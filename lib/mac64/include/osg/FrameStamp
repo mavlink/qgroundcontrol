@@ -1,0 +1,91 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_FRAMESTAMP
+#define OSG_FRAMESTAMP 1
+
+#include <osg/Referenced>
+
+#if defined(__sgi) || (defined(WIN32) && !defined(__MWERKS__))
+#include <time.h>
+#else
+#include <ctime>
+using std::tm;
+#endif
+
+namespace osg
+{
+
+/** Class which encapsulates the frame number, reference time and calendar
+  * time of specific frame, used to synchronize operations on the scene graph
+  * and other machines when using a graphics cluster.  Note the calendar
+  * time can be an artificial simulation time or capture the real time
+  * of day etc.*/ 
+class OSG_EXPORT FrameStamp : public Referenced
+{
+    public:
+
+        FrameStamp();
+        FrameStamp(const FrameStamp& fs);
+        
+        FrameStamp& operator = (const FrameStamp& fs);
+        
+        void setFrameNumber(unsigned int fnum) { _frameNumber = fnum; }
+        unsigned int getFrameNumber() const { return _frameNumber; }
+        
+        void setReferenceTime(double refTime) { _referenceTime = refTime; }
+        double getReferenceTime() const { return _referenceTime; }
+        
+        void setSimulationTime(double refTime) { _simulationTime = refTime; }
+        double getSimulationTime() const { return _simulationTime; }
+        
+        void setCalendarTime(const tm& calendarTime);
+        void getCalendarTime(tm& calendarTime) const;
+
+        // keep public to allow it to be permit allocation which is 
+        // not on the heap used osgcluster
+        virtual ~FrameStamp();
+
+    protected:
+    
+
+        // note no dynamic memory is used so that data can be passed
+        // via a simple memory copy or within a data packet across
+        // the network.
+    
+        unsigned int    _frameNumber;
+        double          _referenceTime;
+        double          _simulationTime;        
+        
+        // member variables of time.h's tm structure, copied here to
+        // ensure that all data is not dynamic. The tm structure itself
+        // is not completely consistent between implementations, which
+        // could be a problem when sending the FrameStamp across a network
+        // with different versions of tm (i.e mixing Unix and Windows.)
+        int tm_sec;            /* Seconds.        [0-60] (1 leap second) */
+        int tm_min;            /* Minutes.        [0-59] */
+        int tm_hour;           /* Hours.          [0-23] */
+        int tm_mday;           /* Day.            [1-31] */
+        int tm_mon;            /* Month.          [0-11] */
+        int tm_year;           /* Year            - 1900.  */
+        int tm_wday;           /* Day of week.    [0-6] */
+        int tm_yday;           /* Days in year.   [0-365]    */
+        int tm_isdst;           /* DST.           [-1/0/1]*/
+        
+        
+};
+
+}
+
+
+#endif

@@ -1,0 +1,287 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_TEXENVCOMBINE
+#define OSG_TEXENVCOMBINE 1
+
+#include <osg/TexEnv>
+#include <osg/Vec3>
+#include <osg/Vec4>
+
+// If not defined by gl.h use the definition found in:
+// http://oss.sgi.com/projects/ogl-sample/registry/ARB/texture_env_combine.txt
+#ifndef GL_ARB_texture_env_combine
+#define GL_COMBINE_ARB                                     0x8570
+#define GL_COMBINE_RGB_ARB                                 0x8571
+#define GL_COMBINE_ALPHA_ARB                               0x8572
+#define GL_SOURCE0_RGB_ARB                                 0x8580
+#define GL_SOURCE1_RGB_ARB                                 0x8581
+#define GL_SOURCE2_RGB_ARB                                 0x8582
+#define GL_SOURCE0_ALPHA_ARB                               0x8588
+#define GL_SOURCE1_ALPHA_ARB                               0x8589
+#define GL_SOURCE2_ALPHA_ARB                               0x858A
+#define GL_OPERAND0_RGB_ARB                                0x8590
+#define GL_OPERAND1_RGB_ARB                                0x8591
+#define GL_OPERAND2_RGB_ARB                                0x8592
+#define GL_OPERAND0_ALPHA_ARB                              0x8598
+#define GL_OPERAND1_ALPHA_ARB                              0x8599
+#define GL_OPERAND2_ALPHA_ARB                              0x859A
+#define GL_RGB_SCALE_ARB                                   0x8573
+#define GL_ADD_SIGNED_ARB                                  0x8574
+#define GL_INTERPOLATE_ARB                                 0x8575
+#define GL_SUBTRACT_ARB                                    0x84E7
+#define GL_CONSTANT_ARB                                    0x8576
+#define GL_PRIMARY_COLOR_ARB                               0x8577
+#define GL_PREVIOUS_ARB                                    0x8578
+#endif
+
+#ifndef GL_ARB_texture_env_dot3
+#define GL_DOT3_RGB_ARB                                    0x86AE
+#define GL_DOT3_RGBA_ARB                                   0x86AF
+#endif
+
+#ifndef GL_TEXTURE0
+#define GL_TEXTURE0 0x84C0
+#endif
+
+namespace osg {
+
+/** TexEnvCombine encapsulates the OpenGL glTexEnvCombine (texture
+  * environment) state. */
+class OSG_EXPORT TexEnvCombine : public StateAttribute
+{
+    public :
+
+        TexEnvCombine();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        TexEnvCombine(const TexEnvCombine& texenv,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(texenv,copyop),
+            _needsTexEnvCrossbar(texenv._needsTexEnvCrossbar),
+            _combine_RGB(texenv._combine_RGB),
+            _combine_Alpha(texenv._combine_Alpha),
+            _source0_RGB(texenv._source0_RGB),
+            _source1_RGB(texenv._source1_RGB),
+            _source2_RGB(texenv._source2_RGB),
+            _source0_Alpha(texenv._source0_Alpha),
+            _source1_Alpha(texenv._source1_Alpha),
+            _source2_Alpha(texenv._source2_Alpha),
+            _operand0_RGB(texenv._operand0_RGB),
+            _operand1_RGB(texenv._operand1_RGB),
+            _operand2_RGB(texenv._operand2_RGB),
+            _operand0_Alpha(texenv._operand0_Alpha),
+            _operand1_Alpha(texenv._operand1_Alpha),
+            _operand2_Alpha(texenv._operand2_Alpha),
+            _scale_RGB(texenv._scale_RGB),
+            _scale_Alpha(texenv._scale_Alpha),
+            _constantColor(texenv._constantColor) {}
+
+
+        META_StateAttribute(osg, TexEnvCombine, TEXENV);
+
+
+        virtual bool isTextureAttribute() const { return true; }
+
+        /** Return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs. */
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // Check for equal types, then create the rhs variable
+            // used by the COMPARE_StateAttribute_parameter macros below.
+            COMPARE_StateAttribute_Types(TexEnvCombine,sa)
+
+            // Compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_needsTexEnvCrossbar)
+            COMPARE_StateAttribute_Parameter(_combine_RGB)
+            COMPARE_StateAttribute_Parameter(_combine_Alpha)
+            COMPARE_StateAttribute_Parameter(_source0_RGB)
+            COMPARE_StateAttribute_Parameter(_source1_RGB)
+            COMPARE_StateAttribute_Parameter(_source2_RGB)
+            COMPARE_StateAttribute_Parameter(_source0_Alpha)
+            COMPARE_StateAttribute_Parameter(_source1_Alpha)
+            COMPARE_StateAttribute_Parameter(_source2_Alpha)
+            COMPARE_StateAttribute_Parameter(_operand0_RGB)
+            COMPARE_StateAttribute_Parameter(_operand1_RGB)
+            COMPARE_StateAttribute_Parameter(_operand2_RGB)
+            COMPARE_StateAttribute_Parameter(_operand0_Alpha)
+            COMPARE_StateAttribute_Parameter(_operand1_Alpha)
+            COMPARE_StateAttribute_Parameter(_operand2_Alpha)
+            COMPARE_StateAttribute_Parameter(_scale_RGB)
+            COMPARE_StateAttribute_Parameter(_scale_Alpha)
+            COMPARE_StateAttribute_Parameter(_constantColor)
+
+            return 0; // Passed all the above comparison macros, so must be equal.
+        }
+
+
+        enum CombineParam
+        {
+            REPLACE         = GL_REPLACE,
+            MODULATE        = GL_MODULATE,
+            ADD             = GL_ADD,
+            ADD_SIGNED      = GL_ADD_SIGNED_ARB,
+            INTERPOLATE     = GL_INTERPOLATE_ARB,
+            SUBTRACT        = GL_SUBTRACT_ARB,
+            DOT3_RGB        = GL_DOT3_RGB_ARB,
+            DOT3_RGBA       = GL_DOT3_RGBA_ARB
+        };
+
+        void setCombine_RGB(GLint cm);
+        void setCombine_Alpha(GLint cm);
+
+        GLint getCombine_RGB() const { return _combine_RGB; }
+        GLint getCombine_Alpha() const { return _combine_Alpha; }
+        
+        enum SourceParam
+        {
+            CONSTANT        = GL_CONSTANT_ARB,
+            PRIMARY_COLOR   = GL_PRIMARY_COLOR_ARB,
+            PREVIOUS        = GL_PREVIOUS_ARB,
+            TEXTURE         = GL_TEXTURE,
+            TEXTURE0        = GL_TEXTURE0,
+            TEXTURE1        = GL_TEXTURE0+1,
+            TEXTURE2        = GL_TEXTURE0+2,
+            TEXTURE3        = GL_TEXTURE0+3,
+            TEXTURE4        = GL_TEXTURE0+4,
+            TEXTURE5        = GL_TEXTURE0+5,
+            TEXTURE6        = GL_TEXTURE0+6,
+            TEXTURE7        = GL_TEXTURE0+7
+        };
+        
+        void setSource0_RGB(GLint sp);
+        void setSource1_RGB(GLint sp);
+        void setSource2_RGB(GLint sp);
+        
+        void setSource0_Alpha(GLint sp);
+        void setSource1_Alpha(GLint sp);
+        void setSource2_Alpha(GLint sp);
+
+        GLint getSource0_RGB() const { return _source0_RGB; }
+        GLint getSource1_RGB() const { return _source1_RGB; }
+        GLint getSource2_RGB() const { return _source2_RGB; }
+        
+        GLint getSource0_Alpha() const { return _source0_Alpha; }
+        GLint getSource1_Alpha() const { return _source1_Alpha; }
+        GLint getSource2_Alpha() const { return _source2_Alpha; }
+
+        enum OperandParam
+        {
+            SRC_COLOR           = GL_SRC_COLOR,
+            ONE_MINUS_SRC_COLOR = GL_ONE_MINUS_SRC_COLOR,
+            SRC_ALPHA           = GL_SRC_ALPHA,
+            ONE_MINUS_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA
+        };
+        
+        void setOperand0_RGB(GLint op);
+        void setOperand1_RGB(GLint op);
+        void setOperand2_RGB(GLint op);
+        
+        void setOperand0_Alpha(GLint op);
+        void setOperand1_Alpha(GLint op);
+        void setOperand2_Alpha(GLint op);
+
+        GLint getOperand0_RGB() const { return _operand0_RGB; }
+        GLint getOperand1_RGB() const { return _operand1_RGB; }
+        GLint getOperand2_RGB() const { return _operand2_RGB; }
+        
+        GLint getOperand0_Alpha() const { return _operand0_Alpha; }
+        GLint getOperand1_Alpha() const { return _operand1_Alpha; }
+        GLint getOperand2_Alpha() const { return _operand2_Alpha; }
+
+
+        void setScale_RGB(float scale);
+        void setScale_Alpha(float scale);
+
+        float getScale_RGB() const { return _scale_RGB; }
+        float getScale_Alpha() const { return _scale_Alpha; }
+
+        void setConstantColor( const Vec4& color ) { _constantColor = color; }
+        const Vec4& getConstantColor() const { return _constantColor; }
+
+        /** Set the constant color attribute to the given light direction
+          * for use with DOT3 combine operation. */
+        void setConstantColorAsLightDirection(const Vec3& direction)
+        {
+            _constantColor.set((direction.x()+1.0f)*0.5f,(direction.y()+1.0f)*0.5f,(direction.z()+1.0f)*0.5f,1.0f);
+        }
+
+        Vec3 getConstantColorAsLightDirection() const
+        {
+            return Vec3(_constantColor.x()*2.0f-1.0f, _constantColor.y()*2.0f-1.0f, _constantColor.z()*2.0f-1.0f);
+        }
+
+        virtual void apply(State& state) const;
+
+    protected :
+
+        virtual ~TexEnvCombine();
+
+        inline bool needsTexEnvCombiner(GLint value) const
+        {
+            switch(value)
+            {
+                case(CONSTANT):
+                case(PRIMARY_COLOR):
+                case(PREVIOUS):
+                case(TEXTURE):
+                    return false;
+            }
+            return true;
+        }
+
+        void computeNeedForTexEnvCombiners()
+        {
+            _needsTexEnvCrossbar = (needsTexEnvCombiner(_source0_RGB) ||
+                                    needsTexEnvCombiner(_source1_RGB) ||
+                                    needsTexEnvCombiner(_source2_RGB) ||
+                                    needsTexEnvCombiner(_source0_Alpha) ||
+                                    needsTexEnvCombiner(_source1_Alpha) ||
+                                    needsTexEnvCombiner(_source2_Alpha)); 
+        }
+        
+
+        
+
+
+        bool            _needsTexEnvCrossbar;
+
+        GLint           _combine_RGB;
+        GLint           _combine_Alpha;
+    
+        GLint           _source0_RGB;
+        GLint           _source1_RGB;
+        GLint           _source2_RGB;
+        
+        GLint           _source0_Alpha;
+        GLint           _source1_Alpha;
+        GLint           _source2_Alpha;
+
+
+        GLint           _operand0_RGB;
+        GLint           _operand1_RGB;
+        GLint           _operand2_RGB;
+        
+        GLint           _operand0_Alpha;
+        GLint           _operand1_Alpha;
+        GLint           _operand2_Alpha;
+
+
+        float           _scale_RGB;
+        float           _scale_Alpha;
+        
+        osg::Vec4       _constantColor;
+
+};
+
+}
+
+#endif

@@ -1,0 +1,155 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_GLEXTENSIONS
+#define OSG_GLEXTENSIONS 1
+
+#include <osg/Export>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+
+
+namespace osg {
+
+/** Return floating-point OpenGL version number.
+  * Note: Must only be called within a valid OpenGL context,
+  * undefined behavior may occur otherwise.
+*/
+extern OSG_EXPORT float getGLVersionNumber();
+
+/** Return true if "extension" is contained in "extensionString".
+*/
+extern OSG_EXPORT bool isExtensionInExtensionString(const char *extension, const char *extensionString);
+
+/** Return true if OpenGL "extension" is supported.
+  * Note: Must only be called within a valid OpenGL context,
+  * undefined behavior may occur otherwise.
+*/
+extern OSG_EXPORT bool isGLExtensionSupported(unsigned int contextID, const char *extension);
+
+/** Return true if OpenGL "extension" or minimum OpenGL version number is supported.
+  * Note: Must only be called within a valid OpenGL context,
+  * undefined behavior may occur otherwise.
+*/
+extern OSG_EXPORT bool isGLExtensionOrVersionSupported(unsigned int contextID, const char *extension, float requiredGlVersion);
+
+/** Return the address of the specified OpenGL function.
+  * Return NULL if function not supported by OpenGL library.
+  * Note, glGLExtensionFuncPtr is declared inline so that the code
+  * is compiled locally to the calling code.  This should get by Windows'
+  * dumb implementation of having different GL function ptr's for each
+  * library when linked to it. 
+*/
+extern OSG_EXPORT void* getGLExtensionFuncPtr(const char *funcName);
+
+/** Set a list of extensions to disable for different OpenGL renderers. This allows
+  * OSG applications to work around OpenGL drivers' bugs which are due to problematic extension support.
+  * The format of the string is:
+  * "GLRendererString : ExtensionName, ExtensionName; GLRenderString2 : ExtensionName;"
+  * An example of is : "SUN_XVR1000:GL_EXT_texture_filter_anisotropic"
+  * The default setting of GLExtensionDisableString is obtained from the OSG_GL_EXTENSION_DISABLE
+  * environmental variable.
+*/
+extern OSG_EXPORT void setGLExtensionDisableString(const std::string& disableString);
+
+/** Get the list of extensions that are disabled for various OpenGL renderers. */
+extern OSG_EXPORT std::string& getGLExtensionDisableString();
+
+/** Return the address of the specified OpenGL function. If not found then
+  * check a second function name, if this fails then return NULL as function is
+  * not supported by OpenGL library. This is used for checking something
+  * like glActiveTexture (which is in OGL1.3) or glActiveTextureARB.
+*/
+inline void* getGLExtensionFuncPtr(const char *funcName,const char *fallbackFuncName)
+{
+    void* ptr = getGLExtensionFuncPtr(funcName);
+    if (ptr) return ptr;
+    return getGLExtensionFuncPtr(fallbackFuncName);
+}
+
+/** Return the address of the specified OpenGL function. If not found then
+  * check a second function name, if this fails then return NULL as function is
+  * not supported by OpenGL library. This is used for checking something
+  * like glActiveTexture (which is in OGL1.3) or glActiveTextureARB.
+*/
+inline void* getGLExtensionFuncPtr(const char *funcName1, const char *funcName2, const char *funcName3)
+{
+    void* ptr = getGLExtensionFuncPtr(funcName1);
+    if (ptr) return ptr;
+
+    ptr = getGLExtensionFuncPtr(funcName2);
+    if (ptr) return ptr;
+
+    return getGLExtensionFuncPtr(funcName3);
+}
+
+template<typename T, typename R>
+T convertPointerType(R src)
+{
+    T dest;
+    memcpy(&dest, &src, sizeof(src));
+    return dest;
+}
+
+template<typename T>
+bool setGLExtensionFuncPtr(T& t, const char* str1)
+{
+    void* data = osg::getGLExtensionFuncPtr(str1);
+    if (data)
+    {
+        memcpy(&t, &data, sizeof(T));
+        return true;        
+    }
+    else
+    {
+        t = 0;
+        return false;        
+    }
+}
+
+template<typename T>
+bool setGLExtensionFuncPtr(T& t, const char* str1, const char* str2)
+{
+    void* data = osg::getGLExtensionFuncPtr(str1,str2);
+    if (data)
+    {
+        memcpy(&t, &data, sizeof(T));
+        return true;        
+    }
+    else
+    {
+        t = 0;
+        return false;        
+    }
+}
+
+template<typename T>
+bool setGLExtensionFuncPtr(T& t, const char* str1, const char* str2, const char* str3)
+{
+    void* data = osg::getGLExtensionFuncPtr(str1,str2,str3);
+    if (data)
+    {
+        memcpy(&t, &data, sizeof(T));
+        return true;        
+    }
+    else
+    {
+        t = 0;
+        return false;        
+    }
+}
+
+}
+
+#endif
