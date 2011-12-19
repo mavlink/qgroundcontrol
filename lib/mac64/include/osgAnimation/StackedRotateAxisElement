@@ -1,0 +1,59 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ */
+
+#ifndef OSGANIMATION_STACKED_ROTATE_AXIS_ELEMENT
+#define OSGANIMATION_STACKED_ROTATE_AXIS_ELEMENT 1
+
+#include <osgAnimation/Export>
+#include <osgAnimation/StackedTransformElement>
+#include <osgAnimation/Target>
+#include <osg/Vec3>
+
+namespace osgAnimation
+{
+
+    class OSGANIMATION_EXPORT StackedRotateAxisElement : public StackedTransformElement 
+    {
+    public:
+        META_Object(osgAnimation, StackedRotateAxisElement);
+
+        StackedRotateAxisElement();
+        StackedRotateAxisElement(const StackedRotateAxisElement&, const osg::CopyOp&);
+        StackedRotateAxisElement(const std::string& name, const osg::Vec3& axis, double angle);
+        StackedRotateAxisElement(const osg::Vec3& axis, double angle);
+
+        void applyToMatrix(osg::Matrix& matrix) const;
+        osg::Matrix getAsMatrix() const;
+        bool isIdentity() const { return (_angle == 0); }
+        void update();
+
+        const osg::Vec3& getAxis() const;
+        double getAngle() const;
+        void setAxis(const osg::Vec3&);
+        void setAngle(double);
+
+        virtual Target* getOrCreateTarget();
+        virtual Target* getTarget() {return _target.get();}
+        virtual const Target* getTarget() const {return _target.get();}
+
+    protected:
+        osg::Vec3 _axis;
+        double _angle;
+        osg::ref_ptr<FloatTarget> _target;
+    };
+
+}
+
+#endif
+

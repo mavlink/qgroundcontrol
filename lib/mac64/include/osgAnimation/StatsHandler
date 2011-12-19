@@ -1,0 +1,113 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <mornifle@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGANIMATION_STATSHANDLER_H
+#define OSGANIMATION_STATSHANDLER_H
+
+#include <osgAnimation/Timeline>
+#include <osgGA/GUIEventHandler>
+#include <osgViewer/ViewerBase>
+#include <osgViewer/Viewer>
+#include <osgText/Text>
+
+namespace osgAnimation
+{
+#if 0
+    struct StatAction
+    {
+        
+        std::string _name;
+        osg::ref_ptr<osg::Group> _group;
+        osg::ref_ptr<osg::Geode> _label;
+        osg::ref_ptr<osg::MatrixTransform> _graph;
+        osg::ref_ptr<osgText::Text> _textLabel;
+
+        void init(osg::Stats* stats, const std::string& name, const osg::Vec3& pos, float width, float heigh, const osg::Vec4& color);
+        void setPosition(const osg::Vec3& pos);
+        void setAlpha(float v);
+    };
+
+#endif
+
+/** Event handler for adding on screen stats reporting to Viewers.*/
+    class OSGANIMATION_EXPORT StatsHandler : public osgGA::GUIEventHandler 
+    {
+    public: 
+
+        StatsHandler();
+
+        enum StatsType
+        {
+            NO_STATS = 0,
+            FRAME_RATE = 1,
+            LAST = 2
+        };
+        
+        void setKeyEventTogglesOnScreenStats(int key) { _keyEventTogglesOnScreenStats = key; }
+        int getKeyEventTogglesOnScreenStats() const { return _keyEventTogglesOnScreenStats; }
+        
+        void setKeyEventPrintsOutStats(int key) { _keyEventPrintsOutStats = key; }
+        int getKeyEventPrintsOutStats() const { return _keyEventPrintsOutStats; }
+
+        double getBlockMultiplier() const { return _blockMultiplier; }
+
+        void reset();
+
+        osg::Camera* getCamera() { return _camera.get(); }
+        const osg::Camera* getCamera() const { return _camera.get(); }
+
+        virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+
+        /** Get the keyboard and mouse usage of this manipulator.*/
+        virtual void getUsage(osg::ApplicationUsage& usage) const;
+
+    protected:
+
+        void setUpHUDCamera(osgViewer::ViewerBase* viewer);
+
+        osg::Geometry* createBackgroundRectangle(const osg::Vec3& pos, const float width, const float height, osg::Vec4& color);
+
+        osg::Geometry* createGeometry(const osg::Vec3& pos, float height, const osg::Vec4& colour, unsigned int numBlocks);
+
+        osg::Geometry* createFrameMarkers(const osg::Vec3& pos, float height, const osg::Vec4& colour, unsigned int numBlocks);
+
+        osg::Geometry* createTick(const osg::Vec3& pos, float height, const osg::Vec4& colour, unsigned int numTicks);
+        
+        osg::Node* createCameraTimeStats(const std::string& font, osg::Vec3& pos, float startBlocks, bool acquireGPUStats, float characterSize, osg::Stats* viewerStats, osg::Camera* camera);
+
+        void setUpScene(osgViewer::Viewer* viewer);
+        
+        int                                 _keyEventTogglesOnScreenStats;
+        int                                 _keyEventPrintsOutStats;
+
+        int                                 _statsType;
+
+        bool                                _initialized;
+        osg::ref_ptr<osg::Camera>           _camera;
+        
+        osg::ref_ptr<osg::Switch>           _switch;
+        osg::ref_ptr<osg::Group>            _group;
+        
+        unsigned int                        _frameRateChildNum;
+        unsigned int                        _numBlocks;
+        double                              _blockMultiplier;
+        
+        float                               _statsWidth;
+        float                               _statsHeight;
+
+//        std::map<std::string, StatAction >      _actions;
+    };
+
+}
+#endif

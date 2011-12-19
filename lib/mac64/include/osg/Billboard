@@ -1,0 +1,132 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_BILLBOARD
+#define OSG_BILLBOARD 1
+
+#include <osg/Matrix>
+#include <osg/Geode>
+
+namespace osg {
+
+/** Billboard is a derived form of Geode that orients its osg::Drawable
+  * children to face the eye point. Typical uses include trees and
+  * particle explosions,
+*/
+class OSG_EXPORT Billboard : public Geode
+{
+    public:
+
+        enum Mode {
+            POINT_ROT_EYE,
+            POINT_ROT_WORLD,
+            AXIAL_ROT
+        };
+
+        Billboard();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        Billboard(const Billboard&,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        META_Node(osg, Billboard);
+
+        /** Set the billboard rotation mode. */
+        void setMode(Mode mode);
+        /** Get the billboard rotation mode. */
+        inline Mode getMode() const { return _mode; }
+
+        /** Set the rotation axis for the billboard's child Drawables.
+          * Only utilized when mode==AXIAL_ROT. */
+        void setAxis(const Vec3& axis);
+        /** Get the rotation axis. */
+        inline const Vec3& getAxis() const { return _axis; }
+
+        /** This normal defines child Drawables' front face direction when unrotated. */
+        void setNormal(const Vec3& normal);
+        /** Get the front face direction normal. */
+        inline const Vec3& getNormal() const { return _normal; }
+
+
+        /** Set the specified child Drawable's position. */
+        inline void setPosition(unsigned int i,const Vec3& pos)      { _positionList[i] = pos; }
+        /** Get the specified child Drawable's position. */
+        inline const Vec3& getPosition(unsigned int i) const         { return _positionList[i]; }
+
+        /** Type definition for pivot point position list. */
+        typedef std::vector<Vec3> PositionList;
+        
+        /** Set the list of pivot point positions. */
+        inline void setPositionList(PositionList& pl)       { _positionList=pl; }
+
+        /** Get the list of pivot point positions. */
+        inline PositionList& getPositionList()              { return _positionList; }
+        
+        /** Get a const list of pivot point positions. */
+        inline const PositionList& getPositionList() const  { return _positionList; }
+
+        /** Add a Drawable with a default position of Vec3(0,0,0).
+          * Call the base-class Geode::addDrawble() to add the given Drawable
+          * gset as a child. If Geode::addDrawable() returns true, add the
+          * default position to the pivot point position list and return true.
+          * Otherwise, return false. */
+        virtual bool addDrawable( Drawable *gset );
+
+        /** Add a Drawable with a specified position.
+          * Call the base-class Geode::addDrawble() to add the given Drawable
+          * gset as a child. If Geode::addDrawable() returns true, add the
+          * given position pos to the pivot point position list and return true.
+          * Otherwise, return false. */
+        virtual bool addDrawable(Drawable *gset,const Vec3& pos);
+
+        /** Remove a Drawable and its associated position.
+          * If gset is a child, remove it, decrement its reference count,
+          * remove its pivot point position. and return true.
+          * Otherwise, return false. */
+        virtual bool removeDrawable( Drawable *gset );
+                
+
+        bool computeMatrix(Matrix& modelview, const Vec3& eye_local, const Vec3& pos_local) const;
+
+        virtual BoundingSphere computeBound() const;
+
+    protected:
+
+        virtual ~Billboard();
+
+        enum AxisAligned
+        {
+            AXIAL_ROT_X_AXIS=AXIAL_ROT+1,
+            AXIAL_ROT_Y_AXIS,
+            AXIAL_ROT_Z_AXIS,
+            POINT_ROT_WORLD_Z_AXIS,
+            CACHE_DIRTY
+        };
+
+
+        Mode                                _mode;
+        Vec3                                _axis;
+        Vec3                                _normal;
+        Matrix                              _rotateNormalToZAxis;
+        PositionList                        _positionList;
+        
+        // used internally as cache of which what _axis is aligned to help
+        // decide which method of rotation to use.
+        int                                 _cachedMode;
+        Vec3                                _side;
+        void updateCache();
+
+};
+
+}
+
+#endif

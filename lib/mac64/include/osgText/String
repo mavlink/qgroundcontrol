@@ -1,0 +1,95 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGTEXT_STRING
+#define OSGTEXT_STRING 1
+
+#include <vector>
+#include <set>
+#include <string>
+
+#include <osgText/Export>
+
+namespace osgText {
+
+// ********************************  HACK  **********************************
+// Following class is needed to work around a DLL export problem. See file
+// include/osg/PrimitiveSet for details.
+
+class VectorUInt: public std::vector<unsigned int>
+{
+    typedef std::vector<value_type> vector_type;
+public:
+    VectorUInt(): vector_type() {}
+    VectorUInt(const VectorUInt &copy): vector_type(copy) {}
+    VectorUInt(unsigned int* beg, unsigned int* end): vector_type(beg, end) {}
+    explicit VectorUInt(unsigned int n): vector_type(n) {}
+};
+
+// **************************************************************************
+
+class Text;
+
+class OSGTEXT_EXPORT String : public VectorUInt
+{
+    public:
+
+        typedef VectorUInt vector_type;
+
+        /**
+         * Types of string encodings supported
+         */
+        enum Encoding
+        {
+            ENCODING_UNDEFINED,                 /// not using Unicode
+            ENCODING_ASCII = ENCODING_UNDEFINED,/// unsigned char ASCII
+            ENCODING_UTF8,                      /// 8-bit unicode transformation format
+            ENCODING_UTF16,                     /// 16-bit signature
+            ENCODING_UTF16_BE,                  /// 16-bit big-endian
+            ENCODING_UTF16_LE,                  /// 16-bit little-endian
+            ENCODING_UTF32,                     /// 32-bit signature
+            ENCODING_UTF32_BE,                  /// 32-bit big-endian
+            ENCODING_UTF32_LE,                  /// 32-bit little-endian
+            ENCODING_SIGNATURE                  /// detect encoding from signature
+        };
+
+
+        String() {}
+        String(const String& str);
+        String(const std::string& str) { set(str); }
+        String(const wchar_t* text) { set(text); }
+        String(const std::string& text,Encoding encoding) { set(text,encoding); }
+
+        String& operator = (const String& str);
+
+        void set(const std::string& str);
+
+        /** Set the text using a wchar_t string, 
+          * which is converted to an internal TextString.*/
+        void set(const wchar_t* text);
+
+        /** Set the text using a Unicode encoded std::string, which is converted to an internal TextString.
+          * The encoding parameter specifies which Unicode encoding is used in the std::string. */
+        void set(const std::string& text,Encoding encoding);
+
+        /** returns a UTF8 encoded version of this osgText::String.*/
+        std::string createUTF8EncodedString() const;
+
+    protected:
+
+};
+
+}
+
+
+#endif

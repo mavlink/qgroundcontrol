@@ -1,0 +1,91 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_TRISTRIPVISITOR
+#define OSGUTIL_TRISTRIPVISITOR 1
+
+#include <osg/NodeVisitor>
+#include <osg/Geode>
+#include <osg/Geometry>
+
+#include <osgUtil/Optimizer>
+
+#include <set>
+
+namespace osgUtil {
+
+/** A tri stripping visitor for converting Geometry surface primitives into tri strips.
+  * The current implemention is based upon Tanguy Fautre's triangulation code.
+  */
+class OSGUTIL_EXPORT TriStripVisitor : public BaseOptimizerVisitor
+{
+    public:
+
+        /// default to traversing all children.
+        TriStripVisitor(Optimizer* optimizer=0) : 
+                BaseOptimizerVisitor( optimizer, Optimizer::TRISTRIP_GEOMETRY), 
+                _cacheSize( 16 ),
+                _minStripSize( 2 ),
+                _generateFourPointPrimitivesQuads ( false)
+        {}
+
+        /** Convert mesh primitives in Geometry into Tri Strips.
+          * Converts all primitive types except points
+          * and lines, linestrips which it leaves unchanged.
+          */
+        void stripify(osg::Geometry& drawable);
+
+        /** Stripify (make into strips of tria or quads) the accumulated list of Geometry drawables.*/
+        void stripify();
+
+        /// Accumulate the Geometry drawables to make into strips.
+        virtual void apply(osg::Geode& geode);
+
+        inline void setCacheSize( unsigned int size )
+        {
+            _cacheSize = size;
+        }
+        
+        inline unsigned int getCacheSize() const
+        {
+            return _cacheSize;
+        }
+        
+        inline void setMinStripSize( unsigned int size )
+        {
+            _minStripSize = size;
+        }
+        
+        inline unsigned int getMinStripSize() const
+        {
+            return _minStripSize;
+        }
+        
+        
+        void setGenerateFourPointPrimitivesQuads(bool flag) { _generateFourPointPrimitivesQuads = flag; }
+        bool getGenerateFourPointPrimitivesQuads() const { return _generateFourPointPrimitivesQuads; }
+        
+
+    private:
+    
+        typedef std::set<osg::Geometry*> GeometryList;
+
+        unsigned int _cacheSize;
+        unsigned int _minStripSize;
+        GeometryList _geometryList;
+        bool         _generateFourPointPrimitivesQuads;
+};
+
+}
+
+#endif

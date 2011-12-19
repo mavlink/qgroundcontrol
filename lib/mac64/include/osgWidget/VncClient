@@ -1,0 +1,63 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGWIDGET_VNCCLIENT
+#define OSGWIDGET_VNCCLIENT
+
+#include <osgDB/ReaderWriter>
+
+#include <osgWidget/PdfReader>
+
+namespace osgWidget {
+
+/** Pure virtual base class for VncImage that is sublcassed by vnc plugin to provide the actual implementation.*/
+class VncImage : public osg::Image
+{
+    public:
+    
+        VncImage() {}
+    
+        virtual bool connect(const std::string& hostname) = 0;
+
+        virtual void close() = 0;
+
+    protected:
+    
+        virtual ~VncImage() {}
+    
+};
+
+
+/** Convinience Vnc Client class that provides a interactive quad that can be placed directly in the scene.*/
+class OSGWIDGET_EXPORT VncClient : public osg::Geode
+{
+    public:
+    
+        VncClient() {}
+
+        VncClient(const std::string& hostname, const GeometryHints& hints = GeometryHints());
+        
+        bool assign(VncImage* vncImage, const GeometryHints& hints = GeometryHints());
+        
+        bool connect(const std::string& hostname, const GeometryHints& hints = GeometryHints());
+
+        void close();
+
+    protected:
+    
+        osg::ref_ptr<VncImage> _vncImage;
+};
+
+}
+
+#endif

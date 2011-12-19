@@ -1,0 +1,196 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+//osgParticle - Copyright (C) 2002 Marco Jez
+
+#ifndef OSGPARTICLE_RADIAL_SHOOTER
+#define OSGPARTICLE_RADIAL_SHOOTER 1
+
+#include <osgParticle/Shooter>
+#include <osgParticle/Particle>
+#include <osgParticle/range>
+
+#include <osg/CopyOp>
+#include <osg/Object>
+#include <osg/Math>
+
+namespace osgParticle
+{
+
+    /**    A shooter class that shoots particles radially.
+        This shooter computes the velocity vector of incoming particles by choosing a
+        random direction and a random speed. Both direction and speed are chosen within
+        specified ranges. The direction is defined by two angles: <B>theta</B>, which
+        is the angle between the velocity vector and the Z axis, and <B>phi</B>, which is
+        the angle between the X axis and the velocity vector projected onto the X-Y plane.
+    */
+    class RadialShooter: public Shooter {
+    public:
+        inline RadialShooter();
+        inline RadialShooter(const RadialShooter& copy, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+        META_Object(osgParticle, RadialShooter);
+
+        /// Get the range of possible values for <B>theta</B> angle.
+        inline const rangef& getThetaRange() const;
+        
+        /// Set the range of possible values for <B>theta</B> angle.
+        inline void setThetaRange(const rangef& r);
+        
+        /// Set the range of possible values for <B>theta</B> angle.
+        inline void setThetaRange(float r1, float r2);
+        
+        /// Get the range of possible values for <B>phi</B> angle.
+        inline const rangef& getPhiRange() const;
+        
+        /// Set the range of possible values for <B>phi</B> angle.
+        inline void setPhiRange(const rangef& r);
+        
+        /// Set the range of possible values for <B>phi</B> angle.
+        inline void setPhiRange(float r1, float r2);
+        
+        /// Get the range of possible values for initial speed of particles.
+        inline const rangef& getInitialSpeedRange() const;        
+        
+        /// Set the range of possible values for initial speed of particles.
+        inline void setInitialSpeedRange(const rangef& r);
+        
+        /// Set the range of possible values for initial speed of particles.
+        inline void setInitialSpeedRange(float r1, float r2);
+
+        /// Get the range of possible values for initial rotational speed of particles.
+        inline const rangev3& getInitialRotationalSpeedRange() const;        
+        
+        /// Set the range of possible values for initial rotational speed of particles.
+        inline void setInitialRotationalSpeedRange(const rangev3& r);
+        
+        /// Set the range of possible values for initial rotational speed of particles.
+        inline void setInitialRotationalSpeedRange(const osg::Vec3& r1, const osg::Vec3& r2);
+
+        /// Shoot a particle. Do not call this method manually.
+        inline void shoot(Particle* P) const;
+
+    protected:
+        virtual ~RadialShooter() {}
+        RadialShooter& operator=(const RadialShooter&) { return *this; }
+
+    private:
+        rangef _theta_range;
+        rangef _phi_range;
+        rangef _speed_range;
+        rangev3 _rot_speed_range;
+    };
+
+    // INLINE FUNCTIONS
+
+    inline RadialShooter::RadialShooter()
+    :    Shooter(), 
+        _theta_range(0, 0.5f*osg::PI_4), 
+        _phi_range(0, 2*osg::PI), 
+        _speed_range(10, 10),
+        _rot_speed_range(osg::Vec3(0,0,0), osg::Vec3(0,0,0))
+    {
+    }
+
+    inline RadialShooter::RadialShooter(const RadialShooter& copy, const osg::CopyOp& copyop)
+    :    Shooter(copy, copyop), 
+        _theta_range(copy._theta_range), 
+        _phi_range(copy._phi_range), 
+        _speed_range(copy._speed_range),
+        _rot_speed_range(copy._rot_speed_range)
+    {
+    }
+    
+    inline const rangef& RadialShooter::getThetaRange() const
+    {
+        return _theta_range;
+    }
+
+    inline const rangef& RadialShooter::getPhiRange() const
+    {
+        return _phi_range;
+    }
+
+    inline const rangef& RadialShooter::getInitialSpeedRange() const
+    {
+        return _speed_range;
+    }
+
+    inline const rangev3& RadialShooter::getInitialRotationalSpeedRange() const
+    {
+        return _rot_speed_range;
+    }
+
+    inline void RadialShooter::setThetaRange(const rangef& r)
+    {
+        _theta_range = r;
+    }
+
+    inline void RadialShooter::setThetaRange(float r1, float r2)
+    {
+        _theta_range.minimum = r1;
+        _theta_range.maximum = r2;
+    }
+
+    inline void RadialShooter::setPhiRange(const rangef& r)
+    {
+        _phi_range = r;
+    }
+
+    inline void RadialShooter::setPhiRange(float r1, float r2)
+    {
+        _phi_range.minimum = r1;
+        _phi_range.maximum = r2;
+    }
+
+    inline void RadialShooter::setInitialSpeedRange(const rangef& r)
+    {
+        _speed_range = r;
+    }
+
+    inline void RadialShooter::setInitialSpeedRange(float r1, float r2)
+    {
+        _speed_range.minimum = r1;
+        _speed_range.maximum = r2;
+    }
+
+    inline void RadialShooter::setInitialRotationalSpeedRange(const rangev3& r)
+    {
+        _rot_speed_range = r;
+    }
+
+    inline void RadialShooter::setInitialRotationalSpeedRange(const osg::Vec3& r1, const osg::Vec3& r2)
+    {
+        _rot_speed_range.minimum = r1;
+        _rot_speed_range.maximum = r2;
+    }
+
+    inline void RadialShooter::shoot(Particle* P) const
+    {
+        float theta = _theta_range.get_random();
+        float phi = _phi_range.get_random();
+        float speed = _speed_range.get_random();
+        osg::Vec3 rot_speed = _rot_speed_range.get_random();
+        
+        P->setVelocity(osg::Vec3(
+            speed * sinf(theta) * cosf(phi),
+            speed * sinf(theta) * sinf(phi),
+            speed * cosf(theta)
+            ));
+            
+        P->setAngularVelocity(rot_speed);
+    }
+
+}
+
+
+#endif
