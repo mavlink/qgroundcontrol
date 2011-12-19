@@ -1,0 +1,181 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_RENDERBIN
+#define OSGUTIL_RENDERBIN 1
+
+#include <osgUtil/StateGraph>
+
+#include <map>
+#include <vector>
+#include <string>
+
+namespace osgUtil {
+
+class RenderStage;
+class Statistics;
+/**
+ * RenderBin base class. Renderbin contains geometries to be rendered as a group, 
+ * renderbins are rendered once each.  They can improve efficiency or 
+ * use different rendering algorithms.
+ * A renderBin can contain further renderBins producing a tree hierarchy of renderBins.
+ */
+class OSGUTIL_EXPORT RenderBin : public osg::Object
+{
+    public:
+
+        typedef std::vector<RenderLeaf*>                    RenderLeafList; 
+        typedef std::vector<StateGraph*>                    StateGraphList;
+        typedef std::map< int, osg::ref_ptr<RenderBin> >    RenderBinList; 
+
+        enum SortMode
+        {
+            SORT_BY_STATE,
+            SORT_BY_STATE_THEN_FRONT_TO_BACK,
+            SORT_FRONT_TO_BACK,
+            SORT_BACK_TO_FRONT,
+            TRAVERSAL_ORDER
+        };
+
+        // static methods.
+        static RenderBin* createRenderBin(const std::string& binName);
+        static RenderBin* getRenderBinPrototype(const std::string& binName);
+        static void addRenderBinPrototype(const std::string& binName,RenderBin* proto);
+        static void removeRenderBinPrototype(RenderBin* proto);
+
+        static void setDefaultRenderBinSortMode(SortMode mode);
+        static SortMode getDefaultRenderBinSortMode();
+
+
+
+        RenderBin();
+
+        RenderBin(SortMode mode);
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        RenderBin(const RenderBin& rhs,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        virtual osg::Object* cloneType() const { return new RenderBin(); }
+        virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new RenderBin(*this,copyop); } // note only implements a clone of type.
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const RenderBin*>(obj)!=0L; }
+        virtual const char* libraryName() const { return "osgUtil"; }
+        virtual const char* className() const { return "RenderBin"; }
+
+        virtual void reset();
+
+        void setStateSet(osg::StateSet* stateset) { _stateset = stateset; }
+        osg::StateSet* getStateSet() { return _stateset.get(); }
+        const osg::StateSet* getStateSet() const { return _stateset.get(); }
+
+
+        RenderBin* getParent() { return _parent; }
+        const RenderBin* getParent() const { return _parent; }
+
+        RenderStage* getStage() { return _stage; }
+        const RenderStage* getStage() const { return _stage; }
+
+        int getBinNum() const { return _binNum; }
+
+        StateGraphList& getStateGraphList() { return _stateGraphList; }
+        const StateGraphList& getStateGraphList() const { return _stateGraphList; }
+
+        RenderBinList& getRenderBinList() { return _bins; }
+        const RenderBinList& getRenderBinList() const { return _bins; }
+
+        RenderLeafList& getRenderLeafList() { return _renderLeafList; }
+        const RenderLeafList& getRenderLeafList() const { return _renderLeafList; }
+
+
+        RenderBin* find_or_insert(int binNum,const std::string& binName);
+
+        void addStateGraph(StateGraph* rg)
+        {
+            _stateGraphList.push_back(rg);
+        }
+
+        virtual void sort();
+
+        virtual void sortImplementation();
+
+        void setSortMode(SortMode mode);
+        SortMode getSortMode() const { return _sortMode; }
+
+        virtual void sortByState();
+        virtual void sortByStateThenFrontToBack();
+        virtual void sortFrontToBack();
+        virtual void sortBackToFront();
+        virtual void sortTraversalOrder();
+
+        struct SortCallback : public osg::Referenced    
+        {
+            virtual void sortImplementation(RenderBin*) = 0;
+        };
+
+        void setSortCallback(SortCallback* sortCallback) { _sortCallback = sortCallback; }
+        SortCallback* getSortCallback() { return _sortCallback.get(); }
+        const SortCallback* getSortCallback() const { return _sortCallback.get(); }
+
+
+
+        virtual void draw(osg::RenderInfo& renderInfo,RenderLeaf*& previous);
+
+        virtual void drawImplementation(osg::RenderInfo& renderInfo,RenderLeaf*& previous);
+
+        struct DrawCallback : public osg::Referenced    
+        {
+            virtual void drawImplementation(RenderBin* bin,osg::RenderInfo& renderInfo,RenderLeaf*& previous) = 0;
+        };
+
+        void setDrawCallback(DrawCallback* drawCallback) { _drawCallback = drawCallback; }
+        DrawCallback* getDrawCallback() { return _drawCallback.get(); }
+        const DrawCallback* getDrawCallback() const { return _drawCallback.get(); }
+
+        /** Extract stats for current draw list. */
+        bool getStats(Statistics& primStats) const;
+
+        /** Compute the number of dynamic RenderLeaves.*/
+        virtual unsigned int computeNumberOfDynamicRenderLeaves() const;
+
+        void copyLeavesFromStateGraphListToRenderLeafList();
+
+        /** If State is non-zero, this function releases any associated OpenGL objects for
+           * the specified graphics context. Otherwise, releases OpenGL objexts
+           * for all graphics contexts. */
+        virtual void releaseGLObjects(osg::State* state= 0) const;
+
+    protected:
+
+        virtual ~RenderBin();
+   
+        int                             _binNum;
+        RenderBin*                      _parent;
+        RenderStage*                    _stage;
+        RenderBinList                   _bins;
+        StateGraphList                  _stateGraphList;
+        RenderLeafList                  _renderLeafList;
+
+        bool                            _sorted;           
+        SortMode                        _sortMode;
+        osg::ref_ptr<SortCallback>      _sortCallback;
+
+        osg::ref_ptr<DrawCallback>      _drawCallback;
+
+        osg::ref_ptr<osg::StateSet>     _stateset;
+
+};
+
+}
+
+#endif
+
+    

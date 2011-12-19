@@ -1,0 +1,72 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGANIMATION_ANIMATION_UPDATE_CALLBACK
+#define OSGANIMATION_ANIMATION_UPDATE_CALLBACK 1
+
+#include <osg/Object>
+#include <osgAnimation/Channel>
+#include <osgAnimation/Animation>
+#include <string>
+
+namespace osgAnimation 
+{
+
+    class AnimationUpdateCallbackBase : public virtual osg::Object
+    {
+    public:
+        virtual bool link(Channel* channel) = 0;
+        virtual int link(Animation* animation) = 0;
+    };
+
+
+    template <class T>
+    class AnimationUpdateCallback : public AnimationUpdateCallbackBase, public T
+    {
+    public:
+        AnimationUpdateCallback() {}
+        AnimationUpdateCallback(const std::string& name) { T::setName(name);}
+        AnimationUpdateCallback(const AnimationUpdateCallback& apc,const osg::CopyOp& copyop): T(apc, copyop) {}
+
+        META_Object(osgAnimation, AnimationUpdateCallback<T>);
+
+        const std::string& getName() const { return T::getName(); }
+        bool link(Channel* channel) { return 0; }
+        int link(Animation* animation)
+        {
+            if (T::getName().empty())
+            {
+                osg::notify(osg::WARN) << "An update callback has no name, it means it could link only with \"\" named Target, often an error, discard" << std::endl;
+                return 0;
+            }
+            int nbLinks = 0;
+            for (ChannelList::iterator it = animation->getChannels().begin();
+                 it != animation->getChannels().end();
+                 ++it)
+            {
+                std::string targetName = (*it)->getTargetName();
+                if (targetName == T::getName())
+                {
+                    AnimationUpdateCallbackBase* a = this;
+                    a->link((*it).get());
+                    nbLinks++;
+                }
+            }
+            return nbLinks;
+        }
+    };
+
+}
+
+#endif
