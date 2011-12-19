@@ -1,0 +1,59 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_OCCLUDERNODE
+#define OSG_OCCLUDERNODE 1
+
+#include <osg/Group>
+#include <osg/ConvexPlanarOccluder>
+
+namespace osg {
+
+/**
+ * OccluderNode is a Group node which provides hooks for adding
+ * ConvexPlanarOccluders to the scene.
+ */
+class OSG_EXPORT OccluderNode : public Group
+{
+    public :
+        
+        OccluderNode();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        OccluderNode(const OccluderNode&,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        META_Node(osg, OccluderNode);
+        
+
+        /** Attach a ConvexPlanarOccluder to an OccluderNode.*/            
+        void setOccluder(ConvexPlanarOccluder* occluder) { _occluder = occluder; }
+        
+        /** Get the ConvexPlanarOccluder* attached to a OccluderNode. */
+        ConvexPlanarOccluder* getOccluder() { return _occluder.get(); }
+        
+        /** Get the const ConvexPlanarOccluder* attached to a OccluderNode.*/            
+        const ConvexPlanarOccluder* getOccluder() const { return _occluder.get(); }
+
+        /** Overrides Group's computeBound.*/
+        virtual BoundingSphere computeBound() const;
+
+    protected :
+    
+        virtual ~OccluderNode() {}
+        
+        ref_ptr<ConvexPlanarOccluder>   _occluder;
+};
+
+}
+
+#endif

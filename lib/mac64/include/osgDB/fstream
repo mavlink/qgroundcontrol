@@ -1,0 +1,69 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGDB_FSTREAM
+#define OSGDB_FSTREAM 1
+
+#include <osgDB/Export>
+#include <osg/Export>
+
+#include <fstream>
+
+namespace osgDB
+{
+
+/**
+* Replacements for std::fstream, std::ifstream, and std::ofstream to
+* automatically handle UTF-8 to UTF-16 filename conversion. Always use one
+* of these classes in any OpenSceneGraph code instead of the STL equivalent.
+*/
+
+class OSGDB_EXPORT fstream : public std::fstream
+{
+public:
+    fstream();
+    explicit fstream(const char* filename,
+        std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out);
+    ~fstream();
+
+    void open(const char* filename,
+        std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out);
+};
+
+class OSGDB_EXPORT ifstream : public std::ifstream
+{
+public:
+    ifstream();
+    explicit ifstream(const char* filename,
+        std::ios_base::openmode mode = std::ios_base::in);
+    ~ifstream();
+
+    void open(const char* filename,
+        std::ios_base::openmode mode = std::ios_base::in);
+};
+
+class OSGDB_EXPORT ofstream : public std::ofstream
+{
+public:
+    ofstream();
+    explicit ofstream(const char* filename,
+        std::ios_base::openmode mode = std::ios_base::out);
+    ~ofstream();
+
+    void open(const char* filename,
+        std::ios_base::openmode mode = std::ios_base::out);
+};
+
+}
+
+#endif

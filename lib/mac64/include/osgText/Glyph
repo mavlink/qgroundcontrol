@@ -1,0 +1,296 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGTEXT_GLYPH
+#define OSGTEXT_GLYPH 1
+
+#include <string>
+#include <istream>
+
+#include <osg/Vec2>
+#include <osg/Image>
+#include <osg/Texture2D>
+#include <osg/StateSet>
+#include <osg/Geometry>
+#include <osg/Geode>
+
+#include <osgText/Export>
+#include <osgText/KerningType>
+#include <osgText/Style>
+
+#include <OpenThreads/Mutex>
+
+namespace osgText {
+
+class Font;
+class Text;
+class Glyph3D;
+class GlyphGeometry;
+class GlyphTexture;
+
+class OSGTEXT_EXPORT Glyph : public osg::Image
+{
+public:
+
+    Glyph(Font* font, unsigned int glyphCode);
+
+    Font* getFont() { return _font; }
+    const Font* getFont() const { return _font; }
+
+    unsigned int getGlyphCode() const { return _glyphCode; }
+
+    void setWidth(float width) { _width = width; }
+    float getWidth() const { return _width; }
+
+    void setHeight(float height) { _height = height; }
+    float getHeight() const { return _height; }
+
+    void setHorizontalBearing(const osg::Vec2& bearing);
+    const osg::Vec2& getHorizontalBearing() const;
+
+    void setHorizontalAdvance(float advance);
+    float getHorizontalAdvance() const;
+
+    void setVerticalBearing(const osg::Vec2& bearing);
+    const osg::Vec2& getVerticalBearing() const;
+
+    void setVerticalAdvance(float advance);
+    float getVerticalAdvance() const;
+
+    void setTexture(GlyphTexture* texture);
+    GlyphTexture* getTexture();
+    const GlyphTexture* getTexture() const;
+
+    void setTexturePosition(int posX,int posY);
+    int getTexturePositionX() const;
+    int getTexturePositionY() const;
+
+    void setMinTexCoord(const osg::Vec2& coord);
+    const osg::Vec2& getMinTexCoord() const;
+
+    void setMaxTexCoord(const osg::Vec2& coord);
+    const osg::Vec2& getMaxTexCoord() const;
+
+    void subload() const;
+
+protected:
+
+    virtual ~Glyph();
+
+    Font*                       _font;
+    unsigned int                _glyphCode;
+
+    float                       _width;
+    float                       _height;
+
+    osg::Vec2                   _horizontalBearing;
+    float                       _horizontalAdvance;
+
+    osg::Vec2                   _verticalBearing;
+    float                       _verticalAdvance;
+
+    GlyphTexture*               _texture;
+    int                         _texturePosX;
+    int                         _texturePosY;
+    osg::Vec2                   _minTexCoord;
+    osg::Vec2                   _maxTexCoord;
+
+    typedef osg::buffered_value<GLuint> GLObjectList;
+    mutable GLObjectList _globjList;
+
+};
+
+class OSGTEXT_EXPORT GlyphGeometry : public osg::Referenced
+{
+    public:
+
+        GlyphGeometry();
+
+        void setup(const Glyph3D* glyph, const Style* style);
+
+        bool match(const Style* style) const;
+
+        osg::Geode* getGeode() const { return _geode.get(); }
+        osg::Geometry* getGeometry() const { return _geometry.get(); }
+
+        /** Set the VertexArray of the glyph. */
+        void setVertexArray(osg::Vec3Array * va) { _vertices = va; }
+        /** Get the VertexArray of the glyph. */
+        osg::Vec3Array * getVertexArray() const { return _vertices.get(); }
+
+        /** Set the VertexArray of the glyph. */
+        void setNormalArray(osg::Vec3Array* na) { _normals = na; }
+        /** Get the NormalArray for the wall face. */
+        osg::Vec3Array* getNormalArray() const { return _normals.get(); }
+
+        /** Get the PrimitiveSetList for the front face. */
+        osg::Geometry::PrimitiveSetList& getFrontPrimitiveSetList() { return _frontPrimitiveSetList; }
+        /** Get the PrimitiveSetList for the wall face. */
+        osg::Geometry::PrimitiveSetList& getWallPrimitiveSetList() { return _wallPrimitiveSetList; }
+        /** Get et the PrimitiveSetList for the back face. */
+        osg::Geometry::PrimitiveSetList& getBackPrimitiveSetList() { return _backPrimitiveSetList; }
+
+        /** Set whether to use a mutex to ensure ref() and unref() are thread safe.*/
+        virtual void setThreadSafeRefUnref(bool threadSafe);
+
+    protected:
+
+        osg::ref_ptr<Style>             _style;
+        osg::ref_ptr<osg::Geode>        _geode;
+        osg::ref_ptr<osg::Geometry>     _geometry;
+        osg::ref_ptr<osg::Vec3Array>    _vertices;
+        osg::ref_ptr<osg::Vec3Array>    _normals;
+
+        osg::Geometry::PrimitiveSetList _frontPrimitiveSetList;
+        osg::Geometry::PrimitiveSetList _wallPrimitiveSetList;
+        osg::Geometry::PrimitiveSetList _backPrimitiveSetList;
+};
+
+
+class OSGTEXT_EXPORT Glyph3D : public osg::Referenced
+{
+public:
+
+    Glyph3D(Font* font, unsigned int glyphCode);
+
+    Font* getFont() { return _font; }
+    const Font* getFont() const { return _font; }
+
+    unsigned int getGlyphCode() const { return _glyphCode; }
+
+    void setWidth(float width) { _width = width; }
+    float getWidth() const { return _width; }
+
+    void setHeight(float height) { _height = height; }
+    float getHeight() const { return _height; }
+
+    void setHorizontalBearing(const osg::Vec2& bearing) { _horizontalBearing=bearing; }
+    const osg::Vec2 & getHorizontalBearing() const { return _horizontalBearing; }
+
+    void setHorizontalAdvance(float advance) { _horizontalAdvance=advance; }
+    float getHorizontalAdvance() const { return _horizontalAdvance; }
+
+    void setVerticalBearing(const osg::Vec2& bearing) {  _verticalBearing=bearing; }
+    const osg::Vec2& getVerticalBearing() const { return _verticalBearing; }
+
+    void setVerticalAdvance(float advance) { _verticalAdvance=advance; }
+    float getVerticalAdvance() const { return _verticalAdvance; }
+
+    void setBoundingBox(osg::BoundingBox & bb) { _bb=bb; }
+    const osg::BoundingBox & getBoundingBox() const { return _bb; }
+
+
+    /** Set whether to use a mutex to ensure ref() and unref() are thread safe.*/
+    virtual void setThreadSafeRefUnref(bool threadSafe);
+
+
+    void setRawVertexArray(osg::Vec3Array* vertices) { _rawVertexArray = vertices; }
+    osg::Vec3Array* getRawVertexArray() { return _rawVertexArray.get(); }
+    const osg::Vec3Array* getRawVertexArray() const { return _rawVertexArray.get(); }
+
+    /** Get the PrimitiveSetList for the raw face which hasn't been tessellated. */
+    osg::Geometry::PrimitiveSetList & getRawFacePrimitiveSetList() { return _rawFacePrimitiveSetList; }
+    const osg::Geometry::PrimitiveSetList & getRawFacePrimitiveSetList() const { return _rawFacePrimitiveSetList; }
+
+    GlyphGeometry* getGlyphGeometry(const Style* style);
+
+protected:
+
+    virtual ~Glyph3D() {}
+
+    Font*                       _font;
+    unsigned int                _glyphCode;
+
+    float                       _width;
+    float                       _height;
+
+    osg::Vec2                   _horizontalBearing;
+    float                       _horizontalAdvance;
+
+    osg::Vec2                   _verticalBearing;
+    float                       _verticalAdvance;
+
+    osg::BoundingBox            _bb;
+//        osg::Vec2                   _advance;
+
+
+    osg::ref_ptr<osg::Vec3Array>    _rawVertexArray;
+    osg::Geometry::PrimitiveSetList _rawFacePrimitiveSetList;
+
+    typedef std::list< osg::ref_ptr<GlyphGeometry> >  GlyphGeometries;
+    GlyphGeometries _glyphGeometries;
+
+};
+
+
+class OSGTEXT_EXPORT GlyphTexture : public osg::Texture2D
+{
+public:
+
+    GlyphTexture();
+
+    const char* className() const { return "GlyphTexture"; }
+
+    /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+    virtual int compare(const osg::StateAttribute& rhs) const;
+
+    /** Set the margin around each glyph, to ensure that texture filtering doesn't bleed adjacent glyph's into each other.*/
+    void setGlyphImageMargin(unsigned int margin) { _margin = margin; }
+    unsigned int getGlyphImageMargin() const { return _margin; }
+
+    void setGlyphImageMarginRatio(float margin) { _marginRatio = margin; }
+    float getGlyphImageMarginRatio() const { return _marginRatio; }
+
+    bool getSpaceForGlyph(Glyph* glyph, int& posX, int& posY);
+
+    void addGlyph(Glyph* glyph,int posX, int posY);
+
+    virtual void apply(osg::State& state) const;
+
+    /** Set whether to use a mutex to ensure ref() and unref() are thread safe.*/
+    virtual void setThreadSafeRefUnref(bool threadSafe);
+
+    /** Resize any per context GLObject buffers to specified size. */
+    virtual void resizeGLObjectBuffers(unsigned int maxSize);
+
+    /** create an image that maps all the associated Glyph's onto a single image, that is equivilant to what will be downloaded to the texture.*/
+    osg::Image* createImage();
+    
+protected:
+
+    virtual ~GlyphTexture();
+
+
+    // parameter used to compute the size and position of empty space
+    // in the texture which could accommodate new glyphs.
+    int _margin;
+    float _marginRatio;
+    int _usedY;
+    int _partUsedX;
+    int _partUsedY;
+
+    typedef std::vector< osg::ref_ptr<Glyph> > GlyphRefList;
+    typedef std::vector< const Glyph* > GlyphPtrList;
+    typedef osg::buffered_object< GlyphPtrList > GlyphBuffer;
+
+    GlyphRefList                _glyphs;
+    mutable GlyphBuffer         _glyphsToSubload;
+
+    mutable OpenThreads::Mutex  _mutex;
+
+};
+
+}
+
+
+#endif

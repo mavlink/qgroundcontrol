@@ -1,0 +1,44 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2008 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ */
+
+#ifndef OSGANIMATION_TIMELINE_ANIMATION_MANAGER 
+#define OSGANIMATION_TIMELINE_ANIMATION_MANAGER 1
+
+#include <osgAnimation/Export>
+#include <osgAnimation/AnimationManagerBase>
+#include <osgAnimation/Timeline>
+
+
+namespace osgAnimation 
+{
+
+    class OSGANIMATION_EXPORT TimelineAnimationManager : public AnimationManagerBase
+    {
+    protected:
+        osg::ref_ptr<Timeline> _timeline;
+
+    public:
+        META_Object(osgAnimation, TimelineAnimationManager);
+        TimelineAnimationManager();
+        TimelineAnimationManager(const AnimationManagerBase& manager);
+        TimelineAnimationManager(const TimelineAnimationManager& nc,const osg::CopyOp&);
+
+        Timeline* getTimeline() { return _timeline.get(); }
+        const Timeline* getTimeline() const { return _timeline.get(); }
+        void update(double time);
+    };
+
+}
+
+#endif
