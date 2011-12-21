@@ -1,0 +1,44 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ */
+
+#ifndef OSGANIMATION_ACTION_BLENDIN_H
+#define OSGANIMATION_ACTION_BLENDIN_H
+
+#include <osgAnimation/Action>
+#include <osgAnimation/Export>
+
+
+namespace osgAnimation {
+
+
+    /// blend in from 0 to weight in duration
+    class OSGANIMATION_EXPORT ActionBlendIn : public Action
+    {
+    public:
+        META_Action(osgAnimation, ActionBlendIn);
+        ActionBlendIn();
+        ActionBlendIn(const ActionBlendIn& a, const osg::CopyOp& c);
+        ActionBlendIn(Animation* animation, double duration, double weight);
+        double getWeight() const { return _weight;}
+        Animation* getAnimation() { return _animation.get(); }
+        void computeWeight(unsigned int frame);
+
+    protected:
+        double _weight;
+        osg::ref_ptr<Animation> _animation;
+    };
+
+}
+
+#endif

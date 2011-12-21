@@ -1,0 +1,68 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+//osgParticle - Copyright (C) 2002 Marco Jez
+
+#ifndef OSGPARTICLE_PLACER
+#define OSGPARTICLE_PLACER 1
+
+#include <osg/CopyOp>
+#include <osg/Object>
+#include <osg/Vec3>
+
+namespace osgParticle
+{
+
+    class Particle;
+
+    /**    An abstract base class for implementing <I>particle placers</I>. A placer is an object which take
+        a particle as input, and places it somewhere by setting its position vector. Placer objects are
+        used by the <CODE>ModularEmitter</CODE> class as part of the particle emission process.
+    */
+    class Placer: public osg::Object {
+    public:
+        inline Placer();
+        inline Placer(const Placer& copy, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+        virtual const char* libraryName() const { return "osgParticle"; }
+        virtual const char* className() const { return "Placer"; }
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const Placer *>(obj) != 0; }
+
+        /// Place a particle. Must be implemented in descendant classes.
+        virtual void place(Particle* P) const = 0;
+        
+        /// Volume of the placer. Can be implemented in descendant classes.
+        virtual float volume() const { return 1.0f; }
+
+        /// Return the control position of particles that placer will generate. Must be implemented in descendant classes.
+        virtual osg::Vec3 getControlPosition() const = 0;
+
+    protected:
+        ~Placer() {}
+        Placer& operator=(const Placer& ) { return *this; }
+    };
+    
+    // INLINE FUNCTIONS
+    
+    inline Placer::Placer()
+    : osg::Object()
+    {
+    }
+    
+    inline Placer::Placer(const Placer& copy, const osg::CopyOp& copyop)
+    : osg::Object(copy, copyop)
+    {
+    }
+
+}
+
+#endif

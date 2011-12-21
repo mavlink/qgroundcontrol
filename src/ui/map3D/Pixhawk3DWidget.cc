@@ -44,6 +44,11 @@
 
 #include "QGC.h"
 
+#ifdef QGC_PROTOBUF_ENABLED
+#include <tr1/memory>
+#include <pixhawk.pb.h>
+#endif
+
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     : Q3DWidget(parent)
     , uas(NULL)
@@ -58,7 +63,6 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     , enableRGBDColor(true)
     , enableTarget(false)
     , followCamera(true)
-    , enableFreenect(false)
     , frame(MAV_FRAME_GLOBAL)
     , lastRobotX(0.0f)
     , lastRobotY(0.0f)
@@ -92,16 +96,9 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     targetNode = createTarget();
     rollingMap->addChild(targetNode);
 
-#ifdef QGC_LIBFREENECT_ENABLED
-    freenect.reset(new Freenect());
-    enableFreenect = freenect->init();
-#endif
-
     // generate RGBD model
-    if (enableFreenect) {
-        rgbd3DNode = createRGBD3D();
-        egocentricMap->addChild(rgbd3DNode);
-    }
+    rgbd3DNode = createRGBD3D();
+    egocentricMap->addChild(rgbd3DNode);
 
     setupHUD();
 
@@ -123,7 +120,8 @@ Pixhawk3DWidget::~Pixhawk3DWidget()
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
  */
-void Pixhawk3DWidget::setActiveUAS(UASInterface* uas)
+void
+Pixhawk3DWidget::setActiveUAS(UASInterface* uas)
 {
     if (this->uas != NULL && this->uas != uas) {
         // Disconnect any previously connected active MAV
@@ -555,11 +553,12 @@ Pixhawk3DWidget::display(void)
         updateTarget(robotX, robotY);
     }
 
-#ifdef QGC_LIBFREENECT_ENABLED
-    if (enableFreenect && (displayRGBD2D || displayRGBD3D)) {
-        updateRGBD();
+#ifdef QGC_PROTOBUF_ENABLED
+    if (displayRGBD2D || displayRGBD3D) {
+        updateRGBD(robotX, robotY, robotZ);
     }
 #endif
+
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw, utmZone);
 
     // set node visibility
@@ -569,9 +568,7 @@ Pixhawk3DWidget::display(void)
     rollingMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
     rollingMap->setChildValue(targetNode, enableTarget);
-    if (enableFreenect) {
-        egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
-    }
+    egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
     hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
     hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
@@ -704,13 +701,17 @@ Pixhawk3DWidget::createGrid(void)
     osg::ref_ptr<osg::Vec3Array> coarseCoords(new osg::Vec3Array);
 
     // draw a 20m x 20m grid with 0.25m resolution
-    for (float i = -radius; i <= radius; i += resolution) {
-        if (fabsf(i - floor(i + 0.5f)) < 0.01f) {
+    for (float i = -radius; i <= radius; i += resolution)
+    {
+        if (fabs(i - floor(i + 0.5f)) < 0.01f)
+        {
             coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
             coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
             coarseCoords->push_back(osg::Vec3(-radius, i, 0.0f));
             coarseCoords->push_back(osg::Vec3(radius, i, 0.0f));
-        } else {
+        }
+        else
+        {
             fineCoords->push_back(osg::Vec3(i, -radius, 0.0f));
             fineCoords->push_back(osg::Vec3(i, radius, 0.0f));
             fineCoords->push_back(osg::Vec3(-radius, i, 0.0f));
@@ -788,7 +789,7 @@ Pixhawk3DWidget::createMap(void)
 osg::ref_ptr<osg::Geode>
 Pixhawk3DWidget::createRGBD3D(void)
 {
-    int frameSize = 640 * 480;
+    int frameSize = 752 * 480;
 
     osg::ref_ptr<osg::Geode> geode(new osg::Geode);
     osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry);
@@ -1218,46 +1219,67 @@ float colormap_jet[128][3] = {
     {0.5f,0.0f,0.0f}
 };
 
-#ifdef QGC_LIBFREENECT_ENABLED
+#ifdef QGC_PROTOBUF_ENABLED
 void
-Pixhawk3DWidget::updateRGBD(void)
+Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 {
-    QSharedPointer<QByteArray> rgb = freenect->getRgbData();
-    if (!rgb.isNull()) {
-        rgbImage->setImage(640, 480, 1,
-                           GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-                           reinterpret_cast<unsigned char *>(rgb->data()),
-                           osg::Image::NO_DELETE);
-        rgbImage->dirty();
+    px::RGBDImage rgbdImage = uas->getRGBDImage();
+    px::PointCloudXYZRGB pointCloud = uas->getPointCloud();
+
+    rgbImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
+                       GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
+                       reinterpret_cast<unsigned char *>(&(*(rgbdImage.mutable_imagedata1()))[0]),
+                       osg::Image::NO_DELETE);
+    rgbImage->dirty();
+
+    QByteArray coloredDepth(rgbdImage.cols() * rgbdImage.rows() * 3, 0);
+    for (uint32_t r = 0; r < rgbdImage.rows(); ++r)
+    {
+        const float* depth = reinterpret_cast<const float*>(rgbdImage.imagedata2().c_str() + r * rgbdImage.step2());
+        uint8_t* pixel = reinterpret_cast<uint8_t*>(coloredDepth.data()) + r * rgbdImage.cols() * 3;
+        for (uint32_t c = 0; c < rgbdImage.cols(); ++c)
+        {
+            if (depth[c] != 0)
+            {
+                int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
+                idx = 127 - idx;
+
+                pixel[0] = colormap_jet[idx][2] * 255.0f;
+                pixel[1] = colormap_jet[idx][1] * 255.0f;
+                pixel[2] = colormap_jet[idx][0] * 255.0f;
+            }
+
+            pixel += 3;
+        }
     }
 
-    QSharedPointer<QByteArray> coloredDepth = freenect->getColoredDepthData();
-    if (!coloredDepth.isNull()) {
-        depthImage->setImage(640, 480, 1,
-                             GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-                             reinterpret_cast<unsigned char *>(coloredDepth->data()),
-                             osg::Image::NO_DELETE);
-        depthImage->dirty();
-    }
-
-    QSharedPointer< QVector<Freenect::Vector6D> > pointCloud =
-        freenect->get6DPointCloudData();
+    depthImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
+                         GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                         reinterpret_cast<unsigned char *>(coloredDepth.data()),
+                         osg::Image::NO_DELETE);
+    depthImage->dirty();
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
 
     osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(geometry->getVertexArray());
     osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
-    for (int i = 0; i < pointCloud->size(); ++i) {
-        double x = pointCloud->at(i).x;
-        double y = pointCloud->at(i).y;
-        double z = pointCloud->at(i).z;
-        (*vertices)[i].set(x, z, -y);
+    for (int i = 0; i < pointCloud.points_size(); ++i) {
+        const px::PointCloudXYZRGB_PointXYZRGB& p = pointCloud.points(i);
+
+        double x = p.x() - robotX;
+        double y = p.y() - robotY;
+        double z = p.z() - robotZ;
+
+        (*vertices)[i].set(y, x, -z);
 
         if (enableRGBDColor) {
-            (*colors)[i].set(pointCloud->at(i).r / 255.0f,
-                             pointCloud->at(i).g / 255.0f,
-                             pointCloud->at(i).b / 255.0f,
-                             1.0f);
+            float rgb = p.rgb();
+
+            float b = *(reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
+            float g = *(1 + reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
+            float r = *(2 + reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
+
+            (*colors)[i].set(r, g, b, 1.0f);
         } else {
             double dist = sqrt(x * x + y * y + z * z);
             int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
@@ -1270,10 +1292,10 @@ Pixhawk3DWidget::updateRGBD(void)
 
     if (geometry->getNumPrimitiveSets() == 0) {
         geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS,
-                                  0, pointCloud->size()));
+                                  0, pointCloud.points_size()));
     } else {
         osg::DrawArrays* drawarrays = static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-        drawarrays->setCount(pointCloud->size());
+        drawarrays->setCount(pointCloud.points_size());
     }
 }
 #endif

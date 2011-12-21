@@ -1,0 +1,60 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2009 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGVOLUME_FIXEDFUNCTIONTECHNIQUE
+#define OSGVOLUME_FIXEDFUNCTIONTECHNIQUE 1
+
+#include <osgVolume/VolumeTechnique>
+
+namespace osgVolume {
+
+class OSGVOLUME_EXPORT FixedFunctionTechnique : public VolumeTechnique
+{
+    public:
+
+        FixedFunctionTechnique();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        FixedFunctionTechnique(const FixedFunctionTechnique&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+        
+        META_Object(osgVolume, FixedFunctionTechnique);
+
+        virtual void init();
+
+        virtual void update(osgUtil::UpdateVisitor* nv);
+
+        virtual void cull(osgUtil::CullVisitor* nv);
+        
+        void setNumSlices(unsigned int numSlices);
+
+        unsigned int getNumSlices() const { return _numSlices; }
+        
+
+        /** Clean scene graph from any terrain technique specific nodes.*/
+        virtual void cleanSceneGraph();
+
+        /** Traverse the terrain subgraph.*/
+        virtual void traverse(osg::NodeVisitor& nv);
+
+    protected:
+    
+        virtual ~FixedFunctionTechnique();
+        
+        osg::ref_ptr<osg::Node> _node;
+        
+        unsigned int _numSlices;
+};
+
+}
+
+#endif

@@ -1,4 +1,0 @@
-#!/bin/bash
-astyle --style=k/r $(find src -regex ".*\.\(cpp\|cc\|h\|hpp\)")
-rm -f $(find . -regex '.*orig$')
-git commit

@@ -206,6 +206,14 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #endif
 }
 
+#ifdef QGC_PROTOBUF_ENABLED
+void PxQuadMAV::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message)
+{
+    UAS::receiveExtendedMessage(link, message);
+}
+
+#endif
+
 void PxQuadMAV::sendProcessCommand(int watchdogId, int processId, unsigned int command)
 {
 #ifdef MAVLINK_ENABLED_PIXHAWK

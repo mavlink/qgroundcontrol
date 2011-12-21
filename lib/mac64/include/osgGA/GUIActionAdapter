@@ -1,0 +1,91 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGGA_GUIACTIONADAPTER
+#define OSGGA_GUIACTIONADAPTER 1 
+
+#include <osgGA/Export>
+#include <osg/View>
+
+namespace osgGA{
+
+/**
+Abstract base class defining the interface by which GUIEventHandlers may request
+actions of the GUI system in use. These requests for actions should then be honored
+by the GUI toolkit of the user's application.
+
+To provide more detail, when a GUIEventHandler (e.g. a TrackballManipulator)
+handles an incoming event, such as a mouse event, it may wish to make
+a request of the GUI. E.g. if a model is 'thrown', the trackball manipulator
+may wish to start a timer, and be repeatedly called, to continuously refresh the
+camera's position and orientation. However, it has no way of doing this, as it
+knows nothing of the window system in which it's operating. Instead, the
+GUIEventHandler issues it's request via a GUIActionAdapter, and the viewer
+in use should honour the request, using the GUI system in play.
+
+There is more than one way of using the GUIActionAdapter. E.g. it may be inherited
+into a Viewer class, as is done with osgGLUT::Viewer. Alternatively, a simple 
+subclass of GUIActionAdapter (e.g. osgQt::QtActionAdapter) may be passed to
+the GUIEventHandler::handle() function; once the function has returned, the viewer
+will then unpack the results and work out what to do to respond to the
+requests.
+
+Also there are several ways to run your app and handle the updating of
+the window.  osgGLUT::Viewer always has a idle callback registered which does a
+redraw all the time.  osgGLUT::Viewer can safely ignore both requestRedraw() and
+requestContinousUpdate() as these are happening all the time anyway.
+
+Other apps will probably want to respond to the requestRedraw() and
+requestContinousUpdate(bool) and again there is more than one way to handle it.
+You can override requestRedraw() and implement to call your own window
+redraw straight away. Or you can implement so that a flag is set and
+then you then respond the flag being set in your own leisure.
+
+*/
+class GUIActionAdapter
+{
+public:
+        virtual ~GUIActionAdapter() {}
+        
+        /** Provide a mechanism for getting the osg::View associated with this GUIActionAdapter.
+          * One would use this to case view to osgViewer::View(er) if supported by the subclass.*/
+        virtual osg::View* asView() { return 0; }
+        
+        /**
+        requestRedraw() requests a single redraw.
+        */
+        virtual void requestRedraw() = 0;
+
+        /**
+        requestContinousUpdate(bool) is for en/disabling a throw or idle 
+        callback to be requested by a GUIEventHandler (typically a MatrixManipulator,
+        though other GUIEventHandler's may also provide functionality). 
+        GUI toolkits can respond  to this immediately by registering an idle/timed
+        callback, or can delay setting the callback and update at their own leisure.
+        */
+        virtual void requestContinuousUpdate(bool needed=true) = 0;
+
+        /**
+        requestWarpPointer(int,int) is requesting a repositioning of the mouse pointer
+        to a specified x,y location on the window.  This is used by some camera manipulators
+        to initialise the mouse pointer when mouse position relative to a controls
+        neutral mouse position is required, i.e when mimicking a aircrafts joystick.
+        */
+        virtual void requestWarpPointer(float x,float y) = 0;
+
+};
+
+}
+
+#endif
+

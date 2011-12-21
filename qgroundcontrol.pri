@@ -37,13 +37,13 @@ win32-msvc2008|win32-msvc2010 {
 DEFINES += _TTY_NOWARN_
 
 # MAC OS X
-macx {
+macx-g++42 {
 
    # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
 
-        CONFIG += x86 cocoa phonon
-        CONFIG -= x86_64
+        CONFIG += x86_64 cocoa phonon
+        CONFIG -= x86
 
     #HARDWARE_PLATFORM = $$system(uname -a)
     #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
@@ -92,10 +92,12 @@ macx {
     QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy parameter tooltip files
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+    # Copy libraries
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac64/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy model files
     #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
-    exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
+    #exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
@@ -103,24 +105,19 @@ macx {
     # Include OpenSceneGraph libraries
     INCLUDEPATH += -framework GLUT \
             -framework Cocoa \
-            -framework OpenThreads \
-            -framework osg \
-            -framework osgViewer \
-            -framework osgGA \
-            -framework osgDB \
-            -framework osgText \
-            -framework osgWidget
+            $$BASEDIR/lib/mac64/include
 
     LIBS += -framework GLUT \
             -framework Cocoa \
-            -framework OpenThreads \
-            -framework osg \
-            -framework osgViewer \
-            -framework osgGA \
-            -framework osgDB \
-            -framework osgText \
-            -framework osgWidget
-    }
+            -L$$BASEDIR/lib/mac64/lib \
+            -lOpenThreads \
+            -losg \
+            -losgViewer \
+            -losgGA \
+            -losgDB \
+            -losgText \
+            -losgWidget
+    #}
 
     exists(/opt/local/include/libfreenect)|exists(/usr/local/include/libfreenect) {
     message("Building support for libfreenect")
@@ -135,14 +132,14 @@ macx {
 linux-g++ {
 
     debug {
-        DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug console
+        #DESTDIR = $$TARGETDIR/debug
+        #CONFIG += debug console
     }
 
     release {
-        DESTDIR = $$TARGETDIR/release
+        #DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
-        CONFIG -= console
+        #CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -158,6 +155,7 @@ message("Compiling for linux 32")
 
     LIBS += \
         -L/usr/lib \
+        -L/usr/local/lib64 \
         -lm \
         -lflite_cmu_us_kal \
         -lflite_usenglish \
@@ -166,7 +164,7 @@ message("Compiling for linux 32")
         -lSDL \
         -lSDLmain
 
-    exists(/usr/include/osg) {
+    exists(/usr/include/osg) | exists(/usr/local/include/osg) {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
@@ -174,19 +172,22 @@ message("Compiling for linux 32")
             -losgViewer \
             -losgGA \
             -losgDB \
+            -losgQt \
             -losgText \
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
     }
 
-    exists(/usr/include/osgEarth):exists(/usr/include/osg) | exists(/usr/local/include/osgEarth):exists(/usr/include/osg) {
-    message("Building support for osgEarth")
-    DEPENDENCIES_PRESENT += osgearth
-    # Include osgEarth libraries
-    LIBS += -losgEarth \
-            -losgEarthUtil
-    DEFINES += QGC_OSGEARTH_ENABLED
+    exists(/usr/local/include/google/protobuf) {
+    message("Building support for Protocol Buffers")
+    DEPENDENCIES_PRESENT += protobuf
+    # Include Protocol Buffers libraries
+    LIBS += -lprotobuf \
+            -lprotobuf-lite \
+            -lprotoc
+
+    DEFINES += QGC_PROTOBUF_ENABLED
     }
 
     exists(/usr/local/include/libfreenect/libfreenect.h) {
@@ -214,14 +215,14 @@ message("Compiling for linux 32")
 linux-g++-64 {
 
     debug {
-        DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug console
+        #DESTDIR = $$TARGETDIR/debug
+        #CONFIG += debug console
     }
 
     release {
-        DESTDIR = $$TARGETDIR/release
+        #DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
-        CONFIG -= console
+        #CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -235,6 +236,7 @@ linux-g++-64 {
 
     LIBS += \
         -L/usr/lib \
+        -L/usr/local/lib64 \
         -lm \
         -lflite_cmu_us_kal \
         -lflite_usenglish \
@@ -243,7 +245,7 @@ linux-g++-64 {
         -lSDL \
         -lSDLmain
 
-    exists(/usr/include/osg) {
+    exists(/usr/include/osg) | exists(/usr/local/include/osg) {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
@@ -251,19 +253,22 @@ linux-g++-64 {
             -losgViewer \
             -losgGA \
             -losgDB \
+            -losgQt \
             -losgText \
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
     }
 
-    exists(/usr/include/osgEarth) {
-    message("Building support for osgEarth")
-    DEPENDENCIES_PRESENT += osgearth
-    # Include osgEarth libraries
-    LIBS += -losgEarth \
-            -losgEarthUtil
-    DEFINES += QGC_OSGEARTH_ENABLED
+    exists(/usr/local/include/google/protobuf) {
+    message("Building support for Protocol Buffers")
+    DEPENDENCIES_PRESENT += protobuf
+    # Include Protocol Buffers libraries
+    LIBS += -lprotobuf \
+            -lprotobuf-lite \
+            -lprotoc
+
+    DEFINES += QGC_PROTOBUF_ENABLED
     }
 
     exists(/usr/local/include/libfreenect) {

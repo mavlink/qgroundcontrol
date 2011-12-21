@@ -1,0 +1,228 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_INTERSECTVISITOR
+#define OSGUTIL_INTERSECTVISITOR 1
+
+#include <osg/NodeVisitor>
+#include <osg/LineSegment>
+#include <osg/Geode>
+#include <osg/Matrix>
+#include <osg/Transform>
+
+#include <osgUtil/Export>
+
+#include <map>
+#include <set>
+#include <vector>
+
+namespace osgUtil {
+
+
+class OSGUTIL_EXPORT Hit
+{ 
+    /** Deprecated */
+    public:
+
+        Hit();
+        Hit(const Hit& hit);
+        ~Hit();
+        
+        Hit& operator = (const Hit& hit);
+        
+        typedef std::vector<int> VecIndexList;
+
+        bool operator < (const Hit& hit) const
+        {
+            if (_originalLineSegment<hit._originalLineSegment) return true;
+            if (hit._originalLineSegment<_originalLineSegment) return false;
+            return _ratio<hit._ratio;
+        }
+        
+        
+        const osg::Vec3& getLocalIntersectPoint() const { return _intersectPoint; }
+        const osg::Vec3& getLocalIntersectNormal() const { return _intersectNormal; }
+        
+        const osg::Vec3 getWorldIntersectPoint() const { if (_matrix.valid()) return _intersectPoint*(*_matrix); else return _intersectPoint; }
+        const osg::Vec3 getWorldIntersectNormal() const ;
+
+        float getRatio() const { return _ratio; }
+        const osg::LineSegment* getOriginalLineSegment() const { return _originalLineSegment.get(); }
+        const osg::LineSegment* getLocalLineSegment() const { return _localLineSegment.get(); }
+        osg::NodePath& getNodePath() { return _nodePath; }
+        const osg::NodePath& getNodePath() const { return _nodePath; }
+        osg::Geode* getGeode() { return _geode.get(); }
+        const osg::Geode* getGeode() const { return _geode.get(); }
+        osg::Drawable* getDrawable() { return _drawable.get(); }
+        const osg::Drawable* getDrawable() const { return _drawable.get(); }
+        const osg::RefMatrix* getMatrix() const { return _matrix.get(); }
+        const osg::RefMatrix* getInverseMatrix() const { return _inverse.get(); }
+        const VecIndexList& getVecIndexList() const { return _vecIndexList; }
+        int getPrimitiveIndex() const { return _primitiveIndex; }
+        
+        
+        float                           _ratio;
+        osg::ref_ptr<osg::LineSegment>  _originalLineSegment;
+        osg::ref_ptr<osg::LineSegment>  _localLineSegment;
+        osg::NodePath                   _nodePath;
+        osg::ref_ptr<osg::Geode>        _geode;
+        osg::ref_ptr<osg::Drawable>     _drawable;
+        osg::ref_ptr<osg::RefMatrix>    _matrix;
+        osg::ref_ptr<osg::RefMatrix>    _inverse;
+        
+        VecIndexList                    _vecIndexList;
+        int                             _primitiveIndex;
+        osg::Vec3                       _intersectPoint;
+        osg::Vec3                       _intersectNormal;
+
+
+};
+
+
+/** Deprecated - use IntersectionVisitor instead.*/
+class OSGUTIL_EXPORT IntersectVisitor : public osg::NodeVisitor
+{
+    public:
+
+        IntersectVisitor();
+        virtual ~IntersectVisitor();
+
+        META_NodeVisitor("osgUtil","IntersectVisitor")
+
+        void reset();
+        
+        /** Add a line segment to use for intersection testing during scene traversal.
+          * Note, a maximum of 32 line segments can be added to a IntersectVistor,
+          * adding more than this will result in warning being emitted to the console
+          * and the excess segments being ignored.*/
+        void addLineSegment(osg::LineSegment* seg);
+
+        typedef std::vector<Hit> HitList;
+        typedef std::map<const osg::LineSegment*,HitList > LineSegmentHitListMap;
+
+        HitList& getHitList(const osg::LineSegment* seg) { return _segHitList[seg]; }
+
+        int getNumHits(const osg::LineSegment* seg) { return _segHitList[seg].size(); }
+        
+        LineSegmentHitListMap& getSegHitList() { return _segHitList; }
+
+        bool hits();
+
+        enum LODSelectionMode
+        {
+            USE_HIGHEST_LEVEL_OF_DETAIL,
+            USE_SEGMENT_START_POINT_AS_EYE_POINT_FOR_LOD_LEVEL_SELECTION
+        };
+        
+        void setLODSelectionMode(LODSelectionMode mode) { _lodSelectionMode = mode; }
+        LODSelectionMode getLODSelectionMode() const { return _lodSelectionMode; }
+
+        /** Set the eye point in local coordinates.
+          * This is a pseudo-EyePoint for billboarding and LOD purposes.
+          * It is copied from the Start point of the most-recently-added segment
+          * of the intersection ray set (IntersectState::_segList). */
+        void setEyePoint(const osg::Vec3& eye) { _pseudoEyePoint = eye; }
+
+        virtual osg::Vec3 getEyePoint() const;
+
+
+        /** Get the distance from a point to the eye point, distance value in local coordinate system.
+          * This is calculated using the pseudo-EyePoint (above) when doing LOD calculcations. */
+        virtual float getDistanceToEyePoint(const osg::Vec3& pos, bool withLODScale) const;
+
+        virtual void apply(osg::Node&);
+        virtual void apply(osg::Geode& node);
+        virtual void apply(osg::Billboard& node);
+
+        virtual void apply(osg::Group& node);
+        virtual void apply(osg::Transform& node);
+        virtual void apply(osg::Switch& node);
+        virtual void apply(osg::LOD& node);
+
+    protected:
+
+        class IntersectState : public osg::Referenced
+        {
+            public:
+
+                IntersectState();
+
+                osg::ref_ptr<osg::RefMatrix> _view_matrix;
+                osg::ref_ptr<osg::RefMatrix> _view_inverse;
+                osg::ref_ptr<osg::RefMatrix> _model_matrix;
+                osg::ref_ptr<osg::RefMatrix> _model_inverse;
+
+                typedef std::pair<osg::ref_ptr<osg::LineSegment>,osg::ref_ptr<osg::LineSegment> >   LineSegmentPair;
+                typedef std::vector< LineSegmentPair >                                              LineSegmentList;
+                LineSegmentList _segList;
+
+                typedef unsigned int LineSegmentMask;
+                typedef std::vector<LineSegmentMask> LineSegmentMaskStack;
+                LineSegmentMaskStack _segmentMaskStack;
+
+                bool isCulled(const osg::BoundingSphere& bs,LineSegmentMask& segMaskOut);
+                bool isCulled(const osg::BoundingBox& bb,LineSegmentMask& segMaskOut);
+
+                void addLineSegment(osg::LineSegment* seg);
+
+            protected:
+
+                ~IntersectState();
+
+        };
+
+        bool intersect(osg::Drawable& gset);
+
+        void pushMatrix(osg::RefMatrix* matrix, osg::Transform::ReferenceFrame rf);
+        void popMatrix();
+
+        bool enterNode(osg::Node& node);
+        void leaveNode();
+
+        typedef std::vector<osg::ref_ptr<IntersectState> > IntersectStateStack;
+        
+        IntersectStateStack         _intersectStateStack;
+
+        LineSegmentHitListMap       _segHitList;
+        
+        LODSelectionMode            _lodSelectionMode;
+        osg::Vec3                   _pseudoEyePoint;
+};
+
+/** Picking intersection visitor specialises the IntersectVistor to allow more convinient handling of mouse picking.*/
+class OSGUTIL_EXPORT PickVisitor : public osgUtil::IntersectVisitor
+{
+    public:
+
+        PickVisitor(const osg::Viewport* viewport, const osg::Matrixd& proj, const osg::Matrixd& view, float mx, float my);
+
+        void runNestedPickVisitor(osg::Node& node, const osg::Viewport* viewport, const osg::Matrix& proj, const osg::Matrix& view, float mx, float my);
+
+        void apply(osg::Projection& projection);
+
+        void apply(osg::Camera& camera);
+
+    protected:
+        
+        float _mx;
+        float _my;
+
+        osg::ref_ptr<const osg::Viewport>   _lastViewport;
+        osg::Matrixd                        _lastProjectionMatrix;
+        osg::Matrixd                        _lastViewMatrix;
+};
+
+}
+
+#endif
+
