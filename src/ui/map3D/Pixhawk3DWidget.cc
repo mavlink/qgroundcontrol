@@ -1238,7 +1238,7 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
             {
                 if (depth[c] != 0)
                 {
-                    int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
+                    int idx = fminf(depth[c], 7.0f) / 7.0f * 127.0f;
                     idx = 127 - idx;
 
                     pixel[0] = colormap_jet[idx][2] * 255.0f;
