@@ -1131,8 +1131,8 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Connect the UAS to the full user interface
 
-    if (uas != NULL)
-    {
+    //if (uas != NULL)
+    //{
         // The pilot, operator and engineer views were not available on startup, enable them now
         ui.actionPilotsView->setEnabled(true);
         ui.actionOperatorsView->setEnabled(true);
@@ -1276,7 +1276,7 @@ void MainWindow::UASCreated(UASInterface* uas)
             }
         }
 
-    }
+    //}
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
 
