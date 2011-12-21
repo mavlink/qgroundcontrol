@@ -248,7 +248,7 @@ void QGCRGBDView::updateData(UASInterface *uas)
             {
                 if (depth[c] != 0)
                 {
-                    int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
+                    int idx = fminf(depth[c], 7.0f) / 7.0f * 127.0f;
                     idx = 127 - idx;
 
                     pixel[0] = colormapJet[idx][2] * 255.0f;
