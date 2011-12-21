@@ -1,0 +1,90 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGWIDGET_BROWSER
+#define OSGWIDGET_BROWSER
+
+#include <osgWidget/PdfReader>
+
+namespace osgWidget {
+
+
+class BrowserImage;
+
+class OSGWIDGET_EXPORT BrowserManager : public osg::Object
+{
+    public:
+    
+        static osg::ref_ptr<BrowserManager>& instance();
+        
+        virtual void init(const std::string& application);
+
+        void setApplication(const std::string& application) { _application = application; }
+        const std::string& getApplication() const { return _application; }
+
+        virtual BrowserImage* createBrowserImage(const std::string& url, int width, int height);
+        
+    protected:
+
+        BrowserManager();
+        BrowserManager(const BrowserManager& rhs, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY):
+            osg::Object(rhs,copyop) {}
+            
+        virtual ~BrowserManager();
+        
+        META_Object(osgWidget,BrowserManager);
+
+        std::string _application;
+};
+
+
+/** Pure virtual base class that provides the browser interface for integration with 3rd party implementations.
+  * Implementations of BrowserImage are provided via the gecko plugin.*/
+class BrowserImage : public osg::Image
+{
+    public:
+    
+        BrowserImage() {}
+    
+        virtual void navigateTo(const std::string& url) = 0;
+
+    protected:
+    
+        virtual ~BrowserImage() {}
+    
+};
+
+
+/** Convenience class that provides an interactive quad that can be placed directly into the scene.*/
+class OSGWIDGET_EXPORT Browser : public osg::Geode
+{
+    public:
+    
+        Browser() {}
+
+        Browser(const std::string& url, const GeometryHints& hints = GeometryHints());
+        
+        bool assign(BrowserImage* browserImage, const GeometryHints& hints = GeometryHints());
+
+        bool open(const std::string& url, const GeometryHints& hints = GeometryHints());
+
+        void navigateTo(const std::string& url);
+
+    protected:
+    
+        osg::ref_ptr<BrowserImage> _browserImage;
+};
+
+}
+
+#endif

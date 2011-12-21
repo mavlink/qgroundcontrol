@@ -1,0 +1,158 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_MULTISAMPLE
+#define OSG_MULTISAMPLE 1
+
+
+#include <osg/GL>
+#include <osg/StateAttribute>
+#include <osg/ref_ptr>
+
+
+#ifndef GL_ARB_multisample
+#define GL_MULTISAMPLE_ARB                0x809D
+#define GL_SAMPLE_ALPHA_TO_COVERAGE_ARB   0x809E
+#define GL_SAMPLE_ALPHA_TO_ONE_ARB        0x809F
+#define GL_SAMPLE_COVERAGE_ARB            0x80A0
+#define GL_SAMPLE_BUFFERS_ARB             0x80A8
+#define GL_SAMPLES_ARB                    0x80A9
+#define GL_SAMPLE_COVERAGE_VALUE_ARB      0x80AA
+#define GL_SAMPLE_COVERAGE_INVERT_ARB     0x80AB
+#define GL_MULTISAMPLE_BIT_ARB            0x20000000
+#endif
+#ifndef GL_NV_multisample_filter_hint
+#define GL_MULTISAMPLE_FILTER_HINT_NV     0x8534
+#endif
+
+
+namespace osg {
+
+/** Multisample - encapsulates the OpenGL Multisample state.*/
+class OSG_EXPORT Multisample : public StateAttribute
+{
+    public :
+
+        enum Mode
+        {
+            FASTEST = GL_FASTEST, 
+            NICEST = GL_NICEST,
+            DONT_CARE = GL_DONT_CARE 
+        };
+
+        Multisample();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        Multisample(const Multisample& trans,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(trans,copyop),
+            _coverage(trans._coverage),
+            _invert(trans._invert),
+            _mode(trans._mode) {}
+
+        META_StateAttribute(osg, Multisample,MULTISAMPLE);
+        
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // check the types are equal and then create the rhs variable
+            // used by the COMPARE_StateAttribute_Parameter macros below.
+            COMPARE_StateAttribute_Types(Multisample,sa)
+
+            // compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_coverage)
+            COMPARE_StateAttribute_Parameter(_invert)
+            COMPARE_StateAttribute_Parameter(_mode)
+
+            return 0; // passed all the above comparison macros, must be equal.
+        }
+
+        void setSampleCoverage(float coverage, bool invert) 
+        {
+            _coverage = coverage; 
+            _invert = invert;
+        }
+        inline void setCoverage(float coverage) { _coverage=coverage; }
+        inline float getCoverage() const { return _coverage; }
+    
+        inline void setInvert(bool invert) { _invert=invert; }
+        inline bool getInvert() const { return _invert; }
+
+        inline void setHint(Mode mode) { _mode = mode; }
+        inline Mode getHint() const { return _mode; }
+
+        virtual void apply(State& state) const;
+
+
+        /** Extensions class which encapsulates the querying of extensions and
+          * associated function pointers, and provide convenience wrappers to 
+          * check for the extensions or use the associated functions.*/        
+        class OSG_EXPORT Extensions : public osg::Referenced
+        {
+            public:
+                Extensions(unsigned int contextID);
+
+                Extensions(const Extensions& rhs);
+                
+                void lowestCommonDenominator(const Extensions& rhs);
+                
+                void setupGLExtensions(unsigned int contextID);
+
+                void setMultisampleSupported(bool flag) { _isMultisampleSupported=flag; }
+                void setMultisampleFilterHintSupported(bool flag) { _isMultisampleFilterHintSupported=flag; }
+                bool isMultisampleSupported() const { return _isMultisampleSupported; }
+                bool isMultisampleFilterHintSupported() const { return _isMultisampleFilterHintSupported; }
+                
+                void glSampleCoverage(GLclampf value, GLboolean invert) const;
+
+            protected:
+
+                ~Extensions() {}
+                
+                bool    _isMultisampleSupported;
+                bool    _isMultisampleFilterHintSupported;
+                
+                typedef void (GL_APIENTRY * GLSampleCoverageProc) (GLclampf value, GLboolean invert);
+                GLSampleCoverageProc _glSampleCoverage;
+
+        };
+        
+        /** Function to call to get the extension of a specified context.
+          * If the Extension object for that context has not yet been created 
+          * and the 'createIfNotInitalized' flag been set to false then returns NULL.
+          * If 'createIfNotInitalized' is true then the Extensions object is 
+          * automatically created.  However, in this case the extension object will
+          * only be created with the graphics context associated with ContextID..*/
+        static Extensions* getExtensions(unsigned int contextID,bool createIfNotInitalized);
+
+        /** setExtensions allows users to override the extensions across graphics contexts.
+          * Typically used when you have different extensions supported across graphics pipes
+          * but need to ensure that they all use the same low common denominator extensions.*/
+        static void setExtensions(unsigned int contextID,Extensions* extensions);
+
+
+
+    protected :
+
+        virtual ~Multisample();
+
+        float _coverage;
+        bool _invert;
+        Mode _mode;
+};
+
+}
+
+#endif
+
+
+

@@ -1,0 +1,358 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_STATEATTRIBUTE
+#define OSG_STATEATTRIBUTE 1
+
+#include <osg/Export>
+#include <osg/Object>
+#include <osg/StateAttributeCallback>
+#include <osg/Shader>
+#include <osg/GL>
+
+#include <typeinfo>
+#include <utility>
+#include <vector>
+
+// define for the GL_EXT_secondary_color extension, GL_COLOR_SUM is OpenGL
+// mode to be used to enable and disable the second color.
+#ifndef GL_COLOR_SUM
+#define GL_COLOR_SUM    0x8458
+#endif
+
+namespace osg {
+
+
+// forward declare NodeVisitor, State & StateSet
+class NodeVisitor;
+class State;
+class ShaderComposer;
+class StateSet;
+class Texture;
+
+/** META_StateAttribute macro define the standard clone, isSameKindAs,
+  * className and getType methods.
+  * Use when subclassing from Object to make it more convenient to define 
+  * the standard pure virtual methods which are required for all Object 
+  * subclasses.*/
+#define META_StateAttribute(library,name,type) \
+        virtual osg::Object* cloneType() const { return new name(); } \
+        virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new name (*this,copyop); } \
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const name *>(obj)!=NULL; } \
+        virtual const char* libraryName() const { return #library; } \
+        virtual const char* className() const { return #name; } \
+        virtual Type getType() const { return type; }
+
+/** COMPARE_StateAttribute_Types macro is a helper for implementing the StateAtribute::compare(..) method.*/
+#define COMPARE_StateAttribute_Types(TYPE,rhs_attribute) \
+            if (this==&rhs_attribute) return 0;\
+            const std::type_info* type_lhs = &typeid(*this);\
+            const std::type_info* type_rhs = &typeid(rhs_attribute);\
+            if (type_lhs->before(*type_rhs)) return -1;\
+            if (*type_lhs != *type_rhs) return 1;\
+            const TYPE& rhs = static_cast<const TYPE&>(rhs_attribute);
+
+
+/** COMPARE_StateAttribute_Parameter macro is a helper for implementing the StatateAtribute::compare(..) method.
+  * Macro assumes that variable rhs has been correctly defined by preceding code
+  * macro.*/
+#define COMPARE_StateAttribute_Parameter(parameter) \
+        if (parameter<rhs.parameter) return -1; \
+        if (rhs.parameter<parameter) return 1;
+
+
+/** Base class for state attributes.
+*/     
+class OSG_EXPORT StateAttribute : public Object
+{
+    public :
+    
+        /** GLMode is the value used in glEnable/glDisable(mode) */
+        typedef GLenum          GLMode;
+        /** GLModeValue is used to specify whether a mode is enabled (ON) or disabled (OFF).
+          * GLMoveValue is also used to specify the override behavior of modes from parent to children. 
+          * See enum Value description for more details.*/
+        typedef unsigned int    GLModeValue;
+        /** Override is used to specify the override behavior of StateAttributes
+          * from parent to children. 
+          * See enum Value description for more details.*/
+        typedef unsigned int    OverrideValue;
+
+        /** list values which can be used to set either GLModeValues or OverrideValues.
+          * When using in conjunction with GLModeValues, all Values have meaning. 
+          * When using in conjunction with StateAttribute OverrideValue only 
+          * OFF,OVERRIDE and INHERIT are meaningful.
+          * However, they are useful when using GLModeValue 
+          * and OverrideValue in conjunction with each other as when using
+          * StateSet::setAttributeAndModes(..).*/
+        enum Values
+        {
+            /** means that associated GLMode and Override is disabled.*/
+            OFF          = 0x0,
+            /** means that associated GLMode is enabled and Override is disabled.*/
+            ON           = 0x1,
+            /** Overriding of GLMode's or StateAttributes is enabled, so that state below it is overridden.*/
+            OVERRIDE     = 0x2,
+            /** Protecting of GLMode's or StateAttributes is enabled, so that state from above cannot override this and below state.*/
+            PROTECTED    = 0x4,            
+            /** means that GLMode or StateAttribute should be inherited from above.*/
+            INHERIT      = 0x8
+        };
+        
+        /** Type identifier to differentiate between different state types. */
+        // typedef unsigned int Type;
+
+        /** Values of StateAttribute::Type used to aid identification
+          * of different StateAttribute subclasses. Each subclass defines
+          * its own value in the virtual Type getType() method.  When 
+          * extending the osg's StateAttribute's simply define your
+          * own Type value which is unique, using the StateAttribute::Type
+          * enum as a guide of what values to use.  If your new subclass
+          * needs to override a standard StateAttriubte then simply use 
+          * that type's value. */
+        enum Type
+        {
+            TEXTURE,
+            
+            POLYGONMODE,
+            POLYGONOFFSET,
+            MATERIAL,
+            ALPHAFUNC,
+            ANTIALIAS,
+            COLORTABLE,
+            CULLFACE,
+            FOG,
+            FRONTFACE,
+            
+            LIGHT,
+
+            POINT,
+            LINEWIDTH,
+            LINESTIPPLE,
+            POLYGONSTIPPLE,
+            SHADEMODEL,
+            TEXENV,
+            TEXENVFILTER,
+            TEXGEN,
+            TEXMAT,
+            LIGHTMODEL,
+            BLENDFUNC,
+            BLENDEQUATION,
+            LOGICOP,
+            STENCIL,
+            COLORMASK,
+            DEPTH,
+            VIEWPORT,
+            SCISSOR,
+            BLENDCOLOR,
+            MULTISAMPLE,
+            CLIPPLANE,
+            COLORMATRIX,
+            VERTEXPROGRAM,
+            FRAGMENTPROGRAM,
+            POINTSPRITE,
+            PROGRAM,
+            CLAMPCOLOR,
+            HINT,
+
+            /// osgFX namespace
+            VALIDATOR,
+            VIEWMATRIXEXTRACTOR,
+            
+            /// osgNV namespace
+            OSGNV_PARAMETER_BLOCK,
+
+            // osgNVExt namespace
+            OSGNVEXT_TEXTURE_SHADER,
+            OSGNVEXT_VERTEX_PROGRAM,
+            OSGNVEXT_REGISTER_COMBINERS,
+
+            /// osgNVCg namespace
+            OSGNVCG_PROGRAM,
+
+            // osgNVSlang namespace
+            OSGNVSLANG_PROGRAM,
+
+            // osgNVParse
+            OSGNVPARSE_PROGRAM_PARSER,
+
+            UNIFORMBUFFERBINDING,
+            TRANSFORMFEEDBACKBUFFERBINDING
+        };
+        
+        /** Simple pairing between an attribute type and the member within that attribute type group.*/
+        typedef std::pair<Type,unsigned int> TypeMemberPair;
+
+        StateAttribute();
+        
+        StateAttribute(const StateAttribute& sa,const CopyOp& copyop=CopyOp::SHALLOW_COPY): 
+            Object(sa,copyop),
+            _shaderComponent(sa._shaderComponent),
+            _updateCallback(copyop(sa._updateCallback.get())),
+            _eventCallback(copyop(sa._eventCallback.get()))
+            {}
+        
+
+        /** Clone the type of an attribute, with Object* return type.
+            Must be defined by derived classes.*/
+        virtual Object* cloneType() const = 0;
+
+        /** Clone an attribute, with Object* return type.
+            Must be defined by derived classes.*/
+        virtual Object* clone(const CopyOp&) const = 0;
+
+        /** Return true if this and obj are of the same kind of object.*/
+        virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const StateAttribute*>(obj)!=NULL; }
+
+        /** Return the name of the attribute's library.*/
+        virtual const char* libraryName() const { return "osg"; }
+
+        /** Return the name of the attribute's class type.*/
+        virtual const char* className() const { return "StateAttribute"; }
+        
+        
+        /** Fast alternative to dynamic_cast<> for determining if state attribute is a Texture.*/
+        virtual Texture* asTexture() { return 0; }
+        
+        /** Fast alternative to dynamic_cast<> for determining if state attribute is a Texture.*/
+        virtual const Texture* asTexture() const { return 0; }
+
+        
+        /** Return the Type identifier of the attribute's class type.*/
+        virtual Type getType() const = 0;
+
+        /** Return the member identifier within the attribute's class type. Used for light number/clip plane number etc.*/
+        virtual unsigned int getMember() const { return 0; }
+
+        /** Return the TypeMemberPair that uniquely identifies this type member.*/
+        inline TypeMemberPair getTypeMemberPair() const { return TypeMemberPair(getType(),getMember()); }
+
+        /** Return true if StateAttribute is a type which controls texturing and needs to be issued w.r.t to specific texture unit.*/
+        virtual bool isTextureAttribute() const { return false; }
+
+        /** Return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        virtual int compare(const StateAttribute& sa) const = 0;
+        
+        bool operator <  (const StateAttribute& rhs) const { return compare(rhs)<0; }
+        bool operator == (const StateAttribute& rhs) const { return compare(rhs)==0; }
+        bool operator != (const StateAttribute& rhs) const { return compare(rhs)!=0; }
+
+        
+        /** A vector of osg::StateSet pointers which is used to store the parent(s) of this StateAttribute.*/
+        typedef std::vector<StateSet*> ParentList;
+
+        /** Get the parent list of this StateAttribute. */
+        inline const ParentList& getParents() const { return _parents; }
+
+        inline StateSet* getParent(unsigned int i)  { return _parents[i]; }
+        /**
+         * Get a single const parent of this StateAttribute.
+         * @param i index of the parent to get.
+         * @return the parent i.
+         */
+        inline const StateSet* getParent(unsigned int i) const  { return _parents[i]; }
+
+        /**
+         * Get the number of parents of this StateAttribute.
+         * @return the number of parents of this StateAttribute.
+         */
+        inline unsigned int getNumParents() const { return static_cast<unsigned int>(_parents.size()); }
+
+        void setShaderComponent(ShaderComponent* sc) { _shaderComponent = sc; }
+        ShaderComponent* getShaderComponent() { return _shaderComponent.get(); }
+        const ShaderComponent* getShaderComponent() const { return _shaderComponent.get(); }
+
+        struct ModeUsage
+        {
+            virtual ~ModeUsage() {}
+            virtual void usesMode(GLMode mode) = 0;
+            virtual void usesTextureMode(GLMode mode) = 0;
+        };
+
+        /** Return the modes associated with this StateAttribute.*/        
+        virtual bool getModeUsage(ModeUsage&) const
+        {
+            // default to no GLMode's associated with use of the StateAttribute.
+            return false;
+        }
+        
+        /** Check the modes associated with this StateAttribute are supported by current OpenGL drivers,
+          * and if not set the associated mode in osg::State to be black listed/invalid.
+          * Return true if all associated modes are valid.*/
+        virtual bool checkValidityOfAssociatedModes(osg::State&) const
+        {
+            // default to no black listed GLMode's associated with use of the StateAttribute.
+            return true;
+        }
+
+        // provide callback for backwards compatibility.
+        typedef osg::StateAttributeCallback Callback;
+
+        /** Set the UpdateCallback which allows users to attach customize the updating of an object during the update traversal.*/
+        void setUpdateCallback(StateAttributeCallback* uc);
+
+        /** Get the non const UpdateCallback.*/
+        StateAttributeCallback* getUpdateCallback() { return _updateCallback.get(); }
+
+        /** Get the const UpdateCallback.*/
+        const StateAttributeCallback* getUpdateCallback() const { return _updateCallback.get(); }
+
+
+        /** Set the EventCallback which allows users to attach customize the updating of an object during the Event traversal.*/
+        void setEventCallback(StateAttributeCallback* ec);
+
+        /** Get the non const EventCallback.*/
+        StateAttributeCallback* getEventCallback() { return _eventCallback.get(); }
+
+        /** Get the const EventCallback.*/
+        const StateAttributeCallback* getEventCallback() const { return _eventCallback.get(); }
+
+    
+        /** apply the OpenGL state attributes. 
+          * The render info for the current OpenGL context is passed
+          * in to allow the StateAttribute to obtain details on the
+          * the current context and state.
+          */
+        virtual void apply(State&) const {}
+
+        /** Default to nothing to compile - all state is applied immediately. */
+        virtual void compileGLObjects(State&) const {}
+
+        /** Resize any per context GLObject buffers to specified size. */
+        virtual void resizeGLObjectBuffers(unsigned int /*maxSize*/) {}
+
+        /** Release OpenGL objects in specified graphics context if State
+            object is passed, otherwise release OpenGL objects for all graphics context if
+            State object pointer NULL.*/
+        virtual void releaseGLObjects(State* =0) const {}
+
+
+    protected:
+    
+        virtual ~StateAttribute() {}
+
+        void addParent(osg::StateSet* object);
+        void removeParent(osg::StateSet* object);
+
+        ParentList _parents;
+        friend class osg::StateSet;
+
+        ref_ptr<ShaderComponent>          _shaderComponent;
+
+        ref_ptr<StateAttributeCallback>   _updateCallback;
+        ref_ptr<StateAttributeCallback>   _eventCallback;
+};
+
+}
+
+#endif

@@ -95,7 +95,7 @@ contains(MAVLINK_CONF, pixhawk) {
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
     INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
-    
+
     # PIXHAWK SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
     INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/pixhawk
@@ -361,7 +361,6 @@ contains(DEPENDENCIES_PRESENT, osg) {
     HEADERS += src/ui/map3D/Q3DWidget.h \
         src/ui/map3D/GCManipulator.h \
         src/ui/map3D/ImageWindowGeode.h \
-        src/ui/map3D/QOSGWidget.h \
         src/ui/map3D/PixhawkCheetahGeode.h \
         src/ui/map3D/Pixhawk3DWidget.h \
         src/ui/map3D/Q3DWidgetFactory.h \
@@ -372,12 +371,12 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Imagery.h \
         src/ui/map3D/HUDScaleGeode.h \
         src/ui/map3D/WaypointGroupNode.h
-    contains(DEPENDENCIES_PRESENT, osgearth) { 
-        message("Including headers for OSGEARTH")
-        
-        # Enable only if OpenSceneGraph is available
-        HEADERS += src/ui/map3D/QMap3D.h
-    }
+}
+contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
+    message("Including headers for Protocol Buffers")
+
+    # Enable only if protobuf is available
+    HEADERS += ../mavlink/include/pixhawk/pixhawk.pb.h
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
@@ -491,7 +490,6 @@ contains(DEPENDENCIES_PRESENT, osg) {
     SOURCES += src/ui/map3D/Q3DWidget.cc \
         src/ui/map3D/ImageWindowGeode.cc \
         src/ui/map3D/GCManipulator.cc \
-        src/ui/map3D/QOSGWidget.cc \
         src/ui/map3D/PixhawkCheetahGeode.cc \
         src/ui/map3D/Pixhawk3DWidget.cc \
         src/ui/map3D/Q3DWidgetFactory.cc \
@@ -508,6 +506,12 @@ contains(DEPENDENCIES_PRESENT, osg) {
         # Enable only if OpenSceneGraph is available
         SOURCES += src/ui/map3D/QMap3D.cc
     }
+}
+contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
+    message("Including sources for Protocol Buffers")
+
+    # Enable only if protobuf is available
+    SOURCES += ../mavlink/src/pixhawk/pixhawk.pb.cc
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including sources for libfreenect")

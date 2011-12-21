@@ -1,0 +1,122 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGTerrain
+#define OSGTerrain 1
+
+#include <osg/CoordinateSystemNode>
+
+#include <osgTerrain/TerrainTile>
+
+namespace osgTerrain {
+
+/** Terrain provides a framework for loosely coupling height field data with height rendering algorithms.
+  * This allows TerrainTechniques to be plugged in at runtime.*/
+class OSGTERRAIN_EXPORT Terrain : public osg::CoordinateSystemNode
+{
+    public:
+
+        Terrain();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        Terrain(const Terrain&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        META_Node(osgTerrain, Terrain);
+
+        virtual void traverse(osg::NodeVisitor& nv);
+
+        virtual osgTerrain::Terrain* asTerrain() { return this; }
+        virtual const osgTerrain::Terrain* asTerrain() const { return this; }
+
+
+        /** Set the sample ratio hint that TerrainTile should use when building geometry.
+          * Defaults to 1.0, which means use all original sample points.*/
+        void setSampleRatio(float ratio);
+
+        /** Get the sample ratio hint.*/
+        float getSampleRatio() const { return _sampleRatio; }
+
+
+        /** Set the vertical scale hint.*/
+        void setVerticalScale(float scale);
+
+        /** Get the vertical scale hint.*/
+        float getVerticalScale() const { return _verticalScale; }
+
+        /** If set to true the boundaries between adjacent tiles should be equalized.
+          * Note, it is only possible to equalizae boundaries when the TerrainTile's contain properly assigned TileID's,
+          * databases built with VirtualPlanetBuilder-0.9.11 and older do not set the TileID, so databases must be
+          * built with later versions of VirtualPlanetBuilder to take advantage of boundary equalization. */
+        void setEqualizeBoundaries(bool equalizeBoundaries);
+
+        /** If true the boundaries between adjacent tiles will be equalized. */
+        bool getEqualizeBoundaries() const { return _equalizeBoundaries; }
+
+        /** Set the default policy to use when deciding whether to enable/disable blending and use of transparent bin.
+          * Note, the Terrain::BlendingPolicy value only sets the value for the TerrainTiles it encloses for the
+          * TerrainTile's that have their policy set to INHERIT.   INHERIT is the default BlendingPolicy for both
+          * Terrain and TerrainTile, and if both are left to INERHIT then the policy used is ENABLE_BLENDING_WHEN_ALPHA_PRESENT. */
+        void setBlendingPolicy(TerrainTile::BlendingPolicy policy);
+
+        /** Get the default policy to use when deciding whether to enable/disable blending and use of transparent bin.*/
+        TerrainTile::BlendingPolicy getBlendingPolicy() const { return _blendingPolicy; }
+
+
+        /** Get the TerrainTile for a given TileID.*/
+        TerrainTile* getTile(const TileID& tileID);
+
+        /** Get the const TerrainTile for a given TileID.*/
+        const TerrainTile* getTile(const TileID& tileID) const;
+        
+        /** Set the TerrainTechnique prototype from which TerrainTiles can clone the techniques from.*/
+        void setTerrainTechniquePrototype(TerrainTechnique* technique) { _terrainTechnique = technique; }
+
+        /** Get the TerrainTechnique prototype */
+        TerrainTechnique* getTerrainTechniquePrototype() { return _terrainTechnique.get(); }
+        
+        /** Get the const TerrainTechnique protype*/
+        const TerrainTechnique* getTerrainTechniquePrototype() const { return _terrainTechnique.get(); }
+
+        /** Tell the Terrain node to call the terrainTile's TerrainTechnique on the next update traversal.*/
+        void updateTerrainTileOnNextFrame(TerrainTile* terrainTile);
+
+    protected:
+
+        virtual ~Terrain();
+        
+        friend class TerrainTile;
+        
+        void dirtyRegisteredTiles(int dirtyMask = TerrainTile::ALL_DIRTY);
+
+        void registerTerrainTile(TerrainTile* tile);
+        void unregisterTerrainTile(TerrainTile* tile);
+
+        typedef std::map< TileID, TerrainTile* >    TerrainTileMap;
+        typedef std::set< TerrainTile* >            TerrainTileSet;
+
+        float                               _sampleRatio;
+        float                               _verticalScale;
+        TerrainTile::BlendingPolicy         _blendingPolicy;
+        bool                                _equalizeBoundaries;
+
+        mutable OpenThreads::Mutex          _mutex;
+        TerrainTileSet                      _terrainTileSet;
+        TerrainTileMap                      _terrainTileMap;
+        TerrainTileSet                      _updateTerrainTileSet;
+
+        osg::ref_ptr<TerrainTechnique>      _terrainTechnique;
+};
+
+}
+
+#endif

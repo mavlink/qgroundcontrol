@@ -1,4 +1,0 @@
-designer
-.lib
-.pdb
-d4.dll

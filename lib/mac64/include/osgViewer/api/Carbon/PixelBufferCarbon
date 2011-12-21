@@ -1,0 +1,116 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+
+
+#ifndef OSGVIEWER_PIXELBUFFERCARBON
+#define OSGVIEWER_PIXELBUFFERCARBON 1
+
+#if defined (__APPLE__) && (!__LP64__)
+
+#include <osg/GraphicsContext>
+#include <osgViewer/api/Carbon/GraphicsHandleCarbon>
+
+
+namespace osgViewer
+{
+
+class OSGVIEWER_EXPORT PixelBufferCarbon : public osg::GraphicsContext, public osgViewer::GraphicsHandleCarbon
+{
+    public:
+
+        PixelBufferCarbon(osg::GraphicsContext::Traits* traits):
+            _valid(false),
+            _initialized(false),
+            _realized(false),
+            _pixelformat(0),
+            _pbuffer(0)
+        {
+            _traits = traits;
+
+            init();
+            
+            if (valid())
+            {
+                setState( new osg::State );
+                getState()->setGraphicsContext(this);
+
+                if (_traits.valid() && _traits->sharedContext)
+                {
+                    getState()->setContextID( _traits->sharedContext->getState()->getContextID() );
+                    incrementContextIDUsageCount( getState()->getContextID() );   
+                }
+                else
+                {
+                    getState()->setContextID( osg::GraphicsContext::createNewContextID() );
+                }
+
+            }
+        }
+    
+        virtual bool isSameKindAs(const Object* object) const { return dynamic_cast<const PixelBufferCarbon*>(object)!=0; }
+        virtual const char* libraryName() const { return "osgViewer"; }
+        virtual const char* className() const { return "PixelBufferCarbon"; }
+
+        virtual bool valid() const { return _valid; }
+
+        /** Realise the GraphicsContext.*/
+        virtual bool realizeImplementation();
+
+        /** Return true if the graphics context has been realised and is ready to use.*/
+        virtual bool isRealizedImplementation() const { return _realized; }
+
+        /** Close the graphics context.*/
+        virtual void closeImplementation();
+
+        /** Make this graphics context current.*/
+        virtual bool makeCurrentImplementation();
+
+        /** Make this graphics context current with specified read context implementation. */
+        virtual bool makeContextCurrentImplementation(osg::GraphicsContext* readContext);
+
+        /** Release the graphics context.*/
+        virtual bool releaseContextImplementation();
+
+        /** Bind the graphics context to associated texture implementation.*/
+        virtual void bindPBufferToTextureImplementation( GLenum buffer );
+
+        /** Swap the front and back buffers.*/
+        virtual void swapBuffersImplementation();
+       
+        static AGLPixelFormat createPixelFormat(osg::GraphicsContext::Traits* traits);
+
+    public:
+    
+
+    protected:
+        
+
+    
+        ~PixelBufferCarbon();
+    
+        void init();
+
+        bool            _valid;
+        bool            _initialized;
+        bool            _realized;
+        
+        AGLPixelFormat    _pixelformat;
+        AGLPbuffer        _pbuffer;        
+};
+
+}
+
+#endif
+
+#endif

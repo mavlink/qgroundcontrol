@@ -1,0 +1,89 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_TEXMAT
+#define OSG_TEXMAT 1
+
+#include <osg/StateAttribute>
+#include <osg/Matrix>
+
+namespace osg {
+
+/** A texture matrix state class that encapsulates OpenGL texture matrix
+  * functionality. */
+class OSG_EXPORT TexMat : public StateAttribute
+{
+    public :
+
+        TexMat();
+
+        TexMat(const Matrix& matrix):_matrix(matrix),_scaleByTextureRectangleSize(false) {}
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        TexMat(const TexMat& texmat,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(texmat,copyop),
+            _matrix(texmat._matrix),
+            _scaleByTextureRectangleSize(texmat._scaleByTextureRectangleSize) {}
+
+        META_StateAttribute(osg, TexMat, TEXMAT);
+        
+        virtual bool isTextureAttribute() const { return true; }
+
+        /** Return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs. */
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // Check for equal types, then create the rhs variable
+            // used by the COMPARE_StateAttribute_Parameter macros below.
+            COMPARE_StateAttribute_Types(TexMat,sa)
+
+            // Compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_matrix)
+
+            return 0; // Passed all the above comparison macros, so must be equal.
+        }
+
+        /** Set the texture matrix  */
+        inline void setMatrix(const Matrix& matrix) { _matrix = matrix; }
+
+        /** Get the texture matrix  */
+        inline Matrix& getMatrix() { return _matrix; }
+
+        /** Get the const texture matrix  */
+        inline const Matrix& getMatrix() const { return _matrix; }
+
+        /** Switch on/off the post scaling of the TexMat matrix by the size of the last applied texture rectangle.
+          * Use a TexMat alongside a TextureRectangle with this scaling applied allows one to treat a TextureRectnagles texture coordinate
+          * range as if it were the usual non dimensional 0.0 to 1.0 range.
+          * Note, the TexMat matrix itself is not modified by the post scaling, its purely an operation passed to OpenGL to do the post scaling once the 
+          * the TexMat matrix has been loaded.*/
+        void setScaleByTextureRectangleSize(bool flag) { _scaleByTextureRectangleSize = flag; }
+
+        /** Get whether the post scaling of the TexMat matrix, by the size of the last applied texture rectangle, is switched on/off.*/
+        bool getScaleByTextureRectangleSize() const { return _scaleByTextureRectangleSize; }
+
+        /** Apply texture matrix to OpenGL state. */
+        virtual void apply(State& state) const;
+
+    protected:
+
+        virtual ~TexMat( void );
+
+        Matrix _matrix;
+        bool   _scaleByTextureRectangleSize;
+
+};
+
+}
+
+
+#endif

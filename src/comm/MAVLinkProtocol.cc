@@ -169,6 +169,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //    receiveMutex.lock();
     mavlink_message_t message;
     mavlink_status_t status;
+
     for (int position = 0; position < b.size(); position++) {
         unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b.at(position)), &message, &status);
 
@@ -181,6 +182,38 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //		    continue;
 //	    }
 //#endif
+#ifdef QGC_PROTOBUF_ENABLED
+            if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
+            {
+                mavlink_extended_message_t extended_message;
+
+                extended_message.base_msg = message;
+
+                // read extended header
+                uint8_t* payload = reinterpret_cast<uint8_t*>(message.payload64);
+                memcpy(&extended_message.extended_payload_len, payload + 3, 4);
+
+                const uint8_t* extended_payload = reinterpret_cast<const uint8_t*>(b.constData()) + MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_EXTENDED_HEADER_LEN;
+
+                // copy extended payload data
+                memcpy(extended_message.extended_payload, extended_payload, extended_message.extended_payload_len);
+
+                if (protobufManager.cacheFragment(extended_message))
+                {
+                    std::tr1::shared_ptr<google::protobuf::Message> protobuf_msg;
+
+                    if (protobufManager.getMessage(protobuf_msg))
+                    {
+                        emit extendedMessageReceived(link, protobuf_msg);
+                    }
+                }
+
+                position += extended_message.extended_payload_len;
+
+                continue;
+            }
+#endif
+
             // Log data
             if (m_loggingEnabled && m_logfile) {
                 const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);

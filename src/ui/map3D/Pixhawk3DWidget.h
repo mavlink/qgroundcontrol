@@ -39,10 +39,6 @@
 #include "ImageWindowGeode.h"
 #include "WaypointGroupNode.h"
 
-#ifdef QGC_LIBFREENECT_ENABLED
-#include "Freenect.h"
-#endif
-
 #include "Q3DWidget.h"
 
 class UASInterface;
@@ -115,8 +111,8 @@ private:
                        const QString& zone);
     void updateWaypoints(void);
     void updateTarget(double robotX, double robotY);
-#ifdef QGC_LIBFREENECT_ENABLED
-    void updateRGBD(void);
+#ifdef QGC_PROTOBUF_ENABLED
+    void updateRGBD(double robotX, double robotY, double robotZ);
 #endif
 
     int findWaypoint(int mouseX, int mouseY);
@@ -161,10 +157,6 @@ private:
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
     osg::ref_ptr<osg::Node> targetNode;
     osg::ref_ptr<osg::Geode> rgbd3DNode;
-#ifdef QGC_LIBFREENECT_ENABLED
-    QScopedPointer<Freenect> freenect;
-#endif
-    bool enableFreenect;
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
