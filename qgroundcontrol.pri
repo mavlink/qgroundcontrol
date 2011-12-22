@@ -201,12 +201,12 @@ message("Compiling for linux 32")
     }
 
     # Validated copy commands
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
 
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
-    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
+    QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/images/Vera.ttf
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
@@ -283,11 +283,11 @@ linux-g++-64 {
     }
 
     # Validated copy commands
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$DESTDIR
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
-    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
+    QMAKE_POST_LINK += && mkdir -p $$TARGETDIRimages
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/images/Vera.ttf
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
