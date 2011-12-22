@@ -1,0 +1,636 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+//osgParticle - Copyright (C) 2002 Marco Jez
+
+#ifndef OSGPARTICLE_PARTICLE
+#define OSGPARTICLE_PARTICLE 1
+
+#include <osgParticle/Export>
+#include <osgParticle/Interpolator>
+#include <osgParticle/range>
+
+#include <osg/ref_ptr>
+#include <osg/Vec3>
+#include <osg/Vec4>
+#include <osg/Matrix>
+#include <osg/Drawable>
+#include <osg/GL>
+#include <osg/GLBeginEndAdapter>
+
+namespace osgParticle
+{
+
+    // forward declare so we can reference it
+    class ParticleSystem;
+
+    /**    Implementation of a <B>particle</B>.
+        Objects of this class are particles, they have some graphical properties
+        and some physical properties. Particles are created by emitters and then placed
+        into Particle Systems, where they live and get updated at each frame.
+        Particles can either live forever (lifeTime < 0), or die after a specified
+        time (lifeTime >= 0). For each property which is defined as a range of values, a
+        "current" value will be evaluated at each frame by interpolating the <I>min</I>
+        and <I>max</I> values so that <I>curr_value = min</I> when <I>t == 0</I>, and 
+        <I>curr_value = max</I> when <I>t == lifeTime</I>.
+        You may customize the interpolator objects to achieve any kind of transition.
+        If you want the particle to live forever, set its lifetime to any value <= 0;
+        in that case, no interpolation is done to compute real-time properties, and only
+        minimum values are used.
+    */
+    class OSGPARTICLE_EXPORT Particle {
+        friend class ParticleSystem;
+    public:
+        
+        enum
+        {
+            INVALID_INDEX = -1
+        };
+
+        /**
+         Shape of particles.
+         NOTE: the LINE shape should be used in conjunction with FIXED alignment mode (see ParticleSystem).
+        */
+        enum Shape {
+            POINT,            // uses GL_POINTS as primitive
+            QUAD,            // uses GL_QUADS as primitive
+            QUAD_TRIANGLESTRIP,    // uses GL_TRI_angleSTRIP as primitive, but each particle needs a glBegin/glEnd pair
+            HEXAGON,            // may save some filling time, but uses more triangles
+            LINE,               // uses GL_LINES to draw line segments that point to the direction of motion   
+            USER               // uses a user-defined drawable as primitive
+        };
+        
+        Particle();
+
+        /// Get the shape of the particle.
+        inline Shape getShape() const;
+        
+        /// Set the shape of the particle.
+        inline void setShape(Shape s);
+
+        /// Get whether the particle is still alive.
+        inline bool isAlive() const;
+        
+        /// Get the life time of the particle (in seconds).
+        inline double getLifeTime() const;
+        
+        /// Get the age of the particle (in seconds).
+        inline double getAge() const;
+        
+        /// Get the minimum and maximum values for polygon size.
+        inline const rangef& getSizeRange() const;
+        
+        /// Get the minimum and maximum values for alpha.
+        inline const rangef& getAlphaRange() const;
+        
+        /// Get the minimum and maximum values for color.
+        inline const rangev4& getColorRange() const;
+        
+        /// Get the interpolator for computing the size of polygons.
+        inline const Interpolator* getSizeInterpolator() const;
+        
+        /// Get the interpolator for computing alpha values.
+        inline const Interpolator* getAlphaInterpolator() const;
+        
+        /// Get the interpolator for computing color values.
+        inline const Interpolator* getColorInterpolator() const;
+
+        /** Get the physical radius of the particle.
+            For built-in operators to work correctly, lengths must be expressed in meters.
+        */
+        inline float getRadius() const;
+        
+        /** Get the mass of the particle.
+            For built-in operators to work correctly, remember that the mass is expressed in kg.
+        */
+        inline float getMass() const;
+        
+        /// Get <CODE>1 / getMass()</CODE>.
+        inline float getMassInv() const;
+        
+        /// Get the position vector.
+        inline const osg::Vec3& getPosition() const;
+        
+        /**    Get the velocity vector.
+            For built-in operators to work correctly, remember that velocity components are expressed
+            in meters per second.
+        */
+        inline const osg::Vec3& getVelocity() const;        
+        
+        /// Get the previous position (the position before last update).
+        inline const osg::Vec3& getPreviousPosition() const;
+
+        /// Get the angle vector.
+        inline const osg::Vec3& getAngle() const;
+        
+        /// Get the rotational velocity vector.
+        inline const osg::Vec3& getAngularVelocity() const;
+        
+        /// Get the previous angle vector.
+        inline const osg::Vec3& getPreviousAngle() const;
+        
+        /// Get the current color
+        inline const osg::Vec4& getCurrentColor() const { return _current_color; }
+
+        /// Get the current alpha
+        inline float getCurrentAlpha() const { return _current_alpha; }
+        
+        /// Get the s texture coordinate of the bottom left of the particle
+        inline float getSTexCoord() const { return _s_coord; }
+
+        /// Get the t texture coordinate of the bottom left of the particle
+        inline float getTTexCoord() const { return _t_coord; }
+
+        /// Get width of texture tile
+        inline int getTileS() const;
+        
+        /// Get height of texture tile
+        inline int getTileT() const;
+        
+        /// Get number of texture tiles
+        inline int getNumTiles() const { return _end_tile - _start_tile + 1; }
+        
+        /** Kill the particle on next update
+            NOTE: after calling this function, the <CODE>isAlive()</CODE> method will still 
+            return true until the particle is updated again.
+        */
+        inline void kill();
+        
+        /// Set the life time of the particle.
+        inline void setLifeTime(double t);
+        
+        /// Set the minimum and maximum values for polygon size.
+        inline void setSizeRange(const rangef& r);
+        
+        /// Set the minimum and maximum values for alpha.
+        inline void setAlphaRange(const rangef& r);
+        
+        /// Set the minimum and maximum values for color.
+        inline void setColorRange(const rangev4& r);
+        
+        /// Set the interpolator for computing size values.
+        inline void setSizeInterpolator(Interpolator* ri);
+        
+        /// Set the interpolator for computing alpha values.        
+        inline void setAlphaInterpolator(Interpolator* ai);
+        
+        /// Set the interpolator for computing color values.
+        inline void setColorInterpolator(Interpolator* ci);
+
+        /** Set the physical radius of the particle.
+            For built-in operators to work correctly, lengths must be expressed in meters.
+        */
+        inline void setRadius(float r);
+        
+        /** Set the mass of the particle.
+            For built-in operators to work correctly, remember that the mass is expressed in kg.
+        */
+        inline void setMass(float m);
+        
+        /// Set the position vector.        
+        inline void setPosition(const osg::Vec3& p);
+        
+        /**    Set the velocity vector.
+            For built-in operators to work correctly, remember that velocity components are expressed
+            in meters per second.
+        */
+        inline void setVelocity(const osg::Vec3& v);
+        
+        /// Add a vector to the velocity vector.
+        inline void addVelocity(const osg::Vec3& dv);
+        
+        /// Transform position and velocity vectors by a matrix.
+        inline void transformPositionVelocity(const osg::Matrix& xform);
+
+        /// Transform position and velocity vectors by a combination of two matrices
+        void transformPositionVelocity(const osg::Matrix& xform1, const osg::Matrix& xform2, float r);
+
+        /// Set the angle vector.
+        inline void setAngle(const osg::Vec3& a);
+        
+        /**
+          Set the angular velocity vector. 
+          Components x, y and z are angles of rotation around the respective axis (in radians).
+        */
+        inline void setAngularVelocity(const osg::Vec3& v);
+        
+        /// Add a vector to the angular velocity vector.
+        inline void addAngularVelocity(const osg::Vec3& dv);
+        
+        /// Transform angle and angularVelocity vectors by a matrix.
+        inline void transformAngleVelocity(const osg::Matrix& xform);
+        
+        /** Update the particle (don't call this method manually).
+            This method is called automatically by <CODE>ParticleSystem::update()</CODE>; it
+            updates the graphical properties of the particle for the current time,
+            checks whether the particle is still alive, and then updates its position
+            by computing <I>P = P + V * dt</I> (where <I>P</I> is the position and <I>V</I> is the velocity).
+        */
+        bool update(double dt, bool onlyTimeStamp);
+
+        /// Perform some pre-rendering tasks. Called automatically by particle systems.
+        inline void beginRender(osg::GLBeginEndAdapter* gl) const;
+        
+        /// Render the particle. Called automatically by particle systems.
+        void render(osg::GLBeginEndAdapter* gl, const osg::Vec3& xpos, const osg::Vec3& px, const osg::Vec3& py, float scale = 1.0f) const;
+        
+        /// Render the particle with user-defined drawable
+        void render(osg::RenderInfo& renderInfo, const osg::Vec3& xpos, const osg::Vec3& xrot) const;
+        
+        /// Perform some post-rendering tasks. Called automatically by particle systems.
+        inline void endRender(osg::GLBeginEndAdapter* gl) const;
+        
+        /// Get the current (interpolated) polygon size. Valid only after the first call to update().
+        inline float getCurrentSize() const;
+        
+        /// Specify how the particle texture is tiled.
+        /// All tiles in the given range are sequentially displayed during the lifetime
+        /// of the particle. When no range is given, all tiles are displayed during the lifetime.
+        inline void setTextureTileRange(int sTile, int tTile, int startTile, int endTile);
+
+        /// Same as above, range starts at 0 and ends at end
+        inline void setTextureTile(int sTile, int tTile, int end = -1);
+
+        /// Set the previous particle
+        inline void setPreviousParticle(int previous) { _previousParticle = previous; }
+
+        /// Get the previous particle
+        inline int getPreviousParticle() const { return _previousParticle; }
+
+        /// Set the next particle
+        inline void setNextParticle(int next) { _nextParticle = next; }
+
+        /// Get the const next particle
+        inline int getNextParticle() const { return _nextParticle; }
+        
+        /// Set the depth of the particle
+        inline void setDepth(double d) { _depth = d; }
+        
+        /// Get the depth of the particle
+        inline double getDepth() const { return _depth; }
+        
+        /// Set the user-defined particle drawable
+        inline void setDrawable(osg::Drawable* d) { _drawable = d; }
+        
+        /// Get the user-defined particle drawable
+        inline osg::Drawable* getDrawable() const { return _drawable.get(); }
+        
+        /// Sorting operator
+        bool operator<(const Particle &P) const { return _depth < P._depth; }
+
+        /// Method for initializing a particles texture coords as part of a connected particle system.
+        void setUpTexCoordsAsPartOfConnectedParticleSystem(ParticleSystem* ps);
+
+    protected:
+    
+        Shape _shape;
+
+        rangef _sr;
+        rangef _ar;
+        rangev4 _cr;
+
+        osg::ref_ptr<Interpolator> _si;
+        osg::ref_ptr<Interpolator> _ai;
+        osg::ref_ptr<Interpolator> _ci;
+
+        bool _mustdie;
+        double _lifeTime;
+
+        float _radius;
+        float _mass;
+        float _massinv;
+        osg::Vec3 _prev_pos;
+        osg::Vec3 _position;
+        osg::Vec3 _velocity;
+
+        osg::Vec3 _prev_angle;
+        osg::Vec3 _angle;
+        osg::Vec3 _angul_arvel;
+
+        double _t0;        
+
+        float _alive;
+        float _current_size;
+        float _current_alpha;
+        osg::Vec3 _base_prop;  // [0] _alive [1] _current_size [2] _current_alpha
+        osg::Vec4 _current_color;
+        
+        float _s_tile;
+        float _t_tile;
+        int _start_tile;
+        int _end_tile;
+        int _cur_tile;
+        float _s_coord;
+        float _t_coord;
+        
+        // previous and next Particles are only used in ConnectedParticleSystems
+        int _previousParticle;
+        int _nextParticle;
+        
+        // the depth of the particle is used only when sorting is enabled
+        double _depth;
+        
+        // the particle drawable is used only when USER shape is enabled
+        osg::ref_ptr<osg::Drawable> _drawable;
+    };
+
+    // INLINE FUNCTIONS
+
+    inline Particle::Shape Particle::getShape() const
+    {
+        return _shape;
+    }
+
+    inline void Particle::setShape(Shape s)
+    {
+        _shape = s;
+    }
+
+    inline bool Particle::isAlive() const
+    {
+        return _alive>0.0f;
+    }
+
+    inline double Particle::getLifeTime() const
+    {
+        return _lifeTime;
+    }
+    
+    inline double Particle::getAge() const
+    {
+        return _t0;
+    }
+    
+    inline float Particle::getRadius() const
+    {
+        return _radius;
+    }
+    
+    inline void Particle::setRadius(float r)
+    {
+        _radius = r;
+    }
+
+    inline const rangef& Particle::getSizeRange() const
+    {
+        return _sr;
+    }
+
+    inline const rangef& Particle::getAlphaRange() const
+    {
+        return _ar;
+    }
+
+    inline const rangev4& Particle::getColorRange() const
+    {
+        return _cr;
+    }
+
+    inline const Interpolator* Particle::getSizeInterpolator() const
+    {
+        return _si.get();
+    }
+
+    inline const Interpolator* Particle::getAlphaInterpolator() const
+    {
+        return _ai.get();
+    }
+
+    inline const Interpolator* Particle::getColorInterpolator() const
+    {
+        return _ci.get();
+    }
+
+    inline const osg::Vec3& Particle::getPosition() const
+    {
+        return _position;
+    }
+
+    inline const osg::Vec3& Particle::getVelocity() const
+    {
+        return _velocity;
+    }
+    
+    inline const osg::Vec3& Particle::getPreviousPosition() const
+    {
+        return _prev_pos;
+    }
+
+    inline const osg::Vec3& Particle::getAngle() const
+    {
+        return _angle;
+    }
+    
+    inline const osg::Vec3& Particle::getAngularVelocity() const
+    {
+        return _angul_arvel;
+    }
+    
+    inline const osg::Vec3& Particle::getPreviousAngle() const
+    {
+        return _prev_angle;
+    }
+    
+    inline int Particle::getTileS() const
+    {
+        return (_s_tile>0.0f) ? static_cast<int>(1.0f / _s_tile) : 1;
+    }
+
+    inline int Particle::getTileT() const
+    {
+        return (_t_tile>0.0f) ? static_cast<int>(1.0f / _t_tile) : 1;
+    }
+    
+    inline void Particle::kill()
+    {
+        _mustdie = true;
+    }
+
+    inline void Particle::setLifeTime(double t)
+    {
+        _lifeTime = t;
+    }
+
+    inline void Particle::setSizeRange(const rangef& r)
+    {
+        _sr = r;
+    }
+
+    inline void Particle::setAlphaRange(const rangef& r)
+    {
+        _ar = r;
+    }
+
+    inline void Particle::setColorRange(const rangev4& r)
+    {
+        _cr = r;
+    }
+
+    inline void Particle::setSizeInterpolator(Interpolator* ri)
+    {
+        _si = ri;
+    }
+
+    inline void Particle::setAlphaInterpolator(Interpolator* ai)
+    {
+        _ai = ai;
+    }
+
+    inline void Particle::setColorInterpolator(Interpolator* ci)
+    {
+        _ci = ci;
+    }
+
+    inline void Particle::setPosition(const osg::Vec3& p)
+    {
+        _position = p;
+    }
+
+    inline void Particle::setVelocity(const osg::Vec3& v)
+    {
+        _velocity = v;
+    }
+
+    inline void Particle::addVelocity(const osg::Vec3& dv)
+    {
+        _velocity += dv;
+    }
+
+    inline void Particle::transformPositionVelocity(const osg::Matrix& xform)
+    {
+        _position = xform.preMult(_position);
+        _velocity = osg::Matrix::transform3x3(_velocity, xform);
+    }
+    
+    inline void Particle::transformPositionVelocity(const osg::Matrix& xform1, const osg::Matrix& xform2, float r)
+    {
+        osg::Vec3 position1 = xform1.preMult(_position);
+        osg::Vec3 velocity1 = osg::Matrix::transform3x3(_velocity, xform1);
+        osg::Vec3 position2 = xform2.preMult(_position);
+        osg::Vec3 velocity2 = osg::Matrix::transform3x3(_velocity, xform2);
+        float one_minus_r = 1.0f-r;
+        _position = position1*r + position2*one_minus_r;
+        _velocity = velocity1*r + velocity2*one_minus_r;
+    }
+    
+    inline void Particle::setAngle(const osg::Vec3& a)
+    {
+        _angle = a;
+    }
+    
+    inline void Particle::setAngularVelocity(const osg::Vec3& v)
+    {
+        _angul_arvel = v;
+    }
+    
+    inline void Particle::addAngularVelocity(const osg::Vec3& dv)
+    {
+        _angul_arvel += dv;
+    }
+    
+    inline void Particle::transformAngleVelocity(const osg::Matrix& xform)
+    {
+        // this should be optimized!
+        
+        osg::Vec3 a1 = _angle + _angul_arvel;
+        
+        _angle = xform.preMult(_angle);
+        a1 = xform.preMult(a1);
+        
+        _angul_arvel = a1 - _angle;
+    }
+            
+    inline float Particle::getMass() const
+    {
+        return _mass;
+    }
+    
+    inline float Particle::getMassInv() const
+    {
+        return _massinv;
+    }
+    
+    inline void Particle::setMass(float m)
+    {
+        _mass = m;
+        _massinv = 1 / m;
+    }
+    
+    inline void Particle::beginRender(osg::GLBeginEndAdapter* gl) const
+    {
+        switch (_shape)
+        {
+        case POINT:
+            gl->Begin(GL_POINTS);
+            break;
+        case QUAD:
+            gl->Begin(GL_QUADS);
+            break;
+        case LINE:
+            gl->Begin(GL_LINES);
+            break;
+        default: ;
+        }
+    }
+
+    inline void Particle::endRender(osg::GLBeginEndAdapter* gl) const
+    {
+        switch (_shape)
+        {
+        case POINT:
+        case QUAD:
+        case LINE:
+            gl->End();
+            break;
+        default: ;
+        }
+    }
+
+    inline float Particle::getCurrentSize() const
+    {
+        return _current_size;
+    }
+
+
+    inline void Particle::setTextureTile(int sTile, int tTile, int end)
+    {
+        setTextureTileRange(sTile, tTile, -1, end);
+    }
+
+    inline void Particle::setTextureTileRange(int sTile, int tTile, int startTile, int endTile)
+    {
+       _s_tile = (sTile>0) ? 1.0f / static_cast<float>(sTile) : 1.0f;
+       _t_tile = (tTile>0) ? 1.0f / static_cast<float>(tTile) : 1.0f;
+       
+       if(startTile == -1)
+       {
+          _start_tile = 0;
+       }
+       else
+       {
+          _start_tile = startTile;
+       }
+
+       if(endTile == -1)
+       {
+          _end_tile = sTile * tTile;
+       }
+       else
+       {
+          _end_tile = endTile;
+       }
+    }
+
+}
+
+#endif
+

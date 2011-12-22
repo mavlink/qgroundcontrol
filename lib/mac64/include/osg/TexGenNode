@@ -1,0 +1,78 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_TexGenNode
+#define OSG_TexGenNode 1
+
+#include <osg/Group>
+#include <osg/TexGen>
+
+namespace osg {
+
+/** Node for defining the position of TexGen in the scene. */
+class OSG_EXPORT TexGenNode : public Group
+{
+
+    public:
+
+        TexGenNode();
+        TexGenNode(TexGen* texgen);
+
+        TexGenNode(const TexGenNode& tgb, const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        META_Node(osg, TexGenNode);
+    
+        
+        enum ReferenceFrame
+        {
+            RELATIVE_RF,
+            ABSOLUTE_RF
+        };
+        
+        /** Set the TexGenNode's ReferenceFrame, either to be relative to its
+          * parent reference frame. */
+        void setReferenceFrame(ReferenceFrame rf);
+        
+        /** Get the TexGenNode's ReferenceFrame.*/
+        ReferenceFrame getReferenceFrame() const { return _referenceFrame; }
+
+        /** Set the texture unit that this TexGenNode is associated with.*/
+        void setTextureUnit(unsigned int textureUnit) { _textureUnit = textureUnit; }
+
+        unsigned int getTextureUnit() const { return _textureUnit; }
+
+        /** Set the TexGen. */
+        void setTexGen(TexGen* texgen);
+        
+        /** Get the TexGen. */
+        inline TexGen* getTexGen() { return _texgen.get(); }
+
+        /** Get the const TexGen. */
+        inline const TexGen* getTexGen() const { return _texgen.get(); }
+
+        /** Set whether to use a mutex to ensure ref() and unref() are thread safe.*/
+        virtual void setThreadSafeRefUnref(bool threadSafe);
+
+    protected:
+
+        virtual ~TexGenNode();
+
+        unsigned int _textureUnit;
+        osg::ref_ptr<TexGen> _texgen;
+
+        ReferenceFrame                  _referenceFrame;
+};
+
+}
+
+#endif
