@@ -1,0 +1,134 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2008 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+
+#ifndef OSGANIMATION_TARGET
+#define OSGANIMATION_TARGET 1
+
+#include <vector>
+#include <osg/Quat>
+#include <osg/Vec3>
+#include <osg/Vec2>
+#include <osg/Vec4>
+#include <osg/Referenced>
+#include <osgAnimation/Export>
+
+namespace osgAnimation 
+{
+
+    class Channel;
+
+    class OSGANIMATION_EXPORT Target : public osg::Referenced
+    {
+    public:
+            
+        Target();
+        virtual ~Target() {}
+        void reset() { _weight = 0; _priorityWeight = 0; }
+        int getCount() const { return referenceCount(); }
+        float getWeight() const { return _weight; }
+    protected:
+        float _weight;
+        float _priorityWeight;
+        int _lastPriority;
+    };
+
+
+    template <class T>
+    class TemplateTarget : public Target
+    {
+    public:
+            
+        TemplateTarget() : _target() {}
+        TemplateTarget(const T& v) { setValue(v); }
+        TemplateTarget(const TemplateTarget& v) { setValue(v.getValue()); }
+
+        inline void lerp(float t, const T& a, const T& b);
+
+        /**
+         *  The priority is used to detect a change of priority
+         *  It's important to update animation target in priority
+         *  order. eg:
+         *  all animation with priority 1
+         *  all animation with priority 0
+         *  all animation with priority -1
+         *  ...
+         */
+        void update(float weight, const T& val, int priority)
+        {
+            if (_weight || _priorityWeight)
+            {
+                if (_lastPriority != priority)
+                {
+                    // change in priority
+                    // add to weight with the same previous priority cumulated weight
+                    _weight += _priorityWeight * (1.0 - _weight);
+                    _priorityWeight = 0;
+                    _lastPriority = priority;
+                }
+
+                _priorityWeight += weight;
+                float t = (1.0 - _weight) * weight / _priorityWeight;
+                lerp(t, _target, val);
+            }
+            else
+            {
+                _priorityWeight = weight;
+                _lastPriority = priority;
+                _target = val;
+            }
+        }
+        const T& getValue() const { return _target; }
+
+        void setValue(const T& value) { _target = value; }
+
+    protected:
+
+        T _target;
+    };
+
+    template <class T>
+    inline void TemplateTarget<T>::lerp(float t, const T& a, const T& b)
+    {
+        _target = a * (1.0f - t) + b * t;
+    }
+
+    template <>
+    inline void TemplateTarget<osg::Quat>::lerp(float t, const osg::Quat& a, const osg::Quat& b)
+    {
+        if (a.asVec4() * b.asVec4() < 0.0)
+        {
+            _target = a * (1.0f - t) + b * -t;
+        }
+        else
+        {
+            _target = a * (1.0f - t) + b * t;
+        }
+
+        osg::Quat::value_type len2 = _target.length2();
+        if ( len2 != 1.0 && len2 != 0.0) 
+            _target *= 1.0/sqrt(len2);
+    }
+
+    typedef TemplateTarget<osg::Matrixf> MatrixTarget;
+    typedef TemplateTarget<osg::Quat> QuatTarget;
+    typedef TemplateTarget<osg::Vec3> Vec3Target;
+    typedef TemplateTarget<osg::Vec4> Vec4Target;
+    typedef TemplateTarget<osg::Vec2> Vec2Target;
+    typedef TemplateTarget<float> FloatTarget;
+    typedef TemplateTarget<double> DoubleTarget;
+  
+}
+
+#endif

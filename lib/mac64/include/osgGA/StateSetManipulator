@@ -1,0 +1,110 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGGA_STATESET_MANIPULATOR
+#define OSGGA_STATESET_MANIPULATOR 1
+
+#include <osgGA/Export>
+#include <osgGA/GUIEventAdapter>
+#include <osgGA/GUIActionAdapter>
+#include <osgGA/GUIEventHandler>
+
+#include <osg/StateSet>
+#include <osg/PolygonMode>
+
+
+namespace osgGA {
+
+/**
+Experimental class, not been looked at for a while, but which will
+be returned to at some point :-\
+*/
+class OSGGA_EXPORT StateSetManipulator : public GUIEventHandler
+{
+public:
+
+        StateSetManipulator(osg::StateSet* stateset=0);
+
+        virtual const char* className() const { return "StateSetManipulator"; }
+
+        /** attach a StateSet to the manipulator to be used for specifying view.*/
+        virtual void setStateSet(osg::StateSet*);
+
+        /** get the attached a StateSet.*/
+        virtual osg::StateSet * getStateSet();
+
+        /** get the attached a StateSet.*/
+        virtual const osg::StateSet * getStateSet() const;
+        
+
+        /** Handle events, return true if handled, false otherwise.*/
+        virtual bool handle(const GUIEventAdapter& ea,GUIActionAdapter& us);        
+
+        /** Get the keyboard and mouse usage of this manipulator.*/
+        virtual void getUsage(osg::ApplicationUsage& usage) const;
+        
+        void setMaximumNumOfTextureUnits(unsigned int i) { _maxNumOfTextureUnits = i; }
+        unsigned int getMaximumNumOfTextureUnits() const { return _maxNumOfTextureUnits; }
+        
+        void setBackfaceEnabled(bool newbackface);
+        bool getBackfaceEnabled() const {return _backface;};
+
+        void setLightingEnabled(bool newlighting);
+        bool getLightingEnabled() const {return _lighting;};
+
+        void setTextureEnabled(bool newtexture);
+        bool getTextureEnabled() const {return _texture;};
+
+        void setPolygonMode(osg::PolygonMode::Mode newpolygonmode);
+        osg::PolygonMode::Mode getPolygonMode() const;
+        
+        void cyclePolygonMode();
+
+
+        void setKeyEventToggleBackfaceCulling(int key) { _keyEventToggleBackfaceCulling = key; }
+        int getKeyEventToggleBackfaceCulling() const { return _keyEventToggleBackfaceCulling; }
+
+        void setKeyEventToggleLighting(int key) { _keyEventToggleLighting = key; }
+        int getKeyEventToggleLighting() const { return _keyEventToggleLighting; }
+
+        void setKeyEventToggleTexturing(int key) { _keyEventToggleTexturing = key; }
+        int getKeyEventToggleTexturing() const { return _keyEventToggleTexturing; }
+
+        void setKeyEventCyclePolygonMode(int key) { _keyEventCyclePolygonMode = key; }
+        int getKeyEventCyclePolygonMode() const { return _keyEventCyclePolygonMode; }
+
+protected:
+
+        virtual ~StateSetManipulator();
+
+        void clone();
+
+        osg::ref_ptr<osg::StateSet> _stateset;
+
+        bool _initialized;
+        bool _backface;
+        bool _lighting;
+        bool _texture;
+        unsigned int _maxNumOfTextureUnits;
+        
+        int _keyEventToggleBackfaceCulling;
+        int _keyEventToggleLighting;
+        int _keyEventToggleTexturing;
+        int _keyEventCyclePolygonMode;
+
+        osg::PolygonMode* getOrCreatePolygonMode();
+};
+
+}
+
+#endif

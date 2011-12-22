@@ -1,0 +1,77 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_POSTIONALSTATECONTIANER
+#define OSGUTIL_POSTIONALSTATECONTIANER 1
+
+#include <osg/Object>
+#include <osg/Light>
+#include <osg/State>
+
+#include <osgUtil/RenderLeaf>
+#include <osgUtil/StateGraph>
+
+namespace osgUtil {
+
+/**
+ * PositionalStateContainer base class. Used in RenderStage class.
+ */
+class OSGUTIL_EXPORT PositionalStateContainer : public osg::Object
+{
+    public:
+    
+
+        PositionalStateContainer();
+        virtual osg::Object* cloneType() const { return new PositionalStateContainer(); }
+        virtual osg::Object* clone(const osg::CopyOp&) const { return new PositionalStateContainer(); } // note only implements a clone of type.
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const PositionalStateContainer*>(obj)!=0L; }
+        virtual const char* libraryName() const { return "osgUtil"; }
+        virtual const char* className() const { return "PositionalStateContainer"; }
+
+        virtual void reset();
+        
+        typedef std::pair< osg::ref_ptr<const osg::StateAttribute> , osg::ref_ptr<osg::RefMatrix> >    AttrMatrixPair;
+        typedef std::vector< AttrMatrixPair >                                            AttrMatrixList;
+        typedef std::map< unsigned int, AttrMatrixList >                                 TexUnitAttrMatrixListMap;
+
+        AttrMatrixList& getAttrMatrixList() { return _attrList; }
+
+        virtual void addPositionedAttribute(osg::RefMatrix* matrix,const osg::StateAttribute* attr)
+        {
+            _attrList.push_back(AttrMatrixPair(attr,matrix));
+        }
+
+        TexUnitAttrMatrixListMap& getTexUnitAttrMatrixListMap() { return _texAttrListMap; }
+
+        virtual void addPositionedTextureAttribute(unsigned int textureUnit, osg::RefMatrix* matrix,const osg::StateAttribute* attr)
+        {
+            _texAttrListMap[textureUnit].push_back(AttrMatrixPair(attr,matrix));
+        }
+
+        virtual void draw(osg::State& state,RenderLeaf*& previous, const osg::Matrix* postMultMatrix = 0);
+        
+    public:
+        
+        AttrMatrixList              _attrList;
+        TexUnitAttrMatrixListMap    _texAttrListMap;
+        
+    protected:
+    
+        virtual ~PositionalStateContainer();
+
+};
+
+}
+
+#endif
+
