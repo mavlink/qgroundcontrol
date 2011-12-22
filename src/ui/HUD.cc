@@ -153,6 +153,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
+    resize(this->width(), this->height());
     //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 
     // Set size once
@@ -661,6 +662,10 @@ void HUD::paintHUD()
                 nextOfflineImage = "";
             }
 
+        }
+
+        if (dataStreamEnabled || videoEnabled)
+        {
             glRasterPos2i(0, 0);
 
             xImageFactor = width() / (float)glImage.width();

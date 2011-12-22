@@ -554,6 +554,10 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
+    /** @brief Point cloud data has been changed */
+    void pointCloudChanged(UASInterface* uas);
+    /** @brief RGBD image data has been changed */
+    void rgbdImageChanged(UASInterface* uas);
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 

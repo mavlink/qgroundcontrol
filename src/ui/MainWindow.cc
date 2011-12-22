@@ -51,6 +51,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCSettingsWidget.h"
 #include "QGCMapTool.h"
 #include "MAVLinkDecoder.h"
+#include "QGCRGBDView.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -459,9 +460,9 @@ void MainWindow::buildCommonWidgets()
 
     if (!video1DockWidget) {
         video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
-        HUD* video1 =  new HUD(160, 120, this);
+        QGCRGBDView* video1 =  new QGCRGBDView(160, 120, this);
         video1->enableHUDInstruments(false);
-        video1->enableVideo(true);
+        video1->enableVideo(false);
         // FIXME select video stream as well
         video1DockWidget->setWidget(video1);
         video1DockWidget->setObjectName("VIDEO_STREAM_1_DOCK_WIDGET");
@@ -470,14 +471,36 @@ void MainWindow::buildCommonWidgets()
 
     if (!video2DockWidget) {
         video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
-        HUD* video2 =  new HUD(160, 120, this);
+        QGCRGBDView* video2 =  new QGCRGBDView(160, 120, this);
         video2->enableHUDInstruments(false);
-        video2->enableVideo(true);
+        video2->enableVideo(false);
         // FIXME select video stream as well
         video2DockWidget->setWidget(video2);
         video2DockWidget->setObjectName("VIDEO_STREAM_2_DOCK_WIDGET");
         addTool(video2DockWidget, tr("Video Stream 2"), Qt::LeftDockWidgetArea);
     }
+
+//    if (!rgbd1DockWidget) {
+//        rgbd1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
+//        HUD* video1 =  new HUD(160, 120, this);
+//        video1->enableHUDInstruments(false);
+//        video1->enableVideo(true);
+//        // FIXME select video stream as well
+//        video1DockWidget->setWidget(video1);
+//        video1DockWidget->setObjectName("VIDEO_STREAM_1_DOCK_WIDGET");
+//        addTool(video1DockWidget, tr("Video Stream 1"), Qt::LeftDockWidgetArea);
+//    }
+
+//    if (!rgbd2DockWidget) {
+//        video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
+//        HUD* video2 =  new HUD(160, 120, this);
+//        video2->enableHUDInstruments(false);
+//        video2->enableVideo(true);
+//        // FIXME select video stream as well
+//        video2DockWidget->setWidget(video2);
+//        video2DockWidget->setObjectName("VIDEO_STREAM_2_DOCK_WIDGET");
+//        addTool(video2DockWidget, tr("Video Stream 2"), Qt::LeftDockWidgetArea);
+//    }
 
     // Custom widgets, added last to all menus and layouts
     buildCustomWidget();
