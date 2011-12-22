@@ -1,0 +1,317 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGSIM_SPHERESEGMENT
+#define OSGSIM_SPHERESEGMENT 1
+
+#include <osgSim/Export>
+
+#include <osg/Vec3>
+#include <osg/Vec4>
+#include <osg/Geode>
+#include <osg/Matrixd>
+#include <osg/BlendFunc>
+
+namespace osgSim{
+
+/**
+A SphereSegment is a Geode to represent an portion of a sphere (potentially
+the whole sphere). The sphere is aligned such that the line through the
+sphere's poles is parallel to the z axis. The sphere segment
+may be rendered various components switched on or off:
+
+    - The specified area of the sphere surface.
+
+    - An edge line around the boundary of the specified area
+      of the sphere surface.
+
+    - Four <i>spokes</i>, where a spoke is the line from
+      the sphere's centre to a corner of the rendered area.
+
+    - Four planar areas, where the planar areas are formed
+      between the spokes.
+
+Caveats:
+
+    - It's worth noting that the line through the sphere's poles is
+      parallel to the z axis. This has implications when specifying the
+      area to be rendered, and specifying areas where the centre of
+      the rendered area <i>is</i> the Z axis may lead to unexpected
+      geometry.
+
+    - It's possible to render the whole sphere by specifying elevation
+      and azimuth ranges round the full 360 degrees. When doing
+      so you may consider switching the planes, spokes, and edge lines
+      off, to avoid rendering artefacts, e.g. the upper and lower
+      planes will be coincident.
+
+*/
+class OSGSIM_EXPORT SphereSegment: public osg::Geode
+{
+public:
+
+    /**
+    DrawMask represents a bit field, the values of which may be OR'ed together
+    to specify which parts of the sphere segment should be drawn. E.g.
+    \code
+    sphereSegment->setDrawMask(SphereSegment::DrawMask(SphereSegment::SURFACE|SphereSegment::SPOKES));
+    \endcode
+    */
+    enum DrawMask{
+        SURFACE =   0x00000001, ///< Draw the specified area on the sphere's surface
+        SPOKES =    0x00000002, ///< Draw the spokes from the sphere's centre to the surface's corners
+        EDGELINE =  0x00000008, ///< Draw the line round the edge of the area on the sphere's surface
+        SIDES =     0x00000010, ///< Draw the planes from the sphere's centre to the edge of the sphere's surface
+        ALL =       0x7fffffff  ///< Draw every part of the sphere segment
+    };
+
+
+    /** Default constructor. */
+    SphereSegment():osg::Geode(),
+                    _centre(0.0f,0.0f,0.0f), _radius(1.0f),
+                    _azMin(0.0f), _azMax(osg::PI/2.0f),
+                    _elevMin(0.0f), _elevMax(osg::PI/2.0f),
+                    _density(10),
+                    _drawMask(DrawMask(ALL))
+    {
+        init();
+    }
+
+    /**
+    Construct by angle ranges. Note that the azimuth 'zero' is the Y axis; specifying
+    an azimuth range from azMin -osg::PI/2.0f to azMax osg::PI/2.0f will cover the
+    'top half' of the circle in the XY plane. The elev angles are 'out' of the 'zero'
+    XY plane with +ve angles above the plane, and -ve angles below.
+    @param centre       sphere centre
+    @param radius       radius of sphere
+    @param azMin        azimuth minimum
+    @param azMax        azimuth maximum
+    @param elevMin      elevation minimum
+    @param elevMax      elevation maximum
+    @param density      number of units to divide the azimuth and elevation ranges into
+    */
+    SphereSegment(const osg::Vec3& centre, float radius, float azMin, float azMax,
+                    float elevMin, float elevMax, int density):
+        osg::Geode(),
+        _centre(centre), _radius(radius),
+        _azMin(azMin), _azMax(azMax),
+        _elevMin(elevMin), _elevMax(elevMax),
+        _density(density),
+        _drawMask(DrawMask(ALL))
+    {
+        init();
+    }
+
+    /**
+    Construct by vector.
+    @param centre       sphere centre
+    @param radius       radius of sphere
+    @param vec          vector pointing from sphere centre to centre point
+                        of rendered area on sphere surface
+    @param azRange      azimuth range in radians (with centre along vec)
+    @param elevRange    elevation range in radians (with centre along vec)
+    @param density      number of units to divide the azimuth and elevation ranges into
+    */
+    SphereSegment(const osg::Vec3& centre, float radius, const osg::Vec3& vec, float azRange,
+                    float elevRange, int density);
+
+    /** Copy constructor */
+    SphereSegment(const SphereSegment& rhs, const osg::CopyOp& co):
+        osg::Geode(rhs,co),
+        _centre(rhs._centre), _radius(rhs._radius),
+        _azMin(rhs._azMin), _azMax(rhs._azMax),
+        _elevMin(rhs._elevMin), _elevMax(rhs._elevMax),
+        _density(rhs._density),
+        _drawMask(rhs._drawMask)
+    {
+        init();
+    }
+
+    /** Set the centre point of the SphereSegment */
+    void setCentre(const osg::Vec3& c);
+
+    /** Get the centre point of the SphereSegment */
+    const osg::Vec3& getCentre() const;
+
+    /** Set the radius of the SphereSegment */
+    void setRadius(float r);
+
+    /** Get the radius of the SphereSegment */
+    float getRadius() const;
+
+    /** Set the area of the sphere segment
+
+    @param vec          vector pointing from sphere centre to centre point
+                        of rendered area on sphere surface
+    @param azRange      azimuth range in radians (with centre along vec)
+    @param elevRange    elevation range in radians (with centre along vec)
+    */
+    void setArea(const osg::Vec3& vec, float azRange, float elevRange);
+
+    /** Get the area of the sphere segment
+
+    @param vec          vector pointing from sphere centre to centre point
+                        of rendered area on sphere surface (normalized)
+    @param azRange      azimuth range in radians (with centre along vec)
+    @param elevRange    elevation range in radians (with centre along vec)
+    */
+    void getArea(osg::Vec3& vec, float& azRange, float& elevRange) const;
+
+    /** Set the area of the sphere segment
+    @param azMin        azimuth minimum
+    @param azMax        azimuth maximum
+    @param elevMin      elevation minimum
+    @param elevMax      elevation maximum
+    */
+    void setArea(float azMin, float azMax, float elevMin, float elevMax);
+
+    /** Get the area of the sphere segment
+    @param azMin        azimuth minimum
+    @param azMax        azimuth maximum
+    @param elevMin      elevation minimum
+    @param elevMax      elevation maximum
+    */
+    void getArea(float &azMin, float &azMax, float &elevMin, float &elevMax) const;
+
+    /** Set the density of the sphere segment */
+    void setDensity(int d);
+
+    /** Get the density of the sphere segment */
+    int getDensity() const;
+
+    /**
+    Specify the DrawMask.
+    @param dm   Bitmask specifying which parts of the sphere segment should be drawn.
+    @see DrawMask
+    */
+    void setDrawMask(int dm);
+
+    /** Get the DrawMask */
+    int getDrawMask() const { return _drawMask; }
+
+    /** Set the color of the surface. */
+    void setSurfaceColor(const osg::Vec4& c);
+
+    /** Get the color of the surface. */
+    const osg::Vec4& getSurfaceColor() const { return _surfaceColor; }
+
+    /** Set the color of the spokes. */
+    void setSpokeColor(const osg::Vec4& c);
+
+    /** Get the color of the spokes. */
+    const osg::Vec4& getSpokeColor() const { return _spokeColor; }
+
+    /** Set the color of the edge line. */
+    void setEdgeLineColor(const osg::Vec4& c);
+
+    /** Get the color of the edge line. */
+    const osg::Vec4& getEdgeLineColor() const { return _edgeLineColor; }
+
+    /** Set the color of the planes. */
+    void setSideColor(const osg::Vec4& c);
+
+    /** Get the color of the planes. */
+    const osg::Vec4& getSideColor() const { return _planeColor; }
+
+    /** Set color of all components. */
+    void setAllColors(const osg::Vec4& c);
+
+    META_Node(osgSim, SphereSegment);
+    
+    /** A list of vertex arrays representing a list of lines.*/
+    typedef std::vector< osg::ref_ptr<osg::Vec3Array> > LineList;
+    
+    /** Compute the interesection lines between subgraph and this sphere segment.
+      * The matrix is the transform that takes the subgraph into the same coordiante frame as the sphere segment.
+      * The resulting intersections are in the coordinate frame of the sphere segment. */
+    LineList computeIntersection(const osg::Matrixd& matrix, osg::Node* subgraph);
+
+    /** Compute the interesection lines between specified drawable and this sphere segment.
+      * The matrix is the transform that takes the subgraph into the same coordiante frame as the sphere segment.
+      * The resulting intersections are in the coordinate frame of the sphere segment. */
+    LineList computeIntersection(const osg::Matrixd& matrix, osg::Drawable* drawable);
+
+    /** Compute the interesection lines between subgraph and this sphere segment.
+      * The matrix is the transform that takes the subgraph into the same coordiante frame as the sphere segment.
+      * The resulting intersections are in the coordinate frame of the sphere segment. */
+    osg::Node* computeIntersectionSubgraph(const osg::Matrixd& matrix, osg::Node* subgraph);
+
+    /** Compute the interesection lines between specified drawable and this sphere segment.
+      * The matrix is the transform that takes the subgraph into the same coordiante frame as the sphere segment.
+      * The resulting intersections are in the coordinate frame of the sphere segment. */
+    osg::Node* computeIntersectionSubgraph(const osg::Matrixd& matrix, osg::Drawable* drawable);
+
+
+private:
+
+    void init();    // Shared constructor code, generates the drawables
+
+    void dirtyAllDrawableDisplayLists();    // Force re-calling of gl functions
+    void dirtyAllDrawableBounds();          // Force recalculation of bound geometry
+
+    // SphereSegment is actually made up of a number of Drawable classes,
+    // all of which are nested private classes, as declared below. These
+    // classes are defined in the .cpp for minimum visibility and physical
+    // coupling. (Reduces time spent compiling! :-)
+    //
+    // Each of the nested classes holds a pointer to the SphereSegment
+    // 'parent', which stores the geometry details, and performs any
+    // work required. The nested classes are lightweight objects which
+    // just pass the work on.
+    //
+    // Why are things done with these sub-Drawables? Alpha-blended
+    // Drawables need to be drawn last, depth sorted, and the various
+    // components of a SphereSegment also need to be depth sorted
+    // against one another (they may all be drawn with alpha blending).
+    // Making these Drawables allows us to get the OSG to depth sort
+    // for us.
+
+    class Surface;
+    friend class Surface;
+    bool Surface_computeBound(osg::BoundingBox&) const;
+    void Surface_drawImplementation(osg::State&) const;
+
+    class EdgeLine;
+    friend class EdgeLine;
+    bool EdgeLine_computeBound(osg::BoundingBox&) const;
+    void EdgeLine_drawImplementation(osg::State&) const;
+
+    enum BoundaryAngle{MIN,MAX};        // Why here and not in Side class? Because we can't forward
+    enum SideOrientation{AZIM,ELEV};   // declare enums, Side is in the .cpp, and this is tidier...
+    class Side;
+    friend class Side;
+    bool Side_computeBound(osg::BoundingBox&, SideOrientation, BoundaryAngle) const;
+    void Side_drawImplementation(osg::State&, SideOrientation, BoundaryAngle) const;
+
+    class Spoke;
+    friend class Spoke;
+    bool Spoke_computeBound(osg::BoundingBox&, BoundaryAngle, BoundaryAngle) const;
+    void Spoke_drawImplementation(osg::State&, BoundaryAngle, BoundaryAngle) const;
+
+    // Sphere segment geometry details
+    osg::Vec3 _centre;
+    float _radius;
+    float _azMin, _azMax, _elevMin, _elevMax;
+    int _density;
+
+    // Draw details
+    int         _drawMask;
+    osg::Vec4   _surfaceColor;
+    osg::Vec4   _spokeColor;
+    osg::Vec4   _edgeLineColor;
+    osg::Vec4   _planeColor;
+};
+
+}
+
+#endif

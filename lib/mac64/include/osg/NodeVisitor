@@ -1,0 +1,369 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_NODEVISITOR
+#define OSG_NODEVISITOR 1
+
+#include <osg/Node>
+#include <osg/Matrix>
+#include <osg/FrameStamp>
+
+namespace osg {
+
+class Billboard;
+class ClearNode;
+class ClipNode;
+class CoordinateSystemNode;
+class Geode;
+class Group;
+class LightSource;
+class LOD;
+class MatrixTransform;
+class OccluderNode;
+class OcclusionQueryNode;
+class PagedLOD;
+class PositionAttitudeTransform;
+class Projection;
+class ProxyNode;
+class Sequence;
+class Switch;
+class TexGenNode;
+class Transform;
+class Camera;
+class CameraView;
+
+const unsigned int UNINITIALIZED_FRAME_NUMBER=0xffffffff;
+
+#define META_NodeVisitor(library,name) \
+        virtual const char* libraryName() const { return #library; }\
+        virtual const char* className() const { return #name; }
+
+/** Visitor for type safe operations on osg::Nodes.
+    Based on GOF's Visitor pattern. The NodeVisitor 
+    is useful for developing type safe operations to nodes
+    in the scene graph (as per Visitor pattern), and adds to this
+    support for optional scene graph traversal to allow
+    operations to be applied to whole scenes at once. The Visitor
+    pattern uses a technique of double dispatch as a mechanism to
+    call the appropriate apply(..) method of the NodeVisitor.  To
+    use this feature one must use the Node::accept(NodeVisitor) which
+    is extended in each Node subclass, rather than the NodeVisitor
+    apply directly.  So use root->accept(myVisitor); instead of
+    myVisitor.apply(*root).  The later method will bypass the double
+    dispatch and the appropriate NodeVisitor::apply(..) method will
+    not be called. */ 
+class OSG_EXPORT NodeVisitor : public virtual Referenced
+{
+    public:
+
+        enum TraversalMode
+        {
+            TRAVERSE_NONE,
+            TRAVERSE_PARENTS,
+            TRAVERSE_ALL_CHILDREN,
+            TRAVERSE_ACTIVE_CHILDREN
+        };
+        
+        enum VisitorType
+        {
+            NODE_VISITOR = 0,
+            UPDATE_VISITOR,
+            EVENT_VISITOR,
+            COLLECT_OCCLUDER_VISITOR,
+            CULL_VISITOR
+        };
+
+        NodeVisitor(TraversalMode tm=TRAVERSE_NONE);
+        
+        NodeVisitor(VisitorType type,TraversalMode tm=TRAVERSE_NONE);
+        
+        virtual ~NodeVisitor();
+        
+        /** return the library name/namespapce of the visitor's. Should be defined by derived classes.*/
+        virtual const char* libraryName() const { return "osg"; }
+
+        /** return the name of the visitor's class type. Should be defined by derived classes.*/
+        virtual const char* className() const { return "NodeVisitor"; }
+
+        /** Method to call to reset visitor. Useful if your visitor accumulates
+            state during a traversal, and you plan to reuse the visitor. 
+            To flush that state for the next traversal: call reset() prior
+            to each traversal.*/
+        virtual void reset() {}
+
+
+        /** Set the VisitorType, used to distinguish different visitors during
+          * traversal of the scene, typically used in the Node::traverse() method
+          * to select which behaviour to use for different types of traversal/visitors.*/
+        inline void setVisitorType(VisitorType type) { _visitorType = type; }
+        
+        /** Get the VisitorType.*/
+        inline VisitorType getVisitorType() const { return _visitorType; }
+
+        /** Set the traversal number. Typically used to denote the frame count.*/
+        inline void setTraversalNumber(unsigned int fn) { _traversalNumber = fn; }
+        
+        /** Get the traversal number. Typically used to denote the frame count.*/
+        inline unsigned int getTraversalNumber() const { return _traversalNumber; }
+
+        /** Set the FrameStamp that this traversal is associated with.*/
+        inline void setFrameStamp(FrameStamp* fs) { _frameStamp = fs; }
+        
+        /** Get the FrameStamp that this traversal is associated with.*/
+        inline const FrameStamp* getFrameStamp() const { return _frameStamp.get(); }
+
+
+        /** Set the TraversalMask of this NodeVisitor.
+          * The TraversalMask is used by the NodeVisitor::validNodeMask() method
+          * to determine whether to operate on a node and its subgraph.
+          * validNodeMask() is called automatically in the Node::accept() method before
+          * any call to NodeVisitor::apply(), apply() is only ever called if validNodeMask
+          * returns true. Note, if NodeVisitor::_traversalMask is 0 then all operations
+          * will be switched off for all nodes.  Whereas setting both _traversalMask and
+          * _nodeMaskOverride to 0xffffffff will allow a visitor to work on all nodes
+          * regardless of their own Node::_nodeMask state.*/
+        inline void setTraversalMask(Node::NodeMask mask) { _traversalMask = mask; }
+
+        /** Get the TraversalMask.*/
+        inline Node::NodeMask getTraversalMask() const { return _traversalMask; }
+
+        /** Set the NodeMaskOverride mask.
+          * Used in validNodeMask() to determine whether to operate on a node or its 
+          * subgraph, by OR'ing NodeVisitor::_nodeMaskOverride with the Node's own Node::_nodeMask.
+          * Typically used to force on nodes which may have
+          * been switched off by their own Node::_nodeMask.*/
+        inline void setNodeMaskOverride(Node::NodeMask mask) { _nodeMaskOverride = mask; }
+
+        /** Get the NodeMaskOverride mask.*/
+        inline Node::NodeMask getNodeMaskOverride() const { return _nodeMaskOverride; }
+        
+        /** Method to called by Node and its subclass' Node::accept() method, if the result is true
+          * it is used to cull operations of nodes and their subgraphs.
+          * Return true if the result of a bit wise and of the NodeVisitor::_traversalMask
+          * with the bit or between NodeVistor::_nodeMaskOverride and the Node::_nodeMask.
+          * default values for _traversalMask is 0xffffffff, _nodeMaskOverride is 0x0,
+          * and osg::Node::_nodeMask is 0xffffffff. */
+        inline bool validNodeMask(const osg::Node& node) const
+        {
+            return (getTraversalMask() & (getNodeMaskOverride() | node.getNodeMask()))!=0;
+        }
+
+        /** Set the traversal mode for Node::traverse() to use when 
+            deciding which children of a node to traverse. If a
+            NodeVisitor has been attached via setTraverseVisitor()
+            and the new mode is not TRAVERSE_VISITOR then the attached
+            visitor is detached. Default mode is TRAVERSE_NONE.*/
+        inline void setTraversalMode(TraversalMode mode) { _traversalMode = mode; }
+        
+        /** Get the traversal mode.*/
+        inline TraversalMode getTraversalMode() const { return _traversalMode; }
+
+        /**
+         * Set user data, data must be subclassed from Referenced to allow
+         * automatic memory handling.  If your own data isn't directly 
+         * subclassed from Referenced then create an adapter object
+         * which points to your own objects and handles the memory addressing.
+         */
+        inline void setUserData(Referenced* obj) { _userData = obj; }
+        
+        /** Get user data.*/
+        inline Referenced* getUserData() { return _userData.get(); }
+        
+        /** Get const user data.*/
+        inline const Referenced* getUserData() const { return _userData.get(); }
+
+
+        /** Method for handling traversal of a nodes.
+            If you intend to use the visitor for actively traversing 
+            the scene graph then make sure the accept() methods call
+            this method unless they handle traversal directly.*/
+        inline void traverse(Node& node)
+        {
+            if (_traversalMode==TRAVERSE_PARENTS) node.ascend(*this);
+            else if (_traversalMode!=TRAVERSE_NONE) node.traverse(*this);
+        }
+        
+        /** Method called by osg::Node::accept() method before
+          * a call to the NodeVisitor::apply(..).  The back of the list will,
+          * therefore, be the current node being visited inside the apply(..),
+          * and the rest of the list will be the parental sequence of nodes 
+          * from the top most node applied down the graph to the current node.
+          * Note, the user does not typically call pushNodeOnPath() as it
+          * will be called automatically by the Node::accept() method.*/
+        inline void pushOntoNodePath(Node* node) { if (_traversalMode!=TRAVERSE_PARENTS) _nodePath.push_back(node); else _nodePath.insert(_nodePath.begin(),node); }
+        
+        /** Method called by osg::Node::accept() method after
+          * a call to NodeVisitor::apply(..).
+          * Note, the user does not typically call popFromNodePath() as it
+          * will be called automatically by the Node::accept() method.*/
+        inline void popFromNodePath()            { if (_traversalMode!=TRAVERSE_PARENTS) _nodePath.pop_back(); else _nodePath.erase(_nodePath.begin()); }
+        
+        /** Get the non const NodePath from the top most node applied down
+          * to the current Node being visited.*/
+        NodePath& getNodePath() { return _nodePath; }
+
+        /** Get the const NodePath from the top most node applied down
+          * to the current Node being visited.*/
+        const NodePath& getNodePath() const { return _nodePath; }
+        
+        /** Get the eye point in local coordinates.
+          * Note, not all NodeVisitor implement this method, it is mainly cull visitors which will implement.*/
+        virtual osg::Vec3 getEyePoint() const { return Vec3(0.0f,0.0f,0.0f); }
+
+        /** Get the view point in local coordinates.
+          * Note, not all NodeVisitor implement this method, it is mainly cull visitors which will implement.*/
+        virtual osg::Vec3 getViewPoint() const { return getEyePoint(); }
+
+        /** Get the distance from a point to the eye point, distance value in local coordinate system.
+          * Note, not all NodeVisitor implement this method, it is mainly cull visitors which will implement.
+          * If the getDistanceFromEyePoint(pos) is not implemented then a default value of 0.0 is returned.*/
+        virtual float getDistanceToEyePoint(const Vec3& /*pos*/, bool /*useLODScale*/) const { return 0.0f; }
+
+        /** Get the distance of a point from the eye point, distance value in the eye coordinate system.
+          * Note, not all NodeVisitor implement this method, it is mainly cull visitors which will implement.
+          * If the getDistanceFromEyePoint(pos) is not implemented than a default value of 0.0 is returned.*/
+        virtual float getDistanceFromEyePoint(const Vec3& /*pos*/, bool /*useLODScale*/) const { return 0.0f; }
+
+        /** Get the distance from a point to the view point, distance value in local coordinate system.
+          * Note, not all NodeVisitor implement this method, it is mainly cull visitors which will implement.
+          * If the getDistanceToViewPoint(pos) is not implemented then a default value of 0.0 is returned.*/
+        virtual float getDistanceToViewPoint(const Vec3& /*pos*/, bool /*useLODScale*/) const { return 0.0f; }
+        
+
+        virtual void apply(Node& node);
+        
+        virtual void apply(Geode& node);
+        virtual void apply(Billboard& node);
+        
+        virtual void apply(Group& node);
+
+        virtual void apply(ProxyNode& node);
+
+        virtual void apply(Projection& node);
+
+        virtual void apply(CoordinateSystemNode& node);
+
+        virtual void apply(ClipNode& node);
+        virtual void apply(TexGenNode& node);
+        virtual void apply(LightSource& node);
+
+        virtual void apply(Transform& node);
+        virtual void apply(Camera& node);
+        virtual void apply(CameraView& node);
+        virtual void apply(MatrixTransform& node);
+        virtual void apply(PositionAttitudeTransform& node);
+
+        virtual void apply(Switch& node);
+        virtual void apply(Sequence& node);
+        virtual void apply(LOD& node);
+        virtual void apply(PagedLOD& node);
+        virtual void apply(ClearNode& node);
+        virtual void apply(OccluderNode& node);
+        virtual void apply(OcclusionQueryNode& node);
+
+
+        /** Callback for managing database paging, such as generated by PagedLOD nodes.*/
+        class DatabaseRequestHandler : public osg::Referenced
+        {
+        public:
+
+            DatabaseRequestHandler():
+                Referenced(true) {}
+
+             virtual void requestNodeFile(const std::string& fileName, osg::NodePath& nodePath, float priority, const FrameStamp* framestamp, osg::ref_ptr<osg::Referenced>& databaseRequest, const osg::Referenced* options=0) = 0;
+
+        protected:
+            virtual ~DatabaseRequestHandler() {}
+        };
+
+        /** Set the handler for database requests.*/
+        void setDatabaseRequestHandler(DatabaseRequestHandler* handler) { _databaseRequestHandler = handler; }
+
+        /** Get the handler for database requests.*/
+        DatabaseRequestHandler* getDatabaseRequestHandler() { return _databaseRequestHandler.get(); }
+
+        /** Get the const handler for database requests.*/
+        const DatabaseRequestHandler* getDatabaseRequestHandler() const { return _databaseRequestHandler.get(); }
+
+
+        /** Callback for managing image paging, such as generated by PagedLOD nodes.*/
+        class ImageRequestHandler : public osg::Referenced
+        {
+        public:
+        
+            ImageRequestHandler():
+                Referenced(true) {}
+
+            virtual double getPreLoadTime() const = 0;
+            
+            virtual osg::Image* readImageFile(const std::string& fileName) = 0;
+        
+            virtual void requestImageFile(const std::string& fileName,osg::Object* attachmentPoint, int attachmentIndex, double timeToMergeBy, const FrameStamp* framestamp) = 0;
+            
+        protected:
+            virtual ~ImageRequestHandler() {}
+        };
+        
+        /** Set the handler for image requests.*/
+        void setImageRequestHandler(ImageRequestHandler* handler) { _imageRequestHandler = handler; }
+        
+        /** Get the handler for image requests.*/
+        ImageRequestHandler* getImageRequestHandler() { return _imageRequestHandler.get(); }
+
+        /** Get the const handler for image requests.*/
+        const ImageRequestHandler* getImageRequestHandler() const { return _imageRequestHandler.get(); }
+
+
+
+    protected:
+
+        VisitorType                     _visitorType;
+        unsigned int                    _traversalNumber;
+        
+        ref_ptr<FrameStamp>             _frameStamp;
+        
+        TraversalMode                   _traversalMode;
+        Node::NodeMask                  _traversalMask;
+        Node::NodeMask                  _nodeMaskOverride;
+        
+        NodePath                        _nodePath;
+
+        ref_ptr<Referenced>             _userData;
+
+        ref_ptr<DatabaseRequestHandler> _databaseRequestHandler;
+        ref_ptr<ImageRequestHandler>    _imageRequestHandler;
+
+};
+
+
+/** Convenience functor for assisting visiting of arrays of osg::Node's.*/ 
+class NodeAcceptOp
+{
+    public:
+
+        NodeAcceptOp(NodeVisitor& nv):_nv(nv) {}
+        NodeAcceptOp(const NodeAcceptOp& naop):_nv(naop._nv) {}
+
+        void operator () (Node* node) { node->accept(_nv); }
+        void operator () (ref_ptr<Node> node) { node->accept(_nv); }
+
+    protected:
+
+        NodeAcceptOp& operator = (const NodeAcceptOp&) { return *this; }
+
+        NodeVisitor& _nv;
+};
+
+}
+
+#endif
