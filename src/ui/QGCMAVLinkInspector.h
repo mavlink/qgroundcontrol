@@ -28,6 +28,7 @@ public slots:
 protected:
     QMap<int, quint64> lastMessageUpdate; ///< Used to switch between highlight and non-highlighting color
     QMap<int, float> messagesHz; ///< Used to store update rate in Hz
+    QMap<int, unsigned int> messageCount; ///< Used to store the message count
     mavlink_message_t receivedMessages[256]; ///< Available / known messages
     QMap<int, QTreeWidgetItem*> treeWidgetItems;   ///< Available tree widget items
     QTimer updateTimer; ///< Only update at 1 Hz to not overload the GUI
@@ -35,6 +36,9 @@ protected:
 
     // Update one message field
     void updateField(int msgid, int fieldid, QTreeWidgetItem* item);
+
+    static const unsigned int updateInterval = 1000;
+    static const float updateHzLowpass = 0.2f;
 
 private:
     Ui::QGCMAVLinkInspector *ui;
