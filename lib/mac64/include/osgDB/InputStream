@@ -1,0 +1,196 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+// Written by Wang Rui, (C) 2010
+
+#ifndef OSGDB_INPUTSTREAM
+#define OSGDB_INPUTSTREAM
+
+#include <osg/Endian>
+#include <osg/Vec2>
+#include <osg/Vec3>
+#include <osg/Vec4>
+#include <osg/Quat>
+#include <osg/Matrix>
+#include <osg/Array>
+#include <osg/PrimitiveSet>
+#include <osgDB/ReaderWriter>
+#include <osgDB/StreamOperator>
+#include <osgDB/Options>
+#include <iostream>
+#include <sstream>
+
+namespace osgDB
+{
+
+class InputException : public osg::Referenced
+{
+public:
+    InputException( const std::vector<std::string>& fields, const std::string& err ) : _error(err)
+    {
+        for ( unsigned int i=0; i<fields.size(); ++i )
+        {
+            _field += fields[i];
+            _field += " ";
+        }
+    }
+    
+    const std::string& getField() const { return _field; }
+    const std::string& getError() const { return _error; }
+    
+protected:
+    std::string _field;
+    std::string _error;
+};
+
+class OSGDB_EXPORT InputStream
+{
+public:
+    typedef std::map< unsigned int, osg::ref_ptr<osg::Array> > ArrayMap;
+    typedef std::map< unsigned int, osg::ref_ptr<osg::Object> > IdentifierMap;
+    
+    enum ReadType
+    {
+        READ_UNKNOWN = 0,
+        READ_SCENE,
+        READ_IMAGE,
+        READ_OBJECT
+    };
+    
+    InputStream( const osgDB::Options* options );
+    virtual ~InputStream();
+    
+    bool isBinary() const { return _in->isBinary(); }
+    int getFileVersion() const { return _fileVersion; }
+    const osgDB::Options* getOptions() const { return _options.get(); }
+    
+    // Serialization related functions
+    InputStream& operator>>( bool& b ) { _in->readBool(b); checkStream(); return *this; }
+    InputStream& operator>>( char& c ) { _in->readChar(c); checkStream(); return *this; }
+    InputStream& operator>>( signed char& c ) { _in->readSChar(c); checkStream(); return *this; }
+    InputStream& operator>>( unsigned char& c ) { _in->readUChar(c); checkStream(); return *this; }
+    InputStream& operator>>( short& s ) { _in->readShort(s); checkStream(); return *this; }
+    InputStream& operator>>( unsigned short& s ) { _in->readUShort(s); checkStream(); return *this; }
+    InputStream& operator>>( int& i ) { _in->readInt(i); checkStream(); return *this; }
+    InputStream& operator>>( unsigned int& i ) { _in->readUInt(i); checkStream(); return *this; }
+    InputStream& operator>>( long& l ) { _in->readLong(l); checkStream(); return *this; }
+    InputStream& operator>>( unsigned long& l ) { _in->readULong(l); checkStream(); return *this; }
+    InputStream& operator>>( float& f ) { _in->readFloat(f); checkStream(); return *this; }
+    InputStream& operator>>( double& d ) { _in->readDouble(d); checkStream(); return *this; }
+    InputStream& operator>>( std::string& s ) { _in->readString(s); checkStream(); return *this; }
+    InputStream& operator>>( std::istream& (*fn)(std::istream&) ) { _in->readStream(fn); checkStream(); return *this; }
+    InputStream& operator>>( std::ios_base& (*fn)(std::ios_base&) ) { _in->readBase(fn); checkStream(); return *this; }
+    
+    InputStream& operator>>( ObjectGLenum& value ) { _in->readGLenum(value); checkStream(); return *this; }
+    InputStream& operator>>( ObjectProperty& prop ) { _in->readProperty(prop); checkStream(); return *this; }
+    InputStream& operator>>( ObjectMark& mark ) { _in->readMark(mark); checkStream(); return *this; }
+    
+    InputStream& operator>>( osg::Vec2b& v );
+    InputStream& operator>>( osg::Vec3b& v );
+    InputStream& operator>>( osg::Vec4b& v );
+    InputStream& operator>>( osg::Vec4ub& v );
+    InputStream& operator>>( osg::Vec2s& v );
+    InputStream& operator>>( osg::Vec3s& v );
+    InputStream& operator>>( osg::Vec4s& v );
+    InputStream& operator>>( osg::Vec2f& v );
+    InputStream& operator>>( osg::Vec3f& v );
+    InputStream& operator>>( osg::Vec4f& v );
+    InputStream& operator>>( osg::Vec2d& v );
+    InputStream& operator>>( osg::Vec3d& v );
+    InputStream& operator>>( osg::Vec4d& v );
+    InputStream& operator>>( osg::Quat& q );
+    InputStream& operator>>( osg::Plane& p );
+    InputStream& operator>>( osg::Matrixf& mat );
+    InputStream& operator>>( osg::Matrixd& mat );
+    
+    InputStream& operator>>( osg::Array*& a ) { a = readArray(); return *this; }
+    InputStream& operator>>( osg::Image*& img ) { img = readImage(); return *this; }
+    InputStream& operator>>( osg::PrimitiveSet*& p ) { p = readPrimitiveSet(); return *this; }
+    InputStream& operator>>( osg::Object*& obj ) { obj = readObject(); return *this; }
+    
+    InputStream& operator>>( osg::ref_ptr<osg::Array>& ptr ) { ptr = readArray(); return *this; }
+    InputStream& operator>>( osg::ref_ptr<osg::Image>& ptr ) { ptr = readImage(); return *this; }
+    InputStream& operator>>( osg::ref_ptr<osg::PrimitiveSet>& ptr ) { ptr = readPrimitiveSet(); return *this; }
+    
+    template<typename T> InputStream& operator>>( osg::ref_ptr<T>& ptr )
+    { ptr = static_cast<T*>(readObject()); return *this; }
+    
+    // Convenient methods for reading
+    bool matchString( const std::string& str ) { return _in->matchString(str); }
+    void advanceToCurrentEndBracket() { _in->advanceToCurrentEndBracket(); }
+    void readWrappedString( std::string& str ) { _in->readWrappedString(str); checkStream(); }
+    void readCharArray( char* s, unsigned int size ) { _in->readCharArray(s, size); }
+
+    // readSize() use unsigned int for all sizes.
+    unsigned int readSize() { unsigned int size; *this>>size; return size; }
+
+    // Global reading functions
+    osg::Array* readArray();
+    osg::PrimitiveSet* readPrimitiveSet();
+    osg::Image* readImage(bool readFromExternal=true);
+    osg::Object* readObject( osg::Object* existingObj=0 );
+    osg::Object* readObjectFields( const std::string& className, osg::Object* existingObj=0);
+
+    /// set an input iterator, used directly when not using InputStream with a traditional file releated stream.
+    void setInputIterator( InputIterator* ii ) { _in = ii; }
+
+    /// start reading from InputStream treating it as a traditional file releated stream, handles headers and versioning
+    ReadType start( InputIterator* );
+
+    void decompress();
+    
+    // Schema handlers
+    void readSchema( std::istream& fin );
+    void resetSchema();
+    
+    // Exception handlers
+    inline void throwException( const std::string& msg );
+    const InputException* getException() const { return _exception.get(); }
+    
+protected:
+    inline void checkStream();
+    void setWrapperSchema( const std::string& name, const std::string& properties );
+    
+    template<typename T>
+    void readArrayImplementation( T* a, int read_size, bool useByteSwap=false );
+    
+    ArrayMap _arrayMap;
+    IdentifierMap _identifierMap;
+    
+    int _fileVersion;
+    int _byteSwap;
+    bool _useSchemaData;
+    bool _forceReadingImage;
+    std::vector<std::string> _fields;
+    osg::ref_ptr<InputIterator> _in;
+    osg::ref_ptr<InputException> _exception;
+    osg::ref_ptr<const osgDB::Options> _options;
+
+    // store here to avoid a new and a leak in InputStream::decompress
+    std::stringstream* _dataDecompress;
+};
+
+void InputStream::throwException( const std::string& msg )
+{
+    _exception = new InputException(_fields, msg);
+}
+
+void InputStream::checkStream()
+{
+    _in->checkStream();
+    if ( _in->isFailed() )
+        throwException( "InputStream: Failed to read from stream." );
+}
+
+}
+
+#endif
