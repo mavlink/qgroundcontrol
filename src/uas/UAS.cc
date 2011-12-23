@@ -175,23 +175,23 @@ bool UAS::getSelected() const
     return (UASManager::instance()->getActiveUAS() == this);
 }
 
-void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
-{
-    if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
-    {
-        mavlink_named_value_float_t val;
-        mavlink_msg_named_value_float_decode(&message, &val);
-        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
-        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
-    }
-    else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
-    {
-        mavlink_named_value_int_t val;
-        mavlink_msg_named_value_int_decode(&message, &val);
-        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN);
-        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
-    }
-}
+//void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
+//{
+//    if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
+//    {
+//        mavlink_named_value_float_t val;
+//        mavlink_msg_named_value_float_decode(&message, &val);
+//        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
+//        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
+//    }
+//    else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
+//    {
+//        mavlink_named_value_int_t val;
+//        mavlink_msg_named_value_int_decode(&message, &val);
+//        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN);
+//        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
+//    }
+//}
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
@@ -356,11 +356,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 }
 
             break;
-        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
-        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
-            // Receive named value message
-            receiveMessageNamedValue(message);
-            break;
+//        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+//        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
+//            // Receive named value message
+//            receiveMessageNamedValue(message);
+//            break;
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
                 if (multiComponentSourceDetected && message.compid != MAV_COMP_ID_IMU_2)
@@ -938,10 +938,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
-            break;
         case MAVLINK_MSG_ID_DEBUG_VECT:
-            break;
         case MAVLINK_MSG_ID_DEBUG:
+        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
             break;
         default:
             {

@@ -27,8 +27,6 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ITEM, false);
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_COUNT, false);
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
-    messageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, false);
-    messageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
 
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);
@@ -176,6 +174,27 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         mavlink_msg_debug_vect_decode(msg, &debug);
         name = name.arg(QString(debug.name), fieldName);
         time = debug.time_usec / 1000;
+    }
+    else if (msgid == MAVLINK_MSG_ID_DEBUG)
+    {
+        mavlink_debug_t debug;
+        mavlink_msg_debug_decode(msg, &debug);
+        name = name.arg(QString("debug")).arg(debug.ind);
+        time = debug.time_boot_ms;
+    }
+    else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
+    {
+        mavlink_named_value_float_t debug;
+        mavlink_msg_named_value_float_decode(msg, &debug);
+        name = name.arg(debug.name).arg(fieldName);
+        time = debug.time_boot_ms;
+    }
+    else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
+    {
+        mavlink_named_value_int_t debug;
+        mavlink_msg_named_value_int_decode(msg, &debug);
+        name = name.arg(debug.name).arg(fieldName);
+        time = debug.time_boot_ms;
     }
     else
     {
