@@ -100,19 +100,19 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit processChanged(this->uasId, payload.watchdog_id, payload.process_id, payload.state, (payload.muted == 1) ? true : false, payload.crashes, payload.pid);
         }
         break;
-        case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE: {
-            mavlink_vision_position_estimate_t pos;
-            mavlink_msg_vision_position_estimate_decode(&message, &pos);
-            quint64 time = getUnixTime(pos.usec);
-            //emit valueChanged(uasId, "vis. time", pos.usec, time);
-            emit valueChanged(uasId, "vis. roll", "rad", pos.roll, time);
-            emit valueChanged(uasId, "vis. pitch", "rad", pos.pitch, time);
-            emit valueChanged(uasId, "vis. yaw", "rad", pos.yaw, time);
-            emit valueChanged(uasId, "vis. x", "m", pos.x, time);
-            emit valueChanged(uasId, "vis. y", "m", pos.y, time);
-            emit valueChanged(uasId, "vis. z", "m", pos.z, time);
-        }
-        break;
+//        case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE: {
+//            mavlink_vision_position_estimate_t pos;
+//            mavlink_msg_vision_position_estimate_decode(&message, &pos);
+//            quint64 time = getUnixTime(pos.usec);
+//            //emit valueChanged(uasId, "vis. time", pos.usec, time);
+//            emit valueChanged(uasId, "vis. roll", "rad", pos.roll, time);
+//            emit valueChanged(uasId, "vis. pitch", "rad", pos.pitch, time);
+//            emit valueChanged(uasId, "vis. yaw", "rad", pos.yaw, time);
+//            emit valueChanged(uasId, "vis. x", "m", pos.x, time);
+//            emit valueChanged(uasId, "vis. y", "m", pos.y, time);
+//            emit valueChanged(uasId, "vis. z", "m", pos.z, time);
+//        }
+//        break;
 //        case MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE: {
 //            mavlink_global_vision_position_estimate_t pos;
 //            mavlink_msg_global_vision_position_estimate_decode(&message, &pos);
@@ -126,29 +126,29 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //            emit valueChanged(uasId, "glob. vis. z", "m", pos.z, time);
 //        }
 //        break;
-        case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE: {
-            mavlink_vicon_position_estimate_t pos;
-            mavlink_msg_vicon_position_estimate_decode(&message, &pos);
-            quint64 time = getUnixTime(pos.usec);
-            //emit valueChanged(uasId, "vis. time", pos.usec, time);
-            emit valueChanged(uasId, "vicon roll", "rad", pos.roll, time);
-            emit valueChanged(uasId, "vicon pitch", "rad", pos.pitch, time);
-            emit valueChanged(uasId, "vicon yaw", "rad", pos.yaw, time);
-            emit valueChanged(uasId, "vicon x", "m", pos.x, time);
-            emit valueChanged(uasId, "vicon y", "m", pos.y, time);
-            emit valueChanged(uasId, "vicon z", "m", pos.z, time);
-            //emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-        }
-        break;
-        case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE: {
-            mavlink_vision_speed_estimate_t speed;
-            mavlink_msg_vision_speed_estimate_decode(&message, &speed);
-            quint64 time = getUnixTime(speed.usec);
-            emit valueChanged(uasId, "vis. speed x", "m/s", speed.x, time);
-            emit valueChanged(uasId, "vis. speed y", "m/s", speed.y, time);
-            emit valueChanged(uasId, "vis. speed z", "m/s", speed.z, time);
-        }
-        break;
+//        case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE: {
+//            mavlink_vicon_position_estimate_t pos;
+//            mavlink_msg_vicon_position_estimate_decode(&message, &pos);
+//            quint64 time = getUnixTime(pos.usec);
+//            //emit valueChanged(uasId, "vis. time", pos.usec, time);
+//            emit valueChanged(uasId, "vicon roll", "rad", pos.roll, time);
+//            emit valueChanged(uasId, "vicon pitch", "rad", pos.pitch, time);
+//            emit valueChanged(uasId, "vicon yaw", "rad", pos.yaw, time);
+//            emit valueChanged(uasId, "vicon x", "m", pos.x, time);
+//            emit valueChanged(uasId, "vicon y", "m", pos.y, time);
+//            emit valueChanged(uasId, "vicon z", "m", pos.z, time);
+//            //emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+//        }
+//        break;
+//        case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE: {
+//            mavlink_vision_speed_estimate_t speed;
+//            mavlink_msg_vision_speed_estimate_decode(&message, &speed);
+//            quint64 time = getUnixTime(speed.usec);
+//            emit valueChanged(uasId, "vis. speed x", "m/s", speed.x, time);
+//            emit valueChanged(uasId, "vis. speed y", "m/s", speed.y, time);
+//            emit valueChanged(uasId, "vis. speed z", "m/s", speed.z, time);
+//        }
+//        break;
 //        case MAVLINK_MSG_ID_CONTROL_STATUS:
 //            {
 //                mavlink_control_status_t status;
