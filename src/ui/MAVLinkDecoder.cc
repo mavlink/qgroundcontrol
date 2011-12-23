@@ -11,7 +11,10 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     {
         componentID[i] = -1;
         componentMulti[i] = false;
+        onboardTimeOffset[i] = 0;
     }
+
+
 
     // Fill filter
     messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
@@ -41,35 +44,98 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
     uint8_t msgid = message.msgid;
-    QString messageName("%1 (#%2)");
-    messageName = messageName.arg(messageInfo[msgid].name).arg(msgid);
 
-    // See if first value is a time value
-    quint64 time = 0;
-    uint8_t fieldid = 0;
-    uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
-    if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_boot_ms") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
+    // Handle time sync message
+    if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME && message.compid == 200)
     {
-        time = *((quint32*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-    }
-    else if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_usec") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT64_T)
-    {
-        time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+        mavlink_system_time_t timebase;
+        mavlink_msg_system_time_decode(&message, &timebase);
+        onboardTimeOffset[message.sysid] = timebase.time_unix_usec/1000 - timebase.time_boot_ms;
+        onboardToGCSUnixTimeOffsetAndDelay[message.sysid] = static_cast<qint64>(QGC::groundTimeMilliseconds() - timebase.time_unix_usec/1000);
     }
     else
     {
-        // First value is not time, send out value 0
-        emitFieldValue(&message, fieldid, time);
-    }
 
-    // Send out field values from 1..n
-    for (unsigned int i = 1; i < messageInfo[msgid].num_fields; ++i)
-    {
-        emitFieldValue(&message, i, time);
+        QString messageName("%1 (#%2)");
+        messageName = messageName.arg(messageInfo[msgid].name).arg(msgid);
+
+        // See if first value is a time value
+        quint64 time = 0;
+        uint8_t fieldid = 0;
+        uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
+        if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_boot_ms") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
+        {
+            time = *((quint32*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+        }
+        else if (QString(messageInfo[msgid].fields[fieldid].name).contains("usec") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT64_T)
+        {
+            time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            time = time/1000; // Scale to milliseconds
+        }
+        else
+        {
+            // First value is not time, send out value 0
+            emitFieldValue(&message, fieldid, getUnixTimeFromMs(message.sysid, 0));
+        }
+
+        // Align time to global time
+        time = getUnixTimeFromMs(message.sysid, time);
+
+        // Send out field values from 1..n
+        for (unsigned int i = 1; i < messageInfo[msgid].num_fields; ++i)
+        {
+            emitFieldValue(&message, i, time);
+        }
     }
 
     // Send out combined math expressions
     // FIXME XXX TODO
+}
+
+quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
+{
+    quint64 ret = 0;
+    if (time == 0)
+    {
+        ret = QGC::groundTimeMilliseconds() - onboardToGCSUnixTimeOffsetAndDelay[systemID];
+    }
+    // Check if time is smaller than 40 years,
+    // assuming no system without Unix timestamp
+    // runs longer than 40 years continuously without
+    // reboot. In worst case this will add/subtract the
+    // communication delay between GCS and MAV,
+    // it will never alter the timestamp in a safety
+    // critical way.
+    //
+    // Calculation:
+    // 40 years
+    // 365 days
+    // 24 hours
+    // 60 minutes
+    // 60 seconds
+    // 1000 milliseconds
+    // 1000 microseconds
+#ifndef _MSC_VER
+    else if (time < 1261440000000LLU)
+#else
+    else if (time < 1261440000000)
+#endif
+    {
+        if (onboardTimeOffset[systemID] == 0 || time < (firstOnboardTime[systemID]-2000))
+        {
+            firstOnboardTime[systemID] = time;
+            onboardTimeOffset[systemID] = QGC::groundTimeMilliseconds() - time;
+        }
+        ret = time + onboardTimeOffset[systemID];
+    }
+    else
+    {
+        // Time is not zero and larger than 40 years -> has to be
+        // a Unix epoch timestamp. Do nothing.
+        ret = time;
+    }
+
+    return ret;
 }
 
 void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64 time)
@@ -102,7 +168,20 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
     QString name("%1.%2");
     QString unit("");
-    name = name.arg(messageInfo[msgid].name, fieldName);
+
+    // Debug vector messages
+    if (msgid == MAVLINK_MSG_ID_DEBUG_VECT)
+    {
+        mavlink_debug_vect_t debug;
+        mavlink_msg_debug_vect_decode(msg, &debug);
+        name = name.arg(QString(debug.name), fieldName);
+        time = debug.time_usec / 1000;
+    }
+    else
+    {
+        name = name.arg(messageInfo[msgid].name, fieldName);
+    }
+
     if (multiComponentSourceDetected) name.prepend(QString("C%1:").arg(msg->compid));
     name.prepend(QString("M%1:").arg(msg->sysid));
     switch (messageInfo[msgid].fields[fieldid].type)
