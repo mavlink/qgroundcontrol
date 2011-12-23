@@ -577,9 +577,9 @@ protected slots:
     /** @brief Read settings from disk */
     void readSettings();
 
-    // MESSAGE RECEPTION
-    /** @brief Receive a named value message */
-    void receiveMessageNamedValue(const mavlink_message_t& message);
+//    // MESSAGE RECEPTION
+//    /** @brief Receive a named value message */
+//    void receiveMessageNamedValue(const mavlink_message_t& message);
 
 private:
 //    unsigned int mode;          ///< The current mode of the MAV

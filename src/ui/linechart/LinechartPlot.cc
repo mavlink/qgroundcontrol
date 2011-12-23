@@ -32,8 +32,10 @@
  * @param interval The maximum interval for which data is stored (default: 30 minutes) in milliseconds
  **/
 LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): QwtPlot(parent),
-    minTime(QUINT64_MAX),
-    maxTime(QUINT64_MIN),
+    minTime(0),
+    lastTime(0),
+    maxTime(100),
+    plotPosition(0),
     maxInterval(MAX_STORAGE_INTERVAL),
     timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
     automaticScrollActive(false),
@@ -83,8 +85,6 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
     colors.append(QColor(161,252,116));
     colors.append(QColor(87,231,246));
     colors.append(QColor(230,126,23));
-
-    plotPosition = 0;
 
     setAutoReplot(false);
 
@@ -257,18 +257,26 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     /* Check if dataset identifier already exists */
     if(!data.contains(dataname)) {
         addCurve(dataname);
+        enforceGroundTime(m_groundTime);
+        qDebug() << "ADDING CURVE WITH" << dataname << ms << value;
+        qDebug() << "MINTIME:" << minTime << "MAXTIME:" << maxTime;
+        qDebug() << "LASTTIME:" << lastTime;
     }
 
     // Add new value
     TimeSeriesData* dataset = data.value(dataname);
 
-    quint64 time = QGC::groundTimeMilliseconds();
+    quint64 time;
 
     // Append data
     if (!m_groundTime)
     {
         // Use timestamp from dataset
         time = ms;
+    }
+    else
+    {
+        time = QGC::groundTimeMilliseconds();
     }
     dataset->append(time, value);
 
@@ -302,7 +310,19 @@ void LinechartPlot::enforceGroundTime(bool enforce)
 {
     m_groundTime = enforce;
 
-    lastTime = QGC::groundTimeUsecs()/1000;
+    if (enforce)
+    {
+        lastTime = QGC::groundTimeMilliseconds();
+        plotPosition = lastTime;
+        maxTime = lastTime;
+    }
+    else
+    {
+        lastTime = 0;
+        plotPosition = 0;
+        minTime = 0;
+        maxTime = 100;
+    }
 }
 
 /**
