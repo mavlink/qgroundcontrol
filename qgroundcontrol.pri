@@ -37,7 +37,7 @@ win32-msvc2008|win32-msvc2010 {
 DEFINES += _TTY_NOWARN_
 
 # MAC OS X
-macx-g++42 {
+macx|macx-g++42|macx-g++: {
 
    # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
