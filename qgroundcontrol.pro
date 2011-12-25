@@ -182,6 +182,7 @@ include(thirdParty/qserialport/qgroundcontrol-qserialport.pri)
 # Serial port detection (ripped-off from qextserialport library)
 macx::SOURCES += src/libs/qextserialport/qextserialenumerator_osx.cpp
 linux-g++::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
+linux-g++-64::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
 win32::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
 
 # Input
