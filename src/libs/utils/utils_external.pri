@@ -81,6 +81,10 @@ linux-g++ {
 SOURCES += consoleprocess_unix.cpp
 }
 
+linux-g++-64 {
+SOURCES += consoleprocess_unix.cpp
+}
+
 #    submiteditorwidget.cpp \
 #    qtcolorbutton.cpp \
 
