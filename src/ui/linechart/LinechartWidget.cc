@@ -153,6 +153,8 @@ LinechartWidget::~LinechartWidget()
 {
     writeSettings();
     stopLogging();
+    if (activePlot) delete activePlot;
+    activePlot = NULL;
     delete listedCurves;
     listedCurves = NULL;
 }

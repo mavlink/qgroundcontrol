@@ -132,7 +132,29 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
 
 LinechartPlot::~LinechartPlot()
 {
-    removeAllData();
+//    datalock.lock();
+//    // Delete curves
+//    QMap<QString, QwtPlotCurve*>::iterator i;
+//    for(i = curves.begin(); i != curves.end(); ++i) {
+//        // Remove from curve list
+//        QwtPlotCurve* curve = curves.take(i.key());
+//        // Delete the object
+//        delete curve;
+//        // Set the pointer null
+//        curve = NULL;
+//    }
+
+//    // Delete data
+//    QMap<QString, TimeSeriesData*>::iterator j;
+//    for(j = data.begin(); j != data.end(); ++j) {
+//        // Remove from data list
+//        TimeSeriesData* d = data.take(j.key());
+//        // Delete the object
+//        delete d;
+//        // Set the pointer null
+//        d = NULL;
+//    }
+//    datalock.unlock();
 }
 
 void LinechartPlot::showEvent(QShowEvent* event)
