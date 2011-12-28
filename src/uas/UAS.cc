@@ -164,7 +164,8 @@ void UAS::updateState()
 
 void UAS::setSelected()
 {
-    if (UASManager::instance()->getActiveUAS() != this) {
+    if (UASManager::instance()->getActiveUAS() != this)
+    {
         UASManager::instance()->setActiveUAS(this);
         emit systemSelected(true);
     }
@@ -175,24 +176,6 @@ bool UAS::getSelected() const
     return (UASManager::instance()->getActiveUAS() == this);
 }
 
-//void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
-//{
-//    if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
-//    {
-//        mavlink_named_value_float_t val;
-//        mavlink_msg_named_value_float_decode(&message, &val);
-//        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
-//        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
-//    }
-//    else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
-//    {
-//        mavlink_named_value_int_t val;
-//        mavlink_msg_named_value_int_decode(&message, &val);
-//        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN);
-//        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
-//    }
-//}
-
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     if (!link) return;
@@ -201,10 +184,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         addLink(link);
         //        qDebug() << __FILE__ << __LINE__ << "ADDED LINK!" << link->getName();
     }
-    //    else
-    //    {
-    //        qDebug() << __FILE__ << __LINE__ << "DID NOT ADD LINK" << link->getName() << "ALREADY IN LIST";
-    //    }
 
     //    qDebug() << "UAS RECEIVED from" << message.sysid << "component" << message.compid << "msg id" << message.msgid << "seq no" << message.seq;
 
@@ -428,6 +407,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                    // Set to 0, since it is an invalid value
 //                    compass = 0.0f;
 //                }
+
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, roll, pitch, yaw, time);

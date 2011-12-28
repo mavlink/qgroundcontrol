@@ -287,7 +287,11 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     if(ms > maxTime) maxTime = ms;
     storageInterval = maxTime - minTime;
 
-    if(time > lastTime) lastTime = time;
+    if(time > lastTime)
+    {
+        qDebug() << "UPDATED LAST TIME!" << dataname << time << lastTime;
+        lastTime = time;
+    }
 
     //
     if (value < minValue) minValue = value;
@@ -524,8 +528,10 @@ bool LinechartPlot::isVisible(QString id)
 bool LinechartPlot::anyCurveVisible()
 {
     bool visible = false;
-    foreach (QString key, curves.keys()) {
-        if (curves.value(key)->isVisible()) {
+    foreach (QString key, curves.keys())
+    {
+        if (curves.value(key)->isVisible())
+        {
             visible = true;
         }
     }
@@ -599,7 +605,8 @@ void LinechartPlot::setPlotInterval(int interval)
 {
     plotInterval = interval;
     QMap<QString, TimeSeriesData*>::iterator j;
-    for(j = data.begin(); j != data.end(); ++j) {
+    for(j = data.begin(); j != data.end(); ++j)
+    {
         TimeSeriesData* d = data.value(j.key());
         d->setInterval(interval);
     }
@@ -644,7 +651,8 @@ void LinechartPlot::setLinearScaling()
 void LinechartPlot::setAverageWindow(int windowSize)
 {
     this->averageWindowSize = windowSize;
-    foreach(TimeSeriesData* series, data) {
+    foreach(TimeSeriesData* series, data)
+    {
         series->setAverageWindowSize(windowSize);
     }
 }
@@ -664,7 +672,8 @@ void LinechartPlot::paintRealtime()
 #endif
         // Update plot window value to new max time if the last time was also the max time
         windowLock.lock();
-        if (automaticScrollActive) {
+        if (automaticScrollActive)
+        {
 
             // FIXME Check, but commenting this out should have been
             // beneficial (does only add complexity)
@@ -741,7 +750,8 @@ void LinechartPlot::removeAllData()
     datalock.lock();
     // Delete curves
     QMap<QString, QwtPlotCurve*>::iterator i;
-    for(i = curves.begin(); i != curves.end(); ++i) {
+    for(i = curves.begin(); i != curves.end(); ++i)
+    {
         // Remove from curve list
         QwtPlotCurve* curve = curves.take(i.key());
         // Delete the object
@@ -755,7 +765,8 @@ void LinechartPlot::removeAllData()
 
     // Delete data
     QMap<QString, TimeSeriesData*>::iterator j;
-    for(j = data.begin(); j != data.end(); ++j) {
+    for(j = data.begin(); j != data.end(); ++j)
+    {
         // Remove from data list
         TimeSeriesData* d = data.take(j.key());
         // Delete the object
