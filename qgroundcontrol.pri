@@ -190,6 +190,8 @@ macx|macx-g++42|macx-g++: {
 # GNU/Linux
 linux-g++ {
 
+    CONFIG -= console
+
     debug {
         #DESTDIR = $$TARGETDIR/debug
         #CONFIG += debug console
@@ -273,6 +275,8 @@ message("Compiling for linux 32")
 }
 
 linux-g++-64 {
+
+    CONFIG -= console
 
     debug {
         #DESTDIR = $$TARGETDIR/debug
