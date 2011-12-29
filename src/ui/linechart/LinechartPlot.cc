@@ -311,7 +311,7 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
 
     if(time > lastTime)
     {
-        qDebug() << "UPDATED LAST TIME!" << dataname << time << lastTime;
+        //qDebug() << "UPDATED LAST TIME!" << dataname << time << lastTime;
         lastTime = time;
     }
 
