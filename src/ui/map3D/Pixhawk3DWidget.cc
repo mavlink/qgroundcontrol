@@ -575,6 +575,8 @@ Pixhawk3DWidget::display(void)
     lastRobotX = robotX;
     lastRobotY = robotY;
     lastRobotZ = robotZ;
+
+    layout()->update();
 }
 
 void

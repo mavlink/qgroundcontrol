@@ -50,7 +50,8 @@ void ArduPilotMegaMAV::receiveMessage(LinkInterface* link, mavlink_message_t mes
     if (message.sysid == uasId) {
         // Handle your special messages
         switch (message.msgid) {
-        case MAVLINK_MSG_ID_HEARTBEAT: {
+        case MAVLINK_MSG_ID_HEARTBEAT:
+        {
             //qDebug() << "ARDUPILOT RECEIVED HEARTBEAT";
             break;
         }
