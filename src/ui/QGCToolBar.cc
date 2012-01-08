@@ -101,8 +101,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
 {
     this->player = player;
-    connect(toggleLoggingAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
-    connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
+    connect(toggleLoggingAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
+    connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
 }
 
 void QGCToolBar::playLogFile(bool enabled)
