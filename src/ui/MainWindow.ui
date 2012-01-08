@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -108,7 +108,7 @@
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
-     <string>Widgets</string>
+     <string>Tool Widgets</string>
     </property>
     <addaction name="actionNewCustomWidget"/>
     <addaction name="actionLoadCustomWidgetFile"/>
@@ -129,6 +129,7 @@
     <addaction name="actionEngineersView"/>
     <addaction name="actionPilotsView"/>
     <addaction name="separator"/>
+    <addaction name="actionFirmwareUpdateView"/>
     <addaction name="actionMavlinkView"/>
     <addaction name="actionUnconnectedView"/>
     <addaction name="separator"/>
@@ -137,16 +138,22 @@
    </widget>
    <widget class="QMenu" name="menuMain">
     <property name="title">
-     <string>Main</string>
+     <string>Main Widget</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuPlugins">
+    <property name="title">
+     <string>Plugins</string>
     </property>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuConnected_Systems"/>
    <addaction name="menuUnmanned_System"/>
+   <addaction name="menuPerspectives"/>
    <addaction name="menuMain"/>
    <addaction name="menuTools"/>
-   <addaction name="menuPerspectives"/>
+   <addaction name="menuPlugins"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -464,6 +471,18 @@
    </property>
    <property name="text">
     <string>Load Custom Widget File</string>
+   </property>
+  </action>
+  <action name="actionFirmwareUpdateView">
+   <property name="icon">
+    <iconset resource="../../qgroundcontrol.qrc">
+     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Firmware Update</string>
+   </property>
+   <property name="toolTip">
+    <string>Update the firmware of one of the connected autopilots</string>
    </property>
   </action>
  </widget>
