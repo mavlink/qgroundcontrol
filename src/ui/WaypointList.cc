@@ -239,6 +239,14 @@ void WaypointList::addEditable()
                  updateStatusLabel(tr("No UAV. Added default LOCAL (NED) waypoint"));
                 wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
                 WPM->addWaypointEditable(wp);
+                //create a popup notifying the user about the limitations of offline editing
+                QMessageBox msgBox;
+                msgBox.setIcon(QMessageBox::Warning);
+                msgBox.setText("Offline editor!");
+                msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
+                msgBox.setStandardButtons(QMessageBox::Ok);
+                msgBox.setDefaultButton(QMessageBox::Ok);
+                int ret = msgBox.exec();
             }
         }
 
