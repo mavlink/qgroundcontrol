@@ -401,6 +401,19 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
     if (seq < waypointsEditable.size())
     {
         Waypoint *t = waypointsEditable[seq];
+
+        if (t->getCurrent() == true) //trying to remove the current waypoint
+        {
+            if (seq+1 < waypointsEditable.size()) // setting the next waypoint as current
+            {
+                waypointsEditable[seq+1]->setCurrent(true);
+            }
+            else if (seq-1 >= 0) //if deleting the last on the list, then setting the previous waypoint as current
+            {
+                waypointsEditable[seq-1]->setCurrent(true);
+            }
+        }
+
         waypointsEditable.remove(seq);
         delete t;
         t = NULL;
