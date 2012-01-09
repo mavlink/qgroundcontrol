@@ -47,6 +47,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     mavY(0.0),
     mavZ(0.0),
     mavYaw(0.0),
+    showOfflineWarning(false),
     m_ui(new Ui::WaypointList)
 {
 
@@ -104,15 +105,16 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     }
     else
     {
-        qDebug() << "setUAS failed" ;
+        qDebug() << "setUAS failed. Creating an offline WaypointList";
         // Hide buttons, which don't make sense without valid UAS
         m_ui->positionAddButton->hide();
         m_ui->transmitButton->hide();
         m_ui->readButton->hide();
-        //FIXME: The whole "Onboard Waypoints"-tab should be hidden, instead of "refresh" button
         m_ui->refreshButton->hide();
+        //FIXME: The whole "Onboard Waypoints"-tab should be hidden, instead of "refresh" button       
         UnconnectedUASInfoWidget* inf = new UnconnectedUASInfoWidget(this);
-        viewOnlyListLayout->insertWidget(0, inf);
+        viewOnlyListLayout->insertWidget(0, inf); //insert a "NO UAV" info into the Onboard Tab
+        showOfflineWarning = true;
         WPM = new UASWaypointManager(NULL);
     }
 
@@ -183,10 +185,20 @@ void WaypointList::saveWaypoints()
 
 void WaypointList::loadWaypoints()
 {
-
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
-        WPM->loadWaypoints(fileName);
-
+    //create a popup notifying the user about the limitations of offline editing
+    if (showOfflineWarning == true)
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("Offline editor!");
+        msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        int ret = msgBox.exec();
+        showOfflineWarning = false;
+    }
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
+    WPM->loadWaypoints(fileName);
 }
 
 void WaypointList::transmit()
@@ -240,13 +252,17 @@ void WaypointList::addEditable()
                 wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
                 WPM->addWaypointEditable(wp);
                 //create a popup notifying the user about the limitations of offline editing
-                QMessageBox msgBox;
-                msgBox.setIcon(QMessageBox::Warning);
-                msgBox.setText("Offline editor!");
-                msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
-                msgBox.setStandardButtons(QMessageBox::Ok);
-                msgBox.setDefaultButton(QMessageBox::Ok);
-                int ret = msgBox.exec();
+                if (showOfflineWarning == true)
+                {
+                    QMessageBox msgBox;
+                    msgBox.setIcon(QMessageBox::Warning);
+                    msgBox.setText("Offline editor!");
+                    msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.setDefaultButton(QMessageBox::Ok);
+                    int ret = msgBox.exec();
+                    showOfflineWarning = false;
+                }
             }
         }
 

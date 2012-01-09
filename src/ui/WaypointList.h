@@ -141,6 +141,7 @@ protected:
     QPointF centerMapCoordinate;
     bool loadFileGlobalWP;
     bool readGlobalWP;
+    bool showOfflineWarning;
 
 private:
     Ui::WaypointList *m_ui;
