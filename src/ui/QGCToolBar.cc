@@ -45,7 +45,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toggleLoggingAction = new QAction(QIcon(":"), "Logging", this);
     toggleLoggingAction->setCheckable(true);
     logReplayAction = new QAction(QIcon(":"), "Replay", this);
-    logReplayAction->setCheckable(true);
+    logReplayAction->setCheckable(false);
 
     addAction(toggleLoggingAction);
     addAction(logReplayAction);
@@ -143,7 +143,7 @@ void QGCToolBar::logging(bool enabled)
         }
 
         QFileInfo file(fileName);
-        if (file.exists() && !file.isWritable())
+        if ((file.exists() && !file.isWritable()))
         {
             QMessageBox msgBox;
             msgBox.setIcon(QMessageBox::Critical);

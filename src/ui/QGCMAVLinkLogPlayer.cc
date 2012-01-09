@@ -21,6 +21,7 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     mavlinkLogFormat(true),
     binaryBaudRate(57600),
     isPlaying(false),
+    currPacketCount(0),
     ui(new Ui::QGCMAVLinkLogPlayer)
 {
     ui->setupUi(this);
@@ -102,6 +103,7 @@ void QGCMAVLinkLogPlayer::play()
             loopTimer.start(interval*accelerationFactor);
         }
         isPlaying = true;
+        ui->logStatsLabel->setText(tr("Started playing.."));
         ui->playButton->setIcon(QIcon(":images/actions/media-playback-pause.svg"));
     }
     else
@@ -272,7 +274,8 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
             minutes -= 60*hours;
 
             QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
-            ui->logStatsLabel->setText(tr("%2 MB, %3 packets, %4").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(logFileInfo.size()/(MAVLINK_MAX_PACKET_LEN+sizeof(quint64))).arg(timelabel));
+            currPacketCount = logFileInfo.size()/(MAVLINK_MAX_PACKET_LEN+sizeof(quint64));
+            ui->logStatsLabel->setText(tr("%2 MB, %3 packets, %4").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(currPacketCount).arg(timelabel));
         }
         else
         {
@@ -302,6 +305,10 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
             QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
             ui->logStatsLabel->setText(tr("%2 MB, %4 at %5 KB/s").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(timelabel).arg(binaryBaudRate/10.0f/1024.0f, 0, 'f', 2));
         }
+
+        // Reset current state
+        reset(0);
+
         return true;
     }
 }
@@ -458,7 +465,7 @@ void QGCMAVLinkLogPlayer::logLoop()
 
     // Update status label
     // Update progress bar
-    if (loopCounter % 40 == 0)
+    if (loopCounter % 40 == 0 || currPacketCount < 500)
     {
         QFileInfo logFileInfo(logFile);
         int progress = (ui->positionSlider->maximum()-ui->positionSlider->minimum())*(logFile.pos()/static_cast<float>(logFileInfo.size()));
