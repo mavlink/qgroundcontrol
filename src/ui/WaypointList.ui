@@ -260,6 +260,18 @@
        <string>Onboard Waypoints</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
+       <property name="leftMargin">
+        <number>6</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>6</number>
+       </property>
+       <property name="bottomMargin">
+        <number>6</number>
+       </property>
        <item row="0" column="0" colspan="3">
         <widget class="QScrollArea" name="readOnlyScrollArea">
          <property name="widgetResizable">
@@ -270,8 +282,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>830</width>
-            <height>304</height>
+            <width>836</width>
+            <height>316</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -285,7 +297,7 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>828</width>
+               <width>16777215</width>
                <height>16777215</height>
               </size>
              </property>
