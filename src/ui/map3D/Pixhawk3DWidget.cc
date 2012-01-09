@@ -663,15 +663,19 @@ void
 Pixhawk3DWidget::getPosition(double& x, double& y, double& z,
                              QString& utmZone)
 {
-    if (uas) {
-        if (frame == MAV_FRAME_GLOBAL) {
+    if (uas)
+    {
+        if (frame == MAV_FRAME_GLOBAL)
+        {
             double latitude = uas->getLatitude();
             double longitude = uas->getLongitude();
             double altitude = uas->getAltitude();
 
             Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
             z = -altitude;
-        } else if (frame == MAV_FRAME_LOCAL_NED) {
+        }
+        else if (frame == MAV_FRAME_LOCAL_NED)
+        {
             x = uas->getLocalX();
             y = uas->getLocalY();
             z = uas->getLocalZ();
@@ -881,7 +885,8 @@ Pixhawk3DWidget::resizeHUD(void)
     int bottomHUDHeight = 25;
 
     osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(hudBackgroundGeometry->getVertexArray());
-    if (vertices == NULL || vertices->size() != 8) {
+    if (vertices == NULL || vertices->size() != 8)
+    {
         osg::ref_ptr<osg::Vec3Array> newVertices = new osg::Vec3Array(8);
         hudBackgroundGeometry->setVertexArray(newVertices);
 
@@ -899,7 +904,8 @@ Pixhawk3DWidget::resizeHUD(void)
 
     statusText->setPosition(osg::Vec3(10, height() - 15, -1.5));
 
-    if (rgb2DGeode.valid() && depth2DGeode.valid()) {
+    if (rgb2DGeode.valid() && depth2DGeode.valid())
+    {
         int windowWidth = (width() - 20) / 2;
         int windowHeight = 3 * windowWidth / 4;
         rgb2DGeode->setAttributes(10, (height() - windowHeight) / 2,
@@ -922,7 +928,8 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
     std::ostringstream oss;
     oss.setf(std::ios::fixed, std::ios::floatfield);
     oss.precision(2);
-    if (frame == MAV_FRAME_GLOBAL) {
+    if (frame == MAV_FRAME_GLOBAL)
+    {
         double latitude, longitude;
         Imagery::UTMtoLL(robotX, robotY, utmZone, latitude, longitude);
 
@@ -943,7 +950,9 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
         oss.precision(6);
         oss << " Cursor [" << cursorLatitude <<
             " " << cursorLongitude << "]";
-    } else if (frame == MAV_FRAME_LOCAL_NED) {
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
         oss << " x = " << robotX <<
             " y = " << robotY <<
             " z = " << robotZ <<
@@ -957,7 +966,8 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
     statusText->setText(oss.str());
 
     bool darkBackground = true;
-    if (mapNode->getImageryType() == Imagery::GOOGLE_MAP) {
+    if (mapNode->getImageryType() == Imagery::GOOGLE_MAP)
+    {
         darkBackground = false;
     }
 
@@ -968,34 +978,44 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
 void
 Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
 {
-    if (robotX == 0.0f || robotY == 0.0f || robotZ == 0.0f) {
+    if (robotX == 0.0f || robotY == 0.0f || robotZ == 0.0f)
+    {
         return;
     }
 
     bool addToTrail = false;
-    if (trail.size() > 0) {
+    if (trail.size() > 0)
+    {
         if (fabs(robotX - trail[trail.size() - 1].x()) > 0.01f ||
                 fabs(robotY - trail[trail.size() - 1].y()) > 0.01f ||
-                fabs(robotZ - trail[trail.size() - 1].z()) > 0.01f) {
+                fabs(robotZ - trail[trail.size() - 1].z()) > 0.01f)
+        {
             addToTrail = true;
         }
-    } else {
+    }
+    else
+    {
         addToTrail = true;
     }
 
-    if (addToTrail) {
+    if (addToTrail)
+    {
         osg::Vec3d p(robotX, robotY, robotZ);
-        if (trail.size() == trail.capacity()) {
+        if (trail.size() == trail.capacity())
+        {
             memcpy(trail.data(), trail.data() + 1,
                    (trail.size() - 1) * sizeof(osg::Vec3d));
             trail[trail.size() - 1] = p;
-        } else {
+        }
+        else
+        {
             trail.append(p);
         }
     }
 
     trailVertices->clear();
-    for (int i = 0; i < trail.size(); ++i) {
+    for (int i = 0; i < trail.size(); ++i)
+    {
         trailVertices->push_back(osg::Vec3d(trail[i].y() - robotY,
                                             trail[i].x() - robotX,
                                             -(trail[i].z() - robotZ)));
@@ -1010,12 +1030,14 @@ void
 Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
                                const QString& zone)
 {
-    if (mapNode->getImageryType() == Imagery::BLANK_MAP) {
+    if (mapNode->getImageryType() == Imagery::BLANK_MAP)
+    {
         return;
     }
 
     double viewingRadius = cameraManipulator->getDistance() * 10.0;
-    if (viewingRadius < 100.0) {
+    if (viewingRadius < 100.0)
+    {
         viewingRadius = 100.0;
     }
 
@@ -1024,7 +1046,8 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
     double maxResolution = 1048576.0;
 
     Imagery::ImageryType imageryType = mapNode->getImageryType();
-    switch (imageryType) {
+    switch (imageryType)
+    {
     case Imagery::GOOGLE_MAP:
         minResolution = 0.25;
         break;
@@ -1040,10 +1063,13 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
     }
 
     double resolution = minResolution;
-    while (resolution * 2.0 < centerResolution) {
+    while (resolution * 2.0 < centerResolution)
+    {
         resolution *= 2.0;
     }
-    if (resolution > maxResolution) {
+
+    if (resolution > maxResolution)
+    {
         resolution = maxResolution;
     }
 
@@ -1057,14 +1083,16 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
                     zone);
 
     // prefetch map tiles
-    if (resolution / 2.0 >= minResolution) {
+    if (resolution / 2.0 >= minResolution)
+    {
         mapNode->prefetch3D(viewingRadius / 2.0,
                             resolution / 2.0,
                             cameraManipulator->getCenter().y(),
                             cameraManipulator->getCenter().x(),
                             zone);
     }
-    if (resolution * 2.0 <= maxResolution) {
+    if (resolution * 2.0 <= maxResolution)
+    {
         mapNode->prefetch3D(viewingRadius * 2.0,
                             resolution * 2.0,
                             cameraManipulator->getCenter().y(),

@@ -78,6 +78,7 @@ protected:
     bool mavlinkLogFormat;
     int binaryBaudRate;
     bool isPlaying;
+    unsigned int currPacketCount;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
     static const int timeLen = sizeof(quint64);
     void changeEvent(QEvent *e);
