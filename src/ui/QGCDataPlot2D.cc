@@ -470,7 +470,8 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     // Read data
 
-    double x,y;
+    double x = 0;
+    double y = 0;
 
     while (!in.atEnd())
     {
