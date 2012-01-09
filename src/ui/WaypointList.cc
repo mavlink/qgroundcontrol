@@ -293,7 +293,7 @@ void WaypointList::addCurrentPositionWaypoint()
                 yawGlobal = last->getYaw();
             }
             // Create global frame waypoint per default
-            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, true, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
+            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
             WPM->addWaypointEditable(wp);
             updateStatusLabel(tr("Added GLOBAL, ALTITUDE OVER GROUND waypoint"));
         }
@@ -307,7 +307,7 @@ void WaypointList::addCurrentPositionWaypoint()
                 holdTime = last->getHoldTime();
             }
             // Create local frame waypoint as second option
-            wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+            wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, false, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
             WPM->addWaypointEditable(wp);
             updateStatusLabel(tr("Added LOCAL (NED) waypoint"));
         }
