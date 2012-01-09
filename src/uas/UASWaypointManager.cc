@@ -426,6 +426,7 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
             for (int i = cur_seq; i < new_seq; i++)
             {
                 waypointsEditable[i] = waypointsEditable[i+1];
+                waypointsEditable[i]->setId(i);
             }
         }
         else
@@ -433,9 +434,11 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
             for (int i = cur_seq; i > new_seq; i--)
             {
                 waypointsEditable[i] = waypointsEditable[i-1];
+                waypointsEditable[i]->setId(i);
             }
         }
         waypointsEditable[new_seq] = t;
+        waypointsEditable[new_seq]->setId(new_seq);
 
         emit waypointEditableListChanged();
         emit waypointEditableListChanged(uasid);
