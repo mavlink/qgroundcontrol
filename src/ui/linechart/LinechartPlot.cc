@@ -35,8 +35,8 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
     minTime(0),
     lastTime(0),
     maxTime(100),
-    plotPosition(0),
     maxInterval(MAX_STORAGE_INTERVAL),
+    plotPosition(0),
     timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
     automaticScrollActive(false),
     m_active(false),
