@@ -234,6 +234,7 @@ void WaypointEditableView::updateActionView(int action)
  */
 void WaypointEditableView::changedAction(int index)
 {
+    MAV_FRAME cur_frame = (MAV_FRAME) m_ui->comboBox_frame->itemData(m_ui->comboBox_frame->currentIndex()).toUInt();
     // set waypoint action
     int actionIndex = m_ui->comboBox_action->itemData(index).toUInt();
     if (actionIndex < MAV_CMD_ENUM_END && actionIndex >= 0) {
@@ -254,8 +255,8 @@ void WaypointEditableView::changedAction(int index)
     case MAV_CMD_NAV_LOITER_TURNS:
     case MAV_CMD_NAV_LOITER_TIME:
         changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_NAV);
-        // Update frame view
-        updateFrameView(m_ui->comboBox_frame->currentIndex());
+        // Update frame view        
+        updateFrameView(cur_frame);
         // Update view
         updateActionView(actionIndex);
         break;
@@ -310,29 +311,45 @@ void WaypointEditableView::changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode)
 
 void WaypointEditableView::updateFrameView(int frame)
 {
+     std::cerr << "update frame view: "<< frame << std::endl;
+    //int custom_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
     switch(frame) {
     case MAV_FRAME_GLOBAL:
     case MAV_FRAME_GLOBAL_RELATIVE_ALT:
-        m_ui->posNSpinBox->hide();
-        m_ui->posESpinBox->hide();
-        m_ui->posDSpinBox->hide();
-        m_ui->lonSpinBox->show();
-        m_ui->latSpinBox->show();
-        m_ui->altSpinBox->show();
-        // Coordinate frame
-        m_ui->comboBox_frame->show();
-        m_ui->customActionWidget->hide();
+        if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
+        {
+            m_ui->posNSpinBox->hide();
+            m_ui->posESpinBox->hide();
+            m_ui->posDSpinBox->hide();
+            m_ui->lonSpinBox->show();
+            m_ui->latSpinBox->show();
+            m_ui->altSpinBox->show();
+            // Coordinate frame
+            m_ui->comboBox_frame->show();
+            m_ui->customActionWidget->hide();
+        }
+        else // do not hide customActionWidget if Command is set to "Other"
+        {
+            m_ui->customActionWidget->show();
+        }
         break;
     case MAV_FRAME_LOCAL_NED:
-        m_ui->lonSpinBox->hide();
-        m_ui->latSpinBox->hide();
-        m_ui->altSpinBox->hide();
-        m_ui->posNSpinBox->show();
-        m_ui->posESpinBox->show();
-        m_ui->posDSpinBox->show();
-        // Coordinate frame
-        m_ui->comboBox_frame->show();
-        m_ui->customActionWidget->hide();
+        if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
+        {
+            m_ui->lonSpinBox->hide();
+            m_ui->latSpinBox->hide();
+            m_ui->altSpinBox->hide();
+            m_ui->posNSpinBox->show();
+            m_ui->posESpinBox->show();
+            m_ui->posDSpinBox->show();
+            // Coordinate frame
+            m_ui->comboBox_frame->show();
+            m_ui->customActionWidget->hide();
+        }
+        else // do not hide customActionWidget if Command is set to "Other"
+        {
+            m_ui->customActionWidget->show();
+        }
         break;
     default:
         std::cerr << "unknown frame" << std::endl;
@@ -526,7 +543,7 @@ void WaypointEditableView::updateValues()
             {
                 // Action ID known, update
                 m_ui->comboBox_action->setCurrentIndex(action_index);
-                updateActionView(action);
+                updateActionView(action);                
             }
         }
     }
