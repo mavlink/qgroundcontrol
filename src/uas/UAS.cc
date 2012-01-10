@@ -767,6 +767,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 imagePayload = p.payload;
                 imageQuality = p.jpg_quality;
                 imageType = p.type;
+                imageWidth = p.width;
+                imageHeight = p.height;
                 imageStart = QGC::groundTimeMilliseconds();
             }
             break;
@@ -1392,16 +1394,13 @@ QImage UAS::getImage()
     // RAW greyscale
     if (imageType == MAVLINK_DATA_STREAM_IMG_RAW8U)
     {
-        // TODO FIXME Fabian
-        // RAW hardcoded to 22x22
-        int imgWidth = 22;
-        int imgHeight = 22;
-        int imgColors = 255;
+        // TODO FIXME
+        int imgColors = 255;//imageSize/(imageWidth*imageHeight);
         //const int headerSize = 15;
 
         // Construct PGM header
         QString header("P5\n%1 %2\n%3\n");
-        header = header.arg(imgWidth).arg(imgHeight).arg(imgColors);
+        header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
         QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
         tmpImage.append(imageRecBuffer);
@@ -1451,7 +1450,7 @@ void UAS::requestImage()
     if (imagePacketsArrived == 0)
     {
         mavlink_message_t msg;
-        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 50);
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
 #endif
