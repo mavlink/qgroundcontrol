@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_attitude_pack(uint8_t system_id, uint8_t comp
 	_mav_put_float(buf, 20, pitchspeed);
 	_mav_put_float(buf, 24, yawspeed);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_attitude_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_attitude_pack(uint8_t system_id, uint8_t comp
 	packet.pitchspeed = pitchspeed;
 	packet.yawspeed = yawspeed;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_ATTITUDE;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_attitude_pack_chan(uint8_t system_id, uint8_t
 	_mav_put_float(buf, 20, pitchspeed);
 	_mav_put_float(buf, 24, yawspeed);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_attitude_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_attitude_pack_chan(uint8_t system_id, uint8_t
 	packet.pitchspeed = pitchspeed;
 	packet.yawspeed = yawspeed;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_ATTITUDE;

@@ -24,6 +24,8 @@ Note: this file has been auto-generated. DO NOT EDIT
 
 import struct, array, mavutil, time
 
+WIRE_PROTOCOL_VERSION = "${WIRE_PROTOCOL_VERSION}"
+
 class MAVLink_header(object):
     '''MAVLink message header'''
     def __init__(self, msgId, mlen=0, seq=0, srcSystem=0, srcComponent=0):
@@ -99,7 +101,8 @@ class MAVLink_message(object):
 
 """, {'FILELIST' : ",".join(args),
       'PROTOCOL_MARKER' : xml.protocol_marker,
-      'crc_extra' : xml.crc_extra })
+      'crc_extra' : xml.crc_extra,
+      'WIRE_PROTOCOL_VERSION' : xml.wire_protocol_version })
 
 
 def generate_enums(outf, enums):
@@ -293,6 +296,19 @@ class MAVLink(object):
                     self.callback(m, *self.callback_args, **self.callback_kwargs)
                 return m
             return None
+
+        def parse_buffer(self, s):
+            '''input some data bytes, possibly returning a list of new messages'''
+            m = self.parse_char(s)
+            if m is None:
+                return None
+            ret = [m]
+            while True:
+                m = self.parse_char("")
+                if m is None:
+                    return ret
+                ret.append(m)
+            return ret
 
         def decode(self, msgbuf):
                 '''decode a buffer as a MAVLink message'''

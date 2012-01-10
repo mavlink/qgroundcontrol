@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_pack(uint8_t syst
 	_mav_put_uint8_t(buf, 6, payload);
 	_mav_put_uint8_t(buf, 7, jpg_quality);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 8);
 #else
 	mavlink_data_transmission_handshake_t packet;
 	packet.size = size;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_pack(uint8_t syst
 	packet.payload = payload;
 	packet.jpg_quality = jpg_quality;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 8);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_pack_chan(uint8_t
 	_mav_put_uint8_t(buf, 6, payload);
 	_mav_put_uint8_t(buf, 7, jpg_quality);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 8);
 #else
 	mavlink_data_transmission_handshake_t packet;
 	packet.size = size;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_pack_chan(uint8_t
 	packet.payload = payload;
 	packet.jpg_quality = jpg_quality;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 8);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;

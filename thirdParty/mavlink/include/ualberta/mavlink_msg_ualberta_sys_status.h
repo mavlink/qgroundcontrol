@@ -44,14 +44,14 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_pack(uint8_t system_id, u
 	_mav_put_uint8_t(buf, 1, nav_mode);
 	_mav_put_uint8_t(buf, 2, pilot);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 3);
 #else
 	mavlink_ualberta_sys_status_t packet;
 	packet.mode = mode;
 	packet.nav_mode = nav_mode;
 	packet.pilot = pilot;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 3);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
@@ -79,14 +79,14 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_pack_chan(uint8_t system_
 	_mav_put_uint8_t(buf, 1, nav_mode);
 	_mav_put_uint8_t(buf, 2, pilot);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 3);
 #else
 	mavlink_ualberta_sys_status_t packet;
 	packet.mode = mode;
 	packet.nav_mode = nav_mode;
 	packet.pilot = pilot;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 3);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;

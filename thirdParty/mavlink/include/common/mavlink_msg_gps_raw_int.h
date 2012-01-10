@@ -72,7 +72,7 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 28, fix_type);
 	_mav_put_uint8_t(buf, 29, satellites_visible);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 30);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 30);
 #else
 	mavlink_gps_raw_int_t packet;
 	packet.time_usec = time_usec;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack(uint8_t system_id, uint8_t c
 	packet.fix_type = fix_type;
 	packet.satellites_visible = satellites_visible;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 30);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 30);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GPS_RAW_INT;
@@ -128,7 +128,7 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack_chan(uint8_t system_id, uint
 	_mav_put_uint8_t(buf, 28, fix_type);
 	_mav_put_uint8_t(buf, 29, satellites_visible);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 30);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 30);
 #else
 	mavlink_gps_raw_int_t packet;
 	packet.time_usec = time_usec;
@@ -142,7 +142,7 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack_chan(uint8_t system_id, uint
 	packet.fix_type = fix_type;
 	packet.satellites_visible = satellites_visible;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 30);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 30);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GPS_RAW_INT;

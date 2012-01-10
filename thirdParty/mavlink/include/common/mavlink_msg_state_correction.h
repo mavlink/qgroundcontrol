@@ -68,7 +68,7 @@ static inline uint16_t mavlink_msg_state_correction_pack(uint8_t system_id, uint
 	_mav_put_float(buf, 28, vyErr);
 	_mav_put_float(buf, 32, vzErr);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 36);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 36);
 #else
 	mavlink_state_correction_t packet;
 	packet.xErr = xErr;
@@ -81,7 +81,7 @@ static inline uint16_t mavlink_msg_state_correction_pack(uint8_t system_id, uint
 	packet.vyErr = vyErr;
 	packet.vzErr = vzErr;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 36);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 36);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
@@ -121,7 +121,7 @@ static inline uint16_t mavlink_msg_state_correction_pack_chan(uint8_t system_id,
 	_mav_put_float(buf, 28, vyErr);
 	_mav_put_float(buf, 32, vzErr);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 36);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 36);
 #else
 	mavlink_state_correction_t packet;
 	packet.xErr = xErr;
@@ -134,7 +134,7 @@ static inline uint16_t mavlink_msg_state_correction_pack_chan(uint8_t system_id,
 	packet.vyErr = vyErr;
 	packet.vzErr = vzErr;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 36);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 36);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;

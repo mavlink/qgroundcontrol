@@ -64,7 +64,7 @@ static inline uint16_t mavlink_msg_nav_controller_output_pack(uint8_t system_id,
 	_mav_put_int16_t(buf, 22, target_bearing);
 	_mav_put_uint16_t(buf, 24, wp_dist);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_nav_controller_output_t packet;
 	packet.nav_roll = nav_roll;
@@ -76,7 +76,7 @@ static inline uint16_t mavlink_msg_nav_controller_output_pack(uint8_t system_id,
 	packet.target_bearing = target_bearing;
 	packet.wp_dist = wp_dist;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
@@ -114,7 +114,7 @@ static inline uint16_t mavlink_msg_nav_controller_output_pack_chan(uint8_t syste
 	_mav_put_int16_t(buf, 22, target_bearing);
 	_mav_put_uint16_t(buf, 24, wp_dist);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_nav_controller_output_t packet;
 	packet.nav_roll = nav_roll;
@@ -126,7 +126,7 @@ static inline uint16_t mavlink_msg_nav_controller_output_pack_chan(uint8_t syste
 	packet.target_bearing = target_bearing;
 	packet.wp_dist = wp_dist;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;

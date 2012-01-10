@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_marker_pack(uint8_t system_id, uint8_t compon
 	_mav_put_float(buf, 20, yaw);
 	_mav_put_uint16_t(buf, 24, id);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_marker_t packet;
 	packet.x = x;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_marker_pack(uint8_t system_id, uint8_t compon
 	packet.yaw = yaw;
 	packet.id = id;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MARKER;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_marker_pack_chan(uint8_t system_id, uint8_t c
 	_mav_put_float(buf, 20, yaw);
 	_mav_put_uint16_t(buf, 24, id);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_marker_t packet;
 	packet.x = x;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_marker_pack_chan(uint8_t system_id, uint8_t c
 	packet.yaw = yaw;
 	packet.id = id;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MARKER;

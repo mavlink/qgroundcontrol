@@ -25,6 +25,13 @@
 #define MAVLINK_NO_DATA
 #endif
 
+#include <mavlink_types.h>
+extern void mavlink_send_uart_bytes(mavlink_channel_t chan, uint8_t* buffer, uint16_t len);
+
+#ifndef MAVLINK_SEND_UART_BYTES
+#define MAVLINK_SEND_UART_BYTES(chan, buffer, len) mavlink_send_uart_bytes(chan, buffer, len)
+#endif
+extern mavlink_system_t mavlink_system;
 #include <mavlink.h>
 #include <stdbool.h>
 

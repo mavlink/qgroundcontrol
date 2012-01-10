@@ -72,7 +72,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack(uint8_t system_id, uint8_t compo
 	_mav_put_int16_t(buf, 22, ymag);
 	_mav_put_int16_t(buf, 24, zmag);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_raw_imu_t packet;
 	packet.time_usec = time_usec;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack(uint8_t system_id, uint8_t compo
 	packet.ymag = ymag;
 	packet.zmag = zmag;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
@@ -128,7 +128,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack_chan(uint8_t system_id, uint8_t 
 	_mav_put_int16_t(buf, 22, ymag);
 	_mav_put_int16_t(buf, 24, zmag);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_raw_imu_t packet;
 	packet.time_usec = time_usec;
@@ -142,7 +142,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack_chan(uint8_t system_id, uint8_t 
 	packet.ymag = ymag;
 	packet.zmag = zmag;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
