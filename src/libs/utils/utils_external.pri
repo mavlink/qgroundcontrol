@@ -77,11 +77,7 @@ macx {
 SOURCES += consoleprocess_unix.cpp
 }
 
-linux-g++ {
-SOURCES += consoleprocess_unix.cpp
-}
-
-linux-g++-64 {
+linux-g++|linux-g++-64 {
 SOURCES += consoleprocess_unix.cpp
 }
 
