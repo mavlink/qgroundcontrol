@@ -1394,18 +1394,23 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
     Q_UNUSED(imgid);
     //    qDebug() << "at" << __FILE__ << __LINE__ << ": Received startindex" << startIndex << "and length" << length << "(" << startIndex+length << "of" << rawExpectedBytes << "bytes)";
 
-    if (imageStarted) {
+    if (imageStarted)
+    {
         //if (rawLastIndex != startIndex) qDebug() << "PACKET LOSS!";
 
-        if (startIndex+length > rawExpectedBytes) {
+        if (startIndex+length > rawExpectedBytes)
+        {
             qDebug() << "HUD: OVERFLOW! startIndex:" << startIndex << "length:" << length << "image raw size" << ((receivedWidth * receivedHeight * receivedChannels * receivedDepth) / 8) - 1;
-        } else {
+        }
+        else
+        {
             memcpy(rawImage+startIndex, imageData, length);
 
             rawLastIndex = startIndex+length;
 
             // Check if we just reached the end of the image
-            if (startIndex+length == rawExpectedBytes) {
+            if (startIndex+length == rawExpectedBytes)
+            {
                 //qDebug() << "HUD: END OF IMAGE REACHED!";
                 finishImage();
                 rawLastIndex = 0;
