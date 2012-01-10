@@ -76,7 +76,7 @@ static inline uint16_t mavlink_msg_rc_channels_raw_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 20, port);
 	_mav_put_uint8_t(buf, 21, rssi);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 22);
 #else
 	mavlink_rc_channels_raw_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -91,7 +91,7 @@ static inline uint16_t mavlink_msg_rc_channels_raw_pack(uint8_t system_id, uint8
 	packet.port = port;
 	packet.rssi = rssi;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 22);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_RAW;
@@ -135,7 +135,7 @@ static inline uint16_t mavlink_msg_rc_channels_raw_pack_chan(uint8_t system_id, 
 	_mav_put_uint8_t(buf, 20, port);
 	_mav_put_uint8_t(buf, 21, rssi);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 22);
 #else
 	mavlink_rc_channels_raw_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -150,7 +150,7 @@ static inline uint16_t mavlink_msg_rc_channels_raw_pack_chan(uint8_t system_id, 
 	packet.port = port;
 	packet.rssi = rssi;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 22);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_RAW;

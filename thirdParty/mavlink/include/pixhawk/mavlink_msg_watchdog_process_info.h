@@ -52,15 +52,15 @@ static inline uint16_t mavlink_msg_watchdog_process_info_pack(uint8_t system_id,
 	_mav_put_uint16_t(buf, 6, process_id);
 	_mav_put_char_array(buf, 8, name, 100);
 	_mav_put_char_array(buf, 108, arguments, 147);
-        memcpy(_MAV_PAYLOAD(msg), buf, 255);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 255);
 #else
 	mavlink_watchdog_process_info_t packet;
 	packet.timeout = timeout;
 	packet.watchdog_id = watchdog_id;
 	packet.process_id = process_id;
-	memcpy(packet.name, name, sizeof(char)*100);
-	memcpy(packet.arguments, arguments, sizeof(char)*147);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 255);
+	mav_array_memcpy(packet.name, name, sizeof(char)*100);
+	mav_array_memcpy(packet.arguments, arguments, sizeof(char)*147);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 255);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO;
@@ -91,15 +91,15 @@ static inline uint16_t mavlink_msg_watchdog_process_info_pack_chan(uint8_t syste
 	_mav_put_uint16_t(buf, 6, process_id);
 	_mav_put_char_array(buf, 8, name, 100);
 	_mav_put_char_array(buf, 108, arguments, 147);
-        memcpy(_MAV_PAYLOAD(msg), buf, 255);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 255);
 #else
 	mavlink_watchdog_process_info_t packet;
 	packet.timeout = timeout;
 	packet.watchdog_id = watchdog_id;
 	packet.process_id = process_id;
-	memcpy(packet.name, name, sizeof(char)*100);
-	memcpy(packet.arguments, arguments, sizeof(char)*147);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 255);
+	mav_array_memcpy(packet.name, name, sizeof(char)*100);
+	mav_array_memcpy(packet.arguments, arguments, sizeof(char)*147);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 255);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO;
@@ -146,8 +146,8 @@ static inline void mavlink_msg_watchdog_process_info_send(mavlink_channel_t chan
 	packet.timeout = timeout;
 	packet.watchdog_id = watchdog_id;
 	packet.process_id = process_id;
-	memcpy(packet.name, name, sizeof(char)*100);
-	memcpy(packet.arguments, arguments, sizeof(char)*147);
+	mav_array_memcpy(packet.name, name, sizeof(char)*100);
+	mav_array_memcpy(packet.arguments, arguments, sizeof(char)*147);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO, (const char *)&packet, 255, 16);
 #endif
 }

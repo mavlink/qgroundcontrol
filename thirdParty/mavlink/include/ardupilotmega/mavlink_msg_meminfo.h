@@ -40,13 +40,13 @@ static inline uint16_t mavlink_msg_meminfo_pack(uint8_t system_id, uint8_t compo
 	_mav_put_uint16_t(buf, 0, brkval);
 	_mav_put_uint16_t(buf, 2, freemem);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_meminfo_t packet;
 	packet.brkval = brkval;
 	packet.freemem = freemem;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MEMINFO;
@@ -72,13 +72,13 @@ static inline uint16_t mavlink_msg_meminfo_pack_chan(uint8_t system_id, uint8_t 
 	_mav_put_uint16_t(buf, 0, brkval);
 	_mav_put_uint16_t(buf, 2, freemem);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_meminfo_t packet;
 	packet.brkval = brkval;
 	packet.freemem = freemem;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MEMINFO;

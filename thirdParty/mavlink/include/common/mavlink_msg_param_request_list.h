@@ -40,13 +40,13 @@ static inline uint16_t mavlink_msg_param_request_list_pack(uint8_t system_id, ui
 	_mav_put_uint8_t(buf, 0, target_system);
 	_mav_put_uint8_t(buf, 1, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 2);
 #else
 	mavlink_param_request_list_t packet;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 2);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PARAM_REQUEST_LIST;
@@ -72,13 +72,13 @@ static inline uint16_t mavlink_msg_param_request_list_pack_chan(uint8_t system_i
 	_mav_put_uint8_t(buf, 0, target_system);
 	_mav_put_uint8_t(buf, 1, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 2);
 #else
 	mavlink_param_request_list_t packet;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 2);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PARAM_REQUEST_LIST;

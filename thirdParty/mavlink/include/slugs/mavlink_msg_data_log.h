@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_data_log_pack(uint8_t system_id, uint8_t comp
 	_mav_put_float(buf, 16, fl_5);
 	_mav_put_float(buf, 20, fl_6);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 24);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
 #else
 	mavlink_data_log_t packet;
 	packet.fl_1 = fl_1;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_data_log_pack(uint8_t system_id, uint8_t comp
 	packet.fl_5 = fl_5;
 	packet.fl_6 = fl_6;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 24);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_data_log_pack_chan(uint8_t system_id, uint8_t
 	_mav_put_float(buf, 16, fl_5);
 	_mav_put_float(buf, 20, fl_6);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 24);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
 #else
 	mavlink_data_log_t packet;
 	packet.fl_1 = fl_1;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_data_log_pack_chan(uint8_t system_id, uint8_t
 	packet.fl_5 = fl_5;
 	packet.fl_6 = fl_6;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 24);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;

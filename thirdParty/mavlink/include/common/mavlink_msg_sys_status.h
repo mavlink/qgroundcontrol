@@ -84,7 +84,7 @@ static inline uint16_t mavlink_msg_sys_status_pack(uint8_t system_id, uint8_t co
 	_mav_put_uint16_t(buf, 28, errors_count4);
 	_mav_put_int8_t(buf, 30, battery_remaining);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 31);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 31);
 #else
 	mavlink_sys_status_t packet;
 	packet.onboard_control_sensors_present = onboard_control_sensors_present;
@@ -101,7 +101,7 @@ static inline uint16_t mavlink_msg_sys_status_pack(uint8_t system_id, uint8_t co
 	packet.errors_count4 = errors_count4;
 	packet.battery_remaining = battery_remaining;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 31);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 31);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
@@ -149,7 +149,7 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 	_mav_put_uint16_t(buf, 28, errors_count4);
 	_mav_put_int8_t(buf, 30, battery_remaining);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 31);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 31);
 #else
 	mavlink_sys_status_t packet;
 	packet.onboard_control_sensors_present = onboard_control_sensors_present;
@@ -166,7 +166,7 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 	packet.errors_count4 = errors_count4;
 	packet.battery_remaining = battery_remaining;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 31);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 31);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;

@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_raw_pressure_pack(uint8_t system_id, uint8_t 
 	_mav_put_int16_t(buf, 12, press_diff2);
 	_mav_put_int16_t(buf, 14, temperature);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 16);
 #else
 	mavlink_raw_pressure_t packet;
 	packet.time_usec = time_usec;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_raw_pressure_pack(uint8_t system_id, uint8_t 
 	packet.press_diff2 = press_diff2;
 	packet.temperature = temperature;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 16);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RAW_PRESSURE;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_raw_pressure_pack_chan(uint8_t system_id, uin
 	_mav_put_int16_t(buf, 12, press_diff2);
 	_mav_put_int16_t(buf, 14, temperature);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 16);
 #else
 	mavlink_raw_pressure_t packet;
 	packet.time_usec = time_usec;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_raw_pressure_pack_chan(uint8_t system_id, uin
 	packet.press_diff2 = press_diff2;
 	packet.temperature = temperature;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 16);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RAW_PRESSURE;

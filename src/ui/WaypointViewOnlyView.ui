@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>200</width>
-    <height>31</height>
+    <height>30</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -116,8 +116,17 @@ margin-top: 1ex; /* leave space at the top for the title */
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="toolTip">
+         <string>Mission element description</string>
+        </property>
+        <property name="statusTip">
+         <string>Mission element description</string>
+        </property>
+        <property name="whatsThis">
+         <string/>
+        </property>
         <property name="text">
-         <string>test 1</string>
+         <string>Mission element description</string>
         </property>
        </widget>
       </item>
@@ -139,8 +148,17 @@ margin-top: 1ex; /* leave space at the top for the title */
       </item>
       <item>
        <widget class="QLabel" name="frameLabel">
+        <property name="toolTip">
+         <string comment="Coordinate Frame" extracomment="Coordinate Frame">Coordinate Frame</string>
+        </property>
+        <property name="statusTip">
+         <string>Coordinate Frame</string>
+        </property>
+        <property name="whatsThis">
+         <string/>
+        </property>
         <property name="text">
-         <string>v10</string>
+         <string>Frame</string>
         </property>
        </widget>
       </item>

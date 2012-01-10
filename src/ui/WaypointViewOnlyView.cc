@@ -125,6 +125,41 @@ void WaypointViewOnlyView::updateValues()
     // update frame
 
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
+    switch (wp->getFrame())
+    {
+    case MAV_FRAME_GLOBAL:
+    {
+        m_ui->frameLabel->setText(QString("GAA"));
+        break;
+    }
+    case MAV_FRAME_LOCAL_NED:
+    {
+        m_ui->frameLabel->setText(QString("NED"));
+        break;
+    }
+    case MAV_FRAME_MISSION:
+    {
+        m_ui->frameLabel->setText(QString("MIS"));
+        break;
+    }
+    case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+    {
+        m_ui->frameLabel->setText(QString("GRA"));
+        break;
+    }
+    case MAV_FRAME_LOCAL_ENU:
+    {
+        m_ui->frameLabel->setText(QString("ENU"));
+        break;
+    }
+    default:
+    {
+        m_ui->frameLabel->setText(QString(""));
+        break;
+    }
+    }
+
+
 
     if (m_ui->current->isChecked() != wp->getCurrent())
     {
@@ -143,24 +178,74 @@ void WaypointViewOnlyView::updateValues()
     {
     case MAV_CMD_NAV_WAYPOINT:
     {
-        if (wp->getParam1()>0)
+        switch (wp->getFrame())
         {
-            m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
-        }
-        else
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
         {
-            m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b>; yaw: %4; rad: %5").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()).arg(wp->getParam2()));
+            if (wp->getParam1()>0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>,lon <b>%2<sup>o</sup></b>,alt <b>%3)</b>; yaw: %4; rad: %5").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            break;
         }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            if (wp->getParam1()>0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f',2).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b>; yaw: %4; rad: %5").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            break;
+        }
+        } //end Frame switch
         break;
     }
     case MAV_CMD_NAV_LAND:
-    {
-        m_ui->displayBar->setText(QString("LAND. Go to (%1, %2, %3) and descent; yaw: %4").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()));
+    {        
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            m_ui->displayBar->setText(QString("LAND. Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and descent; yaw: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            m_ui->displayBar->setText(QString("LAND. Go to <b>(%1, %2, %3)</b> and descent; yaw: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        } //end Frame switch
         break;
     }
     case MAV_CMD_NAV_TAKEOFF:
-    {
-        m_ui->displayBar->setText(QString("TAKEOFF. Go to (%1, %2, %3); yaw: %4").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()));
+    {        
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            m_ui->displayBar->setText(QString("TAKEOFF. Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b>; yaw: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            m_ui->displayBar->setText(QString("TAKEOFF. Go to <b>(%1, %2, %3)</b>; yaw: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        } //end Frame switch
+        break;
         break;
     }
     case MAV_CMD_DO_JUMP:
@@ -192,7 +277,21 @@ void WaypointViewOnlyView::updateValues()
     }
     case 240: //MAV_CMD_DO_SWEEP
     {
-        m_ui->displayBar->setText(QString("Sweep. Corners: (%1,%2) and (%3,%4); z: %5; scan radius: %6").arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()).arg(wp->getParam1()));
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+        m_ui->displayBar->setText(QString("Sweep. Corners: <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup>)</b> and <b>(</b>lat <b>%3<sup>o</sup></b>, lon <b>%4<sup>o</sup>)</b>; alt: <b>%5</b>; scan radius: %6").arg(wp->getParam3(),0, 'f', 7).arg(wp->getParam4(),0, 'f', 7).arg(wp->getParam5(),0, 'f', 7).arg(wp->getParam6(),0, 'f', 7).arg(wp->getParam7(),0, 'f', 2).arg(wp->getParam1()));
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+        m_ui->displayBar->setText(QString("Sweep. Corners: <b>(%1, %2)</b> and <b>(%3, %4)</b>; z: <b>%5</b>; scan radius: %6").arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()).arg(wp->getParam1()));
+            break;
+        }
+        } //end Frame switch
         break;
     }
     default:

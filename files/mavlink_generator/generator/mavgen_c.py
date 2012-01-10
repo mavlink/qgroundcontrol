@@ -115,11 +115,14 @@ ${{include_list:#include "../${base}/${base}.h"
 
 ${{enum:
 /** @brief ${description} */
+#ifndef HAVE_ENUM_${name}
+#define HAVE_ENUM_${name}
 enum ${name}
 {
 ${{entry:	${name}=${value}, /* ${description} |${{param:${description}| }} */
 }}
 };
+#endif
 }}
 
 // MESSAGE DEFINITIONS
@@ -182,14 +185,14 @@ ${{scalar_fields:	_mav_put_${type}(buf, ${wire_offset}, ${putname});
 }}
 ${{array_fields:	_mav_put_${type}_array(buf, ${wire_offset}, ${name}, ${array_length});
 }}
-        memcpy(_MAV_PAYLOAD(msg), buf, ${wire_length});
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, ${wire_length});
 #else
 	mavlink_${name_lower}_t packet;
 ${{scalar_fields:	packet.${name} = ${putname};
 }}
-${{array_fields:	memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
+${{array_fields:	mav_array_memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
 }}
-        memcpy(_MAV_PAYLOAD(msg), &packet, ${wire_length});
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, ${wire_length});
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_${name};
@@ -216,14 +219,14 @@ ${{scalar_fields:	_mav_put_${type}(buf, ${wire_offset}, ${putname});
 }}
 ${{array_fields:	_mav_put_${type}_array(buf, ${wire_offset}, ${name}, ${array_length});
 }}
-        memcpy(_MAV_PAYLOAD(msg), buf, ${wire_length});
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, ${wire_length});
 #else
 	mavlink_${name_lower}_t packet;
 ${{scalar_fields:	packet.${name} = ${putname};
 }}
-${{array_fields:	memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
+${{array_fields:	mav_array_memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
 }}
-        memcpy(_MAV_PAYLOAD(msg), &packet, ${wire_length});
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, ${wire_length});
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_${name};
@@ -265,7 +268,7 @@ ${{array_fields:	_mav_put_${type}_array(buf, ${wire_offset}, ${name}, ${array_le
 	mavlink_${name_lower}_t packet;
 ${{scalar_fields:	packet.${name} = ${putname};
 }}
-${{array_fields:	memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
+${{array_fields:	mav_array_memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
 }}
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_${name}, (const char *)&packet, ${wire_length}${crc_extra_arg});
 #endif
@@ -351,7 +354,7 @@ static void mavlink_test_${name_lower}(uint8_t system_id, uint8_t component_id, 
         memset(&packet1, 0, sizeof(packet1));
         ${{scalar_fields:	packet1.${name} = packet_in.${name};
         }}
-        ${{array_fields:	memcpy(packet1.${name}, packet_in.${name}, sizeof(${type})*${array_length});
+        ${{array_fields:	mav_array_memcpy(packet1.${name}, packet_in.${name}, sizeof(${type})*${array_length});
         }}
 
         memset(&packet2, 0, sizeof(packet2));
@@ -463,8 +466,10 @@ def generate_one(basename, xml):
         if name is not None:
             xml.message_info_array += 'MAVLINK_MESSAGE_INFO_%s, ' % name
         else:
-            #xml.message_info_array += '{"EMPTY",0,{}}, '
-            xml.message_info_array += '{NULL}, '
+            # Several C compilers don't accept {NULL} for
+            # multi-dimensional arrays and structs
+            # feed the compiler a "filled" empty message
+            xml.message_info_array += '{"EMPTY",0,{{"","",MAVLINK_TYPE_CHAR,0,0,0}}}, '
     xml.message_info_array = xml.message_info_array[:-2]
 
     # add some extra field attributes for convenience with arrays

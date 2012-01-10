@@ -1,0 +1,49 @@
+package px;
+
+message PointCloudXYZI {
+    message PointXYZI {
+        required float x = 1;
+        required float y = 2;
+        required float z = 3;
+        required float intensity = 4;
+    }
+
+    repeated PointXYZI points = 1;
+}
+
+message PointCloudXYZRGB {
+    message PointXYZRGB {
+        required float x = 1;
+        required float y = 2;
+        required float z = 3;
+        required float rgb = 4;
+    }
+
+    repeated PointXYZRGB points = 1;
+}
+
+message RGBDImage
+{
+    required uint32 cols = 1;		///< Number of columns in image(s)
+    required uint32 rows = 2;		///< Number of rows in image(s)
+    required uint32 step1 = 3;		///< Step (stride) of image 1
+    required uint32 type1 = 4;		///< Type of image 1
+    required bytes imageData1 = 5;
+    required uint32 step2 = 6;		///< Step (stride) of image 2
+    required uint32 type2 = 7;		///< Type of image 2
+    required bytes imageData2 = 8;
+    optional uint32 camera_config = 9;	///< PxSHM::Camera enumeration
+    optional uint32 camera_type = 10;	///< PxSHM::CameraType enumeration
+    optional uint64 timestamp = 11;
+    optional float roll = 12;
+    optional float pitch = 13;
+    optional float yaw = 14;
+    optional float lon = 15;
+    optional float lat = 16;
+    optional float alt = 17;
+    optional float ground_x = 18;
+    optional float ground_y = 19;
+    optional float ground_z = 20;
+    repeated float camera_matrix = 21;
+}
+

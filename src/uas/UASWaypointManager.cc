@@ -208,6 +208,7 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             //all waypoints sent and ack received
             protocol_timer.stop();
             current_state = WP_IDLE;
+            readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
             emit updateStatusString("done.");
             // // qDebug() << "sent all waypoints to ID " << systemId;
         } else if(current_state == WP_CLEARLIST) {

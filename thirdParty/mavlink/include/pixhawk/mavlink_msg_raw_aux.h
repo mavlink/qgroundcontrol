@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_raw_aux_pack(uint8_t system_id, uint8_t compo
 	_mav_put_uint16_t(buf, 12, vbat);
 	_mav_put_int16_t(buf, 14, temp);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 16);
 #else
 	mavlink_raw_aux_t packet;
 	packet.baro = baro;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_raw_aux_pack(uint8_t system_id, uint8_t compo
 	packet.vbat = vbat;
 	packet.temp = temp;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 16);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_raw_aux_pack_chan(uint8_t system_id, uint8_t 
 	_mav_put_uint16_t(buf, 12, vbat);
 	_mav_put_int16_t(buf, 14, temp);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 16);
 #else
 	mavlink_raw_aux_t packet;
 	packet.baro = baro;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_raw_aux_pack_chan(uint8_t system_id, uint8_t 
 	packet.vbat = vbat;
 	packet.temp = temp;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 16);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;

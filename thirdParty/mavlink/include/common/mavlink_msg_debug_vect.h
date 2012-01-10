@@ -51,15 +51,15 @@ static inline uint16_t mavlink_msg_debug_vect_pack(uint8_t system_id, uint8_t co
 	_mav_put_float(buf, 12, y);
 	_mav_put_float(buf, 16, z);
 	_mav_put_char_array(buf, 20, name, 10);
-        memcpy(_MAV_PAYLOAD(msg), buf, 30);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 30);
 #else
 	mavlink_debug_vect_t packet;
 	packet.time_usec = time_usec;
 	packet.x = x;
 	packet.y = y;
 	packet.z = z;
-	memcpy(packet.name, name, sizeof(char)*10);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 30);
+	mav_array_memcpy(packet.name, name, sizeof(char)*10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 30);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DEBUG_VECT;
@@ -90,15 +90,15 @@ static inline uint16_t mavlink_msg_debug_vect_pack_chan(uint8_t system_id, uint8
 	_mav_put_float(buf, 12, y);
 	_mav_put_float(buf, 16, z);
 	_mav_put_char_array(buf, 20, name, 10);
-        memcpy(_MAV_PAYLOAD(msg), buf, 30);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 30);
 #else
 	mavlink_debug_vect_t packet;
 	packet.time_usec = time_usec;
 	packet.x = x;
 	packet.y = y;
 	packet.z = z;
-	memcpy(packet.name, name, sizeof(char)*10);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 30);
+	mav_array_memcpy(packet.name, name, sizeof(char)*10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 30);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DEBUG_VECT;
@@ -146,7 +146,7 @@ static inline void mavlink_msg_debug_vect_send(mavlink_channel_t chan, const cha
 	packet.x = x;
 	packet.y = y;
 	packet.z = z;
-	memcpy(packet.name, name, sizeof(char)*10);
+	mav_array_memcpy(packet.name, name, sizeof(char)*10);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_DEBUG_VECT, (const char *)&packet, 30, 49);
 #endif
 }
