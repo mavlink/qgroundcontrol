@@ -88,7 +88,7 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_pack(uint8_t system_id, uin
 	_mav_put_uint16_t(buf, 30, chan12_raw);
 	_mav_put_uint8_t(buf, 32, rssi);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 33);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 33);
 #else
 	mavlink_hil_rc_inputs_raw_t packet;
 	packet.time_usec = time_usec;
@@ -106,7 +106,7 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_pack(uint8_t system_id, uin
 	packet.chan12_raw = chan12_raw;
 	packet.rssi = rssi;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 33);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 33);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW;
@@ -156,7 +156,7 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_pack_chan(uint8_t system_id
 	_mav_put_uint16_t(buf, 30, chan12_raw);
 	_mav_put_uint8_t(buf, 32, rssi);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 33);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 33);
 #else
 	mavlink_hil_rc_inputs_raw_t packet;
 	packet.time_usec = time_usec;
@@ -174,7 +174,7 @@ static inline uint16_t mavlink_msg_hil_rc_inputs_raw_pack_chan(uint8_t system_id
 	packet.chan12_raw = chan12_raw;
 	packet.rssi = rssi;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 33);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 33);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIL_RC_INPUTS_RAW;

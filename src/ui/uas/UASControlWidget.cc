@@ -171,7 +171,9 @@ void UASControlWidget::transmitMode()
     if (mav)
     {
         mav->setMode(uasMode);
-        ui.lastActionLabel->setText(QString("Sent new mode cmd to %1").arg(mav->getUASName()));
+        QString mode = ui.modeComboBox->currentText();
+
+        ui.lastActionLabel->setText(QString("Sent new mode %1 to %2").arg(mode).arg(mav->getUASName()));
     }
 }
 

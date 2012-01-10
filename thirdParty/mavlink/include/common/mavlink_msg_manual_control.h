@@ -68,7 +68,7 @@ static inline uint16_t mavlink_msg_manual_control_pack(uint8_t system_id, uint8_
 	_mav_put_uint8_t(buf, 19, yaw_manual);
 	_mav_put_uint8_t(buf, 20, thrust_manual);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 21);
 #else
 	mavlink_manual_control_t packet;
 	packet.roll = roll;
@@ -81,7 +81,7 @@ static inline uint16_t mavlink_msg_manual_control_pack(uint8_t system_id, uint8_
 	packet.yaw_manual = yaw_manual;
 	packet.thrust_manual = thrust_manual;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 21);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MANUAL_CONTROL;
@@ -121,7 +121,7 @@ static inline uint16_t mavlink_msg_manual_control_pack_chan(uint8_t system_id, u
 	_mav_put_uint8_t(buf, 19, yaw_manual);
 	_mav_put_uint8_t(buf, 20, thrust_manual);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 21);
 #else
 	mavlink_manual_control_t packet;
 	packet.roll = roll;
@@ -134,7 +134,7 @@ static inline uint16_t mavlink_msg_manual_control_pack_chan(uint8_t system_id, u
 	packet.yaw_manual = yaw_manual;
 	packet.thrust_manual = thrust_manual;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 21);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MANUAL_CONTROL;

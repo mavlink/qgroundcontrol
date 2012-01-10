@@ -47,14 +47,14 @@ static inline uint16_t mavlink_msg_pattern_detected_pack(uint8_t system_id, uint
 	_mav_put_uint8_t(buf, 4, type);
 	_mav_put_uint8_t(buf, 105, detected);
 	_mav_put_char_array(buf, 5, file, 100);
-        memcpy(_MAV_PAYLOAD(msg), buf, 106);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 106);
 #else
 	mavlink_pattern_detected_t packet;
 	packet.confidence = confidence;
 	packet.type = type;
 	packet.detected = detected;
-	memcpy(packet.file, file, sizeof(char)*100);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 106);
+	mav_array_memcpy(packet.file, file, sizeof(char)*100);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 106);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
@@ -83,14 +83,14 @@ static inline uint16_t mavlink_msg_pattern_detected_pack_chan(uint8_t system_id,
 	_mav_put_uint8_t(buf, 4, type);
 	_mav_put_uint8_t(buf, 105, detected);
 	_mav_put_char_array(buf, 5, file, 100);
-        memcpy(_MAV_PAYLOAD(msg), buf, 106);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 106);
 #else
 	mavlink_pattern_detected_t packet;
 	packet.confidence = confidence;
 	packet.type = type;
 	packet.detected = detected;
-	memcpy(packet.file, file, sizeof(char)*100);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 106);
+	mav_array_memcpy(packet.file, file, sizeof(char)*100);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 106);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
@@ -135,7 +135,7 @@ static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uin
 	packet.confidence = confidence;
 	packet.type = type;
 	packet.detected = detected;
-	memcpy(packet.file, file, sizeof(char)*100);
+	mav_array_memcpy(packet.file, file, sizeof(char)*100);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PATTERN_DETECTED, (const char *)&packet, 106, 90);
 #endif
 }

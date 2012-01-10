@@ -39,12 +39,12 @@ static inline uint16_t mavlink_msg_statustext_pack(uint8_t system_id, uint8_t co
 	char buf[51];
 	_mav_put_uint8_t(buf, 0, severity);
 	_mav_put_char_array(buf, 1, text, 50);
-        memcpy(_MAV_PAYLOAD(msg), buf, 51);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 51);
 #else
 	mavlink_statustext_t packet;
 	packet.severity = severity;
-	memcpy(packet.text, text, sizeof(char)*50);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 51);
+	mav_array_memcpy(packet.text, text, sizeof(char)*50);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 51);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_STATUSTEXT;
@@ -69,12 +69,12 @@ static inline uint16_t mavlink_msg_statustext_pack_chan(uint8_t system_id, uint8
 	char buf[51];
 	_mav_put_uint8_t(buf, 0, severity);
 	_mav_put_char_array(buf, 1, text, 50);
-        memcpy(_MAV_PAYLOAD(msg), buf, 51);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 51);
 #else
 	mavlink_statustext_t packet;
 	packet.severity = severity;
-	memcpy(packet.text, text, sizeof(char)*50);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 51);
+	mav_array_memcpy(packet.text, text, sizeof(char)*50);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 51);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_STATUSTEXT;
@@ -113,7 +113,7 @@ static inline void mavlink_msg_statustext_send(mavlink_channel_t chan, uint8_t s
 #else
 	mavlink_statustext_t packet;
 	packet.severity = severity;
-	memcpy(packet.text, text, sizeof(char)*50);
+	mav_array_memcpy(packet.text, text, sizeof(char)*50);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_STATUSTEXT, (const char *)&packet, 51, 83);
 #endif
 }

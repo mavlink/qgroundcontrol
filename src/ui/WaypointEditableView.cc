@@ -50,9 +50,9 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
 
     // add frames
-    m_ui->comboBox_frame->addItem("Abs. Alt/Global",MAV_FRAME_GLOBAL);
-    m_ui->comboBox_frame->addItem("Rel. Alt/Global", MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    m_ui->comboBox_frame->addItem("Local/Abs. Alt.",MAV_FRAME_LOCAL_NED);
+    m_ui->comboBox_frame->addItem("Global/Abs. Alt",MAV_FRAME_GLOBAL);
+    m_ui->comboBox_frame->addItem("Global/Rel. Alt", MAV_FRAME_GLOBAL_RELATIVE_ALT);
+    m_ui->comboBox_frame->addItem("Local(NED)",MAV_FRAME_LOCAL_NED);
     m_ui->comboBox_frame->addItem("Mission",MAV_FRAME_MISSION);
 
     // Initialize view correctly

@@ -47,14 +47,14 @@ static inline uint16_t mavlink_msg_change_operator_control_pack(uint8_t system_i
 	_mav_put_uint8_t(buf, 1, control_request);
 	_mav_put_uint8_t(buf, 2, version);
 	_mav_put_char_array(buf, 3, passkey, 25);
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_change_operator_control_t packet;
 	packet.target_system = target_system;
 	packet.control_request = control_request;
 	packet.version = version;
-	memcpy(packet.passkey, passkey, sizeof(char)*25);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+	mav_array_memcpy(packet.passkey, passkey, sizeof(char)*25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL;
@@ -83,14 +83,14 @@ static inline uint16_t mavlink_msg_change_operator_control_pack_chan(uint8_t sys
 	_mav_put_uint8_t(buf, 1, control_request);
 	_mav_put_uint8_t(buf, 2, version);
 	_mav_put_char_array(buf, 3, passkey, 25);
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_change_operator_control_t packet;
 	packet.target_system = target_system;
 	packet.control_request = control_request;
 	packet.version = version;
-	memcpy(packet.passkey, passkey, sizeof(char)*25);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+	mav_array_memcpy(packet.passkey, passkey, sizeof(char)*25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL;
@@ -135,7 +135,7 @@ static inline void mavlink_msg_change_operator_control_send(mavlink_channel_t ch
 	packet.target_system = target_system;
 	packet.control_request = control_request;
 	packet.version = version;
-	memcpy(packet.passkey, passkey, sizeof(char)*25);
+	mav_array_memcpy(packet.passkey, passkey, sizeof(char)*25);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL, (const char *)&packet, 28, 217);
 #endif
 }

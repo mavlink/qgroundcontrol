@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_pack(uin
 	_mav_put_float(buf, 12, yaw_speed);
 	_mav_put_float(buf, 16, thrust);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_roll_pitch_yaw_speed_thrust_setpoint_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_pack(uin
 	packet.yaw_speed = yaw_speed;
 	packet.thrust = thrust;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_pack_cha
 	_mav_put_float(buf, 12, yaw_speed);
 	_mav_put_float(buf, 16, thrust);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_roll_pitch_yaw_speed_thrust_setpoint_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_pack_cha
 	packet.yaw_speed = yaw_speed;
 	packet.thrust = thrust;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT;

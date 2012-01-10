@@ -95,12 +95,12 @@ static void mavlink_test_radio_calibration(uint8_t system_id, uint8_t component_
 	mavlink_radio_calibration_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         
-        	memcpy(packet1.aileron, packet_in.aileron, sizeof(uint16_t)*3);
-        	memcpy(packet1.elevator, packet_in.elevator, sizeof(uint16_t)*3);
-        	memcpy(packet1.rudder, packet_in.rudder, sizeof(uint16_t)*3);
-        	memcpy(packet1.gyro, packet_in.gyro, sizeof(uint16_t)*2);
-        	memcpy(packet1.pitch, packet_in.pitch, sizeof(uint16_t)*5);
-        	memcpy(packet1.throttle, packet_in.throttle, sizeof(uint16_t)*5);
+        	mav_array_memcpy(packet1.aileron, packet_in.aileron, sizeof(uint16_t)*3);
+        	mav_array_memcpy(packet1.elevator, packet_in.elevator, sizeof(uint16_t)*3);
+        	mav_array_memcpy(packet1.rudder, packet_in.rudder, sizeof(uint16_t)*3);
+        	mav_array_memcpy(packet1.gyro, packet_in.gyro, sizeof(uint16_t)*2);
+        	mav_array_memcpy(packet1.pitch, packet_in.pitch, sizeof(uint16_t)*5);
+        	mav_array_memcpy(packet1.throttle, packet_in.throttle, sizeof(uint16_t)*5);
         
 
         memset(&packet2, 0, sizeof(packet2));

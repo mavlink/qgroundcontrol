@@ -100,12 +100,11 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
     if (uas)
     {
-        qDebug() << "setUAS" ;
         WPM = uas->getWaypointManager();
+        //setUAS(uas);
     }
     else
     {
-        qDebug() << "setUAS failed. Creating an offline WaypointList";
         // Hide buttons, which don't make sense without valid UAS
         m_ui->positionAddButton->hide();
         m_ui->transmitButton->hide();
@@ -160,16 +159,17 @@ void WaypointList::setUAS(UASInterface* uas)
     if (this->uas == NULL)
     {
         this->uas = uas;
-
-        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
-
         connect(WPM, SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
         connect(WPM, SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
         connect(WPM, SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
         connect(WPM, SIGNAL(waypointViewOnlyListChanged(void)),                  this, SLOT(waypointViewOnlyListChanged(void)));
         connect(WPM, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(updateWaypointViewOnly(int,Waypoint*)));
         connect(WPM, SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointViewOnlyChanged(quint16)));
+        if (uas != NULL)
+        {
+            connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
+            connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+        }
         //connect(WPM,SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
         //connect(WPM,SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
     }

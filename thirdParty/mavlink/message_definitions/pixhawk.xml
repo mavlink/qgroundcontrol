@@ -60,17 +60,7 @@
                <field type="float" name="ground_y">Ground truth Y</field>
                <field type="float" name="ground_z">Ground truth Z</field>
           </message>
-          <message id="159" name="POSITION_CONTROL_SETPOINT_SET">
-               <description>Message sent to the MAV to set a new position as reference for the controller</description>
-               <field type="uint8_t" name="target_system">System ID</field>
-               <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint16_t" name="id">ID of waypoint, 0 for plain position</field>
-               <field type="float" name="x">x position</field>
-               <field type="float" name="y">y position</field>
-               <field type="float" name="z">z position</field>
-               <field type="float" name="yaw">yaw orientation in radians, 0 = NORTH</field>
-          </message>
-          <message id="160" name="POSITION_CONTROL_OFFSET_SET">
+          <message id="160" name="SET_POSITION_CONTROL_OFFSET">
                <description>Message sent to the MAV to set a new offset from the currently controlled position</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
@@ -170,6 +160,8 @@
           <message id="193" name="DATA_TRANSMISSION_HANDSHAKE">
                <field type="uint8_t" name="type">type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)</field>
                <field type="uint32_t" name="size">total data size in bytes (set on ACK only)</field>
+               <field type="uint16_t" name="width">Width of a matrix or image</field>
+               <field type="uint16_t" name="height">Height of a matrix or image</field>
                <field type="uint8_t" name="packets">number of packets beeing sent (set on ACK only)</field>
                <field type="uint8_t" name="payload">payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)</field>
                <field type="uint8_t" name="jpg_quality">JPEG quality out of [1,100]</field>

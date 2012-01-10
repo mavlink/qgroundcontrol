@@ -18,6 +18,24 @@ MAVLINK_HELPER mavlink_status_t* mavlink_get_channel_status(uint8_t chan)
 	return &m_mavlink_status[chan];
 }
 
+/*
+ internal function to give access to the channel buffer for each channel
+ */
+MAVLINK_HELPER mavlink_message_t* mavlink_get_channel_buffer(uint8_t chan)
+{
+	
+#if MAVLINK_EXTERNAL_RX_BUFFER
+	// No m_mavlink_message array defined in function,
+	// has to be defined externally
+#ifndef m_mavlink_message
+#error ERROR: IF #define MAVLINK_EXTERNAL_RX_BUFFER IS SET, THE BUFFER HAS TO BE ALLOCATED OUTSIDE OF THIS FUNCTION (mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];)
+#endif
+#else
+	static mavlink_message_t m_mavlink_buffer[MAVLINK_COMM_NUM_BUFFERS];
+#endif
+	return &m_mavlink_buffer[chan];
+}
+
 /**
  * @brief Finalize a MAVLink message with channel assignment
  *
@@ -182,16 +200,6 @@ MAVLINK_HELPER void mavlink_update_checksum(mavlink_message_t* msg, uint8_t c)
  */
 MAVLINK_HELPER uint8_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_message_t* r_message, mavlink_status_t* r_mavlink_status)
 {
-#if MAVLINK_EXTERNAL_RX_BUFFER
-	// No m_mavlink_message array defined in function,
-	// has to be defined externally
-#ifndef m_mavlink_message
-#error ERROR: IF #define MAVLINK_EXTERNAL_RX_BUFFER IS SET, THE BUFFER HAS TO BE ALLOCATED OUTSIDE OF THIS FUNCTION
-#endif
-#else
-	static mavlink_message_t m_mavlink_message[MAVLINK_COMM_NUM_BUFFERS];
-#endif
-
         /*
 	  default message crc function. You can override this per-system to
 	  put this data in a different memory segment
@@ -203,7 +211,7 @@ MAVLINK_HELPER uint8_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_messa
 #endif
 #endif
 
-	mavlink_message_t* rxmsg = &m_mavlink_message[chan]; ///< The currently decoded message
+	mavlink_message_t* rxmsg = mavlink_get_channel_buffer(chan); ///< The currently decoded message
 	mavlink_status_t* status = mavlink_get_channel_status(chan); ///< The current decode status
 	int bufferIndex = 0;
 

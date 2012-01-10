@@ -72,7 +72,7 @@ static inline uint16_t mavlink_msg_scaled_imu_pack(uint8_t system_id, uint8_t co
 	_mav_put_int16_t(buf, 18, ymag);
 	_mav_put_int16_t(buf, 20, zmag);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 22);
 #else
 	mavlink_scaled_imu_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_scaled_imu_pack(uint8_t system_id, uint8_t co
 	packet.ymag = ymag;
 	packet.zmag = zmag;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 22);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;
@@ -128,7 +128,7 @@ static inline uint16_t mavlink_msg_scaled_imu_pack_chan(uint8_t system_id, uint8
 	_mav_put_int16_t(buf, 18, ymag);
 	_mav_put_int16_t(buf, 20, zmag);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 22);
 #else
 	mavlink_scaled_imu_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -142,7 +142,7 @@ static inline uint16_t mavlink_msg_scaled_imu_pack_chan(uint8_t system_id, uint8
 	packet.ymag = ymag;
 	packet.zmag = zmag;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 22);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;

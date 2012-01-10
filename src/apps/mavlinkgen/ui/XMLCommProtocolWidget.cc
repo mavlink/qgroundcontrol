@@ -72,9 +72,12 @@ void XMLCommProtocolWidget::setXML(const QString& xml)
     m_ui->xmlTextView->setText(xml);
     QDomDocument doc;
 	
-    if (doc.setContent(xml)) {
+    if (doc.setContent(xml))
+    {
         m_ui->validXMLLabel->setText(tr("<font color=\"green\">Valid XML file</font>"));
-    } else {
+    }
+    else
+    {
         m_ui->validXMLLabel->setText(tr("<font color=\"red\">File is NOT valid XML, please fix in editor</font>"));
     }
 }
@@ -89,11 +92,13 @@ void XMLCommProtocolWidget::selectOutputDirectory()
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setViewMode(QFileDialog::Detail);
     QStringList fileNames;
-    if (dialog.exec()) {
+    if (dialog.exec())
+    {
         fileNames = dialog.selectedFiles();
     }
 	
-    if (fileNames.size() > 0) {
+    if (fileNames.size() > 0)
+    {
         m_ui->outputDirNameLabel->setText(fileNames.first());
         // Store directory for next time
         settings.setValue(mavlinkOutputDir, QFileInfo(fileNames.first()).absoluteFilePath());
@@ -105,13 +110,15 @@ void XMLCommProtocolWidget::selectOutputDirectory()
 void XMLCommProtocolWidget::generate()
 {
     // Check if input file is present
-    if (!QFileInfo(m_ui->fileNameLabel->text().trimmed()).isFile()) {
+    if (!QFileInfo(m_ui->fileNameLabel->text().trimmed()).isFile())
+    {
         QMessageBox::critical(this, tr("Please select an XML input file first"), tr("You have to select an input XML file before generating C files."), QMessageBox::Ok);
         return;
     }
 	
     // Check if output dir is selected
-    if (!QFileInfo(m_ui->outputDirNameLabel->text().trimmed()).isDir()) {
+    if (!QFileInfo(m_ui->outputDirNameLabel->text().trimmed()).isDir())
+    {
         QMessageBox::critical(this, tr("Please select output directory first"), tr("You have to select an output directory before generating C files."), QMessageBox::Ok);
         return;
     }

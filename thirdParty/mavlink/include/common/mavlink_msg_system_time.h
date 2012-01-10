@@ -40,13 +40,13 @@ static inline uint16_t mavlink_msg_system_time_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint64_t(buf, 0, time_unix_usec);
 	_mav_put_uint32_t(buf, 8, time_boot_ms);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_system_time_t packet;
 	packet.time_unix_usec = time_unix_usec;
 	packet.time_boot_ms = time_boot_ms;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SYSTEM_TIME;
@@ -72,13 +72,13 @@ static inline uint16_t mavlink_msg_system_time_pack_chan(uint8_t system_id, uint
 	_mav_put_uint64_t(buf, 0, time_unix_usec);
 	_mav_put_uint32_t(buf, 8, time_boot_ms);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_system_time_t packet;
 	packet.time_unix_usec = time_unix_usec;
 	packet.time_boot_ms = time_boot_ms;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SYSTEM_TIME;
