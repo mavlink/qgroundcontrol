@@ -55,7 +55,7 @@ static inline uint16_t mavlink_msg_heartbeat_pack(uint8_t system_id, uint8_t com
 	_mav_put_uint8_t(buf, 7, system_status);
 	_mav_put_uint8_t(buf, 8, 3);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 9);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 9);
 #else
 	mavlink_heartbeat_t packet;
 	packet.custom_mode = custom_mode;
@@ -65,7 +65,7 @@ static inline uint16_t mavlink_msg_heartbeat_pack(uint8_t system_id, uint8_t com
 	packet.system_status = system_status;
 	packet.mavlink_version = 3;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 9);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 9);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;
@@ -98,7 +98,7 @@ static inline uint16_t mavlink_msg_heartbeat_pack_chan(uint8_t system_id, uint8_
 	_mav_put_uint8_t(buf, 7, system_status);
 	_mav_put_uint8_t(buf, 8, 3);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 9);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 9);
 #else
 	mavlink_heartbeat_t packet;
 	packet.custom_mode = custom_mode;
@@ -108,7 +108,7 @@ static inline uint16_t mavlink_msg_heartbeat_pack_chan(uint8_t system_id, uint8_
 	packet.system_status = system_status;
 	packet.mavlink_version = 3;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 9);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 9);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;

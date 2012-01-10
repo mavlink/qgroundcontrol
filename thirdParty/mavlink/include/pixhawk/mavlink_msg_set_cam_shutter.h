@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_set_cam_shutter_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 9, cam_mode);
 	_mav_put_uint8_t(buf, 10, trigger_pin);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 11);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 11);
 #else
 	mavlink_set_cam_shutter_t packet;
 	packet.gain = gain;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_set_cam_shutter_pack(uint8_t system_id, uint8
 	packet.cam_mode = cam_mode;
 	packet.trigger_pin = trigger_pin;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 11);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 11);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_set_cam_shutter_pack_chan(uint8_t system_id, 
 	_mav_put_uint8_t(buf, 9, cam_mode);
 	_mav_put_uint8_t(buf, 10, trigger_pin);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 11);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 11);
 #else
 	mavlink_set_cam_shutter_t packet;
 	packet.gain = gain;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_set_cam_shutter_pack_chan(uint8_t system_id, 
 	packet.cam_mode = cam_mode;
 	packet.trigger_pin = trigger_pin;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 11);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 11);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;

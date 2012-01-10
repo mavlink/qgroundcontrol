@@ -44,14 +44,14 @@ static inline uint16_t mavlink_msg_cpu_load_pack(uint8_t system_id, uint8_t comp
 	_mav_put_uint8_t(buf, 2, sensLoad);
 	_mav_put_uint8_t(buf, 3, ctrlLoad);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_cpu_load_t packet;
 	packet.batVolt = batVolt;
 	packet.sensLoad = sensLoad;
 	packet.ctrlLoad = ctrlLoad;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_CPU_LOAD;
@@ -79,14 +79,14 @@ static inline uint16_t mavlink_msg_cpu_load_pack_chan(uint8_t system_id, uint8_t
 	_mav_put_uint8_t(buf, 2, sensLoad);
 	_mav_put_uint8_t(buf, 3, ctrlLoad);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_cpu_load_t packet;
 	packet.batVolt = batVolt;
 	packet.sensLoad = sensLoad;
 	packet.ctrlLoad = ctrlLoad;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_CPU_LOAD;

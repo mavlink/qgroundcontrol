@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack(uint8_t system_id, u
 	_mav_put_uint8_t(buf, 4, req_stream_id);
 	_mav_put_uint8_t(buf, 5, start_stop);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 6);
 #else
 	mavlink_request_data_stream_t packet;
 	packet.req_message_rate = req_message_rate;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack(uint8_t system_id, u
 	packet.req_stream_id = req_stream_id;
 	packet.start_stop = start_stop;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 6);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_REQUEST_DATA_STREAM;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack_chan(uint8_t system_
 	_mav_put_uint8_t(buf, 4, req_stream_id);
 	_mav_put_uint8_t(buf, 5, start_stop);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 6);
 #else
 	mavlink_request_data_stream_t packet;
 	packet.req_message_rate = req_message_rate;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack_chan(uint8_t system_
 	packet.req_stream_id = req_stream_id;
 	packet.start_stop = start_stop;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 6);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_REQUEST_DATA_STREAM;

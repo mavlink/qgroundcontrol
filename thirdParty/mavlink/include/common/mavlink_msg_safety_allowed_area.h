@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_safety_allowed_area_pack(uint8_t system_id, u
 	_mav_put_float(buf, 20, p2z);
 	_mav_put_uint8_t(buf, 24, frame);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 25);
 #else
 	mavlink_safety_allowed_area_t packet;
 	packet.p1x = p1x;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_safety_allowed_area_pack(uint8_t system_id, u
 	packet.p2z = p2z;
 	packet.frame = frame;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 25);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_safety_allowed_area_pack_chan(uint8_t system_
 	_mav_put_float(buf, 20, p2z);
 	_mav_put_uint8_t(buf, 24, frame);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 25);
 #else
 	mavlink_safety_allowed_area_t packet;
 	packet.p1x = p1x;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_safety_allowed_area_pack_chan(uint8_t system_
 	packet.p2z = p2z;
 	packet.frame = frame;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 25);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA;

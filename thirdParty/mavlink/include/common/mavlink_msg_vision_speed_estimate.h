@@ -48,7 +48,7 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_pack(uint8_t system_id,
 	_mav_put_float(buf, 12, y);
 	_mav_put_float(buf, 16, z);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_vision_speed_estimate_t packet;
 	packet.usec = usec;
@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_pack(uint8_t system_id,
 	packet.y = y;
 	packet.z = z;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_pack_chan(uint8_t syste
 	_mav_put_float(buf, 12, y);
 	_mav_put_float(buf, 16, z);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_vision_speed_estimate_t packet;
 	packet.usec = usec;
@@ -94,7 +94,7 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_pack_chan(uint8_t syste
 	packet.y = y;
 	packet.z = z;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE;

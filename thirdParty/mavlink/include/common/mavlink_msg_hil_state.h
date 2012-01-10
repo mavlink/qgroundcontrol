@@ -96,7 +96,7 @@ static inline uint16_t mavlink_msg_hil_state_pack(uint8_t system_id, uint8_t com
 	_mav_put_int16_t(buf, 52, yacc);
 	_mav_put_int16_t(buf, 54, zacc);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 56);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 56);
 #else
 	mavlink_hil_state_t packet;
 	packet.time_usec = time_usec;
@@ -116,7 +116,7 @@ static inline uint16_t mavlink_msg_hil_state_pack(uint8_t system_id, uint8_t com
 	packet.yacc = yacc;
 	packet.zacc = zacc;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 56);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 56);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;
@@ -170,7 +170,7 @@ static inline uint16_t mavlink_msg_hil_state_pack_chan(uint8_t system_id, uint8_
 	_mav_put_int16_t(buf, 52, yacc);
 	_mav_put_int16_t(buf, 54, zacc);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 56);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 56);
 #else
 	mavlink_hil_state_t packet;
 	packet.time_usec = time_usec;
@@ -190,7 +190,7 @@ static inline uint16_t mavlink_msg_hil_state_pack_chan(uint8_t system_id, uint8_
 	packet.yacc = yacc;
 	packet.zacc = zacc;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 56);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 56);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;

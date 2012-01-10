@@ -43,13 +43,13 @@ static inline uint16_t mavlink_msg_named_value_float_pack(uint8_t system_id, uin
 	_mav_put_uint32_t(buf, 0, time_boot_ms);
 	_mav_put_float(buf, 4, value);
 	_mav_put_char_array(buf, 8, name, 10);
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_named_value_float_t packet;
 	packet.time_boot_ms = time_boot_ms;
 	packet.value = value;
-	memcpy(packet.name, name, sizeof(char)*10);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+	mav_array_memcpy(packet.name, name, sizeof(char)*10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_NAMED_VALUE_FLOAT;
@@ -76,13 +76,13 @@ static inline uint16_t mavlink_msg_named_value_float_pack_chan(uint8_t system_id
 	_mav_put_uint32_t(buf, 0, time_boot_ms);
 	_mav_put_float(buf, 4, value);
 	_mav_put_char_array(buf, 8, name, 10);
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_named_value_float_t packet;
 	packet.time_boot_ms = time_boot_ms;
 	packet.value = value;
-	memcpy(packet.name, name, sizeof(char)*10);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+	mav_array_memcpy(packet.name, name, sizeof(char)*10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_NAMED_VALUE_FLOAT;
@@ -124,7 +124,7 @@ static inline void mavlink_msg_named_value_float_send(mavlink_channel_t chan, ui
 	mavlink_named_value_float_t packet;
 	packet.time_boot_ms = time_boot_ms;
 	packet.value = value;
-	memcpy(packet.name, name, sizeof(char)*10);
+	mav_array_memcpy(packet.name, name, sizeof(char)*10);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, (const char *)&packet, 18, 170);
 #endif
 }

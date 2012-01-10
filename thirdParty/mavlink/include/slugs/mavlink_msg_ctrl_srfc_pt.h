@@ -40,13 +40,13 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint16_t(buf, 0, bitfieldPt);
 	_mav_put_uint8_t(buf, 2, target);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 3);
 #else
 	mavlink_ctrl_srfc_pt_t packet;
 	packet.bitfieldPt = bitfieldPt;
 	packet.target = target;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 3);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_CTRL_SRFC_PT;
@@ -72,13 +72,13 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_pack_chan(uint8_t system_id, uin
 	_mav_put_uint16_t(buf, 0, bitfieldPt);
 	_mav_put_uint8_t(buf, 2, target);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 3);
 #else
 	mavlink_ctrl_srfc_pt_t packet;
 	packet.bitfieldPt = bitfieldPt;
 	packet.target = target;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 3);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_CTRL_SRFC_PT;
