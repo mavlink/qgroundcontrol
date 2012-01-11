@@ -124,7 +124,7 @@ static inline uint16_t mavlink_msg_image_available_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 90, cam_no);
 	_mav_put_uint8_t(buf, 91, channels);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 92);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 92);
 #else
 	mavlink_image_available_t packet;
 	packet.cam_id = cam_id;
@@ -151,7 +151,7 @@ static inline uint16_t mavlink_msg_image_available_pack(uint8_t system_id, uint8
 	packet.cam_no = cam_no;
 	packet.channels = channels;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 92);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 92);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_AVAILABLE;
@@ -219,7 +219,7 @@ static inline uint16_t mavlink_msg_image_available_pack_chan(uint8_t system_id, 
 	_mav_put_uint8_t(buf, 90, cam_no);
 	_mav_put_uint8_t(buf, 91, channels);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 92);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 92);
 #else
 	mavlink_image_available_t packet;
 	packet.cam_id = cam_id;
@@ -246,7 +246,7 @@ static inline uint16_t mavlink_msg_image_available_pack_chan(uint8_t system_id, 
 	packet.cam_no = cam_no;
 	packet.channels = channels;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 92);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 92);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_AVAILABLE;

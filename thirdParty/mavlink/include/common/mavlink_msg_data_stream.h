@@ -44,14 +44,14 @@ static inline uint16_t mavlink_msg_data_stream_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 2, stream_id);
 	_mav_put_uint8_t(buf, 3, on_off);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_data_stream_t packet;
 	packet.message_rate = message_rate;
 	packet.stream_id = stream_id;
 	packet.on_off = on_off;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;
@@ -79,14 +79,14 @@ static inline uint16_t mavlink_msg_data_stream_pack_chan(uint8_t system_id, uint
 	_mav_put_uint8_t(buf, 2, stream_id);
 	_mav_put_uint8_t(buf, 3, on_off);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_data_stream_t packet;
 	packet.message_rate = message_rate;
 	packet.stream_id = stream_id;
 	packet.on_off = on_off;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;

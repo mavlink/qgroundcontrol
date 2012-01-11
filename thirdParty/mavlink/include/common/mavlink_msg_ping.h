@@ -48,7 +48,7 @@ static inline uint16_t mavlink_msg_ping_pack(uint8_t system_id, uint8_t componen
 	_mav_put_uint8_t(buf, 12, target_system);
 	_mav_put_uint8_t(buf, 13, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 14);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 14);
 #else
 	mavlink_ping_t packet;
 	packet.time_usec = time_usec;
@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_ping_pack(uint8_t system_id, uint8_t componen
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 14);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 14);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PING;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_ping_pack_chan(uint8_t system_id, uint8_t com
 	_mav_put_uint8_t(buf, 12, target_system);
 	_mav_put_uint8_t(buf, 13, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 14);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 14);
 #else
 	mavlink_ping_t packet;
 	packet.time_usec = time_usec;
@@ -94,7 +94,7 @@ static inline uint16_t mavlink_msg_ping_pack_chan(uint8_t system_id, uint8_t com
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 14);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 14);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PING;

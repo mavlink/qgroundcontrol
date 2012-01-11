@@ -44,14 +44,14 @@ static inline uint16_t mavlink_msg_gps_global_origin_pack(uint8_t system_id, uin
 	_mav_put_int32_t(buf, 4, longitude);
 	_mav_put_int32_t(buf, 8, altitude);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_gps_global_origin_t packet;
 	packet.latitude = latitude;
 	packet.longitude = longitude;
 	packet.altitude = altitude;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN;
@@ -79,14 +79,14 @@ static inline uint16_t mavlink_msg_gps_global_origin_pack_chan(uint8_t system_id
 	_mav_put_int32_t(buf, 4, longitude);
 	_mav_put_int32_t(buf, 8, altitude);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_gps_global_origin_t packet;
 	packet.latitude = latitude;
 	packet.longitude = longitude;
 	packet.altitude = altitude;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN;

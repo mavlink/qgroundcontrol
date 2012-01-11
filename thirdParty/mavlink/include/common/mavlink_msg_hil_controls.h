@@ -76,7 +76,7 @@ static inline uint16_t mavlink_msg_hil_controls_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 40, mode);
 	_mav_put_uint8_t(buf, 41, nav_mode);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 42);
 #else
 	mavlink_hil_controls_t packet;
 	packet.time_usec = time_usec;
@@ -91,7 +91,7 @@ static inline uint16_t mavlink_msg_hil_controls_pack(uint8_t system_id, uint8_t 
 	packet.mode = mode;
 	packet.nav_mode = nav_mode;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 42);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIL_CONTROLS;
@@ -135,7 +135,7 @@ static inline uint16_t mavlink_msg_hil_controls_pack_chan(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 40, mode);
 	_mav_put_uint8_t(buf, 41, nav_mode);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 42);
 #else
 	mavlink_hil_controls_t packet;
 	packet.time_usec = time_usec;
@@ -150,7 +150,7 @@ static inline uint16_t mavlink_msg_hil_controls_pack_chan(uint8_t system_id, uin
 	packet.mode = mode;
 	packet.nav_mode = nav_mode;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 42);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIL_CONTROLS;

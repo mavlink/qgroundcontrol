@@ -1,6 +1,6 @@
 // MESSAGE RC_CHANNELS_SCALED PACKING
 
-#define MAVLINK_MSG_ID_RC_CHANNELS_SCALED 36
+#define MAVLINK_MSG_ID_RC_CHANNELS_SCALED 34
 
 typedef struct __mavlink_rc_channels_scaled_t
 {
@@ -18,7 +18,7 @@ typedef struct __mavlink_rc_channels_scaled_t
 } mavlink_rc_channels_scaled_t;
 
 #define MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN 22
-#define MAVLINK_MSG_ID_36_LEN 22
+#define MAVLINK_MSG_ID_34_LEN 22
 
 
 
@@ -76,7 +76,7 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack(uint8_t system_id, ui
 	_mav_put_uint8_t(buf, 20, port);
 	_mav_put_uint8_t(buf, 21, rssi);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 22);
 #else
 	mavlink_rc_channels_scaled_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -91,7 +91,7 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack(uint8_t system_id, ui
 	packet.port = port;
 	packet.rssi = rssi;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 22);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_SCALED;
@@ -135,7 +135,7 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack_chan(uint8_t system_i
 	_mav_put_uint8_t(buf, 20, port);
 	_mav_put_uint8_t(buf, 21, rssi);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 22);
 #else
 	mavlink_rc_channels_scaled_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -150,7 +150,7 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack_chan(uint8_t system_i
 	packet.port = port;
 	packet.rssi = rssi;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 22);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 22);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_SCALED;

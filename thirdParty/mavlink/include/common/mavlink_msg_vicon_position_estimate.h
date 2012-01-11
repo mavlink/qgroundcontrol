@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_vicon_position_estimate_pack(uint8_t system_i
 	_mav_put_float(buf, 24, pitch);
 	_mav_put_float(buf, 28, yaw);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 32);
 #else
 	mavlink_vicon_position_estimate_t packet;
 	packet.usec = usec;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_vicon_position_estimate_pack(uint8_t system_i
 	packet.pitch = pitch;
 	packet.yaw = yaw;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 32);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_vicon_position_estimate_pack_chan(uint8_t sys
 	_mav_put_float(buf, 24, pitch);
 	_mav_put_float(buf, 28, yaw);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 32);
 #else
 	mavlink_vicon_position_estimate_t packet;
 	packet.usec = usec;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_vicon_position_estimate_pack_chan(uint8_t sys
 	packet.pitch = pitch;
 	packet.yaw = yaw;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 32);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE;

@@ -42,8 +42,8 @@ macx|macx-g++42|macx-g++: {
    # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
 
-        CONFIG += x86_64 cocoa phonon
-        CONFIG -= x86
+        CONFIG += x86 cocoa phonon
+        CONFIG -= x86_64
 
     #HARDWARE_PLATFORM = $$system(uname -a)
     #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
@@ -94,7 +94,7 @@ macx|macx-g++42|macx-g++: {
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy libraries
     QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/libs
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac64/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/libs
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac32/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/libs
 
     # Fix library paths inside executable
     QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
@@ -164,11 +164,11 @@ macx|macx-g++42|macx-g++: {
     # Include OpenSceneGraph libraries
     INCLUDEPATH += -framework GLUT \
             -framework Cocoa \
-            $$BASEDIR/lib/mac64/include
+            $$BASEDIR/lib/mac32/include
 
     LIBS += -framework GLUT \
             -framework Cocoa \
-            -L$$BASEDIR/lib/mac64/lib \
+            -L$$BASEDIR/lib/mac32/lib \
             -lOpenThreads \
             -losg \
             -losgViewer \

@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_diagnostic_pack(uint8_t system_id, uint8_t co
 	_mav_put_int16_t(buf, 14, diagSh2);
 	_mav_put_int16_t(buf, 16, diagSh3);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_diagnostic_t packet;
 	packet.diagFl1 = diagFl1;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_diagnostic_pack(uint8_t system_id, uint8_t co
 	packet.diagSh2 = diagSh2;
 	packet.diagSh3 = diagSh3;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_diagnostic_pack_chan(uint8_t system_id, uint8
 	_mav_put_int16_t(buf, 14, diagSh2);
 	_mav_put_int16_t(buf, 16, diagSh3);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_diagnostic_t packet;
 	packet.diagFl1 = diagFl1;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_diagnostic_pack_chan(uint8_t system_id, uint8
 	packet.diagSh2 = diagSh2;
 	packet.diagSh3 = diagSh3;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;

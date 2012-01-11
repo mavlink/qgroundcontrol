@@ -47,14 +47,14 @@ static inline uint16_t mavlink_msg_param_request_read_pack(uint8_t system_id, ui
 	_mav_put_uint8_t(buf, 2, target_system);
 	_mav_put_uint8_t(buf, 3, target_component);
 	_mav_put_char_array(buf, 4, param_id, 16);
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_param_request_read_t packet;
 	packet.param_index = param_index;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
-	memcpy(packet.param_id, param_id, sizeof(char)*16);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+	mav_array_memcpy(packet.param_id, param_id, sizeof(char)*16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PARAM_REQUEST_READ;
@@ -83,14 +83,14 @@ static inline uint16_t mavlink_msg_param_request_read_pack_chan(uint8_t system_i
 	_mav_put_uint8_t(buf, 2, target_system);
 	_mav_put_uint8_t(buf, 3, target_component);
 	_mav_put_char_array(buf, 4, param_id, 16);
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_param_request_read_t packet;
 	packet.param_index = param_index;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
-	memcpy(packet.param_id, param_id, sizeof(char)*16);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+	mav_array_memcpy(packet.param_id, param_id, sizeof(char)*16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PARAM_REQUEST_READ;
@@ -135,7 +135,7 @@ static inline void mavlink_msg_param_request_read_send(mavlink_channel_t chan, u
 	packet.param_index = param_index;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
-	memcpy(packet.param_id, param_id, sizeof(char)*16);
+	mav_array_memcpy(packet.param_id, param_id, sizeof(char)*16);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PARAM_REQUEST_READ, (const char *)&packet, 20, 214);
 #endif
 }
