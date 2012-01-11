@@ -2,14 +2,26 @@
 
 #define MAVLINK_MSG_ID_OBS_POSITION 170
 
-typedef struct __mavlink_obs_position_t 
+typedef struct __mavlink_obs_position_t
 {
-	int32_t lon; ///< Longitude expressed in 1E7
-	int32_t lat; ///< Latitude expressed in 1E7
-	int32_t alt; ///< Altitude expressed in milimeters
-
+ int32_t lon; ///< Longitude expressed in 1E7
+ int32_t lat; ///< Latitude expressed in 1E7
+ int32_t alt; ///< Altitude expressed in milimeters
 } mavlink_obs_position_t;
 
+#define MAVLINK_MSG_ID_OBS_POSITION_LEN 12
+#define MAVLINK_MSG_ID_170_LEN 12
+
+
+
+#define MAVLINK_MESSAGE_INFO_OBS_POSITION { \
+	"OBS_POSITION", \
+	3, \
+	{  { "lon", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_obs_position_t, lon) }, \
+         { "lat", NULL, MAVLINK_TYPE_INT32_T, 0, 4, offsetof(mavlink_obs_position_t, lat) }, \
+         { "alt", NULL, MAVLINK_TYPE_INT32_T, 0, 8, offsetof(mavlink_obs_position_t, alt) }, \
+         } \
+}
 
 
 /**
@@ -23,20 +35,31 @@ typedef struct __mavlink_obs_position_t
  * @param alt Altitude expressed in milimeters
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_position_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, int32_t lon, int32_t lat, int32_t alt)
+static inline uint16_t mavlink_msg_obs_position_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       int32_t lon, int32_t lat, int32_t alt)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+	_mav_put_int32_t(buf, 0, lon);
+	_mav_put_int32_t(buf, 4, lat);
+	_mav_put_int32_t(buf, 8, alt);
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
+#else
+	mavlink_obs_position_t packet;
+	packet.lon = lon;
+	packet.lat = lat;
+	packet.alt = alt;
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_POSITION;
-
-	i += put_int32_t_by_index(lon, i, msg->payload); // Longitude expressed in 1E7
-	i += put_int32_t_by_index(lat, i, msg->payload); // Latitude expressed in 1E7
-	i += put_int32_t_by_index(alt, i, msg->payload); // Altitude expressed in milimeters
-
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, 12, 15);
 }
 
 /**
- * @brief Pack a obs_position message
+ * @brief Pack a obs_position message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -46,16 +69,28 @@ static inline uint16_t mavlink_msg_obs_position_pack(uint8_t system_id, uint8_t 
  * @param alt Altitude expressed in milimeters
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_position_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, int32_t lon, int32_t lat, int32_t alt)
+static inline uint16_t mavlink_msg_obs_position_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           int32_t lon,int32_t lat,int32_t alt)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+	_mav_put_int32_t(buf, 0, lon);
+	_mav_put_int32_t(buf, 4, lat);
+	_mav_put_int32_t(buf, 8, alt);
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
+#else
+	mavlink_obs_position_t packet;
+	packet.lon = lon;
+	packet.lat = lat;
+	packet.alt = alt;
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_POSITION;
-
-	i += put_int32_t_by_index(lon, i, msg->payload); // Longitude expressed in 1E7
-	i += put_int32_t_by_index(lat, i, msg->payload); // Latitude expressed in 1E7
-	i += put_int32_t_by_index(alt, i, msg->payload); // Altitude expressed in milimeters
-
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 15);
 }
 
 /**
@@ -83,13 +118,27 @@ static inline uint16_t mavlink_msg_obs_position_encode(uint8_t system_id, uint8_
 
 static inline void mavlink_msg_obs_position_send(mavlink_channel_t chan, int32_t lon, int32_t lat, int32_t alt)
 {
-	mavlink_message_t msg;
-	mavlink_msg_obs_position_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, lon, lat, alt);
-	mavlink_send_uart(chan, &msg);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+	_mav_put_int32_t(buf, 0, lon);
+	_mav_put_int32_t(buf, 4, lat);
+	_mav_put_int32_t(buf, 8, alt);
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_POSITION, buf, 12, 15);
+#else
+	mavlink_obs_position_t packet;
+	packet.lon = lon;
+	packet.lat = lat;
+	packet.alt = alt;
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_POSITION, (const char *)&packet, 12, 15);
+#endif
 }
 
 #endif
+
 // MESSAGE OBS_POSITION UNPACKING
+
 
 /**
  * @brief Get field lon from obs_position message
@@ -98,12 +147,7 @@ static inline void mavlink_msg_obs_position_send(mavlink_channel_t chan, int32_t
  */
 static inline int32_t mavlink_msg_obs_position_get_lon(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload)[0];
-	r.b[2] = (msg->payload)[1];
-	r.b[1] = (msg->payload)[2];
-	r.b[0] = (msg->payload)[3];
-	return (int32_t)r.i;
+	return _MAV_RETURN_int32_t(msg,  0);
 }
 
 /**
@@ -113,12 +157,7 @@ static inline int32_t mavlink_msg_obs_position_get_lon(const mavlink_message_t* 
  */
 static inline int32_t mavlink_msg_obs_position_get_lat(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(int32_t))[0];
-	r.b[2] = (msg->payload+sizeof(int32_t))[1];
-	r.b[1] = (msg->payload+sizeof(int32_t))[2];
-	r.b[0] = (msg->payload+sizeof(int32_t))[3];
-	return (int32_t)r.i;
+	return _MAV_RETURN_int32_t(msg,  4);
 }
 
 /**
@@ -128,12 +167,7 @@ static inline int32_t mavlink_msg_obs_position_get_lat(const mavlink_message_t* 
  */
 static inline int32_t mavlink_msg_obs_position_get_alt(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(int32_t)+sizeof(int32_t))[0];
-	r.b[2] = (msg->payload+sizeof(int32_t)+sizeof(int32_t))[1];
-	r.b[1] = (msg->payload+sizeof(int32_t)+sizeof(int32_t))[2];
-	r.b[0] = (msg->payload+sizeof(int32_t)+sizeof(int32_t))[3];
-	return (int32_t)r.i;
+	return _MAV_RETURN_int32_t(msg,  8);
 }
 
 /**
@@ -144,7 +178,11 @@ static inline int32_t mavlink_msg_obs_position_get_alt(const mavlink_message_t* 
  */
 static inline void mavlink_msg_obs_position_decode(const mavlink_message_t* msg, mavlink_obs_position_t* obs_position)
 {
+#if MAVLINK_NEED_BYTE_SWAP
 	obs_position->lon = mavlink_msg_obs_position_get_lon(msg);
 	obs_position->lat = mavlink_msg_obs_position_get_lat(msg);
 	obs_position->alt = mavlink_msg_obs_position_get_alt(msg);
+#else
+	memcpy(obs_position, _MAV_PAYLOAD(msg), 12);
+#endif
 }
