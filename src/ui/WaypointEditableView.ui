@@ -465,16 +465,16 @@ QPushButton:pressed {
          <enum>Qt::StrongFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Loiter radius</string>
+         <string>Loiter radius. Negative for counter-clockwise</string>
         </property>
         <property name="statusTip">
-         <string>Loiter radius</string>
+         <string>Loiter radius. Negative for counter-clockwise</string>
         </property>
         <property name="suffix">
          <string> m</string>
         </property>
         <property name="minimum">
-         <double>0.050000000000000</double>
+         <double>-5000.000000000000000</double>
         </property>
         <property name="maximum">
          <double>5000.000000000000000</double>
@@ -519,11 +519,10 @@ where to accept this waypoint as reached</string>
          </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>Rotaty wing and ground vehicles only:
-Time to stay at this position before advancing</string>
+         <string>Time to stay/loiter at this position before advancing</string>
         </property>
         <property name="statusTip">
-         <string>Rotaty wing and ground vehicles only: Time to stay at this position before advancing</string>
+         <string>Time to stay/loiter at this position before advancing</string>
         </property>
         <property name="suffix">
          <string> s</string>
