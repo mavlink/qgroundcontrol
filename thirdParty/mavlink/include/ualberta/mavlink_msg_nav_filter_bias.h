@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_nav_filter_bias_pack(uint8_t system_id, uint8
 	_mav_put_float(buf, 24, gyro_1);
 	_mav_put_float(buf, 28, gyro_2);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 32);
 #else
 	mavlink_nav_filter_bias_t packet;
 	packet.usec = usec;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_nav_filter_bias_pack(uint8_t system_id, uint8
 	packet.gyro_1 = gyro_1;
 	packet.gyro_2 = gyro_2;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 32);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_NAV_FILTER_BIAS;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_nav_filter_bias_pack_chan(uint8_t system_id, 
 	_mav_put_float(buf, 24, gyro_1);
 	_mav_put_float(buf, 28, gyro_2);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 32);
 #else
 	mavlink_nav_filter_bias_t packet;
 	packet.usec = usec;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_nav_filter_bias_pack_chan(uint8_t system_id, 
 	packet.gyro_1 = gyro_1;
 	packet.gyro_2 = gyro_2;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 32);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_NAV_FILTER_BIAS;

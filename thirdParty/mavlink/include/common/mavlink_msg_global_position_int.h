@@ -1,6 +1,6 @@
 // MESSAGE GLOBAL_POSITION_INT PACKING
 
-#define MAVLINK_MSG_ID_GLOBAL_POSITION_INT 34
+#define MAVLINK_MSG_ID_GLOBAL_POSITION_INT 33
 
 typedef struct __mavlink_global_position_int_t
 {
@@ -16,7 +16,7 @@ typedef struct __mavlink_global_position_int_t
 } mavlink_global_position_int_t;
 
 #define MAVLINK_MSG_ID_GLOBAL_POSITION_INT_LEN 28
-#define MAVLINK_MSG_ID_34_LEN 28
+#define MAVLINK_MSG_ID_33_LEN 28
 
 
 
@@ -68,7 +68,7 @@ static inline uint16_t mavlink_msg_global_position_int_pack(uint8_t system_id, u
 	_mav_put_int16_t(buf, 24, vz);
 	_mav_put_uint16_t(buf, 26, hdg);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_global_position_int_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -81,7 +81,7 @@ static inline uint16_t mavlink_msg_global_position_int_pack(uint8_t system_id, u
 	packet.vz = vz;
 	packet.hdg = hdg;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;
@@ -121,7 +121,7 @@ static inline uint16_t mavlink_msg_global_position_int_pack_chan(uint8_t system_
 	_mav_put_int16_t(buf, 24, vz);
 	_mav_put_uint16_t(buf, 26, hdg);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_global_position_int_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -134,7 +134,7 @@ static inline uint16_t mavlink_msg_global_position_int_pack_chan(uint8_t system_
 	packet.vz = vz;
 	packet.hdg = hdg;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_INT;

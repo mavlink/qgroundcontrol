@@ -99,12 +99,11 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
     if (uas)
     {
-        qDebug() << "setUAS" ;
         WPM = uas->getWaypointManager();
+        setUAS(uas);
     }
     else
     {
-        qDebug() << "setUAS failed" ;
         // Hide buttons, which don't make sense without valid UAS
         m_ui->positionAddButton->hide();
         m_ui->transmitButton->hide();
@@ -115,8 +114,6 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
         viewOnlyListLayout->insertWidget(0, inf);
         WPM = new UASWaypointManager(NULL);
     }
-
-    setUAS(uas);
 
     // STATUS LABEL
     updateStatusLabel("");
@@ -154,8 +151,7 @@ void WaypointList::updateAttitude(UASInterface* uas, double roll, double pitch, 
 
 void WaypointList::setUAS(UASInterface* uas)
 {
-    //if (this->uas == NULL && uas != NULL)
-    if (this->uas == NULL)
+    if (this->uas == NULL && uas != NULL)
     {
         this->uas = uas;
 

@@ -1,6 +1,6 @@
 // MESSAGE SERVO_OUTPUT_RAW PACKING
 
-#define MAVLINK_MSG_ID_SERVO_OUTPUT_RAW 37
+#define MAVLINK_MSG_ID_SERVO_OUTPUT_RAW 36
 
 typedef struct __mavlink_servo_output_raw_t
 {
@@ -17,7 +17,7 @@ typedef struct __mavlink_servo_output_raw_t
 } mavlink_servo_output_raw_t;
 
 #define MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN 21
-#define MAVLINK_MSG_ID_37_LEN 21
+#define MAVLINK_MSG_ID_36_LEN 21
 
 
 
@@ -72,7 +72,7 @@ static inline uint16_t mavlink_msg_servo_output_raw_pack(uint8_t system_id, uint
 	_mav_put_uint16_t(buf, 18, servo8_raw);
 	_mav_put_uint8_t(buf, 20, port);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 21);
 #else
 	mavlink_servo_output_raw_t packet;
 	packet.time_usec = time_usec;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_servo_output_raw_pack(uint8_t system_id, uint
 	packet.servo8_raw = servo8_raw;
 	packet.port = port;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 21);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
@@ -128,7 +128,7 @@ static inline uint16_t mavlink_msg_servo_output_raw_pack_chan(uint8_t system_id,
 	_mav_put_uint16_t(buf, 18, servo8_raw);
 	_mav_put_uint8_t(buf, 20, port);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 21);
 #else
 	mavlink_servo_output_raw_t packet;
 	packet.time_usec = time_usec;
@@ -142,7 +142,7 @@ static inline uint16_t mavlink_msg_servo_output_raw_pack_chan(uint8_t system_id,
 	packet.servo8_raw = servo8_raw;
 	packet.port = port;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 21);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 21);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;

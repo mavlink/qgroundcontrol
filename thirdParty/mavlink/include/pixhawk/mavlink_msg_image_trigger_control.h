@@ -36,12 +36,12 @@ static inline uint16_t mavlink_msg_image_trigger_control_pack(uint8_t system_id,
 	char buf[1];
 	_mav_put_uint8_t(buf, 0, enable);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 1);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 1);
 #else
 	mavlink_image_trigger_control_t packet;
 	packet.enable = enable;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 1);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 1);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL;
@@ -65,12 +65,12 @@ static inline uint16_t mavlink_msg_image_trigger_control_pack_chan(uint8_t syste
 	char buf[1];
 	_mav_put_uint8_t(buf, 0, enable);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 1);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 1);
 #else
 	mavlink_image_trigger_control_t packet;
 	packet.enable = enable;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 1);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 1);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL;

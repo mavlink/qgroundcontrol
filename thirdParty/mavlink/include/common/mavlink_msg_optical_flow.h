@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 16, sensor_id);
 	_mav_put_uint8_t(buf, 17, quality);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_optical_flow_t packet;
 	packet.time_usec = time_usec;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack(uint8_t system_id, uint8_t 
 	packet.sensor_id = sensor_id;
 	packet.quality = quality;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OPTICAL_FLOW;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack_chan(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 16, sensor_id);
 	_mav_put_uint8_t(buf, 17, quality);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_optical_flow_t packet;
 	packet.time_usec = time_usec;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack_chan(uint8_t system_id, uin
 	packet.sensor_id = sensor_id;
 	packet.quality = quality;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OPTICAL_FLOW;

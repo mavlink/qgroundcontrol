@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_vfr_hud_pack(uint8_t system_id, uint8_t compo
 	_mav_put_int16_t(buf, 16, heading);
 	_mav_put_uint16_t(buf, 18, throttle);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_vfr_hud_t packet;
 	packet.airspeed = airspeed;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_vfr_hud_pack(uint8_t system_id, uint8_t compo
 	packet.heading = heading;
 	packet.throttle = throttle;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_VFR_HUD;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_vfr_hud_pack_chan(uint8_t system_id, uint8_t 
 	_mav_put_int16_t(buf, 16, heading);
 	_mav_put_uint16_t(buf, 18, throttle);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_vfr_hud_t packet;
 	packet.airspeed = airspeed;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_vfr_hud_pack_chan(uint8_t system_id, uint8_t 
 	packet.heading = heading;
 	packet.throttle = throttle;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_VFR_HUD;

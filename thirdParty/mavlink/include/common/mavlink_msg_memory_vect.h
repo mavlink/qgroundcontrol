@@ -47,14 +47,14 @@ static inline uint16_t mavlink_msg_memory_vect_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint8_t(buf, 2, ver);
 	_mav_put_uint8_t(buf, 3, type);
 	_mav_put_int8_t_array(buf, 4, value, 32);
-        memcpy(_MAV_PAYLOAD(msg), buf, 36);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 36);
 #else
 	mavlink_memory_vect_t packet;
 	packet.address = address;
 	packet.ver = ver;
 	packet.type = type;
-	memcpy(packet.value, value, sizeof(int8_t)*32);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 36);
+	mav_array_memcpy(packet.value, value, sizeof(int8_t)*32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 36);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MEMORY_VECT;
@@ -83,14 +83,14 @@ static inline uint16_t mavlink_msg_memory_vect_pack_chan(uint8_t system_id, uint
 	_mav_put_uint8_t(buf, 2, ver);
 	_mav_put_uint8_t(buf, 3, type);
 	_mav_put_int8_t_array(buf, 4, value, 32);
-        memcpy(_MAV_PAYLOAD(msg), buf, 36);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 36);
 #else
 	mavlink_memory_vect_t packet;
 	packet.address = address;
 	packet.ver = ver;
 	packet.type = type;
-	memcpy(packet.value, value, sizeof(int8_t)*32);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 36);
+	mav_array_memcpy(packet.value, value, sizeof(int8_t)*32);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 36);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MEMORY_VECT;
@@ -135,7 +135,7 @@ static inline void mavlink_msg_memory_vect_send(mavlink_channel_t chan, uint16_t
 	packet.address = address;
 	packet.ver = ver;
 	packet.type = type;
-	memcpy(packet.value, value, sizeof(int8_t)*32);
+	mav_array_memcpy(packet.value, value, sizeof(int8_t)*32);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MEMORY_VECT, (const char *)&packet, 36, 204);
 #endif
 }

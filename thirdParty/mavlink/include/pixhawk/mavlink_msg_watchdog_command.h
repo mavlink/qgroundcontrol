@@ -48,7 +48,7 @@ static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint
 	_mav_put_uint8_t(buf, 4, target_system_id);
 	_mav_put_uint8_t(buf, 5, command_id);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 6);
 #else
 	mavlink_watchdog_command_t packet;
 	packet.watchdog_id = watchdog_id;
@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint
 	packet.target_system_id = target_system_id;
 	packet.command_id = command_id;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 6);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id,
 	_mav_put_uint8_t(buf, 4, target_system_id);
 	_mav_put_uint8_t(buf, 5, command_id);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 6);
 #else
 	mavlink_watchdog_command_t packet;
 	packet.watchdog_id = watchdog_id;
@@ -94,7 +94,7 @@ static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id,
 	packet.target_system_id = target_system_id;
 	packet.command_id = command_id;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 6);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 6);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;

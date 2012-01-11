@@ -75,7 +75,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
 	_mav_put_uint8_t(buf, 27, color);
 	_mav_put_uint8_t(buf, 28, coordinate_system);
 	_mav_put_char_array(buf, 29, name, 26);
-        memcpy(_MAV_PAYLOAD(msg), buf, 55);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 55);
 #else
 	mavlink_point_of_interest_connection_t packet;
 	packet.xp1 = xp1;
@@ -88,8 +88,8 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
 	packet.type = type;
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
-	memcpy(packet.name, name, sizeof(char)*26);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 55);
+	mav_array_memcpy(packet.name, name, sizeof(char)*26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 55);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
@@ -132,7 +132,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_
 	_mav_put_uint8_t(buf, 27, color);
 	_mav_put_uint8_t(buf, 28, coordinate_system);
 	_mav_put_char_array(buf, 29, name, 26);
-        memcpy(_MAV_PAYLOAD(msg), buf, 55);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 55);
 #else
 	mavlink_point_of_interest_connection_t packet;
 	packet.xp1 = xp1;
@@ -145,8 +145,8 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_
 	packet.type = type;
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
-	memcpy(packet.name, name, sizeof(char)*26);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 55);
+	mav_array_memcpy(packet.name, name, sizeof(char)*26);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 55);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
@@ -212,7 +212,7 @@ static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel
 	packet.type = type;
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
-	memcpy(packet.name, name, sizeof(char)*26);
+	mav_array_memcpy(packet.name, name, sizeof(char)*26);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, (const char *)&packet, 55, 36);
 #endif
 }

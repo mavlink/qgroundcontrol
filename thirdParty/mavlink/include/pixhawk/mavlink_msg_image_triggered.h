@@ -80,7 +80,7 @@ static inline uint16_t mavlink_msg_image_triggered_pack(uint8_t system_id, uint8
 	_mav_put_float(buf, 44, ground_y);
 	_mav_put_float(buf, 48, ground_z);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 52);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 52);
 #else
 	mavlink_image_triggered_t packet;
 	packet.timestamp = timestamp;
@@ -96,7 +96,7 @@ static inline uint16_t mavlink_msg_image_triggered_pack(uint8_t system_id, uint8
 	packet.ground_y = ground_y;
 	packet.ground_z = ground_z;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 52);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 52);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGERED;
@@ -142,7 +142,7 @@ static inline uint16_t mavlink_msg_image_triggered_pack_chan(uint8_t system_id, 
 	_mav_put_float(buf, 44, ground_y);
 	_mav_put_float(buf, 48, ground_z);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 52);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 52);
 #else
 	mavlink_image_triggered_t packet;
 	packet.timestamp = timestamp;
@@ -158,7 +158,7 @@ static inline uint16_t mavlink_msg_image_triggered_pack_chan(uint8_t system_id, 
 	packet.ground_y = ground_y;
 	packet.ground_z = ground_z;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 52);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 52);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGERED;

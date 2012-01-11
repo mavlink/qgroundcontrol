@@ -164,6 +164,45 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="editParam5SpinBox">
+       <property name="prefix">
+        <string>P5: </string>
+       </property>
+       <property name="minimum">
+        <double>-2147483647.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>2147483647.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="editParam6SpinBox">
+       <property name="prefix">
+        <string>P6: </string>
+       </property>
+       <property name="minimum">
+        <double>-2147483647.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>2147483647.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="editParam7SpinBox">
+       <property name="prefix">
+        <string>P7: </string>
+       </property>
+       <property name="minimum">
+        <double>-2147483647.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>2147483647.000000000000000</double>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item row="4" column="0" colspan="3">

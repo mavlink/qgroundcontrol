@@ -44,14 +44,14 @@ static inline uint16_t mavlink_msg_slugs_action_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 2, target);
 	_mav_put_uint8_t(buf, 3, actionId);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_slugs_action_t packet;
 	packet.actionVal = actionVal;
 	packet.target = target;
 	packet.actionId = actionId;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
@@ -79,14 +79,14 @@ static inline uint16_t mavlink_msg_slugs_action_pack_chan(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 2, target);
 	_mav_put_uint8_t(buf, 3, actionId);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_slugs_action_t packet;
 	packet.actionVal = actionVal;
 	packet.target = target;
 	packet.actionId = actionId;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;

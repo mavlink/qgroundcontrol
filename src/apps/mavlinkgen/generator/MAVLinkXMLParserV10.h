@@ -59,6 +59,11 @@ public slots:
     /** @brief Handle process errors */
     void processError(QProcess::ProcessError err);
 
+    /** @brief Redirect standard output */
+    void readStdOut();
+    /** @brief Redirect standard error output */
+    void readStdErr();
+
 signals:
     /** @brief Status message on the parsing */
     void parseState(QString message);

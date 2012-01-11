@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_set_roll_pitch_yaw_thrust_pack(uint8_t system
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_set_roll_pitch_yaw_thrust_t packet;
 	packet.roll = roll;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_set_roll_pitch_yaw_thrust_pack(uint8_t system
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_ROLL_PITCH_YAW_THRUST;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_set_roll_pitch_yaw_thrust_pack_chan(uint8_t s
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_set_roll_pitch_yaw_thrust_t packet;
 	packet.roll = roll;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_set_roll_pitch_yaw_thrust_pack_chan(uint8_t s
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_ROLL_PITCH_YAW_THRUST;
