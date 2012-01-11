@@ -486,6 +486,11 @@ void HSIDisplay::updatePositionZControllerEnabled(bool enabled)
 
 void HSIDisplay::updateObjectPosition(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance)
 {
+	Q_UNUSED(quality);
+	Q_UNUSED(name);
+	Q_UNUSED(type);
+	Q_UNUSED(id);
+	Q_UNUSED(time);
     // FIXME add multi-object support
     QPainter painter(this);
     QColor color(Qt::yellow);

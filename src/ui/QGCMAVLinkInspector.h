@@ -37,8 +37,8 @@ protected:
     // Update one message field
     void updateField(int msgid, int fieldid, QTreeWidgetItem* item);
 
-    static const unsigned int updateInterval = 1000;
-    static const float updateHzLowpass = 0.2f;
+    static const unsigned int updateInterval;
+    static const float updateHzLowpass;
 
 private:
     Ui::QGCMAVLinkInspector *ui;

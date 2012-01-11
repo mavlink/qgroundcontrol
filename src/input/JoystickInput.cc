@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
 #include "UAS.h"
 #include "UASManager.h"
 #include "QGC.h"
+#include <QMutexLocker>
 
 /**
  * The coordinate frame of the joystick axis is the aeronautical frame like shown on this image:
@@ -49,10 +50,10 @@ JoystickInput::JoystickInput() :
     uas(NULL),
     uasButtonList(QList<int>()),
     done(false),
-    thrustAxis(3),
-    xAxis(1),
-    yAxis(0),
-    yawAxis(2),
+    thrustAxis(2),
+    xAxis(0),
+    yAxis(1),
+    yawAxis(3),
     joystickName(tr("Unitinialized"))
 {
     for (int i = 0; i < 10; i++) {
@@ -65,6 +66,17 @@ JoystickInput::JoystickInput() :
     // Enter main loop
     //start();
 }
+
+JoystickInput::~JoystickInput()
+{
+	{
+		QMutexLocker locker(&this->m_doneMutex);
+		done = true;
+	}
+	this->wait();
+	this->deleteLater();
+}
+
 
 void JoystickInput::setActiveUAS(UASInterface* uas)
 {
@@ -134,7 +146,16 @@ void JoystickInput::run()
 
     init();
 
-    while(!done) {
+    forever
+	{
+		{
+			QMutexLocker locker(&this->m_doneMutex);
+			if(done)
+			{
+				done = false;
+				break;
+			}
+		}
         while(SDL_PollEvent(&event)) {
 
             SDL_JoystickUpdate();
