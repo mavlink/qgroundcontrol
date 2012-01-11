@@ -211,6 +211,7 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             //all waypoints sent and ack received
             protocol_timer.stop();
             current_state = WP_IDLE;
+            readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
             emit updateStatusString("done.");
             // // qDebug() << "sent all waypoints to ID " << systemId;
         } else if(current_state == WP_CLEARLIST) {
@@ -405,6 +406,19 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
     if (seq < waypointsEditable.size())
     {
         Waypoint *t = waypointsEditable[seq];
+
+        if (t->getCurrent() == true) //trying to remove the current waypoint
+        {
+            if (seq+1 < waypointsEditable.size()) // setting the next waypoint as current
+            {
+                waypointsEditable[seq+1]->setCurrent(true);
+            }
+            else if (seq-1 >= 0) //if deleting the last on the list, then setting the previous waypoint as current
+            {
+                waypointsEditable[seq-1]->setCurrent(true);
+            }
+        }
+
         waypointsEditable.remove(seq);
         delete t;
         t = NULL;
@@ -430,6 +444,7 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
             for (int i = cur_seq; i < new_seq; i++)
             {
                 waypointsEditable[i] = waypointsEditable[i+1];
+                waypointsEditable[i]->setId(i);
             }
         }
         else
@@ -437,9 +452,11 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
             for (int i = cur_seq; i > new_seq; i--)
             {
                 waypointsEditable[i] = waypointsEditable[i-1];
+                waypointsEditable[i]->setId(i);
             }
         }
         waypointsEditable[new_seq] = t;
+        waypointsEditable[new_seq]->setId(new_seq);
 
         emit waypointEditableListChanged();
         emit waypointEditableListChanged(uasid);
