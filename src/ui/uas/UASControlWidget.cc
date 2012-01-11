@@ -44,6 +44,7 @@ This file is part of the PIXHAWK project
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     uas(0),
+    uasMode(0),
     engineOn(false)
 {
     ui.setupUi(this);
@@ -59,6 +60,8 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
+    uasMode = ui.modeComboBox->itemData(ui.modeComboBox->currentIndex()).toInt();
+
     ui.modeComboBox->setCurrentIndex(0);
 
     ui.gridLayout->setAlignment(Qt::AlignTop);
@@ -67,7 +70,8 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::setUAS(UASInterface* uas)
 {
-    if (this->uas != 0) {
+    if (this->uas != 0)
+    {
         UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uas);
         disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
         disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
@@ -101,9 +105,12 @@ UASControlWidget::~UASControlWidget()
 void UASControlWidget::updateStatemachine()
 {
 
-    if (engineOn) {
+    if (engineOn)
+    {
         ui.controlButton->setText(tr("DISARM SYSTEM"));
-    } else {
+    }
+    else
+    {
         ui.controlButton->setText(tr("ARM SYSTEM"));
     }
 }
@@ -139,7 +146,8 @@ void UASControlWidget::updateMode(int uas,QString mode,QString description)
 
 void UASControlWidget::updateState(int state)
 {
-    switch (state) {
+    switch (state)
+    {
     case (int)MAV_STATE_ACTIVE:
         engineOn = true;
         ui.controlButton->setText(tr("DISARM SYSTEM"));

@@ -310,9 +310,7 @@ void WaypointEditableView::changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode)
 }
 
 void WaypointEditableView::updateFrameView(int frame)
-{
-     std::cerr << "update frame view: "<< frame << std::endl;
-    //int custom_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
+{    
     switch(frame) {
     case MAV_FRAME_GLOBAL:
     case MAV_FRAME_GLOBAL_RELATIVE_ALT:

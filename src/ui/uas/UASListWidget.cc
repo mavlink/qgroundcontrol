@@ -114,6 +114,7 @@ void UASListWidget::activeUAS(UASInterface* uas)
 
 void UASListWidget::removeUAS(UASInterface* uas)
 {
+	Q_UNUSED(uas);
 //    uasViews.remove(uas);
 //    listLayout->removeWidget(uasViews.value(uas));
 //    uasViews.value(uas)->deleteLater();

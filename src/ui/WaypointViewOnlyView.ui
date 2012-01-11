@@ -75,7 +75,7 @@ margin-top: 1ex; /* leave space at the top for the title */
      <property name="checkable">
       <bool>false</bool>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,2,100,10,5,1">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,2,100,10,5,1">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -85,10 +85,16 @@ margin-top: 1ex; /* leave space at the top for the title */
       <item>
        <widget class="QCheckBox" name="current">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>25</width>
+          <height>0</height>
+         </size>
         </property>
         <property name="toolTip">
          <string>Currently executed waypoint</string>
@@ -103,8 +109,26 @@ margin-top: 1ex; /* leave space at the top for the title */
       </item>
       <item>
        <widget class="QLabel" name="idLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>25</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
         <property name="text">
          <string>ID</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
@@ -159,6 +183,9 @@ margin-top: 1ex; /* leave space at the top for the title */
         </property>
         <property name="text">
          <string>Frame</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>

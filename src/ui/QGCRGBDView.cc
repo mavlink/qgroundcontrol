@@ -265,5 +265,7 @@ void QGCRGBDView::updateData(UASInterface *uas)
     }
 
     glImage = QGLWidget::convertToGLFormat(fill);
+#else
+	Q_UNUSED(uas);
 #endif
 }

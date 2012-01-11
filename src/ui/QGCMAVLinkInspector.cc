@@ -6,6 +6,9 @@
 
 #include <QDebug>
 
+const float QGCMAVLinkInspector::updateHzLowpass = 0.2f;
+const unsigned int QGCMAVLinkInspector::updateInterval = 1000U;
+
 QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QGCMAVLinkInspector)
