@@ -221,10 +221,10 @@ void MAVLinkSimulationMAV::mainloop()
         if (sys_mode & MAV_MODE_FLAG_DECODE_POSITION_HIL)
         {
             mavlink_hil_controls_t hil;
-            hil.roll_ailerons = 0.0;
-            hil.pitch_elevator = 0.05;
-            hil.yaw_rudder = 0.05;
-            hil.throttle = 0.6;
+            hil.roll_ailerons = 0.0f;
+            hil.pitch_elevator = 0.05f;
+            hil.yaw_rudder = 0.05f;
+            hil.throttle = 0.6f;
             // Encode the data (adding header and checksums, etc.)
             mavlink_msg_hil_controls_encode(systemid, MAV_COMP_ID_IMU, &ret, &hil);
             // And send it
