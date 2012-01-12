@@ -234,9 +234,8 @@ message("Compiling for linux 32")
             -losgGA \
             -losgDB \
             -losgText \
+            -losgQt \
             -lOpenThreads
-
-            #-losgQt \
 
     DEFINES += QGC_OSG_ENABLED
     }
@@ -318,9 +317,8 @@ linux-g++-64 {
             -losgGA \
             -losgDB \
             -losgText \
+            -losgQt \
             -lOpenThreads
-
-#            -losgQt \
 
     DEFINES += QGC_OSG_ENABLED
     }

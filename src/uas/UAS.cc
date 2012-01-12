@@ -961,6 +961,11 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
         rgbdImage.CopyFrom(*message);
         emit rgbdImageChanged(this);
     }
+    else if (message->GetTypeName() == obstacleList.GetTypeName())
+    {
+        obstacleList.CopyFrom(*message);
+        emit obstacleListChanged(this);
+    }
 }
 
 #endif

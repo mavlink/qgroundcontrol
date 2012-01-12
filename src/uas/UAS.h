@@ -136,6 +136,10 @@ public:
     px::RGBDImage getRGBDImage() const {
         return rgbdImage;
     }
+
+    px::ObstacleList getObstacleList() const {
+        return obstacleList;
+    }
 #endif
 
     friend class UASWaypointManager;
@@ -223,6 +227,7 @@ protected: //COMMENTS FOR TEST UNIT
 #ifdef QGC_PROTOBUF_ENABLED
     px::PointCloudXYZRGB pointCloud;
     px::RGBDImage rgbdImage;
+    px::ObstacleList obstacleList;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
@@ -556,10 +561,14 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
+#ifdef QGC_PROTOBUF_ENABLED
     /** @brief Point cloud data has been changed */
     void pointCloudChanged(UASInterface* uas);
     /** @brief RGBD image data has been changed */
     void rgbdImageChanged(UASInterface* uas);
+    /** @brief Obstacle list data has been changed */
+    void obstacleListChanged(UASInterface* uas);
+#endif
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 
