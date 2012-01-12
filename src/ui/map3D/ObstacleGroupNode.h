@@ -23,29 +23,26 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Definition of the class WaypointGroupNode.
+ *   @brief Definition of the class ObstacleGroupNode.
  *
  *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
-#ifndef WAYPOINTGROUPNODE_H
-#define WAYPOINTGROUPNODE_H
+#ifndef OBSTACLEGROUPNODE_H
+#define OBSTACLEGROUPNODE_H
 
 #include <osg/Group>
 
 #include "UASInterface.h"
 
-class WaypointGroupNode : public osg::Group
+class ObstacleGroupNode : public osg::Group
 {
 public:
-    WaypointGroupNode();
+    ObstacleGroupNode();
 
     void init(void);
     void update(MAV_FRAME frame, UASInterface* uas);
-
-private:
-    void getPosition(Waypoint* wp, double& x, double& y, double& z);
 };
 
-#endif // WAYPOINTGROUPNODE_H
+#endif // OBSTACLEGROUPNODE_H
