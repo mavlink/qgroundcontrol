@@ -105,6 +105,18 @@ QPushButton:pressed {
       </property>
       <item>
        <widget class="QCheckBox" name="selectedBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>25</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="focusPolicy">
          <enum>Qt::TabFocus</enum>
         </property>
@@ -127,9 +139,15 @@ QPushButton:pressed {
       </item>
       <item>
        <widget class="QLabel" name="idLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
-          <width>15</width>
+          <width>25</width>
           <height>0</height>
          </size>
         </property>
@@ -471,6 +489,12 @@ QPushButton:pressed {
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="acceptanceSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Uncertainty radius in meters
 where to accept this waypoint as reached</string>
@@ -488,6 +512,12 @@ where to accept this waypoint as reached</string>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="holdTimeSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Rotaty wing and ground vehicles only:
 Time to stay at this position before advancing</string>
@@ -505,6 +535,12 @@ Time to stay at this position before advancing</string>
       </item>
       <item>
        <widget class="QSpinBox" name="turnsSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Number of turns to loiter</string>
         </property>
@@ -581,6 +617,12 @@ Time to stay at this position before advancing</string>
       </item>
       <item>
        <widget class="QCheckBox" name="autoContinue">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Automatically continue after this waypoint</string>
         </property>
