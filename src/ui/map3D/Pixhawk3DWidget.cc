@@ -114,6 +114,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     buildLayout();
 
+    updateHUD(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "132N");
+
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 }
@@ -568,8 +570,29 @@ Pixhawk3DWidget::buildLayout(void)
 }
 
 void
+Pixhawk3DWidget::resizeGL(int width, int height)
+{
+    Q3DWidget::resizeGL(width, height);
+
+    resizeHUD();
+}
+
+void
 Pixhawk3DWidget::display(void)
 {
+    // set node visibility
+    rollingMap->setChildValue(gridNode, displayGrid);
+    rollingMap->setChildValue(trailNode, displayTrail);
+    rollingMap->setChildValue(mapNode, displayImagery);
+    rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
+    rollingMap->setChildValue(targetNode, enableTarget);
+#ifdef QGC_PROTOBUF_ENABLED
+    rollingMap->setChildValue(obstacleGroupNode, displayObstacleList);
+#endif
+    rollingMap->setChildValue(rgbd3DNode, displayRGBD3D);
+    hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
+    hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
+
     if (!uas)
     {
         return;
@@ -635,20 +658,6 @@ Pixhawk3DWidget::display(void)
 #endif
 
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw, utmZone);
-
-    // set node visibility
-
-    rollingMap->setChildValue(gridNode, displayGrid);
-    rollingMap->setChildValue(trailNode, displayTrail);
-    rollingMap->setChildValue(mapNode, displayImagery);
-    rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
-    rollingMap->setChildValue(targetNode, enableTarget);
-#ifdef QGC_PROTOBUF_ENABLED
-    rollingMap->setChildValue(obstacleGroupNode, displayObstacleList);
-#endif
-    rollingMap->setChildValue(rgbd3DNode, displayRGBD3D);
-    hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
-    hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
     lastRobotX = robotX;
     lastRobotY = robotY;
@@ -952,27 +961,25 @@ Pixhawk3DWidget::setupHUD(void)
     statusText->setAxisAlignment(osgText::Text::SCREEN);
     statusText->setColor(osg::Vec4(255, 255, 255, 1));
 
-    resizeHUD();
-
     osg::ref_ptr<osg::Geode> statusGeode = new osg::Geode;
     statusGeode->addDrawable(hudBackgroundGeometry);
     statusGeode->addDrawable(statusText);
     hudGroup->addChild(statusGeode);
 
     rgbImage = new osg::Image;
-    rgb2DGeode = new ImageWindowGeode("RGB Image",
-                                      osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
-                                      rgbImage);
+    rgb2DGeode = new ImageWindowGeode;
+    rgb2DGeode->init("RGB Image", osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                     rgbImage, font);
     hudGroup->addChild(rgb2DGeode);
 
     depthImage = new osg::Image;
-    depth2DGeode = new ImageWindowGeode("Depth Image",
-                                        osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
-                                        depthImage);
+    depth2DGeode = new ImageWindowGeode;
+    depth2DGeode->init("Depth Image", osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                       depthImage, font);
     hudGroup->addChild(depth2DGeode);
 
     scaleGeode = new HUDScaleGeode;
-    scaleGeode->init();
+    scaleGeode->init(font);
     hudGroup->addChild(scaleGeode);
 }
 
@@ -1018,8 +1025,6 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
                            double robotRoll, double robotPitch, double robotYaw,
                            const QString& utmZone)
 {
-    resizeHUD();
-
     std::pair<double,double> cursorPosition =
         getGlobalCursorPosition(getMouseX(), getMouseY(), -robotZ);
 

@@ -40,8 +40,10 @@
 class ImageWindowGeode : public osg::Geode
 {
 public:
-    ImageWindowGeode(const QString& caption, const osg::Vec4& backgroundColor,
-                     osg::ref_ptr<osg::Image>& image);
+    ImageWindowGeode();
+    void init(const QString& caption, const osg::Vec4& backgroundColor,
+              osg::ref_ptr<osg::Image>& image,
+              osg::ref_ptr<osgText::Font>& font);
 
     void setAttributes(int x, int y, int width, int height);
 

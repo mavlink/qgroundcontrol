@@ -41,7 +41,7 @@ class HUDScaleGeode : public osg::Geode
 public:
     HUDScaleGeode();
 
-    void init(void);
+    void init(osg::ref_ptr<osgText::Font>& font);
     void update(int windowHeight, float cameraFov, float cameraDistance,
                 bool darkBackground);
 
