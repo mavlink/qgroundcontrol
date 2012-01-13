@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>2208</width>
-    <height>39</height>
+    <height>37</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -96,7 +96,7 @@ QPushButton:pressed {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,5,5,5,50,50,50,50,50,50,5,20,20,5,10,10,10,20,5,5,5,5">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,5,5,5,50,50,50,50,50,50,5,20,20,5,10,10,0,0,0,20,5,5,5,5">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -121,10 +121,10 @@ QPushButton:pressed {
          <enum>Qt::TabFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Currently selected waypoint</string>
+         <string>Mission Start</string>
         </property>
         <property name="statusTip">
-         <string>Currently selected waypoint</string>
+         <string>Mission Start</string>
         </property>
         <property name="text">
          <string/>
@@ -594,7 +594,33 @@ where to accept this waypoint as reached</string>
       <item>
        <widget class="QWidget" name="customActionWidget" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="missionDoWidgetSlot" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="missionConditionWidgetSlot" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
