@@ -2,6 +2,7 @@
 
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkInspector.h"
+#include "UASManager.h"
 #include "ui_QGCMAVLinkInspector.h"
 
 #include <QDebug>
@@ -11,12 +12,15 @@ const unsigned int QGCMAVLinkInspector::updateInterval = 1000U;
 
 QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent) :
     QWidget(parent),
+    selectedSystemID(0),
+    selectedComponentID(0),
     ui(new Ui::QGCMAVLinkInspector)
 {
     ui->setupUi(this);
 
     /* Insert system */
-    ui->systemComboBox->addItem(tr("All Systems"), -1);
+    ui->systemComboBox->addItem(tr("All Systems"), 0);
+    ui->componentComboBox->addItem(tr("All Components"), 0);
 
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
@@ -29,7 +33,60 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     header << tr("Type");
     ui->treeWidget->setHeaderLabels(header);
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(refreshView()));
+
+
+    // ARM UI
+    connect(ui->systemComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuSystem(int)));
+    connect(ui->componentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuComponent(int)));
+
+    // ARM external connections
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
+
+    // Start
     updateTimer.start(updateInterval);
+}
+
+void QGCMAVLinkInspector::addSystem(UASInterface* uas)
+{
+    ui->systemComboBox->addItem(uas->getUASName(), uas->getUASID());
+}
+
+void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
+{
+    selectedSystemID = ui->systemComboBox->itemData(dropdownid).toInt();
+    rebuildComponentList();
+}
+
+void QGCMAVLinkInspector::selectDropDownMenuComponent(int dropdownid)
+{
+    selectedComponentID = ui->componentComboBox->itemData(dropdownid).toInt();
+}
+
+void QGCMAVLinkInspector::rebuildComponentList()
+{
+    ui->componentComboBox->clear();
+
+    // Fill
+    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
+    if (uas)
+    {
+        QMap<int, QString> components = uas->getComponents();
+
+        foreach (int id, components.keys())
+        {
+            QString name = components.value(id);
+            ui->componentComboBox->addItem(name, id);
+        }
+    }
+}
+
+void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& name)
+{
+    Q_UNUSED(component);
+    Q_UNUSED(name);
+    if (uas != selectedSystemID) return;
+
+    rebuildComponentList();
 }
 
 void QGCMAVLinkInspector::refreshView()
@@ -76,6 +133,8 @@ void QGCMAVLinkInspector::refreshView()
 void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t message)
 {
     Q_UNUSED(link);
+    if (selectedSystemID != 0 && selectedSystemID != message.sysid) return;
+    if (selectedComponentID != 0 && selectedComponentID != message.compid) return;
     // Only overwrite if system filter is set
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 

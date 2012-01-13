@@ -81,6 +81,9 @@ public:
     int getAirframe() const {
         return airframe;
     }
+    /** @brief Get the components */
+    QMap<int, QString> getComponents();
+
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
@@ -90,13 +93,16 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
-    double getLocalX() const {
+    double getLocalX() const
+    {
         return localX;
     }
-    double getLocalY() const {
+    double getLocalY() const
+    {
         return localY;
     }
-    double getLocalZ() const {
+    double getLocalZ() const
+    {
         return localZ;
     }
     double getLatitude() const {
@@ -160,6 +166,7 @@ protected: //COMMENTS FOR TEST UNIT
 
     QList<double> motorValues;
     QList<QString> motorNames;
+    QMap<int, QString> components;  ///< IDs and names of all detected onboard components
 
     double thrustSum;           ///< Sum of forward/up thrust of all thrust actuators, in Newtons
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
