@@ -50,10 +50,7 @@ JoystickInput::JoystickInput() :
 JoystickInput::~JoystickInput()
 {
     done = true;
-    while (done)
-    {
-        QGC::SLEEP::usleep(5000);
-    }
+    QGC::SLEEP::usleep(50000);
     this->deleteLater();
 }
 
