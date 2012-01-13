@@ -40,7 +40,7 @@ HUDScaleGeode::HUDScaleGeode()
 }
 
 void
-HUDScaleGeode::init(void)
+HUDScaleGeode::init(osg::ref_ptr<osgText::Font>& font)
 {
     osg::ref_ptr<osg::Vec2Array> outlineVertices(new osg::Vec2Array);
     outlineVertices->push_back(osg::Vec2(20.0f, 50.0f));
@@ -96,7 +96,7 @@ HUDScaleGeode::init(void)
 
     text = new osgText::Text;
     text->setCharacterSize(11);
-    text->setFont("images/Vera.ttf");
+    text->setFont(font);
     text->setAxisAlignment(osgText::Text::SCREEN);
     text->setColor(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));
     text->setPosition(osg::Vec3(40.0f, 45.0f, -1.5f));

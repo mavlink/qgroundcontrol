@@ -81,6 +81,7 @@ private slots:
 protected:
     QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
     void buildLayout(void);
+    virtual void resizeGL(int width, int height);
     virtual void display(void);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
