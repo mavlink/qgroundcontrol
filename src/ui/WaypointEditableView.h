@@ -49,7 +49,7 @@ namespace Ui
 class WaypointEditableView;
 }
 class Ui_QGCCustomWaypointAction;
-
+class Ui_QGCMissionDoWidget;
 class WaypointEditableView : public QWidget
 {
     Q_OBJECT
@@ -84,6 +84,7 @@ protected:
     // Special widgets extendending the
     // waypoint view to mission capabilities
     Ui_QGCCustomWaypointAction* customCommand;
+    Ui_QGCMissionDoWidget* doCommand;
     QGC_WAYPOINTEDITABLEVIEW_MODE viewMode;
 
 private:
