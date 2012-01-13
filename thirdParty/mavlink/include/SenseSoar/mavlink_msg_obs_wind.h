@@ -2,13 +2,22 @@
 
 #define MAVLINK_MSG_ID_OBS_WIND 176
 
-typedef struct __mavlink_obs_wind_t 
+typedef struct __mavlink_obs_wind_t
 {
-	float wind[3]; ///< Wind
-
+ float wind[3]; ///< Wind
 } mavlink_obs_wind_t;
 
+#define MAVLINK_MSG_ID_OBS_WIND_LEN 12
+#define MAVLINK_MSG_ID_176_LEN 12
+
 #define MAVLINK_MSG_OBS_WIND_FIELD_WIND_LEN 3
+
+#define MAVLINK_MESSAGE_INFO_OBS_WIND { \
+	"OBS_WIND", \
+	1, \
+	{  { "wind", NULL, MAVLINK_TYPE_FLOAT, 3, 0, offsetof(mavlink_obs_wind_t, wind) }, \
+         } \
+}
 
 
 /**
@@ -20,18 +29,27 @@ typedef struct __mavlink_obs_wind_t
  * @param wind Wind
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_wind_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const float* wind)
+static inline uint16_t mavlink_msg_obs_wind_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       const float *wind)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+
+	_mav_put_float_array(buf, 0, wind, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
+#else
+	mavlink_obs_wind_t packet;
+
+	mav_array_memcpy(packet.wind, wind, sizeof(float)*3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_WIND;
-
-	i += put_array_by_index((const int8_t*)wind, sizeof(float)*3, i, msg->payload); // Wind
-
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, 12, 16);
 }
 
 /**
- * @brief Pack a obs_wind message
+ * @brief Pack a obs_wind message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -39,14 +57,24 @@ static inline uint16_t mavlink_msg_obs_wind_pack(uint8_t system_id, uint8_t comp
  * @param wind Wind
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_wind_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const float* wind)
+static inline uint16_t mavlink_msg_obs_wind_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           const float *wind)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+
+	_mav_put_float_array(buf, 0, wind, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
+#else
+	mavlink_obs_wind_t packet;
+
+	mav_array_memcpy(packet.wind, wind, sizeof(float)*3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_WIND;
-
-	i += put_array_by_index((const int8_t*)wind, sizeof(float)*3, i, msg->payload); // Wind
-
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 16);
 }
 
 /**
@@ -70,26 +98,34 @@ static inline uint16_t mavlink_msg_obs_wind_encode(uint8_t system_id, uint8_t co
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_obs_wind_send(mavlink_channel_t chan, const float* wind)
+static inline void mavlink_msg_obs_wind_send(mavlink_channel_t chan, const float *wind)
 {
-	mavlink_message_t msg;
-	mavlink_msg_obs_wind_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, wind);
-	mavlink_send_uart(chan, &msg);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+
+	_mav_put_float_array(buf, 0, wind, 3);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_WIND, buf, 12, 16);
+#else
+	mavlink_obs_wind_t packet;
+
+	mav_array_memcpy(packet.wind, wind, sizeof(float)*3);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_WIND, (const char *)&packet, 12, 16);
+#endif
 }
 
 #endif
+
 // MESSAGE OBS_WIND UNPACKING
+
 
 /**
  * @brief Get field wind from obs_wind message
  *
  * @return Wind
  */
-static inline uint16_t mavlink_msg_obs_wind_get_wind(const mavlink_message_t* msg, float* r_data)
+static inline uint16_t mavlink_msg_obs_wind_get_wind(const mavlink_message_t* msg, float *wind)
 {
-
-	memcpy(r_data, msg->payload, sizeof(float)*3);
-	return sizeof(float)*3;
+	return _MAV_RETURN_float_array(msg, wind, 3,  0);
 }
 
 /**
@@ -100,5 +136,9 @@ static inline uint16_t mavlink_msg_obs_wind_get_wind(const mavlink_message_t* ms
  */
 static inline void mavlink_msg_obs_wind_decode(const mavlink_message_t* msg, mavlink_obs_wind_t* obs_wind)
 {
+#if MAVLINK_NEED_BYTE_SWAP
 	mavlink_msg_obs_wind_get_wind(msg, obs_wind->wind);
+#else
+	memcpy(obs_wind, _MAV_PAYLOAD(msg), 12);
+#endif
 }

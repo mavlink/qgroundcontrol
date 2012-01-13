@@ -304,7 +304,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Increase receive counter
                 totalReceiveCounter++;
                 currReceiveCounter++;
-                qint64 lastLoss = totalLossCounter;
                 // Update last packet index
                 if (lastIndex[message.sysid][message.compid] == -1)
                 {
@@ -312,32 +311,21 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 else
                 {
-                    // TODO: This if-else block can (should) be greatly simplified
-                    if (lastIndex[message.sysid][message.compid] == 255)
-                    {
-                        lastIndex[message.sysid][message.compid] = 0;
-                    }
-                    else
-                    {
-                        lastIndex[message.sysid][message.compid]++;
-                    }
+                    uint8_t expectedIndex = lastIndex[message.sysid][message.compid];
+                    // Now increase to the expected index
+                    expectedIndex++;
 
-                    int safeguard = 0;
-                    //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "LASTINDEX" << lastIndex[message.sysid][message.compid] << "SEQ" << message.seq;
-                    while(lastIndex[message.sysid][message.compid] != message.seq && safeguard < 255)
+                    //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "EXPECTED INDEX:" << expectedIndex << "SEQ" << message.seq;
+                    while(expectedIndex != message.seq)
                     {
-                        if (lastIndex[message.sysid][message.compid] == 255)
-                        {
-                            lastIndex[message.sysid][message.compid] = 0;
-                        }
-                        else
-                        {
-                            lastIndex[message.sysid][message.compid]++;
-                        }
+                        expectedIndex++;
                         totalLossCounter++;
                         currLossCounter++;
-                        safeguard++;
+                        //qDebug() << "COUNTING ONE DROP!";
                     }
+
+                    // Set new lastindex
+                    lastIndex[message.sysid][message.compid] = message.seq;
                 }
                 //            if (lastIndex.contains(message.sysid))
                 //            {
@@ -347,8 +335,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 //            }
                 //if ()
 
-                // If a new loss was detected or we just hit one 128th packet step
-                if (lastLoss != totalLossCounter || (totalReceiveCounter % 64 == 0))
+                // Update on every 32th packet
+                if (totalReceiveCounter % 32 == 0)
                 {
                     // Calculate new loss ratio
                     // Receive loss
