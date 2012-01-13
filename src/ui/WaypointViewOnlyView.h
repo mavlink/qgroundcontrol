@@ -31,6 +31,7 @@ protected:
 Waypoint* wp;
 
 private:
+    void hightlightDesiredCurrent(bool hightlight_on);
     Ui::WaypointViewOnlyView *m_ui;
 };
 

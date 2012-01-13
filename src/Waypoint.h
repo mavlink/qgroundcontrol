@@ -188,7 +188,7 @@ public slots:
 
 signals:
     /** @brief Announces a change to the waypoint data */
-    void changed(Waypoint* wp);
+    void changed(Waypoint* wp);    
 };
 
 #endif // WAYPOINT_H
