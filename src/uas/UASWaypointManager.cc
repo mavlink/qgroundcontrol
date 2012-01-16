@@ -133,11 +133,20 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 
         // // qDebug() << "got waypoint count (" << count << ") from ID " << systemId;
 
+        //Clear the old edit-list before receiving the new one
+        if (read_to_edit == true){
+            while(waypointsEditable.size()>0) {
+                Waypoint *t = waypointsEditable[0];
+                waypointsEditable.remove(0);
+                delete t;
+            }
+            emit waypointEditableListChanged();
+        }
+
         if (count > 0) {
             current_count = count;
             current_wp_id = 0;
             current_state = WP_GETLIST_GETWPS;
-
             sendWaypointRequest(current_wp_id);
         } else {
             protocol_timer.stop();
@@ -149,6 +158,8 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             current_partner_systemid = 0;
             current_partner_compid = 0;
         }
+
+
     } else {
         qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
     }
@@ -766,20 +777,25 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
     emit readGlobalWPFromUAS(true);
     if(current_state == WP_IDLE) {
 
+
         //Clear the old view-list before receiving the new one
         while(waypointsViewOnly.size()>0) {
-            delete waypointsViewOnly.back();
-            waypointsViewOnly.pop_back();
+            Waypoint *t = waypointsViewOnly[0];
+            waypointsViewOnly.remove(0);
+            delete t;
         }
-
+        emit waypointViewOnlyListChanged();
+        /* THIS PART WAS MOVED TO handleWaypointCount. THE EDIT-LIST SHOULD NOT BE CLEARED UNLESS THERE IS A RESPONSE FROM UAV.
         //Clear the old edit-list before receiving the new one
         if (read_to_edit == true){
             while(waypointsEditable.size()>0) {
-                delete waypointsEditable.back();
-                waypointsEditable.pop_back();
+                Waypoint *t = waypointsEditable[0];
+                waypointsEditable.remove(0);
+                delete t;
             }
+            emit waypointEditableListChanged();
         }
-
+        */
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
 
