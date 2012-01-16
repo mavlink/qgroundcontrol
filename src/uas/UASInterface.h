@@ -199,9 +199,12 @@ public:
     /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
     virtual int getAutopilotType() = 0;
     virtual QString getAutopilotTypeName() = 0;
-    virtual void setAutopilotType(int apType)= 0;
+    virtual void setAutopilotType(int apType) = 0;
 
-    QColor getColor() {
+    virtual QMap<int, QString> getComponents() = 0;
+
+    QColor getColor()
+    {
         return color;
     }
 
@@ -316,8 +319,10 @@ protected:
     QColor color;
 
 signals:
-    /** @brief The robot state has changed **/
+    /** @brief The robot state has changed */
     void statusChanged(int stateFlag);
+    /** @brief A new component was detected or created */
+    void componentCreated(int uas, int component, const QString& name);
     /** @brief The robot state has changed
      *
      * @param uas this robot
