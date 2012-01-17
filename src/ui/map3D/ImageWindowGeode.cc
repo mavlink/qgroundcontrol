@@ -31,10 +31,16 @@
 
 #include "ImageWindowGeode.h"
 
-ImageWindowGeode::ImageWindowGeode(const QString& caption,
-                                   const osg::Vec4& backgroundColor,
-                                   osg::ref_ptr<osg::Image>& image)
+ImageWindowGeode::ImageWindowGeode()
     : border(5)
+{
+
+}
+
+void
+ImageWindowGeode::init(const QString& caption, const osg::Vec4& backgroundColor,
+                       osg::ref_ptr<osg::Image>& image,
+                       osg::ref_ptr<osgText::Font>& font)
 {
     // image
     osg::ref_ptr<osg::Geometry> imageGeometry = new osg::Geometry;
@@ -82,7 +88,7 @@ ImageWindowGeode::ImageWindowGeode(const QString& caption,
     text = new osgText::Text;
     text->setText(caption.toStdString().c_str());
     text->setCharacterSize(11);
-    text->setFont("images/Vera.ttf");
+    text->setFont(font);
     text->setAxisAlignment(osgText::Text::SCREEN);
     text->setColor(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
