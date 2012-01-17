@@ -46,7 +46,7 @@
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <tr1/memory>
-#include <pixhawk.pb.h>
+#include <pixhawk/pixhawk.pb.h>
 #endif
 
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
