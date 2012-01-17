@@ -45,7 +45,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toggleLoggingAction = new QAction(QIcon(":"), "Logging", this);
     toggleLoggingAction->setCheckable(true);
     logReplayAction = new QAction(QIcon(":"), "Replay", this);
-    logReplayAction->setCheckable(true);
+    logReplayAction->setCheckable(false);
 
     addAction(toggleLoggingAction);
     addAction(logReplayAction);
@@ -101,8 +101,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
 {
     this->player = player;
-    connect(toggleLoggingAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
-    connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
+    connect(toggleLoggingAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
+    connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
 }
 
 void QGCToolBar::playLogFile(bool enabled)
@@ -143,7 +143,7 @@ void QGCToolBar::logging(bool enabled)
         }
 
         QFileInfo file(fileName);
-        if (file.exists() && !file.isWritable())
+        if ((file.exists() && !file.isWritable()))
         {
             QMessageBox msgBox;
             msgBox.setIcon(QMessageBox::Critical);

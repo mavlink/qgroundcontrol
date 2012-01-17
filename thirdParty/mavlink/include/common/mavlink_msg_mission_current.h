@@ -36,12 +36,12 @@ static inline uint16_t mavlink_msg_mission_current_pack(uint8_t system_id, uint8
 	char buf[2];
 	_mav_put_uint16_t(buf, 0, seq);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 2);
 #else
 	mavlink_mission_current_t packet;
 	packet.seq = seq;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 2);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MISSION_CURRENT;
@@ -65,12 +65,12 @@ static inline uint16_t mavlink_msg_mission_current_pack_chan(uint8_t system_id, 
 	char buf[2];
 	_mav_put_uint16_t(buf, 0, seq);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 2);
 #else
 	mavlink_mission_current_t packet;
 	packet.seq = seq;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 2);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MISSION_CURRENT;

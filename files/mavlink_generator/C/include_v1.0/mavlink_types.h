@@ -3,54 +3,6 @@
 
 #include <inttypes.h>
 
-enum MAV_ACTION
-{
-    MAV_ACTION_HOLD = 0,
-    MAV_ACTION_MOTORS_START = 1,
-    MAV_ACTION_LAUNCH = 2,
-    MAV_ACTION_RETURN = 3,
-    MAV_ACTION_EMCY_LAND = 4,
-    MAV_ACTION_EMCY_KILL = 5,
-    MAV_ACTION_CONFIRM_KILL = 6,
-    MAV_ACTION_CONTINUE = 7,
-    MAV_ACTION_MOTORS_STOP = 8,
-    MAV_ACTION_HALT = 9,
-    MAV_ACTION_SHUTDOWN = 10,
-    MAV_ACTION_REBOOT = 11,
-    MAV_ACTION_SET_MANUAL = 12,
-    MAV_ACTION_SET_AUTO = 13,
-    MAV_ACTION_STORAGE_READ = 14,
-    MAV_ACTION_STORAGE_WRITE = 15,
-    MAV_ACTION_CALIBRATE_RC = 16,
-    MAV_ACTION_CALIBRATE_GYRO = 17,
-    MAV_ACTION_CALIBRATE_MAG = 18,
-    MAV_ACTION_CALIBRATE_ACC = 19,
-    MAV_ACTION_CALIBRATE_PRESSURE = 20,
-    MAV_ACTION_REC_START = 21,
-    MAV_ACTION_REC_PAUSE = 22,
-    MAV_ACTION_REC_STOP = 23,
-    MAV_ACTION_TAKEOFF = 24,
-    MAV_ACTION_NAVIGATE = 25,
-    MAV_ACTION_LAND = 26,
-    MAV_ACTION_LOITER = 27,
-    MAV_ACTION_SET_ORIGIN = 28,
-    MAV_ACTION_RELAY_ON = 29,
-    MAV_ACTION_RELAY_OFF = 30,
-    MAV_ACTION_GET_IMAGE = 31,
-    MAV_ACTION_VIDEO_START = 32,
-    MAV_ACTION_VIDEO_STOP = 33,
-    MAV_ACTION_RESET_MAP = 34,
-    MAV_ACTION_RESET_PLAN = 35,
-    MAV_ACTION_DELAY_BEFORE_COMMAND = 36,
-    MAV_ACTION_ASCEND_AT_RATE = 37,
-    MAV_ACTION_CHANGE_MODE = 38,
-    MAV_ACTION_LOITER_MAX_TURNS = 39,
-    MAV_ACTION_LOITER_MAX_TIME = 40,
-    MAV_ACTION_START_HILSIM = 41,
-    MAV_ACTION_STOP_HILSIM = 42,    
-    MAV_ACTION_NB        ///< Number of MAV actions
-};
-
 #ifndef MAVLINK_MAX_PAYLOAD_LEN
 // it is possible to override this, but be careful!
 #define MAVLINK_MAX_PAYLOAD_LEN 255 ///< Maximum payload length
@@ -62,6 +14,11 @@ enum MAV_ACTION
 #define MAVLINK_NUM_NON_PAYLOAD_BYTES (MAVLINK_NUM_HEADER_BYTES + MAVLINK_NUM_CHECKSUM_BYTES)
 
 #define MAVLINK_MAX_PACKET_LEN (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) ///< Maximum packet length
+
+#define MAVLINK_MSG_ID_EXTENDED_MESSAGE 255
+#define MAVLINK_EXTENDED_HEADER_LEN 14
+#define MAVLINK_MAX_EXTENDED_PACKET_LEN 65507
+#define MAVLINK_MAX_EXTENDED_PAYLOAD_LEN (MAVLINK_MAX_EXTENDED_PACKET_LEN - MAVLINK_EXTENDED_HEADER_LEN - MAVLINK_NUM_NON_PAYLOAD_BYTES)
 
 typedef struct param_union {
 	union {
@@ -93,6 +50,14 @@ typedef struct __mavlink_message {
 	uint8_t msgid;   ///< ID of message in payload
 	uint64_t payload64[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+7)/8];
 } mavlink_message_t;
+
+
+typedef struct __mavlink_extended_message {
+       mavlink_message_t base_msg;
+       int32_t extended_payload_len;   ///< Length of extended payload if any
+       uint8_t extended_payload[MAVLINK_MAX_EXTENDED_PAYLOAD_LEN];
+} mavlink_extended_message_t;
+
 
 typedef enum {
 	MAVLINK_TYPE_CHAR     = 0,
@@ -127,12 +92,12 @@ typedef struct __mavlink_message_info {
 	mavlink_field_info_t fields[MAVLINK_MAX_FIELDS];       // field information
 } mavlink_message_info_t;
 
-#define _MAV_PAYLOAD(msg) ((const char *)(&(msg)->payload64[0]))
-#define _MAV_PAYLOAD_NON_CONST(msg) ((char *)((char *)(&(msg)->payload64[0])))
+#define _MAV_PAYLOAD(msg) ((const char *)(&((msg)->payload64[0])))
+#define _MAV_PAYLOAD_NON_CONST(msg) ((char *)(&((msg)->payload64[0])))
 
 // checksum is immediately after the payload bytes
-#define mavlink_ck_a(msg) *(msg->len + (uint8_t *)_MAV_PAYLOAD_NON_CONST(msg))
-#define mavlink_ck_b(msg) *((msg->len+(uint16_t)1) + (uint8_t *)_MAV_PAYLOAD_NON_CONST(msg))
+#define mavlink_ck_a(msg) *((msg)->len + (uint8_t *)_MAV_PAYLOAD_NON_CONST(msg))
+#define mavlink_ck_b(msg) *(((msg)->len+(uint16_t)1) + (uint8_t *)_MAV_PAYLOAD_NON_CONST(msg))
 
 typedef enum {
     MAVLINK_COMM_0,

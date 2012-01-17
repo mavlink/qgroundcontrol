@@ -81,6 +81,9 @@ public:
     int getAirframe() const {
         return airframe;
     }
+    /** @brief Get the components */
+    QMap<int, QString> getComponents();
+
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
@@ -90,13 +93,16 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
-    double getLocalX() const {
+    double getLocalX() const
+    {
         return localX;
     }
-    double getLocalY() const {
+    double getLocalY() const
+    {
         return localY;
     }
-    double getLocalZ() const {
+    double getLocalZ() const
+    {
         return localZ;
     }
     double getLatitude() const {
@@ -136,6 +142,10 @@ public:
     px::RGBDImage getRGBDImage() const {
         return rgbdImage;
     }
+
+    px::ObstacleList getObstacleList() const {
+        return obstacleList;
+    }
 #endif
 
     friend class UASWaypointManager;
@@ -160,6 +170,7 @@ protected: //COMMENTS FOR TEST UNIT
 
     QList<double> motorValues;
     QList<QString> motorNames;
+    QMap<int, QString> components;  ///< IDs and names of all detected onboard components
 
     double thrustSum;           ///< Sum of forward/up thrust of all thrust actuators, in Newtons
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
@@ -214,6 +225,8 @@ protected: //COMMENTS FOR TEST UNIT
     int imagePayload;           ///< Payload size per transmitted packet (bytes). Standard is 254, and decreases when image resolution increases.
     int imageQuality;           ///< Quality of the transmitted image (percentage)
     int imageType;              ///< Type of the transmitted image (BMP, PNG, JPEG, RAW 8 bit, RAW 32 bit)
+    int imageWidth;             ///< Width of the image stream
+    int imageHeight;            ///< Width of the image stream
     QByteArray imageRecBuffer;  ///< Buffer for the incoming bytestream
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
@@ -221,6 +234,7 @@ protected: //COMMENTS FOR TEST UNIT
 #ifdef QGC_PROTOBUF_ENABLED
     px::PointCloudXYZRGB pointCloud;
     px::RGBDImage rgbdImage;
+    px::ObstacleList obstacleList;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
@@ -554,10 +568,14 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
+#ifdef QGC_PROTOBUF_ENABLED
     /** @brief Point cloud data has been changed */
     void pointCloudChanged(UASInterface* uas);
     /** @brief RGBD image data has been changed */
     void rgbdImageChanged(UASInterface* uas);
+    /** @brief Obstacle list data has been changed */
+    void obstacleListChanged(UASInterface* uas);
+#endif
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 
@@ -577,9 +595,9 @@ protected slots:
     /** @brief Read settings from disk */
     void readSettings();
 
-    // MESSAGE RECEPTION
-    /** @brief Receive a named value message */
-    void receiveMessageNamedValue(const mavlink_message_t& message);
+//    // MESSAGE RECEPTION
+//    /** @brief Receive a named value message */
+//    void receiveMessageNamedValue(const mavlink_message_t& message);
 
 private:
 //    unsigned int mode;          ///< The current mode of the MAV

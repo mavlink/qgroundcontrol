@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_local_position_setpoint_pack(uint8_t system_i
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint8_t(buf, 16, coordinate_frame);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 17);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 17);
 #else
 	mavlink_local_position_setpoint_t packet;
 	packet.x = x;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_local_position_setpoint_pack(uint8_t system_i
 	packet.yaw = yaw;
 	packet.coordinate_frame = coordinate_frame;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 17);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 17);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_local_position_setpoint_pack_chan(uint8_t sys
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint8_t(buf, 16, coordinate_frame);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 17);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 17);
 #else
 	mavlink_local_position_setpoint_t packet;
 	packet.x = x;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_local_position_setpoint_pack_chan(uint8_t sys
 	packet.yaw = yaw;
 	packet.coordinate_frame = coordinate_frame;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 17);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 17);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT;

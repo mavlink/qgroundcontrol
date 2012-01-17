@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>2208</width>
-    <height>39</height>
+    <height>37</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -96,7 +96,7 @@ QPushButton:pressed {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,5,5,5,50,50,50,50,50,50,5,20,20,5,10,10,10,20,5,5,5,5">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,5,5,5,50,50,50,50,50,50,5,20,20,5,10,10,0,0,0,20,5,5,5,5">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -105,14 +105,26 @@ QPushButton:pressed {
       </property>
       <item>
        <widget class="QCheckBox" name="selectedBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>25</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="focusPolicy">
          <enum>Qt::TabFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Currently selected waypoint</string>
+         <string>Mission Start</string>
         </property>
         <property name="statusTip">
-         <string>Currently selected waypoint</string>
+         <string>Mission Start</string>
         </property>
         <property name="text">
          <string/>
@@ -127,9 +139,15 @@ QPushButton:pressed {
       </item>
       <item>
        <widget class="QLabel" name="idLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
-          <width>15</width>
+          <width>25</width>
           <height>0</height>
          </size>
         </property>
@@ -447,16 +465,16 @@ QPushButton:pressed {
          <enum>Qt::StrongFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Loiter radius</string>
+         <string>Loiter radius. Negative for counter-clockwise</string>
         </property>
         <property name="statusTip">
-         <string>Loiter radius</string>
+         <string>Loiter radius. Negative for counter-clockwise</string>
         </property>
         <property name="suffix">
          <string> m</string>
         </property>
         <property name="minimum">
-         <double>0.050000000000000</double>
+         <double>-5000.000000000000000</double>
         </property>
         <property name="maximum">
          <double>5000.000000000000000</double>
@@ -471,6 +489,12 @@ QPushButton:pressed {
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="acceptanceSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Uncertainty radius in meters
 where to accept this waypoint as reached</string>
@@ -488,12 +512,17 @@ where to accept this waypoint as reached</string>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="holdTimeSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
-         <string>Rotaty wing and ground vehicles only:
-Time to stay at this position before advancing</string>
+         <string>Time to stay/loiter at this position before advancing</string>
         </property>
         <property name="statusTip">
-         <string>Rotaty wing and ground vehicles only: Time to stay at this position before advancing</string>
+         <string>Time to stay/loiter at this position before advancing</string>
         </property>
         <property name="suffix">
          <string> s</string>
@@ -505,6 +534,12 @@ Time to stay at this position before advancing</string>
       </item>
       <item>
        <widget class="QSpinBox" name="turnsSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Number of turns to loiter</string>
         </property>
@@ -559,7 +594,33 @@ Time to stay at this position before advancing</string>
       <item>
        <widget class="QWidget" name="customActionWidget" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="missionDoWidgetSlot" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="missionConditionWidgetSlot" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -581,6 +642,12 @@ Time to stay at this position before advancing</string>
       </item>
       <item>
        <widget class="QCheckBox" name="autoContinue">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>Automatically continue after this waypoint</string>
         </property>

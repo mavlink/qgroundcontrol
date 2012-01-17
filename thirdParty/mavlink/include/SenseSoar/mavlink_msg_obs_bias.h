@@ -2,15 +2,25 @@
 
 #define MAVLINK_MSG_ID_OBS_BIAS 180
 
-typedef struct __mavlink_obs_bias_t 
+typedef struct __mavlink_obs_bias_t
 {
-	float accBias[3]; ///< accelerometer bias
-	float gyroBias[3]; ///< gyroscope bias
-
+ float accBias[3]; ///< accelerometer bias
+ float gyroBias[3]; ///< gyroscope bias
 } mavlink_obs_bias_t;
+
+#define MAVLINK_MSG_ID_OBS_BIAS_LEN 24
+#define MAVLINK_MSG_ID_180_LEN 24
 
 #define MAVLINK_MSG_OBS_BIAS_FIELD_ACCBIAS_LEN 3
 #define MAVLINK_MSG_OBS_BIAS_FIELD_GYROBIAS_LEN 3
+
+#define MAVLINK_MESSAGE_INFO_OBS_BIAS { \
+	"OBS_BIAS", \
+	2, \
+	{  { "accBias", NULL, MAVLINK_TYPE_FLOAT, 3, 0, offsetof(mavlink_obs_bias_t, accBias) }, \
+         { "gyroBias", NULL, MAVLINK_TYPE_FLOAT, 3, 12, offsetof(mavlink_obs_bias_t, gyroBias) }, \
+         } \
+}
 
 
 /**
@@ -23,19 +33,29 @@ typedef struct __mavlink_obs_bias_t
  * @param gyroBias gyroscope bias
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_bias_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const float* accBias, const float* gyroBias)
+static inline uint16_t mavlink_msg_obs_bias_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       const float *accBias, const float *gyroBias)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+
+	_mav_put_float_array(buf, 0, accBias, 3);
+	_mav_put_float_array(buf, 12, gyroBias, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
+#else
+	mavlink_obs_bias_t packet;
+
+	mav_array_memcpy(packet.accBias, accBias, sizeof(float)*3);
+	mav_array_memcpy(packet.gyroBias, gyroBias, sizeof(float)*3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_BIAS;
-
-	i += put_array_by_index((const int8_t*)accBias, sizeof(float)*3, i, msg->payload); // accelerometer bias
-	i += put_array_by_index((const int8_t*)gyroBias, sizeof(float)*3, i, msg->payload); // gyroscope bias
-
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, 24, 159);
 }
 
 /**
- * @brief Pack a obs_bias message
+ * @brief Pack a obs_bias message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -44,15 +64,26 @@ static inline uint16_t mavlink_msg_obs_bias_pack(uint8_t system_id, uint8_t comp
  * @param gyroBias gyroscope bias
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_bias_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const float* accBias, const float* gyroBias)
+static inline uint16_t mavlink_msg_obs_bias_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           const float *accBias,const float *gyroBias)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+
+	_mav_put_float_array(buf, 0, accBias, 3);
+	_mav_put_float_array(buf, 12, gyroBias, 3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
+#else
+	mavlink_obs_bias_t packet;
+
+	mav_array_memcpy(packet.accBias, accBias, sizeof(float)*3);
+	mav_array_memcpy(packet.gyroBias, gyroBias, sizeof(float)*3);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_BIAS;
-
-	i += put_array_by_index((const int8_t*)accBias, sizeof(float)*3, i, msg->payload); // accelerometer bias
-	i += put_array_by_index((const int8_t*)gyroBias, sizeof(float)*3, i, msg->payload); // gyroscope bias
-
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 159);
 }
 
 /**
@@ -77,26 +108,36 @@ static inline uint16_t mavlink_msg_obs_bias_encode(uint8_t system_id, uint8_t co
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_obs_bias_send(mavlink_channel_t chan, const float* accBias, const float* gyroBias)
+static inline void mavlink_msg_obs_bias_send(mavlink_channel_t chan, const float *accBias, const float *gyroBias)
 {
-	mavlink_message_t msg;
-	mavlink_msg_obs_bias_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, accBias, gyroBias);
-	mavlink_send_uart(chan, &msg);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+
+	_mav_put_float_array(buf, 0, accBias, 3);
+	_mav_put_float_array(buf, 12, gyroBias, 3);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_BIAS, buf, 24, 159);
+#else
+	mavlink_obs_bias_t packet;
+
+	mav_array_memcpy(packet.accBias, accBias, sizeof(float)*3);
+	mav_array_memcpy(packet.gyroBias, gyroBias, sizeof(float)*3);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_BIAS, (const char *)&packet, 24, 159);
+#endif
 }
 
 #endif
+
 // MESSAGE OBS_BIAS UNPACKING
+
 
 /**
  * @brief Get field accBias from obs_bias message
  *
  * @return accelerometer bias
  */
-static inline uint16_t mavlink_msg_obs_bias_get_accBias(const mavlink_message_t* msg, float* r_data)
+static inline uint16_t mavlink_msg_obs_bias_get_accBias(const mavlink_message_t* msg, float *accBias)
 {
-
-	memcpy(r_data, msg->payload, sizeof(float)*3);
-	return sizeof(float)*3;
+	return _MAV_RETURN_float_array(msg, accBias, 3,  0);
 }
 
 /**
@@ -104,11 +145,9 @@ static inline uint16_t mavlink_msg_obs_bias_get_accBias(const mavlink_message_t*
  *
  * @return gyroscope bias
  */
-static inline uint16_t mavlink_msg_obs_bias_get_gyroBias(const mavlink_message_t* msg, float* r_data)
+static inline uint16_t mavlink_msg_obs_bias_get_gyroBias(const mavlink_message_t* msg, float *gyroBias)
 {
-
-	memcpy(r_data, msg->payload+sizeof(float)*3, sizeof(float)*3);
-	return sizeof(float)*3;
+	return _MAV_RETURN_float_array(msg, gyroBias, 3,  12);
 }
 
 /**
@@ -119,6 +158,10 @@ static inline uint16_t mavlink_msg_obs_bias_get_gyroBias(const mavlink_message_t
  */
 static inline void mavlink_msg_obs_bias_decode(const mavlink_message_t* msg, mavlink_obs_bias_t* obs_bias)
 {
+#if MAVLINK_NEED_BYTE_SWAP
 	mavlink_msg_obs_bias_get_accBias(msg, obs_bias->accBias);
 	mavlink_msg_obs_bias_get_gyroBias(msg, obs_bias->gyroBias);
+#else
+	memcpy(obs_bias, _MAV_PAYLOAD(msg), 24);
+#endif
 }

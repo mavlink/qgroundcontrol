@@ -48,7 +48,7 @@ static inline uint16_t mavlink_msg_mid_lvl_cmds_pack(uint8_t system_id, uint8_t 
 	_mav_put_float(buf, 8, rCommand);
 	_mav_put_uint8_t(buf, 12, target);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 13);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 13);
 #else
 	mavlink_mid_lvl_cmds_t packet;
 	packet.hCommand = hCommand;
@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_mid_lvl_cmds_pack(uint8_t system_id, uint8_t 
 	packet.rCommand = rCommand;
 	packet.target = target;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 13);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 13);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MID_LVL_CMDS;
@@ -86,7 +86,7 @@ static inline uint16_t mavlink_msg_mid_lvl_cmds_pack_chan(uint8_t system_id, uin
 	_mav_put_float(buf, 8, rCommand);
 	_mav_put_uint8_t(buf, 12, target);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 13);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 13);
 #else
 	mavlink_mid_lvl_cmds_t packet;
 	packet.hCommand = hCommand;
@@ -94,7 +94,7 @@ static inline uint16_t mavlink_msg_mid_lvl_cmds_pack_chan(uint8_t system_id, uin
 	packet.rCommand = rCommand;
 	packet.target = target;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 13);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 13);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MID_LVL_CMDS;

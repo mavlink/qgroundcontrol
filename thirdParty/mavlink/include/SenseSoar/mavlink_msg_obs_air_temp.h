@@ -2,12 +2,22 @@
 
 #define MAVLINK_MSG_ID_OBS_AIR_TEMP 183
 
-typedef struct __mavlink_obs_air_temp_t 
+typedef struct __mavlink_obs_air_temp_t
 {
-	float airT; ///< Air Temperatur
-
+ float airT; ///< Air Temperatur
 } mavlink_obs_air_temp_t;
 
+#define MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN 4
+#define MAVLINK_MSG_ID_183_LEN 4
+
+
+
+#define MAVLINK_MESSAGE_INFO_OBS_AIR_TEMP { \
+	"OBS_AIR_TEMP", \
+	1, \
+	{  { "airT", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_obs_air_temp_t, airT) }, \
+         } \
+}
 
 
 /**
@@ -19,18 +29,27 @@ typedef struct __mavlink_obs_air_temp_t
  * @param airT Air Temperatur
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_air_temp_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float airT)
+static inline uint16_t mavlink_msg_obs_air_temp_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       float airT)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_float(buf, 0, airT);
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
+#else
+	mavlink_obs_air_temp_t packet;
+	packet.airT = airT;
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_AIR_TEMP;
-
-	i += put_float_by_index(airT, i, msg->payload); // Air Temperatur
-
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, 4, 248);
 }
 
 /**
- * @brief Pack a obs_air_temp message
+ * @brief Pack a obs_air_temp message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -38,14 +57,24 @@ static inline uint16_t mavlink_msg_obs_air_temp_pack(uint8_t system_id, uint8_t 
  * @param airT Air Temperatur
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_air_temp_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float airT)
+static inline uint16_t mavlink_msg_obs_air_temp_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           float airT)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_float(buf, 0, airT);
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
+#else
+	mavlink_obs_air_temp_t packet;
+	packet.airT = airT;
+
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_OBS_AIR_TEMP;
-
-	i += put_float_by_index(airT, i, msg->payload); // Air Temperatur
-
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 248);
 }
 
 /**
@@ -71,13 +100,23 @@ static inline uint16_t mavlink_msg_obs_air_temp_encode(uint8_t system_id, uint8_
 
 static inline void mavlink_msg_obs_air_temp_send(mavlink_channel_t chan, float airT)
 {
-	mavlink_message_t msg;
-	mavlink_msg_obs_air_temp_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, airT);
-	mavlink_send_uart(chan, &msg);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_float(buf, 0, airT);
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, buf, 4, 248);
+#else
+	mavlink_obs_air_temp_t packet;
+	packet.airT = airT;
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, (const char *)&packet, 4, 248);
+#endif
 }
 
 #endif
+
 // MESSAGE OBS_AIR_TEMP UNPACKING
+
 
 /**
  * @brief Get field airT from obs_air_temp message
@@ -86,12 +125,7 @@ static inline void mavlink_msg_obs_air_temp_send(mavlink_channel_t chan, float a
  */
 static inline float mavlink_msg_obs_air_temp_get_airT(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload)[0];
-	r.b[2] = (msg->payload)[1];
-	r.b[1] = (msg->payload)[2];
-	r.b[0] = (msg->payload)[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -102,5 +136,9 @@ static inline float mavlink_msg_obs_air_temp_get_airT(const mavlink_message_t* m
  */
 static inline void mavlink_msg_obs_air_temp_decode(const mavlink_message_t* msg, mavlink_obs_air_temp_t* obs_air_temp)
 {
+#if MAVLINK_NEED_BYTE_SWAP
 	obs_air_temp->airT = mavlink_msg_obs_air_temp_get_airT(msg);
+#else
+	memcpy(obs_air_temp, _MAV_PAYLOAD(msg), 4);
+#endif
 }

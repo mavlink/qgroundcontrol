@@ -258,13 +258,15 @@ void UASManager::addUAS(UASInterface* uas)
     // returns the UAS once the UASCreated() signal
     // is emitted. The code is thus NOT redundant.
     bool firstUAS = false;
-    if (activeUAS == NULL) {
+    if (activeUAS == NULL)
+    {
         firstUAS = true;
         activeUAS = uas;
     }
 
     // Only execute if there is no UAS at this index
-    if (!systems.contains(uas)) {
+    if (!systems.contains(uas))
+    {
         systems.append(uas);
         connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
         // Set home position on UAV if set in UI
@@ -275,7 +277,8 @@ void UASManager::addUAS(UASInterface* uas)
     }
 
     // If there is no active UAS yet, set the first one as the active UAS
-    if (firstUAS) {
+    if (firstUAS)
+    {
         setActiveUAS(uas);
     }
 }

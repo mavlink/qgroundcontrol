@@ -44,14 +44,14 @@ static inline uint16_t mavlink_msg_air_data_pack(uint8_t system_id, uint8_t comp
 	_mav_put_float(buf, 4, staticPressure);
 	_mav_put_uint16_t(buf, 8, temperature);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 10);
 #else
 	mavlink_air_data_t packet;
 	packet.dynamicPressure = dynamicPressure;
 	packet.staticPressure = staticPressure;
 	packet.temperature = temperature;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 10);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_AIR_DATA;
@@ -79,14 +79,14 @@ static inline uint16_t mavlink_msg_air_data_pack_chan(uint8_t system_id, uint8_t
 	_mav_put_float(buf, 4, staticPressure);
 	_mav_put_uint16_t(buf, 8, temperature);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 10);
 #else
 	mavlink_air_data_t packet;
 	packet.dynamicPressure = dynamicPressure;
 	packet.staticPressure = staticPressure;
 	packet.temperature = temperature;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 10);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 10);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_AIR_DATA;

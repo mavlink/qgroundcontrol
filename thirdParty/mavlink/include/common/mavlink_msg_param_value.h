@@ -8,7 +8,7 @@ typedef struct __mavlink_param_value_t
  uint16_t param_count; ///< Total number of onboard parameters
  uint16_t param_index; ///< Index of this onboard parameter
  char param_id[16]; ///< Onboard parameter id
- uint8_t param_type; ///< Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
+ uint8_t param_type; ///< Onboard parameter type: see MAV_VAR enum
 } mavlink_param_value_t;
 
 #define MAVLINK_MSG_ID_PARAM_VALUE_LEN 25
@@ -36,7 +36,7 @@ typedef struct __mavlink_param_value_t
  *
  * @param param_id Onboard parameter id
  * @param param_value Onboard parameter value
- * @param param_type Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
+ * @param param_type Onboard parameter type: see MAV_VAR enum
  * @param param_count Total number of onboard parameters
  * @param param_index Index of this onboard parameter
  * @return length of the message in bytes (excluding serial stream start sign)
@@ -51,15 +51,15 @@ static inline uint16_t mavlink_msg_param_value_pack(uint8_t system_id, uint8_t c
 	_mav_put_uint16_t(buf, 6, param_index);
 	_mav_put_uint8_t(buf, 24, param_type);
 	_mav_put_char_array(buf, 8, param_id, 16);
-        memcpy(_MAV_PAYLOAD(msg), buf, 25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 25);
 #else
 	mavlink_param_value_t packet;
 	packet.param_value = param_value;
 	packet.param_count = param_count;
 	packet.param_index = param_index;
 	packet.param_type = param_type;
-	memcpy(packet.param_id, param_id, sizeof(char)*16);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 25);
+	mav_array_memcpy(packet.param_id, param_id, sizeof(char)*16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 25);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PARAM_VALUE;
@@ -74,7 +74,7 @@ static inline uint16_t mavlink_msg_param_value_pack(uint8_t system_id, uint8_t c
  * @param msg The MAVLink message to compress the data into
  * @param param_id Onboard parameter id
  * @param param_value Onboard parameter value
- * @param param_type Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
+ * @param param_type Onboard parameter type: see MAV_VAR enum
  * @param param_count Total number of onboard parameters
  * @param param_index Index of this onboard parameter
  * @return length of the message in bytes (excluding serial stream start sign)
@@ -90,15 +90,15 @@ static inline uint16_t mavlink_msg_param_value_pack_chan(uint8_t system_id, uint
 	_mav_put_uint16_t(buf, 6, param_index);
 	_mav_put_uint8_t(buf, 24, param_type);
 	_mav_put_char_array(buf, 8, param_id, 16);
-        memcpy(_MAV_PAYLOAD(msg), buf, 25);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 25);
 #else
 	mavlink_param_value_t packet;
 	packet.param_value = param_value;
 	packet.param_count = param_count;
 	packet.param_index = param_index;
 	packet.param_type = param_type;
-	memcpy(packet.param_id, param_id, sizeof(char)*16);
-        memcpy(_MAV_PAYLOAD(msg), &packet, 25);
+	mav_array_memcpy(packet.param_id, param_id, sizeof(char)*16);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 25);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PARAM_VALUE;
@@ -124,7 +124,7 @@ static inline uint16_t mavlink_msg_param_value_encode(uint8_t system_id, uint8_t
  *
  * @param param_id Onboard parameter id
  * @param param_value Onboard parameter value
- * @param param_type Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
+ * @param param_type Onboard parameter type: see MAV_VAR enum
  * @param param_count Total number of onboard parameters
  * @param param_index Index of this onboard parameter
  */
@@ -146,7 +146,7 @@ static inline void mavlink_msg_param_value_send(mavlink_channel_t chan, const ch
 	packet.param_count = param_count;
 	packet.param_index = param_index;
 	packet.param_type = param_type;
-	memcpy(packet.param_id, param_id, sizeof(char)*16);
+	mav_array_memcpy(packet.param_id, param_id, sizeof(char)*16);
 	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PARAM_VALUE, (const char *)&packet, 25, 220);
 #endif
 }
@@ -179,7 +179,7 @@ static inline float mavlink_msg_param_value_get_param_value(const mavlink_messag
 /**
  * @brief Get field param_type from param_value message
  *
- * @return Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
+ * @return Onboard parameter type: see MAV_VAR enum
  */
 static inline uint8_t mavlink_msg_param_value_get_param_type(const mavlink_message_t* msg)
 {

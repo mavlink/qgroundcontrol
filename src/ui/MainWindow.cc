@@ -51,7 +51,9 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCSettingsWidget.h"
 #include "QGCMapTool.h"
 #include "MAVLinkDecoder.h"
+#include "QGCMAVLinkMessageSender.h"
 #include "QGCRGBDView.h"
+#include "QGCFirmwareUpdate.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -237,7 +239,7 @@ MainWindow::~MainWindow()
 
     // Get and delete all dockwidgets and contained
     // widgets
-    QObjectList childList( this->children() );
+    QObjectList childList(this->children());
 
     QObjectList::iterator i;
     QDockWidget* dockWidget;
@@ -251,12 +253,11 @@ MainWindow::~MainWindow()
             // delete dockWidget->widget();
             delete dockWidget;
         }
-        else
+        else if (dynamic_cast<QObject*>(*i))
         {
             delete dynamic_cast<QObject*>(*i);
         }
     }
-
     // Delete all UAS objects
 }
 
@@ -402,31 +403,42 @@ void MainWindow::buildCommonWidgets()
         addTool(mavlinkInspectorWidget, tr("MAVLink Inspector"), Qt::RightDockWidgetArea);
     }
 
+    if (!mavlinkSenderWidget)
+    {
+        mavlinkSenderWidget = new QDockWidget(tr("MAVLink Message Sender"), this);
+        mavlinkSenderWidget->setWidget( new QGCMAVLinkMessageSender(mavlink, this) );
+        mavlinkSenderWidget->setObjectName("MAVLINK_SENDER_DOCKWIDGET");
+        addTool(mavlinkSenderWidget, tr("MAVLink Sender"), Qt::RightDockWidgetArea);
+    }
+
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
-    acceptList->append("-105,roll deg,deg,+105,s");
-    acceptList->append("-105,pitch deg,deg,+105,s");
-    acceptList->append("-105,heading deg,deg,+105,s");
+    acceptList->append("-3.3,ATTITUDE.roll,rad,+3.3,s");
+    acceptList->append("-3.3,ATTITUDE.pitch,deg,+3.3,s");
+    acceptList->append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
-    acceptList2->append("0,abs pressure,hPa,65500");
+    acceptList2->append("0,RAW_PRESSURE.pres_abs,hPa,65500");
 
-    if (!parametersDockWidget) {
+    if (!parametersDockWidget)
+    {
         parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
         parametersDockWidget->setWidget( new ParameterInterface(this) );
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
         addTool(parametersDockWidget, tr("Calibration and Parameters"), Qt::RightDockWidgetArea);
     }
 	
-    if (!hsiDockWidget) {
+    if (!hsiDockWidget)
+    {
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
         addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
     }
 	
-    if (!headDown1DockWidget) {
+    if (!headDown1DockWidget)
+    {
         headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
         HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
         hdDisplay->addSource(mavlinkDecoder);
@@ -435,7 +447,8 @@ void MainWindow::buildCommonWidgets()
         addTool(headDown1DockWidget, tr("Flight Display"), Qt::RightDockWidgetArea);
     }
 
-    if (!headDown2DockWidget) {
+    if (!headDown2DockWidget)
+    {
         headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
         HDDisplay* hdDisplay = new HDDisplay(acceptList2, "Actuator Status", this);
         hdDisplay->addSource(mavlinkDecoder);
@@ -444,21 +457,24 @@ void MainWindow::buildCommonWidgets()
         addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);
     }
 	
-    if (!rcViewDockWidget) {
+    if (!rcViewDockWidget)
+    {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
         rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
         addTool(rcViewDockWidget, tr("Radio Control"), Qt::BottomDockWidgetArea);
     }
 
-    if (!headUpDockWidget) {
+    if (!headUpDockWidget)
+    {
         headUpDockWidget = new QDockWidget(tr("HUD"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
         headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
         addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
     }
 
-    if (!video1DockWidget) {
+    if (!video1DockWidget)
+    {
         video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
         QGCRGBDView* video1 =  new QGCRGBDView(160, 120, this);
         video1->enableHUDInstruments(false);
@@ -469,7 +485,8 @@ void MainWindow::buildCommonWidgets()
         addTool(video1DockWidget, tr("Video Stream 1"), Qt::LeftDockWidgetArea);
     }
 
-    if (!video2DockWidget) {
+    if (!video2DockWidget)
+    {
         video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
         QGCRGBDView* video2 =  new QGCRGBDView(160, 120, this);
         video2->enableHUDInstruments(false);
@@ -516,6 +533,12 @@ void MainWindow::buildCommonWidgets()
     {
         protocolWidget    = new XMLCommProtocolWidget(this);
         addCentralWidget(protocolWidget, "Mavlink Generator");
+    }
+
+    if (!firmwareUpdateWidget)
+    {
+        firmwareUpdateWidget    = new QGCFirmwareUpdate(this);
+        addCentralWidget(firmwareUpdateWidget, "Firmware Update");
     }
 
     if (!hudWidget) {
@@ -608,7 +631,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
  */
 void MainWindow::connectCommonWidgets()
 {
-    if (infoDockWidget && infoDockWidget->widget()) {
+    if (infoDockWidget && infoDockWidget->widget())
+    {
         connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
                 infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
     }
@@ -846,7 +870,8 @@ void MainWindow::selectStylesheet()
     // Let user select style sheet
     styleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), styleFileName, tr("CSS Stylesheet (*.css);;"));
 
-    if (!styleFileName.endsWith(".css")) {
+    if (!styleFileName.endsWith(".css"))
+    {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText(tr("QGroundControl did lot load a new style"));
@@ -865,14 +890,18 @@ void MainWindow::reloadStylesheet()
 {
     // Load style sheet
     QFile* styleSheet = new QFile(styleFileName);
-    if (!styleSheet->exists()) {
+    if (!styleSheet->exists())
+    {
         styleSheet = new QFile(":/images/style-mission.css");
     }
-    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         QString style = QString(styleSheet->readAll());
         style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
         qApp->setStyleSheet(style);
-    } else {
+    }
+    else
+    {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText(tr("QGroundControl did lot load a new style"));
@@ -940,6 +969,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionMavlinkView);
     perspectives->addAction(ui.actionPilotsView);
     perspectives->addAction(ui.actionOperatorsView);
+    perspectives->addAction(ui.actionFirmwareUpdateView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->setExclusive(true);
 
@@ -948,6 +978,7 @@ void MainWindow::connectCommonActions()
     if (currentView == VIEW_MAVLINK) ui.actionMavlinkView->setChecked(true);
     if (currentView == VIEW_PILOT) ui.actionPilotsView->setChecked(true);
     if (currentView == VIEW_OPERATOR) ui.actionOperatorsView->setChecked(true);
+    if (currentView == VIEW_FIRMWAREUPDATE) ui.actionFirmwareUpdateView->setChecked(true);
     if (currentView == VIEW_UNCONNECTED) ui.actionUnconnectedView->setChecked(true);
 
     // The UAS actions are not enabled without connection to system
@@ -978,7 +1009,9 @@ void MainWindow::connectCommonActions()
     connect(ui.actionOperatorsView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
 
+    connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
+
     connect(ui.actionReloadStylesheet, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
     connect(ui.actionSelectStylesheet, SIGNAL(triggered()), this, SLOT(selectStylesheet()));
 
@@ -1012,7 +1045,8 @@ void MainWindow::connectCommonActions()
 
 void MainWindow::showHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/users/start"))) {
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/users/start")))
+    {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open help in browser");
@@ -1025,7 +1059,8 @@ void MainWindow::showHelp()
 
 void MainWindow::showCredits()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/credits"))) {
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/credits")))
+    {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open credits in browser");
@@ -1038,7 +1073,8 @@ void MainWindow::showCredits()
 
 void MainWindow::showRoadMap()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/dev/roadmap"))) {
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/dev/roadmap")))
+    {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open roadmap in browser");
@@ -1051,8 +1087,10 @@ void MainWindow::showRoadMap()
 
 void MainWindow::configure()
 {
-    if (!joystickWidget) {
-        if (!joystick->isRunning()) {
+    if (!joystickWidget)
+    {
+        if (!joystick->isRunning())
+        {
             joystick->start();
         }
         joystickWidget = new JoystickWidget(joystick);
@@ -1080,8 +1118,10 @@ void MainWindow::addLink()
 	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
 	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
-    foreach (QAction* act, actions) {
-        if (act->data().toInt() == linkID) { // LinkManager::instance()->getLinks().indexOf(link)
+    foreach (QAction* act, actions)
+    {
+        if (act->data().toInt() == linkID)
+        { // LinkManager::instance()->getLinks().indexOf(link)
             act->trigger();
             break;
         }
@@ -1105,15 +1145,18 @@ void MainWindow::addLink(LinkInterface *link)
 	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
 	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
-    foreach (QAction* act, actions) {
-        if (act->data().toInt() == linkID) { // LinkManager::instance()->getLinks().indexOf(link)
+    foreach (QAction* act, actions)
+    {
+        if (act->data().toInt() == linkID)
+        { // LinkManager::instance()->getLinks().indexOf(link)
             found = true;
         }
     }
 
     //UDPLink* udp = dynamic_cast<UDPLink*>(link);
 
-    if (!found) {  //  || udp
+    if (!found)
+    {  //  || udp
         CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
         QAction* action = commWidget->getAction();
         ui.menuNetwork->addAction(action);
@@ -1154,8 +1197,8 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Connect the UAS to the full user interface
 
-    if (uas != NULL)
-    {
+    //if (uas != NULL)
+    //{
         // The pilot, operator and engineer views were not available on startup, enable them now
         ui.actionPilotsView->setEnabled(true);
         ui.actionOperatorsView->setEnabled(true);
@@ -1274,12 +1317,16 @@ void MainWindow::UASCreated(UASInterface* uas)
             if (settings.contains("CURRENT_VIEW_WITH_UAS_CONNECTED"))
             {
                 int view = settings.value("CURRENT_VIEW_WITH_UAS_CONNECTED").toInt();
-                switch (view) {
+                switch (view)
+                {
                 case VIEW_ENGINEER:
                     loadEngineerView();
                     break;
                 case VIEW_MAVLINK:
                     loadMAVLinkView();
+                    break;
+                case VIEW_FIRMWAREUPDATE:
+                    loadFirmwareUpdateView();
                     break;
                 case VIEW_PILOT:
                     loadPilotView();
@@ -1299,7 +1346,7 @@ void MainWindow::UASCreated(UASInterface* uas)
             }
         }
 
-    }
+    //}
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
 
@@ -1358,6 +1405,7 @@ void MainWindow::loadViewState()
             debugConsoleDockWidget->show();
             logPlayerDockWidget->show();
             mavlinkInspectorWidget->show();
+            mavlinkSenderWidget->show();
             parametersDockWidget->show();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
@@ -1393,7 +1441,27 @@ void MainWindow::loadViewState()
             infoDockWidget->hide();
             debugConsoleDockWidget->hide();
             logPlayerDockWidget->hide();
+            mavlinkInspectorWidget->show();
+            mavlinkSenderWidget->show();
+            parametersDockWidget->hide();
+            hsiDockWidget->hide();
+            headDown1DockWidget->hide();
+            headDown2DockWidget->hide();
+            rcViewDockWidget->hide();
+            headUpDockWidget->hide();
+            video1DockWidget->hide();
+            video2DockWidget->hide();
+            break;
+        case VIEW_FIRMWAREUPDATE:
+            centerStack->setCurrentWidget(firmwareUpdateWidget);
+            controlDockWidget->hide();
+            listDockWidget->hide();
+            waypointsDockWidget->hide();
+            infoDockWidget->hide();
+            debugConsoleDockWidget->hide();
+            logPlayerDockWidget->hide();
             mavlinkInspectorWidget->hide();
+            mavlinkSenderWidget->hide();
             parametersDockWidget->hide();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
@@ -1502,6 +1570,17 @@ void MainWindow::loadMAVLinkView()
         storeViewState();
         currentView = VIEW_MAVLINK;
         ui.actionMavlinkView->setChecked(true);
+        loadViewState();
+    }
+}
+
+void MainWindow::loadFirmwareUpdateView()
+{
+    if (currentView != VIEW_FIRMWAREUPDATE)
+    {
+        storeViewState();
+        currentView = VIEW_FIRMWAREUPDATE;
+        ui.actionFirmwareUpdateView->setChecked(true);
         loadViewState();
     }
 }
