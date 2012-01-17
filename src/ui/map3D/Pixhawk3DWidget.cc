@@ -248,6 +248,38 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
 }
 
 void
+Pixhawk3DWidget::selectTargetHeading(void)
+{
+    if (!uas)
+    {
+        return;
+    }
+
+    osg::Vec2d p;
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double altitude = uas->getAltitude();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        p.set(cursorWorldCoords.first, cursorWorldCoords.second);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        double z = uas->getLocalZ();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+
+        p.set(cursorWorldCoords.first, cursorWorldCoords.second);
+    }
+
+    target.z() = atan2(p.y() - target.y(), p.x() - target.x());
+}
+
+void
 Pixhawk3DWidget::selectTarget(void)
 {
     if (!uas)
@@ -262,7 +294,7 @@ Pixhawk3DWidget::selectTarget(void)
         std::pair<double,double> cursorWorldCoords =
             getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
 
-        target.set(cursorWorldCoords.first, cursorWorldCoords.second);
+        target.set(cursorWorldCoords.first, cursorWorldCoords.second, 0.0);
     }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
@@ -271,12 +303,20 @@ Pixhawk3DWidget::selectTarget(void)
         std::pair<double,double> cursorWorldCoords =
             getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
 
-        target.set(cursorWorldCoords.first, cursorWorldCoords.second);
+        target.set(cursorWorldCoords.first, cursorWorldCoords.second, 0.0);
     }
 
-    uas->setTargetPosition(target.x(), target.y(), 0.0, 0.0);
-
     enableTarget = true;
+
+    mode = SELECT_TARGET_YAW_MODE;
+}
+
+void
+Pixhawk3DWidget::setTarget(void)
+{
+    selectTargetHeading();
+
+    uas->setTargetPosition(target.x(), target.y(), 0.0, target.z());
 }
 
 void
@@ -303,7 +343,7 @@ Pixhawk3DWidget::insertWaypoint(void)
         Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
                          latitude, longitude);
 
-        wp = new Waypoint(0, longitude, latitude, altitude);
+        wp = new Waypoint(0, longitude, latitude, altitude, 0.0, 0.25);
     }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
@@ -313,7 +353,7 @@ Pixhawk3DWidget::insertWaypoint(void)
             getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
 
         wp = new Waypoint(0, cursorWorldCoords.first,
-                          cursorWorldCoords.second, z);
+                          cursorWorldCoords.second, z, 0.0, 0.25);
     }
 
     if (wp)
@@ -706,6 +746,14 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
             return;
         }
 
+        if (mode == SELECT_TARGET_YAW_MODE)
+        {
+            setTarget();
+            mode = DEFAULT_MODE;
+
+            return;
+        }
+
         if (event->modifiers() == Qt::ShiftModifier)
         {
             selectedWpIndex = findWaypoint(event->x(), event->y());
@@ -723,6 +771,17 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
     }
 
     Q3DWidget::mousePressEvent(event);
+}
+
+void
+Pixhawk3DWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    if (mode == SELECT_TARGET_YAW_MODE)
+    {
+        selectTargetHeading();
+    }
+
+    Q3DWidget::mouseMoveEvent(event);
 }
 
 void
@@ -927,14 +986,15 @@ Pixhawk3DWidget::createTarget(void)
 
     pat->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
 
-    osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.1f);
-    osg::ref_ptr<osg::ShapeDrawable> sphereDrawable = new osg::ShapeDrawable(sphere);
-    sphereDrawable->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
-    osg::ref_ptr<osg::Geode> sphereGeode = new osg::Geode;
-    sphereGeode->addDrawable(sphereDrawable);
-    sphereGeode->setName("Target");
+    osg::ref_ptr<osg::Cone> cone = new osg::Cone(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.1f, 0.4f);
+    osg::ref_ptr<osg::ShapeDrawable> coneDrawable = new osg::ShapeDrawable(cone);
+    coneDrawable->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
+    coneDrawable->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+    osg::ref_ptr<osg::Geode> coneGeode = new osg::Geode;
+    coneGeode->addDrawable(coneDrawable);
+    coneGeode->setName("Target");
 
-    pat->addChild(sphereGeode);
+    pat->addChild(coneGeode);
 
     return pat;
 }
@@ -1216,8 +1276,23 @@ void
 Pixhawk3DWidget::updateTarget(double robotX, double robotY)
 {
     osg::PositionAttitudeTransform* pat =
-        static_cast<osg::PositionAttitudeTransform*>(targetNode.get());
+        dynamic_cast<osg::PositionAttitudeTransform*>(targetNode.get());
+
     pat->setPosition(osg::Vec3d(target.y() - robotY, target.x() - robotX, 0.0));
+    pat->setAttitude(osg::Quat(target.z() - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+
+    osg::Geode* geode = dynamic_cast<osg::Geode*>(pat->getChild(0));
+    osg::ShapeDrawable* sd = dynamic_cast<osg::ShapeDrawable*>(geode->getDrawable(0));
+    if (mode == SELECT_TARGET_YAW_MODE)
+    {
+        sd->setColor(osg::Vec4f(1.0f, 0.8f, 0.0f, 1.0f));
+    }
+    else
+    {
+        sd->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
+    }
 }
 
 float colormap_jet[128][3] = {
