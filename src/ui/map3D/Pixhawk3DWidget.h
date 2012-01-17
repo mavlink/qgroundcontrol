@@ -70,7 +70,9 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void selectTargetHeading(void);
     void selectTarget(void);
+    void setTarget(void);
     void insertWaypoint(void);
     void moveWaypoint(void);
     void setWaypoint(void);
@@ -85,6 +87,7 @@ protected:
     virtual void display(void);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseMoveEvent(QMouseEvent* event);
 
     UASInterface* uas;
 
@@ -127,7 +130,8 @@ private:
 
     enum Mode {
         DEFAULT_MODE,
-        MOVE_WAYPOINT_MODE
+        MOVE_WAYPOINT_MODE,
+        SELECT_TARGET_YAW_MODE
     };
     Mode mode;
     int selectedWpIndex;
@@ -170,7 +174,7 @@ private:
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     MAV_FRAME frame;
-    osg::Vec2d target;
+    osg::Vec3d target;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
 

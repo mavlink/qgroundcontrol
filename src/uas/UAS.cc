@@ -2196,7 +2196,7 @@ void UAS::shutdown()
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
-    mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_FRAME_LOCAL_NED, x, y, z, yaw);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 2, 2, 0, yaw, x, y, z);
     sendMessage(msg);
 }
 
