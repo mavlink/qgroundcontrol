@@ -43,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointEditableView.h"
 #include "WaypointViewOnlyView.h"
 #include "UnconnectedUASInfoWidget.h"
+//#include "PopupMessage.h"
 
 
 namespace Ui
@@ -140,6 +141,7 @@ protected:
     QPointF centerMapCoordinate;
     bool loadFileGlobalWP;
     bool readGlobalWP;
+    bool showOfflineWarning;
 
 private:
     Ui::WaypointList *m_ui;

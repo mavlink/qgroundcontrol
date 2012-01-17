@@ -15,65 +15,62 @@ WaypointViewOnlyView::WaypointViewOnlyView(Waypoint* wp, QWidget *parent) :
 }
 
 void WaypointViewOnlyView::changedAutoContinue(int state)
-{
+{    
     bool new_value = false;
     if (state != 0)
     {
         new_value = true;
     }
-    m_ui->autoContinue->blockSignals(true);
-    m_ui->autoContinue->setChecked(state);
-    m_ui->autoContinue->blockSignals(false);
-    wp->setAutocontinue(new_value);
+    wp->setAutocontinue(new_value);    
     emit changeAutoContinue(wp->getId(),new_value);
 }
 
 void WaypointViewOnlyView::changedCurrent(int state)
+//This is a slot receiving signals from QCheckBox m_ui->current. The state given here is whatever the user has clicked and not the true "current" value onboard.
 {
     qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
-    m_ui->current->blockSignals(true);
-    if (state == 0)
+    m_ui->current->blockSignals(true);    
+
+    if (m_ui->current->isChecked() == false)
     {
-        /*
-
-        m_ui->current->setStyleSheet("");
-
-        */
-        if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
+        if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current. Box stays checked
         {
-            m_ui->current->setChecked(true);
             m_ui->current->setCheckState(Qt::Checked);
+            qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Rechecked true. stay true " << m_ui->current->isChecked();
         }
-        else
+        else // Strange case, unchecking the box which was not checked to start with
         {
-            m_ui->current->setChecked(false);
-            m_ui->current->setCheckState(Qt::Unchecked);            
-            wp->setCurrent(false);
+            m_ui->current->setCheckState(Qt::Unchecked);
+            qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Unchecked false. set false " << m_ui->current->isChecked();
         }
     }
     else
-    {        
-        /*
-        FIXME: The checkbox should turn gray to indicate, that set_current request has been sent to UAV. It should become blue (checked) after receiving set_current_ack from waypointplanner.
-
-        m_ui->current->setStyleSheet("*::indicator { \
-            border: 1px solid #777777; \
-            border-radius: 2px; \
-            color: #999999; \
-                 width: 10px; \
-             height: 10px; \
-        }");
-        */
-        wp->setCurrent(true);
+    {
+        hightlightDesiredCurrent(true);
+        m_ui->current->setCheckState(Qt::Unchecked);
+        qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Checked new. Sending set_current request to Manager " << m_ui->current->isChecked();
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
+
     }
     m_ui->current->blockSignals(false);
 }
 
 void WaypointViewOnlyView::setCurrent(bool state)
+//This is a slot receiving signals from UASWaypointManager. The state given here is the true representation of what the "current" waypoint on UAV is.
 {
-    m_ui->current->blockSignals(true);
-    m_ui->current->setChecked(state);
+    m_ui->current->blockSignals(true);    
+    if (state == true)
+    {
+        wp->setCurrent(true);
+        hightlightDesiredCurrent(true);
+        m_ui->current->setCheckState(Qt::Checked);
+    }
+    else
+    {
+        wp->setCurrent(false);
+        hightlightDesiredCurrent(false);
+        m_ui->current->setCheckState(Qt::Unchecked);
+    }
     m_ui->current->blockSignals(false);
 }
 
@@ -125,11 +122,45 @@ void WaypointViewOnlyView::updateValues()
     // update frame
 
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
+    switch (wp->getFrame())
+    {
+    case MAV_FRAME_GLOBAL:
+    {
+        m_ui->frameLabel->setText(QString("GAA"));
+        break;
+    }
+    case MAV_FRAME_LOCAL_NED:
+    {
+        m_ui->frameLabel->setText(QString("NED"));
+        break;
+    }
+    case MAV_FRAME_MISSION:
+    {
+        m_ui->frameLabel->setText(QString("MIS"));
+        break;
+    }
+    case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+    {
+        m_ui->frameLabel->setText(QString("GRA"));
+        break;
+    }
+    case MAV_FRAME_LOCAL_ENU:
+    {
+        m_ui->frameLabel->setText(QString("ENU"));
+        break;
+    }
+    default:
+    {
+        m_ui->frameLabel->setText(QString(""));
+        break;
+    }
+    }
 
+    hightlightDesiredCurrent(wp->getCurrent());
     if (m_ui->current->isChecked() != wp->getCurrent())
     {
         m_ui->current->blockSignals(true);
-        m_ui->current->setChecked(wp->getCurrent());
+        m_ui->current->setChecked(wp->getCurrent());        
         m_ui->current->blockSignals(false);
     }
     if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
@@ -143,24 +174,178 @@ void WaypointViewOnlyView::updateValues()
     {
     case MAV_CMD_NAV_WAYPOINT:
     {
-        if (wp->getParam1()>0)
+        switch (wp->getFrame())
         {
-            m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
-        }
-        else
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
         {
-            m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b>; yaw: %4; rad: %5").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()).arg(wp->getParam2()));
+            if (wp->getParam1()>0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>,lon <b>%2<sup>o</sup></b>,alt <b>%3)</b>; yaw: %4; rad: %5").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            break;
         }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            if (wp->getParam1()>0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f',2).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b>; yaw: %4; rad: %5").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()).arg(wp->getParam2()));
+            }
+            break;
+        }
+        } //end Frame switch
+        break;
+    }
+    case MAV_CMD_NAV_LOITER_UNLIM:
+    {
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            if (wp->getParam3()>=0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and loiter there indefinitely (clockwise); rad: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam3()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and loiter there indefinitely (counter-clockwise); rad: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(-wp->getParam3()));
+            }
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            if (wp->getParam3()>=0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and loiter there indefinitely (clockwise); rad: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f',2).arg(wp->getParam3()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and loiter there indefinitely (counter-clockwise); rad: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(-wp->getParam3()));
+            }
+            break;
+        }
+        } //end Frame switch
+        break;
+    }
+    case MAV_CMD_NAV_LOITER_TURNS:
+    {
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            if (wp->getParam3()>=0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and loiter there for %5 turns (clockwise); rad: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam3()).arg(wp->getParam1()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and loiter there for %5 turns (counter-clockwise); rad: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(-wp->getParam3()).arg(wp->getParam1()));
+            }
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            if (wp->getParam3()>=0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and loiter there for %5 turns (clockwise); rad: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f',2).arg(wp->getParam3()).arg(wp->getParam1()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and loiter there for %5 turns (counter-clockwise); rad: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(-wp->getParam3()).arg(wp->getParam1()));
+            }
+            break;
+        }
+        } //end Frame switch
+        break;
+    }
+    case MAV_CMD_NAV_LOITER_TIME:
+    {
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            if (wp->getParam3()>=0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and loiter there for %5s (clockwise); rad: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam3()).arg(wp->getParam1()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and loiter there for %5s (counter-clockwise); rad: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(-wp->getParam3()).arg(wp->getParam1()));
+            }
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            if (wp->getParam3()>=0)
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and loiter there for %5s (clockwise); rad: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f',2).arg(wp->getParam3()).arg(wp->getParam1()));
+            }
+            else
+            {
+                m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and loiter there for %5s (counter-clockwise); rad: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(-wp->getParam3()).arg(wp->getParam1()));
+            }
+            break;
+        }
+        } //end Frame switch
+        break;
+    }
+    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+    {
+        m_ui->displayBar->setText(QString("Return to launch location"));
         break;
     }
     case MAV_CMD_NAV_LAND:
-    {
-        m_ui->displayBar->setText(QString("LAND. Go to (%1, %2, %3) and descent; yaw: %4").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()));
+    {        
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            m_ui->displayBar->setText(QString("LAND. Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b> and descent; yaw: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            m_ui->displayBar->setText(QString("LAND. Go to <b>(%1, %2, %3)</b> and descent; yaw: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        } //end Frame switch
         break;
     }
     case MAV_CMD_NAV_TAKEOFF:
-    {
-        m_ui->displayBar->setText(QString("TAKEOFF. Go to (%1, %2, %3); yaw: %4").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()));
+    {        
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+            m_ui->displayBar->setText(QString("TAKEOFF. Go to <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup></b>, alt <b>%3)</b>; yaw: %4").arg(wp->getX(),0, 'f', 7).arg(wp->getY(),0, 'f', 7).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+            m_ui->displayBar->setText(QString("TAKEOFF. Go to <b>(%1, %2, %3)</b>; yaw: %4").arg(wp->getX(),0, 'f', 2).arg(wp->getY(),0, 'f', 2).arg(wp->getZ(),0, 'f', 2).arg(wp->getParam4()));
+            break;
+        }
+        } //end Frame switch
+        break;
         break;
     }
     case MAV_CMD_DO_JUMP:
@@ -192,7 +377,21 @@ void WaypointViewOnlyView::updateValues()
     }
     case 240: //MAV_CMD_DO_SWEEP
     {
-        m_ui->displayBar->setText(QString("Sweep. Corners: (%1,%2) and (%3,%4); z: %5; scan radius: %6").arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()).arg(wp->getParam1()));
+        switch (wp->getFrame())
+        {
+        case MAV_FRAME_GLOBAL_RELATIVE_ALT:
+        case MAV_FRAME_GLOBAL:
+        {
+        m_ui->displayBar->setText(QString("Sweep. Corners: <b>(</b>lat <b>%1<sup>o</sup></b>, lon <b>%2<sup>o</sup>)</b> and <b>(</b>lat <b>%3<sup>o</sup></b>, lon <b>%4<sup>o</sup>)</b>; alt: <b>%5</b>; scan radius: %6").arg(wp->getParam3(),0, 'f', 7).arg(wp->getParam4(),0, 'f', 7).arg(wp->getParam5(),0, 'f', 7).arg(wp->getParam6(),0, 'f', 7).arg(wp->getParam7(),0, 'f', 2).arg(wp->getParam1()));
+            break;
+        }
+        case MAV_FRAME_LOCAL_NED:
+        default:
+        {
+        m_ui->displayBar->setText(QString("Sweep. Corners: <b>(%1, %2)</b> and <b>(%3, %4)</b>; z: <b>%5</b>; scan radius: %6").arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()).arg(wp->getParam1()));
+            break;
+        }
+        } //end Frame switch
         break;
     }
     default:
@@ -201,6 +400,30 @@ void WaypointViewOnlyView::updateValues()
         break;
     }
     }
+}
+
+void WaypointViewOnlyView::hightlightDesiredCurrent(bool hightlight_on)
+{
+    QColor backGroundColor = QGC::colorBackground;
+    QString checkBoxStyle;
+    if (wp->getId() % 2 == 1)
+    {
+        backGroundColor = QColor("#252528").lighter(150);
+    }
+    else
+    {
+        backGroundColor = QColor("#252528").lighter(250);
+    }
+
+    if (hightlight_on)
+    {
+        checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; } QCheckBox::indicator { border-color: #FFFFFF}").arg(backGroundColor.name());
+    }
+    else
+    {
+        checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; } QCheckBox::indicator { border-color: QGC::colorBackground}").arg(backGroundColor.name());
+    }
+    m_ui->current->setStyleSheet(checkBoxStyle);
 }
 
 WaypointViewOnlyView::~WaypointViewOnlyView()

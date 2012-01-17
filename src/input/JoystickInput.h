@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 
 #include <QThread>
 #include <QList>
+#include <qmutex.h>
 #include <SDL/SDL.h>
 
 #include "UASInterface.h"
@@ -48,6 +49,7 @@ class JoystickInput : public QThread
 
 public:
     JoystickInput();
+	~JoystickInput();
     void run();
 
     const QString& getName();
@@ -63,6 +65,7 @@ protected:
     UASInterface* uas;
     QList<int> uasButtonList;
     bool done;
+	QMutex m_doneMutex;
 
     // Axis 3 is thrust (CALIBRATION!)
     int thrustAxis;

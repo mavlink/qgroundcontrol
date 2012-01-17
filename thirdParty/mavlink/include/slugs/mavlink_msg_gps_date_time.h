@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_gps_date_time_pack(uint8_t system_id, uint8_t
 	_mav_put_uint8_t(buf, 5, sec);
 	_mav_put_uint8_t(buf, 6, visSat);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 7);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 7);
 #else
 	mavlink_gps_date_time_t packet;
 	packet.year = year;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_gps_date_time_pack(uint8_t system_id, uint8_t
 	packet.sec = sec;
 	packet.visSat = visSat;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 7);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 7);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GPS_DATE_TIME;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_gps_date_time_pack_chan(uint8_t system_id, ui
 	_mav_put_uint8_t(buf, 5, sec);
 	_mav_put_uint8_t(buf, 6, visSat);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 7);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 7);
 #else
 	mavlink_gps_date_time_t packet;
 	packet.year = year;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_gps_date_time_pack_chan(uint8_t system_id, ui
 	packet.sec = sec;
 	packet.visSat = visSat;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 7);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 7);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_GPS_DATE_TIME;

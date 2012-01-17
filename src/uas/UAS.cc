@@ -164,7 +164,8 @@ void UAS::updateState()
 
 void UAS::setSelected()
 {
-    if (UASManager::instance()->getActiveUAS() != this) {
+    if (UASManager::instance()->getActiveUAS() != this)
+    {
         UASManager::instance()->setActiveUAS(this);
         emit systemSelected(true);
     }
@@ -175,24 +176,6 @@ bool UAS::getSelected() const
     return (UASManager::instance()->getActiveUAS() == this);
 }
 
-void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
-{
-    if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
-    {
-        mavlink_named_value_float_t val;
-        mavlink_msg_named_value_float_decode(&message, &val);
-        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
-        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
-    }
-    else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
-    {
-        mavlink_named_value_int_t val;
-        mavlink_msg_named_value_int_decode(&message, &val);
-        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN);
-        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
-    }
-}
-
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     if (!link) return;
@@ -201,10 +184,38 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         addLink(link);
         //        qDebug() << __FILE__ << __LINE__ << "ADDED LINK!" << link->getName();
     }
-    //    else
-    //    {
-    //        qDebug() << __FILE__ << __LINE__ << "DID NOT ADD LINK" << link->getName() << "ALREADY IN LIST";
-    //    }
+
+    if (!components.contains(message.compid))
+    {
+        QString componentName;
+
+        switch (message.compid)
+        {
+        case MAV_COMP_ID_ALL:
+            {
+                componentName = "ANONYMOUS";
+                break;
+            }
+        case MAV_COMP_ID_IMU:
+            {
+                componentName = "IMU #1";
+                break;
+            }
+        case MAV_COMP_ID_CAMERA:
+            {
+                componentName = "CAMERA";
+                break;
+            }
+        case MAV_COMP_ID_MISSIONPLANNER:
+            {
+                componentName = "MISSIONPLANNER";
+                break;
+            }
+        }
+
+        components.insert(message.compid, componentName);
+        emit componentCreated(uasId, message.compid, componentName);
+    }
 
     //    qDebug() << "UAS RECEIVED from" << message.sysid << "component" << message.compid << "msg id" << message.msgid << "seq no" << message.seq;
 
@@ -356,11 +367,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 }
 
             break;
-        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
-        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
-            // Receive named value message
-            receiveMessageNamedValue(message);
-            break;
+//        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+//        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
+//            // Receive named value message
+//            receiveMessageNamedValue(message);
+//            break;
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
                 if (multiComponentSourceDetected && message.compid != MAV_COMP_ID_IMU_2)
@@ -428,6 +439,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                    // Set to 0, since it is an invalid value
 //                    compass = 0.0f;
 //                }
+
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, roll, pitch, yaw, time);
@@ -787,6 +799,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 imagePayload = p.payload;
                 imageQuality = p.jpg_quality;
                 imageType = p.type;
+                imageWidth = p.width;
+                imageHeight = p.height;
                 imageStart = QGC::groundTimeMilliseconds();
             }
             break;
@@ -938,20 +952,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
-            break;
         case MAVLINK_MSG_ID_DEBUG_VECT:
-            {
-                mavlink_debug_vect_t debug;
-                mavlink_msg_debug_vect_decode(&message, &debug);
-                debug.name[MAVLINK_MSG_DEBUG_VECT_FIELD_NAME_LEN-1] = '\0';
-                QString name(debug.name);
-                quint64 time = getUnixTime(debug.time_usec);
-                emit valueChanged(uasId, name+".x", "raw", debug.x, time);
-                emit valueChanged(uasId, name+".y", "raw", debug.y, time);
-                emit valueChanged(uasId, name+".z", "raw", debug.z, time);
-            }
-            break;
         case MAVLINK_MSG_ID_DEBUG:
+        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
             break;
         default:
             {
@@ -988,6 +992,11 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
     {
         rgbdImage.CopyFrom(*message);
         emit rgbdImageChanged(this);
+    }
+    else if (message->GetTypeName() == obstacleList.GetTypeName())
+    {
+        obstacleList.CopyFrom(*message);
+        emit obstacleListChanged(this);
     }
 }
 
@@ -1422,16 +1431,13 @@ QImage UAS::getImage()
     // RAW greyscale
     if (imageType == MAVLINK_DATA_STREAM_IMG_RAW8U)
     {
-        // TODO FIXME Fabian
-        // RAW hardcoded to 22x22
-        int imgWidth = 22;
-        int imgHeight = 22;
-        int imgColors = 255;
+        // TODO FIXME
+        int imgColors = 255;//imageSize/(imageWidth*imageHeight);
         //const int headerSize = 15;
 
         // Construct PGM header
         QString header("P5\n%1 %2\n%3\n");
-        header = header.arg(imgWidth).arg(imgHeight).arg(imgColors);
+        header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
         QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
         tmpImage.append(imageRecBuffer);
@@ -1481,7 +1487,7 @@ void UAS::requestImage()
     if (imagePacketsArrived == 0)
     {
         mavlink_message_t msg;
-        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 50);
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
 #endif
@@ -2190,7 +2196,7 @@ void UAS::shutdown()
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
-    mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_FRAME_LOCAL_NED, x, y, z, yaw);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 2, 2, 0, yaw, x, y, z);
     sendMessage(msg);
 }
 
@@ -2292,13 +2298,15 @@ void UAS::removeLink(QObject* object)
     }
 }
 
-/**
- * @brief Get the links associated with this robot
- *
- **/
+
 QList<LinkInterface*>* UAS::getLinks()
 {
     return links;
+}
+
+QMap<int, QString> UAS::getComponents()
+{
+    return components;
 }
 
 

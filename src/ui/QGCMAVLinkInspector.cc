@@ -2,18 +2,25 @@
 
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkInspector.h"
+#include "UASManager.h"
 #include "ui_QGCMAVLinkInspector.h"
 
 #include <QDebug>
 
+const float QGCMAVLinkInspector::updateHzLowpass = 0.2f;
+const unsigned int QGCMAVLinkInspector::updateInterval = 1000U;
+
 QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent) :
     QWidget(parent),
+    selectedSystemID(0),
+    selectedComponentID(0),
     ui(new Ui::QGCMAVLinkInspector)
 {
     ui->setupUi(this);
 
     /* Insert system */
-    ui->systemComboBox->addItem(tr("All Systems"), -1);
+    ui->systemComboBox->addItem(tr("All Systems"), 0);
+    ui->componentComboBox->addItem(tr("All Components"), 0);
 
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
@@ -26,7 +33,60 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     header << tr("Type");
     ui->treeWidget->setHeaderLabels(header);
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(refreshView()));
-    updateTimer.start(1000);
+
+
+    // ARM UI
+    connect(ui->systemComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuSystem(int)));
+    connect(ui->componentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuComponent(int)));
+
+    // ARM external connections
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
+
+    // Start
+    updateTimer.start(updateInterval);
+}
+
+void QGCMAVLinkInspector::addSystem(UASInterface* uas)
+{
+    ui->systemComboBox->addItem(uas->getUASName(), uas->getUASID());
+}
+
+void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
+{
+    selectedSystemID = ui->systemComboBox->itemData(dropdownid).toInt();
+    rebuildComponentList();
+}
+
+void QGCMAVLinkInspector::selectDropDownMenuComponent(int dropdownid)
+{
+    selectedComponentID = ui->componentComboBox->itemData(dropdownid).toInt();
+}
+
+void QGCMAVLinkInspector::rebuildComponentList()
+{
+    ui->componentComboBox->clear();
+
+    // Fill
+    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
+    if (uas)
+    {
+        QMap<int, QString> components = uas->getComponents();
+
+        foreach (int id, components.keys())
+        {
+            QString name = components.value(id);
+            ui->componentComboBox->addItem(name, id);
+        }
+    }
+}
+
+void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& name)
+{
+    Q_UNUSED(component);
+    Q_UNUSED(name);
+    if (uas != selectedSystemID) return;
+
+    rebuildComponentList();
 }
 
 void QGCMAVLinkInspector::refreshView()
@@ -38,7 +98,10 @@ void QGCMAVLinkInspector::refreshView()
         if (!msg) continue;
         // Update the tree view
         QString messageName("%1 (%2 Hz, #%3)");
-        messageName = messageName.arg(messageInfo[msg->msgid].name).arg(messagesHz.value(msg->msgid, 0), 2, 'f', 0).arg(msg->msgid);
+        float msgHz = (1.0f-updateHzLowpass)*messagesHz.value(msg->msgid, 0) + updateHzLowpass*((float)messageCount.value(msg->msgid, 0))/((float)updateInterval/1000.0f);
+        messagesHz.insert(msg->msgid, msgHz);
+        messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
+        messageCount.insert(msg->msgid, 0);
         if (!treeWidgetItems.contains(msg->msgid))
         {
             QStringList fields;
@@ -70,20 +133,16 @@ void QGCMAVLinkInspector::refreshView()
 void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t message)
 {
     Q_UNUSED(link);
+    if (selectedSystemID != 0 && selectedSystemID != message.sysid) return;
+    if (selectedComponentID != 0 && selectedComponentID != message.compid) return;
     // Only overwrite if system filter is set
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
-    float msgHz = 0.0f;
     quint64 receiveTime = QGC::groundTimeMilliseconds();
     if (lastMessageUpdate.contains(message.msgid))
     {
-        msgHz = 1000.0/(double)(receiveTime - lastMessageUpdate.value(message.msgid));
-        if (isinf(msgHz) || isnan(msgHz) || msgHz < 0.0f)
-        {
-            msgHz = 1;
-        }
-        float newHz = 0.05f*msgHz+0.95f*messagesHz.value(message.msgid, 1);
-        messagesHz.insert(message.msgid, newHz);
+        int count = messageCount.value(message.msgid, 0);
+        messageCount.insert(message.msgid, count+1);
     }
 
     lastMessageUpdate.insert(message.msgid, receiveTime);

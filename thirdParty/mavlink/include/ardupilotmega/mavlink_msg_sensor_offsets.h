@@ -80,7 +80,7 @@ static inline uint16_t mavlink_msg_sensor_offsets_pack(uint8_t system_id, uint8_
 	_mav_put_int16_t(buf, 38, mag_ofs_y);
 	_mav_put_int16_t(buf, 40, mag_ofs_z);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 42);
 #else
 	mavlink_sensor_offsets_t packet;
 	packet.mag_declination = mag_declination;
@@ -96,7 +96,7 @@ static inline uint16_t mavlink_msg_sensor_offsets_pack(uint8_t system_id, uint8_
 	packet.mag_ofs_y = mag_ofs_y;
 	packet.mag_ofs_z = mag_ofs_z;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 42);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SENSOR_OFFSETS;
@@ -142,7 +142,7 @@ static inline uint16_t mavlink_msg_sensor_offsets_pack_chan(uint8_t system_id, u
 	_mav_put_int16_t(buf, 38, mag_ofs_y);
 	_mav_put_int16_t(buf, 40, mag_ofs_z);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 42);
 #else
 	mavlink_sensor_offsets_t packet;
 	packet.mag_declination = mag_declination;
@@ -158,7 +158,7 @@ static inline uint16_t mavlink_msg_sensor_offsets_pack_chan(uint8_t system_id, u
 	packet.mag_ofs_y = mag_ofs_y;
 	packet.mag_ofs_z = mag_ofs_z;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 42);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 42);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SENSOR_OFFSETS;

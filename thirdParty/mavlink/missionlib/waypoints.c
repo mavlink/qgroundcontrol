@@ -23,12 +23,14 @@
 bool debug = true;
 bool verbose = true;
 
-extern mavlink_system_t mavlink_system;
 extern mavlink_wpm_storage wpm;
 
 extern void mavlink_missionlib_send_message(mavlink_message_t* msg);
 extern void mavlink_missionlib_send_gcs_string(const char* string);
 extern uint64_t mavlink_missionlib_get_system_timestamp();
+extern void mavlink_missionlib_current_waypoint_changed(uint16_t index, float param1,
+		float param2, float param3, float param4, float param5_lat_x,
+		float param6_lon_y, float param7_alt_z, uint8_t frame, uint16_t command);
 
 
 #define MAVLINK_WPM_NO_PRINTF
@@ -111,11 +113,11 @@ void mavlink_wpm_send_waypoint_current(uint16_t seq)
 		
         // FIXME TIMING usleep(paramClient->getParamValue("PROTOCOLDELAY"));
 		
-        if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("Broadcasted new current waypoint\n"); //// printf("Broadcasted new current waypoint %u\n", wpc.seq);
+        if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("Set current waypoint\n"); //// printf("Broadcasted new current waypoint %u\n", wpc.seq);
     }
     else
     {
-        if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("ERROR: index out of bounds\n");
+        if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("ERROR: wp index out of bounds\n");
     }
 }
 
@@ -129,39 +131,19 @@ void mavlink_wpm_send_waypoint_current(uint16_t seq)
  */
 void mavlink_wpm_send_setpoint(uint16_t seq)
 {
-//    if(seq < wpm.size)
-//    {
-//        mavlink_mission_item_t *cur = &(wpm.waypoints[seq]);
-//
-//        mavlink_message_t msg;
-//        mavlink_local_position_setpoint_set_t position_control_set_point;
-//
-//        // Send new NED or ENU setpoint to onbaord autopilot
-//        if (cur->frame == MAV_FRAME_LOCAL_NED || cur->frame == MAV_FRAME_LOCAL_ENU)
-//        {
-//            position_control_set_point.target_system = mavlink_system.sysid;
-//            position_control_set_point.target_component = MAV_COMP_ID_IMU;
-//            position_control_set_point.x = cur->x;
-//            position_control_set_point.y = cur->y;
-//            position_control_set_point.z = cur->z;
-//            position_control_set_point.yaw = cur->param4;
-//
-//            mavlink_msg_local_position_setpoint_set_encode(mavlink_system.sysid, mavlink_wpm_comp_id, &msg, &position_control_set_point);
-//            mavlink_missionlib_send_message(&msg);
-//
-//            // FIXME TIMING usleep(paramClient->getParamValue("PROTOCOLDELAY"));
-//        }
-//        else
-//        {
-//            if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("No new setpoint set because of invalid coordinate frame of waypoint");//// if (verbose) // printf("No new set point sent to IMU because the new waypoint %u had no local coordinates\n", cur->seq);
-//        }
-//
-//        wpm.timestamp_last_send_setpoint = mavlink_missionlib_get_system_timestamp();
-//    }
-//    else
-//    {
-//        if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("ERROR: Waypoint index out of bounds\n"); //// if (verbose) // printf("ERROR: index out of bounds\n");
-//    }
+    if(seq < wpm.size)
+    {
+        mavlink_mission_item_t *cur = &(wpm.waypoints[seq]);
+        mavlink_missionlib_current_waypoint_changed(cur->seq, cur->param1,
+        		cur->param2, cur->param3, cur->param4, cur->x,
+        		cur->y, cur->z, cur->frame, cur->command);
+
+        wpm.timestamp_last_send_setpoint = mavlink_missionlib_get_system_timestamp();
+    }
+    else
+    {
+        if (MAVLINK_WPM_TEXT_FEEDBACK) mavlink_missionlib_send_gcs_string("ERROR: Waypoint index out of bounds\n"); //// if (verbose) // printf("ERROR: index out of bounds\n");
+    }
 }
 
 void mavlink_wpm_send_waypoint_count(uint8_t sysid, uint8_t compid, uint16_t count)

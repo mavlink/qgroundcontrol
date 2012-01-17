@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_set_mag_offsets_pack(uint8_t system_id, uint8
 	_mav_put_uint8_t(buf, 6, target_system);
 	_mav_put_uint8_t(buf, 7, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 8);
 #else
 	mavlink_set_mag_offsets_t packet;
 	packet.mag_ofs_x = mag_ofs_x;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_set_mag_offsets_pack(uint8_t system_id, uint8
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 8);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_MAG_OFFSETS;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_set_mag_offsets_pack_chan(uint8_t system_id, 
 	_mav_put_uint8_t(buf, 6, target_system);
 	_mav_put_uint8_t(buf, 7, target_component);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 8);
 #else
 	mavlink_set_mag_offsets_t packet;
 	packet.mag_ofs_x = mag_ofs_x;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_set_mag_offsets_pack_chan(uint8_t system_id, 
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 8);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 8);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_MAG_OFFSETS;

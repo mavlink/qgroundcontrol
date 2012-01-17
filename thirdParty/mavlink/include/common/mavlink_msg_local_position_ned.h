@@ -60,7 +60,7 @@ static inline uint16_t mavlink_msg_local_position_ned_pack(uint8_t system_id, ui
 	_mav_put_float(buf, 20, vy);
 	_mav_put_float(buf, 24, vz);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_local_position_ned_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -71,7 +71,7 @@ static inline uint16_t mavlink_msg_local_position_ned_pack(uint8_t system_id, ui
 	packet.vy = vy;
 	packet.vz = vz;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION_NED;
@@ -107,7 +107,7 @@ static inline uint16_t mavlink_msg_local_position_ned_pack_chan(uint8_t system_i
 	_mav_put_float(buf, 20, vy);
 	_mav_put_float(buf, 24, vz);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 28);
 #else
 	mavlink_local_position_ned_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -118,7 +118,7 @@ static inline uint16_t mavlink_msg_local_position_ned_pack_chan(uint8_t system_i
 	packet.vy = vy;
 	packet.vz = vz;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 28);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 28);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION_NED;

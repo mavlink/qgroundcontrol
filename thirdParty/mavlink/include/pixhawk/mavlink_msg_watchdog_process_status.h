@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack(uint8_t system_i
 	_mav_put_uint8_t(buf, 10, state);
 	_mav_put_uint8_t(buf, 11, muted);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_watchdog_process_status_t packet;
 	packet.pid = pid;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack(uint8_t system_i
 	packet.state = state;
 	packet.muted = muted;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 	_mav_put_uint8_t(buf, 10, state);
 	_mav_put_uint8_t(buf, 11, muted);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_watchdog_process_status_t packet;
 	packet.pid = pid;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 	packet.state = state;
 	packet.muted = muted;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;

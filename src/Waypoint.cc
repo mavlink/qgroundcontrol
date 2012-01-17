@@ -55,8 +55,7 @@ Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1,
 }
 
 Waypoint::~Waypoint()
-{
-
+{    
 }
 
 bool Waypoint::isNavigationType()

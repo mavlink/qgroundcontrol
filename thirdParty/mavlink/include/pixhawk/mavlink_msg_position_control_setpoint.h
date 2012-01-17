@@ -52,7 +52,7 @@ static inline uint16_t mavlink_msg_position_control_setpoint_pack(uint8_t system
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint16_t(buf, 16, id);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_position_control_setpoint_t packet;
 	packet.x = x;
@@ -61,7 +61,7 @@ static inline uint16_t mavlink_msg_position_control_setpoint_pack(uint8_t system
 	packet.yaw = yaw;
 	packet.id = id;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT;
@@ -93,7 +93,7 @@ static inline uint16_t mavlink_msg_position_control_setpoint_pack_chan(uint8_t s
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint16_t(buf, 16, id);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_position_control_setpoint_t packet;
 	packet.x = x;
@@ -102,7 +102,7 @@ static inline uint16_t mavlink_msg_position_control_setpoint_pack_chan(uint8_t s
 	packet.yaw = yaw;
 	packet.id = id;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT;

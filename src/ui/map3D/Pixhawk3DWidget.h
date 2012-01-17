@@ -25,7 +25,7 @@
  * @file
  *   @brief Definition of the class Pixhawk3DWidget.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
@@ -38,6 +38,9 @@
 #include "Imagery.h"
 #include "ImageWindowGeode.h"
 #include "WaypointGroupNode.h"
+#ifdef QGC_PROTOBUF_ENABLED
+    #include "ObstacleGroupNode.h"
+#endif
 
 #include "Q3DWidget.h"
 
@@ -67,7 +70,9 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void selectTargetHeading(void);
     void selectTarget(void);
+    void setTarget(void);
     void insertWaypoint(void);
     void moveWaypoint(void);
     void setWaypoint(void);
@@ -78,9 +83,11 @@ private slots:
 protected:
     QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
     void buildLayout(void);
+    virtual void resizeGL(int width, int height);
     virtual void display(void);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseMoveEvent(QMouseEvent* event);
 
     UASInterface* uas;
 
@@ -113,6 +120,7 @@ private:
     void updateTarget(double robotX, double robotY);
 #ifdef QGC_PROTOBUF_ENABLED
     void updateRGBD(double robotX, double robotY, double robotZ);
+    void updateObstacles(void);
 #endif
 
     int findWaypoint(int mouseX, int mouseY);
@@ -122,7 +130,8 @@ private:
 
     enum Mode {
         DEFAULT_MODE,
-        MOVE_WAYPOINT_MODE
+        MOVE_WAYPOINT_MODE,
+        SELECT_TARGET_YAW_MODE
     };
     Mode mode;
     int selectedWpIndex;
@@ -133,6 +142,7 @@ private:
     bool displayWaypoints;
     bool displayRGBD2D;
     bool displayRGBD3D;
+    bool displayObstacleList;
     bool enableRGBDColor;
     bool enableTarget;
 
@@ -157,11 +167,14 @@ private:
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
     osg::ref_ptr<osg::Node> targetNode;
     osg::ref_ptr<osg::Geode> rgbd3DNode;
+#ifdef QGC_PROTOBUF_ENABLED
+    osg::ref_ptr<ObstacleGroupNode> obstacleGroupNode;
+#endif
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     MAV_FRAME frame;
-    osg::Vec2d target;
+    osg::Vec3d target;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
 

@@ -56,7 +56,7 @@ static inline uint16_t mavlink_msg_ap_adc_pack(uint8_t system_id, uint8_t compon
 	_mav_put_uint16_t(buf, 8, adc5);
 	_mav_put_uint16_t(buf, 10, adc6);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_ap_adc_t packet;
 	packet.adc1 = adc1;
@@ -66,7 +66,7 @@ static inline uint16_t mavlink_msg_ap_adc_pack(uint8_t system_id, uint8_t compon
 	packet.adc5 = adc5;
 	packet.adc6 = adc6;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_AP_ADC;
@@ -100,7 +100,7 @@ static inline uint16_t mavlink_msg_ap_adc_pack_chan(uint8_t system_id, uint8_t c
 	_mav_put_uint16_t(buf, 8, adc5);
 	_mav_put_uint16_t(buf, 10, adc6);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_ap_adc_t packet;
 	packet.adc1 = adc1;
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_ap_adc_pack_chan(uint8_t system_id, uint8_t c
 	packet.adc5 = adc5;
 	packet.adc6 = adc6;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_AP_ADC;

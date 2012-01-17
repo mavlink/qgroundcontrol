@@ -36,12 +36,12 @@ static inline uint16_t mavlink_msg_mission_item_reached_pack(uint8_t system_id, 
 	char buf[2];
 	_mav_put_uint16_t(buf, 0, seq);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 2);
 #else
 	mavlink_mission_item_reached_t packet;
 	packet.seq = seq;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 2);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MISSION_ITEM_REACHED;
@@ -65,12 +65,12 @@ static inline uint16_t mavlink_msg_mission_item_reached_pack_chan(uint8_t system
 	char buf[2];
 	_mav_put_uint16_t(buf, 0, seq);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 2);
 #else
 	mavlink_mission_item_reached_t packet;
 	packet.seq = seq;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 2);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MISSION_ITEM_REACHED;

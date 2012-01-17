@@ -55,7 +55,6 @@ This file is part of the QGROUNDCONTROL project
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #include "DebugConsole.h"
-//#include "MapWidget.h"
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
@@ -80,6 +79,8 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 
 class QGCMapTool;
+class QGCMAVLinkMessageSender;
+class QGCFirmwareUpdate;
 class QSplashScreen;
 
 /**
@@ -154,6 +155,8 @@ public slots:
     void loadOperatorView();
     /** @brief Load MAVLink XML generator view */
     void loadMAVLinkView();
+    /** @brief Load firmware update view */
+    void loadFirmwareUpdateView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -241,12 +244,10 @@ protected:
         VIEW_OPERATOR,
         VIEW_PILOT,
         VIEW_MAVLINK,
+        VIEW_FIRMWAREUPDATE,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
-
-//    QHash<int, QAction*> toolsMenuActions; // Holds ptr to the Menu Actions
-//    QHash<int, QWidget*> dockWidgets;  // Holds ptr to the Actual Dock widget
 
     /**
      * @brief Adds an already instantiated QDockedWidget to the Tools Menu
@@ -314,12 +315,10 @@ protected:
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> _3DWidget;
 #endif
-#ifdef QGC_OSGEARTH_ENABLED
-    QPointer<QWidget> _3DMapWidget;
-#endif
 #if (defined _MSC_VER) || (defined Q_OS_MAC)
     QPointer<QGCGoogleEarthView> gEarthWidget;
 #endif
+    QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
@@ -353,6 +352,7 @@ protected:
 
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
+    QPointer<QDockWidget> mavlinkSenderWidget;
     QGCMAVLinkLogPlayer* logPlayer;
 
     // Popup widgets

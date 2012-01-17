@@ -1,24 +1,4 @@
 /*=====================================================================
-
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
 ======================================================================*/
 
 /**
@@ -37,23 +17,24 @@ This file is part of the PIXHAWK project
 #include "UAS.h"
 #include "UASManager.h"
 #include "QGC.h"
+#include <QMutexLocker>
 
 /**
  * The coordinate frame of the joystick axis is the aeronautical frame like shown on this image:
  * @image html http://pixhawk.ethz.ch/wiki/_media/standards/body-frame.png Aeronautical frame
  */
 JoystickInput::JoystickInput() :
-    sdlJoystickMin(-32768.0f),
-    sdlJoystickMax(32767.0f),
-    defaultIndex(0),
-    uas(NULL),
-    uasButtonList(QList<int>()),
-    done(false),
-    thrustAxis(3),
-    xAxis(1),
-    yAxis(0),
-    yawAxis(2),
-    joystickName(tr("Unitinialized"))
+        sdlJoystickMin(-32768.0f),
+        sdlJoystickMax(32767.0f),
+        defaultIndex(0),
+        uas(NULL),
+        uasButtonList(QList<int>()),
+        done(false),
+        thrustAxis(2),
+        xAxis(0),
+        yAxis(1),
+        yawAxis(3),
+        joystickName(tr("Unitinialized"))
 {
     for (int i = 0; i < 10; i++) {
         calibrationPositive[i] = sdlJoystickMax;
@@ -66,13 +47,23 @@ JoystickInput::JoystickInput() :
     //start();
 }
 
+JoystickInput::~JoystickInput()
+{
+    done = true;
+    QGC::SLEEP::usleep(50000);
+    this->deleteLater();
+}
+
+
 void JoystickInput::setActiveUAS(UASInterface* uas)
 {
     // Only connect / disconnect is the UAS is of a controllable UAS class
     UAS* tmp = 0;
-    if (this->uas) {
+    if (this->uas)
+    {
         tmp = dynamic_cast<UAS*>(this->uas);
-        if(tmp) {
+        if(tmp)
+        {
             disconnect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
             disconnect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
         }
@@ -85,7 +76,8 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
         connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
     }
-    if (!isRunning()) {
+    if (!isRunning())
+    {
         start();
     }
 }
@@ -101,17 +93,20 @@ void JoystickInput::init()
     int numJoysticks = SDL_NumJoysticks();
 
     // Wait for joysticks if none is connected
-    while (numJoysticks == 0) {
-        MG::SLEEP::msleep(200);
+    while (numJoysticks == 0)
+    {
+        MG::SLEEP::msleep(800);
         // INITIALIZE SDL Joystick support
-        if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
+        if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
+        {
             printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
         }
         numJoysticks = SDL_NumJoysticks();
     }
 
     printf("%d Input devices found:\n", numJoysticks);
-    for(int i=0; i < SDL_NumJoysticks(); i++ ) {
+    for(int i=0; i < SDL_NumJoysticks(); i++ )
+    {
         printf("\t- %s\n", SDL_JoystickName(i));
         joystickName = QString(SDL_JoystickName(i));
     }
@@ -134,8 +129,15 @@ void JoystickInput::run()
 
     init();
 
-    while(!done) {
-        while(SDL_PollEvent(&event)) {
+    forever
+    {
+        if (done)
+        {
+           done = false;
+           exit();
+        }
+        while(SDL_PollEvent(&event))
+        {
 
             SDL_JoystickUpdate();
 
@@ -176,7 +178,8 @@ void JoystickInput::run()
         }
 
         // Display all axes
-        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++) {
+        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++)
+        {
             //qDebug() << "\rAXIS" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
         }
 
@@ -247,15 +250,19 @@ void JoystickInput::run()
 
 
         // Display all buttons
-        for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++) {
+        for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
+        {
             //qDebug() << "BUTTON" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
-            if(SDL_JoystickGetButton(joystick, i)) {
+            if(SDL_JoystickGetButton(joystick, i))
+            {
                 emit buttonPressed(i);
                 // Check if button is a UAS select button
 
-                if (uasButtonList.contains(i)) {
+                if (uasButtonList.contains(i))
+                {
                     UASInterface* uas = UASManager::instance()->getUASForId(i);
-                    if (uas) {
+                    if (uas)
+                    {
                         UASManager::instance()->setActiveUAS(uas);
                     }
                 }
