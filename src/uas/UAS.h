@@ -411,8 +411,6 @@ public slots:
     void setUASName(const QString& name);
     /** @brief Executes a command **/
     void executeCommand(MAV_CMD command);
-    /** @brief Executes a command **/
-    void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component);
     /** @brief Executes a command with 7 params */
     void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component);
     /** @brief Set the current battery type and voltages */
