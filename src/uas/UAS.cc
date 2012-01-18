@@ -1911,25 +1911,6 @@ void UAS::executeCommand(MAV_CMD command)
     sendMessage(msg);
 }
 
-void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component)
-{
-    mavlink_message_t msg;
-    mavlink_command_long_t cmd;
-    cmd.command = (uint8_t)command;
-    cmd.confirmation = confirmation;
-    cmd.param1 = param1;
-    cmd.param2 = param2;
-    cmd.param3 = param3;
-    cmd.param4 = param4;
-    cmd.param5 = 0.0f;
-    cmd.param6 = 0.0f;
-    cmd.param7 = 0.0f;
-    cmd.target_system = uasId;
-    cmd.target_component = component;
-    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
-    sendMessage(msg);
-}
-
 void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component)
 {
     mavlink_message_t msg;
@@ -2196,7 +2177,7 @@ void UAS::shutdown()
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 2, 2, 0, yaw, x, y, z);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 2, 3, 0, yaw, x, y, z);
     sendMessage(msg);
 }
 
