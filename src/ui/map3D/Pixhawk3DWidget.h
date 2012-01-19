@@ -74,8 +74,8 @@ private slots:
     void selectTarget(void);
     void setTarget(void);
     void insertWaypoint(void);
-    void moveWaypoint(void);
-    void setWaypoint(void);
+    void moveWaypointPosition(void);
+    void moveWaypointHeading(void);
     void deleteWaypoint(void);
     void setWaypointAltitude(void);
     void clearAllWaypoints(void);
@@ -123,15 +123,16 @@ private:
     void updateObstacles(void);
 #endif
 
-    int findWaypoint(int mouseX, int mouseY);
+    int findWaypoint(const QPoint& mousePos);
     bool findTarget(int mouseX, int mouseY);
     void showInsertWaypointMenu(const QPoint& cursorPos);
     void showEditWaypointMenu(const QPoint& cursorPos);
 
     enum Mode {
         DEFAULT_MODE,
-        MOVE_WAYPOINT_MODE,
-        SELECT_TARGET_YAW_MODE
+        MOVE_WAYPOINT_POSITION_MODE,
+        MOVE_WAYPOINT_HEADING_MODE,
+        SELECT_TARGET_HEADING_MODE
     };
     Mode mode;
     int selectedWpIndex;
@@ -175,6 +176,7 @@ private:
 
     MAV_FRAME frame;
     osg::Vec3d target;
+    QPoint cachedMousePos;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
 
