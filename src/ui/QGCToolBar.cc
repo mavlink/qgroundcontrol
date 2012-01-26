@@ -55,18 +55,28 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     // Add internal actions
     // Add MAV widget
     symbolButton = new QToolButton(this);
+    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
+	addWidget(symbolButton);
+
     toolBarNameLabel = new QLabel("------", this);
+	toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
+    addWidget(toolBarNameLabel);
+
     toolBarSafetyLabel = new QLabel("SAFE", this);
     toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
+	toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
+    addWidget(toolBarSafetyLabel);
+
     toolBarModeLabel = new QLabel("------", this);
     toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #3C7B9E; }");
+	toolBarModeLabel->setToolTip(tr("Vehicle mode"));
+    addWidget(toolBarModeLabel);
+
     toolBarStateLabel = new QLabel("------", this);
     toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #FEC654; }");
-    toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
-    toolBarDistLabel = new QLabel("--- ---- m", this);
-    toolBarMessageLabel = new QLabel("No system messages.", this);
-    toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
+	toolBarStateLabel->setToolTip(tr("Vehicle state"));
+    addWidget(toolBarStateLabel);
+
     toolBarBatteryBar = new QProgressBar(this);
     toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
@@ -74,26 +84,34 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toolBarBatteryBar->setMinimumWidth(20);
     toolBarBatteryBar->setMaximumWidth(100);
     toolBarBatteryBar->setToolTip(tr("Battery charge level"));
+    addWidget(toolBarBatteryBar);
+
     toolBarBatteryVoltageLabel = new QLabel("xx.x V");
     toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
-    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
-    addWidget(symbolButton);
-    addWidget(toolBarNameLabel);
-    addWidget(toolBarSafetyLabel);
-    addWidget(toolBarModeLabel);
-    addWidget(toolBarStateLabel);
-    addWidget(toolBarBatteryBar);
+	toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
     addWidget(toolBarBatteryVoltageLabel);
+
+    toolBarWpLabel = new QLabel("WP--", this);
+    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
+	toolBarWpLabel->setToolTip(tr("Current mission"));
     addWidget(toolBarWpLabel);
+
+    toolBarDistLabel = new QLabel("--- ---- m", this);
+	toolBarDistLabel->setToolTip(tr("Distance to current mission"));
     addWidget(toolBarDistLabel);
+
+    toolBarMessageLabel = new QLabel("No system messages.", this);
+    toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
+	toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
-    //addWidget(new QSpacerItem(20, 0, QSizePolicy::Expanding));
 
     // DONE INITIALIZING BUTTONS
 
+	// Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
+	// Set the toolbar to be updated every 2s
     connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateViewTimer.start(2000);
 }
