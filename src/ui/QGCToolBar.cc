@@ -374,6 +374,6 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
 
 QGCToolBar::~QGCToolBar()
 {
-    delete toggleLoggingAction;
-    delete logReplayAction;
+    if (toggleLoggingAction) toggleLoggingAction->deleteLater();
+    if (logReplayAction) logReplayAction->deleteLater();
 }

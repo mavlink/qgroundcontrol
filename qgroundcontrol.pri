@@ -250,6 +250,7 @@ message("Compiling for linux 32")
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
+    DEFINES += QGC_OSG_QT_ENABLED
     }
 
     exists(/usr/local/include/google/protobuf) {
@@ -333,6 +334,7 @@ linux-g++-64 {
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
+    DEFINES += QGC_OSG_QT_ENABLED
     }
 
     exists(/usr/local/include/google/protobuf) {

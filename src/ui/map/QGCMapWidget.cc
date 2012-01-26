@@ -284,6 +284,68 @@ void QGCMapWidget::updateGlobalPosition()
     }
 }
 
+void QGCMapWidget::updateLocalPosition()
+{
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    foreach (UASInterface* system, systems)
+    {
+        // Get reference to graphic UAV item
+        mapcontrol::UAVItem* uav = GetUAV(system->getUASID());
+        // Check if reference is valid, else create a new one
+        if (uav == NULL)
+        {
+            MAV2DIcon* newUAV = new MAV2DIcon(map, this, system);
+            AddUAV(system->getUASID(), newUAV);
+            uav = newUAV;
+            uav->SetTrailTime(1);
+            uav->SetTrailDistance(5);
+            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
+        }
+
+        // Set new lat/lon position of UAV icon
+        double latitude = UASManager::instance()->getHomeLatitude();
+        double longitude = UASManager::instance()->getHomeLongitude();
+        double altitude = UASManager::instance()->getHomeAltitude();
+        internals::PointLatLng pos_lat_lon = internals::PointLatLng(system->getLatitude(), system->getLongitude());
+        uav->SetUAVPos(pos_lat_lon, system->getAltitude());
+        // Follow status
+        if (followUAVEnabled && system->getUASID() == followUAVID) SetCurrentPosition(pos_lat_lon);
+        // Convert from radians to degrees and apply
+        uav->SetUAVHeading((system->getYaw()/M_PI)*180.0f);
+    }
+}
+
+void QGCMapWidget::updateLocalPositionEstimates()
+{
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    foreach (UASInterface* system, systems)
+    {
+        // Get reference to graphic UAV item
+        mapcontrol::UAVItem* uav = GetUAV(system->getUASID());
+        // Check if reference is valid, else create a new one
+        if (uav == NULL)
+        {
+            MAV2DIcon* newUAV = new MAV2DIcon(map, this, system);
+            AddUAV(system->getUASID(), newUAV);
+            uav = newUAV;
+            uav->SetTrailTime(1);
+            uav->SetTrailDistance(5);
+            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
+        }
+
+        // Set new lat/lon position of UAV icon
+        double latitude = UASManager::instance()->getHomeLatitude();
+        double longitude = UASManager::instance()->getHomeLongitude();
+        double altitude = UASManager::instance()->getHomeAltitude();
+        internals::PointLatLng pos_lat_lon = internals::PointLatLng(system->getLatitude(), system->getLongitude());
+        uav->SetUAVPos(pos_lat_lon, system->getAltitude());
+        // Follow status
+        if (followUAVEnabled && system->getUASID() == followUAVID) SetCurrentPosition(pos_lat_lon);
+        // Convert from radians to degrees and apply
+        uav->SetUAVHeading((system->getYaw()/M_PI)*180.0f);
+    }
+}
+
 
 void QGCMapWidget::updateSystemSpecs(int uas)
 {
