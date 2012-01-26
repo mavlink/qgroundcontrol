@@ -215,7 +215,7 @@ public slots:
     /** @brief Execute command immediately **/
     virtual void executeCommand(MAV_CMD command) = 0;
     /** @brief Executes a command **/
-    virtual void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component) = 0;
+    virtual void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component) = 0;
 
     /** @brief Selects the airframe */
     virtual void setAirframe(int airframe) = 0;

@@ -114,7 +114,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     buildLayout();
 
-    updateHUD(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "132N");
+    updateHUD(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "32N");
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
@@ -248,6 +248,38 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
 }
 
 void
+Pixhawk3DWidget::selectTargetHeading(void)
+{
+    if (!uas)
+    {
+        return;
+    }
+
+    osg::Vec2d p;
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double altitude = uas->getAltitude();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        p.set(cursorWorldCoords.first, cursorWorldCoords.second);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        double z = uas->getLocalZ();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+
+        p.set(cursorWorldCoords.first, cursorWorldCoords.second);
+    }
+
+    target.z() = atan2(p.y() - target.y(), p.x() - target.x());
+}
+
+void
 Pixhawk3DWidget::selectTarget(void)
 {
     if (!uas)
@@ -260,23 +292,33 @@ Pixhawk3DWidget::selectTarget(void)
         double altitude = uas->getAltitude();
 
         std::pair<double,double> cursorWorldCoords =
-            getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(),
+                                    altitude);
 
-        target.set(cursorWorldCoords.first, cursorWorldCoords.second);
+        target.set(cursorWorldCoords.first, cursorWorldCoords.second, 0.0);
     }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
         double z = uas->getLocalZ();
 
         std::pair<double,double> cursorWorldCoords =
-            getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(), -z);
 
-        target.set(cursorWorldCoords.first, cursorWorldCoords.second);
+        target.set(cursorWorldCoords.first, cursorWorldCoords.second, 0.0);
     }
 
-    uas->setTargetPosition(target.x(), target.y(), 0.0, 0.0);
-
     enableTarget = true;
+
+    mode = SELECT_TARGET_HEADING_MODE;
+}
+
+void
+Pixhawk3DWidget::setTarget(void)
+{
+    selectTargetHeading();
+
+    uas->setTargetPosition(target.x(), target.y(), 0.0,
+                           osg::RadiansToDegrees(target.z()));
 }
 
 void
@@ -298,22 +340,23 @@ Pixhawk3DWidget::insertWaypoint(void)
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
 
         std::pair<double,double> cursorWorldCoords =
-            getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(),
+                                    altitude);
 
         Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
                          latitude, longitude);
 
-        wp = new Waypoint(0, longitude, latitude, altitude);
+        wp = new Waypoint(0, longitude, latitude, altitude, 0.0, 0.25);
     }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
         double z = uas->getLocalZ();
 
         std::pair<double,double> cursorWorldCoords =
-            getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(), -z);
 
         wp = new Waypoint(0, cursorWorldCoords.first,
-                          cursorWorldCoords.second, z);
+                          cursorWorldCoords.second, z, 0.0, 0.25);
     }
 
     if (wp)
@@ -321,17 +364,20 @@ Pixhawk3DWidget::insertWaypoint(void)
         wp->setFrame(frame);
         uas->getWaypointManager()->addWaypointEditable(wp);
     }
+
+    selectedWpIndex = wp->getId();
+    mode = MOVE_WAYPOINT_HEADING_MODE;
 }
 
 void
-Pixhawk3DWidget::moveWaypoint(void)
+Pixhawk3DWidget::moveWaypointPosition(void)
 {
-    mode = MOVE_WAYPOINT_MODE;
-}
+    if (mode != MOVE_WAYPOINT_POSITION_MODE)
+    {
+        mode = MOVE_WAYPOINT_POSITION_MODE;
+        return;
+    }
 
-void
-Pixhawk3DWidget::setWaypoint(void)
-{
     if (!uas)
     {
         return;
@@ -353,12 +399,11 @@ Pixhawk3DWidget::setWaypoint(void)
         std::pair<double,double> cursorWorldCoords =
             getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
 
-        Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
-                         latitude, longitude);
+        Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second,
+                         utmZone, latitude, longitude);
 
         waypoint->setX(longitude);
         waypoint->setY(latitude);
-        waypoint->setZ(altitude);
     }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
@@ -369,8 +414,50 @@ Pixhawk3DWidget::setWaypoint(void)
 
         waypoint->setX(cursorWorldCoords.first);
         waypoint->setY(cursorWorldCoords.second);
-        waypoint->setZ(z);
     }
+}
+
+void
+Pixhawk3DWidget::moveWaypointHeading(void)
+{
+    if (mode != MOVE_WAYPOINT_HEADING_MODE)
+    {
+        mode = MOVE_WAYPOINT_HEADING_MODE;
+        return;
+    }
+
+    if (!uas)
+    {
+        return;
+    }
+
+    const QVector<Waypoint *> waypoints =
+        uas->getWaypointManager()->getWaypointEditableList();
+    Waypoint* waypoint = waypoints.at(selectedWpIndex);
+
+    double x = 0.0, y = 0.0, z = 0.0;
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double latitude = waypoint->getY();
+        double longitude = waypoint->getX();
+        z = -waypoint->getZ();
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        z = uas->getLocalZ();
+    }
+
+    std::pair<double,double> cursorWorldCoords =
+        getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+
+    double yaw = atan2(cursorWorldCoords.second - waypoint->getY(),
+                       cursorWorldCoords.first - waypoint->getX());
+    yaw = osg::RadiansToDegrees(yaw);
+
+    waypoint->setYaw(yaw);
 }
 
 void
@@ -698,19 +785,23 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton)
     {
-        if (mode == MOVE_WAYPOINT_MODE)
+        if (mode == SELECT_TARGET_HEADING_MODE)
         {
-            setWaypoint();
-            mode = DEFAULT_MODE;
+            setTarget();
+        }
 
-            return;
+        if (mode != DEFAULT_MODE)
+        {
+            mode = DEFAULT_MODE;
         }
 
         if (event->modifiers() == Qt::ShiftModifier)
         {
-            selectedWpIndex = findWaypoint(event->x(), event->y());
+            selectedWpIndex = findWaypoint(event->pos());
             if (selectedWpIndex == -1)
             {
+                cachedMousePos = event->pos();
+
                 showInsertWaypointMenu(event->globalPos());
             }
             else
@@ -723,6 +814,25 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
     }
 
     Q3DWidget::mousePressEvent(event);
+}
+
+void
+Pixhawk3DWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    if (mode == SELECT_TARGET_HEADING_MODE)
+    {
+        selectTargetHeading();
+    }
+    if (mode == MOVE_WAYPOINT_POSITION_MODE)
+    {
+        moveWaypointPosition();
+    }
+    if (mode == MOVE_WAYPOINT_HEADING_MODE)
+    {
+        moveWaypointHeading();
+    }
+
+    Q3DWidget::mouseMoveEvent(event);
 }
 
 void
@@ -927,14 +1037,15 @@ Pixhawk3DWidget::createTarget(void)
 
     pat->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
 
-    osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.1f);
-    osg::ref_ptr<osg::ShapeDrawable> sphereDrawable = new osg::ShapeDrawable(sphere);
-    sphereDrawable->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
-    osg::ref_ptr<osg::Geode> sphereGeode = new osg::Geode;
-    sphereGeode->addDrawable(sphereDrawable);
-    sphereGeode->setName("Target");
+    osg::ref_ptr<osg::Cone> cone = new osg::Cone(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.2f, 0.6f);
+    osg::ref_ptr<osg::ShapeDrawable> coneDrawable = new osg::ShapeDrawable(cone);
+    coneDrawable->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
+    coneDrawable->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+    osg::ref_ptr<osg::Geode> coneGeode = new osg::Geode;
+    coneGeode->addDrawable(coneDrawable);
+    coneGeode->setName("Target");
 
-    pat->addChild(sphereGeode);
+    pat->addChild(coneGeode);
 
     return pat;
 }
@@ -1216,8 +1327,18 @@ void
 Pixhawk3DWidget::updateTarget(double robotX, double robotY)
 {
     osg::PositionAttitudeTransform* pat =
-        static_cast<osg::PositionAttitudeTransform*>(targetNode.get());
+        dynamic_cast<osg::PositionAttitudeTransform*>(targetNode.get());
+
     pat->setPosition(osg::Vec3d(target.y() - robotY, target.x() - robotX, 0.0));
+    pat->setAttitude(osg::Quat(target.z() - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+
+    osg::Geode* geode = dynamic_cast<osg::Geode*>(pat->getChild(0));
+    osg::ShapeDrawable* sd = dynamic_cast<osg::ShapeDrawable*>(geode->getDrawable(0));
+
+
+    sd->setColor(osg::Vec4f(1.0f, 0.8f, 0.0f, 1.0f));
 }
 
 float colormap_jet[128][3] = {
@@ -1451,13 +1572,14 @@ Pixhawk3DWidget::updateObstacles(void)
 #endif
 
 int
-Pixhawk3DWidget::findWaypoint(int mouseX, int mouseY)
+Pixhawk3DWidget::findWaypoint(const QPoint& mousePos)
 {
     if (getSceneData())
     {
         osgUtil::LineSegmentIntersector::Intersections intersections;
 
-        if (computeIntersections(mouseX, height() - mouseY, intersections))
+        if (computeIntersections(mousePos.x(), height() - mousePos.y(),
+                                 intersections))
         {
             for (osgUtil::LineSegmentIntersector::Intersections::iterator
                     it = intersections.begin(); it != intersections.end(); it++)
@@ -1521,7 +1643,10 @@ Pixhawk3DWidget::showEditWaypointMenu(const QPoint &cursorPos)
 
     QString text;
     text = QString("Move waypoint %1").arg(QString::number(selectedWpIndex));
-    menu.addAction(text, this, SLOT(moveWaypoint()));
+    menu.addAction(text, this, SLOT(moveWaypointPosition()));
+
+    text = QString("Change heading of waypoint %1").arg(QString::number(selectedWpIndex));
+    menu.addAction(text, this, SLOT(moveWaypointHeading()));
 
     text = QString("Change altitude of waypoint %1").arg(QString::number(selectedWpIndex));
     menu.addAction(text, this, SLOT(setWaypointAltitude()));
