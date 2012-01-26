@@ -73,6 +73,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
     setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);
 }
 
 Q3DWidget::~Q3DWidget()

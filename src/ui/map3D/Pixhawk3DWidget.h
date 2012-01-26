@@ -70,10 +70,12 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void selectTargetHeading(void);
     void selectTarget(void);
+    void setTarget(void);
     void insertWaypoint(void);
-    void moveWaypoint(void);
-    void setWaypoint(void);
+    void moveWaypointPosition(void);
+    void moveWaypointHeading(void);
     void deleteWaypoint(void);
     void setWaypointAltitude(void);
     void clearAllWaypoints(void);
@@ -96,6 +98,7 @@ protected:
         QWidget::hideEvent(event);
         emit visibilityChanged(false);
     }
+    virtual void mouseMoveEvent(QMouseEvent* event);
 
     UASInterface* uas;
 
@@ -134,14 +137,16 @@ private:
     void updateObstacles(void);
 #endif
 
-    int findWaypoint(int mouseX, int mouseY);
+    int findWaypoint(const QPoint& mousePos);
     bool findTarget(int mouseX, int mouseY);
     void showInsertWaypointMenu(const QPoint& cursorPos);
     void showEditWaypointMenu(const QPoint& cursorPos);
 
     enum Mode {
         DEFAULT_MODE,
-        MOVE_WAYPOINT_MODE
+        MOVE_WAYPOINT_POSITION_MODE,
+        MOVE_WAYPOINT_HEADING_MODE,
+        SELECT_TARGET_HEADING_MODE
     };
     Mode mode;
     int selectedWpIndex;
@@ -184,7 +189,8 @@ private:
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     MAV_FRAME frame;
-    osg::Vec2d target;
+    osg::Vec3d target;
+    QPoint cachedMousePos;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
 

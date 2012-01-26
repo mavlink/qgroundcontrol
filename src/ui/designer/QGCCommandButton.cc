@@ -79,7 +79,6 @@ QGCCommandButton::~QGCCommandButton()
 void QGCCommandButton::sendCommand()
 {
     if (QGCToolWidgetItem::uas) {
-        // FIXME
         int index = ui->editCommandComboBox->itemData(ui->editCommandComboBox->currentIndex()).toInt();
         MAV_CMD command = static_cast<MAV_CMD>(index);
         int confirm = (ui->editConfirmationCheckBox->isChecked()) ? 1 : 0;
@@ -87,9 +86,12 @@ void QGCCommandButton::sendCommand()
         float param2 = ui->editParam2SpinBox->value();
         float param3 = ui->editParam3SpinBox->value();
         float param4 = ui->editParam4SpinBox->value();
+        float param5 = ui->editParam5SpinBox->value();
+        float param6 = ui->editParam6SpinBox->value();
+        float param7 = ui->editParam7SpinBox->value();
         int component = ui->editComponentSpinBox->value();
 
-        QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, component);
+        QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, param5, param6, param7, component);
         qDebug() << __FILE__ << __LINE__ << "SENDING COMMAND" << index;
     } else {
         qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";

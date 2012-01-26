@@ -89,8 +89,42 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 
         double wpX, wpY, wpZ;
         getPosition(wp, wpX, wpY, wpZ);
+        double wpYaw = osg::DegreesToRadians(wp->getYaw());
 
+        osg::ref_ptr<osg::Group> group = new osg::Group;
+
+        // cone indicates waypoint orientation
         osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
+        double coneRadius = wp->getAcceptanceRadius() / 2.0;
+        osg::ref_ptr<osg::Cone> cone =
+            new osg::Cone(osg::Vec3d(wpZ, 0.0, 0.0),
+                          coneRadius, wp->getAcceptanceRadius() * 2.0);
+
+        sd->setShape(cone);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+
+        if (wp->getCurrent())
+        {
+            sd->setColor(osg::Vec4(1.0f, 0.3f, 0.3f, 0.5f));
+        }
+        else
+        {
+            sd->setColor(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
+        }
+
+        osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+        geode->addDrawable(sd);
+
+        osg::ref_ptr<osg::PositionAttitudeTransform> pat =
+            new osg::PositionAttitudeTransform;
+        pat->addChild(geode);
+        pat->setAttitude(osg::Quat(wpYaw - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                   M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                                   0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+        group->addChild(pat);
+
+        // cylinder indicates waypoint position
+        sd = new osg::ShapeDrawable;
         osg::ref_ptr<osg::Cylinder> cylinder =
             new osg::Cylinder(osg::Vec3d(0.0, 0.0, -wpZ / 2.0),
                               wp->getAcceptanceRadius(),
@@ -108,12 +142,13 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             sd->setColor(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
         }
 
-        osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+        geode = new osg::Geode;
         geode->addDrawable(sd);
+        group->addChild(geode);
 
         char wpLabel[10];
         sprintf(wpLabel, "wp%d", i);
-        geode->setName(wpLabel);
+        group->setName(wpLabel);
 
         if (i < list.size() - 1)
         {
@@ -143,15 +178,13 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             geode->addDrawable(geometry);
         }
 
-        osg::ref_ptr<osg::PositionAttitudeTransform> pat =
-            new osg::PositionAttitudeTransform;
-
+        pat = new osg::PositionAttitudeTransform;
         pat->setPosition(osg::Vec3d(wpY - robotY,
                                     wpX - robotX,
                                     robotZ));
 
         addChild(pat);
-        pat->addChild(geode);
+        pat->addChild(group);
     }
 }
 
