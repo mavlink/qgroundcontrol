@@ -42,6 +42,18 @@ public:
 			registerType(msg);
 		}
 
+		// register ObstacleList
+		{
+			std::tr1::shared_ptr<px::ObstacleList> msg(new px::ObstacleList);
+			registerType(msg);
+		}
+
+		// register ObstacleMap
+		{
+			std::tr1::shared_ptr<px::ObstacleMap> msg(new px::ObstacleMap);
+			registerType(msg);
+		}
+
 		srand(time(NULL));
 		mStreamID = rand() + 1;
 	}
@@ -186,6 +198,11 @@ public:
 				if (offset == 0)
 				{
 					queue.push_back(msg);
+
+					if ((flags & 0x1) != 0x1)
+					{
+						reassemble = true;
+					}
 				}
 				else
 				{
