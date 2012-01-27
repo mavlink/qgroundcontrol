@@ -7,60 +7,49 @@
     <x>0</x>
     <y>0</y>
     <width>632</width>
-    <height>40</height>
+    <height>27</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QSpinBox" name="doJumpIndexSpinBox">
-   <property name="geometry">
-    <rect>
-     <x>170</x>
-     <y>10</y>
-     <width>201</width>
-     <height>25</height>
-    </rect>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10">
+   <property name="spacing">
+    <number>5</number>
    </property>
-   <property name="suffix">
-    <string/>
+   <property name="margin">
+    <number>0</number>
    </property>
-   <property name="prefix">
-    <string>list index to jump to: </string>
-   </property>
-   <property name="maximum">
-    <number>5000</number>
-   </property>
-  </widget>
-  <widget class="QSpinBox" name="doJumpRepeatSpinBox">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>10</y>
-     <width>121</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="suffix">
-    <string> times</string>
-   </property>
-   <property name="prefix">
-    <string>repeat </string>
-   </property>
-   <property name="maximum">
-    <number>1000</number>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="doSetModeComboBox">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>10</y>
-     <width>111</width>
-     <height>26</height>
-    </rect>
-   </property>
-  </widget>
+   <item>
+    <widget class="QComboBox" name="doSetModeComboBox"/>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="doJumpIndexSpinBox">
+     <property name="suffix">
+      <string/>
+     </property>
+     <property name="prefix">
+      <string>list index to jump to: </string>
+     </property>
+     <property name="maximum">
+      <number>5000</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="doJumpRepeatSpinBox">
+     <property name="suffix">
+      <string> times</string>
+     </property>
+     <property name="prefix">
+      <string>repeat </string>
+     </property>
+     <property name="maximum">
+      <number>1000</number>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

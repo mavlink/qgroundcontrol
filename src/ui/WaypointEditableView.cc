@@ -21,11 +21,15 @@
 #include "ui_WaypointEditableView.h"
 #include "ui_QGCCustomWaypointAction.h"
 #include "ui_QGCMissionDoWidget.h"
+#include "ui_QGCMissionOther.h"
+
+#include "QGCMissionDoWidget.h"
+#include "QGCMissionConditionWidget.h"
+#include "QGCMissionOther.h"
+
 
 WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     QWidget(parent),
-    customCommand(new Ui_QGCCustomWaypointAction),
-    doCommand(new Ui_QGCMissionDoWidget),
     viewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_NAV),
     m_ui(new Ui::WaypointEditableView)
 {
@@ -34,10 +38,40 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     this->wp = wp;
     connect(wp, SIGNAL(destroyed(QObject*)), this, SLOT(deleted(QObject*)));
 
-    // CUSTOM COMMAND WIDGET
-    customCommand->setupUi(m_ui->customActionWidget);
+    // CUSTOM COMMAND WIDGET   
+
     // DO COMMAND WIDGET
-    //doCommand->setupUi(m_ui->customActionWidget);
+    /*
+    doCommand->setupUi(m_ui->customActionWidget);
+    QVBoxLayout *layout = new QVBoxLayout;
+         layout->addWidget(doCommand);
+        layout->addWidget(customCommand);
+    m_ui->customActionWidget->setLayout(layout);
+    */
+    //Ui_QGCCustomWaypointAction *act = new Ui_QGCCustomWaypointAction;
+    MissionDoJumpWidget = new QGCMissionDoWidget(this);
+    MissionConditionDelayWidget = new QGCMissionConditionWidget(this);
+    MissionOtherWidget = new QGCMissionOther(this);
+
+
+
+    QHBoxLayout *layout = new QHBoxLayout;
+        layout->addWidget(MissionOtherWidget);
+        layout->setSpacing(2);
+        layout->setContentsMargins(4, 4 ,4 ,4);
+        m_ui->customActionWidget->setLayout(layout);
+    //qDebug() << "Count before " << m_ui->customActionWidget->layout()->count();
+    QDoubleSpinBox *param1widget = new QDoubleSpinBox;
+    //param1widget->setva
+    param1widget = MissionOtherWidget->findChild<QDoubleSpinBox *>("param1SpinBox");
+    param1widget->hide();
+    MissionOtherWidget->hide();
+    m_ui->customActionWidget->layout()->addWidget(MissionDoJumpWidget);
+    MissionDoJumpWidget->hide();
+    MissionOtherWidget->show();
+    m_ui->customActionWidget->layout()->addWidget(MissionConditionDelayWidget);
+    MissionConditionDelayWidget->hide();
+
 
 
     // add actions
@@ -49,9 +83,9 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("NAV: Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
     m_ui->comboBox_action->addItem(tr("NAV: Land"),MAV_CMD_NAV_LAND);
     //m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
-    //m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
+    m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
     //m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
-    //m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
+    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
 
     // add frames
@@ -97,6 +131,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->turnsSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setTurns(int)));
     connect(m_ui->takeOffAngleSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam1(double)));
 
+    /*
     // Connect actions
     connect(customCommand->commandSpinBox, SIGNAL(valueChanged(int)),   wp, SLOT(setAction(int)));
     connect(customCommand->param1SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam1(double)));
@@ -106,6 +141,17 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     connect(customCommand->param5SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam5(double)));
     connect(customCommand->param6SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam6(double)));
     connect(customCommand->param7SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam7(double)));
+
+    customCommand->param1SpinBox->hide();
+    customCommand->param2SpinBox->hide();
+    customCommand->param3SpinBox->hide();
+    customCommand->param4SpinBox->hide();
+    customCommand->param5SpinBox->hide();
+    customCommand->param6SpinBox->hide();
+    customCommand->param7SpinBox->hide();
+    customCommand->commandSpinBox->hide();
+    */
+
 }
 
 void WaypointEditableView::moveUp()
@@ -144,12 +190,10 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->orbitSpinBox->hide();
         m_ui->yawSpinBox->hide();
         m_ui->turnsSpinBox->hide();
-        m_ui->autoContinue->hide();
+        //m_ui->autoContinue->hide();
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 82);
         m_ui->takeOffAngleSpinBox->show();
         break;
@@ -161,9 +205,7 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->autoContinue->hide();
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 26);
         break;
     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
@@ -174,9 +216,7 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->autoContinue->hide();
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 26);
         break;
     case MAV_CMD_NAV_WAYPOINT:
@@ -184,11 +224,8 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->turnsSpinBox->hide();
         m_ui->holdTimeSpinBox->show();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 1);
-
         m_ui->autoContinue->show();
         m_ui->acceptanceSpinBox->show();
         m_ui->yawSpinBox->show();
@@ -200,9 +237,7 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->autoContinue->hide();
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 25);
         m_ui->orbitSpinBox->show();
         break;
@@ -212,9 +247,7 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->autoContinue->hide();
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 20);
         m_ui->orbitSpinBox->show();
         m_ui->turnsSpinBox->show();
@@ -225,9 +258,7 @@ void WaypointEditableView::updateActionView(int action)
         m_ui->turnsSpinBox->hide();
         m_ui->autoContinue->hide();
         m_ui->acceptanceSpinBox->hide();
-        m_ui->customActionWidget->hide();
-        m_ui->missionDoWidgetSlot->hide();
-        m_ui->missionConditionWidgetSlot->hide();
+        //m_ui->customActionWidget->hide();
         m_ui->horizontalLayout->insertStretch(17, 20);
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
@@ -237,9 +268,8 @@ void WaypointEditableView::updateActionView(int action)
 //        m_ui->takeOffAngleSpinBox->hide();
 //        m_ui->turnsSpinBox->hide();
 //        m_ui->holdTimeSpinBox->show();
-//        m_ui->customActionWidget->hide();
-//        m_ui->missionDoWidgetSlot->hide();
-//        m_ui->missionConditionWidgetSlot->hide();
+//        //m_ui->customActionWidget->hide();
+
 //        m_ui->autoContinue->show();
 //        m_ui->acceptanceSpinBox->hide();
 //        m_ui->yawSpinBox->hide();
@@ -318,13 +348,10 @@ void WaypointEditableView::changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode)
         m_ui->lonSpinBox->hide();
         m_ui->altSpinBox->hide();
 
-        // Show action widget
-        if (!m_ui->missionDoWidgetSlot->isVisible()) {
-            m_ui->missionDoWidgetSlot->show();
-        }
-        if (!m_ui->autoContinue->isVisible()) {
-            m_ui->autoContinue->show();
-        }
+        MissionOtherWidget->hide();
+        //if (!MissionDoJumpWidget->isVisible()) {
+            MissionDoJumpWidget->show();
+        //}
         break;
     }
     case QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING:
@@ -342,13 +369,15 @@ void WaypointEditableView::changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode)
         m_ui->lonSpinBox->hide();
         m_ui->altSpinBox->hide();
 
+        MissionDoJumpWidget->hide();
+
         int action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
         m_ui->comboBox_action->setCurrentIndex(action_index);
 
         // Show action widget
-        if (!m_ui->customActionWidget->isVisible()) {
-            m_ui->customActionWidget->show();
-        }
+        //if (!MissionOtherWidget->isVisible()) {
+            MissionOtherWidget->show();
+        //}
         if (!m_ui->autoContinue->isVisible()) {
             m_ui->autoContinue->show();
         }
@@ -372,9 +401,7 @@ void WaypointEditableView::updateFrameView(int frame)
             m_ui->altSpinBox->show();
             // Coordinate frame
             m_ui->comboBox_frame->show();
-            m_ui->customActionWidget->hide();
-            m_ui->missionDoWidgetSlot->hide();
-            m_ui->missionConditionWidgetSlot->hide();
+            //m_ui->customActionWidget->hide();
         }
         else // do not hide customActionWidget if Command is set to "Other"
         {
@@ -392,9 +419,7 @@ void WaypointEditableView::updateFrameView(int frame)
             m_ui->posDSpinBox->show();
             // Coordinate frame
             m_ui->comboBox_frame->show();
-            m_ui->customActionWidget->hide();
-            m_ui->missionDoWidgetSlot->hide();
-            m_ui->missionConditionWidgetSlot->hide();
+            //m_ui->customActionWidget->hide();
         }
         else // do not hide customActionWidget if Command is set to "Other"
         {
@@ -647,7 +672,7 @@ void WaypointEditableView::updateValues()
     }
 
 //    // UPDATE CUSTOM ACTION WIDGET
-
+/*
     if (customCommand->commandSpinBox->value() != wp->getAction())
     {
         customCommand->commandSpinBox->setValue(wp->getAction());
@@ -681,7 +706,7 @@ void WaypointEditableView::updateValues()
     if (customCommand->param7SpinBox->value() != wp->getParam7()) {
         customCommand->param7SpinBox->setValue(wp->getParam7());
     }
-
+*/
     QColor backGroundColor = QGC::colorBackground;
 
     static int lastId = -1;
@@ -706,11 +731,13 @@ void WaypointEditableView::updateValues()
         QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; }").arg(backGroundColor.name());
         QString labelStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; }").arg(backGroundColor.name());
         QString checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; }").arg(backGroundColor.name());
+        QString widgetSlotStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; } QSpinBox {background-color: #252528 } QDoubleSpinBox {background-color: #252528 } QComboBox {background-color: #252528 }").arg(backGroundColor.name()); //FIXME There should be a way to declare background color for widgetSlot without letting the children inherit this color. Here, background color for every widget-type (QSpinBox, etc.) has to be declared separately to overrule the coloring of QWidget.
 
         m_ui->autoContinue->setStyleSheet(checkBoxStyle);
         m_ui->selectedBox->setStyleSheet(checkBoxStyle);
         m_ui->idLabel->setStyleSheet(labelStyle);
         m_ui->groupBox->setStyleSheet(groupBoxStyle);
+        m_ui->customActionWidget->setStyleSheet(widgetSlotStyle);
         lastId = currId;
     }
 
