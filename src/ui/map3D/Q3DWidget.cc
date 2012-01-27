@@ -35,7 +35,9 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/Geometry>
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
+#ifdef QGC_OSG_QT_ENABLED
 #include <osgQt/QFontImplementation>
+#endif
 #ifdef Q_OS_MACX
 #include <Carbon/Carbon.h>
 #endif
@@ -57,9 +59,13 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     cameraParams.cameraFov = 30.0f;
     cameraParams.minClipRange = 1.0f;
     cameraParams.maxClipRange = 10000.0f;
-
+#ifdef QGC_OSG_QT_ENABLED
     osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
     fontImpl = new osgQt::QFontImplementation(QFont(":/general/vera.ttf"));
+#else
+    osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
+    fontImpl = 0;//new osgText::Font::Font("images/Vera.ttf");
+#endif
     font = new osgText::Font(fontImpl);
 
     osgGW = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());

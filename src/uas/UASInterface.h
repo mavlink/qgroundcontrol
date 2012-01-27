@@ -46,7 +46,7 @@ This file is part of the QGROUNDCONTROL project
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <tr1/memory>
-#include <pixhawk.pb.h>
+#include <pixhawk/pixhawk.pb.h>
 #endif
 
 /**
