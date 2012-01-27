@@ -23,30 +23,26 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Definition of the class HUDScaleGeode.
+ *   @brief Definition of the class ObstacleGroupNode.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
-#ifndef HUDSCALEGEODE_H
-#define HUDSCALEGEODE_H
+#ifndef OBSTACLEGROUPNODE_H
+#define OBSTACLEGROUPNODE_H
 
-#include <osg/Geode>
-#include <osgText/Text>
-#include <QString>
+#include <osg/Group>
 
-class HUDScaleGeode : public osg::Geode
+#include "UASInterface.h"
+
+class ObstacleGroupNode : public osg::Group
 {
 public:
-    HUDScaleGeode();
+    ObstacleGroupNode();
 
-    void init(osg::ref_ptr<osgText::Font>& font);
-    void update(int windowHeight, float cameraFov, float cameraDistance,
-                bool darkBackground);
-
-private:
-    osg::ref_ptr<osgText::Text> text;
+    void init(void);
+    void update(MAV_FRAME frame, UASInterface* uas);
 };
 
-#endif // HUDSCALEGEODE_H
+#endif // OBSTACLEGROUPNODE_H

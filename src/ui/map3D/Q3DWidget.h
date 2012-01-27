@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/LineSegment>
 #include <osg/PositionAttitudeTransform>
 #include <osgGA/TrackballManipulator>
+#include <osgText/Font>
 #include <osgViewer/Viewer>
 
 #include "GCManipulator.h"
@@ -259,6 +260,8 @@ protected:
 
     CameraParams cameraParams; /**< Struct representing camera parameters. */
     float fps;
+
+    osg::ref_ptr<osgText::Font> font;
 };
 
 #endif // Q3DWIDGET_H

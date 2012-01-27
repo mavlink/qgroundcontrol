@@ -387,7 +387,8 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including headers for Protocol Buffers")
 
     # Enable only if protobuf is available
-    HEADERS += ../mavlink/include/pixhawk/pixhawk.pb.h
+    HEADERS += ../mavlink/include/pixhawk/pixhawk.pb.h \
+               src/ui/map3D/ObstacleGroupNode.h
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
@@ -527,7 +528,8 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including sources for Protocol Buffers")
 
     # Enable only if protobuf is available
-    SOURCES += ../mavlink/src/pixhawk/pixhawk.pb.cc
+    SOURCES += ../mavlink/src/pixhawk/pixhawk.pb.cc \
+               src/ui/map3D/ObstacleGroupNode.cc
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including sources for libfreenect")
