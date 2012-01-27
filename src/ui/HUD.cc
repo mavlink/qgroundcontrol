@@ -1431,10 +1431,13 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
 void HUD::copyImage()
 {
-    qDebug() << "HUD::copyImage()";
-    UAS* u = dynamic_cast<UAS*>(this->uas);
-    if (u)
+    if (isVisible())
     {
-        this->glImage = QGLWidget::convertToGLFormat(u->getImage());
+        qDebug() << "HUD::copyImage()";
+        UAS* u = dynamic_cast<UAS*>(this->uas);
+        if (u)
+        {
+            this->glImage = QGLWidget::convertToGLFormat(u->getImage());
+        }
     }
 }

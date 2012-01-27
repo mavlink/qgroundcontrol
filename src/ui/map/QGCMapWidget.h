@@ -46,6 +46,10 @@ public slots:
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     /** @brief Update the global position of all systems */
     void updateGlobalPosition();
+    /** @brief Update the local position and draw it converted to GPS reference */
+    void updateLocalPosition();
+    /** @brief Update the local position estimates (individual sensors) and draw it converted to GPS reference */
+    void updateLocalPositionEstimates();
     /** @brief Update the type, size, etc. of this system */
     void updateSystemSpecs(int uas);
     /** @brief Change current system in focus / editing */
