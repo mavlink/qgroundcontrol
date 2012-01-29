@@ -61,6 +61,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     , displayRGBD2D(false)
     , displayRGBD3D(true)
     , displayObstacleList(true)
+    , displayPath(true)
     , enableRGBDColor(false)
     , enableTarget(false)
     , followCamera(true)
@@ -81,7 +82,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     rollingMap->addChild(gridNode);
 
     // generate empty trail model
-    trailNode = createTrail();
+    trailNode = createTrail(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
     rollingMap->addChild(trailNode);
 
     // generate map model
@@ -105,6 +106,10 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     obstacleGroupNode = new ObstacleGroupNode;
     obstacleGroupNode->init();
     rollingMap->addChild(obstacleGroupNode);
+
+    // generate path model
+    pathNode = createTrail(osg::Vec4(1.0f, 0.8f, 0.0f, 1.0f));
+    rollingMap->addChild(pathNode);
 #endif
 
     setupHUD();
@@ -675,6 +680,7 @@ Pixhawk3DWidget::display(void)
     rollingMap->setChildValue(targetNode, enableTarget);
 #ifdef QGC_PROTOBUF_ENABLED
     rollingMap->setChildValue(obstacleGroupNode, displayObstacleList);
+    rollingMap->setChildValue(pathNode, displayPath);
 #endif
     rollingMap->setChildValue(rgbd3DNode, displayRGBD3D);
     hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
@@ -742,6 +748,11 @@ Pixhawk3DWidget::display(void)
     {
         updateObstacles();
     }
+
+    if (displayPath)
+    {
+        updatePath(robotX, robotY, robotZ);
+    }
 #endif
 
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw, utmZone);
@@ -773,6 +784,10 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
         case 'o':
         case 'O':
             displayObstacleList = !displayObstacleList;
+            break;
+        case 'p':
+        case 'P':
+            displayPath = !displayPath;
             break;
         }
     }
@@ -974,30 +989,30 @@ Pixhawk3DWidget::createGrid(void)
 }
 
 osg::ref_ptr<osg::Geode>
-Pixhawk3DWidget::createTrail(void)
+Pixhawk3DWidget::createTrail(const osg::Vec4& color)
 {
     osg::ref_ptr<osg::Geode> geode(new osg::Geode());
-    trailGeometry = new osg::Geometry();
-    trailGeometry->setUseDisplayList(false);
-    geode->addDrawable(trailGeometry.get());
+    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
+    geometry->setUseDisplayList(false);
+    geode->addDrawable(geometry.get());
 
-    trailVertices = new osg::Vec3dArray;
-    trailGeometry->setVertexArray(trailVertices);
+    osg::ref_ptr<osg::Vec3dArray> vertices(new osg::Vec3dArray());
+    geometry->setVertexArray(vertices);
 
-    trailDrawArrays = new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP);
-    trailGeometry->addPrimitiveSet(trailDrawArrays);
+    osg::ref_ptr<osg::DrawArrays> drawArrays(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP));
+    geometry->addPrimitiveSet(drawArrays);
 
-    osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array);
-    color->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-    trailGeometry->setColorArray(color);
-    trailGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    osg::ref_ptr<osg::Vec4Array> colorArray(new osg::Vec4Array);
+    colorArray->push_back(color);
+    geometry->setColorArray(colorArray);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
     osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
     linewidth->setWidth(1.0f);
     stateset->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
     stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    trailGeometry->setStateSet(stateset);
+    geometry->setStateSet(stateset);
 
     return geode;
 }
@@ -1227,17 +1242,20 @@ Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
         }
     }
 
-    trailVertices->clear();
+    osg::Geometry* geometry = reinterpret_cast<osg::Geometry*>(trailNode->getDrawable(0));
+    osg::Vec3dArray* vertices = reinterpret_cast<osg::Vec3dArray*>(geometry->getVertexArray());
+    osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+    vertices->clear();
     for (int i = 0; i < trail.size(); ++i)
     {
-        trailVertices->push_back(osg::Vec3d(trail[i].y() - robotY,
-                                            trail[i].x() - robotX,
-                                            -(trail[i].z() - robotZ)));
+        vertices->push_back(osg::Vec3d(trail[i].y() - robotY,
+                                       trail[i].x() - robotX,
+                                       -(trail[i].z() - robotZ)));
     }
 
-    trailDrawArrays->setFirst(0);
-    trailDrawArrays->setCount(trailVertices->size());
-    trailGeometry->dirtyBound();
+    drawArrays->setFirst(0);
+    drawArrays->setCount(vertices->size());
+    geometry->dirtyBound();
 }
 
 void
@@ -1567,6 +1585,29 @@ void
 Pixhawk3DWidget::updateObstacles(void)
 {
     obstacleGroupNode->update(frame, uas);
+}
+
+void
+Pixhawk3DWidget::updatePath(double robotX, double robotY, double robotZ)
+{
+    px::Path path = uas->getPath();
+
+    osg::Geometry* geometry = reinterpret_cast<osg::Geometry*>(pathNode->getDrawable(0));
+    osg::Vec3dArray* vertices = reinterpret_cast<osg::Vec3dArray*>(geometry->getVertexArray());
+    osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+    vertices->clear();
+    for (int i = 0; i < path.waypoints_size(); ++i)
+    {
+        const px::Waypoint& wp = path.waypoints(i);
+
+        vertices->push_back(osg::Vec3d(wp.y() - robotY,
+                                       wp.x() - robotX,
+                                       -(wp.z() - robotZ)));
+    }
+
+    drawArrays->setFirst(0);
+    drawArrays->setCount(vertices->size());
+    geometry->dirtyBound();
 }
 
 #endif

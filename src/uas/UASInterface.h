@@ -98,6 +98,7 @@ public:
     virtual px::PointCloudXYZRGB getPointCloud() const = 0;
     virtual px::RGBDImage getRGBDImage() const = 0;
     virtual px::ObstacleList getObstacleList() const = 0;
+    virtual px::Path getPath() const = 0;
 #endif
 
     virtual bool isArmed() const = 0;

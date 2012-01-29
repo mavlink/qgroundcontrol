@@ -146,6 +146,10 @@ public:
     px::ObstacleList getObstacleList() const {
         return obstacleList;
     }
+
+    px::Path getPath() const {
+        return path;
+    }
 #endif
 
     friend class UASWaypointManager;
@@ -235,6 +239,7 @@ protected: //COMMENTS FOR TEST UNIT
     px::PointCloudXYZRGB pointCloud;
     px::RGBDImage rgbdImage;
     px::ObstacleList obstacleList;
+    px::Path path;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
@@ -573,6 +578,8 @@ signals:
     void rgbdImageChanged(UASInterface* uas);
     /** @brief Obstacle list data has been changed */
     void obstacleListChanged(UASInterface* uas);
+    /** @brief Path data has been changed */
+    void pathChanged(UASInterface* uas);
 #endif
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);

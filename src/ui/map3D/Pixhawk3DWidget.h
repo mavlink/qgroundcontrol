@@ -116,7 +116,7 @@ private:
     void getPosition(double& x, double& y, double& z);
 
     osg::ref_ptr<osg::Geode> createGrid(void);
-    osg::ref_ptr<osg::Geode> createTrail(void);
+    osg::ref_ptr<osg::Geode> createTrail(const osg::Vec4& color);
     osg::ref_ptr<Imagery> createMap(void);
     osg::ref_ptr<osg::Geode> createRGBD3D(void);
     osg::ref_ptr<osg::Node> createTarget(void);
@@ -135,6 +135,7 @@ private:
 #ifdef QGC_PROTOBUF_ENABLED
     void updateRGBD(double robotX, double robotY, double robotZ);
     void updateObstacles(void);
+    void updatePath(double robotX, double robotY, double robotZ);
 #endif
 
     int findWaypoint(const QPoint& mousePos);
@@ -158,12 +159,12 @@ private:
     bool displayRGBD2D;
     bool displayRGBD3D;
     bool displayObstacleList;
+    bool displayPath;
     bool enableRGBDColor;
     bool enableTarget;
 
     bool followCamera;
 
-    osg::ref_ptr<osg::Vec3dArray> trailVertices;
     QVarLengthArray<osg::Vec3d, 10000> trail;
 
     osg::ref_ptr<osg::Node> vehicleModel;
@@ -176,14 +177,13 @@ private:
     osg::ref_ptr<osg::Image> depthImage;
     osg::ref_ptr<osg::Geode> gridNode;
     osg::ref_ptr<osg::Geode> trailNode;
-    osg::ref_ptr<osg::Geometry> trailGeometry;
-    osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
     osg::ref_ptr<Imagery> mapNode;
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
     osg::ref_ptr<osg::Node> targetNode;
     osg::ref_ptr<osg::Geode> rgbd3DNode;
 #ifdef QGC_PROTOBUF_ENABLED
     osg::ref_ptr<ObstacleGroupNode> obstacleGroupNode;
+    osg::ref_ptr<osg::Geode> pathNode;
 #endif
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
