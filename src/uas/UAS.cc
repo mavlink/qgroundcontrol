@@ -998,6 +998,11 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
         obstacleList.CopyFrom(*message);
         emit obstacleListChanged(this);
     }
+    else if (message->GetTypeName() == path.GetTypeName())
+    {
+        path.CopyFrom(*message);
+        emit pathChanged(this);
+    }
 }
 
 #endif
