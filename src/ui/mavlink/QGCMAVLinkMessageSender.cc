@@ -23,7 +23,6 @@ QGCMAVLinkMessageSender::QGCMAVLinkMessageSender(MAVLinkProtocol* mavlink, QWidg
 
 void QGCMAVLinkMessageSender::refresh()
 {
-    unsigned int maxUpdateRate = 0;
     // Send messages
     foreach (unsigned int i, managementItems.keys())
     {
@@ -79,7 +78,7 @@ bool QGCMAVLinkMessageSender::sendMessage(unsigned int msgid)
                     uint8_t* nums = m+messageInfo[msgid].fields[fieldid].wire_offset;
                     for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
                     {
-                        if (field->data(1, Qt::DisplayRole).toString().split(" ").size() > j)
+                        if ((unsigned int)(field->data(1, Qt::DisplayRole).toString().split(" ").size()) > j)
                         {
                             nums[j] = field->data(1, Qt::DisplayRole).toString().split(" ").at(j).toInt();
                         }
