@@ -43,6 +43,7 @@
 #include "UASManager.h"
 
 #include "QGC.h"
+#include "gpl.h"
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <tr1/memory>
@@ -55,7 +56,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     , mode(DEFAULT_MODE)
     , selectedWpIndex(-1)
     , displayGrid(true)
-    , displayTrail(false)
+    , displayTrail(true)
     , displayImagery(true)
     , displayWaypoints(true)
     , displayRGBD2D(false)
@@ -832,6 +833,20 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
 }
 
 void
+Pixhawk3DWidget::showEvent(QShowEvent* event)
+{
+    Q3DWidget::showEvent(event);
+    emit visibilityChanged(true);
+}
+
+void
+Pixhawk3DWidget::hideEvent(QHideEvent* event)
+{
+    Q3DWidget::hideEvent(event);
+    emit visibilityChanged(false);
+}
+
+void
 Pixhawk3DWidget::mouseMoveEvent(QMouseEvent* event)
 {
     if (mode == SELECT_TARGET_HEADING_MODE)
@@ -1242,10 +1257,10 @@ Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
         }
     }
 
-    osg::Geometry* geometry = reinterpret_cast<osg::Geometry*>(trailNode->getDrawable(0));
-    osg::Vec3dArray* vertices = reinterpret_cast<osg::Vec3dArray*>(geometry->getVertexArray());
+    osg::Geometry* geometry = trailNode->getDrawable(0)->asGeometry();
     osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-    vertices->clear();
+
+    osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
     for (int i = 0; i < trail.size(); ++i)
     {
         vertices->push_back(osg::Vec3d(trail[i].y() - robotY,
@@ -1253,6 +1268,7 @@ Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
                                        -(trail[i].z() - robotZ)));
     }
 
+    geometry->setVertexArray(vertices);
     drawArrays->setFirst(0);
     drawArrays->setCount(vertices->size());
     geometry->dirtyBound();
@@ -1359,137 +1375,6 @@ Pixhawk3DWidget::updateTarget(double robotX, double robotY)
     sd->setColor(osg::Vec4f(1.0f, 0.8f, 0.0f, 1.0f));
 }
 
-float colormap_jet[128][3] = {
-    {0.0f,0.0f,0.53125f},
-    {0.0f,0.0f,0.5625f},
-    {0.0f,0.0f,0.59375f},
-    {0.0f,0.0f,0.625f},
-    {0.0f,0.0f,0.65625f},
-    {0.0f,0.0f,0.6875f},
-    {0.0f,0.0f,0.71875f},
-    {0.0f,0.0f,0.75f},
-    {0.0f,0.0f,0.78125f},
-    {0.0f,0.0f,0.8125f},
-    {0.0f,0.0f,0.84375f},
-    {0.0f,0.0f,0.875f},
-    {0.0f,0.0f,0.90625f},
-    {0.0f,0.0f,0.9375f},
-    {0.0f,0.0f,0.96875f},
-    {0.0f,0.0f,1.0f},
-    {0.0f,0.03125f,1.0f},
-    {0.0f,0.0625f,1.0f},
-    {0.0f,0.09375f,1.0f},
-    {0.0f,0.125f,1.0f},
-    {0.0f,0.15625f,1.0f},
-    {0.0f,0.1875f,1.0f},
-    {0.0f,0.21875f,1.0f},
-    {0.0f,0.25f,1.0f},
-    {0.0f,0.28125f,1.0f},
-    {0.0f,0.3125f,1.0f},
-    {0.0f,0.34375f,1.0f},
-    {0.0f,0.375f,1.0f},
-    {0.0f,0.40625f,1.0f},
-    {0.0f,0.4375f,1.0f},
-    {0.0f,0.46875f,1.0f},
-    {0.0f,0.5f,1.0f},
-    {0.0f,0.53125f,1.0f},
-    {0.0f,0.5625f,1.0f},
-    {0.0f,0.59375f,1.0f},
-    {0.0f,0.625f,1.0f},
-    {0.0f,0.65625f,1.0f},
-    {0.0f,0.6875f,1.0f},
-    {0.0f,0.71875f,1.0f},
-    {0.0f,0.75f,1.0f},
-    {0.0f,0.78125f,1.0f},
-    {0.0f,0.8125f,1.0f},
-    {0.0f,0.84375f,1.0f},
-    {0.0f,0.875f,1.0f},
-    {0.0f,0.90625f,1.0f},
-    {0.0f,0.9375f,1.0f},
-    {0.0f,0.96875f,1.0f},
-    {0.0f,1.0f,1.0f},
-    {0.03125f,1.0f,0.96875f},
-    {0.0625f,1.0f,0.9375f},
-    {0.09375f,1.0f,0.90625f},
-    {0.125f,1.0f,0.875f},
-    {0.15625f,1.0f,0.84375f},
-    {0.1875f,1.0f,0.8125f},
-    {0.21875f,1.0f,0.78125f},
-    {0.25f,1.0f,0.75f},
-    {0.28125f,1.0f,0.71875f},
-    {0.3125f,1.0f,0.6875f},
-    {0.34375f,1.0f,0.65625f},
-    {0.375f,1.0f,0.625f},
-    {0.40625f,1.0f,0.59375f},
-    {0.4375f,1.0f,0.5625f},
-    {0.46875f,1.0f,0.53125f},
-    {0.5f,1.0f,0.5f},
-    {0.53125f,1.0f,0.46875f},
-    {0.5625f,1.0f,0.4375f},
-    {0.59375f,1.0f,0.40625f},
-    {0.625f,1.0f,0.375f},
-    {0.65625f,1.0f,0.34375f},
-    {0.6875f,1.0f,0.3125f},
-    {0.71875f,1.0f,0.28125f},
-    {0.75f,1.0f,0.25f},
-    {0.78125f,1.0f,0.21875f},
-    {0.8125f,1.0f,0.1875f},
-    {0.84375f,1.0f,0.15625f},
-    {0.875f,1.0f,0.125f},
-    {0.90625f,1.0f,0.09375f},
-    {0.9375f,1.0f,0.0625f},
-    {0.96875f,1.0f,0.03125f},
-    {1.0f,1.0f,0.0f},
-    {1.0f,0.96875f,0.0f},
-    {1.0f,0.9375f,0.0f},
-    {1.0f,0.90625f,0.0f},
-    {1.0f,0.875f,0.0f},
-    {1.0f,0.84375f,0.0f},
-    {1.0f,0.8125f,0.0f},
-    {1.0f,0.78125f,0.0f},
-    {1.0f,0.75f,0.0f},
-    {1.0f,0.71875f,0.0f},
-    {1.0f,0.6875f,0.0f},
-    {1.0f,0.65625f,0.0f},
-    {1.0f,0.625f,0.0f},
-    {1.0f,0.59375f,0.0f},
-    {1.0f,0.5625f,0.0f},
-    {1.0f,0.53125f,0.0f},
-    {1.0f,0.5f,0.0f},
-    {1.0f,0.46875f,0.0f},
-    {1.0f,0.4375f,0.0f},
-    {1.0f,0.40625f,0.0f},
-    {1.0f,0.375f,0.0f},
-    {1.0f,0.34375f,0.0f},
-    {1.0f,0.3125f,0.0f},
-    {1.0f,0.28125f,0.0f},
-    {1.0f,0.25f,0.0f},
-    {1.0f,0.21875f,0.0f},
-    {1.0f,0.1875f,0.0f},
-    {1.0f,0.15625f,0.0f},
-    {1.0f,0.125f,0.0f},
-    {1.0f,0.09375f,0.0f},
-    {1.0f,0.0625f,0.0f},
-    {1.0f,0.03125f,0.0f},
-    {1.0f,0.0f,0.0f},
-    {0.96875f,0.0f,0.0f},
-    {0.9375f,0.0f,0.0f},
-    {0.90625f,0.0f,0.0f},
-    {0.875f,0.0f,0.0f},
-    {0.84375f,0.0f,0.0f},
-    {0.8125f,0.0f,0.0f},
-    {0.78125f,0.0f,0.0f},
-    {0.75f,0.0f,0.0f},
-    {0.71875f,0.0f,0.0f},
-    {0.6875f,0.0f,0.0f},
-    {0.65625f,0.0f,0.0f},
-    {0.625f,0.0f,0.0f},
-    {0.59375f,0.0f,0.0f},
-    {0.5625f,0.0f,0.0f},
-    {0.53125f,0.0f,0.0f},
-    {0.5f,0.0f,0.0f}
-};
-
 #ifdef QGC_PROTOBUF_ENABLED
 void
 Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
@@ -1517,9 +1402,11 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
                     int idx = fminf(depth[c], 7.0f) / 7.0f * 127.0f;
                     idx = 127 - idx;
 
-                    pixel[0] = colormap_jet[idx][2] * 255.0f;
-                    pixel[1] = colormap_jet[idx][1] * 255.0f;
-                    pixel[2] = colormap_jet[idx][0] * 255.0f;
+                    float r, g, b;
+                    qgc::colormap("jet", idx, r, g, b);
+                    pixel[0] = r * 255.0f;
+                    pixel[1] = g * 255.0f;
+                    pixel[2] = b * 255.0f;
                 }
 
                 pixel += 3;
@@ -1562,10 +1449,11 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
         {
             double dist = sqrt(x * x + y * y + z * z);
             int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
-            (*colors)[i].set(colormap_jet[colorIndex][0],
-                             colormap_jet[colorIndex][1],
-                             colormap_jet[colorIndex][2],
-                             1.0f);
+
+            float r, g, b;
+            qgc::colormap("jet", colorIndex, r, g, b);
+
+            (*colors)[i].set(r, g, b, 1.0f);
         }
     }
 
@@ -1592,19 +1480,67 @@ Pixhawk3DWidget::updatePath(double robotX, double robotY, double robotZ)
 {
     px::Path path = uas->getPath();
 
-    osg::Geometry* geometry = reinterpret_cast<osg::Geometry*>(pathNode->getDrawable(0));
-    osg::Vec3dArray* vertices = reinterpret_cast<osg::Vec3dArray*>(geometry->getVertexArray());
+    osg::Geometry* geometry = pathNode->getDrawable(0)->asGeometry();
     osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-    vertices->clear();
-    for (int i = 0; i < path.waypoints_size(); ++i)
-    {
-        const px::Waypoint& wp = path.waypoints(i);
+    osg::Vec4Array* colorArray = reinterpret_cast<osg::Vec4Array*>(geometry->getColorArray());
 
-        vertices->push_back(osg::Vec3d(wp.y() - robotY,
-                                       wp.x() - robotX,
-                                       -(wp.z() - robotZ)));
+    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
+    linewidth->setWidth(2.0f);
+    geometry->getStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+
+    colorArray->clear();
+
+    osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
+
+    // find path length
+    float length = 0.0f;
+    for (int i = 0; i < path.waypoints_size() - 1; ++i)
+    {
+        const px::Waypoint& wp0 = path.waypoints(i);
+        const px::Waypoint& wp1 = path.waypoints(i+1);
+
+        length += qgc::hypot3f(wp0.x() - wp1.x(),
+                               wp0.y() - wp1.y(),
+                               wp0.z() - wp1.z());
     }
 
+    // build path
+    if (path.waypoints_size() > 0)
+    {
+        const px::Waypoint& wp0 = path.waypoints(0);
+
+        vertices->push_back(osg::Vec3d(wp0.y() - robotY,
+                                       wp0.x() - robotX,
+                                       -(wp0.z() - robotZ)));
+
+        float r, g, b;
+        qgc::colormap("autumn", 0, r, g, b);
+        colorArray->push_back(osg::Vec4d(r, g, b, 1.0f));
+    }
+
+    float lengthCurrent = 0.0f;
+    for (int i = 0; i < path.waypoints_size() - 1; ++i)
+    {
+        const px::Waypoint& wp0 = path.waypoints(i);
+        const px::Waypoint& wp1 = path.waypoints(i+1);
+
+        lengthCurrent += qgc::hypot3f(wp0.x() - wp1.x(),
+                                      wp0.y() - wp1.y(),
+                                      wp0.z() - wp1.z());
+
+        vertices->push_back(osg::Vec3d(wp1.y() - robotY,
+                                       wp1.x() - robotX,
+                                       -(wp1.z() - robotZ)));
+
+        int colorIdx = lengthCurrent / length * 127.0f;
+
+        float r, g, b;
+        qgc::colormap("autumn", colorIdx, r, g, b);
+        colorArray->push_back(osg::Vec4f(r, g, b, 1.0f));
+    }
+
+    geometry->setVertexArray(vertices);
     drawArrays->setFirst(0);
     drawArrays->setCount(vertices->size());
     geometry->dirtyBound();
