@@ -358,11 +358,28 @@ linux-g++-64 {
     }
 
     # Validated copy commands
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
-    QMAKE_POST_LINK += && mkdir -p $$TARGETDIRimages
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/images/Vera.ttf
+    debug {
+        !exists($$TARGETDIR/debug){
+             QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/debug
+        }
+        DESTDIR = $$TARGETDIR/debug
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/debug
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/debug/images
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/debug/images/Vera.ttf
+    }
+    release {
+        !exists($$TARGETDIR/release){
+             QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/release
+        }
+        DESTDIR = $$TARGETDIR/release
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/release
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/release/images
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/release/images/Vera.ttf
+    }
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
