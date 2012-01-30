@@ -432,7 +432,7 @@ DEFINES += QGC_OSG_ENABLED
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
 
-    exists($$TARGETDIR/debug) {
+    debug {
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\debug\\audio" /E /I $$escape_expand(\\n))
         QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\debug\\files" /E /I $$escape_expand(\\n))
@@ -453,7 +453,7 @@ DEFINES += QGC_OSG_ENABLED
 	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtXmlPatternsd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
     }
 
-    exists($$TARGETDIR/release) {
+    release {
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\release\\audio" /E /I $$escape_expand(\\n))
         QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\release\\files" /E /I $$escape_expand(\\n))
