@@ -87,17 +87,8 @@ protected:
     virtual void display(void);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
-    void showEvent(QShowEvent* event)
-    {
-        QWidget::showEvent(event);
-        emit visibilityChanged(true);
-    }
-
-    void hideEvent(QHideEvent* event)
-    {
-        QWidget::hideEvent(event);
-        emit visibilityChanged(false);
-    }
+    virtual void showEvent(QShowEvent* event);
+    virtual void hideEvent(QHideEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
 
     UASInterface* uas;
