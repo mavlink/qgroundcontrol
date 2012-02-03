@@ -333,6 +333,10 @@ linux-g++-64 {
             -losgQt \
             -lOpenThreads
 
+    exists(/usr/local/lib64) {
+    LIBS += -L/usr/local/lib64
+    }
+
     DEFINES += QGC_OSG_ENABLED
     DEFINES += QGC_OSG_QT_ENABLED
     }
