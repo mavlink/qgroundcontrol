@@ -148,8 +148,8 @@ Q3DWidget::createRobot(void)
     osg::ref_ptr<osg::Vec3Array> coords(new osg::Vec3Array(6));
     (*coords)[0] = (*coords)[2] = (*coords)[4] =
                                       osg::Vec3(0.0f, 0.0f, 0.0f);
-    (*coords)[1] = osg::Vec3(0.15f, 0.0f, 0.0f);
-    (*coords)[3] = osg::Vec3(0.0f, 0.3f, 0.0f);
+    (*coords)[1] = osg::Vec3(0.0f, 0.3f, 0.0f);
+    (*coords)[3] = osg::Vec3(0.15f, 0.0f, 0.0f);
     (*coords)[5] = osg::Vec3(0.0f, 0.0f, -0.15f);
 
     geometry->setVertexArray(coords);
