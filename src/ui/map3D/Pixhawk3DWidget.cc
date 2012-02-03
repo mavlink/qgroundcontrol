@@ -55,7 +55,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     , uas(NULL)
     , mode(DEFAULT_MODE)
     , selectedWpIndex(-1)
-    , displayGrid(true)
+    , displayLocalGrid(false)
+    , displayWorldGrid(true)
     , displayTrail(true)
     , displayImagery(true)
     , displayWaypoints(true)
@@ -78,9 +79,12 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     vehicleModel = PixhawkCheetahGeode::instance();
     egocentricMap->addChild(vehicleModel);
 
-    // generate grid model
-    gridNode = createGrid();
-    rollingMap->addChild(gridNode);
+    // generate grid models
+    localGridNode = createLocalGrid();
+    rollingMap->addChild(localGridNode);
+
+    worldGridNode = createWorldGrid();
+    allocentricMap->addChild(worldGridNode);
 
     // generate empty trail model
     trailNode = createTrail(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -165,15 +169,28 @@ Pixhawk3DWidget::selectFrame(QString text)
 }
 
 void
-Pixhawk3DWidget::showGrid(int32_t state)
+Pixhawk3DWidget::showLocalGrid(int32_t state)
 {
     if (state == Qt::Checked)
     {
-        displayGrid = true;
+        displayLocalGrid = true;
     }
     else
     {
-        displayGrid = false;
+        displayLocalGrid = false;
+    }
+}
+
+void
+Pixhawk3DWidget::showWorldGrid(int32_t state)
+{
+    if (state == Qt::Checked)
+    {
+        displayWorldGrid = true;
+    }
+    else
+    {
+        displayWorldGrid = false;
     }
 }
 
@@ -593,9 +610,13 @@ Pixhawk3DWidget::buildLayout(void)
     frameComboBox->addItem("Global");
     frameComboBox->setFixedWidth(70);
 
-    QCheckBox* gridCheckBox = new QCheckBox(this);
-    gridCheckBox->setText("Grid");
-    gridCheckBox->setChecked(displayGrid);
+    QCheckBox* localGridCheckBox = new QCheckBox(this);
+    localGridCheckBox->setText("Local Grid");
+    localGridCheckBox->setChecked(displayLocalGrid);
+
+    QCheckBox* worldGridCheckBox = new QCheckBox(this);
+    worldGridCheckBox->setText("World Grid");
+    worldGridCheckBox->setChecked(displayWorldGrid);
 
     QCheckBox* trailCheckBox = new QCheckBox(this);
     trailCheckBox->setText("Trail");
@@ -629,17 +650,18 @@ Pixhawk3DWidget::buildLayout(void)
     layout->setMargin(0);
     layout->setSpacing(2);
     layout->addWidget(frameComboBox, 0, 10);
-    layout->addWidget(gridCheckBox, 2, 0);
-    layout->addWidget(trailCheckBox, 2, 1);
-    layout->addWidget(waypointsCheckBox, 2, 2);
-    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 3);
-    layout->addWidget(mapLabel, 2, 4);
-    layout->addWidget(mapComboBox, 2, 5);
-    layout->addWidget(modelLabel, 2, 6);
-    layout->addWidget(modelComboBox, 2, 7);
-    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 8);
-    layout->addWidget(recenterButton, 2, 9);
-    layout->addWidget(followCameraCheckBox, 2, 10);
+    layout->addWidget(localGridCheckBox, 2, 0);
+    layout->addWidget(worldGridCheckBox, 2, 1);
+    layout->addWidget(trailCheckBox, 2, 2);
+    layout->addWidget(waypointsCheckBox, 2, 3);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 4);
+    layout->addWidget(mapLabel, 2, 5);
+    layout->addWidget(mapComboBox, 2, 6);
+    layout->addWidget(modelLabel, 2, 7);
+    layout->addWidget(modelComboBox, 2, 8);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 9);
+    layout->addWidget(recenterButton, 2, 10);
+    layout->addWidget(followCameraCheckBox, 2, 11);
     layout->setRowStretch(0, 1);
     layout->setRowStretch(1, 100);
     layout->setRowStretch(2, 1);
@@ -647,8 +669,10 @@ Pixhawk3DWidget::buildLayout(void)
 
     connect(frameComboBox, SIGNAL(currentIndexChanged(QString)),
             this, SLOT(selectFrame(QString)));
-    connect(gridCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showGrid(int)));
+    connect(localGridCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showLocalGrid(int)));
+    connect(worldGridCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showWorldGrid(int)));
     connect(trailCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showTrail(int)));
     connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
@@ -674,7 +698,8 @@ void
 Pixhawk3DWidget::display(void)
 {
     // set node visibility
-    rollingMap->setChildValue(gridNode, displayGrid);
+    allocentricMap->setChildValue(worldGridNode, displayWorldGrid);
+    rollingMap->setChildValue(localGridNode, displayLocalGrid);
     rollingMap->setChildValue(trailNode, displayTrail);
     rollingMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
@@ -938,7 +963,7 @@ Pixhawk3DWidget::getPosition(double& x, double& y, double& z)
 }
 
 osg::ref_ptr<osg::Geode>
-Pixhawk3DWidget::createGrid(void)
+Pixhawk3DWidget::createLocalGrid(void)
 {
     osg::ref_ptr<osg::Geode> geode(new osg::Geode());
     osg::ref_ptr<osg::Geometry> fineGeometry(new osg::Geometry());
@@ -946,16 +971,16 @@ Pixhawk3DWidget::createGrid(void)
     geode->addDrawable(fineGeometry);
     geode->addDrawable(coarseGeometry);
 
-    float radius = 10.0f;
+    float radius = 5.0f;
     float resolution = 0.25f;
 
     osg::ref_ptr<osg::Vec3Array> fineCoords(new osg::Vec3Array);
     osg::ref_ptr<osg::Vec3Array> coarseCoords(new osg::Vec3Array);
 
-    // draw a 20m x 20m grid with 0.25m resolution
+    // draw a 10m x 10m grid with 0.25m resolution
     for (float i = -radius; i <= radius; i += resolution)
     {
-        if (fabs(i - floor(i + 0.5f)) < 0.01f)
+        if (fabs(i / 1.0f - floor(i / 1.0f)) < 0.01f)
         {
             coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
             coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
@@ -991,6 +1016,80 @@ Pixhawk3DWidget::createGrid(void)
     fineLinewidth->setWidth(0.25f);
     fineStateset->setAttributeAndModes(fineLinewidth, osg::StateAttribute::ON);
     fineStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    fineStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+    fineGeometry->setStateSet(fineStateset);
+
+    osg::ref_ptr<osg::StateSet> coarseStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> coarseLinewidth(new osg::LineWidth());
+    coarseLinewidth->setWidth(1.0f);
+    coarseStateset->setAttributeAndModes(coarseLinewidth, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    coarseStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+    coarseGeometry->setStateSet(coarseStateset);
+
+    return geode;
+}
+
+osg::ref_ptr<osg::Geode>
+Pixhawk3DWidget::createWorldGrid(void)
+{
+    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
+    osg::ref_ptr<osg::Geometry> fineGeometry(new osg::Geometry());
+    osg::ref_ptr<osg::Geometry> coarseGeometry(new osg::Geometry());
+    osg::ref_ptr<osg::Geometry> axisGeometry(new osg::Geometry());
+    geode->addDrawable(fineGeometry);
+    geode->addDrawable(coarseGeometry);
+    geode->addDrawable(axisGeometry.get());
+
+    float radius = 20.0f;
+    float resolution = 1.0f;
+
+    osg::ref_ptr<osg::Vec3Array> fineCoords(new osg::Vec3Array);
+    osg::ref_ptr<osg::Vec3Array> coarseCoords(new osg::Vec3Array);
+
+    // draw a 40m x 40m grid with 1.0m resolution
+    for (float i = -radius; i <= radius; i += resolution)
+    {
+        if (fabs(i / 5.0f - floor(i / 5.0f)) < 0.01f)
+        {
+            coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
+            coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
+            coarseCoords->push_back(osg::Vec3(-radius, i, 0.0f));
+            coarseCoords->push_back(osg::Vec3(radius, i, 0.0f));
+        }
+        else
+        {
+            fineCoords->push_back(osg::Vec3(i, -radius, 0.0f));
+            fineCoords->push_back(osg::Vec3(i, radius, 0.0f));
+            fineCoords->push_back(osg::Vec3(-radius, i, 0.0f));
+            fineCoords->push_back(osg::Vec3(radius, i, 0.0f));
+        }
+    }
+
+    fineGeometry->setVertexArray(fineCoords);
+    coarseGeometry->setVertexArray(coarseCoords);
+
+    osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array);
+    color->push_back(osg::Vec4(0.5f, 0.5f, 0.5f, 1.0f));
+    fineGeometry->setColorArray(color);
+    coarseGeometry->setColorArray(color);
+    fineGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    coarseGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    fineGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
+                                  0, fineCoords->size()));
+    coarseGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0,
+                                    coarseCoords->size()));
+
+    osg::ref_ptr<osg::StateSet> fineStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> fineLinewidth(new osg::LineWidth());
+    fineLinewidth->setWidth(0.1f);
+    fineStateset->setAttributeAndModes(fineLinewidth, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    fineStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
     fineGeometry->setStateSet(fineStateset);
 
     osg::ref_ptr<osg::StateSet> coarseStateset(new osg::StateSet);
@@ -998,7 +1097,43 @@ Pixhawk3DWidget::createGrid(void)
     coarseLinewidth->setWidth(2.0f);
     coarseStateset->setAttributeAndModes(coarseLinewidth, osg::StateAttribute::ON);
     coarseStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    coarseStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
     coarseGeometry->setStateSet(coarseStateset);
+
+    // add axes
+    osg::ref_ptr<osg::Vec3Array> coords(new osg::Vec3Array(6));
+    (*coords)[0] = (*coords)[2] = (*coords)[4] =
+                                      osg::Vec3(0.0f, 0.0f, 0.0f);
+    (*coords)[1] = osg::Vec3(0.0f, 1.0f, 0.0f);
+    (*coords)[3] = osg::Vec3(1.0f, 0.0f, 0.0f);
+    (*coords)[5] = osg::Vec3(0.0f, 0.0f, -1.0f);
+
+    axisGeometry->setVertexArray(coords);
+
+    osg::Vec4 redColor(1.0f, 0.0f, 0.0f, 0.0f);
+    osg::Vec4 greenColor(0.0f, 1.0f, 0.0f, 0.0f);
+    osg::Vec4 blueColor(0.0f, 0.0f, 1.0f, 0.0f);
+
+    osg::ref_ptr<osg::Vec4Array> axisColors(new osg::Vec4Array(6));
+    (*axisColors)[0] = redColor;
+    (*axisColors)[1] = redColor;
+    (*axisColors)[2] = greenColor;
+    (*axisColors)[3] = greenColor;
+    (*axisColors)[4] = blueColor;
+    (*axisColors)[5] = blueColor;
+
+    axisGeometry->setColorArray(axisColors);
+    axisGeometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+
+    axisGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 6));
+
+    osg::ref_ptr<osg::StateSet> axisStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> axisLinewidth(new osg::LineWidth());
+    axisLinewidth->setWidth(4.0f);
+    axisStateset->setAttributeAndModes(axisLinewidth, osg::StateAttribute::ON);
+    axisStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    axisGeometry->setStateSet(axisStateset);
 
     return geode;
 }

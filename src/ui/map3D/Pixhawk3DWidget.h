@@ -62,7 +62,8 @@ public slots:
 
 private slots:
     void selectFrame(QString text);
-    void showGrid(int state);
+    void showLocalGrid(int state);
+    void showWorldGrid(int state);
     void showTrail(int state);
     void showWaypoints(int state);
     void selectMapSource(int index);
@@ -106,7 +107,8 @@ private:
                      QString& utmZone);
     void getPosition(double& x, double& y, double& z);
 
-    osg::ref_ptr<osg::Geode> createGrid(void);
+    osg::ref_ptr<osg::Geode> createLocalGrid(void);
+    osg::ref_ptr<osg::Geode> createWorldGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(const osg::Vec4& color);
     osg::ref_ptr<Imagery> createMap(void);
     osg::ref_ptr<osg::Geode> createRGBD3D(void);
@@ -143,7 +145,8 @@ private:
     Mode mode;
     int selectedWpIndex;
 
-    bool displayGrid;
+    bool displayLocalGrid;
+    bool displayWorldGrid;
     bool displayTrail;
     bool displayImagery;
     bool displayWaypoints;
@@ -166,7 +169,8 @@ private:
     osg::ref_ptr<ImageWindowGeode> depth2DGeode;
     osg::ref_ptr<osg::Image> rgbImage;
     osg::ref_ptr<osg::Image> depthImage;
-    osg::ref_ptr<osg::Geode> gridNode;
+    osg::ref_ptr<osg::Geode> localGridNode;
+    osg::ref_ptr<osg::Geode> worldGridNode;
     osg::ref_ptr<osg::Geode> trailNode;
     osg::ref_ptr<Imagery> mapNode;
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
