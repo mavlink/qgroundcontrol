@@ -19,13 +19,14 @@
 
 #include "WaypointEditableView.h"
 #include "ui_WaypointEditableView.h"
-#include "ui_QGCCustomWaypointAction.h"
-#include "ui_QGCMissionDoWidget.h"
-#include "ui_QGCMissionOther.h"
+
 
 #include "QGCMissionNavWaypoint.h"
-#include "QGCMissionDoWidget.h"
-#include "QGCMissionConditionWidget.h"
+#include "QGCMissionNavLoiterUnlim.h"
+#include "QGCMissionNavLoiterTurns.h"
+#include "QGCMissionNavLoiterTime.h"
+#include "QGCMissionConditionDelay.h"
+#include "QGCMissionDoJump.h"
 #include "QGCMissionOther.h"
 
 
@@ -42,10 +43,13 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     // CUSTOM COMMAND WIDGET
     QHBoxLayout *layout = new QHBoxLayout;
     layout->setSpacing(2);
-    layout->setContentsMargins(4, 4 ,4 ,4);
+    layout->setContentsMargins(4, 0 ,4 ,0);
     m_ui->customActionWidget->setLayout(layout);
 
     MissionNavWaypointWidget = NULL;
+    MissionNavLoiterUnlimWidget = NULL;
+    MissionNavLoiterTurnsWidget = NULL;
+    MissionNavLoiterTimeWidget = NULL;
     MissionDoJumpWidget = NULL;
     MissionConditionDelayWidget = NULL;
     MissionOtherWidget = NULL;
@@ -72,10 +76,10 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_frame->addItem("Mission",MAV_FRAME_MISSION);
 
     // Initialize view correctly
-    updateActionView(wp->getAction());    
-
-    // Read values and set user interface
+    int actionID = wp->getAction();
+    initializeActionView(actionID);
     updateValues();
+    updateActionView(actionID);
 
     // Check for mission frame
     if (wp->getFrame() == MAV_FRAME_MISSION)
@@ -120,9 +124,12 @@ void WaypointEditableView::changedAutoContinue(int state)
 }
 
 void WaypointEditableView::updateActionView(int action)
-{
+{    
     //Hide all
     if(MissionNavWaypointWidget) MissionNavWaypointWidget->hide();
+    if(MissionNavLoiterUnlimWidget) MissionNavLoiterUnlimWidget->hide();
+    if(MissionNavLoiterTurnsWidget) MissionNavLoiterTurnsWidget->hide();
+    if(MissionNavLoiterTimeWidget) MissionNavLoiterTimeWidget->hide();
     if(MissionOtherWidget) MissionOtherWidget->hide();
     if(MissionConditionDelayWidget) MissionConditionDelayWidget->hide();
     if(MissionDoJumpWidget) MissionDoJumpWidget->hide();
@@ -131,21 +138,30 @@ void WaypointEditableView::updateActionView(int action)
     if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
     {
         switch(action) {
-        case MAV_CMD_NAV_TAKEOFF:
-        case MAV_CMD_NAV_LAND:
-        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-        case MAV_CMD_NAV_LOITER_UNLIM:
-        case MAV_CMD_NAV_LOITER_TURNS:
-        case MAV_CMD_NAV_LOITER_TIME:
-            break;
         case MAV_CMD_NAV_WAYPOINT:
             if(MissionNavWaypointWidget) MissionNavWaypointWidget->show();
+            break;
+        case MAV_CMD_NAV_LOITER_UNLIM:
+            if(MissionNavLoiterUnlimWidget) MissionNavLoiterUnlimWidget->show();
+            break;
+        case MAV_CMD_NAV_LOITER_TURNS:
+            if(MissionNavLoiterTurnsWidget) MissionNavLoiterTurnsWidget->show();
+            break;
+        case MAV_CMD_NAV_LOITER_TIME:
+            if(MissionNavLoiterTimeWidget) MissionNavLoiterTimeWidget->show();
+            break;
+        case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+        case MAV_CMD_NAV_LAND:
+        case MAV_CMD_NAV_TAKEOFF:
+        case MAV_CMD_CONDITION_DELAY:
+            if(MissionConditionDelayWidget) MissionConditionDelayWidget->show();
             break;
         case MAV_CMD_DO_JUMP:
             if(MissionDoJumpWidget) MissionDoJumpWidget->show();
             break;
         default:
             if(MissionOtherWidget) MissionOtherWidget->show();
+            viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING;
             break;
         }
     }
@@ -160,59 +176,83 @@ void WaypointEditableView::updateActionView(int action)
  */
 void WaypointEditableView::changedAction(int index)
 {
-    MAV_FRAME cur_frame = (MAV_FRAME) m_ui->comboBox_frame->itemData(m_ui->comboBox_frame->currentIndex()).toUInt();
     // set waypoint action
-    int actionIndex = m_ui->comboBox_action->itemData(index).toUInt();
-    if (actionIndex < MAV_CMD_ENUM_END && actionIndex >= 0) {
-        MAV_CMD action = (MAV_CMD) actionIndex;
+    int actionID = m_ui->comboBox_action->itemData(index).toUInt();
+    if (actionID == QVariant::Invalid || actionID == MAV_CMD_ENUM_END)
+    {
+        viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING;
+    }
+    else //(actionID < MAV_CMD_ENUM_END && actionID >= 0)
+    {
+        viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT;
+        MAV_CMD action = (MAV_CMD) actionID;
         wp->setAction(action);
     }
+    // change the view
+    initializeActionView(actionID);
+    updateValues();
+    updateActionView(actionID);
+}
 
-    // Expose ui based on action
-    // Change to mission frame
-    // if action is unknown
-    viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT;
-    switch(actionIndex) {        
-    case MAV_CMD_NAV_TAKEOFF:
-    case MAV_CMD_NAV_LAND:
-    case MAV_CMD_NAV_RETURN_TO_LAUNCH:    
-    case MAV_CMD_NAV_LOITER_UNLIM:
-    case MAV_CMD_NAV_LOITER_TURNS:
-    case MAV_CMD_NAV_LOITER_TIME:
-        updateActionView(actionIndex);
-        break;
-
+void WaypointEditableView::initializeActionView(int actionID)
+{
+    //initialize a new action-widget, if needed.
+    switch(actionID) {
     case MAV_CMD_NAV_WAYPOINT:
         if (!MissionNavWaypointWidget)
         {
             MissionNavWaypointWidget = new QGCMissionNavWaypoint(this);
             m_ui->customActionWidget->layout()->addWidget(MissionNavWaypointWidget);
         }
-        updateActionView(actionIndex);
         break;
-
-    case MAV_CMD_DO_JUMP:        
+    case MAV_CMD_NAV_LOITER_UNLIM:
+        if (!MissionNavLoiterUnlimWidget)
+        {
+            MissionNavLoiterUnlimWidget = new QGCMissionNavLoiterUnlim(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavLoiterUnlimWidget);
+        }
+        break;
+    case MAV_CMD_NAV_LOITER_TURNS:
+        if (!MissionNavLoiterTurnsWidget)
+        {
+            MissionNavLoiterTurnsWidget = new QGCMissionNavLoiterTurns(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavLoiterTurnsWidget);
+        }
+        break;
+    case MAV_CMD_NAV_LOITER_TIME:
+        if (!MissionNavLoiterTimeWidget)
+        {
+            MissionNavLoiterTimeWidget = new QGCMissionNavLoiterTime(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavLoiterTimeWidget);
+        }
+        break;
+    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+    case MAV_CMD_NAV_LAND:
+    case MAV_CMD_NAV_TAKEOFF:
+    case MAV_CMD_CONDITION_DELAY:
+        if (!MissionConditionDelayWidget)
+        {
+            MissionConditionDelayWidget = new QGCMissionConditionDelay(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionConditionDelayWidget);
+        }
+        break;
+    case MAV_CMD_DO_JUMP:
         if (!MissionDoJumpWidget)
         {
-            MissionDoJumpWidget = new QGCMissionDoWidget(this);
+            MissionDoJumpWidget = new QGCMissionDoJump(this);
             m_ui->customActionWidget->layout()->addWidget(MissionDoJumpWidget);
         }
-        updateActionView(actionIndex);
         break;
 
     case MAV_CMD_ENUM_END:
     default:
-        // Switch to mission frame
-        viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING;
         if (!MissionOtherWidget)
         {
             MissionOtherWidget = new QGCMissionOther(this);
             m_ui->customActionWidget->layout()->addWidget(MissionOtherWidget);
         }
-        updateActionView(actionIndex);
         break;
     }
-    updateValues();
 }
 
 void WaypointEditableView::deleted(QObject* waypoint)
@@ -299,7 +339,7 @@ void WaypointEditableView::updateValues()
         QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(m_ui->customActionWidget->children().at(j));
         if (spin)
         {
-            qDebug() << "DEACTIVATED SPINBOX #" << j;
+            //qDebug() << "DEACTIVATED SPINBOX #" << j;
             spin->blockSignals(true);
         }
         else
@@ -334,31 +374,19 @@ void WaypointEditableView::updateValues()
     // Update action
     MAV_CMD action = wp->getAction();
     int action_index = m_ui->comboBox_action->findData(action);
-    // Set to "Other" action if it was -1
-    if (action_index == -1)
-    {
-        action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
-    }
-
-    // Only update if changed
     if (m_ui->comboBox_action->currentIndex() != action_index)
     {
-        // If action is unknown, set direct editing mode
-        if (wp->getAction() < 0 || wp->getAction() > MAV_CMD_NAV_TAKEOFF)//FIXME condition should not depend on NAV_TAKEOFF
+        if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
         {
-            //changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING);
-        }
-        else
-        {
-            if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
+            // Set to "Other" action if it was -1
+            if (action_index == -1)
             {
-                // Action ID known, update
-                m_ui->comboBox_action->setCurrentIndex(action_index);
-                updateActionView(action);                
+                action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
+                viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING;
             }
+            m_ui->comboBox_action->setCurrentIndex(action_index);
         }
     }
-
 
     emit commandBroadcast(wp->getAction());
     emit frameBroadcast(wp->getFrame());

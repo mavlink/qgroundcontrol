@@ -14,13 +14,13 @@ class QGCMissionOther : public QWidget
 
 public:
     explicit QGCMissionOther(WaypointEditableView* WEV);
-    ~QGCMissionOther();
-    Ui::QGCMissionOther *ui;
+    ~QGCMissionOther();    
 
 protected:
     WaypointEditableView* WEV;
 
 private:
+    Ui::QGCMissionOther *ui;
 };
 
 #endif // QGCMISSIONOTHER_H

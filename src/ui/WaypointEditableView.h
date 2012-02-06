@@ -27,7 +27,7 @@ This file is part of the QGROUNDCONTROL project
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
  *   @author Petri Tanskanen <mavteam@student.ethz.ch>
- *
+ *   @author Alex Trofimov <talex@student.ethz.ch>
  */
 
 #ifndef WAYPOINTEDITABLEVIEW_H
@@ -46,12 +46,14 @@ namespace Ui
 {
 class WaypointEditableView;
 }
-//class Ui_QGCCustomWaypointAction;
-//class Ui_QGCMissionDoWidget;
 class QGCMissionNavWaypoint;
-class QGCMissionDoWidget;
-class QGCMissionConditionWidget;
+class QGCMissionNavLoiterUnlim;
+class QGCMissionNavLoiterTurns;
+class QGCMissionNavLoiterTime;
+class QGCMissionDoJump;
+class QGCMissionConditionDelay;
 class QGCMissionOther;
+
 class WaypointEditableView : public QWidget
 {
     Q_OBJECT
@@ -72,6 +74,7 @@ public slots:
     void changedAutoContinue(int);    
     void changedFrame(int state);
     void updateActionView(int action);
+    void initializeActionView(int action);
 
     void changedCurrent(int);
     void updateValues(void);
@@ -90,13 +93,16 @@ protected slots:
 protected:
     virtual void changeEvent(QEvent *e);
     Waypoint* wp;
-    // Special widgets extendending the
-    // waypoint view to mission capabilities
-    QGCMissionNavWaypoint* MissionNavWaypointWidget;
-    QGCMissionDoWidget* MissionDoJumpWidget;
-    QGCMissionConditionWidget* MissionConditionDelayWidget;
-    QGCMissionOther* MissionOtherWidget;
     QGC_WAYPOINTEDITABLEVIEW_MODE viewMode;
+    // Widgets for every mission element
+    QGCMissionNavWaypoint* MissionNavWaypointWidget;
+    QGCMissionNavLoiterUnlim* MissionNavLoiterUnlimWidget;
+    QGCMissionNavLoiterTurns* MissionNavLoiterTurnsWidget;
+    QGCMissionNavLoiterTime* MissionNavLoiterTimeWidget;
+    QGCMissionDoJump* MissionDoJumpWidget;
+    QGCMissionConditionDelay* MissionConditionDelayWidget;
+    QGCMissionOther* MissionOtherWidget;
+
 
 private:
     Ui::WaypointEditableView *m_ui;
