@@ -26,7 +26,4 @@ private:
     Ui::QGCMissionNavWaypoint *ui;
 };
 
-
-
-
 #endif // QGCMISSIONNAVWAYPOINT_H

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QGCMissionNavWaypoint</class>
- <widget class="QWidget" name="QGCMissionNavWaypoint">
+ <class>QGCMissionNavLoiterTime</class>
+ <widget class="QWidget" name="QGCMissionNavLoiterTime">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -313,7 +313,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="acceptanceSpinBox">
+    <widget class="QDoubleSpinBox" name="radSpinBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -321,11 +321,10 @@
       </sizepolicy>
      </property>
      <property name="toolTip">
-      <string>Uncertainty radius in meters
-where to accept this waypoint as reached</string>
+      <string>Loiter Radius. If negative loiter counter-clockwise</string>
      </property>
      <property name="statusTip">
-      <string>Uncertainty radius in meters where to accept this waypoint as reached</string>
+      <string>Loiter Radius. If negative loiter counter-clockwise</string>
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
@@ -333,13 +332,19 @@ where to accept this waypoint as reached</string>
      <property name="suffix">
       <string> m</string>
      </property>
+     <property name="minimum">
+      <double>-1000000.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>1000000.000000000000000</double>
+     </property>
      <property name="value">
-      <double>0.200000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="holdTimeSpinBox">
+    <widget class="QDoubleSpinBox" name="timeSpinBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -347,10 +352,10 @@ where to accept this waypoint as reached</string>
       </sizepolicy>
      </property>
      <property name="toolTip">
-      <string>Time to stay/loiter at this position before advancing</string>
+      <string>Time to loiter around the mission point</string>
      </property>
      <property name="statusTip">
-      <string>Time to stay/loiter at this position before advancing</string>
+      <string>Time to loiter around the mission point</string>
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
@@ -358,8 +363,17 @@ where to accept this waypoint as reached</string>
      <property name="suffix">
       <string> s</string>
      </property>
+     <property name="decimals">
+      <number>2</number>
+     </property>
+     <property name="minimum">
+      <double>0.000000000000000</double>
+     </property>
      <property name="maximum">
-      <double>9999.989999999999782</double>
+      <double>1000000.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.000000000000000</double>
      </property>
     </widget>
    </item>
