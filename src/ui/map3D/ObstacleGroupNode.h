@@ -42,6 +42,7 @@ public:
     ObstacleGroupNode();
 
     void init(void);
+    void clear(void);
     void update(MAV_FRAME frame, UASInterface* uas);
 };
 
