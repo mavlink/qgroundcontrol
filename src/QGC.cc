@@ -47,6 +47,15 @@ quint64 groundTimeMilliseconds()
     return static_cast<quint64>(seconds + (time.time().msec()));
 }
 
+qreal groundTimeSeconds()
+{
+    QDateTime time = QDateTime::currentDateTime();
+    time = time.toUTC();
+    /* Return time in seconds unit */
+    quint64 seconds = time.toTime_t();
+    return static_cast<qreal>(seconds + (time.time().msec() / 1000.0));
+}
+
 float limitAngleToPMPIf(float angle)
 {
     if (angle > -20*M_PI && angle < 20*M_PI)

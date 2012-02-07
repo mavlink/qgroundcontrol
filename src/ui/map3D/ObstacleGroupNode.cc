@@ -48,6 +48,15 @@ ObstacleGroupNode::init(void)
 }
 
 void
+ObstacleGroupNode::clear(void)
+{
+    if (getNumChildren() > 0)
+    {
+        removeChild(0, getNumChildren());
+    }
+}
+
+void
 ObstacleGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 {
     if (!uas || frame == MAV_FRAME_GLOBAL)
@@ -59,10 +68,7 @@ ObstacleGroupNode::update(MAV_FRAME frame, UASInterface *uas)
     double robotY = uas->getLocalY();
     double robotZ = uas->getLocalZ();
 
-    if (getNumChildren() > 0)
-    {
-        removeChild(0, getNumChildren());
-    }
+    clear();
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
 

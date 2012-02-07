@@ -27,6 +27,10 @@
 #include "LinkManager.h"
 #include "SerialLink.h"
 
+#ifdef QGC_PROTOBUF_ENABLED
+#include <google/protobuf/descriptor.h>
+#endif
+
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     uasId(id),
     startTime(QGC::groundTimeMilliseconds()),
@@ -981,6 +985,41 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
     if (!links->contains(link))
     {
         addLink(link);
+    }
+
+    const google::protobuf::Descriptor* descriptor = message->GetDescriptor();
+    if (!descriptor)
+    {
+        return;
+    }
+
+    const google::protobuf::FieldDescriptor* headerField = descriptor->FindFieldByName("header");
+    if (!headerField)
+    {
+        return;
+    }
+
+    const google::protobuf::Descriptor* headerDescriptor = headerField->message_type();
+    if (!headerDescriptor)
+    {
+        return;
+    }
+
+    const google::protobuf::FieldDescriptor* sourceSysIdField = headerDescriptor->FindFieldByName("source_sysid");
+    if (!sourceSysIdField)
+    {
+        return;
+    }
+
+    const google::protobuf::Reflection* reflection = message->GetReflection();
+    const google::protobuf::Message& headerMsg = reflection->GetMessage(*message, headerField);
+    const google::protobuf::Reflection* headerReflection = headerMsg.GetReflection();
+
+    int source_sysid = headerReflection->GetInt32(headerMsg, sourceSysIdField);
+
+    if (source_sysid != uasId)
+    {
+        return;
     }
 
     if (message->GetTypeName() == pointCloud.GetTypeName())
