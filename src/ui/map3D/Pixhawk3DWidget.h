@@ -124,7 +124,7 @@ private:
     void updateImagery(double originX, double originY, double originZ,
                        const QString& zone);
     void updateWaypoints(void);
-    void updateTarget(double robotX, double robotY);
+    void updateTarget(double robotX, double robotY, double robotZ);
 #ifdef QGC_PROTOBUF_ENABLED
     void updateRGBD(double robotX, double robotY, double robotZ);
     void updateObstacles(void);
@@ -135,6 +135,8 @@ private:
     bool findTarget(int mouseX, int mouseY);
     void showInsertWaypointMenu(const QPoint& cursorPos);
     void showEditWaypointMenu(const QPoint& cursorPos);
+
+    const qreal kMessageTimeout; // message timeout in seconds
 
     enum Mode {
         DEFAULT_MODE,
@@ -184,7 +186,7 @@ private:
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     MAV_FRAME frame;
-    osg::Vec3d target;
+    QVector4D target;
     QPoint cachedMousePos;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
