@@ -25,6 +25,9 @@
 #include "QGCMissionNavLoiterUnlim.h"
 #include "QGCMissionNavLoiterTurns.h"
 #include "QGCMissionNavLoiterTime.h"
+#include "QGCMissionNavReturnToLaunch.h"
+#include "QGCMissionNavLand.h"
+#include "QGCMissionNavTakeoff.h"
 #include "QGCMissionConditionDelay.h"
 #include "QGCMissionDoJump.h"
 #include "QGCMissionOther.h"
@@ -50,6 +53,9 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     MissionNavLoiterUnlimWidget = NULL;
     MissionNavLoiterTurnsWidget = NULL;
     MissionNavLoiterTimeWidget = NULL;
+    MissionNavReturnToLaunchWidget = NULL;
+    MissionNavLandWidget = NULL;
+    MissionNavTakeoffWidget = NULL;
     MissionDoJumpWidget = NULL;
     MissionConditionDelayWidget = NULL;
     MissionOtherWidget = NULL;
@@ -130,9 +136,12 @@ void WaypointEditableView::updateActionView(int action)
     if(MissionNavLoiterUnlimWidget) MissionNavLoiterUnlimWidget->hide();
     if(MissionNavLoiterTurnsWidget) MissionNavLoiterTurnsWidget->hide();
     if(MissionNavLoiterTimeWidget) MissionNavLoiterTimeWidget->hide();
-    if(MissionOtherWidget) MissionOtherWidget->hide();
+    if(MissionNavReturnToLaunchWidget) MissionNavReturnToLaunchWidget->hide();
+    if(MissionNavLandWidget) MissionNavLandWidget->hide();
+    if(MissionNavTakeoffWidget) MissionNavTakeoffWidget->hide();
     if(MissionConditionDelayWidget) MissionConditionDelayWidget->hide();
     if(MissionDoJumpWidget) MissionDoJumpWidget->hide();
+    if(MissionOtherWidget) MissionOtherWidget->hide();
 
     //Show only the correct one
     if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
@@ -151,8 +160,14 @@ void WaypointEditableView::updateActionView(int action)
             if(MissionNavLoiterTimeWidget) MissionNavLoiterTimeWidget->show();
             break;
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+            if(MissionNavReturnToLaunchWidget) MissionNavReturnToLaunchWidget->show();
+            break;
         case MAV_CMD_NAV_LAND:
+            if(MissionNavLandWidget) MissionNavLandWidget->show();
+            break;
         case MAV_CMD_NAV_TAKEOFF:
+            if(MissionNavTakeoffWidget) MissionNavTakeoffWidget->show();
+            break;
         case MAV_CMD_CONDITION_DELAY:
             if(MissionConditionDelayWidget) MissionConditionDelayWidget->show();
             break;
@@ -227,8 +242,26 @@ void WaypointEditableView::initializeActionView(int actionID)
         }
         break;
     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+        if (!MissionNavReturnToLaunchWidget)
+        {
+            MissionNavReturnToLaunchWidget = new QGCMissionNavReturnToLaunch(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavReturnToLaunchWidget);
+        }
+        break;
     case MAV_CMD_NAV_LAND:
+        if (!MissionNavLandWidget)
+        {
+            MissionNavLandWidget = new QGCMissionNavLand(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavLandWidget);
+        }
+        break;
     case MAV_CMD_NAV_TAKEOFF:
+        if (!MissionNavTakeoffWidget)
+        {
+            MissionNavTakeoffWidget = new QGCMissionNavTakeoff(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavTakeoffWidget);
+        }
+        break;
     case MAV_CMD_CONDITION_DELAY:
         if (!MissionConditionDelayWidget)
         {

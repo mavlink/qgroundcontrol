@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QGCMissionNavLoiterTime</class>
- <widget class="QWidget" name="QGCMissionNavLoiterTime">
+ <class>QGCMissionNavTakeoff</class>
+ <widget class="QWidget" name="QGCMissionNavTakeoff">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -313,7 +313,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="radSpinBox">
+    <widget class="QDoubleSpinBox" name="minPitchSpinBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -321,56 +321,25 @@
       </sizepolicy>
      </property>
      <property name="toolTip">
-      <string>Loiter Radius. If negative loiter counter-clockwise</string>
+      <string>Minimum Pitch</string>
      </property>
      <property name="statusTip">
-      <string>Loiter Radius. If negative loiter counter-clockwise</string>
+      <string>Minimum Pitch</string>
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
      <property name="suffix">
-      <string> m</string>
-     </property>
-     <property name="minimum">
-      <double>-1000000.000000000000000</double>
-     </property>
-     <property name="maximum">
-      <double>1000000.000000000000000</double>
-     </property>
-     <property name="value">
-      <double>0.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QDoubleSpinBox" name="timeSpinBox">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="toolTip">
-      <string>Time to loiter around the mission point</string>
-     </property>
-     <property name="statusTip">
-      <string>Time to loiter around the mission point</string>
-     </property>
-     <property name="keyboardTracking">
-      <bool>false</bool>
-     </property>
-     <property name="suffix">
-      <string> s</string>
+      <string>°</string>
      </property>
      <property name="decimals">
-      <number>2</number>
+      <number>0</number>
      </property>
      <property name="minimum">
-      <double>0.000000000000000</double>
+      <double>-90.000000000000000</double>
      </property>
      <property name="maximum">
-      <double>1000000.000000000000000</double>
+      <double>90.000000000000000</double>
      </property>
      <property name="value">
       <double>0.000000000000000</double>
