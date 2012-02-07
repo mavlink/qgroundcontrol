@@ -243,7 +243,10 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCMissionConditionDelay.ui \
     src/ui/mission/QGCMissionNavLoiterUnlim.ui \
     src/ui/mission/QGCMissionNavLoiterTurns.ui \
-    src/ui/mission/QGCMissionNavLoiterTime.ui
+    src/ui/mission/QGCMissionNavLoiterTime.ui \
+    src/ui/mission/QGCMissionNavReturnToLaunch.ui \
+    src/ui/mission/QGCMissionNavLand.ui \
+    src/ui/mission/QGCMissionNavTakeoff.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -371,7 +374,10 @@ HEADERS += src/MG.h \
     src/ui/mission/QGCMissionConditionDelay.h \
     src/ui/mission/QGCMissionNavLoiterUnlim.h \
     src/ui/mission/QGCMissionNavLoiterTurns.h \
-    src/ui/mission/QGCMissionNavLoiterTime.h
+    src/ui/mission/QGCMissionNavLoiterTime.h \
+    src/ui/mission/QGCMissionNavReturnToLaunch.h \
+    src/ui/mission/QGCMissionNavLand.h \
+    src/ui/mission/QGCMissionNavTakeoff.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -508,7 +514,10 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionConditionDelay.cc \
     src/ui/mission/QGCMissionNavLoiterUnlim.cc \
     src/ui/mission/QGCMissionNavLoiterTurns.cc \
-    src/ui/mission/QGCMissionNavLoiterTime.cc
+    src/ui/mission/QGCMissionNavLoiterTime.cc \
+    src/ui/mission/QGCMissionNavReturnToLaunch.cc \
+    src/ui/mission/QGCMissionNavLand.cc \
+    src/ui/mission/QGCMissionNavTakeoff.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
