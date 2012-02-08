@@ -52,7 +52,6 @@ void QGCRGBDView::clearData(void)
     qDebug() << offlineImg.load(":/images/status/colorbars.png");
 
     glImage = QGLWidget::convertToGLFormat(offlineImg);
-    qDebug() << "cleardata" << offlineImg.isNull() << offlineImg.width() << offlineImg.height();
 }
 
 void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
