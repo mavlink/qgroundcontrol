@@ -65,6 +65,7 @@ private:
 
 public:
     UASWaypointManager(UAS* uas=NULL);   ///< Standard constructor
+    ~UASWaypointManager();
 
     /** @name Received message handlers */
     /*@{*/

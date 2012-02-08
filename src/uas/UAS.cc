@@ -977,7 +977,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #ifdef QGC_PROTOBUF_ENABLED
 void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message)
 {
-    if (!link) return;
+    if (!link)
+    {
+        return;
+    }
     if (!links->contains(link))
     {
         addLink(link);
