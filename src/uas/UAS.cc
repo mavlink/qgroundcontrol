@@ -75,6 +75,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     pitch(0.0),
     yaw(0.0),
     statusTimeout(new QTimer(this)),
+#ifdef QGC_PROTOBUF_ENABLED
+    receivedPointCloudTimestamp(0.0),
+    receivedRGBDImageTimestamp(0.0),
+    receivedObstacleListTimestamp(0.0),
+    receivedPathTimestamp(0.0),
+#endif
     paramsOnceRequested(false),
     airframe(QGC_AIRFRAME_EASYSTAR),
     attitudeKnown(false),
@@ -1027,21 +1033,25 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
 
     if (message->GetTypeName() == pointCloud.GetTypeName())
     {
+        receivedPointCloudTimestamp = QGC::groundTimeSeconds();
         pointCloud.CopyFrom(*message);
         emit pointCloudChanged(this);
     }
     else if (message->GetTypeName() == rgbdImage.GetTypeName())
     {
+        receivedRGBDImageTimestamp = QGC::groundTimeSeconds();
         rgbdImage.CopyFrom(*message);
         emit rgbdImageChanged(this);
     }
     else if (message->GetTypeName() == obstacleList.GetTypeName())
     {
+        receivedObstacleListTimestamp = QGC::groundTimeSeconds();
         obstacleList.CopyFrom(*message);
         emit obstacleListChanged(this);
     }
     else if (message->GetTypeName() == path.GetTypeName())
     {
+        receivedPathTimestamp = QGC::groundTimeSeconds();
         path.CopyFrom(*message);
         emit pathChanged(this);
     }
