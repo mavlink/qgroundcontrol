@@ -96,9 +96,13 @@ public:
 
 #ifdef QGC_PROTOBUF_ENABLED
     virtual px::PointCloudXYZRGB getPointCloud() const = 0;
+    virtual px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) const = 0;
     virtual px::RGBDImage getRGBDImage() const = 0;
+    virtual px::RGBDImage getRGBDImage(qreal& receivedTimestamp) const = 0;
     virtual px::ObstacleList getObstacleList() const = 0;
+    virtual px::ObstacleList getObstacleList(qreal& receivedTimestamp) const = 0;
     virtual px::Path getPath() const = 0;
+    virtual px::Path getPath(qreal& receivedTimestamp) const = 0;
 #endif
 
     virtual bool isArmed() const = 0;

@@ -57,22 +57,12 @@ ObstacleGroupNode::clear(void)
 }
 
 void
-ObstacleGroupNode::update(MAV_FRAME frame, UASInterface *uas)
+ObstacleGroupNode::update(double robotX, double robotY, double robotZ,
+                          const px::ObstacleList& obstacleList)
 {
-    if (!uas || frame == MAV_FRAME_GLOBAL)
-    {
-        return;
-    }
-
-    double robotX = uas->getLocalX();
-    double robotY = uas->getLocalY();
-    double robotZ = uas->getLocalZ();
-
     clear();
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-
-    px::ObstacleList obstacleList = uas->getObstacleList();
 
     for (int i = 0; i < obstacleList.obstacles_size(); ++i)
     {

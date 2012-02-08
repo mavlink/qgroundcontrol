@@ -127,7 +127,7 @@ private:
     void updateTarget(double robotX, double robotY, double robotZ);
 #ifdef QGC_PROTOBUF_ENABLED
     void updateRGBD(double robotX, double robotY, double robotZ);
-    void updateObstacles(void);
+    void updateObstacles(double robotX, double robotY, double robotZ);
     void updatePath(double robotX, double robotY, double robotZ);
 #endif
 
