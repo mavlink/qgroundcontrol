@@ -53,7 +53,7 @@
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     : Q3DWidget(parent)
     , uas(NULL)
-    , kMessageTimeout(2.0)
+    , kMessageTimeout(4.0)
     , mode(DEFAULT_MODE)
     , selectedWpIndex(-1)
     , displayLocalGrid(false)
@@ -791,7 +791,7 @@ Pixhawk3DWidget::display(void)
 
     if (displayObstacleList)
     {
-        updateObstacles();
+        updateObstacles(robotX, robotY, robotZ);
     }
 
     if (displayPath)
@@ -1534,10 +1534,12 @@ Pixhawk3DWidget::updateTarget(double robotX, double robotY, double robotZ)
 void
 Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 {
-    px::RGBDImage rgbdImage = uas->getRGBDImage();
-    px::PointCloudXYZRGB pointCloud = uas->getPointCloud();
+    qreal receivedRGBDImageTimestamp, receivedPointCloudTimestamp;
+    px::RGBDImage rgbdImage = uas->getRGBDImage(receivedRGBDImageTimestamp);
+    px::PointCloudXYZRGB pointCloud = uas->getPointCloud(receivedPointCloudTimestamp);
 
-    if (rgbdImage.rows() > 0 && rgbdImage.cols() > 0)
+    if (rgbdImage.rows() > 0 && rgbdImage.cols() > 0 &&
+        QGC::groundTimeSeconds() - receivedRGBDImageTimestamp < kMessageTimeout)
     {
         rgbImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
                            GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
@@ -1576,9 +1578,15 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
     }
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
-
     osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(geometry->getVertexArray());
     osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
+
+    if (QGC::groundTimeSeconds() - receivedPointCloudTimestamp > kMessageTimeout)
+    {
+        geometry->removePrimitiveSet(0, geometry->getNumPrimitiveSets());
+        return;
+    }
+
     for (int i = 0; i < pointCloud.points_size(); ++i)
     {
         const px::PointCloudXYZRGB_PointXYZRGB& p = pointCloud.points(i);
@@ -1625,11 +1633,20 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 }
 
 void
-Pixhawk3DWidget::updateObstacles(void)
+Pixhawk3DWidget::updateObstacles(double robotX, double robotY, double robotZ)
 {
-    if (QGC::groundTimeSeconds() - uas->getObstacleList().header().timestamp() < kMessageTimeout)
+    if (frame == MAV_FRAME_GLOBAL)
     {
-        obstacleGroupNode->update(frame, uas);
+        obstacleGroupNode->clear();
+        return;
+    }
+
+    qreal receivedTimestamp;
+    px::ObstacleList obstacleList = uas->getObstacleList(receivedTimestamp);
+
+    if (QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
+    {
+        obstacleGroupNode->update(robotX, robotY, robotZ, obstacleList);
     }
     else
     {
@@ -1640,7 +1657,8 @@ Pixhawk3DWidget::updateObstacles(void)
 void
 Pixhawk3DWidget::updatePath(double robotX, double robotY, double robotZ)
 {
-    px::Path path = uas->getPath();
+    qreal receivedTimestamp;
+    px::Path path = uas->getPath(receivedTimestamp);
 
     osg::Geometry* geometry = pathNode->getDrawable(0)->asGeometry();
     osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
@@ -1655,7 +1673,7 @@ Pixhawk3DWidget::updatePath(double robotX, double robotY, double robotZ)
 
     osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
 
-    if (QGC::groundTimeSeconds() - path.header().timestamp() < kMessageTimeout)
+    if (QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
     {
         // find path length
         float length = 0.0f;

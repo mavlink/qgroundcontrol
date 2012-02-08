@@ -139,7 +139,17 @@ public:
         return pointCloud;
     }
 
+    px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) const {
+        receivedTimestamp = receivedPointCloudTimestamp;
+        return pointCloud;
+    }
+
     px::RGBDImage getRGBDImage() const {
+        return rgbdImage;
+    }
+
+    px::RGBDImage getRGBDImage(qreal& receivedTimestamp) const {
+        receivedTimestamp = receivedRGBDImageTimestamp;
         return rgbdImage;
     }
 
@@ -147,7 +157,17 @@ public:
         return obstacleList;
     }
 
+    px::ObstacleList getObstacleList(qreal& receivedTimestamp) const {
+        receivedTimestamp = receivedObstacleListTimestamp;
+        return obstacleList;
+    }
+
     px::Path getPath() const {
+        return path;
+    }
+
+    px::Path getPath(qreal& receivedTimestamp) const {
+        receivedTimestamp = receivedPathTimestamp;
         return path;
     }
 #endif
@@ -237,9 +257,16 @@ protected: //COMMENTS FOR TEST UNIT
 
 #ifdef QGC_PROTOBUF_ENABLED
     px::PointCloudXYZRGB pointCloud;
+    qreal receivedPointCloudTimestamp;
+
     px::RGBDImage rgbdImage;
+    qreal receivedRGBDImageTimestamp;
+
     px::ObstacleList obstacleList;
+    qreal receivedObstacleListTimestamp;
+
     px::Path path;
+    qreal receivedPathTimestamp;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
