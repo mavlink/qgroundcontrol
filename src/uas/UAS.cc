@@ -1031,25 +1031,33 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
     if (message->GetTypeName() == pointCloud.GetTypeName())
     {
         receivedPointCloudTimestamp = QGC::groundTimeSeconds();
+        pointCloudMutex.lock();
         pointCloud.CopyFrom(*message);
+        pointCloudMutex.unlock();
         emit pointCloudChanged(this);
     }
     else if (message->GetTypeName() == rgbdImage.GetTypeName())
     {
         receivedRGBDImageTimestamp = QGC::groundTimeSeconds();
+        rgbdImageMutex.lock();
         rgbdImage.CopyFrom(*message);
+        rgbdImageMutex.unlock();
         emit rgbdImageChanged(this);
     }
     else if (message->GetTypeName() == obstacleList.GetTypeName())
     {
         receivedObstacleListTimestamp = QGC::groundTimeSeconds();
+        obstacleListMutex.lock();
         obstacleList.CopyFrom(*message);
+        obstacleListMutex.unlock();
         emit obstacleListChanged(this);
     }
     else if (message->GetTypeName() == path.GetTypeName())
     {
         receivedPathTimestamp = QGC::groundTimeSeconds();
+        pathMutex.lock();
         path.CopyFrom(*message);
+        pathMutex.unlock();
         emit pathChanged(this);
     }
 }
