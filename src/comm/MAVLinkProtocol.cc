@@ -198,6 +198,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //	    }
 //#endif
 #ifdef QGC_PROTOBUF_ENABLED
+
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
             {
                 mavlink_extended_message_t extended_message;
