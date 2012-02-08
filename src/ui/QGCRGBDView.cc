@@ -21,16 +21,38 @@ QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
     enableDepthAction->setChecked(depthEnabled);
     connect(enableDepthAction, SIGNAL(triggered(bool)), this, SLOT(enableDepth(bool)));
 
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 
-void QGCRGBDView::addUAS(UASInterface *uas)
+void QGCRGBDView::setActiveUAS(UASInterface* uas)
 {
-    // TODO Enable multi-uas support
-    connect(uas, SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
+    if (this->uas != NULL)
+    {
+        // Disconnect any previously connected active MAV
+        disconnect(this->uas, SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
+
+        clearData();
+    }
+
+    if (uas)
+    {
+        // Now connect the new UAS
+        // Setup communication
+        connect(uas, SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
+    }
+
+    HUD::setActiveUAS(uas);
 }
 
-void QGCRGBDView::contextMenuEvent (QContextMenuEvent* event)
+void QGCRGBDView::clearData(void)
+{
+    QImage emptyImg(16, 16, QImage::Format_Mono);
+    emptyImg.fill(0);
+
+    glImage = QGLWidget::convertToGLFormat(emptyImg);
+}
+
+void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
 {
     QMenu menu(this);
     // Update actions
@@ -248,7 +270,7 @@ void QGCRGBDView::updateData(UASInterface *uas)
             {
                 if (depth[c] != 0)
                 {
-                    int idx = fminf(depth[c], 7.0f) / 7.0f * 127.0f;
+                    int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
                     idx = 127 - idx;
 
                     pixel[0] = colormapJet[idx][2] * 255.0f;
