@@ -53,6 +53,7 @@
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     : Q3DWidget(parent)
     , uas(NULL)
+    , kMessageTimeout(2.0)
     , mode(DEFAULT_MODE)
     , selectedWpIndex(-1)
     , displayLocalGrid(false)
@@ -299,13 +300,17 @@ Pixhawk3DWidget::selectTargetHeading(void)
         p.set(cursorWorldCoords.first, cursorWorldCoords.second);
     }
 
-    target.z() = atan2(p.y() - target.y(), p.x() - target.x());
+    target.setW(atan2(p.y() - target.y(), p.x() - target.x()));
 }
 
 void
 Pixhawk3DWidget::selectTarget(void)
 {
     if (!uas)
+    {
+        return;
+    }
+    if (!uas->getParamManager())
     {
         return;
     }
@@ -318,7 +323,14 @@ Pixhawk3DWidget::selectTarget(void)
             getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(),
                                     altitude);
 
-        target.set(cursorWorldCoords.first, cursorWorldCoords.second, 0.0);
+        QVariant zTarget;
+        if (!uas->getParamManager()->getParameterValue(MAV_COMP_ID_PATHPLANNER, "TARGET-ALT", zTarget))
+        {
+            zTarget = -altitude;
+        }
+
+        target = QVector4D(cursorWorldCoords.first, cursorWorldCoords.second,
+                           zTarget.toReal(), 0.0);
     }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
@@ -327,7 +339,14 @@ Pixhawk3DWidget::selectTarget(void)
         std::pair<double,double> cursorWorldCoords =
             getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(), -z);
 
-        target.set(cursorWorldCoords.first, cursorWorldCoords.second, 0.0);
+        QVariant zTarget;
+        if (!uas->getParamManager()->getParameterValue(MAV_COMP_ID_PATHPLANNER, "TARGET-ALT", zTarget))
+        {
+            zTarget = z;
+        }
+
+        target = QVector4D(cursorWorldCoords.first, cursorWorldCoords.second,
+                           zTarget.toReal(), 0.0);
     }
 
     enableTarget = true;
@@ -340,8 +359,8 @@ Pixhawk3DWidget::setTarget(void)
 {
     selectTargetHeading();
 
-    uas->setTargetPosition(target.x(), target.y(), 0.0,
-                           osg::RadiansToDegrees(target.z()));
+    uas->setTargetPosition(target.x(), target.y(), target.z(),
+                           osg::RadiansToDegrees(target.w()));
 }
 
 void
@@ -761,7 +780,7 @@ Pixhawk3DWidget::display(void)
 
     if (enableTarget)
     {
-        updateTarget(robotX, robotY);
+        updateTarget(robotX, robotY, robotZ);
     }
 
 #ifdef QGC_PROTOBUF_ENABLED
@@ -1493,19 +1512,20 @@ Pixhawk3DWidget::updateWaypoints(void)
 }
 
 void
-Pixhawk3DWidget::updateTarget(double robotX, double robotY)
+Pixhawk3DWidget::updateTarget(double robotX, double robotY, double robotZ)
 {
     osg::PositionAttitudeTransform* pat =
         dynamic_cast<osg::PositionAttitudeTransform*>(targetNode.get());
 
-    pat->setPosition(osg::Vec3d(target.y() - robotY, target.x() - robotX, 0.0));
-    pat->setAttitude(osg::Quat(target.z() - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+    pat->setPosition(osg::Vec3d(target.y() - robotY,
+                                target.x() - robotX,
+                                -(target.z() - robotZ)));
+    pat->setAttitude(osg::Quat(target.w() - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
                                M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
                                0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
 
     osg::Geode* geode = dynamic_cast<osg::Geode*>(pat->getChild(0));
     osg::ShapeDrawable* sd = dynamic_cast<osg::ShapeDrawable*>(geode->getDrawable(0));
-
 
     sd->setColor(osg::Vec4f(1.0f, 0.8f, 0.0f, 1.0f));
 }
@@ -1607,7 +1627,14 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 void
 Pixhawk3DWidget::updateObstacles(void)
 {
-    obstacleGroupNode->update(frame, uas);
+    if (QGC::groundTimeSeconds() - uas->getObstacleList().header().timestamp() < kMessageTimeout)
+    {
+        obstacleGroupNode->update(frame, uas);
+    }
+    else
+    {
+        obstacleGroupNode->clear();
+    }
 }
 
 void
@@ -1628,51 +1655,54 @@ Pixhawk3DWidget::updatePath(double robotX, double robotY, double robotZ)
 
     osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
 
-    // find path length
-    float length = 0.0f;
-    for (int i = 0; i < path.waypoints_size() - 1; ++i)
+    if (QGC::groundTimeSeconds() - path.header().timestamp() < kMessageTimeout)
     {
-        const px::Waypoint& wp0 = path.waypoints(i);
-        const px::Waypoint& wp1 = path.waypoints(i+1);
+        // find path length
+        float length = 0.0f;
+        for (int i = 0; i < path.waypoints_size() - 1; ++i)
+        {
+            const px::Waypoint& wp0 = path.waypoints(i);
+            const px::Waypoint& wp1 = path.waypoints(i+1);
 
-        length += qgc::hypot3f(wp0.x() - wp1.x(),
-                               wp0.y() - wp1.y(),
-                               wp0.z() - wp1.z());
-    }
+            length += qgc::hypot3f(wp0.x() - wp1.x(),
+                                   wp0.y() - wp1.y(),
+                                   wp0.z() - wp1.z());
+        }
 
-    // build path
-    if (path.waypoints_size() > 0)
-    {
-        const px::Waypoint& wp0 = path.waypoints(0);
+        // build path
+        if (path.waypoints_size() > 0)
+        {
+            const px::Waypoint& wp0 = path.waypoints(0);
 
-        vertices->push_back(osg::Vec3d(wp0.y() - robotY,
-                                       wp0.x() - robotX,
-                                       -(wp0.z() - robotZ)));
+            vertices->push_back(osg::Vec3d(wp0.y() - robotY,
+                                           wp0.x() - robotX,
+                                           -(wp0.z() - robotZ)));
 
-        float r, g, b;
-        qgc::colormap("autumn", 0, r, g, b);
-        colorArray->push_back(osg::Vec4d(r, g, b, 1.0f));
-    }
+            float r, g, b;
+            qgc::colormap("autumn", 0, r, g, b);
+            colorArray->push_back(osg::Vec4d(r, g, b, 1.0f));
+        }
 
-    float lengthCurrent = 0.0f;
-    for (int i = 0; i < path.waypoints_size() - 1; ++i)
-    {
-        const px::Waypoint& wp0 = path.waypoints(i);
-        const px::Waypoint& wp1 = path.waypoints(i+1);
+        float lengthCurrent = 0.0f;
+        for (int i = 0; i < path.waypoints_size() - 1; ++i)
+        {
+            const px::Waypoint& wp0 = path.waypoints(i);
+            const px::Waypoint& wp1 = path.waypoints(i+1);
 
-        lengthCurrent += qgc::hypot3f(wp0.x() - wp1.x(),
-                                      wp0.y() - wp1.y(),
-                                      wp0.z() - wp1.z());
+            lengthCurrent += qgc::hypot3f(wp0.x() - wp1.x(),
+                                          wp0.y() - wp1.y(),
+                                          wp0.z() - wp1.z());
 
-        vertices->push_back(osg::Vec3d(wp1.y() - robotY,
-                                       wp1.x() - robotX,
-                                       -(wp1.z() - robotZ)));
+            vertices->push_back(osg::Vec3d(wp1.y() - robotY,
+                                           wp1.x() - robotX,
+                                           -(wp1.z() - robotZ)));
 
-        int colorIdx = lengthCurrent / length * 127.0f;
+            int colorIdx = lengthCurrent / length * 127.0f;
 
-        float r, g, b;
-        qgc::colormap("autumn", colorIdx, r, g, b);
-        colorArray->push_back(osg::Vec4f(r, g, b, 1.0f));
+            float r, g, b;
+            qgc::colormap("autumn", colorIdx, r, g, b);
+            colorArray->push_back(osg::Vec4f(r, g, b, 1.0f));
+        }
     }
 
     geometry->setVertexArray(vertices);
