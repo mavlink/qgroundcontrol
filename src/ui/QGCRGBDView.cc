@@ -22,6 +22,8 @@ QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
     connect(enableDepthAction, SIGNAL(triggered(bool)), this, SLOT(enableDepth(bool)));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    clearData();
 }
 
 void QGCRGBDView::setActiveUAS(UASInterface* uas)
@@ -46,10 +48,11 @@ void QGCRGBDView::setActiveUAS(UASInterface* uas)
 
 void QGCRGBDView::clearData(void)
 {
-    QImage emptyImg(16, 16, QImage::Format_Mono);
-    emptyImg.fill(0);
+    QImage offlineImg;
+    qDebug() << offlineImg.load(":/images/status/colorbars.png");
 
-    glImage = QGLWidget::convertToGLFormat(emptyImg);
+    glImage = QGLWidget::convertToGLFormat(offlineImg);
+    qDebug() << "cleardata" << offlineImg.isNull() << offlineImg.width() << offlineImg.height();
 }
 
 void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
