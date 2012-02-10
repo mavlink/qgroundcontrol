@@ -59,12 +59,13 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    void addToTrails(UASInterface* uas, int component, double x, double y, double z, quint64 time);
 
 private slots:
     void selectFrame(QString text);
     void showLocalGrid(int state);
     void showWorldGrid(int state);
-    void showTrail(int state);
+    void showTrails(int state);
     void showWaypoints(int state);
     void selectMapSource(int index);
     void selectVehicleModel(int index);
@@ -109,7 +110,7 @@ private:
 
     osg::ref_ptr<osg::Geode> createLocalGrid(void);
     osg::ref_ptr<osg::Geode> createWorldGrid(void);
-    osg::ref_ptr<osg::Geode> createTrail(const osg::Vec4& color);
+    osg::ref_ptr<osg::Geometry> createTrail(const osg::Vec4& color);
     osg::ref_ptr<Imagery> createMap(void);
     osg::ref_ptr<osg::Geode> createRGBD3D(void);
     osg::ref_ptr<osg::Node> createTarget(void);
@@ -120,7 +121,7 @@ private:
     void updateHUD(double robotX, double robotY, double robotZ,
                    double robotRoll, double robotPitch, double robotYaw,
                    const QString& utmZone);
-    void updateTrail(double robotX, double robotY, double robotZ);
+    void updateTrails(double robotX, double robotY, double robotZ);
     void updateImagery(double originX, double originY, double originZ,
                        const QString& zone);
     void updateWaypoints(void);
@@ -149,7 +150,7 @@ private:
 
     bool displayLocalGrid;
     bool displayWorldGrid;
-    bool displayTrail;
+    bool displayTrails;
     bool displayImagery;
     bool displayWaypoints;
     bool displayRGBD2D;
@@ -161,7 +162,8 @@ private:
 
     bool followCamera;
 
-    QVarLengthArray<osg::Vec3d, 10000> trail;
+    QMap<int, QVarLengthArray<osg::Vec3d, 10000> > trails;
+    QMap<int, int> trailDrawableIdxs;
 
     osg::ref_ptr<osg::Node> vehicleModel;
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;

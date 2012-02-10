@@ -240,9 +240,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         bool multiComponentSourceDetected = false;
         bool wrongComponent = false;
 
+        switch (message.compid)
+        {
+        case MAV_COMP_ID_IMU_2:
+            // Prefer IMU 2 over IMU 1 (FIXME)
+            componentID[message.msgid] = MAV_COMP_ID_IMU_2;
+            break;
+        default:
+            // Do nothing
+            break;
+        }
+
         // Store component ID
         if (componentID[message.msgid] == -1)
         {
+            // Prefer the first component
             componentID[message.msgid] = message.compid;
         }
         else
@@ -488,19 +500,38 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_local_position_ned_t pos;
                 mavlink_msg_local_position_ned_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.time_boot_ms);
-                localX = pos.x;
-                localY = pos.y;
-                localZ = pos.z;
-                emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
 
-                // Set internal state
-                if (!positionLock) {
-                    // If position was not locked before, notify positive
-                    GAudioOutput::instance()->notifyPositive();
+                // Emit position always with component ID
+                emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
+
+                if (!wrongComponent)
+                {
+
+                    localX = pos.x;
+                    localY = pos.y;
+                    localZ = pos.z;
+
+                    // Emit
+
+                    emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+                    emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+
+                    // Set internal state
+                    if (!positionLock) {
+                        // If position was not locked before, notify positive
+                        GAudioOutput::instance()->notifyPositive();
+                    }
+                    positionLock = true;
+                    isLocalPositionKnown = true;
                 }
-                positionLock = true;
-                isLocalPositionKnown = true;
+            }
+            break;
+        case MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
+            {
+                mavlink_global_vision_position_estimate_t pos;
+                mavlink_msg_global_vision_position_estimate_decode(&message, &pos);
+                quint64 time = getUnixTime(pos.usec);
+                emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
             }
             break;
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
@@ -785,6 +816,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
             }
             break;
+        case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
+            {
+                mavlink_set_local_position_setpoint_t p;
+                mavlink_msg_set_local_position_setpoint_decode(&message, &p);
+                emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw);
+            }
+            break;
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
@@ -954,7 +992,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 #endif
             // Messages to ignore
-        case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
         case MAVLINK_MSG_ID_RAW_IMU:
         case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:

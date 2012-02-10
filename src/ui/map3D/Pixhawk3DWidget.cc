@@ -58,7 +58,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     , selectedWpIndex(-1)
     , displayLocalGrid(false)
     , displayWorldGrid(true)
-    , displayTrail(true)
+    , displayTrails(true)
     , displayImagery(true)
     , displayWaypoints(true)
     , displayRGBD2D(false)
@@ -88,7 +88,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     allocentricMap->addChild(worldGridNode);
 
     // generate empty trail model
-    trailNode = createTrail(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+    trailNode = new osg::Geode;
     rollingMap->addChild(trailNode);
 
     // generate map model
@@ -114,7 +114,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     rollingMap->addChild(obstacleGroupNode);
 
     // generate path model
-    pathNode = createTrail(osg::Vec4(1.0f, 0.8f, 0.0f, 1.0f));
+    pathNode = new osg::Geode;
+    pathNode->addDrawable(createTrail(osg::Vec4(1.0f, 0.8f, 0.0f, 1.0f)));
     rollingMap->addChild(pathNode);
 #endif
 
@@ -143,13 +144,72 @@ Pixhawk3DWidget::~Pixhawk3DWidget()
 void
 Pixhawk3DWidget::setActiveUAS(UASInterface* uas)
 {
-    if (this->uas != NULL && this->uas != uas)
+    if (this->uas == uas)
     {
-        // Disconnect any previously connected active MAV
-        //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+        return;
     }
 
+    if (this->uas != NULL)
+    {
+        // Disconnect any previously connected active MAV
+        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(addToTrails(UASInterface*,int,double,double,double,quint64)));
+    }
+
+    connect(uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(addToTrails(UASInterface*,int,double,double,double,quint64)));
+    trails.clear();
+
     this->uas = uas;
+}
+
+void
+Pixhawk3DWidget::addToTrails(UASInterface* uas, int component, double x, double y, double z, quint64 time)
+{
+    if (this->uas->getUASID() != uas->getUASID())
+    {
+        return;
+    }
+
+    if (!trails.contains(component))
+    {
+        trails[component] = QVarLengthArray<osg::Vec3d, 10000>();
+        trailDrawableIdxs[component] = trails.size() - 1;
+        trailNode->addDrawable(createTrail(osg::Vec4((float)qrand() / RAND_MAX,
+                                                     (float)qrand() / RAND_MAX,
+                                                     (float)qrand() / RAND_MAX,
+                                                     1.0)));
+    }
+
+    QVarLengthArray<osg::Vec3d, 10000>& trail = trails[component];
+
+    bool addToTrail = false;
+    if (trail.size() > 0)
+    {
+        if (fabs(x - trail[trail.size() - 1].x()) > 0.01f ||
+                fabs(y - trail[trail.size() - 1].y()) > 0.01f ||
+                fabs(z - trail[trail.size() - 1].z()) > 0.01f)
+        {
+            addToTrail = true;
+        }
+    }
+    else
+    {
+        addToTrail = true;
+    }
+
+    if (addToTrail)
+    {
+        osg::Vec3d p(x, y, z);
+        if (trail.size() == trail.capacity())
+        {
+            memcpy(trail.data(), trail.data() + 1,
+                   (trail.size() - 1) * sizeof(osg::Vec3d));
+            trail[trail.size() - 1] = p;
+        }
+        else
+        {
+            trail.append(p);
+        }
+    }
 }
 
 void
@@ -196,20 +256,20 @@ Pixhawk3DWidget::showWorldGrid(int32_t state)
 }
 
 void
-Pixhawk3DWidget::showTrail(int32_t state)
+Pixhawk3DWidget::showTrails(int32_t state)
 {
     if (state == Qt::Checked)
     {
-        if (!displayTrail)
+        if (!displayTrails)
         {
-            trail.clear();
+            trails.clear();
         }
 
-        displayTrail = true;
+        displayTrails = true;
     }
     else
     {
-        displayTrail = false;
+        displayTrails = false;
     }
 }
 
@@ -638,8 +698,8 @@ Pixhawk3DWidget::buildLayout(void)
     worldGridCheckBox->setChecked(displayWorldGrid);
 
     QCheckBox* trailCheckBox = new QCheckBox(this);
-    trailCheckBox->setText("Trail");
-    trailCheckBox->setChecked(displayTrail);
+    trailCheckBox->setText("Trails");
+    trailCheckBox->setChecked(displayTrails);
 
     QCheckBox* waypointsCheckBox = new QCheckBox(this);
     waypointsCheckBox->setText("Waypoints");
@@ -693,7 +753,7 @@ Pixhawk3DWidget::buildLayout(void)
     connect(worldGridCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showWorldGrid(int)));
     connect(trailCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showTrail(int)));
+            this, SLOT(showTrails(int)));
     connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showWaypoints(int)));
     connect(mapComboBox, SIGNAL(currentIndexChanged(int)),
@@ -719,7 +779,7 @@ Pixhawk3DWidget::display(void)
     // set node visibility
     allocentricMap->setChildValue(worldGridNode, displayWorldGrid);
     rollingMap->setChildValue(localGridNode, displayLocalGrid);
-    rollingMap->setChildValue(trailNode, displayTrail);
+    rollingMap->setChildValue(trailNode, displayTrails);
     rollingMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
     rollingMap->setChildValue(targetNode, enableTarget);
@@ -763,9 +823,9 @@ Pixhawk3DWidget::display(void)
                                          robotPitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
                                          robotRoll, osg::Vec3d(0.0f, 1.0f, 0.0f)));
 
-    if (displayTrail)
+    if (displayTrails)
     {
-        updateTrail(robotX, robotY, robotZ);
+        updateTrails(robotX, robotY, robotZ);
     }
 
     if (frame == MAV_FRAME_GLOBAL && displayImagery)
@@ -1157,13 +1217,11 @@ Pixhawk3DWidget::createWorldGrid(void)
     return geode;
 }
 
-osg::ref_ptr<osg::Geode>
+osg::ref_ptr<osg::Geometry>
 Pixhawk3DWidget::createTrail(const osg::Vec4& color)
 {
-    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
     osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
     geometry->setUseDisplayList(false);
-    geode->addDrawable(geometry.get());
 
     osg::ref_ptr<osg::Vec3dArray> vertices(new osg::Vec3dArray());
     geometry->setVertexArray(vertices);
@@ -1183,7 +1241,7 @@ Pixhawk3DWidget::createTrail(const osg::Vec4& color)
     stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
     geometry->setStateSet(stateset);
 
-    return geode;
+    return geometry;
 }
 
 osg::ref_ptr<Imagery>
@@ -1374,58 +1432,33 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
 }
 
 void
-Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
+Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ)
 {
-    if (robotX == 0.0f || robotY == 0.0f || robotZ == 0.0f)
-    {
-        return;
-    }
+    QMapIterator<int,int> it(trailDrawableIdxs);
 
-    bool addToTrail = false;
-    if (trail.size() > 0)
+    while (it.hasNext())
     {
-        if (fabs(robotX - trail[trail.size() - 1].x()) > 0.01f ||
-                fabs(robotY - trail[trail.size() - 1].y()) > 0.01f ||
-                fabs(robotZ - trail[trail.size() - 1].z()) > 0.01f)
+        it.next();
+
+        osg::Geometry* geometry = trailNode->getDrawable(it.value())->asGeometry();
+        osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+
+        osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
+
+        const QVarLengthArray<osg::Vec3d, 10000>& trail = trails.value(it.key());
+
+        for (int i = 0; i < trail.size(); ++i)
         {
-            addToTrail = true;
+            vertices->push_back(osg::Vec3d(trail[i].y() - robotY,
+                                           trail[i].x() - robotX,
+                                           -(trail[i].z() - robotZ)));
         }
-    }
-    else
-    {
-        addToTrail = true;
-    }
 
-    if (addToTrail)
-    {
-        osg::Vec3d p(robotX, robotY, robotZ);
-        if (trail.size() == trail.capacity())
-        {
-            memcpy(trail.data(), trail.data() + 1,
-                   (trail.size() - 1) * sizeof(osg::Vec3d));
-            trail[trail.size() - 1] = p;
-        }
-        else
-        {
-            trail.append(p);
-        }
+        geometry->setVertexArray(vertices);
+        drawArrays->setFirst(0);
+        drawArrays->setCount(vertices->size());
+        geometry->dirtyBound();
     }
-
-    osg::Geometry* geometry = trailNode->getDrawable(0)->asGeometry();
-    osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-
-    osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
-    for (int i = 0; i < trail.size(); ++i)
-    {
-        vertices->push_back(osg::Vec3d(trail[i].y() - robotY,
-                                       trail[i].x() - robotX,
-                                       -(trail[i].z() - robotZ)));
-    }
-
-    geometry->setVertexArray(vertices);
-    drawArrays->setFirst(0);
-    drawArrays->setCount(vertices->size());
-    geometry->dirtyBound();
 }
 
 void
