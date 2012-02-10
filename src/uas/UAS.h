@@ -135,16 +135,48 @@ public:
     bool getSelected() const;
 
 #ifdef QGC_PROTOBUF_ENABLED
-    px::PointCloudXYZRGB getPointCloud() const {
+    px::PointCloudXYZRGB getPointCloud() {
+        QMutexLocker locker(&pointCloudMutex);
         return pointCloud;
     }
 
-    px::RGBDImage getRGBDImage() const {
+    px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedPointCloudTimestamp;
+        QMutexLocker locker(&pointCloudMutex);
+        return pointCloud;
+    }
+
+    px::RGBDImage getRGBDImage() {
+        QMutexLocker locker(&rgbdImageMutex);
         return rgbdImage;
     }
 
-    px::ObstacleList getObstacleList() const {
+    px::RGBDImage getRGBDImage(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedRGBDImageTimestamp;
+        QMutexLocker locker(&rgbdImageMutex);
+        return rgbdImage;
+    }
+
+    px::ObstacleList getObstacleList() {
+        QMutexLocker locker(&obstacleListMutex);
         return obstacleList;
+    }
+
+    px::ObstacleList getObstacleList(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedObstacleListTimestamp;
+        QMutexLocker locker(&obstacleListMutex);
+        return obstacleList;
+    }
+
+    px::Path getPath() {
+        QMutexLocker locker(&pathMutex);
+        return path;
+    }
+
+    px::Path getPath(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedPathTimestamp;
+        QMutexLocker locker(&pathMutex);
+        return path;
     }
 #endif
 
@@ -233,8 +265,20 @@ protected: //COMMENTS FOR TEST UNIT
 
 #ifdef QGC_PROTOBUF_ENABLED
     px::PointCloudXYZRGB pointCloud;
+    QMutex pointCloudMutex;
+    qreal receivedPointCloudTimestamp;
+
     px::RGBDImage rgbdImage;
+    QMutex rgbdImageMutex;
+    qreal receivedRGBDImageTimestamp;
+
     px::ObstacleList obstacleList;
+    QMutex obstacleListMutex;
+    qreal receivedObstacleListTimestamp;
+
+    px::Path path;
+    QMutex pathMutex;
+    qreal receivedPathTimestamp;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
@@ -573,6 +617,8 @@ signals:
     void rgbdImageChanged(UASInterface* uas);
     /** @brief Obstacle list data has been changed */
     void obstacleListChanged(UASInterface* uas);
+    /** @brief Path data has been changed */
+    void pathChanged(UASInterface* uas);
 #endif
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);

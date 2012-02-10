@@ -31,6 +31,10 @@
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 
+#ifdef QGC_PROTOBUF_ENABLED
+#include <google/protobuf/descriptor.h>
+#endif
+
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -198,6 +202,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //	    }
 //#endif
 #ifdef QGC_PROTOBUF_ENABLED
+
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
             {
                 mavlink_extended_message_t extended_message;
@@ -219,7 +224,42 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                     if (protobufManager.getMessage(protobuf_msg))
                     {
-                        emit extendedMessageReceived(link, protobuf_msg);
+                        const google::protobuf::Descriptor* descriptor = protobuf_msg->GetDescriptor();
+                        if (!descriptor)
+                        {
+                            continue;
+                        }
+
+                        const google::protobuf::FieldDescriptor* headerField = descriptor->FindFieldByName("header");
+                        if (!headerField)
+                        {
+                            continue;
+                        }
+
+                        const google::protobuf::Descriptor* headerDescriptor = headerField->message_type();
+                        if (!headerDescriptor)
+                        {
+                            continue;
+                        }
+
+                        const google::protobuf::FieldDescriptor* sourceSysIdField = headerDescriptor->FindFieldByName("source_sysid");
+                        if (!sourceSysIdField)
+                        {
+                            continue;
+                        }
+
+                        const google::protobuf::Reflection* reflection = protobuf_msg->GetReflection();
+                        const google::protobuf::Message& headerMsg = reflection->GetMessage(*protobuf_msg, headerField);
+                        const google::protobuf::Reflection* headerReflection = headerMsg.GetReflection();
+
+                        int source_sysid = headerReflection->GetInt32(headerMsg, sourceSysIdField);
+
+                        UASInterface* uas = UASManager::instance()->getUASForId(source_sysid);
+
+                        if (uas != NULL)
+                        {
+                            emit extendedMessageReceived(link, protobuf_msg);
+                        }
                     }
                 }
 

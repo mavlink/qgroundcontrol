@@ -95,9 +95,14 @@ public:
     virtual bool getSelected() const = 0;
 
 #ifdef QGC_PROTOBUF_ENABLED
-    virtual px::PointCloudXYZRGB getPointCloud() const = 0;
-    virtual px::RGBDImage getRGBDImage() const = 0;
-    virtual px::ObstacleList getObstacleList() const = 0;
+    virtual px::PointCloudXYZRGB getPointCloud() = 0;
+    virtual px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) = 0;
+    virtual px::RGBDImage getRGBDImage() = 0;
+    virtual px::RGBDImage getRGBDImage(qreal& receivedTimestamp) = 0;
+    virtual px::ObstacleList getObstacleList() = 0;
+    virtual px::ObstacleList getObstacleList(qreal& receivedTimestamp) = 0;
+    virtual px::Path getPath() = 0;
+    virtual px::Path getPath(qreal& receivedTimestamp) = 0;
 #endif
 
     virtual bool isArmed() const = 0;
@@ -442,10 +447,15 @@ signals:
     void thrustChanged(UASInterface*, double thrust);
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
+    void attitudeChanged(UASInterface*, int component, double roll, double pitch, double yaw, quint64 usec);
     void attitudeSpeedChanged(int uas, double rollspeed, double pitchspeed, double yawspeed, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+    /** @brief The MAV set a new setpoint in the local (not body) NED X, Y, Z frame */
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
+    /** @brief A user (or an autonomous mission or obstacle avoidance planner) requested to set a new setpoint */
+    void userPositionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
+    void localPositionChanged(UASInterface*, int component, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
     void altitudeChanged(int uasid, double altitude);
     /** @brief Update the status of one satellite used for localization */
