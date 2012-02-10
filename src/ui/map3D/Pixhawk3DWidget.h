@@ -60,6 +60,7 @@ public:
 public slots:
     void setActiveUAS(UASInterface* uas);
     void addToTrails(UASInterface* uas, int component, double x, double y, double z, quint64 time);
+    void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 time);
 
 private slots:
     void selectFrame(QString text);
@@ -176,6 +177,7 @@ private:
     osg::ref_ptr<osg::Geode> localGridNode;
     osg::ref_ptr<osg::Geode> worldGridNode;
     osg::ref_ptr<osg::Geode> trailNode;
+    osg::ref_ptr<osg::Group> orientationNode;
     osg::ref_ptr<Imagery> mapNode;
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
     osg::ref_ptr<osg::Node> targetNode;

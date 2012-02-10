@@ -91,6 +91,9 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     trailNode = new osg::Geode;
     rollingMap->addChild(trailNode);
 
+    orientationNode = new osg::Group;
+    rollingMap->addChild(orientationNode);
+
     // generate map model
     mapNode = createMap();
     rollingMap->addChild(mapNode);
@@ -153,10 +156,15 @@ Pixhawk3DWidget::setActiveUAS(UASInterface* uas)
     {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(addToTrails(UASInterface*,int,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double,double,double,quint64)));
     }
 
     connect(uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(addToTrails(UASInterface*,int,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double,double,double,quint64)));
+
     trails.clear();
+    trailNode->removeDrawables(0, trailNode->getNumDrawables());
+    orientationNode->removeChildren(0, orientationNode->getNumChildren());
 
     this->uas = uas;
 }
@@ -173,10 +181,56 @@ Pixhawk3DWidget::addToTrails(UASInterface* uas, int component, double x, double 
     {
         trails[component] = QVarLengthArray<osg::Vec3d, 10000>();
         trailDrawableIdxs[component] = trails.size() - 1;
-        trailNode->addDrawable(createTrail(osg::Vec4((float)qrand() / RAND_MAX,
-                                                     (float)qrand() / RAND_MAX,
-                                                     (float)qrand() / RAND_MAX,
-                                                     1.0)));
+
+        osg::Vec4 color((float)qrand() / RAND_MAX,
+                        (float)qrand() / RAND_MAX,
+                        (float)qrand() / RAND_MAX,
+                        0.5);
+        trailNode->addDrawable(createTrail(color));
+
+        double radius = 0.5;
+
+        osg::ref_ptr<osg::Group> group = new osg::Group;
+
+        // cone indicates waypoint orientation
+        osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
+        double coneRadius = radius / 2.0;
+        osg::ref_ptr<osg::Cone> cone =
+            new osg::Cone(osg::Vec3d(0.0, 0.0, 0.0),
+                          coneRadius, radius * 2.0);
+
+        sd->setShape(cone);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(color);
+
+        osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+        geode->addDrawable(sd);
+
+        osg::ref_ptr<osg::PositionAttitudeTransform> pat =
+            new osg::PositionAttitudeTransform;
+        pat->addChild(geode);
+        pat->setAttitude(osg::Quat(- M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                   M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                                   0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+        group->addChild(pat);
+
+        // cylinder indicates waypoint position
+        sd = new osg::ShapeDrawable;
+        osg::ref_ptr<osg::Cylinder> cylinder =
+            new osg::Cylinder(osg::Vec3d(0.0, 0.0, 0.0),
+                              radius, 0);
+
+        sd->setShape(cylinder);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(color);
+
+        geode = new osg::Geode;
+        geode->addDrawable(sd);
+        group->addChild(geode);
+
+        pat = new osg::PositionAttitudeTransform;
+        orientationNode->addChild(pat);
+        pat->addChild(group);
     }
 
     QVarLengthArray<osg::Vec3d, 10000>& trail = trails[component];
@@ -210,6 +264,29 @@ Pixhawk3DWidget::addToTrails(UASInterface* uas, int component, double x, double 
             trail.append(p);
         }
     }
+}
+
+void
+Pixhawk3DWidget::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 time)
+{
+    if (this->uas->getUASID() != uas->getUASID())
+    {
+        return;
+    }
+
+    if (!trails.contains(component))
+    {
+        return;
+    }
+
+    int idx = trailDrawableIdxs[component];
+
+    osg::PositionAttitudeTransform* pat =
+        dynamic_cast<osg::PositionAttitudeTransform*>(orientationNode->getChild(idx));
+
+    pat->setAttitude(osg::Quat(-yaw, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                               0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
 }
 
 void
@@ -780,6 +857,7 @@ Pixhawk3DWidget::display(void)
     allocentricMap->setChildValue(worldGridNode, displayWorldGrid);
     rollingMap->setChildValue(localGridNode, displayLocalGrid);
     rollingMap->setChildValue(trailNode, displayTrails);
+    rollingMap->setChildValue(orientationNode, displayTrails);
     rollingMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
     rollingMap->setChildValue(targetNode, enableTarget);
@@ -1458,6 +1536,12 @@ Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ)
         drawArrays->setFirst(0);
         drawArrays->setCount(vertices->size());
         geometry->dirtyBound();
+
+        osg::PositionAttitudeTransform* pat =
+            dynamic_cast<osg::PositionAttitudeTransform*>(orientationNode->getChild(it.value()));
+        pat->setPosition(osg::Vec3(trail[trail.size() - 1].y() - robotY,
+                                   trail[trail.size() - 1].x() - robotX,
+                                   -(trail[trail.size() - 1].z() - robotZ)));
     }
 }
 

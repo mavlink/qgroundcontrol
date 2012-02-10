@@ -462,9 +462,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                    compass = 0.0f;
 //                }
 
-
                 attitudeKnown = true;
                 emit attitudeChanged(this, roll, pitch, yaw, time);
+                emit attitudeChanged(this, message.compid, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
             break;
@@ -532,6 +532,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_global_vision_position_estimate_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
                 emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
+                emit attitudeChanged(this, message.compid, pos.roll, pos.pitch, pos.yaw, time);
             }
             break;
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
