@@ -28,6 +28,7 @@
 #include "QGCMissionNavReturnToLaunch.h"
 #include "QGCMissionNavLand.h"
 #include "QGCMissionNavTakeoff.h"
+#include "QGCMissionNavSweep.h"
 #include "QGCMissionConditionDelay.h"
 #include "QGCMissionDoJump.h"
 #include "QGCMissionOther.h"
@@ -56,6 +57,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     MissionNavReturnToLaunchWidget = NULL;
     MissionNavLandWidget = NULL;
     MissionNavTakeoffWidget = NULL;
+    MissionNavSweepWidget = NULL;
     MissionDoJumpWidget = NULL;
     MissionConditionDelayWidget = NULL;
     MissionOtherWidget = NULL;
@@ -72,7 +74,10 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     //m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
     m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
     //m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
-    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
+    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);    
+#ifdef MAVLINK_ENABLED_PIXHAWK
+    m_ui->comboBox_action->addItem(tr("NAV: Sweep"),MAV_CMD_NAV_SWEEP);
+#endif
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
 
     // add frames
@@ -174,6 +179,12 @@ void WaypointEditableView::updateActionView(int action)
         case MAV_CMD_DO_JUMP:
             if(MissionDoJumpWidget) MissionDoJumpWidget->show();
             break;
+        #ifdef MAVLINK_ENABLED_PIXHAWK
+        case MAV_CMD_NAV_SWEEP:
+            if(MissionNavSweepWidget) MissionNavSweepWidget->show();
+            break;
+        #endif
+
         default:
             if(MissionOtherWidget) MissionOtherWidget->show();
             viewMode = QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING;
@@ -276,7 +287,15 @@ void WaypointEditableView::initializeActionView(int actionID)
             m_ui->customActionWidget->layout()->addWidget(MissionDoJumpWidget);
         }
         break;
-
+ #ifdef MAVLINK_ENABLED_PIXHAWK
+    case MAV_CMD_NAV_SWEEP:
+        if (!MissionNavSweepWidget)
+        {
+            MissionNavSweepWidget = new QGCMissionNavSweep(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionNavSweepWidget);
+        }
+        break;
+#endif
     case MAV_CMD_ENUM_END:
     default:
         if (!MissionOtherWidget)
