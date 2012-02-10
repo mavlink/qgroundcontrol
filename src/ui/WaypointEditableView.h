@@ -53,6 +53,7 @@ class QGCMissionNavLoiterTime;
 class QGCMissionNavReturnToLaunch;
 class QGCMissionNavLand;
 class QGCMissionNavTakeoff;
+class QGCMissionNavSweep;
 class QGCMissionDoJump;
 class QGCMissionConditionDelay;
 class QGCMissionOther;
@@ -105,6 +106,7 @@ protected:
     QGCMissionNavReturnToLaunch* MissionNavReturnToLaunchWidget;
     QGCMissionNavLand* MissionNavLandWidget;
     QGCMissionNavTakeoff* MissionNavTakeoffWidget;
+    QGCMissionNavSweep* MissionNavSweepWidget;
     QGCMissionDoJump* MissionDoJumpWidget;
     QGCMissionConditionDelay* MissionConditionDelayWidget;
     QGCMissionOther* MissionOtherWidget;
