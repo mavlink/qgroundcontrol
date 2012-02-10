@@ -57,6 +57,7 @@ public slots:
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
+    void updateUserPositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired);
     void updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
