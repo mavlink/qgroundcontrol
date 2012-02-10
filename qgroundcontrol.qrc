@@ -75,6 +75,7 @@
         <file>images/status/audio-volume-medium.svg</file>
         <file>images/status/audio-volume-low.svg</file>
         <file>images/status/audio-volume-high.svg</file>
+	<file>images/status/colorbars.png</file>
         <file>images/style-mission.css</file>
         <file>images/splash.png</file>
         <file>audio/alert.wav</file>

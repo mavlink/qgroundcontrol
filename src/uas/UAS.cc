@@ -27,6 +27,10 @@
 #include "LinkManager.h"
 #include "SerialLink.h"
 
+#ifdef QGC_PROTOBUF_ENABLED
+#include <google/protobuf/descriptor.h>
+#endif
+
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     uasId(id),
     startTime(QGC::groundTimeMilliseconds()),
@@ -71,6 +75,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     pitch(0.0),
     yaw(0.0),
     statusTimeout(new QTimer(this)),
+#ifdef QGC_PROTOBUF_ENABLED
+    receivedPointCloudTimestamp(0.0),
+    receivedRGBDImageTimestamp(0.0),
+    receivedObstacleListTimestamp(0.0),
+    receivedPathTimestamp(0.0),
+#endif
     paramsOnceRequested(false),
     airframe(QGC_AIRFRAME_EASYSTAR),
     attitudeKnown(false),
@@ -230,9 +240,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         bool multiComponentSourceDetected = false;
         bool wrongComponent = false;
 
+        switch (message.compid)
+        {
+        case MAV_COMP_ID_IMU_2:
+            // Prefer IMU 2 over IMU 1 (FIXME)
+            componentID[message.msgid] = MAV_COMP_ID_IMU_2;
+            break;
+        default:
+            // Do nothing
+            break;
+        }
+
         // Store component ID
         if (componentID[message.msgid] == -1)
         {
+            // Prefer the first component
             componentID[message.msgid] = message.compid;
         }
         else
@@ -440,9 +462,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                    compass = 0.0f;
 //                }
 
-
                 attitudeKnown = true;
                 emit attitudeChanged(this, roll, pitch, yaw, time);
+                emit attitudeChanged(this, message.compid, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
             break;
@@ -478,19 +500,39 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_local_position_ned_t pos;
                 mavlink_msg_local_position_ned_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.time_boot_ms);
-                localX = pos.x;
-                localY = pos.y;
-                localZ = pos.z;
-                emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
 
-                // Set internal state
-                if (!positionLock) {
-                    // If position was not locked before, notify positive
-                    GAudioOutput::instance()->notifyPositive();
+                // Emit position always with component ID
+                emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
+
+                if (!wrongComponent)
+                {
+
+                    localX = pos.x;
+                    localY = pos.y;
+                    localZ = pos.z;
+
+                    // Emit
+
+                    emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+                    emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+
+                    // Set internal state
+                    if (!positionLock) {
+                        // If position was not locked before, notify positive
+                        GAudioOutput::instance()->notifyPositive();
+                    }
+                    positionLock = true;
+                    isLocalPositionKnown = true;
                 }
-                positionLock = true;
-                isLocalPositionKnown = true;
+            }
+            break;
+        case MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
+            {
+                mavlink_global_vision_position_estimate_t pos;
+                mavlink_msg_global_vision_position_estimate_decode(&message, &pos);
+                quint64 time = getUnixTime(pos.usec);
+                emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
+                emit attitudeChanged(this, message.compid, pos.roll, pos.pitch, pos.yaw, time);
             }
             break;
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
@@ -786,6 +828,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
             }
             break;
+        case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
+            {
+                mavlink_set_local_position_setpoint_t p;
+                mavlink_msg_set_local_position_setpoint_decode(&message, &p);
+                emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw);
+            }
+            break;
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
@@ -955,7 +1004,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 #endif
             // Messages to ignore
-        case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
         case MAVLINK_MSG_ID_RAW_IMU:
         case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
@@ -988,26 +1036,81 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #ifdef QGC_PROTOBUF_ENABLED
 void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message)
 {
-    if (!link) return;
+    if (!link)
+    {
+        return;
+    }
     if (!links->contains(link))
     {
         addLink(link);
     }
 
+    const google::protobuf::Descriptor* descriptor = message->GetDescriptor();
+    if (!descriptor)
+    {
+        return;
+    }
+
+    const google::protobuf::FieldDescriptor* headerField = descriptor->FindFieldByName("header");
+    if (!headerField)
+    {
+        return;
+    }
+
+    const google::protobuf::Descriptor* headerDescriptor = headerField->message_type();
+    if (!headerDescriptor)
+    {
+        return;
+    }
+
+    const google::protobuf::FieldDescriptor* sourceSysIdField = headerDescriptor->FindFieldByName("source_sysid");
+    if (!sourceSysIdField)
+    {
+        return;
+    }
+
+    const google::protobuf::Reflection* reflection = message->GetReflection();
+    const google::protobuf::Message& headerMsg = reflection->GetMessage(*message, headerField);
+    const google::protobuf::Reflection* headerReflection = headerMsg.GetReflection();
+
+    int source_sysid = headerReflection->GetInt32(headerMsg, sourceSysIdField);
+
+    if (source_sysid != uasId)
+    {
+        return;
+    }
+
     if (message->GetTypeName() == pointCloud.GetTypeName())
     {
+        receivedPointCloudTimestamp = QGC::groundTimeSeconds();
+        pointCloudMutex.lock();
         pointCloud.CopyFrom(*message);
+        pointCloudMutex.unlock();
         emit pointCloudChanged(this);
     }
     else if (message->GetTypeName() == rgbdImage.GetTypeName())
     {
+        receivedRGBDImageTimestamp = QGC::groundTimeSeconds();
+        rgbdImageMutex.lock();
         rgbdImage.CopyFrom(*message);
+        rgbdImageMutex.unlock();
         emit rgbdImageChanged(this);
     }
     else if (message->GetTypeName() == obstacleList.GetTypeName())
     {
+        receivedObstacleListTimestamp = QGC::groundTimeSeconds();
+        obstacleListMutex.lock();
         obstacleList.CopyFrom(*message);
+        obstacleListMutex.unlock();
         emit obstacleListChanged(this);
+    }
+    else if (message->GetTypeName() == path.GetTypeName())
+    {
+        receivedPathTimestamp = QGC::groundTimeSeconds();
+        pathMutex.lock();
+        path.CopyFrom(*message);
+        pathMutex.unlock();
+        emit pathChanged(this);
     }
 }
 

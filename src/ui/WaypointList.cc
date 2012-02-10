@@ -155,7 +155,10 @@ void WaypointList::updateAttitude(UASInterface* uas, double roll, double pitch, 
 
 void WaypointList::setUAS(UASInterface* uas)
 {
-    //if (this->uas == NULL && uas != NULL)
+    if (this->uas == NULL && uas != NULL)
+    {
+        WPM = uas->getWaypointManager();
+    }
     if (this->uas == NULL)
     {
         this->uas = uas;
