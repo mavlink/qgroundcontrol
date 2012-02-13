@@ -365,7 +365,7 @@ HEADERS += src/MG.h \
     src/ui/map3D/gpl.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
-macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
+macx|macx-g++|macx-g++42|linux-g++|linux-g++-64|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
     
@@ -499,7 +499,7 @@ SOURCES += src/main.cc \
     src/ui/map3D/gpl.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
-macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+macx|macx-g++|macx-g++42|linux-g++|linux-g++-64|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 
 # Enable OSG only if it has been found
 contains(DEPENDENCIES_PRESENT, osg) { 
