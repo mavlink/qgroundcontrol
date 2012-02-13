@@ -59,6 +59,12 @@
    </item>
    <item>
     <widget class="QDoubleSpinBox" name="param1SpinBox">
+     <property name="toolTip">
+      <string>Mission parameter #1</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #1</string>
+     </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
@@ -79,7 +85,10 @@
    <item>
     <widget class="QDoubleSpinBox" name="param2SpinBox">
      <property name="toolTip">
-      <string/>
+      <string>Mission parameter #2</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #2</string>
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
@@ -100,6 +109,12 @@
    </item>
    <item>
     <widget class="QDoubleSpinBox" name="param3SpinBox">
+     <property name="toolTip">
+      <string>Mission parameter #3</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #3</string>
+     </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
@@ -119,6 +134,12 @@
    </item>
    <item>
     <widget class="QDoubleSpinBox" name="param4SpinBox">
+     <property name="toolTip">
+      <string>Mission parameter #4</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #4</string>
+     </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
@@ -138,6 +159,12 @@
    </item>
    <item>
     <widget class="QDoubleSpinBox" name="param5SpinBox">
+     <property name="toolTip">
+      <string>Mission parameter #5</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #5</string>
+     </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
@@ -157,6 +184,12 @@
    </item>
    <item>
     <widget class="QDoubleSpinBox" name="param6SpinBox">
+     <property name="toolTip">
+      <string>Mission parameter #6</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #6</string>
+     </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>
@@ -176,6 +209,12 @@
    </item>
    <item>
     <widget class="QDoubleSpinBox" name="param7SpinBox">
+     <property name="toolTip">
+      <string>Mission parameter #7</string>
+     </property>
+     <property name="statusTip">
+      <string>Mission parameter #7</string>
+     </property>
      <property name="keyboardTracking">
       <bool>false</bool>
      </property>

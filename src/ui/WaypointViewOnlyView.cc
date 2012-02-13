@@ -365,17 +365,18 @@ void WaypointViewOnlyView::updateValues()
         m_ui->displayBar->setText(QString("Delay: %1 sec").arg(wp->getParam1()));
         break;
     }
-    case 237: //MAV_CMD_DO_START_SEARCH
+#ifdef MAVLINK_ENABLED_PIXHAWK
+    case MAV_CMD_DO_START_SEARCH:
     {
         m_ui->displayBar->setText(QString("Start searching for pattern. Success when got more than %2 detections with confidence %1").arg(wp->getParam1()).arg(wp->getParam2()));
         break;
     }
-    case 238: //MAV_CMD_DO_FINISH_SEARCH
+    case MAV_CMD_DO_FINISH_SEARCH:
     {
         m_ui->displayBar->setText(QString("Check if search was successful. yes -> jump to %1, no -> jump to %2.  Jumps left: %3").arg(wp->getParam1()).arg(wp->getParam2()).arg(wp->getParam3()));
         break;
     }
-    case 240: //MAV_CMD_DO_SWEEP
+    case MAV_CMD_NAV_SWEEP:
     {
         switch (wp->getFrame())
         {
@@ -394,6 +395,7 @@ void WaypointViewOnlyView::updateValues()
         } //end Frame switch
         break;
     }
+#endif
     default:
     {
         m_ui->displayBar->setText(QString("Unknown Command ID (%1) : %2, %3, %4, %5, %6, %7, %8").arg(wp->getAction()).arg(wp->getParam1()).arg(wp->getParam2()).arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()));

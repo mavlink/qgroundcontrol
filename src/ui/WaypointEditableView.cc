@@ -31,6 +31,8 @@
 #include "QGCMissionNavSweep.h"
 #include "QGCMissionConditionDelay.h"
 #include "QGCMissionDoJump.h"
+#include "QGCMissionDoStartSearch.h"
+#include "QGCMissionDoFinishSearch.h"
 #include "QGCMissionOther.h"
 
 
@@ -58,8 +60,10 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     MissionNavLandWidget = NULL;
     MissionNavTakeoffWidget = NULL;
     MissionNavSweepWidget = NULL;
-    MissionDoJumpWidget = NULL;
     MissionConditionDelayWidget = NULL;
+    MissionDoJumpWidget = NULL;    
+    MissionDoStartSearchWidget = NULL;
+    MissionDoFinishSearchWidget = NULL;
     MissionOtherWidget = NULL;
 
 
@@ -77,6 +81,8 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);    
 #ifdef MAVLINK_ENABLED_PIXHAWK
     m_ui->comboBox_action->addItem(tr("NAV: Sweep"),MAV_CMD_NAV_SWEEP);
+    m_ui->comboBox_action->addItem(tr("Do: Start Search"),MAV_CMD_DO_START_SEARCH);
+    m_ui->comboBox_action->addItem(tr("Do: Finish Search"),MAV_CMD_DO_FINISH_SEARCH);
 #endif
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
 
@@ -144,8 +150,11 @@ void WaypointEditableView::updateActionView(int action)
     if(MissionNavReturnToLaunchWidget) MissionNavReturnToLaunchWidget->hide();
     if(MissionNavLandWidget) MissionNavLandWidget->hide();
     if(MissionNavTakeoffWidget) MissionNavTakeoffWidget->hide();
+    if(MissionNavSweepWidget) MissionNavSweepWidget->hide();
     if(MissionConditionDelayWidget) MissionConditionDelayWidget->hide();
     if(MissionDoJumpWidget) MissionDoJumpWidget->hide();
+    if(MissionDoStartSearchWidget) MissionDoStartSearchWidget->hide();
+    if(MissionDoFinishSearchWidget) MissionDoFinishSearchWidget->hide();
     if(MissionOtherWidget) MissionOtherWidget->hide();
 
     //Show only the correct one
@@ -182,6 +191,12 @@ void WaypointEditableView::updateActionView(int action)
         #ifdef MAVLINK_ENABLED_PIXHAWK
         case MAV_CMD_NAV_SWEEP:
             if(MissionNavSweepWidget) MissionNavSweepWidget->show();
+            break;
+        case MAV_CMD_DO_START_SEARCH:
+            if(MissionDoStartSearchWidget) MissionDoStartSearchWidget->show();
+            break;
+        case MAV_CMD_DO_FINISH_SEARCH:
+            if(MissionDoFinishSearchWidget) MissionDoFinishSearchWidget->show();
             break;
         #endif
 
@@ -293,6 +308,20 @@ void WaypointEditableView::initializeActionView(int actionID)
         {
             MissionNavSweepWidget = new QGCMissionNavSweep(this);
             m_ui->customActionWidget->layout()->addWidget(MissionNavSweepWidget);
+        }
+        break;
+    case MAV_CMD_DO_START_SEARCH:
+        if (!MissionDoStartSearchWidget)
+        {
+            MissionDoStartSearchWidget = new QGCMissionDoStartSearch(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionDoStartSearchWidget);
+        }
+        break;
+    case MAV_CMD_DO_FINISH_SEARCH:
+        if (!MissionDoFinishSearchWidget)
+        {
+            MissionDoFinishSearchWidget = new QGCMissionDoFinishSearch(this);
+            m_ui->customActionWidget->layout()->addWidget(MissionDoFinishSearchWidget);
         }
         break;
 #endif
