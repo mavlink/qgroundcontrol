@@ -361,7 +361,8 @@ HEADERS += src/MG.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
     src/ui/QGCPluginHost.h \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h \
+    src/ui/map3D/gpl.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -387,7 +388,7 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including headers for Protocol Buffers")
 
     # Enable only if protobuf is available
-    HEADERS += ../mavlink/include/pixhawk/pixhawk.pb.h \
+    HEADERS += thirdParty/mavlink/include/pixhawk/pixhawk.pb.h \
                src/ui/map3D/ObstacleGroupNode.h
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
@@ -494,7 +495,8 @@ SOURCES += src/main.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc \
+    src/ui/map3D/gpl.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -528,7 +530,7 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including sources for Protocol Buffers")
 
     # Enable only if protobuf is available
-    SOURCES += ../mavlink/src/pixhawk/pixhawk.pb.cc \
+    SOURCES += thirdParty/mavlink/src/pixhawk/pixhawk.pb.cc \
                src/ui/map3D/ObstacleGroupNode.cc
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 

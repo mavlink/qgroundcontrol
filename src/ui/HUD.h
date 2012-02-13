@@ -61,7 +61,7 @@ public slots:
     //void paintGL();
 
     /** @brief Set the currently monitored UAS */
-    void setActiveUAS(UASInterface* uas);
+    virtual void setActiveUAS(UASInterface* uas);
 
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
 //    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);

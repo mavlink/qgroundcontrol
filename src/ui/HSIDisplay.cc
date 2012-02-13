@@ -637,10 +637,39 @@ void HSIDisplay::keyPressEvent(QKeyEvent* event)
         statusClearTimer.start();
         sendBodySetPointCoordinates();
     }
-    else
+    else if ((event->key() ==  Qt::Key_Up))
     {
-        HDDisplay::keyPressEvent(event);
+        setBodySetpointCoordinateXY(0.5, 0);
     }
+    else if ((event->key() ==  Qt::Key_Down))
+    {
+        setBodySetpointCoordinateXY(-0.5, 0);
+    }
+    else if ((event->key() ==  Qt::Key_Left))
+    {
+        setBodySetpointCoordinateXY(0, -0.5);
+    }
+    else if ((event->key() ==  Qt::Key_Right))
+    {
+        setBodySetpointCoordinateXY(0, 0.5);
+    }
+    else if ((event->key() ==  Qt::Key_Plus))
+    {
+        setBodySetpointCoordinateZ(-0.2);
+    }
+    else if ((event->key() ==  Qt::Key_Minus))
+    {
+        setBodySetpointCoordinateZ(+0.2);
+    }
+    else if ((event->key() ==  Qt::Key_L))
+    {
+        setBodySetpointCoordinateYaw(-0.1);
+    }
+    else if ((event->key() ==  Qt::Key_R))
+    {
+        setBodySetpointCoordinateYaw(0.1);
+    }
+     HDDisplay::keyPressEvent(event);
 }
 
 void HSIDisplay::contextMenuEvent (QContextMenuEvent* event)
@@ -668,6 +697,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
+        disconnect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)), this, SLOT(updateUserPositionSetpoints(int,float,float,float,float)));
         disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
@@ -688,6 +718,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
     connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
+    connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)), this, SLOT(updateUserPositionSetpoints(int,float,float,float,float)));
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
@@ -809,6 +840,16 @@ void HSIDisplay::updateAttitude(UASInterface* uas, double roll, double pitch, do
     this->roll = roll;
     this->pitch = pitch;
     this->yaw = yaw;
+}
+
+void HSIDisplay::updateUserPositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired)
+{
+    uiXSetCoordinate = xDesired;
+    uiYSetCoordinate = yDesired;
+    uiZSetCoordinate = zDesired;
+    uiYawSet = yawDesired;
+    userXYSetPointSet = true;
+    userSetPointSet = true;
 }
 
 void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec)
