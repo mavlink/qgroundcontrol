@@ -220,7 +220,7 @@ float colormapJet[128][3] = {
 
 void QGCRGBDView::updateData(UASInterface *uas)
 {
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::RGBDImage rgbdImage = uas->getRGBDImage();
 
     if (rgbdImage.rows() == 0 || rgbdImage.cols() == 0 || (!rgbEnabled && !depthEnabled))

@@ -134,7 +134,7 @@ public:
     }
     bool getSelected() const;
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::PointCloudXYZRGB getPointCloud() {
         QMutexLocker locker(&pointCloudMutex);
         return pointCloud;
@@ -263,7 +263,7 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::PointCloudXYZRGB pointCloud;
     QMutex pointCloudMutex;
     qreal receivedPointCloudTimestamp;
@@ -610,7 +610,7 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     /** @brief Point cloud data has been changed */
     void pointCloudChanged(UASInterface* uas);
     /** @brief RGBD image data has been changed */
