@@ -38,7 +38,7 @@
 #include "Imagery.h"
 #include "ImageWindowGeode.h"
 #include "WaypointGroupNode.h"
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     #include "ObstacleGroupNode.h"
 #endif
 
@@ -127,7 +127,7 @@ private:
                        const QString& zone);
     void updateWaypoints(void);
     void updateTarget(double robotX, double robotY, double robotZ);
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     void updateRGBD(double robotX, double robotY, double robotZ);
     void updateObstacles(double robotX, double robotY, double robotZ);
     void updatePath(double robotX, double robotY, double robotZ);
@@ -182,7 +182,7 @@ private:
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
     osg::ref_ptr<osg::Node> targetNode;
     osg::ref_ptr<osg::Geode> rgbd3DNode;
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     osg::ref_ptr<ObstacleGroupNode> obstacleGroupNode;
     osg::ref_ptr<osg::Geode> pathNode;
 #endif

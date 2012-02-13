@@ -206,7 +206,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #endif
 }
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED)
 void PxQuadMAV::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message)
 {
     UAS::receiveExtendedMessage(link, message);

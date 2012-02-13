@@ -42,8 +42,12 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLink.h"
 #include "QGC.h"
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED)
+#include <tr1/memory>
+#include <google/protobuf/message.h>
+#if defined(QGC_USE_PIXHAWK_MESSAGES)
 #include <mavlink_protobuf_manager.hpp>
+#endif
 #endif
 
 
@@ -202,14 +206,14 @@ protected:
     int currLossCounter;
     bool versionMismatchIgnore;
     int systemId;
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     mavlink::ProtobufManager protobufManager;
 #endif
 
 signals:
     /** @brief Message received and directly copied via signal */
     void messageReceived(LinkInterface* link, mavlink_message_t message);
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED)
     /** @brief Message received via signal */
     void extendedMessageReceived(LinkInterface *link, std::tr1::shared_ptr<google::protobuf::Message> message);
 #endif
