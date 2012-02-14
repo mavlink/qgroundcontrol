@@ -816,6 +816,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
         case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT:
         {
+            if (multiComponentSourceDetected && wrongComponent)
+            {
+                break;
+            }
             mavlink_local_position_setpoint_t p;
             mavlink_msg_local_position_setpoint_decode(&message, &p);
             emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
