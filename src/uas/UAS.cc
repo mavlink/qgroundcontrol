@@ -755,7 +755,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
                 else
                 {
-                    qDebug() << "Got waypoint message, but was not for me";
+                    qDebug() << QString("Received mission count, but was for %1 not me (%2)").arg(wpc.target_system).arg(mavlink->getSystemId());
                 }
             }
             break;
@@ -764,14 +764,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_mission_item_t wp;
                 mavlink_msg_mission_item_decode(&message, &wp);
-                //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
                 if(wp.target_system == mavlink->getSystemId())
                 {
                     waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
                 }
                 else
                 {
-                    qDebug() << "Got waypoint message, but was not for me";
+                    qDebug() << QString("Received mission item, but was for %1 not me (%2)").arg(wp.target_system).arg(mavlink->getSystemId());
                 }
             }
             break;
@@ -797,7 +796,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
                 else
                 {
-                    qDebug() << "Got waypoint message, but was not for me";
+                    qDebug() << QString("Received mission request, but was for %1 not me (%2)").arg(wpr.target_system).arg(mavlink->getSystemId());
                 }
             }
             break;
