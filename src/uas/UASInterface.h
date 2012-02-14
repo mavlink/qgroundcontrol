@@ -46,7 +46,9 @@ This file is part of the QGROUNDCONTROL project
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <tr1/memory>
+#ifdef QGC_USE_PIXHAWK_MESSAGES
 #include <pixhawk/pixhawk.pb.h>
+#endif
 #endif
 
 /**
@@ -94,7 +96,7 @@ public:
 
     virtual bool getSelected() const = 0;
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     virtual px::PointCloudXYZRGB getPointCloud() = 0;
     virtual px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) = 0;
     virtual px::RGBDImage getRGBDImage() = 0;

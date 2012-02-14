@@ -75,7 +75,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     pitch(0.0),
     yaw(0.0),
     statusTimeout(new QTimer(this)),
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedPointCloudTimestamp(0.0),
     receivedRGBDImageTimestamp(0.0),
     receivedObstacleListTimestamp(0.0),
@@ -1033,7 +1033,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
     }
 }
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED)
 void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message)
 {
     if (!link)
@@ -1080,6 +1080,7 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
         return;
     }
 
+#ifdef QGC_USE_PIXHAWK_MESSAGES
     if (message->GetTypeName() == pointCloud.GetTypeName())
     {
         receivedPointCloudTimestamp = QGC::groundTimeSeconds();
@@ -1112,6 +1113,7 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
         pathMutex.unlock();
         emit pathChanged(this);
     }
+#endif
 }
 
 #endif
