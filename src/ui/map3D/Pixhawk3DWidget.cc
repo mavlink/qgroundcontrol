@@ -45,7 +45,7 @@
 #include "QGC.h"
 #include "gpl.h"
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
 #include <tr1/memory>
 #include <pixhawk/pixhawk.pb.h>
 #endif
@@ -111,7 +111,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     rgbd3DNode = createRGBD3D();
     rollingMap->addChild(rgbd3DNode);
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     obstacleGroupNode = new ObstacleGroupNode;
     obstacleGroupNode->init();
     rollingMap->addChild(obstacleGroupNode);
@@ -861,7 +861,7 @@ Pixhawk3DWidget::display(void)
     rollingMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
     rollingMap->setChildValue(targetNode, enableTarget);
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     rollingMap->setChildValue(obstacleGroupNode, displayObstacleList);
     rollingMap->setChildValue(pathNode, displayPath);
 #endif
@@ -921,7 +921,7 @@ Pixhawk3DWidget::display(void)
         updateTarget(robotX, robotY, robotZ);
     }
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     if (displayRGBD2D || displayRGBD3D)
     {
         updateRGBD(robotX, robotY, robotZ);
@@ -1647,7 +1647,7 @@ Pixhawk3DWidget::updateTarget(double robotX, double robotY, double robotZ)
     sd->setColor(osg::Vec4f(1.0f, 0.8f, 0.0f, 1.0f));
 }
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
 void
 Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 {

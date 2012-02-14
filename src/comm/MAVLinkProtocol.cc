@@ -201,7 +201,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //		    continue;
 //	    }
 //#endif
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED)
 
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
             {
@@ -217,6 +217,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                 // copy extended payload data
                 memcpy(extended_message.extended_payload, extended_payload, extended_message.extended_payload_len);
+
+#if defined(QGC_USE_PIXHAWK_MESSAGES)
 
                 if (protobufManager.cacheFragment(extended_message))
                 {
@@ -262,6 +264,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                         }
                     }
                 }
+#endif
 
                 position += extended_message.extended_payload_len;
 
