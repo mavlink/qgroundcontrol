@@ -199,7 +199,7 @@ protected:
     bool m_actionGuardEnabled;       ///< Action request retransmission enabled
     int m_actionRetransmissionTimeout; ///< Timeout for parameter retransmission
     QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
-    int lastIndex[256][256];
+    int lastIndex[256][256];	///< Store the last received sequence ID for each system/componenet pair
     int totalReceiveCounter;
     int totalLossCounter;
     int currReceiveCounter;
