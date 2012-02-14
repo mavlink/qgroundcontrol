@@ -81,8 +81,6 @@ macx|macx-g++42|macx-g++: {
 
     ICON = $$BASEDIR/images/icons/macx.icns
 
-    # Copy audio files if needed
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy contributed files
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy google earth starter file
@@ -274,7 +272,6 @@ message("Compiling for linux 32")
     }
 
     # Validated copy commands
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
 
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
@@ -367,7 +364,6 @@ linux-g++-64 {
              QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/debug
         }
         DESTDIR = $$TARGETDIR/debug
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/debug
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/debug/images
@@ -378,7 +374,6 @@ linux-g++-64 {
              QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/release
         }
         DESTDIR = $$TARGETDIR/release
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/release
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/release/images
@@ -455,7 +450,6 @@ DEFINES += QGC_OSG_ENABLED
 
     exists($$TARGETDIR/debug) {
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
-	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\debug\\audio" /E /I $$escape_expand(\\n))
         QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\debug\\files" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
@@ -476,7 +470,6 @@ DEFINES += QGC_OSG_ENABLED
 
     exists($$TARGETDIR/release) {
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
-	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\release\\audio" /E /I $$escape_expand(\\n))
         QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\release\\files" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\release\\models" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\release\\earth.html" $$escape_expand(\\n))
@@ -543,13 +536,13 @@ win32-g++ {
     message("Using cp to copy image and audio files to executable")
     debug {
         QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
-        QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/debug/audio
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/files $$TARGETDIR/debug/files
         QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/debug/models
     }
 
     release {
         QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/SDL.dll
-        QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/release/audio
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/files $$TARGETDIR/release/files
         QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
     }
 
@@ -561,14 +554,14 @@ win32-g++ {
 
     exists($$TARGETDIR/debug) {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\files\" \"$$TARGETDIR_WIN\\debug\\files\\\" /S /E /Y
         QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
     }
 
     exists($$TARGETDIR/release) {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\files\" \"$$TARGETDIR_WIN\\release\\files\\\" /S /E /Y
         QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
     }

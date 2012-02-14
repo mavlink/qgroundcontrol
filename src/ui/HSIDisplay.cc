@@ -104,6 +104,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     leftDragStarted(false),
     mouseHasMoved(false),
     actionPending(false),
+    directSending(false),
     userSetPointSet(false),
     userXYSetPointSet(false)
 {
@@ -637,37 +638,53 @@ void HSIDisplay::keyPressEvent(QKeyEvent* event)
         statusClearTimer.start();
         sendBodySetPointCoordinates();
     }
+    else if ((event->key() ==  Qt::Key_W))
+    {
+        setBodySetpointCoordinateXY(1.0, 0);
+        setBodySetpointCoordinateZ(uas->getLocalZ());
+        setBodySetpointCoordinateYaw(uas->getYaw());
+    }
+    else if ((event->key() ==  Qt::Key_S))
+    {
+        setBodySetpointCoordinateXY(-1.0, 0);
+        setBodySetpointCoordinateZ(uas->getLocalZ());
+        setBodySetpointCoordinateYaw(uas->getYaw());
+    }
+    else if ((event->key() ==  Qt::Key_A))
+    {
+        setBodySetpointCoordinateXY(0, -1.0);
+        setBodySetpointCoordinateZ(uas->getLocalZ());
+        setBodySetpointCoordinateYaw(uas->getYaw());
+    }
+    else if ((event->key() ==  Qt::Key_D))
+    {
+        setBodySetpointCoordinateXY(0, 1.0);
+        setBodySetpointCoordinateZ(uas->getLocalZ());
+        setBodySetpointCoordinateYaw(uas->getYaw());
+    }
     else if ((event->key() ==  Qt::Key_Up))
     {
-        setBodySetpointCoordinateXY(0.5, 0);
+        setBodySetpointCoordinateXY(0, 0);
+        setBodySetpointCoordinateZ(-0.5+uas->getLocalZ());
+        setBodySetpointCoordinateYaw(uas->getYaw());
     }
     else if ((event->key() ==  Qt::Key_Down))
     {
-        setBodySetpointCoordinateXY(-0.5, 0);
+        setBodySetpointCoordinateZ(+0.5+uas->getLocalZ());
+        setBodySetpointCoordinateXY(0, 0);
+        setBodySetpointCoordinateYaw(uas->getYaw());
     }
     else if ((event->key() ==  Qt::Key_Left))
     {
-        setBodySetpointCoordinateXY(0, -0.5);
+        setBodySetpointCoordinateXY(0, 0);
+        setBodySetpointCoordinateZ(uas->getLocalZ());
+        setBodySetpointCoordinateYaw(-0.2+uas->getYaw());
     }
     else if ((event->key() ==  Qt::Key_Right))
     {
-        setBodySetpointCoordinateXY(0, 0.5);
-    }
-    else if ((event->key() ==  Qt::Key_Plus))
-    {
-        setBodySetpointCoordinateZ(-0.2);
-    }
-    else if ((event->key() ==  Qt::Key_Minus))
-    {
-        setBodySetpointCoordinateZ(+0.2);
-    }
-    else if ((event->key() ==  Qt::Key_L))
-    {
-        setBodySetpointCoordinateYaw(-0.1);
-    }
-    else if ((event->key() ==  Qt::Key_R))
-    {
-        setBodySetpointCoordinateYaw(0.1);
+        setBodySetpointCoordinateXY(0, 0);
+        setBodySetpointCoordinateZ(uas->getLocalZ());
+        setBodySetpointCoordinateYaw(0.2+uas->getYaw());
     }
      HDDisplay::keyPressEvent(event);
 }
@@ -811,7 +828,7 @@ void HSIDisplay::sendBodySetPointCoordinates()
         double dx = uiXSetCoordinate - uas->getLocalX();
         double dy = uiYSetCoordinate - uas->getLocalY();
         double dz = uiZSetCoordinate - uas->getLocalZ();
-        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 1.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
+        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 3.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
         if (valid)
         {
             uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
