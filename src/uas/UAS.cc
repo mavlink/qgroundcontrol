@@ -429,8 +429,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 // COMMUNICATIONS DROP RATE
-                // FIXME
-                emit dropRateChanged(this->getUASID(), state.drop_rate_comm/10000.0f);
+                emit dropRateChanged(this->getUASID(), 100.0 * state.drop_rate_comm/10000.0f);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
