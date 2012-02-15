@@ -606,6 +606,9 @@ margin-top: 1ex; /* leave space at the top for the title */
       </item>
       <item>
        <widget class="QCheckBox" name="autoContinue">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -620,6 +623,9 @@ margin-top: 1ex; /* leave space at the top for the title */
         </property>
         <property name="text">
          <string/>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
