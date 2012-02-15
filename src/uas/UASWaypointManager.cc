@@ -132,7 +132,7 @@ void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double l
 
 void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, quint16 count)
 {
-    if (current_state == WP_GETLIST && systemId == current_partner_systemid && ((compId == current_partner_compid || compId == MAV_COMP_ID_ALL) || compId == MAV_COMP_ID_ALL)) {
+    if (current_state == WP_GETLIST && systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL)) {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
 
