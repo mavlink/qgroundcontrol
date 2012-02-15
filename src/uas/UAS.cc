@@ -436,9 +436,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 				// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
 				// percentage as a float. We also cap the incoming value at 100% as defined
 				// by the MAVLink specifications.
-				if (state.drop_rate_comm > 10000) {
+                if (state.drop_rate_comm > 10000)
+                {
 				    emit dropRateChanged(this->getUASID(), 100.0f);
-				} else {
+                }
+                else
+                {
 				    emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
 				}
             }
