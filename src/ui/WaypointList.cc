@@ -197,7 +197,7 @@ void WaypointList::loadWaypoints()
         msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        int ret = msgBox.exec();
+        msgBox.exec();
         showOfflineWarning = false;
     }
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
@@ -263,7 +263,7 @@ void WaypointList::addEditable()
                     msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
                     msgBox.setStandardButtons(QMessageBox::Ok);
                     msgBox.setDefaultButton(QMessageBox::Ok);
-                    int ret = msgBox.exec();
+                    msgBox.exec();
                     showOfflineWarning = false;
                 }
             }
