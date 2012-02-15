@@ -42,17 +42,18 @@ class ImageWindowGeode : public osg::Geode
 public:
     ImageWindowGeode();
     void init(const QString& caption, const osg::Vec4& backgroundColor,
-              osg::ref_ptr<osg::Image>& image,
               osg::ref_ptr<osgText::Font>& font);
 
     void setAttributes(int x, int y, int width, int height);
+    osg::ref_ptr<osg::Image>& image(void);
 
 private:
-    int border;
+    int mBorder;
 
-    osg::ref_ptr<osg::Vec3Array> imageVertices;
-    osg::ref_ptr<osg::Vec3Array> backgroundVertices;
-    osg::ref_ptr<osgText::Text> text;
+    osg::ref_ptr<osg::Image> mImage;
+    osg::ref_ptr<osg::Vec3Array> mImageVertices;
+    osg::ref_ptr<osg::Vec3Array> mBackgroundVertices;
+    osg::ref_ptr<osgText::Text> mText;
 };
 
 #endif // IMAGEWINDOWGEODE_H

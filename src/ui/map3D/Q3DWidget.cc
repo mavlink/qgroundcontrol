@@ -44,21 +44,12 @@ This file is part of the QGROUNDCONTROL project
 
 Q3DWidget::Q3DWidget(QWidget* parent)
     : QGLWidget(parent)
-    , root(new osg::Group())
-    , allocentricMap(new osg::Switch())
-    , rollingMap(new osg::Switch())
-    , egocentricMap(new osg::Switch())
-    , robotPosition(new osg::PositionAttitudeTransform())
-    , robotAttitude(new osg::PositionAttitudeTransform())
-    , hudGroup(new osg::Switch())
-    , hudProjectionMatrix(new osg::Projection)
-    , fps(30.0f)
+    , mHandleDeviceEvents(true)
+    , mRoot(new osg::Group())
+    , mHudGroup(new osg::Switch())
+    , mHudProjectionMatrix(new osg::Projection)
+    , mFps(30.0f)
 {
-    // set initial camera parameters
-    cameraParams.minZoomRange = 2.0f;
-    cameraParams.cameraFov = 30.0f;
-    cameraParams.minClipRange = 1.0f;
-    cameraParams.maxClipRange = 10000.0f;
 #ifdef QGC_OSG_QT_ENABLED
     osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
     fontImpl = new osgQt::QFontImplementation(QFont(":/general/vera.ttf"));
@@ -66,13 +57,12 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
     fontImpl = 0;//new osgText::Font::Font("images/Vera.ttf");
 #endif
-    font = new osgText::Font(fontImpl);
+    mFont = new osgText::Font(fontImpl);
 
-    osgGW = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
+    mOsgGW = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
 
     setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
-    setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 }
 
@@ -84,149 +74,63 @@ Q3DWidget::~Q3DWidget()
 void
 Q3DWidget::init(float fps)
 {
-    this->fps = fps;
+    mFps = fps;
 
-    getCamera()->setGraphicsContext(osgGW);
+    getCamera()->setGraphicsContext(mOsgGW);
 
     // manually specify near and far clip planes
     getCamera()->setComputeNearFarMode(osg::CullSettings::DO_NOT_COMPUTE_NEAR_FAR);
 
     setLightingMode(osg::View::SKY_LIGHT);
 
-    // set up various maps
-    // allocentric - world map
-    // rolling - map aligned to the world axes and centered on the robot
-    // egocentric - vehicle-centric map
-    root->addChild(allocentricMap);
-    allocentricMap->addChild(robotPosition);
-    robotPosition->addChild(rollingMap);
-    rollingMap->addChild(robotAttitude);
-    robotAttitude->addChild(egocentricMap);
+    setSceneData(mRoot);
 
-    setSceneData(root);
+    mWorldMap = new osg::Switch;
+    mRoot->addChild(mWorldMap);
 
     // set up HUD
-    root->addChild(createHUD());
-
-    // set up robot
-    egocentricMap->addChild(createRobot());
+    mRoot->addChild(createHUD());
 
     // set up camera control
-    cameraManipulator = new GCManipulator();
-    setCameraManipulator(cameraManipulator);
-    cameraManipulator->setMinZoomRange(cameraParams.minZoomRange);
-    cameraManipulator->setDistance(cameraParams.minZoomRange * 2.0);
+    mCameraManipulator = new GCManipulator();
+    setCameraManipulator(mCameraManipulator);
+    mCameraManipulator->setMinZoomRange(mCameraParams.minZoomRange());
+    mCameraManipulator->setDistance(mCameraParams.minZoomRange() * 2.0);
 
-    connect(&timer, SIGNAL(timeout()), this, SLOT(redraw()));
+    connect(&mTimer, SIGNAL(timeout()), this, SLOT(redraw()));
     // DO NOT START TIMER IN INITIALIZATION! IT IS STARTED IN THE SHOW EVENT
-}
-
-void Q3DWidget::showEvent(QShowEvent* event)
-{
-    // React only to internal (pre/post-display)
-    // events
-    Q_UNUSED(event)
-    timer.start(static_cast<int>(floorf(1000.0f / fps)));
-}
-
-void Q3DWidget::hideEvent(QHideEvent* event)
-{
-    // React only to internal (pre/post-display)
-    // events
-    Q_UNUSED(event)
-    timer.stop();
-}
-
-osg::ref_ptr<osg::Geode>
-Q3DWidget::createRobot(void)
-{
-    // draw x,y,z-axes
-    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
-    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
-    geode->addDrawable(geometry.get());
-
-    osg::ref_ptr<osg::Vec3Array> coords(new osg::Vec3Array(6));
-    (*coords)[0] = (*coords)[2] = (*coords)[4] =
-                                      osg::Vec3(0.0f, 0.0f, 0.0f);
-    (*coords)[1] = osg::Vec3(0.0f, 0.3f, 0.0f);
-    (*coords)[3] = osg::Vec3(0.15f, 0.0f, 0.0f);
-    (*coords)[5] = osg::Vec3(0.0f, 0.0f, -0.15f);
-
-    geometry->setVertexArray(coords);
-
-    osg::Vec4 redColor(1.0f, 0.0f, 0.0f, 0.0f);
-    osg::Vec4 greenColor(0.0f, 1.0f, 0.0f, 0.0f);
-    osg::Vec4 blueColor(0.0f, 0.0f, 1.0f, 0.0f);
-
-    osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array(6));
-    (*color)[0] = redColor;
-    (*color)[1] = redColor;
-    (*color)[2] = greenColor;
-    (*color)[3] = greenColor;
-    (*color)[4] = blueColor;
-    (*color)[5] = blueColor;
-
-    geometry->setColorArray(color);
-    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
-
-    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 6));
-
-    osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
-    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
-    linewidth->setWidth(3.0f);
-    stateset->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
-    stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    geometry->setStateSet(stateset);
-
-    return geode;
-}
-
-osg::ref_ptr<osg::Node>
-Q3DWidget::createHUD(void)
-{
-    hudProjectionMatrix->setMatrix(osg::Matrix::ortho(0.0, width(),
-                                   0.0, height(),
-                                   -10.0, 10.0));
-
-    osg::ref_ptr<osg::MatrixTransform> hudModelViewMatrix(
-        new osg::MatrixTransform);
-    hudModelViewMatrix->setMatrix(osg::Matrix::identity());
-    hudModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-
-    hudProjectionMatrix->addChild(hudModelViewMatrix);
-    hudModelViewMatrix->addChild(hudGroup);
-
-    osg::ref_ptr<osg::StateSet> hudStateSet(new osg::StateSet);
-    hudGroup->setStateSet(hudStateSet);
-    hudStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
-    hudStateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    hudStateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
-    hudStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
-    hudStateSet->setRenderBinDetails(11, "RenderBin");
-
-    return hudProjectionMatrix;
 }
 
 void
 Q3DWidget::setCameraParams(float minZoomRange, float cameraFov,
                            float minClipRange, float maxClipRange)
 {
-    cameraParams.minZoomRange = minZoomRange;
-    cameraParams.cameraFov = cameraFov;
-    cameraParams.minClipRange = minClipRange;
-    cameraParams.maxClipRange = maxClipRange;
+    mCameraParams.minZoomRange() = minZoomRange;
+    mCameraParams.fov() = cameraFov;
+    mCameraParams.minClipRange() = minClipRange;
+    mCameraParams.maxClipRange() = maxClipRange;
 }
 
 void
 Q3DWidget::moveCamera(double dx, double dy, double dz)
 {
-    cameraManipulator->move(dx, dy, dz);
+    mCameraManipulator->move(dx, dy, dz);
 }
 
 void
 Q3DWidget::recenterCamera(double x, double y, double z)
 {
-    cameraManipulator->setCenter(osg::Vec3d(x, y, z));
+    mCameraManipulator->setCenter(osg::Vec3d(x, y, z));
+}
+
+void
+Q3DWidget::rotateCamera(double roll, double pitch, double yaw)
+{
+    osg::Quat q(-yaw, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                pitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                roll, osg::Vec3d(0.0f, 1.0f, 0.0f));
+
+    mCameraManipulator->setRotation(q);
 }
 
 void
@@ -236,21 +140,33 @@ Q3DWidget::setDisplayMode3D(void)
                     / static_cast<double>(height());
 
     getCamera()->setViewport(new osg::Viewport(0, 0, width(), height()));
-    getCamera()->setProjectionMatrixAsPerspective(cameraParams.cameraFov,
-            aspect,
-            cameraParams.minClipRange,
-            cameraParams.maxClipRange);
+    getCamera()->setProjectionMatrixAsPerspective(mCameraParams.fov(),
+                                                  aspect,
+                                                  mCameraParams.minClipRange(),
+                                                  mCameraParams.maxClipRange());
 }
 
-std::pair<double,double>
-Q3DWidget::getGlobalCursorPosition(int32_t cursorX, int32_t cursorY, double z)
+osg::ref_ptr<osg::Switch>&
+Q3DWidget::hudGroup(void)
+{
+    return mHudGroup;
+}
+
+QPoint
+Q3DWidget::mouseCursorCoords(void)
+{
+    return mapFromGlobal(cursor().pos());
+}
+
+QPointF
+Q3DWidget::worldCursorPosition(const QPoint& cursorPos, double worldZ) const
 {
     osgUtil::LineSegmentIntersector::Intersections intersections;
 
     // normalize cursor position to value between -1 and 1
-    double x = -1.0f + static_cast<double>(2 * cursorX)
+    double x = -1.0f + static_cast<double>(2 * cursorPos.x())
                / static_cast<double>(width());
-    double y = -1.0f + static_cast<double>(2 * (height() - cursorY))
+    double y = -1.0f + static_cast<double>(2 * (height() - cursorPos.y()))
                / static_cast<double>(height());
 
     // compute matrix which transforms screen coordinates to world coordinates
@@ -264,44 +180,335 @@ Q3DWidget::getGlobalCursorPosition(int32_t cursorX, int32_t cursorY, double z)
     osg::ref_ptr<osg::LineSegment> line =
         new osg::LineSegment(nearPoint, farPoint);
 
-    osg::Plane p(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 0.0, z));
+    osg::Plane p(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 0.0, worldZ));
 
     osg::Vec3d projectedPoint;
-    getPlaneLineIntersection(p.asVec4(), *line, projectedPoint);
+    planeLineIntersection(p.asVec4(), *line, projectedPoint);
 
-    return std::make_pair(projectedPoint.y(), projectedPoint.x());
+    return QPointF(projectedPoint.y(), projectedPoint.x());
+}
+
+CameraParams&
+Q3DWidget::cameraParams(void)
+{
+    return mCameraParams;
+}
+
+osg::ref_ptr<GCManipulator>&
+Q3DWidget::cameraManipulator(void)
+{
+    return mCameraManipulator;
+}
+
+osg::ref_ptr<osgText::Font>&
+Q3DWidget::font(void)
+{
+    return mFont;
+}
+
+osg::ref_ptr<osg::Switch>&
+Q3DWidget::worldMap(void)
+{
+    return mWorldMap;
+}
+
+osg::ref_ptr<SystemGroupNode>&
+Q3DWidget::systemGroup(int systemId)
+{
+    if (!mSystemGroups.contains(systemId))
+    {
+        osg::ref_ptr<SystemGroupNode> newSystem = new SystemGroupNode;
+        mRoot->addChild(newSystem);
+
+        mSystemGroups.insert(systemId, newSystem);
+    }
+
+    return mSystemGroups[systemId];
+}
+
+bool&
+Q3DWidget::handleDeviceEvents(void)
+{
+    return mHandleDeviceEvents;
+}
+
+void
+Q3DWidget::handleKeyPressEvent(QKeyEvent* event)
+{
+    if (event->isAccepted())
+    {
+        return;
+    }
+
+    if (event->text().isEmpty())
+    {
+        mOsgGW->getEventQueue()->keyPress(convertKey(event->key()));
+    }
+    else
+    {
+        mOsgGW->getEventQueue()->keyPress(
+            static_cast<osgGA::GUIEventAdapter::KeySymbol>(
+                *(event->text().toAscii().data())));
+    }
+}
+
+void
+Q3DWidget::handleKeyReleaseEvent(QKeyEvent* event)
+{
+    if (event->isAccepted())
+    {
+        return;
+    }
+
+    if (event->text().isEmpty())
+    {
+        mOsgGW->getEventQueue()->keyRelease(convertKey(event->key()));
+    }
+    else
+    {
+        mOsgGW->getEventQueue()->keyRelease(
+            static_cast<osgGA::GUIEventAdapter::KeySymbol>(
+                *(event->text().toAscii().data())));
+    }
+}
+
+void
+Q3DWidget::handleMousePressEvent(QMouseEvent* event)
+{
+    if (event->isAccepted())
+    {
+        return;
+    }
+
+    int button = 0;
+    switch (event->button())
+    {
+    case Qt::LeftButton:
+        button = 1;
+        break;
+    case Qt::MidButton:
+        button = 2;
+        break;
+    case Qt::RightButton:
+        button = 3;
+        break;
+    case Qt::NoButton:
+        button = 0;
+        break;
+    default:
+        {}
+    }
+    mOsgGW->getEventQueue()->mouseButtonPress(event->x(), event->y(), button);
+}
+
+void
+Q3DWidget::handleMouseReleaseEvent(QMouseEvent* event)
+{
+    if (event->isAccepted())
+    {
+        return;
+    }
+
+    int button = 0;
+    switch (event->button())
+    {
+    case Qt::LeftButton:
+        button = 1;
+        break;
+    case Qt::MidButton:
+        button = 2;
+        break;
+    case Qt::RightButton:
+        button = 3;
+        break;
+    case Qt::NoButton:
+        button = 0;
+        break;
+    default:
+        {}
+    }
+    mOsgGW->getEventQueue()->mouseButtonRelease(event->x(), event->y(), button);
+}
+
+void
+Q3DWidget::handleMouseMoveEvent(QMouseEvent* event)
+{
+    if (event->isAccepted())
+    {
+        return;
+    }
+
+    mOsgGW->getEventQueue()->mouseMotion(event->x(), event->y());
+}
+
+void
+Q3DWidget::handleWheelEvent(QWheelEvent* event)
+{
+    if (event->isAccepted())
+    {
+        return;
+    }
+
+    mOsgGW->getEventQueue()->mouseScroll((event->delta() > 0) ?
+                                         osgGA::GUIEventAdapter::SCROLL_UP :
+                                         osgGA::GUIEventAdapter::SCROLL_DOWN);
 }
 
 void
 Q3DWidget::redraw(void)
 {
+    emit update();
 #if (QGC_EVENTLOOP_DEBUG)
     qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
     updateGL();
 }
 
-int
-Q3DWidget::getMouseX(void)
-{
-    return mapFromGlobal(cursor().pos()).x();
-}
-
-int
-Q3DWidget::getMouseY(void)
-{
-    return mapFromGlobal(cursor().pos()).y();
-}
-
 void
 Q3DWidget::resizeGL(int width, int height)
 {
-    hudProjectionMatrix->setMatrix(osg::Matrix::ortho(0.0, width,
-                                   0.0, height,
-                                   -10.0, 10.0));
+    mHudProjectionMatrix->setMatrix(osg::Matrix::ortho(0.0, width,
+                                    0.0, height,
+                                    -10.0, 10.0));
 
-    osgGW->getEventQueue()->windowResize(0, 0, width, height);
-    osgGW->resized(0 , 0, width, height);
+    mOsgGW->getEventQueue()->windowResize(0, 0, width, height);
+    mOsgGW->resized(0 , 0, width, height);
+
+    emit sizeChanged(width, height);
+}
+
+void
+Q3DWidget::keyPressEvent(QKeyEvent* event)
+{
+    QWidget::keyPressEvent(event);
+
+    if (mHandleDeviceEvents)
+    {
+        handleKeyPressEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void
+Q3DWidget::keyReleaseEvent(QKeyEvent* event)
+{
+    QWidget::keyReleaseEvent(event);
+
+    if (mHandleDeviceEvents)
+    {
+        handleKeyReleaseEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void
+Q3DWidget::mousePressEvent(QMouseEvent* event)
+{
+    QWidget::mousePressEvent(event);
+
+    if (mHandleDeviceEvents)
+    {
+        handleMousePressEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void
+Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
+{
+    QWidget::mouseReleaseEvent(event);
+
+    if (mHandleDeviceEvents)
+    {
+        handleMouseReleaseEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void
+Q3DWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    QWidget::mouseMoveEvent(event);
+
+    if (mHandleDeviceEvents)
+    {
+        handleMouseMoveEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void
+Q3DWidget::wheelEvent(QWheelEvent* event)
+{
+    QWidget::wheelEvent(event);
+
+    if (mHandleDeviceEvents)
+    {
+        handleWheelEvent(event);
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void
+Q3DWidget::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre/post-display)
+    // events
+    Q_UNUSED(event)
+    mTimer.start(static_cast<int>(floorf(1000.0f / mFps)));
+}
+
+void
+Q3DWidget::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre/post-display)
+    // events
+    Q_UNUSED(event)
+    mTimer.stop();
+}
+
+osg::ref_ptr<osg::Node>
+Q3DWidget::createHUD(void)
+{
+    mHudProjectionMatrix->setMatrix(osg::Matrix::ortho(0.0, width(),
+                                    0.0, height(),
+                                    -10.0, 10.0));
+
+    osg::ref_ptr<osg::MatrixTransform> hudModelViewMatrix(
+        new osg::MatrixTransform);
+    hudModelViewMatrix->setMatrix(osg::Matrix::identity());
+    hudModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+
+    mHudProjectionMatrix->addChild(hudModelViewMatrix);
+    hudModelViewMatrix->addChild(mHudGroup);
+
+    osg::ref_ptr<osg::StateSet> hudStateSet(new osg::StateSet);
+    mHudGroup->setStateSet(hudStateSet);
+    hudStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    hudStateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    hudStateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
+    hudStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    hudStateSet->setRenderBinDetails(11, "RenderBin");
+
+    return mHudProjectionMatrix;
 }
 
 void
@@ -312,114 +519,14 @@ Q3DWidget::paintGL(void)
     getCamera()->setClearColor(osg::Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
     getCamera()->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    display();
-
     frame();
-}
-
-void
-Q3DWidget::display(void)
-{
-
-}
-
-void
-Q3DWidget::keyPressEvent(QKeyEvent* event)
-{
-    QWidget::keyPressEvent(event);
-    if (event->isAccepted()) {
-        return;
-    }
-
-    if (event->text().isEmpty()) {
-        osgGW->getEventQueue()->keyPress(convertKey(event->key()));
-    } else {
-        osgGW->getEventQueue()->keyPress(
-            static_cast<osgGA::GUIEventAdapter::KeySymbol>(
-                *(event->text().toAscii().data())));
-    }
-}
-
-void
-Q3DWidget::keyReleaseEvent(QKeyEvent* event)
-{
-    QWidget::keyReleaseEvent(event);
-    if (event->isAccepted()) {
-        return;
-    }
-    if (event->text().isEmpty()) {
-        osgGW->getEventQueue()->keyRelease(convertKey(event->key()));
-    } else {
-        osgGW->getEventQueue()->keyRelease(
-            static_cast<osgGA::GUIEventAdapter::KeySymbol>(
-                *(event->text().toAscii().data())));
-    }
-}
-
-void
-Q3DWidget::mousePressEvent(QMouseEvent* event)
-{
-    int button = 0;
-    switch (event->button()) {
-    case Qt::LeftButton:
-        button = 1;
-        break;
-    case Qt::MidButton:
-        button = 2;
-        break;
-    case Qt::RightButton:
-        button = 3;
-        break;
-    case Qt::NoButton:
-        button = 0;
-        break;
-    default:
-    {}
-    }
-    osgGW->getEventQueue()->mouseButtonPress(event->x(), event->y(), button);
-}
-
-void
-Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
-{
-    int button = 0;
-    switch (event->button()) {
-    case Qt::LeftButton:
-        button = 1;
-        break;
-    case Qt::MidButton:
-        button = 2;
-        break;
-    case Qt::RightButton:
-        button = 3;
-        break;
-    case Qt::NoButton:
-        button = 0;
-        break;
-    default:
-    {}
-    }
-    osgGW->getEventQueue()->mouseButtonRelease(event->x(), event->y(), button);
-}
-
-void
-Q3DWidget::mouseMoveEvent(QMouseEvent* event)
-{
-    osgGW->getEventQueue()->mouseMotion(event->x(), event->y());
-}
-
-void
-Q3DWidget::wheelEvent(QWheelEvent* event)
-{
-    osgGW->getEventQueue()->mouseScroll((event->delta() > 0) ?
-                                        osgGA::GUIEventAdapter::SCROLL_UP :
-                                        osgGA::GUIEventAdapter::SCROLL_DOWN);
 }
 
 osgGA::GUIEventAdapter::KeySymbol
 Q3DWidget::convertKey(int key) const
 {
-    switch (key) {
+    switch (key)
+    {
     case Qt::Key_Space :
         return osgGA::GUIEventAdapter::KEY_Space;
     case Qt::Key_Backspace :
@@ -606,9 +713,9 @@ Q3DWidget::convertKey(int key) const
 }
 
 bool
-Q3DWidget::getPlaneLineIntersection(const osg::Vec4d& plane,
-                                    const osg::LineSegment& line,
-                                    osg::Vec3d& isect)
+Q3DWidget::planeLineIntersection(const osg::Vec4d& plane,
+                                 const osg::LineSegment& line,
+                                 osg::Vec3d& isect) const
 {
     osg::Vec3d lineStart = line.start();
     osg::Vec3d lineEnd = line.end();
@@ -620,7 +727,8 @@ Q3DWidget::getPlaneLineIntersection(const osg::Vec4d& plane,
     const double denominator = plane[0] * deltaX
                                + plane[1] * deltaY
                                + plane[2] * deltaZ;
-    if (!denominator) {
+    if (!denominator)
+    {
         return false;
     }
 

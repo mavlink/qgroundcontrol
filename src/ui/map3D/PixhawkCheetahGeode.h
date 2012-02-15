@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #define PIXHAWKCHEETAHGEODE_H_
 
 #include <osg/Geode>
+#include <QColor>
 
 /**
  * @brief The PixhawkCheetahGeode class.
@@ -52,7 +53,6 @@ public:
      */
     static osg::ref_ptr<osg::Geode> instance(void);
 
-private:
     /**
      * @brief Creates an OpenSceneGraph geode which renders a Pixhawk Cheetah MAV.
      * @param red Red intensity of the MAV model.
@@ -61,9 +61,10 @@ private:
      *
      * @return A smart pointer to the geode.
      **/
-    static osg::ref_ptr<osg::Geode> create(float red, float green, float blue);
+    static osg::ref_ptr<osg::Geode> create(const QColor& color);
 
-    static osg::ref_ptr<osg::Geode> _instance;
+private:
+    static osg::ref_ptr<osg::Geode> mInstance;
 };
 
 #endif
