@@ -218,7 +218,8 @@ protected: //COMMENTS FOR TEST UNIT
     bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
     float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    uint8_t mode;                   ///< The current mode of the MAV
+    uint8_t mode;              ///< The current mode of the MAV
+    uint32_t custom_mode;       ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
     uint32_t navMode;                ///< The current navigation mode of the MAV
     quint64 onboardTimeOffset;

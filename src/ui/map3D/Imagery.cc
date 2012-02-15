@@ -46,14 +46,14 @@ Imagery::Imagery()
 
 }
 
-Imagery::ImageryType
+Imagery::Type
 Imagery::getImageryType(void) const
 {
     return currentImageryType;
 }
 
 void
-Imagery::setImageryType(ImageryType type)
+Imagery::setImageryType(Imagery::Type type)
 {
     currentImageryType = type;
 }

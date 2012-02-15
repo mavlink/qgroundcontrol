@@ -104,6 +104,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     leftDragStarted(false),
     mouseHasMoved(false),
     actionPending(false),
+    directSending(false),
     userSetPointSet(false),
     userXYSetPointSet(false)
 {
@@ -177,9 +178,9 @@ void HSIDisplay::paintEvent(QPaintEvent * event)
 {
     Q_UNUSED(event);
     //paintGL();
-//    static quint64 interval = 0;
-//    //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
-//    interval = MG::TIME::getGroundTimeNow();
+    //    static quint64 interval = 0;
+    //    //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+    //    interval = MG::TIME::getGroundTimeNow();
     renderOverlay();
 }
 
@@ -218,7 +219,8 @@ void HSIDisplay::renderOverlay()
     pen.setWidth(refLineWidthToPen(0.1f));
     painter.setPen(pen);
     const int ringCount = 2;
-    for (int i = 0; i < ringCount; i++) {
+    for (int i = 0; i < ringCount; i++)
+    {
         float radius = (vwidth - (topMargin + bottomMargin)*0.3f) / (1.35f * i+1) / 2.0f - bottomMargin / 2.0f;
         drawCircle(xCenterPos, yCenterPos, radius, 0.1f, ringColor, &painter);
         paintText(tr("%1 m").arg(refToMetric(radius), 5, 'f', 1, ' '), QGC::colorCyan, 1.6f, vwidth/2-4, vheight/2+radius+2.2, &painter);
@@ -238,22 +240,23 @@ void HSIDisplay::renderOverlay()
     painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
 
     // Draw trail
-//    QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
-//    // Transform from body to world coordinates
-//    m = metricWorldToBody(m);
-//    // Scale from metric body to screen reference units
-//    QPointF s = metricBodyToRef(m);
-//    drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, uas->getColor(), &painter);
+    //    QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
+    //    // Transform from body to world coordinates
+    //    m = metricWorldToBody(m);
+    //    // Scale from metric body to screen reference units
+    //    QPointF s = metricBodyToRef(m);
+    //    drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, uas->getColor(), &painter);
 
 
     // Draw center indicator
-//    QPolygonF p(3);
-//    p.replace(0, QPointF(xCenterPos, yCenterPos-4.0f));
-//    p.replace(1, QPointF(xCenterPos-4.0f, yCenterPos+3.5f));
-//    p.replace(2, QPointF(xCenterPos+4.0f, yCenterPos+3.5f));
-//    drawPolygon(p, &painter);
+    //    QPolygonF p(3);
+    //    p.replace(0, QPointF(xCenterPos, yCenterPos-4.0f));
+    //    p.replace(1, QPointF(xCenterPos-4.0f, yCenterPos+3.5f));
+    //    p.replace(2, QPointF(xCenterPos+4.0f, yCenterPos+3.5f));
+    //    drawPolygon(p, &painter);
 
-    if (uas) {
+    if (uas)
+    {
         // Translate to center
         painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
         QColor uasColor = uas->getColor();
@@ -291,30 +294,13 @@ void HSIDisplay::renderOverlay()
 
     float normAngleDiff = fabs(atan2(sin(angleDiff), cos(angleDiff)));
 
-    if (userSetPointSet && setPointDist > 0.08f || normAngleDiff > 0.05f || dragStarted)
-    {
-        QColor spColor(150, 150, 150);
-        drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, spColor, painter);
-    }
+    //if (((userSetPointSet) || (normAngleDiff > 0.05f) || dragStarted) && !(setPointDist < 0.08f && mavInitialized))
+
 
     // Labels on outer part and bottom
 
     // Draw waypoints
     drawWaypoints(painter);
-
-    // Draw setpoint over waypoints
-    if (positionSetPointKnown)
-    {
-        // Draw setpoint
-        drawSetpointXYZYaw(bodyXSetCoordinate, bodyYSetCoordinate, bodyZSetCoordinate, bodyYawSet, uas->getColor(), painter);
-        // Draw travel direction line
-        QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
-        // Transform from body to world coordinates
-        m = metricWorldToBody(m);
-        // Scale from metric body to screen reference units
-        QPointF s = metricBodyToRef(m);
-        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, uas->getColor(), &painter);
-    }
 
     // Draw status flags
     drawStatusFlag(2,  1, tr("ATT"), attControlEnabled, attControlKnown, painter);
@@ -338,29 +324,52 @@ void HSIDisplay::renderOverlay()
     paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 67, 11, &painter);
 
     // Draw position to bottom left
-    if (localAvailable > 0 && globalAvailable == 0) {
+    if (localAvailable > 0)
+    {
         // Position
         QString str;
+        float offset = (globalAvailable > 0) ? -3.0f : 0.0f;
         str.sprintf("%05.2f %05.2f %05.2f m", x, y, z);
-        paintText(tr("POS"), QGC::colorCyan, 2.6f, 2, vheight- 4.0f, &painter);
-        paintText(str, Qt::white, 2.6f, 10, vheight - 4.0f, &painter);
+        paintText(tr("POS"), QGC::colorCyan, 2.6f, 2, vheight - offset - 2.0f, &painter);
+        paintText(str, Qt::white, 2.6f, 10, vheight - offset - 2.0f, &painter);
     }
 
-    if (globalAvailable > 0) {
+    if (globalAvailable > 0)
+    {
         // Position
         QString str;
         str.sprintf("lat: %05.2f lon: %06.2f alt: %06.2f", lat, lon, alt);
-        paintText(tr("GPS"), QGC::colorCyan, 2.6f, 2, vheight- 4.0f, &painter);
-        paintText(str, Qt::white, 2.6f, 10, vheight - 4.0f, &painter);
+        paintText(tr("GPS"), QGC::colorCyan, 2.6f, 2, vheight- 2.0f, &painter);
+        paintText(str, Qt::white, 2.6f, 10, vheight - 2.0f, &painter);
     }
 
     // Draw Safety
     double x1, y1, z1, x2, y2, z2;
     UASManager::instance()->getLocalNEDSafetyLimits(&x1, &y1, &z1, &x2, &y2, &z2);
-//    drawSafetyArea(QPointF(x1, y1), QPointF(x2, y2), QGC::colorYellow, painter);
+    //    drawSafetyArea(QPointF(x1, y1), QPointF(x2, y2), QGC::colorYellow, painter);
 
     // Draw status message
-    paintText(statusMessage, QGC::colorOrange, 2.4f, 8, 15, &painter);
+    paintText(statusMessage, QGC::colorOrange, 2.8f, 8, 15, &painter);
+
+    // Draw setpoint over waypoints
+    if (positionSetPointKnown || setPointKnown)
+    {
+        // Draw setpoint
+        drawSetpointXYZYaw(bodyXSetCoordinate, bodyYSetCoordinate, bodyZSetCoordinate, bodyYawSet, QGC::colorYellow, painter);
+        // Draw travel direction line
+        QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
+        // Transform from body to world coordinates
+        m = metricWorldToBody(m);
+        // Scale from metric body to screen reference units
+        QPointF s = metricBodyToRef(m);
+        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::colorYellow, &painter);
+    }
+
+    if ((userSetPointSet || dragStarted) && ((normAngleDiff > 0.05f) || !(setPointDist < 0.08f && mavInitialized)))
+    {
+        QColor spColor(150, 250, 150);
+        drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, spColor, painter);
+    }
 }
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, QPainter& painter)
@@ -486,11 +495,11 @@ void HSIDisplay::updatePositionZControllerEnabled(bool enabled)
 
 void HSIDisplay::updateObjectPosition(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance)
 {
-	Q_UNUSED(quality);
-	Q_UNUSED(name);
-	Q_UNUSED(type);
-	Q_UNUSED(id);
-	Q_UNUSED(time);
+    Q_UNUSED(quality);
+    Q_UNUSED(name);
+    Q_UNUSED(type);
+    Q_UNUSED(id);
+    Q_UNUSED(time);
     // FIXME add multi-object support
     QPainter painter(this);
     QColor color(Qt::yellow);
@@ -565,7 +574,7 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     {
         QPointF p = screenToMetricBody(event->posF());
         setBodySetpointCoordinateXY(p.x(), p.y());
-//        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
+        //        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
     }
 }
 
@@ -620,8 +629,8 @@ void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
 
         if (leftDragStarted)
         {
-//            uiZSetCoordinate -= 0.06f*(startY - event->y()) / this->frameSize().height();
-//            setBodySetpointCoordinateZ(uiZSetCoordinate);
+            //            uiZSetCoordinate -= 0.06f*(startY - event->y()) / this->frameSize().height();
+            //            setBodySetpointCoordinateZ(uiZSetCoordinate);
         }
 
         if (leftDragStarted || dragStarted) mouseHasMoved = true;
@@ -630,6 +639,8 @@ void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
 
 void HSIDisplay::keyPressEvent(QKeyEvent* event)
 {
+    QPointF bodySP = metricWorldToBody(QPointF(uiXSetCoordinate, uiYSetCoordinate));
+
     if ((event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) && actionPending)
     {
         actionPending = false;
@@ -637,39 +648,129 @@ void HSIDisplay::keyPressEvent(QKeyEvent* event)
         statusClearTimer.start();
         sendBodySetPointCoordinates();
     }
-    else if ((event->key() ==  Qt::Key_Up))
+
+    if ((event->key() ==  Qt::Key_W))
     {
-        setBodySetpointCoordinateXY(0.5, 0);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateZ(uas->getLocalZ());
+            setBodySetpointCoordinateYaw(uas->getYaw());
+            setBodySetpointCoordinateXY(1.0, 0);
+        }
+        else
+        {
+            setBodySetpointCoordinateXY(qBound(-1.5, bodySP.x()+0.2, +1.5), bodySP.y());
+        }
+
     }
-    else if ((event->key() ==  Qt::Key_Down))
+
+    if ((event->key() ==  Qt::Key_S))
     {
-        setBodySetpointCoordinateXY(-0.5, 0);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateZ(uas->getLocalZ());
+            setBodySetpointCoordinateYaw(uas->getYaw());
+            setBodySetpointCoordinateXY(-1.0, 0);
+        }
+        else
+        {
+            setBodySetpointCoordinateXY(qBound(-1.5, bodySP.x()-0.2, +1.5), bodySP.y());
+        }
     }
-    else if ((event->key() ==  Qt::Key_Left))
+
+    if ((event->key() ==  Qt::Key_A))
     {
-        setBodySetpointCoordinateXY(0, -0.5);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateZ(uas->getLocalZ());
+            setBodySetpointCoordinateYaw(uas->getYaw());
+            setBodySetpointCoordinateXY(0, -1.0);
+        }
+        else
+        {
+            setBodySetpointCoordinateXY(bodySP.x(), qBound(-1.5, bodySP.y()-0.2, +1.5));
+        }
     }
-    else if ((event->key() ==  Qt::Key_Right))
+
+    if ((event->key() ==  Qt::Key_D))
     {
-        setBodySetpointCoordinateXY(0, 0.5);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateZ(uas->getLocalZ());
+            setBodySetpointCoordinateYaw(uas->getYaw());
+            setBodySetpointCoordinateXY(0, 1.0);
+        }
+        else
+        {
+            setBodySetpointCoordinateXY(bodySP.x(), qBound(-1.5, bodySP.y()+0.2, +1.5));
+        }
     }
-    else if ((event->key() ==  Qt::Key_Plus))
+
+    if ((event->key() ==  Qt::Key_Up))
     {
-        setBodySetpointCoordinateZ(-0.2);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateXY(0, 0);
+            setBodySetpointCoordinateYaw(uas->getYaw());
+        }
+        setBodySetpointCoordinateZ(-0.5);
     }
-    else if ((event->key() ==  Qt::Key_Minus))
+
+    if ((event->key() ==  Qt::Key_Down))
     {
-        setBodySetpointCoordinateZ(+0.2);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateXY(0, 0);
+            setBodySetpointCoordinateYaw(uas->getYaw());
+        }
+        setBodySetpointCoordinateZ(+0.5);
     }
-    else if ((event->key() ==  Qt::Key_L))
+
+    if ((event->key() ==  Qt::Key_Left))
     {
-        setBodySetpointCoordinateYaw(-0.1);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateXY(0, 0);
+            setBodySetpointCoordinateZ(uas->getLocalZ());
+        }
+        setBodySetpointCoordinateYaw(-0.2);
     }
-    else if ((event->key() ==  Qt::Key_R))
+
+    if ((event->key() ==  Qt::Key_Right))
     {
-        setBodySetpointCoordinateYaw(0.1);
+        if (!directSending)
+        {
+            setBodySetpointCoordinateXY(0, 0);
+            setBodySetpointCoordinateZ(uas->getLocalZ());
+        }
+        setBodySetpointCoordinateYaw(0.2);
     }
-     HDDisplay::keyPressEvent(event);
+
+
+    if ((event->key() == Qt::Key_Escape))
+    {
+        setBodySetpointCoordinateXY(0, 0);
+        setBodySetpointCoordinateZ(0);
+        setBodySetpointCoordinateYaw(0);
+        statusMessage = "CANCELLED, PRESS <ENTER> TO SEND";
+    }
+
+    if ((event->key() == Qt::Key_T))
+    {
+        directSending = !directSending;
+        statusMessage = (directSending) ? "DIRECT SEND ON" : "DIRECT SEND OFF";
+        statusClearTimer.start();
+    }
+
+    if (actionPending && (directSending || (event->key() == Qt::Key_Escape)))
+    {
+        actionPending = false;
+        statusMessage = "SETPOINT SENT";
+        statusClearTimer.start();
+        sendBodySetPointCoordinates();
+    }
+
+    HDDisplay::keyPressEvent(event);
 }
 
 void HSIDisplay::contextMenuEvent (QContextMenuEvent* event)
@@ -750,19 +851,20 @@ void HSIDisplay::updateSpeed(UASInterface* uas, double vx, double vy, double vz,
 
 void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
 {
-    userSetPointSet = true;
-    userXYSetPointSet = true;
-    // Set coordinates and send them out to MAV
-
-    QPointF sp(x, y);
-    sp = metricBodyToWorld(sp);
-    uiXSetCoordinate = sp.x();
-    uiYSetCoordinate = sp.y();
-
-    qDebug() << "Attempting to set new setpoint at x: " << x << "metric y:" << y;
-
-    if (uas && mavInitialized)
+    if (uas)
     {
+        userSetPointSet = true;
+        userXYSetPointSet = true;
+        // Set coordinates and send them out to MAV
+
+        QPointF sp(x, y);
+        sp = metricBodyToWorld(sp);
+        uiXSetCoordinate = sp.x();
+        uiYSetCoordinate = sp.y();
+
+        qDebug() << "Attempting to set new setpoint at x: " << x << "metric y:" << y;
+
+
         //sendBodySetPointCoordinates();
         statusMessage = "POSITION SET, PRESS <ENTER> TO SEND";
         actionPending = true;
@@ -772,46 +874,52 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
 
 void HSIDisplay::setBodySetpointCoordinateZ(double z)
 {
-    userSetPointSet = true;
-    // Set coordinates and send them out to MAV
-    uiZSetCoordinate = z;
-    statusMessage = "Z SET, PRESS <ENTER> TO SEND";
-    actionPending = true;
-    statusClearTimer.start();
+    if (uas)
+    {
+        userSetPointSet = true;
+        // Set coordinates and send them out to MAV
+        uiZSetCoordinate = z+uas->getLocalZ();
+        statusMessage = "Z SET, PRESS <ENTER> TO SEND";
+        actionPending = true;
+        statusClearTimer.start();
+    }
     //sendBodySetPointCoordinates();
 }
 
 void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
 {
-    if (!userXYSetPointSet && setPointKnown)
+    if (uas)
     {
-        uiXSetCoordinate = bodyXSetCoordinate;
-        uiYSetCoordinate = bodyYSetCoordinate;
+        if (!userXYSetPointSet && setPointKnown)
+        {
+            uiXSetCoordinate = bodyXSetCoordinate;
+            uiYSetCoordinate = bodyYSetCoordinate;
+        }
+        else if (!userXYSetPointSet && mavInitialized)
+        {
+            QPointF coord = metricBodyToWorld(QPointF(0.0, 0.0));
+            uiXSetCoordinate = coord.x();
+            uiYSetCoordinate = coord.y();
+        }
+        userSetPointSet = true;
+        // Set coordinates and send them out to MAV
+        uiYawSet = atan2(sin(yaw+uas->getYaw()), cos(yaw+uas->getYaw()));
+        statusMessage = "YAW SET, PRESS <ENTER> TO SEND";
+        statusClearTimer.start();
+        actionPending = true;
     }
-    else if (!userXYSetPointSet && mavInitialized)
-    {
-        QPointF coord = metricBodyToWorld(QPointF(0.0, 0.0));
-        uiXSetCoordinate = coord.x();
-        uiYSetCoordinate = coord.y();
-    }
-    userSetPointSet = true;
-    // Set coordinates and send them out to MAV
-    uiYawSet = atan2(sin(yaw), cos(yaw));
-    statusMessage = "YAW SET, PRESS <ENTER> TO SEND";
-    statusClearTimer.start();
-    actionPending = true;
     //sendBodySetPointCoordinates();
 }
 
 void HSIDisplay::sendBodySetPointCoordinates()
 {
     // Send the coordinates to the MAV
-    if (uas && mavInitialized)
+    if (uas)
     {
         double dx = uiXSetCoordinate - uas->getLocalX();
         double dy = uiYSetCoordinate - uas->getLocalY();
         double dz = uiZSetCoordinate - uas->getLocalZ();
-        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 1.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
+        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 2.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
         if (valid)
         {
             uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
@@ -868,7 +976,7 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
     {
         uiXSetCoordinate = bodyXSetCoordinate;
         uiYSetCoordinate = bodyYSetCoordinate;
-//        uiZSetCoordinate = bodyZSetCoordinate;
+        //        uiZSetCoordinate = bodyZSetCoordinate;
         uiYawSet= bodyYawSet;
     }
 }
@@ -966,10 +1074,11 @@ QColor HSIDisplay::getColorForSNR(float snr)
 
 void HSIDisplay::drawSetpointXYZYaw(float x, float y, float z, float yaw, const QColor &color, QPainter &painter)
 {
-    if (setPointKnown && uas) {
+    if (uas)
+    {
         float radius = vwidth / 18.0f;
         QPen pen(color);
-        pen.setWidthF(refLineWidthToPen(0.4f));
+        pen.setWidthF(refLineWidthToPen(1.6f));
         pen.setColor(color);
         painter.setPen(pen);
         painter.setBrush(Qt::NoBrush);
@@ -989,12 +1098,12 @@ void HSIDisplay::drawSetpointXYZYaw(float x, float y, float z, float yaw, const 
         poly.replace(3, QPointF(p.x()-radius, p.y()+radius));
 
         // Label
-        paintText(QString("z: %1 m").arg(z), color, 1.2f, p.x()-radius, p.y()-radius-2.0f, &painter);
+        paintText(QString("z: %1").arg(z), color, 2.1f, p.x()-radius, p.y()-radius-3.5f, &painter);
 
         drawPolygon(poly, &painter);
 
         radius *= 0.8f;
-        drawLine(p.x(), p.y(), p.x()+sin(-yaw + uas->getYaw() + M_PI) * radius, p.y()+cos(-yaw + uas->getYaw() + M_PI) * radius, refLineWidthToPen(0.4f), color, &painter);
+        drawLine(p.x(), p.y(), p.x()+sin(-yaw + uas->getYaw() + M_PI) * radius, p.y()+cos(-yaw + uas->getYaw() + M_PI) * radius, refLineWidthToPen(0.6f), color, &painter);
 
         // Draw center dot
         painter.setBrush(color);

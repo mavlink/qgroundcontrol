@@ -175,6 +175,7 @@ protected:
     QTimer statusClearTimer;
     QString statusMessage;
     bool actionPending;
+    bool directSending;
 
     /**
      * @brief Private data container class to be used within the HSI widget
