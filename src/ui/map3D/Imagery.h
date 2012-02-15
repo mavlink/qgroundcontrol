@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 class Imagery : public osg::Geode
 {
 public:
-    enum ImageryType {
+    enum Type {
         BLANK_MAP = 0,
         GOOGLE_MAP = 1,
         GOOGLE_SATELLITE = 2,
@@ -50,8 +50,8 @@ public:
 
     Imagery();
 
-    ImageryType getImageryType(void) const;
-    void setImageryType(ImageryType type);
+    Type getImageryType(void) const;
+    void setImageryType(Type type);
     void setOffset(double xOffset, double yOffset);
 
     void prefetch2D(double windowWidth, double windowHeight,
@@ -104,7 +104,7 @@ private:
 
     QScopedPointer<TextureCache> textureCache;
 
-    ImageryType currentImageryType;
+    Type currentImageryType;
 
     double xOffset;
     double yOffset;

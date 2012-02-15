@@ -344,39 +344,42 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Only count message if UAS exists for this message
             if (uas != NULL)
             {
+
                 // Increase receive counter
                 totalReceiveCounter++;
                 currReceiveCounter++;
-                // Update last packet index
-                if (lastIndex[message.sysid][message.compid] == -1)
+
+                // Update last message sequence ID
+                uint8_t expectedIndex;
+				if (lastIndex[message.sysid][message.compid] == -1)
                 {
                     lastIndex[message.sysid][message.compid] = message.seq;
-                }
+                    expectedIndex = message.seq;
+				}
                 else
                 {
-                    uint8_t expectedIndex = lastIndex[message.sysid][message.compid];
-                    // Now increase to the expected index
-                    expectedIndex++;
+					// NOTE: Using uint8_t here auto-wraps the number around to 0.
+                    expectedIndex = lastIndex[message.sysid][message.compid] + 1;
+				}
+				
+				// Make some noise if a message was skipped
+                //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "EXPECTED INDEX:" << expectedIndex << "SEQ" << message.seq;
+				if (message.seq != expectedIndex)
+				{
+					// Determine how many messages were skipped accounting for 0-wraparound
+					int16_t lostMessages = message.seq - expectedIndex;
+					if (lostMessages < 0)
+					{
+						lostMessages += 256;
+					}
+					qDebug() << QString("Lost %1 messages: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq);
+					
+					totalLossCounter += lostMessages;
+					currLossCounter += lostMessages;
+				}
 
-                    //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "EXPECTED INDEX:" << expectedIndex << "SEQ" << message.seq;
-                    while(expectedIndex != message.seq)
-                    {
-                        expectedIndex++;
-                        totalLossCounter++;
-                        currLossCounter++;
-                        //qDebug() << "COUNTING ONE DROP!";
-                    }
-
-                    // Set new lastindex
-                    lastIndex[message.sysid][message.compid] = message.seq;
-                }
-                //            if (lastIndex.contains(message.sysid))
-                //            {
-                //                QMap<int, int>* lastCompIndex = lastIndex.value(message.sysid);
-                //                if (lastCompIndex->contains(message.compid))
-                //                while (lastCompIndex->value(message.compid, 0)+1 )
-                //            }
-                //if ()
+                // Update the last sequence ID
+                lastIndex[message.sysid][message.compid] = message.seq;
 
                 // Update on every 32th packet
                 if (totalReceiveCounter % 32 == 0)
@@ -385,11 +388,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     // Receive loss
                     float receiveLoss = (double)currLossCounter/(double)(currReceiveCounter+currLossCounter);
                     receiveLoss *= 100.0f;
-                    // qDebug() << "LOSSCHANGED" << receiveLoss;
                     currLossCounter = 0;
                     currReceiveCounter = 0;
                     emit receiveLossChanged(message.sysid, receiveLoss);
-                    //qDebug() << "LOSSCHANGED" << message.sysid<<" "<<receiveLoss;
                 }
 
                 // The packet is emitted as a whole, as it is only 255 - 261 bytes short
@@ -414,7 +415,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             }
         }
     }
-//    receiveMutex.unlock();
 }
 
 /**

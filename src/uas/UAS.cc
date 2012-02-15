@@ -432,10 +432,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 stopLowBattAlarm();
             }
 
-            // COMMUNICATIONS DROP RATE
-            // FIXME
-            emit dropRateChanged(this->getUASID(), state.drop_rate_comm/10000.0f);
-        }
+                // Trigger drop rate updates as needed. Here we convert the incoming
+				// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
+				// percentage as a float. We also cap the incoming value at 100% as defined
+				// by the MAVLink specifications.
+				if (state.drop_rate_comm > 10000) {
+				    emit dropRateChanged(this->getUASID(), 100.0f);
+				} else {
+				    emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
+				}
+            }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
         {

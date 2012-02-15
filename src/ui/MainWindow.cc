@@ -553,7 +553,7 @@ void MainWindow::buildCommonWidgets()
 
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget) {
-        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK", this);
         addCentralWidget(_3DWidget, tr("Local 3D"));
     }
 #endif
