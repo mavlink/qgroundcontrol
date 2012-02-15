@@ -17,9 +17,23 @@ public:
 
 protected:
     void changeEvent(QEvent *e);
+    void showEvent(QShowEvent* event)
+    {
+        QWidget::showEvent(event);
+        emit visibilityChanged(true);
+    }
+
+    void hideEvent(QHideEvent* event)
+    {
+        QWidget::hideEvent(event);
+        emit visibilityChanged(false);
+    }
 
 private:
     Ui::QGCFirmwareUpdate *ui;
+
+signals:
+    void visibilityChanged(bool visible);
 };
 
 #endif // QGCFIRMWAREUPDATE_H

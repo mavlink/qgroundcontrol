@@ -77,7 +77,8 @@ extern "C" {
 GAudioOutput* GAudioOutput::instance()
 {
     static GAudioOutput* _instance = 0;
-    if(_instance == 0) {
+    if(_instance == 0)
+    {
         _instance = new GAudioOutput();
         // Set the application as parent to ensure that this object
         // will be destroyed when the main application exits
@@ -106,12 +107,16 @@ GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
 #if _MSC_VER2
 
     ISpVoice * pVoice = NULL;
-    if (FAILED(::CoInitialize(NULL))) {
+    if (FAILED(::CoInitialize(NULL)))
+    {
         qDebug("Creating COM object for audio output failed!");
-    } else {
+    }
+    else
+    {
 
         HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice;);
-        if( SUCCEEDED( hr ) ) {
+        if( SUCCEEDED( hr ) )
+        {
             hr = pVoice->Speak(L"Hello world", 0, NULL);
             pVoice->Release();
             pVoice = NULL;
@@ -146,7 +151,8 @@ GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
 
 void GAudioOutput::mute(bool mute)
 {
-    if (mute != muted) {
+    if (mute != muted)
+    {
         this->muted = mute;
         QSettings settings;
         settings.setValue(QGC_GAUDIOOUTPUT_KEY+"muted", this->muted);
@@ -162,11 +168,13 @@ bool GAudioOutput::isMuted()
 
 bool GAudioOutput::say(QString text, int severity)
 {
-    if (!muted) {
+    if (!muted)
+    {
         // TODO Add severity filter
         Q_UNUSED(severity);
         bool res = false;
-        if (!emergency) {
+        if (!emergency)
+        {
 
             // Speech synthesis is only supported with MSVC compiler
 #ifdef _MSC_VER2
@@ -202,7 +210,9 @@ bool GAudioOutput::say(QString text, int severity)
 #endif
         }
         return res;
-    } else {
+    }
+    else
+    {
         return false;
     }
 }
@@ -212,22 +222,26 @@ bool GAudioOutput::say(QString text, int severity)
  */
 bool GAudioOutput::alert(QString text)
 {
-    if (!emergency || !muted) {
+    if (!emergency || !muted)
+    {
         // Play alert sound
         beep();
         // Say alert message
         say(text, 2);
         return true;
-    } else {
+    }
+    else
+    {
         return false;
     }
 }
 
 void GAudioOutput::notifyPositive()
 {
-    if (!muted) {
+    if (!muted)
+    {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath()+QString("/audio/double_notify.wav"));
+        QFile f(QCoreApplication::applicationDirPath()+QString("/files/audio/double_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -235,9 +249,10 @@ void GAudioOutput::notifyPositive()
 
 void GAudioOutput::notifyNegative()
 {
-    if (!muted) {
+    if (!muted)
+    {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath()+QString("/audio/flat_notify.wav"));
+        QFile f(QCoreApplication::applicationDirPath()+QString("/files/audio/flat_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -252,7 +267,8 @@ void GAudioOutput::notifyNegative()
  */
 bool GAudioOutput::startEmergency()
 {
-    if (!emergency) {
+    if (!emergency)
+    {
         emergency = true;
         // Beep immediately and then start timer
         if (!muted) beep();
@@ -279,9 +295,10 @@ bool GAudioOutput::stopEmergency()
 
 void GAudioOutput::beep()
 {
-    if (!muted) {
+    if (!muted)
+    {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath()+QString("/audio/alert.wav"));
+        QFile f(QCoreApplication::applicationDirPath()+QString("/files/audio/alert.wav"));
         qDebug() << "FILE:" << f.fileName();
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();

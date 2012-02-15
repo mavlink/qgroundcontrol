@@ -25,7 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Definition of the class WaypointGroupNode.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 

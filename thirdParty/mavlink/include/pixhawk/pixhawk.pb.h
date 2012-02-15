@@ -32,13 +32,121 @@ void  protobuf_AddDesc_pixhawk_2eproto();
 void protobuf_AssignDesc_pixhawk_2eproto();
 void protobuf_ShutdownFile_pixhawk_2eproto();
 
+class HeaderInfo;
 class PointCloudXYZI;
 class PointCloudXYZI_PointXYZI;
 class PointCloudXYZRGB;
 class PointCloudXYZRGB_PointXYZRGB;
 class RGBDImage;
+class Obstacle;
+class ObstacleList;
+class ObstacleMap;
+class Waypoint;
+class Path;
 
 // ===================================================================
+
+class HeaderInfo : public ::google::protobuf::Message {
+ public:
+  HeaderInfo();
+  virtual ~HeaderInfo();
+  
+  HeaderInfo(const HeaderInfo& from);
+  
+  inline HeaderInfo& operator=(const HeaderInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const HeaderInfo& default_instance();
+  
+  void Swap(HeaderInfo* other);
+  
+  // implements Message ----------------------------------------------
+  
+  HeaderInfo* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const HeaderInfo& from);
+  void MergeFrom(const HeaderInfo& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required int32 source_sysid = 1;
+  inline bool has_source_sysid() const;
+  inline void clear_source_sysid();
+  static const int kSourceSysidFieldNumber = 1;
+  inline ::google::protobuf::int32 source_sysid() const;
+  inline void set_source_sysid(::google::protobuf::int32 value);
+  
+  // required int32 source_compid = 2;
+  inline bool has_source_compid() const;
+  inline void clear_source_compid();
+  static const int kSourceCompidFieldNumber = 2;
+  inline ::google::protobuf::int32 source_compid() const;
+  inline void set_source_compid(::google::protobuf::int32 value);
+  
+  // required double timestamp = 3;
+  inline bool has_timestamp() const;
+  inline void clear_timestamp();
+  static const int kTimestampFieldNumber = 3;
+  inline double timestamp() const;
+  inline void set_timestamp(double value);
+  
+  // @@protoc_insertion_point(class_scope:px.HeaderInfo)
+ private:
+  inline void set_has_source_sysid();
+  inline void clear_has_source_sysid();
+  inline void set_has_source_compid();
+  inline void clear_has_source_compid();
+  inline void set_has_timestamp();
+  inline void clear_has_timestamp();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::google::protobuf::int32 source_sysid_;
+  ::google::protobuf::int32 source_compid_;
+  double timestamp_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_pixhawk_2eproto();
+  friend void protobuf_AssignDesc_pixhawk_2eproto();
+  friend void protobuf_ShutdownFile_pixhawk_2eproto();
+  
+  void InitAsDefaultInstance();
+  static HeaderInfo* default_instance_;
+};
+// -------------------------------------------------------------------
 
 class PointCloudXYZI_PointXYZI : public ::google::protobuf::Message {
  public:
@@ -208,10 +316,18 @@ class PointCloudXYZI : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // repeated .px.PointCloudXYZI.PointXYZI points = 1;
+  // required .px.HeaderInfo header = 1;
+  inline bool has_header() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::px::HeaderInfo& header() const;
+  inline ::px::HeaderInfo* mutable_header();
+  inline ::px::HeaderInfo* release_header();
+  
+  // repeated .px.PointCloudXYZI.PointXYZI points = 2;
   inline int points_size() const;
   inline void clear_points();
-  static const int kPointsFieldNumber = 1;
+  static const int kPointsFieldNumber = 2;
   inline const ::px::PointCloudXYZI_PointXYZI& points(int index) const;
   inline ::px::PointCloudXYZI_PointXYZI* mutable_points(int index);
   inline ::px::PointCloudXYZI_PointXYZI* add_points();
@@ -222,13 +338,16 @@ class PointCloudXYZI : public ::google::protobuf::Message {
   
   // @@protoc_insertion_point(class_scope:px.PointCloudXYZI)
  private:
+  inline void set_has_header();
+  inline void clear_has_header();
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
+  ::px::HeaderInfo* header_;
   ::google::protobuf::RepeatedPtrField< ::px::PointCloudXYZI_PointXYZI > points_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   friend void  protobuf_AddDesc_pixhawk_2eproto();
   friend void protobuf_AssignDesc_pixhawk_2eproto();
@@ -407,10 +526,18 @@ class PointCloudXYZRGB : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // repeated .px.PointCloudXYZRGB.PointXYZRGB points = 1;
+  // required .px.HeaderInfo header = 1;
+  inline bool has_header() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::px::HeaderInfo& header() const;
+  inline ::px::HeaderInfo* mutable_header();
+  inline ::px::HeaderInfo* release_header();
+  
+  // repeated .px.PointCloudXYZRGB.PointXYZRGB points = 2;
   inline int points_size() const;
   inline void clear_points();
-  static const int kPointsFieldNumber = 1;
+  static const int kPointsFieldNumber = 2;
   inline const ::px::PointCloudXYZRGB_PointXYZRGB& points(int index) const;
   inline ::px::PointCloudXYZRGB_PointXYZRGB* mutable_points(int index);
   inline ::px::PointCloudXYZRGB_PointXYZRGB* add_points();
@@ -421,13 +548,16 @@ class PointCloudXYZRGB : public ::google::protobuf::Message {
   
   // @@protoc_insertion_point(class_scope:px.PointCloudXYZRGB)
  private:
+  inline void set_has_header();
+  inline void clear_has_header();
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
+  ::px::HeaderInfo* header_;
   ::google::protobuf::RepeatedPtrField< ::px::PointCloudXYZRGB_PointXYZRGB > points_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   friend void  protobuf_AddDesc_pixhawk_2eproto();
   friend void protobuf_AssignDesc_pixhawk_2eproto();
@@ -492,38 +622,46 @@ class RGBDImage : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // required uint32 cols = 1;
+  // required .px.HeaderInfo header = 1;
+  inline bool has_header() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::px::HeaderInfo& header() const;
+  inline ::px::HeaderInfo* mutable_header();
+  inline ::px::HeaderInfo* release_header();
+  
+  // required uint32 cols = 2;
   inline bool has_cols() const;
   inline void clear_cols();
-  static const int kColsFieldNumber = 1;
+  static const int kColsFieldNumber = 2;
   inline ::google::protobuf::uint32 cols() const;
   inline void set_cols(::google::protobuf::uint32 value);
   
-  // required uint32 rows = 2;
+  // required uint32 rows = 3;
   inline bool has_rows() const;
   inline void clear_rows();
-  static const int kRowsFieldNumber = 2;
+  static const int kRowsFieldNumber = 3;
   inline ::google::protobuf::uint32 rows() const;
   inline void set_rows(::google::protobuf::uint32 value);
   
-  // required uint32 step1 = 3;
+  // required uint32 step1 = 4;
   inline bool has_step1() const;
   inline void clear_step1();
-  static const int kStep1FieldNumber = 3;
+  static const int kStep1FieldNumber = 4;
   inline ::google::protobuf::uint32 step1() const;
   inline void set_step1(::google::protobuf::uint32 value);
   
-  // required uint32 type1 = 4;
+  // required uint32 type1 = 5;
   inline bool has_type1() const;
   inline void clear_type1();
-  static const int kType1FieldNumber = 4;
+  static const int kType1FieldNumber = 5;
   inline ::google::protobuf::uint32 type1() const;
   inline void set_type1(::google::protobuf::uint32 value);
   
-  // required bytes imageData1 = 5;
+  // required bytes imageData1 = 6;
   inline bool has_imagedata1() const;
   inline void clear_imagedata1();
-  static const int kImageData1FieldNumber = 5;
+  static const int kImageData1FieldNumber = 6;
   inline const ::std::string& imagedata1() const;
   inline void set_imagedata1(const ::std::string& value);
   inline void set_imagedata1(const char* value);
@@ -531,24 +669,24 @@ class RGBDImage : public ::google::protobuf::Message {
   inline ::std::string* mutable_imagedata1();
   inline ::std::string* release_imagedata1();
   
-  // required uint32 step2 = 6;
+  // required uint32 step2 = 7;
   inline bool has_step2() const;
   inline void clear_step2();
-  static const int kStep2FieldNumber = 6;
+  static const int kStep2FieldNumber = 7;
   inline ::google::protobuf::uint32 step2() const;
   inline void set_step2(::google::protobuf::uint32 value);
   
-  // required uint32 type2 = 7;
+  // required uint32 type2 = 8;
   inline bool has_type2() const;
   inline void clear_type2();
-  static const int kType2FieldNumber = 7;
+  static const int kType2FieldNumber = 8;
   inline ::google::protobuf::uint32 type2() const;
   inline void set_type2(::google::protobuf::uint32 value);
   
-  // required bytes imageData2 = 8;
+  // required bytes imageData2 = 9;
   inline bool has_imagedata2() const;
   inline void clear_imagedata2();
-  static const int kImageData2FieldNumber = 8;
+  static const int kImageData2FieldNumber = 9;
   inline const ::std::string& imagedata2() const;
   inline void set_imagedata2(const ::std::string& value);
   inline void set_imagedata2(const char* value);
@@ -556,26 +694,19 @@ class RGBDImage : public ::google::protobuf::Message {
   inline ::std::string* mutable_imagedata2();
   inline ::std::string* release_imagedata2();
   
-  // optional uint32 camera_config = 9;
+  // optional uint32 camera_config = 10;
   inline bool has_camera_config() const;
   inline void clear_camera_config();
-  static const int kCameraConfigFieldNumber = 9;
+  static const int kCameraConfigFieldNumber = 10;
   inline ::google::protobuf::uint32 camera_config() const;
   inline void set_camera_config(::google::protobuf::uint32 value);
   
-  // optional uint32 camera_type = 10;
+  // optional uint32 camera_type = 11;
   inline bool has_camera_type() const;
   inline void clear_camera_type();
-  static const int kCameraTypeFieldNumber = 10;
+  static const int kCameraTypeFieldNumber = 11;
   inline ::google::protobuf::uint32 camera_type() const;
   inline void set_camera_type(::google::protobuf::uint32 value);
-  
-  // optional uint64 timestamp = 11;
-  inline bool has_timestamp() const;
-  inline void clear_timestamp();
-  static const int kTimestampFieldNumber = 11;
-  inline ::google::protobuf::uint64 timestamp() const;
-  inline void set_timestamp(::google::protobuf::uint64 value);
   
   // optional float roll = 12;
   inline bool has_roll() const;
@@ -654,6 +785,8 @@ class RGBDImage : public ::google::protobuf::Message {
   
   // @@protoc_insertion_point(class_scope:px.RGBDImage)
  private:
+  inline void set_has_header();
+  inline void clear_has_header();
   inline void set_has_cols();
   inline void clear_has_cols();
   inline void set_has_rows();
@@ -674,8 +807,6 @@ class RGBDImage : public ::google::protobuf::Message {
   inline void clear_has_camera_config();
   inline void set_has_camera_type();
   inline void clear_has_camera_type();
-  inline void set_has_timestamp();
-  inline void clear_has_timestamp();
   inline void set_has_roll();
   inline void clear_has_roll();
   inline void set_has_pitch();
@@ -697,6 +828,7 @@ class RGBDImage : public ::google::protobuf::Message {
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
+  ::px::HeaderInfo* header_;
   ::google::protobuf::uint32 cols_;
   ::google::protobuf::uint32 rows_;
   ::google::protobuf::uint32 step1_;
@@ -707,7 +839,6 @@ class RGBDImage : public ::google::protobuf::Message {
   ::std::string* imagedata2_;
   ::google::protobuf::uint32 camera_config_;
   ::google::protobuf::uint32 camera_type_;
-  ::google::protobuf::uint64 timestamp_;
   float roll_;
   float pitch_;
   float yaw_;
@@ -729,10 +860,713 @@ class RGBDImage : public ::google::protobuf::Message {
   void InitAsDefaultInstance();
   static RGBDImage* default_instance_;
 };
+// -------------------------------------------------------------------
+
+class Obstacle : public ::google::protobuf::Message {
+ public:
+  Obstacle();
+  virtual ~Obstacle();
+  
+  Obstacle(const Obstacle& from);
+  
+  inline Obstacle& operator=(const Obstacle& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Obstacle& default_instance();
+  
+  void Swap(Obstacle* other);
+  
+  // implements Message ----------------------------------------------
+  
+  Obstacle* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Obstacle& from);
+  void MergeFrom(const Obstacle& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // optional float x = 1;
+  inline bool has_x() const;
+  inline void clear_x();
+  static const int kXFieldNumber = 1;
+  inline float x() const;
+  inline void set_x(float value);
+  
+  // optional float y = 2;
+  inline bool has_y() const;
+  inline void clear_y();
+  static const int kYFieldNumber = 2;
+  inline float y() const;
+  inline void set_y(float value);
+  
+  // optional float z = 3;
+  inline bool has_z() const;
+  inline void clear_z();
+  static const int kZFieldNumber = 3;
+  inline float z() const;
+  inline void set_z(float value);
+  
+  // optional float length = 4;
+  inline bool has_length() const;
+  inline void clear_length();
+  static const int kLengthFieldNumber = 4;
+  inline float length() const;
+  inline void set_length(float value);
+  
+  // optional float width = 5;
+  inline bool has_width() const;
+  inline void clear_width();
+  static const int kWidthFieldNumber = 5;
+  inline float width() const;
+  inline void set_width(float value);
+  
+  // optional float height = 6;
+  inline bool has_height() const;
+  inline void clear_height();
+  static const int kHeightFieldNumber = 6;
+  inline float height() const;
+  inline void set_height(float value);
+  
+  // @@protoc_insertion_point(class_scope:px.Obstacle)
+ private:
+  inline void set_has_x();
+  inline void clear_has_x();
+  inline void set_has_y();
+  inline void clear_has_y();
+  inline void set_has_z();
+  inline void clear_has_z();
+  inline void set_has_length();
+  inline void clear_has_length();
+  inline void set_has_width();
+  inline void clear_has_width();
+  inline void set_has_height();
+  inline void clear_has_height();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  float x_;
+  float y_;
+  float z_;
+  float length_;
+  float width_;
+  float height_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_pixhawk_2eproto();
+  friend void protobuf_AssignDesc_pixhawk_2eproto();
+  friend void protobuf_ShutdownFile_pixhawk_2eproto();
+  
+  void InitAsDefaultInstance();
+  static Obstacle* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ObstacleList : public ::google::protobuf::Message {
+ public:
+  ObstacleList();
+  virtual ~ObstacleList();
+  
+  ObstacleList(const ObstacleList& from);
+  
+  inline ObstacleList& operator=(const ObstacleList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ObstacleList& default_instance();
+  
+  void Swap(ObstacleList* other);
+  
+  // implements Message ----------------------------------------------
+  
+  ObstacleList* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ObstacleList& from);
+  void MergeFrom(const ObstacleList& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required .px.HeaderInfo header = 1;
+  inline bool has_header() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::px::HeaderInfo& header() const;
+  inline ::px::HeaderInfo* mutable_header();
+  inline ::px::HeaderInfo* release_header();
+  
+  // repeated .px.Obstacle obstacles = 2;
+  inline int obstacles_size() const;
+  inline void clear_obstacles();
+  static const int kObstaclesFieldNumber = 2;
+  inline const ::px::Obstacle& obstacles(int index) const;
+  inline ::px::Obstacle* mutable_obstacles(int index);
+  inline ::px::Obstacle* add_obstacles();
+  inline const ::google::protobuf::RepeatedPtrField< ::px::Obstacle >&
+      obstacles() const;
+  inline ::google::protobuf::RepeatedPtrField< ::px::Obstacle >*
+      mutable_obstacles();
+  
+  // @@protoc_insertion_point(class_scope:px.ObstacleList)
+ private:
+  inline void set_has_header();
+  inline void clear_has_header();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::px::HeaderInfo* header_;
+  ::google::protobuf::RepeatedPtrField< ::px::Obstacle > obstacles_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_pixhawk_2eproto();
+  friend void protobuf_AssignDesc_pixhawk_2eproto();
+  friend void protobuf_ShutdownFile_pixhawk_2eproto();
+  
+  void InitAsDefaultInstance();
+  static ObstacleList* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ObstacleMap : public ::google::protobuf::Message {
+ public:
+  ObstacleMap();
+  virtual ~ObstacleMap();
+  
+  ObstacleMap(const ObstacleMap& from);
+  
+  inline ObstacleMap& operator=(const ObstacleMap& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ObstacleMap& default_instance();
+  
+  void Swap(ObstacleMap* other);
+  
+  // implements Message ----------------------------------------------
+  
+  ObstacleMap* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ObstacleMap& from);
+  void MergeFrom(const ObstacleMap& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required .px.HeaderInfo header = 1;
+  inline bool has_header() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::px::HeaderInfo& header() const;
+  inline ::px::HeaderInfo* mutable_header();
+  inline ::px::HeaderInfo* release_header();
+  
+  // required int32 type = 2;
+  inline bool has_type() const;
+  inline void clear_type();
+  static const int kTypeFieldNumber = 2;
+  inline ::google::protobuf::int32 type() const;
+  inline void set_type(::google::protobuf::int32 value);
+  
+  // optional float resolution = 3;
+  inline bool has_resolution() const;
+  inline void clear_resolution();
+  static const int kResolutionFieldNumber = 3;
+  inline float resolution() const;
+  inline void set_resolution(float value);
+  
+  // optional int32 rows = 4;
+  inline bool has_rows() const;
+  inline void clear_rows();
+  static const int kRowsFieldNumber = 4;
+  inline ::google::protobuf::int32 rows() const;
+  inline void set_rows(::google::protobuf::int32 value);
+  
+  // optional int32 cols = 5;
+  inline bool has_cols() const;
+  inline void clear_cols();
+  static const int kColsFieldNumber = 5;
+  inline ::google::protobuf::int32 cols() const;
+  inline void set_cols(::google::protobuf::int32 value);
+  
+  // optional int32 mapR0 = 6;
+  inline bool has_mapr0() const;
+  inline void clear_mapr0();
+  static const int kMapR0FieldNumber = 6;
+  inline ::google::protobuf::int32 mapr0() const;
+  inline void set_mapr0(::google::protobuf::int32 value);
+  
+  // optional int32 mapC0 = 7;
+  inline bool has_mapc0() const;
+  inline void clear_mapc0();
+  static const int kMapC0FieldNumber = 7;
+  inline ::google::protobuf::int32 mapc0() const;
+  inline void set_mapc0(::google::protobuf::int32 value);
+  
+  // optional int32 arrayR0 = 8;
+  inline bool has_arrayr0() const;
+  inline void clear_arrayr0();
+  static const int kArrayR0FieldNumber = 8;
+  inline ::google::protobuf::int32 arrayr0() const;
+  inline void set_arrayr0(::google::protobuf::int32 value);
+  
+  // optional int32 arrayC0 = 9;
+  inline bool has_arrayc0() const;
+  inline void clear_arrayc0();
+  static const int kArrayC0FieldNumber = 9;
+  inline ::google::protobuf::int32 arrayc0() const;
+  inline void set_arrayc0(::google::protobuf::int32 value);
+  
+  // optional bytes data = 10;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 10;
+  inline const ::std::string& data() const;
+  inline void set_data(const ::std::string& value);
+  inline void set_data(const char* value);
+  inline void set_data(const void* value, size_t size);
+  inline ::std::string* mutable_data();
+  inline ::std::string* release_data();
+  
+  // @@protoc_insertion_point(class_scope:px.ObstacleMap)
+ private:
+  inline void set_has_header();
+  inline void clear_has_header();
+  inline void set_has_type();
+  inline void clear_has_type();
+  inline void set_has_resolution();
+  inline void clear_has_resolution();
+  inline void set_has_rows();
+  inline void clear_has_rows();
+  inline void set_has_cols();
+  inline void clear_has_cols();
+  inline void set_has_mapr0();
+  inline void clear_has_mapr0();
+  inline void set_has_mapc0();
+  inline void clear_has_mapc0();
+  inline void set_has_arrayr0();
+  inline void clear_has_arrayr0();
+  inline void set_has_arrayc0();
+  inline void clear_has_arrayc0();
+  inline void set_has_data();
+  inline void clear_has_data();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::px::HeaderInfo* header_;
+  ::google::protobuf::int32 type_;
+  float resolution_;
+  ::google::protobuf::int32 rows_;
+  ::google::protobuf::int32 cols_;
+  ::google::protobuf::int32 mapr0_;
+  ::google::protobuf::int32 mapc0_;
+  ::google::protobuf::int32 arrayr0_;
+  ::google::protobuf::int32 arrayc0_;
+  ::std::string* data_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_pixhawk_2eproto();
+  friend void protobuf_AssignDesc_pixhawk_2eproto();
+  friend void protobuf_ShutdownFile_pixhawk_2eproto();
+  
+  void InitAsDefaultInstance();
+  static ObstacleMap* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Waypoint : public ::google::protobuf::Message {
+ public:
+  Waypoint();
+  virtual ~Waypoint();
+  
+  Waypoint(const Waypoint& from);
+  
+  inline Waypoint& operator=(const Waypoint& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Waypoint& default_instance();
+  
+  void Swap(Waypoint* other);
+  
+  // implements Message ----------------------------------------------
+  
+  Waypoint* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Waypoint& from);
+  void MergeFrom(const Waypoint& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required double x = 1;
+  inline bool has_x() const;
+  inline void clear_x();
+  static const int kXFieldNumber = 1;
+  inline double x() const;
+  inline void set_x(double value);
+  
+  // required double y = 2;
+  inline bool has_y() const;
+  inline void clear_y();
+  static const int kYFieldNumber = 2;
+  inline double y() const;
+  inline void set_y(double value);
+  
+  // optional double z = 3;
+  inline bool has_z() const;
+  inline void clear_z();
+  static const int kZFieldNumber = 3;
+  inline double z() const;
+  inline void set_z(double value);
+  
+  // optional double roll = 4;
+  inline bool has_roll() const;
+  inline void clear_roll();
+  static const int kRollFieldNumber = 4;
+  inline double roll() const;
+  inline void set_roll(double value);
+  
+  // optional double pitch = 5;
+  inline bool has_pitch() const;
+  inline void clear_pitch();
+  static const int kPitchFieldNumber = 5;
+  inline double pitch() const;
+  inline void set_pitch(double value);
+  
+  // optional double yaw = 6;
+  inline bool has_yaw() const;
+  inline void clear_yaw();
+  static const int kYawFieldNumber = 6;
+  inline double yaw() const;
+  inline void set_yaw(double value);
+  
+  // @@protoc_insertion_point(class_scope:px.Waypoint)
+ private:
+  inline void set_has_x();
+  inline void clear_has_x();
+  inline void set_has_y();
+  inline void clear_has_y();
+  inline void set_has_z();
+  inline void clear_has_z();
+  inline void set_has_roll();
+  inline void clear_has_roll();
+  inline void set_has_pitch();
+  inline void clear_has_pitch();
+  inline void set_has_yaw();
+  inline void clear_has_yaw();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  double x_;
+  double y_;
+  double z_;
+  double roll_;
+  double pitch_;
+  double yaw_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_pixhawk_2eproto();
+  friend void protobuf_AssignDesc_pixhawk_2eproto();
+  friend void protobuf_ShutdownFile_pixhawk_2eproto();
+  
+  void InitAsDefaultInstance();
+  static Waypoint* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Path : public ::google::protobuf::Message {
+ public:
+  Path();
+  virtual ~Path();
+  
+  Path(const Path& from);
+  
+  inline Path& operator=(const Path& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Path& default_instance();
+  
+  void Swap(Path* other);
+  
+  // implements Message ----------------------------------------------
+  
+  Path* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Path& from);
+  void MergeFrom(const Path& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required .px.HeaderInfo header = 1;
+  inline bool has_header() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::px::HeaderInfo& header() const;
+  inline ::px::HeaderInfo* mutable_header();
+  inline ::px::HeaderInfo* release_header();
+  
+  // repeated .px.Waypoint waypoints = 2;
+  inline int waypoints_size() const;
+  inline void clear_waypoints();
+  static const int kWaypointsFieldNumber = 2;
+  inline const ::px::Waypoint& waypoints(int index) const;
+  inline ::px::Waypoint* mutable_waypoints(int index);
+  inline ::px::Waypoint* add_waypoints();
+  inline const ::google::protobuf::RepeatedPtrField< ::px::Waypoint >&
+      waypoints() const;
+  inline ::google::protobuf::RepeatedPtrField< ::px::Waypoint >*
+      mutable_waypoints();
+  
+  // @@protoc_insertion_point(class_scope:px.Path)
+ private:
+  inline void set_has_header();
+  inline void clear_has_header();
+  
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  
+  ::px::HeaderInfo* header_;
+  ::google::protobuf::RepeatedPtrField< ::px::Waypoint > waypoints_;
+  
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  
+  friend void  protobuf_AddDesc_pixhawk_2eproto();
+  friend void protobuf_AssignDesc_pixhawk_2eproto();
+  friend void protobuf_ShutdownFile_pixhawk_2eproto();
+  
+  void InitAsDefaultInstance();
+  static Path* default_instance_;
+};
 // ===================================================================
 
 
 // ===================================================================
+
+// HeaderInfo
+
+// required int32 source_sysid = 1;
+inline bool HeaderInfo::has_source_sysid() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void HeaderInfo::set_has_source_sysid() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void HeaderInfo::clear_has_source_sysid() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void HeaderInfo::clear_source_sysid() {
+  source_sysid_ = 0;
+  clear_has_source_sysid();
+}
+inline ::google::protobuf::int32 HeaderInfo::source_sysid() const {
+  return source_sysid_;
+}
+inline void HeaderInfo::set_source_sysid(::google::protobuf::int32 value) {
+  set_has_source_sysid();
+  source_sysid_ = value;
+}
+
+// required int32 source_compid = 2;
+inline bool HeaderInfo::has_source_compid() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void HeaderInfo::set_has_source_compid() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void HeaderInfo::clear_has_source_compid() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void HeaderInfo::clear_source_compid() {
+  source_compid_ = 0;
+  clear_has_source_compid();
+}
+inline ::google::protobuf::int32 HeaderInfo::source_compid() const {
+  return source_compid_;
+}
+inline void HeaderInfo::set_source_compid(::google::protobuf::int32 value) {
+  set_has_source_compid();
+  source_compid_ = value;
+}
+
+// required double timestamp = 3;
+inline bool HeaderInfo::has_timestamp() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void HeaderInfo::set_has_timestamp() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void HeaderInfo::clear_has_timestamp() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void HeaderInfo::clear_timestamp() {
+  timestamp_ = 0;
+  clear_has_timestamp();
+}
+inline double HeaderInfo::timestamp() const {
+  return timestamp_;
+}
+inline void HeaderInfo::set_timestamp(double value) {
+  set_has_timestamp();
+  timestamp_ = value;
+}
+
+// -------------------------------------------------------------------
 
 // PointCloudXYZI_PointXYZI
 
@@ -828,7 +1662,36 @@ inline void PointCloudXYZI_PointXYZI::set_intensity(float value) {
 
 // PointCloudXYZI
 
-// repeated .px.PointCloudXYZI.PointXYZI points = 1;
+// required .px.HeaderInfo header = 1;
+inline bool PointCloudXYZI::has_header() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void PointCloudXYZI::set_has_header() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void PointCloudXYZI::clear_has_header() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void PointCloudXYZI::clear_header() {
+  if (header_ != NULL) header_->::px::HeaderInfo::Clear();
+  clear_has_header();
+}
+inline const ::px::HeaderInfo& PointCloudXYZI::header() const {
+  return header_ != NULL ? *header_ : *default_instance_->header_;
+}
+inline ::px::HeaderInfo* PointCloudXYZI::mutable_header() {
+  set_has_header();
+  if (header_ == NULL) header_ = new ::px::HeaderInfo;
+  return header_;
+}
+inline ::px::HeaderInfo* PointCloudXYZI::release_header() {
+  clear_has_header();
+  ::px::HeaderInfo* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+
+// repeated .px.PointCloudXYZI.PointXYZI points = 2;
 inline int PointCloudXYZI::points_size() const {
   return points_.size();
 }
@@ -949,7 +1812,36 @@ inline void PointCloudXYZRGB_PointXYZRGB::set_rgb(float value) {
 
 // PointCloudXYZRGB
 
-// repeated .px.PointCloudXYZRGB.PointXYZRGB points = 1;
+// required .px.HeaderInfo header = 1;
+inline bool PointCloudXYZRGB::has_header() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void PointCloudXYZRGB::set_has_header() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void PointCloudXYZRGB::clear_has_header() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void PointCloudXYZRGB::clear_header() {
+  if (header_ != NULL) header_->::px::HeaderInfo::Clear();
+  clear_has_header();
+}
+inline const ::px::HeaderInfo& PointCloudXYZRGB::header() const {
+  return header_ != NULL ? *header_ : *default_instance_->header_;
+}
+inline ::px::HeaderInfo* PointCloudXYZRGB::mutable_header() {
+  set_has_header();
+  if (header_ == NULL) header_ = new ::px::HeaderInfo;
+  return header_;
+}
+inline ::px::HeaderInfo* PointCloudXYZRGB::release_header() {
+  clear_has_header();
+  ::px::HeaderInfo* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+
+// repeated .px.PointCloudXYZRGB.PointXYZRGB points = 2;
 inline int PointCloudXYZRGB::points_size() const {
   return points_.size();
 }
@@ -978,15 +1870,44 @@ PointCloudXYZRGB::mutable_points() {
 
 // RGBDImage
 
-// required uint32 cols = 1;
-inline bool RGBDImage::has_cols() const {
+// required .px.HeaderInfo header = 1;
+inline bool RGBDImage::has_header() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void RGBDImage::set_has_cols() {
+inline void RGBDImage::set_has_header() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void RGBDImage::clear_has_cols() {
+inline void RGBDImage::clear_has_header() {
   _has_bits_[0] &= ~0x00000001u;
+}
+inline void RGBDImage::clear_header() {
+  if (header_ != NULL) header_->::px::HeaderInfo::Clear();
+  clear_has_header();
+}
+inline const ::px::HeaderInfo& RGBDImage::header() const {
+  return header_ != NULL ? *header_ : *default_instance_->header_;
+}
+inline ::px::HeaderInfo* RGBDImage::mutable_header() {
+  set_has_header();
+  if (header_ == NULL) header_ = new ::px::HeaderInfo;
+  return header_;
+}
+inline ::px::HeaderInfo* RGBDImage::release_header() {
+  clear_has_header();
+  ::px::HeaderInfo* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+
+// required uint32 cols = 2;
+inline bool RGBDImage::has_cols() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void RGBDImage::set_has_cols() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void RGBDImage::clear_has_cols() {
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void RGBDImage::clear_cols() {
   cols_ = 0u;
@@ -1000,15 +1921,15 @@ inline void RGBDImage::set_cols(::google::protobuf::uint32 value) {
   cols_ = value;
 }
 
-// required uint32 rows = 2;
+// required uint32 rows = 3;
 inline bool RGBDImage::has_rows() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void RGBDImage::set_has_rows() {
-  _has_bits_[0] |= 0x00000002u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void RGBDImage::clear_has_rows() {
-  _has_bits_[0] &= ~0x00000002u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void RGBDImage::clear_rows() {
   rows_ = 0u;
@@ -1022,15 +1943,15 @@ inline void RGBDImage::set_rows(::google::protobuf::uint32 value) {
   rows_ = value;
 }
 
-// required uint32 step1 = 3;
+// required uint32 step1 = 4;
 inline bool RGBDImage::has_step1() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
 inline void RGBDImage::set_has_step1() {
-  _has_bits_[0] |= 0x00000004u;
+  _has_bits_[0] |= 0x00000008u;
 }
 inline void RGBDImage::clear_has_step1() {
-  _has_bits_[0] &= ~0x00000004u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline void RGBDImage::clear_step1() {
   step1_ = 0u;
@@ -1044,15 +1965,15 @@ inline void RGBDImage::set_step1(::google::protobuf::uint32 value) {
   step1_ = value;
 }
 
-// required uint32 type1 = 4;
+// required uint32 type1 = 5;
 inline bool RGBDImage::has_type1() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void RGBDImage::set_has_type1() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void RGBDImage::clear_has_type1() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void RGBDImage::clear_type1() {
   type1_ = 0u;
@@ -1066,15 +1987,15 @@ inline void RGBDImage::set_type1(::google::protobuf::uint32 value) {
   type1_ = value;
 }
 
-// required bytes imageData1 = 5;
+// required bytes imageData1 = 6;
 inline bool RGBDImage::has_imagedata1() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void RGBDImage::set_has_imagedata1() {
-  _has_bits_[0] |= 0x00000010u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void RGBDImage::clear_has_imagedata1() {
-  _has_bits_[0] &= ~0x00000010u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void RGBDImage::clear_imagedata1() {
   if (imagedata1_ != &::google::protobuf::internal::kEmptyString) {
@@ -1124,15 +2045,15 @@ inline ::std::string* RGBDImage::release_imagedata1() {
   }
 }
 
-// required uint32 step2 = 6;
+// required uint32 step2 = 7;
 inline bool RGBDImage::has_step2() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void RGBDImage::set_has_step2() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void RGBDImage::clear_has_step2() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void RGBDImage::clear_step2() {
   step2_ = 0u;
@@ -1146,15 +2067,15 @@ inline void RGBDImage::set_step2(::google::protobuf::uint32 value) {
   step2_ = value;
 }
 
-// required uint32 type2 = 7;
+// required uint32 type2 = 8;
 inline bool RGBDImage::has_type2() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void RGBDImage::set_has_type2() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void RGBDImage::clear_has_type2() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void RGBDImage::clear_type2() {
   type2_ = 0u;
@@ -1168,15 +2089,15 @@ inline void RGBDImage::set_type2(::google::protobuf::uint32 value) {
   type2_ = value;
 }
 
-// required bytes imageData2 = 8;
+// required bytes imageData2 = 9;
 inline bool RGBDImage::has_imagedata2() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
 inline void RGBDImage::set_has_imagedata2() {
-  _has_bits_[0] |= 0x00000080u;
+  _has_bits_[0] |= 0x00000100u;
 }
 inline void RGBDImage::clear_has_imagedata2() {
-  _has_bits_[0] &= ~0x00000080u;
+  _has_bits_[0] &= ~0x00000100u;
 }
 inline void RGBDImage::clear_imagedata2() {
   if (imagedata2_ != &::google::protobuf::internal::kEmptyString) {
@@ -1226,15 +2147,15 @@ inline ::std::string* RGBDImage::release_imagedata2() {
   }
 }
 
-// optional uint32 camera_config = 9;
+// optional uint32 camera_config = 10;
 inline bool RGBDImage::has_camera_config() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000200u) != 0;
 }
 inline void RGBDImage::set_has_camera_config() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000200u;
 }
 inline void RGBDImage::clear_has_camera_config() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000200u;
 }
 inline void RGBDImage::clear_camera_config() {
   camera_config_ = 0u;
@@ -1248,15 +2169,15 @@ inline void RGBDImage::set_camera_config(::google::protobuf::uint32 value) {
   camera_config_ = value;
 }
 
-// optional uint32 camera_type = 10;
+// optional uint32 camera_type = 11;
 inline bool RGBDImage::has_camera_type() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
 inline void RGBDImage::set_has_camera_type() {
-  _has_bits_[0] |= 0x00000200u;
+  _has_bits_[0] |= 0x00000400u;
 }
 inline void RGBDImage::clear_has_camera_type() {
-  _has_bits_[0] &= ~0x00000200u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void RGBDImage::clear_camera_type() {
   camera_type_ = 0u;
@@ -1268,28 +2189,6 @@ inline ::google::protobuf::uint32 RGBDImage::camera_type() const {
 inline void RGBDImage::set_camera_type(::google::protobuf::uint32 value) {
   set_has_camera_type();
   camera_type_ = value;
-}
-
-// optional uint64 timestamp = 11;
-inline bool RGBDImage::has_timestamp() const {
-  return (_has_bits_[0] & 0x00000400u) != 0;
-}
-inline void RGBDImage::set_has_timestamp() {
-  _has_bits_[0] |= 0x00000400u;
-}
-inline void RGBDImage::clear_has_timestamp() {
-  _has_bits_[0] &= ~0x00000400u;
-}
-inline void RGBDImage::clear_timestamp() {
-  timestamp_ = GOOGLE_ULONGLONG(0);
-  clear_has_timestamp();
-}
-inline ::google::protobuf::uint64 RGBDImage::timestamp() const {
-  return timestamp_;
-}
-inline void RGBDImage::set_timestamp(::google::protobuf::uint64 value) {
-  set_has_timestamp();
-  timestamp_ = value;
 }
 
 // optional float roll = 12;
@@ -1513,6 +2412,661 @@ RGBDImage::camera_matrix() const {
 inline ::google::protobuf::RepeatedField< float >*
 RGBDImage::mutable_camera_matrix() {
   return &camera_matrix_;
+}
+
+// -------------------------------------------------------------------
+
+// Obstacle
+
+// optional float x = 1;
+inline bool Obstacle::has_x() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Obstacle::set_has_x() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Obstacle::clear_has_x() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Obstacle::clear_x() {
+  x_ = 0;
+  clear_has_x();
+}
+inline float Obstacle::x() const {
+  return x_;
+}
+inline void Obstacle::set_x(float value) {
+  set_has_x();
+  x_ = value;
+}
+
+// optional float y = 2;
+inline bool Obstacle::has_y() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Obstacle::set_has_y() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Obstacle::clear_has_y() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Obstacle::clear_y() {
+  y_ = 0;
+  clear_has_y();
+}
+inline float Obstacle::y() const {
+  return y_;
+}
+inline void Obstacle::set_y(float value) {
+  set_has_y();
+  y_ = value;
+}
+
+// optional float z = 3;
+inline bool Obstacle::has_z() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void Obstacle::set_has_z() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void Obstacle::clear_has_z() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void Obstacle::clear_z() {
+  z_ = 0;
+  clear_has_z();
+}
+inline float Obstacle::z() const {
+  return z_;
+}
+inline void Obstacle::set_z(float value) {
+  set_has_z();
+  z_ = value;
+}
+
+// optional float length = 4;
+inline bool Obstacle::has_length() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void Obstacle::set_has_length() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void Obstacle::clear_has_length() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void Obstacle::clear_length() {
+  length_ = 0;
+  clear_has_length();
+}
+inline float Obstacle::length() const {
+  return length_;
+}
+inline void Obstacle::set_length(float value) {
+  set_has_length();
+  length_ = value;
+}
+
+// optional float width = 5;
+inline bool Obstacle::has_width() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void Obstacle::set_has_width() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void Obstacle::clear_has_width() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void Obstacle::clear_width() {
+  width_ = 0;
+  clear_has_width();
+}
+inline float Obstacle::width() const {
+  return width_;
+}
+inline void Obstacle::set_width(float value) {
+  set_has_width();
+  width_ = value;
+}
+
+// optional float height = 6;
+inline bool Obstacle::has_height() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void Obstacle::set_has_height() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void Obstacle::clear_has_height() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void Obstacle::clear_height() {
+  height_ = 0;
+  clear_has_height();
+}
+inline float Obstacle::height() const {
+  return height_;
+}
+inline void Obstacle::set_height(float value) {
+  set_has_height();
+  height_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// ObstacleList
+
+// required .px.HeaderInfo header = 1;
+inline bool ObstacleList::has_header() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ObstacleList::set_has_header() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ObstacleList::clear_has_header() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ObstacleList::clear_header() {
+  if (header_ != NULL) header_->::px::HeaderInfo::Clear();
+  clear_has_header();
+}
+inline const ::px::HeaderInfo& ObstacleList::header() const {
+  return header_ != NULL ? *header_ : *default_instance_->header_;
+}
+inline ::px::HeaderInfo* ObstacleList::mutable_header() {
+  set_has_header();
+  if (header_ == NULL) header_ = new ::px::HeaderInfo;
+  return header_;
+}
+inline ::px::HeaderInfo* ObstacleList::release_header() {
+  clear_has_header();
+  ::px::HeaderInfo* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+
+// repeated .px.Obstacle obstacles = 2;
+inline int ObstacleList::obstacles_size() const {
+  return obstacles_.size();
+}
+inline void ObstacleList::clear_obstacles() {
+  obstacles_.Clear();
+}
+inline const ::px::Obstacle& ObstacleList::obstacles(int index) const {
+  return obstacles_.Get(index);
+}
+inline ::px::Obstacle* ObstacleList::mutable_obstacles(int index) {
+  return obstacles_.Mutable(index);
+}
+inline ::px::Obstacle* ObstacleList::add_obstacles() {
+  return obstacles_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::px::Obstacle >&
+ObstacleList::obstacles() const {
+  return obstacles_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::px::Obstacle >*
+ObstacleList::mutable_obstacles() {
+  return &obstacles_;
+}
+
+// -------------------------------------------------------------------
+
+// ObstacleMap
+
+// required .px.HeaderInfo header = 1;
+inline bool ObstacleMap::has_header() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ObstacleMap::set_has_header() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ObstacleMap::clear_has_header() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ObstacleMap::clear_header() {
+  if (header_ != NULL) header_->::px::HeaderInfo::Clear();
+  clear_has_header();
+}
+inline const ::px::HeaderInfo& ObstacleMap::header() const {
+  return header_ != NULL ? *header_ : *default_instance_->header_;
+}
+inline ::px::HeaderInfo* ObstacleMap::mutable_header() {
+  set_has_header();
+  if (header_ == NULL) header_ = new ::px::HeaderInfo;
+  return header_;
+}
+inline ::px::HeaderInfo* ObstacleMap::release_header() {
+  clear_has_header();
+  ::px::HeaderInfo* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+
+// required int32 type = 2;
+inline bool ObstacleMap::has_type() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ObstacleMap::set_has_type() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ObstacleMap::clear_has_type() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ObstacleMap::clear_type() {
+  type_ = 0;
+  clear_has_type();
+}
+inline ::google::protobuf::int32 ObstacleMap::type() const {
+  return type_;
+}
+inline void ObstacleMap::set_type(::google::protobuf::int32 value) {
+  set_has_type();
+  type_ = value;
+}
+
+// optional float resolution = 3;
+inline bool ObstacleMap::has_resolution() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void ObstacleMap::set_has_resolution() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void ObstacleMap::clear_has_resolution() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void ObstacleMap::clear_resolution() {
+  resolution_ = 0;
+  clear_has_resolution();
+}
+inline float ObstacleMap::resolution() const {
+  return resolution_;
+}
+inline void ObstacleMap::set_resolution(float value) {
+  set_has_resolution();
+  resolution_ = value;
+}
+
+// optional int32 rows = 4;
+inline bool ObstacleMap::has_rows() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void ObstacleMap::set_has_rows() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void ObstacleMap::clear_has_rows() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void ObstacleMap::clear_rows() {
+  rows_ = 0;
+  clear_has_rows();
+}
+inline ::google::protobuf::int32 ObstacleMap::rows() const {
+  return rows_;
+}
+inline void ObstacleMap::set_rows(::google::protobuf::int32 value) {
+  set_has_rows();
+  rows_ = value;
+}
+
+// optional int32 cols = 5;
+inline bool ObstacleMap::has_cols() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void ObstacleMap::set_has_cols() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void ObstacleMap::clear_has_cols() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void ObstacleMap::clear_cols() {
+  cols_ = 0;
+  clear_has_cols();
+}
+inline ::google::protobuf::int32 ObstacleMap::cols() const {
+  return cols_;
+}
+inline void ObstacleMap::set_cols(::google::protobuf::int32 value) {
+  set_has_cols();
+  cols_ = value;
+}
+
+// optional int32 mapR0 = 6;
+inline bool ObstacleMap::has_mapr0() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void ObstacleMap::set_has_mapr0() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void ObstacleMap::clear_has_mapr0() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void ObstacleMap::clear_mapr0() {
+  mapr0_ = 0;
+  clear_has_mapr0();
+}
+inline ::google::protobuf::int32 ObstacleMap::mapr0() const {
+  return mapr0_;
+}
+inline void ObstacleMap::set_mapr0(::google::protobuf::int32 value) {
+  set_has_mapr0();
+  mapr0_ = value;
+}
+
+// optional int32 mapC0 = 7;
+inline bool ObstacleMap::has_mapc0() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void ObstacleMap::set_has_mapc0() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void ObstacleMap::clear_has_mapc0() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void ObstacleMap::clear_mapc0() {
+  mapc0_ = 0;
+  clear_has_mapc0();
+}
+inline ::google::protobuf::int32 ObstacleMap::mapc0() const {
+  return mapc0_;
+}
+inline void ObstacleMap::set_mapc0(::google::protobuf::int32 value) {
+  set_has_mapc0();
+  mapc0_ = value;
+}
+
+// optional int32 arrayR0 = 8;
+inline bool ObstacleMap::has_arrayr0() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void ObstacleMap::set_has_arrayr0() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void ObstacleMap::clear_has_arrayr0() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void ObstacleMap::clear_arrayr0() {
+  arrayr0_ = 0;
+  clear_has_arrayr0();
+}
+inline ::google::protobuf::int32 ObstacleMap::arrayr0() const {
+  return arrayr0_;
+}
+inline void ObstacleMap::set_arrayr0(::google::protobuf::int32 value) {
+  set_has_arrayr0();
+  arrayr0_ = value;
+}
+
+// optional int32 arrayC0 = 9;
+inline bool ObstacleMap::has_arrayc0() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void ObstacleMap::set_has_arrayc0() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void ObstacleMap::clear_has_arrayc0() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void ObstacleMap::clear_arrayc0() {
+  arrayc0_ = 0;
+  clear_has_arrayc0();
+}
+inline ::google::protobuf::int32 ObstacleMap::arrayc0() const {
+  return arrayc0_;
+}
+inline void ObstacleMap::set_arrayc0(::google::protobuf::int32 value) {
+  set_has_arrayc0();
+  arrayc0_ = value;
+}
+
+// optional bytes data = 10;
+inline bool ObstacleMap::has_data() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void ObstacleMap::set_has_data() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void ObstacleMap::clear_has_data() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void ObstacleMap::clear_data() {
+  if (data_ != &::google::protobuf::internal::kEmptyString) {
+    data_->clear();
+  }
+  clear_has_data();
+}
+inline const ::std::string& ObstacleMap::data() const {
+  return *data_;
+}
+inline void ObstacleMap::set_data(const ::std::string& value) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(value);
+}
+inline void ObstacleMap::set_data(const char* value) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(value);
+}
+inline void ObstacleMap::set_data(const void* value, size_t size) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ObstacleMap::mutable_data() {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  return data_;
+}
+inline ::std::string* ObstacleMap::release_data() {
+  clear_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = data_;
+    data_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// -------------------------------------------------------------------
+
+// Waypoint
+
+// required double x = 1;
+inline bool Waypoint::has_x() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Waypoint::set_has_x() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Waypoint::clear_has_x() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Waypoint::clear_x() {
+  x_ = 0;
+  clear_has_x();
+}
+inline double Waypoint::x() const {
+  return x_;
+}
+inline void Waypoint::set_x(double value) {
+  set_has_x();
+  x_ = value;
+}
+
+// required double y = 2;
+inline bool Waypoint::has_y() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Waypoint::set_has_y() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Waypoint::clear_has_y() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Waypoint::clear_y() {
+  y_ = 0;
+  clear_has_y();
+}
+inline double Waypoint::y() const {
+  return y_;
+}
+inline void Waypoint::set_y(double value) {
+  set_has_y();
+  y_ = value;
+}
+
+// optional double z = 3;
+inline bool Waypoint::has_z() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void Waypoint::set_has_z() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void Waypoint::clear_has_z() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void Waypoint::clear_z() {
+  z_ = 0;
+  clear_has_z();
+}
+inline double Waypoint::z() const {
+  return z_;
+}
+inline void Waypoint::set_z(double value) {
+  set_has_z();
+  z_ = value;
+}
+
+// optional double roll = 4;
+inline bool Waypoint::has_roll() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void Waypoint::set_has_roll() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void Waypoint::clear_has_roll() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void Waypoint::clear_roll() {
+  roll_ = 0;
+  clear_has_roll();
+}
+inline double Waypoint::roll() const {
+  return roll_;
+}
+inline void Waypoint::set_roll(double value) {
+  set_has_roll();
+  roll_ = value;
+}
+
+// optional double pitch = 5;
+inline bool Waypoint::has_pitch() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void Waypoint::set_has_pitch() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void Waypoint::clear_has_pitch() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void Waypoint::clear_pitch() {
+  pitch_ = 0;
+  clear_has_pitch();
+}
+inline double Waypoint::pitch() const {
+  return pitch_;
+}
+inline void Waypoint::set_pitch(double value) {
+  set_has_pitch();
+  pitch_ = value;
+}
+
+// optional double yaw = 6;
+inline bool Waypoint::has_yaw() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void Waypoint::set_has_yaw() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void Waypoint::clear_has_yaw() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void Waypoint::clear_yaw() {
+  yaw_ = 0;
+  clear_has_yaw();
+}
+inline double Waypoint::yaw() const {
+  return yaw_;
+}
+inline void Waypoint::set_yaw(double value) {
+  set_has_yaw();
+  yaw_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// Path
+
+// required .px.HeaderInfo header = 1;
+inline bool Path::has_header() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Path::set_has_header() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Path::clear_has_header() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Path::clear_header() {
+  if (header_ != NULL) header_->::px::HeaderInfo::Clear();
+  clear_has_header();
+}
+inline const ::px::HeaderInfo& Path::header() const {
+  return header_ != NULL ? *header_ : *default_instance_->header_;
+}
+inline ::px::HeaderInfo* Path::mutable_header() {
+  set_has_header();
+  if (header_ == NULL) header_ = new ::px::HeaderInfo;
+  return header_;
+}
+inline ::px::HeaderInfo* Path::release_header() {
+  clear_has_header();
+  ::px::HeaderInfo* temp = header_;
+  header_ = NULL;
+  return temp;
+}
+
+// repeated .px.Waypoint waypoints = 2;
+inline int Path::waypoints_size() const {
+  return waypoints_.size();
+}
+inline void Path::clear_waypoints() {
+  waypoints_.Clear();
+}
+inline const ::px::Waypoint& Path::waypoints(int index) const {
+  return waypoints_.Get(index);
+}
+inline ::px::Waypoint* Path::mutable_waypoints(int index) {
+  return waypoints_.Mutable(index);
+}
+inline ::px::Waypoint* Path::add_waypoints() {
+  return waypoints_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::px::Waypoint >&
+Path::waypoints() const {
+  return waypoints_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::px::Waypoint >*
+Path::mutable_waypoints() {
+  return &waypoints_;
 }
 
 

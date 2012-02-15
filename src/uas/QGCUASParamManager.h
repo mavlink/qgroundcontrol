@@ -20,8 +20,20 @@ public:
     QList<QVariant> getParameterValues(int component) const {
         return parameters.value(component)->values();
     }
-    QVariant getParameterValue(int component, const QString& parameter) const {
-        return parameters.value(component)->value(parameter);
+    bool getParameterValue(int component, const QString& parameter, QVariant& value) const {
+        if (!parameters.contains(component))
+        {
+            return false;
+        }
+
+        if (!parameters.value(component)->contains(parameter))
+        {
+            return false;
+        }
+
+        value = parameters.value(component)->value(parameter);
+
+        return true;
     }
 
     virtual bool isParamMinKnown(const QString& param) = 0;

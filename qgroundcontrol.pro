@@ -371,6 +371,7 @@ HEADERS += src/MG.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
     src/ui/QGCPluginHost.h \
     src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h \
+    src/ui/map3D/gpl.h\
     src/ui/mission/QGCMissionOther.h \
     src/ui/mission/QGCMissionNavWaypoint.h \
     src/ui/mission/QGCMissionDoJump.h \
@@ -409,7 +410,8 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including headers for Protocol Buffers")
 
     # Enable only if protobuf is available
-    HEADERS += ../mavlink/include/pixhawk/pixhawk.pb.h
+    HEADERS += thirdParty/mavlink/include/pixhawk/pixhawk.pb.h \
+               src/ui/map3D/ObstacleGroupNode.h
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
@@ -514,6 +516,7 @@ SOURCES += src/main.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
     src/ui/QGCPluginHost.cc \
     src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc \
+    src/ui/map3D/gpl.cc \
     src/ui/mission/QGCMissionOther.cc \
     src/ui/mission/QGCMissionNavWaypoint.cc \
     src/ui/mission/QGCMissionDoJump.cc \
@@ -560,7 +563,8 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including sources for Protocol Buffers")
 
     # Enable only if protobuf is available
-    SOURCES += ../mavlink/src/pixhawk/pixhawk.pb.cc
+    SOURCES += thirdParty/mavlink/src/pixhawk/pixhawk.pb.cc \
+               src/ui/map3D/ObstacleGroupNode.cc
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including sources for libfreenect")

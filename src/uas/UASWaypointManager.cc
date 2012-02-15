@@ -61,6 +61,11 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
     }
 }
 
+UASWaypointManager::~UASWaypointManager()
+{
+
+}
+
 void UASWaypointManager::timeout()
 {
     if (current_retries > 0) {
