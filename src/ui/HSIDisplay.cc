@@ -573,7 +573,7 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     if (event->type() == QMouseEvent::MouseButtonDblClick)
     {
         QPointF p = screenToMetricBody(event->posF());
-        setBodySetpointCoordinateXY(p.x(), p.y());
+        if (!directSending) setBodySetpointCoordinateXY(p.x(), p.y());
         //        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
     }
 }
@@ -586,7 +586,7 @@ void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
         {
             if (dragStarted)
             {
-                setBodySetpointCoordinateYaw(uiYawSet);
+                if (!directSending) setBodySetpointCoordinateYaw(uiYawSet);
                 dragStarted = false;
             }
         }
@@ -594,7 +594,7 @@ void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
         {
             if (leftDragStarted)
             {
-                setBodySetpointCoordinateZ(uiZSetCoordinate);
+                if (!directSending) setBodySetpointCoordinateZ(uiZSetCoordinate);
                 leftDragStarted = false;
             }
         }
