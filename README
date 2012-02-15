@@ -4,8 +4,8 @@ Project:
 http://qgroundcontrol.org
 
 Files:
-http://github.com/pixhawk/qgroundcontrol
-http://github.com/pixhawk/mavlink
+http://github.com/mavlink/qgroundcontrol
+http://github.com/mavlink/mavlink
 
 Credits:
 http://qgroundcontrol.org/credits
@@ -57,8 +57,8 @@ qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential
 
 cd directory
 
-git clone git@github.com:pixhawk/mavlink.git
-git clone git@github.com:pixhawk/qgroundcontrol.git
+git clone https://github.com/mavlink/mavlink.git
+git clone https://github.com/mavlink/qgroundcontrol.git
 
 go to thirdParty -> libxbee 
 

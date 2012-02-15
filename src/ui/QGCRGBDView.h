@@ -12,7 +12,9 @@ public:
 signals:
 
 public slots:
-    void addUAS(UASInterface* uas);
+    void setActiveUAS(UASInterface* uas);
+
+    void clearData(void);
     void enableRGB(bool enabled);
     void enableDepth(bool enabled);
     void updateData(UASInterface *uas);

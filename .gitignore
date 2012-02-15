@@ -22,7 +22,6 @@ debug
 release
 qgroundcontrol
 mavlinkgen-build-desktop
-*.wav
 qgroundcontrol.xcodeproj/**
 doc/html
 doc/doxy.log

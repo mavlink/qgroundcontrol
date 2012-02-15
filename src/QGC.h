@@ -77,6 +77,8 @@ const QColor colorBlack(0, 0, 0);
 quint64 groundTimeUsecs();
 /** @brief Get the current ground time in milliseconds */
 quint64 groundTimeMilliseconds();
+/** @brief Get the current ground time in seconds */
+qreal groundTimeSeconds();
 /** @brief Returns the angle limited to -pi - pi */
 float limitAngleToPMPIf(float angle);
 /** @brief Returns the angle limited to -pi - pi */

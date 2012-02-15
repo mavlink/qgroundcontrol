@@ -25,7 +25,7 @@
  * @file
  *   @brief Definition of the class Pixhawk3DWidget.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
@@ -43,23 +43,28 @@
 #include "UASManager.h"
 
 #include "QGC.h"
+#include "gpl.h"
 
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
 #include <tr1/memory>
-#include <pixhawk.pb.h>
+#include <pixhawk/pixhawk.pb.h>
 #endif
 
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     : Q3DWidget(parent)
     , uas(NULL)
+    , kMessageTimeout(4.0)
     , mode(DEFAULT_MODE)
     , selectedWpIndex(-1)
-    , displayGrid(true)
-    , displayTrail(false)
+    , displayLocalGrid(false)
+    , displayWorldGrid(true)
+    , displayTrails(true)
     , displayImagery(true)
     , displayWaypoints(true)
     , displayRGBD2D(false)
     , displayRGBD3D(true)
+    , displayObstacleList(true)
+    , displayPath(true)
     , enableRGBDColor(false)
     , enableTarget(false)
     , followCamera(true)
@@ -75,13 +80,19 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     vehicleModel = PixhawkCheetahGeode::instance();
     egocentricMap->addChild(vehicleModel);
 
-    // generate grid model
-    gridNode = createGrid();
-    rollingMap->addChild(gridNode);
+    // generate grid models
+    localGridNode = createLocalGrid();
+    rollingMap->addChild(localGridNode);
+
+    worldGridNode = createWorldGrid();
+    allocentricMap->addChild(worldGridNode);
 
     // generate empty trail model
-    trailNode = createTrail();
+    trailNode = new osg::Geode;
     rollingMap->addChild(trailNode);
+
+    orientationNode = new osg::Group;
+    rollingMap->addChild(orientationNode);
 
     // generate map model
     mapNode = createMap();
@@ -98,7 +109,18 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     // generate RGBD model
     rgbd3DNode = createRGBD3D();
-    egocentricMap->addChild(rgbd3DNode);
+    rollingMap->addChild(rgbd3DNode);
+
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+    obstacleGroupNode = new ObstacleGroupNode;
+    obstacleGroupNode->init();
+    rollingMap->addChild(obstacleGroupNode);
+
+    // generate path model
+    pathNode = new osg::Geode;
+    pathNode->addDrawable(createTrail(osg::Vec4(1.0f, 0.8f, 0.0f, 1.0f)));
+    rollingMap->addChild(pathNode);
+#endif
 
     setupHUD();
 
@@ -106,6 +128,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     vehicleModels = findVehicleModels();
 
     buildLayout();
+
+    updateHUD(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "32N");
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
@@ -123,20 +147,157 @@ Pixhawk3DWidget::~Pixhawk3DWidget()
 void
 Pixhawk3DWidget::setActiveUAS(UASInterface* uas)
 {
-    if (this->uas != NULL && this->uas != uas) {
-        // Disconnect any previously connected active MAV
-        //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+    if (this->uas == uas)
+    {
+        return;
     }
+
+    if (this->uas != NULL)
+    {
+        // Disconnect any previously connected active MAV
+        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(addToTrails(UASInterface*,int,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double,double,double,quint64)));
+    }
+
+    connect(uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(addToTrails(UASInterface*,int,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double,double,double,quint64)));
+
+    trails.clear();
+    trailNode->removeDrawables(0, trailNode->getNumDrawables());
+    orientationNode->removeChildren(0, orientationNode->getNumChildren());
 
     this->uas = uas;
 }
 
 void
+Pixhawk3DWidget::addToTrails(UASInterface* uas, int component, double x, double y, double z, quint64 time)
+{
+    if (this->uas->getUASID() != uas->getUASID())
+    {
+        return;
+    }
+
+    if (!trails.contains(component))
+    {
+        trails[component] = QVarLengthArray<osg::Vec3d, 10000>();
+        trailDrawableIdxs[component] = trails.size() - 1;
+
+        osg::Vec4 color((float)qrand() / RAND_MAX,
+                        (float)qrand() / RAND_MAX,
+                        (float)qrand() / RAND_MAX,
+                        0.5);
+        trailNode->addDrawable(createTrail(color));
+
+        double radius = 0.5;
+
+        osg::ref_ptr<osg::Group> group = new osg::Group;
+
+        // cone indicates waypoint orientation
+        osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
+        double coneRadius = radius / 2.0;
+        osg::ref_ptr<osg::Cone> cone =
+            new osg::Cone(osg::Vec3d(0.0, 0.0, 0.0),
+                          coneRadius, radius * 2.0);
+
+        sd->setShape(cone);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(color);
+
+        osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+        geode->addDrawable(sd);
+
+        osg::ref_ptr<osg::PositionAttitudeTransform> pat =
+            new osg::PositionAttitudeTransform;
+        pat->addChild(geode);
+        pat->setAttitude(osg::Quat(- M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                   M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                                   0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+        group->addChild(pat);
+
+        // cylinder indicates waypoint position
+        sd = new osg::ShapeDrawable;
+        osg::ref_ptr<osg::Cylinder> cylinder =
+            new osg::Cylinder(osg::Vec3d(0.0, 0.0, 0.0),
+                              radius, 0);
+
+        sd->setShape(cylinder);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(color);
+
+        geode = new osg::Geode;
+        geode->addDrawable(sd);
+        group->addChild(geode);
+
+        pat = new osg::PositionAttitudeTransform;
+        orientationNode->addChild(pat);
+        pat->addChild(group);
+    }
+
+    QVarLengthArray<osg::Vec3d, 10000>& trail = trails[component];
+
+    bool addToTrail = false;
+    if (trail.size() > 0)
+    {
+        if (fabs(x - trail[trail.size() - 1].x()) > 0.01f ||
+                fabs(y - trail[trail.size() - 1].y()) > 0.01f ||
+                fabs(z - trail[trail.size() - 1].z()) > 0.01f)
+        {
+            addToTrail = true;
+        }
+    }
+    else
+    {
+        addToTrail = true;
+    }
+
+    if (addToTrail)
+    {
+        osg::Vec3d p(x, y, z);
+        if (trail.size() == trail.capacity())
+        {
+            memcpy(trail.data(), trail.data() + 1,
+                   (trail.size() - 1) * sizeof(osg::Vec3d));
+            trail[trail.size() - 1] = p;
+        }
+        else
+        {
+            trail.append(p);
+        }
+    }
+}
+
+void
+Pixhawk3DWidget::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 time)
+{
+    if (this->uas->getUASID() != uas->getUASID())
+    {
+        return;
+    }
+
+    if (!trails.contains(component))
+    {
+        return;
+    }
+
+    int idx = trailDrawableIdxs[component];
+
+    osg::PositionAttitudeTransform* pat =
+        dynamic_cast<osg::PositionAttitudeTransform*>(orientationNode->getChild(idx));
+
+    pat->setAttitude(osg::Quat(-yaw, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                               0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
+}
+
+void
 Pixhawk3DWidget::selectFrame(QString text)
 {
-    if (text.compare("Global") == 0) {
+    if (text.compare("Global") == 0)
+    {
         frame = MAV_FRAME_GLOBAL;
-    } else if (text.compare("Local") == 0) {
+    }
+    else if (text.compare("Local") == 0)
+    {
         frame = MAV_FRAME_LOCAL_NED;
     }
 
@@ -146,35 +307,58 @@ Pixhawk3DWidget::selectFrame(QString text)
 }
 
 void
-Pixhawk3DWidget::showGrid(int32_t state)
+Pixhawk3DWidget::showLocalGrid(int32_t state)
 {
-    if (state == Qt::Checked) {
-        displayGrid = true;
-    } else {
-        displayGrid = false;
+    if (state == Qt::Checked)
+    {
+        displayLocalGrid = true;
+    }
+    else
+    {
+        displayLocalGrid = false;
     }
 }
 
 void
-Pixhawk3DWidget::showTrail(int32_t state)
+Pixhawk3DWidget::showWorldGrid(int32_t state)
 {
-    if (state == Qt::Checked) {
-        if (!displayTrail) {
-            trail.clear();
+    if (state == Qt::Checked)
+    {
+        displayWorldGrid = true;
+    }
+    else
+    {
+        displayWorldGrid = false;
+    }
+}
+
+void
+Pixhawk3DWidget::showTrails(int32_t state)
+{
+    if (state == Qt::Checked)
+    {
+        if (!displayTrails)
+        {
+            trails.clear();
         }
 
-        displayTrail = true;
-    } else {
-        displayTrail = false;
+        displayTrails = true;
+    }
+    else
+    {
+        displayTrails = false;
     }
 }
 
 void
 Pixhawk3DWidget::showWaypoints(int state)
 {
-    if (state == Qt::Checked) {
+    if (state == Qt::Checked)
+    {
         displayWaypoints = true;
-    } else {
+    }
+    else
+    {
         displayWaypoints = false;
     }
 }
@@ -184,9 +368,12 @@ Pixhawk3DWidget::selectMapSource(int index)
 {
     mapNode->setImageryType(static_cast<Imagery::ImageryType>(index));
 
-    if (mapNode->getImageryType() == Imagery::BLANK_MAP) {
+    if (mapNode->getImageryType() == Imagery::BLANK_MAP)
+    {
         displayImagery = false;
-    } else {
+    }
+    else
+    {
         displayImagery = true;
     }
 }
@@ -211,124 +398,252 @@ Pixhawk3DWidget::recenter(void)
 void
 Pixhawk3DWidget::toggleFollowCamera(int32_t state)
 {
-    if (state == Qt::Checked) {
+    if (state == Qt::Checked)
+    {
         followCamera = true;
-    } else {
+    }
+    else
+    {
         followCamera = false;
     }
 }
 
 void
+Pixhawk3DWidget::selectTargetHeading(void)
+{
+    if (!uas)
+    {
+        return;
+    }
+
+    osg::Vec2d p;
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double altitude = uas->getAltitude();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        p.set(cursorWorldCoords.first, cursorWorldCoords.second);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        double z = uas->getLocalZ();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+
+        p.set(cursorWorldCoords.first, cursorWorldCoords.second);
+    }
+
+    target.setW(atan2(p.y() - target.y(), p.x() - target.x()));
+}
+
+void
 Pixhawk3DWidget::selectTarget(void)
 {
-    if (uas) {
-        if (frame == MAV_FRAME_GLOBAL) {
-            double altitude = uas->getAltitude();
+    if (!uas)
+    {
+        return;
+    }
+    if (!uas->getParamManager())
+    {
+        return;
+    }
 
-            std::pair<double,double> cursorWorldCoords =
-                getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double altitude = uas->getAltitude();
 
-            target.set(cursorWorldCoords.first, cursorWorldCoords.second);
-        } else if (frame == MAV_FRAME_LOCAL_NED) {
-            double z = uas->getLocalZ();
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(),
+                                    altitude);
 
-            std::pair<double,double> cursorWorldCoords =
-                getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
-
-            target.set(cursorWorldCoords.first, cursorWorldCoords.second);
+        QVariant zTarget;
+        if (!uas->getParamManager()->getParameterValue(MAV_COMP_ID_PATHPLANNER, "TARGET-ALT", zTarget))
+        {
+            zTarget = -altitude;
         }
 
-        uas->setTargetPosition(target.x(), target.y(), 0.0, 0.0);
-
-        enableTarget = true;
+        target = QVector4D(cursorWorldCoords.first, cursorWorldCoords.second,
+                           zTarget.toReal(), 0.0);
     }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        double z = uas->getLocalZ();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(), -z);
+
+        QVariant zTarget;
+        if (!uas->getParamManager()->getParameterValue(MAV_COMP_ID_PATHPLANNER, "TARGET-ALT", zTarget))
+        {
+            zTarget = z;
+        }
+
+        target = QVector4D(cursorWorldCoords.first, cursorWorldCoords.second,
+                           zTarget.toReal(), 0.0);
+    }
+
+    enableTarget = true;
+
+    mode = SELECT_TARGET_HEADING_MODE;
+}
+
+void
+Pixhawk3DWidget::setTarget(void)
+{
+    selectTargetHeading();
+
+    uas->setTargetPosition(target.x(), target.y(), target.z(),
+                           osg::RadiansToDegrees(target.w()));
 }
 
 void
 Pixhawk3DWidget::insertWaypoint(void)
 {
-    if (uas) {
-        Waypoint* wp = NULL;
-        if (frame == MAV_FRAME_GLOBAL) {
-            double latitude = uas->getLatitude();
-            double longitude = uas->getLongitude();
-            double altitude = uas->getAltitude();
-            double x, y;
-            QString utmZone;
-            Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
+    if (!uas)
+    {
+        return;
+    }
 
-            std::pair<double,double> cursorWorldCoords =
-                getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+    Waypoint* wp = NULL;
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+        double altitude = uas->getAltitude();
+        double x, y;
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
 
-            Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
-                             latitude, longitude);
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(),
+                                    altitude);
 
-            wp = new Waypoint(0, longitude, latitude, altitude);
-        } else if (frame == MAV_FRAME_LOCAL_NED) {
-            double z = uas->getLocalZ();
+        Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
+                         latitude, longitude);
 
-            std::pair<double,double> cursorWorldCoords =
-                getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+        wp = new Waypoint(0, longitude, latitude, altitude, 0.0, 0.25);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        double z = uas->getLocalZ();
 
-            wp = new Waypoint(0, cursorWorldCoords.first,
-                              cursorWorldCoords.second, z);
-        }
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(cachedMousePos.x(), cachedMousePos.y(), -z);
 
-        if (wp) {
-            wp->setFrame(frame);
-            uas->getWaypointManager()->addWaypointEditable(wp);
-        }
+        wp = new Waypoint(0, cursorWorldCoords.first,
+                          cursorWorldCoords.second, z, 0.0, 0.25);
+    }
+
+    if (wp)
+    {
+        wp->setFrame(frame);
+        uas->getWaypointManager()->addWaypointEditable(wp);
+    }
+
+    selectedWpIndex = wp->getId();
+    mode = MOVE_WAYPOINT_HEADING_MODE;
+}
+
+void
+Pixhawk3DWidget::moveWaypointPosition(void)
+{
+    if (mode != MOVE_WAYPOINT_POSITION_MODE)
+    {
+        mode = MOVE_WAYPOINT_POSITION_MODE;
+        return;
+    }
+
+    if (!uas)
+    {
+        return;
+    }
+
+    const QVector<Waypoint *> waypoints =
+        uas->getWaypointManager()->getWaypointEditableList();
+    Waypoint* waypoint = waypoints.at(selectedWpIndex);
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+        double altitude = uas->getAltitude();
+        double x, y;
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second,
+                         utmZone, latitude, longitude);
+
+        waypoint->setX(longitude);
+        waypoint->setY(latitude);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        double z = uas->getLocalZ();
+
+        std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+
+        waypoint->setX(cursorWorldCoords.first);
+        waypoint->setY(cursorWorldCoords.second);
     }
 }
 
 void
-Pixhawk3DWidget::moveWaypoint(void)
+Pixhawk3DWidget::moveWaypointHeading(void)
 {
-    mode = MOVE_WAYPOINT_MODE;
-}
-
-void
-Pixhawk3DWidget::setWaypoint(void)
-{
-    if (uas) {
-        const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointEditableList();
-        Waypoint* waypoint = waypoints.at(selectedWpIndex);
-
-        if (frame == MAV_FRAME_GLOBAL) {
-            double latitude = uas->getLatitude();
-            double longitude = uas->getLongitude();
-            double altitude = uas->getAltitude();
-            double x, y;
-            QString utmZone;
-            Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
-
-            std::pair<double,double> cursorWorldCoords =
-                getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
-
-            Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
-                             latitude, longitude);
-
-            waypoint->setX(longitude);
-            waypoint->setY(latitude);
-            waypoint->setZ(altitude);
-        } else if (frame == MAV_FRAME_LOCAL_NED) {
-            double z = uas->getLocalZ();
-
-            std::pair<double,double> cursorWorldCoords =
-                getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
-
-            waypoint->setX(cursorWorldCoords.first);
-            waypoint->setY(cursorWorldCoords.second);
-            waypoint->setZ(z);
-        }
+    if (mode != MOVE_WAYPOINT_HEADING_MODE)
+    {
+        mode = MOVE_WAYPOINT_HEADING_MODE;
+        return;
     }
+
+    if (!uas)
+    {
+        return;
+    }
+
+    const QVector<Waypoint *> waypoints =
+        uas->getWaypointManager()->getWaypointEditableList();
+    Waypoint* waypoint = waypoints.at(selectedWpIndex);
+
+    double x = 0.0, y = 0.0, z = 0.0;
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double latitude = waypoint->getY();
+        double longitude = waypoint->getX();
+        z = -waypoint->getZ();
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        z = uas->getLocalZ();
+    }
+
+    std::pair<double,double> cursorWorldCoords =
+        getGlobalCursorPosition(getMouseX(), getMouseY(), -z);
+
+    double yaw = atan2(cursorWorldCoords.second - waypoint->getY(),
+                       cursorWorldCoords.first - waypoint->getX());
+    yaw = osg::RadiansToDegrees(yaw);
+
+    waypoint->setYaw(yaw);
 }
 
 void
 Pixhawk3DWidget::deleteWaypoint(void)
 {
-    if (uas) {
+    if (uas)
+    {
         uas->getWaypointManager()->removeWaypoint(selectedWpIndex);
     }
 }
@@ -336,26 +651,34 @@ Pixhawk3DWidget::deleteWaypoint(void)
 void
 Pixhawk3DWidget::setWaypointAltitude(void)
 {
-    if (uas) {
-        bool ok;
-        const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointEditableList();
-        Waypoint* waypoint = waypoints.at(selectedWpIndex);
+    if (!uas)
+    {
+        return;
+    }
 
-        double altitude = waypoint->getZ();
-        if (frame == MAV_FRAME_LOCAL_NED) {
-            altitude = -altitude;
+    bool ok;
+    const QVector<Waypoint *> waypoints =
+        uas->getWaypointManager()->getWaypointEditableList();
+    Waypoint* waypoint = waypoints.at(selectedWpIndex);
+
+    double altitude = waypoint->getZ();
+    if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        altitude = -altitude;
+    }
+
+    double newAltitude =
+        QInputDialog::getDouble(this, tr("Set altitude of waypoint %1").arg(selectedWpIndex),
+                                tr("Altitude (m):"), waypoint->getZ(), -1000.0, 1000.0, 1, &ok);
+    if (ok)
+    {
+        if (frame == MAV_FRAME_GLOBAL)
+        {
+            waypoint->setZ(newAltitude);
         }
-
-        double newAltitude =
-            QInputDialog::getDouble(this, tr("Set altitude of waypoint %1").arg(selectedWpIndex),
-                                    tr("Altitude (m):"), waypoint->getZ(), -1000.0, 1000.0, 1, &ok);
-        if (ok) {
-            if (frame == MAV_FRAME_GLOBAL) {
-                waypoint->setZ(newAltitude);
-            } else if (frame == MAV_FRAME_LOCAL_NED) {
-                waypoint->setZ(-newAltitude);
-            }
+        else if (frame == MAV_FRAME_LOCAL_NED)
+        {
+            waypoint->setZ(-newAltitude);
         }
     }
 }
@@ -363,10 +686,12 @@ Pixhawk3DWidget::setWaypointAltitude(void)
 void
 Pixhawk3DWidget::clearAllWaypoints(void)
 {
-    if (uas) {
+    if (uas)
+    {
         const QVector<Waypoint *> waypoints =
             uas->getWaypointManager()->getWaypointEditableList();
-        for (int i = waypoints.size() - 1; i >= 0; --i) {
+        for (int i = waypoints.size() - 1; i >= 0; --i)
+        {
             uas->getWaypointManager()->removeWaypoint(i);
         }
     }
@@ -393,13 +718,17 @@ Pixhawk3DWidget::findVehicleModels(void)
     nodes.push_back(sphereGeode);
 
     // add all other models in folder
-    for (int i = 0; i < files.size(); ++i) {
+    for (int i = 0; i < files.size(); ++i)
+    {
         osg::ref_ptr<osg::Node> node =
             osgDB::readNodeFile(directory.absoluteFilePath(files[i]).toStdString().c_str());
 
-        if (node) {
+        if (node)
+        {
             nodes.push_back(node);
-        } else {
+        }
+        else
+        {
             printf("%s\n", QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
         }
     }
@@ -437,13 +766,17 @@ Pixhawk3DWidget::buildLayout(void)
     frameComboBox->addItem("Global");
     frameComboBox->setFixedWidth(70);
 
-    QCheckBox* gridCheckBox = new QCheckBox(this);
-    gridCheckBox->setText("Grid");
-    gridCheckBox->setChecked(displayGrid);
+    QCheckBox* localGridCheckBox = new QCheckBox(this);
+    localGridCheckBox->setText("Local Grid");
+    localGridCheckBox->setChecked(displayLocalGrid);
+
+    QCheckBox* worldGridCheckBox = new QCheckBox(this);
+    worldGridCheckBox->setText("World Grid");
+    worldGridCheckBox->setChecked(displayWorldGrid);
 
     QCheckBox* trailCheckBox = new QCheckBox(this);
-    trailCheckBox->setText("Trail");
-    trailCheckBox->setChecked(displayTrail);
+    trailCheckBox->setText("Trails");
+    trailCheckBox->setChecked(displayTrails);
 
     QCheckBox* waypointsCheckBox = new QCheckBox(this);
     waypointsCheckBox->setText("Waypoints");
@@ -457,7 +790,8 @@ Pixhawk3DWidget::buildLayout(void)
 
     QLabel* modelLabel = new QLabel("Vehicle", this);
     QComboBox* modelComboBox = new QComboBox(this);
-    for (int i = 0; i < vehicleModels.size(); ++i) {
+    for (int i = 0; i < vehicleModels.size(); ++i)
+    {
         modelComboBox->addItem(vehicleModels[i]->getName().c_str());
     }
 
@@ -472,17 +806,18 @@ Pixhawk3DWidget::buildLayout(void)
     layout->setMargin(0);
     layout->setSpacing(2);
     layout->addWidget(frameComboBox, 0, 10);
-    layout->addWidget(gridCheckBox, 2, 0);
-    layout->addWidget(trailCheckBox, 2, 1);
-    layout->addWidget(waypointsCheckBox, 2, 2);
-    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 3);
-    layout->addWidget(mapLabel, 2, 4);
-    layout->addWidget(mapComboBox, 2, 5);
-    layout->addWidget(modelLabel, 2, 6);
-    layout->addWidget(modelComboBox, 2, 7);
-    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 8);
-    layout->addWidget(recenterButton, 2, 9);
-    layout->addWidget(followCameraCheckBox, 2, 10);
+    layout->addWidget(localGridCheckBox, 2, 0);
+    layout->addWidget(worldGridCheckBox, 2, 1);
+    layout->addWidget(trailCheckBox, 2, 2);
+    layout->addWidget(waypointsCheckBox, 2, 3);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 4);
+    layout->addWidget(mapLabel, 2, 5);
+    layout->addWidget(mapComboBox, 2, 6);
+    layout->addWidget(modelLabel, 2, 7);
+    layout->addWidget(modelComboBox, 2, 8);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 9);
+    layout->addWidget(recenterButton, 2, 10);
+    layout->addWidget(followCameraCheckBox, 2, 11);
     layout->setRowStretch(0, 1);
     layout->setRowStretch(1, 100);
     layout->setRowStretch(2, 1);
@@ -490,10 +825,12 @@ Pixhawk3DWidget::buildLayout(void)
 
     connect(frameComboBox, SIGNAL(currentIndexChanged(QString)),
             this, SLOT(selectFrame(QString)));
-    connect(gridCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showGrid(int)));
+    connect(localGridCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showLocalGrid(int)));
+    connect(worldGridCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showWorldGrid(int)));
     connect(trailCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showTrail(int)));
+            this, SLOT(showTrails(int)));
     connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showWaypoints(int)));
     connect(mapComboBox, SIGNAL(currentIndexChanged(int)),
@@ -506,9 +843,34 @@ Pixhawk3DWidget::buildLayout(void)
 }
 
 void
+Pixhawk3DWidget::resizeGL(int width, int height)
+{
+    Q3DWidget::resizeGL(width, height);
+
+    resizeHUD();
+}
+
+void
 Pixhawk3DWidget::display(void)
 {
-    if (uas == NULL) {
+    // set node visibility
+    allocentricMap->setChildValue(worldGridNode, displayWorldGrid);
+    rollingMap->setChildValue(localGridNode, displayLocalGrid);
+    rollingMap->setChildValue(trailNode, displayTrails);
+    rollingMap->setChildValue(orientationNode, displayTrails);
+    rollingMap->setChildValue(mapNode, displayImagery);
+    rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
+    rollingMap->setChildValue(targetNode, enableTarget);
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+    rollingMap->setChildValue(obstacleGroupNode, displayObstacleList);
+    rollingMap->setChildValue(pathNode, displayPath);
+#endif
+    rollingMap->setChildValue(rgbd3DNode, displayRGBD3D);
+    hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
+    hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
+
+    if (!uas)
+    {
         return;
     }
 
@@ -516,7 +878,8 @@ Pixhawk3DWidget::display(void)
     QString utmZone;
     getPose(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw, utmZone);
 
-    if (lastRobotX == 0.0f && lastRobotY == 0.0f && lastRobotZ == 0.0f) {
+    if (lastRobotX == 0.0f && lastRobotY == 0.0f && lastRobotZ == 0.0f)
+    {
         lastRobotX = robotX;
         lastRobotY = robotY;
         lastRobotZ = robotZ;
@@ -524,7 +887,8 @@ Pixhawk3DWidget::display(void)
         recenterCamera(robotY, robotX, -robotZ);
     }
 
-    if (followCamera) {
+    if (followCamera)
+    {
         double dx = robotY - lastRobotY;
         double dy = robotX - lastRobotX;
         double dz = lastRobotZ - robotZ;
@@ -537,40 +901,44 @@ Pixhawk3DWidget::display(void)
                                          robotPitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
                                          robotRoll, osg::Vec3d(0.0f, 1.0f, 0.0f)));
 
-    if (displayTrail) {
-        updateTrail(robotX, robotY, robotZ);
+    if (displayTrails)
+    {
+        updateTrails(robotX, robotY, robotZ);
     }
 
-    if (frame == MAV_FRAME_GLOBAL && displayImagery) {
+    if (frame == MAV_FRAME_GLOBAL && displayImagery)
+    {
         updateImagery(robotX, robotY, robotZ, utmZone);
     }
 
-    if (displayWaypoints) {
+    if (displayWaypoints)
+    {
         updateWaypoints();
     }
 
-    if (enableTarget) {
-        updateTarget(robotX, robotY);
+    if (enableTarget)
+    {
+        updateTarget(robotX, robotY, robotZ);
     }
 
-#ifdef QGC_PROTOBUF_ENABLED
-    if (displayRGBD2D || displayRGBD3D) {
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+    if (displayRGBD2D || displayRGBD3D)
+    {
         updateRGBD(robotX, robotY, robotZ);
+    }
+
+    if (displayObstacleList)
+    {
+        updateObstacles(robotX, robotY, robotZ);
+    }
+
+    if (displayPath)
+    {
+        updatePath(robotX, robotY, robotZ);
     }
 #endif
 
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw, utmZone);
-
-    // set node visibility
-
-    rollingMap->setChildValue(gridNode, displayGrid);
-    rollingMap->setChildValue(trailNode, displayTrail);
-    rollingMap->setChildValue(mapNode, displayImagery);
-    rollingMap->setChildValue(waypointGroupNode, displayWaypoints);
-    rollingMap->setChildValue(targetNode, enableTarget);
-    egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
-    hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
-    hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
     lastRobotX = robotX;
     lastRobotY = robotY;
@@ -582,8 +950,10 @@ Pixhawk3DWidget::display(void)
 void
 Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
 {
-    if (!event->text().isEmpty()) {
-        switch (*(event->text().toAscii().data())) {
+    if (!event->text().isEmpty())
+    {
+        switch (*(event->text().toAscii().data()))
+        {
         case '1':
             displayRGBD2D = !displayRGBD2D;
             break;
@@ -594,6 +964,14 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
         case 'C':
             enableRGBDColor = !enableRGBDColor;
             break;
+        case 'o':
+        case 'O':
+            displayObstacleList = !displayObstacleList;
+            break;
+        case 'p':
+        case 'P':
+            displayPath = !displayPath;
+            break;
         }
     }
 
@@ -603,19 +981,29 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
 void
 Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) {
-        if (mode == MOVE_WAYPOINT_MODE) {
-            setWaypoint();
-            mode = DEFAULT_MODE;
-
-            return;
+    if (event->button() == Qt::LeftButton)
+    {
+        if (mode == SELECT_TARGET_HEADING_MODE)
+        {
+            setTarget();
         }
 
-        if (event->modifiers() == Qt::ShiftModifier) {
-            selectedWpIndex = findWaypoint(event->x(), event->y());
-            if (selectedWpIndex == -1) {
+        if (mode != DEFAULT_MODE)
+        {
+            mode = DEFAULT_MODE;
+        }
+
+        if (event->modifiers() == Qt::ShiftModifier)
+        {
+            selectedWpIndex = findWaypoint(event->pos());
+            if (selectedWpIndex == -1)
+            {
+                cachedMousePos = event->pos();
+
                 showInsertWaypointMenu(event->globalPos());
-            } else {
+            }
+            else
+            {
                 showEditWaypointMenu(event->globalPos());
             }
 
@@ -627,28 +1015,67 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
 }
 
 void
+Pixhawk3DWidget::showEvent(QShowEvent* event)
+{
+    Q3DWidget::showEvent(event);
+    emit visibilityChanged(true);
+}
+
+void
+Pixhawk3DWidget::hideEvent(QHideEvent* event)
+{
+    Q3DWidget::hideEvent(event);
+    emit visibilityChanged(false);
+}
+
+void
+Pixhawk3DWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    if (mode == SELECT_TARGET_HEADING_MODE)
+    {
+        selectTargetHeading();
+    }
+    if (mode == MOVE_WAYPOINT_POSITION_MODE)
+    {
+        moveWaypointPosition();
+    }
+    if (mode == MOVE_WAYPOINT_HEADING_MODE)
+    {
+        moveWaypointHeading();
+    }
+
+    Q3DWidget::mouseMoveEvent(event);
+}
+
+void
 Pixhawk3DWidget::getPose(double& x, double& y, double& z,
                          double& roll, double& pitch, double& yaw,
                          QString& utmZone)
 {
-    if (uas) {
-        if (frame == MAV_FRAME_GLOBAL) {
-            double latitude = uas->getLatitude();
-            double longitude = uas->getLongitude();
-            double altitude = uas->getAltitude();
-
-            Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
-            z = -altitude;
-        } else if (frame == MAV_FRAME_LOCAL_NED) {
-            x = uas->getLocalX();
-            y = uas->getLocalY();
-            z = uas->getLocalZ();
-        }
-
-        roll = uas->getRoll();
-        pitch = uas->getPitch();
-        yaw = uas->getYaw();
+    if (!uas)
+    {
+        return;
     }
+
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+        double altitude = uas->getAltitude();
+
+        Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
+        z = -altitude;
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        x = uas->getLocalX();
+        y = uas->getLocalY();
+        z = uas->getLocalZ();
+    }
+
+    roll = uas->getRoll();
+    pitch = uas->getPitch();
+    yaw = uas->getYaw();
 }
 
 void
@@ -663,23 +1090,25 @@ void
 Pixhawk3DWidget::getPosition(double& x, double& y, double& z,
                              QString& utmZone)
 {
-    if (uas)
+    if (!uas)
     {
-        if (frame == MAV_FRAME_GLOBAL)
-        {
-            double latitude = uas->getLatitude();
-            double longitude = uas->getLongitude();
-            double altitude = uas->getAltitude();
+        return;
+    }
 
-            Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
-            z = -altitude;
-        }
-        else if (frame == MAV_FRAME_LOCAL_NED)
-        {
-            x = uas->getLocalX();
-            y = uas->getLocalY();
-            z = uas->getLocalZ();
-        }
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+        double altitude = uas->getAltitude();
+
+        Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
+        z = -altitude;
+    }
+    else if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        x = uas->getLocalX();
+        y = uas->getLocalY();
+        z = uas->getLocalZ();
     }
 }
 
@@ -691,7 +1120,7 @@ Pixhawk3DWidget::getPosition(double& x, double& y, double& z)
 }
 
 osg::ref_ptr<osg::Geode>
-Pixhawk3DWidget::createGrid(void)
+Pixhawk3DWidget::createLocalGrid(void)
 {
     osg::ref_ptr<osg::Geode> geode(new osg::Geode());
     osg::ref_ptr<osg::Geometry> fineGeometry(new osg::Geometry());
@@ -699,16 +1128,16 @@ Pixhawk3DWidget::createGrid(void)
     geode->addDrawable(fineGeometry);
     geode->addDrawable(coarseGeometry);
 
-    float radius = 10.0f;
+    float radius = 5.0f;
     float resolution = 0.25f;
 
     osg::ref_ptr<osg::Vec3Array> fineCoords(new osg::Vec3Array);
     osg::ref_ptr<osg::Vec3Array> coarseCoords(new osg::Vec3Array);
 
-    // draw a 20m x 20m grid with 0.25m resolution
+    // draw a 10m x 10m grid with 0.25m resolution
     for (float i = -radius; i <= radius; i += resolution)
     {
-        if (fabs(i - floor(i + 0.5f)) < 0.01f)
+        if (fabs(i / 1.0f - floor(i / 1.0f)) < 0.01f)
         {
             coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
             coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
@@ -744,6 +1173,80 @@ Pixhawk3DWidget::createGrid(void)
     fineLinewidth->setWidth(0.25f);
     fineStateset->setAttributeAndModes(fineLinewidth, osg::StateAttribute::ON);
     fineStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    fineStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+    fineGeometry->setStateSet(fineStateset);
+
+    osg::ref_ptr<osg::StateSet> coarseStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> coarseLinewidth(new osg::LineWidth());
+    coarseLinewidth->setWidth(1.0f);
+    coarseStateset->setAttributeAndModes(coarseLinewidth, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    coarseStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+    coarseGeometry->setStateSet(coarseStateset);
+
+    return geode;
+}
+
+osg::ref_ptr<osg::Geode>
+Pixhawk3DWidget::createWorldGrid(void)
+{
+    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
+    osg::ref_ptr<osg::Geometry> fineGeometry(new osg::Geometry());
+    osg::ref_ptr<osg::Geometry> coarseGeometry(new osg::Geometry());
+    osg::ref_ptr<osg::Geometry> axisGeometry(new osg::Geometry());
+    geode->addDrawable(fineGeometry);
+    geode->addDrawable(coarseGeometry);
+    geode->addDrawable(axisGeometry.get());
+
+    float radius = 20.0f;
+    float resolution = 1.0f;
+
+    osg::ref_ptr<osg::Vec3Array> fineCoords(new osg::Vec3Array);
+    osg::ref_ptr<osg::Vec3Array> coarseCoords(new osg::Vec3Array);
+
+    // draw a 40m x 40m grid with 1.0m resolution
+    for (float i = -radius; i <= radius; i += resolution)
+    {
+        if (fabs(i / 5.0f - floor(i / 5.0f)) < 0.01f)
+        {
+            coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
+            coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
+            coarseCoords->push_back(osg::Vec3(-radius, i, 0.0f));
+            coarseCoords->push_back(osg::Vec3(radius, i, 0.0f));
+        }
+        else
+        {
+            fineCoords->push_back(osg::Vec3(i, -radius, 0.0f));
+            fineCoords->push_back(osg::Vec3(i, radius, 0.0f));
+            fineCoords->push_back(osg::Vec3(-radius, i, 0.0f));
+            fineCoords->push_back(osg::Vec3(radius, i, 0.0f));
+        }
+    }
+
+    fineGeometry->setVertexArray(fineCoords);
+    coarseGeometry->setVertexArray(coarseCoords);
+
+    osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array);
+    color->push_back(osg::Vec4(0.5f, 0.5f, 0.5f, 1.0f));
+    fineGeometry->setColorArray(color);
+    coarseGeometry->setColorArray(color);
+    fineGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    coarseGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    fineGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
+                                  0, fineCoords->size()));
+    coarseGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0,
+                                    coarseCoords->size()));
+
+    osg::ref_ptr<osg::StateSet> fineStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> fineLinewidth(new osg::LineWidth());
+    fineLinewidth->setWidth(0.1f);
+    fineStateset->setAttributeAndModes(fineLinewidth, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    fineStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
     fineGeometry->setStateSet(fineStateset);
 
     osg::ref_ptr<osg::StateSet> coarseStateset(new osg::StateSet);
@@ -751,38 +1254,72 @@ Pixhawk3DWidget::createGrid(void)
     coarseLinewidth->setWidth(2.0f);
     coarseStateset->setAttributeAndModes(coarseLinewidth, osg::StateAttribute::ON);
     coarseStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    coarseStateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_BLEND, osg::StateAttribute::ON);
     coarseGeometry->setStateSet(coarseStateset);
+
+    // add axes
+    osg::ref_ptr<osg::Vec3Array> coords(new osg::Vec3Array(6));
+    (*coords)[0] = (*coords)[2] = (*coords)[4] =
+                                      osg::Vec3(0.0f, 0.0f, 0.0f);
+    (*coords)[1] = osg::Vec3(0.0f, 1.0f, 0.0f);
+    (*coords)[3] = osg::Vec3(1.0f, 0.0f, 0.0f);
+    (*coords)[5] = osg::Vec3(0.0f, 0.0f, -1.0f);
+
+    axisGeometry->setVertexArray(coords);
+
+    osg::Vec4 redColor(1.0f, 0.0f, 0.0f, 0.0f);
+    osg::Vec4 greenColor(0.0f, 1.0f, 0.0f, 0.0f);
+    osg::Vec4 blueColor(0.0f, 0.0f, 1.0f, 0.0f);
+
+    osg::ref_ptr<osg::Vec4Array> axisColors(new osg::Vec4Array(6));
+    (*axisColors)[0] = redColor;
+    (*axisColors)[1] = redColor;
+    (*axisColors)[2] = greenColor;
+    (*axisColors)[3] = greenColor;
+    (*axisColors)[4] = blueColor;
+    (*axisColors)[5] = blueColor;
+
+    axisGeometry->setColorArray(axisColors);
+    axisGeometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+
+    axisGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 6));
+
+    osg::ref_ptr<osg::StateSet> axisStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> axisLinewidth(new osg::LineWidth());
+    axisLinewidth->setWidth(4.0f);
+    axisStateset->setAttributeAndModes(axisLinewidth, osg::StateAttribute::ON);
+    axisStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    axisGeometry->setStateSet(axisStateset);
 
     return geode;
 }
 
-osg::ref_ptr<osg::Geode>
-Pixhawk3DWidget::createTrail(void)
+osg::ref_ptr<osg::Geometry>
+Pixhawk3DWidget::createTrail(const osg::Vec4& color)
 {
-    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
-    trailGeometry = new osg::Geometry();
-    trailGeometry->setUseDisplayList(false);
-    geode->addDrawable(trailGeometry.get());
+    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
+    geometry->setUseDisplayList(false);
 
-    trailVertices = new osg::Vec3dArray;
-    trailGeometry->setVertexArray(trailVertices);
+    osg::ref_ptr<osg::Vec3dArray> vertices(new osg::Vec3dArray());
+    geometry->setVertexArray(vertices);
 
-    trailDrawArrays = new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP);
-    trailGeometry->addPrimitiveSet(trailDrawArrays);
+    osg::ref_ptr<osg::DrawArrays> drawArrays(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP));
+    geometry->addPrimitiveSet(drawArrays);
 
-    osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array);
-    color->push_back(osg::Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-    trailGeometry->setColorArray(color);
-    trailGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    osg::ref_ptr<osg::Vec4Array> colorArray(new osg::Vec4Array);
+    colorArray->push_back(color);
+    geometry->setColorArray(colorArray);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
     osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
     linewidth->setWidth(1.0f);
     stateset->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
     stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    trailGeometry->setStateSet(stateset);
+    geometry->setStateSet(stateset);
 
-    return geode;
+    return geometry;
 }
 
 osg::ref_ptr<Imagery>
@@ -820,14 +1357,15 @@ Pixhawk3DWidget::createTarget(void)
 
     pat->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
 
-    osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.1f);
-    osg::ref_ptr<osg::ShapeDrawable> sphereDrawable = new osg::ShapeDrawable(sphere);
-    sphereDrawable->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
-    osg::ref_ptr<osg::Geode> sphereGeode = new osg::Geode;
-    sphereGeode->addDrawable(sphereDrawable);
-    sphereGeode->setName("Target");
+    osg::ref_ptr<osg::Cone> cone = new osg::Cone(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.2f, 0.6f);
+    osg::ref_ptr<osg::ShapeDrawable> coneDrawable = new osg::ShapeDrawable(cone);
+    coneDrawable->setColor(osg::Vec4f(0.0f, 1.0f, 0.0f, 1.0f));
+    coneDrawable->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+    osg::ref_ptr<osg::Geode> coneGeode = new osg::Geode;
+    coneGeode->addDrawable(coneDrawable);
+    coneGeode->setName("Target");
 
-    pat->addChild(sphereGeode);
+    pat->addChild(coneGeode);
 
     return pat;
 }
@@ -850,11 +1388,9 @@ Pixhawk3DWidget::setupHUD(void)
 
     statusText = new osgText::Text;
     statusText->setCharacterSize(11);
-    statusText->setFont("images/Vera.ttf");
+    statusText->setFont(font);
     statusText->setAxisAlignment(osgText::Text::SCREEN);
     statusText->setColor(osg::Vec4(255, 255, 255, 1));
-
-    resizeHUD();
 
     osg::ref_ptr<osg::Geode> statusGeode = new osg::Geode;
     statusGeode->addDrawable(hudBackgroundGeometry);
@@ -862,19 +1398,19 @@ Pixhawk3DWidget::setupHUD(void)
     hudGroup->addChild(statusGeode);
 
     rgbImage = new osg::Image;
-    rgb2DGeode = new ImageWindowGeode("RGB Image",
-                                      osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
-                                      rgbImage);
+    rgb2DGeode = new ImageWindowGeode;
+    rgb2DGeode->init("RGB Image", osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                     rgbImage, font);
     hudGroup->addChild(rgb2DGeode);
 
     depthImage = new osg::Image;
-    depth2DGeode = new ImageWindowGeode("Depth Image",
-                                        osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
-                                        depthImage);
+    depth2DGeode = new ImageWindowGeode;
+    depth2DGeode->init("Depth Image", osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                       depthImage, font);
     hudGroup->addChild(depth2DGeode);
 
     scaleGeode = new HUDScaleGeode;
-    scaleGeode->init();
+    scaleGeode->init(font);
     hudGroup->addChild(scaleGeode);
 }
 
@@ -920,8 +1456,6 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
                            double robotRoll, double robotPitch, double robotYaw,
                            const QString& utmZone)
 {
-    resizeHUD();
-
     std::pair<double,double> cursorPosition =
         getGlobalCursorPosition(getMouseX(), getMouseY(), -robotZ);
 
@@ -976,54 +1510,39 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
 }
 
 void
-Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
+Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ)
 {
-    if (robotX == 0.0f || robotY == 0.0f || robotZ == 0.0f)
-    {
-        return;
-    }
+    QMapIterator<int,int> it(trailDrawableIdxs);
 
-    bool addToTrail = false;
-    if (trail.size() > 0)
+    while (it.hasNext())
     {
-        if (fabs(robotX - trail[trail.size() - 1].x()) > 0.01f ||
-                fabs(robotY - trail[trail.size() - 1].y()) > 0.01f ||
-                fabs(robotZ - trail[trail.size() - 1].z()) > 0.01f)
+        it.next();
+
+        osg::Geometry* geometry = trailNode->getDrawable(it.value())->asGeometry();
+        osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+
+        osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
+
+        const QVarLengthArray<osg::Vec3d, 10000>& trail = trails.value(it.key());
+
+        for (int i = 0; i < trail.size(); ++i)
         {
-            addToTrail = true;
+            vertices->push_back(osg::Vec3d(trail[i].y() - robotY,
+                                           trail[i].x() - robotX,
+                                           -(trail[i].z() - robotZ)));
         }
-    }
-    else
-    {
-        addToTrail = true;
-    }
 
-    if (addToTrail)
-    {
-        osg::Vec3d p(robotX, robotY, robotZ);
-        if (trail.size() == trail.capacity())
-        {
-            memcpy(trail.data(), trail.data() + 1,
-                   (trail.size() - 1) * sizeof(osg::Vec3d));
-            trail[trail.size() - 1] = p;
-        }
-        else
-        {
-            trail.append(p);
-        }
-    }
+        geometry->setVertexArray(vertices);
+        drawArrays->setFirst(0);
+        drawArrays->setCount(vertices->size());
+        geometry->dirtyBound();
 
-    trailVertices->clear();
-    for (int i = 0; i < trail.size(); ++i)
-    {
-        trailVertices->push_back(osg::Vec3d(trail[i].y() - robotY,
-                                            trail[i].x() - robotX,
-                                            -(trail[i].z() - robotZ)));
+        osg::PositionAttitudeTransform* pat =
+            dynamic_cast<osg::PositionAttitudeTransform*>(orientationNode->getChild(it.value()));
+        pat->setPosition(osg::Vec3(trail[trail.size() - 1].y() - robotY,
+                                   trail[trail.size() - 1].x() - robotX,
+                                   -(trail[trail.size() - 1].z() - robotZ)));
     }
-
-    trailDrawArrays->setFirst(0);
-    trailDrawArrays->setCount(trailVertices->size());
-    trailGeometry->dirtyBound();
 }
 
 void
@@ -1059,7 +1578,7 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
         maxResolution = 0.25;
         break;
     default:
-    {}
+        {}
     }
 
     double resolution = minResolution;
@@ -1110,152 +1629,34 @@ Pixhawk3DWidget::updateWaypoints(void)
 }
 
 void
-Pixhawk3DWidget::updateTarget(double robotX, double robotY)
+Pixhawk3DWidget::updateTarget(double robotX, double robotY, double robotZ)
 {
     osg::PositionAttitudeTransform* pat =
-        static_cast<osg::PositionAttitudeTransform*>(targetNode.get());
-    pat->setPosition(osg::Vec3d(target.y() - robotY, target.x() - robotX, 0.0));
+        dynamic_cast<osg::PositionAttitudeTransform*>(targetNode.get());
+
+    pat->setPosition(osg::Vec3d(target.y() - robotY,
+                                target.x() - robotX,
+                                -(target.z() - robotZ)));
+    pat->setAttitude(osg::Quat(target.w() - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+
+    osg::Geode* geode = dynamic_cast<osg::Geode*>(pat->getChild(0));
+    osg::ShapeDrawable* sd = dynamic_cast<osg::ShapeDrawable*>(geode->getDrawable(0));
+
+    sd->setColor(osg::Vec4f(1.0f, 0.8f, 0.0f, 1.0f));
 }
 
-float colormap_jet[128][3] = {
-    {0.0f,0.0f,0.53125f},
-    {0.0f,0.0f,0.5625f},
-    {0.0f,0.0f,0.59375f},
-    {0.0f,0.0f,0.625f},
-    {0.0f,0.0f,0.65625f},
-    {0.0f,0.0f,0.6875f},
-    {0.0f,0.0f,0.71875f},
-    {0.0f,0.0f,0.75f},
-    {0.0f,0.0f,0.78125f},
-    {0.0f,0.0f,0.8125f},
-    {0.0f,0.0f,0.84375f},
-    {0.0f,0.0f,0.875f},
-    {0.0f,0.0f,0.90625f},
-    {0.0f,0.0f,0.9375f},
-    {0.0f,0.0f,0.96875f},
-    {0.0f,0.0f,1.0f},
-    {0.0f,0.03125f,1.0f},
-    {0.0f,0.0625f,1.0f},
-    {0.0f,0.09375f,1.0f},
-    {0.0f,0.125f,1.0f},
-    {0.0f,0.15625f,1.0f},
-    {0.0f,0.1875f,1.0f},
-    {0.0f,0.21875f,1.0f},
-    {0.0f,0.25f,1.0f},
-    {0.0f,0.28125f,1.0f},
-    {0.0f,0.3125f,1.0f},
-    {0.0f,0.34375f,1.0f},
-    {0.0f,0.375f,1.0f},
-    {0.0f,0.40625f,1.0f},
-    {0.0f,0.4375f,1.0f},
-    {0.0f,0.46875f,1.0f},
-    {0.0f,0.5f,1.0f},
-    {0.0f,0.53125f,1.0f},
-    {0.0f,0.5625f,1.0f},
-    {0.0f,0.59375f,1.0f},
-    {0.0f,0.625f,1.0f},
-    {0.0f,0.65625f,1.0f},
-    {0.0f,0.6875f,1.0f},
-    {0.0f,0.71875f,1.0f},
-    {0.0f,0.75f,1.0f},
-    {0.0f,0.78125f,1.0f},
-    {0.0f,0.8125f,1.0f},
-    {0.0f,0.84375f,1.0f},
-    {0.0f,0.875f,1.0f},
-    {0.0f,0.90625f,1.0f},
-    {0.0f,0.9375f,1.0f},
-    {0.0f,0.96875f,1.0f},
-    {0.0f,1.0f,1.0f},
-    {0.03125f,1.0f,0.96875f},
-    {0.0625f,1.0f,0.9375f},
-    {0.09375f,1.0f,0.90625f},
-    {0.125f,1.0f,0.875f},
-    {0.15625f,1.0f,0.84375f},
-    {0.1875f,1.0f,0.8125f},
-    {0.21875f,1.0f,0.78125f},
-    {0.25f,1.0f,0.75f},
-    {0.28125f,1.0f,0.71875f},
-    {0.3125f,1.0f,0.6875f},
-    {0.34375f,1.0f,0.65625f},
-    {0.375f,1.0f,0.625f},
-    {0.40625f,1.0f,0.59375f},
-    {0.4375f,1.0f,0.5625f},
-    {0.46875f,1.0f,0.53125f},
-    {0.5f,1.0f,0.5f},
-    {0.53125f,1.0f,0.46875f},
-    {0.5625f,1.0f,0.4375f},
-    {0.59375f,1.0f,0.40625f},
-    {0.625f,1.0f,0.375f},
-    {0.65625f,1.0f,0.34375f},
-    {0.6875f,1.0f,0.3125f},
-    {0.71875f,1.0f,0.28125f},
-    {0.75f,1.0f,0.25f},
-    {0.78125f,1.0f,0.21875f},
-    {0.8125f,1.0f,0.1875f},
-    {0.84375f,1.0f,0.15625f},
-    {0.875f,1.0f,0.125f},
-    {0.90625f,1.0f,0.09375f},
-    {0.9375f,1.0f,0.0625f},
-    {0.96875f,1.0f,0.03125f},
-    {1.0f,1.0f,0.0f},
-    {1.0f,0.96875f,0.0f},
-    {1.0f,0.9375f,0.0f},
-    {1.0f,0.90625f,0.0f},
-    {1.0f,0.875f,0.0f},
-    {1.0f,0.84375f,0.0f},
-    {1.0f,0.8125f,0.0f},
-    {1.0f,0.78125f,0.0f},
-    {1.0f,0.75f,0.0f},
-    {1.0f,0.71875f,0.0f},
-    {1.0f,0.6875f,0.0f},
-    {1.0f,0.65625f,0.0f},
-    {1.0f,0.625f,0.0f},
-    {1.0f,0.59375f,0.0f},
-    {1.0f,0.5625f,0.0f},
-    {1.0f,0.53125f,0.0f},
-    {1.0f,0.5f,0.0f},
-    {1.0f,0.46875f,0.0f},
-    {1.0f,0.4375f,0.0f},
-    {1.0f,0.40625f,0.0f},
-    {1.0f,0.375f,0.0f},
-    {1.0f,0.34375f,0.0f},
-    {1.0f,0.3125f,0.0f},
-    {1.0f,0.28125f,0.0f},
-    {1.0f,0.25f,0.0f},
-    {1.0f,0.21875f,0.0f},
-    {1.0f,0.1875f,0.0f},
-    {1.0f,0.15625f,0.0f},
-    {1.0f,0.125f,0.0f},
-    {1.0f,0.09375f,0.0f},
-    {1.0f,0.0625f,0.0f},
-    {1.0f,0.03125f,0.0f},
-    {1.0f,0.0f,0.0f},
-    {0.96875f,0.0f,0.0f},
-    {0.9375f,0.0f,0.0f},
-    {0.90625f,0.0f,0.0f},
-    {0.875f,0.0f,0.0f},
-    {0.84375f,0.0f,0.0f},
-    {0.8125f,0.0f,0.0f},
-    {0.78125f,0.0f,0.0f},
-    {0.75f,0.0f,0.0f},
-    {0.71875f,0.0f,0.0f},
-    {0.6875f,0.0f,0.0f},
-    {0.65625f,0.0f,0.0f},
-    {0.625f,0.0f,0.0f},
-    {0.59375f,0.0f,0.0f},
-    {0.5625f,0.0f,0.0f},
-    {0.53125f,0.0f,0.0f},
-    {0.5f,0.0f,0.0f}
-};
-
-#ifdef QGC_PROTOBUF_ENABLED
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
 void
 Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 {
-    px::RGBDImage rgbdImage = uas->getRGBDImage();
-    px::PointCloudXYZRGB pointCloud = uas->getPointCloud();
+    qreal receivedRGBDImageTimestamp, receivedPointCloudTimestamp;
+    px::RGBDImage rgbdImage = uas->getRGBDImage(receivedRGBDImageTimestamp);
+    px::PointCloudXYZRGB pointCloud = uas->getPointCloud(receivedPointCloudTimestamp);
 
-    if (rgbdImage.rows() > 0 && rgbdImage.cols() > 0)
+    if (rgbdImage.rows() > 0 && rgbdImage.cols() > 0 &&
+        QGC::groundTimeSeconds() - receivedRGBDImageTimestamp < kMessageTimeout)
     {
         rgbImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
                            GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
@@ -1275,9 +1676,11 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
                     int idx = fminf(depth[c], 7.0f) / 7.0f * 127.0f;
                     idx = 127 - idx;
 
-                    pixel[0] = colormap_jet[idx][2] * 255.0f;
-                    pixel[1] = colormap_jet[idx][1] * 255.0f;
-                    pixel[2] = colormap_jet[idx][0] * 255.0f;
+                    float r, g, b;
+                    qgc::colormap("jet", idx, r, g, b);
+                    pixel[0] = r * 255.0f;
+                    pixel[1] = g * 255.0f;
+                    pixel[2] = b * 255.0f;
                 }
 
                 pixel += 3;
@@ -1292,10 +1695,17 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
     }
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
-
     osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(geometry->getVertexArray());
     osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
-    for (int i = 0; i < pointCloud.points_size(); ++i) {
+
+    if (QGC::groundTimeSeconds() - receivedPointCloudTimestamp > kMessageTimeout)
+    {
+        geometry->removePrimitiveSet(0, geometry->getNumPrimitiveSets());
+        return;
+    }
+
+    for (int i = 0; i < pointCloud.points_size(); ++i)
+    {
         const px::PointCloudXYZRGB_PointXYZRGB& p = pointCloud.points(i);
 
         double x = p.x() - robotX;
@@ -1305,7 +1715,8 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 
         (*vertices)[i].set(y, x, -z);
 
-        if (enableRGBDColor) {
+        if (enableRGBDColor)
+        {
             float rgb = p.rgb();
 
             float b = *(reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
@@ -1313,38 +1724,148 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
             float r = *(2 + reinterpret_cast<unsigned char*>(&rgb)) / 255.0f;
 
             (*colors)[i].set(r, g, b, 1.0f);
-        } else {
+        }
+        else
+        {
             double dist = sqrt(x * x + y * y + z * z);
             int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
-            (*colors)[i].set(colormap_jet[colorIndex][0],
-                             colormap_jet[colorIndex][1],
-                             colormap_jet[colorIndex][2],
-                             1.0f);
+
+            float r, g, b;
+            qgc::colormap("jet", colorIndex, r, g, b);
+
+            (*colors)[i].set(r, g, b, 1.0f);
         }
     }
 
-    if (geometry->getNumPrimitiveSets() == 0) {
+    if (geometry->getNumPrimitiveSets() == 0)
+    {
         geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS,
                                   0, pointCloud.points_size()));
-    } else {
+    }
+    else
+    {
         osg::DrawArrays* drawarrays = static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
         drawarrays->setCount(pointCloud.points_size());
     }
 }
+
+void
+Pixhawk3DWidget::updateObstacles(double robotX, double robotY, double robotZ)
+{
+    if (frame == MAV_FRAME_GLOBAL)
+    {
+        obstacleGroupNode->clear();
+        return;
+    }
+
+    qreal receivedTimestamp;
+    px::ObstacleList obstacleList = uas->getObstacleList(receivedTimestamp);
+
+    if (QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
+    {
+        obstacleGroupNode->update(robotX, robotY, robotZ, obstacleList);
+    }
+    else
+    {
+        obstacleGroupNode->clear();
+    }
+}
+
+void
+Pixhawk3DWidget::updatePath(double robotX, double robotY, double robotZ)
+{
+    qreal receivedTimestamp;
+    px::Path path = uas->getPath(receivedTimestamp);
+
+    osg::Geometry* geometry = pathNode->getDrawable(0)->asGeometry();
+    osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+    osg::Vec4Array* colorArray = reinterpret_cast<osg::Vec4Array*>(geometry->getColorArray());
+
+    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
+    linewidth->setWidth(2.0f);
+    geometry->getStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+
+    colorArray->clear();
+
+    osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
+
+    if (QGC::groundTimeSeconds() - receivedTimestamp < kMessageTimeout)
+    {
+        // find path length
+        float length = 0.0f;
+        for (int i = 0; i < path.waypoints_size() - 1; ++i)
+        {
+            const px::Waypoint& wp0 = path.waypoints(i);
+            const px::Waypoint& wp1 = path.waypoints(i+1);
+
+            length += qgc::hypot3f(wp0.x() - wp1.x(),
+                                   wp0.y() - wp1.y(),
+                                   wp0.z() - wp1.z());
+        }
+
+        // build path
+        if (path.waypoints_size() > 0)
+        {
+            const px::Waypoint& wp0 = path.waypoints(0);
+
+            vertices->push_back(osg::Vec3d(wp0.y() - robotY,
+                                           wp0.x() - robotX,
+                                           -(wp0.z() - robotZ)));
+
+            float r, g, b;
+            qgc::colormap("autumn", 0, r, g, b);
+            colorArray->push_back(osg::Vec4d(r, g, b, 1.0f));
+        }
+
+        float lengthCurrent = 0.0f;
+        for (int i = 0; i < path.waypoints_size() - 1; ++i)
+        {
+            const px::Waypoint& wp0 = path.waypoints(i);
+            const px::Waypoint& wp1 = path.waypoints(i+1);
+
+            lengthCurrent += qgc::hypot3f(wp0.x() - wp1.x(),
+                                          wp0.y() - wp1.y(),
+                                          wp0.z() - wp1.z());
+
+            vertices->push_back(osg::Vec3d(wp1.y() - robotY,
+                                           wp1.x() - robotX,
+                                           -(wp1.z() - robotZ)));
+
+            int colorIdx = lengthCurrent / length * 127.0f;
+
+            float r, g, b;
+            qgc::colormap("autumn", colorIdx, r, g, b);
+            colorArray->push_back(osg::Vec4f(r, g, b, 1.0f));
+        }
+    }
+
+    geometry->setVertexArray(vertices);
+    drawArrays->setFirst(0);
+    drawArrays->setCount(vertices->size());
+    geometry->dirtyBound();
+}
+
 #endif
 
 int
-Pixhawk3DWidget::findWaypoint(int mouseX, int mouseY)
+Pixhawk3DWidget::findWaypoint(const QPoint& mousePos)
 {
-    if (getSceneData() != NULL) {
+    if (getSceneData())
+    {
         osgUtil::LineSegmentIntersector::Intersections intersections;
 
-        if (computeIntersections(mouseX, height() - mouseY, intersections)) {
+        if (computeIntersections(mousePos.x(), height() - mousePos.y(),
+                                 intersections))
+        {
             for (osgUtil::LineSegmentIntersector::Intersections::iterator
-                    it = intersections.begin(); it != intersections.end(); it++) {
-                for (uint i = 0 ; i < it->nodePath.size(); ++i) {
+                    it = intersections.begin(); it != intersections.end(); it++)
+            {
+                for (uint i = 0 ; i < it->nodePath.size(); ++i)
+                {
                     std::string nodeName = it->nodePath[i]->getName();
-                    if (nodeName.substr(0, 2).compare("wp") == 0) {
+                    if (nodeName.substr(0, 2).compare("wp") == 0)
+                    {
                         return atoi(nodeName.substr(2).c_str());
                     }
                 }
@@ -1358,15 +1879,20 @@ Pixhawk3DWidget::findWaypoint(int mouseX, int mouseY)
 bool
 Pixhawk3DWidget::findTarget(int mouseX, int mouseY)
 {
-    if (getSceneData() != NULL) {
+    if (getSceneData())
+    {
         osgUtil::LineSegmentIntersector::Intersections intersections;
 
-        if (computeIntersections(mouseX, height() - mouseY, intersections)) {
+        if (computeIntersections(mouseX, height() - mouseY, intersections))
+        {
             for (osgUtil::LineSegmentIntersector::Intersections::iterator
-                    it = intersections.begin(); it != intersections.end(); it++) {
-                for (uint i = 0 ; i < it->nodePath.size(); ++i) {
+                    it = intersections.begin(); it != intersections.end(); it++)
+            {
+                for (uint i = 0 ; i < it->nodePath.size(); ++i)
+                {
                     std::string nodeName = it->nodePath[i]->getName();
-                    if (nodeName.compare("Target") == 0) {
+                    if (nodeName.compare("Target") == 0)
+                    {
                         return true;
                     }
                 }
@@ -1394,7 +1920,10 @@ Pixhawk3DWidget::showEditWaypointMenu(const QPoint &cursorPos)
 
     QString text;
     text = QString("Move waypoint %1").arg(QString::number(selectedWpIndex));
-    menu.addAction(text, this, SLOT(moveWaypoint()));
+    menu.addAction(text, this, SLOT(moveWaypointPosition()));
+
+    text = QString("Change heading of waypoint %1").arg(QString::number(selectedWpIndex));
+    menu.addAction(text, this, SLOT(moveWaypointHeading()));
 
     text = QString("Change altitude of waypoint %1").arg(QString::number(selectedWpIndex));
     menu.addAction(text, this, SLOT(setWaypointAltitude()));
