@@ -37,7 +37,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include "Imagery.h"
 
-WaypointGroupNode::WaypointGroupNode()
+WaypointGroupNode::WaypointGroupNode(const QColor& color)
+ : mColor(color)
 {
 
 }
@@ -49,7 +50,7 @@ WaypointGroupNode::init(void)
 }
 
 void
-WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
+WaypointGroupNode::update(UASInterface* uas, MAV_FRAME frame)
 {
     if (!uas)
     {
@@ -105,11 +106,12 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 
         if (wp->getCurrent())
         {
-            sd->setColor(osg::Vec4(1.0f, 0.3f, 0.3f, 0.5f));
+            sd->setColor(osg::Vec4(1.0f, 0.8f, 0.0f, 1.0f));
         }
         else
         {
-            sd->setColor(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
+            sd->setColor(osg::Vec4(mColor.redF(), mColor.greenF(),
+                                   mColor.blueF(), 0.5f));
         }
 
         osg::ref_ptr<osg::Geode> geode = new osg::Geode;
@@ -133,14 +135,8 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
         sd->setShape(cylinder);
         sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
 
-        if (wp->getCurrent())
-        {
-            sd->setColor(osg::Vec4(1.0f, 0.3f, 0.3f, 0.5f));
-        }
-        else
-        {
-            sd->setColor(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
-        }
+        sd->setColor(osg::Vec4(mColor.redF(), mColor.greenF(),
+                               mColor.blueF(), 0.5f));
 
         geode = new osg::Geode;
         geode->addDrawable(sd);
@@ -164,7 +160,8 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             geometry->setVertexArray(vertices);
 
             osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-            colors->push_back(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
+            colors->push_back(osg::Vec4(mColor.redF(), mColor.greenF(),
+                                        mColor.blueF(), 0.5f));
             geometry->setColorArray(colors);
             geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
