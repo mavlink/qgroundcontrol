@@ -39,13 +39,15 @@ This file is part of the QGROUNDCONTROL project
 class WaypointGroupNode : public osg::Group
 {
 public:
-    WaypointGroupNode();
+    WaypointGroupNode(const QColor& color);
 
     void init(void);
-    void update(MAV_FRAME frame, UASInterface* uas);
+    void update(UASInterface* uas, MAV_FRAME frame);
 
 private:
     void getPosition(Waypoint* wp, double& x, double& y, double& z);
+
+    QColor mColor;
 };
 
 #endif // WAYPOINTGROUPNODE_H
