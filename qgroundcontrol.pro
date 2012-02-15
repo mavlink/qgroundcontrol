@@ -361,14 +361,7 @@ HEADERS += src/MG.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
     src/ui/QGCPluginHost.h \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h \
-    src/ui/map3D/gpl.h \
-    src/ui/map3D/CameraParams.h \
-    src/ui/map3D/ViewParamWidget.h \
-    src/ui/map3D/SystemContainer.h \
-    src/ui/map3D/SystemViewParams.h \
-    src/ui/map3D/GlobalViewParams.h \
-    src/ui/map3D/SystemGroupNode.h
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -376,7 +369,14 @@ contains(DEPENDENCIES_PRESENT, osg) {
     message("Including headers for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
-    HEADERS += src/ui/map3D/Q3DWidget.h \
+    HEADERS += src/ui/map3D/gpl.h \
+        src/ui/map3D/CameraParams.h \
+        src/ui/map3D/ViewParamWidget.h \
+        src/ui/map3D/SystemContainer.h \
+        src/ui/map3D/SystemViewParams.h \
+        src/ui/map3D/GlobalViewParams.h \
+        src/ui/map3D/SystemGroupNode.h \
+        src/ui/map3D/Q3DWidget.h \
         src/ui/map3D/GCManipulator.h \
         src/ui/map3D/ImageWindowGeode.h \
         src/ui/map3D/PixhawkCheetahGeode.h \
@@ -501,14 +501,7 @@ SOURCES += src/main.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc \
-    src/ui/map3D/gpl.cc \
-    src/ui/map3D/CameraParams.cc \
-    src/ui/map3D/ViewParamWidget.cc \
-    src/ui/map3D/SystemContainer.cc \
-    src/ui/map3D/SystemViewParams.cc \
-    src/ui/map3D/GlobalViewParams.cc \
-    src/ui/map3D/SystemGroupNode.cc
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -518,7 +511,14 @@ contains(DEPENDENCIES_PRESENT, osg) {
     message("Including sources for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
-    SOURCES += src/ui/map3D/Q3DWidget.cc \
+    SOURCES += src/ui/map3D/gpl.cc \
+        src/ui/map3D/CameraParams.cc \
+        src/ui/map3D/ViewParamWidget.cc \
+        src/ui/map3D/SystemContainer.cc \
+        src/ui/map3D/SystemViewParams.cc \
+        src/ui/map3D/GlobalViewParams.cc \
+        src/ui/map3D/SystemGroupNode.cc \
+        src/ui/map3D/Q3DWidget.cc \
         src/ui/map3D/ImageWindowGeode.cc \
         src/ui/map3D/GCManipulator.cc \
         src/ui/map3D/PixhawkCheetahGeode.cc \
