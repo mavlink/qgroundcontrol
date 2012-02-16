@@ -408,23 +408,21 @@ signals:
     void deactivated();
     /** @brief The robot is manually controlled **/
     void manualControl();
+
     /** @brief A value of the robot has changed.
       *
       * Typically this is used to send lowlevel information like the battery voltage to the plotting facilities of
-      * the groundstation
+      * the groundstation. The data here should be converted to human-readable values before being passed, so ideally
+	  * SI units.
       *
       * @param uasId ID of this system
       * @param name name of the value, e.g. "battery voltage"
+	  * @param unit The units this variable is in as an abbreviation. For system-dependent (such as raw ADC values) use "raw", for unitless values use "none".
       * @param value the value that changed
       * @param msec the timestamp of the message, in milliseconds
       */
-
-    //void valueChanged(const int uasId, const QString& name, const double value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec);
-
-//    void valueChanged(const int uasId, const QString& name, const double value, const quint64 msec);
-//    //void valueChanged(UASInterface* uas, QString name, double value, quint64 msec);
 
     void voltageChanged(int uasId, double voltage);
     void waypointUpdated(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool active);
