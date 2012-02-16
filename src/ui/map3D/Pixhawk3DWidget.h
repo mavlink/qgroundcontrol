@@ -67,7 +67,7 @@ private slots:
     void followCameraChanged(int systemId);
     void recenterActiveCamera(void);
     void modelChanged(int systemId, int index);
-    void setBirdView(void);
+    void setBirdEyeView(void);
 
     void selectTargetHeading(void);
     void selectTarget(void);

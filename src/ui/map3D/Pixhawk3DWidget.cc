@@ -292,14 +292,12 @@ Pixhawk3DWidget::modelChanged(int systemId, int index)
 }
 
 void
-Pixhawk3DWidget::setBirdView(void)
+Pixhawk3DWidget::setBirdEyeView(void)
 {
     mViewParamWidget->setFollowCameraId(-1);
 
-    mCameraPos = QVector3D(0.0, 0.0, -100.0);
-
     m3DWidget->rotateCamera(0.0, 0.0, 0.0);
-    m3DWidget->recenterCamera(mCameraPos.y(), mCameraPos.x(), -mCameraPos.z());
+    m3DWidget->setCameraDistance(100.0);
 }
 
 void
@@ -692,7 +690,7 @@ Pixhawk3DWidget::update(void)
 
             mCameraPos = QVector3D(x, y, z);
 
-            setBirdView();
+            setBirdEyeView();
             mInitCameraPos = true;
         }
     }
@@ -828,12 +826,12 @@ Pixhawk3DWidget::buildLayout(void)
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
 
-    QPushButton* birdViewButton = new QPushButton(this);
-    birdViewButton->setText("Bird's Eye View");
+    QPushButton* birdEyeViewButton = new QPushButton(this);
+    birdEyeViewButton->setText("Bird's Eye View");
 
     QHBoxLayout* layoutBottom = new QHBoxLayout;
     layoutBottom->addWidget(recenterButton);
-    layoutBottom->addWidget(birdViewButton);
+    layoutBottom->addWidget(birdEyeViewButton);
     layoutBottom->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
 
     QGridLayout* layout = new QGridLayout(this);
@@ -850,8 +848,8 @@ Pixhawk3DWidget::buildLayout(void)
             this, SLOT(showViewParamWindow()));
     connect(recenterButton, SIGNAL(clicked()),
             this, SLOT(recenterActiveCamera()));
-    connect(birdViewButton, SIGNAL(clicked()),
-            this, SLOT(setBirdView()));
+    connect(birdEyeViewButton, SIGNAL(clicked()),
+            this, SLOT(setBirdEyeView()));
 }
 
 void

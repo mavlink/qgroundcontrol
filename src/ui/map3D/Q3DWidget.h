@@ -104,6 +104,11 @@ public:
     void rotateCamera(double roll, double pitch, double yaw);
 
     /**
+      * @brief Sets the camera distance.
+      */
+    void setCameraDistance(double distance);
+
+    /**
      * @brief Sets up 3D display mode.
      */
     void setDisplayMode3D(void);

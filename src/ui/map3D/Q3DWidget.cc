@@ -134,6 +134,12 @@ Q3DWidget::rotateCamera(double roll, double pitch, double yaw)
 }
 
 void
+Q3DWidget::setCameraDistance(double distance)
+{
+    mCameraManipulator->setDistance(distance);
+}
+
+void
 Q3DWidget::setDisplayMode3D(void)
 {
     double aspect = static_cast<double>(width())
