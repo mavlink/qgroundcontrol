@@ -63,9 +63,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
-#if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
-#endif
 #include "QGCToolBar.h"
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
@@ -312,12 +310,8 @@ protected:
     QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
-#ifdef QGC_OSG_ENABLED
     QPointer<QWidget> _3DWidget;
-#endif
-#if (defined _MSC_VER) || (defined Q_OS_MAC)
     QPointer<QGCGoogleEarthView> gEarthWidget;
-#endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
     // Dock widgets

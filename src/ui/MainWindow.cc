@@ -551,19 +551,15 @@ void MainWindow::buildCommonWidgets()
         addCentralWidget(dataplotWidget, tr("Logfile Plot"));
     }
 
-#ifdef QGC_OSG_ENABLED
     if (!_3DWidget) {
         _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
         addCentralWidget(_3DWidget, tr("Local 3D"));
     }
-#endif
 
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
     if (!gEarthWidget) {
         gEarthWidget = new QGCGoogleEarthView(this);
         addCentralWidget(gEarthWidget, tr("Google Earth"));
     }
-#endif
 }
 
 void MainWindow::addTool(QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
