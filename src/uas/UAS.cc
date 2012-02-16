@@ -404,8 +404,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_sys_status_t state;
             mavlink_msg_sys_status_decode(&message, &state);
 
-            emit loadChanged(this,state.load/10.0f);
+			// Prepare for sending data to the realtime plotter, which is every field excluding onboard_control_sensors_present.
+            quint64 time = getUnixTime();
+			QString name = QString("M%1:SYS_STATUS.%2").arg(message.sysid);
+			emit valueChanged(uasId, name.arg("sensors_enabled"), "bits", state.onboard_control_sensors_enabled, time);
+			emit valueChanged(uasId, name.arg("sensors_health"), "bits", state.onboard_control_sensors_health, time);
+			emit valueChanged(uasId, name.arg("errors_comm"), "-", state.errors_comm, time);
+			emit valueChanged(uasId, name.arg("errors_count1"), "-", state.errors_count1, time);
+			emit valueChanged(uasId, name.arg("errors_count2"), "-", state.errors_count2, time);
+			emit valueChanged(uasId, name.arg("errors_count3"), "-", state.errors_count3, time);
+			emit valueChanged(uasId, name.arg("errors_count4"), "-", state.errors_count4, time);
 
+			// Process CPU load.
+            emit loadChanged(this,state.load/10.0f);
+			emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
+
+			// Battery charge/time remaining/voltage calculations
             currentVoltage = state.voltage_battery/1000.0f;
             lpVoltage = filterVoltage(currentVoltage);
 
@@ -415,9 +429,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 chargeLevel = state.battery_remaining;
             }
-            //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
             emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
-            emit voltageChanged(message.sysid, state.voltage_battery/1000);
+			emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
+            emit voltageChanged(message.sysid, currentVoltage);
+			emit valueChanged(uasId, name.arg("battery_voltage"), "V", currentVoltage, time);
+
+			// And if the battery current draw is measured, log that also.
+			if (state.current_battery != -1)
+			{
+				emit valueChanged(uasId, name.arg("battery_current"), "A", ((double)state.current_battery) / 100.0f, time);
+			}
 
             // LOW BATTERY ALARM
             if (lpVoltage < warnVoltage)
@@ -435,12 +456,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 			// by the MAVLink specifications.
 			if (state.drop_rate_comm > 10000)
 			{
-				emit dropRateChanged(this->getUASID(), 100.0f);
+				state.drop_rate_comm = 10000;
 			}
-			else
-			{
-				emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
-			}
+			emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
+			emit valueChanged(uasId, name.arg("drop_rate_comm"), "%", state.drop_rate_comm/100.0f, time);
 		}
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
