@@ -164,7 +164,9 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
                         (float)qrand() / RAND_MAX,
                         (float)qrand() / RAND_MAX,
                         0.5);
+
         systemData.trailNode()->addDrawable(createTrail(color));
+        systemData.trailNode()->addDrawable(createLink(uas->getColor()));
     }
 
     QVector<osg::Vec3d>& trail = systemData.trailMap()[component];
@@ -222,7 +224,11 @@ Pixhawk3DWidget::attitudeChanged(UASInterface* uas, int component,
 void
 Pixhawk3DWidget::showViewParamWindow(void)
 {
-    if (!mViewParamWidget->isVisible())
+    if (mViewParamWidget->isVisible())
+    {
+        mViewParamWidget->hide();
+    }
+    else
     {
         mViewParamWidget->show();
     }
@@ -817,6 +823,7 @@ void
 Pixhawk3DWidget::buildLayout(void)
 {
     QPushButton* viewParamWindowButton = new QPushButton(this);
+    viewParamWindowButton->setCheckable(true);
     viewParamWindowButton->setText("View Parameters");
 
     QHBoxLayout* layoutTop = new QHBoxLayout;
@@ -1332,6 +1339,35 @@ Pixhawk3DWidget::createTrail(const osg::Vec4& color)
     return geometry;
 }
 
+osg::ref_ptr<osg::Geometry>
+Pixhawk3DWidget::createLink(const QColor& color)
+{
+    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
+    geometry->setUseDisplayList(false);
+
+    osg::ref_ptr<osg::Vec3dArray> vertices(new osg::Vec3dArray());
+    geometry->setVertexArray(vertices);
+
+    osg::ref_ptr<osg::DrawArrays> drawArrays(new osg::DrawArrays(osg::PrimitiveSet::LINES));
+    geometry->addPrimitiveSet(drawArrays);
+
+    osg::ref_ptr<osg::Vec4Array> colorArray(new osg::Vec4Array);
+    colorArray->push_back(osg::Vec4(color.redF(), color.greenF(), color.blueF(), 1.0f));
+    geometry->setColorArray(colorArray);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
+    linewidth->setWidth(3.0f);
+    stateset->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+    stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    stateset->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
+    stateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+    geometry->setStateSet(stateset);
+
+    return geometry;
+}
+
 osg::ref_ptr<Imagery>
 Pixhawk3DWidget::createImagery(void)
 {
@@ -1522,7 +1558,8 @@ Pixhawk3DWidget::updateHUD(UASInterface* uas, MAV_FRAME frame)
     mStatusText->setText(oss.str());
 
     bool darkBackground = true;
-    if (mImageryNode->getImageryType() == Imagery::GOOGLE_MAP)
+    if (frame == MAV_FRAME_GLOBAL &&
+        mImageryNode->getImageryType() == Imagery::GOOGLE_MAP)
     {
         darkBackground = false;
     }
@@ -1544,18 +1581,52 @@ Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ,
     {
         it.next();
 
-        osg::Geometry* geometry = trailNode->getDrawable(it.value())->asGeometry();
+        // update trail
+        osg::Geometry* geometry = trailNode->getDrawable(it.value() * 2)->asGeometry();
         osg::DrawArrays* drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
 
         osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array);
 
         const QVector<osg::Vec3d>& trail = trailMap.value(it.key());
 
+        vertices->reserve(trail.size());
         for (int i = 0; i < trail.size(); ++i)
         {
             vertices->push_back(osg::Vec3d(trail[i].y() - robotY,
                                            trail[i].x() - robotX,
                                            -(trail[i].z() - robotZ)));
+        }
+
+        geometry->setVertexArray(vertices);
+        drawArrays->setFirst(0);
+        drawArrays->setCount(vertices->size());
+        geometry->dirtyBound();
+
+        // update link
+        geometry = trailNode->getDrawable(it.value() * 2 + 1)->asGeometry();
+        drawArrays = reinterpret_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+
+        vertices = new osg::Vec3Array;
+
+        if (!trail.empty())
+        {
+            QVector3D p(trail.back().x() - robotX,
+                        trail.back().y() - robotY,
+                        trail.back().z() - robotZ);
+
+            double length = p.length();
+            p.normalize();
+
+            for (double i = 0.1; i < length - 0.1; i += 0.3)
+            {
+                QVector3D v = p * i;
+
+                vertices->push_back(osg::Vec3d(v.y(), v.x(), -v.z()));
+            }
+        }
+        if (vertices->size() % 2 == 1)
+        {
+            vertices->pop_back();
         }
 
         geometry->setVertexArray(vertices);
