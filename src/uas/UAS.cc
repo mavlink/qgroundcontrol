@@ -282,6 +282,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit heartbeat(this);
             mavlink_heartbeat_t state;
             mavlink_msg_heartbeat_decode(&message, &state);
+			
+			// Send the base_mode and system_status values to the plotter. This uses the ground time
+			// so the Ground Time checkbox must be ticked for these values to display
+            quint64 time = getUnixTime();
+			QString name = QString("M%1:HEARTBEAT.%2").arg(message.sysid);
+			emit valueChanged(uasId, name.arg("base_mode"), "none", state.base_mode, time);
+			emit valueChanged(uasId, name.arg("system_status"), "none", state.system_status, time);
+			
             // Set new type if it has changed
             if (this->type != state.type)
             {
@@ -384,20 +392,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 GAudioOutput::instance()->stopEmergency();
                 GAudioOutput::instance()->say(audiostring.toLower());
             }
-
-            //            if (state.system_status == MAV_STATE_POWEROFF)
-            //            {
-            //                emit systemRemoved(this);
-            //                emit systemRemoved();
-            //            }
         }
 
             break;
-            //        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
-            //        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
-            //            // Receive named value message
-            //            receiveMessageNamedValue(message);
-            //            break;
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
             if (multiComponentSourceDetected && wrongComponent)
@@ -432,19 +429,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 stopLowBattAlarm();
             }
 
-                // Trigger drop rate updates as needed. Here we convert the incoming
-				// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
-				// percentage as a float. We also cap the incoming value at 100% as defined
-				// by the MAVLink specifications.
-                if (state.drop_rate_comm > 10000)
-                {
-				    emit dropRateChanged(this->getUASID(), 100.0f);
-                }
-                else
-                {
-				    emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
-				}
-            }
+			// Trigger drop rate updates as needed. Here we convert the incoming
+			// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
+			// percentage as a float. We also cap the incoming value at 100% as defined
+			// by the MAVLink specifications.
+			if (state.drop_rate_comm > 10000)
+			{
+				emit dropRateChanged(this->getUASID(), 100.0f);
+			}
+			else
+			{
+				emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
+			}
+		}
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
         {
