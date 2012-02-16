@@ -417,6 +417,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
                 emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.voltage_battery/1000);
+ 
+                // control_sensors_enabled:
+                // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
+                emit attitudeControlEnabled(state.onboard_control_sensors_enabled & (1 << 11));
+                emit positionYawControlEnabled(state.onboard_control_sensors_enabled & (1 << 12));
+                emit positionZControlEnabled(state.onboard_control_sensors_enabled & (1 << 13));
+                emit positionXYControlEnabled(state.onboard_control_sensors_enabled & (1 << 14));
 
                 // LOW BATTERY ALARM
                 if (lpVoltage < warnVoltage)
@@ -571,6 +578,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // only accept values in a realistic range
                 // quint64 time = getUnixTime(pos.time_usec);
                 quint64 time = getUnixTime(pos.time_usec);
+
+                emit gpsLocalizationChanged(this, pos.fix_type);
+
+                // TODO: track localization state not only for gps but also for other loc. sources
+                int loc_type = pos.fix_type;
+                if (loc_type == 1)
+                {
+                    loc_type = 0;   
+                }
+                emit localizationChanged(this, loc_type);
 
                 if (pos.fix_type > 2)
                 {
