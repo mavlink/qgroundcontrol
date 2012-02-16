@@ -167,7 +167,8 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("QGroundControl has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
 
     // Check if link could be connected
-    if (!udpLink->connect()) {
+    if (!udpLink->connect())
+    {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
@@ -177,10 +178,11 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
         int ret = msgBox.exec();
 
         // Close the message box shortly after the click to prevent accidental clicks
-        QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+        QTimer::singleShot(15000, &msgBox, SLOT(reject()));
 
         // Exit application
-        if (ret == QMessageBox::Yes) {
+        if (ret == QMessageBox::Yes)
+        {
             //mainWindow->close();
             QTimer::singleShot(200, mainWindow, SLOT(close()));
         }

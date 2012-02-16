@@ -32,19 +32,19 @@
 #include "ImageWindowGeode.h"
 
 ImageWindowGeode::ImageWindowGeode()
-    : border(5)
+ : mBorder(5)
+ , mImage(new osg::Image)
 {
 
 }
 
 void
 ImageWindowGeode::init(const QString& caption, const osg::Vec4& backgroundColor,
-                       osg::ref_ptr<osg::Image>& image,
                        osg::ref_ptr<osgText::Font>& font)
 {
     // image
     osg::ref_ptr<osg::Geometry> imageGeometry = new osg::Geometry;
-    imageVertices = new osg::Vec3Array(4);
+    mImageVertices = new osg::Vec3Array(4);
 
     osg::ref_ptr<osg::Vec2Array> textureCoords = new osg::Vec2Array;
     textureCoords->push_back(osg::Vec2(0.0f, 1.0f));
@@ -57,15 +57,15 @@ ImageWindowGeode::init(const QString& caption, const osg::Vec4& backgroundColor,
     imageGeometry->setColorArray(imageColors);
     imageGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
-    imageGeometry->setVertexArray(imageVertices);
+    imageGeometry->setVertexArray(mImageVertices);
     imageGeometry->setTexCoordArray(0, textureCoords);
 
     imageGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
-                                   0, imageVertices->size()));
+                                   0, mImageVertices->size()));
 
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
     texture->setDataVariance(osg::Object::DYNAMIC);
-    texture->setImage(image);
+    texture->setImage(mImage);
     texture->setResizeNonPowerOfTwoHint(false);
 
     imageGeometry->getOrCreateStateSet()->
@@ -74,10 +74,10 @@ ImageWindowGeode::init(const QString& caption, const osg::Vec4& backgroundColor,
 
     // background
     osg::ref_ptr<osg::Geometry> backgroundGeometry = new osg::Geometry;
-    backgroundVertices = new osg::Vec3Array(4);
-    backgroundGeometry->setVertexArray(backgroundVertices);
+    mBackgroundVertices = new osg::Vec3Array(4);
+    backgroundGeometry->setVertexArray(mBackgroundVertices);
     backgroundGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
-                                        0, backgroundVertices->size()));
+                                        0, mBackgroundVertices->size()));
     osg::ref_ptr<osg::Vec4Array> backgroundColors(new osg::Vec4Array);
     backgroundColors->push_back(backgroundColor);
     backgroundGeometry->setColorArray(backgroundColors);
@@ -85,16 +85,16 @@ ImageWindowGeode::init(const QString& caption, const osg::Vec4& backgroundColor,
     backgroundGeometry->setUseDisplayList(false);
 
     // caption
-    text = new osgText::Text;
-    text->setText(caption.toStdString().c_str());
-    text->setCharacterSize(11);
-    text->setFont(font);
-    text->setAxisAlignment(osgText::Text::SCREEN);
-    text->setColor(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    mText = new osgText::Text;
+    mText->setText(caption.toStdString().c_str());
+    mText->setCharacterSize(11);
+    mText->setFont(font);
+    mText->setAxisAlignment(osgText::Text::SCREEN);
+    mText->setColor(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
     addDrawable(imageGeometry);
     addDrawable(backgroundGeometry);
-    addDrawable(text);
+    addDrawable(mText);
 
     setAttributes(0, 0, 0, 0);
 }
@@ -102,20 +102,26 @@ ImageWindowGeode::init(const QString& caption, const osg::Vec4& backgroundColor,
 void
 ImageWindowGeode::setAttributes(int x, int y, int width, int height)
 {
-    int imageWidth = width - border * 2;
-    int imageHeight = height - border * 2 - 15;
-    int imageXPosition = x + border;
-    int imageYPosition = y + border;
+    int imageWidth = width - mBorder * 2;
+    int imageHeight = height - mBorder * 2 - 15;
+    int imageXPosition = x + mBorder;
+    int imageYPosition = y + mBorder;
 
-    imageVertices->at(0) = osg::Vec3(imageXPosition, imageYPosition, 0);
-    imageVertices->at(1) = osg::Vec3(imageXPosition + imageWidth, imageYPosition, 0);
-    imageVertices->at(2) = osg::Vec3(imageXPosition + imageWidth, imageYPosition + imageHeight, 0);
-    imageVertices->at(3) = osg::Vec3(imageXPosition, imageYPosition + imageHeight, 0);
+    mImageVertices->at(0) = osg::Vec3(imageXPosition, imageYPosition, 0);
+    mImageVertices->at(1) = osg::Vec3(imageXPosition + imageWidth, imageYPosition, 0);
+    mImageVertices->at(2) = osg::Vec3(imageXPosition + imageWidth, imageYPosition + imageHeight, 0);
+    mImageVertices->at(3) = osg::Vec3(imageXPosition, imageYPosition + imageHeight, 0);
 
-    text->setPosition(osg::Vec3(imageXPosition, imageYPosition + imageHeight + 5, 0));
+    mText->setPosition(osg::Vec3(imageXPosition, imageYPosition + imageHeight + 5, 0));
 
-    backgroundVertices->at(0) = osg::Vec3(x, y, -1);
-    backgroundVertices->at(1) = osg::Vec3(x + width, y, -1);
-    backgroundVertices->at(2) = osg::Vec3(x + width, y + height, -1);
-    backgroundVertices->at(3) = osg::Vec3(x, y + height, -1);
+    mBackgroundVertices->at(0) = osg::Vec3(x, y, -1);
+    mBackgroundVertices->at(1) = osg::Vec3(x + width, y, -1);
+    mBackgroundVertices->at(2) = osg::Vec3(x + width, y + height, -1);
+    mBackgroundVertices->at(3) = osg::Vec3(x, y + height, -1);
+}
+
+osg::ref_ptr<osg::Image>&
+ImageWindowGeode::image(void)
+{
+    return mImage;
 }

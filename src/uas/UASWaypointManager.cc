@@ -132,7 +132,7 @@ void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double l
 
 void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, quint16 count)
 {
-    if (current_state == WP_GETLIST && systemId == current_partner_systemid && compId == current_partner_compid) {
+    if (current_state == WP_GETLIST && systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL)) {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
 
@@ -172,7 +172,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 
 void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_mission_item_t *wp)
 {
-    if (systemId == current_partner_systemid && compId == current_partner_compid && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id) {
+    if (systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL) && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id) {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
 
@@ -222,7 +222,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
 void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavlink_mission_ack_t *wpa)
 {
-    if (systemId == current_partner_systemid && compId == current_partner_compid) {
+    if (systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL)) {
         if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && (current_wp_id == waypoint_buffer.count()-1 && wpa->type == 0)) {
             //all waypoints sent and ack received
             protocol_timer.stop();
@@ -241,7 +241,7 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
 
 void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_mission_request_t *wpr)
 {
-    if (systemId == current_partner_systemid && compId == current_partner_compid && ((current_state == WP_SENDLIST && wpr->seq == 0) || (current_state == WP_SENDLIST_SENDWPS && (wpr->seq == current_wp_id || wpr->seq == current_wp_id + 1)))) {
+    if (systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL) && ((current_state == WP_SENDLIST && wpr->seq == 0) || (current_state == WP_SENDLIST_SENDWPS && (wpr->seq == current_wp_id || wpr->seq == current_wp_id + 1)))) {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
 
