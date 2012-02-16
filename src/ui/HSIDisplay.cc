@@ -1216,8 +1216,8 @@ void HSIDisplay::drawGPS(QPainter &painter)
         i.next();
         GPSSatellite* sat = i.value();
 
-        // Check if update is not older than 5 seconds, else delete satellite
-        if (sat->lastUpdate + 1000000 < currTime) {
+        // Check if update is not older than 10 seconds, else delete satellite
+        if (sat->lastUpdate + 10000000 < currTime) {
             // Delete and go to next satellite
             gpsSatellites.remove(i.key());
             if (i.hasNext()) {
