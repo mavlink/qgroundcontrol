@@ -25,7 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Definition of the class GCManipulator.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
@@ -74,8 +74,8 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
             if (isMouseMoving()) {
                 if (calcMovement()) {
                     us.requestRedraw();
-                    us.requestContinuousUpdate(true);
-                    _thrown = true;
+                    us.requestContinuousUpdate(false);
+                    _thrown = false;
                 }
             } else {
                 flushMouseEventStack();
