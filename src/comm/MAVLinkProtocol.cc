@@ -351,33 +351,35 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                 // Update last message sequence ID
                 uint8_t expectedIndex;
-				if (lastIndex[message.sysid][message.compid] == -1)
+                if (lastIndex[message.sysid][message.compid] == -1)
                 {
                     lastIndex[message.sysid][message.compid] = message.seq;
                     expectedIndex = message.seq;
-				}
+                }
                 else
                 {
-					// NOTE: Using uint8_t here auto-wraps the number around to 0.
+                    // NOTE: Using uint8_t here auto-wraps the number around to 0.
                     expectedIndex = lastIndex[message.sysid][message.compid] + 1;
-				}
-				
-				// Make some noise if a message was skipped
+                }
+
+                // Make some noise if a message was skipped
                 //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "EXPECTED INDEX:" << expectedIndex << "SEQ" << message.seq;
-				if (message.seq != expectedIndex)
-				{
-					// Determine how many messages were skipped accounting for 0-wraparound
-					int16_t lostMessages = message.seq - expectedIndex;
-					if (lostMessages < 0)
-					{
-                  // Usually, this happens in the case of an out-of order packet
-						lostMessages = 0;
-					}
-					qDebug() << QString("Lost %1 messages: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq);
-					
-					totalLossCounter += lostMessages;
-					currLossCounter += lostMessages;
-				}
+                if (message.seq != expectedIndex)
+                {
+                    // Determine how many messages were skipped accounting for 0-wraparound
+                    int16_t lostMessages = message.seq - expectedIndex; 
+                    if (lostMessages < 0)
+                    {
+                        // Usually, this happens in the case of an out-of order packet
+                        lostMessages = 0;
+                    }
+                    else
+                    {
+                       qDebug() << QString("Lost %1 messages: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq);
+                    }
+                    totalLossCounter += lostMessages;
+                    currLossCounter += lostMessages;
+                }
 
                 // Update the last sequence ID
                 lastIndex[message.sysid][message.compid] = message.seq;
