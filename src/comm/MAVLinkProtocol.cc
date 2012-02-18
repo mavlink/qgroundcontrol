@@ -370,7 +370,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 					int16_t lostMessages = message.seq - expectedIndex;
 					if (lostMessages < 0)
 					{
-						lostMessages += 256;
+                  // Usually, this happens in the case of an out-of order packet
+						lostMessages = 0;
 					}
 					qDebug() << QString("Lost %1 messages: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq);
 					
