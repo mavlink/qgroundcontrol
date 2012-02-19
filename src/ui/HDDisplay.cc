@@ -478,16 +478,13 @@ void HDDisplay::renderOverlay()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
+    // Disconnect any previously connected active UAS
     if (this->uas != NULL) {
-        // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
-        disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
+        removeSource(this->uas);
     }
 
     // Now connect the new UAS
-    // Setup communication
-    connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
-    connect(uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
+	addSource(uas);
     this->uas = uas;
 }
 
@@ -842,28 +839,75 @@ float HDDisplay::refLineWidthToPen(float line)
     return line * 2.50f;
 }
 
+// Connect a generic source
 void HDDisplay::addSource(QObject* obj)
 {
     //genericSources.append(obj);
     // FIXME XXX HACK
 //    if (plots.size() > 0)
 //    {
-        // Connect generic source
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,unsigned int,quint64)), this, SLOT(updateValue(int,QString,QString,unsigned int,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), this, SLOT(updateValue(int,QString,QString,qint8,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), this, SLOT(updateValue(int,QString,QString,quint8,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), this, SLOT(updateValue(int,QString,QString,qint16,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), this, SLOT(updateValue(int,QString,QString,quint16,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), this, SLOT(updateValue(int,QString,QString,qint32,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), this, SLOT(updateValue(int,QString,QString,quint32,quint64)));
         connect(obj, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), this, SLOT(updateValue(int,QString,QString,quint64,quint64)));
         connect(obj, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), this, SLOT(updateValue(int,QString,QString,qint64,quint64)));
         connect(obj, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
 //    }
 }
 
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec)
+// Disconnect a generic source
+void HDDisplay::removeSource(QObject* obj)
+{
+    //genericSources.append(obj);
+    // FIXME XXX HACK
+//    if (plots.size() > 0)
+//    {
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), this, SLOT(updateValue(int,QString,QString,qint8,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), this, SLOT(updateValue(int,QString,QString,quint8,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), this, SLOT(updateValue(int,QString,QString,qint16,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), this, SLOT(updateValue(int,QString,QString,quint16,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), this, SLOT(updateValue(int,QString,QString,qint32,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), this, SLOT(updateValue(int,QString,QString,quint32,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), this, SLOT(updateValue(int,QString,QString,quint64,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), this, SLOT(updateValue(int,QString,QString,qint64,quint64)));
+        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
+//    }
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec)
 {
     if (!intValues.contains(name)) intValues.insert(name, true);
     updateValue(uasId, name, unit, (double)value, msec);
 }
 
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const unsigned int value, const quint64 msec)
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint16 value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint16 value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint32 value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint32 value, const quint64 msec)
 {
     if (!intValues.contains(name)) intValues.insert(name, true);
     updateValue(uasId, name, unit, (double)value, msec);

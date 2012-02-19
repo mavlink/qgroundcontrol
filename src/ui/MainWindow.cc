@@ -1167,7 +1167,6 @@ void MainWindow::addLink(LinkInterface *link)
         MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
         if (sim)
         {
-            //connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
             connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
         }
     }
