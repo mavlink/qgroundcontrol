@@ -24,7 +24,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
 
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
-    memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
+    memset(receivedMessages, 0xFF, sizeof(mavlink_message_t)*256);
 
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
     QStringList header;
@@ -95,7 +95,7 @@ void QGCMAVLinkInspector::refreshView()
     {
         mavlink_message_t* msg = receivedMessages+i;
         // Ignore NULL values
-        if (!msg) continue;
+        if (msg->msgid == 0xFF) continue;
         // Update the tree view
         QString messageName("%1 (%2 Hz, #%3)");
         float msgHz = (1.0f-updateHzLowpass)*messagesHz.value(msg->msgid, 0) + updateHzLowpass*((float)messageCount.value(msg->msgid, 0))/((float)updateInterval/1000.0f);
