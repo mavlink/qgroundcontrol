@@ -287,8 +287,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 			// so the Ground Time checkbox must be ticked for these values to display
             quint64 time = getUnixTime();
 			QString name = QString("M%1:HEARTBEAT.%2").arg(message.sysid);
-			emit valueChanged(uasId, name.arg("base_mode"), "none", state.base_mode, time);
-			emit valueChanged(uasId, name.arg("system_status"), "none", state.system_status, time);
+			emit valueChanged(uasId, name.arg("base_mode"), "bits", state.base_mode, time);
+			emit valueChanged(uasId, name.arg("custom_mode"), "bits", state.custom_mode, time);
+			emit valueChanged(uasId, name.arg("system_status"), "-", state.system_status, time);
 			
             // Set new type if it has changed
             if (this->type != state.type)
