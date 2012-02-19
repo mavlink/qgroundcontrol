@@ -472,25 +472,45 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
 void HSIDisplay::updatePositionLock(UASInterface* uas, bool lock)
 {
     Q_UNUSED(uas);
+    bool changed = positionLock != lock;
     positionLock = lock;
+    if (changed)
+    {
+        update();
+    }
 }
 
 void HSIDisplay::updateAttitudeControllerEnabled(bool enabled)
 {
+    bool changed = attControlEnabled != enabled;
     attControlEnabled = enabled;
     attControlKnown = true;
+    if (changed)
+    {
+        update();
+    }
 }
 
 void HSIDisplay::updatePositionXYControllerEnabled(bool enabled)
 {
+    bool changed = xyControlEnabled != enabled;
     xyControlEnabled = enabled;
     xyControlKnown = true;
+    if (changed)
+    {
+        update();
+    }
 }
 
 void HSIDisplay::updatePositionZControllerEnabled(bool enabled)
 {
+    bool changed = zControlEnabled != enabled;
     zControlEnabled = enabled;
     zControlKnown = true;
+    if (changed)
+    {
+        update();
+    }
 }
 
 void HSIDisplay::updateObjectPosition(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance)

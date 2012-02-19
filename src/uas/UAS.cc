@@ -450,6 +450,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 stopLowBattAlarm();
             }
 
+
+            // control_sensors_enabled:
+            // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
+            emit attitudeControlEnabled(state.onboard_control_sensors_enabled & (1 << 11));
+            emit positionYawControlEnabled(state.onboard_control_sensors_enabled & (1 << 12));
+            emit positionZControlEnabled(state.onboard_control_sensors_enabled & (1 << 13));
+            emit positionXYControlEnabled(state.onboard_control_sensors_enabled & (1 << 14));
+
 			// Trigger drop rate updates as needed. Here we convert the incoming
 			// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
 			// percentage as a float. We also cap the incoming value at 100% as defined
@@ -579,6 +587,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             speedZ = pos.vz/100.0;
             emit globalPositionChanged(this, latitude, longitude, altitude, time);
             emit speedChanged(this, speedX, speedY, speedZ, time);
+
             // Set internal state
             if (!positionLock)
             {
@@ -600,6 +609,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // only accept values in a realistic range
             // quint64 time = getUnixTime(pos.time_usec);
             quint64 time = getUnixTime(pos.time_usec);
+            
+            emit gpsLocalizationChanged(this, pos.fix_type);
+            // TODO: track localization state not only for gps but also for other loc. sources
+            int loc_type = pos.fix_type;
+            if (loc_type == 1)
+            {
+                loc_type = 0; 
+            }
+            emit localizationChanged(this, loc_type);
 
             if (pos.fix_type > 2)
             {
