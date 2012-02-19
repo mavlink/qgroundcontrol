@@ -778,7 +778,10 @@ Pixhawk3DWidget::update(void)
 //        updateImagery(robotX, robotY, robotZ, utmZone);
     }
 
-    updateHUD(mActiveUAS, frame);
+    if (mActiveUAS)
+    {
+      updateHUD(mActiveUAS, frame);
+    }
 
     layout()->update();
 }
