@@ -28,6 +28,7 @@ public:
     osg::ref_ptr<ImageWindowGeode>& depthImageNode(void);
     osg::ref_ptr<osg::Geode>& localGridNode(void);
     osg::ref_ptr<osg::Node>& modelNode(void);
+    osg::ref_ptr<osg::Group>& orientationNode(void);
     osg::ref_ptr<osg::Geode>& pointCloudNode(void);
     osg::ref_ptr<ImageWindowGeode>& rgbImageNode(void);
     osg::ref_ptr<osg::Group>& setpointGroupNode(void);
@@ -52,6 +53,7 @@ private:
     osg::ref_ptr<ImageWindowGeode> mDepthImageNode;
     osg::ref_ptr<osg::Geode> mLocalGridNode;
     osg::ref_ptr<osg::Node> mModelNode;
+    osg::ref_ptr<osg::Group> mOrientationNode;
     osg::ref_ptr<osg::Geode> mPointCloudNode;
     osg::ref_ptr<ImageWindowGeode> mRGBImageNode;
     osg::ref_ptr<osg::Group> mSetpointGroupNode;

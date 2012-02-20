@@ -58,6 +58,7 @@ public slots:
     void systemCreated(UASInterface* uas);
     void localPositionChanged(UASInterface* uas, int component, double x, double y, double z, quint64 time);
     void localPositionChanged(UASInterface* uas, double x, double y, double z, quint64 time);
+    void attitudeChanged(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 time);
     void attitudeChanged(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
     void setpointChanged(int uasId, float x, float y, float z, float yaw);
 
@@ -142,6 +143,7 @@ private:
                       osg::ref_ptr<osg::Node>& targetNode);
     void updateTrails(double robotX, double robotY, double robotZ,
                       osg::ref_ptr<osg::Geode>& trailNode,
+                      osg::ref_ptr<osg::Group>& orientationNode,
                       QMap<int, QVector<osg::Vec3d> >& trailMap,
                       QMap<int, int>& trailIndexMap);
     void updateWaypoints(UASInterface* uas, MAV_FRAME frame,

@@ -49,6 +49,12 @@ SystemContainer::modelNode(void)
     return mModelNode;
 }
 
+osg::ref_ptr<osg::Group>&
+SystemContainer::orientationNode(void)
+{
+    return mOrientationNode;
+}
+
 osg::ref_ptr<osg::Geode>&
 SystemContainer::pointCloudNode(void)
 {

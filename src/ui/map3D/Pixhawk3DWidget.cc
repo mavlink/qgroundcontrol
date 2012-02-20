@@ -129,6 +129,8 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
             this, SLOT(localPositionChanged(UASInterface*,int,double,double,double,quint64)));
     connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
             this, SLOT(localPositionChanged(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)),
+            this, SLOT(attitudeChanged(UASInterface*,int,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),
             this, SLOT(attitudeChanged(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)),
@@ -168,6 +170,50 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
 
         systemData.trailNode()->addDrawable(createTrail(color));
         systemData.trailNode()->addDrawable(createLink(uas->getColor()));
+
+        double radius = 0.5;
+
+        osg::ref_ptr<osg::Group> group = new osg::Group;
+
+        // cone indicates orientation
+        osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
+        double coneRadius = radius / 2.0;
+        osg::ref_ptr<osg::Cone> cone =
+            new osg::Cone(osg::Vec3d(0.0, 0.0, 0.0),
+                          coneRadius, radius * 2.0);
+
+        sd->setShape(cone);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(color);
+
+        osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+        geode->addDrawable(sd);
+
+        osg::ref_ptr<osg::PositionAttitudeTransform> pat =
+            new osg::PositionAttitudeTransform;
+        pat->addChild(geode);
+        pat->setAttitude(osg::Quat(- M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                   M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                                   0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+        group->addChild(pat);
+
+        // cylinder indicates position
+        sd = new osg::ShapeDrawable;
+        osg::ref_ptr<osg::Cylinder> cylinder =
+            new osg::Cylinder(osg::Vec3d(0.0, 0.0, 0.0),
+                              radius, 0);
+
+        sd->setShape(cylinder);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(color);
+
+        geode = new osg::Geode;
+        geode->addDrawable(sd);
+        group->addChild(geode);
+
+        pat = new osg::PositionAttitudeTransform;
+        pat->addChild(group);
+        systemData.orientationNode()->addChild(pat);
     }
 
     QVector<osg::Vec3d>& trail = systemData.trailMap()[component];
@@ -217,6 +263,36 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas,
 
     // update system position
     m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
+}
+
+void
+Pixhawk3DWidget::attitudeChanged(UASInterface* uas, int component,
+                                 double roll, double pitch, double yaw,
+                                 quint64 time)
+{
+    int systemId = uas->getUASID();
+
+    if (!mSystemContainerMap.contains(systemId))
+    {
+        return;
+    }
+
+    SystemContainer& systemData = mSystemContainerMap[systemId];
+
+    // update trail data
+    if (!systemData.trailMap().contains(component))
+    {
+        return;
+    }
+
+    int idx = systemData.trailIndexMap().value(component);
+
+    osg::PositionAttitudeTransform* pat =
+        dynamic_cast<osg::PositionAttitudeTransform*>(systemData.orientationNode()->getChild(idx));
+
+    pat->setAttitude(osg::Quat(-yaw, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                               0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
 }
 
 void
@@ -725,6 +801,8 @@ Pixhawk3DWidget::update(void)
         osg::ref_ptr<osg::Switch>& rollingMap = systemNode->rollingMap();
         rollingMap->setChildValue(systemData.localGridNode(),
                                   systemViewParams->displayLocalGrid());
+        rollingMap->setChildValue(systemData.orientationNode(),
+                                  systemViewParams->displayTrails());
         rollingMap->setChildValue(systemData.pointCloudNode(),
                                   systemViewParams->displayPointCloud());
         rollingMap->setChildValue(systemData.targetNode(),
@@ -826,7 +904,7 @@ Pixhawk3DWidget::update(void)
         }
         if (systemViewParams->displayTrails())
         {
-            updateTrails(x, y, z, systemData.trailNode(),
+            updateTrails(x, y, z, systemData.trailNode(), systemData.orientationNode(),
                          systemData.trailMap(), systemData.trailIndexMap());
         }
         else
@@ -1093,6 +1171,10 @@ Pixhawk3DWidget::initializeSystem(int systemId, const QColor& systemColor)
     // generate grid model
     systemData.localGridNode() = createLocalGrid();
     systemNode->rollingMap()->addChild(systemData.localGridNode(), false);
+
+    // generate orientation model
+    systemData.orientationNode() = new osg::Group;
+    systemNode->rollingMap()->addChild(systemData.orientationNode(), false);
 
     // generate point cloud model
     systemData.pointCloudNode() = createPointCloud();
@@ -1668,6 +1750,7 @@ Pixhawk3DWidget::updateHUD(UASInterface* uas, MAV_FRAME frame)
 void
 Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ,
                               osg::ref_ptr<osg::Geode>& trailNode,
+                              osg::ref_ptr<osg::Group>& orientationNode,
                               QMap<int, QVector<osg::Vec3d> >& trailMap,
                               QMap<int, int>& trailIndexMap)
 {
@@ -1729,6 +1812,15 @@ Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ,
         drawArrays->setFirst(0);
         drawArrays->setCount(vertices->size());
         geometry->dirtyBound();
+
+        if (!trail.empty())
+        {
+            osg::PositionAttitudeTransform* pat =
+                dynamic_cast<osg::PositionAttitudeTransform*>(orientationNode->getChild(it.value()));
+            pat->setPosition(osg::Vec3(trail.back().y() - robotY,
+                                       trail.back().x() - robotX,
+                                       -(trail.back().z() - robotZ)));
+        }
     }
 }
 
