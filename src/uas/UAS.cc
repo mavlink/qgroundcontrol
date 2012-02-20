@@ -473,37 +473,40 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
         {
-            if (wrongComponent) break;
-
             mavlink_attitude_t attitude;
             mavlink_msg_attitude_decode(&message, &attitude);
             quint64 time = getUnixReferenceTime(attitude.time_boot_ms);
-            lastAttitude = time;
-            roll = QGC::limitAngleToPMPIf(attitude.roll);
-            pitch = QGC::limitAngleToPMPIf(attitude.pitch);
-            yaw = QGC::limitAngleToPMPIf(attitude.yaw);
 
-            //                // Emit in angles
+            emit attitudeChanged(this, message.compid, QGC::limitAngleToPMPIf(attitude.roll), QGC::limitAngleToPMPIf(attitude.pitch), QGC::limitAngleToPMPIf(attitude.yaw), time);
 
-            //                // Convert yaw angle to compass value
-            //                // in 0 - 360 deg range
-            //                float compass = (yaw/M_PI)*180.0+360.0f;
-            //                if (compass > -10000 && compass < 10000)
-            //                {
-            //                    while (compass > 360.0f) {
-            //                        compass -= 360.0f;
-            //                    }
-            //                }
-            //                else
-            //                {
-            //                    // Set to 0, since it is an invalid value
-            //                    compass = 0.0f;
-            //                }
+            if (!wrongComponent)
+            {
+                lastAttitude = time;
+                roll = QGC::limitAngleToPMPIf(attitude.roll);
+                pitch = QGC::limitAngleToPMPIf(attitude.pitch);
+                yaw = QGC::limitAngleToPMPIf(attitude.yaw);
 
-            attitudeKnown = true;
-            emit attitudeChanged(this, roll, pitch, yaw, time);
-            emit attitudeChanged(this, message.compid, roll, pitch, yaw, time);
-            emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
+                //                // Emit in angles
+
+                //                // Convert yaw angle to compass value
+                //                // in 0 - 360 deg range
+                //                float compass = (yaw/M_PI)*180.0+360.0f;
+                //                if (compass > -10000 && compass < 10000)
+                //                {
+                //                    while (compass > 360.0f) {
+                //                        compass -= 360.0f;
+                //                    }
+                //                }
+                //                else
+                //                {
+                //                    // Set to 0, since it is an invalid value
+                //                    compass = 0.0f;
+                //                }
+
+                attitudeKnown = true;
+                emit attitudeChanged(this, roll, pitch, yaw, time);
+                emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
+            }
         }
             break;
         case MAVLINK_MSG_ID_HIL_CONTROLS:
