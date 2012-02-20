@@ -360,7 +360,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 emit navModeChanged(uasId, state.custom_mode, getNavModeText(state.custom_mode));
                 navMode = state.custom_mode;
-                navModeAudio = tr(" changed nav mode to ") + tr("FIXME");
+                //navModeAudio = tr(" changed nav mode to ") + tr("FIXME");
             }
 
             // AUDIO
@@ -517,9 +517,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Emit position always with component ID
             emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
 
+
             if (!wrongComponent)
             {
-
                 localX = pos.x;
                 localY = pos.y;
                 localZ = pos.z;

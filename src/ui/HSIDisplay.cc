@@ -85,7 +85,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     bodyYawSet(0.0f),
     uiXSetCoordinate(0.0f),
     uiYSetCoordinate(0.0f),
-    uiZSetCoordinate(-0.51f),
+    uiZSetCoordinate(0.0f),
     uiYawSet(0.0f),
     metricWidth(4.0),
     positionLock(false),
@@ -106,7 +106,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     actionPending(false),
     directSending(false),
     userSetPointSet(false),
-    userXYSetPointSet(false)
+    userXYSetPointSet(false),
+    userZSetPointSet(false),
+    userYawSetPointSet(false)
 {
     refreshTimer->setInterval(updateInterval);
 
@@ -580,6 +582,8 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
 
 void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
 {
+    // FIXME hardcode yaw to current value
+    setBodySetpointCoordinateYaw(0);
     if (mouseHasMoved)
     {
         if (event->type() == QMouseEvent::MouseButtonRelease && event->button() == Qt::RightButton)
@@ -648,106 +652,74 @@ void HSIDisplay::keyPressEvent(QKeyEvent* event)
         statusClearTimer.start();
         sendBodySetPointCoordinates();
     }
-
-    if ((event->key() ==  Qt::Key_W))
+    else
     {
-        if (!directSending)
+        // FIXME hardcode yaw to current value
+        setBodySetpointCoordinateYaw(0);
+
+
+        // Reset setpoints to current position / orientation
+        // if not initialized
+        if (!userYawSetPointSet)
         {
-            setBodySetpointCoordinateZ(uas->getLocalZ());
-            setBodySetpointCoordinateYaw(uas->getYaw());
-            setBodySetpointCoordinateXY(1.0, 0);
+            setBodySetpointCoordinateYaw(0);
         }
-        else
+
+        if (!userZSetPointSet)
+        {
+            setBodySetpointCoordinateZ(0);
+        }
+
+        if (!userXYSetPointSet)
+        {
+            setBodySetpointCoordinateXY(0, 0);
+        }
+
+        if ((event->key() ==  Qt::Key_W))
         {
             setBodySetpointCoordinateXY(qBound(-1.5, bodySP.x()+0.2, +1.5), bodySP.y());
         }
 
-    }
-
-    if ((event->key() ==  Qt::Key_S))
-    {
-        if (!directSending)
-        {
-            setBodySetpointCoordinateZ(uas->getLocalZ());
-            setBodySetpointCoordinateYaw(uas->getYaw());
-            setBodySetpointCoordinateXY(-1.0, 0);
-        }
-        else
+        if ((event->key() ==  Qt::Key_S))
         {
             setBodySetpointCoordinateXY(qBound(-1.5, bodySP.x()-0.2, +1.5), bodySP.y());
         }
-    }
 
-    if ((event->key() ==  Qt::Key_A))
-    {
-        if (!directSending)
-        {
-            setBodySetpointCoordinateZ(uas->getLocalZ());
-            setBodySetpointCoordinateYaw(uas->getYaw());
-            setBodySetpointCoordinateXY(0, -1.0);
-        }
-        else
+        if ((event->key() ==  Qt::Key_A))
         {
             setBodySetpointCoordinateXY(bodySP.x(), qBound(-1.5, bodySP.y()-0.2, +1.5));
         }
-    }
 
-    if ((event->key() ==  Qt::Key_D))
-    {
-        if (!directSending)
-        {
-            setBodySetpointCoordinateZ(uas->getLocalZ());
-            setBodySetpointCoordinateYaw(uas->getYaw());
-            setBodySetpointCoordinateXY(0, 1.0);
-        }
-        else
+        if ((event->key() ==  Qt::Key_D))
         {
             setBodySetpointCoordinateXY(bodySP.x(), qBound(-1.5, bodySP.y()+0.2, +1.5));
         }
-    }
 
-    if ((event->key() ==  Qt::Key_Up))
-    {
-        if (!directSending)
+        if ((event->key() ==  Qt::Key_Up))
         {
-            setBodySetpointCoordinateXY(0, 0);
-            setBodySetpointCoordinateYaw(uas->getYaw());
+            setBodySetpointCoordinateZ(-0.5);
         }
-        setBodySetpointCoordinateZ(-0.5);
-    }
 
-    if ((event->key() ==  Qt::Key_Down))
-    {
-        if (!directSending)
+        if ((event->key() ==  Qt::Key_Down))
         {
-            setBodySetpointCoordinateXY(0, 0);
-            setBodySetpointCoordinateYaw(uas->getYaw());
+            setBodySetpointCoordinateZ(+0.5);
         }
-        setBodySetpointCoordinateZ(+0.5);
-    }
 
-    if ((event->key() ==  Qt::Key_Left))
-    {
-        if (!directSending)
+        if ((event->key() ==  Qt::Key_Left))
         {
-            setBodySetpointCoordinateXY(0, 0);
-            setBodySetpointCoordinateZ(uas->getLocalZ());
+            setBodySetpointCoordinateYaw(-0.2);
         }
-        setBodySetpointCoordinateYaw(-0.2);
-    }
 
-    if ((event->key() ==  Qt::Key_Right))
-    {
-        if (!directSending)
+        if ((event->key() ==  Qt::Key_Right))
         {
-            setBodySetpointCoordinateXY(0, 0);
-            setBodySetpointCoordinateZ(uas->getLocalZ());
+            setBodySetpointCoordinateYaw(0.2);
         }
-        setBodySetpointCoordinateYaw(0.2);
     }
 
 
-    if ((event->key() == Qt::Key_Escape))
+    // Overwrite any existing non-zero body setpoints
+    // for escape
+    if ((event->key() == Qt::Key_Escape) || (event->key() == Qt::Key_R))
     {
         setBodySetpointCoordinateXY(0, 0);
         setBodySetpointCoordinateZ(0);
@@ -877,6 +849,7 @@ void HSIDisplay::setBodySetpointCoordinateZ(double z)
     if (uas)
     {
         userSetPointSet = true;
+        userZSetPointSet = true;
         // Set coordinates and send them out to MAV
         uiZSetCoordinate = z+uas->getLocalZ();
         statusMessage = "Z SET, PRESS <ENTER> TO SEND";
@@ -902,6 +875,7 @@ void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
             uiYSetCoordinate = coord.y();
         }
         userSetPointSet = true;
+        userYawSetPointSet = true;
         // Set coordinates and send them out to MAV
         uiYawSet = atan2(sin(yaw+uas->getYaw()), cos(yaw+uas->getYaw()));
         statusMessage = "YAW SET, PRESS <ENTER> TO SEND";
@@ -919,15 +893,10 @@ void HSIDisplay::sendBodySetPointCoordinates()
         double dx = uiXSetCoordinate - uas->getLocalX();
         double dy = uiYSetCoordinate - uas->getLocalY();
         double dz = uiZSetCoordinate - uas->getLocalZ();
-        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 2.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
-        if (valid)
-        {
+        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 200.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
+//        if (valid)
+//        {
             uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
-        }
-        else
-        {
-            setStatusMessage("REJECTED NEW SETPOINT: OUT OF BOUNDS");
-        }
     }
 }
 
@@ -958,6 +927,8 @@ void HSIDisplay::updateUserPositionSetpoints(int uasid, float xDesired, float yD
     uiZSetCoordinate = zDesired;
     uiYawSet = yawDesired;
     userXYSetPointSet = true;
+    userZSetPointSet = true;
+    userYawSetPointSet = true;
     userSetPointSet = true;
 }
 
