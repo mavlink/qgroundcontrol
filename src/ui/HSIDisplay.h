@@ -294,6 +294,8 @@ protected:
     bool positionSetPointKnown; ///< Position setpoint known status flag
     bool userSetPointSet;     ///< User set X, Y and Z
     bool userXYSetPointSet;   ///< User set the X/Y position already
+    bool userZSetPointSet;   ///< User set the Z position already
+    bool userYawSetPointSet;   ///< User set the YAW position already
 
 private:
 };

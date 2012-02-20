@@ -149,9 +149,6 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
 
     SystemContainer& systemData = mSystemContainerMap[systemId];
 
-    // update system position
-    m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
-
     // update trail data
     if (!systemData.trailMap().contains(component))
     {
@@ -166,6 +163,10 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
                         0.5);
         systemData.trailNode()->addDrawable(createTrail(color));
     }
+
+    // update system position
+    // FIXME
+    if (component == 201) m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
 
     QVector<osg::Vec3d>& trail = systemData.trailMap()[component];
 
@@ -685,7 +686,6 @@ Pixhawk3DWidget::update(void)
         {
             double x = 0.0, y = 0.0, z = 0.0;
             getPosition(mActiveUAS, frame, x, y, z);
-
             m3DWidget->recenterCamera(y, x, -z);
 
             mCameraPos = QVector3D(x, y, z);
@@ -1465,6 +1465,7 @@ Pixhawk3DWidget::resizeHUD(int width, int height)
 void
 Pixhawk3DWidget::updateHUD(UASInterface* uas, MAV_FRAME frame)
 {
+    if (!uas) return;
     // display pose of current system
     double x = 0.0;
     double y = 0.0;

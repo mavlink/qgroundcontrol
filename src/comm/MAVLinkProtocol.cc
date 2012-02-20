@@ -372,7 +372,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 					{
 						lostMessages += 256;
 					}
-					qDebug() << QString("Lost %1 messages: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq);
+                    // Console generates excessive load at high loss rates, needs better GUI visualization
+                    //qDebug() << QString("Lost %1 messages for comp %4: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq).arg(message.compid);
 					
 					totalLossCounter += lostMessages;
 					currLossCounter += lostMessages;
