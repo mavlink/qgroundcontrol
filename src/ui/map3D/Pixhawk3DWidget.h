@@ -123,6 +123,7 @@ private:
     osg::ref_ptr<osg::Geode> createLocalGrid(void);
     osg::ref_ptr<osg::Geode> createWorldGrid(void);
     osg::ref_ptr<osg::Geometry> createTrail(const osg::Vec4& color);
+    osg::ref_ptr<osg::Geometry> createLink(const QColor& color);
     osg::ref_ptr<Imagery> createImagery(void);
     osg::ref_ptr<osg::Geode> createPointCloud(void);
     osg::ref_ptr<osg::Node> createTarget(const QColor& color);

@@ -93,12 +93,17 @@ void Linecharts::addSystem(UASInterface* uas)
         LinechartWidget* widget = new LinechartWidget(uas->getUASID(), this);
         addWidget(widget);
         plots.insert(uas->getUASID(), widget);
-        // Values without unit
-        //connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), widget, SLOT(appendData(int,QString,double,quint64)));
-        // Values with unit as double
-        connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), widget, SLOT(appendData(int,QString,QString,double,quint64)));
-        // Values with unit as integer
-        connect(uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), widget, SLOT(appendData(int,QString,QString,int,quint64)));
+		
+		// Connect valueChanged signals
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), widget, SLOT(appendData(int,QString,QString,quint8,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), widget, SLOT(appendData(int,QString,QString,qint8,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), widget, SLOT(appendData(int,QString,QString,quint16,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), widget, SLOT(appendData(int,QString,QString,qint16,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), widget, SLOT(appendData(int,QString,QString,quint32,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), widget, SLOT(appendData(int,QString,QString,qint32,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), widget, SLOT(appendData(int,QString,QString,quint64,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), widget, SLOT(appendData(int,QString,QString,qint64,quint64)));
+		connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), widget, SLOT(appendData(int,QString,QString,double,quint64)));
 
         connect(widget, SIGNAL(logfileWritten(QString)), this, SIGNAL(logfileWritten(QString)));
         // Set system active if this is the only system
@@ -110,11 +115,15 @@ void Linecharts::addSystem(UASInterface* uas)
                 // Connect generic sources
                 for (int i = 0; i < genericSources.count(); ++i)
                 {
-                    connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,int,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,int,quint64)));
-                    connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,unsigned int,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,unsigned int,quint64)));
-                    connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint64,quint64)));
-                    connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint64,quint64)));
-                    connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,double,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,double,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint8,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint8,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint16,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint16,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint32,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint32,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint64,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint64,quint64)));
+					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,double,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,double,quint64)));
                 }
                 // Select system
                 selectSystem(uas->getUASID());
@@ -130,8 +139,12 @@ void Linecharts::addSource(QObject* obj)
     if (plots.size() > 0)
     {
         // Connect generic source
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,int,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,int,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,unsigned int,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,unsigned int,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint8,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint8,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint16,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint16,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint32,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint32,quint64)));
         connect(obj, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,quint64,quint64)));
         connect(obj, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,qint64,quint64)));
         connect(obj, SIGNAL(valueChanged(int,QString,QString,double,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,double,quint64)));

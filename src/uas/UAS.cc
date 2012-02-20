@@ -282,6 +282,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit heartbeat(this);
             mavlink_heartbeat_t state;
             mavlink_msg_heartbeat_decode(&message, &state);
+			
+			// Send the base_mode and system_status values to the plotter. This uses the ground time
+			// so the Ground Time checkbox must be ticked for these values to display
+            quint64 time = getUnixTime();
+			QString name = QString("M%1:HEARTBEAT.%2").arg(message.sysid);
+			emit valueChanged(uasId, name.arg("base_mode"), "none", state.base_mode, time);
+			emit valueChanged(uasId, name.arg("system_status"), "none", state.system_status, time);
+			
             // Set new type if it has changed
             if (this->type != state.type)
             {
@@ -384,20 +392,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 GAudioOutput::instance()->stopEmergency();
                 GAudioOutput::instance()->say(audiostring.toLower());
             }
-
-            //            if (state.system_status == MAV_STATE_POWEROFF)
-            //            {
-            //                emit systemRemoved(this);
-            //                emit systemRemoved();
-            //            }
         }
 
             break;
-            //        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
-            //        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
-            //            // Receive named value message
-            //            receiveMessageNamedValue(message);
-            //            break;
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
             if (multiComponentSourceDetected && wrongComponent)
@@ -407,8 +404,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_sys_status_t state;
             mavlink_msg_sys_status_decode(&message, &state);
 
-            emit loadChanged(this,state.load/10.0f);
+			// Prepare for sending data to the realtime plotter, which is every field excluding onboard_control_sensors_present.
+            quint64 time = getUnixTime();
+			QString name = QString("M%1:SYS_STATUS.%2").arg(message.sysid);
+			emit valueChanged(uasId, name.arg("sensors_enabled"), "bits", state.onboard_control_sensors_enabled, time);
+			emit valueChanged(uasId, name.arg("sensors_health"), "bits", state.onboard_control_sensors_health, time);
+			emit valueChanged(uasId, name.arg("errors_comm"), "-", state.errors_comm, time);
+			emit valueChanged(uasId, name.arg("errors_count1"), "-", state.errors_count1, time);
+			emit valueChanged(uasId, name.arg("errors_count2"), "-", state.errors_count2, time);
+			emit valueChanged(uasId, name.arg("errors_count3"), "-", state.errors_count3, time);
+			emit valueChanged(uasId, name.arg("errors_count4"), "-", state.errors_count4, time);
 
+			// Process CPU load.
+            emit loadChanged(this,state.load/10.0f);
+			emit valueChanged(uasId, name.arg("load"), "%", state.load/10.0f, time);
+
+			// Battery charge/time remaining/voltage calculations
             currentVoltage = state.voltage_battery/1000.0f;
             lpVoltage = filterVoltage(currentVoltage);
 
@@ -418,9 +429,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 chargeLevel = state.battery_remaining;
             }
-            //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
             emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
-            emit voltageChanged(message.sysid, state.voltage_battery/1000);
+			emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
+            emit voltageChanged(message.sysid, currentVoltage);
+			emit valueChanged(uasId, name.arg("battery_voltage"), "V", currentVoltage, time);
+
+			// And if the battery current draw is measured, log that also.
+			if (state.current_battery != -1)
+			{
+				emit valueChanged(uasId, name.arg("battery_current"), "A", ((double)state.current_battery) / 100.0f, time);
+			}
 
             // LOW BATTERY ALARM
             if (lpVoltage < warnVoltage)
@@ -432,19 +450,25 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 stopLowBattAlarm();
             }
 
-                // Trigger drop rate updates as needed. Here we convert the incoming
-				// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
-				// percentage as a float. We also cap the incoming value at 100% as defined
-				// by the MAVLink specifications.
-                if (state.drop_rate_comm > 10000)
-                {
-				    emit dropRateChanged(this->getUASID(), 100.0f);
-                }
-                else
-                {
-				    emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
-				}
-            }
+
+            // control_sensors_enabled:
+            // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
+            emit attitudeControlEnabled(state.onboard_control_sensors_enabled & (1 << 11));
+            emit positionYawControlEnabled(state.onboard_control_sensors_enabled & (1 << 12));
+            emit positionZControlEnabled(state.onboard_control_sensors_enabled & (1 << 13));
+            emit positionXYControlEnabled(state.onboard_control_sensors_enabled & (1 << 14));
+
+			// Trigger drop rate updates as needed. Here we convert the incoming
+			// drop_rate_comm value from 1/100 of a percent in a uint16 to a true
+			// percentage as a float. We also cap the incoming value at 100% as defined
+			// by the MAVLink specifications.
+			if (state.drop_rate_comm > 10000)
+			{
+				state.drop_rate_comm = 10000;
+			}
+			emit dropRateChanged(this->getUASID(), state.drop_rate_comm/100.0f);
+			emit valueChanged(uasId, name.arg("drop_rate_comm"), "%", state.drop_rate_comm/100.0f, time);
+		}
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
         {
@@ -563,6 +587,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             speedZ = pos.vz/100.0;
             emit globalPositionChanged(this, latitude, longitude, altitude, time);
             emit speedChanged(this, speedX, speedY, speedZ, time);
+
             // Set internal state
             if (!positionLock)
             {
@@ -584,6 +609,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // only accept values in a realistic range
             // quint64 time = getUnixTime(pos.time_usec);
             quint64 time = getUnixTime(pos.time_usec);
+            
+            emit gpsLocalizationChanged(this, pos.fix_type);
+            // TODO: track localization state not only for gps but also for other loc. sources
+            int loc_type = pos.fix_type;
+            if (loc_type == 1)
+            {
+                loc_type = 0; 
+            }
+            emit localizationChanged(this, loc_type);
 
             if (pos.fix_type > 2)
             {
