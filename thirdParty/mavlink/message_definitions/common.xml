@@ -1459,10 +1459,10 @@
                <description>Optical flow from a flow sensor (e.g. optical mouse sensor)</description>
                <field type="uint64_t" name="time_usec">Timestamp (UNIX)</field>
                <field type="uint8_t" name="sensor_id">Sensor ID</field>
-               <field type="int16_t" name="flow_x">Flow in pixels in x-sensor direction</field>
-               <field type="int16_t" name="flow_y">Flow in pixels in y-sensor direction</field>
+               <field type="float" name="flow_x">Flow in x-sensor direction</field>
+               <field type="float" name="flow_y">Flow in y-sensor direction</field>
                <field type="uint8_t" name="quality">Optical flow quality / confidence. 0: bad, 255: maximum quality</field>
-               <field type="float" name="ground_distance">Ground distance in meters</field>
+               <field type="float" name="ground_distance">Ground distance in meters (-1 for unknown, flow is then in pixel / arbitrary scale)</field>
           </message>
           <message id="101" name="GLOBAL_VISION_POSITION_ESTIMATE">
                <field type="uint64_t" name="usec">Timestamp (milliseconds)</field>
