@@ -1,51 +1,70 @@
 #!/bin/bash
 
-PS3='Please enter your choice: '
-LIST="all mavlink qserialport end"
-echo 
-echo this script grabs upstream releases
-echo
+MAVLINK_TAG=257e5194afc4bd5752e10fb58e8b8ee158116eb7
+QSERIAL_TAG=004e3de552fe25fee593dfcb03e2ffa82cb0b152
 
-function fetch_qserialport
+libList="mavlink qserialport"
+
+topDir=$PWD
+
+
+function fetch_git
 {
-	echo
-	rm -rf qserialport
-	git clone git://gitorious.org/inbiza-labs/qserialport.git
-	rm -rf qserialport/.git
+    name=$1
+    url=$2
+    tag=$4
+
+    echo
+    echo updating: $name @ $url to tag $tag
+    cd $topDir
+	rm -rf $name
+	git clone $url
+    cd $name && git checkout $tag && rm -rf .git
+    cd $topDir
 }
 
-function fetch_mavlink
+function processLib
 {
-	echo
-	rm -rf mavlink
-	git clone git@github.com:openmav/mavlink.git
-	rm -rf mavlink/.git
-}
-
-echo
-select OPT in $LIST
-do
-	case $OPT in
+    lib=$1
+    case $lib in
 		"qserialport")
-			fetch_qserialport
-			exit 0
+            fetch_git qserialport git://gitorious.org/inbiza-labs/qserialport.git master $QSERIAL_TAG
 			;;
 		"mavlink") 
-			fetch_mavlink
-			exit 0
+            fetch_git mavlink git@github.com:mavlink/mavlink.git master $MAVLINK_TAG
 			;;
 		"all")
-			fetch_mavlink
-			fetch_qserialport
+            for lib in $libList
+            do
+                $0 $lib
+            done
 			exit 0
 			;;
 		"exit")
 			exit 0
 			;;
 		*)
-			echo unknown option
+			echo unknown lib, possiblities are: $libList
 			exit 1
 	esac
-done
+}
 
 
+if [ $# == 0 ]
+then
+
+    #menu 
+    echo This script grabs upstream releases.
+    PS3='Please enter your choice: '
+    select OPT in $libList all exit
+    do
+        processLib $OPT
+    done
+    
+elif [ $# == 1 ]
+then
+    lib=$1
+    processLib $lib
+else
+    echo usage: $0 lib
+fi

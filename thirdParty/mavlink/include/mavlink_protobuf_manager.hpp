@@ -54,6 +54,12 @@ public:
 			registerType(msg);
 		}
 
+		// register Path
+		{
+			std::tr1::shared_ptr<px::Path> msg(new px::Path);
+                        registerType(msg);
+		}
+
 		srand(time(NULL));
 		mStreamID = rand() + 1;
 	}
@@ -156,7 +162,7 @@ public:
 		if (typecode >= mTypeMap.size())
 		{
 			std::cout << "# WARNING: Protobuf message with type code "
-					  << typecode << " is not registered." << std::endl;
+					  << static_cast<int>(typecode) << " is not registered." << std::endl;
 			return false;
 		}
 

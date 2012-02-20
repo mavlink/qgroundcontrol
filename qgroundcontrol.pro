@@ -177,7 +177,7 @@ INCLUDEPATH += . \
     src/libs/qextserialport
 
 # Include serial port library (QSerial)
-include(thirdParty/qserialport/qgroundcontrol-qserialport.pri)
+include(qserialport.pri)
 
 # Serial port detection (ripped-off from qextserialport library)
 macx|macx-g++|macx-g++42::SOURCES += src/libs/qextserialport/qextserialenumerator_osx.cpp
