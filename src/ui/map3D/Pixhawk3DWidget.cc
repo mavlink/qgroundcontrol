@@ -163,10 +163,21 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
         systemData.trailIndexMap().insert(component,
                                           systemData.trailMap().size() - 1);
 
-        osg::Vec4 color((float)qrand() / RAND_MAX,
-                        (float)qrand() / RAND_MAX,
-                        (float)qrand() / RAND_MAX,
-                        0.5);
+        // generate nice bright random color
+        float golden_ratio_conjugate = 0.618033988749895f;
+
+        float h = (float)qrand() / RAND_MAX + golden_ratio_conjugate;
+        if (h > 1.0f)
+        {
+            h -= 1.0f;
+        }
+
+        QColor colorHSV;
+        colorHSV.setHsvF(h, 0.99, 0.99, 0.5);
+
+        QColor colorRGB = colorHSV.toRgb();
+
+        osg::Vec4f color(colorRGB.redF(), colorRGB.greenF(), colorRGB.blueF(), colorRGB.alphaF());
 
         systemData.trailNode()->addDrawable(createTrail(color));
         systemData.trailNode()->addDrawable(createLink(uas->getColor()));
