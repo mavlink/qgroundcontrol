@@ -57,7 +57,9 @@ public slots:
     void activeSystemChanged(UASInterface* uas);
     void systemCreated(UASInterface* uas);
     void localPositionChanged(UASInterface* uas, int component, double x, double y, double z, quint64 time);
-    void attitudeChanged(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 time);
+    void localPositionChanged(UASInterface* uas, double x, double y, double z, quint64 time);
+    void attitudeChanged(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
+    void setpointChanged(int uasId, float x, float y, float z, float yaw);
 
 signals:
     void systemCreatedSignal(UASInterface* uas);

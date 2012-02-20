@@ -127,8 +127,12 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
 
     connect(uas, SIGNAL(localPositionChanged(UASInterface*,int,double,double,double,quint64)),
             this, SLOT(localPositionChanged(UASInterface*,int,double,double,double,quint64)));
-    connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)),
-            this, SLOT(attitudeChanged(UASInterface*,int,double,double,double,quint64)));
+    connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
+            this, SLOT(localPositionChanged(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),
+            this, SLOT(attitudeChanged(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)),
+            this, SLOT(setpointChanged(int,float,float,float,float)));
 
     initializeSystem(systemId, uas->getColor());
 
@@ -166,10 +170,6 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
         systemData.trailNode()->addDrawable(createLink(uas->getColor()));
     }
 
-    // update system position
-    // FIXME
-    if (component == 201) m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
-
     QVector<osg::Vec3d>& trail = systemData.trailMap()[component];
 
     bool addToTrail = false;
@@ -204,7 +204,23 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
 }
 
 void
-Pixhawk3DWidget::attitudeChanged(UASInterface* uas, int component,
+Pixhawk3DWidget::localPositionChanged(UASInterface* uas,
+                                      double x, double y, double z,
+                                      quint64 time)
+{
+    int systemId = uas->getUASID();
+
+    if (!mSystemContainerMap.contains(systemId))
+    {
+        return;
+    }
+
+    // update system position
+    m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
+}
+
+void
+Pixhawk3DWidget::attitudeChanged(UASInterface* uas,
                                  double roll, double pitch, double yaw,
                                  quint64 time)
 {
@@ -220,6 +236,66 @@ Pixhawk3DWidget::attitudeChanged(UASInterface* uas, int component,
                 pitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
                 roll, osg::Vec3d(0.0f, 1.0f, 0.0f));
     m3DWidget->systemGroup(systemId)->attitude()->setAttitude(q);
+}
+
+void
+Pixhawk3DWidget::setpointChanged(int uasId, float x, float y, float z,
+                                 float yaw)
+{
+    if (!mSystemContainerMap.contains(uasId))
+    {
+        return;
+    }
+
+    UASInterface* uas = UASManager::instance()->getUASForId(uasId);
+    if (!uas)
+    {
+        return;
+    }
+
+    QColor color = uas->getColor();
+    const SystemViewParamsPtr& systemViewParams = mSystemViewParamMap.value(uasId);
+
+    osg::ref_ptr<osg::PositionAttitudeTransform> pat =
+        new osg::PositionAttitudeTransform;
+
+    pat->setPosition(osg::Vec3d(y, x, -z));
+    pat->setAttitude(osg::Quat(osg::DegreesToRadians(yaw) - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                               M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
+                               0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
+
+    osg::ref_ptr<osg::Cone> cone = new osg::Cone(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.1f, 0.3f);
+    osg::ref_ptr<osg::ShapeDrawable> coneDrawable = new osg::ShapeDrawable(cone);
+    coneDrawable->setColor(osg::Vec4f(color.redF(), color.greenF(), color.blueF(), 1.0f));
+    coneDrawable->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+    osg::ref_ptr<osg::Geode> coneGeode = new osg::Geode;
+    coneGeode->addDrawable(coneDrawable);
+
+    pat->addChild(coneGeode);
+
+    osg::ref_ptr<osg::Group>& setpointGroupNode = mSystemContainerMap[uasId].setpointGroupNode();
+
+    setpointGroupNode->addChild(pat);
+    if (setpointGroupNode->getNumChildren() > systemViewParams->setpointHistoryLength())
+    {
+        setpointGroupNode->removeChildren(0, setpointGroupNode->getNumChildren() - systemViewParams->setpointHistoryLength());
+    }
+
+    osg::Vec4f setpointColor(color.redF(), color.greenF(), color.blueF(), 1.0f);
+    int setpointCount = setpointGroupNode->getNumChildren();
+
+    // update colors
+    for (int i = 0; i < setpointCount; ++i)
+    {
+        osg::PositionAttitudeTransform* pat =
+            dynamic_cast<osg::PositionAttitudeTransform*>(setpointGroupNode->getChild(i));
+
+        osg::Geode* geode = dynamic_cast<osg::Geode*>(pat->getChild(0));
+        osg::ShapeDrawable* sd = dynamic_cast<osg::ShapeDrawable*>(geode->getDrawable(0));
+
+        setpointColor.a() = static_cast<float>(i + 1) / setpointCount;
+        sd->setColor(setpointColor);
+    }
 }
 
 void
@@ -622,7 +698,7 @@ Pixhawk3DWidget::update(void)
 
     // set node visibility
     m3DWidget->worldMap()->setChildValue(mWorldGridNode,
-                                        mGlobalViewParams->displayWorldGrid());
+                                         mGlobalViewParams->displayWorldGrid());
     if (mGlobalViewParams->imageryType() == Imagery::BLANK_MAP)
     {
         m3DWidget->worldMap()->setChildValue(mImageryNode, false);
@@ -641,6 +717,10 @@ Pixhawk3DWidget::update(void)
         osg::ref_ptr<SystemGroupNode>& systemNode = m3DWidget->systemGroup(it.key());
         SystemContainer& systemData = mSystemContainerMap[it.key()];
         const SystemViewParamsPtr& systemViewParams = it.value();
+
+        osg::ref_ptr<osg::Switch>& allocentricMap = systemNode->allocentricMap();
+        allocentricMap->setChildValue(systemData.setpointGroupNode(),
+                                      systemViewParams->displaySetpoints());
 
         osg::ref_ptr<osg::Switch>& rollingMap = systemNode->rollingMap();
         rollingMap->setChildValue(systemData.localGridNode(),
@@ -724,6 +804,14 @@ Pixhawk3DWidget::update(void)
 
         getPose(uas, frame, x, y, z, roll, pitch, yaw);
 
+        if (systemViewParams->displaySetpoints())
+        {
+
+        }
+        else
+        {
+            systemData.setpointGroupNode()->removeChildren(0, systemData.setpointGroupNode()->getNumChildren());
+        }
         if (systemViewParams->displayTarget())
         {
             if (systemData.target().isNull())
@@ -1009,6 +1097,10 @@ Pixhawk3DWidget::initializeSystem(int systemId, const QColor& systemColor)
     // generate point cloud model
     systemData.pointCloudNode() = createPointCloud();
     systemNode->rollingMap()->addChild(systemData.pointCloudNode(), false);
+
+    // generate setpoint model
+    systemData.setpointGroupNode() = new osg::Group;
+    systemNode->allocentricMap()->addChild(systemData.setpointGroupNode(), false);
 
     // generate target model
     systemData.targetNode() = createTarget(systemColor);
