@@ -64,18 +64,31 @@ public:
     ~HDDisplay();
 
 public slots:
-    /** @brief Update a HDD double value */
-    void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
-    /** @brief Update a HDD integer value */
-    void updateValue(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec);
-    /** @brief Update a HDD integer value */
-    void updateValue(const int uasId, const QString& name, const QString& unit, const unsigned int value, const quint64 msec);
-    /** @brief Update a HDD integer value */
+    /** @brief Update the HDD with new int8 data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec);
+    /** @brief Update the HDD with new uint8 data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec);
+    /** @brief Update the HDD with new int16 data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const qint16 value, const quint64 msec);
+    /** @brief Update the HDD with new uint16 data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const quint16 value, const quint64 msec);
+    /** @brief Update the HDD with new int32 data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const qint32 value, const quint64 msec);
+    /** @brief Update the HDD with new uint32 data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const quint32 value, const quint64 msec);
+    /** @brief Update the HDD with new int64 data */
     void updateValue(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec);
-    /** @brief Update a HDD integer value */
+    /** @brief Update the HDD with new uint64 data */
     void updateValue(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec);
+    /** @brief Update the HDD with new double data */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+	
     virtual void setActiveUAS(UASInterface* uas);
+	
+	/** @brief Connects a source to the updateValue() signals */
     void addSource(QObject* obj);
+	/** @brief Disconnects a source to the updateValue() signals */
+    void removeSource(QObject* obj);
 
     /** @brief Removes a plot item by the action data */
     void removeItemByAction();
