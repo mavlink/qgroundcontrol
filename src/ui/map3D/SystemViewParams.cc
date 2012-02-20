@@ -8,10 +8,12 @@ SystemViewParams::SystemViewParams(int systemId)
  , mDisplayPlannedPath(true)
  , mDisplayPointCloud(true)
  , mDisplayRGBD(false)
+ , mDisplaySetpoints(true)
  , mDisplayTarget(true)
  , mDisplayTrails(true)
  , mDisplayWaypoints(true)
  , mModelIndex(-1)
+ , mSetpointHistoryLength(100)
 {
 
 }
@@ -89,6 +91,18 @@ SystemViewParams::displayRGBD(void) const
 }
 
 bool&
+SystemViewParams::displaySetpoints(void)
+{
+    return mDisplaySetpoints;
+}
+
+bool
+SystemViewParams::displaySetpoints(void) const
+{
+    return mDisplaySetpoints;
+}
+
+bool&
 SystemViewParams::displayTarget(void)
 {
     return mDisplayTarget;
@@ -148,12 +162,30 @@ SystemViewParams::modelNames(void) const
     return mModelNames;
 }
 
+int&
+SystemViewParams::setpointHistoryLength(void)
+{
+    return mSetpointHistoryLength;
+}
+
+int
+SystemViewParams::setpointHistoryLength(void) const
+{
+    return mSetpointHistoryLength;
+}
+
 void
 SystemViewParams::modelChanged(int index)
 {
     mModelIndex = index;
 
     emit modelChangedSignal(mSystemId, index);
+}
+
+void
+SystemViewParams::setSetpointHistoryLength(int length)
+{
+    mSetpointHistoryLength = length;
 }
 
 void
@@ -231,6 +263,19 @@ SystemViewParams::toggleRGBD(int state)
     else
     {
         mDisplayRGBD = false;
+    }
+}
+
+void
+SystemViewParams::toggleSetpoints(int state)
+{
+    if (state == Qt::Checked)
+    {
+        mDisplaySetpoints = true;
+    }
+    else
+    {
+        mDisplaySetpoints = false;
     }
 }
 

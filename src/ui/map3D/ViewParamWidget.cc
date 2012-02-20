@@ -58,6 +58,19 @@ ViewParamWidget::systemCreated(UASInterface *uas)
 }
 
 void
+ViewParamWidget::setpointsCheckBoxToggled(int state)
+{
+    if (state == Qt::Checked)
+    {
+        mSetpointHistoryLengthSpinBox->setEnabled(true);
+    }
+    else
+    {
+        mSetpointHistoryLengthSpinBox->setEnabled(false);
+    }
+}
+
+void
 ViewParamWidget::buildLayout(QVBoxLayout* layout)
 {
     mFollowCameraComboBox->addItem("None");
@@ -136,6 +149,15 @@ ViewParamWidget::addTab(int systemId)
     QCheckBox* rgbdCheckBox = new QCheckBox(this);
     rgbdCheckBox->setChecked(systemViewParams->displayRGBD());
 
+    QCheckBox* setpointsCheckBox = new QCheckBox(this);
+    setpointsCheckBox->setChecked(systemViewParams->displaySetpoints());
+
+    mSetpointHistoryLengthSpinBox = new QSpinBox(this);
+    mSetpointHistoryLengthSpinBox->setRange(1, 10000);
+    mSetpointHistoryLengthSpinBox->setSingleStep(10);
+    mSetpointHistoryLengthSpinBox->setValue(systemViewParams->setpointHistoryLength());
+    mSetpointHistoryLengthSpinBox->setEnabled(systemViewParams->displaySetpoints());
+
     QCheckBox* targetCheckBox = new QCheckBox(this);
     targetCheckBox->setChecked(systemViewParams->displayTarget());
 
@@ -155,6 +177,8 @@ ViewParamWidget::addTab(int systemId)
     formLayout->addRow(tr("Planned Path"), plannedPathCheckBox);
     formLayout->addRow(tr("Point Cloud"), pointCloudCheckBox);
     formLayout->addRow(tr("RGBD"), rgbdCheckBox);
+    formLayout->addRow(tr("Setpoints"), setpointsCheckBox);
+    formLayout->addRow(tr("Setpoint History Length"), mSetpointHistoryLengthSpinBox);
     formLayout->addRow(tr("Target"), targetCheckBox);
     formLayout->addRow(tr("Trails"), trailsCheckBox);
     formLayout->addRow(tr("Waypoints"), waypointsCheckBox);
@@ -179,6 +203,12 @@ ViewParamWidget::addTab(int systemId)
             systemViewParams.data(), SLOT(togglePointCloud(int)));
     connect(rgbdCheckBox, SIGNAL(stateChanged(int)),
             systemViewParams.data(), SLOT(toggleRGBD(int)));
+    connect(setpointsCheckBox, SIGNAL(stateChanged(int)),
+            systemViewParams.data(), SLOT(toggleSetpoints(int)));
+    connect(setpointsCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(setpointsCheckBoxToggled(int)));
+    connect(mSetpointHistoryLengthSpinBox, SIGNAL(valueChanged(int)),
+            systemViewParams.data(), SLOT(setSetpointHistoryLength(int)));
     connect(targetCheckBox, SIGNAL(stateChanged(int)),
             systemViewParams.data(), SLOT(toggleTarget(int)));
     connect(trailsCheckBox, SIGNAL(stateChanged(int)),

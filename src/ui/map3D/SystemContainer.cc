@@ -61,6 +61,12 @@ SystemContainer::rgbImageNode(void)
     return mRGBImageNode;
 }
 
+osg::ref_ptr<osg::Group>&
+SystemContainer::setpointGroupNode(void)
+{
+    return mSetpointGroupNode;
+}
+
 osg::ref_ptr<osg::Node>&
 SystemContainer::targetNode(void)
 {

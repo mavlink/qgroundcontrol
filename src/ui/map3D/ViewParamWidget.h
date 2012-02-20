@@ -3,6 +3,7 @@
 
 #include <QComboBox>
 #include <QDockWidget>
+#include <QSpinBox>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
@@ -26,6 +27,7 @@ signals:
 
 private slots:
     void systemCreated(UASInterface* uas);
+    void setpointsCheckBoxToggled(int state);
 
 private:
     void buildLayout(QVBoxLayout* layout);
@@ -40,6 +42,7 @@ private:
 
     // child widgets
     QComboBox* mFollowCameraComboBox;
+    QSpinBox* mSetpointHistoryLengthSpinBox;
     QTabWidget* mTabWidget;
 };
 

@@ -30,6 +30,9 @@ public:
     bool& displayRGBD(void);
     bool displayRGBD(void) const;
 
+    bool& displaySetpoints(void);
+    bool displaySetpoints(void) const;
+
     bool& displayTarget(void);
     bool displayTarget(void) const;
 
@@ -45,14 +48,19 @@ public:
     QVector<QString>& modelNames(void);
     const QVector<QString>& modelNames(void) const;
 
+    int& setpointHistoryLength(void);
+    int setpointHistoryLength(void) const;
+
 public slots:
     void modelChanged(int index);
+    void setSetpointHistoryLength(int length);
     void toggleColorPointCloud(int state);
     void toggleLocalGrid(int state);
     void toggleObstacleList(int state);
     void togglePlannedPath(int state);
     void togglePointCloud(int state);
     void toggleRGBD(int state);
+    void toggleSetpoints(int state);
     void toggleTarget(int state);
     void toggleTrails(int state);
     void toggleWaypoints(int state);
@@ -69,11 +77,13 @@ private:
     bool mDisplayPlannedPath;
     bool mDisplayPointCloud;
     bool mDisplayRGBD;
+    bool mDisplaySetpoints;
     bool mDisplayTarget;
     bool mDisplayTrails;
     bool mDisplayWaypoints;
     int mModelIndex;
     QVector<QString> mModelNames;
+    int mSetpointHistoryLength;
 };
 
 typedef QSharedPointer<SystemViewParams> SystemViewParamsPtr;
