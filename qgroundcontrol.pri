@@ -244,10 +244,15 @@ message("Compiling for linux 32")
             -losgGA \
             -losgDB \
             -losgText \
-            -losgQt \
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osg/osgQt) | exists(/usr/local/include/osg/osgQt) {
+    message("Building support for OpenSceneGraph")
+    # Include OpenSceneGraph Qt libraries
+    LIBS += -losgQt
     DEFINES += QGC_OSG_QT_ENABLED
     }
 
@@ -327,7 +332,6 @@ linux-g++-64 {
             -losgGA \
             -losgDB \
             -losgText \
-            -losgQt \
             -lOpenThreads
 
     exists(/usr/local/lib64) {
@@ -335,6 +339,12 @@ linux-g++-64 {
     }
 
     DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osg/osgQt) | exists(/usr/local/include/osg/osgQt) {
+    message("Building support for OpenSceneGraph")
+    # Include OpenSceneGraph Qt libraries
+    LIBS += -losgQt
     DEFINES += QGC_OSG_QT_ENABLED
     }
 
