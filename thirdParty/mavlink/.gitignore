@@ -1,6 +1,0 @@
-*~
-doc/html
-doc/*.log
-missionlib/testing/*.xcodeproj/*
-.DS_Store
-build*

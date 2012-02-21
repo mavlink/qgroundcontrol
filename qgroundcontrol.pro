@@ -40,6 +40,7 @@ MOC_DIR = $${BUILDDIR}/moc
 UI_DIR = $${BUILDDIR}/ui
 RCC_DIR = $${BUILDDIR}/rcc
 MAVLINK_CONF = ""
+MAVLINKPATH = $$BASEDIR/thirdParty/mavlink/v1.0
 DEFINES += MAVLINK_NO_DATA
 
 win32 {
@@ -87,58 +88,47 @@ exists(user_config.pri) {
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
 }
-INCLUDEPATH += $$BASEDIR/../mavlink/include/common
-INCLUDEPATH += $$BASEDIR/../mavlink/include
-INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/common
-INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include
+INCLUDEPATH += $$MAVLINKPATH/common
+INCLUDEPATH += $$MAVLINKPATH
 contains(MAVLINK_CONF, pixhawk) { 
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
 
     # PIXHAWK SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
-    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/pixhawk
+    INCLUDEPATH += $$MAVLINKPATH/pixhawk
     DEFINES += QGC_USE_PIXHAWK_MESSAGES
 }
 contains(MAVLINK_CONF, slugs) { 
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
     
     # SLUGS SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
-    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/slugs
+    INCLUDEPATH += $$MAVLINKPATH/slugs
     DEFINES += QGC_USE_SLUGS_MESSAGES
 }
 contains(MAVLINK_CONF, ualberta) { 
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
     
     # UALBERTA SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
-    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/ualberta
+    INCLUDEPATH += $$MAVLINKPATH/ualberta
     DEFINES += QGC_USE_UALBERTA_MESSAGES
 }
 contains(MAVLINK_CONF, ardupilotmega) { 
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
     INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
     
     # UALBERTA SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
-    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/ardupilotmega
+    INCLUDEPATH += $$MAVLINKPATH/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
 }
 contains(MAVLINK_CONF, senseSoar) { 
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
     
     # SENSESOAR SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/SenseSoar
-    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/SenseSoar
+    INCLUDEPATH += $$MAVLINKPATH/SenseSoar
     DEFINES += QGC_USE_SENSESOAR_MESSAGES
 }
 
@@ -149,6 +139,7 @@ contains(MAVLINK_CONF, senseSoar) {
 include(qgroundcontrol.pri)
 
 # Include MAVLink generator
+# has been deprecated
 DEPENDPATH += \
     src/apps/mavlinkgen
 
