@@ -66,6 +66,7 @@ signals:
     void systemCreatedSignal(UASInterface* uas);
 
 private slots:
+    void clearData(void);
     void showViewParamWindow(void);
     void followCameraChanged(int systemId);
     void recenterActiveCamera(void);
