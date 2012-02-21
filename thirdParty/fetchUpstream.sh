@@ -1,7 +1,6 @@
 #!/bin/bash
-
-MAVLINK_TAG=257e5194afc4bd5752e10fb58e8b8ee158116eb7
 QSERIAL_TAG=004e3de552fe25fee593dfcb03e2ffa82cb0b152
+MAVLINK_VERSION=1.0.0
 
 libList="mavlink qserialport"
 
@@ -31,7 +30,13 @@ function processLib
             fetch_git qserialport git://gitorious.org/inbiza-labs/qserialport.git master $QSERIAL_TAG
 			;;
 		"mavlink") 
-            fetch_git mavlink git@github.com:mavlink/mavlink.git master $MAVLINK_TAG
+            rm -rf mavlink
+            mavlinkName=mavlink-$MAVLINK_VERSION-Linux
+            wget https://github.com/downloads/mavlink/mavlink/$mavlinkName.tar.gz
+            tar -xzvf $mavlinkName.tar.gz
+            mv  $mavlinkName/usr/local/include/mavlink mavlink
+            rm -rf $mavlinkName
+            rm -rf $mavlinkName.tar.gz
 			;;
 		"all")
             for lib in $libList
