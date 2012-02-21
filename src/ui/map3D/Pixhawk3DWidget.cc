@@ -386,6 +386,24 @@ Pixhawk3DWidget::setpointChanged(int uasId, float x, float y, float z,
 }
 
 void
+Pixhawk3DWidget::clearData(void)
+{
+    QMutableMapIterator<int, SystemContainer> it(mSystemContainerMap);
+    while (it.hasNext())
+    {
+        it.next();
+
+        SystemContainer& systemData = it.value();
+
+        // clear setpoint data
+        systemData.setpointGroupNode()->removeChildren(0, systemData.setpointGroupNode()->getNumChildren());
+
+        // clear trail data
+        systemData.trailMap().clear();
+    }
+}
+
+void
 Pixhawk3DWidget::showViewParamWindow(void)
 {
     if (mViewParamWidget->isVisible())
@@ -1002,12 +1020,16 @@ Pixhawk3DWidget::addModels(QVector< osg::ref_ptr<osg::Node> >& models,
 void
 Pixhawk3DWidget::buildLayout(void)
 {
+    QPushButton* clearDataButton = new QPushButton(this);
+    clearDataButton->setText("Clear Data");
+
     QPushButton* viewParamWindowButton = new QPushButton(this);
     viewParamWindowButton->setCheckable(true);
     viewParamWindowButton->setText("View Parameters");
 
     QHBoxLayout* layoutTop = new QHBoxLayout;
     layoutTop->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+    layoutTop->addWidget(clearDataButton);
     layoutTop->addWidget(viewParamWindowButton);
 
     QPushButton* recenterButton = new QPushButton(this);
@@ -1031,6 +1053,8 @@ Pixhawk3DWidget::buildLayout(void)
     layout->setRowStretch(1, 100);
     layout->setRowStretch(2, 1);
 
+    connect(clearDataButton, SIGNAL(clicked()),
+            this, SLOT(clearData()));
     connect(viewParamWindowButton, SIGNAL(clicked()),
             this, SLOT(showViewParamWindow()));
     connect(recenterButton, SIGNAL(clicked()),
