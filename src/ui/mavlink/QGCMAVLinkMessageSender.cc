@@ -39,7 +39,7 @@ void QGCMAVLinkMessageSender::refresh()
 
 bool QGCMAVLinkMessageSender::sendMessage()
 {
-    sendMessage(ui->messageIdSpinBox->value());
+    return sendMessage(ui->messageIdSpinBox->value());
 }
 
 bool QGCMAVLinkMessageSender::sendMessage(unsigned int msgid)
