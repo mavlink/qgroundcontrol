@@ -645,19 +645,22 @@ void SerialLink::setName(QString name)
 }
 
 
+/**
+  * This function maps baud rate constants to numerical equivalents.
+  * It relies on the mapping given in qportsettings.h from the QSerialPort library.
+  */
 qint64 SerialLink::getNominalDataRate()
 {
     qint64 dataRate = 0;
     switch (portSettings.baudRate()) {
-#ifndef Q_OS_WIN
+
+	// Baud rates supported only by POSIX systems
+#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
     case QPortSettings::BAUDR_50:
         dataRate = 50;
         break;
     case QPortSettings::BAUDR_75:
         dataRate = 75;
-        break;
-    case QPortSettings::BAUDR_110:
-        dataRate = 110;
         break;
     case QPortSettings::BAUDR_134:
         dataRate = 134;
@@ -668,7 +671,48 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_200:
         dataRate = 200;
         break;
+    case QPortSettings::BAUDR_1800:
+        dataRate = 1800;
+        break;
 #endif
+
+	// Baud rates supported only by Linux
+#ifdef Q_OS_LINUX
+    case QPortSettings::BAUDR_230400:
+        dataRate = 230400;
+        break;
+    case QPortSettings::BAUDR_460800:
+        dataRate = 460800;
+        break;
+    case QPortSettings::BAUDR_500000:
+        dataRate = 500000;
+        break;
+    case QPortSettings::BAUDR_576000:
+        dataRate = 576000;
+        break;
+    case QPortSettings::BAUDR_921600:
+        dataRate = 921600;
+        break;
+#endif
+
+	// Baud rates supported only by Windows
+#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
+    case QPortSettings::BAUDR_14400:
+        dataRate = 14400;
+        break;
+    case QPortSettings::BAUDR_56000:
+        dataRate = 56000;
+        break;
+    case QPortSettings::BAUDR_128000:
+        dataRate = 128000;
+        break;
+    case QPortSettings::BAUDR_256000:
+        dataRate = 256000;
+#endif
+
+    case QPortSettings::BAUDR_110:
+        dataRate = 110;
+        break;
     case QPortSettings::BAUDR_300:
         dataRate = 300;
         break;
@@ -678,11 +722,6 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_1200:
         dataRate = 1200;
         break;
-#ifndef Q_OS_WIN
-    case QPortSettings::BAUDR_1800:
-        dataRate = 1800;
-        break;
-#endif
     case QPortSettings::BAUDR_2400:
         dataRate = 2400;
         break;
@@ -692,52 +731,22 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_9600:
         dataRate = 9600;
         break;
-#ifdef Q_OS_WIN
-    case QPortSettings::BAUDR_14400:
-        dataRate = 14400;
-        break;
-#endif
     case QPortSettings::BAUDR_19200:
         dataRate = 19200;
         break;
     case QPortSettings::BAUDR_38400:
         dataRate = 38400;
         break;
-#ifdef Q_OS_WIN
-    case QPortSettings::BAUDR_56000:
-        dataRate = 56000;
-        break;
-#endif
     case QPortSettings::BAUDR_57600:
         dataRate = 57600;
         break;
-#ifdef Q_OS_WIN_XXXX // FIXME
-    case QPortSettings::BAUDR_76800:
-        dataRate = 76800;
-        break;
-#endif
     case QPortSettings::BAUDR_115200:
         dataRate = 115200;
         break;
-#ifdef Q_OS_WIN
-        // Windows-specific high-end baudrates
-    case QPortSettings::BAUDR_128000:
-        dataRate = 128000;
-        break;
-    case QPortSettings::BAUDR_256000:
-        dataRate = 256000;
-    case QPortSettings::BAUDR_230400:
-        dataRate = 230400;
-    case QPortSettings::BAUDR_460800:
-        dataRate = 460800;
-#endif
-        // All-OS high-speed
-    case QPortSettings::BAUDR_921600:
-        dataRate = 921600;
-        break;
+
+	// Otherwise do nothing.
     case QPortSettings::BAUDR_UNKNOWN:
-        default:
-        // Do nothing
+    default:
         break;
     }
     return dataRate;
@@ -907,13 +916,19 @@ bool SerialLink::setBaudRateType(int rateIndex)
     if(isConnected()) reconnect = true;
     disconnect();
 
-#ifdef Q_OS_WIN
-	const int minBaud = (int)QPortSettings::BAUDR_14400;
-#else
+// These minimum and maximum baud rates were based on those enumerated in qportsettings.h.
+#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
+	const int minBaud = (int)QPortSettings::BAUDR_110;
+	const int maxBaud = (int)QPortSettings::BAUDR_256000;
+#elif defined(Q_OS_LINUX)
 	const int minBaud = (int)QPortSettings::BAUDR_50;
+	const int maxBaud = (int)QPortSettings::BAUDR_921600;
+#elif defined(Q_OS_UNIX) || defined(Q_OS_DARWIN)
+	const int minBaud = (int)QPortSettings::BAUDR_50;
+	const int maxBaud = (int)QPortSettings::BAUDR_115200;
 #endif
 
-    if (rateIndex >= minBaud && rateIndex <= (int)QPortSettings::BAUDR_921600)
+    if (rateIndex >= minBaud && rateIndex <= maxBaud)
     {
         portSettings.setBaudRate((QPortSettings::BaudRate)rateIndex);
     }
@@ -932,26 +947,23 @@ bool SerialLink::setBaudRateString(const QString& rate)
 
 bool SerialLink::setBaudRate(int rate)
 {
-    //qDebug() << "BAUD RATE:" << rate;
-
     bool reconnect = false;
     bool accepted = true; // This is changed if none of the data rates matches
     if(isConnected()) {
         reconnect = true;
     }
     disconnect();
-
+	
+    // This switch-statment relies on the mapping given in qportsettings.h from the QSerialPort library.
     switch (rate) {
 
-#ifndef Q_OS_WIN
+	// Baud rates supported only by non-Windows systems
+#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
     case 50:
         portSettings.setBaudRate(QPortSettings::BAUDR_50);
         break;
     case 75:
         portSettings.setBaudRate(QPortSettings::BAUDR_75);
-        break;
-    case 110:
-        portSettings.setBaudRate(QPortSettings::BAUDR_110);
         break;
     case 134:
         portSettings.setBaudRate(QPortSettings::BAUDR_134);
@@ -962,7 +974,50 @@ bool SerialLink::setBaudRate(int rate)
     case 200:
         portSettings.setBaudRate(QPortSettings::BAUDR_200);
         break;
+    case 1800:
+        portSettings.setBaudRate(QPortSettings::BAUDR_1800);
+        break;
 #endif
+
+	// Supported only by Linux
+#ifdef Q_OS_LINUX
+    case 230400:
+        portSettings.setBaudRate(QPortSettings::BAUDR_230400);
+        break;
+    case 460800:
+        portSettings.setBaudRate(QPortSettings::BAUDR_460800);
+        break;
+    case 500000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_500000);
+        break;
+    case 576000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_576000);
+        break;
+    case 921600:
+        portSettings.setBaudRate(QPortSettings::BAUDR_921600);
+        break;
+#endif
+
+	// Baud rates supported only by windows
+#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
+    case 14400:
+        portSettings.setBaudRate(QPortSettings::BAUDR_14400);
+        break;
+    case 56000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_56000);
+        break;
+    case 128000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_128000);
+        break;
+    case 256000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_256000);
+        break;
+#endif
+
+	// Supported by all OSes:
+    case 110:
+        portSettings.setBaudRate(QPortSettings::BAUDR_110);
+        break;
     case 300:
         portSettings.setBaudRate(QPortSettings::BAUDR_300);
         break;
@@ -972,11 +1027,6 @@ bool SerialLink::setBaudRate(int rate)
     case 1200:
         portSettings.setBaudRate(QPortSettings::BAUDR_1200);
         break;
-#ifndef Q_OS_WIN
-    case 1800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_1800);
-        break;
-#endif
     case 2400:
         portSettings.setBaudRate(QPortSettings::BAUDR_2400);
         break;
@@ -986,49 +1036,17 @@ bool SerialLink::setBaudRate(int rate)
     case 9600:
         portSettings.setBaudRate(QPortSettings::BAUDR_9600);
         break;
-#ifdef Q_OS_WIN
-    case 14400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_14400);
-        break;
-#endif
     case 19200:
         portSettings.setBaudRate(QPortSettings::BAUDR_19200);
         break;
     case 38400:
         portSettings.setBaudRate(QPortSettings::BAUDR_38400);
         break;
-#ifdef Q_OS_WIN
-    case 56000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_56000);
-        break;
-#endif
     case 57600:
         portSettings.setBaudRate(QPortSettings::BAUDR_57600);
         break;
-#ifdef Q_OS_WIN_XXXX // FIXME CHECK THIS
-    case 76800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_76800);
-        break;
-#endif
     case 115200:
         portSettings.setBaudRate(QPortSettings::BAUDR_115200);
-        break;
-#ifdef Q_OS_WIN
-    case 128000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_128000);
-        break;
-    case 230400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_230400);
-        break;
-    case 256000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_256000);
-        break;
-    case 460800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_460800);
-        break;
-#endif
-    case 921600:
-        portSettings.setBaudRate(QPortSettings::BAUDR_921600);
         break;
     default:
         // If none of the above cases matches, there must be an error
