@@ -910,13 +910,7 @@ void HSIDisplay::sendBodySetPointCoordinates()
     // Send the coordinates to the MAV
     if (uas)
     {
-        double dx = uiXSetCoordinate - uas->getLocalX();
-        double dy = uiYSetCoordinate - uas->getLocalY();
-        double dz = uiZSetCoordinate - uas->getLocalZ();
-        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 200.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
-//        if (valid)
-//        {
-            uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
+        uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
     }
 }
 
