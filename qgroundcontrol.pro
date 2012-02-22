@@ -40,7 +40,7 @@ MOC_DIR = $${BUILDDIR}/moc
 UI_DIR = $${BUILDDIR}/ui
 RCC_DIR = $${BUILDDIR}/rcc
 MAVLINK_CONF = ""
-MAVLINKPATH = $$BASEDIR/thirdParty/mavlink/v1.0
+MAVLINKPATH = $$BASEDIR/thirdParty/mavlink/include
 DEFINES += MAVLINK_NO_DATA
 
 win32 {

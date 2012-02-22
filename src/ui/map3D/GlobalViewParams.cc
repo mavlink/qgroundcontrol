@@ -3,12 +3,25 @@
 #include <QStringList>
 
 GlobalViewParams::GlobalViewParams()
- : mDisplayWorldGrid(true)
+ : mDisplayTerrain(true)
+ , mDisplayWorldGrid(true)
  , mImageryType(Imagery::BLANK_MAP)
  , mFollowCameraId(-1)
  , mFrame(MAV_FRAME_LOCAL_NED)
 {
 
+}
+
+bool&
+GlobalViewParams::displayTerrain(void)
+{
+    return mDisplayTerrain;
+}
+
+bool
+GlobalViewParams::displayTerrain(void) const
+{
+    return mDisplayTerrain;
 }
 
 bool&
@@ -111,5 +124,18 @@ GlobalViewParams::toggleWorldGrid(int state)
     else
     {
         mDisplayWorldGrid = false;
+    }
+}
+
+void
+GlobalViewParams::toggleTerrain(int state)
+{
+    if (state == Qt::Checked)
+    {
+        mDisplayTerrain = true;
+    }
+    else
+    {
+        mDisplayTerrain = false;
     }
 }

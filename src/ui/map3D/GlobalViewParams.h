@@ -15,6 +15,9 @@ class GlobalViewParams : public QObject
 public:
     GlobalViewParams();
 
+    bool& displayTerrain(void);
+    bool displayTerrain(void) const;
+
     bool& displayWorldGrid(void);
     bool displayWorldGrid(void) const;
 
@@ -31,12 +34,14 @@ public slots:
     void followCameraChanged(const QString& text);
     void frameChanged(const QString &text);
     void imageryTypeChanged(int index);
+    void toggleTerrain(int state);
     void toggleWorldGrid(int state);
 
 signals:
     void followCameraChanged(int systemId);
 
 private:
+    bool mDisplayTerrain;
     bool mDisplayWorldGrid;
     Imagery::Type mImageryType;
     int mFollowCameraId;
