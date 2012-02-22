@@ -41,6 +41,7 @@
 
 #include "../MainWindow.h"
 #include "PixhawkCheetahGeode.h"
+#include "TerrainParamDialog.h"
 #include "UASManager.h"
 
 #include "QGC.h"
@@ -72,6 +73,9 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     mWorldGridNode = createWorldGrid();
     m3DWidget->worldMap()->addChild(mWorldGridNode, false);
+
+    mTerrainPAT = new osg::PositionAttitudeTransform;
+    m3DWidget->worldMap()->addChild(mTerrainPAT);
 
     // generate map model
     mImageryNode = createImagery();
@@ -404,6 +408,19 @@ Pixhawk3DWidget::clearData(void)
 }
 
 void
+Pixhawk3DWidget::showTerrainParamWindow(void)
+{
+    TerrainParamDialog::getTerrainParams(mGlobalViewParams);
+
+    const QVector4D& terrainOffset = mGlobalViewParams->terrainOffset();
+
+    mTerrainPAT->setPosition(osg::Vec3d(terrainOffset.y(), terrainOffset.x(), -terrainOffset.z()));
+    mTerrainPAT->setAttitude(osg::Quat(M_PI_2 - terrainOffset.w(), osg::Vec3d(0.0f, 0.0f, 1.0f),
+                                       0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                       0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
+}
+
+void
 Pixhawk3DWidget::showViewParamWindow(void)
 {
     if (mViewParamWidget->isVisible())
@@ -507,10 +524,18 @@ Pixhawk3DWidget::loadTerrainModel(void)
     {
         if (mTerrainNode.get())
         {
-            m3DWidget->worldMap()->removeChild(mTerrainNode);
+            mTerrainPAT->removeChild(mTerrainNode);
         }
         mTerrainNode = node;
-        m3DWidget->worldMap()->addChild(mTerrainNode);
+        mTerrainNode->setName("terrain");
+        mTerrainPAT->addChild(mTerrainNode);
+
+        mGlobalViewParams->terrainOffset() = QVector4D();
+
+        mTerrainPAT->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
+        mTerrainPAT->setAttitude(osg::Quat(M_PI_2, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                                           0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                           0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
     }
     else
     {
@@ -835,7 +860,7 @@ Pixhawk3DWidget::update(void)
     MAV_FRAME frame = mGlobalViewParams->frame();
 
     // set node visibility
-    m3DWidget->worldMap()->setChildValue(mTerrainNode,
+    m3DWidget->worldMap()->setChildValue(mTerrainPAT,
                                          mGlobalViewParams->displayTerrain());
     m3DWidget->worldMap()->setChildValue(mWorldGridNode,
                                          mGlobalViewParams->displayWorldGrid());
@@ -1169,6 +1194,16 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
             return;
         }
     }
+    else if (event->button() == Qt::RightButton)
+    {
+        if (findTerrain(event->pos()))
+        {
+            showTerrainMenu(event->globalPos());
+
+            event->accept();
+        }
+    }
+
 
     m3DWidget->handleMousePressEvent(event);
 }
@@ -2261,6 +2296,7 @@ Pixhawk3DWidget::findWaypoint(const QPoint& mousePos)
     return -1;
 }
 
+
 bool
 Pixhawk3DWidget::findTarget(int mouseX, int mouseY)
 {
@@ -2280,6 +2316,41 @@ Pixhawk3DWidget::findTarget(int mouseX, int mouseY)
                     {
                         return true;
                     }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+bool
+Pixhawk3DWidget::findTerrain(const QPoint& mousePos)
+{
+    if (!m3DWidget->getSceneData() || !mActiveUAS)
+    {
+        return -1;
+    }
+
+    osgUtil::LineSegmentIntersector::Intersections intersections;
+
+    QPoint widgetMousePos = m3DWidget->mapFromParent(mousePos);
+
+    if (m3DWidget->computeIntersections(widgetMousePos.x(),
+                                        m3DWidget->height() - widgetMousePos.y(),
+                                        intersections))
+    {
+        for (osgUtil::LineSegmentIntersector::Intersections::iterator
+             it = intersections.begin(); it != intersections.end(); it++)
+        {
+            for (uint i = 0 ; i < it->nodePath.size(); ++i)
+            {
+                osg::Node* node = it->nodePath[i];
+                std::string nodeName = node->getName();
+
+                if (nodeName.compare("terrain") == 0)
+                {
+                    return true;
                 }
             }
         }
@@ -2317,5 +2388,13 @@ Pixhawk3DWidget::showEditWaypointMenu(const QPoint &cursorPos)
     menu.addAction(text, this, SLOT(deleteWaypoint()));
 
     menu.addAction("Clear all waypoints", this, SLOT(clearAllWaypoints()));
+    menu.exec(cursorPos);
+}
+
+void
+Pixhawk3DWidget::showTerrainMenu(const QPoint &cursorPos)
+{
+    QMenu menu;
+    menu.addAction("Edit terrain parameters", this, SLOT(showTerrainParamWindow()));
     menu.exec(cursorPos);
 }

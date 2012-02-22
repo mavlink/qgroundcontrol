@@ -72,6 +72,18 @@ GlobalViewParams::frame(void) const
     return mFrame;
 }
 
+QVector4D&
+GlobalViewParams::terrainOffset(void)
+{
+    return mTerrainOffset;
+}
+
+QVector4D
+GlobalViewParams::terrainOffset(void) const
+{
+    return mTerrainOffset;
+}
+
 void
 GlobalViewParams::followCameraChanged(const QString& text)
 {

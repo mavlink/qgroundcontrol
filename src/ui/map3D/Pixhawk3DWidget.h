@@ -67,6 +67,7 @@ signals:
 
 private slots:
     void clearData(void);
+    void showTerrainParamWindow(void);
     void showViewParamWindow(void);
     void followCameraChanged(int systemId);
     void recenterActiveCamera(void);
@@ -168,8 +169,10 @@ private:
 
     int findWaypoint(const QPoint& mousePos);
     bool findTarget(int mouseX, int mouseY);
+    bool findTerrain(const QPoint& mousePos);
     void showInsertWaypointMenu(const QPoint& cursorPos);
     void showEditWaypointMenu(const QPoint& cursorPos);
+    void showTerrainMenu(const QPoint& cursorPos);
 
     const qreal kMessageTimeout; // message timeout in seconds
 
@@ -198,6 +201,7 @@ private:
     osg::ref_ptr<HUDScaleGeode> mScaleGeode;
     osg::ref_ptr<osgText::Text> mStatusText;
     osg::ref_ptr<osg::Node> mTerrainNode;
+    osg::ref_ptr<osg::PositionAttitudeTransform> mTerrainPAT;
     osg::ref_ptr<osg::Geode> mWorldGridNode;
 
     QPoint mCachedMousePos;
