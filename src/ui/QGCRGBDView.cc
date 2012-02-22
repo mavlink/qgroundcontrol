@@ -1,5 +1,6 @@
 #include <QMenu>
 #include <QContextMenuEvent>
+#include <QSettings>
 
 #include "QGCRGBDView.h"
 #include "UASManager.h"
@@ -24,6 +25,32 @@ QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     clearData();
+    loadSettings();
+}
+
+QGCRGBDView::~QGCRGBDView()
+{
+    storeSettings();
+}
+
+void QGCRGBDView::storeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_RGBDWIDGET");
+    settings.setValue("STREAM_RGB_ON", rgbEnabled);
+    settings.setValue("STREAM_DEPTH_ON", depthEnabled);
+    settings.endGroup();
+    settings.sync();
+}
+
+void QGCRGBDView::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_RGBDWIDGET");
+    rgbEnabled = settings.value("STREAM_RGB_ON", rgbEnabled).toBool();
+    // Only enable depth if RGB is not on
+    if (!rgbEnabled) depthEnabled = settings.value("STREAM_DEPTH_ON", depthEnabled).toBool();
+    settings.endGroup();
 }
 
 void QGCRGBDView::setActiveUAS(UASInterface* uas)
