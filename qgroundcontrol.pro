@@ -32,8 +32,14 @@ QT += network \
 TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $${IN_PWD}
-TARGETDIR = $${OUT_PWD}
-BUILDDIR = $${TARGETDIR}/build
+debug {
+    TARGETDIR = $${OUT_PWD}/debug
+    BUILDDIR = $${OUT_PWD}/build-debug
+}
+release {
+    TARGETDIR = $${OUT_PWD}/release
+    BUILDDIR = $${OUT_PWD}/build-release
+}
 LANGUAGE = C++
 OBJECTS_DIR = $${BUILDDIR}/obj
 MOC_DIR = $${BUILDDIR}/moc
