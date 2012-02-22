@@ -836,7 +836,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                     streampointer+=bufferlength;
                     //qDebug() << "Sending PARAM" << key;
                 }
-                else if (read.param_index < onboardParams.size())
+                else if (read.param_index >= 0 && read.param_index < onboardParams.keys().size())
                 {
                     key = onboardParams.keys().at(read.param_index);
                     float paramValue = onboardParams.value(key);
