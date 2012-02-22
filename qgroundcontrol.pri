@@ -198,31 +198,24 @@ macx|macx-g++42|macx-g++: {
 }
 
 # GNU/Linux
-linux-g++ {
+linux-g++|linux-g++-64{
 
     CONFIG -= console
 
     debug {
-        #DESTDIR = $$TARGETDIR/debug
         #CONFIG += debug console
     }
 
     release {
-        #DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
         #CONFIG -= console
     }
 
     #QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
-message("Compiling for linux 32")
-
     INCLUDEPATH += /usr/include \
                    /usr/local/include \
                    /usr/include/qt4/phonon
-
-
-    message(Building for GNU/Linux 32bit/i386)
 
     LIBS += \
         -L/usr/lib \
@@ -244,10 +237,16 @@ message("Compiling for linux 32")
             -losgGA \
             -losgDB \
             -losgText \
-            -losgQt \
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osg/osgQt) | exists(/usr/include/osgQt) |
+    exists(/usr/local/include/osg/osgQt) | exists(/usr/local/include/osgQt) {
+    message("Building support for OpenSceneGraph Qt")
+    # Include OpenSceneGraph Qt libraries
+    LIBS += -losgQt
     DEFINES += QGC_OSG_QT_ENABLED
     }
 
@@ -272,8 +271,11 @@ message("Compiling for linux 32")
     }
 
     # Validated copy commands
+    !exists($$TARGETDIR){
+         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR
+    }
+    DESTDIR = $$TARGETDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
-
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
     QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/images
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/images/Vera.ttf
@@ -283,106 +285,14 @@ message("Compiling for linux 32")
     QMAKE_CXXFLAGS += -Wl,-E
 }
 
+linux-g++ {
+    message("Building for GNU/Linux 32bit/i386")
+}
 linux-g++-64 {
-
-    CONFIG -= console
-
-    debug {
-        #DESTDIR = $$TARGETDIR/debug
-        #CONFIG += debug console
-    }
-
-    release {
-        #DESTDIR = $$TARGETDIR/release
-        DEFINES += QT_NO_DEBUG
-        #CONFIG -= console
-    }
-
-    #QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
-
-    INCLUDEPATH += /usr/include \
-                   /usr/include/qt4/phonon
-
-
-    # 64-bit Linux
-    message(Building for GNU/Linux 64bit/x64 (g++-64))
-
-    LIBS += \
-        -L/usr/lib \
-        -L/usr/local/lib64 \
-        -lm \
-        -lflite_cmu_us_kal \
-        -lflite_usenglish \
-        -lflite_cmulex \
-        -lflite \
-        -lSDL \
-        -lSDLmain
-
-    exists(/usr/include/osg) | exists(/usr/local/include/osg) {
-    message("Building support for OpenSceneGraph")
-    DEPENDENCIES_PRESENT += osg
-    # Include OpenSceneGraph libraries
-    LIBS += -losg \
-            -losgViewer \
-            -losgGA \
-            -losgDB \
-            -losgText \
-            -losgQt \
-            -lOpenThreads
-
+    message("Building for GNU/Linux 64bit/x64 (g++-64)")
     exists(/usr/local/lib64) {
-    LIBS += -L/usr/local/lib64
+        LIBS += -L/usr/local/lib64
     }
-
-    DEFINES += QGC_OSG_ENABLED
-    DEFINES += QGC_OSG_QT_ENABLED
-    }
-
-    exists(/usr/local/include/google/protobuf) {
-    message("Building support for Protocol Buffers")
-    DEPENDENCIES_PRESENT += protobuf
-    # Include Protocol Buffers libraries
-    LIBS += -lprotobuf \
-            -lprotobuf-lite \
-            -lprotoc
-
-    DEFINES += QGC_PROTOBUF_ENABLED
-    }
-
-    exists(/usr/local/include/libfreenect) {
-    message("Building support for libfreenect")
-    DEPENDENCIES_PRESENT += libfreenect
-    INCLUDEPATH += /usr/include/libusb-1.0
-    # Include libfreenect libraries
-    LIBS += -lfreenect
-    DEFINES += QGC_LIBFREENECT_ENABLED
-    }
-
-    # Validated copy commands
-    debug {
-        !exists($$TARGETDIR/debug){
-             QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/debug
-        }
-        DESTDIR = $$TARGETDIR/debug
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/debug
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/debug/images
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/debug/images/Vera.ttf
-    }
-    release {
-        !exists($$TARGETDIR/release){
-             QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/release
-        }
-        DESTDIR = $$TARGETDIR/release
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/release
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/release/images
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$TARGETDIR/release/images/Vera.ttf
-    }
-
-    # osg/osgEarth dynamic casts might fail without this compiler option.
-    # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (32bit)
