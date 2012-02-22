@@ -66,11 +66,13 @@ signals:
     void systemCreatedSignal(UASInterface* uas);
 
 private slots:
+    void clearData(void);
     void showViewParamWindow(void);
     void followCameraChanged(int systemId);
     void recenterActiveCamera(void);
     void modelChanged(int systemId, int index);
     void setBirdEyeView(void);
+    void loadTerrainModel(void);
 
     void selectTargetHeading(void);
     void selectTarget(void);
@@ -195,6 +197,7 @@ private:
     osg::ref_ptr<Imagery> mImageryNode;
     osg::ref_ptr<HUDScaleGeode> mScaleGeode;
     osg::ref_ptr<osgText::Text> mStatusText;
+    osg::ref_ptr<osg::Node> mTerrainNode;
     osg::ref_ptr<osg::Geode> mWorldGridNode;
 
     QPoint mCachedMousePos;

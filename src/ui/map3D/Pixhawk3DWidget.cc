@@ -163,10 +163,21 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
         systemData.trailIndexMap().insert(component,
                                           systemData.trailMap().size() - 1);
 
-        osg::Vec4 color((float)qrand() / RAND_MAX,
-                        (float)qrand() / RAND_MAX,
-                        (float)qrand() / RAND_MAX,
-                        0.5);
+        // generate nice bright random color
+        float golden_ratio_conjugate = 0.618033988749895f;
+
+        float h = (float)qrand() / RAND_MAX + golden_ratio_conjugate;
+        if (h > 1.0f)
+        {
+            h -= 1.0f;
+        }
+
+        QColor colorHSV;
+        colorHSV.setHsvF(h, 0.99, 0.99, 0.5);
+
+        QColor colorRGB = colorHSV.toRgb();
+
+        osg::Vec4f color(colorRGB.redF(), colorRGB.greenF(), colorRGB.blueF(), colorRGB.alphaF());
 
         systemData.trailNode()->addDrawable(createTrail(color));
         systemData.trailNode()->addDrawable(createLink(uas->getColor()));
@@ -375,6 +386,24 @@ Pixhawk3DWidget::setpointChanged(int uasId, float x, float y, float z,
 }
 
 void
+Pixhawk3DWidget::clearData(void)
+{
+    QMutableMapIterator<int, SystemContainer> it(mSystemContainerMap);
+    while (it.hasNext())
+    {
+        it.next();
+
+        SystemContainer& systemData = it.value();
+
+        // clear setpoint data
+        systemData.setpointGroupNode()->removeChildren(0, systemData.setpointGroupNode()->getNumChildren());
+
+        // clear trail data
+        systemData.trailMap().clear();
+    }
+}
+
+void
 Pixhawk3DWidget::showViewParamWindow(void)
 {
     if (mViewParamWidget->isVisible())
@@ -457,6 +486,39 @@ Pixhawk3DWidget::setBirdEyeView(void)
 
     m3DWidget->rotateCamera(0.0, 0.0, 0.0);
     m3DWidget->setCameraDistance(100.0);
+}
+
+void
+Pixhawk3DWidget::loadTerrainModel(void)
+{
+    QString filename = QFileDialog::getOpenFileName(this, "Load Terrain Model",
+                                                    QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                                                    tr("Collada (*.dae)"));
+
+    if (filename.isNull())
+    {
+        return;
+    }
+
+    osg::ref_ptr<osg::Node> node =
+        osgDB::readNodeFile(filename.toStdString().c_str());
+
+    if (node)
+    {
+        if (mTerrainNode.get())
+        {
+            m3DWidget->worldMap()->removeChild(mTerrainNode);
+        }
+        mTerrainNode = node;
+        m3DWidget->worldMap()->addChild(mTerrainNode);
+    }
+    else
+    {
+        QMessageBox msgBox(QMessageBox::Warning,
+                           "Error loading model",
+                           QString("Error: Unable to load terrain model (%1).").arg(filename));
+        msgBox.exec();
+    }
 }
 
 void
@@ -773,6 +835,8 @@ Pixhawk3DWidget::update(void)
     MAV_FRAME frame = mGlobalViewParams->frame();
 
     // set node visibility
+    m3DWidget->worldMap()->setChildValue(mTerrainNode,
+                                         mGlobalViewParams->displayTerrain());
     m3DWidget->worldMap()->setChildValue(mWorldGridNode,
                                          mGlobalViewParams->displayWorldGrid());
     if (mGlobalViewParams->imageryType() == Imagery::BLANK_MAP)
@@ -991,12 +1055,16 @@ Pixhawk3DWidget::addModels(QVector< osg::ref_ptr<osg::Node> >& models,
 void
 Pixhawk3DWidget::buildLayout(void)
 {
+    QPushButton* clearDataButton = new QPushButton(this);
+    clearDataButton->setText("Clear Data");
+
     QPushButton* viewParamWindowButton = new QPushButton(this);
     viewParamWindowButton->setCheckable(true);
     viewParamWindowButton->setText("View Parameters");
 
     QHBoxLayout* layoutTop = new QHBoxLayout;
     layoutTop->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+    layoutTop->addWidget(clearDataButton);
     layoutTop->addWidget(viewParamWindowButton);
 
     QPushButton* recenterButton = new QPushButton(this);
@@ -1005,10 +1073,14 @@ Pixhawk3DWidget::buildLayout(void)
     QPushButton* birdEyeViewButton = new QPushButton(this);
     birdEyeViewButton->setText("Bird's Eye View");
 
+    QPushButton* loadTerrainModelButton = new QPushButton(this);
+    loadTerrainModelButton->setText("Load Terrain Model");
+
     QHBoxLayout* layoutBottom = new QHBoxLayout;
     layoutBottom->addWidget(recenterButton);
     layoutBottom->addWidget(birdEyeViewButton);
     layoutBottom->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+    layoutBottom->addWidget(loadTerrainModelButton);
 
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
@@ -1020,12 +1092,16 @@ Pixhawk3DWidget::buildLayout(void)
     layout->setRowStretch(1, 100);
     layout->setRowStretch(2, 1);
 
+    connect(clearDataButton, SIGNAL(clicked()),
+            this, SLOT(clearData()));
     connect(viewParamWindowButton, SIGNAL(clicked()),
             this, SLOT(showViewParamWindow()));
     connect(recenterButton, SIGNAL(clicked()),
             this, SLOT(recenterActiveCamera()));
     connect(birdEyeViewButton, SIGNAL(clicked()),
             this, SLOT(setBirdEyeView()));
+    connect(loadTerrainModelButton, SIGNAL(clicked()),
+            this, SLOT(loadTerrainModel()));
 }
 
 void

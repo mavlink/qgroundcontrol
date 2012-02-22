@@ -84,6 +84,9 @@ ViewParamWidget::buildLayout(QVBoxLayout* layout)
     imageryComboBox->addItem("Map (Google)");
     imageryComboBox->addItem("Satellite (Google)");
 
+    QCheckBox* terrainModelCheckBox = new QCheckBox(this);
+    terrainModelCheckBox->setChecked(mGlobalViewParams->displayTerrain());
+
     QCheckBox* worldGridCheckBox = new QCheckBox(this);
     worldGridCheckBox->setChecked(mGlobalViewParams->displayWorldGrid());
 
@@ -101,6 +104,7 @@ ViewParamWidget::buildLayout(QVBoxLayout* layout)
     formLayout->addRow(tr("Follow Camera"), mFollowCameraComboBox);
     formLayout->addRow(tr("Frame"), frameComboBox);
     formLayout->addRow(tr("Imagery"), imageryComboBox);
+    formLayout->addRow(tr("Terrain"), terrainModelCheckBox);
     formLayout->addRow(tr("World Grid"), worldGridCheckBox);
 
     layout->addLayout(formLayout);
@@ -113,6 +117,8 @@ ViewParamWidget::buildLayout(QVBoxLayout* layout)
             mGlobalViewParams.data(), SLOT(frameChanged(const QString&)));
     connect(imageryComboBox, SIGNAL(currentIndexChanged(int)),
             mGlobalViewParams.data(), SLOT(imageryTypeChanged(int)));
+    connect(terrainModelCheckBox, SIGNAL(stateChanged(int)),
+            mGlobalViewParams.data(), SLOT(toggleTerrain(int)));
     connect(worldGridCheckBox, SIGNAL(stateChanged(int)),
             mGlobalViewParams.data(), SLOT(toggleWorldGrid(int)));
 }
