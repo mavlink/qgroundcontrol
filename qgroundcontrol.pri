@@ -249,8 +249,9 @@ message("Compiling for linux 32")
     DEFINES += QGC_OSG_ENABLED
     }
 
-    exists(/usr/include/osg/osgQt) | exists(/usr/local/include/osg/osgQt) {
-    message("Building support for OpenSceneGraph")
+    exists(/usr/include/osg/osgQt) | exists(/usr/include/osgQt) |
+    exists(/usr/local/include/osg/osgQt) | exists(/usr/local/include/osgQt) {
+    message("Building support for OpenSceneGraph Qt")
     # Include OpenSceneGraph Qt libraries
     LIBS += -losgQt
     DEFINES += QGC_OSG_QT_ENABLED
@@ -341,8 +342,9 @@ linux-g++-64 {
     DEFINES += QGC_OSG_ENABLED
     }
 
-    exists(/usr/include/osg/osgQt) | exists(/usr/local/include/osg/osgQt) {
-    message("Building support for OpenSceneGraph")
+    exists(/usr/include/osg/osgQt) | exists(/usr/include/osgQt) |
+    exists(/usr/local/include/osg/osgQt) | exists(/usr/local/include/osgQt) {
+    message("Building support for OpenSceneGraph Qt")
     # Include OpenSceneGraph Qt libraries
     LIBS += -losgQt
     DEFINES += QGC_OSG_QT_ENABLED
