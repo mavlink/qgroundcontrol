@@ -8,6 +8,7 @@ class QGCRGBDView : public HUD
     Q_OBJECT
 public:
     explicit QGCRGBDView(int width=640, int height=480, QWidget *parent = 0);
+    ~QGCRGBDView();
 
 signals:
 
@@ -26,6 +27,10 @@ protected:
     QAction* enableDepthAction;
 
     void contextMenuEvent (QContextMenuEvent* event);
+    /** @brief Store current configuration of widget */
+    void storeSettings();
+    /** @brief Load configuration of widget */
+    void loadSettings();
 };
 
 #endif // QGCRGBDVIEW_H
