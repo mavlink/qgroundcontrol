@@ -93,8 +93,6 @@ public:
     BAUDR_200,
     BAUDR_1800,
     //BAUDR_76800,
-#endif
-#ifdef Q_OS_LINUX
     BAUDR_500000,
     BAUDR_576000,
 #endif
