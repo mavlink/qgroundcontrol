@@ -78,52 +78,25 @@ Done.
 Windows
 =======
 
-DETAILED STEPS BELOW THE VISUAL STUDIO 2010 NOTES.
 GNU GCC / MINGW IS UNTESTED, COULD WORK
 VISUAL STUDIO 2008 / 2010 EXPRESS EDITION IS FREE!
 
--------------------------------------------------------------------------------------
-VISUAL STUDIO 2010 NOTES (VS 2008 runs out-of-the-box, just follow the steps below):
-
-For use of Qt 4x with Visual Studio 2010 Add-in.
-
-Visual studio adds automatically certain defines that are wrong and cause errors.
-To resolve this, execute these steps:
-
-In the projects properties -> C/C++ ->preprocessor change:
-
-in DEBUG:
-	delete QT_NO_DEBUG
-
-in both (DEBUG / RELEASE):
-	delete QT_NO_DYNAMIC_CAST
--------------------------------------------------------------------------------------
-
-
-
-
-Steps for Visual Studio 2008 / 2010. (VS 2008 is easier, VS 2010 only recommended for
-expert developers)
-
+Steps for Visual Studio 2008 / 2010:
 
 Windows XP/7:
 
-1) Download and install the Qt SDK for Windows from http://qt.nokia.com/downloads/ (Visual Studio 2008 version) OR download Qt source and compile with VS 2010
+1) Download and install the Qt libraries for Windows from https://qt.nokia.com/downloads/ (the Visual Studio 2008 or 2010 version as appropriate)
 
-2) Download and install Visual Studio 2008 Express Edition (free) OR VS 2010 Express Edition
+2) Download and install Visual Studio 2008 or 2010 Express Edition (free) from https://www.microsoft.com/visualstudio
 
-3) Go to the QGroundControl folder and then to thirdParty -> libxbee
+3) Go to the QGroundControl folder and then to thirdParty/libxbee and build it following the instructions in win32.README
 
-4) Build the library. See win32.README 
+4) Open the Qt Command Prompt program (should be in the Start Menu), navigate to the source folder of QGroundControl and create the Visual Studio project by typing:
 
-5) Go to the source folder of QGroundControl with the Qt 4.7.x Command Prompt tool (from the applications menu)
+`qmake -tp vc qgroundcontrol.pro`
 
-6) Create the Visual Studio project by typing:
+5) Now start Visual Studio and load the qgroundcontrol.vcproj if using Visual Studio 2008 or qgroundcontrol.vcxproj if using Visual Studio 2010
 
-qmake -tp vc qgroundcontrol.pro
-
-7) Now start Visual Studio and load the qgroundcontrol.vcproj file
-
-8) Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run "quake -tp vc qgroundcontrol.pro"
+6) Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run `qmake -tp vc qgroundcontrol.pro`
 
 
