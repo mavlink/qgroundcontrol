@@ -276,27 +276,56 @@ void TermiosHelper::setBaudRate(QPortSettings::BaudRate baudRate)
     case QPortSettings::BAUDR_115200:
       baud = B115200;
       break;
-#if defined(Q_OS_LINUX)
   case QPortSettings::BAUDR_230400:
-    baud = B230400;
+#ifdef B230400
+      baud = B230400;
+#else
+      baud = (speed_t)230400;
+#endif
     break;
   case QPortSettings::BAUDR_460800:
+#ifdef B460800
     baud = B460800;
+#else
+    baud = (speed_t)460800;
+#endif
     break;
   case QPortSettings::BAUDR_500000:
+#ifdef B500000
     baud = B500000;
+#else
+    baud = (speed_t)500000;
+#endif
     break;
   case QPortSettings::BAUDR_576000:
+#ifdef B576000
     baud = B576000;
+#else
+    baud = (speed_t)576000;
+#endif
     break;
   case QPortSettings::BAUDR_921600:
+#ifdef B921600
     baud = B921600;
-    break;
+#else
+    baud = (speed_t)921600;
 #endif
+    break;
   default:
     qWarning() << "TermiosHelper::setBaudRate(" << baudRate << "): " \
                   "Unsupported baud rate";
   }
+
+//#ifdef Q_OS_MAC
+//  if ( ioctl( fileDescriptor_, IOSSIOSPEED, &baud ) == -1 )
+//          {
+//      qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
+//                   .arg(fileDescriptor_)
+//                   .arg(strerror(errno))
+//                   .arg(errno);
+//              return false;
+//          }
+//#else
 
   if ( cfsetspeed(currentAttrs_, baud) == -1 ) {
     qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
@@ -304,6 +333,7 @@ void TermiosHelper::setBaudRate(QPortSettings::BaudRate baudRate)
                  .arg(strerror(errno))
                  .arg(errno);
   }
+//#endif
 }
 
 /*!
