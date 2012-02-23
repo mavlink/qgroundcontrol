@@ -2,6 +2,7 @@
 
 GLOverlayGeode::GLOverlayGeode()
  : mDrawable(new GLOverlayDrawable)
+ , mMessageTimestamp(0.0)
 {
     addDrawable(mDrawable);
 }
@@ -19,6 +20,18 @@ px::GLOverlay::CoordinateFrameType
 GLOverlayGeode::coordinateFrameType(void) const
 {
     return mCoordinateFrameType;
+}
+
+void
+GLOverlayGeode::setMessageTimestamp(qreal timestamp)
+{
+    mMessageTimestamp = timestamp;
+}
+
+qreal
+GLOverlayGeode::messageTimestamp(void) const
+{
+    return mMessageTimestamp;
 }
 
 GLOverlayGeode::GLOverlayDrawable::GLOverlayDrawable()
