@@ -363,9 +363,7 @@ HEADERS += src/MG.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
     src/ui/QGCPluginHost.h \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h \
-    src/ui/map3D/TerrainParamDialog.h \
-    src/ui/map3D/GLOverlayGeode.h
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -392,14 +390,16 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Texture.h \
         src/ui/map3D/Imagery.h \
         src/ui/map3D/HUDScaleGeode.h \
-        src/ui/map3D/WaypointGroupNode.h
+        src/ui/map3D/WaypointGroupNode.h \
+        src/ui/map3D/TerrainParamDialog.h
 }
 contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including headers for Protocol Buffers")
 
     # Enable only if protobuf is available
     HEADERS += thirdParty/mavlink/include/pixhawk/pixhawk.pb.h \
-               src/ui/map3D/ObstacleGroupNode.h
+               src/ui/map3D/ObstacleGroupNode.h \
+                src/ui/map3D/GLOverlayGeode.h
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
@@ -505,9 +505,7 @@ SOURCES += src/main.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc \
-    src/ui/map3D/TerrainParamDialog.cc \
-    src/ui/map3D/GLOverlayGeode.cc
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -536,7 +534,9 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Texture.cc \
         src/ui/map3D/Imagery.cc \
         src/ui/map3D/HUDScaleGeode.cc \
-        src/ui/map3D/WaypointGroupNode.cc
+        src/ui/map3D/WaypointGroupNode.cc \
+		src/ui/map3D/TerrainParamDialog.cc
+
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including sources for osgEarth")
         
@@ -549,7 +549,8 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
 
     # Enable only if protobuf is available
     SOURCES += thirdParty/mavlink/src/pixhawk/pixhawk.pb.cc \
-               src/ui/map3D/ObstacleGroupNode.cc
+               src/ui/map3D/ObstacleGroupNode.cc \
+               src/ui/map3D/GLOverlayGeode.cc
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including sources for libfreenect")
