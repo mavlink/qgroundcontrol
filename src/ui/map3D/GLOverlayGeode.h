@@ -28,7 +28,7 @@ private:
 
         virtual void drawImplementation(osg::RenderInfo&) const;
 
-        osg::BoundingBox computeBound() const;
+        virtual osg::BoundingBox computeBound() const;
 
     private:
         float getFloatValue(const std::string& data, size_t& mark) const;
@@ -37,7 +37,7 @@ private:
         osg::BoundingBox mBBox;
     };
 
-    GLOverlayDrawable mDrawable;
+    osg::ref_ptr<GLOverlayDrawable> mDrawable;
     px::GLOverlay::CoordinateFrameType mCoordinateFrameType;
 };
 
