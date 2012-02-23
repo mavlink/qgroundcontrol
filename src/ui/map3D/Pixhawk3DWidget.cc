@@ -563,7 +563,8 @@ Pixhawk3DWidget::addOverlay(UASInterface *uas)
 
     SystemContainer& systemData = mSystemContainerMap[systemId];
 
-    px::GLOverlay overlay = uas->getOverlay();
+    qreal receivedTimestamp;
+    px::GLOverlay overlay = uas->getOverlay(receivedTimestamp);
 
     QString overlayName = QString::fromStdString(overlay.name());
 
@@ -580,7 +581,9 @@ Pixhawk3DWidget::addOverlay(UASInterface *uas)
         emit overlayCreatedSignal(systemId, overlayName);
     }
 
-    systemData.overlayNodeMap()[overlayName]->setOverlay(overlay);
+    osg::ref_ptr<GLOverlayGeode>& overlayNode = systemData.overlayNodeMap()[overlayName];
+    overlayNode->setOverlay(overlay);
+    overlayNode->setMessageTimestamp(receivedTimestamp);
 }
 #endif
 
@@ -953,11 +956,15 @@ Pixhawk3DWidget::update(void)
             bool displayOverlay = systemViewParams->displayOverlay().value(itOverlay.key());
 
             bool visible;
-            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::GLOBAL) && displayOverlay;
+            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::GLOBAL) &&
+                      displayOverlay &&
+                      (QGC::groundTimeSeconds() - overlayNode->messageTimestamp() < kMessageTimeout);
 
             allocentricMap->setChildValue(overlayNode, visible);
 
-            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::LOCAL) && displayOverlay;
+            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::LOCAL) &&
+                      displayOverlay &&
+                      (QGC::groundTimeSeconds() - overlayNode->messageTimestamp() < kMessageTimeout);;
 
             rollingMap->setChildValue(overlayNode, visible);
         }

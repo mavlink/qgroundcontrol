@@ -3,6 +3,7 @@
 
 #include <mavlink_protobuf_manager.hpp>
 #include <osg/Geode>
+#include <QtGlobal>
 
 class GLOverlayGeode : public osg::Geode
 {
@@ -12,6 +13,9 @@ public:
     void setOverlay(px::GLOverlay& overlay);
 
     px::GLOverlay::CoordinateFrameType coordinateFrameType(void) const;
+
+    void setMessageTimestamp(qreal timestamp);
+    qreal messageTimestamp(void) const;
 
 private:
     class GLOverlayDrawable : public osg::Drawable
@@ -39,6 +43,7 @@ private:
 
     osg::ref_ptr<GLOverlayDrawable> mDrawable;
     px::GLOverlay::CoordinateFrameType mCoordinateFrameType;
+    qreal mMessageTimestamp;
 };
 
 #endif // GLOVERLAYGEODE_H
