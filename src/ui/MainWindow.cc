@@ -1211,23 +1211,24 @@ void MainWindow::UASCreated(UASInterface* uas)
 
         QIcon icon;
         // Set matching icon
-        switch (uas->getSystemType()) {
-        case 0:
+        switch (uas->getSystemType())
+		{
+        case MAV_TYPE_GENERIC:
             icon = QIcon(":/images/mavs/generic.svg");
             break;
-        case 1:
+        case MAV_TYPE_FIXED_WING:
             icon = QIcon(":/images/mavs/fixed-wing.svg");
             break;
-        case 2:
+        case MAV_TYPE_QUADROTOR:
             icon = QIcon(":/images/mavs/quadrotor.svg");
             break;
-        case 3:
+        case MAV_TYPE_COAXIAL:
             icon = QIcon(":/images/mavs/coaxial.svg");
             break;
-        case 4:
+        case MAV_TYPE_HELICOPTER:
             icon = QIcon(":/images/mavs/helicopter.svg");
             break;
-        case 5:
+        case MAV_TYPE_GCS:
             icon = QIcon(":/images/mavs/groundstation.svg");
             break;
         default:
