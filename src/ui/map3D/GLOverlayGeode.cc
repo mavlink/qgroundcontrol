@@ -1,15 +1,16 @@
 #include "GLOverlayGeode.h"
 
 GLOverlayGeode::GLOverlayGeode()
- : mDrawable()
+ : mDrawable(new GLOverlayDrawable)
 {
-
+    addDrawable(mDrawable);
 }
 
 void
 GLOverlayGeode::setOverlay(px::GLOverlay &overlay)
 {
-    mDrawable.setOverlay(overlay);
+    mDrawable->setOverlay(overlay);
+    mCoordinateFrameType = overlay.coordinateframetype();
 
     dirtyBound();
 }
@@ -135,6 +136,9 @@ GLOverlayGeode::GLOverlayDrawable::drawImplementation(osg::RenderInfo&) const
     }
 
     glPushMatrix();
+
+    glScalef(-1.0f, 1.0f, 1.0f);
+    glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
 
     const std::string& data = mOverlay.data();
 
