@@ -24,21 +24,9 @@ public:
 	 , kExtendedHeaderSize(MAVLINK_EXTENDED_HEADER_LEN)
 	 , kExtendedPayloadMaxSize(MAVLINK_MAX_EXTENDED_PAYLOAD_LEN)
 	{
-		// register PointCloudXYZI
+		// register GLOverlay
 		{
-			std::tr1::shared_ptr<px::PointCloudXYZI> msg(new px::PointCloudXYZI);
-			registerType(msg);
-		}
-
-		// register PointCloudXYZRGB
-		{
-			std::tr1::shared_ptr<px::PointCloudXYZRGB> msg(new px::PointCloudXYZRGB);
-			registerType(msg);
-		}
-
-		// register RGBDImage
-		{
-			std::tr1::shared_ptr<px::RGBDImage> msg(new px::RGBDImage);
+			std::tr1::shared_ptr<px::GLOverlay> msg(new px::GLOverlay);
 			registerType(msg);
 		}
 
@@ -58,6 +46,24 @@ public:
 		{
 			std::tr1::shared_ptr<px::Path> msg(new px::Path);
                         registerType(msg);
+		}
+
+		// register PointCloudXYZI
+		{
+			std::tr1::shared_ptr<px::PointCloudXYZI> msg(new px::PointCloudXYZI);
+			registerType(msg);
+		}
+
+		// register PointCloudXYZRGB
+		{
+			std::tr1::shared_ptr<px::PointCloudXYZRGB> msg(new px::PointCloudXYZRGB);
+			registerType(msg);
+		}
+
+		// register RGBDImage
+		{
+			std::tr1::shared_ptr<px::RGBDImage> msg(new px::RGBDImage);
+			registerType(msg);
 		}
 
 		srand(time(NULL));

@@ -10,6 +10,7 @@
 #include "WaypointGroupNode.h"
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+#include "GLOverlayGeode.h"
 #include "ObstacleGroupNode.h"
 #endif
 
@@ -37,6 +38,7 @@ public:
     osg::ref_ptr<WaypointGroupNode>& waypointGroupNode(void);
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     osg::ref_ptr<ObstacleGroupNode>& obstacleGroupNode(void);
+    QMap<QString,osg::ref_ptr<GLOverlayGeode> >& overlayNodeMap(void);
     osg::ref_ptr<osg::Geode>& plannedPathNode(void);
 #endif
 
@@ -62,6 +64,7 @@ private:
     osg::ref_ptr<WaypointGroupNode> mWaypointGroupNode;
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     osg::ref_ptr<ObstacleGroupNode> mObstacleGroupNode;
+    QMap<QString,osg::ref_ptr<GLOverlayGeode> > mOverlayNodeMap;
     osg::ref_ptr<osg::Geode> mPlannedPathNode;
 #endif
 };

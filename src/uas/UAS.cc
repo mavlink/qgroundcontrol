@@ -76,10 +76,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     yaw(0.0),
     statusTimeout(new QTimer(this)),
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    receivedPointCloudTimestamp(0.0),
-    receivedRGBDImageTimestamp(0.0),
+    receivedOverlayTimestamp(0.0),
     receivedObstacleListTimestamp(0.0),
     receivedPathTimestamp(0.0),
+    receivedPointCloudTimestamp(0.0),
+    receivedRGBDImageTimestamp(0.0),
     #endif
     paramsOnceRequested(false),
     airframe(QGC_AIRFRAME_EASYSTAR),
@@ -1125,21 +1126,13 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
     }
 
 #ifdef QGC_USE_PIXHAWK_MESSAGES
-    if (message->GetTypeName() == pointCloud.GetTypeName())
+    if (message->GetTypeName() == overlay.GetTypeName())
     {
-        receivedPointCloudTimestamp = QGC::groundTimeSeconds();
-        pointCloudMutex.lock();
-        pointCloud.CopyFrom(*message);
-        pointCloudMutex.unlock();
-        emit pointCloudChanged(this);
-    }
-    else if (message->GetTypeName() == rgbdImage.GetTypeName())
-    {
-        receivedRGBDImageTimestamp = QGC::groundTimeSeconds();
-        rgbdImageMutex.lock();
-        rgbdImage.CopyFrom(*message);
-        rgbdImageMutex.unlock();
-        emit rgbdImageChanged(this);
+        receivedOverlayTimestamp = QGC::groundTimeSeconds();
+        overlayMutex.lock();
+        overlay.CopyFrom(*message);
+        overlayMutex.unlock();
+        emit overlayChanged(this);
     }
     else if (message->GetTypeName() == obstacleList.GetTypeName())
     {
@@ -1156,6 +1149,22 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
         path.CopyFrom(*message);
         pathMutex.unlock();
         emit pathChanged(this);
+    }
+    else if (message->GetTypeName() == pointCloud.GetTypeName())
+    {
+        receivedPointCloudTimestamp = QGC::groundTimeSeconds();
+        pointCloudMutex.lock();
+        pointCloud.CopyFrom(*message);
+        pointCloudMutex.unlock();
+        emit pointCloudChanged(this);
+    }
+    else if (message->GetTypeName() == rgbdImage.GetTypeName())
+    {
+        receivedRGBDImageTimestamp = QGC::groundTimeSeconds();
+        rgbdImageMutex.lock();
+        rgbdImage.CopyFrom(*message);
+        rgbdImageMutex.unlock();
+        emit rgbdImageChanged(this);
     }
 #endif
 }
@@ -2329,9 +2338,7 @@ void UAS::shutdown()
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 1, 0, 0, yaw, x, y, z);
-    sendMessage(msg);
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 0, 1, 0, yaw, x, y, z);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_PATHPLANNING, 1, 1, 1, 0, yaw, x, y, z);
     sendMessage(msg);
 }
 

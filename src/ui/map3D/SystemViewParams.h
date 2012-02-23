@@ -1,6 +1,7 @@
 #ifndef SYSTEMVIEWPARAMS_H
 #define SYSTEMVIEWPARAMS_H
 
+#include <QMap>
 #include <QObject>
 #include <QSharedPointer>
 #include <QVector>
@@ -20,6 +21,9 @@ public:
 
     bool& displayObstacleList(void);
     bool displayObstacleList(void) const;
+
+    QMap<QString,bool>& displayOverlay(void);
+    QMap<QString,bool> displayOverlay(void) const;
 
     bool& displayPlannedPath(void);
     bool displayPlannedPath(void) const;
@@ -57,6 +61,7 @@ public slots:
     void toggleColorPointCloud(int state);
     void toggleLocalGrid(int state);
     void toggleObstacleList(int state);
+    void toggleOverlay(const QString& name);
     void togglePlannedPath(int state);
     void togglePointCloud(int state);
     void toggleRGBD(int state);
@@ -74,6 +79,7 @@ private:
     bool mColorPointCloudByDistance;
     bool mDisplayLocalGrid;
     bool mDisplayObstacleList;
+    QMap<QString,bool> mDisplayOverlay;
     bool mDisplayPlannedPath;
     bool mDisplayPointCloud;
     bool mDisplayRGBD;
