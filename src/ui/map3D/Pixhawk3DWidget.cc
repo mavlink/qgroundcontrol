@@ -139,6 +139,10 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
             this, SLOT(attitudeChanged(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)),
             this, SLOT(setpointChanged(int,float,float,float,float)));
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+    connect(uas, SIGNAL(overlayChanged(UASInterface*)),
+            this, SLOT(addOverlay(UASInterface*)));
+#endif
 
     initializeSystem(systemId, uas->getColor());
 
@@ -546,6 +550,40 @@ Pixhawk3DWidget::loadTerrainModel(void)
     }
 }
 
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+void
+Pixhawk3DWidget::addOverlay(UASInterface *uas)
+{
+    int systemId = uas->getUASID();
+
+    if (!mSystemContainerMap.contains(systemId))
+    {
+        return;
+    }
+
+    SystemContainer& systemData = mSystemContainerMap[systemId];
+
+    px::GLOverlay overlay = uas->getOverlay();
+
+    QString overlayName = QString::fromStdString(overlay.name());
+
+    osg::ref_ptr<SystemGroupNode>& systemNode = m3DWidget->systemGroup(systemId);
+
+    if (!systemData.overlayNodeMap().contains(overlayName))
+    {
+        osg::ref_ptr<GLOverlayGeode> overlayNode = new GLOverlayGeode;
+        systemData.overlayNodeMap().insert(overlayName, overlayNode);
+
+        systemNode->allocentricMap()->addChild(overlayNode, false);
+        systemNode->rollingMap()->addChild(overlayNode, false);
+
+        emit overlayCreatedSignal(systemId, overlayName);
+    }
+
+    systemData.overlayNodeMap()[overlayName]->setOverlay(overlay);
+}
+#endif
+
 void
 Pixhawk3DWidget::selectTargetHeading(void)
 {
@@ -904,6 +942,26 @@ Pixhawk3DWidget::update(void)
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
         rollingMap->setChildValue(systemData.obstacleGroupNode(),
                                   systemViewParams->displayObstacleList());
+
+        QMutableMapIterator<QString, osg::ref_ptr<GLOverlayGeode> > itOverlay(systemData.overlayNodeMap());
+        while (itOverlay.hasNext())
+        {
+            itOverlay.next();
+
+            osg::ref_ptr<GLOverlayGeode>& overlayNode = itOverlay.value();
+
+            bool displayOverlay = systemViewParams->displayOverlay().value(itOverlay.key());
+
+            bool visible;
+            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::GLOBAL) && displayOverlay;
+
+            allocentricMap->setChildValue(overlayNode, visible);
+
+            visible = (overlayNode->coordinateFrameType() == px::GLOverlay::LOCAL) && displayOverlay;
+
+            rollingMap->setChildValue(overlayNode, visible);
+        }
+
         rollingMap->setChildValue(systemData.plannedPathNode(),
                                   systemViewParams->displayPlannedPath());
 
