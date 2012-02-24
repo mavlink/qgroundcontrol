@@ -1,0 +1,19 @@
+A more detailed version of this quickstart is available at:
+
+http://qgroundcontrol.org/dev/mavlink_linux_integration_tutorial
+
+MAVLINK UDP QUICKSTART INSTRUCTIONS
+===================================
+
+MAVLink UDP Example for *nix system (Linux, MacOS, BSD, etc.)
+
+To compile with GCC, just enter:
+
+gcc -I ../../include/common -o mavlink_udp mavlink_udp.c
+
+To run, type:
+
+./mavlink_udp
+
+
+If you run QGroundControl on the same machine, a MAV should pop up.
