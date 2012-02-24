@@ -54,6 +54,18 @@ SystemViewParams::displayObstacleList(void) const
     return mDisplayObstacleList;
 }
 
+QMap<QString,bool>&
+SystemViewParams::displayOverlay(void)
+{
+    return mDisplayOverlay;
+}
+
+QMap<QString,bool>
+SystemViewParams::displayOverlay(void) const
+{
+    return mDisplayOverlay;
+}
+
 bool&
 SystemViewParams::displayPlannedPath(void)
 {
@@ -225,6 +237,17 @@ SystemViewParams::toggleObstacleList(int state)
     {
         mDisplayObstacleList = false;
     }
+}
+
+void
+SystemViewParams::toggleOverlay(const QString& name)
+{
+    if (!mDisplayOverlay.contains(name))
+    {
+        return;
+    }
+
+    mDisplayOverlay[name] = !mDisplayOverlay[name];
 }
 
 void

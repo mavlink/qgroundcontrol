@@ -137,26 +137,15 @@ public:
     bool getSelected() const;
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    px::PointCloudXYZRGB getPointCloud() {
-        QMutexLocker locker(&pointCloudMutex);
-        return pointCloud;
+    px::GLOverlay getOverlay() {
+        QMutexLocker locker(&overlayMutex);
+        return overlay;
     }
 
-    px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) {
-        receivedTimestamp = receivedPointCloudTimestamp;
-        QMutexLocker locker(&pointCloudMutex);
-        return pointCloud;
-    }
-
-    px::RGBDImage getRGBDImage() {
-        QMutexLocker locker(&rgbdImageMutex);
-        return rgbdImage;
-    }
-
-    px::RGBDImage getRGBDImage(qreal& receivedTimestamp) {
-        receivedTimestamp = receivedRGBDImageTimestamp;
-        QMutexLocker locker(&rgbdImageMutex);
-        return rgbdImage;
+    px::GLOverlay getOverlay(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedOverlayTimestamp;
+        QMutexLocker locker(&overlayMutex);
+        return overlay;
     }
 
     px::ObstacleList getObstacleList() {
@@ -179,6 +168,28 @@ public:
         receivedTimestamp = receivedPathTimestamp;
         QMutexLocker locker(&pathMutex);
         return path;
+    }
+
+    px::PointCloudXYZRGB getPointCloud() {
+        QMutexLocker locker(&pointCloudMutex);
+        return pointCloud;
+    }
+
+    px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedPointCloudTimestamp;
+        QMutexLocker locker(&pointCloudMutex);
+        return pointCloud;
+    }
+
+    px::RGBDImage getRGBDImage() {
+        QMutexLocker locker(&rgbdImageMutex);
+        return rgbdImage;
+    }
+
+    px::RGBDImage getRGBDImage(qreal& receivedTimestamp) {
+        receivedTimestamp = receivedRGBDImageTimestamp;
+        QMutexLocker locker(&rgbdImageMutex);
+        return rgbdImage;
     }
 #endif
 
@@ -270,13 +281,9 @@ protected: //COMMENTS FOR TEST UNIT
     quint64 imageStart;
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    px::PointCloudXYZRGB pointCloud;
-    QMutex pointCloudMutex;
-    qreal receivedPointCloudTimestamp;
-
-    px::RGBDImage rgbdImage;
-    QMutex rgbdImageMutex;
-    qreal receivedRGBDImageTimestamp;
+    px::GLOverlay overlay;
+    QMutex overlayMutex;
+    qreal receivedOverlayTimestamp;
 
     px::ObstacleList obstacleList;
     QMutex obstacleListMutex;
@@ -285,6 +292,14 @@ protected: //COMMENTS FOR TEST UNIT
     px::Path path;
     QMutex pathMutex;
     qreal receivedPathTimestamp;
+
+    px::PointCloudXYZRGB pointCloud;
+    QMutex pointCloudMutex;
+    qreal receivedPointCloudTimestamp;
+
+    px::RGBDImage rgbdImage;
+    QMutex rgbdImageMutex;
+    qreal receivedRGBDImageTimestamp;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
@@ -616,16 +631,6 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    /** @brief Point cloud data has been changed */
-    void pointCloudChanged(UASInterface* uas);
-    /** @brief RGBD image data has been changed */
-    void rgbdImageChanged(UASInterface* uas);
-    /** @brief Obstacle list data has been changed */
-    void obstacleListChanged(UASInterface* uas);
-    /** @brief Path data has been changed */
-    void pathChanged(UASInterface* uas);
-#endif
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 

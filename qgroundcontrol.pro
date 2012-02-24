@@ -20,7 +20,7 @@
 
 # Qt configuration
 CONFIG += qt \
-	thread
+    thread
 QT += network \
     opengl \
     svg \
@@ -33,14 +33,14 @@ TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
-debug {
-    TARGETDIR = $${OUT_PWD}/debug
-    BUILDDIR = $${OUT_PWD}/build-debug
-}
-release {
-    TARGETDIR = $${OUT_PWD}/release
-    BUILDDIR = $${OUT_PWD}/build-release
-}
+    debug {
+        TARGETDIR = $${OUT_PWD}/debug
+        BUILDDIR = $${OUT_PWD}/build-debug
+    }
+    release {
+        TARGETDIR = $${OUT_PWD}/release
+        BUILDDIR = $${OUT_PWD}/build-release
+    }
 } else {
     TARGETDIR = $${OUT_PWD}
     BUILDDIR = $${OUT_PWD}/build
@@ -55,12 +55,12 @@ MAVLINKPATH = $$BASEDIR/thirdParty/mavlink/include
 DEFINES += MAVLINK_NO_DATA
 
 win32 {
-QMAKE_INCDIR_QT = $$(QTDIR)/include
-QMAKE_LIBDIR_QT = $$(QTDIR)/lib
-QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
-QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
-QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
-QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
+    QMAKE_INCDIR_QT = $$(QTDIR)/include
+    QMAKE_LIBDIR_QT = $$(QTDIR)/lib
+    QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
+    QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
+    QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
+    QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
 }
 
 
@@ -391,14 +391,15 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Imagery.h \
         src/ui/map3D/HUDScaleGeode.h \
         src/ui/map3D/WaypointGroupNode.h \
-		src/ui/map3D/TerrainParamDialog.h
+        src/ui/map3D/TerrainParamDialog.h
 }
 contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
     message("Including headers for Protocol Buffers")
 
     # Enable only if protobuf is available
     HEADERS += thirdParty/mavlink/include/pixhawk/pixhawk.pb.h \
-               src/ui/map3D/ObstacleGroupNode.h
+        src/ui/map3D/ObstacleGroupNode.h \
+        src/ui/map3D/GLOverlayGeode.h
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
@@ -534,7 +535,8 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Imagery.cc \
         src/ui/map3D/HUDScaleGeode.cc \
         src/ui/map3D/WaypointGroupNode.cc \
-		src/ui/map3D/TerrainParamDialog.cc
+        src/ui/map3D/TerrainParamDialog.cc
+
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including sources for osgEarth")
         
@@ -547,7 +549,8 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
 
     # Enable only if protobuf is available
     SOURCES += thirdParty/mavlink/src/pixhawk/pixhawk.pb.cc \
-               src/ui/map3D/ObstacleGroupNode.cc
+        src/ui/map3D/ObstacleGroupNode.cc \
+        src/ui/map3D/GLOverlayGeode.cc
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including sources for libfreenect")
@@ -585,19 +588,18 @@ TRANSLATIONS += es-MX.ts \
 
 # xbee support
 # libxbee only supported by linux and windows systems
-win32-msvc2008|win32-msvc2010|linux{
+win32-msvc2008|win32-msvc2010|linux {
     HEADERS += src/comm/XbeeLinkInterface.h \
-	src/comm/XbeeLink.h \
-	src/comm/HexSpinBox.h \
-	src/ui/XbeeConfigurationWindow.h \
-	src/comm/CallConv.h
+        src/comm/XbeeLink.h \
+        src/comm/HexSpinBox.h \
+        src/ui/XbeeConfigurationWindow.h \
+        src/comm/CallConv.h
     SOURCES += src/comm/XbeeLink.cpp \
-	src/comm/HexSpinBox.cpp \
-	src/ui/XbeeConfigurationWindow.cpp
+        src/comm/HexSpinBox.cpp \
+        src/ui/XbeeConfigurationWindow.cpp
     DEFINES += XBEELINK
     INCLUDEPATH += thirdParty/libxbee
-# TO DO: build library when it does not exists already
+# TO DO: build library when it does not exist already
     LIBS += -LthirdParty/libxbee/lib \
-	-llibxbee
-
+        -llibxbee
 }
