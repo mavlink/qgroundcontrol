@@ -75,6 +75,8 @@ public:
     const QString& getShortMode() const;
     /** @brief Translate from mode id to text */
     static QString getShortModeTextFor(int id);
+    /** @brief Translate from mode id to audio text */
+    static QString getAudioModeTextFor(int id);
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
@@ -211,6 +213,9 @@ protected: //COMMENTS FOR TEST UNIT
     float fullVoltage;          ///< Voltage of the fully charged battery (100%)
     float emptyVoltage;         ///< Voltage of the empty battery (0%)
     float startVoltage;         ///< Voltage at system start
+    float tickVoltage;          ///< Voltage where 0.1 V ticks are told
+    float lastTickVoltageValue; ///< The last voltage where a tick was announced
+    float tickLowpassVoltage;   ///< Lowpass-filtered voltage for the tick announcement
     float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
     float warnLevelPercent;     ///< Warning level, in percent
     double currentVoltage;      ///< Voltage currently measured

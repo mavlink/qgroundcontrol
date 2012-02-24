@@ -43,10 +43,13 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     waypointManager(this),
     thrustSum(0),
     thrustMax(10),
-    startVoltage(0),
+    startVoltage(-1.0f),
+    tickVoltage(10.5f),
+    lastTickVoltageValue(13.0f),
+    tickLowpassVoltage(12.0f),
     warnVoltage(9.5f),
     warnLevelPercent(20.0f),
-    currentVoltage(12.0f),
+    currentVoltage(12.6f),
     lpVoltage(12.0f),
     batteryRemainingEstimateEnabled(true),
     mode(-1),
@@ -333,15 +336,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
 
-            QString audiostring = "System " + getUASName();
+            QString audiostring = QString("System %1").arg(uasId);
             QString stateAudio = "";
             QString modeAudio = "";
             QString navModeAudio = "";
             bool statechanged = false;
             bool modechanged = false;
 
+            QString audiomodeText = getAudioModeTextFor(static_cast<int>(state.base_mode));
 
-            if (state.system_status != this->status)
+
+            if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
             {
                 statechanged = true;
                 this->status = state.system_status;
@@ -362,7 +367,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 emit modeChanged(this->getUASID(), shortModeText, "");
 
-                modeAudio = " is now in " + shortModeText;
+                modeAudio = " is now in " + audiomodeText;
             }
 
             if (navMode != state.custom_mode)
@@ -414,7 +419,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 			emit valueChanged(uasId, name.arg("errors_count1"), "-", state.errors_count1, time);
 			emit valueChanged(uasId, name.arg("errors_count2"), "-", state.errors_count2, time);
 			emit valueChanged(uasId, name.arg("errors_count3"), "-", state.errors_count3, time);
-			emit valueChanged(uasId, name.arg("errors_count4"), "-", state.errors_count4, time);
+            emit valueChanged(uasId, name.arg("errors_count4"), "-", state.errors_count4, time);
 
 			// Process CPU load.
             emit loadChanged(this,state.load/10.0f);
@@ -423,8 +428,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 			// Battery charge/time remaining/voltage calculations
             currentVoltage = state.voltage_battery/1000.0f;
             lpVoltage = filterVoltage(currentVoltage);
+            tickLowpassVoltage = tickLowpassVoltage*0.8f + 0.2f*currentVoltage;
 
-            if (startVoltage == 0) startVoltage = currentVoltage;
+            // We don't want to tick above the threshold
+            if (tickLowpassVoltage > tickVoltage)
+            {
+                lastTickVoltageValue = tickLowpassVoltage;
+            }
+
+            if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
+                    && (lpVoltage < tickVoltage))
+            {
+                GAudioOutput::instance()->say(QString("voltage warning: %1 volt").arg(lpVoltage, 2));
+                lastTickVoltageValue = tickLowpassVoltage;
+            }
+
+            if (startVoltage == -1.0f && currentVoltage > 0.1f) startVoltage = currentVoltage;
             timeRemaining = calculateTimeRemaining();
             if (!batteryRemainingEstimateEnabled && chargeLevel != -1)
             {
@@ -442,7 +461,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 			}
 
             // LOW BATTERY ALARM
-            if (lpVoltage < warnVoltage)
+            if (lpVoltage < warnVoltage && (startVoltage > 0.0f))
             {
                 startLowBattAlarm();
             }
@@ -450,6 +469,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 stopLowBattAlarm();
             }
+
+            qDebug() << "START" << startVoltage;
 
 
             // control_sensors_enabled:
@@ -2355,6 +2376,45 @@ QString UAS::getUASName(void) const
 const QString& UAS::getShortState() const
 {
     return shortStateText;
+}
+
+QString UAS::getAudioModeTextFor(int id)
+{
+    QString mode;
+    uint8_t modeid = id;
+
+    // BASE MODE DECODING
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO)
+    {
+        mode += "autonomous";
+    }
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
+    {
+        mode += "guided";
+    }
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
+    {
+        mode += "manual";
+    }
+
+    if (modeid != 0)
+    {
+        mode += " mode";
+    }
+
+    // ARMED STATE DECODING
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
+    {
+        mode.append(" and armed");
+    }
+
+    // HARDWARE IN THE LOOP DECODING
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_HIL)
+    {
+        mode.append(" using hardware in the loop simulation");
+    }
+
+    return mode;
 }
 
 QString UAS::getShortModeTextFor(int id)

@@ -33,39 +33,39 @@ namespace TNX {
 */
 
 TermiosHelper::TermiosHelper(int fileDescriptor)
-  : fileDescriptor_(fileDescriptor), originalAttrs_(NULL), currentAttrs_(NULL)
+    : fileDescriptor_(fileDescriptor), originalAttrs_(NULL), currentAttrs_(NULL)
 {
-  Q_ASSERT(fileDescriptor_ > 0);
+    Q_ASSERT(fileDescriptor_ > 0);
 
-  originalAttrs_ = new termios();
-  currentAttrs_ = new termios();
+    originalAttrs_ = new termios();
+    currentAttrs_ = new termios();
 
-  // save the current serial port attributes
-  // see restoreTermios()
+    // save the current serial port attributes
+    // see restoreTermios()
 
-  saveTermios();
+    saveTermios();
 
-  // clone the original attributes
+    // clone the original attributes
 
-  *currentAttrs_ = *originalAttrs_;
+    *currentAttrs_ = *originalAttrs_;
 
-  // initialize port attributes for serial port communication
+    // initialize port attributes for serial port communication
 
-  initTermios();
+    initTermios();
 }
 
 
 TermiosHelper::~TermiosHelper()
 {
-  // It is good practice to reset a serial port back to the state in
-  // which you found it. This is why we saved the original termios struct
-  // The constant TCSANOW (defined in termios.h) indicates that
-  // the change should take effect immediately.
+    // It is good practice to reset a serial port back to the state in
+    // which you found it. This is why we saved the original termios struct
+    // The constant TCSANOW (defined in termios.h) indicates that
+    // the change should take effect immediately.
 
-  restoreTermios();
+    restoreTermios();
 
-  delete originalAttrs_;
-  delete currentAttrs_;
+    delete originalAttrs_;
+    delete currentAttrs_;
 }
 
 /*!
@@ -74,18 +74,18 @@ TermiosHelper::~TermiosHelper()
 
 bool TermiosHelper::applyChanges(ChangeApplyTypes /*apptype*/)
 {
-  // there is only termios structure to be applied for posix compatible platforms
+    // there is only termios structure to be applied for posix compatible platforms
 
-  if ( tcsetattr(fileDescriptor_, TCSANOW, currentAttrs_) == -1 ) {
-    qCritical() << QString("TermiosHelper::applyChanges(file: %1, applyType: %2) failed " \
-                           "when setting new attributes: %3(%4)")
-                 .arg(fileDescriptor_)
-                 .arg(TCSANOW)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return false;
-  }
-  return true;
+    if ( tcsetattr(fileDescriptor_, TCSANOW, currentAttrs_) == -1 ) {
+        qCritical() << QString("TermiosHelper::applyChanges(file: %1, applyType: %2) failed " \
+                               "when setting new attributes: %3(%4)")
+                       .arg(fileDescriptor_)
+                       .arg(TCSANOW)
+                       .arg(strerror(errno))
+                       .arg(errno);
+        return false;
+    }
+    return true;
 }
 
 /*!
@@ -94,33 +94,33 @@ bool TermiosHelper::applyChanges(ChangeApplyTypes /*apptype*/)
 
 bool TermiosHelper::setCtrSignal(ControlSignals csig, bool value)
 {
-  int status;
+    int status;
 
-  if ( ioctl(fileDescriptor_, TIOCMGET, &status) == -1 ) {
-    qCritical() <<  QString("TermiosHelper::setCtrSignal(file: %1, csig: %2) failed" \
-                            "when fetching control signal values : %3(%4)")
-                 .arg(fileDescriptor_)
-                 .arg(csig)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return false;
-  }
+    if ( ioctl(fileDescriptor_, TIOCMGET, &status) == -1 ) {
+        qCritical() <<  QString("TermiosHelper::setCtrSignal(file: %1, csig: %2) failed" \
+                                "when fetching control signal values : %3(%4)")
+                        .arg(fileDescriptor_)
+                        .arg(csig)
+                        .arg(strerror(errno))
+                        .arg(errno);
+        return false;
+    }
 
-  if ( value )
-    status |= (int)csig;
-  else
-    status &= ~((int)csig);
+    if ( value )
+        status |= (int)csig;
+    else
+        status &= ~((int)csig);
 
-  if ( ioctl(fileDescriptor_, TIOCMSET, &status) == -1 ) {
-    qCritical() <<  QString("TermiosHelper::setCtrSignal(file: %1, csig: %2) failed" \
-                            "when setting control signal values : %3(%4)")
-                 .arg(fileDescriptor_)
-                 .arg(csig)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return false;
-  }
-  return true;
+    if ( ioctl(fileDescriptor_, TIOCMSET, &status) == -1 ) {
+        qCritical() <<  QString("TermiosHelper::setCtrSignal(file: %1, csig: %2) failed" \
+                                "when setting control signal values : %3(%4)")
+                        .arg(fileDescriptor_)
+                        .arg(csig)
+                        .arg(strerror(errno))
+                        .arg(errno);
+        return false;
+    }
+    return true;
 }
 
 /*!
@@ -129,19 +129,19 @@ bool TermiosHelper::setCtrSignal(ControlSignals csig, bool value)
 
 QSerialPort::CommSignalValues TermiosHelper::ctrSignal(ControlSignals csig) const
 {
-  int status;
+    int status;
 
-  if ( ioctl(fileDescriptor_, TIOCMGET, &status) == -1 ) {
-    qCritical() <<  QString("TermiosHelper::ctrSignal(file: %1, csig: %2) failed" \
-                            "when fetching control signal values : %3(%4)")
-                 .arg(fileDescriptor_)
-                 .arg(csig)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return QSerialPort::Signal_Unknown;
-  }
+    if ( ioctl(fileDescriptor_, TIOCMGET, &status) == -1 ) {
+        qCritical() <<  QString("TermiosHelper::ctrSignal(file: %1, csig: %2) failed" \
+                                "when fetching control signal values : %3(%4)")
+                        .arg(fileDescriptor_)
+                        .arg(csig)
+                        .arg(strerror(errno))
+                        .arg(errno);
+        return QSerialPort::Signal_Unknown;
+    }
 
-  return (status & ((int)csig)) ? QSerialPort::Signal_On : QSerialPort::Signal_Off;
+    return (status & ((int)csig)) ? QSerialPort::Signal_On : QSerialPort::Signal_Off;
 }
 
 /*!
@@ -150,24 +150,24 @@ QSerialPort::CommSignalValues TermiosHelper::ctrSignal(ControlSignals csig) cons
 
 void TermiosHelper::initTermios()
 {
-  // Set raw input (non-canonical) mode, with reads blocking until either a single character
-  // has been received or a one second timeout expires.
-  // See tcsetattr(4) ("man 4 tcsetattr") and termios(4) ("man 4 termios") for details.
+    // Set raw input (non-canonical) mode, with reads blocking until either a single character
+    // has been received or a one second timeout expires.
+    // See tcsetattr(4) ("man 4 tcsetattr") and termios(4) ("man 4 termios") for details.
 
-  cfmakeraw(currentAttrs_);
+    cfmakeraw(currentAttrs_);
 
-  currentAttrs_->c_cflag |= (CLOCAL | CREAD);
+    currentAttrs_->c_cflag |= (CLOCAL | CREAD);
 
-  // set communication timeouts
+    // set communication timeouts
 
-  currentAttrs_->c_cc[VMIN] = kDefaultNumOfBytes;
+    currentAttrs_->c_cc[VMIN] = kDefaultNumOfBytes;
 
-  // converting ms to one-tenths-of-second (sec * 0.1)
-  currentAttrs_->c_cc[VTIME] = (kDefaultReadTimeout / 100);
+    // converting ms to one-tenths-of-second (sec * 0.1)
+    currentAttrs_->c_cc[VTIME] = (kDefaultReadTimeout / 100);
 
-  // ensure the new attributes take effect immediately
+    // ensure the new attributes take effect immediately
 
-  applyChanges();
+    applyChanges();
 }
 
 /*!
@@ -176,15 +176,15 @@ void TermiosHelper::initTermios()
 
 void TermiosHelper::saveTermios()
 {
-  // get the current serial port attributes
+    // get the current serial port attributes
 
-  if ( tcgetattr(fileDescriptor_, originalAttrs_) == -1 ) {
-    qWarning() << QString("TermiosHelper::saveTermios(file: %1) failed when" \
-                          " getting original port attributes: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-  }
+    if ( tcgetattr(fileDescriptor_, originalAttrs_) == -1 ) {
+        qWarning() << QString("TermiosHelper::saveTermios(file: %1) failed when" \
+                              " getting original port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+    }
 }
 
 /*!
@@ -193,24 +193,24 @@ void TermiosHelper::saveTermios()
 
 void TermiosHelper::restoreTermios()
 {
-  if ( !originalAttrs_ || tcsetattr(fileDescriptor_, TCSANOW, originalAttrs_) == -1 ) {
-    qWarning() << QString("TermiosHelper::restoreTermios(file: %1) failed when resetting " \
-                          "serial port attributes: %2(%3)")
-                  .arg(fileDescriptor_)
-                  .arg(strerror(errno))
-                  .arg(errno);
-  }
+    if ( !originalAttrs_ || tcsetattr(fileDescriptor_, TCSANOW, originalAttrs_) == -1 ) {
+        qWarning() << QString("TermiosHelper::restoreTermios(file: %1) failed when resetting " \
+                              "serial port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+    }
 
-  // Block until all written output has been sent from the device.
-  // Note that this call is simply passed on to the serial device driver.
-  // See tcsendbreak(3) ("man 3 tcsendbreak") for details.
+    // Block until all written output has been sent from the device.
+    // Note that this call is simply passed on to the serial device driver.
+    // See tcsendbreak(3) ("man 3 tcsendbreak") for details.
 
-  if ( tcdrain(fileDescriptor_) == -1 ) {
-    qWarning() << QString("TermiosHelper::restoreTermios(file: %1) failed while waiting for drain: %2(%3)")
-                  .arg(fileDescriptor_)
-                  .arg(strerror(errno))
-                  .arg(errno);
-  }
+    if ( tcdrain(fileDescriptor_) == -1 ) {
+        qWarning() << QString("TermiosHelper::restoreTermios(file: %1) failed while waiting for drain: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+    }
 }
 
 /*!
@@ -219,121 +219,121 @@ void TermiosHelper::restoreTermios()
 
 void TermiosHelper::setBaudRate(QPortSettings::BaudRate baudRate)
 {
-  speed_t baud = B9600;
+    speed_t baud = B9600;
 
-  switch ( baudRate ) {
+    switch ( baudRate ) {
     case QPortSettings::BAUDR_50:
-      baud = B50;
-      break;
+        baud = B50;
+        break;
     case QPortSettings::BAUDR_75:
-      baud = B75;
-      break;
+        baud = B75;
+        break;
     case QPortSettings::BAUDR_110:
-      baud = B110;
-      break;
+        baud = B110;
+        break;
     case QPortSettings::BAUDR_134:
-      baud = B134;
-      break;
+        baud = B134;
+        break;
     case QPortSettings::BAUDR_150:
-      baud = B150;
-      break;
+        baud = B150;
+        break;
     case QPortSettings::BAUDR_200:
-      baud = B200;
-      break;
+        baud = B200;
+        break;
     case QPortSettings::BAUDR_300:
-      baud = B300;
-      break;
+        baud = B300;
+        break;
     case QPortSettings::BAUDR_600:
-      baud = B600;
-      break;
+        baud = B600;
+        break;
     case QPortSettings::BAUDR_1200:
-      baud = B1200;
-      break;
+        baud = B1200;
+        break;
     case QPortSettings::BAUDR_1800:
-      baud = B1800;
-      break;
+        baud = B1800;
+        break;
     case QPortSettings::BAUDR_2400:
-      baud = B2400;
-      break;
+        baud = B2400;
+        break;
     case QPortSettings::BAUDR_4800:
-      baud = B4800;
-      break;
+        baud = B4800;
+        break;
     case QPortSettings::BAUDR_9600:
-      baud = B9600;
-      break;
+        baud = B9600;
+        break;
     case QPortSettings::BAUDR_19200:
-      baud = B19200;
-      break;
+        baud = B19200;
+        break;
     case QPortSettings::BAUDR_38400:
-      baud = B38400;
-      break;
+        baud = B38400;
+        break;
     case QPortSettings::BAUDR_57600:
-      baud = B57600;
-      break;
-    //case QPortSettings::BAUDR_76800:
-    //  baud = B76800;
-    //  break;
+        baud = B57600;
+        break;
+        //case QPortSettings::BAUDR_76800:
+        //  baud = B76800;
+        //  break;
     case QPortSettings::BAUDR_115200:
-      baud = B115200;
-      break;
-  case QPortSettings::BAUDR_230400:
+        baud = B115200;
+        break;
+    case QPortSettings::BAUDR_230400:
 #ifdef B230400
-      baud = B230400;
+        baud = B230400;
 #else
-      baud = (speed_t)230400;
+        baud = (speed_t)230400;
 #endif
-    break;
-  case QPortSettings::BAUDR_460800:
+        break;
+    case QPortSettings::BAUDR_460800:
 #ifdef B460800
-    baud = B460800;
+        baud = B460800;
 #else
-    baud = (speed_t)460800;
+        baud = (speed_t)460800;
 #endif
-    break;
-  case QPortSettings::BAUDR_500000:
+        break;
+    case QPortSettings::BAUDR_500000:
 #ifdef B500000
-    baud = B500000;
+        baud = B500000;
 #else
-    baud = (speed_t)500000;
+        baud = (speed_t)500000;
 #endif
-    break;
-  case QPortSettings::BAUDR_576000:
+        break;
+    case QPortSettings::BAUDR_576000:
 #ifdef B576000
-    baud = B576000;
+        baud = B576000;
 #else
-    baud = (speed_t)576000;
+        baud = (speed_t)576000;
 #endif
-    break;
-  case QPortSettings::BAUDR_921600:
+        break;
+    case QPortSettings::BAUDR_921600:
 #ifdef B921600
-    baud = B921600;
+        baud = B921600;
 #else
-    baud = (speed_t)921600;
+        baud = (speed_t)921600;
 #endif
-    break;
-  default:
-    qWarning() << "TermiosHelper::setBaudRate(" << baudRate << "): " \
-                  "Unsupported baud rate";
-  }
+        break;
+    default:
+        qWarning() << "TermiosHelper::setBaudRate(" << baudRate << "): " \
+                      "Unsupported baud rate";
+    }
 
-//#ifdef Q_OS_MAC
-//  if ( ioctl( fileDescriptor_, IOSSIOSPEED, &baud ) == -1 )
-//          {
-//      qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
-//                   .arg(fileDescriptor_)
-//                   .arg(strerror(errno))
-//                   .arg(errno);
-//              return false;
-//          }
-//#else
+    //#ifdef Q_OS_MAC
+    //  if ( ioctl( fileDescriptor_, IOSSIOSPEED, &baud ) == -1 )
+    //          {
+    //      qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
+    //                   .arg(fileDescriptor_)
+    //                   .arg(strerror(errno))
+    //                   .arg(errno);
+    //              return false;
+    //          }
+    //#else
 
-  if ( cfsetspeed(currentAttrs_, baud) == -1 ) {
-    qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-  }
-//#endif
+    if ( cfsetspeed(currentAttrs_, baud) == -1 ) {
+        qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
+                        .arg(fileDescriptor_)
+                        .arg(strerror(errno))
+                        .arg(errno);
+    }
+    //#endif
 }
 
 /*!
@@ -342,69 +342,73 @@ void TermiosHelper::setBaudRate(QPortSettings::BaudRate baudRate)
 
 QPortSettings::BaudRate TermiosHelper::baudRate() const
 {
-  speed_t ibaud = cfgetispeed(currentAttrs_);
-  speed_t obaud = cfgetospeed(currentAttrs_);
+    speed_t ibaud = cfgetispeed(currentAttrs_);
+    speed_t obaud = cfgetospeed(currentAttrs_);
 
-  (obaud == ibaud);
+    (obaud == ibaud);
 
-  Q_ASSERT(ibaud == obaud);
+    Q_ASSERT(ibaud == obaud);
 
-  switch ( ibaud ) {
+    switch ( ibaud ) {
     case B50:
-      return QPortSettings::BAUDR_50;
+        return QPortSettings::BAUDR_50;
     case B75:
-      return QPortSettings::BAUDR_75;
+        return QPortSettings::BAUDR_75;
     case B110:
-      return QPortSettings::BAUDR_110;
+        return QPortSettings::BAUDR_110;
     case B134:
-      return QPortSettings::BAUDR_134;
+        return QPortSettings::BAUDR_134;
     case B150:
-      return QPortSettings::BAUDR_150;
+        return QPortSettings::BAUDR_150;
     case B200:
-      return QPortSettings::BAUDR_200;
+        return QPortSettings::BAUDR_200;
     case B300:
-      return QPortSettings::BAUDR_300;
+        return QPortSettings::BAUDR_300;
     case B600:
-      return QPortSettings::BAUDR_600;
+        return QPortSettings::BAUDR_600;
     case B1200:
-      return QPortSettings::BAUDR_1200;
+        return QPortSettings::BAUDR_1200;
     case B1800:
-      return QPortSettings::BAUDR_1800;
+        return QPortSettings::BAUDR_1800;
     case B2400:
-      return QPortSettings::BAUDR_2400;
+        return QPortSettings::BAUDR_2400;
     case B4800:
-      return QPortSettings::BAUDR_4800;
+        return QPortSettings::BAUDR_4800;
     case B9600:
-      return QPortSettings::BAUDR_9600;
+        return QPortSettings::BAUDR_9600;
     case B19200:
-      return QPortSettings::BAUDR_19200;
+        return QPortSettings::BAUDR_19200;
     case B38400:
-      return QPortSettings::BAUDR_38400;
+        return QPortSettings::BAUDR_38400;
     case B57600:
-      return QPortSettings::BAUDR_57600;
-    //case B76800:
-    //  return QPortSettings::BAUDR_76800;
+        return QPortSettings::BAUDR_57600;
+        //case B76800:
+        //  return QPortSettings::BAUDR_76800;
     case B115200:
-      return QPortSettings::BAUDR_115200;
-#if defined(Q_OS_LINUX)
+        return QPortSettings::BAUDR_115200;
+#ifdef B230400
     case B230400:
-      return QPortSettings::BAUDR_230400;
-    // the baud rates listed below are not supported by all UARTs
-    // and Linux distros
-    case B460800:
-      return QPortSettings::BAUDR_460800;
-    case B500000:
-      return QPortSettings::BAUDR_500000;
-    case B576000:
-      return QPortSettings::BAUDR_576000;
-    case B921600:
-      return QPortSettings::BAUDR_921600;
+        return QPortSettings::BAUDR_230400;
 #endif
-  default:
-    qWarning() << "TermiosHelper::baudRate(): Unknown baud rate";
-  }
+#ifdef B460800
+    case B460800:
+        return QPortSettings::BAUDR_460800;
+#endif
+#ifdef B921600
+    case B921600:
+        return QPortSettings::BAUDR_921600;
+#endif
+#if defined(Q_OS_LINUX)
+    case B500000:
+        return QPortSettings::BAUDR_500000;
+    case B576000:
+        return QPortSettings::BAUDR_576000;
+#endif
+    default:
+        qWarning() << "TermiosHelper::baudRate(): Unknown baud rate";
+    }
 
-  return QPortSettings::BAUDR_UNKNOWN;
+    return QPortSettings::BAUDR_UNKNOWN;
 }
 
 /*!
@@ -413,29 +417,29 @@ QPortSettings::BaudRate TermiosHelper::baudRate() const
 
 QPortSettings::DataBits TermiosHelper::dataBits() const
 {
-  struct termios options;
+    struct termios options;
 
-  // get the current serial port attributes
+    // get the current serial port attributes
 
-  if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
-    qWarning() << QString("TermiosHelper::dataBits(file: %1) failed when" \
-                          " getting original port attributes: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return QPortSettings::DB_UNKNOWN;
-  }
+    if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
+        qWarning() << QString("TermiosHelper::dataBits(file: %1) failed when" \
+                              " getting original port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+        return QPortSettings::DB_UNKNOWN;
+    }
 
-  if ( (options.c_cflag & CSIZE) == CS5 )
-    return QPortSettings::DB_5;
-  else if ( (options.c_cflag & CSIZE) == CS6 )
-    return QPortSettings::DB_6;
-  else if ( (options.c_cflag & CSIZE) == CS7 )
-    return QPortSettings::DB_7;
-  else if ( (options.c_cflag & CSIZE) == CS8 )
-    return QPortSettings::DB_8;
-  else
-    return QPortSettings::DB_UNKNOWN;
+    if ( (options.c_cflag & CSIZE) == CS5 )
+        return QPortSettings::DB_5;
+    else if ( (options.c_cflag & CSIZE) == CS6 )
+        return QPortSettings::DB_6;
+    else if ( (options.c_cflag & CSIZE) == CS7 )
+        return QPortSettings::DB_7;
+    else if ( (options.c_cflag & CSIZE) == CS8 )
+        return QPortSettings::DB_8;
+    else
+        return QPortSettings::DB_UNKNOWN;
 }
 
 
@@ -444,32 +448,32 @@ QPortSettings::DataBits TermiosHelper::dataBits() const
 */
 void TermiosHelper::setDataBits(QPortSettings::DataBits dataBits)
 {
-  switch( dataBits ) {
+    switch( dataBits ) {
     /*5 data bits*/
     case QPortSettings::DB_5:
-      currentAttrs_->c_cflag &= (~CSIZE);
-      currentAttrs_->c_cflag |= CS5;
-      break;
-    /*6 data bits*/
+        currentAttrs_->c_cflag &= (~CSIZE);
+        currentAttrs_->c_cflag |= CS5;
+        break;
+        /*6 data bits*/
     case QPortSettings::DB_6:
-      currentAttrs_->c_cflag &= (~CSIZE);
-      currentAttrs_->c_cflag |= CS6;
-      break;
-    /*7 data bits*/
+        currentAttrs_->c_cflag &= (~CSIZE);
+        currentAttrs_->c_cflag |= CS6;
+        break;
+        /*7 data bits*/
     case QPortSettings::DB_7:
-      currentAttrs_->c_cflag &= (~CSIZE);
-      currentAttrs_->c_cflag |= CS7;
-      break;
-    /*8 data bits*/
+        currentAttrs_->c_cflag &= (~CSIZE);
+        currentAttrs_->c_cflag |= CS7;
+        break;
+        /*8 data bits*/
     case QPortSettings::DB_8:
-      currentAttrs_->c_cflag &= (~CSIZE);
-      currentAttrs_->c_cflag |= CS8;
-      break;
+        currentAttrs_->c_cflag &= (~CSIZE);
+        currentAttrs_->c_cflag |= CS8;
+        break;
     default:
-      currentAttrs_->c_cflag &= (~CSIZE);
-      currentAttrs_->c_cflag |= CS8;
-      qWarning() << "TermiosHelper::setDataBits(" << dataBits << "): Unsupported data bits";
-  }
+        currentAttrs_->c_cflag &= (~CSIZE);
+        currentAttrs_->c_cflag |= CS8;
+        qWarning() << "TermiosHelper::setDataBits(" << dataBits << "): Unsupported data bits";
+    }
 }
 
 /*!
@@ -478,27 +482,27 @@ void TermiosHelper::setDataBits(QPortSettings::DataBits dataBits)
 
 QPortSettings::Parity TermiosHelper::parity() const
 {
-  struct termios options;
+    struct termios options;
 
-  // get the current serial port attributes
+    // get the current serial port attributes
 
-  if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
-    qWarning() << QString("TermiosHelper::parity(file: %1) failed when getting original " \
-                          "port attributes: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return QPortSettings::PAR_UNKNOWN;
-  }
+    if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
+        qWarning() << QString("TermiosHelper::parity(file: %1) failed when getting original " \
+                              "port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+        return QPortSettings::PAR_UNKNOWN;
+    }
 
-  if ( options.c_cflag & PARENB ) {
-    if ( options.c_cflag & PARODD )
-      return QPortSettings::PAR_ODD;
+    if ( options.c_cflag & PARENB ) {
+        if ( options.c_cflag & PARODD )
+            return QPortSettings::PAR_ODD;
+        else
+            return QPortSettings::PAR_EVEN;
+    }
     else
-      return QPortSettings::PAR_EVEN;
-  }
-  else
-    return QPortSettings::PAR_NONE;
+        return QPortSettings::PAR_NONE;
 }
 
 /*!
@@ -506,24 +510,24 @@ QPortSettings::Parity TermiosHelper::parity() const
 */
 void TermiosHelper::setParity(QPortSettings::Parity parity)
 {
-  switch ( parity ) {
+    switch ( parity ) {
     /*no parity*/
     case QPortSettings::PAR_NONE:
-      currentAttrs_->c_cflag &= (~PARENB);
-      break;
-    /*odd parity*/
+        currentAttrs_->c_cflag &= (~PARENB);
+        break;
+        /*odd parity*/
     case QPortSettings::PAR_ODD:
-      currentAttrs_->c_cflag |= (PARENB|PARODD);
-      break;
-    /*even parity*/
+        currentAttrs_->c_cflag |= (PARENB|PARODD);
+        break;
+        /*even parity*/
     case QPortSettings::PAR_EVEN:
-      currentAttrs_->c_cflag &= (~PARODD);
-      currentAttrs_->c_cflag |= PARENB;
-      break;
+        currentAttrs_->c_cflag &= (~PARODD);
+        currentAttrs_->c_cflag |= PARENB;
+        break;
     default:
-      currentAttrs_->c_cflag &= (~PARENB);
-      qWarning() << "TermiosHelper::setParity(" << parity << "): Unsupported parity";
-  }
+        currentAttrs_->c_cflag &= (~PARENB);
+        qWarning() << "TermiosHelper::setParity(" << parity << "): Unsupported parity";
+    }
 }
 
 /*!
@@ -532,22 +536,22 @@ void TermiosHelper::setParity(QPortSettings::Parity parity)
 
 QPortSettings::StopBits TermiosHelper::stopBits() const
 {
-  struct termios options;
-  // get the current serial port attributes
+    struct termios options;
+    // get the current serial port attributes
 
-  if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
-    qWarning() << QString("TermiosHelper::stopBits(file: %1) failed when getting original " \
-                          "port attributes: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return QPortSettings::STOP_UNKNOWN;
-  }
+    if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
+        qWarning() << QString("TermiosHelper::stopBits(file: %1) failed when getting original " \
+                              "port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+        return QPortSettings::STOP_UNKNOWN;
+    }
 
-  if ( options.c_cflag & CSTOPB )
-    return QPortSettings::STOP_2;
-  else
-    return QPortSettings::STOP_1;
+    if ( options.c_cflag & CSTOPB )
+        return QPortSettings::STOP_2;
+    else
+        return QPortSettings::STOP_1;
 }
 
 /*!
@@ -555,19 +559,19 @@ QPortSettings::StopBits TermiosHelper::stopBits() const
 */
 void TermiosHelper::setStopBits(QPortSettings::StopBits stopBits)
 {
-  switch( stopBits ) {
+    switch( stopBits ) {
     /*one stop bit*/
     case QPortSettings::STOP_1:
-      currentAttrs_->c_cflag &= (~CSTOPB);
-      break;
-    /*two stop bits*/
+        currentAttrs_->c_cflag &= (~CSTOPB);
+        break;
+        /*two stop bits*/
     case QPortSettings::STOP_2:
-      currentAttrs_->c_cflag |= CSTOPB;
-      break;
+        currentAttrs_->c_cflag |= CSTOPB;
+        break;
     default:
-      currentAttrs_->c_cflag &= (~CSTOPB);
-      qWarning() << "TermiosHelper::setStopBits(" << stopBits << "): Unsupported stop bits";
-  }
+        currentAttrs_->c_cflag &= (~CSTOPB);
+        qWarning() << "TermiosHelper::setStopBits(" << stopBits << "): Unsupported stop bits";
+    }
 }
 
 /*!
@@ -576,27 +580,27 @@ void TermiosHelper::setStopBits(QPortSettings::StopBits stopBits)
 
 QPortSettings::FlowControl TermiosHelper::flowControl() const
 {
-  struct termios options;
-  // get the current serial port attributes
+    struct termios options;
+    // get the current serial port attributes
 
-  if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
-    qWarning() << QString("TermiosHelper::flowControl(file: %1) failed when getting original " \
-                          "port attributes: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return QPortSettings::FLOW_UNKNOWN;
-  }
+    if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
+        qWarning() << QString("TermiosHelper::flowControl(file: %1) failed when getting original " \
+                              "port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+        return QPortSettings::FLOW_UNKNOWN;
+    }
 
-  if ( options.c_cflag & CRTSCTS ) {
-    return QPortSettings::FLOW_HARDWARE;
-  }
-  else {
-    if ( options.c_iflag & IXON )
-      return QPortSettings::FLOW_XONXOFF;
-    else
-      return QPortSettings::FLOW_OFF;
-  }
+    if ( options.c_cflag & CRTSCTS ) {
+        return QPortSettings::FLOW_HARDWARE;
+    }
+    else {
+        if ( options.c_iflag & IXON )
+            return QPortSettings::FLOW_XONXOFF;
+        else
+            return QPortSettings::FLOW_OFF;
+    }
 }
 
 /*!
@@ -604,26 +608,26 @@ QPortSettings::FlowControl TermiosHelper::flowControl() const
 */
 void TermiosHelper::setFlowControl(QPortSettings::FlowControl flow)
 {
-  switch( flow ) {
+    switch( flow ) {
     /*no flow control*/
     case QPortSettings::FLOW_OFF:
-      currentAttrs_->c_cflag &= (~CRTSCTS);
-      currentAttrs_->c_iflag &= (~(IXON|IXOFF|IXANY));
-      break;
-    /*software (XON/XOFF) flow control*/
+        currentAttrs_->c_cflag &= (~CRTSCTS);
+        currentAttrs_->c_iflag &= (~(IXON|IXOFF|IXANY));
+        break;
+        /*software (XON/XOFF) flow control*/
     case QPortSettings::FLOW_XONXOFF:
-      currentAttrs_->c_cflag &= (~CRTSCTS);
-      currentAttrs_->c_iflag |= (IXON|IXOFF|IXANY);
-      break;
+        currentAttrs_->c_cflag &= (~CRTSCTS);
+        currentAttrs_->c_iflag |= (IXON|IXOFF|IXANY);
+        break;
     case QPortSettings::FLOW_HARDWARE:
-      currentAttrs_->c_cflag |= CRTSCTS;
-      currentAttrs_->c_iflag &= (~(IXON|IXOFF|IXANY));
-      break;
+        currentAttrs_->c_cflag |= CRTSCTS;
+        currentAttrs_->c_iflag &= (~(IXON|IXOFF|IXANY));
+        break;
     default:
-      currentAttrs_->c_cflag &= (~CRTSCTS);
-      currentAttrs_->c_iflag &= (~(IXON|IXOFF|IXANY));
-      qWarning() << "TermiosHelper::setFlowControl(" << flow << "): Unsupported flow control type";
-  }
+        currentAttrs_->c_cflag &= (~CRTSCTS);
+        currentAttrs_->c_iflag &= (~(IXON|IXOFF|IXANY));
+        qWarning() << "TermiosHelper::setFlowControl(" << flow << "): Unsupported flow control type";
+    }
 }
 
 //
@@ -673,28 +677,28 @@ void TermiosHelper::setFlowControl(QPortSettings::FlowControl flow)
 
 bool TermiosHelper::commTimeouts(CommTimeouts &commtimeouts) const
 {
-  struct termios options;
+    struct termios options;
 
-  // get the current serial port attributes
+    // get the current serial port attributes
 
-  if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
-    qWarning() << QString("TermiosHelper::commTimeouts(file: %1) failed when getting original " \
-                          "port attributes: %2(%3)")
-                 .arg(fileDescriptor_)
-                 .arg(strerror(errno))
-                 .arg(errno);
-    return false;
-  }
-  commtimeouts.PosixVMIN = options.c_cc[VMIN];
-  commtimeouts.PosixVTIME = options.c_cc[VTIME];
+    if ( tcgetattr(fileDescriptor_, &options) == -1 ) {
+        qWarning() << QString("TermiosHelper::commTimeouts(file: %1) failed when getting original " \
+                              "port attributes: %2(%3)")
+                      .arg(fileDescriptor_)
+                      .arg(strerror(errno))
+                      .arg(errno);
+        return false;
+    }
+    commtimeouts.PosixVMIN = options.c_cc[VMIN];
+    commtimeouts.PosixVTIME = options.c_cc[VTIME];
 
-  return true;
+    return true;
 }
 
 void TermiosHelper::setCommTimeouts(const CommTimeouts commtimeouts)
 {
-  currentAttrs_->c_cc[VMIN] = (cc_t)commtimeouts.PosixVMIN;
-  currentAttrs_->c_cc[VTIME] = (cc_t)commtimeouts.PosixVTIME;
+    currentAttrs_->c_cc[VMIN] = (cc_t)commtimeouts.PosixVMIN;
+    currentAttrs_->c_cc[VTIME] = (cc_t)commtimeouts.PosixVTIME;
 }
 
 } // namespace
