@@ -21,6 +21,12 @@ public:
     bool& displayWorldGrid(void);
     bool displayWorldGrid(void) const;
 
+    QVector3D& imageryOffset(void);
+    QVector3D imageryOffset(void) const;
+
+    QString& imageryPath(void);
+    QString imageryPath(void) const;
+
     Imagery::Type& imageryType(void);
     Imagery::Type imageryType(void) const;
 
@@ -29,6 +35,8 @@ public:
 
     MAV_FRAME& frame(void);
     MAV_FRAME frame(void) const;
+
+    void signalImageryParamsChanged(void);
 
     QVector3D& terrainPositionOffset(void);
     QVector3D terrainPositionOffset(void) const;
@@ -39,16 +47,18 @@ public:
 public slots:
     void followCameraChanged(const QString& text);
     void frameChanged(const QString &text);
-    void imageryTypeChanged(int index);
     void toggleTerrain(int state);
     void toggleWorldGrid(int state);
 
 signals:
     void followCameraChanged(int systemId);
+    void imageryParamsChanged(void);
 
 private:
     bool mDisplayTerrain;
     bool mDisplayWorldGrid;
+    QVector3D mImageryOffset;
+    QString mImageryPath;
     Imagery::Type mImageryType;
     int mFollowCameraId;
     MAV_FRAME mFrame;

@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 
+#include "ImageryParamDialog.h"
 #include "UASInterface.h"
 
 ViewParamWidget::ViewParamWidget(GlobalViewParamsPtr& globalViewParams,
@@ -98,6 +99,12 @@ ViewParamWidget::setpointsCheckBoxToggled(int state)
 }
 
 void
+ViewParamWidget::showImageryParamDialog(void)
+{
+    ImageryParamDialog::getImageryParams(mGlobalViewParams);
+}
+
+void
 ViewParamWidget::buildLayout(QVBoxLayout* layout)
 {
     mFollowCameraComboBox->addItem("None");
@@ -106,16 +113,14 @@ ViewParamWidget::buildLayout(QVBoxLayout* layout)
     frameComboBox->addItem("Local");
     frameComboBox->addItem("Global");
 
-    QComboBox* imageryComboBox = new QComboBox(this);
-    imageryComboBox->addItem("None");
-    imageryComboBox->addItem("Map (Google)");
-    imageryComboBox->addItem("Satellite (Google)");
-
     QCheckBox* terrainModelCheckBox = new QCheckBox(this);
     terrainModelCheckBox->setChecked(mGlobalViewParams->displayTerrain());
 
     QCheckBox* worldGridCheckBox = new QCheckBox(this);
     worldGridCheckBox->setChecked(mGlobalViewParams->displayWorldGrid());
+
+    QPushButton* imageryButton = new QPushButton(this);
+    imageryButton->setText("View");
 
     QMapIterator<int, SystemViewParamsPtr> it(mSystemViewParamMap);
     while (it.hasNext())
@@ -130,9 +135,9 @@ ViewParamWidget::buildLayout(QVBoxLayout* layout)
     QFormLayout* formLayout = new QFormLayout;
     formLayout->addRow(tr("Follow Camera"), mFollowCameraComboBox);
     formLayout->addRow(tr("Frame"), frameComboBox);
-    formLayout->addRow(tr("Imagery"), imageryComboBox);
     formLayout->addRow(tr("Terrain"), terrainModelCheckBox);
     formLayout->addRow(tr("World Grid"), worldGridCheckBox);
+    formLayout->addRow(tr("Imagery Options"), imageryButton);
 
     layout->addLayout(formLayout);
     layout->addWidget(mTabWidget);
@@ -142,12 +147,14 @@ ViewParamWidget::buildLayout(QVBoxLayout* layout)
             mGlobalViewParams.data(), SLOT(followCameraChanged(const QString&)));
     connect(frameComboBox, SIGNAL(currentIndexChanged(const QString&)),
             mGlobalViewParams.data(), SLOT(frameChanged(const QString&)));
-    connect(imageryComboBox, SIGNAL(currentIndexChanged(int)),
-            mGlobalViewParams.data(), SLOT(imageryTypeChanged(int)));
     connect(terrainModelCheckBox, SIGNAL(stateChanged(int)),
             mGlobalViewParams.data(), SLOT(toggleTerrain(int)));
     connect(worldGridCheckBox, SIGNAL(stateChanged(int)),
             mGlobalViewParams.data(), SLOT(toggleWorldGrid(int)));
+    connect(imageryButton, SIGNAL(clicked()),
+            this, SLOT(showImageryParamDialog()));
+//    connect(imageryComboBox, SIGNAL(currentIndexChanged(int)),
+//            mGlobalViewParams.data(), SLOT(imageryTypeChanged(int)));
 }
 
 void

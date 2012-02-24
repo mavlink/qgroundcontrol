@@ -31,6 +31,7 @@ private slots:
     void overlayCreated(int systemId, const QString& name);
     void systemCreated(UASInterface* uas);
     void setpointsCheckBoxToggled(int state);
+    void showImageryParamDialog(void);
 
 private:
     void buildLayout(QVBoxLayout* layout);

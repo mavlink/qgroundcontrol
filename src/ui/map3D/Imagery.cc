@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Imagery.h"
 
 #include <cmath>
+#include <cstdio>
 #include <iomanip>
 #include <sstream>
 
@@ -41,7 +42,11 @@ const double WGS84_ECCSQ = 0.00669437999013;
 const int MAX_ZOOM_LEVEL = 20;
 
 Imagery::Imagery()
-    : textureCache(new TextureCache(1000))
+ : mTextureCache(new TextureCache(500))
+ , mImageryType(Imagery::BLANK_MAP)
+ , mXOffset(0.0)
+ , mYOffset(0.0)
+ , mZOffset(0.0)
 {
 
 }
@@ -49,20 +54,27 @@ Imagery::Imagery()
 Imagery::Type
 Imagery::getImageryType(void) const
 {
-    return currentImageryType;
+    return mImageryType;
 }
 
 void
 Imagery::setImageryType(Imagery::Type type)
 {
-    currentImageryType = type;
+    mImageryType = type;
 }
 
 void
-Imagery::setOffset(double xOffset, double yOffset)
+Imagery::setOffset(double xOffset, double yOffset, double zOffset)
 {
-    this->xOffset = xOffset;
-    this->yOffset = yOffset;
+    mXOffset = xOffset;
+    mYOffset = yOffset;
+    mZOffset = zOffset;
+}
+
+void
+Imagery::setPath(const QString &path)
+{
+    mImageryPath = path.toStdString();
 }
 
 void
@@ -70,21 +82,27 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
                     double zoom, double xOrigin, double yOrigin,
                     const QString& utmZone)
 {
-    if (currentImageryType == BLANK_MAP) {
+    if (mImageryType == BLANK_MAP)
+    {
         return;
     }
 
     double tileResolution = 1.0;
-    if (currentImageryType == GOOGLE_SATELLITE ||
-            currentImageryType == GOOGLE_MAP) {
+    if (mImageryType == GOOGLE_SATELLITE ||
+        mImageryType == GOOGLE_MAP)
+    {
         tileResolution = 1.0;
-        while (tileResolution * 3.0 / 2.0 < 1.0 / zoom) {
+        while (tileResolution * 3.0 / 2.0 < 1.0 / zoom)
+        {
             tileResolution *= 2.0;
         }
-        if (tileResolution > 512.0) {
+        if (tileResolution > 512.0)
+        {
             tileResolution = 512.0;
         }
-    } else if (currentImageryType == SWISSTOPO_SATELLITE) {
+    }
+    else if (mImageryType == OFFLINE_SATELLITE)
+    {
         tileResolution = 0.25;
     }
 
@@ -98,11 +116,13 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
                yOrigin + windowHeight / 2.0 / zoom * 1.5, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
-    for (int r = minTileY; r <= maxTileY; ++r) {
-        for (int c = minTileX; c <= maxTileX; ++c) {
+    for (int r = minTileY; r <= maxTileY; ++r)
+    {
+        for (int c = minTileX; c <= maxTileX; ++c)
+        {
             QString url = getTileLocation(c, r, zoomLevel, tileResolution);
 
-            TexturePtr t = textureCache->get(url);
+            TexturePtr t = mTextureCache->get(url);
         }
     }
 }
@@ -110,28 +130,34 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
 void
 Imagery::draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
-                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone)
 {
-    if (getNumDrawables() > 0) {
+    if (getNumDrawables() > 0)
+    {
         removeDrawables(0, getNumDrawables());
     }
 
-    if (currentImageryType == BLANK_MAP) {
+    if (mImageryType == BLANK_MAP)
+    {
         return;
     }
 
     double tileResolution = 1.0;
-    if (currentImageryType == GOOGLE_SATELLITE ||
-            currentImageryType == GOOGLE_MAP) {
+    if (mImageryType == GOOGLE_SATELLITE ||
+        mImageryType == GOOGLE_MAP)
+    {
         tileResolution = 1.0;
-        while (tileResolution * 3.0 / 2.0 < 1.0 / zoom) {
+        while (tileResolution * 3.0 / 2.0 < 1.0 / zoom)
+        {
             tileResolution *= 2.0;
         }
-        if (tileResolution > 512.0) {
+        if (tileResolution > 512.0)
+        {
             tileResolution = 512.0;
         }
-    } else if (currentImageryType == SWISSTOPO_SATELLITE) {
+    }
+    else if (mImageryType == OFFLINE_SATELLITE)
+    {
         tileResolution = 0.25;
     }
 
@@ -145,20 +171,23 @@ Imagery::draw2D(double windowWidth, double windowHeight,
                yOrigin + windowHeight / 2.0 / zoom * 1.5, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
-    for (int r = minTileY; r <= maxTileY; ++r) {
-        for (int c = minTileX; c <= maxTileX; ++c) {
+    for (int r = minTileY; r <= maxTileY; ++r)
+    {
+        for (int c = minTileX; c <= maxTileX; ++c)
+        {
             QString tileURL = getTileLocation(c, r, zoomLevel, tileResolution);
 
             double x1, y1, x2, y2, x3, y3, x4, y4;
             imageBounds(c, r, tileResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
-            TexturePtr t = textureCache->get(tileURL);
-            if (!t.isNull()) {
-                addDrawable(t->draw(y1 - yOffset, x1 - xOffset,
-                                    y2 - yOffset, x2 - xOffset,
-                                    y3 - yOffset, x3 - xOffset,
-                                    y4 - yOffset, x4 - xOffset,
-                                    zOffset,
+            TexturePtr t = mTextureCache->get(tileURL);
+            if (!t.isNull())
+            {
+                addDrawable(t->draw(y1, x1,
+                                    y2, x2,
+                                    y3, x3,
+                                    y4, x4,
+                                    - mZOffset,
                                     true));
             }
         }
@@ -170,7 +199,8 @@ Imagery::prefetch3D(double radius, double tileResolution,
                     double xOrigin, double yOrigin,
                     const QString& utmZone)
 {
-    if (currentImageryType == BLANK_MAP) {
+    if (mImageryType == BLANK_MAP)
+    {
         return;
     }
 
@@ -178,15 +208,17 @@ Imagery::prefetch3D(double radius, double tileResolution,
     int zoomLevel;
 
     tileBounds(tileResolution,
-               xOrigin - radius, yOrigin - radius,
-               xOrigin + radius, yOrigin + radius, utmZone,
+               xOrigin + mXOffset - radius, yOrigin + mYOffset - radius,
+               xOrigin + mXOffset + radius, yOrigin + mYOffset + radius, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
-    for (int r = minTileY; r <= maxTileY; ++r) {
-        for (int c = minTileX; c <= maxTileX; ++c) {
+    for (int r = minTileY; r <= maxTileY; ++r)
+    {
+        for (int c = minTileX; c <= maxTileX; ++c)
+        {
             QString url = getTileLocation(c, r, zoomLevel, tileResolution);
 
-            TexturePtr t = textureCache->get(url);
+            TexturePtr t = mTextureCache->get(url);
         }
     }
 }
@@ -194,14 +226,16 @@ Imagery::prefetch3D(double radius, double tileResolution,
 void
 Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
-                double xOffset, double yOffset, double zOffset,
+                double xOffset, double yOffset,
                 const QString& utmZone)
 {
-    if (getNumDrawables() > 0) {
+    if (getNumDrawables() > 0)
+    {
         removeDrawables(0, getNumDrawables());
     }
 
-    if (currentImageryType == BLANK_MAP) {
+    if (mImageryType == BLANK_MAP)
+    {
         return;
     }
 
@@ -209,25 +243,28 @@ Imagery::draw3D(double radius, double tileResolution,
     int zoomLevel;
 
     tileBounds(tileResolution,
-               xOrigin - radius, yOrigin - radius,
-               xOrigin + radius, yOrigin + radius, utmZone,
+               xOrigin + mXOffset - radius, yOrigin + mYOffset - radius,
+               xOrigin + mXOffset + radius, yOrigin + mYOffset + radius, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
-    for (int r = minTileY; r <= maxTileY; ++r) {
-        for (int c = minTileX; c <= maxTileX; ++c) {
+    for (int r = minTileY; r <= maxTileY; ++r)
+    {
+        for (int c = minTileX; c <= maxTileX; ++c)
+        {
             QString tileURL = getTileLocation(c, r, zoomLevel, tileResolution);
 
             double x1, y1, x2, y2, x3, y3, x4, y4;
             imageBounds(c, r, tileResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
-            TexturePtr t = textureCache->get(tileURL);
+            TexturePtr t = mTextureCache->get(tileURL);
 
-            if (!t.isNull()) {
-                addDrawable(t->draw(y1 - yOffset, x1 - xOffset,
-                                    y2 - yOffset, x2 - xOffset,
-                                    y3 - yOffset, x3 - xOffset,
-                                    y4 - yOffset, x4 - xOffset,
-                                    zOffset,
+            if (!t.isNull())
+            {
+                addDrawable(t->draw(y1 - mYOffset + yOffset, x1 - mXOffset + xOffset,
+                                    y2 - mYOffset + yOffset, x2 - mXOffset + xOffset,
+                                    y3 - mYOffset + yOffset, x3 - mXOffset + xOffset,
+                                    y4 - mYOffset + yOffset, x4 - mXOffset + xOffset,
+                                    - mZOffset,
                                     true));
             }
         }
@@ -237,7 +274,7 @@ Imagery::draw3D(double radius, double tileResolution,
 bool
 Imagery::update(void)
 {
-    textureCache->sync();
+    mTextureCache->sync();
 
     return true;
 }
@@ -247,8 +284,9 @@ Imagery::imageBounds(int tileX, int tileY, double tileResolution,
                      double& x1, double& y1, double& x2, double& y2,
                      double& x3, double& y3, double& x4, double& y4) const
 {
-    if (currentImageryType == GOOGLE_MAP ||
-            currentImageryType == GOOGLE_SATELLITE) {
+    if (mImageryType == GOOGLE_MAP ||
+        mImageryType == GOOGLE_SATELLITE)
+    {
         int zoomLevel = MAX_ZOOM_LEVEL - static_cast<int>(rint(log2(tileResolution)));
         int numTiles = static_cast<int>(exp2(static_cast<double>(zoomLevel)));
 
@@ -263,7 +301,9 @@ Imagery::imageBounds(int tileX, int tileY, double tileResolution,
         LLtoUTM(lat1, lon2, x2, y2, utmZone);
         LLtoUTM(lat2, lon2, x3, y3, utmZone);
         LLtoUTM(lat2, lon1, x4, y4, utmZone);
-    } else if (currentImageryType == SWISSTOPO_SATELLITE) {
+    }
+    else if (mImageryType == OFFLINE_SATELLITE)
+    {
         double utmMultiplier = tileResolution * 200.0;
         double minX = tileX * utmMultiplier;
         double maxX = minX + utmMultiplier;
@@ -293,15 +333,18 @@ Imagery::tileBounds(double tileResolution,
     double centerUtmY = (maxUtmY - minUtmY) / 2.0 + minUtmY;
     int centerTileX, centerTileY;
 
-    if (currentImageryType == GOOGLE_MAP ||
-            currentImageryType == GOOGLE_SATELLITE) {
+    if (mImageryType == GOOGLE_MAP ||
+        mImageryType == GOOGLE_SATELLITE)
+    {
         UTMtoTile(minUtmX, minUtmY, utmZone, tileResolution,
                   minTileX, maxTileY, zoomLevel);
         UTMtoTile(centerUtmX, centerUtmY, utmZone, tileResolution,
                   centerTileX, centerTileY, zoomLevel);
         UTMtoTile(maxUtmX, maxUtmY, utmZone, tileResolution,
                   maxTileX, minTileY, zoomLevel);
-    } else if (currentImageryType == SWISSTOPO_SATELLITE) {
+    }
+    else if (mImageryType == OFFLINE_SATELLITE)
+    {
         double utmMultiplier = tileResolution * 200;
 
         minTileX = static_cast<int>(rint(minUtmX / utmMultiplier));
@@ -312,11 +355,13 @@ Imagery::tileBounds(double tileResolution,
         maxTileY = static_cast<int>(rint(maxUtmY / utmMultiplier));
     }
 
-    if (maxTileX - minTileX + 1 > 14) {
+    if (maxTileX - minTileX + 1 > 14)
+    {
         minTileX = centerTileX - 7;
         maxTileX = centerTileX + 6;
     }
-    if (maxTileY - minTileY + 1 > 14) {
+    if (maxTileY - minTileY + 1 > 14)
+    {
         minTileY = centerTileY - 7;
         maxTileY = centerTileY + 6;
     }
@@ -558,7 +603,8 @@ Imagery::getTileLocation(int tileX, int tileY, int zoomLevel,
 {
     std::ostringstream oss;
 
-    switch (currentImageryType) {
+    switch (mImageryType)
+    {
     case GOOGLE_MAP:
         oss << "http://mt0.google.com/vt/lyrs=m@120&x=" << tileX
             << "&y=" << tileY << "&z=" << zoomLevel;
@@ -567,12 +613,15 @@ Imagery::getTileLocation(int tileX, int tileY, int zoomLevel,
         oss << "http://khm.google.com/vt/lbw/lyrs=y&x=" << tileX
             << "&y=" << tileY << "&z=" << zoomLevel;
         break;
-    case SWISSTOPO_SATELLITE:
-        oss << "../map/eth_zurich_swissimage_025/200/color/" << tileY
+    case OFFLINE_SATELLITE:
+        oss << mImageryPath << "/200/color/" << tileY
             << "/tile-";
-        if (tileResolution < 1.0) {
+        if (tileResolution < 1.0)
+        {
             oss << std::fixed << std::setprecision(2) << tileResolution;
-        } else {
+        }
+        else
+        {
             oss << static_cast<int>(rint(tileResolution));
         }
         oss << "-" << tileY << "-" << tileX << ".jpg";
