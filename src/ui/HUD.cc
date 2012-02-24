@@ -256,6 +256,7 @@ void HUD::setActiveUAS(UASInterface* uas)
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
         disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
@@ -278,6 +279,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Now connect the new UAS
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        connect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
         connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
         connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
@@ -315,6 +317,13 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
     this->roll = roll;
     this->pitch = pitch;
     this->yaw = yaw;
+}
+
+void HUD::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    attitudes.insert(component, QVector3D(roll, pitch, yaw));
 }
 
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
@@ -816,16 +825,37 @@ void HUD::paintHUD()
 
             painter.translate(refToScreenX(yawTrans), 0);
 
-            // Rotate view and draw all roll-dependent indicators
-            painter.rotate((rollLP/M_PI)* -180.0f);
+            // Old single-component pitch drawing
+//            // Rotate view and draw all roll-dependent indicators
+//            painter.rotate((rollLP/M_PI)* -180.0f);
 
-            painter.translate(0, (-pitchLP/(float)M_PI)* -180.0f * refToScreenY(1.8f));
+//            painter.translate(0, (-pitchLP/(float)M_PI)* -180.0f * refToScreenY(1.8f));
 
-            //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
+//            //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
-            // PITCH
+//            // PITCH
 
-            paintPitchLines(pitchLP, &painter);
+//            paintPitchLines(pitchLP, &painter);
+
+            QColor attColor = painter.pen().color();
+
+            // Draw multi-component attitude
+            foreach (QVector3D att, attitudes.values())
+            {
+                attColor = attColor.darker(200);
+                painter.setPen(attColor);
+                // Rotate view and draw all roll-dependent indicators
+                painter.rotate((att.x()/M_PI)* -180.0f);
+
+                painter.translate(0, (-att.y()/(float)M_PI)* -180.0f * refToScreenY(1.8f));
+
+                //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
+
+                // PITCH
+
+                paintPitchLines(att.y(), &painter);
+            }
+
             painter.end();
         } else {
             QPainter painter;

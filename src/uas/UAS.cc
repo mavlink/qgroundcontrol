@@ -440,7 +440,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
                     && (lpVoltage < tickVoltage))
             {
-                GAudioOutput::instance()->say(QString("voltage warning: %1 volt").arg(lpVoltage, 2));
+                GAudioOutput::instance()->say(QString("voltage warning: %1 volt").arg(lpVoltage, 2, 'f', 0, QChar(' ')));
                 lastTickVoltageValue = tickLowpassVoltage;
             }
 
@@ -470,9 +470,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 stopLowBattAlarm();
             }
-
-            qDebug() << "START" << startVoltage;
-
 
             // control_sensors_enabled:
             // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
