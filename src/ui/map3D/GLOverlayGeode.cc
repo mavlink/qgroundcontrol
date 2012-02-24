@@ -36,14 +36,16 @@ GLOverlayGeode::messageTimestamp(void) const
 
 GLOverlayGeode::GLOverlayDrawable::GLOverlayDrawable()
 {
-    setUseDisplayList(true);
+    setUseDisplayList(false);
+    setUseVertexBufferObjects(true);
 }
 
 GLOverlayGeode::GLOverlayDrawable::GLOverlayDrawable(const GLOverlayDrawable& drawable,
                                                      const osg::CopyOp& copyop)
  : osg::Drawable(drawable,copyop)
 {
-    setUseDisplayList(true);
+    setUseDisplayList(false);
+    setUseVertexBufferObjects(true);
 }
 
 void
@@ -136,8 +138,6 @@ GLOverlayGeode::GLOverlayDrawable::setOverlay(px::GLOverlay &overlay)
             break;
         }
     }
-
-    dirtyDisplayList();
 }
 
 void
