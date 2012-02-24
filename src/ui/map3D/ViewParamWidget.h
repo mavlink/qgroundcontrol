@@ -3,6 +3,8 @@
 
 #include <QComboBox>
 #include <QDockWidget>
+#include <QFormLayout>
+#include <QSignalMapper>
 #include <QSpinBox>
 #include <QTabWidget>
 #include <QVBoxLayout>
@@ -26,6 +28,7 @@ public:
 signals:
 
 private slots:
+    void overlayCreated(int systemId, const QString& name);
     void systemCreated(UASInterface* uas);
     void setpointsCheckBoxToggled(int state);
 
@@ -43,7 +46,10 @@ private:
     // child widgets
     QComboBox* mFollowCameraComboBox;
     QSpinBox* mSetpointHistoryLengthSpinBox;
+    QMap<int, QFormLayout*> mOverlayLayout;
     QTabWidget* mTabWidget;
+
+    QSignalMapper* mOverlaySignalMapper;
 };
 
 #endif // VIEWPARAMWIDGET_H

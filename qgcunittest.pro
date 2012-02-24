@@ -4,10 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += network \
-            phonon \
-            testlib \
-            svg
+QT += network \
+    phonon \
+    testlib \
+    svg
 
 TEMPLATE = app
 
@@ -99,49 +99,46 @@ INCLUDEPATH += . \
     $$BASEDIR/src/ui/ \
 
 
-SOURCES +=  src/uas/UAS.cc \
-            src/comm/MAVLinkProtocol.cc \
-            src/uas/UASWaypointManager.cc \
-            src/Waypoint.cc \
-            src/ui/RadioCalibration/RadioCalibrationData.cc \
-            src/uas/SlugsMAV.cc \
-            src/uas/PxQuadMAV.cc \
-            src/uas/ArduPilotMegaMAV.cc \
-            src/GAudioOutput.cc \
-            src/uas/UASManager.cc \
-            src/comm/LinkManager.cc \
-            src/QGC.cc \
-            src/comm/SerialLink.cc \
-            $$TESTDIR/SlugsMavUnitTest.cc \
-            $$TESTDIR/testSuite.cc \
-            $$TESTDIR/UASUnitTest.cc \
+SOURCES += src/uas/UAS.cc \
+    src/comm/MAVLinkProtocol.cc \
+    src/uas/UASWaypointManager.cc \
+    src/Waypoint.cc \
+    src/ui/RadioCalibration/RadioCalibrationData.cc \
+    src/uas/SlugsMAV.cc \
+    src/uas/PxQuadMAV.cc \
+    src/uas/ArduPilotMegaMAV.cc \
+    src/GAudioOutput.cc \
+    src/uas/UASManager.cc \
+    src/comm/LinkManager.cc \
+    src/QGC.cc \
+    src/comm/SerialLink.cc \
+    $$TESTDIR/SlugsMavUnitTest.cc \
+    $$TESTDIR/testSuite.cc \
+    $$TESTDIR/UASUnitTest.cc \
     src/uas/QGCMAVLinkUASFactory.cc
 
 
 HEADERS += src/uas/UASInterface.h \
-            src/uas/UAS.h \
-            src/comm/MAVLinkProtocol.h \
-            src/comm/ProtocolInterface.h \
-            src/uas/UASWaypointManager.h \
-            src/Waypoint.h \
-            src/ui/RadioCalibration/RadioCalibrationData.h \
-            src/uas/SlugsMAV.h \
-            src/uas/PxQuadMAV.h \
-            src/uas/ArduPilotMegaMAV.h \
-            src/GAudioOutput.h \
-            src/uas/UASManager.h \
-            src/comm/LinkManager.h \
-            src/comm/LinkInterface.h \
-            src/QGC.h \
-            src/comm/SerialLinkInterface.h \
-            src/comm/SerialLink.h \
-            $$TESTDIR//SlugsMavUnitTest.h \
-            $$TESTDIR/AutoTest.h \
-            $$TESTDIR/UASUnitTest.h \
+    src/uas/UAS.h \
+    src/comm/MAVLinkProtocol.h \
+    src/comm/ProtocolInterface.h \
+    src/uas/UASWaypointManager.h \
+    src/Waypoint.h \
+    src/ui/RadioCalibration/RadioCalibrationData.h \
+    src/uas/SlugsMAV.h \
+    src/uas/PxQuadMAV.h \
+    src/uas/ArduPilotMegaMAV.h \
+    src/GAudioOutput.h \
+    src/uas/UASManager.h \
+    src/comm/LinkManager.h \
+    src/comm/LinkInterface.h \
+    src/QGC.h \
+    src/comm/SerialLinkInterface.h \
+    src/comm/SerialLink.h \
+    $$TESTDIR//SlugsMavUnitTest.h \
+    $$TESTDIR/AutoTest.h \
+    $$TESTDIR/UASUnitTest.h \
     src/uas/QGCMAVLinkUASFactory.h
-
-
-
 
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"

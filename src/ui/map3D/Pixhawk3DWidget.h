@@ -64,6 +64,7 @@ public slots:
 
 signals:
     void systemCreatedSignal(UASInterface* uas);
+    void overlayCreatedSignal(int systemId, const QString& name);
 
 private slots:
     void clearData(void);
@@ -74,6 +75,10 @@ private slots:
     void modelChanged(int systemId, int index);
     void setBirdEyeView(void);
     void loadTerrainModel(void);
+
+#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
+    void addOverlay(UASInterface* uas);
+#endif
 
     void selectTargetHeading(void);
     void selectTarget(void);

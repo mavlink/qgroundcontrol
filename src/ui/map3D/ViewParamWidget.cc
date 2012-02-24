@@ -2,7 +2,7 @@
 
 #include <osg/LineWidth>
 #include <QCheckBox>
-#include <QFormLayout>
+#include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
 
@@ -28,8 +28,13 @@ ViewParamWidget::ViewParamWidget(GlobalViewParamsPtr& globalViewParams,
 
     mTabWidget->setFocusPolicy(Qt::NoFocus);
 
+    mOverlaySignalMapper = new QSignalMapper(this);
+
     connect(parent, SIGNAL(systemCreatedSignal(UASInterface*)),
             this, SLOT(systemCreated(UASInterface*)));
+
+    connect(parent, SIGNAL(overlayCreatedSignal(int,QString)),
+            this, SLOT(overlayCreated(int,QString)));
 }
 
 void
@@ -45,6 +50,28 @@ ViewParamWidget::setFollowCameraId(int id)
     }
 
     mFollowCameraComboBox->setCurrentIndex(0);
+}
+
+void
+ViewParamWidget::overlayCreated(int systemId, const QString& name)
+{
+    if (!mOverlayLayout.contains(systemId))
+    {
+        return;
+    }
+
+    SystemViewParamsPtr systemViewParams = mSystemViewParamMap[systemId];
+    systemViewParams->displayOverlay().insert(name, true);
+
+    QCheckBox* checkbox = new QCheckBox(this);
+    checkbox->setChecked(systemViewParams->displayOverlay().value(name));
+    mOverlayLayout[systemId]->addRow(name, checkbox);
+
+    mOverlaySignalMapper->setMapping(checkbox, name);
+    connect(checkbox, SIGNAL(clicked()),
+            mOverlaySignalMapper, SLOT(map()));
+    connect(mOverlaySignalMapper, SIGNAL(mapped(QString)),
+            systemViewParams.data(), SLOT(toggleOverlay(QString)));
 }
 
 void
@@ -173,6 +200,10 @@ ViewParamWidget::addTab(int systemId)
     QCheckBox* waypointsCheckBox = new QCheckBox(this);
     waypointsCheckBox->setChecked(systemViewParams->displayWaypoints());
 
+    QGroupBox* overlayGroupBox = new QGroupBox(tr("Overlays"), this);
+    mOverlayLayout[systemId] = new QFormLayout;
+    overlayGroupBox->setLayout(mOverlayLayout[systemId]);
+
     QFormLayout* formLayout = new QFormLayout;
     page->setLayout(formLayout);
 
@@ -188,6 +219,7 @@ ViewParamWidget::addTab(int systemId)
     formLayout->addRow(tr("Target"), targetCheckBox);
     formLayout->addRow(tr("Trails"), trailsCheckBox);
     formLayout->addRow(tr("Waypoints"), waypointsCheckBox);
+    formLayout->addRow(overlayGroupBox);
 
     QString label("MAV ");
     label += QString::number(systemId);
