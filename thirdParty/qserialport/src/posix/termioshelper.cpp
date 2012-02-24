@@ -389,13 +389,22 @@ QPortSettings::BaudRate TermiosHelper::baudRate() const
 #ifdef B230400
     case B230400:
         return QPortSettings::BAUDR_230400;
+#else
+    case 230400:
+        return QPortSettings::BAUDR_230400;
 #endif
 #ifdef B460800
     case B460800:
         return QPortSettings::BAUDR_460800;
+#else
+    case 460800:
+        return QPortSettings::BAUDR_460800;
 #endif
 #ifdef B921600
     case B921600:
+        return QPortSettings::BAUDR_921600;
+#else
+    case 921600:
         return QPortSettings::BAUDR_921600;
 #endif
 #if defined(Q_OS_LINUX)
