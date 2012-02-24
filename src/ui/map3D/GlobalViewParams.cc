@@ -72,16 +72,28 @@ GlobalViewParams::frame(void) const
     return mFrame;
 }
 
-QVector4D&
-GlobalViewParams::terrainOffset(void)
+QVector3D&
+GlobalViewParams::terrainPositionOffset(void)
 {
-    return mTerrainOffset;
+    return mTerrainPositionOffset;
 }
 
-QVector4D
-GlobalViewParams::terrainOffset(void) const
+QVector3D
+GlobalViewParams::terrainPositionOffset(void) const
 {
-    return mTerrainOffset;
+    return mTerrainPositionOffset;
+}
+
+QVector3D&
+GlobalViewParams::terrainAttitudeOffset(void)
+{
+    return mTerrainPositionOffset;
+}
+
+QVector3D
+GlobalViewParams::terrainAttitudeOffset(void) const
+{
+    return mTerrainPositionOffset;
 }
 
 void

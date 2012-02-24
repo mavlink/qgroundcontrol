@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QString>
-#include <QVector4D>
+#include <QVector3D>
 
 #include "QGCMAVLink.h"
 #include "Imagery.h"
@@ -30,8 +30,11 @@ public:
     MAV_FRAME& frame(void);
     MAV_FRAME frame(void) const;
 
-    QVector4D& terrainOffset(void);
-    QVector4D terrainOffset(void) const;
+    QVector3D& terrainPositionOffset(void);
+    QVector3D terrainPositionOffset(void) const;
+
+    QVector3D& terrainAttitudeOffset(void);
+    QVector3D terrainAttitudeOffset(void) const;
 
 public slots:
     void followCameraChanged(const QString& text);
@@ -49,7 +52,8 @@ private:
     Imagery::Type mImageryType;
     int mFollowCameraId;
     MAV_FRAME mFrame;
-    QVector4D mTerrainOffset;
+    QVector3D mTerrainPositionOffset;
+    QVector3D mTerrainAttitudeOffset;
 };
 
 typedef QSharedPointer<GlobalViewParams> GlobalViewParamsPtr;
