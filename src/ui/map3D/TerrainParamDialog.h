@@ -26,6 +26,8 @@ private:
     QDoubleSpinBox* mXOffsetSpinBox;
     QDoubleSpinBox* mYOffsetSpinBox;
     QDoubleSpinBox* mZOffsetSpinBox;
+    QDoubleSpinBox* mRollOffsetSpinBox;
+    QDoubleSpinBox* mPitchOffsetSpinBox;
     QDoubleSpinBox* mYawOffsetSpinBox;
 };
 

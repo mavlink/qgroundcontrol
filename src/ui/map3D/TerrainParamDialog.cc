@@ -19,20 +19,25 @@ TerrainParamDialog::TerrainParamDialog(QWidget* parent)
 void
 TerrainParamDialog::getTerrainParams(GlobalViewParamsPtr &globalViewParams)
 {
-    QVector4D& terrainOffset = globalViewParams->terrainOffset();
+    QVector3D& positionOffset = globalViewParams->terrainPositionOffset();
+    QVector3D& attitudeOffset = globalViewParams->terrainAttitudeOffset();
 
     TerrainParamDialog dialog;
-    dialog.mXOffsetSpinBox->setValue(terrainOffset.x());
-    dialog.mYOffsetSpinBox->setValue(terrainOffset.y());
-    dialog.mZOffsetSpinBox->setValue(terrainOffset.z());
-    dialog.mYawOffsetSpinBox->setValue(osg::RadiansToDegrees(terrainOffset.w()));
+    dialog.mXOffsetSpinBox->setValue(positionOffset.x());
+    dialog.mYOffsetSpinBox->setValue(positionOffset.y());
+    dialog.mZOffsetSpinBox->setValue(positionOffset.z());
+    dialog.mRollOffsetSpinBox->setValue(osg::RadiansToDegrees(attitudeOffset.x()));
+    dialog.mPitchOffsetSpinBox->setValue(osg::RadiansToDegrees(attitudeOffset.y()));
+    dialog.mYawOffsetSpinBox->setValue(osg::RadiansToDegrees(attitudeOffset.z()));
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        terrainOffset.setX(dialog.mXOffsetSpinBox->value());
-        terrainOffset.setY(dialog.mYOffsetSpinBox->value());
-        terrainOffset.setZ(dialog.mZOffsetSpinBox->value());
-        terrainOffset.setW(osg::DegreesToRadians(dialog.mYawOffsetSpinBox->value()));
+        positionOffset.setX(dialog.mXOffsetSpinBox->value());
+        positionOffset.setY(dialog.mYOffsetSpinBox->value());
+        positionOffset.setZ(dialog.mZOffsetSpinBox->value());
+        attitudeOffset.setX(osg::DegreesToRadians(dialog.mRollOffsetSpinBox->value()));
+        attitudeOffset.setY(osg::DegreesToRadians(dialog.mPitchOffsetSpinBox->value()));
+        attitudeOffset.setZ(osg::DegreesToRadians(dialog.mYawOffsetSpinBox->value()));
     }
 }
 
@@ -68,6 +73,16 @@ TerrainParamDialog::buildLayout(QVBoxLayout* layout)
     mZOffsetSpinBox->setRange(-100.0, 100.0);
     mZOffsetSpinBox->setValue(0.0);
 
+    mRollOffsetSpinBox = new QDoubleSpinBox(this);
+    mRollOffsetSpinBox->setDecimals(0);
+    mRollOffsetSpinBox->setRange(-180.0, 180.0);
+    mRollOffsetSpinBox->setValue(0.0);
+
+    mPitchOffsetSpinBox = new QDoubleSpinBox(this);
+    mPitchOffsetSpinBox->setDecimals(0);
+    mPitchOffsetSpinBox->setRange(-180.0, 180.0);
+    mPitchOffsetSpinBox->setValue(0.0);
+
     mYawOffsetSpinBox = new QDoubleSpinBox(this);
     mYawOffsetSpinBox->setDecimals(0);
     mYawOffsetSpinBox->setRange(-180.0, 180.0);
@@ -77,6 +92,8 @@ TerrainParamDialog::buildLayout(QVBoxLayout* layout)
     formLayout->addRow(tr("x (m)"), mXOffsetSpinBox);
     formLayout->addRow(tr("y (m)"), mYOffsetSpinBox);
     formLayout->addRow(tr("z (m)"), mZOffsetSpinBox);
+    formLayout->addRow(tr("Roll (deg)"), mRollOffsetSpinBox);
+    formLayout->addRow(tr("Pitch (deg)"), mPitchOffsetSpinBox);
     formLayout->addRow(tr("Yaw (deg)"), mYawOffsetSpinBox);
 
     offsetGroupBox->setLayout(formLayout);
