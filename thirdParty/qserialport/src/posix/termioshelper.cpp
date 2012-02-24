@@ -400,18 +400,26 @@ QPortSettings::BaudRate TermiosHelper::baudRate() const
     case 460800:
         return QPortSettings::BAUDR_460800;
 #endif
+#ifdef B500000
+    case B500000:
+        return QPortSettings::BAUDR_500000;
+#else
+    case 500000:
+        return QPortSettings::BAUDR_500000;
+#endif
+#ifdef B576000:
+    case B576000:
+        return QPortSettings::BAUDR_576000;
+#else
+    case 576000:
+        return QPortSettings::BAUDR_576000;
+#endif
 #ifdef B921600
     case B921600:
         return QPortSettings::BAUDR_921600;
 #else
     case 921600:
         return QPortSettings::BAUDR_921600;
-#endif
-#if defined(Q_OS_LINUX)
-    case B500000:
-        return QPortSettings::BAUDR_500000;
-    case B576000:
-        return QPortSettings::BAUDR_576000;
 #endif
     default:
         qWarning() << "TermiosHelper::baudRate(): Unknown baud rate";
