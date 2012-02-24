@@ -87,13 +87,13 @@ GlobalViewParams::terrainPositionOffset(void) const
 QVector3D&
 GlobalViewParams::terrainAttitudeOffset(void)
 {
-    return mTerrainPositionOffset;
+    return mTerrainAttitudeOffset;
 }
 
 QVector3D
 GlobalViewParams::terrainAttitudeOffset(void) const
 {
-    return mTerrainPositionOffset;
+    return mTerrainAttitudeOffset;
 }
 
 void
