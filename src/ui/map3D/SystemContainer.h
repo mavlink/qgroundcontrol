@@ -4,6 +4,7 @@
 #include <osg/Geode>
 #include <QMap>
 #include <QVarLengthArray>
+#include <QVector3D>
 #include <QVector4D>
 
 #include "ImageWindowGeode.h"
@@ -18,6 +19,8 @@ class SystemContainer
 {
 public:
     SystemContainer();
+
+    QVector3D& gpsLocalOrigin(void);
 
     QVector4D& target(void);
 
@@ -43,6 +46,7 @@ public:
 #endif
 
 private:
+    QVector3D mGPSLocalOrigin;
     QVector4D mTarget;
 
     QVector< osg::ref_ptr<osg::Node> > mModels;

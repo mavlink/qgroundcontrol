@@ -60,6 +60,7 @@ public slots:
     void localPositionChanged(UASInterface* uas, double x, double y, double z, quint64 time);
     void attitudeChanged(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 time);
     void attitudeChanged(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
+    void homePositionChanged(int uasId, double lat, double lon, double alt);
     void setpointChanged(int uasId, float x, float y, float z, float yaw);
 
 signals:
@@ -71,6 +72,7 @@ private slots:
     void showTerrainParamWindow(void);
     void showViewParamWindow(void);
     void followCameraChanged(int systemId);
+    void imageryParamsChanged(void);
     void recenterActiveCamera(void);
     void modelChanged(int systemId, int index);
     void setBirdEyeView(void);
@@ -143,8 +145,8 @@ private:
     void resizeHUD(int width, int height);
 
     void updateHUD(UASInterface* uas, MAV_FRAME frame);
-    void updateImagery(double originX, double originY, double originZ,
-                       const QString& zone);
+    void updateImagery(double originX, double originY,
+                       const QString& zone, MAV_FRAME frame);
     void updateTarget(UASInterface* uas, MAV_FRAME frame,
                       double robotX, double robotY, double robotZ,
                       QVector4D& target,

@@ -36,6 +36,30 @@ GlobalViewParams::displayWorldGrid(void) const
     return mDisplayWorldGrid;
 }
 
+QVector3D&
+GlobalViewParams::imageryOffset(void)
+{
+    return mImageryOffset;
+}
+
+QVector3D
+GlobalViewParams::imageryOffset(void) const
+{
+    return mImageryOffset;
+}
+
+QString&
+GlobalViewParams::imageryPath(void)
+{
+    return mImageryPath;
+}
+
+QString
+GlobalViewParams::imageryPath(void) const
+{
+    return mImageryPath;
+}
+
 Imagery::Type&
 GlobalViewParams::imageryType(void)
 {
@@ -70,6 +94,12 @@ MAV_FRAME
 GlobalViewParams::frame(void) const
 {
     return mFrame;
+}
+
+void
+GlobalViewParams::signalImageryParamsChanged(void)
+{
+    emit imageryParamsChanged();
 }
 
 QVector3D&
@@ -130,12 +160,6 @@ GlobalViewParams::frameChanged(const QString& text)
     {
        mFrame = MAV_FRAME_LOCAL_NED;
     }
-}
-
-void
-GlobalViewParams::imageryTypeChanged(int index)
-{
-    mImageryType = static_cast<Imagery::Type>(index);
 }
 
 void
