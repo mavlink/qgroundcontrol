@@ -41,25 +41,26 @@ This file is part of the QGROUNDCONTROL project
 class Imagery : public osg::Geode
 {
 public:
-    enum Type {
+    enum Type
+    {
         BLANK_MAP = 0,
         GOOGLE_MAP = 1,
         GOOGLE_SATELLITE = 2,
-        SWISSTOPO_SATELLITE = 3
+        OFFLINE_SATELLITE = 3
     };
 
     Imagery();
 
     Type getImageryType(void) const;
     void setImageryType(Type type);
-    void setOffset(double xOffset, double yOffset);
+    void setOffset(double xOffset, double yOffset, double zOffset = 0.0);
+    void setPath(const QString& path);
 
     void prefetch2D(double windowWidth, double windowHeight,
                     double zoom, double xOrigin, double yOrigin,
                     const QString& utmZone);
     void draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
-                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone);
 
     void prefetch3D(double radius, double tileResolution,
@@ -67,7 +68,7 @@ public:
                     const QString& utmZone);
     void draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
-                double xOffset, double yOffset, double zOffset,
+                double xOffset, double yOffset,
                 const QString& utmZone);
 
     bool update(void);
@@ -102,12 +103,14 @@ private:
     QString getTileLocation(int tileX, int tileY, int zoomLevel,
                             double tileResolution) const;
 
-    QScopedPointer<TextureCache> textureCache;
+    QScopedPointer<TextureCache> mTextureCache;
 
-    Type currentImageryType;
+    Type mImageryType;
+    std::string mImageryPath;
 
-    double xOffset;
-    double yOffset;
+    double mXOffset;
+    double mYOffset;
+    double mZOffset;
 };
 
 #endif // IMAGERY_H

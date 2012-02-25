@@ -25,7 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Definition of the class Texture.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
@@ -43,11 +43,11 @@ This file is part of the QGROUNDCONTROL project
 class Texture
 {
 public:
-    explicit Texture(unsigned int _id);
+    explicit Texture(quint64 id);
 
     const QString& getSourceURL(void) const;
 
-    void setId(unsigned int _id);
+    void setId(quint64 id);
 
     void sync(const WebImagePtr& image);
 
@@ -60,17 +60,18 @@ public:
                                      bool smoothInterpolation) const;
 
 private:
-    enum State {
+    enum State
+    {
         UNINITIALIZED = 0,
         REQUESTED = 1,
         READY = 2
     };
 
-    State state;
-    QString sourceURL;
-    unsigned int id;
-    osg::ref_ptr<osg::Texture2D> texture2D;
-    osg::ref_ptr<osg::Geometry> geometry;
+    State mState;
+    QString mSourceURL;
+    quint64 mId;
+    osg::ref_ptr<osg::Texture2D> mTexture2D;
+    osg::ref_ptr<osg::Geometry> mGeometry;
 };
 
 typedef QSharedPointer<Texture> TexturePtr;

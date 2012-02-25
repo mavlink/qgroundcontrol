@@ -25,7 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Definition of the class WebImageCache.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
@@ -43,22 +43,22 @@ class WebImageCache : public QObject
     Q_OBJECT
 
 public:
-    WebImageCache(QObject* parent, uint32_t cacheSize);
+    WebImageCache(QObject* parent, int cacheSize);
 
-    QPair<WebImagePtr, int32_t> lookup(const QString& url);
+    QPair<WebImagePtr, int> lookup(const QString& url);
 
-    WebImagePtr at(int32_t index) const;
+    WebImagePtr at(int index) const;
 
 private Q_SLOTS:
     void downloadFinished(QNetworkReply* reply);
 
 private:
-    uint32_t cacheSize;
+    int mCacheSize;
 
-    QVector<WebImagePtr> webImages;
-    uint64_t currentReference;
+    QVector<WebImagePtr> mWebImages;
+    quint64 mCurrentReference;
 
-    QScopedPointer<QNetworkAccessManager> networkManager;
+    QScopedPointer<QNetworkAccessManager> mNetworkManager;
 };
 
 #endif // WEBIMAGECACHE_H

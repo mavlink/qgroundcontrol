@@ -36,14 +36,16 @@ GLOverlayGeode::messageTimestamp(void) const
 
 GLOverlayGeode::GLOverlayDrawable::GLOverlayDrawable()
 {
-    setUseDisplayList(true);
+    setUseDisplayList(false);
+    setUseVertexBufferObjects(true);
 }
 
 GLOverlayGeode::GLOverlayDrawable::GLOverlayDrawable(const GLOverlayDrawable& drawable,
                                                      const osg::CopyOp& copyop)
  : osg::Drawable(drawable,copyop)
 {
-    setUseDisplayList(true);
+    setUseDisplayList(false);
+    setUseVertexBufferObjects(true);
 }
 
 void
@@ -136,8 +138,6 @@ GLOverlayGeode::GLOverlayDrawable::setOverlay(px::GLOverlay &overlay)
             break;
         }
     }
-
-    dirtyDisplayList();
 }
 
 void
@@ -148,9 +148,11 @@ GLOverlayGeode::GLOverlayDrawable::drawImplementation(osg::RenderInfo&) const
         return;
     }
 
+    glMatrixMode(GL_MODELVIEW);
+    glDisable(GL_LIGHTING);
     glPushMatrix();
 
-    glScalef(-1.0f, 1.0f, 1.0f);
+    glScalef(-1.0f, 1.0f, -1.0f);
     glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
 
     const std::string& data = mOverlay.data();
@@ -401,6 +403,7 @@ GLOverlayGeode::GLOverlayDrawable::drawImplementation(osg::RenderInfo&) const
     }
 
     glPopMatrix();
+    glEnable(GL_LIGHTING);
 }
 
 osg::BoundingBox

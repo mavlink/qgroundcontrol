@@ -64,18 +64,18 @@ public:
     int getHeight(void) const;
     int getByteCount(void) const;
 
-    ulong getLastReference(void) const;
-    void setLastReference(ulong value);
+    quint64 getLastReference(void) const;
+    void setLastReference(quint64 value);
 
     bool getSyncFlag(void) const;
     void setSyncFlag(bool onoff);
 
 private:
-    State state;
-    QString sourceURL;
-    QScopedPointer<QImage> image;
-    ulong lastReference;
-    bool syncFlag;
+    State mState;
+    QString mSourceURL;
+    QScopedPointer<QImage> mImage;
+    quint64 mLastReference;
+    bool mSyncFlag;
 };
 
 typedef QSharedPointer<WebImage> WebImagePtr;
