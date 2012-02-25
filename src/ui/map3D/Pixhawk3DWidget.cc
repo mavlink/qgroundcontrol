@@ -439,7 +439,7 @@ Pixhawk3DWidget::showTerrainParamWindow(void)
     const QVector3D& attitudeOffset = mGlobalViewParams->terrainAttitudeOffset();
 
     mTerrainPAT->setPosition(osg::Vec3d(positionOffset.y(), positionOffset.x(), -positionOffset.z()));
-    mTerrainPAT->setAttitude(osg::Quat(M_PI_2 - attitudeOffset.z(), osg::Vec3d(0.0f, 0.0f, 1.0f),
+    mTerrainPAT->setAttitude(osg::Quat(- attitudeOffset.z(), osg::Vec3d(0.0f, 0.0f, 1.0f),
                                        attitudeOffset.y(), osg::Vec3d(1.0f, 0.0f, 0.0f),
                                        attitudeOffset.x(), osg::Vec3d(0.0f, 1.0f, 0.0f)));
 }
@@ -568,7 +568,7 @@ Pixhawk3DWidget::loadTerrainModel(void)
         mGlobalViewParams->terrainAttitudeOffset() = QVector3D();
 
         mTerrainPAT->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
-        mTerrainPAT->setAttitude(osg::Quat(M_PI_2, osg::Vec3d(0.0f, 0.0f, 1.0f),
+        mTerrainPAT->setAttitude(osg::Quat(0.0, osg::Vec3d(0.0f, 0.0f, 1.0f),
                                            0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
                                            0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
     }
