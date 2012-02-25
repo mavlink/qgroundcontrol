@@ -7,6 +7,12 @@ SystemContainer::SystemContainer()
 
 }
 
+QVector3D&
+SystemContainer::gpsLocalOrigin(void)
+{
+    return mGPSLocalOrigin;
+}
+
 QVector4D&
 SystemContainer::target(void)
 {

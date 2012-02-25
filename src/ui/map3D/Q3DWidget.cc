@@ -61,7 +61,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
 
     mOsgGW = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
 
-    setThreadingModel(osgViewer::Viewer::SingleThreaded);
+    setThreadingModel(osgViewer::Viewer::CullDrawThreadPerContext);
 
     setMouseTracking(true);
 }

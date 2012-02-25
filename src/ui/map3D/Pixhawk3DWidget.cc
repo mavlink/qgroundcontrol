@@ -91,6 +91,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
             this, SLOT(systemCreated(UASInterface*)));
     connect(mGlobalViewParams.data(), SIGNAL(followCameraChanged(int)),
             this, SLOT(followCameraChanged(int)));
+    connect(mGlobalViewParams.data(), SIGNAL(imageryParamsChanged(void)),
+            this, SLOT(imageryParamsChanged(void)));
 
     MainWindow* parentWindow = qobject_cast<MainWindow*>(parent);
     parentWindow->addDockWidget(Qt::LeftDockWidgetArea, mViewParamWidget);
@@ -139,11 +141,14 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
             this, SLOT(attitudeChanged(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)),
             this, SLOT(setpointChanged(int,float,float,float,float)));
+    connect(uas, SIGNAL(homePositionChanged(int,double,double,double)),
+            this, SLOT(homePositionChanged(int,double,double,double)));
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     connect(uas, SIGNAL(overlayChanged(UASInterface*)),
             this, SLOT(addOverlay(UASInterface*)));
 #endif
 
+//    mSystemContainerMap[systemId].gpsLocalOrigin() = QVector3D(47.419182, 8.566980, 428);
     initializeSystem(systemId, uas->getColor());
 
     emit systemCreatedSignal(uas);
@@ -342,6 +347,20 @@ Pixhawk3DWidget::attitudeChanged(UASInterface* uas,
 }
 
 void
+Pixhawk3DWidget::homePositionChanged(int uasId, double lat, double lon,
+                                     double alt)
+{
+    if (!mSystemContainerMap.contains(uasId))
+    {
+        return;
+    }
+
+    SystemContainer& systemData = mSystemContainerMap[uasId];
+
+    systemData.gpsLocalOrigin() = QVector3D(lat, lon, alt);
+}
+
+void
 Pixhawk3DWidget::setpointChanged(int uasId, float x, float y, float z,
                                  float yaw)
 {
@@ -424,12 +443,13 @@ Pixhawk3DWidget::showTerrainParamWindow(void)
 {
     TerrainParamDialog::getTerrainParams(mGlobalViewParams);
 
-    const QVector4D& terrainOffset = mGlobalViewParams->terrainOffset();
+    const QVector3D& positionOffset = mGlobalViewParams->terrainPositionOffset();
+    const QVector3D& attitudeOffset = mGlobalViewParams->terrainAttitudeOffset();
 
-    mTerrainPAT->setPosition(osg::Vec3d(terrainOffset.y(), terrainOffset.x(), -terrainOffset.z()));
-    mTerrainPAT->setAttitude(osg::Quat(M_PI_2 - terrainOffset.w(), osg::Vec3d(0.0f, 0.0f, 1.0f),
-                                       0.0, osg::Vec3d(1.0f, 0.0f, 0.0f),
-                                       0.0, osg::Vec3d(0.0f, 1.0f, 0.0f)));
+    mTerrainPAT->setPosition(osg::Vec3d(positionOffset.y(), positionOffset.x(), -positionOffset.z()));
+    mTerrainPAT->setAttitude(osg::Quat(M_PI_2 - attitudeOffset.z(), osg::Vec3d(0.0f, 0.0f, 1.0f),
+                                       attitudeOffset.y(), osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                       attitudeOffset.x(), osg::Vec3d(0.0f, 1.0f, 0.0f)));
 }
 
 void
@@ -470,6 +490,16 @@ Pixhawk3DWidget::followCameraChanged(int systemId)
 
         mFollowCameraId = systemId;
     }
+}
+
+void
+Pixhawk3DWidget::imageryParamsChanged(void)
+{
+    mImageryNode->setImageryType(mGlobalViewParams->imageryType());
+    mImageryNode->setPath(mGlobalViewParams->imageryPath());
+
+    const QVector3D& offset = mGlobalViewParams->imageryOffset();
+    mImageryNode->setOffset(offset.x(), offset.y(), offset.z());
 }
 
 void
@@ -542,7 +572,8 @@ Pixhawk3DWidget::loadTerrainModel(void)
         mTerrainNode->setName("terrain");
         mTerrainPAT->addChild(mTerrainNode);
 
-        mGlobalViewParams->terrainOffset() = QVector4D();
+        mGlobalViewParams->terrainPositionOffset() = QVector3D();
+        mGlobalViewParams->terrainAttitudeOffset() = QVector3D();
 
         mTerrainPAT->setPosition(osg::Vec3d(0.0, 0.0, 0.0));
         mTerrainPAT->setAttitude(osg::Quat(M_PI_2, osg::Vec3d(0.0f, 0.0f, 1.0f),
@@ -987,8 +1018,6 @@ Pixhawk3DWidget::update(void)
 #endif
     }
 
-    mImageryNode->setImageryType(mGlobalViewParams->imageryType());
-
     if (mFollowCameraId != -1)
     {
         UASInterface* uas = UASManager::instance()->getUASForId(mFollowCameraId);
@@ -1097,13 +1126,27 @@ Pixhawk3DWidget::update(void)
             updateRGBD(uas, frame, systemData.rgbImageNode(),
                        systemData.depthImageNode());
         }
+
+        if (frame == MAV_FRAME_LOCAL_NED &&
+            mGlobalViewParams->imageryType() != Imagery::BLANK_MAP &&
+            !systemData.gpsLocalOrigin().isNull() &&
+            mActiveUAS->getUASID() == systemId)
+        {
+            const QVector3D& gpsLocalOrigin = systemData.gpsLocalOrigin();
+
+            double utmX, utmY;
+            QString utmZone;
+            Imagery::LLtoUTM(gpsLocalOrigin.x(), gpsLocalOrigin.y(), utmX, utmY, utmZone);
+
+            updateImagery(utmX, utmY, utmZone, frame);
+        }
 #endif
     }
 
     if (frame == MAV_FRAME_GLOBAL &&
         mGlobalViewParams->imageryType() != Imagery::BLANK_MAP)
     {
-//        updateImagery(robotX, robotY, robotZ, utmZone);
+//        updateImagery(x, y, z, utmZone);
     }
 
     if (mActiveUAS)
@@ -2009,8 +2052,8 @@ Pixhawk3DWidget::updateTrails(double robotX, double robotY, double robotZ,
 }
 
 void
-Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
-                               const QString& zone)
+Pixhawk3DWidget::updateImagery(double originX, double originY,
+                               const QString& zone, MAV_FRAME frame)
 {
     if (mImageryNode->getImageryType() == Imagery::BLANK_MAP)
     {
@@ -2018,9 +2061,9 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
     }
 
     double viewingRadius = m3DWidget->cameraManipulator()->getDistance() * 10.0;
-    if (viewingRadius < 100.0)
+    if (viewingRadius < 200.0)
     {
-        viewingRadius = 100.0;
+        viewingRadius = 200.0;
     }
 
     double minResolution = 0.25;
@@ -2036,7 +2079,7 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
     case Imagery::GOOGLE_SATELLITE:
         minResolution = 0.5;
         break;
-    case Imagery::SWISSTOPO_SATELLITE:
+    case Imagery::OFFLINE_SATELLITE:
         minResolution = 0.25;
         maxResolution = 0.25;
         break;
@@ -2055,13 +2098,24 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
         resolution = maxResolution;
     }
 
+    double x = m3DWidget->cameraManipulator()->getCenter().y();
+    double y = m3DWidget->cameraManipulator()->getCenter().x();
+
+    double xOffset = 0.0;
+    double yOffset = 0.0;
+
+    if (frame == MAV_FRAME_LOCAL_NED)
+    {
+        xOffset = originX;
+        yOffset = originY;
+    }
+
     mImageryNode->draw3D(viewingRadius,
                          resolution,
-                         m3DWidget->cameraManipulator()->getCenter().y(),
-                         m3DWidget->cameraManipulator()->getCenter().x(),
-                         originX,
-                         originY,
-                         originZ,
+                         x + xOffset,
+                         y + yOffset,
+                         -xOffset,
+                         -yOffset,
                          zone);
 
     // prefetch map tiles
@@ -2069,16 +2123,16 @@ Pixhawk3DWidget::updateImagery(double originX, double originY, double originZ,
     {
         mImageryNode->prefetch3D(viewingRadius / 2.0,
                                  resolution / 2.0,
-                                 m3DWidget->cameraManipulator()->getCenter().y(),
-                                 m3DWidget->cameraManipulator()->getCenter().x(),
+                                 x + xOffset,
+                                 y + yOffset,
                                  zone);
     }
     if (resolution * 2.0 <= maxResolution)
     {
         mImageryNode->prefetch3D(viewingRadius * 2.0,
                                  resolution * 2.0,
-                                 m3DWidget->cameraManipulator()->getCenter().y(),
-                                 m3DWidget->cameraManipulator()->getCenter().x(),
+                                 x + xOffset,
+                                 y + yOffset,
                                  zone);
     }
 

@@ -36,6 +36,30 @@ GlobalViewParams::displayWorldGrid(void) const
     return mDisplayWorldGrid;
 }
 
+QVector3D&
+GlobalViewParams::imageryOffset(void)
+{
+    return mImageryOffset;
+}
+
+QVector3D
+GlobalViewParams::imageryOffset(void) const
+{
+    return mImageryOffset;
+}
+
+QString&
+GlobalViewParams::imageryPath(void)
+{
+    return mImageryPath;
+}
+
+QString
+GlobalViewParams::imageryPath(void) const
+{
+    return mImageryPath;
+}
+
 Imagery::Type&
 GlobalViewParams::imageryType(void)
 {
@@ -72,16 +96,34 @@ GlobalViewParams::frame(void) const
     return mFrame;
 }
 
-QVector4D&
-GlobalViewParams::terrainOffset(void)
+void
+GlobalViewParams::signalImageryParamsChanged(void)
 {
-    return mTerrainOffset;
+    emit imageryParamsChanged();
 }
 
-QVector4D
-GlobalViewParams::terrainOffset(void) const
+QVector3D&
+GlobalViewParams::terrainPositionOffset(void)
 {
-    return mTerrainOffset;
+    return mTerrainPositionOffset;
+}
+
+QVector3D
+GlobalViewParams::terrainPositionOffset(void) const
+{
+    return mTerrainPositionOffset;
+}
+
+QVector3D&
+GlobalViewParams::terrainAttitudeOffset(void)
+{
+    return mTerrainAttitudeOffset;
+}
+
+QVector3D
+GlobalViewParams::terrainAttitudeOffset(void) const
+{
+    return mTerrainAttitudeOffset;
 }
 
 void
@@ -118,12 +160,6 @@ GlobalViewParams::frameChanged(const QString& text)
     {
        mFrame = MAV_FRAME_LOCAL_NED;
     }
-}
-
-void
-GlobalViewParams::imageryTypeChanged(int index)
-{
-    mImageryType = static_cast<Imagery::Type>(index);
 }
 
 void
