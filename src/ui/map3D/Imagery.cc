@@ -42,13 +42,13 @@ const double WGS84_ECCSQ = 0.00669437999013;
 const int MAX_ZOOM_LEVEL = 20;
 
 Imagery::Imagery()
- : mTextureCache(new TextureCache(500))
+ : mTextureCache(new TextureCache(1000))
  , mImageryType(Imagery::BLANK_MAP)
  , mXOffset(0.0)
  , mYOffset(0.0)
  , mZOffset(0.0)
 {
-
+    setCullingActive(false);
 }
 
 Imagery::Type

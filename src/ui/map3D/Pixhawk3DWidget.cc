@@ -2053,9 +2053,9 @@ Pixhawk3DWidget::updateImagery(double originX, double originY,
     }
 
     double viewingRadius = m3DWidget->cameraManipulator()->getDistance() * 10.0;
-    if (viewingRadius < 100.0)
+    if (viewingRadius < 200.0)
     {
-        viewingRadius = 100.0;
+        viewingRadius = 200.0;
     }
 
     double minResolution = 0.25;

@@ -25,7 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Definition of the class Texture.
  *
- *   @author Lionel Heng <hengli@student.ethz.ch>
+ *   @author Lionel Heng <hengli@inf.ethz.ch>
  *
  */
 
@@ -33,77 +33,86 @@ This file is part of the QGROUNDCONTROL project
 
 #include "Texture.h"
 
-Texture::Texture(unsigned int _id)
-    : id(_id)
-    , texture2D(new osg::Texture2D)
-    , geometry(new osg::Geometry)
+Texture::Texture(quint64 id)
+ : mId(id)
+ , mTexture2D(new osg::Texture2D)
+ , mGeometry(new osg::Geometry)
 {
-    texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
-    texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+    mTexture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    mTexture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
 
-    texture2D->setDataVariance(osg::Object::DYNAMIC);
-    texture2D->setResizeNonPowerOfTwoHint(false);
+    mTexture2D->setDataVariance(osg::Object::DYNAMIC);
+    mTexture2D->setResizeNonPowerOfTwoHint(false);
 
     osg::ref_ptr<osg::Image> image = new osg::Image;
-    texture2D->setImage(image);
+    mTexture2D->setImage(image);
 
     osg::ref_ptr<osg::Vec3dArray> vertices(new osg::Vec3dArray(4));
-    geometry->setVertexArray(vertices);
+    mGeometry->setVertexArray(vertices);
 
     osg::ref_ptr<osg::Vec2Array> textureCoords = new osg::Vec2Array;
     textureCoords->push_back(osg::Vec2(0.0f, 1.0f));
     textureCoords->push_back(osg::Vec2(1.0f, 1.0f));
     textureCoords->push_back(osg::Vec2(1.0f, 0.0f));
     textureCoords->push_back(osg::Vec2(0.0f, 0.0f));
-    geometry->setTexCoordArray(0, textureCoords);
+    mGeometry->setTexCoordArray(0, textureCoords);
 
-    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
+    mGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
                               0, 4));
 
     osg::ref_ptr<osg::Vec4Array> colors(new osg::Vec4Array);
     colors->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    geometry->setColorArray(colors);
-    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    mGeometry->setColorArray(colors);
+    mGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
-    geometry->setUseDisplayList(false);
+    mGeometry->setUseDisplayList(false);
 
     osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth);
     linewidth->setWidth(2.0f);
-    geometry->getOrCreateStateSet()->
+    mGeometry->getOrCreateStateSet()->
     setAttributeAndModes(linewidth, osg::StateAttribute::ON);
-    geometry->getOrCreateStateSet()->
+    mGeometry->getOrCreateStateSet()->
     setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 }
 
 const QString&
 Texture::getSourceURL(void) const
 {
-    return sourceURL;
+    return mSourceURL;
+}
+
+void
+Texture::setId(quint64 id)
+{
+    mId = id;
 }
 
 void
 Texture::sync(const WebImagePtr& image)
 {
-    state = static_cast<State>(image->getState());
+    mState = static_cast<State>(image->getState());
 
     if (image->getState() != WebImage::UNINITIALIZED &&
-            sourceURL != image->getSourceURL()) {
-        sourceURL = image->getSourceURL();
+        mSourceURL != image->getSourceURL())
+    {
+        mSourceURL = image->getSourceURL();
     }
 
-    if (image->getState() == WebImage::READY && image->getSyncFlag()) {
+    if (image->getState() == WebImage::READY && image->getSyncFlag())
+    {
         image->setSyncFlag(false);
 
-        if (texture2D->getImage() != NULL) {
-            texture2D->getImage()->setImage(image->getWidth(),
-                                            image->getHeight(),
-                                            1,
-                                            GL_RGBA,
-                                            GL_RGBA,
-                                            GL_UNSIGNED_BYTE,
-                                            image->getImageData(),
-                                            osg::Image::NO_DELETE);
-            texture2D->getImage()->dirty();
+        if (mTexture2D->getImage() != NULL)
+        {
+            mTexture2D->getImage()->setImage(image->getWidth(),
+                                             image->getHeight(),
+                                             1,
+                                             GL_RGBA,
+                                             GL_RGBA,
+                                             GL_UNSIGNED_BYTE,
+                                             image->getImageData(),
+                                             osg::Image::NO_DELETE);
+            mTexture2D->getImage()->dirty();
         }
     }
 }
@@ -123,40 +132,44 @@ Texture::draw(double x1, double y1, double x2, double y2,
               bool smoothInterpolation) const
 {
     osg::Vec3dArray* vertices =
-        static_cast<osg::Vec3dArray*>(geometry->getVertexArray());
+        static_cast<osg::Vec3dArray*>(mGeometry->getVertexArray());
     (*vertices)[0].set(x1, y1, z);
     (*vertices)[1].set(x2, y2, z);
     (*vertices)[2].set(x3, y3, z);
     (*vertices)[3].set(x4, y4, z);
 
     osg::DrawArrays* drawarrays =
-        static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+        static_cast<osg::DrawArrays*>(mGeometry->getPrimitiveSet(0));
     osg::Vec4Array* colors =
-        static_cast<osg::Vec4Array*>(geometry->getColorArray());
+        static_cast<osg::Vec4Array*>(mGeometry->getColorArray());
 
-    if (state == REQUESTED) {
+    if (mState == REQUESTED)
+    {
         drawarrays->set(osg::PrimitiveSet::LINE_LOOP, 0, 4);
         (*colors)[0].set(0.0f, 0.0f, 1.0f, 1.0f);
 
-        geometry->getOrCreateStateSet()->
-        setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::OFF);
+        mGeometry->getOrCreateStateSet()->
+        setTextureAttributeAndModes(0, mTexture2D, osg::StateAttribute::OFF);
 
-        return geometry;
+        return mGeometry;
     }
 
-    if (smoothInterpolation) {
-        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
-        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-    } else {
-        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
-        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+    if (smoothInterpolation)
+    {
+        mTexture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+        mTexture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+    }
+    else
+    {
+        mTexture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+        mTexture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
     }
 
     drawarrays->set(osg::PrimitiveSet::POLYGON, 0, 4);
     (*colors)[0].set(1.0f, 1.0f, 1.0f, 1.0f);
 
-    geometry->getOrCreateStateSet()->
-    setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
+    mGeometry->getOrCreateStateSet()->
+        setTextureAttributeAndModes(0, mTexture2D, osg::StateAttribute::ON);
 
-    return geometry;
+    return mGeometry;
 }
