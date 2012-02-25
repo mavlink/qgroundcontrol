@@ -3123,6 +3123,61 @@ static void mavlink_test_command_ack(uint8_t system_id, uint8_t component_id, ma
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
+static void mavlink_test_local_position_ned_system_global_offset(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_local_position_ned_system_global_offset_t packet_in = {
+		963497464,
+	45.0,
+	73.0,
+	101.0,
+	129.0,
+	157.0,
+	185.0,
+	};
+	mavlink_local_position_ned_system_global_offset_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.time_boot_ms = packet_in.time_boot_ms;
+        	packet1.x = packet_in.x;
+        	packet1.y = packet_in.y;
+        	packet1.z = packet_in.z;
+        	packet1.roll = packet_in.roll;
+        	packet1.pitch = packet_in.pitch;
+        	packet1.yaw = packet_in.yaw;
+        
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_local_position_ned_system_global_offset_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_local_position_ned_system_global_offset_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_local_position_ned_system_global_offset_pack(system_id, component_id, &msg , packet1.time_boot_ms , packet1.x , packet1.y , packet1.z , packet1.roll , packet1.pitch , packet1.yaw );
+	mavlink_msg_local_position_ned_system_global_offset_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_local_position_ned_system_global_offset_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.time_boot_ms , packet1.x , packet1.y , packet1.z , packet1.roll , packet1.pitch , packet1.yaw );
+	mavlink_msg_local_position_ned_system_global_offset_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_local_position_ned_system_global_offset_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_local_position_ned_system_global_offset_send(MAVLINK_COMM_1 , packet1.time_boot_ms , packet1.x , packet1.y , packet1.z , packet1.roll , packet1.pitch , packet1.yaw );
+	mavlink_msg_local_position_ned_system_global_offset_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
 static void mavlink_test_hil_state(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
 {
 	mavlink_message_t msg;
@@ -3336,17 +3391,17 @@ static void mavlink_test_optical_flow(uint8_t system_id, uint8_t component_id, m
 	mavlink_optical_flow_t packet_in = {
 		93372036854775807ULL,
 	73.0,
-	17859,
-	17963,
-	53,
-	120,
+	101.0,
+	129.0,
+	65,
+	132,
 	};
 	mavlink_optical_flow_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.time_usec = packet_in.time_usec;
-        	packet1.ground_distance = packet_in.ground_distance;
         	packet1.flow_x = packet_in.flow_x;
         	packet1.flow_y = packet_in.flow_y;
+        	packet1.ground_distance = packet_in.ground_distance;
         	packet1.sensor_id = packet_in.sensor_id;
         	packet1.quality = packet_in.quality;
         
@@ -3942,6 +3997,7 @@ static void mavlink_test_common(uint8_t system_id, uint8_t component_id, mavlink
 	mavlink_test_vfr_hud(system_id, component_id, last_msg);
 	mavlink_test_command_long(system_id, component_id, last_msg);
 	mavlink_test_command_ack(system_id, component_id, last_msg);
+	mavlink_test_local_position_ned_system_global_offset(system_id, component_id, last_msg);
 	mavlink_test_hil_state(system_id, component_id, last_msg);
 	mavlink_test_hil_controls(system_id, component_id, last_msg);
 	mavlink_test_hil_rc_inputs_raw(system_id, component_id, last_msg);

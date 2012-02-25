@@ -33,8 +33,8 @@ This file is part of the QGROUNDCONTROL project
 #define _UAS_H_
 
 #include "UASInterface.h"
-#include "MG.h"
 #include <MAVLinkProtocol.h>
+#include <QVector3D>
 #include "QGCMAVLink.h"
 #include "QGCFlightGearLink.h"
 
@@ -53,7 +53,8 @@ public:
     UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
-    enum BatteryType {
+    enum BatteryType
+    {
         NICD = 0,
         NIMH = 1,
         LIION = 2,
@@ -80,7 +81,8 @@ public:
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
-    int getAirframe() const {
+    int getAirframe() const
+    {
         return airframe;
     }
     /** @brief Get the components */
@@ -107,13 +109,16 @@ public:
     {
         return localZ;
     }
-    double getLatitude() const {
+    double getLatitude() const
+    {
         return latitude;
     }
-    double getLongitude() const {
+    double getLongitude() const
+    {
         return longitude;
     }
-    double getAltitude() const {
+    double getAltitude() const
+    {
         return altitude;
     }
     virtual bool localPositionKnown() const
@@ -125,24 +130,39 @@ public:
         return isGlobalPositionKnown;
     }
 
-    double getRoll() const {
+    double getRoll() const
+    {
         return roll;
     }
-    double getPitch() const {
+    double getPitch() const
+    {
         return pitch;
     }
-    double getYaw() const {
+    double getYaw() const
+    {
         return yaw;
     }
     bool getSelected() const;
 
+    QVector3D getNedPosGlobalOffset() const
+    {
+        return nedPosGlobalOffset;
+    }
+
+    QVector3D getNedAttGlobalOffset() const
+    {
+        return nedAttGlobalOffset;
+    }
+
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    px::GLOverlay getOverlay() {
+    px::GLOverlay getOverlay()
+    {
         QMutexLocker locker(&overlayMutex);
         return overlay;
     }
 
-    px::GLOverlay getOverlay(qreal& receivedTimestamp) {
+    px::GLOverlay getOverlay(qreal& receivedTimestamp)
+    {
         receivedTimestamp = receivedOverlayTimestamp;
         QMutexLocker locker(&overlayMutex);
         return overlay;
@@ -315,6 +335,8 @@ protected: //COMMENTS FOR TEST UNIT
     bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
     bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
     bool systemIsArmed;             ///< If the system is armed
+    QVector3D nedPosGlobalOffset;   ///< Offset between the system's NED position measurements and the swarm / global 0/0/0 origin
+    QVector3D nedAttGlobalOffset;   ///< Offset between the system's NED position measurements and the swarm / global 0/0/0 origin
 
 public:
     /** @brief Set the current battery type */

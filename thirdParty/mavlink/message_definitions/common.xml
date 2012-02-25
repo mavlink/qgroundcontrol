@@ -1367,42 +1367,16 @@
                <field type="uint16_t" name="command">Command ID, as defined by MAV_CMD enum.</field>
                <field type="uint8_t" name="result">See MAV_RESULT enum</field>
           </message>
-          <!--
-          <message id="80" name="MISSION_ITEM">
-          	   <description>One mission element following the MAV_CMD enumeration</description>
-          	   <field type="uint8_t" name="target_system">System ID</field>
-               <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint16_t" name="id">ID</field>
-               <field type="uint16_t" name="id">Total count (size of total mission)</field>
-               <field type="uint8_t" name="frame">The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h</field>
-               <field type="uint8_t" name="command">The scheduled action for the MISSION. see MAV_COMMAND in common.xml MAVLink specs</field>
-               <field type="uint8_t" name="current">false:0, true:1</field>
-               <field type="uint8_t" name="autocontinue">autocontinue to next wp</field>
-               <field type="float" name="param1">PARAM1 / For NAV command MISSIONs: Radius in which the MISSION is accepted as reached, in meters</field>
-               <field type="float" name="param2">PARAM2 / For NAV command MISSIONs: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds</field>
-               <field type="float" name="param3">PARAM3 / For LOITER command MISSIONs: Orbit to circle around the MISSION, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.</field>
-               <field type="float" name="param4">PARAM4 / For NAV and LOITER command MISSIONs: Yaw orientation in degrees, [0..360] 0 = NORTH</field>
-               <field type="float" name="x">PARAM5 / local: x position, global: latitude</field>
-               <field type="float" name="y">PARAM6 / y position: global: longitude</field>
-               <field type="float" name="z">PARAM7 / z position: global: altitude</field>
+          <message id="89" name="LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET">
+               <description>The offset in X, Y, Z and yaw between the LOCAL_POSITION_NED messages of MAV X and the global coordinate frame in NED coordinates. Coordinate frame is right-handed, Z-axis down (aeronautical frame, NED / north-east-down convention)</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+               <field type="float" name="x">X Position</field>
+               <field type="float" name="y">Y Position</field>
+               <field type="float" name="z">Z Position</field>
+               <field type="float" name="roll">Roll</field>
+               <field type="float" name="pitch">Pitch</field>
+               <field type="float" name="yaw">Yaw</field>
           </message>
-          <message id="81" name="MISSION_ACK">
-               <description>ACK / NACK for one mission element or a whole mission</description>
-          	   <field type="uint8_t" name="target_system">System ID</field>
-               <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint8_t" name="mission_status"></field>
-               <field type="uint16_t" name="begin_item"></field>
-               <field type="uint16_t" name="end_item"></field>
-               <field type="uint8_t" name="packet_seq"></field>
-          </message>
-          <message id="82" name="MISSION_REQUEST">
-               <description>One mission element following the MAV_CMD enumeration</description>
-          	   <field type="uint8_t" name="target_system">System ID</field>
-               <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint8_t" name="mission_command">Command id: 0: read whole mission, 1: read mission from begin to end, 2: write mission items from begin to end, 3: clear mission.</field>
-               <field type="uint16_t" name="begin_item"></field>
-               <field type="uint16_t" name="end_item"></field>
-          </message> -->
           <message id="90" name="HIL_STATE">
                <description>Sent from simulation to autopilot. This packet is useful for high throughput
                 applications such as hardware in the loop simulations.

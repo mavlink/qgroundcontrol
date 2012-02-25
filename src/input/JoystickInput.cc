@@ -95,7 +95,7 @@ void JoystickInput::init()
     // Wait for joysticks if none is connected
     while (numJoysticks == 0)
     {
-        MG::SLEEP::msleep(800);
+        QGC::SLEEP::msleep(800);
         // INITIALIZE SDL Joystick support
         if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
         {
