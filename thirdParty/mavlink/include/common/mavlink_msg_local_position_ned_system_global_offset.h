@@ -1,6 +1,6 @@
 // MESSAGE LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET PACKING
 
-#define MAVLINK_MSG_ID_LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET 80
+#define MAVLINK_MSG_ID_LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET 89
 
 typedef struct __mavlink_local_position_ned_system_global_offset_t
 {
@@ -14,7 +14,7 @@ typedef struct __mavlink_local_position_ned_system_global_offset_t
 } mavlink_local_position_ned_system_global_offset_t;
 
 #define MAVLINK_MSG_ID_LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET_LEN 28
-#define MAVLINK_MSG_ID_80_LEN 28
+#define MAVLINK_MSG_ID_89_LEN 28
 
 
 
