@@ -63,36 +63,40 @@ void Linecharts::hideEvent(QHideEvent* event)
 
 void Linecharts::selectSystem(int systemid)
 {
-    QWidget* prevWidget = currentWidget();
-    if (prevWidget)
-    {
-        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-        if (chart)
-        {
-            chart->setActive(false);
-            chart->setActiveSystem(systemid);
-        }
-    }
-    QWidget* widget = plots.value(systemid, NULL);
-    if (widget)
-    {
-        setCurrentWidget(widget);
-        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(widget);
-        if (chart)
-        {
-            chart->setActive(true);
-            chart->setActiveSystem(systemid);
-        }
-    }
+//    QWidget* prevWidget = currentWidget();
+//    if (prevWidget)
+//    {
+//        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+//        if (chart)
+//        {
+//            chart->setActive(false);
+//            chart->setActiveSystem(systemid);
+//        }
+//    }
+//    QWidget* widget = plots.value(systemid, NULL);
+//    if (widget)
+//    {
+//        setCurrentWidget(widget);
+//        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(widget);
+//        if (chart)
+//        {
+//            chart->setActive(true);
+//            chart->setActiveSystem(systemid);
+//        }
+//    }
 }
 
 void Linecharts::addSystem(UASInterface* uas)
 {
-    if (!plots.contains(uas->getUASID()))
+    // FIXME Add removeSystem() call
+
+    // Compatibility hack
+    int uasid = 0; /*uas->getUASID()*/
+    if (!plots.contains(uasid))
     {
-        LinechartWidget* widget = new LinechartWidget(uas->getUASID(), this);
+        LinechartWidget* widget = new LinechartWidget(uasid, this);
         addWidget(widget);
-        plots.insert(uas->getUASID(), widget);
+        plots.insert(uasid, widget);
 		
 		// Connect valueChanged signals
 		connect(uas, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), widget, SLOT(appendData(int,QString,QString,quint8,quint64)));
@@ -107,10 +111,10 @@ void Linecharts::addSystem(UASInterface* uas)
 
         connect(widget, SIGNAL(logfileWritten(QString)), this, SIGNAL(logfileWritten(QString)));
         // Set system active if this is the only system
-        if (active)
-        {
-            if (plots.size() == 1)
-            {
+//        if (active)
+//        {
+//            if (plots.size() == 1)
+//            {
                 // FIXME XXX HACK
                 // Connect generic sources
                 for (int i = 0; i < genericSources.count(); ++i)
@@ -126,10 +130,11 @@ void Linecharts::addSystem(UASInterface* uas)
 					connect(genericSources[i], SIGNAL(valueChanged(int,QString,QString,double,quint64)), plots.values().first(), SLOT(appendData(int,QString,QString,double,quint64)));
                 }
                 // Select system
-                selectSystem(uas->getUASID());
+                widget->setActive(true);
+                //widget->selectActiveSystem(0);
             }
-        }
-    }
+//        }
+//    }
 }
 
 void Linecharts::addSource(QObject* obj)

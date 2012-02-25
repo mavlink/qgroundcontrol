@@ -146,6 +146,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    connect(ui.uasSelectionBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectActiveSystem(int)));
     readSettings();
 }
 
@@ -157,6 +158,17 @@ LinechartWidget::~LinechartWidget()
     activePlot = NULL;
     delete listedCurves;
     listedCurves = NULL;
+}
+
+void LinechartWidget::selectActiveSystem(int mav)
+{
+    // -1: Unitialized, 0: all
+    if (mav != selectedMAV && (selectedMAV != -1))
+    {
+        // Delete all curves
+        // FIXME
+    }
+    selectedMAV = mav;
 }
 
 void LinechartWidget::selectAllCurves(bool all)

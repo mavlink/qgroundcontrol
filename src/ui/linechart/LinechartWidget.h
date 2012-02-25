@@ -105,11 +105,8 @@ public slots:
     /** @brief Stop automatic updates once hidden */
     void hideEvent(QHideEvent* event);
     void setActive(bool active);
-    void setActiveSystem(int systemid)
-    {
-        selectedMAV = systemid;
-    }
-
+    /** @brief Select one MAV for curve display */
+    void selectActiveSystem(int mav);
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);
     /** @brief Start logging to file */
