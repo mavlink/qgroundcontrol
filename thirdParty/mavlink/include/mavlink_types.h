@@ -15,21 +15,10 @@
 
 #define MAVLINK_MAX_PACKET_LEN (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) ///< Maximum packet length
 
-
-#if (defined __GNUC__) || (defined _MSC_VER) || (defined __MINGW32__) || (defined __WATCOMC__) || (defined __CMB__) || (defined __BORLANDC__) || (defined __clang__)
-#define MAVLINK_EXTENDED_MESSAGES_ENABLED
-#endif
-
-// EXTENDED message definition - the extended message set is compatible to standard MAVLink message passing
-// but does NOT have to be supported by the platform. The extended message set will NOT consume
-// any memory if the messages are not explicitely used
-
-#ifdef MAVLINK_EXTENDED_MESSAGES_ENABLED
 #define MAVLINK_MSG_ID_EXTENDED_MESSAGE 255
 #define MAVLINK_EXTENDED_HEADER_LEN 14
 #define MAVLINK_MAX_EXTENDED_PACKET_LEN 65507
 #define MAVLINK_MAX_EXTENDED_PAYLOAD_LEN (MAVLINK_MAX_EXTENDED_PACKET_LEN - MAVLINK_EXTENDED_HEADER_LEN - MAVLINK_NUM_NON_PAYLOAD_BYTES)
-#endif
 
 typedef struct param_union {
 	union {
@@ -62,13 +51,12 @@ typedef struct __mavlink_message {
 	uint64_t payload64[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+7)/8];
 } mavlink_message_t;
 
-#ifdef MAVLINK_EXTENDED_MESSAGES_ENABLED
+
 typedef struct __mavlink_extended_message {
        mavlink_message_t base_msg;
        int32_t extended_payload_len;   ///< Length of extended payload if any
        uint8_t extended_payload[MAVLINK_MAX_EXTENDED_PAYLOAD_LEN];
 } mavlink_extended_message_t;
-#endif
 
 
 typedef enum {

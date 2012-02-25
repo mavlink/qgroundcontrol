@@ -94,7 +94,9 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     simulation(new QGCFlightGearLink(this)),
     isLocalPositionKnown(false),
     isGlobalPositionKnown(false),
-    systemIsArmed(false)
+    systemIsArmed(false),
+    nedPosGlobalOffset(0,0,0),
+    nedAttGlobalOffset(0,0,0)
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -440,7 +442,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
                     && (lpVoltage < tickVoltage))
             {
-                GAudioOutput::instance()->say(QString("voltage warning: %1 volt").arg(lpVoltage, 2, 'f', 0, QChar(' ')));
+                GAudioOutput::instance()->say(QString("voltage warning: %1 volt").arg(lpVoltage, 0, 'f', 1, QChar(' ')));
                 lastTickVoltageValue = tickLowpassVoltage;
             }
 
@@ -526,6 +528,18 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
+        }
+            break;
+        case MAVLINK_MSG_ID_LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET:
+        {
+            mavlink_local_position_ned_system_global_offset_t offset;
+            mavlink_msg_local_position_ned_system_global_offset_decode(&message, &offset);
+            nedPosGlobalOffset.setX(offset.x);
+            nedPosGlobalOffset.setY(offset.y);
+            nedPosGlobalOffset.setZ(offset.z);
+            nedAttGlobalOffset.setX(offset.roll);
+            nedAttGlobalOffset.setY(offset.pitch);
+            nedAttGlobalOffset.setZ(offset.yaw);
         }
             break;
         case MAVLINK_MSG_ID_HIL_CONTROLS:
