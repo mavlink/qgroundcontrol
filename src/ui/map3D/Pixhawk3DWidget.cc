@@ -285,6 +285,14 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas,
         return;
     }
 
+    // Add offset
+    UAS* mav = qobject_cast<UAS*>(uas);
+
+    float offX = mav->getNedPosGlobalOffset().x();
+    float offY = mav->getNedPosGlobalOffset().y();
+    float offZ = mav->getNedPosGlobalOffset().z();
+    float offYaw = mav->getNedAttGlobalOffset().z();
+
     // update system position
     m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
 }
