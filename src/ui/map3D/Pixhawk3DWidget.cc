@@ -38,6 +38,7 @@
 #include <osgDB/ReadFile>
 #include <osg/LineWidth>
 #include <osg/ShapeDrawable>
+#include <osgText/Text>
 
 #include "../MainWindow.h"
 #include "PixhawkCheetahGeode.h"
@@ -233,6 +234,29 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
         sd->setColor(color);
 
         geode = new osg::Geode;
+        geode->addDrawable(sd);
+        group->addChild(geode);
+
+        // text indicates component id
+        osg::ref_ptr<osgText::Text> text = new osgText::Text;
+        text->setFont(m3DWidget->font());
+        text->setText(QString::number(component).toStdString().c_str());
+        text->setColor(color);
+        text->setCharacterSize(0.3f);
+        text->setAxisAlignment(osgText::Text::XY_PLANE);
+        text->setAlignment(osgText::Text::CENTER_CENTER);
+        text->setPosition(osg::Vec3(0.0, -0.8, 0.0));
+
+        sd = new osg::ShapeDrawable;
+        osg::ref_ptr<osg::Box> textBox =
+            new osg::Box(osg::Vec3(0.0, -0.8, -0.01), 0.7, 0.4, 0.01);
+
+        sd->setShape(textBox);
+        sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+        sd->setColor(osg::Vec4(0.0, 0.0, 0.0, 1.0));
+
+        geode = new osg::Geode;
+        geode->addDrawable(text);
         geode->addDrawable(sd);
         group->addChild(geode);
 
