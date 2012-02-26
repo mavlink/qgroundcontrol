@@ -234,8 +234,21 @@ MainWindow::MainWindow(QWidget *parent):
 
 MainWindow::~MainWindow()
 {
-    delete mavlink;
-    delete joystick;
+    if (mavlink)
+    {
+        delete mavlink;
+        mavlink = NULL;
+    }
+//    if (simulationLink)
+//    {
+//        simulationLink->deleteLater();
+//        simulationLink = NULL;
+//    }
+    if (joystick)
+    {
+        delete joystick;
+        joystick = NULL;
+    }
 
     // Get and delete all dockwidgets and contained
     // widgets
@@ -252,10 +265,12 @@ MainWindow::~MainWindow()
             // removeDockWidget(dockWidget);
             // delete dockWidget->widget();
             delete dockWidget;
+            dockWidget = NULL;
         }
-        else if (dynamic_cast<QObject*>(*i))
+        else if (dynamic_cast<QWidget*>(*i))
         {
-            delete dynamic_cast<QObject*>(*i);
+            delete dynamic_cast<QWidget*>(*i);
+            *i = NULL;
         }
     }
     // Delete all UAS objects

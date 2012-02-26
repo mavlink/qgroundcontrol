@@ -84,15 +84,19 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     // Comments on the variables can be found in the header file
 
     simulationFile = new QFile(readFile, this);
-    if (simulationFile->exists() && simulationFile->open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (simulationFile->exists() && simulationFile->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         simulationHeader = simulationFile->readLine();
     }
     receiveFile = new QFile(writeFile, this);
     lastSent = QGC::groundTimeMilliseconds();
 
-    if (simulationFile->exists()) {
+    if (simulationFile->exists())
+    {
         this->name = "Simulation: " + QFileInfo(simulationFile->fileName()).fileName();
-    } else {
+    }
+    else
+    {
         this->name = "MAVLink simulation link";
     }
 
@@ -111,6 +115,11 @@ MAVLinkSimulationLink::~MAVLinkSimulationLink()
     //TODO Check destructor
     //    fileStream->flush();
     //    outStream->flush();
+    // Force termination, there is no
+    // need for cleanup since
+    // this thread is not manipulating
+    // any relevant data
+    terminate();
     delete simulationFile;
 }
 
@@ -124,28 +133,26 @@ void MAVLinkSimulationLink::run()
     system.custom_mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_SAFETY_ARMED;
     system.system_status = MAV_STATE_UNINIT;
 
-    forever {
-
+    forever
+    {
         static quint64 last = 0;
 
-        if (QGC::groundTimeMilliseconds() - last >= rate) {
-            if (_isConnected) {
+        if (QGC::groundTimeMilliseconds() - last >= rate)
+        {
+            if (_isConnected)
+            {
                 mainloop();
-
-                // FIXME Hacky code to read from packet log file
-//                readyBufferMutex.lock();
-//                for (int i = 0; i < streampointer; i++)
-//                {
-//                    readyBuffer.enqueue(*(stream + i));
-//                }
-//                readyBufferMutex.unlock();
-
                 readBytes();
+            }
+            else
+            {
+                // Sleep for substantially longer
+                // if not connected
+                QGC::SLEEP::msleep(500);
             }
             last = QGC::groundTimeMilliseconds();
         }
         QGC::SLEEP::msleep(3);
-
     }
 }
 
@@ -157,7 +164,8 @@ void MAVLinkSimulationLink::sendMAVLinkMessage(const mavlink_message_t* msg)
 
     // Pack to link buffer
     readyBufferMutex.lock();
-    for (unsigned int i = 0; i < bufferlength; i++) {
+    for (unsigned int i = 0; i < bufferlength; i++)
+    {
         readyBuffer.enqueue(*(buf + i));
     }
     readyBufferMutex.unlock();
@@ -217,14 +225,17 @@ void MAVLinkSimulationLink::mainloop()
 
     static int state = 0;
 
-    if (state == 0) {
+    if (state == 0)
+    {
         state++;
     }
 
 
     // 50 HZ TASKS
-    if (rate50hzCounter == 1000 / rate / 40) {
-        if (simulationFile->isOpen()) {
+    if (rate50hzCounter == 1000 / rate / 40)
+    {
+        if (simulationFile->isOpen())
+        {
             if (simulationFile->atEnd()) {
                 // We reached the end of the file, start from scratch
                 simulationFile->reset();
@@ -916,7 +927,8 @@ void MAVLinkSimulationLink::readBytes()
 bool MAVLinkSimulationLink::disconnect()
 {
 
-    if(isConnected()) {
+    if(isConnected())
+    {
         //        timer->stop();
 
         _isConnected = false;
