@@ -1462,14 +1462,17 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
             }
 
             menu.addAction("Clear all waypoints", this, SLOT(clearAllWaypoints()));
+            menu.addSeparator();
             menu.addAction("Select target", this, SLOT(selectTarget()));
 
             if (mouseOverImagery)
             {
+                menu.addSeparator();
                 menu.addAction("Move imagery", this, SLOT(moveImagery()));
             }
             if (mouseOverTerrain)
             {
+                menu.addSeparator();
                 menu.addAction("Move terrain", this, SLOT(moveTerrain()));
                 menu.addAction("Rotate terrain", this, SLOT(rotateTerrain()));
                 menu.addAction("Edit terrain parameters", this, SLOT(showTerrainParamWindow()));
