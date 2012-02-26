@@ -95,23 +95,27 @@ public:
     static MainWindow* instance(QSplashScreen* screen = 0);
     ~MainWindow();
 
-    enum QGC_MAINWINDOW_STYLE {
+    enum QGC_MAINWINDOW_STYLE
+    {
         QGC_MAINWINDOW_STYLE_NATIVE,
         QGC_MAINWINDOW_STYLE_INDOOR,
         QGC_MAINWINDOW_STYLE_OUTDOOR
     };
 
     /** @brief Get current visual style */
-    int getStyle() {
+    int getStyle()
+    {
         return currentStyle;
     }
     /** @brief Get auto link reconnect setting */
-    bool autoReconnectEnabled() {
+    bool autoReconnectEnabled()
+    {
         return autoReconnect;
     }
 
     /** @brief Get low power mode setting */
-    bool lowPowerModeEnabled() {
+    bool lowPowerModeEnabled()
+    {
         return lowPowerMode;
     }
 

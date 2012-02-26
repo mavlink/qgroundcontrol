@@ -80,6 +80,7 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN);
     ui->editCommandComboBox->addItem("MAV_CMD_OVERRIDE_GOTO", MAV_CMD_OVERRIDE_GOTO);
     ui->editCommandComboBox->addItem("MAV_CMD_MISSION_START", MAV_CMD_MISSION_START);
+    ui->editCommandComboBox->addItem("MAV_CMD_COMPONENT_ARM_DISARM", MAV_CMD_COMPONENT_ARM_DISARM);
     ui->editCommandComboBox->setEditable(true);
 }
 
@@ -136,6 +137,7 @@ void QGCCommandButton::startEditMode()
     ui->commandButton->hide();
     ui->nameLabel->hide();
 
+    ui->editCommandComboBox->blockSignals(false);
     ui->editCommandComboBox->show();
     ui->editFinishButton->show();
     ui->editNameLabel->show();
@@ -158,6 +160,7 @@ void QGCCommandButton::startEditMode()
 
 void QGCCommandButton::endEditMode()
 {
+    ui->editCommandComboBox->blockSignals(true);
     ui->editCommandComboBox->hide();
     ui->editFinishButton->hide();
     ui->editNameLabel->hide();

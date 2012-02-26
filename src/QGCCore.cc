@@ -84,16 +84,20 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Show user an upgrade message if QGC got upgraded (see code below, after splash screen)
     bool upgraded = false;
     QString lastApplicationVersion("");
-    if (settings.contains("QGC_APPLICATION_VERSION")) {
+    if (settings.contains("QGC_APPLICATION_VERSION"))
+    {
         QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
-        if (qgcVersion != QGC_APPLICATION_VERSION) {
+        if (qgcVersion != QGC_APPLICATION_VERSION)
+        {
             lastApplicationVersion = qgcVersion;
             settings.clear();
             // Write current application version
             settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
             upgraded = true;
         }
-    } else {
+    }
+    else
+    {
         // If application version is not set, clear settings anyway
         settings.clear();
         // Write current application version
@@ -117,7 +121,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Load application font
     QFontDatabase fontDatabase = QFontDatabase();
     const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
-    const QString fontFamilyName = "Bitstream Vera Sans";
+    //const QString fontFamilyName = "Bitstream Vera Sans";
     if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
     fontDatabase.addApplicationFont(fontFileName);
     // Avoid Using setFont(). In the Qt docu you can read the following:
@@ -132,9 +136,6 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     splashScreen->showMessage(tr("Starting UAS Manager"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startUASManager();
 
-    //tarsus = new ViconTarsusProtocol();
-    //tarsus->start();
-
     // Start the user interface
     splashScreen->showMessage(tr("Starting User Interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Start UI
@@ -143,21 +144,18 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // to make sure that all components are initialized when the
     // first messages arrive
     UDPLink* udpLink = new UDPLink(QHostAddress::Any, 14550);
-	MainWindow::instance()->addLink(udpLink);
+    MainWindow::instance()->addLink(udpLink);
     // Listen on Multicast-Address 239.255.77.77, Port 14550
     //QHostAddress * multicast_udp = new QHostAddress("239.255.77.77");
     //UDPLink* udpLink = new UDPLink(*multicast_udp, 14550);
-    //mainWindow->addLink(udpLink);
 
 #ifdef OPAL_RT
     // Add OpalRT Link, but do not connect
     OpalLink* opalLink = new OpalLink();
-    //mainWindow->addLink(opalLink);
+    MainWindow::instance()->addLink(opalLink);
 #endif
-    // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     simulationLink->disconnect();
-    //mainWindow->addLink(simulationLink);
 
     mainWindow = MainWindow::instance(splashScreen);
 
