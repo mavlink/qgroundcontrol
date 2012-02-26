@@ -92,6 +92,10 @@ private slots:
     void setWaypointAltitude(void);
     void clearAllWaypoints(void);
 
+    void moveImagery(void);
+    void moveTerrain(void);
+    void rotateTerrain(void);
+
     void sizeChanged(int width, int height);
     void update(void);
 
@@ -187,7 +191,10 @@ private:
         DEFAULT_MODE,
         MOVE_WAYPOINT_POSITION_MODE,
         MOVE_WAYPOINT_HEADING_MODE,
-        SELECT_TARGET_HEADING_MODE
+        SELECT_TARGET_HEADING_MODE,
+        MOVE_TERRAIN_MODE,
+        ROTATE_TERRAIN_MODE,
+        MOVE_IMAGERY_MODE
     };
     Mode mMode;
     int mSelectedWpIndex;

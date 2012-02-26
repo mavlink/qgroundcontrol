@@ -79,6 +79,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     // generate map model
     mImageryNode = createImagery();
+    mImageryNode->setName("imagery");
     m3DWidget->worldMap()->addChild(mImageryNode, false);
 
     setupHUD();
@@ -929,6 +930,105 @@ Pixhawk3DWidget::clearAllWaypoints(void)
 }
 
 void
+Pixhawk3DWidget::moveImagery(void)
+{
+    if (mMode != MOVE_IMAGERY_MODE)
+    {
+        mMode = MOVE_IMAGERY_MODE;
+        return;
+    }
+
+    if (!mActiveUAS)
+    {
+        return;
+    }
+
+    if (mGlobalViewParams->frame() == MAV_FRAME_GLOBAL)
+    {
+        return;
+    }
+
+    double z = mActiveUAS->getLocalZ();
+
+    QPointF cursorWorldCoords =
+        m3DWidget->worldCursorPosition(m3DWidget->mouseCursorCoords(), -z);
+
+    QVector3D& offset = mGlobalViewParams->imageryOffset();
+    offset.setX(cursorWorldCoords.x());
+    offset.setY(cursorWorldCoords.y());
+
+    mImageryNode->setOffset(offset.x(), offset.y(), offset.z());
+}
+
+void
+Pixhawk3DWidget::moveTerrain(void)
+{
+    if (mMode != MOVE_TERRAIN_MODE)
+    {
+        mMode = MOVE_TERRAIN_MODE;
+        return;
+    }
+
+    if (!mActiveUAS)
+    {
+        return;
+    }
+
+    if (mGlobalViewParams->frame() == MAV_FRAME_GLOBAL)
+    {
+        return;
+    }
+
+    double z = mActiveUAS->getLocalZ();
+
+    QPointF cursorWorldCoords =
+        m3DWidget->worldCursorPosition(m3DWidget->mouseCursorCoords(), -z);
+
+    QVector3D& positionOffset = mGlobalViewParams->terrainPositionOffset();
+    positionOffset.setX(cursorWorldCoords.x());
+    positionOffset.setY(cursorWorldCoords.y());
+
+    mTerrainPAT->setPosition(osg::Vec3d(positionOffset.y(), positionOffset.x(), -positionOffset.z()));
+}
+
+void
+Pixhawk3DWidget::rotateTerrain(void)
+{
+    if (mMode != ROTATE_TERRAIN_MODE)
+    {
+        mMode = ROTATE_TERRAIN_MODE;
+        return;
+    }
+
+    if (!mActiveUAS)
+    {
+        return;
+    }
+
+    if (mGlobalViewParams->frame() == MAV_FRAME_GLOBAL)
+    {
+        return;
+    }
+
+    double z = mActiveUAS->getLocalZ();
+
+    QPointF cursorWorldCoords =
+        m3DWidget->worldCursorPosition(m3DWidget->mouseCursorCoords(), -z);
+
+    const QVector3D& positionOffset = mGlobalViewParams->terrainPositionOffset();
+    QVector3D& attitudeOffset = mGlobalViewParams->terrainAttitudeOffset();
+
+    double yaw = atan2(cursorWorldCoords.y() - positionOffset.y(),
+                       cursorWorldCoords.x() - positionOffset.x());
+
+    attitudeOffset.setZ(yaw);
+
+    mTerrainPAT->setAttitude(osg::Quat(- attitudeOffset.z(), osg::Vec3d(0.0f, 0.0f, 1.0f),
+                                       attitudeOffset.y(), osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                       attitudeOffset.x(), osg::Vec3d(0.0f, 1.0f, 0.0f)));
+}
+
+void
 Pixhawk3DWidget::sizeChanged(int width, int height)
 {
     resizeHUD(width, height);
@@ -1291,30 +1391,91 @@ Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
             mMode = DEFAULT_MODE;
             event->accept();
         }
-
-        if (event->modifiers() == Qt::ShiftModifier)
+    }
+    else if (event->button() == Qt::RightButton)
+    {
+        if (m3DWidget->getSceneData() && mActiveUAS)
         {
-            mSelectedWpIndex = findWaypoint(event->pos());
+            mSelectedWpIndex = -1;
+            bool mouseOverImagery = false;
+            bool mouseOverTerrain = false;
+
+            SystemContainer& systemData = mSystemContainerMap[mActiveUAS->getUASID()];
+            osg::ref_ptr<WaypointGroupNode>& waypointGroupNode = systemData.waypointGroupNode();
+
+            osgUtil::LineSegmentIntersector::Intersections intersections;
+
+            QPoint widgetMousePos = m3DWidget->mapFromParent(event->pos());
+
+            if (m3DWidget->computeIntersections(widgetMousePos.x(),
+                                                m3DWidget->height() - widgetMousePos.y(),
+                                                intersections))
+            {
+                for (osgUtil::LineSegmentIntersector::Intersections::iterator
+                     it = intersections.begin(); it != intersections.end(); it++)
+                {
+                    for (uint i = 0 ; i < it->nodePath.size(); ++i)
+                    {
+                        osg::Node* node = it->nodePath[i];
+                        std::string nodeName = node->getName();
+
+                        if (nodeName.substr(0, 2).compare("wp") == 0)
+                        {
+                            if (node->getParent(0)->getParent(0) == waypointGroupNode.get())
+                            {
+                                mSelectedWpIndex = atoi(nodeName.substr(2).c_str());
+                            }
+                        }
+                        else if (nodeName.compare("imagery") == 0)
+                        {
+                            mouseOverImagery = true;
+                        }
+                        else if (nodeName.compare("terrain") == 0)
+                        {
+                            mouseOverTerrain = true;
+                        }
+                    }
+                }
+            }
+
+            QMenu menu;
             if (mSelectedWpIndex == -1)
             {
                 mCachedMousePos = event->pos();
 
-                showInsertWaypointMenu(event->globalPos());
+                menu.addAction("Insert new waypoint", this, SLOT(insertWaypoint()));
             }
             else
             {
-                showEditWaypointMenu(event->globalPos());
-            }
-            event->accept();
+                QString text;
+                text = QString("Move waypoint %1").arg(QString::number(mSelectedWpIndex));
+                menu.addAction(text, this, SLOT(moveWaypointPosition()));
 
-            return;
-        }
-    }
-    else if (event->button() == Qt::RightButton)
-    {
-        if (findTerrain(event->pos()))
-        {
-            showTerrainMenu(event->globalPos());
+                text = QString("Change heading of waypoint %1").arg(QString::number(mSelectedWpIndex));
+                menu.addAction(text, this, SLOT(moveWaypointHeading()));
+
+                text = QString("Change altitude of waypoint %1").arg(QString::number(mSelectedWpIndex));
+                menu.addAction(text, this, SLOT(setWaypointAltitude()));
+
+                text = QString("Delete waypoint %1").arg(QString::number(mSelectedWpIndex));
+                menu.addAction(text, this, SLOT(deleteWaypoint()));
+            }
+
+            menu.addAction("Clear all waypoints", this, SLOT(clearAllWaypoints()));
+            menu.addAction("Select target", this, SLOT(selectTarget()));
+
+            if (mouseOverImagery)
+            {
+                menu.addAction("Move imagery", this, SLOT(moveImagery()));
+            }
+            if (mouseOverTerrain)
+            {
+                menu.addAction("Move terrain", this, SLOT(moveTerrain()));
+                menu.addAction("Rotate terrain", this, SLOT(rotateTerrain()));
+                menu.addAction("Edit terrain parameters", this, SLOT(showTerrainParamWindow()));
+            }
+
+            menu.exec(event->globalPos());
 
             event->accept();
         }
@@ -1345,20 +1506,34 @@ Pixhawk3DWidget::mouseMoveEvent(QMouseEvent* event)
         return;
     }
 
-    if (mMode == SELECT_TARGET_HEADING_MODE)
+    switch (mMode)
     {
+    case SELECT_TARGET_HEADING_MODE:
         selectTargetHeading();
         event->accept();
-    }
-    if (mMode == MOVE_WAYPOINT_POSITION_MODE)
-    {
+        break;
+    case MOVE_WAYPOINT_POSITION_MODE:
         moveWaypointPosition();
         event->accept();
-    }
-    if (mMode == MOVE_WAYPOINT_HEADING_MODE)
-    {
+        break;
+    case MOVE_WAYPOINT_HEADING_MODE:
         moveWaypointHeading();
         event->accept();
+        break;
+    case MOVE_IMAGERY_MODE:
+        moveImagery();
+        event->accept();
+        break;
+    case MOVE_TERRAIN_MODE:
+        moveTerrain();
+        event->accept();
+        break;
+    case ROTATE_TERRAIN_MODE:
+        rotateTerrain();
+        event->accept();
+        break;
+    default:
+        {}
     }
 
     m3DWidget->handleMouseMoveEvent(event);
