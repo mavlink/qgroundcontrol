@@ -470,7 +470,7 @@ void MAVLinkProtocol::sendMessage(mavlink_message_t message)
 void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Create buffer
-    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    static uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Rewriting header to ensure correct link ID is set
     static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
     if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len, messageKeys[message.msgid]);
@@ -491,12 +491,14 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
  */
 void MAVLinkProtocol::sendHeartbeat()
 {
-    if (m_heartbeatsEnabled) {
+    if (m_heartbeatsEnabled)
+    {
         mavlink_message_t beat;
         mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE);
         sendMessage(beat);
     }
-    if (m_authEnabled) {
+    if (m_authEnabled)
+    {
         mavlink_message_t msg;
         mavlink_auth_key_t auth;
         if (m_authKey.length() != MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN) m_authKey.resize(MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN);

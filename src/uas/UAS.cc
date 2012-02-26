@@ -142,7 +142,8 @@ void UAS::readSettings()
     this->name = settings.value("NAME", this->name).toString();
     this->airframe = settings.value("AIRFRAME", this->airframe).toInt();
     this->autopilot = settings.value("AP_TYPE", this->autopilot).toInt();
-    if (settings.contains("BATTERY_SPECS")) {
+    if (settings.contains("BATTERY_SPECS"))
+    {
         setBatterySpecs(settings.value("BATTERY_SPECS").toString());
     }
     settings.endGroup();
@@ -1479,9 +1480,11 @@ void UAS::sendMessage(mavlink_message_t message)
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, *links)
     {
+        qDebug() << "ITERATING THROUGH LINKS";
         if (link)
         {
             sendMessage(link, message);
+            qDebug() << "SENT MESSAGE";
         }
         else
         {
@@ -1716,6 +1719,7 @@ void UAS::requestParameters()
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_ALL);
     sendMessage(msg);
+    qDebug() << __FILE__ << __LINE__ << "LOADING PARAM LIST";
 }
 
 void UAS::writeParametersToStorage()
