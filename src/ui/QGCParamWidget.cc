@@ -590,7 +590,6 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
  */
 void QGCParamWidget::requestParameterList()
 {
-    qDebug() << "LOADING PARAM LIST";
     if (!mav) return;
     // FIXME This call does not belong here
     // Once the comm handling is moved to a new
@@ -606,7 +605,8 @@ void QGCParamWidget::requestParameterList()
     // Clear transmission state
     transmissionListMode = true;
     transmissionListSizeKnown.clear();
-    foreach (int key, transmissionMissingPackets.keys()) {
+    foreach (int key, transmissionMissingPackets.keys())
+    {
         transmissionMissingPackets.value(key)->clear();
     }
     transmissionActive = true;

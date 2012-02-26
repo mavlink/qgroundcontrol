@@ -668,6 +668,10 @@
                     <param index="1">first_item: the first mission item to run</param>
                     <param index="2">last_item:  the last mission item to run (after this item is run, the mission ends)</param>
                </entry>
+              <entry value="400" name="MAV_CMD_COMPONENT_ARM_DISARM">
+                  <description>Arms / Disarms a component</description>
+                  <param index="1">1 to arm, 0 to disarm</param>
+              </entry>
           </enum>
           <enum name="MAV_DATA_STREAM">
                <description>Data stream IDs. A data stream is not a fixed set of messages, but rather a
