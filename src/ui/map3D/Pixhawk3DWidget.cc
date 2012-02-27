@@ -161,6 +161,8 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas, int component,
                                       double x, double y, double z,
                                       quint64 time)
 {
+    Q_UNUSED(time);
+
     int systemId = uas->getUASID();
 
     if (!mSystemContainerMap.contains(systemId))
@@ -303,6 +305,8 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas,
                                       double x, double y, double z,
                                       quint64 time)
 {
+    Q_UNUSED(time);
+
     int systemId = uas->getUASID();
 
     if (!mSystemContainerMap.contains(systemId))
@@ -310,13 +314,13 @@ Pixhawk3DWidget::localPositionChanged(UASInterface* uas,
         return;
     }
 
-    // Add offset
-    UAS* mav = qobject_cast<UAS*>(uas);
+//    // Add offset
+//    UAS* mav = qobject_cast<UAS*>(uas);
 
-    float offX = mav->getNedPosGlobalOffset().x();
-    float offY = mav->getNedPosGlobalOffset().y();
-    float offZ = mav->getNedPosGlobalOffset().z();
-    float offYaw = mav->getNedAttGlobalOffset().z();
+//    float offX = mav->getNedPosGlobalOffset().x();
+//    float offY = mav->getNedPosGlobalOffset().y();
+//    float offZ = mav->getNedPosGlobalOffset().z();
+//    float offYaw = mav->getNedAttGlobalOffset().z();
 
     // update system position
     m3DWidget->systemGroup(systemId)->position()->setPosition(osg::Vec3d(y, x, -z));
@@ -327,6 +331,10 @@ Pixhawk3DWidget::attitudeChanged(UASInterface* uas, int component,
                                  double roll, double pitch, double yaw,
                                  quint64 time)
 {
+    Q_UNUSED(roll);
+    Q_UNUSED(pitch);
+    Q_UNUSED(time);
+
     int systemId = uas->getUASID();
 
     if (!mSystemContainerMap.contains(systemId))
@@ -357,6 +365,8 @@ Pixhawk3DWidget::attitudeChanged(UASInterface* uas,
                                  double roll, double pitch, double yaw,
                                  quint64 time)
 {
+    Q_UNUSED(time);
+
     int systemId = uas->getUASID();
 
     if (!mSystemContainerMap.contains(systemId))
@@ -423,7 +433,7 @@ Pixhawk3DWidget::setpointChanged(int uasId, float x, float y, float z,
     osg::ref_ptr<osg::Group>& setpointGroupNode = mSystemContainerMap[uasId].setpointGroupNode();
 
     setpointGroupNode->addChild(pat);
-    if (setpointGroupNode->getNumChildren() > systemViewParams->setpointHistoryLength())
+    if (setpointGroupNode->getNumChildren() > static_cast<unsigned int>(systemViewParams->setpointHistoryLength()))
     {
         setpointGroupNode->removeChildren(0, setpointGroupNode->getNumChildren() - systemViewParams->setpointHistoryLength());
     }
@@ -1184,7 +1194,6 @@ Pixhawk3DWidget::update(void)
 
         UASInterface* uas = UASManager::instance()->getUASForId(systemId);
 
-        osg::ref_ptr<SystemGroupNode>& systemNode = m3DWidget->systemGroup(systemId);
         SystemContainer& systemData = mSystemContainerMap[systemId];
         SystemViewParamsPtr& systemViewParams = it.value();
 
@@ -1581,12 +1590,16 @@ Pixhawk3DWidget::wheelEvent(QWheelEvent* event)
 void
 Pixhawk3DWidget::showEvent(QShowEvent* event)
 {
+    Q_UNUSED(event);
+
     emit visibilityChanged(true);
 }
 
 void
 Pixhawk3DWidget::hideEvent(QHideEvent* event)
 {
+    Q_UNUSED(event);
+
     emit visibilityChanged(false);
 }
 
@@ -2347,6 +2360,9 @@ Pixhawk3DWidget::updateTarget(UASInterface* uas, MAV_FRAME frame,
                               QVector4D& target,
                               osg::ref_ptr<osg::Node>& targetNode)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(frame);
+
     osg::PositionAttitudeTransform* pat =
         dynamic_cast<osg::PositionAttitudeTransform*>(targetNode.get());
 
@@ -2356,9 +2372,6 @@ Pixhawk3DWidget::updateTarget(UASInterface* uas, MAV_FRAME frame,
     pat->setAttitude(osg::Quat(target.w() - M_PI_2, osg::Vec3d(1.0f, 0.0f, 0.0f),
                                M_PI_2, osg::Vec3d(0.0f, 1.0f, 0.0f),
                                0.0, osg::Vec3d(0.0f, 0.0f, 1.0f)));
-
-    osg::Geode* geode = dynamic_cast<osg::Geode*>(pat->getChild(0));
-    osg::ShapeDrawable* sd = dynamic_cast<osg::ShapeDrawable*>(geode->getDrawable(0));
 }
 
 void
@@ -2399,6 +2412,8 @@ Pixhawk3DWidget::updatePlannedPath(UASInterface* uas, MAV_FRAME frame,
                                    double robotX, double robotY, double robotZ,
                                    osg::ref_ptr<osg::Geode>& plannedPathNode)
 {
+    Q_UNUSED(frame);
+
     qreal receivedTimestamp;
     px::Path path = uas->getPath(receivedTimestamp);
 
@@ -2476,6 +2491,8 @@ Pixhawk3DWidget::updateRGBD(UASInterface* uas, MAV_FRAME frame,
                             osg::ref_ptr<ImageWindowGeode>& rgbImageNode,
                             osg::ref_ptr<ImageWindowGeode>& depthImageNode)
 {
+    Q_UNUSED(frame);
+
     qreal receivedTimestamp;
     px::RGBDImage rgbdImage = uas->getRGBDImage(receivedTimestamp);
 
@@ -2525,6 +2542,8 @@ Pixhawk3DWidget::updatePointCloud(UASInterface* uas, MAV_FRAME frame,
                                   osg::ref_ptr<osg::Geode>& pointCloudNode,
                                   bool colorPointCloudByDistance)
 {
+    Q_UNUSED(frame);
+
     qreal receivedTimestamp;
     px::PointCloudXYZRGB pointCloud = uas->getPointCloud(receivedTimestamp);
 
