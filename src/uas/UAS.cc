@@ -705,7 +705,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         {
             mavlink_gps_global_origin_t pos;
             mavlink_msg_gps_global_origin_decode(&message, &pos);
-            emit homePositionChanged(uasId, pos.latitude, pos.longitude, pos.altitude);
+            emit homePositionChanged(uasId, pos.latitude / 10000000.0, pos.longitude / 10000000.0, pos.altitude / 1000.0);
         }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
