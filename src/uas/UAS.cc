@@ -923,7 +923,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             int severity = mavlink_msg_statustext_get_severity(&message);
             //qDebug() << "RECEIVED STATUS:" << text;false
             //emit statusTextReceived(severity, text);
-            emit textMessageReceived(uasId, message.compid, severity, text);
+
+            if (text.startsWith("#audio:"))
+            {
+                text.remove("#audio:");
+                emit textMessageReceived(uasId, message.compid, severity, QString("Audio message: ") + text);
+                GAudioOutput::instance()->say(text, severity);
+            }
+            else
+            {
+                emit textMessageReceived(uasId, message.compid, severity, text);
+            }
         }
             break;
 #ifdef MAVLINK_ENABLED_PIXHAWK

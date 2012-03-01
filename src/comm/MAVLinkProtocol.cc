@@ -188,19 +188,23 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     mavlink_message_t message;
     mavlink_status_t status;
 
+    static int mavlink09Count = 0;
+    static bool decodedFirstPacket = false;
+
     for (int position = 0; position < b.size(); position++) {
-        unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b.at(position)), &message, &status);
+        unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b[position]), &message, &status);
+
+        if ((uint8_t)b[position] == 0x55) mavlink09Count++;
+        if ((mavlink09Count > 100) && !decodedFirstPacket)
+        {
+            // Obviously the user tries to use a 0.9 autopilot
+            // with QGroundControl built for version 1.0
+            emit protocolStatusMessage("MAVLink Version Mismatch", "Your MAVLink device seems to use the deprecated version 0.9, while QGroundControl only supports version 1.0+. Please upgrade the MAVLink version of your autopilot.");
+        }
 
         if (decodeState == 1)
         {
-//#ifdef MAVLINK_MESSAGE_LENGTHS
-//	    const uint8_t message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
-//	    if (message.msgid >= sizeof(message_lengths) ||
-//		message.len != message_lengths[message.msgid]) {
-//                    qDebug() << "MAVLink message " << message.msgid << " length incorrect (was " << message.len << " expected " << message_lengths[message.msgid] << ")";
-//		    continue;
-//	    }
-//#endif
+            decodedFirstPacket = true;
 #if defined(QGC_PROTOBUF_ENABLED)
 
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
