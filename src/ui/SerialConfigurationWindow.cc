@@ -73,14 +73,6 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 		supportedBaudRates << 200;
 		supportedBaudRates << 1800;
 #endif
-		// Baud rates supported only by Linux
-#if defined(Q_OS_LINUX)
-		supportedBaudRates << 230400;
-		supportedBaudRates << 460800;
-		supportedBaudRates << 500000;
-		supportedBaudRates << 576000;
-		supportedBaudRates << 921600;
-#endif
 
 		// Baud rates supported only by Windows
 #if defined(Q_OS_WIN)
@@ -102,6 +94,16 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 		supportedBaudRates << 38400;
 		supportedBaudRates << 57600;
 		supportedBaudRates << 115200;
+        supportedBaudRates << 230400;
+        supportedBaudRates << 460800;
+
+#if defined(Q_OS_LINUX)
+        // Baud rates supported only by Linux
+        supportedBaudRates << 500000;
+        supportedBaudRates << 576000;
+#endif
+
+        supportedBaudRates << 921600;
 		
 		// Now actually add all of our supported baud rates to the UI.
 		qSort(supportedBaudRates.begin(), supportedBaudRates.end());
