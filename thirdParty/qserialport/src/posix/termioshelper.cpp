@@ -327,6 +327,8 @@ void TermiosHelper::setBaudRate(QPortSettings::BaudRate baudRate)
     //          }
     //#else
 
+    qCritical() << "Baud rate is now: " << baud;
+
     if ( cfsetspeed(currentAttrs_, baud) == -1 ) {
         qCritical() <<  QString("TermiosHelper::setBaudRate(file: %1) failed: %2(%3)")
                         .arg(fileDescriptor_)

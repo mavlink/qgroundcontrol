@@ -1465,7 +1465,7 @@ void HUD::copyImage()
 {
     if (isVisible())
     {
-        qDebug() << "HUD::copyImage()";
+        //qDebug() << "HUD::copyImage()";
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u)
         {

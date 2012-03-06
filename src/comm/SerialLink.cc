@@ -174,9 +174,9 @@ static kern_return_t GetModemPath(io_iterator_t serialPortIterator, char *bsdPat
         // incoming calls, e.g. a fax listener.
 
         bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
-                            CFSTR(kIOCalloutDeviceKey),
-                            kCFAllocatorDefault,
-                            0);
+                                                            CFSTR(kIOCalloutDeviceKey),
+                                                            kCFAllocatorDefault,
+                                                            0);
         if (bsdPathAsCFString) {
             Boolean result;
 
@@ -213,7 +213,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
                        int dataBits, int stopBits) :
     port(NULL),
     ports(new QVector<QString>()),
-          m_stopp(false)
+    m_stopp(false)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
@@ -395,14 +395,14 @@ void SerialLink::run()
     // Qt way to make clear what a while(1) loop does
     forever
     {
-		{
-			QMutexLocker locker(&this->m_stoppMutex);
-			if(this->m_stopp)
-			{
-				this->m_stopp = false;
-				break;
-			}
-		}
+        {
+            QMutexLocker locker(&this->m_stoppMutex);
+            if(this->m_stopp)
+            {
+                this->m_stopp = false;
+                break;
+            }
+        }
         // Check if new bytes have arrived, if yes, emit the notification signal
         checkForBytes();
         /* Serial data isn't arriving that fast normally, this saves the thread
@@ -410,13 +410,13 @@ void SerialLink::run()
                  */
         MG::SLEEP::msleep(SerialLink::poll_interval);
     }
-	if (port) {
+    if (port) {
         port->flushInBuffer();
         port->flushOutBuffer();
         port->close();
         delete port;
         port = NULL;
-	}
+    }
 }
 
 
@@ -449,18 +449,18 @@ void SerialLink::writeBytes(const char* data, qint64 size)
 
         if (b > 0) {
 
-//            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
+            //            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
             // Increase write counter
             bitsSentTotal += size * 8;
 
-//            int i;
-//            for (i=0; i<size; i++)
-//            {
-//                unsigned char v =data[i];
-//                qDebug("%02x ", v);
-//            }
-//            qDebug("\n");
+            //            int i;
+            //            for (i=0; i<size; i++)
+            //            {
+            //                unsigned char v =data[i];
+            //                qDebug("%02x ", v);
+            //            }
+            //            qDebug("\n");
         } else {
             disconnect();
             // Error occured
@@ -528,33 +528,33 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-	if(this->isRunning())
-	{
-		{
-			QMutexLocker locker(&this->m_stoppMutex);
-			this->m_stopp = true;
-		}
-		this->wait();
-	
-//    if (port) {
+    if(this->isRunning())
+    {
+        {
+            QMutexLocker locker(&this->m_stoppMutex);
+            this->m_stopp = true;
+        }
+        this->wait();
+
+        //    if (port) {
         //#if !defined _WIN32 || !defined _WIN64
         /* Block the thread until it returns from run() */
         //#endif
-//        port->flushInBuffer();
-//        port->flushOutBuffer();
-//        port->close();
-//        delete port;
-//        port = NULL;
+        //        port->flushInBuffer();
+        //        port->flushOutBuffer();
+        //        port->close();
+        //        delete port;
+        //        port = NULL;
 
-//        if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
-		
+        //        if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
+
         bool closed = true;
         //port->isOpen();
 
         emit disconnected();
         emit connected(false);
         return closed;
-	}
+    }
     else {
         // No port, so we're disconnected
         return true;
@@ -570,10 +570,10 @@ bool SerialLink::disconnect()
 bool SerialLink::connect()
 {
     if (this->isRunning()) this->disconnect();
-	{
-		QMutexLocker locker(&this->m_stoppMutex);
-		this->m_stopp = false;
-	}
+    {
+        QMutexLocker locker(&this->m_stoppMutex);
+        this->m_stopp = false;
+    }
     this->start(LowPriority);
     return true;
 }
@@ -654,7 +654,7 @@ qint64 SerialLink::getNominalDataRate()
     qint64 dataRate = 0;
     switch (portSettings.baudRate()) {
 
-	// Baud rates supported only by POSIX systems
+    // Baud rates supported only by POSIX systems
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
     case QPortSettings::BAUDR_50:
         dataRate = 50;
@@ -676,26 +676,7 @@ qint64 SerialLink::getNominalDataRate()
         break;
 #endif
 
-	// Baud rates supported only by Linux
-#ifdef Q_OS_LINUX
-    case QPortSettings::BAUDR_230400:
-        dataRate = 230400;
-        break;
-    case QPortSettings::BAUDR_460800:
-        dataRate = 460800;
-        break;
-    case QPortSettings::BAUDR_500000:
-        dataRate = 500000;
-        break;
-    case QPortSettings::BAUDR_576000:
-        dataRate = 576000;
-        break;
-    case QPortSettings::BAUDR_921600:
-        dataRate = 921600;
-        break;
-#endif
-
-	// Baud rates supported only by Windows
+        // Baud rates supported only by Windows
 #if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
     case QPortSettings::BAUDR_14400:
         dataRate = 14400;
@@ -743,8 +724,23 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_115200:
         dataRate = 115200;
         break;
+    case QPortSettings::BAUDR_230400:
+        dataRate = 230400;
+        break;
+    case QPortSettings::BAUDR_460800:
+        dataRate = 460800;
+        break;
+    case QPortSettings::BAUDR_500000:
+        dataRate = 500000;
+        break;
+    case QPortSettings::BAUDR_576000:
+        dataRate = 576000;
+        break;
+    case QPortSettings::BAUDR_921600:
+        dataRate = 921600;
+        break;
 
-	// Otherwise do nothing.
+        // Otherwise do nothing.
     case QPortSettings::BAUDR_UNKNOWN:
     default:
         break;
@@ -869,17 +865,17 @@ int SerialLink::getDataBits()
 int SerialLink::getStopBits()
 {
     int ret = -1;
-        switch (portSettings.stopBits()) {
-        case QPortSettings::STOP_1:
-            ret = 1;
-            break;
-        case QPortSettings::STOP_2:
-            ret = 2;
-            break;
-        default:
-            ret = -1;
-            break;
-        }
+    switch (portSettings.stopBits()) {
+    case QPortSettings::STOP_1:
+        ret = 1;
+        break;
+    case QPortSettings::STOP_2:
+        ret = 2;
+        break;
+    default:
+        ret = -1;
+        break;
+    }
     return ret;
 }
 
@@ -916,16 +912,16 @@ bool SerialLink::setBaudRateType(int rateIndex)
     if(isConnected()) reconnect = true;
     disconnect();
 
-// These minimum and maximum baud rates were based on those enumerated in qportsettings.h.
+    // These minimum and maximum baud rates were based on those enumerated in qportsettings.h.
 #if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
-	const int minBaud = (int)QPortSettings::BAUDR_110;
-	const int maxBaud = (int)QPortSettings::BAUDR_256000;
+    const int minBaud = (int)QPortSettings::BAUDR_110;
+    const int maxBaud = (int)QPortSettings::BAUDR_256000;
 #elif defined(Q_OS_LINUX)
-	const int minBaud = (int)QPortSettings::BAUDR_50;
-	const int maxBaud = (int)QPortSettings::BAUDR_921600;
+    const int minBaud = (int)QPortSettings::BAUDR_50;
+    const int maxBaud = (int)QPortSettings::BAUDR_921600;
 #elif defined(Q_OS_UNIX) || defined(Q_OS_DARWIN)
-	const int minBaud = (int)QPortSettings::BAUDR_50;
-	const int maxBaud = (int)QPortSettings::BAUDR_115200;
+    const int minBaud = (int)QPortSettings::BAUDR_50;
+    const int maxBaud = (int)QPortSettings::BAUDR_115200;
 #endif
 
     if (rateIndex >= minBaud && rateIndex <= maxBaud)
@@ -953,11 +949,11 @@ bool SerialLink::setBaudRate(int rate)
         reconnect = true;
     }
     disconnect();
-	
+
     // This switch-statment relies on the mapping given in qportsettings.h from the QSerialPort library.
     switch (rate) {
 
-	// Baud rates supported only by non-Windows systems
+    // Baud rates supported only by non-Windows systems
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
     case 50:
         portSettings.setBaudRate(QPortSettings::BAUDR_50);
@@ -979,26 +975,7 @@ bool SerialLink::setBaudRate(int rate)
         break;
 #endif
 
-	// Supported only by Linux
-#ifdef Q_OS_LINUX
-    case 230400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_230400);
-        break;
-    case 460800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_460800);
-        break;
-    case 500000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_500000);
-        break;
-    case 576000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_576000);
-        break;
-    case 921600:
-        portSettings.setBaudRate(QPortSettings::BAUDR_921600);
-        break;
-#endif
-
-	// Baud rates supported only by windows
+        // Baud rates supported only by windows
 #if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
     case 14400:
         portSettings.setBaudRate(QPortSettings::BAUDR_14400);
@@ -1014,7 +991,7 @@ bool SerialLink::setBaudRate(int rate)
         break;
 #endif
 
-	// Supported by all OSes:
+        // Supported by all OSes:
     case 110:
         portSettings.setBaudRate(QPortSettings::BAUDR_110);
         break;
@@ -1047,6 +1024,21 @@ bool SerialLink::setBaudRate(int rate)
         break;
     case 115200:
         portSettings.setBaudRate(QPortSettings::BAUDR_115200);
+        break;
+    case 230400:
+        portSettings.setBaudRate(QPortSettings::BAUDR_230400);
+        break;
+    case 460800:
+        portSettings.setBaudRate(QPortSettings::BAUDR_460800);
+        break;
+    case 500000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_500000);
+        break;
+    case 576000:
+        portSettings.setBaudRate(QPortSettings::BAUDR_576000);
+        break;
+    case 921600:
+        portSettings.setBaudRate(QPortSettings::BAUDR_921600);
         break;
     default:
         // If none of the above cases matches, there must be an error
