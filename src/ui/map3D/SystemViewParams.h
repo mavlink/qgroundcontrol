@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QSharedPointer>
 #include <QVector>
+#include <QWidget>
 
 class SystemViewParams : public QObject
 {
@@ -61,7 +62,7 @@ public slots:
     void toggleColorPointCloud(int state);
     void toggleLocalGrid(int state);
     void toggleObstacleList(int state);
-    void toggleOverlay(const QString& name);
+    void toggleOverlay(QWidget* widget);
     void togglePlannedPath(int state);
     void togglePointCloud(int state);
     void toggleRGBD(int state);

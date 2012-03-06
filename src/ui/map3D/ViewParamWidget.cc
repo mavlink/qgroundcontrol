@@ -65,14 +65,16 @@ ViewParamWidget::overlayCreated(int systemId, const QString& name)
     systemViewParams->displayOverlay().insert(name, true);
 
     QCheckBox* checkbox = new QCheckBox(this);
+    checkbox->setAccessibleName(name);
     checkbox->setChecked(systemViewParams->displayOverlay().value(name));
     mOverlayLayout[systemId]->addRow(name, checkbox);
 
-    mOverlaySignalMapper->setMapping(checkbox, name);
+    mOverlaySignalMapper->setMapping(checkbox, checkbox);
+
     connect(checkbox, SIGNAL(clicked()),
             mOverlaySignalMapper, SLOT(map()));
-    connect(mOverlaySignalMapper, SIGNAL(mapped(QString)),
-            systemViewParams.data(), SLOT(toggleOverlay(QString)));
+    connect(mOverlaySignalMapper, SIGNAL(mapped(QWidget*)),
+            systemViewParams.data(), SLOT(toggleOverlay(QWidget*)));
 }
 
 void
