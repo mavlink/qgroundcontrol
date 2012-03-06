@@ -1,5 +1,7 @@
 #include "SystemViewParams.h"
 
+#include <QCheckBox>
+
 SystemViewParams::SystemViewParams(int systemId)
  : mSystemId(systemId)
  , mColorPointCloudByDistance(false)
@@ -240,14 +242,17 @@ SystemViewParams::toggleObstacleList(int state)
 }
 
 void
-SystemViewParams::toggleOverlay(const QString& name)
+SystemViewParams::toggleOverlay(QWidget* widget)
 {
+    const QCheckBox* checkbox = dynamic_cast<QCheckBox*>(widget);
+    QString name = checkbox->accessibleName();
+
     if (!mDisplayOverlay.contains(name))
     {
         return;
     }
 
-    mDisplayOverlay[name] = !mDisplayOverlay[name];
+    mDisplayOverlay[name] = (checkbox->checkState() == Qt::Checked);
 }
 
 void
