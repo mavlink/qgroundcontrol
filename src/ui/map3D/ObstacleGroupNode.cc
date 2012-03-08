@@ -31,9 +31,11 @@ This file is part of the QGROUNDCONTROL project
 
 #include "ObstacleGroupNode.h"
 
+#include <limits>
 #include <osg/PositionAttitudeTransform>
 #include <osg/ShapeDrawable>
 
+#include "gpl.h"
 #include "Imagery.h"
 
 ObstacleGroupNode::ObstacleGroupNode()
@@ -64,6 +66,25 @@ ObstacleGroupNode::update(double robotX, double robotY, double robotZ,
 
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
 
+    // find minimum and maximum height
+    float zMin = std::numeric_limits<float>::max();
+    float zMax = std::numeric_limits<float>::min();
+    for (int i = 0; i < obstacleList.obstacles_size(); ++i)
+    {
+        const px::Obstacle& obs = obstacleList.obstacles(i);
+
+        float z = robotZ - obs.z();
+
+        if (zMin > z)
+        {
+            zMin = z;
+        }
+        if (zMax < z)
+        {
+            zMax = z;
+        }
+    }
+
     for (int i = 0; i < obstacleList.obstacles_size(); ++i)
     {
         const px::Obstacle& obs = obstacleList.obstacles(i);
@@ -74,8 +95,12 @@ ObstacleGroupNode::update(double robotX, double robotY, double robotZ,
             new osg::Box(obsPos, obs.width(), obs.width(), obs.height());
         osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(box);
 
+        int idx = (obsPos.z() - zMin) / (zMax - zMin) * 127.0f;
+        float r, g, b;
+        qgc::colormap("jet", idx, r, g, b);
+
         sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
-        sd->setColor(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f));
+        sd->setColor(osg::Vec4(r, g, b, 1.0f));
 
         geode->addDrawable(sd);
     }
