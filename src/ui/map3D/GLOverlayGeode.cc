@@ -4,6 +4,8 @@ GLOverlayGeode::GLOverlayGeode()
  : mDrawable(new GLOverlayDrawable)
  , mMessageTimestamp(0.0)
 {
+    setCullingActive(false);
+
     addDrawable(mDrawable);
 }
 
