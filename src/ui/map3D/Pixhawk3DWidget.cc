@@ -472,7 +472,10 @@ Pixhawk3DWidget::clearData(void)
         systemData.setpointGroupNode()->removeChildren(0, systemData.setpointGroupNode()->getNumChildren());
 
         // clear trail data
+        systemData.orientationNode()->removeChildren(0, systemData.orientationNode()->getNumChildren());
+        systemData.trailIndexMap().clear();
         systemData.trailMap().clear();
+        systemData.trailNode()->removeDrawables(0, systemData.trailNode()->getNumDrawables());
     }
 }
 
