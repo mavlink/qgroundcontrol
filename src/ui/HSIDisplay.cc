@@ -595,7 +595,11 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     if (event->type() == QMouseEvent::MouseButtonDblClick)
     {
         QPointF p = screenToMetricBody(event->posF());
-        if (!directSending) setBodySetpointCoordinateXY(p.x(), p.y());
+        if (!directSending)
+        {
+            setBodySetpointCoordinateXY(p.x(), p.y());
+            if (!userZSetPointSet) setBodySetpointCoordinateZ(0.0);
+        }
         //        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
     }
 }
@@ -717,12 +721,12 @@ void HSIDisplay::keyPressEvent(QKeyEvent* event)
 
         if ((event->key() ==  Qt::Key_Up))
         {
-            setBodySetpointCoordinateZ(-0.5);
+            setBodySetpointCoordinateZ(-0.2);
         }
 
         if ((event->key() ==  Qt::Key_Down))
         {
-            setBodySetpointCoordinateZ(+0.5);
+            setBodySetpointCoordinateZ(+0.2);
         }
 
         if ((event->key() ==  Qt::Key_Left))
@@ -1084,7 +1088,7 @@ void HSIDisplay::drawSetpointXYZYaw(float x, float y, float z, float yaw, const 
         poly.replace(3, QPointF(p.x()-radius, p.y()+radius));
 
         // Label
-        paintText(QString("z: %1").arg(z), color, 2.1f, p.x()-radius, p.y()-radius-3.5f, &painter);
+        paintText(QString("z: %1").arg(z, 3, 'f', 1, QChar(' ')), color, 2.1f, p.x()-radius, p.y()-radius-3.5f, &painter);
 
         drawPolygon(poly, &painter);
 

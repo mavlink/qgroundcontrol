@@ -1463,7 +1463,7 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
 void HUD::copyImage()
 {
-    if (isVisible())
+    if (isVisible() && hudInstrumentsEnabled)
     {
         qDebug() << "HUD::copyImage()";
         UAS* u = dynamic_cast<UAS*>(this->uas);
