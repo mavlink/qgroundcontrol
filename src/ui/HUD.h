@@ -228,7 +228,6 @@ protected:
     QAction* selectVideoChannelAction;
     void paintEvent(QPaintEvent *event);
     bool imageRequested;
-
 };
 
 #endif // HUD_H
