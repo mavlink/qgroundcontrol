@@ -984,7 +984,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Restart statemachine
                 imagePacketsArrived = 0;
                 emit imageReady(this);
-                qDebug() << "imageReady emitted. all packets arrived";
+                //qDebug() << "imageReady emitted. all packets arrived";
             }
         }
             break;
@@ -1632,7 +1632,7 @@ QImage UAS::getImage()
 {
 #ifdef MAVLINK_ENABLED_PIXHAWK
 
-    qDebug() << "IMAGE TYPE:" << imageType;
+//    qDebug() << "IMAGE TYPE:" << imageType;
 
     // RAW greyscale
     if (imageType == MAVLINK_DATA_STREAM_IMG_RAW8U)

@@ -4,6 +4,8 @@ GLOverlayGeode::GLOverlayGeode()
  : mDrawable(new GLOverlayDrawable)
  , mMessageTimestamp(0.0)
 {
+    setCullingActive(false);
+
     addDrawable(mDrawable);
 }
 
@@ -150,6 +152,8 @@ GLOverlayGeode::GLOverlayDrawable::drawImplementation(osg::RenderInfo&) const
 
     glMatrixMode(GL_MODELVIEW);
     glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glPushMatrix();
 
     glScalef(-1.0f, 1.0f, -1.0f);
@@ -404,6 +408,7 @@ GLOverlayGeode::GLOverlayDrawable::drawImplementation(osg::RenderInfo&) const
 
     glPopMatrix();
     glEnable(GL_LIGHTING);
+    glDisable(GL_BLEND);
 }
 
 osg::BoundingBox
