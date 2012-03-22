@@ -25,8 +25,11 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="5,5,5,5,100">
-   <item row="0" column="0" colspan="4">
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="5,0,0">
+   <item row="0" column="0" rowspan="3">
     <widget class="QGroupBox" name="curveGroupBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
@@ -46,13 +49,16 @@
        <height>16777215</height>
       </size>
      </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="title">
       <string>Curve Selection</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -82,6 +88,9 @@
         <property name="autoFillBackground">
          <bool>false</bool>
         </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -99,17 +108,103 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>219</width>
-           <height>475</height>
+           <width>368</width>
+           <height>488</height>
           </rect>
          </property>
         </widget>
        </widget>
       </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="QComboBox" name="uasSelectionBox">
+          <item>
+           <property name="text">
+            <string>All MAVs</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="shortNameCheckBox">
+              <property name="toolTip">
+               <string>Display only variable names in curve list</string>
+              </property>
+              <property name="text">
+               <string>Short Names</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="showUnitsCheckBox">
+              <property name="toolTip">
+               <string>Display variable units in curve list</string>
+              </property>
+              <property name="whatsThis">
+               <string>Display variable units in curve list</string>
+              </property>
+              <property name="text">
+               <string>Show units</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QPushButton" name="recolorButton">
+              <property name="toolTip">
+               <string>Rotate color scheme for all curves</string>
+              </property>
+              <property name="text">
+               <string>Recolor</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Minimum</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
      </layout>
     </widget>
    </item>
-   <item row="0" column="4" rowspan="4">
+   <item row="0" column="2" rowspan="3">
     <widget class="QGroupBox" name="diagramGroupBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
@@ -129,45 +224,12 @@
        <height>300</height>
       </size>
      </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="title">
       <string>Diagram</string>
      </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QCheckBox" name="shortNameCheckBox">
-     <property name="text">
-      <string>Short Names</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="2" colspan="2">
-    <widget class="QPushButton" name="recolorButton">
-     <property name="text">
-      <string>Recolor</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="0" colspan="4">
-    <widget class="QComboBox" name="uasSelectionBox">
-     <item>
-      <property name="text">
-       <string>All MAVs</string>
-      </property>
-     </item>
     </widget>
    </item>
   </layout>
