@@ -163,7 +163,6 @@ protected:
     QToolButton* scalingLinearButton;
     QToolButton* scalingLogButton;
     QToolButton* logButton;
-    QPointer<QCheckBox> unitsCheckBox;
     QPointer<QCheckBox> timeButton;
 
     QFile* logFile;
