@@ -55,9 +55,9 @@ public slots:
     /** @brief Received system text message */
     void receiveTextMessage(int uasid, int componentid, int severity, QString text);
     /** @brief Start / stop logging */
-    void logging(bool enabled);
+    void logging(bool checked);
     /** @brief Start playing logfile */
-    void playLogFile(bool enabled);
+    void playLogFile(bool checked);
     /** @brief Set log playing component */
     void setLogPlayer(QGCMAVLinkLogPlayer* player);
     /** @brief Update battery charge state */
