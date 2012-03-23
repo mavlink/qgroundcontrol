@@ -246,21 +246,27 @@ void QGCDataPlot2D::exportSVG(QString fileName)
  */
 void QGCDataPlot2D::selectFile()
 {
-    // Let user select the log file name
-    //QDate date(QDate::currentDate());
-    // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-
+	// Open a file dialog prompting the user for the file to load.
+	// Note the special case for the Pixhawk.
     if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
         fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
-    } else {
+	}
+	else
+	{
         fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
     }
 
-    // Store reference to file
+	// Check if the user hit cancel, which results in a Null string.
+	// If this is the case, we just stop.
+	if (fileName.isNull())
+	{
+		return;
+	}
 
+	// Now attempt to open the file
     QFileInfo fileInfo(fileName);
-
-    if (!fileInfo.isReadable()) {
+    if (!fileInfo.isReadable())
+	{
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open file");
@@ -269,7 +275,9 @@ void QGCDataPlot2D::selectFile()
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
         ui->filenameLabel->setText(tr("Could not open %1").arg(fileInfo.baseName()+"."+fileInfo.completeSuffix()));
-    } else {
+    }
+	else
+	{
         ui->filenameLabel->setText(tr("Opened %1").arg(fileInfo.completeBaseName()+"."+fileInfo.completeSuffix()));
         // Open and import the file
         loadFile();
