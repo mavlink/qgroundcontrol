@@ -560,11 +560,8 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
 bool QGCDataPlot2D::calculateRegression()
 {
-    // TODO Add support for quadratic / cubic curve fitting
-	qDebug() << ui->xRegressionComboBox->currentText();
-	qDebug() << ui->yRegressionComboBox->currentText();
-    //return false;
-	return calculateRegression(ui->xRegressionComboBox->currentText(), ui->yRegressionComboBox->currentText(), "quadratic");
+    // TODO: Add support for quadratic / cubic curve fitting
+	return calculateRegression(ui->xRegressionComboBox->currentText(), ui->yRegressionComboBox->currentText(), "linear");
 }
 
 /**
@@ -597,8 +594,7 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
             double a;  // Y-axis crossing
             double b;  // Slope
             double r;  // Regression coefficient
-            int lin = linearRegression(x, y, copied, &a, &b, &r);
-            if(lin == 1) {
+            if (linearRegression(x, y, copied, &a, &b, &r)) {
                 function = tr("%1 = %2 * %3 + %4 | R-coefficient: %5").arg(yName, QString::number(b), xName, QString::number(a), QString::number(r));
 
                 // Plot curve
@@ -608,14 +604,13 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
                 plot->setStyleText("lines");
                 // x-value of the current rightmost x position in the plot
                 plot->appendData(tr("regression %1-%2").arg(xName, yName), plot->invTransform(QwtPlot::xBottom, plot->width() - plot->width()*0.08f), (a + b*plot->invTransform(QwtPlot::xBottom, plot->width() - plot->width() * 0.08f)));
-                result = true;
+                
+				result = true;
             } else {
                 function = tr("Linear regression failed. (Limit: %1 data points. Try with less)").arg(size);
-                result = false;
             }
         } else {
             function = tr("Regression method %1 not found").arg(method);
-            result = false;
         }
 
 		delete x, y;
@@ -642,7 +637,7 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
  *          the match of the regression.
  * @return 1 on success, 0 on failure (e.g. because of infinite slope)
  */
-int QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, double *b, double *r)
+bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, double *b, double *r)
 {
     int i;
     double sumx=0,sumy=0,sumx2=0,sumy2=0,sumxy=0;
@@ -652,7 +647,7 @@ int QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, doub
     *b = 0;
     *r = 0;
     if (n < 2)
-        return(FALSE);
+        return true;
 
     /* Conpute some things we need */
     for (i=0; i<n; i++) {
@@ -668,7 +663,7 @@ int QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, doub
 
     /* Infinite slope (b), non existant intercept (a) */
     if (fabs(sxx) == 0)
-        return(FALSE);
+        return false;
 
     /* Calculate the slope (b) and intercept (a) */
     *b = sxy / sxx;
@@ -680,7 +675,7 @@ int QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, doub
     else
         *r = sxy / sqrt(sxx * syy);
 
-    return(TRUE);
+    return false;
 }
 
 void QGCDataPlot2D::saveCsvLog()
