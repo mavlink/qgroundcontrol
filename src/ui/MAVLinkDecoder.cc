@@ -12,9 +12,9 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
         componentID[i] = -1;
         componentMulti[i] = false;
         onboardTimeOffset[i] = 0;
+        onboardToGCSUnixTimeOffsetAndDelay[i] = 0;
+        firstOnboardTime[i] = 0;
     }
-
-
 
     // Fill filter
     messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
