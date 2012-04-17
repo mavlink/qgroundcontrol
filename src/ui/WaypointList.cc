@@ -246,12 +246,22 @@ void WaypointList::addEditable()
             if (uas)
             {
                 // Create first waypoint at current MAV position
-                addCurrentPositionWaypoint();
+                if (uas->localPositionKnown() || uas->globalPositionKnown())
+                {
+                    addCurrentPositionWaypoint();
+                }
+                else
+                {
+                    // MAV connected, but position unknown, add default waypoint
+                   updateStatusLabel(tr("WARNING: No position known. Adding default LOCAL (NED) waypoint"));
+                   wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                   WPM->addWaypointEditable(wp);
+                }
             }
             else
             {
                 //Since no UAV available, create first default waypoint.
-                 updateStatusLabel(tr("No UAV. Added default LOCAL (NED) waypoint"));
+                 updateStatusLabel(tr("No UAV connected. Adding default LOCAL (NED) waypoint"));
                 wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
                 WPM->addWaypointEditable(wp);
                 //create a popup notifying the user about the limitations of offline editing
