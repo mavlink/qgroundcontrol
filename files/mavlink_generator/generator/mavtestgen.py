@@ -8,6 +8,9 @@ Released under GNU GPL version 3 or later
 
 import sys, textwrap
 from optparse import OptionParser
+
+# mavparse is up a directory level
+sys.path.append('..')
 import mavparse
 
 def gen_value(f, i, language):
@@ -62,11 +65,11 @@ Note: this file has been auto-generated. DO NOT EDIT
 import mavlink
 
 def generate_outputs(mav):
-	'''generate all message types as outputs'''
+    '''generate all message types as outputs'''
 """)
     for m in msgs:
         if m.name == "HEARTBEAT": continue
-	outf.write("\tmav.%s_send(" % m.name.lower())
+        outf.write("\tmav.%s_send(" % m.name.lower())
         for i in range(0, len(m.fields)):
             f = m.fields[i]
             outf.write("%s=%s" % (f.name, gen_value(f, i, 'py')))
@@ -90,7 +93,7 @@ static void mavtest_generate_outputs(mavlink_channel_t chan)
 """)
     for m in msgs:
         if m.name == "HEARTBEAT": continue
-	outf.write("\tmavlink_msg_%s_send(chan," % m.name.lower())
+        outf.write("\tmavlink_msg_%s_send(chan," % m.name.lower())
         for i in range(0, len(m.fields)):
             f = m.fields[i]
             outf.write("%s" % gen_value(f, i, 'C'))
@@ -104,8 +107,8 @@ static void mavtest_generate_outputs(mavlink_channel_t chan)
 ######################################################################
 '''main program'''
 
-parser = OptionParser("mavtestgen.py [options] <XML files>")
-parser.add_option("-o", "--output", dest="output", default="mavtest", help="output file base name")
+parser = OptionParser("%prog [options] <XML files>")
+parser.add_option("-o", "--output", dest="output", default="mavtest", help="output folder [default: %default]")
 (opts, args) = parser.parse_args()
 
 if len(args) < 1:
@@ -116,9 +119,9 @@ msgs = []
 enums = []
 
 for fname in args:
-	(m, e) = mavparse.parse_mavlink_xml(fname)
-        msgs.extend(m)
-        enums.extend(e)
+    (m, e) = mavparse.parse_mavlink_xml(fname)
+    msgs.extend(m)
+    enums.extend(e)
 
 
 if mavparse.check_duplicates(msgs):

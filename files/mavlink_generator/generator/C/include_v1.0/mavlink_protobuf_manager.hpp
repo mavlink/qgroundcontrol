@@ -24,6 +24,30 @@ public:
 	 , kExtendedHeaderSize(MAVLINK_EXTENDED_HEADER_LEN)
 	 , kExtendedPayloadMaxSize(MAVLINK_MAX_EXTENDED_PAYLOAD_LEN)
 	{
+		// register GLOverlay
+		{
+			std::tr1::shared_ptr<px::GLOverlay> msg(new px::GLOverlay);
+			registerType(msg);
+		}
+
+		// register ObstacleList
+		{
+			std::tr1::shared_ptr<px::ObstacleList> msg(new px::ObstacleList);
+			registerType(msg);
+		}
+
+		// register ObstacleMap
+		{
+			std::tr1::shared_ptr<px::ObstacleMap> msg(new px::ObstacleMap);
+			registerType(msg);
+		}
+
+		// register Path
+		{
+			std::tr1::shared_ptr<px::Path> msg(new px::Path);
+                        registerType(msg);
+		}
+
 		// register PointCloudXYZI
 		{
 			std::tr1::shared_ptr<px::PointCloudXYZI> msg(new px::PointCloudXYZI);
@@ -144,7 +168,7 @@ public:
 		if (typecode >= mTypeMap.size())
 		{
 			std::cout << "# WARNING: Protobuf message with type code "
-					  << typecode << " is not registered." << std::endl;
+					  << static_cast<int>(typecode) << " is not registered." << std::endl;
 			return false;
 		}
 
@@ -186,6 +210,11 @@ public:
 				if (offset == 0)
 				{
 					queue.push_back(msg);
+
+					if ((flags & 0x1) != 0x1)
+					{
+						reassemble = true;
+					}
 				}
 				else
 				{

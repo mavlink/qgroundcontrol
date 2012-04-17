@@ -71,10 +71,10 @@ if __name__=="__main__":
     import mavgen_python
     import mavgen_c
 
-    parser = OptionParser("mavgen.py [options] <XML files>")
-    parser.add_option("-o", "--output", dest="output", default="mavlink", help="output base name")
-    parser.add_option("--lang", dest="language", default="python", help="language to generate")
-    parser.add_option("--wire-protocol", dest="wire_protocol", default=mavparse.PROTOCOL_0_9, help="wire protocol version")
+    parser = OptionParser("%prog [options] <XML files>")
+    parser.add_option("-o", "--output", dest="output", default="mavlink", help="output directory.")
+    parser.add_option("--lang", dest="language", default="python", help="language of generated code: 'Python' or 'C' [default: %default]")
+    parser.add_option("--wire-protocol", dest="wire_protocol", default=mavparse.PROTOCOL_0_9, help="MAVLink protocol version: '0.9' or '1.0'. [default: %default]")
     (opts, args) = parser.parse_args()
 
     if len(args) < 1:
