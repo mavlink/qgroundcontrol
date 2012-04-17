@@ -860,18 +860,14 @@ static void mavlink_test_data_transmission_handshake(uint8_t system_id, uint8_t 
         uint16_t i;
 	mavlink_data_transmission_handshake_t packet_in = {
 		963497464,
-	17443,
-	17547,
-	29,
-	96,
-	163,
-	230,
+	17,
+	84,
+	151,
+	218,
 	};
 	mavlink_data_transmission_handshake_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.size = packet_in.size;
-        	packet1.width = packet_in.width;
-        	packet1.height = packet_in.height;
         	packet1.type = packet_in.type;
         	packet1.packets = packet_in.packets;
         	packet1.payload = packet_in.payload;
@@ -885,12 +881,12 @@ static void mavlink_test_data_transmission_handshake(uint8_t system_id, uint8_t 
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_data_transmission_handshake_pack(system_id, component_id, &msg , packet1.type , packet1.size , packet1.width , packet1.height , packet1.packets , packet1.payload , packet1.jpg_quality );
+	mavlink_msg_data_transmission_handshake_pack(system_id, component_id, &msg , packet1.type , packet1.size , packet1.packets , packet1.payload , packet1.jpg_quality );
 	mavlink_msg_data_transmission_handshake_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_data_transmission_handshake_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.type , packet1.size , packet1.width , packet1.height , packet1.packets , packet1.payload , packet1.jpg_quality );
+	mavlink_msg_data_transmission_handshake_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.type , packet1.size , packet1.packets , packet1.payload , packet1.jpg_quality );
 	mavlink_msg_data_transmission_handshake_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -903,7 +899,7 @@ static void mavlink_test_data_transmission_handshake(uint8_t system_id, uint8_t 
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_data_transmission_handshake_send(MAVLINK_COMM_1 , packet1.type , packet1.size , packet1.width , packet1.height , packet1.packets , packet1.payload , packet1.jpg_quality );
+	mavlink_msg_data_transmission_handshake_send(MAVLINK_COMM_1 , packet1.type , packet1.size , packet1.packets , packet1.payload , packet1.jpg_quality );
 	mavlink_msg_data_transmission_handshake_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
