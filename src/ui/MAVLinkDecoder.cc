@@ -14,8 +14,6 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
         onboardTimeOffset[i] = 0;
     }
 
-
-
     // Fill filter
     messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
     messageFilter.insert(MAVLINK_MSG_ID_SYS_STATUS, false);
