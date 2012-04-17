@@ -64,6 +64,32 @@ enum MAV_AUTOPILOT
 };
 #endif
 
+/** @brief  */
+#ifndef HAVE_ENUM_MAV_TYPE
+#define HAVE_ENUM_MAV_TYPE
+enum MAV_TYPE
+{
+	MAV_TYPE_GENERIC=0, /* Generic micro air vehicle. | */
+	MAV_TYPE_FIXED_WING=1, /* Fixed wing aircraft. | */
+	MAV_TYPE_QUADROTOR=2, /* Quadrotor | */
+	MAV_TYPE_COAXIAL=3, /* Coaxial helicopter | */
+	MAV_TYPE_HELICOPTER=4, /* Normal helicopter with tail rotor. | */
+	MAV_TYPE_ANTENNA_TRACKER=5, /* Ground installation | */
+	MAV_TYPE_GCS=6, /* Operator control unit / ground control station | */
+	MAV_TYPE_AIRSHIP=7, /* Airship, controlled | */
+	MAV_TYPE_FREE_BALLOON=8, /* Free balloon, uncontrolled | */
+	MAV_TYPE_ROCKET=9, /* Rocket | */
+	MAV_TYPE_GROUND_ROVER=10, /* Ground rover | */
+	MAV_TYPE_SURFACE_BOAT=11, /* Surface vessel, boat, ship | */
+	MAV_TYPE_SUBMARINE=12, /* Submarine | */
+	MAV_TYPE_HEXAROTOR=13, /* Hexarotor | */
+	MAV_TYPE_OCTOROTOR=14, /* Octorotor | */
+	MAV_TYPE_TRICOPTER=15, /* Octorotor | */
+	MAV_TYPE_FLAPPING_WING=16, /* Flapping wing | */
+	MAV_TYPE_ENUM_END=17, /*  | */
+};
+#endif
+
 /** @brief These flags encode the MAV mode. */
 #ifndef HAVE_ENUM_MAV_MODE_FLAG
 #define HAVE_ENUM_MAV_MODE_FLAG
