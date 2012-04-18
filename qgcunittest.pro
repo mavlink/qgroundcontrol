@@ -19,13 +19,26 @@ TARGETDIR = $$OUT_PWD
 BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
 
-CONFIG   += console
-CONFIG   -= app_bundle
+CONFIG = qt thread console
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 MAVLINK_CONF = ""
+MAVLINKPATH = $$BASEDIR/mavlink/include/v1.0
+DEFINES += MAVLINK_NO_DATA
+
+win32 {
+    QMAKE_INCDIR_QT = $$(QTDIR)/include
+    QMAKE_LIBDIR_QT = $$(QTDIR)/lib
+    QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
+    QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
+    QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
+    QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
+}
+
+# EIGEN matrix library (header-only)
+INCLUDEPATH += src/libs/eigen
 
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
@@ -38,37 +51,38 @@ exists(user_config.pri) {
     message("------------------------------------------------------------------------")
 }
 
-INCLUDEPATH += $$BASEDIR/../mavlink/include/common
+INCLUDEPATH += $$MAVLINKPATH/common
+INCLUDEPATH += $$MAVLINKPATH
 contains(MAVLINK_CONF, pixhawk) {
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
 
     # PIXHAWK SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+    INCLUDEPATH += $$MAVLINKPATH/pixhawk
     DEFINES += QGC_USE_PIXHAWK_MESSAGES
 }
 contains(MAVLINK_CONF, slugs) {
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
 
     # SLUGS SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+    INCLUDEPATH += $$MAVLINKPATH/slugs
     DEFINES += QGC_USE_SLUGS_MESSAGES
 }
 contains(MAVLINK_CONF, ualberta) {
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
 
     # UALBERTA SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+    INCLUDEPATH += $$MAVLINKPATH/ualberta
     DEFINES += QGC_USE_UALBERTA_MESSAGES
 }
 contains(MAVLINK_CONF, ardupilotmega) {
     # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$MAVLINKPATH/common
 
     # UALBERTA SPECIAL MESSAGES
-    INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
+    INCLUDEPATH += $$MAVLINKPATH/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
 }
 
@@ -79,25 +93,31 @@ include(qgroundcontrol.pri)
 # Reset QMAKE_POST_LINK to prevent file copy operations
 QMAKE_POST_LINK = ""
 
-# QWT plot and QExtSerial depend on paths set by qgroundcontrol.pri
-# Include serial port library
-include(src/lib/qextserialport/qextserialport.pri)
-
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
-    lib/QMapControl \
-    lib/QMapControl/src \
-    plugins
-INCLUDEPATH += . \
-    lib/QMapControl \
-    $$BASEDIR/../mavlink/include \
-    $$BASEDIR/src/uas \
-    $$BASEDIR/src/comm \
-    $$BASEDIR/src/ \
-    $$BASEDIR/src/ui/RadioCalibration \
-    $$BASEDIR/src/ui/ \
+    plugins \
+    thirdParty/qserialport/include \
+    thirdParty/qserialport/include/QtSerialPort \
+    thirdParty/qserialport \
+    src/libs/qextserialport
 
+INCLUDEPATH += . \
+    thirdParty/qserialport/include \
+    thirdParty/qserialport/include/QtSerialPort \
+    thirdParty/qserialport/src \
+    src/libs/qextserialport
+
+# QWT plot and QExtSerial depend on paths set by qgroundcontrol.pri
+# Include serial port library
+include(qserialport.pri)
+
+# Serial port detection (ripped-off from qextserialport library)
+macx|macx-g++|macx-g++42::SOURCES += src/libs/qextserialport/qextserialenumerator_osx.cpp
+linux-g++::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
+linux-g++-64::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
+win32::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
+win32-msvc2008|win32-msvc2010::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
 
 SOURCES += src/uas/UAS.cc \
     src/comm/MAVLinkProtocol.cc \
@@ -114,9 +134,21 @@ SOURCES += src/uas/UAS.cc \
     src/comm/SerialLink.cc \
     $$TESTDIR/SlugsMavUnitTest.cc \
     $$TESTDIR/testSuite.cc \
-    $$TESTDIR/UASUnitTest.cc \
-    src/uas/QGCMAVLinkUASFactory.cc
+    src/uas/QGCMAVLinkUASFactory.cc \
+    $$TESTDIR/UASUnitTest.cc
 
+INCLUDEPATH += src \
+    src/ui \
+    src/ui/linechart \
+    src/ui/uas \
+    src/ui/map \
+    src/uas \
+    src/comm \
+    src/input \
+    src/ui/mavlink \
+    src/ui/watchdog \
+    src/ui/map3D \
+    src/ui/designer
 
 HEADERS += src/uas/UASInterface.h \
     src/uas/UAS.h \
@@ -135,10 +167,11 @@ HEADERS += src/uas/UASInterface.h \
     src/QGC.h \
     src/comm/SerialLinkInterface.h \
     src/comm/SerialLink.h \
-    $$TESTDIR//SlugsMavUnitTest.h \
+    src/configuration.h \
+    $$TESTDIR/SlugsMavUnitTest.h \
     $$TESTDIR/AutoTest.h \
     $$TESTDIR/UASUnitTest.h \
     src/uas/QGCMAVLinkUASFactory.h
 
 
-DEFINES += SRCDIR=\\\"$$PWD/\\\"
+DEFINES += 'SRCDIR="$${PWD}/"'
