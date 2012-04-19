@@ -6,9 +6,8 @@ UASUnitTest::UASUnitTest()
 
 void UASUnitTest::initTestCase()
 {
-    mav= new MAVLinkProtocol();
-    link = new SerialLink();
-    uas=new UAS(mav,UASID);
+    mav = new MAVLinkProtocol();
+    uas = new UAS(mav,UASID);
 }
 
 void UASUnitTest::cleanupTestCase()
@@ -27,7 +26,7 @@ void UASUnitTest::getUASID_test()
     // Test that the chosen ID was assigned at construction
     QCOMPARE(uas->getUASID(), UASID);
 
-    // Make sure that no other ID was sert
+    // Make sure that no other ID was set
     QEXPECT_FAIL("", "When you set an ID it does not use the default ID of 0", Continue);
     QCOMPARE(uas->getUASID(), 0);
 
@@ -177,27 +176,27 @@ void UASUnitTest::getAirframe_test()
 
 void UASUnitTest::getWaypointList_test()
 {
-    QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointList();
+    QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(kk.count(), 0);
 
-    Waypoint* wp = new Waypoint(0,0,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
-    uas->getWaypointManager()->addWaypoint(wp, true);
+    Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
+    uas->getWaypointManager()->addWaypointEditable(wp, true);
 
-    kk = uas->getWaypointManager()->getWaypointList();
+    kk = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(kk.count(), 1);
 
     wp = new Waypoint();
-    uas->getWaypointManager()->addWaypoint(wp, false);
+    uas->getWaypointManager()->addWaypointEditable(wp, false);
 
-    kk = uas->getWaypointManager()->getWaypointList();
+    kk = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(kk.count(), 2);
 
     uas->getWaypointManager()->removeWaypoint(1);
-    kk = uas->getWaypointManager()->getWaypointList();
+    kk = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(kk.count(), 1);
 
     uas->getWaypointManager()->removeWaypoint(0);
-    kk = uas->getWaypointManager()->getWaypointList();
+    kk = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(kk.count(), 0);
 
     qDebug()<<"disconnect SIGNAL waypointListChanged";
@@ -205,17 +204,17 @@ void UASUnitTest::getWaypointList_test()
 
 void UASUnitTest::getWaypoint_test()
 {
-    Waypoint* wp = new Waypoint(0,5.6,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
+    Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
 
-    uas->getWaypointManager()->addWaypoint(wp, true);
+    uas->getWaypointManager()->addWaypointEditable(wp, true);
 
-    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointList();
+    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
 
     QCOMPARE(wpList.count(), 1);
     QCOMPARE(static_cast<quint16>(0), static_cast<Waypoint*>(wpList.at(0))->getId());
 
     wp = new Waypoint(0, 5.6, 2, 3);
-    uas->getWaypointManager()->addWaypoint(wp, true);
+    uas->getWaypointManager()->addWaypointEditable(wp, true);
     Waypoint* wp2 = static_cast<Waypoint*>(wpList.at(0));
 
     QCOMPARE(wp->getX(), wp2->getX());
@@ -226,9 +225,9 @@ void UASUnitTest::getWaypoint_test()
 void UASUnitTest::signalWayPoint_test()
 {
     QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
-
-    Waypoint* wp = new Waypoint(0,5.6,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
-    uas->getWaypointManager()->addWaypoint(wp, true);
+	
+    Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
+    uas->getWaypointManager()->addWaypointEditable(wp, true);
 
     QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
     uas->getWaypointManager()->removeWaypoint(0);
@@ -245,11 +244,11 @@ void UASUnitTest::signalWayPoint_test()
     QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
     QCOMPARE(spy2.count(), 0);
 
-    uas->getWaypointManager()->addWaypoint(wp, true);
+    uas->getWaypointManager()->addWaypointEditable(wp, true);
     QCOMPARE(spy2.count(), 1);
 
     uas->getWaypointManager()->clearWaypointList();
-    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointList();
+    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(wpList.count(), 1);
 }
 
