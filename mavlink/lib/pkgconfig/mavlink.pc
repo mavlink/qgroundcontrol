@@ -1,0 +1,7 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+
+Name: mavlink
+Description: 
+Version: 
+Cflags: -I/usr/local/include/mavlink
