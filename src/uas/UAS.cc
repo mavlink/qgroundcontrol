@@ -499,7 +499,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_msg_attitude_decode(&message, &attitude);
             quint64 time = getUnixReferenceTime(attitude.time_boot_ms);
 
-            if (message.compid == 201) emit attitudeChanged(this, message.compid, QGC::limitAngleToPMPIf(attitude.roll), QGC::limitAngleToPMPIf(attitude.pitch), QGC::limitAngleToPMPIf(attitude.yaw), time);
+            emit attitudeChanged(this, message.compid, QGC::limitAngleToPMPIf(attitude.roll), QGC::limitAngleToPMPIf(attitude.pitch), QGC::limitAngleToPMPIf(attitude.yaw), time);
 
             if (!wrongComponent)
             {
@@ -577,7 +577,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             quint64 time = getUnixTime(pos.time_boot_ms);
 
             // Emit position always with component ID
-            if (message.compid == 201) emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
+            emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
 
 
             if (!wrongComponent)
