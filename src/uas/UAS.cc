@@ -2103,7 +2103,7 @@ void UAS::executeCommand(MAV_CMD command)
 {
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
-    cmd.command = (uint8_t)command;
+    cmd.command = (uint16_t)command;
     cmd.confirmation = 0;
     cmd.param1 = 0.0f;
     cmd.param2 = 0.0f;
@@ -2122,7 +2122,7 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
 {
     mavlink_message_t msg;
     mavlink_command_long_t cmd;
-    cmd.command = (uint8_t)command;
+    cmd.command = (uint16_t)command;
     cmd.confirmation = confirmation;
     cmd.param1 = param1;
     cmd.param2 = param2;
