@@ -272,7 +272,7 @@ class MAVXML(object):
                 self.largest_payload = m.wire_length
 
             if m.wire_length+8 > 64:
-                print("Warning: message %s is longer than 64 bytes long (%u bytes)" % (m.name, m.wire_length+8))
+                print("Note: message %s is longer than 64 bytes long (%u bytes), which can cause fragmentation since many radio modems use 64 bytes as maximum air transfer unit." % (m.name, m.wire_length+8))
 
     def __str__(self):
         return "MAVXML for %s from %s (%u message, %u enums)" % (
