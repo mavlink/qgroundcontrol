@@ -145,7 +145,7 @@
                <string>Display only variable names in curve list</string>
               </property>
               <property name="text">
-               <string>Short Names</string>
+               <string>Short names</string>
               </property>
              </widget>
             </item>
