@@ -25,8 +25,6 @@ public:
   UAS* uas;
   UASUnitTest();
 
-signals:
-
 private slots:
   void initTestCase();
   void cleanupTestCase();
@@ -61,10 +59,6 @@ private slots:
   void signalWayPoint_test();
   void signalUASLink_test();
   void signalIdUASLink_test();
-
-protected:
-    UAS *prueba;
-
 };
 
 DECLARE_TEST(UASUnitTest)
