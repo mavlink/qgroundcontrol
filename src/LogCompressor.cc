@@ -83,7 +83,7 @@ void LogCompressor::run()
 
 	// Now update each key with its index in the output string. These are
 	// all offset by one to account for the first field: timestamp_ms.
-	QMap<QString, int>::iterator i = messageMap.constBegin();
+    QMap<QString, int>::iterator i = messageMap.begin();
 	int j;
 	for (i = messageMap.begin(), j = 1; i != messageMap.end(); ++i, ++j) {
 		i.value() = j;
