@@ -248,15 +248,8 @@ linux-g++-64 {
 	}
 }
 
-# Windows (32bit), Visual Studio
-win32-msvc2008|win32-msvc2010 {
-
-	win32-msvc2008 {
-		message(Building for Windows Visual Studio 2008 (32bit))
-	}
-	win32-msvc2010 {
-		message(Building for Windows Visual Studio 2010 (32bit))
-	}
+# Windows (32bit), Visual Studio 2010
+win32-msvc2010 {
 
 	# QAxContainer support is needed for the Internet Control
 	# element showing the Google Earth window
@@ -288,7 +281,6 @@ win32-msvc2008|win32-msvc2010 {
         -lsetupapi
 
 	exists($$BASEDIR/lib/osg123) {
-		message("Building support for OSG")
 		DEPENDENCIES_PRESENT += osg
 
 		# Include OpenSceneGraph

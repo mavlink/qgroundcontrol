@@ -186,7 +186,7 @@ macx|macx-g++|macx-g++42::SOURCES += src/libs/qextserialport/qextserialenumerato
 linux-g++::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
 linux-g++-64::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
 win32::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
-win32-msvc2008|win32-msvc2010::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
+win32-msvc2010::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
 
 # Input
 FORMS += src/ui/MainWindow.ui \
@@ -366,7 +366,7 @@ HEADERS += src/MG.h \
     src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
-macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
+macx|macx-g++|macx-g++42|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
     
@@ -509,7 +509,7 @@ SOURCES += src/main.cc \
     src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
-macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+macx|macx-g++|macx-g++42|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 
 # Enable OSG only if it has been found
 contains(DEPENDENCIES_PRESENT, osg) { 
@@ -590,7 +590,7 @@ TRANSLATIONS += es-MX.ts \
 
 # xbee support
 # libxbee only supported by linux and windows systems
-win32-msvc2008|win32-msvc2010|linux {
+win32-msvc2010|linux {
     HEADERS += src/comm/XbeeLinkInterface.h \
         src/comm/XbeeLink.h \
         src/comm/HexSpinBox.h \
