@@ -226,12 +226,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/designer/QGCCommandButton.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
-    src/ui/mission/QGCCustomWaypointAction.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCSettingsWidget.ui \
     src/ui/UASControlParameters.ui \
-    src/ui/mission/QGCMissionDoWidget.ui \
-    src/ui/mission/QGCMissionConditionWidget.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
@@ -241,7 +238,20 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mavlink/QGCMAVLinkMessageSender.ui \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.ui \
     src/ui/QGCPluginHost.ui \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.ui
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.ui \
+    src/ui/mission/QGCMissionOther.ui \
+    src/ui/mission/QGCMissionNavWaypoint.ui \
+    src/ui/mission/QGCMissionDoJump.ui \
+    src/ui/mission/QGCMissionConditionDelay.ui \
+    src/ui/mission/QGCMissionNavLoiterUnlim.ui \
+    src/ui/mission/QGCMissionNavLoiterTurns.ui \
+    src/ui/mission/QGCMissionNavLoiterTime.ui \
+    src/ui/mission/QGCMissionNavReturnToLaunch.ui \
+    src/ui/mission/QGCMissionNavLand.ui \
+    src/ui/mission/QGCMissionNavTakeoff.ui \
+    src/ui/mission/QGCMissionNavSweep.ui \
+    src/ui/mission/QGCMissionDoStartSearch.ui \
+    src/ui/mission/QGCMissionDoFinishSearch.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -256,6 +266,7 @@ INCLUDEPATH += src \
     src/ui/param \
     src/ui/watchdog \
     src/ui/map3D \
+    src/ui/mission \
     src/ui/designer
 HEADERS += src/MG.h \
     src/QGCCore.h \
@@ -342,8 +353,6 @@ HEADERS += src/MG.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCSettingsWidget.h \
     src/ui/uas/UASControlParameters.h \
-    src/ui/mission/QGCMissionDoWidget.h \
-    src/ui/mission/QGCMissionConditionWidget.h \
     src/uas/QGCUASParamManager.h \
     src/ui/map/QGCMapWidget.h \
     src/ui/map/MAV2DIcon.h \
@@ -363,7 +372,21 @@ HEADERS += src/MG.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
     src/ui/QGCPluginHost.h \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h \
+    src/ui/map3D/gpl.h\
+    src/ui/mission/QGCMissionOther.h \
+    src/ui/mission/QGCMissionNavWaypoint.h \
+    src/ui/mission/QGCMissionDoJump.h \
+    src/ui/mission/QGCMissionConditionDelay.h \
+    src/ui/mission/QGCMissionNavLoiterUnlim.h \
+    src/ui/mission/QGCMissionNavLoiterTurns.h \
+    src/ui/mission/QGCMissionNavLoiterTime.h \
+    src/ui/mission/QGCMissionNavReturnToLaunch.h \
+    src/ui/mission/QGCMissionNavLand.h \
+    src/ui/mission/QGCMissionNavTakeoff.h \
+    src/ui/mission/QGCMissionNavSweep.h \
+    src/ui/mission/QGCMissionDoStartSearch.h \
+    src/ui/mission/QGCMissionDoFinishSearch.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -488,8 +511,6 @@ SOURCES += src/main.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCSettingsWidget.cc \
     src/ui/uas/UASControlParameters.cpp \
-    src/ui/mission/QGCMissionDoWidget.cc \
-    src/ui/mission/QGCMissionConditionWidget.cc \
     src/uas/QGCUASParamManager.cc \
     src/ui/map/QGCMapWidget.cc \
     src/ui/map/MAV2DIcon.cc \
@@ -506,7 +527,21 @@ SOURCES += src/main.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc
+    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc \
+    src/ui/map3D/gpl.cc \
+    src/ui/mission/QGCMissionOther.cc \
+    src/ui/mission/QGCMissionNavWaypoint.cc \
+    src/ui/mission/QGCMissionDoJump.cc \
+    src/ui/mission/QGCMissionConditionDelay.cc \
+    src/ui/mission/QGCMissionNavLoiterUnlim.cc \
+    src/ui/mission/QGCMissionNavLoiterTurns.cc \
+    src/ui/mission/QGCMissionNavLoiterTime.cc \
+    src/ui/mission/QGCMissionNavReturnToLaunch.cc \
+    src/ui/mission/QGCMissionNavLand.cc \
+    src/ui/mission/QGCMissionNavTakeoff.cc \
+    src/ui/mission/QGCMissionNavSweep.cc \
+    src/ui/mission/QGCMissionDoStartSearch.cc \
+    src/ui/mission/QGCMissionDoFinishSearch.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

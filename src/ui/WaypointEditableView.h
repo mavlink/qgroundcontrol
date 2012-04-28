@@ -27,7 +27,7 @@ This file is part of the QGROUNDCONTROL project
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
  *   @author Petri Tanskanen <mavteam@student.ethz.ch>
- *
+ *   @author Alex Trofimov <talex@student.ethz.ch>
  */
 
 #ifndef WAYPOINTEDITABLEVIEW_H
@@ -38,9 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <iostream>
 
 enum QGC_WAYPOINTEDITABLEVIEW_MODE {
-    QGC_WAYPOINTEDITABLEVIEW_MODE_NAV,
-    QGC_WAYPOINTEDITABLEVIEW_MODE_CONDITION,
-    QGC_WAYPOINTEDITABLEVIEW_MODE_DO,
+    QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT,
     QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING
 };
 
@@ -48,8 +46,20 @@ namespace Ui
 {
 class WaypointEditableView;
 }
-class Ui_QGCCustomWaypointAction;
-class Ui_QGCMissionDoWidget;
+class QGCMissionNavWaypoint;
+class QGCMissionNavLoiterUnlim;
+class QGCMissionNavLoiterTurns;
+class QGCMissionNavLoiterTime;
+class QGCMissionNavReturnToLaunch;
+class QGCMissionNavLand;
+class QGCMissionNavTakeoff;
+class QGCMissionNavSweep;
+class QGCMissionDoJump;
+class QGCMissionDoStartSearch;
+class QGCMissionDoFinishSearch;
+class QGCMissionConditionDelay;
+class QGCMissionOther;
+
 class WaypointEditableView : public QWidget
 {
     Q_OBJECT
@@ -67,25 +77,44 @@ public slots:
     void remove();
     /** @brief Waypoint matching this widget has been deleted */
     void deleted(QObject* waypoint);
-    void changedAutoContinue(int);
-    void updateFrameView(int frame);
+    void changedAutoContinue(int);    
     void changedFrame(int state);
     void updateActionView(int action);
-    void changedAction(int state);
+    void initializeActionView(int action);
+
     void changedCurrent(int);
     void updateValues(void);
+    void changedAction(int state); //change commandID, including the view
+    void changedCommand(int mav_cmd_id); //only update WP->command, but do not change the view. Should only be used for "other" waypoint-type.
+    void changedParam1(double value);
+    void changedParam2(double value);
+    void changedParam3(double value);
+    void changedParam4(double value);
+    void changedParam5(double value);
+    void changedParam6(double value);
+    void changedParam7(double value);
 
 protected slots:
-    void changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode);
 
 protected:
     virtual void changeEvent(QEvent *e);
     Waypoint* wp;
-    // Special widgets extendending the
-    // waypoint view to mission capabilities
-    Ui_QGCCustomWaypointAction* customCommand;
-    Ui_QGCMissionDoWidget* doCommand;
     QGC_WAYPOINTEDITABLEVIEW_MODE viewMode;
+    // Widgets for every mission element
+    QGCMissionNavWaypoint* MissionNavWaypointWidget;
+    QGCMissionNavLoiterUnlim* MissionNavLoiterUnlimWidget;
+    QGCMissionNavLoiterTurns* MissionNavLoiterTurnsWidget;
+    QGCMissionNavLoiterTime* MissionNavLoiterTimeWidget;
+    QGCMissionNavReturnToLaunch* MissionNavReturnToLaunchWidget;
+    QGCMissionNavLand* MissionNavLandWidget;
+    QGCMissionNavTakeoff* MissionNavTakeoffWidget;
+    QGCMissionNavSweep* MissionNavSweepWidget;
+    QGCMissionDoJump* MissionDoJumpWidget;
+    QGCMissionDoStartSearch* MissionDoStartSearchWidget;
+    QGCMissionDoFinishSearch* MissionDoFinishSearchWidget;
+    QGCMissionConditionDelay* MissionConditionDelayWidget;
+    QGCMissionOther* MissionOtherWidget;
+
 
 private:
     Ui::WaypointEditableView *m_ui;
@@ -93,10 +122,19 @@ private:
 signals:
     void moveUpWaypoint(Waypoint*);
     void moveDownWaypoint(Waypoint*);
-    void removeWaypoint(Waypoint*);
-    //void currentWaypointChanged(quint16); //unused
+    void removeWaypoint(Waypoint*);    
     void changeCurrentWaypoint(quint16);
     void setYaw(double);
+
+    void commandBroadcast(int mav_cmd_id);
+    void frameBroadcast(MAV_FRAME frame);
+    void param1Broadcast(double value);
+    void param2Broadcast(double value);
+    void param3Broadcast(double value);
+    void param4Broadcast(double value);
+    void param5Broadcast(double value);
+    void param6Broadcast(double value);
+    void param7Broadcast(double value);
 };
 
 #endif // WAYPOINTEDITABLEVIEW_H

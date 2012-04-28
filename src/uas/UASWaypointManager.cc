@@ -871,8 +871,10 @@ void UASWaypointManager::writeWaypoints()
             //send the waypoint count to UAS (this starts the send transaction)
             sendWaypointCount();
         }
-    } else if (waypointsEditable.count() == 0) {
-        sendWaypointClearAll();
+        else if (waypointsEditable.count() == 0)
+        {
+            sendWaypointClearAll();
+        }
     } else {
         //we're in another transaction, ignore command
         qDebug() << "UASWaypointManager::sendWaypoints() doing something else ignoring command";
