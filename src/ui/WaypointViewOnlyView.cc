@@ -28,7 +28,7 @@ void WaypointViewOnlyView::changedAutoContinue(int state)
 void WaypointViewOnlyView::changedCurrent(int state)
 //This is a slot receiving signals from QCheckBox m_ui->current. The state given here is whatever the user has clicked and not the true "current" value onboard.
 {
-    qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
+    //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
     m_ui->current->blockSignals(true);    
 
     if (m_ui->current->isChecked() == false)
@@ -36,19 +36,19 @@ void WaypointViewOnlyView::changedCurrent(int state)
         if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current. Box stays checked
         {
             m_ui->current->setCheckState(Qt::Checked);
-            qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Rechecked true. stay true " << m_ui->current->isChecked();
+            //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Rechecked true. stay true " << m_ui->current->isChecked();
         }
         else // Strange case, unchecking the box which was not checked to start with
         {
             m_ui->current->setCheckState(Qt::Unchecked);
-            qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Unchecked false. set false " << m_ui->current->isChecked();
+            //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Unchecked false. set false " << m_ui->current->isChecked();
         }
     }
     else
     {
         hightlightDesiredCurrent(true);
         m_ui->current->setCheckState(Qt::Unchecked);
-        qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Checked new. Sending set_current request to Manager " << m_ui->current->isChecked();
+        //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Checked new. Sending set_current request to Manager " << m_ui->current->isChecked();
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
 
     }
@@ -365,17 +365,18 @@ void WaypointViewOnlyView::updateValues()
         m_ui->displayBar->setText(QString("Delay: %1 sec").arg(wp->getParam1()));
         break;
     }
-    case 237: //MAV_CMD_DO_START_SEARCH
+#ifdef MAVLINK_ENABLED_PIXHAWK
+    case MAV_CMD_DO_START_SEARCH:
     {
         m_ui->displayBar->setText(QString("Start searching for pattern. Success when got more than %2 detections with confidence %1").arg(wp->getParam1()).arg(wp->getParam2()));
         break;
     }
-    case 238: //MAV_CMD_DO_FINISH_SEARCH
+    case MAV_CMD_DO_FINISH_SEARCH:
     {
         m_ui->displayBar->setText(QString("Check if search was successful. yes -> jump to %1, no -> jump to %2.  Jumps left: %3").arg(wp->getParam1()).arg(wp->getParam2()).arg(wp->getParam3()));
         break;
     }
-    case 240: //MAV_CMD_DO_SWEEP
+    case MAV_CMD_NAV_SWEEP:
     {
         switch (wp->getFrame())
         {
@@ -394,6 +395,7 @@ void WaypointViewOnlyView::updateValues()
         } //end Frame switch
         break;
     }
+#endif
     default:
     {
         m_ui->displayBar->setText(QString("Unknown Command ID (%1) : %2, %3, %4, %5, %6, %7, %8").arg(wp->getAction()).arg(wp->getParam1()).arg(wp->getParam2()).arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()));

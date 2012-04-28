@@ -155,13 +155,19 @@ void WaypointList::updateAttitude(UASInterface* uas, double roll, double pitch, 
 
 void WaypointList::setUAS(UASInterface* uas)
 {
-    if (this->uas == NULL && uas != NULL)
-    {
-        WPM = uas->getWaypointManager();
-    }
+    //if (this->uas == NULL && uas != NULL)
     if (this->uas == NULL)
     {
         this->uas = uas;
+<<<<<<< HEAD
+=======
+		if(uas != NULL)
+        {
+			connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
+			connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+		}
+
+>>>>>>> 25e35803a3bef8d831e710769b2c1eb3ee2f967e
         connect(WPM, SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
         connect(WPM, SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
         connect(WPM, SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
@@ -197,7 +203,7 @@ void WaypointList::loadWaypoints()
         msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        int ret = msgBox.exec();
         showOfflineWarning = false;
     }
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
@@ -246,27 +252,12 @@ void WaypointList::addEditable()
             if (uas)
             {
                 // Create first waypoint at current MAV position
-                if (uas->localPositionKnown() || uas->globalPositionKnown())
-                {
-                	if(addCurrentPositionWaypoint())
-                	{
-                 	   updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
-                 	  wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-                 	  WPM->addWaypointEditable(wp);
-                	}
-                }
-                else
-                {
-                    // MAV connected, but position unknown, add default waypoint
-                   updateStatusLabel(tr("WARNING: No position known. Adding default LOCAL (NED) waypoint"));
-                   wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-                   WPM->addWaypointEditable(wp);
-                }
+                addCurrentPositionWaypoint();
             }
             else
             {
                 //Since no UAV available, create first default waypoint.
-                 updateStatusLabel(tr("No UAV connected. Adding default LOCAL (NED) waypoint"));
+                 updateStatusLabel(tr("No UAV. Added default LOCAL (NED) waypoint"));
                 wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
                 WPM->addWaypointEditable(wp);
                 //create a popup notifying the user about the limitations of offline editing
@@ -278,7 +269,7 @@ void WaypointList::addEditable()
                     msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
                     msgBox.setStandardButtons(QMessageBox::Ok);
                     msgBox.setDefaultButton(QMessageBox::Ok);
-                    msgBox.exec();
+                    int ret = msgBox.exec();
                     showOfflineWarning = false;
                 }
             }
@@ -287,7 +278,7 @@ void WaypointList::addEditable()
 }
 
 
-int WaypointList::addCurrentPositionWaypoint()
+void WaypointList::addCurrentPositionWaypoint()
 {    
     if (uas)
     {
@@ -314,7 +305,6 @@ int WaypointList::addCurrentPositionWaypoint()
             wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
             WPM->addWaypointEditable(wp);
             updateStatusLabel(tr("Added GLOBAL, ALTITUDE OVER GROUND waypoint"));
-            return 0;
         }
         else if (uas->localPositionKnown())
         {
@@ -329,13 +319,11 @@ int WaypointList::addCurrentPositionWaypoint()
             wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, false, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
             WPM->addWaypointEditable(wp);
             updateStatusLabel(tr("Added LOCAL (NED) waypoint"));
-            return 0;
         }
         else
         {
             // Do nothing
             updateStatusLabel(tr("Not adding waypoint, no position of MAV known yet."));
-            return 1;
         }
     }
 }
