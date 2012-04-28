@@ -97,7 +97,7 @@ bool MAVLinkXMLParserV10::generate()
 {
     emit parseState(tr("Generator ready."));
 #ifdef Q_OS_WIN
-    QString generatorCall("files/mavlink_generator/generator/mavgen.exe");
+    QString generatorCall("files/mavgen.exe");
 #endif
 #if (defined Q_OS_MAC) || (defined Q_OS_LINUX)
     QString generatorCall("python");
@@ -108,7 +108,7 @@ bool MAVLinkXMLParserV10::generate()
     QStringList arguments;
 #if (defined Q_OS_MAC) || (defined Q_OS_LINUX)
     // Script is only needed as argument if Python is used, the Py2Exe implicitely knows the script
-    arguments << QString("%1/files/mavlink_generator/generator/mavgen.py").arg(QApplication::applicationDirPath());
+    arguments << QString("%1/mavlink/share/pyshared/pymavlink/generator/mavgen.py").arg(QApplication::applicationDirPath());
 #endif
     arguments << QString("--lang=%1").arg(lang);
     arguments << QString("--output=%2").arg(outputDirName);

@@ -54,8 +54,10 @@ macx|macx-g++42|macx-g++: {
 	# Copy CSS stylesheets
 	QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-mission.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-indoor.css
 	QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
-	# Copy parameter tooltip files
+        # Copy support files
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+        # Copy MAVLink
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/mavlink $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
 	# Copy libraries
 	QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/libs
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac64/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/libs
@@ -313,7 +315,8 @@ win32-msvc2008|win32-msvc2010 {
 	CONFIG(debug, debug|release) {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\debug\\files" /E /I $$escape_expand(\\n))
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\mavlink" "$$TARGETDIR_WIN\\debug\\mavlink" /E /I $$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\debug" /E /I $$escape_expand(\\n))
@@ -333,6 +336,7 @@ win32-msvc2008|win32-msvc2010 {
 	CONFIG(release, debug|release) {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\release\\files" /E /I $$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\mavlink" "$$TARGETDIR_WIN\\release\\mavlink" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\release\\models" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\release\\earth.html" $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
@@ -396,12 +400,14 @@ win32-g++ {
 		debug {
 			QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/files $$TARGETDIR/debug/files
+                        QMAKE_POST_LINK += && cp -r $$BASEDIR/mavlink $$TARGETDIR/debug/mavlink
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/debug/models
 		}
 
 		release {
 			QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/SDL.dll
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/files $$TARGETDIR/release/files
+                        QMAKE_POST_LINK += && cp -r $$BASEDIR/mavlink $$TARGETDIR/release/mavlink
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
 		}
 
@@ -414,13 +420,15 @@ win32-g++ {
 		exists($$TARGETDIR/debug) {
 			QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
 			QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\files\" \"$$TARGETDIR_WIN\\debug\\files\\\" /S /E /Y
-			QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+                        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\mavlink\" \"$$TARGETDIR_WIN\\debug\\mavlink\\\" /S /E /Y
+                        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
 			QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
 		}
 
 		exists($$TARGETDIR/release) {
 			QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
 			QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\files\" \"$$TARGETDIR_WIN\\release\\files\\\" /S /E /Y
+                        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\mavlink\" \"$$TARGETDIR_WIN\\release\\mavlink\\\" /S /E /Y
 			QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
 			QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
 		}
