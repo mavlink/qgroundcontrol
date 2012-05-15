@@ -92,57 +92,23 @@ INCLUDEPATH += \
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
 # additional project, QGroundControl includes the support
-# of custom MAVLink messages of this project
+# of custom MAVLink messages of this project. It will also
+# create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use
+# within the actual code.
 exists(user_config.pri) { 
     include(user_config.pri)
     message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
 }
-INCLUDEPATH += $$MAVLINKPATH/common
 INCLUDEPATH += $$MAVLINKPATH
-contains(MAVLINK_CONF, pixhawk) { 
-    # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$MAVLINKPATH/common
-
-    # PIXHAWK SPECIAL MESSAGES
-    INCLUDEPATH += $$MAVLINKPATH/pixhawk
-    DEFINES += QGC_USE_PIXHAWK_MESSAGES
+isEmpty(MAVLINK_CONF) { 
+    INCLUDEPATH += $$MAVLINKPATH/common
+} else {
+    INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
+    DEFINES += 'MAVLINK_CONF="$${MAVLINK_CONF}.h"'
+    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
 }
-contains(MAVLINK_CONF, slugs) { 
-    # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$MAVLINKPATH/common
-    
-    # SLUGS SPECIAL MESSAGES
-    INCLUDEPATH += $$MAVLINKPATH/slugs
-    DEFINES += QGC_USE_SLUGS_MESSAGES
-}
-contains(MAVLINK_CONF, ualberta) { 
-    # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$MAVLINKPATH/common
-    
-    # UALBERTA SPECIAL MESSAGES
-    INCLUDEPATH += $$MAVLINKPATH/ualberta
-    DEFINES += QGC_USE_UALBERTA_MESSAGES
-}
-contains(MAVLINK_CONF, ardupilotmega) { 
-    # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$MAVLINKPATH/common
-    INCLUDEPATH -= $$BASEDIR/mavlink/include/v1.0/common
-    
-    # UALBERTA SPECIAL MESSAGES
-    INCLUDEPATH += $$MAVLINKPATH/ardupilotmega
-    DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
-}
-contains(MAVLINK_CONF, senseSoar) { 
-    # Remove the default set - it is included anyway
-    INCLUDEPATH -= $$MAVLINKPATH/common
-    
-    # SENSESOAR SPECIAL MESSAGES
-    INCLUDEPATH += $$MAVLINKPATH/SenseSoar
-    DEFINES += QGC_USE_SENSESOAR_MESSAGES
-}
-
 
 # Include general settings for QGroundControl
 # necessary as last include to override any non-acceptable settings
