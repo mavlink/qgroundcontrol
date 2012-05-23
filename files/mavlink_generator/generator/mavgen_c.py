@@ -404,16 +404,41 @@ ${{message:	mavlink_test_${name_lower}(system_id, component_id, last_msg);
 def copy_fixed_headers(directory, xml):
     '''copy the fixed protocol headers to the target directory'''
     import shutil
-    hlist = [ 'protocol.h', 'mavlink_helpers.h', 'mavlink_types.h', 'checksum.h' ]
+    hlist = [ 'protocol.h', 'mavlink_helpers.h', 'mavlink_types.h', 'checksum.h', 'mavlink_protobuf_manager.hpp' ]
     basepath = os.path.dirname(os.path.realpath(__file__))
     srcpath = os.path.join(basepath, 'C/include_v%s' % xml.wire_protocol_version)
     print("Copying fixed headers")
     for h in hlist:
+        if (not (h == 'mavlink_protobuf_manager.hpp' and xml.wire_protocol_version == '0.9')):
+           src = os.path.realpath(os.path.join(srcpath, h))
+           dest = os.path.realpath(os.path.join(directory, h))
+           if src == dest:
+               continue
+           shutil.copy(src, dest)
+    # XXX This is a hack - to be removed
+    if (xml.basename == 'pixhawk' and xml.wire_protocol_version == '1.0'):
+        h = 'pixhawk/pixhawk.pb.h'
         src = os.path.realpath(os.path.join(srcpath, h))
         dest = os.path.realpath(os.path.join(directory, h))
-        if src == dest:
-            continue
         shutil.copy(src, dest)
+        
+def copy_fixed_sources(directory, xml):
+    # XXX This is a hack - to be removed
+    import shutil
+    basepath = os.path.dirname(os.path.realpath(__file__))
+    srcpath = os.path.join(basepath, 'C/src_v%s' % xml.wire_protocol_version)
+    if (xml.basename == 'pixhawk' and xml.wire_protocol_version == '1.0'):
+        print("Copying fixed sources")
+        src = os.path.realpath(os.path.join(srcpath, 'pixhawk/pixhawk.pb.cc'))
+        dest = os.path.realpath(os.path.join(directory, '../../../share/mavlink/src/v%s/pixhawk/pixhawk.pb.cc' % xml.wire_protocol_version))
+        destdir = os.path.realpath(os.path.join(directory, '../../../share/mavlink/src/v%s/pixhawk' % xml.wire_protocol_version))
+        try:
+           os.makedirs(destdir)
+        except:
+           print("Not re-creating directory")
+        shutil.copy(src, dest)
+        print("Copied to"),
+        print(dest)
 
 class mav_include(object):
     def __init__(self, base):
@@ -553,3 +578,4 @@ def generate(basename, xml_list):
     for xml in xml_list:
         generate_one(basename, xml)
     copy_fixed_headers(basename, xml_list[0])
+    copy_fixed_sources(basename, xml_list[0])

@@ -217,7 +217,17 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                 // read extended header
                 uint8_t* payload = reinterpret_cast<uint8_t*>(message.payload64);
+
                 memcpy(&extended_message.extended_payload_len, payload + 3, 4);
+
+                // Check if message is valid
+                if
+                 (b.size() != MAVLINK_NUM_NON_PAYLOAD_BYTES+MAVLINK_EXTENDED_HEADER_LEN+ extended_message.extended_payload_len)
+                {
+                    //invalid message
+                    qDebug() << "GOT INVALID EXTENDED MESSAGE, ABORTING";
+                    return;
+                }
 
                 const uint8_t* extended_payload = reinterpret_cast<const uint8_t*>(b.constData()) + MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_EXTENDED_HEADER_LEN;
 

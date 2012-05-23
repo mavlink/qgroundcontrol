@@ -63,6 +63,7 @@ void Linecharts::hideEvent(QHideEvent* event)
 
 void Linecharts::selectSystem(int systemid)
 {
+	Q_UNUSED(systemid);
 //    QWidget* prevWidget = currentWidget();
 //    if (prevWidget)
 //    {
