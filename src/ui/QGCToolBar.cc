@@ -49,7 +49,6 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 
     addAction(toggleLoggingAction);
     addAction(logReplayAction);
-//    addSeparator();
 
     // CREATE TOOLBAR ITEMS
     // Add internal actions
@@ -123,7 +122,7 @@ void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
     connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
 }
 
-void QGCToolBar::playLogFile(bool enabled)
+void QGCToolBar::playLogFile(bool checked)
 {
     // Check if player exists
     if (player)
@@ -133,7 +132,7 @@ void QGCToolBar::playLogFile(bool enabled)
         if (player->isPlayingLogFile())
         {
             player->playPause(false);
-            if (enabled)
+            if (checked)
             {
                 if (!player->selectLogFile()) return;
             }
@@ -143,23 +142,35 @@ void QGCToolBar::playLogFile(bool enabled)
         {
             if (!player->selectLogFile()) return;
         }
-        player->playPause(enabled);
+        player->playPause(checked);
     }
 }
 
-void QGCToolBar::logging(bool enabled)
+void QGCToolBar::logging(bool checked)
 {
     // Stop logging in any case
     MainWindow::instance()->getMAVLink()->enableLogging(false);
-    if (enabled)
+
+	// If the user is enabling logging
+    if (checked)
     {
+		// Prompt the user for a filename/location to save to
         QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file to save to"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
 
+		// Check that they didn't cancel out
+		if (fileName.isNull())
+		{
+			toggleLoggingAction->setChecked(false);
+			return;
+		}
+
+		// Make sure the file's named properly
         if (!fileName.endsWith(".mavlink"))
         {
             fileName.append(".mavlink");
         }
 
+		// Check that we can save the logfile
         QFileInfo file(fileName);
         if ((file.exists() && !file.isWritable()))
         {
@@ -171,6 +182,7 @@ void QGCToolBar::logging(bool enabled)
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
         }
+		// Otherwise we're off and logging
         else
         {
             MainWindow::instance()->getMAVLink()->setLogfileName(fileName);

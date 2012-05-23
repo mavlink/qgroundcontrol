@@ -246,21 +246,27 @@ void QGCDataPlot2D::exportSVG(QString fileName)
  */
 void QGCDataPlot2D::selectFile()
 {
-    // Let user select the log file name
-    //QDate date(QDate::currentDate());
-    // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-
+	// Open a file dialog prompting the user for the file to load.
+	// Note the special case for the Pixhawk.
     if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
         fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
-    } else {
+	}
+	else
+	{
         fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
     }
 
-    // Store reference to file
+	// Check if the user hit cancel, which results in a Null string.
+	// If this is the case, we just stop.
+	if (fileName.isNull())
+	{
+		return;
+	}
 
+	// Now attempt to open the file
     QFileInfo fileInfo(fileName);
-
-    if (!fileInfo.isReadable()) {
+    if (!fileInfo.isReadable())
+	{
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open file");
@@ -269,7 +275,9 @@ void QGCDataPlot2D::selectFile()
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
         ui->filenameLabel->setText(tr("Could not open %1").arg(fileInfo.baseName()+"."+fileInfo.completeSuffix()));
-    } else {
+    }
+	else
+	{
         ui->filenameLabel->setText(tr("Opened %1").arg(fileInfo.completeBaseName()+"."+fileInfo.completeSuffix()));
         // Open and import the file
         loadFile();
@@ -552,8 +560,8 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
 bool QGCDataPlot2D::calculateRegression()
 {
-    // TODO Add support for quadratic / cubic curve fitting
-    return calculateRegression(ui->xRegressionComboBox->currentText(), ui->yRegressionComboBox->currentText(), "linear");
+    // TODO: Add support for quadratic / cubic curve fitting
+	return calculateRegression(ui->xRegressionComboBox->currentText(), ui->yRegressionComboBox->currentText(), "linear");
 }
 
 /**
@@ -571,17 +579,22 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
             ui->xRegressionComboBox->setCurrentIndex(curveNames.indexOf(xName));
             ui->yRegressionComboBox->setCurrentIndex(curveNames.indexOf(yName));
         }
+
+		// Create a couple of arrays for us to use to temporarily store some of the data from the plot.
+		// These arrays are allocated on the heap as they are far too big to go in the stack and will
+		// cause an overflow.
+		// TODO: Look into if this would be better done by having a getter return const double pointers instead
+		// of using memcpy().
         const int size = 100000;
-        double x[size];
-        double y[size];
+		double *x = new double[size];
+		double *y = new double[size];
         int copied = plot->data(yName, x, y, size);
 
         if (method == "linear") {
             double a;  // Y-axis crossing
             double b;  // Slope
             double r;  // Regression coefficient
-            int lin = linearRegression(x, y, copied, &a, &b, &r);
-            if(lin == 1) {
+            if (linearRegression(x, y, copied, &a, &b, &r)) {
                 function = tr("%1 = %2 * %3 + %4 | R-coefficient: %5").arg(yName, QString::number(b), xName, QString::number(a), QString::number(r));
 
                 // Plot curve
@@ -591,19 +604,16 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
                 plot->setStyleText("lines");
                 // x-value of the current rightmost x position in the plot
                 plot->appendData(tr("regression %1-%2").arg(xName, yName), plot->invTransform(QwtPlot::xBottom, plot->width() - plot->width()*0.08f), (a + b*plot->invTransform(QwtPlot::xBottom, plot->width() - plot->width() * 0.08f)));
-                result = true;
+                
+				result = true;
             } else {
                 function = tr("Linear regression failed. (Limit: %1 data points. Try with less)").arg(size);
-                result = false;
             }
-        } else if (method == "quadratic") {
-
-        } else if (method == "cubic") {
-
         } else {
             function = tr("Regression method %1 not found").arg(method);
-            result = false;
         }
+
+		delete x, y;
     } else {
         // xName == yName
         function = tr("Please select different X and Y dimensions, not %1 = %2").arg(xName, yName);
@@ -627,7 +637,7 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
  *          the match of the regression.
  * @return 1 on success, 0 on failure (e.g. because of infinite slope)
  */
-int QGCDataPlot2D::linearRegression(double* x,double* y,int n,double* a,double* b,double* r)
+bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, double *b, double *r)
 {
     int i;
     double sumx=0,sumy=0,sumx2=0,sumy2=0,sumxy=0;
@@ -637,7 +647,7 @@ int QGCDataPlot2D::linearRegression(double* x,double* y,int n,double* a,double* 
     *b = 0;
     *r = 0;
     if (n < 2)
-        return(FALSE);
+        return true;
 
     /* Conpute some things we need */
     for (i=0; i<n; i++) {
@@ -653,7 +663,7 @@ int QGCDataPlot2D::linearRegression(double* x,double* y,int n,double* a,double* 
 
     /* Infinite slope (b), non existant intercept (a) */
     if (fabs(sxx) == 0)
-        return(FALSE);
+        return false;
 
     /* Calculate the slope (b) and intercept (a) */
     *b = sxy / sxx;
@@ -665,7 +675,7 @@ int QGCDataPlot2D::linearRegression(double* x,double* y,int n,double* a,double* 
     else
         *r = sxy / sqrt(sxx * syy);
 
-    return(TRUE);
+    return false;
 }
 
 void QGCDataPlot2D::saveCsvLog()

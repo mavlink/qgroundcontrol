@@ -6,7 +6,7 @@ Copyright Andrew Tridgell 2011
 Released under GNU GPL version 3 or later
 '''
 
-import xml.parsers.expat, os, time, sys, operator, mavutil
+import xml.parsers.expat, os, errno, time, sys, operator, mavutil
 
 PROTOCOL_0_9 = "0.9"
 PROTOCOL_1_0 = "1.0"
@@ -272,7 +272,7 @@ class MAVXML(object):
                 self.largest_payload = m.wire_length
 
             if m.wire_length+8 > 64:
-                print("Warning: message %s is longer than 64 bytes long (%u bytes)" % (m.name, m.wire_length+8))
+                print("Note: message %s is longer than 64 bytes long (%u bytes), which can cause fragmentation since many radio modems use 64 bytes as maximum air transfer unit." % (m.name, m.wire_length+8))
 
     def __str__(self):
         return "MAVXML for %s from %s (%u message, %u enums)" % (
@@ -359,16 +359,12 @@ def total_msgs(xml):
     return count
 
 def mkdir_p(dir):
-    '''like mkdir -p'''
-    if not dir:
-        return
-    if dir.endswith("/"):
-        mkdir_p(dir[:-1])
-        return
-    if os.path.isdir(dir):
-        return
-    mkdir_p(os.path.dirname(dir))
-    os.mkdir(dir)
+    try:
+        os.makedirs(dir)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST:
+            pass
+        else: raise
 
 # check version consistent
 # add test.xml

@@ -101,6 +101,7 @@ ObstacleGroupNode::update(double robotX, double robotY, double robotZ,
 
         sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
         sd->setColor(osg::Vec4(r, g, b, 1.0f));
+        sd->setUseDisplayList(false);
 
         geode->addDrawable(sd);
     }
