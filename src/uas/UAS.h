@@ -511,8 +511,10 @@ public slots:
     //void setWaypoint(Waypoint* wp); FIXME tbd
     /** @brief Set currently active waypoint */
     //void setWaypointActive(int id); FIXME tbd
-    /** @brief Order the robot to return home / to land on the runway **/
+    /** @brief Order the robot to return home **/
     void home();
+    /** @brief Order the robot to land **/
+    void land();
     void halt();
     void go();
 

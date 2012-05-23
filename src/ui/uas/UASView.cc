@@ -109,7 +109,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(m_ui->haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
     connect(m_ui->continueButton, SIGNAL(clicked()), uas, SLOT(go()));
-    connect(m_ui->landButton, SIGNAL(clicked()), uas, SLOT(home()));
+    connect(m_ui->landButton, SIGNAL(clicked()), uas, SLOT(land()));
     connect(m_ui->abortButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
     connect(m_ui->killButton, SIGNAL(clicked()), uas, SLOT(emergencyKILL()));
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
