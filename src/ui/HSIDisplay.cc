@@ -990,8 +990,8 @@ void HSIDisplay::updateGlobalPosition(UASInterface*, double lat, double lon, dou
 void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float azimuth, float snr, bool used)
 {
     Q_UNUSED(uasid);
-    //qDebug() << "UPDATED SATELLITE";
     // If slot is empty, insert object
+    if (satid != 0) // Satellite PRNs currently range from 1-32, but are never zero
     if (gpsSatellites.contains(satid)) {
         gpsSatellites.value(satid)->update(satid, elevation, azimuth, snr, used);
     } else {
