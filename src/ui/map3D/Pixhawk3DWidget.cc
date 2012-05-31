@@ -150,7 +150,7 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
             this, SLOT(addOverlay(UASInterface*)));
 #endif
 
-//    mSystemContainerMap[systemId].gpsLocalOrigin() = QVector3D(47.419182, 8.566980, 428);
+//    mSystemContainerMap[systemId].gpsLocalOrigin() = QVector3D(47.397786, 8.544476, 428);
     initializeSystem(systemId, uas->getColor());
 
     emit systemCreatedSignal(uas);
@@ -2301,8 +2301,8 @@ Pixhawk3DWidget::updateImagery(double originX, double originY,
         minResolution = 0.5;
         break;
     case Imagery::OFFLINE_SATELLITE:
-        minResolution = 0.25;
-        maxResolution = 0.25;
+        minResolution = 0.5;
+        maxResolution = 0.5;
         break;
     default:
         {}
