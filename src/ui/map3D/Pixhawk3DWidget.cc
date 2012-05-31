@@ -41,7 +41,7 @@
 #include <osgText/Text>
 
 #include "../MainWindow.h"
-#include "PixhawkCheetahGeode.h"
+#include "PixhawkCheetahNode.h"
 #include "TerrainParamDialog.h"
 #include "UASManager.h"
 
@@ -1304,7 +1304,7 @@ Pixhawk3DWidget::addModels(QVector< osg::ref_ptr<osg::Node> >& models,
     QStringList files = directory.entryList(QStringList("*.osg"), QDir::Files);
 
     // add Pixhawk Bravo model
-    models.push_back(PixhawkCheetahGeode::create(systemColor));
+    models.push_back(PixhawkCheetahNode::create(systemColor));
 
     // add sphere of 0.05m radius
     osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.05f);
