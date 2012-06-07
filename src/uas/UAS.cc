@@ -249,9 +249,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
         switch (message.compid)
         {
-        case MAV_COMP_ID_IMU:
+        case MAV_COMP_ID_IMU_2:
             // Prefer IMU 2 over IMU 1 (FIXME)
-            componentID[message.msgid] = MAV_COMP_ID_IMU;
+            componentID[message.msgid] = MAV_COMP_ID_IMU_2;
             break;
         default:
             // Do nothing

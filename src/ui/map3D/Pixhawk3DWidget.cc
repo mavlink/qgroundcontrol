@@ -41,7 +41,7 @@
 #include <osgText/Text>
 
 #include "../MainWindow.h"
-#include "PixhawkCheetahGeode.h"
+#include "PixhawkCheetahNode.h"
 #include "TerrainParamDialog.h"
 #include "UASManager.h"
 
@@ -150,7 +150,7 @@ Pixhawk3DWidget::systemCreated(UASInterface *uas)
             this, SLOT(addOverlay(UASInterface*)));
 #endif
 
-//    mSystemContainerMap[systemId].gpsLocalOrigin() = QVector3D(47.419182, 8.566980, 428);
+//    mSystemContainerMap[systemId].gpsLocalOrigin() = QVector3D(47.397786, 8.544476, 428);
     initializeSystem(systemId, uas->getColor());
 
     emit systemCreatedSignal(uas);
@@ -1304,7 +1304,7 @@ Pixhawk3DWidget::addModels(QVector< osg::ref_ptr<osg::Node> >& models,
     QStringList files = directory.entryList(QStringList("*.osg"), QDir::Files);
 
     // add Pixhawk Bravo model
-    models.push_back(PixhawkCheetahGeode::create(systemColor));
+    models.push_back(PixhawkCheetahNode::create(systemColor));
 
     // add sphere of 0.05m radius
     osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.05f);
@@ -2301,8 +2301,8 @@ Pixhawk3DWidget::updateImagery(double originX, double originY,
         minResolution = 0.5;
         break;
     case Imagery::OFFLINE_SATELLITE:
-        minResolution = 0.25;
-        maxResolution = 0.25;
+        minResolution = 0.5;
+        maxResolution = 0.5;
         break;
     default:
         {}
