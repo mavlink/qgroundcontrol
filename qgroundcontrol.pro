@@ -369,7 +369,7 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Q3DWidget.h \
         src/ui/map3D/GCManipulator.h \
         src/ui/map3D/ImageWindowGeode.h \
-        src/ui/map3D/PixhawkCheetahGeode.h \
+        src/ui/map3D/PixhawkCheetahNode.h \
         src/ui/map3D/Pixhawk3DWidget.h \
         src/ui/map3D/Q3DWidgetFactory.h \
         src/ui/map3D/WebImageCache.h \
@@ -525,7 +525,7 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Q3DWidget.cc \
         src/ui/map3D/ImageWindowGeode.cc \
         src/ui/map3D/GCManipulator.cc \
-        src/ui/map3D/PixhawkCheetahGeode.cc \
+        src/ui/map3D/PixhawkCheetahNode.cc \
         src/ui/map3D/Pixhawk3DWidget.cc \
         src/ui/map3D/Q3DWidgetFactory.cc \
         src/ui/map3D/WebImageCache.cc \

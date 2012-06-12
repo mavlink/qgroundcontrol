@@ -2238,7 +2238,7 @@ void UAS::go()
     sendMessage(msg);
 }
 
-/** Order the robot to return home / to land on the runway **/
+/** Order the robot to return home **/
 void UAS::home()
 {
     mavlink_message_t msg;
@@ -2249,6 +2249,15 @@ void UAS::home()
     int frame = UASManager::instance()->getHomeFrame();
 
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, frame, 0, latitude, longitude, altitude);
+    sendMessage(msg);
+}
+
+/** Order the robot to land on the runway **/
+void UAS::land()
+{
+    mavlink_message_t msg;
+
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_NAV_LAND, 1, 0, 0, 0, 0, 0, 0, 0);
     sendMessage(msg);
 }
 

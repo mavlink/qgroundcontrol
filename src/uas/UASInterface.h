@@ -237,6 +237,8 @@ public slots:
     //virtual void setWaypointActive(int wp) = 0;
     /** @brief Order the robot to return home / to land on the runway **/
     virtual void home() = 0;
+    /** @brief Order the robot to land **/
+    virtual void land() = 0;
     /** @brief Halt the system */
     virtual void halt() = 0;
     /** @brief Start/continue the current robot action */
