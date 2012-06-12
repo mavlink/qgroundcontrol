@@ -28,8 +28,10 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_COUNT, false);
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
     messageFilter.insert(MAVLINK_MSG_ID_DATA_STREAM, false);
-    #ifdef MAVLINK_ENABLED_PIXHAWK
+    #ifdef MAVLINK_MSG_ID_ENCAPSULATED_DATA
     messageFilter.insert(MAVLINK_MSG_ID_ENCAPSULATED_DATA, false);
+    #endif
+    #ifdef MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE
     messageFilter.insert(MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE, false);
     #endif
     messageFilter.insert(MAVLINK_MSG_ID_EXTENDED_MESSAGE, false);

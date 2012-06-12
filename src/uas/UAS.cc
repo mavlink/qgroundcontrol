@@ -743,7 +743,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_param_value_t value;
             mavlink_msg_param_value_decode(&message, &value);
             QByteArray bytes(value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
-            QString parameterName = QString(bytes);
+            // Construct a string stopping at the first NUL (0) character, else copy the whole
+            // byte array (max MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN, so safe)
+            QString parameterName(bytes);
             int component = message.compid;
             mavlink_param_union_t val;
             val.param_float = value.param_value;
