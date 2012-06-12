@@ -86,8 +86,7 @@ enum MAV_TYPE
 	MAV_TYPE_OCTOROTOR=14, /* Octorotor | */
 	MAV_TYPE_TRICOPTER=15, /* Octorotor | */
 	MAV_TYPE_FLAPPING_WING=16, /* Flapping wing | */
-	MAV_TYPE_KITE=17, /* Flapping wing | */
-	MAV_TYPE_ENUM_END=18, /*  | */
+	MAV_TYPE_ENUM_END=17, /*  | */
 };
 #endif
 
