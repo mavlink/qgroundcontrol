@@ -935,8 +935,8 @@ void UASWaypointManager::sendWaypointCount()
     emit updateStatusString(QString("Starting to transmit waypoints..."));
 
     mavlink_msg_mission_count_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpc);
-    //if 
-    (uas) uas->sendMessage(message);
+    //if (uas) 
+    uas->sendMessage(message);
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint count (" << wpc.count << ") to ID " << wpc.target_system;
@@ -1003,7 +1003,7 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
         // // qDebug() << "sent waypoint (" << wp->seq << ") to ID " << wp->target_system<<" WP Buffer count: "<<waypoint_buffer.count();
 
         mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, wp);
-    //    if (uas) 
+       // if (uas) 
         uas->sendMessage(message);
         QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
     }
