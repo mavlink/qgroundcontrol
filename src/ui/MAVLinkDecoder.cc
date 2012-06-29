@@ -148,7 +148,6 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
 void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64 time)
 {
     bool multiComponentSourceDetected = false;
-    bool wrongComponent = false;
 
     // Store component ID
     if (componentID[msg->msgid] == -1)
@@ -161,7 +160,6 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         if (componentID[msg->msgid] != msg->compid)
         {
             componentMulti[msg->msgid] = true;
-            wrongComponent = true;
         }
     }
 

@@ -527,15 +527,6 @@ void UASView::selectAirframe()
 
 void UASView::refresh()
 {
-    //setUpdatesEnabled(false);
-    //setUpdatesEnabled(true);
-    //repaint();
-    //qDebug() << "UPDATING UAS WIDGET!" << uas->getUASName();
-
-
-    quint64 lastupdate = 0;
-    //// qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
-    lastupdate = QGC::groundTimeMilliseconds();
 
     if (generalUpdateCount == 4)
     {
@@ -543,14 +534,13 @@ void UASView::refresh()
         // qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
         generalUpdateCount = 0;
-        //// qDebug() << "UPDATING EVERYTHING";
+
         // State
         m_ui->stateLabel->setText(state);
         m_ui->statusTextLabel->setText(stateDesc);
 
         // Battery
         m_ui->batteryBar->setValue(static_cast<int>(this->chargeLevel));
-        //m_ui->loadBar->setValue(static_cast<int>(this->load));
         m_ui->thrustBar->setValue(this->thrust);
 
         // Position

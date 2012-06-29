@@ -2369,7 +2369,6 @@ void UAS::stopHil()
 
 void UAS::shutdown()
 {
-    bool result = false;
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Critical);
     msgBox.setText("Shutting down the UAS");
@@ -2388,7 +2387,6 @@ void UAS::shutdown()
         mavlink_message_t msg;
         mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 0, 2, 0, 0, 0, 0, 0);
         sendMessage(msg);
-        result = true;
     }
 }
 
