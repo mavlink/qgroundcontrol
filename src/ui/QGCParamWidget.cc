@@ -707,15 +707,15 @@ void QGCParamWidget::saveParameters()
                 {
                 case QVariant::Int:
                     paramValue = paramValue.arg(j.value().toInt());
-                    paramType = paramType.arg(MAVLINK_TYPE_INT32_T);
+                    paramType = paramType.arg(MAV_VAR_INT32);
                     break;
                 case QVariant::UInt:
                     paramValue = paramValue.arg(j.value().toUInt());
-                    paramType = paramType.arg(MAVLINK_TYPE_UINT32_T);
+                    paramType = paramType.arg(MAV_VAR_UINT32);
                     break;
                 case QMetaType::Float:
                     paramValue = paramValue.arg(j.value().toDouble(), 25, 'g', 12);
-                    paramType = paramType.arg(MAVLINK_TYPE_FLOAT);
+                    paramType = paramType.arg(MAV_VAR_REAL32);
                     break;
                 default:
                     qCritical() << "ABORTED PARAM WRITE TO FILE, NO VALID QVARIANT TYPE" << j.value();
@@ -772,13 +772,13 @@ void QGCParamWidget::loadParameters()
 
                         switch (wpParams.at(3).toUInt())
                         {
-                        case MAVLINK_TYPE_FLOAT:
+                        case MAV_VAR_REAL32:
                             changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toFloat());
                             break;
-                        case MAVLINK_TYPE_UINT32_T:
+                        case MAV_VAR_UINT32:
                             changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toUInt());
                             break;
-                        case MAVLINK_TYPE_INT32_T:
+                        case MAV_VAR_INT32:
                             changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toInt());
                             break;
                         }
