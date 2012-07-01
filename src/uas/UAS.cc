@@ -763,18 +763,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Insert with correct type
             switch (value.param_type)
             {
-            case MAVLINK_TYPE_FLOAT:
-            {
-                // Variant
-                QVariant param(val.param_float);
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                qDebug() << "RECEIVED PARAM:" << param;
-            }
-                break;
-            case MAVLINK_TYPE_UINT32_T:
+            case MAV_VAR_UINT32:
             {
                 // Variant
                 QVariant param(val.param_uint32);
@@ -785,10 +774,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
-            case MAVLINK_TYPE_INT32_T:
+            case MAV_VAR_INT32:
             {
                 // Variant
                 QVariant param(val.param_int32);
+                parameters.value(component)->insert(parameterName, param);
+                // Emit change
+                emit parameterChanged(uasId, message.compid, parameterName, param);
+                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                qDebug() << "RECEIVED PARAM:" << param;
+            }
+                break;
+            case MAV_VAR_REAL32:
+            {
+                // Variant
+                QVariant param(val.param_float);
                 parameters.value(component)->insert(parameterName, param);
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, param);
@@ -1990,17 +1990,17 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         // Assign correct value based on QVariant
         switch (value.type())
         {
-        case QVariant::Int:
-            union_value.param_int32 = value.toInt();
-            p.param_type = MAVLINK_TYPE_INT32_T;
-            break;
         case QVariant::UInt:
             union_value.param_uint32 = value.toUInt();
-            p.param_type = MAVLINK_TYPE_UINT32_T;
+            p.param_type = MAV_VAR_UINT32_T;
+            break;
+        case QVariant::Int:
+            union_value.param_int32 = value.toInt();
+            p.param_type = MAV_VAR_INT32_T;
             break;
         case QMetaType::Float:
             union_value.param_float = value.toFloat();
-            p.param_type = MAVLINK_TYPE_FLOAT;
+            p.param_type = MAV_VAR_FLOAT;
             break;
         default:
             qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";

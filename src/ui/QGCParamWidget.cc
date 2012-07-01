@@ -705,13 +705,13 @@ void QGCParamWidget::saveParameters()
                 QString paramType("%1");
                 switch (j.value().type())
                 {
-                case QVariant::Int:
-                    paramValue = paramValue.arg(j.value().toInt());
-                    paramType = paramType.arg(MAV_VAR_INT32);
-                    break;
                 case QVariant::UInt:
                     paramValue = paramValue.arg(j.value().toUInt());
                     paramType = paramType.arg(MAV_VAR_UINT32);
+                    break;
+                case QVariant::Int:
+                    paramValue = paramValue.arg(j.value().toInt());
+                    paramType = paramType.arg(MAV_VAR_INT32);
                     break;
                 case QMetaType::Float:
                     paramValue = paramValue.arg(j.value().toDouble(), 25, 'g', 12);
@@ -772,14 +772,14 @@ void QGCParamWidget::loadParameters()
 
                         switch (wpParams.at(3).toUInt())
                         {
-                        case MAV_VAR_REAL32:
-                            changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toFloat());
-                            break;
                         case MAV_VAR_UINT32:
                             changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toUInt());
                             break;
                         case MAV_VAR_INT32:
                             changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toInt());
+                            break;
+                        case MAV_VAR_REAL32:
+                            changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toFloat());
                             break;
                         }
 
