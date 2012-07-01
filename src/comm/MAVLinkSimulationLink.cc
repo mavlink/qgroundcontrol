@@ -623,6 +623,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
     // Parse bytes
     mavlink_message_t msg;
     mavlink_status_t comm;
+    comm.packet_rx_drop_count = 0;
 
     uint8_t stream[2048];
     int streampointer = 0;
