@@ -77,6 +77,7 @@ void MAVLinkSimulationMAV::mainloop()
 
         mavlink_servo_output_raw_t servos;
         servos.time_usec = 0;
+        servos.port = 0;
         servos.servo1_raw = 1000;
         servos.servo2_raw = 1250;
         servos.servo3_raw = 1400;
@@ -142,6 +143,9 @@ void MAVLinkSimulationMAV::mainloop()
         // GLOBAL POSITION
         mavlink_message_t msg;
         mavlink_global_position_int_t pos;
+        pos.time_boot_ms = 0;
+        pos.relative_alt = 0;
+        pos.hdg = 0;
         pos.alt = altitude*1000.0;
         pos.lat = longitude*1E7;
         pos.lon = longitude*1E7;
@@ -166,7 +170,7 @@ void MAVLinkSimulationMAV::mainloop()
         link->sendMAVLinkMessage(&msg);
 
         // SYSTEM STATUS
-        mavlink_sys_status_t status;
+        mavlink_sys_status_t status = {0,0,0,0,0,0,0,0,0,0,0,0,0};
         status.load = 300;
         //        status.mode = sys_mode;
         //        status.nav_mode = nav_mode;
@@ -220,11 +224,23 @@ void MAVLinkSimulationMAV::mainloop()
 
         if (sys_mode & MAV_MODE_FLAG_DECODE_POSITION_HIL)
         {
-            mavlink_hil_controls_t hil;
-            hil.roll_ailerons = 0.0f;
+            mavlink_hil_controls_t hil = {
+                0,
+                0.0f,
+                0.05f,
+                0.05f,
+                0.6f,
+                0.0f,
+                0.0f,
+                0.0f,
+                0.0f,
+                0,
+                0
+            };
+            /*hil.roll_ailerons = 0.0f;
             hil.pitch_elevator = 0.05f;
             hil.yaw_rudder = 0.05f;
-            hil.throttle = 0.6f;
+            hil.throttle = 0.6f;*/
             // Encode the data (adding header and checksums, etc.)
             mavlink_msg_hil_controls_encode(systemid, MAV_COMP_ID_IMU, &ret, &hil);
             // And send it
