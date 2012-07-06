@@ -71,10 +71,6 @@ win32 {
 #################################################################
 # EXTERNAL LIBRARY CONFIGURATION
 
-# Include NMEA parsing library (currently unused)
-include(src/libs/nmea/nmea.pri)
-
-
 # EIGEN matrix library (header-only)
 INCLUDEPATH += src/libs/eigen
 
