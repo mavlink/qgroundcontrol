@@ -53,7 +53,7 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     uint8_t msgid = message.msgid;
 
     // Handle time sync message
-    if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME && message.compid == 200)
+    if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME)
     {
         mavlink_system_time_t timebase;
         mavlink_msg_system_time_decode(&message, &timebase);
