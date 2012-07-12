@@ -14,6 +14,10 @@ http://qgroundcontrol.org/credits
 * PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
 **********************************************************************************************
 
+Documentation
+=============
+For gernerating documentation, refer to README in the doc directory.
+
 
 Mac OS X
 ========
@@ -98,5 +102,4 @@ Windows XP/7:
 5) Now start Visual Studio and load the qgroundcontrol.vcproj if using Visual Studio 2008 or qgroundcontrol.vcxproj if using Visual Studio 2010
 
 6) Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run `qmake -tp vc qgroundcontrol.pro`
-
 
