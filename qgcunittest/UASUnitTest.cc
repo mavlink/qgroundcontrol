@@ -232,18 +232,21 @@ void UASUnitTest::getWaypoint_test()
     QCOMPARE(wpList.count(), 1);
     QCOMPARE(static_cast<quint16>(0), static_cast<Waypoint*>(wpList.at(0))->getId());
 
-    Waypoint*  wp3 = new Waypoint(0, 5.6, 2.0, 3.0);
+    Waypoint*  wp3 = new Waypoint(1, 5.6, 2.0, 3.0);
     uas->getWaypointManager()->addWaypointEditable(wp3, true);
+    wpList = uas->getWaypointManager()->getWaypointEditableList();
     Waypoint* wp2 = static_cast<Waypoint*>(wpList.at(0));
 
+    QCOMPARE(wpList.count(), 2);
     QCOMPARE(wp3->getX(), wp2->getX());
     QCOMPARE(wp3->getY(), wp2->getY());
     QCOMPARE(wp3->getZ(), wp2->getZ());
+    QCOMPARE(wpList.at(1)->getId(), static_cast<quint16>(1));
     QCOMPARE(wp3->getFrame(), MAV_FRAME_GLOBAL);
     QCOMPARE(wp3->getFrame(), wp2->getFrame());
+
     delete wp3;
     delete wp;
-
 }
 
 void UASUnitTest::signalWayPoint_test()
