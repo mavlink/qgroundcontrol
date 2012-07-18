@@ -163,10 +163,7 @@ void UASUnitTest::getYaw_test()
 
 void UASUnitTest::getSelected_test()
 {
-    bool test = uas->getSelected();
-   if(test != NULL){
-    QCOMPARE(test, false);
-    }
+    QCOMPARE(uas->getSelected(), false);
 }
 
 void UASUnitTest::getSystemType_test()
@@ -176,6 +173,7 @@ void UASUnitTest::getSystemType_test()
 
 void UASUnitTest::getAirframe_test()
 {
+    //when uas is constructed, airframe is set to QGC_AIRFRAME_GENERIC which is 0
     QCOMPARE(uas->getAirframe(), 0);
 
     uas->setAirframe(25);
