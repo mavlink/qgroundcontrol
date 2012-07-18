@@ -1,19 +1,22 @@
 #include "UASUnitTest.h"
-
+#include <stdio.h>
 UASUnitTest::UASUnitTest()
 {
 }
-
-void UASUnitTest::initTestCase()
+//This function is called after every test
+void UASUnitTest::init()
 {
     mav = new MAVLinkProtocol();
-    uas = new UAS(mav,UASID);
+    uas = new UAS(mav, UASID);
+    uas->deleteSettings();
 }
-
-void UASUnitTest::cleanupTestCase()
+//this function is called after every test
+void UASUnitTest::cleanup()
 {
-  delete uas;
-  delete mav;
+   delete mav;
+   mav = NULL;
+   delete uas;
+   uas = NULL;
 }
 
 void UASUnitTest::getUASID_test()
@@ -32,6 +35,7 @@ void UASUnitTest::getUASID_test()
 
     // Make sure that ID >= 0
     QCOMPARE(uas->getUASID(), 100);
+
 }
 
 void UASUnitTest::getUASName_test()
@@ -118,11 +122,12 @@ void UASUnitTest::getStatusForCode_test()
 
     uas->getStatusForCode(5325, state, desc);
     QVERIFY(state == "UNKNOWN");
+
 }
 
 void UASUnitTest::getLocalX_test()
 {
-    QCOMPARE(uas->getLocalX(), 0.0);
+   QCOMPARE(uas->getLocalX(), 0.0);
 }
 void UASUnitTest::getLocalY_test()
 {
@@ -158,7 +163,10 @@ void UASUnitTest::getYaw_test()
 
 void UASUnitTest::getSelected_test()
 {
-    QCOMPARE(uas->getSelected(), false);
+    bool test = uas->getSelected();
+   if(test != NULL){
+    QCOMPARE(test, false);
+    }
 }
 
 void UASUnitTest::getSystemType_test()
@@ -200,6 +208,7 @@ void UASUnitTest::getWaypointList_test()
     QCOMPARE(kk.count(), 0);
 
     qDebug()<<"disconnect SIGNAL waypointListChanged";
+
 }
 
 void UASUnitTest::getWaypoint_test()
@@ -220,6 +229,7 @@ void UASUnitTest::getWaypoint_test()
     QCOMPARE(wp->getX(), wp2->getX());
     QCOMPARE(wp->getFrame(), MAV_FRAME_GLOBAL);
     QCOMPARE(wp->getFrame(), wp2->getFrame());
+
 }
 
 void UASUnitTest::signalWayPoint_test()
@@ -250,6 +260,7 @@ void UASUnitTest::signalWayPoint_test()
     uas->getWaypointManager()->clearWaypointList();
     QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(wpList.count(), 1);
+
 }
 
 void UASUnitTest::signalUASLink_test()
@@ -308,6 +319,7 @@ void UASUnitTest::signalUASLink_test()
     LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mav);
     QCOMPARE(spyS.count(), 3);
+
 }
 
 void UASUnitTest::signalIdUASLink_test()
@@ -331,4 +343,5 @@ void UASUnitTest::signalIdUASLink_test()
 
     QCOMPARE(a->getName(), QString("serial port COM 17"));
     QCOMPARE(b->getName(), QString("serial port COM 18"));
+
 }
