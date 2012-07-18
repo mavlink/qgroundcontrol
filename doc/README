@@ -20,7 +20,7 @@ $doxywizard &
 doxywizard information:
 http://www.stack.nl/~dimitri/doxygen/doxywizard_usage.html
 
-Or go to the Doxygen Manual for information.
+Or go to the Doxygen Manual for information at the website noted below.
 
 Windows
 =======
@@ -28,10 +28,10 @@ Go to the following website for the correct download and follow the wizard to in
 http://www.stack.nl/~dimitri/doxygen/download.html
 
 Run the wizard to generate the documentation. 
-Go to the website below or the Doxygen Manual for information on running doxywizard
+Go to the website below or the Doxygen Manual for information on running doxywizard.
 http://www.stack.nl/~dimitri/doxygen/doxywizard_usage.html
 
-doxygen Manual
+Doxygen Manual
 ==============
 http://www.stack.nl/~dimitri/doxygen/
 
