@@ -14,6 +14,10 @@ http://qgroundcontrol.org/credits
 * PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
 **********************************************************************************************
 
+Documentation
+=============
+For gernerating documentation, refer to README in the doc directory.
+
 
 Mac OS X
 ========
@@ -173,5 +177,4 @@ src:
 thirdParty: 
 	Library called lxbee.
 	Library called QSerialPort.
-
 
