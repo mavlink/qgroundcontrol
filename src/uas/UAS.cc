@@ -97,6 +97,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     systemIsArmed(false),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0)
+
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -105,12 +106,13 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     }
 
     color = UASInterface::getNextColor();
+    
     setBatterySpecs(QString("9V,9.5V,12.6V"));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
-
+//    autopilot = 11;
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
@@ -121,8 +123,15 @@ UAS::~UAS()
     writeSettings();
     delete links;
     links=NULL;
-}
+    //if(statusTimeout != NULL){
+   // delete statusTimeout;
+   // statusTimeout = NULL;//}
+  //  if(simulation != NULL){
+  //  delete simulation;
+   // simulation = NULL;
+   // }
 
+}
 void UAS::writeSettings()
 {
     QSettings settings;
@@ -147,6 +156,14 @@ void UAS::readSettings()
         setBatterySpecs(settings.value("BATTERY_SPECS").toString());
     }
     settings.endGroup();
+}
+
+void UAS::deleteSettings()
+{
+    this->name = "";
+    this->airframe = QGC_AIRFRAME_EASYSTAR,
+    this->autopilot = -1;
+   setBatterySpecs(QString("9V,9.5V,12.6V"));
 }
 
 int UAS::getUASID() const
