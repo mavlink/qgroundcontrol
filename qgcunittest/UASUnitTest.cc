@@ -175,11 +175,13 @@ void UASUnitTest::getAirframe_test()
 {
     //when uas is constructed, airframe is set to QGC_AIRFRAME_GENERIC which is 0
     QCOMPARE(uas->getAirframe(), 0);
+}
 
+void UASUnitTest::setAirframe_test()
+{
     uas->setAirframe(25);
     QVERIFY(uas->getAirframe() == 25);
 }
-
 void UASUnitTest::getWaypointList_test()
 {
     QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();

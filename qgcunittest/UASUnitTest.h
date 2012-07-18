@@ -49,6 +49,7 @@ private slots:
   void getSelected_test();
   void getSystemType_test();
   void getAirframe_test();
+  void setAirframe_test();
   void getWaypointList_test();
   void signalWayPoint_test();
   void getWaypoint_test();
