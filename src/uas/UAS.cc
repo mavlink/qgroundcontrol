@@ -112,7 +112,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
-//    autopilot = 11;
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
@@ -123,14 +122,6 @@ UAS::~UAS()
     writeSettings();
     delete links;
     links=NULL;
-    //if(statusTimeout != NULL){
-   // delete statusTimeout;
-   // statusTimeout = NULL;//}
-  //  if(simulation != NULL){
-  //  delete simulation;
-   // simulation = NULL;
-   // }
-
 }
 void UAS::writeSettings()
 {
@@ -161,7 +152,7 @@ void UAS::readSettings()
 void UAS::deleteSettings()
 {
     this->name = "";
-    this->airframe = QGC_AIRFRAME_EASYSTAR,
+    this->airframe = QGC_AIRFRAME_EASYSTAR;
     this->autopilot = -1;
    setBatterySpecs(QString("9V,9.5V,12.6V"));
 }
