@@ -21,19 +21,19 @@
 #include "ui_WaypointEditableView.h"
 
 
-#include "QGCMissionNavWaypoint.h"
-#include "QGCMissionNavLoiterUnlim.h"
-#include "QGCMissionNavLoiterTurns.h"
-#include "QGCMissionNavLoiterTime.h"
-#include "QGCMissionNavReturnToLaunch.h"
-#include "QGCMissionNavLand.h"
-#include "QGCMissionNavTakeoff.h"
-#include "QGCMissionNavSweep.h"
-#include "QGCMissionConditionDelay.h"
-#include "QGCMissionDoJump.h"
-#include "QGCMissionDoStartSearch.h"
-#include "QGCMissionDoFinishSearch.h"
-#include "QGCMissionOther.h"
+#include "mission/QGCMissionNavWaypoint.h"
+#include "mission/QGCMissionNavLoiterUnlim.h"
+#include "mission/QGCMissionNavLoiterTurns.h"
+#include "mission/QGCMissionNavLoiterTime.h"
+#include "mission/QGCMissionNavReturnToLaunch.h"
+#include "mission/QGCMissionNavLand.h"
+#include "mission/QGCMissionNavTakeoff.h"
+#include "mission/QGCMissionNavSweep.h"
+#include "mission/QGCMissionConditionDelay.h"
+#include "mission/QGCMissionDoJump.h"
+#include "mission/QGCMissionDoStartSearch.h"
+#include "mission/QGCMissionDoFinishSearch.h"
+#include "mission/QGCMissionOther.h"
 
 
 WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :

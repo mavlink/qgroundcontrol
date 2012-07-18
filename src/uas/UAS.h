@@ -143,7 +143,6 @@ public:
         return yaw;
     }
     bool getSelected() const;
-
     QVector3D getNedPosGlobalOffset() const
     {
         return nedPosGlobalOffset;
@@ -430,7 +429,7 @@ public:
 
     QImage getImage();
     void requestImage();
-    int getAutopilotType() {
+    int getAutopilotType(){
         return autopilot;
     }
     QString getAutopilotTypeName()
@@ -484,7 +483,7 @@ public slots:
     void setAutopilotType(int apType)
     {
         autopilot = apType;
-        emit systemSpecsChanged(uasId);
+        //emit systemSpecsChanged(uasId);
     }
     /** @brief Set the type of airframe */
     void setSystemType(int systemType);
@@ -638,7 +637,7 @@ public slots:
 
     void startDataRecording();
     void stopDataRecording();
-
+    void deleteSettings();
 signals:
 
     /** @brief The main/battery voltage has changed/was updated */

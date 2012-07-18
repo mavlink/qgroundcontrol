@@ -30,8 +30,8 @@ This file is part of the QGROUNDCONTROL project
 #ifndef QGCMAVLINK_H
 #define QGCMAVLINK_H
 
-#include <mavlink_types.h>
-#include <mavlink.h>
+#include <../../mavlink/include/mavlink/v1.0/mavlink_types.h>
+#include <../../mavlink/include/mavlink/v1.0/common/mavlink.h>
 
 #ifdef MAVLINK_CONF
 #define MY_MACRO(x) <x>
