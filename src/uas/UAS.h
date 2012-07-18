@@ -483,15 +483,19 @@ public slots:
     void setAutopilotType(int apType)
     {
         autopilot = apType;
-        //emit systemSpecsChanged(uasId);
+        emit systemSpecsChanged(uasId);
     }
     /** @brief Set the type of airframe */
     void setSystemType(int systemType);
     /** @brief Set the specific airframe type */
     void setAirframe(int airframe)
     {
-        this->airframe = airframe;
-        emit systemSpecsChanged(uasId);
+        if((airframe >= 0) && (airframe < 12))
+        {
+          this->airframe = airframe;
+          emit systemSpecsChanged(uasId);
+        }
+        
     }
     /** @brief Set a new name **/
     void setUASName(const QString& name);

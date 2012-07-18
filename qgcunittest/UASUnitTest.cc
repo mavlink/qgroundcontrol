@@ -179,8 +179,17 @@ void UASUnitTest::getAirframe_test()
 
 void UASUnitTest::setAirframe_test()
 {
-    uas->setAirframe(25);
-    QVERIFY(uas->getAirframe() == 25);
+    //check at construction, that airframe=0 (GENERIC)
+    QVERIFY(uas->getAirframe() == 0);
+
+    //check that set airframe works
+    uas->setAirframe(11);
+    QVERIFY(uas->getAirframe() == 11);
+
+    //check that setAirframe will not assign a number to airframe, that is 
+    //not defined in the enum 
+    uas->setAirframe(12);
+    QVERIFY(uas->getAirframe() == 11);
 }
 void UASUnitTest::getWaypointList_test()
 {
