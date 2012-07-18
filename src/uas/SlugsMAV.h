@@ -25,7 +25,7 @@ This file is part of the QGROUNDCONTROL project
 #define SLUGSMAV_H
 
 #include "UAS.h"
-#include "mavlink.h"
+#include "../../mavlink/include/mavlink/v1.0/common/mavlink.h"
 #include <QTimer>
 
 #define SLUGS_UPDATE_RATE   200   // in ms
