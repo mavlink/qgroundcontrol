@@ -163,10 +163,7 @@ void UASUnitTest::getYaw_test()
 
 void UASUnitTest::getSelected_test()
 {
-    bool test = uas->getSelected();
-   if(test != NULL){
-    QCOMPARE(test, false);
-    }
+    QCOMPARE(uas->getSelected(), false);
 }
 
 void UASUnitTest::getSystemType_test()
@@ -176,12 +173,24 @@ void UASUnitTest::getSystemType_test()
 
 void UASUnitTest::getAirframe_test()
 {
+    //when uas is constructed, airframe is set to QGC_AIRFRAME_GENERIC which is 0
     QCOMPARE(uas->getAirframe(), 0);
-
-    uas->setAirframe(25);
-    QVERIFY(uas->getAirframe() == 25);
 }
 
+void UASUnitTest::setAirframe_test()
+{
+    //check at construction, that airframe=0 (GENERIC)
+    QVERIFY(uas->getAirframe() == 0);
+
+    //check that set airframe works
+    uas->setAirframe(11);
+    QVERIFY(uas->getAirframe() == 11);
+
+    //check that setAirframe will not assign a number to airframe, that is 
+    //not defined in the enum 
+    uas->setAirframe(12);
+    QVERIFY(uas->getAirframe() == 11);
+}
 void UASUnitTest::getWaypointList_test()
 {
     QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();

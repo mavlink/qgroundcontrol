@@ -86,7 +86,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedRGBDImageTimestamp(0.0),
     #endif
     paramsOnceRequested(false),
-    airframe(QGC_AIRFRAME_EASYSTAR),
+    airframe(QGC_AIRFRAME_GENERIC),
     attitudeKnown(false),
     paramManager(NULL),
     attitudeStamped(false),
@@ -104,7 +104,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentID[i] = -1;
         componentMulti[i] = false;
     }
-
+    
     color = UASInterface::getNextColor();
     
     setBatterySpecs(QString("9V,9.5V,12.6V"));
@@ -152,9 +152,9 @@ void UAS::readSettings()
 void UAS::deleteSettings()
 {
     this->name = "";
-    this->airframe = QGC_AIRFRAME_EASYSTAR;
+    this->airframe = QGC_AIRFRAME_GENERIC;
     this->autopilot = -1;
-   setBatterySpecs(QString("9V,9.5V,12.6V"));
+    setBatterySpecs(QString("9V,9.5V,12.6V"));
 }
 
 int UAS::getUASID() const
