@@ -1,5 +1,6 @@
 #include "UASUnitTest.h"
 #include <stdio.h>
+#include <QObject>
 UASUnitTest::UASUnitTest()
 {
 }
@@ -167,8 +168,9 @@ void UASUnitTest::getSelected_test()
 }
 
 void UASUnitTest::getSystemType_test()
-{   //best guess: it is not initialized in the constructor,
-    //what should it be initialized to?
+{    //check that system type is set to MAV_TYPE_GENERIC when initialized
+    QCOMPARE(uas->getSystemType(), 0);
+    uas->setSystemType(13);
     QCOMPARE(uas->getSystemType(), 13);
 }
 
@@ -251,13 +253,12 @@ void UASUnitTest::getWaypoint_test()
 
 void UASUnitTest::signalWayPoint_test()
 {
-    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointListChanged(UASID)));
-	
+    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged(UASID)));
     Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
     uas->getWaypointManager()->addWaypointEditable(wp, true);
 
     printf("spy.count = %d\n", spy.count());
-    //QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
+    QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
     uas->getWaypointManager()->removeWaypoint(0);
     QCOMPARE(spy.count(), 2); // 2 listChanged for remove wayPoint
     QSignalSpy spyDestroyed(uas->getWaypointManager(), SIGNAL(destroyed()));
