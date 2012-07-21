@@ -257,13 +257,14 @@ void UASUnitTest::signalWayPoint_test()
 {
     QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
 
-    Waypoint* wp = new Waypoint(0,1.0,1.0,1.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
+    Waypoint* wp = new Waypoint(0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
     uas->getWaypointManager()->addWaypointEditable(wp, true);
+
 
     QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
     uas->getWaypointManager()->removeWaypoint(0);
-
     QCOMPARE(spy.count(), 2); // 2 listChanged for remove wayPoint
+
     QSignalSpy spyDestroyed(uas->getWaypointManager(), SIGNAL(destroyed()));
     QVERIFY(spyDestroyed.isValid());
     QCOMPARE( spyDestroyed.count(), 0 );
