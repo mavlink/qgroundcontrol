@@ -111,7 +111,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
-    readSettings();
+    readSettings(); 
+    type = MAV_TYPE_GENERIC;
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
@@ -2081,21 +2082,25 @@ void UAS::requestParameter(int component, const QString& parameter)
 
 void UAS::setSystemType(int systemType)
 {
-    type = systemType;
-    // If the airframe is still generic, change it to a close default type
-    if (airframe == 0)
+    if((systemType >= MAV_TYPE_GENERIC) && (systemType < MAV_TYPE_ENUM_END))
     {
-        switch (systemType)
-        {
-        case MAV_TYPE_FIXED_WING:
-            airframe = QGC_AIRFRAME_EASYSTAR;
-            break;
-        case MAV_TYPE_QUADROTOR:
-            airframe = QGC_AIRFRAME_MIKROKOPTER;
-            break;
-        }
-    }
-    emit systemSpecsChanged(uasId);
+      type = systemType;
+    
+      // If the airframe is still generic, change it to a close default type
+      if (airframe == 0)
+      {
+          switch (systemType)
+          {
+          case MAV_TYPE_FIXED_WING:
+              airframe = QGC_AIRFRAME_EASYSTAR;
+              break;
+          case MAV_TYPE_QUADROTOR:
+              airframe = QGC_AIRFRAME_MIKROKOPTER;
+              break;
+          }
+      }
+      emit systemSpecsChanged(uasId);
+   }
 }
 
 void UAS::setUASName(const QString& name)
