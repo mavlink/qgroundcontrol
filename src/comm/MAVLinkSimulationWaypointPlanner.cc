@@ -525,6 +525,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
 
         mavlink_message_t msg;
         mavlink_set_local_position_setpoint_t PControlSetPoint;
+        PControlSetPoint.coordinate_frame =0;
 
         // send new set point to local IMU
         if (cur->frame == 1) {

@@ -213,13 +213,11 @@ void QGCFlightGearLink::readBytes()
     }
 
     // Parse string
-    double time;
+
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
     double vx, vy, vz, xacc, yacc, zacc;
-    double airspeed;
 
-    time = values.at(0).toDouble();
     lat = values.at(1).toDouble();
     lon = values.at(2).toDouble();
     alt = values.at(3).toDouble();
@@ -238,7 +236,6 @@ void QGCFlightGearLink::readBytes()
     vy = values.at(14).toDouble();
     vz = values.at(15).toDouble();
 
-    airspeed = values.at(16).toDouble();
 
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,

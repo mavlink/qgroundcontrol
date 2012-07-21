@@ -46,8 +46,8 @@ LogCompressor::LogCompressor(QString logFileName, QString outFileName, QString d
 	outFileName(outFileName),
 	running(true),
 	currentDataLine(0),
-	holeFillingEnabled(true),
-	delimiter(delimiter)
+    delimiter(delimiter),
+    holeFillingEnabled(true)
 {
 }
 
