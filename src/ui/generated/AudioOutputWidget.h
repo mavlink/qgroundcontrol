@@ -48,7 +48,7 @@ public:
         muteButton = new QPushButton(AudioOutputWidget);
         muteButton->setObjectName(QString::fromUtf8("muteButton"));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/status/audio-volume-muted.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/status/audio-volume-muted.svg"), QSize(), QIcon::Normal, QIcon::Off);
         muteButton->setIcon(icon);
         muteButton->setIconSize(QSize(16, 16));
 
