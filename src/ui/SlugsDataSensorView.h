@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASInterface.h"
 #include "SlugsMAV.h"
-#include "mavlink.h"
+#include "../../mavlink/include/mavlink/v1.0/common/mavlink.h"
 
 
 namespace Ui
