@@ -419,7 +419,9 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                     }
                     else
                     {
-                        str.append(byte);           // Append original character
+                        // Ignore carriage return, because that
+                        // is auto-added with '\n'
+                        if (byte != '\r') str.append(byte);           // Append original character
                         lastSpace = 0;
                     }
                 }
