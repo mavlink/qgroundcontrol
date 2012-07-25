@@ -31,7 +31,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../mavground.qrc">
-           <normaloff>:/images/status/audio-volume-muted.svg</normaloff>:/images/status/audio-volume-muted.svg</iconset>
+           <normaloff>:/files/images/status/audio-volume-muted.svg</normaloff>:/files/images/status/audio-volume-muted.svg</iconset>
          </property>
         </widget>
        </item>
@@ -42,7 +42,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../mavground.qrc">
-           <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+           <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
          </property>
         </widget>
        </item>

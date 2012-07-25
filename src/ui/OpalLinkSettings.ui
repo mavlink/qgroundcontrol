@@ -75,7 +75,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/status/folder-open.svg</normaloff>:/images/status/folder-open.svg</iconset>
+       <normaloff>:/files/images/status/folder-open.svg</normaloff>:/files/images/status/folder-open.svg</iconset>
      </property>
     </widget>
    </item>
@@ -89,7 +89,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/status/folder-open.svg</normaloff>:/images/status/folder-open.svg</iconset>
+       <normaloff>:/files/images/status/folder-open.svg</normaloff>:/files/images/status/folder-open.svg</iconset>
      </property>
     </widget>
    </item>

@@ -321,22 +321,22 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
         switch (systemType)
         {
         case 0:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/generic.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/generic.svg"));
             break;
         case 1:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/fixed-wing.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/fixed-wing.svg"));
             break;
         case 2:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/quadrotor.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/quadrotor.svg"));
             break;
         case 3:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/coaxial.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/coaxial.svg"));
             break;
         case 4:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/helicopter.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
             break;
         case 5:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
             break;
         case 6: {
                 // A groundstation is a special system type, update widget
@@ -354,11 +354,11 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
                 m_ui->landButton->hide();
                 m_ui->shutdownButton->hide();
                 m_ui->abortButton->hide();
-                m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
+                m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/groundstation.svg"));
             }
             break;
         default:
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
+            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
             break;
         }
     }

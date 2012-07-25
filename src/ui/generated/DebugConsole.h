@@ -107,7 +107,7 @@ public:
         transmitButton = new QPushButton(DebugConsole);
         transmitButton->setObjectName(QString::fromUtf8("transmitButton"));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/devices/network-wireless.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/devices/network-wireless.svg"), QSize(), QIcon::Normal, QIcon::Off);
         transmitButton->setIcon(icon);
 
         horizontalLayout->addWidget(transmitButton);

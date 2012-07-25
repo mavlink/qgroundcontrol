@@ -113,7 +113,7 @@
        </property>
        <property name="icon">
         <iconset resource="../../mavground.qrc">
-         <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+         <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
        </property>
       </widget>
      </item>
@@ -136,7 +136,7 @@
        </property>
        <property name="icon">
         <iconset resource="../../mavground.qrc">
-         <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
+         <normaloff>:/files/images/control/land.svg</normaloff>:/files/images/control/land.svg</iconset>
        </property>
       </widget>
      </item>
@@ -159,7 +159,7 @@
        </property>
        <property name="icon">
         <iconset resource="../../mavground.qrc">
-         <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+         <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
        </property>
       </widget>
      </item>
@@ -200,7 +200,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+       <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
      </property>
     </widget>
    </item>

@@ -123,7 +123,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/images/actions/media-playback-start.svg</normaloff>:/images/actions/media-playback-start.svg</iconset>
+       <normaloff>:/files/images/actions/media-playback-start.svg</normaloff>:/files/images/actions/media-playback-start.svg</iconset>
      </property>
      <property name="checkable">
       <bool>true</bool>

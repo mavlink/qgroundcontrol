@@ -868,12 +868,12 @@ void MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
     break;
     case QGC_MAINWINDOW_STYLE_INDOOR:
         qApp->setStyle("plastique");
-        styleFileName = ":/images/style-mission.css";
+        styleFileName = ":files/images/style-mission.css";
         reloadStylesheet();
         break;
     case QGC_MAINWINDOW_STYLE_OUTDOOR:
         qApp->setStyle("plastique");
-        styleFileName = ":/images/style-outdoor.css";
+        styleFileName = ":files/images/style-outdoor.css";
         reloadStylesheet();
         break;
     }
@@ -907,12 +907,12 @@ void MainWindow::reloadStylesheet()
     QFile* styleSheet = new QFile(styleFileName);
     if (!styleSheet->exists())
     {
-        styleSheet = new QFile(":/images/style-mission.css");
+        styleSheet = new QFile(":files/images/style-mission.css");
     }
     if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QString style = QString(styleSheet->readAll());
-        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
+        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/images/");
         qApp->setStyleSheet(style);
     }
     else
@@ -1229,25 +1229,25 @@ void MainWindow::UASCreated(UASInterface* uas)
         switch (uas->getSystemType())
 		{
         case MAV_TYPE_GENERIC:
-            icon = QIcon(":/images/mavs/generic.svg");
+            icon = QIcon(":files/images/mavs/generic.svg");
             break;
         case MAV_TYPE_FIXED_WING:
-            icon = QIcon(":/images/mavs/fixed-wing.svg");
+            icon = QIcon(":files/images/mavs/fixed-wing.svg");
             break;
         case MAV_TYPE_QUADROTOR:
-            icon = QIcon(":/images/mavs/quadrotor.svg");
+            icon = QIcon(":files/images/mavs/quadrotor.svg");
             break;
         case MAV_TYPE_COAXIAL:
-            icon = QIcon(":/images/mavs/coaxial.svg");
+            icon = QIcon(":files/images/mavs/coaxial.svg");
             break;
         case MAV_TYPE_HELICOPTER:
-            icon = QIcon(":/images/mavs/helicopter.svg");
+            icon = QIcon(":files/images/mavs/helicopter.svg");
             break;
         case MAV_TYPE_GCS:
-            icon = QIcon(":/images/mavs/groundstation.svg");
+            icon = QIcon(":files/images/mavs/groundstation.svg");
             break;
         default:
-            icon = QIcon(":/images/mavs/unknown.svg");
+            icon = QIcon(":files/images/mavs/unknown.svg");
             break;
         }
 
@@ -1308,7 +1308,7 @@ void MainWindow::UASCreated(UASInterface* uas)
             if (!detectionDockWidget)
             {
                 detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
-                detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
+                detectionDockWidget->setWidget( new ObjectDetectionView("files/images/patterns", this) );
                 detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
                 addTool(detectionDockWidget, tr("Object Recognition"), Qt::RightDockWidgetArea);
             }
