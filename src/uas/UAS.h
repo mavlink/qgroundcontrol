@@ -143,7 +143,6 @@ public:
         return yaw;
     }
     bool getSelected() const;
-
     QVector3D getNedPosGlobalOffset() const
     {
         return nedPosGlobalOffset;
@@ -430,7 +429,7 @@ public:
 
     QImage getImage();
     void requestImage();
-    int getAutopilotType() {
+    int getAutopilotType(){
         return autopilot;
     }
     QString getAutopilotTypeName()
@@ -491,8 +490,12 @@ public slots:
     /** @brief Set the specific airframe type */
     void setAirframe(int airframe)
     {
-        this->airframe = airframe;
-        emit systemSpecsChanged(uasId);
+        if((airframe >= QGC_AIRFRAME_GENERIC) && (airframe < QGC_AIRFRAME_END_OF_ENUM))
+        {
+          this->airframe = airframe;
+          emit systemSpecsChanged(uasId);
+        }
+        
     }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
@@ -638,9 +641,8 @@ public slots:
 
     void startDataRecording();
     void stopDataRecording();
-
+    void deleteSettings();
 signals:
-
     /** @brief The main/battery voltage has changed/was updated */
     //void voltageChanged(int uasId, double voltage); // Defined in UASInterface already
     /** @brief An actuator value has changed */

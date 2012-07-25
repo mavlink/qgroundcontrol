@@ -1,19 +1,25 @@
 #include "UASUnitTest.h"
-
+#include <stdio.h>
+#include <QObject>
 UASUnitTest::UASUnitTest()
 {
 }
-
-void UASUnitTest::initTestCase()
+//This function is called after every test
+void UASUnitTest::init()
 {
     mav = new MAVLinkProtocol();
-    uas = new UAS(mav,UASID);
+    uas = new UAS(mav, UASID);
+    uas->deleteSettings();
 }
-
-void UASUnitTest::cleanupTestCase()
+//this function is called after every test
+void UASUnitTest::cleanup()
 {
-  delete uas;
-  delete mav;
+   delete mav;
+   mav = NULL;
+   if(uas != NULL){
+   delete uas;
+   uas = NULL;
+   }
 }
 
 void UASUnitTest::getUASID_test()
@@ -32,6 +38,7 @@ void UASUnitTest::getUASID_test()
 
     // Make sure that ID >= 0
     QCOMPARE(uas->getUASID(), 100);
+
 }
 
 void UASUnitTest::getUASName_test()
@@ -118,11 +125,12 @@ void UASUnitTest::getStatusForCode_test()
 
     uas->getStatusForCode(5325, state, desc);
     QVERIFY(state == "UNKNOWN");
+
 }
 
 void UASUnitTest::getLocalX_test()
 {
-    QCOMPARE(uas->getLocalX(), 0.0);
+   QCOMPARE(uas->getLocalX(), 0.0);
 }
 void UASUnitTest::getLocalY_test()
 {
@@ -162,18 +170,32 @@ void UASUnitTest::getSelected_test()
 }
 
 void UASUnitTest::getSystemType_test()
-{
+{    //check that system type is set to MAV_TYPE_GENERIC when initialized
+    QCOMPARE(uas->getSystemType(), 0);
+    uas->setSystemType(13);
     QCOMPARE(uas->getSystemType(), 13);
 }
 
 void UASUnitTest::getAirframe_test()
 {
+    //when uas is constructed, airframe is set to QGC_AIRFRAME_GENERIC which is 0
     QCOMPARE(uas->getAirframe(), 0);
-
-    uas->setAirframe(25);
-    QVERIFY(uas->getAirframe() == 25);
 }
 
+void UASUnitTest::setAirframe_test()
+{
+    //check at construction, that airframe=0 (GENERIC)
+    QVERIFY(uas->getAirframe() == 0);
+
+    //check that set airframe works
+    uas->setAirframe(11);
+    QVERIFY(uas->getAirframe() == 11);
+
+    //check that setAirframe will not assign a number to airframe, that is 
+    //not defined in the enum 
+    uas->setAirframe(12);
+    QVERIFY(uas->getAirframe() == 11);
+}
 void UASUnitTest::getWaypointList_test()
 {
     QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();
@@ -200,11 +222,12 @@ void UASUnitTest::getWaypointList_test()
     QCOMPARE(kk.count(), 0);
 
     qDebug()<<"disconnect SIGNAL waypointListChanged";
+
 }
 
 void UASUnitTest::getWaypoint_test()
 {
-    Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
+    Waypoint* wp = new Waypoint(0,5.6,2.0,3.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
 
     uas->getWaypointManager()->addWaypointEditable(wp, true);
 
@@ -213,21 +236,30 @@ void UASUnitTest::getWaypoint_test()
     QCOMPARE(wpList.count(), 1);
     QCOMPARE(static_cast<quint16>(0), static_cast<Waypoint*>(wpList.at(0))->getId());
 
-    wp = new Waypoint(0, 5.6, 2, 3);
-    uas->getWaypointManager()->addWaypointEditable(wp, true);
+    Waypoint*  wp3 = new Waypoint(1, 5.6, 2.0, 3.0);
+    uas->getWaypointManager()->addWaypointEditable(wp3, true);
+    wpList = uas->getWaypointManager()->getWaypointEditableList();
     Waypoint* wp2 = static_cast<Waypoint*>(wpList.at(0));
 
-    QCOMPARE(wp->getX(), wp2->getX());
-    QCOMPARE(wp->getFrame(), MAV_FRAME_GLOBAL);
-    QCOMPARE(wp->getFrame(), wp2->getFrame());
+    QCOMPARE(wpList.count(), 2);
+    QCOMPARE(wp3->getX(), wp2->getX());
+    QCOMPARE(wp3->getY(), wp2->getY());
+    QCOMPARE(wp3->getZ(), wp2->getZ());
+    QCOMPARE(wpList.at(1)->getId(), static_cast<quint16>(1));
+    QCOMPARE(wp3->getFrame(), MAV_FRAME_GLOBAL);
+    QCOMPARE(wp3->getFrame(), wp2->getFrame());
+
+    delete wp3;
+    delete wp;
 }
 
 void UASUnitTest::signalWayPoint_test()
 {
-    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
-	
-    Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
+    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
+
+    Waypoint* wp = new Waypoint(0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
     uas->getWaypointManager()->addWaypointEditable(wp, true);
+
 
     QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
     uas->getWaypointManager()->removeWaypoint(0);
@@ -238,18 +270,21 @@ void UASUnitTest::signalWayPoint_test()
     QCOMPARE( spyDestroyed.count(), 0 );
 
     delete uas;// delete(destroyed) uas for validating
+    uas = NULL;
     QCOMPARE(spyDestroyed.count(), 1);// count destroyed uas should are 1
-
     uas = new UAS(mav,UASID);
-    QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
+    QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
     QCOMPARE(spy2.count(), 0);
+    Waypoint* wp2 = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
 
-    uas->getWaypointManager()->addWaypointEditable(wp, true);
+    uas->getWaypointManager()->addWaypointEditable(wp2, true);
     QCOMPARE(spy2.count(), 1);
 
     uas->getWaypointManager()->clearWaypointList();
     QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(wpList.count(), 1);
+
+    delete wp2;
 }
 
 void UASUnitTest::signalUASLink_test()
@@ -308,6 +343,7 @@ void UASUnitTest::signalUASLink_test()
     LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mav);
     QCOMPARE(spyS.count(), 3);
+
 }
 
 void UASUnitTest::signalIdUASLink_test()
@@ -331,4 +367,5 @@ void UASUnitTest::signalIdUASLink_test()
 
     QCOMPARE(a->getName(), QString("serial port COM 17"));
     QCOMPARE(b->getName(), QString("serial port COM 18"));
+
 }

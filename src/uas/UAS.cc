@@ -86,7 +86,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedRGBDImageTimestamp(0.0),
     #endif
     paramsOnceRequested(false),
-    airframe(QGC_AIRFRAME_EASYSTAR),
+    airframe(QGC_AIRFRAME_GENERIC),
     attitudeKnown(false),
     paramManager(NULL),
     attitudeStamped(false),
@@ -97,20 +97,22 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     systemIsArmed(false),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0)
+
 {
     for (unsigned int i = 0; i<255;++i)
     {
         componentID[i] = -1;
         componentMulti[i] = false;
     }
-
+    
     color = UASInterface::getNextColor();
+    
     setBatterySpecs(QString("9V,9.5V,12.6V"));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
-    readSettings();
-
+    readSettings(); 
+    type = MAV_TYPE_GENERIC;
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
@@ -122,7 +124,6 @@ UAS::~UAS()
     delete links;
     links=NULL;
 }
-
 void UAS::writeSettings()
 {
     QSettings settings;
@@ -147,6 +148,14 @@ void UAS::readSettings()
         setBatterySpecs(settings.value("BATTERY_SPECS").toString());
     }
     settings.endGroup();
+}
+
+void UAS::deleteSettings()
+{
+    this->name = "";
+    this->airframe = QGC_AIRFRAME_GENERIC;
+    this->autopilot = -1;
+    setBatterySpecs(QString("9V,9.5V,12.6V"));
 }
 
 int UAS::getUASID() const
@@ -2073,21 +2082,25 @@ void UAS::requestParameter(int component, const QString& parameter)
 
 void UAS::setSystemType(int systemType)
 {
-    type = systemType;
-    // If the airframe is still generic, change it to a close default type
-    if (airframe == 0)
+    if((systemType >= MAV_TYPE_GENERIC) && (systemType < MAV_TYPE_ENUM_END))
     {
-        switch (systemType)
-        {
-        case MAV_TYPE_FIXED_WING:
-            airframe = QGC_AIRFRAME_EASYSTAR;
-            break;
-        case MAV_TYPE_QUADROTOR:
-            airframe = QGC_AIRFRAME_MIKROKOPTER;
-            break;
-        }
-    }
-    emit systemSpecsChanged(uasId);
+      type = systemType;
+    
+      // If the airframe is still generic, change it to a close default type
+      if (airframe == 0)
+      {
+          switch (systemType)
+          {
+          case MAV_TYPE_FIXED_WING:
+              airframe = QGC_AIRFRAME_EASYSTAR;
+              break;
+          case MAV_TYPE_QUADROTOR:
+              airframe = QGC_AIRFRAME_MIKROKOPTER;
+              break;
+          }
+      }
+      emit systemSpecsChanged(uasId);
+   }
 }
 
 void UAS::setUASName(const QString& name)

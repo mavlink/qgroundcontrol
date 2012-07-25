@@ -26,10 +26,9 @@ public:
   UASUnitTest();
 
 private slots:
-  void initTestCase();
-  void cleanupTestCase();
-
-
+  void init();
+  void cleanup();
+  
   void getUASID_test();
   void getUASName_test();
   void getUpTime_test();
@@ -47,16 +46,13 @@ private slots:
   void getRoll_test();
   void getPitch_test();
   void getYaw_test();
-
   void getSelected_test();
   void getSystemType_test();
   void getAirframe_test();
-
-
+  void setAirframe_test();
   void getWaypointList_test();
-  void getWaypoint_test();
-
   void signalWayPoint_test();
+  void getWaypoint_test();
   void signalUASLink_test();
   void signalIdUASLink_test();
 };
