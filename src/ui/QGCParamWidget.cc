@@ -58,15 +58,17 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
     statusLabel->setAutoFillBackground(true);
-    tree->setColumnWidth(0, 150);
+    tree->setColumnWidth(0, 175);
 
     // Set tree widget as widget onto this component
     QGridLayout* horizontalLayout;
     //form->setAutoFillBackground(false);
     horizontalLayout = new QGridLayout(this);
-    horizontalLayout->setSpacing(6);
+    horizontalLayout->setHorizontalSpacing(6);
+    horizontalLayout->setVerticalSpacing(6);
     horizontalLayout->setMargin(0);
-    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    //horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    horizontalLayout->setSizeConstraint( QLayout::SetFixedSize );
 
     // Parameter tree
     horizontalLayout->addWidget(tree, 0, 0, 1, 3);
@@ -113,6 +115,12 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(readButton, SIGNAL(clicked()), this, SLOT(readParameters()));
     horizontalLayout->addWidget(readButton, 3, 2);
 
+    // Set correct vertical scaling
+    horizontalLayout->setRowStretch(0, 100);
+    horizontalLayout->setRowStretch(1, 10);
+    horizontalLayout->setRowStretch(2, 10);
+    horizontalLayout->setRowStretch(3, 10);
+
     // Set layout
     this->setLayout(horizontalLayout);
 
@@ -135,6 +143,9 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
     connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
+
+    // Get parameters
+    if (uas) mav->requestParameters();
 }
 
 void QGCParamWidget::loadSettings()
@@ -431,7 +442,9 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
             pal.setColor(backgroundRole(), QGC::colorGreen);
             statusLabel->setPalette(pal);
         }
-        statusLabel->setText(tr("Got %2 (#%1/%5): %3 (%4 missing)").arg(paramId+1).arg(parameterName).arg(value.toDouble()).arg(missCount).arg(paramCount));
+        QString val = QString("%1").arg(value.toFloat(), 5, 'f', 1, QChar(' '));
+        //statusLabel->setText(tr("OK: %1 %2 #%3/%4, %5 miss").arg(parameterName).arg(val).arg(paramId+1).arg(paramCount).arg(missCount));
+        statusLabel->setText(tr("OK: %1 %2 (%3/%4)").arg(parameterName).arg(val).arg(paramCount-missCount).arg(paramCount));
     }
 
     // Check if last parameter was received
@@ -444,6 +457,9 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
         {
             transmissionMissingPackets.value(key)->clear();
         }
+
+        // Expand visual tree
+        tree->expandItem(tree->topLevelItem(0));
     }
 }
 
@@ -564,7 +580,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
         //tree->expandAll();
     }
     // Reset background color
-    parameterItem->setBackground(0, QBrush(QColor(0, 0, 0)));
+    parameterItem->setBackground(0, Qt::NoBrush);
     parameterItem->setBackground(1, Qt::NoBrush);
     // Add tooltip
     QString tooltipFormat;
@@ -614,7 +630,6 @@ void QGCParamWidget::requestParameterList()
     // Set status text
     statusLabel->setText(tr("Requested param list.. waiting"));
 
-    // Request twice as mean of forward error correction
     mav->requestParameters();
 }
 
@@ -634,9 +649,11 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
         if (map) {
             QString str = current->data(0, Qt::DisplayRole).toString();
             QVariant value = current->data(1, Qt::DisplayRole);
-            qDebug() << "CHANGED PARAM:" << value;
             // Set parameter on changed list to be transmitted to MAV
-            statusLabel->setText(tr("Changed Param %1:%2: %3").arg(key).arg(str).arg(value.toDouble()));
+            QPalette pal = statusLabel->palette();
+            pal.setColor(backgroundRole(), QGC::colorOrange);
+            statusLabel->setPalette(pal);
+            statusLabel->setText(tr("Transmit pend. %1:%2: %3").arg(key).arg(str).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
             //qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
             // Changed values list
             if (map->contains(str)) map->remove(str);

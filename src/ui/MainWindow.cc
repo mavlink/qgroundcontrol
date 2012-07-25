@@ -420,10 +420,10 @@ void MainWindow::buildCommonWidgets()
 
     if (!mavlinkSenderWidget)
     {
-        mavlinkSenderWidget = new QDockWidget(tr("MAVLink Message Sender"), this);
-        mavlinkSenderWidget->setWidget( new QGCMAVLinkMessageSender(mavlink, this) );
-        mavlinkSenderWidget->setObjectName("MAVLINK_SENDER_DOCKWIDGET");
-        addTool(mavlinkSenderWidget, tr("MAVLink Sender"), Qt::RightDockWidgetArea);
+//        mavlinkSenderWidget = new QDockWidget(tr("MAVLink Message Sender"), this);
+//        mavlinkSenderWidget->setWidget( new QGCMAVLinkMessageSender(mavlink, this) );
+//        mavlinkSenderWidget->setObjectName("MAVLINK_SENDER_DOCKWIDGET");
+//        addTool(mavlinkSenderWidget, tr("MAVLink Sender"), Qt::RightDockWidgetArea);
     }
 
     //FIXME: memory of acceptList will never be freed again
@@ -1420,7 +1420,7 @@ void MainWindow::loadViewState()
             debugConsoleDockWidget->show();
             logPlayerDockWidget->show();
             mavlinkInspectorWidget->show();
-            mavlinkSenderWidget->show();
+            //mavlinkSenderWidget->show();
             parametersDockWidget->show();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
@@ -1457,7 +1457,7 @@ void MainWindow::loadViewState()
             debugConsoleDockWidget->hide();
             logPlayerDockWidget->hide();
             mavlinkInspectorWidget->show();
-            mavlinkSenderWidget->show();
+            //mavlinkSenderWidget->show();
             parametersDockWidget->hide();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
@@ -1476,7 +1476,7 @@ void MainWindow::loadViewState()
             debugConsoleDockWidget->hide();
             logPlayerDockWidget->hide();
             mavlinkInspectorWidget->hide();
-            mavlinkSenderWidget->hide();
+            //mavlinkSenderWidget->hide();
             parametersDockWidget->hide();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
