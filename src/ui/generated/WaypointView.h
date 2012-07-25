@@ -144,7 +144,7 @@ public:
         upButton->setObjectName(QString::fromUtf8("upButton"));
         upButton->setMinimumSize(QSize(28, 22));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/actions/go-up.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/actions/go-up.svg"), QSize(), QIcon::Normal, QIcon::Off);
         upButton->setIcon(icon);
 
         horizontalLayout->addWidget(upButton);
@@ -153,7 +153,7 @@ public:
         downButton->setObjectName(QString::fromUtf8("downButton"));
         downButton->setMinimumSize(QSize(28, 22));
         QIcon icon1;
-        icon1.addFile(QString::fromUtf8(":/images/actions/go-down.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QString::fromUtf8(":/files/images/actions/go-down.svg"), QSize(), QIcon::Normal, QIcon::Off);
         downButton->setIcon(icon1);
 
         horizontalLayout->addWidget(downButton);
@@ -162,7 +162,7 @@ public:
         removeButton->setObjectName(QString::fromUtf8("removeButton"));
         removeButton->setMinimumSize(QSize(28, 22));
         QIcon icon2;
-        icon2.addFile(QString::fromUtf8(":/images/actions/list-remove.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon2.addFile(QString::fromUtf8(":/files/images/actions/list-remove.svg"), QSize(), QIcon::Normal, QIcon::Off);
         removeButton->setIcon(icon2);
 
         horizontalLayout->addWidget(removeButton);

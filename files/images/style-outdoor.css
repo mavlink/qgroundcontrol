@@ -61,11 +61,11 @@ border: 1px solid #111111;
  }
 
  QCheckBox::indicator:indeterminate:hover {
-     image: url(:/images/checkbox_indeterminate_hover.png);
+     image: url(:/files/images/checkbox_indeterminate_hover.png);
  }
 
  QCheckBox::indicator:indeterminate:pressed {
-     image: url(:/images/checkbox_indeterminate_pressed.png);
+     image: url(:/files/images/checkbox_indeterminate_pressed.png);
  }
 
  QGroupBox::title {
@@ -137,13 +137,13 @@ QSpinBox {
 QSpinBox::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right; /* position at the top right corner */
-    border-image: url(:/images/actions/go-up.svg) 1;
+    border-image: url(:/files/images/actions/go-up.svg) 1;
     border-width: 1px;
 }
 QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right; /* position at the top right corner */
-    border-image: url(:/images/actions/go-down.svg) 1;
+    border-image: url(:/files/images/actions/go-down.svg) 1;
     border-width: 1px;
 }
 
@@ -157,14 +157,14 @@ QDoubleSpinBox {
 QDoubleSpinBox::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right; /* position at the top right corner */
-    border-image: url(:/images/actions/go-up.svg) 1;
+    border-image: url(:/files/images/actions/go-up.svg) 1;
     border-width: 1px;
     max-width: 5px;
 }
 QDoubleSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right; /* position at the top right corner */
-    border-image: url(:/images/actions/go-down.svg) 1;
+    border-image: url(:/files/images/actions/go-down.svg) 1;
     border-width: 1px;
     max-width: 5px;
 }

@@ -71,7 +71,7 @@ public:
         liftoffButton = new QPushButton(uasControl);
         liftoffButton->setObjectName(QString::fromUtf8("liftoffButton"));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/control/launch.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/control/launch.svg"), QSize(), QIcon::Normal, QIcon::Off);
         liftoffButton->setIcon(icon);
 
         gridLayout->addWidget(liftoffButton, 3, 1, 1, 1);
@@ -79,7 +79,7 @@ public:
         landButton = new QPushButton(uasControl);
         landButton->setObjectName(QString::fromUtf8("landButton"));
         QIcon icon1;
-        icon1.addFile(QString::fromUtf8(":/images/control/land.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QString::fromUtf8(":/files/images/control/land.svg"), QSize(), QIcon::Normal, QIcon::Off);
         landButton->setIcon(icon1);
 
         gridLayout->addWidget(landButton, 3, 2, 1, 2);
@@ -87,7 +87,7 @@ public:
         shutdownButton = new QPushButton(uasControl);
         shutdownButton->setObjectName(QString::fromUtf8("shutdownButton"));
         QIcon icon2;
-        icon2.addFile(QString::fromUtf8(":/images/actions/system-log-out.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon2.addFile(QString::fromUtf8(":/files/images/actions/system-log-out.svg"), QSize(), QIcon::Normal, QIcon::Off);
         shutdownButton->setIcon(icon2);
 
         gridLayout->addWidget(shutdownButton, 3, 4, 1, 1);
@@ -104,7 +104,7 @@ public:
         setModeButton = new QPushButton(uasControl);
         setModeButton->setObjectName(QString::fromUtf8("setModeButton"));
         QIcon icon3;
-        icon3.addFile(QString::fromUtf8(":/images/devices/network-wireless.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon3.addFile(QString::fromUtf8(":/files/images/devices/network-wireless.svg"), QSize(), QIcon::Normal, QIcon::Off);
         setModeButton->setIcon(icon3);
 
         gridLayout->addWidget(setModeButton, 4, 3, 1, 2);

@@ -50,7 +50,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/status/audio-volume-muted.svg</normaloff>:/images/status/audio-volume-muted.svg</iconset>
+       <normaloff>:/files/images/status/audio-volume-muted.svg</normaloff>:/files/images/status/audio-volume-muted.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
