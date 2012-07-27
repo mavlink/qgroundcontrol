@@ -2,7 +2,7 @@
 #define WAYPOINTLINEITEM_H
 
 #include <QGraphicsLineItem>
-#include "opmapcontrol.h"
+#include "../../opmapcontrol.h"
 
 namespace mapcontrol {
 class WaypointLineItem : public QObject,public QGraphicsLineItem
