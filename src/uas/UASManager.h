@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QMutex>
 #include <UASInterface.h>
-#include "Eigen/Eigen"
+#include "../../libs/eigen/Eigen/Eigen"
 #include "QGCGeo.h"
 
 /**
