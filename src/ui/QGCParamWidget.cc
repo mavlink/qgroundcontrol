@@ -145,7 +145,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
 
     // Get parameters
-    if (uas) mav->requestParameters();
+    if (uas) requestParameterList();
 }
 
 void QGCParamWidget::loadSettings()
