@@ -490,7 +490,7 @@ public slots:
     /** @brief Set the specific airframe type */
     void setAirframe(int airframe)
     {
-        if((airframe >= 0) && (airframe < 12))
+        if((airframe >= QGC_AIRFRAME_GENERIC) && (airframe < QGC_AIRFRAME_END_OF_ENUM))
         {
           this->airframe = airframe;
           emit systemSpecsChanged(uasId);
@@ -643,7 +643,6 @@ public slots:
     void stopDataRecording();
     void deleteSettings();
 signals:
-
     /** @brief The main/battery voltage has changed/was updated */
     //void voltageChanged(int uasId, double voltage); // Defined in UASInterface already
     /** @brief An actuator value has changed */
