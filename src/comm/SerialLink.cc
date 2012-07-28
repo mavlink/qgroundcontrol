@@ -325,9 +325,8 @@ QVector<QString>* SerialLink::getCurrentPorts()
     for (int i = list.size() - 1; i >= 0; i--) {
         QFileInfo fileInfo = list.at(i);
         if (fileInfo.fileName().contains(QString("ttyUSB")) ||
-                fileInfo.fileName().contains(QString("tty.usb")) ||
+                fileInfo.fileName().contains(QString("tty.")) ||
                 fileInfo.fileName().contains(QString("ttyS")) ||
-                fileInfo.fileName().contains(QString("tty.SLAB")) ||
                 fileInfo.fileName().contains(QString("ttyACM")))
         {
             ports->append(fileInfo.canonicalFilePath());
