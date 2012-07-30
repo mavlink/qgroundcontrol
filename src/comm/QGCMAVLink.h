@@ -30,19 +30,13 @@ This file is part of the QGROUNDCONTROL project
 #ifndef QGCMAVLINK_H
 #define QGCMAVLINK_H
 
-#include <../../mavlink/include/mavlink/v1.0/mavlink_types.h>
+#include <mavlink.h>
 
-#ifdef QGC_USE_PIXHAWK_MESSAGES
-#include <../../mavlink/include/mavlink/v1.0/pixhawk/pixhawk.h> //please do not delete this.
-#else
-#include <../../mavlink/include/mavlink/v1.0/common/mavlink.h>
-#endif
-
-#ifdef MAVLINK_CONF
-#define MY_MACRO(x) <x>
-#include MY_MACRO(MAVLINK_CONF)
+//#ifdef MAVLINK_CONF
+//#define MY_MACRO(x) <x>
+//#include MY_MACRO(MAVLINK_CONF)
 //#include MAVLINK_CONF
-#endif
+//#endif
 
 
 #endif // QGCMAVLINK_H
