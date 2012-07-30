@@ -34,13 +34,15 @@ border: 1px solid #777777;
 }
 
 QTextEdit {
-border: 1px solid #777777;
+    border: 1px solid #777777;
     border-radius: 2px;
 }
 
 QPlainTextEdit {
-border: 1px solid #777777;
+    border: 1px solid #777777;
     border-radius: 2px;
+    font-family: "Monospace";
+    font: large;
 }
 
 QComboBox {
