@@ -34,7 +34,7 @@ QT += network \
 TEMPLATE = app
 TARGET = qgcunittest
 BASEDIR = $${IN_PWD}
-TESTDIR = $$BASEDIR/qgcunittest
+TESTDIR = $$BASEDIR/src/qgcunittest
 linux-g++|linux-g++-64{
     debug {
         TARGETDIR = $${OUT_PWD}/debug
