@@ -106,7 +106,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     }
     
     color = UASInterface::getNextColor();
-    
     setBatterySpecs(QString("9V,9.5V,12.6V"));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
@@ -115,14 +114,23 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     type = MAV_TYPE_GENERIC;
     // Initial signals
     emit disarmed();
-    emit armingChanged(false);
+    emit armingChanged(false);  
 }
 
 UAS::~UAS()
 {
     writeSettings();
     delete links;
-    links=NULL;
+    if(statusTimeout->isActive())
+    {
+        statusTimeout->deleteLater();
+    }
+    delete statusTimeout;
+
+    delete simulation;
+    mavlink->deleteLater();
+    delete paramManager;
+
 }
 void UAS::writeSettings()
 {

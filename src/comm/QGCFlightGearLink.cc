@@ -53,8 +53,12 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString remoteHost, QHos
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
-{
-    disconnectSimulation();
+{   //if it is connected, then process, terraSync and socket were allocated memory
+    //if they were not connected, then they were never allocated, so no need to free memory or
+    //to disconnect the simulation
+    if(connectState){
+       disconnectSimulation();
+    }
 }
 
 /**
@@ -136,6 +140,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
             currentHost = info.addresses().first();
         }
     }
+
 }
 
 void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
