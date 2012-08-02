@@ -195,6 +195,7 @@ void UASUnitTest::setAirframe_test()
     uas->setAirframe(12);
     QVERIFY(uas->getAirframe() == 11);
 }
+
 void UASUnitTest::getWaypointList_test()
 {
     QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();
@@ -285,11 +286,6 @@ void UASUnitTest::signalWayPoint_test()
     uas = NULL;
     delete wp2;
 }
-
-//TODO:startHil. to make sure connect and disconnect simulation in QGCFlightGear works properly
-
-
-//TODO:stopHil
 
 void UASUnitTest::signalUASLink_test()
 {
