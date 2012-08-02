@@ -121,16 +121,9 @@ UAS::~UAS()
 {
     writeSettings();
     delete links;
-    if(statusTimeout->isActive())
-    {
-        statusTimeout->deleteLater();
-    }
     delete statusTimeout;
-
     delete simulation;
-    mavlink->deleteLater();
     delete paramManager;
-
 }
 void UAS::writeSettings()
 {
