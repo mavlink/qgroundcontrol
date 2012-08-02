@@ -139,7 +139,8 @@ void UASUnitTest::getLocalZ_test()
     QCOMPARE(uas->getLocalZ(), 0.0);
 }
 void UASUnitTest::getLatitude_test()
-{  QCOMPARE(uas->getLatitude(), 0.0);
+{
+    QCOMPARE(uas->getLatitude(), 0.0);
 }
 void UASUnitTest::getLongitude_test()
 {
