@@ -4,7 +4,7 @@
 
 
 #include "UAS.h"
-#include "../../mavlink/include/mavlink/v1.0/common/mavlink.h"
+#include "mavlink.h"
 #include <QTimer>
 
 
