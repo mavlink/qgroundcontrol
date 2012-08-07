@@ -1,0 +1,5 @@
+QMAKE_PRL_BUILD_DIR = /home/jessica/Desktop/qgcMain/qgroundcontrol/thirdParty/qserialport-build-desktop-Qt_4_8_1_in_PATH__System__Release/src
+QMAKE_PRO_INPUT = src.pro
+QMAKE_PRL_TARGET = libQtSerialPort.debug.so.1.0.0
+QMAKE_PRL_CONFIG = include_source_dir lex yacc warn_on debug uic resources debug DebugBuild Debug build_pass qt warn_on incremental link_prl gdb_dwarf_index def_files_disabled exceptions no_mocdepend stl qt_no_framework debug DebugBuild Debug build_pass debug_and_release thread build_all create_prl copy_dir_files debug DebugBuild Debug build_pass no_autoqmake moc dll
+QMAKE_PRL_VERSION = 1.0.0
