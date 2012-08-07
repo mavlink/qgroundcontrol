@@ -1,6 +1,3 @@
-
-
-
 #include "qextserialenumerator.h"
 #include <QDebug>
 #include <QMetaType>
