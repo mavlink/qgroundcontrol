@@ -27,7 +27,7 @@
 # include <fcntl.h>
 # include <sys/ioctl.h>
 # include <errno.h>
-# include "posix/termioshelper.h"
+# include "../posix/termioshelper.h"
 #elif defined(TNX_WINDOWS_SERIAL_PORT)
 # include "win32/commdcbhelper.h"
 # include "win32/qwincommevtnotifier.h"
