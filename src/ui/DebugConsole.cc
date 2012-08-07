@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ui_DebugConsole.h"
 #include "LinkManager.h"
 #include "UASManager.h"
-#include "../../mavlink/include/mavlink/v1.0/protocol.h"
+#include "protocol.h"
 #include "QGC.h"
 
 #include <QDebug>
