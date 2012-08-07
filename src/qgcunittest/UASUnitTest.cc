@@ -1,5 +1,6 @@
 #include "UASUnitTest.h"
 #include <stdio.h>
+#include <QObject>
 UASUnitTest::UASUnitTest()
 {
 }
@@ -13,10 +14,11 @@ void UASUnitTest::init()
 //this function is called after every test
 void UASUnitTest::cleanup()
 {
-   delete mav;
-   mav = NULL;
-   delete uas;
-   uas = NULL;
+    delete uas;
+    uas = NULL;
+
+    delete mav;
+    mav = NULL;
 }
 
 void UASUnitTest::getUASID_test()
@@ -122,7 +124,6 @@ void UASUnitTest::getStatusForCode_test()
 
     uas->getStatusForCode(5325, state, desc);
     QVERIFY(state == "UNKNOWN");
-
 }
 
 void UASUnitTest::getLocalX_test()
@@ -138,7 +139,8 @@ void UASUnitTest::getLocalZ_test()
     QCOMPARE(uas->getLocalZ(), 0.0);
 }
 void UASUnitTest::getLatitude_test()
-{  QCOMPARE(uas->getLatitude(), 0.0);
+{
+    QCOMPARE(uas->getLatitude(), 0.0);
 }
 void UASUnitTest::getLongitude_test()
 {
@@ -167,8 +169,9 @@ void UASUnitTest::getSelected_test()
 }
 
 void UASUnitTest::getSystemType_test()
-{   //best guess: it is not initialized in the constructor,
-    //what should it be initialized to?
+{    //check that system type is set to MAV_TYPE_GENERIC when initialized
+    QCOMPARE(uas->getSystemType(), 0);
+    uas->setSystemType(13);
     QCOMPARE(uas->getSystemType(), 13);
 }
 
@@ -192,6 +195,7 @@ void UASUnitTest::setAirframe_test()
     uas->setAirframe(12);
     QVERIFY(uas->getAirframe() == 11);
 }
+
 void UASUnitTest::getWaypointList_test()
 {
     QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();
@@ -251,43 +255,48 @@ void UASUnitTest::getWaypoint_test()
 
 void UASUnitTest::signalWayPoint_test()
 {
-    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointListChanged(UASID)));
-	
-    Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
+    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
+
+    Waypoint* wp = new Waypoint(0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
     uas->getWaypointManager()->addWaypointEditable(wp, true);
 
-    printf("spy.count = %d\n", spy.count());
-    //QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
+    QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
     uas->getWaypointManager()->removeWaypoint(0);
     QCOMPARE(spy.count(), 2); // 2 listChanged for remove wayPoint
+
     QSignalSpy spyDestroyed(uas->getWaypointManager(), SIGNAL(destroyed()));
     QVERIFY(spyDestroyed.isValid());
     QCOMPARE( spyDestroyed.count(), 0 );
 
     delete uas;// delete(destroyed) uas for validating
+    uas = NULL;
     QCOMPARE(spyDestroyed.count(), 1);// count destroyed uas should are 1
-
     uas = new UAS(mav,UASID);
-    QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
+    QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
     QCOMPARE(spy2.count(), 0);
+    Waypoint* wp2 = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
 
-    uas->getWaypointManager()->addWaypointEditable(wp, true);
+    uas->getWaypointManager()->addWaypointEditable(wp2, true);
     QCOMPARE(spy2.count(), 1);
 
     uas->getWaypointManager()->clearWaypointList();
     QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(wpList.count(), 1);
-
+    delete uas;
+    uas = NULL;
+    delete wp2;
 }
 
 void UASUnitTest::signalUASLink_test()
 {
+
     QSignalSpy spy(uas, SIGNAL(modeChanged(int,QString,QString)));
     uas->setMode(2);
     QCOMPARE(spy.count(), 0);// not solve for UAS not receiving message from UAS
 
     QSignalSpy spyS(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)));
     SerialLink* link = new SerialLink();
+
     LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mav);
     QCOMPARE(spyS.count(), 1);
@@ -324,41 +333,74 @@ void UASUnitTest::signalUASLink_test()
 
     LinkInterface* ff99 = static_cast<LinkInterface*>(links.at(1));
     LinkManager::instance()->removeLink(ff99);
+    delete link2;
 
     QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
     QCOMPARE(uas->getLinks()->count(), 2);
 
-
     QCOMPARE(static_cast<LinkInterface*>(LinkManager::instance()->getLinks().at(0))->getId(),
              static_cast<LinkInterface*>(uas->getLinks()->at(0))->getId());
 
-    link = new SerialLink();
-    LinkManager::instance()->add(link);
-    LinkManager::instance()->addProtocol(link, mav);
+    SerialLink* link3 = new SerialLink();
+    LinkManager::instance()->add(link3);
+    LinkManager::instance()->addProtocol(link3, mav);
     QCOMPARE(spyS.count(), 3);
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 2);
 
+    LinkManager::instance()->removeLink(link3);
+    delete link3;
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
+    LinkManager::instance()->removeLink(link);
+    delete link;
+
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 0);
 }
 
 void UASUnitTest::signalIdUASLink_test()
 {
+
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 0);
     SerialLink* myLink = new SerialLink();
     myLink->setPortName("COM 17");
     LinkManager::instance()->add(myLink);
     LinkManager::instance()->addProtocol(myLink, mav);
 
-    myLink = new SerialLink();
-    myLink->setPortName("COM 18");
-    LinkManager::instance()->add(myLink);
-    LinkManager::instance()->addProtocol(myLink, mav);
+    SerialLink* myLink2 = new SerialLink();
+    myLink2->setPortName("COM 18");
+    LinkManager::instance()->add(myLink2);
+    LinkManager::instance()->addProtocol(myLink2, mav);
+
+    SerialLink* myLink3 = new SerialLink();
+    myLink3->setPortName("COM 19");
+    LinkManager::instance()->add(myLink3);
+    LinkManager::instance()->addProtocol(myLink3, mav);
+
+    SerialLink* myLink4 = new SerialLink();
+    myLink4->setPortName("COM 20");
+    LinkManager::instance()->add(myLink4);
+    LinkManager::instance()->addProtocol(myLink4, mav);
 
     QCOMPARE(LinkManager::instance()->getLinks().count(), 4);
 
     QList<LinkInterface*> links = LinkManager::instance()->getLinks();
 
-    LinkInterface* a = static_cast<LinkInterface*>(links.at(2));
-    LinkInterface* b = static_cast<LinkInterface*>(links.at(3));
-
+    LinkInterface* a = static_cast<LinkInterface*>(links.at(0));
+    LinkInterface* b = static_cast<LinkInterface*>(links.at(1));
+    LinkInterface* c = static_cast<LinkInterface*>(links.at(2));
+    LinkInterface* d = static_cast<LinkInterface*>(links.at(3));
     QCOMPARE(a->getName(), QString("serial port COM 17"));
     QCOMPARE(b->getName(), QString("serial port COM 18"));
+    QCOMPARE(c->getName(), QString("serial port COM 19"));
+    QCOMPARE(d->getName(), QString("serial port COM 20"));
 
+    LinkManager::instance()->removeLink(myLink4);
+    delete myLink4;
+    LinkManager::instance()->removeLink(myLink3);
+    delete myLink3;
+    LinkManager::instance()->removeLink(myLink2);
+    delete myLink2;
+    LinkManager::instance()->removeLink(myLink);
+    delete myLink;
+
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 0);
 }
