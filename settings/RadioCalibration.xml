@@ -1,9 +1,0 @@
-<!-- Values are ordered low center high -->
-<channels>
-  <threeSetpoint name="Aileron" number="1">1000.0, 1500.0, 2000.0</threeSetpoint>
-  <threeSetpoint name="Elevator" number="2">1000.0, 1500.0, 2000.0</threeSetpoint>
-  <threeSetpoint name="Rudder" number="4">1000.0, 1500.0, 2000.0</threeSetpoint>
-  <twoSetpoint name="Gyro" number="5">2000.0, 1000.0</twoSetpoint>
-  <fiveSetpoint name="Pitch" number="6">1000.0, 1250.0, 1500.0, 1750.0, 2000.0</fiveSetpoint>
-  <fiveSetpoint name="Throttle" number="3">1000.0, 1250.0, 1500.0, 1750.0, 2000.0</fiveSetpoint>
-</channels>
