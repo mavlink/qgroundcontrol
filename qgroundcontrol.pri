@@ -322,6 +322,9 @@ win32-msvc2008|win32-msvc2010 {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files\\images\\earth.html" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files\\images\\earth.html" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\debug" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\phonond4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtCored4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
@@ -345,6 +348,7 @@ win32-msvc2008|win32-msvc2010 {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files\\images\\earth.html" "$$TARGETDIR_WIN\\release\\earth.html" $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files\\images\\earth.html" "$$TARGETDIR_WIN\\release\\earth.html" $$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\release" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\phonon4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
