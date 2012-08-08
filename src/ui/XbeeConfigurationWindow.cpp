@@ -203,7 +203,7 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 	{
 		this->link = xbeeLink;
 
-		action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
+		action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", link);
 
 		baudLabel = new QLabel;
 		baudLabel->setText(tr("Baut Rate"));

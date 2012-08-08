@@ -52,7 +52,7 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         // Create action to open this menu
         // Create configuration action for this link
         // Connect the current UAS
-        action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
+        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", link);
         setLinkName(link->getName());
 
         setupPortList();

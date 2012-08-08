@@ -249,7 +249,7 @@ public:
         typeButton->setMaximumSize(QSize(48, 48));
         typeButton->setBaseSize(QSize(30, 30));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/mavs/unknown.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/mavs/unknown.svg"), QSize(), QIcon::Normal, QIcon::Off);
         typeButton->setIcon(icon);
         typeButton->setIconSize(QSize(42, 42));
 
@@ -384,7 +384,7 @@ public:
         liftoffButton->setObjectName(QString::fromUtf8("liftoffButton"));
         liftoffButton->setMinimumSize(QSize(26, 22));
         QIcon icon1;
-        icon1.addFile(QString::fromUtf8(":/images/control/launch.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QString::fromUtf8(":/files/images/control/launch.svg"), QSize(), QIcon::Normal, QIcon::Off);
         liftoffButton->setIcon(icon1);
 
         horizontalLayout->addWidget(liftoffButton);
@@ -393,7 +393,7 @@ public:
         haltButton->setObjectName(QString::fromUtf8("haltButton"));
         haltButton->setMinimumSize(QSize(26, 22));
         QIcon icon2;
-        icon2.addFile(QString::fromUtf8(":/images/actions/media-playback-pause.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon2.addFile(QString::fromUtf8(":/files/images/actions/media-playback-pause.svg"), QSize(), QIcon::Normal, QIcon::Off);
         haltButton->setIcon(icon2);
 
         horizontalLayout->addWidget(haltButton);
@@ -402,7 +402,7 @@ public:
         continueButton->setObjectName(QString::fromUtf8("continueButton"));
         continueButton->setMinimumSize(QSize(26, 22));
         QIcon icon3;
-        icon3.addFile(QString::fromUtf8(":/images/actions/media-playback-start.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon3.addFile(QString::fromUtf8(":/files/images/actions/media-playback-start.svg"), QSize(), QIcon::Normal, QIcon::Off);
         continueButton->setIcon(icon3);
 
         horizontalLayout->addWidget(continueButton);
@@ -411,7 +411,7 @@ public:
         landButton->setObjectName(QString::fromUtf8("landButton"));
         landButton->setMinimumSize(QSize(26, 22));
         QIcon icon4;
-        icon4.addFile(QString::fromUtf8(":/images/control/land.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon4.addFile(QString::fromUtf8(":/files/images/control/land.svg"), QSize(), QIcon::Normal, QIcon::Off);
         landButton->setIcon(icon4);
 
         horizontalLayout->addWidget(landButton);
@@ -419,7 +419,7 @@ public:
         shutdownButton = new QPushButton(uasViewFrame);
         shutdownButton->setObjectName(QString::fromUtf8("shutdownButton"));
         QIcon icon5;
-        icon5.addFile(QString::fromUtf8(":/images/actions/system-log-out.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon5.addFile(QString::fromUtf8(":/files/images/actions/system-log-out.svg"), QSize(), QIcon::Normal, QIcon::Off);
         shutdownButton->setIcon(icon5);
 
         horizontalLayout->addWidget(shutdownButton);
@@ -428,7 +428,7 @@ public:
         abortButton->setObjectName(QString::fromUtf8("abortButton"));
         abortButton->setMinimumSize(QSize(26, 22));
         QIcon icon6;
-        icon6.addFile(QString::fromUtf8(":/images/actions/media-playback-stop.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon6.addFile(QString::fromUtf8(":/files/images/actions/media-playback-stop.svg"), QSize(), QIcon::Normal, QIcon::Off);
         abortButton->setIcon(icon6);
 
         horizontalLayout->addWidget(abortButton);
@@ -437,7 +437,7 @@ public:
         killButton->setObjectName(QString::fromUtf8("killButton"));
         killButton->setMinimumSize(QSize(26, 22));
         QIcon icon7;
-        icon7.addFile(QString::fromUtf8(":/images/actions/process-stop.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon7.addFile(QString::fromUtf8(":/files/images/actions/process-stop.svg"), QSize(), QIcon::Normal, QIcon::Off);
         killButton->setIcon(icon7);
 
         horizontalLayout->addWidget(killButton);

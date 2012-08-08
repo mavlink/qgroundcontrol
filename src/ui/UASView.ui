@@ -316,7 +316,7 @@ QMenu::separator {
         </property>
         <property name="icon">
          <iconset resource="../../mavground.qrc">
-          <normaloff>:/images/mavs/unknown.svg</normaloff>:/images/mavs/unknown.svg</iconset>
+          <normaloff>:/files/images/mavs/unknown.svg</normaloff>:/files/images/mavs/unknown.svg</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -648,7 +648,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+            <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
           </property>
          </widget>
         </item>
@@ -677,7 +677,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/actions/media-playback-pause.svg</normaloff>:/images/actions/media-playback-pause.svg</iconset>
+            <normaloff>:/files/images/actions/media-playback-pause.svg</normaloff>:/files/images/actions/media-playback-pause.svg</iconset>
           </property>
          </widget>
         </item>
@@ -706,7 +706,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/actions/media-playback-start.svg</normaloff>:/images/actions/media-playback-start.svg</iconset>
+            <normaloff>:/files/images/actions/media-playback-start.svg</normaloff>:/files/images/actions/media-playback-start.svg</iconset>
           </property>
          </widget>
         </item>
@@ -735,7 +735,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
+            <normaloff>:/files/images/control/land.svg</normaloff>:/files/images/control/land.svg</iconset>
           </property>
          </widget>
         </item>
@@ -758,7 +758,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+            <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
           </property>
          </widget>
         </item>
@@ -793,7 +793,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/actions/media-playback-stop.svg</normaloff>:/images/actions/media-playback-stop.svg</iconset>
+            <normaloff>:/files/images/actions/media-playback-stop.svg</normaloff>:/files/images/actions/media-playback-stop.svg</iconset>
           </property>
          </widget>
         </item>
@@ -822,7 +822,7 @@ QMenu::separator {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+            <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
           </property>
          </widget>
         </item>

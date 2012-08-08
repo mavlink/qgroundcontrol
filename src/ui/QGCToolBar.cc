@@ -370,25 +370,25 @@ void QGCToolBar::setSystemType(UASInterface* uas, unsigned int systemType)
         // Set matching icon
         switch (systemType) {
         case 0:
-            symbolButton->setIcon(QIcon(":/images/mavs/generic.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/generic.svg"));
             break;
         case 1:
-            symbolButton->setIcon(QIcon(":/images/mavs/fixed-wing.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/fixed-wing.svg"));
             break;
         case 2:
-            symbolButton->setIcon(QIcon(":/images/mavs/quadrotor.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/quadrotor.svg"));
             break;
         case 3:
-            symbolButton->setIcon(QIcon(":/images/mavs/coaxial.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/coaxial.svg"));
             break;
         case 4:
-            symbolButton->setIcon(QIcon(":/images/mavs/helicopter.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
             break;
         case 5:
-            symbolButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
             break;
         default:
-            symbolButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
             break;
         }
 }

@@ -104,7 +104,7 @@ void QGCMAVLinkLogPlayer::play()
         }
         isPlaying = true;
         ui->logStatsLabel->setText(tr("Started playing.."));
-        ui->playButton->setIcon(QIcon(":images/actions/media-playback-pause.svg"));
+        ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-pause.svg"));
     }
     else
     {
@@ -123,7 +123,7 @@ void QGCMAVLinkLogPlayer::pause()
 {
     isPlaying = false;
     loopTimer.stop();
-    ui->playButton->setIcon(QIcon(":images/actions/media-playback-start.svg"));
+    ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-start.svg"));
     ui->selectFileButton->setEnabled(true);
     if (logLink)
     {
@@ -153,7 +153,7 @@ bool QGCMAVLinkLogPlayer::reset(int packetIndex)
             result = false;
         }
 
-        ui->playButton->setIcon(QIcon(":images/actions/media-playback-start.svg"));
+        ui->playButton->setIcon(QIcon(":files/images/actions/media-playback-start.svg"));
         ui->positionSlider->blockSignals(true);
         int sliderVal = (packetIndex / (double)(logFile.size()/packetSize)) * (ui->positionSlider->maximum() - ui->positionSlider->minimum());
         ui->positionSlider->setValue(sliderVal);
