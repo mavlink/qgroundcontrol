@@ -123,7 +123,6 @@ UAS::~UAS()
     delete links;
     delete statusTimeout;
     delete simulation;
-    delete paramManager;
 }
 void UAS::writeSettings()
 {
