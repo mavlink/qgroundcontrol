@@ -54,17 +54,17 @@ public:
         actionAddWaypoint = new QAction(WaypointList);
         actionAddWaypoint->setObjectName(QString::fromUtf8("actionAddWaypoint"));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/actions/list-add.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/actions/list-add.svg"), QSize(), QIcon::Normal, QIcon::Off);
         actionAddWaypoint->setIcon(icon);
         actionTransmit = new QAction(WaypointList);
         actionTransmit->setObjectName(QString::fromUtf8("actionTransmit"));
         QIcon icon1;
-        icon1.addFile(QString::fromUtf8(":/images/devices/network-wireless.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QString::fromUtf8(":/files/images/devices/network-wireless.svg"), QSize(), QIcon::Normal, QIcon::Off);
         actionTransmit->setIcon(icon1);
         actionRead = new QAction(WaypointList);
         actionRead->setObjectName(QString::fromUtf8("actionRead"));
         QIcon icon2;
-        icon2.addFile(QString::fromUtf8(":/images/status/software-update-available.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon2.addFile(QString::fromUtf8(":/files/images/status/software-update-available.svg"), QSize(), QIcon::Normal, QIcon::Off);
         actionRead->setIcon(icon2);
         gridLayout = new QGridLayout(WaypointList);
         gridLayout->setSpacing(4);
@@ -129,7 +129,7 @@ public:
         positionAddButton = new QToolButton(WaypointList);
         positionAddButton->setObjectName(QString::fromUtf8("positionAddButton"));
         QIcon icon3;
-        icon3.addFile(QString::fromUtf8(":/images/actions/go-bottom.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon3.addFile(QString::fromUtf8(":/files/images/actions/go-bottom.svg"), QSize(), QIcon::Normal, QIcon::Off);
         positionAddButton->setIcon(icon3);
 
         gridLayout->addWidget(positionAddButton, 2, 5, 1, 1);

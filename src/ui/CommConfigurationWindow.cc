@@ -77,7 +77,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Create action to open this menu
     // Create configuration action for this link
     // Connect the current UAS
-    action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", this);
+    action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
     LinkManager::instance()->add(link);
 	action->setData(link->getId());
     action->setEnabled(true);

@@ -123,11 +123,11 @@ void MapWidget::init()
         // Add controls to select map provider
         /////////////////////////////////////////////////
         QActionGroup* mapproviderGroup = new QActionGroup(this);
-        osmAction = new QAction(QIcon(":/images/mapproviders/openstreetmap.png"), tr("OpenStreetMap"), mapproviderGroup);
-        yahooActionMap = new QAction(QIcon(":/images/mapproviders/yahoo.png"), tr("Yahoo: Map"), mapproviderGroup);
-        yahooActionSatellite = new QAction(QIcon(":/images/mapproviders/yahoo.png"), tr("Yahoo: Satellite"), mapproviderGroup);
-        googleActionMap = new QAction(QIcon(":/images/mapproviders/google.png"), tr("Google: Map"), mapproviderGroup);
-        googleSatAction = new QAction(QIcon(":/images/mapproviders/google.png"), tr("Google: Sat"), mapproviderGroup);
+        osmAction = new QAction(QIcon(":/files/images/mapproviders/openstreetmap.png"), tr("OpenStreetMap"), mapproviderGroup);
+        yahooActionMap = new QAction(QIcon(":/files/images/mapproviders/yahoo.png"), tr("Yahoo: Map"), mapproviderGroup);
+        yahooActionSatellite = new QAction(QIcon(":/files/images/mapproviders/yahoo.png"), tr("Yahoo: Satellite"), mapproviderGroup);
+        googleActionMap = new QAction(QIcon(":/files/images/mapproviders/google.png"), tr("Google: Map"), mapproviderGroup);
+        googleSatAction = new QAction(QIcon(":/files/images/mapproviders/google.png"), tr("Google: Sat"), mapproviderGroup);
         osmAction->setCheckable(true);
         yahooActionMap->setCheckable(true);
         yahooActionSatellite->setCheckable(true);
@@ -163,17 +163,17 @@ void MapWidget::init()
         mapButton->setStyleSheet(buttonStyle);
 
         // create buttons to control the map (zoom, GPS tracking and WP capture)
-        QPushButton* zoomin = new QPushButton(QIcon(":/images/actions/list-add.svg"), "", this);
+        QPushButton* zoomin = new QPushButton(QIcon(":/files/images/actions/list-add.svg"), "", this);
         zoomin->setStyleSheet(buttonStyle);
-        QPushButton* zoomout = new QPushButton(QIcon(":/images/actions/list-remove.svg"), "", this);
+        QPushButton* zoomout = new QPushButton(QIcon(":/files/images/actions/list-remove.svg"), "", this);
         zoomout->setStyleSheet(buttonStyle);
-        createPath = new QPushButton(QIcon(":/images/actions/go-bottom.svg"), "", this);
+        createPath = new QPushButton(QIcon(":/files/images/actions/go-bottom.svg"), "", this);
         createPath->setStyleSheet(buttonStyle);
         createPath->setToolTip(tr("Start / end waypoint add mode"));
         createPath->setStatusTip(tr("Start / end waypoint add mode"));
         //    clearTracking = new QPushButton(QIcon(""), "", this);
         //    clearTracking->setStyleSheet(buttonStyle);
-        followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
+        followgps = new QPushButton(QIcon(":/files/images/actions/system-lock-screen.svg"), "", this);
         followgps->setStyleSheet(buttonStyle);
         followgps->setToolTip(tr("Follow the position of the current MAV with the map center"));
         followgps->setStatusTip(tr("Follow the position of the current MAV with the map center"));
