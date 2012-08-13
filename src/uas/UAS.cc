@@ -2485,36 +2485,39 @@ QString UAS::getShortModeTextFor(int id)
     {
         mode += "AUTO";
     }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
     {
-        mode += "|GUID";
+        mode += "|STABILIZED";
     }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
-    {
-        mode += "|STAB";
-    }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST)
+//    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
+//    {
+//        mode += "|STAB";
+//    }
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST)
     {
         mode += "|TEST";
     }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
     {
-        mode += "|MAN";
+        mode += "|MANUAL";
     }
-
-    if (modeid == 0)
+    else if (modeid == 0)
     {
-        mode = "PREFLIGHT";
+        mode = "|PREFLIGHT";
+    }
+    else
+    {
+        mode = "|UNKNOWN";
     }
 
     // ARMED STATE DECODING
     if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
     {
-        mode.prepend("A/");
+        mode.prepend("A");
     }
     else
     {
-        mode.prepend("D/");
+        mode.prepend("D");
     }
 
     // HARDWARE IN THE LOOP DECODING
