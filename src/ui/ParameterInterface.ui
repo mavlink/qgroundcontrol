@@ -6,43 +6,25 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>335</width>
-    <height>300</height>
+    <width>707</width>
+    <height>572</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="2,0">
-   <property name="horizontalSpacing">
-    <number>5</number>
-   </property>
-   <property name="verticalSpacing">
-    <number>2</number>
-   </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="100,1">
    <property name="margin">
-    <number>6</number>
+    <number>0</number>
    </property>
-   <item row="0" column="0" colspan="2">
-    <widget class="QGroupBox" name="groupBox_2">
-     <property name="title">
-      <string>Onboard Parameters</string>
+   <item>
+    <widget class="QStackedWidget" name="stackedWidget">
+     <property name="currentIndex">
+      <number>-1</number>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="margin">
-       <number>3</number>
-      </property>
-      <item>
-       <widget class="QStackedWidget" name="stackedWidget">
-        <property name="currentIndex">
-         <number>-1</number>
-        </property>
-       </widget>
-      </item>
-     </layout>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item>
     <widget class="QStackedWidget" name="sensorSettings">
      <property name="currentIndex">
       <number>-1</number>

@@ -58,7 +58,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
     statusLabel->setAutoFillBackground(true);
-    tree->setColumnWidth(0, 175);
+    tree->setColumnWidth(70, 30);
 
     // Set tree widget as widget onto this component
     QGridLayout* horizontalLayout;
@@ -67,8 +67,8 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     horizontalLayout->setHorizontalSpacing(6);
     horizontalLayout->setVerticalSpacing(6);
     horizontalLayout->setMargin(0);
-    //horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
-    horizontalLayout->setSizeConstraint( QLayout::SetFixedSize );
+    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    //horizontalLayout->setSizeConstraint( QLayout::SetFixedSize );
 
     // Parameter tree
     horizontalLayout->addWidget(tree, 0, 0, 1, 3);
