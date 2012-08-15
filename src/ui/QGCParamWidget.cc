@@ -79,13 +79,13 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
 
 
     // BUTTONS
-    QPushButton* refreshButton = new QPushButton(tr("Refresh"));
+    QPushButton* refreshButton = new QPushButton(tr("Get"));
     refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
     refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
     connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
     horizontalLayout->addWidget(refreshButton, 2, 0);
 
-    QPushButton* setButton = new QPushButton(tr("Transmit"));
+    QPushButton* setButton = new QPushButton(tr("Set"));
     setButton->setToolTip(tr("Set current parameters in non-permanent onboard memory"));
     setButton->setWhatsThis(tr("Set current parameters in non-permanent onboard memory"));
     connect(setButton, SIGNAL(clicked()), this, SLOT(setParameters()));
