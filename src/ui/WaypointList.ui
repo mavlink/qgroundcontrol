@@ -382,7 +382,7 @@
      <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
    </property>
    <property name="text">
-    <string>Get</string>
+    <string>Read</string>
    </property>
   </action>
  </widget>
