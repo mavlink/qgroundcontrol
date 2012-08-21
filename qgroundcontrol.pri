@@ -52,8 +52,8 @@ macx|macx-g++42|macx-g++: {
 	# Copy google earth starter file
 	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
 	# Copy CSS stylesheets
-	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/style-mission.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-indoor.css
-	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-indoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-indoor.css
+	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
         # Copy support files
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
         # Copy MAVLink
@@ -233,7 +233,7 @@ linux-g++|linux-g++-64{
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
 	QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/files/images
-	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files/images/Vera.ttf $$TARGETDIR/files/images/Vera.ttf
+	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files/styles/Vera.ttf $$TARGETDIR/files/styles/Vera.ttf
 
 	# osg/osgEarth dynamic casts might fail without this compiler option.
 	# see http://osgearth.org/wiki/FAQ for details.
