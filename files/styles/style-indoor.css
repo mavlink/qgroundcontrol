@@ -248,18 +248,16 @@ QMenu::separator {
  }
 
 QMenuBar::item:disabled {
-  border: none;
-  background: none;
+    border: none;
+    background: none;
 }
-
-QMenuBar::item:diabled:selected {
-  border: none;
-  background: none;
+QMenuBar::item:disabled:selected {
+    border: none;
+    background: none;
 }
-
 QMenuBar::item:disabled:pressed {
-  background: none;
-  border: none;
+    background: none;
+    border: none;
 }
 
 QSlider::groove:horizontal {
