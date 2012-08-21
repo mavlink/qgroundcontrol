@@ -867,13 +867,13 @@ void MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
     }
     break;
     case QGC_MAINWINDOW_STYLE_INDOOR:
-        qApp->setStyle("plastique");
-        styleFileName = ":files/images/style-mission.css";
+	qApp->setStyle("plastique");
+        styleFileName = ":files/styles/style-indoor.css";
         reloadStylesheet();
         break;
     case QGC_MAINWINDOW_STYLE_OUTDOOR:
-        qApp->setStyle("plastique");
-        styleFileName = ":files/images/style-outdoor.css";
+	qApp->setStyle("plastique");
+        styleFileName = ":files/styles/style-outdoor.css";
         reloadStylesheet();
         break;
     }
@@ -907,12 +907,12 @@ void MainWindow::reloadStylesheet()
     QFile* styleSheet = new QFile(styleFileName);
     if (!styleSheet->exists())
     {
-        styleSheet = new QFile(":files/images/style-mission.css");
+        styleSheet = new QFile(":files/styles/style-indoor.css");
     }
     if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QString style = QString(styleSheet->readAll());
-        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/images/");
+        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/styles/");
         qApp->setStyleSheet(style);
     }
     else

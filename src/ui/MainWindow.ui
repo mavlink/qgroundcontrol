@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -84,7 +84,7 @@
    </widget>
    <widget class="QMenu" name="menuConnected_Systems">
     <property name="enabled">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="title">
      <string>Select System</string>
@@ -92,7 +92,7 @@
    </widget>
    <widget class="QMenu" name="menuUnmanned_System">
     <property name="enabled">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="title">
      <string>System</string>
@@ -142,6 +142,9 @@
     </property>
    </widget>
    <widget class="QMenu" name="menuPlugins">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Plugins</string>
     </property>

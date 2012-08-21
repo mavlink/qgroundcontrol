@@ -3,7 +3,7 @@ QWidget#colorIcon {}
 
 QWidget {
 background-color: #050508;
-color: #FFFFFF;
+color: #DDDDDF;
 background-clip: border;
 font-size: 11px;
 }
@@ -34,13 +34,15 @@ border: 1px solid #777777;
 }
 
 QTextEdit {
-border: 1px solid #777777;
+    border: 1px solid #777777;
     border-radius: 2px;
 }
 
 QPlainTextEdit {
-border: 1px solid #777777;
+    border: 1px solid #777777;
     border-radius: 2px;
+    font-family: "Monospace";
+    font: large;
 }
 
 QComboBox {
@@ -184,13 +186,14 @@ QDoubleSpinBox::down-button {
 }
 
 QPushButton {
-	font-weight: bold;
+	/*font-weight: bold;
 	min-height: 18px;
 	max-height: 18px;
+    min-width: 60px;*/
 	border: 2px solid #4A4A4F;
-	border-radius: 5px;
-	padding-left: 5px;
-	padding-right: 5px;
+	border-radius: 3px;
+	padding-left: 8px;
+	padding-right: 8px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
@@ -206,11 +209,11 @@ QPushButton:pressed {
 
 QToolButton {
 	font-weight: bold;
-	min-height: 16px;
+	min-height: 18px;
 	min-width: 24px;
 	max-height: 18px;
 	border: 2px solid #4A4A4F;
-	border-radius: 5px;
+	border-radius: 3px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
@@ -225,8 +228,8 @@ QToolButton:pressed {
 }
 
 QToolTip {
-        background-color: #090909;
-        border: 1px solid #379AC3;
+    background-color: #090909;
+    border: 1px solid #379AC3;
 	border-radius: 3px;
     color: #DDDDDF;
 }
@@ -243,6 +246,21 @@ QMenu::separator {
      margin-left: 5px;
      margin-right: 5px;
  }
+
+QMenuBar::item:disabled {
+  border: none;
+  background: none;
+}
+
+QMenuBar::item:diabled:selected {
+  border: none;
+  background: none;
+}
+
+QMenuBar::item:disabled:pressed {
+  background: none;
+  border: none;
+}
 
 QSlider::groove:horizontal {
      border: 1px solid #999999;
