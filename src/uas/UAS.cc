@@ -772,7 +772,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Insert with correct type
             switch (value.param_type)
             {
-            case MAVLINK_TYPE_FLOAT:
+            case MAV_PARAM_TYPE_REAL32:
             {
                 // Variant
                 QVariant param(val.param_float);
@@ -783,7 +783,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
-            case MAVLINK_TYPE_UINT32_T:
+            case MAV_PARAM_TYPE_UINT32:
             {
                 // Variant
                 QVariant param(val.param_uint32);
@@ -794,7 +794,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
-            case MAVLINK_TYPE_INT32_T:
+            case MAV_PARAM_TYPE_INT32:
             {
                 // Variant
                 QVariant param(val.param_int32);
@@ -2001,15 +2001,15 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         {
         case QVariant::Int:
             union_value.param_int32 = value.toInt();
-            p.param_type = MAVLINK_TYPE_INT32_T;
+            p.param_type = MAV_PARAM_TYPE_INT32;
             break;
         case QVariant::UInt:
             union_value.param_uint32 = value.toUInt();
-            p.param_type = MAVLINK_TYPE_UINT32_T;
+            p.param_type = MAV_PARAM_TYPE_UINT32;
             break;
         case QMetaType::Float:
             union_value.param_float = value.toFloat();
-            p.param_type = MAVLINK_TYPE_FLOAT;
+            p.param_type = MAV_PARAM_TYPE_REAL32;
             break;
         default:
             qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
