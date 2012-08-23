@@ -209,7 +209,7 @@
           <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
          </property>
          <property name="text">
-          <string>Read</string>
+          <string>Get</string>
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
@@ -229,7 +229,7 @@
           <string>Transmit all waypoints on this list to the MAV.</string>
          </property>
          <property name="text">
-          <string>Write</string>
+          <string>Set</string>
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
