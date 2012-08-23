@@ -89,6 +89,7 @@ void UASUnitTest::setAutopilotType_test()
     QCOMPARE(uas->getAutopilotType(), 2);
 }
 
+//verify that the correct status is returned if a certain statue is given to uas
 void UASUnitTest::getStatusForCode_test()
 {
     QString state, desc;
@@ -347,6 +348,8 @@ void UASUnitTest::signalUASLink_test()
     QCOMPARE(spyS.count(), 3);
     QCOMPARE(LinkManager::instance()->getLinks().count(), 2);
 
+    //all the links in LinkManager must be deleted because LinkManager::instance
+    //is static. 
     LinkManager::instance()->removeLink(link3);
     delete link3;
     QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
