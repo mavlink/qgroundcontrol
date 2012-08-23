@@ -47,7 +47,8 @@ enum MAV_AUTOPILOT
 	MAV_AUTOPILOT_PPZ=9, /* PPZ UAV - http://nongnu.org/paparazzi | */
 	MAV_AUTOPILOT_UDB=10, /* UAV Dev Board | */
 	MAV_AUTOPILOT_FP=11, /* FlexiPilot | */
-	MAV_AUTOPILOT_ENUM_END=12, /*  | */
+	MAV_AUTOPILOT_PX4=12, /* PX4 Autopilot - http://pixhawk.ethz.ch/px4/ | */
+	MAV_AUTOPILOT_ENUM_END=13, /*  | */
 };
 #endif
 
@@ -323,19 +324,22 @@ enum MAV_CMD_ACK
 };
 #endif
 
-/** @brief type of a mavlink parameter */
-#ifndef HAVE_ENUM_MAV_VAR
-#define HAVE_ENUM_MAV_VAR
-enum MAV_VAR
+/** @brief Specifies the datatype of a MAVLink parameter. */
+#ifndef HAVE_ENUM_MAV_PARAM_TYPE
+#define HAVE_ENUM_MAV_PARAM_TYPE
+enum MAV_PARAM_TYPE
 {
-	MAV_VAR_FLOAT=0, /* 32 bit float | */
-	MAV_VAR_UINT8=1, /* 8 bit unsigned integer | */
-	MAV_VAR_INT8=2, /* 8 bit signed integer | */
-	MAV_VAR_UINT16=3, /* 16 bit unsigned integer | */
-	MAV_VAR_INT16=4, /* 16 bit signed integer | */
-	MAV_VAR_UINT32=5, /* 32 bit unsigned integer | */
-	MAV_VAR_INT32=6, /* 32 bit signed integer | */
-	MAV_VAR_ENUM_END=7, /*  | */
+	MAV_PARAM_TYPE_UINT8=1, /* 8-bit unsigned integer | */
+	MAV_PARAM_TYPE_INT8=2, /* 8-bit signed integer | */
+	MAV_PARAM_TYPE_UINT16=3, /* 16-bit unsigned integer | */
+	MAV_PARAM_TYPE_INT16=4, /* 16-bit signed integer | */
+	MAV_PARAM_TYPE_UINT32=5, /* 32-bit unsigned integer | */
+	MAV_PARAM_TYPE_INT32=6, /* 32-bit signed integer | */
+	MAV_PARAM_TYPE_UINT64=7, /* 64-bit unsigned integer | */
+	MAV_PARAM_TYPE_INT64=8, /* 64-bit signed integer | */
+	MAV_PARAM_TYPE_REAL32=9, /* 32-bit floating-point | */
+	MAV_PARAM_TYPE_REAL64=10, /* 64-bit floating-point | */
+	MAV_PARAM_TYPE_ENUM_END=11, /*  | */
 };
 #endif
 
