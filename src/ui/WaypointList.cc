@@ -338,6 +338,7 @@ int WaypointList::addCurrentPositionWaypoint()
             return 1;
         }
     }
+    return 1;
 }
 
 void WaypointList::updateStatusLabel(const QString &string)
