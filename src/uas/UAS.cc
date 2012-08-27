@@ -2306,7 +2306,7 @@ void UAS::launch()
 void UAS::armSystem()
 {
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode, navMode | MAV_MODE_FLAG_SAFETY_ARMED);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_SAFETY_ARMED, navMode);
     sendMessage(msg);
 }
 
@@ -2317,7 +2317,7 @@ void UAS::armSystem()
 void UAS::disarmSystem()
 {
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode, navMode & !MAV_MODE_FLAG_SAFETY_ARMED);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & ~MAV_MODE_FLAG_SAFETY_ARMED, navMode);
     sendMessage(msg);
 }
 
