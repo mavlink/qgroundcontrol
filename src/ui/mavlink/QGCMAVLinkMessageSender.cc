@@ -44,7 +44,8 @@ bool QGCMAVLinkMessageSender::sendMessage()
 
 bool QGCMAVLinkMessageSender::sendMessage(unsigned int msgid)
 {
-    if (msgid == 0 || msgid > 255 || messageInfo[msgid].name == "" || messageInfo[msgid].name == "EMPTY")
+    QString msgname(messageInfo[msgid].name);
+    if (msgid == 0 || msgid > 255 || messageInfo[msgid].name == NULL || msgname.compare(QString("EMPTY")))
     {
         return false;
     }

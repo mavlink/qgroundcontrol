@@ -395,7 +395,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                 {
                     if (escReceived)
                     {
-                        if (escIndex < sizeof(escBytes))
+                        if (escIndex < static_cast<int>(sizeof(escBytes)))
                         {
                             escBytes[escIndex] = byte;
                             //qDebug() << "GOT BYTE ESC:" << byte;
