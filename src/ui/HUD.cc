@@ -315,7 +315,7 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
     this->roll = roll;
-    this->pitch = pitch;
+    this->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
     this->yaw = yaw;
 }
 
@@ -323,7 +323,7 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    attitudes.insert(component, QVector3D(roll, pitch, yaw));
+    attitudes.insert(component, QVector3D(roll, pitch*3.35f, yaw)); // Constant here is the 'focal length' of the projection onto the plane
 }
 
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
@@ -478,11 +478,11 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     glColor3ub(179,102,0);
 
     glBegin(GL_POLYGON);
-    glVertex2f(-300,-300);
+    glVertex2f(-300,-900);
     glVertex2f(-300,0);
     glVertex2f(300,0);
-    glVertex2f(300,-300);
-    glVertex2f(-300,-300);
+    glVertex2f(300,-900);
+    glVertex2f(-300,-900);
     glEnd();
 
     // Sky
@@ -490,8 +490,8 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
 
     glBegin(GL_POLYGON);
     glVertex2f(-300,0);
-    glVertex2f(-300,300);
-    glVertex2f(300,300);
+    glVertex2f(-300,900);
+    glVertex2f(300,900);
     glVertex2f(300,0);
     glVertex2f(-300,0);
 
@@ -612,9 +612,9 @@ void HUD::paintHUD()
 
         // Read out most important values to limit hash table lookups
         // Low-pass roll, pitch and yaw
-        rollLP = rollLP * 0.2f + 0.8f * roll;
-        pitchLP = pitchLP * 0.2f + 0.8f * pitch;
-        yawLP = yawLP * 0.2f + 0.8f * yaw;
+        rollLP = roll;//rollLP * 0.2f + 0.8f * roll;
+        pitchLP = pitch;//pitchLP * 0.2f + 0.8f * pitch;
+        yawLP = yaw;//yawLP * 0.2f + 0.8f * yaw;
 
         // Translate for yaw
         const float maxYawTrans = 60.0f;
@@ -887,7 +887,7 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
     const float lineDistance = 5.0f; ///< One pitch line every 10 degrees
     const float posIncrement = yDeg * lineDistance;
     float posY = posIncrement;
-    const float posLimit = sqrt(pow(vwidth, 2.0f) + pow(vheight, 2.0f));
+    const float posLimit = sqrt(pow(vwidth, 2.0f) + pow(vheight, 2.0f))*3.0f;
 
     const float offsetAbs = pitch * yDeg;
 
