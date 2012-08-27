@@ -464,7 +464,7 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     glTranslatef(referenceWidth/2.0f,referenceHeight/2.0f,0);
 
     // Move based on the yaw difference
-    glTranslatef(yaw, 0.0f, 0.0f);
+    //glTranslatef(yaw, 0.0f, 0.0f);
 
     // Rotate based on the bank
     glRotatef((roll/M_PI)*180.0f, 0.0f, 0.0f, 1.0f);
@@ -788,8 +788,11 @@ void HUD::paintHUD()
 
             //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
-            // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
-            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f+180.0f;
+            // YAW is in compass-human readable format, so 0 .. 360 deg.
+            float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
+            if (yawDeg < 0) yawDeg += 360;
+            if (yawDeg > 360) yawDeg -= 360;
+            /* final safeguard for really stupid systems */
             int yawCompass = static_cast<int>(yawDeg) % 360;
             yawAngle.sprintf("%03d", yawCompass);
             paintText(yawAngle, defaultColor, 3.5f, -4.3f, compassY+ 0.97f, &painter);

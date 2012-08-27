@@ -73,7 +73,7 @@ float limitAngleToPMPIf(float angle)
     else
     {
         // Approximate
-        angle = fmodf(angle, (float) M_PI);
+        angle = fmodf(angle, (float)M_PI);
     }
 
     return angle;
