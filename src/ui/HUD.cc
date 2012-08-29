@@ -440,6 +440,8 @@ float HUD::refToScreenY(float y)
  */
 void HUD::paintCenterBackground(float roll, float pitch, float yaw)
 {
+    Q_UNUSED(yaw);
+
     // Center indicator is 100 mm wide
     float referenceWidth = 70.0;
     float referenceHeight = 70.0;
