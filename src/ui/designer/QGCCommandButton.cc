@@ -1,3 +1,5 @@
+#include <QDockWidget>
+
 #include "QGCCommandButton.h"
 #include "ui_QGCCommandButton.h"
 
@@ -155,6 +157,22 @@ void QGCCommandButton::startEditMode()
     ui->editLine1->show();
     ui->editLine2->show();
     //setStyleSheet("QGroupBox { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+
+    // Attempt to undock the dock widget
+    QWidget* p = this;
+    QDockWidget* dock;
+
+    do {
+        p = p->parentWidget();
+        dock = dynamic_cast<QDockWidget*>(p);
+
+        if (dock)
+        {
+            dock->setFloating(true);
+            break;
+        }
+    } while (p && !dock);
+
     isInEditMode = true;
 }
 
@@ -187,6 +205,22 @@ void QGCCommandButton::endEditMode()
     // Write to settings
     emit editingFinished();
     //setStyleSheet("");
+
+    // Attempt to dock the dock widget
+    QWidget* p = this;
+    QDockWidget* dock;
+
+    do {
+        p = p->parentWidget();
+        dock = dynamic_cast<QDockWidget*>(p);
+
+        if (dock)
+        {
+            dock->setFloating(false);
+            break;
+        }
+    } while (p && !dock);
+
     isInEditMode = false;
 }
 
@@ -210,11 +244,8 @@ void QGCCommandButton::writeSettings(QSettings& settings)
 
 void QGCCommandButton::readSettings(const QSettings& settings)
 {
-    ui->editNameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     ui->editButtonName->setText(settings.value("QGC_COMMAND_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
     ui->editCommandComboBox->setCurrentIndex(settings.value("QGC_COMMAND_BUTTON_COMMANDID", 0).toInt());
-
-    ui->nameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     ui->commandButton->setText(settings.value("QGC_COMMAND_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
 
     int commandId = settings.value("QGC_COMMAND_BUTTON_COMMANDID", 0).toInt();
@@ -259,5 +290,7 @@ void QGCCommandButton::readSettings(const QSettings& settings)
         ui->editParam6SpinBox->hide();
         ui->editParam7SpinBox->hide();
     }
-    qDebug() << "DONE READING SETTINGS";
+
+    ui->editNameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+    ui->nameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
 }
