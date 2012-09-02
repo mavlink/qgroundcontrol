@@ -436,12 +436,19 @@ void SerialLink::checkForBytes()
         {
             readBytes();
         }
+        else if (available < 0) {
+            /* Error, close port */
+            port->close();
+            emit disconnected();
+            emit connected(false);
+            emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
+        }
     }
-    else
-    {
-        emit disconnected();
-        emit connected(false);
-    }
+//    else
+//    {
+//        emit disconnected();
+//        emit connected(false);
+//    }
 
 }
 
