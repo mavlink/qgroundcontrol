@@ -222,7 +222,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCMissionNavTakeoff.ui \
     src/ui/mission/QGCMissionNavSweep.ui \
     src/ui/mission/QGCMissionDoStartSearch.ui \
-    src/ui/mission/QGCMissionDoFinishSearch.ui
+    src/ui/mission/QGCMissionDoFinishSearch.ui \
+    src/ui/QGCVehicleConfig.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -356,7 +357,8 @@ HEADERS += src/MG.h \
     src/ui/mission/QGCMissionNavTakeoff.h \
     src/ui/mission/QGCMissionNavSweep.h \
     src/ui/mission/QGCMissionDoStartSearch.h \
-    src/ui/mission/QGCMissionDoFinishSearch.h
+    src/ui/mission/QGCMissionDoFinishSearch.h \
+    src/ui/QGCVehicleConfig.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -510,7 +512,8 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionNavTakeoff.cc \
     src/ui/mission/QGCMissionNavSweep.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
-    src/ui/mission/QGCMissionDoFinishSearch.cc
+    src/ui/mission/QGCMissionDoFinishSearch.cc \
+    src/ui/QGCVehicleConfig.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
