@@ -68,7 +68,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
         selectAction(new QAction("Control this system", this )),
-        hilAction(new QAction("Enable Hardware-in-the-Loop Simulation", this )),
+        hilAction(new QAction("Enable Flightgear Hardware-in-the-Loop Simulation", this )),
+        hilXAction(new QAction("Enable X-Plane Hardware-in-the-Loop Simulation", this )),
         selectAirframeAction(new QAction("Choose Airframe", this)),
         setBatterySpecsAction(new QAction("Set Battery Options", this)),
         lowPowerModeEnabled(true),
@@ -80,6 +81,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     lowPowerModeEnabled = MainWindow::instance()->lowPowerModeEnabled();
 
     hilAction->setCheckable(true);
+    // Flightgear is not ready for prime time
+    hilAction->setEnabled(false);
+    hilXAction->setCheckable(true);
 
     m_ui->setupUi(this);
 
@@ -119,6 +123,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(hilAction, SIGNAL(triggered(bool)), uas, SLOT(enableHil(bool)));
+    connect(hilXAction, SIGNAL(triggered(bool)), uas, SLOT(enableHil(bool)));
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
     connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
@@ -464,7 +469,8 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     {
         menu.addAction(removeAction);
     }
-    menu.addAction(hilAction);
+    menu.addAction(hilXAction);
+    // XXX Re-enable later menu.addAction(hilXAction);
     menu.addAction(selectAirframeAction);
     menu.addAction(setBatterySpecsAction);
     menu.exec(event->globalPos());

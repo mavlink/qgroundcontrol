@@ -22,14 +22,14 @@ This file is part of the QGROUNDCONTROL project
 ======================================================================*/
 
 /**
- * @file
- *   @brief UDP connection (server) for unmanned vehicles
+ * @file QGCXPlaneLink.h
+ *   @brief X-Plane simulation link
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
 
-#ifndef QGCFLIGHTGEARLINK_H
-#define QGCFLIGHTGEARLINK_H
+#ifndef QGCXPLANESIMULATIONLINK_H
+#define QGCXPLANESIMULATIONLINK_H
 
 #include <QString>
 #include <QList>
@@ -43,14 +43,14 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "QGCHilLink.h"
 
-class QGCFlightGearLink : public QGCHilLink
+class QGCXPlaneLink : public QGCHilLink
 {
     Q_OBJECT
-    //Q_INTERFACES(QGCFlightGearLinkInterface:LinkInterface)
+    //Q_INTERFACES(QGCXPlaneLinkInterface:LinkInterface)
 
 public:
-    QGCFlightGearLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
-    ~QGCFlightGearLink();
+    QGCXPlaneLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    ~QGCXPlaneLink();
 
     bool isConnected();
     qint64 bytesAvailable();
@@ -115,8 +115,27 @@ protected:
     void setName(QString name);
 
 signals:
+    /**
+     * @brief This signal is emitted instantly when the link is connected
+     **/
+    void flightGearConnected();
+
+    /**
+     * @brief This signal is emitted instantly when the link is disconnected
+     **/
+    void flightGearDisconnected();
+
+    /**
+     * @brief This signal is emitted instantly when the link status changes
+     **/
+    void flightGearConnected(bool connected);
+
+    /** @brief State update from FlightGear */
+    void hilStateChanged(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
+                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
 
 
 };
 
-#endif // QGCFLIGHTGEARLINK_H
+#endif // QGCXPLANESIMULATIONLINK_H
