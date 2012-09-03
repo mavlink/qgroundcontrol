@@ -2300,7 +2300,7 @@ void UAS::launch()
 }
 
 /**
- * Depending on the UAS, this might make the rotors of a helicopter spinning
+ * @warning Depending on the UAS, this might make the rotors of a helicopter spinning
  *
  */
 void UAS::armSystem()
@@ -2311,7 +2311,7 @@ void UAS::armSystem()
 }
 
 /**
- * warning Depending on the UAS, this might completely stop all motors.
+ * @warning Depending on the UAS, this might completely stop all motors.
  *
  */
 void UAS::disarmSystem()
