@@ -38,16 +38,15 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 #include "MainWindow.h"
 
-QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress host, quint16 port) :
+QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     process(NULL),
     terraSync(NULL)
 {
-    this->host = host;
-    this->port = port+mav->getUASID();
+    this->localHost = localHost;
+    this->localPort = localPort/*+mav->getUASID()*/;
     this->connectState = false;
-    this->currentPort = 48000+mav->getUASID();
     this->mav = mav;
-    this->name = tr("X-Plane Link (port:%1)").arg(port);
+    this->name = tr("X-Plane Link (localPort:%1)").arg(localPort);
     setRemoteHost(remoteHost);
 }
 
@@ -68,9 +67,9 @@ void QGCXPlaneLink::run()
     exec();
 }
 
-void QGCXPlaneLink::setPort(int port)
+void QGCXPlaneLink::setPort(int localPort)
 {
-    this->port = port;
+    this->localPort = localPort;
     disconnectSimulation();
     connectSimulation();
 }
@@ -102,40 +101,40 @@ void QGCXPlaneLink::processError(QProcess::ProcessError err)
 }
 
 /**
- * @param host Hostname in standard formatting, e.g. localhost:14551 or 192.168.1.1:14551
+ * @param localHost Hostname in standard formatting, e.g. locallocalHost:14551 or 192.168.1.1:14551
  */
-void QGCXPlaneLink::setRemoteHost(const QString& host)
+void QGCXPlaneLink::setRemoteHost(const QString& localHost)
 {
-    if (host.contains(":"))
+    if (localHost.contains(":"))
     {
-        //qDebug() << "HOST: " << host.split(":").first();
-        QHostInfo info = QHostInfo::fromName(host.split(":").first());
+        //qDebug() << "HOST: " << localHost.split(":").first();
+        QHostInfo info = QHostInfo::fromName(localHost.split(":").first());
         if (info.error() == QHostInfo::NoError)
         {
-            // Add host
-            QList<QHostAddress> hostAddresses = info.addresses();
+            // Add localHost
+            QList<QHostAddress> localHostAddresses = info.addresses();
             QHostAddress address;
-            for (int i = 0; i < hostAddresses.size(); i++)
+            for (int i = 0; i < localHostAddresses.size(); i++)
             {
                 // Exclude loopback IPv4 and all IPv6 addresses
-                if (!hostAddresses.at(i).toString().contains(":"))
+                if (!localHostAddresses.at(i).toString().contains(":"))
                 {
-                    address = hostAddresses.at(i);
+                    address = localHostAddresses.at(i);
                 }
             }
-            currentHost = address;
+            remoteHost = address;
             //qDebug() << "Address:" << address.toString();
-            // Set port according to user input
-            currentPort = host.split(":").last().toInt();
+            // Set localPort according to user input
+            remotePort = localHost.split(":").last().toInt();
         }
     }
     else
     {
-        QHostInfo info = QHostInfo::fromName(host);
+        QHostInfo info = QHostInfo::fromName(localHost);
         if (info.error() == QHostInfo::NoError)
         {
-            // Add host
-            currentHost = info.addresses().first();
+            // Add localHost
+            remoteHost = info.addresses().first();
         }
     }
 
@@ -175,11 +174,11 @@ void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
             ascii.append(219);
         }
     }
-    qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
+    qDebug() << "Sent" << size << "bytes to" << remoteHost.toString() << ":" << remotePort << "data:";
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    if (connectState && socket) socket->writeDatagram(data, size, currentHost, currentPort);
+    if (connectState && socket) socket->writeDatagram(data, size, remoteHost, remotePort);
 }
 
 /**
@@ -201,19 +200,36 @@ void QGCXPlaneLink::readBytes()
 
     QByteArray b(data, s);
 
-    // Print string
-    QString state(b);
-    //qDebug() << "FG LINK GOT:" << state;
+    /*// Print string
+    QString state(b)*/;
 
-    QStringList values = state.split("\t");
+    // Calculate the number of data segments a 36 bytes
+    // XPlane always has 5 bytes header: 'DATA@'
+    unsigned nsegs = (s-5)/36;
 
-    // Check length
-    if (values.size() != 17)
+    qDebug() << "XPLANE:" << "LEN:" << s << "segs:" << nsegs;
+
+    union dataconv {
+        char c[8];
+        float f;
+        double d;
+        int i;
+    } u;
+
+    for (unsigned i = 0; i < nsegs; i++)
     {
-        qDebug() << "RETURN LENGTH MISMATCHING EXPECTED" << 17 << "BUT GOT" << values.size();
-        qDebug() << state;
-        return;
+        // Get index
+        unsigned ioff = (5+i*36);
+        memcpy(&(u.i), data+ioff, sizeof(u.i));
+        qDebug() << "ind:" << u.i;
+        unsigned doff = ioff+sizeof(u.i);
+        unsigned dsize = sizeof(u.d);
+        memcpy(&(u.d), data+doff, dsize);
+        doff += dsize;
+        qDebug() << "val1:" << u.d;
     }
+
+    return;
 
     // Parse string
     double time;
@@ -222,26 +238,26 @@ void QGCXPlaneLink::readBytes()
     double vx, vy, vz, xacc, yacc, zacc;
     double airspeed;
 
-    time = values.at(0).toDouble();
-    lat = values.at(1).toDouble();
-    lon = values.at(2).toDouble();
-    alt = values.at(3).toDouble();
-    roll = values.at(4).toDouble();
-    pitch = values.at(5).toDouble();
-    yaw = values.at(6).toDouble();
-    rollspeed = values.at(7).toDouble();
-    pitchspeed = values.at(8).toDouble();
-    yawspeed = values.at(9).toDouble();
+//    time = values.at(0).toDouble();
+//    lat = values.at(1).toDouble();
+//    lon = values.at(2).toDouble();
+//    alt = values.at(3).toDouble();
+//    roll = values.at(4).toDouble();
+//    pitch = values.at(5).toDouble();
+//    yaw = values.at(6).toDouble();
+//    rollspeed = values.at(7).toDouble();
+//    pitchspeed = values.at(8).toDouble();
+//    yawspeed = values.at(9).toDouble();
 
-    xacc = values.at(10).toDouble();
-    yacc = values.at(11).toDouble();
-    zacc = values.at(12).toDouble();
+//    xacc = values.at(10).toDouble();
+//    yacc = values.at(11).toDouble();
+//    zacc = values.at(12).toDouble();
 
-    vx = values.at(13).toDouble();
-    vy = values.at(14).toDouble();
-    vz = values.at(15).toDouble();
+//    vx = values.at(13).toDouble();
+//    vy = values.at(14).toDouble();
+//    vz = values.at(15).toDouble();
 
-    airspeed = values.at(16).toDouble();
+//    airspeed = values.at(16).toDouble();
 
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
@@ -317,7 +333,7 @@ bool QGCXPlaneLink::connectSimulation()
 {
     if (!mav) return false;
     socket = new QUdpSocket(this);
-    connectState = socket->bind(host, port);
+    connectState = socket->bind(localHost, localPort);
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
@@ -406,7 +422,7 @@ bool QGCXPlaneLink::connectSimulation()
 
 //    if (!sane) return false;
 
-//    // --atlas=socket,out,1,localhost,5505,udp
+//    // --atlas=socket,out,1,locallocalHost,5505,udp
 //    // terrasync -p 5505 -S -d /usr/local/share/TerraSync
 
 //    processCall << QString("--fg-root=%1").arg(fgRoot);
@@ -414,15 +430,15 @@ bool QGCXPlaneLink::connectSimulation()
 //    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
 //    {
 //        // FIXME ADD QUAD-Specific protocol here
-//        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
-//        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+//        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(localPort);
+//        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(remotePort);
 //    }
 //    else
 //    {
-//        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
-//        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+//        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(localPort);
+//        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(remotePort);
 //    }
-//    processCall << "--atlas=socket,out,1,localhost,5505,udp";
+//    processCall << "--atlas=socket,out,1,locallocalHost,5505,udp";
 //    processCall << "--in-air";
 //    processCall << "--roll=0";
 //    processCall << "--pitch=0";

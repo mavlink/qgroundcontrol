@@ -49,13 +49,13 @@ class QGCXPlaneLink : public QGCHilLink
     //Q_INTERFACES(QGCXPlaneLinkInterface:LinkInterface)
 
 public:
-    QGCXPlaneLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCXPlaneLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
     ~QGCXPlaneLink();
 
     bool isConnected();
     qint64 bytesAvailable();
     int getPort() const {
-        return port;
+        return localPort;
     }
 
     /**
@@ -90,10 +90,10 @@ public slots:
 
 protected:
     QString name;
-    QHostAddress host;
-    QHostAddress currentHost;
-    quint16 currentPort;
-    quint16 port;
+    QHostAddress localHost;
+    quint16 localPort;
+    QHostAddress remoteHost;
+    quint16 remotePort;
     int id;
     QUdpSocket* socket;
     bool connectState;
