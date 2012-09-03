@@ -304,8 +304,8 @@ bool QGCFlightGearLink::disconnectSimulation()
 
     connectState = false;
 
-    emit flightGearDisconnected();
-    emit flightGearConnected(false);
+    emit simulationDisconnected();
+    emit simulationConnected(false);
     return !connectState;
 }
 
@@ -475,9 +475,9 @@ bool QGCFlightGearLink::connectSimulation()
 
 
 
-    emit flightGearConnected(connectState);
+    emit simulationConnected(connectState);
     if (connectState) {
-        emit flightGearConnected();
+        emit simulationConnected();
         connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
     qDebug() << "STARTING SIM";

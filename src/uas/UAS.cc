@@ -97,7 +97,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     paramManager(NULL),
     attitudeStamped(false),
     lastAttitude(0),
-    simulation(new QGCFlightGearLink(this)),
+    simulation(new QGCXPlaneLink(this)),
     isLocalPositionKnown(false),
     isGlobalPositionKnown(false),
     systemIsArmed(false),
@@ -1151,6 +1151,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_DEBUG:
         case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
         case MAVLINK_MSG_ID_NAMED_VALUE_INT:
+        case MAVLINK_MSG_ID_MANUAL_CONTROL:
             break;
         default:
         {
@@ -2515,9 +2516,20 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
 {
-    mavlink_message_t msg;
-    mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
-    sendMessage(msg);
+    if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+        sendMessage(msg);
+    }
+    else
+    {
+        // Attempt to set HIL mode
+        mavlink_message_t msg;
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_HIL_ENABLED, navMode);
+        sendMessage(msg);
+        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
+    }
 }
 
 /**
