@@ -36,7 +36,9 @@ This file is part of the QGROUNDCONTROL project
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
 #include "QGCMAVLink.h"
+#include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
+#include "QGCXPlaneLink.h"
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
@@ -330,7 +332,7 @@ protected: //COMMENTS FOR TEST UNIT
     QString shortModeText;          ///< Short textual mode description
     bool attitudeStamped;           ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
     quint64 lastAttitude;           ///< Timestamp of last attitude measurement
-    QGCFlightGearLink* simulation;  ///< Hardware in the loop simulation link
+    QGCHilLink* simulation;         ///< Hardware in the loop simulation link
     bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
     bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
     bool systemIsArmed;             ///< If the system is armed

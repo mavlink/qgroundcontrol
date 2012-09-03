@@ -438,10 +438,10 @@ void MainWindow::buildCommonWidgets()
 
     if (!parametersDockWidget)
     {
-        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
+        parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
         parametersDockWidget->setWidget( new ParameterInterface(this) );
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
-        addTool(parametersDockWidget, tr("Calibration and Parameters"), Qt::RightDockWidgetArea);
+        addTool(parametersDockWidget, tr("Onboard Parameters"), Qt::RightDockWidgetArea);
     }
 	
     if (!hsiDockWidget)
@@ -556,25 +556,35 @@ void MainWindow::buildCommonWidgets()
         addCentralWidget(firmwareUpdateWidget, "Firmware Update");
     }
 
-    if (!hudWidget) {
+    if (!hudWidget)
+    {
         hudWidget         = new HUD(320, 240, this);
         addCentralWidget(hudWidget, tr("Head Up Display"));
     }
 
-    if (!dataplotWidget) {
+    if (!configWidget)
+    {
+        configWidget = new QGCVehicleConfig(this);
+        addCentralWidget(configWidget, tr("Vehicle Configuration"));
+    }
+
+    if (!dataplotWidget)
+    {
         dataplotWidget    = new QGCDataPlot2D(this);
         addCentralWidget(dataplotWidget, tr("Logfile Plot"));
     }
 
 #ifdef QGC_OSG_ENABLED
-    if (!_3DWidget) {
+    if (!_3DWidget)
+    {
         _3DWidget         = Q3DWidgetFactory::get("PIXHAWK", this);
         addCentralWidget(_3DWidget, tr("Local 3D"));
     }
 #endif
 
 #if (defined _MSC_VER) | (defined Q_OS_MAC)
-    if (!gEarthWidget) {
+    if (!gEarthWidget)
+    {
         gEarthWidget = new QGCGoogleEarthView(this);
         addCentralWidget(gEarthWidget, tr("Google Earth"));
     }
