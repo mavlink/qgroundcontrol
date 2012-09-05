@@ -409,7 +409,7 @@ QPortSettings::BaudRate TermiosHelper::baudRate() const
     case 500000:
         return QPortSettings::BAUDR_500000;
 #endif
-#ifdef B576000:
+#ifdef B576000
     case B576000:
         return QPortSettings::BAUDR_576000;
 #else
