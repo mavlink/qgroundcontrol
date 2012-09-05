@@ -108,7 +108,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 
     // Show splash screen
     QPixmap splashImage(":/files/images/splash.png");
-    QSplashScreen* splashScreen = new QSplashScreen(splashImage, Qt::WindowStaysOnTopHint);
+    QSplashScreen* splashScreen = new QSplashScreen(splashImage);
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
     splashScreen->show();
