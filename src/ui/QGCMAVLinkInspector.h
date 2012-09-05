@@ -24,6 +24,9 @@ public:
 
 public slots:
     void receiveMessage(LinkInterface* link,mavlink_message_t message);
+    /** @brief Clear all messages */
+    void clearView();
+    /** Update view */
     void refreshView();
     void addSystem(UASInterface* uas);
     void addComponent(int uas, int component, const QString& name);
