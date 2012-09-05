@@ -204,9 +204,14 @@ void UAS::updateState()
         emit heartbeatTimeout(heartbeatInterval);
         emit heartbeatTimeout();
         connectionLost = true;
-        connectionLossTime = heartbeatInterval;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
         GAudioOutput::instance()->say(audiostring.toLower());
+    }
+
+    // Update connection loss time on each iteration
+    if (connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
+    {
+        connectionLossTime = heartbeatInterval;
     }
 
     // Connection gained
@@ -1182,6 +1187,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
         case MAVLINK_MSG_ID_NAMED_VALUE_INT:
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
+        case MAVLINK_MSG_ID_HIGHRES_IMU:
             break;
         default:
         {
