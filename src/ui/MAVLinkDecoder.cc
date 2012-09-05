@@ -350,7 +350,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         else
         {
             // Single value
-            float n = *((uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            uint32_t n = *((uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             fieldType = "uint32_t";
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }
