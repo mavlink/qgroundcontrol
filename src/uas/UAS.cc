@@ -469,7 +469,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY)
             {
-                GAudioOutput::instance()->startEmergency();
+                GAudioOutput::instance()->say(QString("emergency for system %1").arg(this->getUASID()));
+                QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
             }
             else if (modechanged || statechanged)
             {
@@ -521,7 +522,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     /* warn only if we have at least the voltage of an empty LiPo cell, else we're sampling something wrong */
                     && (currentVoltage > 3.3f)
                     /* warn only if current voltage is really still lower by a reasonable amount */
-                    && ((currentVoltage - 0.1f) < tickVoltage)
+                    && ((currentVoltage - 0.2f) < tickVoltage)
                     /* warn only every 12 seconds */
                     && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
             {
@@ -548,7 +549,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 			}
 
             // LOW BATTERY ALARM
-            if (lpVoltage < warnVoltage && (startVoltage > 0.0f))
+            if (lpVoltage < warnVoltage && (currentVoltage - 0.2f) < warnVoltage && (currentVoltage > 3.3))
             {
                 startLowBattAlarm();
             }
@@ -1535,31 +1536,12 @@ quint64 UAS::getUnixTimeFromMs(quint64 time)
 */
 quint64 UAS::getUnixTime(quint64 time)
 {
-    bool isNull = (time == 0);
-    // Check if the offset estimation likely went wrong
-    // and we're talking to a new instance / the system
-    // has rebooted. Only reset if this is consistent.
-    if (time != 0 && lastNonNullTime > time)
-    {
-        onboardTimeOffsetInvalidCount++;
-    }
-    else if (time != 0 && lastNonNullTime < time)
-    {
-        onboardTimeOffsetInvalidCount = 0;
-    }
-
-    // Reset onboard time offset estimation, since it seems to be really off
-    if (onboardTimeOffsetInvalidCount > 20)
-    {
-        onboardTimeOffset = 0;
-        onboardTimeOffsetInvalidCount = 0;
-    }
-
     quint64 ret = 0;
     if (attitudeStamped)
     {
         ret = lastAttitude;
     }
+
     if (time == 0)
     {
         ret = QGC::groundTimeMilliseconds();
@@ -1587,10 +1569,13 @@ quint64 UAS::getUnixTime(quint64 time)
 #endif
     {
         //        qDebug() << "GEN time:" << time/1000 + onboardTimeOffset;
-        if (onboardTimeOffset == 0)
+        if (onboardTimeOffset == 0 || time < (lastNonNullTime - 100))
         {
+            lastNonNullTime = time;
             onboardTimeOffset = QGC::groundTimeMilliseconds() - time/1000;
         }
+        if (time > lastNonNullTime) lastNonNullTime = time;
+
         ret = time/1000 + onboardTimeOffset;
     }
     else
@@ -1598,10 +1583,6 @@ quint64 UAS::getUnixTime(quint64 time)
         // Time is not zero and larger than 40 years -> has to be
         // a Unix epoch timestamp. Do nothing.
         ret = time/1000;
-    }
-
-    if (!isNull) {
-        lastNonNullTime = time;
     }
 
     return ret;
@@ -2969,7 +2950,7 @@ void UAS::startLowBattAlarm()
     if (!lowBattAlarm)
     {
         GAudioOutput::instance()->alert(tr("system %1 has low battery").arg(getUASName()));
-        QTimer::singleShot(2500, GAudioOutput::instance(), SLOT(startEmergency()));
+        QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
         lowBattAlarm = true;
     }
 }

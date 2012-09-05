@@ -548,7 +548,7 @@ signals:
 protected:
 
     // TIMEOUT CONSTANTS
-    static const unsigned int timeoutIntervalHeartbeat = 2000 * 1000; ///< Heartbeat timeout is 1.5 seconds
+    static const unsigned int timeoutIntervalHeartbeat = 1500 * 1000; ///< Heartbeat timeout is 1.5 seconds
 
 };
 

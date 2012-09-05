@@ -100,11 +100,13 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 }
 
 quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
-{
+{ 
+    bool isNull = false;
     quint64 ret = 0;
     if (time == 0)
     {
         ret = QGC::groundTimeMilliseconds() - onboardToGCSUnixTimeOffsetAndDelay[systemID];
+        isNull = true;
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -128,11 +130,14 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
     else if (time < 1261440000000)
 #endif
     {
-        if (onboardTimeOffset[systemID] == 0 || time < (firstOnboardTime[systemID]-2000))
+        if (onboardTimeOffset[systemID] == 0 || time < (firstOnboardTime[systemID]-100))
         {
             firstOnboardTime[systemID] = time;
             onboardTimeOffset[systemID] = QGC::groundTimeMilliseconds() - time;
         }
+
+        if (time > firstOnboardTime[systemID]) firstOnboardTime[systemID] = time;
+
         ret = time + onboardTimeOffset[systemID];
     }
     else
@@ -141,6 +146,35 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
         // a Unix epoch timestamp. Do nothing.
         ret = time;
     }
+
+
+//    // Check if the offset estimation likely went wrong
+//    // and we're talking to a new instance / the system
+//    // has rebooted. Only reset if this is consistent.
+//    if (!isNull && lastNonNullTime > ret)
+//    {
+//        onboardTimeOffsetInvalidCount++;
+//    }
+//    else if (!isNull && lastNonNullTime < ret)
+//    {
+//        onboardTimeOffsetInvalidCount = 0;
+//    }
+
+//    // Reset onboard time offset estimation, since it seems to be really off
+//    if (onboardTimeOffsetInvalidCount > 20)
+//    {
+//        onboardTimeOffset = 0;
+//        onboardTimeOffsetInvalidCount = 0;
+//        lastNonNullTime = 0;
+//        qDebug() << "RESETTET ONBOARD TIME OFFSET";
+//    }
+
+//    // If we're progressing in time, set it
+//    // else wait for the reboot detection to
+//    // catch the timestamp wrap / reset
+//    if (!isNull && (lastNonNullTime < ret)) {
+//        lastNonNullTime = ret;
+//    }
 
     return ret;
 }
