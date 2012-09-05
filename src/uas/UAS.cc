@@ -1535,6 +1535,7 @@ quint64 UAS::getUnixTimeFromMs(quint64 time)
 */
 quint64 UAS::getUnixTime(quint64 time)
 {
+    bool isNull = (time == 0);
     // Check if the offset estimation likely went wrong
     // and we're talking to a new instance / the system
     // has rebooted. Only reset if this is consistent.
@@ -1542,7 +1543,7 @@ quint64 UAS::getUnixTime(quint64 time)
     {
         onboardTimeOffsetInvalidCount++;
     }
-    else if (lastNonNullTime < time)
+    else if (time != 0 && lastNonNullTime < time)
     {
         onboardTimeOffsetInvalidCount = 0;
     }
@@ -1553,7 +1554,6 @@ quint64 UAS::getUnixTime(quint64 time)
         onboardTimeOffset = 0;
         onboardTimeOffsetInvalidCount = 0;
     }
-
 
     quint64 ret = 0;
     if (attitudeStamped)
@@ -1599,6 +1599,11 @@ quint64 UAS::getUnixTime(quint64 time)
         // a Unix epoch timestamp. Do nothing.
         ret = time/1000;
     }
+
+    if (!isNull) {
+        lastNonNullTime = time;
+    }
+
     return ret;
 }
 
