@@ -104,7 +104,9 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
     connectionLost(false),
-    lastVoltageWarning(0)
+    lastVoltageWarning(0),
+    lastNonNullTime(0),
+    onboardTimeOffsetInvalidCount(0)
 
 {
     for (unsigned int i = 0; i<255;++i)
@@ -1533,6 +1535,26 @@ quint64 UAS::getUnixTimeFromMs(quint64 time)
 */
 quint64 UAS::getUnixTime(quint64 time)
 {
+    // Check if the offset estimation likely went wrong
+    // and we're talking to a new instance / the system
+    // has rebooted. Only reset if this is consistent.
+    if (time != 0 && lastNonNullTime > time)
+    {
+        onboardTimeOffsetInvalidCount++;
+    }
+    else if (lastNonNullTime < time)
+    {
+        onboardTimeOffsetInvalidCount = 0;
+    }
+
+    // Reset onboard time offset estimation, since it seems to be really off
+    if (onboardTimeOffsetInvalidCount > 20)
+    {
+        onboardTimeOffset = 0;
+        onboardTimeOffsetInvalidCount = 0;
+    }
+
+
     quint64 ret = 0;
     if (attitudeStamped)
     {

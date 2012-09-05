@@ -674,6 +674,8 @@ protected:
     bool connectionLost; ///< Flag indicates a timed out connection
     quint64 connectionLossTime; ///< Time the connection was interrupted
     quint64 lastVoltageWarning; ///< Time at which the last voltage warning occured
+    quint64 lastNonNullTime;    ///< The last timestamp from the MAV that was not null
+    unsigned int onboardTimeOffsetInvalidCount;     ///< Count when the offboard time offset estimation seemed wrong
 
 protected slots:
     /** @brief Write settings to disk */
