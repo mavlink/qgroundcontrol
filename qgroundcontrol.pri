@@ -32,8 +32,8 @@ DEFINES += _TTY_NOWARN_
 # MAC OS X
 macx|macx-g++42|macx-g++: {
 
-	CONFIG += x86_64 cocoa phonon
-	CONFIG -= x86
+        CONFIG += x86_64 cocoa phonon
+        CONFIG -= x86
 
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 
@@ -130,6 +130,7 @@ macx|macx-g++42|macx-g++: {
 	LIBS += -framework GLUT \
         -framework Cocoa \
         -L$$BASEDIR/libs/lib/mac64/lib \
+        -L$$BASEDIR/libs/lib/mac32/lib \
         -lOpenThreads \
         -losg \
         -losgViewer \

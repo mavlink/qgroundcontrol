@@ -3,6 +3,7 @@
 
 #include <QThread>
 #include <QProcess>
+#include "inttypes.h"
 
 class QGCHilLink : public QThread
 {
