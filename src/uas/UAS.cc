@@ -1758,7 +1758,7 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     case MAV_STATE_STANDBY:
         uasState = tr("STANDBY");
-        stateDescription = tr("Standby mode, ready for liftoff.");
+        stateDescription = tr("Standby mode, ready for launch.");
         break;
     case MAV_STATE_CRITICAL:
         uasState = tr("CRITICAL");
