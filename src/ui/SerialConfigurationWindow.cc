@@ -111,6 +111,10 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 			ui.baudRate->addItem(QString::number(supportedBaudRates.at(i)), supportedBaudRates.at(i));
 		}
 
+        // Load current link config
+        ui.portName->setCurrentIndex(ui.baudRate->findText(QString("%1").arg(this->link->getPortName())));
+        qDebug() << __FILE__ << __LINE__ << "port name:" << QString("%1").arg(this->link->getPortName());
+
         connect(action, SIGNAL(triggered()), this, SLOT(configureCommunication()));
 
         // Make sure that a change in the link name will be reflected in the UI

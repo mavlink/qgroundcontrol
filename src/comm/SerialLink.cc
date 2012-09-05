@@ -363,7 +363,7 @@ void SerialLink::loadSettings()
     settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
-        if (porthandle == "") setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
+        setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
         setBaudRateType(settings.value("SERIALLINK_COMM_BAUD").toInt());
         setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
         setStopBits(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
@@ -376,7 +376,7 @@ void SerialLink::writeSettings()
 {
     // Store settings
     QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-    settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
+    settings.setValue("SERIALLINK_COMM_PORT", getPortName());
     settings.setValue("SERIALLINK_COMM_BAUD", getBaudRateType());
     settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
     settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBits());
@@ -925,13 +925,13 @@ bool SerialLink::setBaudRateType(int rateIndex)
     // These minimum and maximum baud rates were based on those enumerated in qportsettings.h.
 #if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
     const int minBaud = (int)QPortSettings::BAUDR_110;
-    const int maxBaud = (int)QPortSettings::BAUDR_256000;
+    const int maxBaud = (int)QPortSettings::BAUDR_921600;
 #elif defined(Q_OS_LINUX)
     const int minBaud = (int)QPortSettings::BAUDR_50;
     const int maxBaud = (int)QPortSettings::BAUDR_921600;
 #elif defined(Q_OS_UNIX) || defined(Q_OS_DARWIN)
     const int minBaud = (int)QPortSettings::BAUDR_50;
-    const int maxBaud = (int)QPortSettings::BAUDR_115200;
+    const int maxBaud = (int)QPortSettings::BAUDR_921600;
 #endif
 
     if (rateIndex >= minBaud && rateIndex <= maxBaud)
