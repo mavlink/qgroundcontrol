@@ -70,7 +70,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("OPENMAV"));
+    this->setOrganizationName(QLatin1String("QGroundControl"));
     this->setOrganizationDomain("org.qgroundcontrol");
 
     // Set settings format
