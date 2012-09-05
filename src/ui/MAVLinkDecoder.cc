@@ -216,28 +216,28 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         mavlink_debug_vect_t debug;
         mavlink_msg_debug_vect_decode(msg, &debug);
         name = name.arg(QString(debug.name), fieldName);
-        time = (debug.time_usec+500)/1000; // Scale to milliseconds, round up/down correctly
+        time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG)
     {
         mavlink_debug_t debug;
         mavlink_msg_debug_decode(msg, &debug);
         name = name.arg(QString("debug")).arg(debug.ind);
-        time = debug.time_boot_ms;
+        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
     else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
     {
         mavlink_named_value_float_t debug;
         mavlink_msg_named_value_float_decode(msg, &debug);
         name = debug.name;
-        time = debug.time_boot_ms;
+        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
     else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
         mavlink_named_value_int_t debug;
         mavlink_msg_named_value_int_decode(msg, &debug);
         name = name.arg(debug.name).arg(fieldName);
-        time = debug.time_boot_ms;
+        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
     else
     {
