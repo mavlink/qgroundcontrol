@@ -102,7 +102,9 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     isGlobalPositionKnown(false),
     systemIsArmed(false),
     nedPosGlobalOffset(0,0,0),
-    nedAttGlobalOffset(0,0,0)
+    nedAttGlobalOffset(0,0,0),
+    connectionLost(false),
+    lastVoltageWarning(0)
 
 {
     for (unsigned int i = 0; i<255;++i)
@@ -197,10 +199,23 @@ void UAS::updateState()
 {
     // Check if heartbeat timed out
     quint64 heartbeatInterval = QGC::groundTimeUsecs() - lastHeartbeat;
-    if (heartbeatInterval > timeoutIntervalHeartbeat)
+    if (!connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
     {
         emit heartbeatTimeout(heartbeatInterval);
         emit heartbeatTimeout();
+        connectionLost = true;
+        connectionLossTime = heartbeatInterval;
+        QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
+        GAudioOutput::instance()->say(audiostring.toLower());
+    }
+
+    // Connection gained
+    if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
+    {
+        QString audiostring = QString("Link regained to system %1 after %2 seconds").arg(this->getUASID()).arg((int)(connectionLossTime/1000000));
+        GAudioOutput::instance()->say(audiostring.toLower());
+        connectionLost = false;
+        connectionLossTime = 0;
     }
 
     // Position lock is set by the MAVLink message handler
@@ -406,7 +421,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 shortStateText = uasState;
 
-                stateAudio = tr(" changed status to ") + uasState;
+                // Adjust for better audio
+                if (uasState == QString("STANDBY")) uasState = QString("standing by");
+                if (uasState == QString("EMERGENCY")) uasState = QString("emergency condition");
+                if (uasState == QString("CRITICAL")) uasState = QString("critical condition");
+                if (uasState == QString("SHUTDOWN")) uasState = QString("shutting down");
+
+                stateAudio = uasState;
             }
 
             if (this->mode != static_cast<int>(state.base_mode))
@@ -480,6 +501,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             lpVoltage = filterVoltage(currentVoltage);
             tickLowpassVoltage = tickLowpassVoltage*0.8f + 0.2f*currentVoltage;
 
+
             // We don't want to tick above the threshold
             if (tickLowpassVoltage > tickVoltage)
             {
@@ -487,9 +509,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             if ((startVoltage > 0.0f) && (tickLowpassVoltage < tickVoltage) && (fabs(lastTickVoltageValue - tickLowpassVoltage) > 0.1f)
-                    && (lpVoltage < tickVoltage))
+                    /* warn if lower than treshold */
+                    && (lpVoltage < tickVoltage)
+                    /* warn only if we have at least the voltage of an empty LiPo cell, else we're sampling something wrong */
+                    && (currentVoltage > 3.3f)
+                    /* warn only if current voltage is really still lower by a reasonable amount */
+                    && ((currentVoltage - 0.1f) < tickVoltage)
+                    /* warn only every 12 seconds */
+                    && (QGC::groundTimeUsecs() - lastVoltageWarning) > 12000000)
             {
-                GAudioOutput::instance()->say(QString("voltage warning: %1 volt").arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                GAudioOutput::instance()->say(QString("voltage warning: %1 volts").arg(lpVoltage, 0, 'f', 1, QChar(' ')));
+                lastVoltageWarning = QGC::groundTimeUsecs();
                 lastTickVoltageValue = tickLowpassVoltage;
             }
 
@@ -2640,6 +2670,11 @@ QString UAS::getAudioModeTextFor(int id)
     else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
     {
         mode += "manual";
+    }
+    else
+    {
+        // Nothing else applies, we're in preflight
+        mode += "preflight";
     }
 
     if (modeid != 0)

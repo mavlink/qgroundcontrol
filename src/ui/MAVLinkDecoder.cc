@@ -57,8 +57,8 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     {
         mavlink_system_time_t timebase;
         mavlink_msg_system_time_decode(&message, &timebase);
-        onboardTimeOffset[message.sysid] = timebase.time_unix_usec/1000 - timebase.time_boot_ms;
-        onboardToGCSUnixTimeOffsetAndDelay[message.sysid] = static_cast<qint64>(QGC::groundTimeMilliseconds() - timebase.time_unix_usec/1000);
+        onboardTimeOffset[message.sysid] = (timebase.time_unix_usec+500)/1000 - timebase.time_boot_ms;
+        onboardToGCSUnixTimeOffsetAndDelay[message.sysid] = static_cast<qint64>(QGC::groundTimeMilliseconds() - (timebase.time_unix_usec+500)/1000);
     }
     else
     {
@@ -77,7 +77,7 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
         else if (QString(messageInfo[msgid].fields[fieldid].name).contains("usec") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT64_T)
         {
             time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            time = time/1000; // Scale to milliseconds
+            time = (time+500)/1000; // Scale to milliseconds, round up/down correctly
         }
         else
         {
@@ -182,7 +182,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         mavlink_debug_vect_t debug;
         mavlink_msg_debug_vect_decode(msg, &debug);
         name = name.arg(QString(debug.name), fieldName);
-        time = debug.time_usec / 1000;
+        time = (debug.time_usec+500)/1000; // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG)
     {
@@ -195,7 +195,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     {
         mavlink_named_value_float_t debug;
         mavlink_msg_named_value_float_decode(msg, &debug);
-        name = name.arg(debug.name).arg(fieldName);
+        name = debug.name;
         time = debug.time_boot_ms;
     }
     else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)

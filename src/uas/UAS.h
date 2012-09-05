@@ -671,6 +671,9 @@ protected:
     quint64 getUnixReferenceTime(quint64 time);
     int componentID[256];
     bool componentMulti[256];
+    bool connectionLost; ///< Flag indicates a timed out connection
+    quint64 connectionLossTime; ///< Time the connection was interrupted
+    quint64 lastVoltageWarning; ///< Time at which the last voltage warning occured
 
 protected slots:
     /** @brief Write settings to disk */
