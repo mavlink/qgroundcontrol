@@ -201,7 +201,9 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
-                emit updateStatusString("done.");
+                QTime time = QTime::currentTime();
+                QString timeString = time.toString();
+                emit updateStatusString(tr("done. (updated at %1)").arg(timeString));
 
             }
         } else {
