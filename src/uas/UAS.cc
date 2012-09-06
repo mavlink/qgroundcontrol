@@ -203,8 +203,6 @@ void UAS::updateState()
     quint64 heartbeatInterval = QGC::groundTimeUsecs() - lastHeartbeat;
     if (!connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
     {
-        emit heartbeatTimeout(heartbeatInterval);
-        emit heartbeatTimeout();
         connectionLost = true;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
         GAudioOutput::instance()->say(audiostring.toLower());
@@ -214,6 +212,7 @@ void UAS::updateState()
     if (connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
     {
         connectionLossTime = heartbeatInterval;
+        emit heartbeatTimeout(true, heartbeatInterval/1000);
     }
 
     // Connection gained
@@ -223,6 +222,7 @@ void UAS::updateState()
         GAudioOutput::instance()->say(audiostring.toLower());
         connectionLost = false;
         connectionLossTime = 0;
+        emit heartbeatTimeout(false, 0);
     }
 
     // Position lock is set by the MAVLink message handler
@@ -855,7 +855,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, param);
                 emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                qDebug() << "RECEIVED PARAM:" << param;
+//                qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
             case MAV_PARAM_TYPE_UINT32:
@@ -866,7 +866,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, param);
                 emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                qDebug() << "RECEIVED PARAM:" << param;
+//                qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
             case MAV_PARAM_TYPE_INT32:
@@ -877,7 +877,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, param);
                 emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                qDebug() << "RECEIVED PARAM:" << param;
+//                qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
             default:
@@ -1629,11 +1629,11 @@ void UAS::sendMessage(mavlink_message_t message)
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, *links)
     {
-        qDebug() << "ITERATING THROUGH LINKS";
+        //qDebug() << "ITERATING THROUGH LINKS";
         if (link)
         {
             sendMessage(link, message);
-            qDebug() << "SENT MESSAGE";
+            //qDebug() << "SENT MESSAGE";
         }
         else
         {
@@ -2192,7 +2192,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         p.target_system = (uint8_t)uasId;
         p.target_component = (uint8_t)component;
 
-        qDebug() << "SENT PARAM:" << value;
+        //qDebug() << "SENT PARAM:" << value;
 
         // Copy string into buffer, ensuring not to exceed the buffer size
         for (unsigned int i = 0; i < sizeof(p.param_id); i++)
@@ -2232,7 +2232,7 @@ void UAS::requestParameter(int component, int id)
     read.target_component = component;
     mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
     sendMessage(msg);
-    qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << id;
+    //qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << id;
 }
 
 /**

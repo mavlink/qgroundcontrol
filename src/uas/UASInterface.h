@@ -527,10 +527,8 @@ signals:
     void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
 
     // ERROR AND STATUS SIGNALS
-    /** @brief Heartbeat timed out */
-    void heartbeatTimeout();
-    /** @brief Heartbeat timed out */
-    void heartbeatTimeout(unsigned int ms);
+    /** @brief Heartbeat timed out or was regained */
+    void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Name of system changed */
     void nameChanged(QString newName);
     /** @brief System has been selected as focused system */

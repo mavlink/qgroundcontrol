@@ -170,7 +170,7 @@ void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QStrin
     // Load CSV data
     if (!paramMetaFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "COULD NOT OPEN PARAM META INFO FILE:" << fileName;
+        //qDebug() << "COULD NOT OPEN PARAM META INFO FILE:" << fileName;
         return;
     }
 
@@ -235,7 +235,7 @@ void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QStrin
 
     QString out = separator;
     out.replace("\t", "<tab>");
-    qDebug() << " Separator: \"" << out << "\"";
+    //qDebug() << " Separator: \"" << out << "\"";
     //qDebug() << "READING CSV:" << header;
 
 
@@ -470,7 +470,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
  */
 void QGCParamWidget::addParameter(int uas, int component, QString parameterName, QVariant value)
 {
-    qDebug() << "PARAM WIDGET GOT PARAM:" << value;
+    //qDebug() << "PARAM WIDGET GOT PARAM:" << value;
     Q_UNUSED(uas);
     // Reference to item in tree
     QTreeWidgetItem* parameterItem = NULL;
@@ -800,7 +800,7 @@ void QGCParamWidget::loadParameters()
                             break;
                         }
 
-                        qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
+                        //qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
 
                         // Mark in UI
 
@@ -833,7 +833,7 @@ void QGCParamWidget::setRetransmissionGuardEnabled(bool enabled)
 void QGCParamWidget::retransmissionGuardTick()
 {
     if (transmissionActive) {
-        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
+        //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
 
         // Check for timeout
         // stop retransmission attempts on timeout
@@ -872,7 +872,7 @@ void QGCParamWidget::retransmissionGuardTick()
                 int count = 0;
                 foreach (int id, *paramList) {
                     if (count < retransmissionBurstRequestSize) {
-                        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
+                        //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
                         emit requestParameter(component, id);
                         statusLabel->setText(tr("Requested retransmission of #%1").arg(id+1));
                         count++;
@@ -915,7 +915,7 @@ void QGCParamWidget::retransmissionGuardTick()
                         }
                         break;
                     default:
-                        qCritical() << "ABORTED PARAM RETRANSMISSION, NO VALID QVARIANT TYPE";
+                        //qCritical() << "ABORTED PARAM RETRANSMISSION, NO VALID QVARIANT TYPE";
                         return;
                     }
                     statusLabel->setText(tr("Requested rewrite of: %1: %2").arg(key).arg(missingParams->value(key).toDouble()));
@@ -926,7 +926,7 @@ void QGCParamWidget::retransmissionGuardTick()
             }
         }
     } else {
-        qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
+        //qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
         setRetransmissionGuardEnabled(false);
     }
 }
@@ -965,21 +965,21 @@ void QGCParamWidget::setParameter(int component, QString parameterName, QVariant
         {
             QVariant fixedValue(value.toInt());
             emit parameterChanged(component, parameterName, fixedValue);
-            qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+            //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
         }
         break;
     case QVariant::UInt:
         {
             QVariant fixedValue(value.toUInt());
             emit parameterChanged(component, parameterName, fixedValue);
-            qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+            //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
         }
         break;
     case QMetaType::Float:
         {
             QVariant fixedValue(value.toFloat());
             emit parameterChanged(component, parameterName, fixedValue);
-            qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+            //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
         }
         break;
     default:

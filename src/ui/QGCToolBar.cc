@@ -61,6 +61,11 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 	toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
     addWidget(toolBarNameLabel);
 
+    toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
+    toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
+    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+    addWidget(toolBarTimeoutLabel);
+
     toolBarSafetyLabel = new QLabel("SAFE", this);
     toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
 	toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
@@ -110,9 +115,36 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-	// Set the toolbar to be updated every 2s
+    // Set the toolbar to be updated every 2s
     connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateViewTimer.start(2000);
+}
+
+void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
+{
+    // set timeout label visible
+    if (timeout)
+    {
+        // Alternate colors to increase visibility
+        if ((ms / 1000) % 2 == 0)
+        {
+            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+        }
+        else
+        {
+            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.dark(250).name()));
+        }
+        toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1));
+    }
+    else
+    {
+        // Check if loss text is present, reset once
+        if (toolBarTimeoutLabel->text() != "")
+        {
+            toolBarTimeoutLabel->setText("");
+            toolBarTimeoutLabel->setStyleSheet(QString(""));
+        }
+    }
 }
 
 void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
@@ -244,6 +276,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
         disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
         disconnect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
+        disconnect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
         if (mav->getWaypointManager())
         {
             disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -260,6 +293,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
     connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
     connect(active, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
+    connect(active, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
     if (active->getWaypointManager())
     {
         connect(active->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -274,6 +308,8 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
     toolBarModeLabel->setText(mav->getShortMode());
     toolBarStateLabel->setText(mav->getShortState());
+    toolBarTimeoutLabel->setStyleSheet(QString(""));
+    toolBarTimeoutLabel->setText("");
     setSystemType(mav, mav->getSystemType());
 }
 

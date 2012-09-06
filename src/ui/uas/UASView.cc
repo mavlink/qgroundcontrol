@@ -98,7 +98,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString,QString)));
     connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
-    connect(uas, SIGNAL(heartbeatTimeout()), this, SLOT(heartbeatTimeout()));
+    connect(uas, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool, unsigned int)));
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
     connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
@@ -175,9 +175,10 @@ UASView::~UASView()
     delete selectAction;
 }
 
-void UASView::heartbeatTimeout()
+void UASView::heartbeatTimeout(bool timeout, unsigned int ms)
 {
-    timeout = true;
+    Q_UNUSED(ms);
+    this->timeout = timeout;
 }
 
 void UASView::updateNavMode(int uasid, int mode, const QString& text)
