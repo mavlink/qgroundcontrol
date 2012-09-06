@@ -120,6 +120,8 @@ protected slots:
     void drawSetpointXYZYaw(float x, float y, float z, float yaw, const QColor &color, QPainter &painter);
     /** @brief Draw waypoints of this system */
     void drawWaypoints(QPainter& painter);
+    /** @brief Draw one waypoint */
+    void drawWaypoint(QPainter& painter, const QColor& color, float width, const QVector<Waypoint*>& list, int i, const QPointF& p);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */

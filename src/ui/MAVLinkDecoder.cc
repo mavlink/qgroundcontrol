@@ -41,6 +41,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
+//    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
 
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 }
@@ -239,6 +240,13 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         name = name.arg(debug.name).arg(fieldName);
         time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
+//    else if (msgid == MAVLINK_MSG_ID_HIGHRES_IMU)
+//    {
+//        mavlink_highres_imu_t d;
+//        mavlink_msg_highres_imu_decode(msg, &d);
+//        name = name.arg(debug.name).arg(fieldName);
+//        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
+//    }
     else
     {
         name = name.arg(messageInfo[msgid].name, fieldName);
