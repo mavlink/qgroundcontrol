@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QFileDialog>
 #include <QFile>
 #include <QList>
+#include <QTime>
 #include <QSettings>
 #include <QMessageBox>
 #include <QApplication>
@@ -444,7 +445,18 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
         }
         QString val = QString("%1").arg(value.toFloat(), 5, 'f', 1, QChar(' '));
         //statusLabel->setText(tr("OK: %1 %2 #%3/%4, %5 miss").arg(parameterName).arg(val).arg(paramId+1).arg(paramCount).arg(missCount));
-        statusLabel->setText(tr("OK: %1 %2 (%3/%4)").arg(parameterName).arg(val).arg(paramCount-missCount).arg(paramCount));
+        if (missCount == 0)
+        {
+            // Transmission done
+            QTime time = QTime::currentTime();
+            QString timeString = time.toString();
+            statusLabel->setText(tr("All received. (updated at %1)").arg(timeString));
+        }
+        else
+        {
+            // Transmission in progress
+            statusLabel->setText(tr("OK: %1 %2 (%3/%4)").arg(parameterName).arg(val).arg(paramCount-missCount).arg(paramCount));
+        }
     }
 
     // Check if last parameter was received
