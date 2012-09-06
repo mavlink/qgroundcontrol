@@ -70,6 +70,8 @@ public slots:
     void updateArmingState(bool armed);
     /** @brief Repaint widgets */
     void updateView();
+    /** @brief Update connection timeout time */
+    void heartbeatTimeout(bool timeout, unsigned int ms);
 
 protected:
     void createCustomWidgets();
@@ -79,6 +81,7 @@ protected:
     UASInterface* mav;
     QToolButton* symbolButton;
     QLabel* toolBarNameLabel;
+    QLabel* toolBarTimeoutLabel;
     QLabel* toolBarSafetyLabel;
     QLabel* toolBarModeLabel;
     QLabel* toolBarStateLabel;
