@@ -1120,10 +1120,6 @@ void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float widt
 {
     painter.setBrush(Qt::NoBrush);
 
-    // Setup pen for background
-    QPen penBg(color);
-    penBg.setWidthF(width*2.0f);
-
     // Setup pen for foreground
     QPen pen(color);
     pen.setWidthF(width);
@@ -1144,10 +1140,10 @@ void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float widt
 
     // Draw background
     pen.setColor(Qt::black);
-    painter.setPen(penBg);
-    drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+    painter.setPen(pen);
+    drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f*3.0f), Qt::black, &painter);
     drawPolygon(poly, &painter);
-    drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 1.0, Qt::black, &painter);
+    drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 3.0, Qt::black, &painter);
 
     // Draw foreground
     pen.setColor(color);
@@ -1208,11 +1204,8 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             // Draw line from last waypoint to this one
             if (!lastWaypoint.isNull())
             {
-                QPen pen(QGC::colorCyan);
-                pen.setWidthF(refLineWidthToPen(0.4f));
-                painter.setPen(pen);
-                color = QGC::colorCyan;
-                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), color, &painter);
+                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f*2.0f), Qt::black, &painter);
+                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), QGC::colorCyan, &painter);
             }
             lastWaypoint = p;
         }
