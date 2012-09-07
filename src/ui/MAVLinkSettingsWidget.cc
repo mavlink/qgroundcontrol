@@ -186,9 +186,11 @@ void MAVLinkSettingsWidget::chooseLogfileName()
 
 void MAVLinkSettingsWidget::enableDroneOS(bool enable)
 {
+    // Enable multiplexing
+    protocol->enableMultiplexing(enable);
     // Get current selected host and port
     QString hostString = m_ui->droneOSComboBox->currentText();
-    QString host = hostString.split(":").first();
+    //QString host = hostString.split(":").first();
 
     // Delete from all lists first
     UDPLink* firstUdp = NULL;

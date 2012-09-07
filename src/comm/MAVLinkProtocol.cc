@@ -429,7 +429,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     {
                         // Only forward this message to the other links,
                         // not the link the message was received on
-                        if (currLink != link) sendMessage(currLink, message);
+                        if (currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
                     }
                 }
             }
@@ -475,7 +475,7 @@ void MAVLinkProtocol::sendMessage(mavlink_message_t message)
     for (i = links.begin(); i != links.end(); ++i)
     {
         sendMessage(*i, message);
-        //qDebug() << __FILE__ << __LINE__ << "SENT MESSAGE OVER" << ((LinkInterface*)*i)->getName() << "LIST SIZE:" << links.size();
+        qDebug() << __FILE__ << __LINE__ << "SENT MESSAGE OVER" << ((LinkInterface*)*i)->getName() << "LIST SIZE:" << links.size();
     }
 }
 
@@ -490,6 +490,29 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
     // Rewriting header to ensure correct link ID is set
     static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
     if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len, messageKeys[message.msgid]);
+    // Write message into buffer, prepending start sign
+    int len = mavlink_msg_to_send_buffer(buffer, &message);
+    // If link is connected
+    if (link->isConnected())
+    {
+        // Send the portion of the buffer now occupied by the message
+        link->writeBytes((const char*)buffer, len);
+    }
+}
+
+/**
+ * @param link the link to send the message over
+ * @param message message to send
+ * @param systemid id of the system the message is originating from
+ * @param componentid id of the component the message is originating from
+ */
+void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message, quint8 systemid, quint8 componentid)
+{
+    // Create buffer
+    static uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    // Rewriting header to ensure correct link ID is set
+    static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
+    if (link->getId() != 0) mavlink_finalize_message_chan(&message, systemid, componentid, link->getId(), message.len, messageKeys[message.msgid]);
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected
