@@ -123,11 +123,9 @@ void UDPLink::addHost(const QString& host)
                 }
             }
             hosts.append(address);
-			this->setAddress(address);
             //qDebug() << "Address:" << address.toString();
             // Set port according to user input
             ports.append(host.split(":").last().toInt());
-			this->setPort(host.split(":").last().toInt());
         }
     }
     else
