@@ -314,16 +314,22 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    this->roll = roll;
-    this->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
-    this->yaw = yaw;
+    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
+    {
+        this->roll = roll;
+        this->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
+        this->yaw = yaw;
+    }
 }
 
 void HUD::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    attitudes.insert(component, QVector3D(roll, pitch*3.35f, yaw)); // Constant here is the 'focal length' of the projection onto the plane
+    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
+    {
+        attitudes.insert(component, QVector3D(roll, pitch*3.35f, yaw)); // Constant here is the 'focal length' of the projection onto the plane
+    }
 }
 
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
