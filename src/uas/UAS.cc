@@ -467,7 +467,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 audiostring += modeAudio + stateAudio + navModeAudio;
             }
 
-            if ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY)
+            if (statechanged && ((int)state.system_status == (int)MAV_STATE_CRITICAL || state.system_status == (int)MAV_STATE_EMERGENCY))
             {
                 GAudioOutput::instance()->say(QString("emergency for system %1").arg(this->getUASID()));
                 QTimer::singleShot(3000, GAudioOutput::instance(), SLOT(startEmergency()));
