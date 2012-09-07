@@ -886,17 +886,38 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
             break;
         case MAVLINK_MSG_ID_COMMAND_ACK:
+        {
             mavlink_command_ack_t ack;
             mavlink_msg_command_ack_decode(&message, &ack);
-            if (ack.result == 1)
+            switch (ack.result)
+            {
+            case MAV_RESULT_ACCEPTED:
             {
                 emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
             }
-            else
+                break;
+            case MAV_RESULT_TEMPORARILY_REJECTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Rejected CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
             }
-            break;
+                break;
+            case MAV_RESULT_DENIED:
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Denied CMD: %1").arg(ack.command));
+            }
+                break;
+            case MAV_RESULT_UNSUPPORTED:
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
+            }
+                break;
+            case MAV_RESULT_FAILED:
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Failed CMD: %1").arg(ack.command));
+            }
+                break;
+            }
+        }
         case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
         {
             mavlink_roll_pitch_yaw_thrust_setpoint_t out;
