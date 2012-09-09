@@ -1259,8 +1259,44 @@ void MainWindow::UASCreated(UASInterface* uas)
         case MAV_TYPE_HELICOPTER:
             icon = QIcon(":files/images/mavs/helicopter.svg");
             break;
+        case MAV_TYPE_ANTENNA_TRACKER:
+            icon = QIcon(":files/images/mavs/antenna-tracker.svg");
+            break;
         case MAV_TYPE_GCS:
             icon = QIcon(":files/images/mavs/groundstation.svg");
+            break;
+        case MAV_TYPE_AIRSHIP:
+            icon = QIcon(":files/images/mavs/airship.svg");
+            break;
+        case MAV_TYPE_FREE_BALLOON:
+            icon = QIcon(":files/images/mavs/free-balloon.svg");
+            break;
+        case MAV_TYPE_ROCKET:
+            icon = QIcon(":files/images/mavs/rocket.svg");
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            icon = QIcon(":files/images/mavs/ground-rover.svg");
+            break;
+        case MAV_TYPE_SURFACE_BOAT:
+            icon = QIcon(":files/images/mavs/surface-boat.svg");
+            break;
+        case MAV_TYPE_SUBMARINE:
+            icon = QIcon(":files/images/mavs/submarine.svg");
+            break;
+        case MAV_TYPE_HEXAROTOR:
+            icon = QIcon(":files/images/mavs/hexarotor.svg");
+            break;
+        case MAV_TYPE_OCTOROTOR:
+            icon = QIcon(":files/images/mavs/octorotor.svg");
+            break;
+        case MAV_TYPE_TRICOPTER:
+            icon = QIcon(":files/images/mavs/tricopter.svg");
+            break;
+        case MAV_TYPE_FLAPPING_WING:
+            icon = QIcon(":files/images/mavs/flapping-wing.svg");
+            break;
+        case MAV_TYPE_KITE:
+            icon = QIcon(":files/images/mavs/kite.svg");
             break;
         default:
             icon = QIcon(":files/images/mavs/unknown.svg");

@@ -326,25 +326,25 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
         // Set matching icon
         switch (systemType)
         {
-        case 0:
+        case MAV_TYPE_GENERIC:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/generic.svg"));
             break;
-        case 1:
+        case MAV_TYPE_FIXED_WING:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/fixed-wing.svg"));
             break;
-        case 2:
+        case MAV_TYPE_QUADROTOR:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/quadrotor.svg"));
             break;
-        case 3:
+        case MAV_TYPE_COAXIAL:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/coaxial.svg"));
             break;
-        case 4:
+        case MAV_TYPE_HELICOPTER:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
             break;
-        case 5:
+        case MAV_TYPE_ANTENNA_TRACKER:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
             break;
-        case 6: {
+        case MAV_TYPE_GCS: {
                 // A groundstation is a special system type, update widget
                 QString result;
                 m_ui->nameLabel->setText(tr("GCS ") + result.sprintf("%03d", uas->getUASID()));
@@ -362,6 +362,39 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
                 m_ui->abortButton->hide();
                 m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/groundstation.svg"));
             }
+            break;
+        case MAV_TYPE_AIRSHIP:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/airship.svg"));
+            break;
+        case MAV_TYPE_FREE_BALLOON:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/free-balloon.svg"));
+            break;
+        case MAV_TYPE_ROCKET:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/rocket.svg"));
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/ground-rover.svg"));
+            break;
+        case MAV_TYPE_SURFACE_BOAT:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/surface-boat.svg"));
+            break;
+        case MAV_TYPE_SUBMARINE:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/submarine.svg"));
+            break;
+        case MAV_TYPE_HEXAROTOR:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/hexarotor.svg"));
+            break;
+        case MAV_TYPE_OCTOROTOR:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/octorotor.svg"));
+            break;
+        case MAV_TYPE_TRICOPTER:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/tricopter.svg"));
+            break;
+        case MAV_TYPE_FLAPPING_WING:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/flapping-wing.svg"));
+            break;
+        case MAV_TYPE_KITE:
+            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/kite.svg"));
             break;
         default:
             m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
