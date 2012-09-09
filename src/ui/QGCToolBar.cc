@@ -405,23 +405,59 @@ void QGCToolBar::setSystemType(UASInterface* uas, unsigned int systemType)
     Q_UNUSED(uas);
         // Set matching icon
         switch (systemType) {
-        case 0:
+        case MAV_TYPE_GENERIC:
             symbolButton->setIcon(QIcon(":/files/images/mavs/generic.svg"));
             break;
-        case 1:
+        case MAV_TYPE_FIXED_WING:
             symbolButton->setIcon(QIcon(":/files/images/mavs/fixed-wing.svg"));
             break;
-        case 2:
+        case MAV_TYPE_QUADROTOR:
             symbolButton->setIcon(QIcon(":/files/images/mavs/quadrotor.svg"));
             break;
-        case 3:
+        case MAV_TYPE_COAXIAL:
             symbolButton->setIcon(QIcon(":/files/images/mavs/coaxial.svg"));
             break;
-        case 4:
+        case MAV_TYPE_HELICOPTER:
             symbolButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
             break;
-        case 5:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
+        case MAV_TYPE_ANTENNA_TRACKER:
+            symbolButton->setIcon(QIcon(":/files/images/mavs/antenn-tracker.svg"));
+            break;
+        case MAV_TYPE_GCS:
+            symbolButton->setIcon(QIcon(":files/images/mavs/groundstation.svg"));
+            break;
+        case MAV_TYPE_AIRSHIP:
+            symbolButton->setIcon(QIcon(":files/images/mavs/airship.svg"));
+            break;
+        case MAV_TYPE_FREE_BALLOON:
+            symbolButton->setIcon(QIcon(":files/images/mavs/free-balloon.svg"));
+            break;
+        case MAV_TYPE_ROCKET:
+            symbolButton->setIcon(QIcon(":files/images/mavs/rocket.svg"));
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            symbolButton->setIcon(QIcon(":files/images/mavs/ground-rover.svg"));
+            break;
+        case MAV_TYPE_SURFACE_BOAT:
+            symbolButton->setIcon(QIcon(":files/images/mavs/surface-boat.svg"));
+            break;
+        case MAV_TYPE_SUBMARINE:
+            symbolButton->setIcon(QIcon(":files/images/mavs/submarine.svg"));
+            break;
+        case MAV_TYPE_HEXAROTOR:
+            symbolButton->setIcon(QIcon(":files/images/mavs/hexarotor.svg"));
+            break;
+        case MAV_TYPE_OCTOROTOR:
+            symbolButton->setIcon(QIcon(":files/images/mavs/octorotor.svg"));
+            break;
+        case MAV_TYPE_TRICOPTER:
+            symbolButton->setIcon(QIcon(":files/images/mavs/tricopter.svg"));
+            break;
+        case MAV_TYPE_FLAPPING_WING:
+            symbolButton->setIcon(QIcon(":files/images/mavs/flapping-wing.svg"));
+            break;
+        case MAV_TYPE_KITE:
+            symbolButton->setIcon(QIcon(":files/images/mavs/kite.svg"));
             break;
         default:
             symbolButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
