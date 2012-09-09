@@ -39,6 +39,18 @@
         <file>files/images/mavs/generic.svg</file>
         <file>files/images/mavs/quadrotor.svg</file>
         <file>files/images/mavs/coaxial.svg</file>
+        <file>files/images/mavs/airship.svg</file>
+        <file>files/images/mavs/antenna-tracker.svg</file>
+        <file>files/images/mavs/flapping-wing.svg</file>
+        <file>files/images/mavs/free-balloon.svg</file>
+        <file>files/images/mavs/ground-rover.svg</file>
+        <file>files/images/mavs/hexarotor.svg</file>
+        <file>files/images/mavs/kite.svg</file>
+        <file>files/images/mavs/octorotor.svg</file>
+        <file>files/images/mavs/rocket.svg</file>
+        <file>files/images/mavs/submarine.svg</file>
+        <file>files/images/mavs/surface-boat.svg</file>
+        <file>files/images/mavs/tricopter.svg</file>
         <file>files/images/actions/system-shutdown.svg</file>
         <file>files/images/actions/system-log-out.svg</file>
         <file>files/images/actions/system-lock-screen.svg</file>
