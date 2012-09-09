@@ -144,6 +144,8 @@ public slots:
 
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
+    /** Delete an UAS */
+    void UASDeleted(UASInterface* uas);
     /** @brief Update system specs of a UAS */
     void UASSpecsChanged(int uas);
     void startVideoCapture();
