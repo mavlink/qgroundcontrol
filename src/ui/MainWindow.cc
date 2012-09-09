@@ -1214,6 +1214,12 @@ void MainWindow::UASSpecsChanged(int uas)
             ui.menuUnmanned_System->setTitle(activeUAS->getUASName());
         }
     }
+    else
+    {
+        // Last system deleted
+        ui.menuUnmanned_System->setTitle(tr("No System"));
+        ui.menuUnmanned_System->setEnabled(false);
+    }
 }
 
 void MainWindow::UASCreated(UASInterface* uas)
@@ -1374,9 +1380,29 @@ void MainWindow::UASCreated(UASInterface* uas)
     //}
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
+    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
 
     // Reload view state in case new widgets were added
     loadViewState();
+}
+
+void MainWindow::UASDeleted(UASInterface* uas)
+{
+    if (UASManager::instance()->getUASList().count() == 0)
+    {
+        // Last system deleted
+        ui.menuUnmanned_System->setTitle(tr("No System"));
+        ui.menuUnmanned_System->setEnabled(false);
+    }
+
+    QAction* act;
+    QList<QAction*> actions = ui.menuConnected_Systems->actions();
+
+    foreach (act, actions)
+    {
+        if (act->text().contains(uas->getUASName()))
+            ui.menuConnected_Systems->removeAction(act);
+    }
 }
 
 /**

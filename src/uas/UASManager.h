@@ -258,7 +258,10 @@ protected:
 
 signals:
 
+    /** A new system was created */
     void UASCreated(UASInterface* UAS);
+    /** A system was deleted */
+    void UASDeleted(UASInterface* UAS);
     /** @brief The UAS currently under main operator control changed */
     void activeUASSet(UASInterface* UAS);
     /** @brief The UAS currently under main operator control changed */
