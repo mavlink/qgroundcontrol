@@ -35,6 +35,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include <QHostInfo>
 #include <QSplashScreen>
+#include <QGCHilLink.h>
+#include <QGCHilConfiguration.h>
 
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
@@ -1381,6 +1383,19 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
     if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
+
+    // Add simulation configuration widget
+    UAS* mav = dynamic_cast<UAS*>(uas);
+
+    if (mav)
+    {
+        QGCHilConfiguration* hconf = new QGCHilConfiguration(mav->getHILSimulation(), this);
+        QString hilDockName = tr("HIL Config (%1)").arg(uas->getUASName());
+        QDockWidget* hilDock = new QDockWidget(hilDockName, this);
+        hilDock->setWidget(hconf);
+        hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
+        addTool(hilDock, hilDockName, Qt::RightDockWidgetArea);
+    }
 
     // Reload view state in case new widgets were added
     loadViewState();

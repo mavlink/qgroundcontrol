@@ -362,6 +362,10 @@ public:
     QGCUASParamManager* getParamManager() const {
         return paramManager;
     }
+    /** @brief Get the HIL simulation */
+    QGCHilLink* getHILSimulation() const {
+        return simulation;
+    }
     // TODO Will be removed
     /** @brief Set reference to the param manager **/
     void setParamManager(QGCUASParamManager* manager) {

@@ -39,13 +39,14 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 
 QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
+    mav(mav),
+    socket(NULL),
     process(NULL),
     terraSync(NULL)
 {
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
     this->connectState = false;
-    this->mav = mav;
     this->name = tr("X-Plane Link (localPort:%1)").arg(localPort);
     setRemoteHost(remoteHost);
 }
@@ -209,55 +210,62 @@ void QGCXPlaneLink::readBytes()
 
     qDebug() << "XPLANE:" << "LEN:" << s << "segs:" << nsegs;
 
-    union dataconv {
-        char c[8];
-        float f;
-        double d;
-        int i;
-    } u;
+    #pragma pack(push, 1)
+    struct payload {
+        int index;
+        float f[8];
+    } p;
+    #pragma pack(pop)
 
-    for (unsigned i = 0; i < nsegs; i++)
-    {
-        // Get index
-        unsigned ioff = (5+i*36);
-        memcpy(&(u.i), data+ioff, sizeof(u.i));
-        qDebug() << "ind:" << u.i;
-        unsigned doff = ioff+sizeof(u.i);
-        unsigned dsize = sizeof(u.d);
-        memcpy(&(u.d), data+doff, dsize);
-        doff += dsize;
-        qDebug() << "val1:" << u.d;
-    }
-
-    return;
-
-    // Parse string
-    double time;
+    quint64 time;
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
     double vx, vy, vz, xacc, yacc, zacc;
     double airspeed;
 
-//    time = values.at(0).toDouble();
-//    lat = values.at(1).toDouble();
-//    lon = values.at(2).toDouble();
-//    alt = values.at(3).toDouble();
-//    roll = values.at(4).toDouble();
-//    pitch = values.at(5).toDouble();
-//    yaw = values.at(6).toDouble();
-//    rollspeed = values.at(7).toDouble();
-//    pitchspeed = values.at(8).toDouble();
-//    yawspeed = values.at(9).toDouble();
+    if (data[0] == 'D' &&
+            data[1] == 'A' &&
+            data[2] == 'T' &&
+            data[3] == 'A')
+    {
 
-//    xacc = values.at(10).toDouble();
-//    yacc = values.at(11).toDouble();
-//    zacc = values.at(12).toDouble();
+        for (unsigned i = 0; i < nsegs; i++)
+        {
+            // Get index
+            unsigned ioff = (5+i*36);;
+            memcpy(&(p), data+ioff, sizeof(p));
 
-//    vx = values.at(13).toDouble();
-//    vy = values.at(14).toDouble();
-//    vz = values.at(15).toDouble();
+            if (p.index == 3)
+            {
+                qDebug() << "SPEEDS:" << p.f[0] << p.f[1] << p.f[2];
+            }
 
-//    airspeed = values.at(16).toDouble();
+            if (p.index == 18)
+            {
+                qDebug() << "ANG VEL:" << p.f[0] << p.f[1] << p.f[2];
+                roll = p.f[0] / 180.0 * M_PI;
+                pitch = p.f[1] / 180.0 * M_PI;
+                yaw = p.f[1] / 180.0 * M_PI;
+            }
+
+            if (p.index == 19)
+            {
+                qDebug() << "ATT:" << p.f[0] << p.f[1] << p.f[2];
+            }
+
+            if (p.index == 20)
+            {
+                qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
+                lat = p.f[0];
+                lon = p.f[1];
+                alt = p.f[2];
+            }
+        }
+    }
+    else
+    {
+        qDebug() << "UNKNOWN PACKET:" << data;
+    }
 
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
@@ -293,10 +301,15 @@ qint64 QGCXPlaneLink::bytesAvailable()
  **/
 bool QGCXPlaneLink::disconnectSimulation()
 {
-    disconnect(process, SIGNAL(error(QProcess::ProcessError)),
+    if (!connectState) return true;
+
+    if (process) disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    if (mav)
+    {
+        disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+        disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    }
 
     if (process)
     {
@@ -334,6 +347,7 @@ bool QGCXPlaneLink::connectSimulation()
     if (!mav) return false;
     socket = new QUdpSocket(this);
     connectState = socket->bind(localHost, localPort);
+    if (!connectState) return false;
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
@@ -505,7 +519,7 @@ bool QGCXPlaneLink::connectSimulation()
 
 //        qDebug() << "STARTING: " << processFgfs << processCall;
 
-    qDebug() << "STARTING X-PLANE LINK";
+    qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
 
     start(LowPriority);
     return connectState;

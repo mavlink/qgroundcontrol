@@ -89,6 +89,7 @@ public slots:
     bool disconnectSimulation();
 
 protected:
+    UASInterface* mav;
     QString name;
     QHostAddress localHost;
     quint16 localPort;
@@ -108,33 +109,10 @@ protected:
     QMutex statisticsMutex;
     QMutex dataMutex;
     QTimer refreshTimer;
-    UASInterface* mav;
     QProcess* process;
     QProcess* terraSync;
 
     void setName(QString name);
-
-signals:
-    /**
-     * @brief This signal is emitted instantly when the link is connected
-     **/
-    void flightGearConnected();
-
-    /**
-     * @brief This signal is emitted instantly when the link is disconnected
-     **/
-    void flightGearDisconnected();
-
-    /**
-     * @brief This signal is emitted instantly when the link status changes
-     **/
-    void flightGearConnected(bool connected);
-
-    /** @brief State update from FlightGear */
-    void hilStateChanged(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
-
 
 };
 
