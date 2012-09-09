@@ -8,10 +8,34 @@
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    version="1.1"
    width="48"
    height="48"
-   id="svg2327">
+   id="svg2327"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="ground-rover.svg">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1280"
+     inkscape:window-height="910"
+     id="namedview156"
+     showgrid="false"
+     inkscape:zoom="11.333333"
+     inkscape:cx="25.235294"
+     inkscape:cy="23.911764"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2327" />
   <defs
      id="defs3">
     <linearGradient
@@ -939,7 +963,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
         <dc:date>2005-03-08</dc:date>
         <dc:creator>
           <cc:Agent>
@@ -975,52 +999,56 @@
       </cc:License>
     </rdf:RDF>
   </metadata>
-  <g
-     id="layer1">
-    <text
-       x="11.823285"
+  <text
+     style="font-size:7px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+     xml:space="preserve"
+     id="text8336"
+     y="45.497997"
+     x="11.823285"><tspan
+       style="font-size:7px;fill:#cccccc"
+       id="tspan8338"
        y="45.497997"
-       id="text8336"
-       xml:space="preserve"
-       style="font-size:7px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
-         x="11.823285"
-         y="45.497997"
-         id="tspan8338"
-         style="font-size:7px;fill:#cccccc">ROVER</tspan></text>
-    <text
-       x="-10.960156"
+       x="11.823285">ROVER</tspan></text>
+  <text
+     style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+     xml:space="preserve"
+     id="text8340"
+     y="63.202797"
+     x="-10.960156"><tspan
+       id="tspan8342"
        y="63.202797"
-       id="text8340"
-       xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
-         x="-10.960156"
-         y="63.202797"
-         id="tspan8342" /></text>
+       x="-10.960156" /></text>
+  <g
+     id="g3143"
+     transform="matrix(1.095419,0,0,1.095419,-2.5034591,-6.7406219)">
     <path
        d="m 25.204159,12.687059 c 0.858681,0 1.690598,0.292743 2.37755,0.827178 l 4.955968,3.816448 12.243407,1.745147 c 0.834146,0.133607 1.373138,0.965513 1.11962,1.792218 l -1.251339,4.186329 c -15.109291,-0.03303 -26.823065,0.20424 -41.2811484,0 -0.4661426,0 -0.8660609,-0.401748 -0.8660609,-0.894435 l 0,-4.734411 c 0,-0.450934 0.3255507,-0.82589 0.7508062,-0.884339 l 8.5058351,-1.210509 3.368753,-3.44321 c 0.736017,-0.768251 1.742503,-1.183716 2.805639,-1.200416 z"
        id="path4085"
-       style="fill:#bebebe;fill-opacity:1;stroke:none" />
+       style="fill:#d2d2d2;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
     <g
        transform="translate(-0.33656871,-1.9072223)"
        id="g4087">
       <path
          d="m 25.945305,15.717018 -3.098721,0 0,3.174213 7.946027,0 -3.556443,-2.730361 c -0.368013,-0.28392 -0.832901,-0.443852 -1.290863,-0.443852 z"
          id="path12"
-         style="fill:#ffffff;fill-opacity:1;stroke:none" />
+         style="fill:#ffffff;fill-opacity:1;stroke:none"
+         inkscape:connector-curvature="0" />
       <path
          d="m 21.740136,15.710318 -3.908801,0 c -0.580636,0 -1.111928,0.307595 -1.439046,0.800278 l -0.964849,1.486229 c -0.238712,0.416034 0.0212,0.820964 0.46761,0.894431 l 5.845086,0 0,-3.180938 z"
          id="path4083"
-         style="fill:#ffffff;fill-opacity:1;stroke:none" />
+         style="fill:#ffffff;fill-opacity:1;stroke:none"
+         inkscape:connector-curvature="0" />
     </g>
     <path
-       d="m -4.7119617,32.461746 a 3.4217815,3.4217815 0 1 1 -6.8435633,0 3.4217815,3.4217815 0 1 1 6.8435633,0 z"
-       transform="translate(18.828597,-7.1607168)"
+       d="m 14.116635,25.301029 a 3.4217816,3.4217816 0 0 1 -6.843563,0 3.4217816,3.4217816 0 1 1 6.843563,0 z"
        id="path4091"
-       style="fill:#505050;fill-opacity:1;stroke:none" />
+       style="fill:#646464;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
     <path
-       d="m -4.7119617,32.461746 a 3.4217815,3.4217815 0 1 1 -6.8435633,0 3.4217815,3.4217815 0 1 1 6.8435633,0 z"
-       transform="translate(45.773339,-7.1607168)"
+       d="m 41.061377,25.301029 a 3.4217816,3.4217816 0 0 1 -6.843563,0 3.4217816,3.4217816 0 1 1 6.843563,0 z"
        id="path4093"
-       style="fill:#505050;fill-opacity:1;stroke:none" />
+       style="fill:#646464;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
   </g>
 </svg>
