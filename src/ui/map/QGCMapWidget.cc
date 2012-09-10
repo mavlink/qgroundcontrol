@@ -74,7 +74,7 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         // Start timer
         connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
         mapInitialized = true;
-        QTimer::singleShot(800, this, SLOT(loadSettings()));
+        //QTimer::singleShot(800, this, SLOT(loadSettings()));
     }
     updateTimer.start(maxUpdateInterval*1000);
     // Update all UAV positions
