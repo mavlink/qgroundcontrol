@@ -143,17 +143,41 @@ void QGCXPlaneLink::setRemoteHost(const QString& localHost)
 
 void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
 {
-    // magnetos,aileron,elevator,rudder,throttle\n
 
-    //float magnetos = 3.0f;
+    #pragma pack(push, 1)
+    struct payload {
+        char b[5];
+        int index;
+        float f[8];
+    } p;
+    #pragma pack(pop)
+
+    p.b[0] = 'D';
+    p.b[1] = 'A';
+    p.b[2] = 'T';
+    p.b[3] = 'A';
+    p.b[4] = '\0';
+
+    p.index = 12;
+    p.f[0] = rollAilerons;
+    p.f[1] = pitchElevator;
+    p.f[2] = yawRudder;
+
     Q_UNUSED(time);
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    QString state("%1\t%2\t%3\t%4\t%5\n");
-    state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-    writeBytes(state.toAscii().constData(), state.length());
-    qDebug() << "Updated controls" << state;
+    // Ail / Elevon / Rudder
+    writeBytes((const char*)&p, sizeof(p));
+
+    p.index = 25;
+    memset(p.f, 0, sizeof(p.f));
+    p.f[0] = 0.5f;//throttle;
+    p.f[1] = 0.5f;//throttle;
+    p.f[2] = 0.5f;//throttle;
+    p.f[3] = 0.5f;//throttle;
+    // Throttle
+    writeBytes((const char*)&p, sizeof(p));
 }
 
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
@@ -220,8 +244,9 @@ void QGCXPlaneLink::readBytes()
     quint64 time;
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
-    double vx, vy, vz, xacc, yacc, zacc;
-    double airspeed;
+    float vx, vy, vz, xacc, yacc, zacc;
+    float airspeed;
+    float groundspeed;
 
     if (data[0] == 'D' &&
             data[1] == 'A' &&
@@ -237,28 +262,60 @@ void QGCXPlaneLink::readBytes()
 
             if (p.index == 3)
             {
-                qDebug() << "SPEEDS:" << p.f[0] << p.f[1] << p.f[2];
-            }
+                //qDebug() << "SPEEDS:" << p.f[0] << p.f[1] << p.f[2];
+                airspeed = p.f[6] * 0.44704f;
+                groundspeed = p.f[7] * 0.44704;
 
-            if (p.index == 18)
+
+
+                qDebug() << "SPEEDS:" << "airspeed" << airspeed << "m/s, groundspeed" << groundspeed << "m/s";
+            }
+            else if (p.index == 16)
             {
-                qDebug() << "ANG VEL:" << p.f[0] << p.f[1] << p.f[2];
-                roll = p.f[0] / 180.0 * M_PI;
-                pitch = p.f[1] / 180.0 * M_PI;
-                yaw = p.f[1] / 180.0 * M_PI;
+                qDebug() << "ANG VEL:" << p.f[0] << p.f[3] << p.f[7];
+                rollspeed = p.f[2];
+                pitchspeed = p.f[1];
+                yawspeed = p.f[0];
             }
-
-            if (p.index == 19)
+            else if (p.index == 17)
             {
-                qDebug() << "ATT:" << p.f[0] << p.f[1] << p.f[2];
+                qDebug() << "HDNG" << "pitch" << p.f[0] << "roll" << p.f[1] << "hding true" << p.f[2] << "hding mag" << p.f[3];
+                // XXX Feeding true heading - might need fix
+                pitch = (p.f[0] - 180.0f) / 180.0f * M_PI;
+                roll = (p.f[1] - 180.0f) / 180.0f * M_PI;
+                yaw = (p.f[2] - 180.0f) / 180.0f * M_PI;
             }
 
-            if (p.index == 20)
+//            else if (p.index == 19)
+//            {
+//                qDebug() << "ATT:" << p.f[0] << p.f[1] << p.f[2];
+//            }
+            else if (p.index == 20)
             {
                 qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
                 lat = p.f[0];
                 lon = p.f[1];
-                alt = p.f[2];
+                alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
+            }
+            else if (p.index == 12)
+            {
+                qDebug() << "AIL/ELEV/RUD" << p.f[0] << p.f[1] << p.f[2];
+            }
+            else if (p.index == 25)
+            {
+                qDebug() << "THROTTLE" << p.f[0] << p.f[1] << p.f[2] << p.f[3];
+            }
+            else if (p.index == 0)
+            {
+                qDebug() << "STATS" << "fgraphics/s" << p.f[0] << "fsim/s" << p.f[2] << "t frame" << p.f[3] << "cpu load" << p.f[4] << "grnd ratio" << p.f[5] << "filt ratio" << p.f[6];
+            }
+            else if (p.index == 11)
+            {
+                qDebug() << "CONTROLS" << "ail" << p.f[0] << "elev" << p.f[1] << "rudder" << p.f[2] << "nwheel" << p.f[3];
+            }
+            else
+            {
+                qDebug() << "UNKNOWN #" << p.index << p.f[0] << p.f[1] << p.f[2] << p.f[3];
             }
         }
     }
@@ -269,8 +326,8 @@ void QGCXPlaneLink::readBytes()
 
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
-                         pitchspeed, yawspeed, lat, lon, alt,
-                         vx, vy, vz, xacc, yacc, zacc);
+                         pitchspeed, yawspeed, lat*1E7, lon*1E7, alt*1E3,
+                         vx, vy, vz, xacc*1000, yacc*1000, zacc*1000);
 
     //    // Echo data for debugging purposes
     //    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;

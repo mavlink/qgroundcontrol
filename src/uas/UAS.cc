@@ -2585,7 +2585,9 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         mavlink_message_t msg;
-        mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+        mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                   time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
+                                   lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
         sendMessage(msg);
     }
     else
