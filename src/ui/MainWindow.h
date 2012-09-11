@@ -76,6 +76,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASControlParameters.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
+#include "QGCVehicleConfig.h"
 #include "MAVLinkDecoder.h"
 
 class QGCMapTool;
@@ -143,6 +144,8 @@ public slots:
 
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
+    /** Delete an UAS */
+    void UASDeleted(UASInterface* uas);
     /** @brief Update system specs of a UAS */
     void UASSpecsChanged(int uas);
     void startVideoCapture();
@@ -313,6 +316,7 @@ protected:
     // Center widgets
     QPointer<Linecharts> linechartWidget;
     QPointer<HUD> hudWidget;
+    QPointer<QGCVehicleConfig> configWidget;
     QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;

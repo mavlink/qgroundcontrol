@@ -65,7 +65,7 @@ class ObjectDetectionView : public QWidget
     };
 
 public:
-    explicit ObjectDetectionView(QString folder="images/patterns", QWidget *parent = 0);
+    explicit ObjectDetectionView(QString folder="files/images/patterns", QWidget *parent = 0);
     virtual ~ObjectDetectionView();
 
     /** @brief Resize widget contents */

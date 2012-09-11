@@ -28,6 +28,7 @@ void WaypointViewOnlyView::changedAutoContinue(int state)
 void WaypointViewOnlyView::changedCurrent(int state)
 //This is a slot receiving signals from QCheckBox m_ui->current. The state given here is whatever the user has clicked and not the true "current" value onboard.
 {
+    Q_UNUSED(state);
     //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
     m_ui->current->blockSignals(true);    
 

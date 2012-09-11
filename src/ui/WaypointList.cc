@@ -101,7 +101,6 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     if (uas)
     {
         WPM = uas->getWaypointManager();
-        //setUAS(uas);
     }
     else
     {
@@ -176,6 +175,9 @@ void WaypointList::setUAS(UASInterface* uas)
         //connect(WPM,SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
         //connect(WPM,SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
     }
+
+    // Update list
+    read();
 }
 
 void WaypointList::saveWaypoints()
@@ -338,6 +340,7 @@ int WaypointList::addCurrentPositionWaypoint()
             return 1;
         }
     }
+    return 1;
 }
 
 void WaypointList::updateStatusLabel(const QString &string)

@@ -120,6 +120,8 @@ protected slots:
     void drawSetpointXYZYaw(float x, float y, float z, float yaw, const QColor &color, QPainter &painter);
     /** @brief Draw waypoints of this system */
     void drawWaypoints(QPainter& painter);
+    /** @brief Draw one waypoint */
+    void drawWaypoint(QPainter& painter, const QColor& color, float width, const QVector<Waypoint*>& list, int i, const QPointF& p);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */
@@ -162,20 +164,6 @@ protected:
     double refToMetric(double ref);
     /** @brief Metric body coordinates to screen coordinates */
     QPointF metricBodyToScreen(QPointF metric);
-    QMap<int, QString> objectNames;
-    QMap<int, int> objectTypes;
-    QMap<int, float> objectQualities;
-    QMap<int, float> objectBearings;
-    QMap<int, float> objectDistances;
-    bool dragStarted;
-    bool leftDragStarted;
-    bool mouseHasMoved;
-    float startX;
-    float startY;
-    QTimer statusClearTimer;
-    QString statusMessage;
-    bool actionPending;
-    bool directSending;
 
     /**
      * @brief Private data container class to be used within the HSI widget
@@ -211,6 +199,21 @@ protected:
 
         friend class HSIDisplay;
     };
+
+    QMap<int, QString> objectNames;
+    QMap<int, int> objectTypes;
+    QMap<int, float> objectQualities;
+    QMap<int, float> objectBearings;
+    QMap<int, float> objectDistances;
+    bool dragStarted;
+    bool leftDragStarted;
+    bool mouseHasMoved;
+    float startX;
+    float startY;
+    QTimer statusClearTimer;
+    QString statusMessage;
+    bool actionPending;
+    bool directSending;
 
     QMap<int, GPSSatellite*> gpsSatellites;
     unsigned int satellitesUsed;
@@ -275,8 +278,8 @@ protected:
     int laserFix;             ///< Localization dimensions based on laser
     int iruFix;               ///< Localization dimensions based on ultrasound
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
-    float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
     float topMargin;          ///< Margin on top of the page, in virtual coordinates
+    float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
 
     bool attControlKnown;     ///< Attitude control status known flag
     bool xyControlKnown;      ///< XY control status known flag

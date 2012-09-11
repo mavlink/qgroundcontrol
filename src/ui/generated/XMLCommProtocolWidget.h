@@ -60,7 +60,7 @@ public:
         selectFileButton = new QPushButton(XMLCommProtocolWidget);
         selectFileButton->setObjectName(QString::fromUtf8("selectFileButton"));
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/images/status/folder-open.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/files/images/status/folder-open.svg"), QSize(), QIcon::Normal, QIcon::Off);
         selectFileButton->setIcon(icon);
 
         gridLayout->addWidget(selectFileButton, 0, 2, 1, 1);
@@ -112,7 +112,7 @@ public:
         generateButton = new QPushButton(XMLCommProtocolWidget);
         generateButton->setObjectName(QString::fromUtf8("generateButton"));
         QIcon icon1;
-        icon1.addFile(QString::fromUtf8(":/images/categories/applications-system.svg"), QSize(), QIcon::Normal, QIcon::Off);
+        icon1.addFile(QString::fromUtf8(":/files/images/categories/applications-system.svg"), QSize(), QIcon::Normal, QIcon::Off);
         generateButton->setIcon(icon1);
 
         gridLayout->addWidget(generateButton, 5, 2, 1, 1);

@@ -314,16 +314,22 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    this->roll = roll;
-    this->pitch = pitch;
-    this->yaw = yaw;
+    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
+    {
+        this->roll = roll;
+        this->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
+        this->yaw = yaw;
+    }
 }
 
 void HUD::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    attitudes.insert(component, QVector3D(roll, pitch, yaw));
+    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
+    {
+        attitudes.insert(component, QVector3D(roll, pitch*3.35f, yaw)); // Constant here is the 'focal length' of the projection onto the plane
+    }
 }
 
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
@@ -440,6 +446,8 @@ float HUD::refToScreenY(float y)
  */
 void HUD::paintCenterBackground(float roll, float pitch, float yaw)
 {
+    Q_UNUSED(yaw);
+
     // Center indicator is 100 mm wide
     float referenceWidth = 70.0;
     float referenceHeight = 70.0;
@@ -464,7 +472,7 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     glTranslatef(referenceWidth/2.0f,referenceHeight/2.0f,0);
 
     // Move based on the yaw difference
-    glTranslatef(yaw, 0.0f, 0.0f);
+    //glTranslatef(yaw, 0.0f, 0.0f);
 
     // Rotate based on the bank
     glRotatef((roll/M_PI)*180.0f, 0.0f, 0.0f, 1.0f);
@@ -478,11 +486,11 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     glColor3ub(179,102,0);
 
     glBegin(GL_POLYGON);
-    glVertex2f(-300,-300);
+    glVertex2f(-300,-900);
     glVertex2f(-300,0);
     glVertex2f(300,0);
-    glVertex2f(300,-300);
-    glVertex2f(-300,-300);
+    glVertex2f(300,-900);
+    glVertex2f(-300,-900);
     glEnd();
 
     // Sky
@@ -490,8 +498,8 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
 
     glBegin(GL_POLYGON);
     glVertex2f(-300,0);
-    glVertex2f(-300,300);
-    glVertex2f(300,300);
+    glVertex2f(-300,900);
+    glVertex2f(300,900);
     glVertex2f(300,0);
     glVertex2f(-300,0);
 
@@ -612,9 +620,9 @@ void HUD::paintHUD()
 
         // Read out most important values to limit hash table lookups
         // Low-pass roll, pitch and yaw
-        rollLP = rollLP * 0.2f + 0.8f * roll;
-        pitchLP = pitchLP * 0.2f + 0.8f * pitch;
-        yawLP = yawLP * 0.2f + 0.8f * yaw;
+        rollLP = roll;//rollLP * 0.2f + 0.8f * roll;
+        pitchLP = pitch;//pitchLP * 0.2f + 0.8f * pitch;
+        yawLP = yaw;//yawLP * 0.2f + 0.8f * yaw;
 
         // Translate for yaw
         const float maxYawTrans = 60.0f;
@@ -788,8 +796,11 @@ void HUD::paintHUD()
 
             //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
-            // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
-            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f+180.0f;
+            // YAW is in compass-human readable format, so 0 .. 360 deg.
+            float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
+            if (yawDeg < 0) yawDeg += 360;
+            if (yawDeg > 360) yawDeg -= 360;
+            /* final safeguard for really stupid systems */
             int yawCompass = static_cast<int>(yawDeg) % 360;
             yawAngle.sprintf("%03d", yawCompass);
             paintText(yawAngle, defaultColor, 3.5f, -4.3f, compassY+ 0.97f, &painter);
@@ -884,7 +895,7 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
     const float lineDistance = 5.0f; ///< One pitch line every 10 degrees
     const float posIncrement = yDeg * lineDistance;
     float posY = posIncrement;
-    const float posLimit = sqrt(pow(vwidth, 2.0f) + pow(vheight, 2.0f));
+    const float posLimit = sqrt(pow(vwidth, 2.0f) + pow(vheight, 2.0f))*3.0f;
 
     const float offsetAbs = pitch * yDeg;
 

@@ -71,15 +71,13 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 	ui.linkType->addItem(tr("Xbee API"),QGC_LINK_XBEE);
 #endif // XBEELINK
     ui.linkType->setEditable(false);
-    //ui.linkType->setEnabled(false);
 
     ui.connectionType->addItem("MAVLink", QGC_PROTOCOL_MAVLINK);
-    //ui.connectionType->addItem("GPS NMEA", QGC_PROTOCOL_NMEA);
 
     // Create action to open this menu
     // Create configuration action for this link
     // Connect the current UAS
-    action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", this);
+    action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
     LinkManager::instance()->add(link);
 	action->setData(link->getId());
     action->setEnabled(true);
@@ -116,21 +114,13 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     SerialLink* serial = dynamic_cast<SerialLink*>(link);
     if(serial != 0) {
         QWidget* conf = new SerialConfigurationWindow(serial, this);
-        //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
-        //layout->addWidget(conf);
         ui.linkScrollArea->setWidget(conf);
-        //ui.linkScrollArea->setLayout(layout);
         ui.linkGroupBox->setTitle(tr("Serial Link"));
         ui.linkType->setCurrentIndex(0);
-        //ui.linkGroupBox->setTitle(link->getName());
-        //connect(link, SIGNAL(nameChanged(QString)), ui.linkGroupBox, SLOT(setTitle(QString)));
     }
     UDPLink* udp = dynamic_cast<UDPLink*>(link);
     if (udp != 0) {
         QWidget* conf = new QGCUDPLinkConfiguration(udp, this);
-        //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
-        //layout->addWidget(conf);
-        //ui.linkGroupBox->setLayout(layout);
         ui.linkScrollArea->setWidget(conf);
         ui.linkGroupBox->setTitle(tr("UDP Link"));
         ui.linkType->setCurrentIndex(1);
@@ -182,9 +172,6 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
     if (mavlink != 0) {
         QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
-        //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.protocolGroupBox);
-        //layout->addWidget(conf);
-        //ui.protocolGroupBox->setLayout(layout);
         ui.protocolScrollArea->setWidget(conf);
         ui.protocolGroupBox->setTitle(protocol->getName()+" (Global Settings)");
     } else {

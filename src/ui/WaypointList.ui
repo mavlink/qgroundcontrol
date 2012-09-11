@@ -153,7 +153,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/images/actions/go-bottom.svg</normaloff>:/images/actions/go-bottom.svg</iconset>
+           <normaloff>:/files/images/actions/go-bottom.svg</normaloff>:/files/images/actions/go-bottom.svg</iconset>
          </property>
         </widget>
        </item>
@@ -173,7 +173,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+           <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
          </property>
         </widget>
        </item>
@@ -193,7 +193,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+           <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
          </property>
         </widget>
        </item>
@@ -209,11 +209,11 @@
           <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
          </property>
          <property name="text">
-          <string>Read</string>
+          <string>Get</string>
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+           <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
          </property>
         </widget>
        </item>
@@ -229,11 +229,11 @@
           <string>Transmit all waypoints on this list to the MAV.</string>
          </property>
          <property name="text">
-          <string>Write</string>
+          <string>Set</string>
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+           <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
          </property>
         </widget>
        </item>
@@ -343,7 +343,7 @@
          </property>
          <property name="icon">
           <iconset resource="../../qgroundcontrol.qrc">
-           <normaloff>:/images/actions/go-jump.svg</normaloff>:/images/actions/go-jump.svg</iconset>
+           <normaloff>:/files/images/actions/go-jump.svg</normaloff>:/files/images/actions/go-jump.svg</iconset>
          </property>
         </widget>
        </item>
@@ -355,7 +355,7 @@
   <action name="actionAddWaypoint">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+     <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
    </property>
    <property name="text">
     <string>Add Waypoint</string>
@@ -367,7 +367,7 @@
   <action name="actionTransmit">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+     <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
    </property>
    <property name="text">
     <string>Transmit</string>
@@ -379,7 +379,7 @@
   <action name="actionRead">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+     <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
    </property>
    <property name="text">
     <string>Read</string>

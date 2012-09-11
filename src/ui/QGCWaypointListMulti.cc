@@ -4,8 +4,8 @@
 
 QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::QGCWaypointListMulti),
-    offline_uas_id(0)
+    offline_uas_id(0),
+    ui(new Ui::QGCWaypointListMulti)
 {
     ui->setupUi(this);
     setMinimumSize(600, 80);

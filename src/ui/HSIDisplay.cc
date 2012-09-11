@@ -49,6 +49,13 @@ This file is part of the QGROUNDCONTROL project
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
     HDDisplay(NULL, "HSI", parent),
+    dragStarted(false),
+    leftDragStarted(false),
+    mouseHasMoved(false),
+    startX(0.0f),
+    startY(0.0f),
+    actionPending(false),
+    directSending(false),
     gpsSatellites(),
     satellitesUsed(0),
     attXSet(0.0f),
@@ -88,6 +95,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     uiZSetCoordinate(0.0f),
     uiYawSet(0.0f),
     metricWidth(4.0),
+    xCenterPos(0),
+    yCenterPos(0),
     positionLock(false),
     attControlEnabled(false),
     xyControlEnabled(false),
@@ -97,14 +106,20 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     gpsFix(0),
     visionFix(0),
     laserFix(0),
+    iruFix(0),
     mavInitialized(false),
-    bottomMargin(10.0f),
-    dragStarted(false),
     topMargin(12.0f),
-    leftDragStarted(false),
-    mouseHasMoved(false),
-    actionPending(false),
-    directSending(false),
+    bottomMargin(10.0f),
+    attControlKnown(false),
+    xyControlKnown(false),
+    zControlKnown(false),
+    yawControlKnown(false),
+    positionFixKnown(false),
+    visionFixKnown(false),
+    gpsFixKnown(false),
+    iruFixKnown(false),
+    setPointKnown(false),
+    positionSetPointKnown(false),
     userSetPointSet(false),
     userXYSetPointSet(false),
     userZSetPointSet(false),
@@ -1101,18 +1116,63 @@ void HSIDisplay::drawSetpointXYZYaw(float x, float y, float z, float yaw, const 
     }
 }
 
+void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float width, const QVector<Waypoint*>& list, int i, const QPointF& p)
+{
+    painter.setBrush(Qt::NoBrush);
+
+    // Setup pen for foreground
+    QPen pen(color);
+    pen.setWidthF(width);
+
+    // DRAW WAYPOINT
+    float waypointSize = vwidth / 20.0f * 2.0f;
+    QPolygonF poly(4);
+    // Top point
+    poly.replace(0, QPointF(p.x(), p.y()-waypointSize/2.0f));
+    // Right point
+    poly.replace(1, QPointF(p.x()+waypointSize/2.0f, p.y()));
+    // Bottom point
+    poly.replace(2, QPointF(p.x(), p.y() + waypointSize/2.0f));
+    poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
+
+    float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
+    float acceptRadius = list.at(i)->getAcceptanceRadius();
+
+    // Draw background
+    pen.setColor(Qt::black);
+    painter.setPen(pen);
+    drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f*3.0f), Qt::black, &painter);
+    drawPolygon(poly, &painter);
+    drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 3.0, Qt::black, &painter);
+
+    // Draw foreground
+    pen.setColor(color);
+    painter.setPen(pen);
+    drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+    drawPolygon(poly, &painter);
+    drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 1.0, Qt::green, &painter);
+}
+
 void HSIDisplay::drawWaypoints(QPainter& painter)
 {
     if (uas)
     {
         const QVector<Waypoint*>& list = uas->getWaypointManager()->getWaypointEditableList();
 
+        // Do not work on empty lists
+        if (list.size() == 0) return;
+
         QColor color;
         painter.setBrush(Qt::NoBrush);
 
-        QPointF lastWaypoint;
+        // XXX Ugly hacks, needs rewrite
 
-        for (int i = 0; i < list.size(); i++) {
+        QPointF lastWaypoint;
+        QPointF currentWaypoint;
+        int currentIndex = 0;
+
+        for (int i = 0; i < list.size(); i++)
+        {
             QPointF in;
             if (list.at(i)->getFrame() == MAV_FRAME_LOCAL_NED)
             {
@@ -1129,49 +1189,28 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             // Scale from metric to screen reference coordinates
             QPointF p = metricBodyToRef(in);
 
-            // Setup pen
-            QPen pen(color);
-            painter.setBrush(Qt::NoBrush);
-
-            // DRAW WAYPOINT
-            float waypointSize = vwidth / 20.0f * 2.0f;
-            QPolygonF poly(4);
-            // Top point
-            poly.replace(0, QPointF(p.x(), p.y()-waypointSize/2.0f));
-            // Right point
-            poly.replace(1, QPointF(p.x()+waypointSize/2.0f, p.y()));
-            // Bottom point
-            poly.replace(2, QPointF(p.x(), p.y() + waypointSize/2.0f));
-            poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
-
             // Select color based on if this is the current waypoint
-            if (list.at(i)->getCurrent()) {
-                color = QGC::colorYellow;//uas->getColor();
-                pen.setWidthF(refLineWidthToPen(0.8f));
-            } else {
-                color = QGC::colorCyan;
-                pen.setWidthF(refLineWidthToPen(0.4f));
+            if (list.at(i)->getCurrent())
+            {
+                currentIndex = i;
+                currentWaypoint = p;
             }
-
-            pen.setColor(color);
-            painter.setPen(pen);
-            float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
-            drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
-            drawPolygon(poly, &painter);
-            float acceptRadius = list.at(i)->getAcceptanceRadius();
-            drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 1.0, Qt::green, &painter);
+            else
+            {
+                drawWaypoint(painter, QGC::colorCyan, refLineWidthToPen(0.4f), list, i, p);
+            }
 
             // DRAW CONNECTING LINE
             // Draw line from last waypoint to this one
             if (!lastWaypoint.isNull())
             {
-                pen.setWidthF(refLineWidthToPen(0.4f));
-                painter.setPen(pen);
-                color = QGC::colorCyan;
-                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), color, &painter);
+                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f*2.0f), Qt::black, &painter);
+                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), QGC::colorCyan, &painter);
             }
             lastWaypoint = p;
         }
+
+        drawWaypoint(painter, QGC::colorYellow, refLineWidthToPen(0.8f), list, currentIndex, currentWaypoint);
     }
 }
 

@@ -613,7 +613,8 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
             function = tr("Regression method %1 not found").arg(method);
         }
 
-		delete x, y;
+        delete x;
+        delete y;
     } else {
         // xName == yName
         function = tr("Please select different X and Y dimensions, not %1 = %2").arg(xName, yName);

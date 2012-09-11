@@ -284,7 +284,7 @@ Freenect::FreenectThread::run(void)
 void
 Freenect::readConfigFile(void)
 {
-    QSettings settings("data/kinect.cal", QSettings::IniFormat, 0);
+    QSettings settings("src/data/kinect.cal", QSettings::IniFormat, 0);
 
     rgbCameraParameters.cx = settings.value("rgb/principal_point/x").toDouble();
     rgbCameraParameters.cy = settings.value("rgb/principal_point/y").toDouble();

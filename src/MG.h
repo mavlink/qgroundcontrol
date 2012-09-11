@@ -394,7 +394,7 @@ public:
      * @return The absolute path of the icon directory
      **/
     static QString getIconDirectory() {
-        return MG::DIR::getSupportFilesDirectory() + "/images/";
+        return MG::DIR::getSupportFilesDirectory() + "/files/images/";
     }
 
 };

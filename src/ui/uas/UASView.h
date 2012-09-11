@@ -78,7 +78,7 @@ public slots:
     /** @brief Update the view if an UAS has been set to active */
     void updateActiveUAS(UASInterface* uas, bool active);
     /** @brief Set the widget into critical mode */
-    void heartbeatTimeout();
+    void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Set the background color for the widget */
     void setBackgroundColor();
     /** @brief Bring up the dialog to rename the system */
@@ -122,6 +122,7 @@ protected:
     QAction* renameAction;
     QAction* selectAction;
     QAction* hilAction;
+    QAction* hilXAction;
     QAction* selectAirframeAction;
     QAction* setBatterySpecsAction;
     static const int updateInterval = 800;

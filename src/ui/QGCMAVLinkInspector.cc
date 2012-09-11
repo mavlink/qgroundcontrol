@@ -19,8 +19,8 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     ui->setupUi(this);
 
     /* Insert system */
-    ui->systemComboBox->addItem(tr("All Systems"), 0);
-    ui->componentComboBox->addItem(tr("All Components"), 0);
+    ui->systemComboBox->addItem(tr("All"), 0);
+    ui->componentComboBox->addItem(tr("All"), 0);
 
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
@@ -38,6 +38,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     // ARM UI
     connect(ui->systemComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuSystem(int)));
     connect(ui->componentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuComponent(int)));
+    connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
 
     // ARM external connections
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
@@ -87,6 +88,12 @@ void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& na
     if (uas != selectedSystemID) return;
 
     rebuildComponentList();
+}
+
+void QGCMAVLinkInspector::clearView()
+{
+    treeWidgetItems.clear();
+    ui->treeWidget->clear();
 }
 
 void QGCMAVLinkInspector::refreshView()
