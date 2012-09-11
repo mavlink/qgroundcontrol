@@ -1,7 +1,0 @@
-<map name="Map" type="projected" version="2">
-    <!--Add a high resolution inset of Zurich-->
-    <image name="zurich" driver="tms">
-        <url>../map/zurich/tms.xml</url>
-    </image>
-</map>
-

@@ -30,8 +30,8 @@
           <string>Mute all audio output</string>
          </property>
          <property name="icon">
-          <iconset resource="../../mavground.qrc">
-           <normaloff>:/images/status/audio-volume-muted.svg</normaloff>:/images/status/audio-volume-muted.svg</iconset>
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/files/images/status/audio-volume-muted.svg</normaloff>:/files/images/status/audio-volume-muted.svg</iconset>
          </property>
         </widget>
        </item>
@@ -41,8 +41,8 @@
           <string>Automatically reconnect last link on application startup</string>
          </property>
          <property name="icon">
-          <iconset resource="../../mavground.qrc">
-           <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
          </property>
         </widget>
        </item>
@@ -97,7 +97,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../../qgroundcontrol.qrc"/>
  </resources>
  <connections>
   <connection>

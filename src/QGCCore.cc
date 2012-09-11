@@ -70,7 +70,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("OPENMAV"));
+    this->setOrganizationName(QLatin1String("QGroundControl"));
     this->setOrganizationDomain("org.qgroundcontrol");
 
     // Set settings format
@@ -107,8 +107,8 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     settings.sync();
 
     // Show splash screen
-    QPixmap splashImage(":images/splash.png");
-    QSplashScreen* splashScreen = new QSplashScreen(splashImage, Qt::WindowStaysOnTopHint);
+    QPixmap splashImage(":/files/images/splash.png");
+    QSplashScreen* splashScreen = new QSplashScreen(splashImage);
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
     splashScreen->show();

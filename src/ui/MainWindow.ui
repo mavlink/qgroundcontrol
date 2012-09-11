@@ -84,7 +84,7 @@
    </widget>
    <widget class="QMenu" name="menuConnected_Systems">
     <property name="enabled">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="title">
      <string>Select System</string>
@@ -92,7 +92,7 @@
    </widget>
    <widget class="QMenu" name="menuUnmanned_System">
     <property name="enabled">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
     <property name="title">
      <string>System</string>
@@ -142,6 +142,9 @@
     </property>
    </widget>
    <widget class="QMenu" name="menuPlugins">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Plugins</string>
     </property>
@@ -160,7 +163,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+     <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -175,8 +178,8 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/control/launch.svg</normaloff>
-     <normalon>:/images/control/launch.svg</normalon>:/images/control/launch.svg</iconset>
+     <normaloff>:/files/images/control/launch.svg</normaloff>
+     <normalon>:/files/images/control/launch.svg</normalon>:/files/images/control/launch.svg</iconset>
    </property>
    <property name="text">
     <string>Liftoff</string>
@@ -185,7 +188,7 @@
   <action name="actionLand">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
+     <normaloff>:/files/images/control/land.svg</normaloff>:/files/images/control/land.svg</iconset>
    </property>
    <property name="text">
     <string>Land</string>
@@ -194,7 +197,7 @@
   <action name="actionEmergency_Land">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+     <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
    </property>
    <property name="text">
     <string>Emergency Land</string>
@@ -206,7 +209,7 @@
   <action name="actionEmergency_Kill">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+     <normaloff>:/files/images/actions/process-stop.svg</normaloff>:/files/images/actions/process-stop.svg</iconset>
    </property>
    <property name="text">
     <string>Kill UAS</string>
@@ -218,7 +221,7 @@
   <action name="actionAdd_Link">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+     <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
    </property>
    <property name="text">
     <string>Add Link</string>
@@ -227,7 +230,7 @@
   <action name="actionConfiguration">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/categories/applications-system.svg</normaloff>:/images/categories/applications-system.svg</iconset>
+     <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -239,7 +242,7 @@
   <action name="actionJoystickSettings">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
+     <normaloff>:/files/images/devices/input-gaming.svg</normaloff>:/files/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
     <string>Joystick Test</string>
@@ -254,7 +257,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+     <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
    </property>
    <property name="text">
     <string>Simulate</string>
@@ -266,7 +269,7 @@
   <action name="actionShow_Slugs_View">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/contrib/slugs.png</normaloff>:/images/contrib/slugs.png</iconset>
+     <normaloff>:/files/images/contrib/slugs.png</normaloff>:/files/images/contrib/slugs.png</iconset>
    </property>
    <property name="text">
     <string>Show Slugs View</string>
@@ -275,7 +278,7 @@
   <action name="actionJoystick_Settings">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
+     <normaloff>:/files/images/devices/input-gaming.svg</normaloff>:/files/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
     <string>Joystick Settings</string>
@@ -287,7 +290,7 @@
   <action name="actionOnline_Documentation">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+     <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
     <string>Online Documentation</string>
@@ -296,7 +299,7 @@
   <action name="actionProject_Roadmap_2">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+     <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
    </property>
    <property name="text">
     <string>Project Roadmap</string>
@@ -305,7 +308,7 @@
   <action name="actionDeveloper_Credits">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
+     <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
     <string>Developer Credits</string>
@@ -317,7 +320,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
+     <normaloff>:/files/images/status/weather-overcast.svg</normaloff>:/files/images/status/weather-overcast.svg</iconset>
    </property>
    <property name="text">
     <string>Operator</string>
@@ -332,7 +335,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+     <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
     <string>Engineer</string>
@@ -347,7 +350,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
+     <normaloff>:/files/images/devices/network-wired.svg</normaloff>:/files/images/devices/network-wired.svg</iconset>
    </property>
    <property name="text">
     <string>Mavlink</string>
@@ -359,7 +362,7 @@
   <action name="actionSelectStylesheet">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+     <normaloff>:/files/images/categories/applications-internet.svg</normaloff>:/files/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
     <string>Select Stylesheet</string>
@@ -371,7 +374,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
+     <normaloff>:/files/images/status/network-wireless-encrypted.svg</normaloff>:/files/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
     <string>Pilot</string>
@@ -383,7 +386,7 @@
   <action name="actionNewCustomWidget">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+     <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
     <string>New Custom Widget</string>
@@ -395,11 +398,11 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/audio-volume-high.svg</normaloff>
-     <normalon>:/images/status/audio-volume-muted.svg</normalon>
-     <activeon>:/images/status/audio-volume-muted.svg</activeon>
-     <selectedoff>:/images/status/audio-volume-high.svg</selectedoff>
-     <selectedon>:/images/status/audio-volume-muted.svg</selectedon>:/images/status/audio-volume-high.svg</iconset>
+     <normaloff>:/files/images/status/audio-volume-high.svg</normaloff>
+     <normalon>:/files/images/status/audio-volume-muted.svg</normalon>
+     <activeon>:/files/images/status/audio-volume-muted.svg</activeon>
+     <selectedoff>:/files/images/status/audio-volume-high.svg</selectedoff>
+     <selectedon>:/files/images/status/audio-volume-muted.svg</selectedon>:/files/images/status/audio-volume-high.svg</iconset>
    </property>
    <property name="text">
     <string>Mute Audio Output</string>
@@ -411,7 +414,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+     <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
    </property>
    <property name="text">
     <string>Unconnected</string>
@@ -423,7 +426,7 @@
   <action name="actionShutdownMAV">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+     <normaloff>:/files/images/actions/system-log-out.svg</normaloff>:/files/images/actions/system-log-out.svg</iconset>
    </property>
    <property name="text">
     <string>Shutdown MAV</string>
@@ -467,7 +470,7 @@
   <action name="actionLoadCustomWidgetFile">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/folder-drag-accept.svg</normaloff>:/images/status/folder-drag-accept.svg</iconset>
+     <normaloff>:/files/images/status/folder-drag-accept.svg</normaloff>:/files/images/status/folder-drag-accept.svg</iconset>
    </property>
    <property name="text">
     <string>Load Custom Widget File</string>
@@ -476,7 +479,7 @@
   <action name="actionFirmwareUpdateView">
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+     <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
    </property>
    <property name="text">
     <string>Firmware Update</string>

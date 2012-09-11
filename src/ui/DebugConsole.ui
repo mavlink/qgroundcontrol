@@ -201,7 +201,7 @@
        </property>
        <property name="icon">
         <iconset resource="../../mavground.qrc">
-         <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+         <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
        </property>
       </widget>
      </item>
@@ -225,7 +225,7 @@
        </property>
        <property name="icon">
         <iconset resource="../../mavground.qrc">
-         <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+         <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
        </property>
       </widget>
      </item>

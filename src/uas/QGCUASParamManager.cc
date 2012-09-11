@@ -9,7 +9,7 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
     transmissionTimeout(0),
     retransmissionTimeout(350),
     rewriteTimeout(500),
-    retransmissionBurstRequestSize(2)
+    retransmissionBurstRequestSize(5)
 {
     uas->setParamManager(this);
 }

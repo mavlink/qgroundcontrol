@@ -13,19 +13,10 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="2,8">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="2,8,0,0,0">
    <property name="margin">
     <number>6</number>
    </property>
-   <item row="2" column="0" colspan="2">
-    <widget class="QTreeWidget" name="treeWidget">
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
-    </widget>
-   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
@@ -36,14 +27,30 @@
    <item row="0" column="1">
     <widget class="QComboBox" name="systemComboBox"/>
    </item>
-   <item row="1" column="1">
+   <item row="0" column="3">
     <widget class="QComboBox" name="componentComboBox"/>
    </item>
-   <item row="1" column="0">
+   <item row="0" column="2">
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Component</string>
      </property>
+    </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QPushButton" name="clearButton">
+     <property name="text">
+      <string>Clear</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="5">
+    <widget class="QTreeWidget" name="treeWidget">
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
     </widget>
    </item>
   </layout>

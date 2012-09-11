@@ -76,7 +76,7 @@ void QGCRGBDView::setActiveUAS(UASInterface* uas)
 void QGCRGBDView::clearData(void)
 {
     QImage offlineImg;
-    qDebug() << offlineImg.load(":/images/status/colorbars.png");
+    qDebug() << offlineImg.load(":/files/images/status/colorbars.png");
 
     glImage = QGLWidget::convertToGLFormat(offlineImg);
 }

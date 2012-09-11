@@ -41,6 +41,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
+//    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
 
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 }
@@ -53,12 +54,12 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     uint8_t msgid = message.msgid;
 
     // Handle time sync message
-    if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME && message.compid == 200)
+    if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME)
     {
         mavlink_system_time_t timebase;
         mavlink_msg_system_time_decode(&message, &timebase);
-        onboardTimeOffset[message.sysid] = timebase.time_unix_usec/1000 - timebase.time_boot_ms;
-        onboardToGCSUnixTimeOffsetAndDelay[message.sysid] = static_cast<qint64>(QGC::groundTimeMilliseconds() - timebase.time_unix_usec/1000);
+        onboardTimeOffset[message.sysid] = (timebase.time_unix_usec+500)/1000 - timebase.time_boot_ms;
+        onboardToGCSUnixTimeOffsetAndDelay[message.sysid] = static_cast<qint64>(QGC::groundTimeMilliseconds() - (timebase.time_unix_usec+500)/1000);
     }
     else
     {
@@ -77,7 +78,7 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
         else if (QString(messageInfo[msgid].fields[fieldid].name).contains("usec") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT64_T)
         {
             time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-            time = time/1000; // Scale to milliseconds
+            time = (time+500)/1000; // Scale to milliseconds, round up/down correctly
         }
         else
         {
@@ -100,11 +101,13 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 }
 
 quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
-{
+{ 
+    bool isNull = false;
     quint64 ret = 0;
     if (time == 0)
     {
         ret = QGC::groundTimeMilliseconds() - onboardToGCSUnixTimeOffsetAndDelay[systemID];
+        isNull = true;
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -128,11 +131,14 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
     else if (time < 1261440000000)
 #endif
     {
-        if (onboardTimeOffset[systemID] == 0 || time < (firstOnboardTime[systemID]-2000))
+        if (onboardTimeOffset[systemID] == 0 || time < (firstOnboardTime[systemID]-100))
         {
             firstOnboardTime[systemID] = time;
             onboardTimeOffset[systemID] = QGC::groundTimeMilliseconds() - time;
         }
+
+        if (time > firstOnboardTime[systemID]) firstOnboardTime[systemID] = time;
+
         ret = time + onboardTimeOffset[systemID];
     }
     else
@@ -141,6 +147,35 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
         // a Unix epoch timestamp. Do nothing.
         ret = time;
     }
+
+
+//    // Check if the offset estimation likely went wrong
+//    // and we're talking to a new instance / the system
+//    // has rebooted. Only reset if this is consistent.
+//    if (!isNull && lastNonNullTime > ret)
+//    {
+//        onboardTimeOffsetInvalidCount++;
+//    }
+//    else if (!isNull && lastNonNullTime < ret)
+//    {
+//        onboardTimeOffsetInvalidCount = 0;
+//    }
+
+//    // Reset onboard time offset estimation, since it seems to be really off
+//    if (onboardTimeOffsetInvalidCount > 20)
+//    {
+//        onboardTimeOffset = 0;
+//        onboardTimeOffsetInvalidCount = 0;
+//        lastNonNullTime = 0;
+//        qDebug() << "RESETTET ONBOARD TIME OFFSET";
+//    }
+
+//    // If we're progressing in time, set it
+//    // else wait for the reboot detection to
+//    // catch the timestamp wrap / reset
+//    if (!isNull && (lastNonNullTime < ret)) {
+//        lastNonNullTime = ret;
+//    }
 
     return ret;
 }
@@ -182,29 +217,36 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         mavlink_debug_vect_t debug;
         mavlink_msg_debug_vect_decode(msg, &debug);
         name = name.arg(QString(debug.name), fieldName);
-        time = debug.time_usec / 1000;
+        time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG)
     {
         mavlink_debug_t debug;
         mavlink_msg_debug_decode(msg, &debug);
         name = name.arg(QString("debug")).arg(debug.ind);
-        time = debug.time_boot_ms;
+        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
     else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
     {
         mavlink_named_value_float_t debug;
         mavlink_msg_named_value_float_decode(msg, &debug);
-        name = name.arg(debug.name).arg(fieldName);
-        time = debug.time_boot_ms;
+        name = debug.name;
+        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
     else if (msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
         mavlink_named_value_int_t debug;
         mavlink_msg_named_value_int_decode(msg, &debug);
         name = name.arg(debug.name).arg(fieldName);
-        time = debug.time_boot_ms;
+        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
+//    else if (msgid == MAVLINK_MSG_ID_HIGHRES_IMU)
+//    {
+//        mavlink_highres_imu_t d;
+//        mavlink_msg_highres_imu_decode(msg, &d);
+//        name = name.arg(debug.name).arg(fieldName);
+//        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
+//    }
     else
     {
         name = name.arg(messageInfo[msgid].name, fieldName);
@@ -316,7 +358,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         else
         {
             // Single value
-            float n = *((uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
+            uint32_t n = *((uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             fieldType = "uint32_t";
             emit valueChanged(msg->sysid, name, fieldType, n, time);
         }

@@ -52,7 +52,6 @@ enum qgc_link_t {
 
 enum qgc_protocol_t {
     QGC_PROTOCOL_MAVLINK,
-    QGC_PROTOCOL_NMEA
 };
 
 

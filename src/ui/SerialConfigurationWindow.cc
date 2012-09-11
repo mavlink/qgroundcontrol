@@ -52,7 +52,7 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         // Create action to open this menu
         // Create configuration action for this link
         // Connect the current UAS
-        action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
+        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", link);
         setLinkName(link->getName());
 
         setupPortList();
@@ -110,6 +110,9 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 		for (int i = 0; i < supportedBaudRates.size(); ++i) {
 			ui.baudRate->addItem(QString::number(supportedBaudRates.at(i)), supportedBaudRates.at(i));
 		}
+
+        // Load current link config
+        ui.portName->setCurrentIndex(ui.baudRate->findText(QString("%1").arg(this->link->getPortName())));
 
         connect(action, SIGNAL(triggered()), this, SLOT(configureCommunication()));
 
@@ -212,11 +215,6 @@ void SerialConfigurationWindow::setupPortList()
 {
     if (!link) return;
 
-    if (!userConfigured)
-    {
-        ui.portName->clear();
-        ui.portName->clearEditText();
-    }
     // Get the ports available on this system
     QVector<QString>* ports = link->getCurrentPorts();
 
@@ -230,7 +228,6 @@ void SerialConfigurationWindow::setupPortList()
             if (!userConfigured) ui.portName->setEditText(ports->at(i));
         }
     }
-
 
     ui.portName->setEditText(this->link->getPortName());
 }

@@ -46,7 +46,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../../../qgroundcontrol.qrc">
-       <normaloff>:/images/status/folder-open.svg</normaloff>:/images/status/folder-open.svg</iconset>
+       <normaloff>:/files/images/status/folder-open.svg</normaloff>:/files/images/status/folder-open.svg</iconset>
      </property>
     </widget>
    </item>
@@ -92,7 +92,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../../../qgroundcontrol.qrc">
-       <normaloff>:/images/status/folder-open.svg</normaloff>:/images/status/folder-open.svg</iconset>
+       <normaloff>:/files/images/status/folder-open.svg</normaloff>:/files/images/status/folder-open.svg</iconset>
      </property>
     </widget>
    </item>
@@ -131,7 +131,7 @@
      </property>
      <property name="icon">
       <iconset resource="../../../../qgroundcontrol.qrc">
-       <normaloff>:/images/categories/applications-system.svg</normaloff>:/images/categories/applications-system.svg</iconset>
+       <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
      </property>
     </widget>
    </item>

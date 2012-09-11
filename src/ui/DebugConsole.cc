@@ -74,12 +74,13 @@ DebugConsole::DebugConsole(QWidget *parent) :
     m_ui->receiveText->setMaximumBlockCount(500);
     // Allow to wrap everywhere
     m_ui->receiveText->setWordWrapMode(QTextOption::WrapAnywhere);
+//    // Set monospace font
+//    m_ui->receiveText->setFontFamily("Monospace");
 
     // Enable 10 Hz output
     //connect(&lineBufferTimer, SIGNAL(timeout()), this, SLOT(showData()));
     //lineBufferTimer.setInterval(100); // 100 Hz
     //lineBufferTimer.start();
-
     loadSettings();
 
     // Enable traffic measurements
@@ -392,20 +393,65 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                 // Convert to ASCII for readability
                 if (convertToAscii)
                 {
-                    if ((byte <= 32) || (byte > 126))
+                    if (escReceived)
+                    {
+                        if (escIndex < static_cast<int>(sizeof(escBytes)))
+                        {
+                            escBytes[escIndex] = byte;
+                            //qDebug() << "GOT BYTE ESC:" << byte;
+                            if (/*escIndex == 1 && */escBytes[escIndex] == 0x48)
+                            {
+                                // Handle sequence
+                                // for this one, clear all text
+                                m_ui->receiveText->clear();
+                                escReceived = false;
+                            }
+                            else if (/*escIndex == 1 && */escBytes[escIndex] == 0x4b)
+                            {
+                                // Handle sequence
+                                // for this one, do nothing
+                                escReceived = false;
+                            }
+                            else if (byte == 0x5b)
+                            {
+                                // Do nothing, this is still a valid escape sequence
+                            }
+                            else
+                            {
+                                escReceived = false;
+                            }
+                         }
+                        else
+                        {
+                            // Obviously something went wrong, reset
+                            escReceived = false;
+                            escIndex = 0;
+                        }
+                    }
+                    else if ((byte <= 32) || (byte > 126))
                     {
                         switch (byte)
                         {
                             case (unsigned char)'\n':   // Accept line feed
-                                if (lastByte != '\r')   // Do not break line again for CR+LF
+                                if (lastByte != '\r')   // Do not break line again for LF+CR
                                     str.append(byte);   // only break line for single LF or CR bytes
                             break;
                             case (unsigned char)' ':    // space of any type means don't add another on hex output
                             case (unsigned char)'\t':   // Accept tab
                             case (unsigned char)'\r':   // Catch and carriage return
-                                str.append(byte);
+                                if (lastByte != '\n')   // Do not break line again for CR+LF
+                                str.append(byte);       // only break line for single LF or CR bytes
                                 lastSpace = 1;
                             break;
+                            /* VT100 emulation (partially */
+                            case 0x1b:                  // ESC received
+                                escReceived = true;
+                                escIndex = 0;
+                                //qDebug() << "GOT ESC";
+                                break;
+                            case 0x08:                  // BS (backspace) received
+                                // Do nothing for now
+                                break;
                             default:                    // Append replacement character (box) if char is not ASCII
 //                                str.append(QChar(QChar::ReplacementCharacter));
                                 QString str2;
@@ -414,12 +460,15 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                                 else str2.sprintf(" 0x%02x ", byte);
                                 str.append(str2);
                                 lastSpace = 1;
+                                escReceived = false;
                             break;
                         }
                     }
                     else
                     {
-                        str.append(byte);           // Append original character
+                        // Ignore carriage return, because that
+                        // is auto-added with '\n'
+                        if (byte != '\r') str.append(byte);           // Append original character
                         lastSpace = 0;
                     }
                 }

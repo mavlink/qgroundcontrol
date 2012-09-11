@@ -55,7 +55,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     fontImpl = new osgQt::QFontImplementation(QFont(":/general/vera.ttf"));
 #else
     osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
-    fontImpl = 0;//new osgText::Font::Font("images/Vera.ttf");
+    fontImpl = 0;//new osgText::Font::Font("files/styles/Vera.ttf");
 #endif
     mFont = new osgText::Font(fontImpl);
 

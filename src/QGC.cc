@@ -22,7 +22,6 @@ This file is part of the QGROUNDCONTROL project
 ======================================================================*/
 
 #include "QGC.h"
-
 #include <qmath.h>
 #include <float.h>
 
@@ -73,7 +72,7 @@ float limitAngleToPMPIf(float angle)
     else
     {
         // Approximate
-        angle = fmodf(angle, (float) M_PI);
+        angle = fmodf(angle, (float)M_PI);
     }
 
     return angle;
