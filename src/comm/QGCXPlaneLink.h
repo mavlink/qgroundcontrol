@@ -112,6 +112,9 @@ protected:
     QProcess* process;
     QProcess* terraSync;
 
+    bool gpsReceived;
+    bool attitudeReceived;
+
     void setName(QString name);
 
 };

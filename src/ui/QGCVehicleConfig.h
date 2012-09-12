@@ -2,6 +2,7 @@
 #define QGCVEHICLECONFIG_H
 
 #include <QWidget>
+#include <QTimer>
 
 #include "UASInterface.h"
 
@@ -60,6 +61,7 @@ protected:
     int rcTrim[chanMax];                ///< Zero-position (center for roll/pitch/yaw, 0 throttle for throttle)
     int rcMapping[chanMax];             ///< PWM to function mappings
     bool rcRev[chanMax];                ///< Channel reverse
+    int rcValue[chanMax];               ///< Last values
     float rcRoll;                       ///< PPM input channel used as roll control input
     float rcPitch;                      ///< PPM input channel used as pitch control input
     float rcYaw;                        ///< PPM input channel used as yaw control input
@@ -70,6 +72,7 @@ protected:
     float rcAux3;                       ///< PPM input channel used as aux 1 input
     bool rcCalChanged;                  ///< Set if the calibration changes (and needs to be written)
     bool changed;                       ///< Set if any of the input data changed
+    QTimer updateTimer;                 ///< Controls update intervals
     
 private:
     Ui::QGCVehicleConfig *ui;
