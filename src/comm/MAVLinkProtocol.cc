@@ -291,12 +291,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled && m_logfile)
             {
-                const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
-                uint8_t buf[len];
+                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
                 quint64 time = QGC::groundTimeUsecs();
                 memcpy(buf, (void*)&time, sizeof(quint64));
                 // Write message to buffer
-                mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
+                int len = mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
                 QByteArray b((const char*)buf, len);
                 if(m_logfile->write(b) < static_cast<qint64>(MAVLINK_MAX_PACKET_LEN+sizeof(quint64)))
                 {
