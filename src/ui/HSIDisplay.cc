@@ -622,7 +622,7 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
 void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
 {
     // FIXME hardcode yaw to current value
-    setBodySetpointCoordinateYaw(0);
+    //setBodySetpointCoordinateYaw(0);
     if (mouseHasMoved)
     {
         if (event->type() == QMouseEvent::MouseButtonRelease && event->button() == Qt::RightButton)
