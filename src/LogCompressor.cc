@@ -61,8 +61,8 @@ void LogCompressor::run()
 	}
 
 	// Verify that the output file is useable
-	QTemporaryFile outTmpFile;
-	if (!outTmpFile.open()) {
+    QFile outTmpFile("processed_" + outFileName);
+    if (!outTmpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
 		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
 		return;
 	}
@@ -143,9 +143,9 @@ void LogCompressor::run()
 	infile.close();
 
 	// Make sure we remove the source file before replacing it.
-	QFile::remove(outFileName);
-	outTmpFile.copy(outFileName);
-	outTmpFile.close();
+//	QFile::remove(outFileName);
+//	outTmpFile.copy(outFileName);
+//	outTmpFile.close();
 	emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
 
 	// Clean up and update the status before we return.
