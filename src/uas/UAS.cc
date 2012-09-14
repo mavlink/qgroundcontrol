@@ -2405,12 +2405,12 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualThrust = thrust * thrustScaling;
 
     // If system has manual inputs enabled and is armed
-    if((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY))
+    if(((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
-        qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
+        //qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }

@@ -3,6 +3,7 @@
 #include <QTimer>
 
 #include "QGCVehicleConfig.h"
+#include "UASManager.h"
 #include "QGC.h"
 #include "ui_QGCVehicleConfig.h"
 
@@ -20,6 +21,19 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
 
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
     connect(ui->storeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    setActiveUAS(UASManager::instance()->getActiveUAS());
+
+    for (int i = 0; i < chanMax; i++)
+    {
+        rcValue[i] = 1500;
+    }
+
+    updateTimer.setInterval(150);
+    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
+    updateTimer.start();
 }
 
 QGCVehicleConfig::~QGCVehicleConfig()
@@ -68,7 +82,10 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
-    connect(active, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*, QString,QString)));
+    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+               SLOT(remoteControlChannelRawChanged(int,float)));
+    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+               SLOT(parameterChanged(int,int,QString,QVariant)));
 }
 
 void QGCVehicleConfig::resetCalibrationRC()
@@ -163,7 +180,7 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     if (chan == rcMapping[0])
     {
         // ROLL
-        if (rcRoll > rcTrim[chan])
+        if (rcRoll >= rcTrim[chan])
         {
             rcRoll = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
         }
@@ -172,12 +189,13 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
             rcRoll = (val - rcMin[chan])/(rcTrim[chan] - rcMin[chan]);
         }
 
+        rcValue[0] = val;
         rcRoll = qBound(-1.0f, rcRoll, 1.0f);
     }
     else if (chan == rcMapping[1])
     {
         // PITCH
-        if (rcPitch > rcTrim[chan])
+        if (rcPitch >= rcTrim[chan])
         {
             rcPitch = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
         }
@@ -185,13 +203,13 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
         {
             rcPitch = (val - rcMin[chan])/(rcTrim[chan] - rcMin[chan]);
         }
-
+        rcValue[1] = val;
         rcPitch = qBound(-1.0f, rcPitch, 1.0f);
     }
     else if (chan == rcMapping[2])
     {
         // YAW
-        if (rcYaw > rcTrim[chan])
+        if (rcYaw >= rcTrim[chan])
         {
             rcYaw = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
         }
@@ -199,13 +217,13 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
         {
             rcYaw = (val - rcMin[chan])/(rcTrim[chan] - rcMin[chan]);
         }
-
+        rcValue[2] = val;
         rcYaw = qBound(-1.0f, rcYaw, 1.0f);
     }
     else if (chan == rcMapping[3])
     {
         // THROTTLE
-        if (rcThrottle > rcTrim[chan])
+        if (rcThrottle >= rcTrim[chan])
         {
             rcThrottle = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
         }
@@ -213,13 +231,13 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
         {
             rcThrottle = (val - rcMin[chan])/(rcTrim[chan] - rcMin[chan]);
         }
-
+        rcValue[3] = val;
         rcThrottle = qBound(-1.0f, rcThrottle, 1.0f);
     }
     else if (chan == rcMapping[4])
     {
         // MODE SWITCH
-        if (rcMode > rcTrim[chan])
+        if (rcMode >= rcTrim[chan])
         {
             rcMode = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
         }
@@ -227,7 +245,7 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
         {
             rcMode = (val - rcMin[chan])/(rcTrim[chan] - rcMin[chan]);
         }
-
+        rcValue[4] = val;
         rcMode = qBound(-1.0f, rcMode, 1.0f);
     }
     else if (chan == rcMapping[5])
@@ -248,7 +266,7 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
 
     changed = true;
 
-    qDebug() << "RC CHAN:" << chan << "PPM:" << val;
+    //qDebug() << "RC CHAN:" << chan << "PPM:" << val;
 }
 
 void QGCVehicleConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
@@ -303,10 +321,10 @@ void QGCVehicleConfig::updateView()
 {
     if (changed)
     {
-        ui->rollSlider->setValue(rcRoll);
-        ui->pitchSlider->setValue(rcPitch);
-        ui->yawSlider->setValue(rcYaw);
-        ui->throttleSlider->setValue(rcThrottle);
+        ui->rollSlider->setValue(rcValue[0]);
+        ui->pitchSlider->setValue(rcValue[1]);
+        ui->yawSlider->setValue(rcValue[2]);
+        ui->throttleSlider->setValue(rcValue[3]);
         changed = false;
     }
 }
