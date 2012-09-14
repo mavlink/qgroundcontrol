@@ -241,7 +241,6 @@ void QGCXPlaneLink::readBytes()
     } p;
     #pragma pack(pop)
 
-    quint64 time;
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
     float vx, vy, vz, xacc, yacc, zacc;

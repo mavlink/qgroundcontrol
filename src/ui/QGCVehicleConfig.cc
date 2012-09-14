@@ -147,6 +147,16 @@ void QGCVehicleConfig::writeParameters()
 
 void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
 {
+//    /* scale around the mid point differently for lower and upper range */
+//            if (ppm_buffer[i] > _rc.chan[i].mid + _parameters.dz[i]) {
+//                _rc.chan[i].scaled = ((ppm_buffer[i] - _parameters.trim[i]) / (_parameters.max[i] - _parameters.trim[i]));
+//            } else if ((ppm_buffer[i] < _rc_chan[i].mid - _parameters.dz[i])) {
+//                _rc.chan[i].scaled = -1.0 + ((ppm_buffer[i] - _parameters.min[i]) / (_parameters.trim[i] - _parameters.min[i]));
+//            } else {
+//                /* in the configured dead zone, output zero */
+//                _rc.chan[i].scaled = 0.0f;
+//            }
+
     if (chan < 0 || static_cast<unsigned int>(chan) >= chanMax)
         return;
 
