@@ -26,7 +26,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
-    for (int i = 0; i < chanMax; i++)
+    for (unsigned int i = 0; i < chanMax; i++)
     {
         rcValue[i] = 1500;
     }

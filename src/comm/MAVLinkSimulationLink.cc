@@ -766,7 +766,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
             case MAVLINK_MSG_ID_MANUAL_CONTROL: {
                 mavlink_manual_control_t control;
                 mavlink_msg_manual_control_decode(&msg, &control);
-                qDebug() << "\n" << "ROLL:" << control.roll << "PITCH:" << control.pitch;
+                qDebug() << "\n" << "ROLL:" << control.x << "PITCH:" << control.y;
             }
             break;
 #endif

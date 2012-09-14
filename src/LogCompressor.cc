@@ -60,8 +60,17 @@ void LogCompressor::run()
 		return;
 	}
 
+//    outFileName = logFileName;
+
+    QString outFileName;
+
+    QStringList parts =  QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
+
+    parts.replace(parts.size()-2, "compressed." + parts.last());
+    outFileName = parts.join(".");
+
 	// Verify that the output file is useable
-    QFile outTmpFile("processed_" + outFileName);
+    QFile outTmpFile(outFileName);
     if (!outTmpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
 		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
 		return;
@@ -146,11 +155,11 @@ void LogCompressor::run()
 //	QFile::remove(outFileName);
 //	outTmpFile.copy(outFileName);
 //	outTmpFile.close();
-	emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
+    emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
 
 	// Clean up and update the status before we return.
 	currentDataLine = 0;
-	emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outFileName));
+    emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outFileName));
 	emit finishedFile(outFileName);
 	qDebug() << "Done with logfile processing";
 	running = false;

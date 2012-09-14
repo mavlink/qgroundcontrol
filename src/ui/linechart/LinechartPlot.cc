@@ -280,9 +280,9 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     if(!data.contains(dataname)) {
         addCurve(dataname);
         enforceGroundTime(m_groundTime);
-        qDebug() << "ADDING CURVE WITH" << dataname << ms << value;
-        qDebug() << "MINTIME:" << minTime << "MAXTIME:" << maxTime;
-        qDebug() << "LASTTIME:" << lastTime;
+//        qDebug() << "ADDING CURVE WITH" << dataname << ms << value;
+//        qDebug() << "MINTIME:" << minTime << "MAXTIME:" << maxTime;
+//        qDebug() << "LASTTIME:" << lastTime;
     }
 
     // Add new value

@@ -1652,7 +1652,7 @@ void UAS::sendMessage(mavlink_message_t message)
     foreach (LinkInterface* link, *links)
     {
         //qDebug() << "ITERATING THROUGH LINKS";
-        if (link)
+        if (LinkManager::instance()->getLinks().contains(link))
         {
             sendMessage(link, message);
             //qDebug() << "SENT MESSAGE";
@@ -2407,8 +2407,10 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     // If system has manual inputs enabled and is armed
     if(((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
+        // XXX FIXME ADD BUTTON SUPPORT
+        quint16 buttons = 0;
         mavlink_message_t message;
-        mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
+        mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualThrust, (float)manualYawAngle, buttons);
         sendMessage(message);
         //qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 

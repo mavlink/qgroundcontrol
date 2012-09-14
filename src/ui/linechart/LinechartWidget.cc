@@ -181,7 +181,8 @@ void LinechartWidget::writeSettings()
 {
     QSettings settings;
     settings.beginGroup("LINECHART");
-    if (timeButton) settings.setValue("ENFORCE_GROUNDTIME", timeButton->isChecked());
+    bool enforceGT = (!autoGroundTimeSet && timeButton->isChecked()) ? true : false;
+    if (timeButton) settings.setValue("ENFORCE_GROUNDTIME", enforceGT);
     if (ui.showUnitsCheckBox) settings.setValue("SHOW_UNITS", ui.showUnitsCheckBox->isChecked());
     if (ui.shortNameCheckBox) settings.setValue("SHORT_NAMES", ui.shortNameCheckBox->isChecked());
     settings.endGroup();
@@ -197,6 +198,7 @@ void LinechartWidget::readSettings()
         timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
         activePlot->enforceGroundTime(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
         timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
+        //userGroundTimeSet = settings.value("USER_GROUNDTIME", timeButton->isChecked()).toBool();
     }
     if (ui.showUnitsCheckBox) ui.showUnitsCheckBox->setChecked(settings.value("SHOW_UNITS", ui.showUnitsCheckBox->isChecked()).toBool());
     if (ui.shortNameCheckBox) ui.shortNameCheckBox->setChecked(settings.value("SHORT_NAMES", ui.shortNameCheckBox->isChecked()).toBool());
@@ -349,18 +351,29 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         intData.insert(curve+unit, value);
     }
 
+    if (lastTimestamp == 0 && usec != 0)
+    {
+        lastTimestamp = usec;
+    } else if (usec != 0) {
+        // Difference larger than 5 secs, enforce ground time
+        if (abs((int)((qint64)usec - (quint64)lastTimestamp)) > 5000)
+        {
+            autoGroundTimeSet = true;
+            if (activePlot) activePlot->groundTime();
+        }
+    }
+
     // Log data
     if (logging)
     {
         if (activePlot->isVisible(curve+unit))
         {
-            if (usec == 0) usec = QGC::groundTimeMilliseconds();
+            if (usec == 0 || autoGroundTimeSet) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
 
             logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
-            logFile->flush();
         }
     }
 }
@@ -384,12 +397,24 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         intData.insert(curve+unit, value);
     }
 
+    if (lastTimestamp == 0 && usec != 0)
+    {
+        lastTimestamp = usec;
+    } else if (usec != 0) {
+        // Difference larger than 5 secs, enforce ground time
+        if (abs((int)((qint64)usec - (quint64)lastTimestamp)) > 5000)
+        {
+            autoGroundTimeSet = true;
+            if (activePlot) activePlot->groundTime();
+        }
+    }
+
     // Log data
     if (logging)
     {
         if (activePlot->isVisible(curve+unit))
         {
-            if (usec == 0) usec = QGC::groundTimeMilliseconds();
+            if (usec == 0 || autoGroundTimeSet) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -416,12 +441,24 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         }
     }
 
+    if (lastTimestamp == 0 && usec != 0)
+    {
+        lastTimestamp = usec;
+    } else if (usec != 0) {
+        // Difference larger than 1 sec, enforce ground time
+        if (abs((int)((qint64)usec - (quint64)lastTimestamp)) > 1000)
+        {
+            autoGroundTimeSet = true;
+            if (activePlot) activePlot->groundTime();
+        }
+    }
+
     // Log data
     if (logging)
     {
         if (activePlot->isVisible(curve+unit))
         {
-            if (usec == 0) usec = QGC::groundTimeMilliseconds();
+            if (usec == 0 || autoGroundTimeSet) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
