@@ -41,9 +41,9 @@ namespace core {
     void Cache::setCacheLocation(const QString& value)
     {
         cache=value;
-        routeCache = cache + "RouteCache" + QDir::separator();
-        geoCache = cache + "GeocoderCache"+ QDir::separator();
-        placemarkCache = cache + "PlacemarkCache" + QDir::separator();
+        routeCache = cache + "RouteCache/";
+        geoCache = cache + "GeocoderCache/";
+        placemarkCache = cache + "PlacemarkCache/";
         ImageCache.setGtileCache(value);
     }
     QString Cache::CacheLocation()
@@ -54,7 +54,7 @@ namespace core {
     {
         if(cache.isNull()|cache.isEmpty())
         {
-            cache= Utils::PathUtils().GetStoragePath()+"mapscache"+QDir::separator();
+            cache = QDir::homePath() + "/mapscache/";
             setCacheLocation(cache);
         }
     }
