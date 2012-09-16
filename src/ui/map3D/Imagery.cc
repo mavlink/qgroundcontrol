@@ -614,7 +614,7 @@ Imagery::getTileLocation(int tileX, int tileY, int zoomLevel,
             << "&y=" << tileY << "&z=" << zoomLevel;
         break;
     case OFFLINE_SATELLITE:
-        oss << mImageryPath << "/200/color/" << tileY
+        oss << mImageryPath.c_str() << "/200/color/" << tileY
             << "/tile-";
         if (tileResolution < 1.0)
         {
