@@ -539,7 +539,7 @@ void MAVLinkProtocol::sendHeartbeat()
     {
         mavlink_message_t msg;
         mavlink_auth_key_t auth;
-        memset(auth, 0, sizeof(auth));
+        memset(&auth, 0, sizeof(auth));
         memcpy(auth.key, m_authKey.toStdString().c_str(), qMin(m_authKey.length(), MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN));
         mavlink_msg_auth_key_encode(getSystemId(), getComponentId(), &msg, &auth);
         sendMessage(msg);
