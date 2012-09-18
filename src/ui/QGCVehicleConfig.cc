@@ -146,13 +146,13 @@ void QGCVehicleConfig::requestCalibrationRC()
     for (unsigned int i = 0; i < chanMax; ++i)
     {
         mav->requestParameter(0, minTpl.arg(i));
-        usleep(5000);
+        QGC::SLEEP::usleep(5000);
         mav->requestParameter(0, trimTpl.arg(i));
-        usleep(5000);
+        QGC::SLEEP::usleep(5000);
         mav->requestParameter(0, maxTpl.arg(i));
-        usleep(5000);
+        QGC::SLEEP::usleep(5000);
         mav->requestParameter(0, revTpl.arg(i));
-        usleep(5000);
+        QGC::SLEEP::usleep(5000);
     }
 }
 

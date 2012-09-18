@@ -552,11 +552,11 @@ void MainWindow::buildCommonWidgets()
         addCentralWidget(protocolWidget, "Mavlink Generator");
     }
 
-    if (!firmwareUpdateWidget)
-    {
-        firmwareUpdateWidget    = new QGCFirmwareUpdate(this);
-        addCentralWidget(firmwareUpdateWidget, "Firmware Update");
-    }
+//    if (!firmwareUpdateWidget)
+//    {
+//        firmwareUpdateWidget    = new QGCFirmwareUpdate(this);
+//        addCentralWidget(firmwareUpdateWidget, "Firmware Update");
+//    }
 
     if (!hudWidget)
     {
@@ -564,11 +564,11 @@ void MainWindow::buildCommonWidgets()
         addCentralWidget(hudWidget, tr("Head Up Display"));
     }
 
-    if (!configWidget)
-    {
-        configWidget = new QGCVehicleConfig(this);
-        addCentralWidget(configWidget, tr("Vehicle Configuration"));
-    }
+//    if (!configWidget)
+//    {
+//        configWidget = new QGCVehicleConfig(this);
+//        addCentralWidget(configWidget, tr("Vehicle Configuration"));
+//    }
 
     if (!dataplotWidget)
     {

@@ -47,7 +47,7 @@ public:
         if ( _valueToString.find(value)!=_valueToString.end() )
         {
             osg::notify(osg::WARN) << "Duplicate enum value " << value
-                                   << " with old string: " << _valueToString[value]
+                                   << " with old string: " << _valueToString[value].c_str()
                                    << " and new string: " << str << std::endl;
         }
         _valueToString[value] = str;
