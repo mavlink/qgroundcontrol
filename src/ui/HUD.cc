@@ -797,7 +797,7 @@ void HUD::paintHUD()
             //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
             // YAW is in compass-human readable format, so 0 .. 360 deg.
-            float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
+            float yawDeg = (yawLP / M_PI) * 180.0f;
             if (yawDeg < 0) yawDeg += 360;
             if (yawDeg > 360) yawDeg -= 360;
             /* final safeguard for really stupid systems */
