@@ -52,6 +52,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     sentBytes(),
     holdBuffer(),
     lineBuffer(""),
+    lastLineBuffer(0),
     lineBufferTimer(),
     snapShotTimer(),
     snapShotInterval(500),
@@ -489,14 +490,19 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             }
 
         }
-        if (lineBuffer.length() > 0) {
+        if (lineBuffer.length() > 0 && (QGC::groundTimeMilliseconds() - lastLineBuffer) > 200) {
             if (isVisible())
             {
-                m_ui->receiveText->insertPlainText(lineBuffer);
+                m_ui->receiveText->appendPlainText(lineBuffer);
+                lineBuffer.clear();
+                lastLineBuffer = QGC::groundTimeMilliseconds();
                 // Ensure text area scrolls correctly
                 m_ui->receiveText->ensureCursorVisible();
             }
-            lineBuffer.clear();
+            if (lineBuffer.size() > 8192)
+            {
+                lineBuffer.remove(0, 4096);
+            }
         }
     }
     else if (link == currLink && holdOn)

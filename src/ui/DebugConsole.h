@@ -128,6 +128,7 @@ protected:
     QList<QString> sentBytes; ///< Transmitted bytes, per transmission
     QByteArray holdBuffer;    ///< Buffer where bytes are stored during hold-enable
     QString lineBuffer;       ///< Buffere where bytes are stored before writing them out
+    quint64 lastLineBuffer;   ///< Last line buffer emission time
     QTimer lineBufferTimer;   ///< Line buffer timer
     QTimer snapShotTimer;     ///< Timer for measuring traffic snapshots
     int snapShotInterval;     ///< Snapshot interval for traffic measurements
