@@ -30,21 +30,21 @@ win32-msvc2008|win32-msvc2010 {
 DEFINES += _TTY_NOWARN_
 
 # MAC OS X
-macx|macx-g++42|macx-g++: {
+macx|macx-g++42|macx-g++|macx-llvm: {
 
         CONFIG += x86_64 cocoa phonon
         CONFIG -= x86
 
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 
-        INCLUDEPATH += -framework SDL
+        INCLUDEPATH += $$BASEDIR/libs/lib/Frameworks/SDL.framework/Headers
 
-	LIBS += -framework IOKit \
+        LIBS += -framework IOKit \
                 -F$$BASEDIR/libs/lib/Frameworks \
-		-framework SDL \
-		-framework CoreFoundation \
-		-framework ApplicationServices \
-		-lm
+                -framework SDL \
+                -framework CoreFoundation \
+                -framework ApplicationServices \
+                -lm
 
 	ICON = $$BASEDIR/files/images/icons/macx.icns
 
