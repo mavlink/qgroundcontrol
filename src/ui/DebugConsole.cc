@@ -490,6 +490,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             }
 
         }
+        // Plot every 200 ms if windows is visible
         if (lineBuffer.length() > 0 && (QGC::groundTimeMilliseconds() - lastLineBuffer) > 200) {
             if (isVisible())
             {

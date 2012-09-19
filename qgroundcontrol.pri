@@ -37,9 +37,10 @@ macx|macx-g++42|macx-g++: {
 
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 
-	INCLUDEPATH += -framework SDL
+        INCLUDEPATH += -framework SDL
 
 	LIBS += -framework IOKit \
+                -F$$BASEDIR/libs/lib/Frameworks \
 		-framework SDL \
 		-framework CoreFoundation \
 		-framework ApplicationServices \
@@ -61,6 +62,10 @@ macx|macx-g++42|macx-g++: {
 	# Copy libraries
 	QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/libs
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/mac64/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/libs
+        # Copy frameworks
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/Frameworks/* $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
+
 
 	# Fix library paths inside executable
 	QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
@@ -118,6 +123,9 @@ macx|macx-g++42|macx-g++: {
 	# CORE OSG LIBRARY
 	QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosg.dylib
 
+        # SDL Framework
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL.framework/Versions/A/SDL" "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
+
 	# No check for GLUT.framework since it's a MAC default
 	message("Building support for OpenSceneGraph")
 	DEPENDENCIES_PRESENT += osg
@@ -139,17 +147,17 @@ macx|macx-g++42|macx-g++: {
         -losgText \
         -losgWidget
 
-	exists(/usr/local/include/google/protobuf) {
-		message("Building support for Protocol Buffers")
-		DEPENDENCIES_PRESENT += protobuf
-		# Include Protocol Buffers libraries
-		LIBS += -L/usr/local/lib \
-            -lprotobuf \
-            -lprotobuf-lite \
-            -lprotoc
-
-		DEFINES += QGC_PROTOBUF_ENABLED
-	}
+        #exists(/usr/local/include/google/protobuf) {
+        #	message("Building support for Protocol Buffers")
+        #	DEPENDENCIES_PRESENT += protobuf
+        #	# Include Protocol Buffers libraries
+        #	LIBS += -L/usr/local/lib \
+        #    -lprotobuf \
+        #    -lprotobuf-lite \
+        #    -lprotoc
+        #
+        #	DEFINES += QGC_PROTOBUF_ENABLED
+        #}
 
 	exists(/opt/local/include/libfreenect)|exists(/usr/local/include/libfreenect) {
 		message("Building support for libfreenect")
