@@ -206,9 +206,12 @@ QGCCore::~QGCCore()
     mainWindow->close();
     //mainWindow->deleteLater();
     // Delete singletons
-	delete MainWindow::instance();
-    delete LinkManager::instance();
+    // First systems
     delete UASManager::instance();
+    // then links
+    delete LinkManager::instance();
+    // Finally the main window
+	delete MainWindow::instance();
 }
 
 /**

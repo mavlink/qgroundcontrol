@@ -1647,14 +1647,13 @@ void UAS::setMode(int mode)
 */
 void UAS::sendMessage(mavlink_message_t message)
 {
+    if (!LinkManager::instance()) return;
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, *links)
     {
-        //qDebug() << "ITERATING THROUGH LINKS";
         if (LinkManager::instance()->getLinks().contains(link))
         {
             sendMessage(link, message);
-            //qDebug() << "SENT MESSAGE";
         }
         else
         {
