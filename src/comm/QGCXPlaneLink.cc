@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QDebug>
 #include <QMutexLocker>
+#include <QNetworkInterface>
 #include <iostream>
 #include "QGCXPlaneLink.h"
 #include "QGC.h"
@@ -140,6 +141,61 @@ void QGCXPlaneLink::setRemoteHost(const QString& localHost)
         }
     }
 
+    //    // Send request to send correct data
+    //#pragma pack(push, 1)
+    //    struct payload {
+    //        char b[5];
+    //        int index;
+    //        float f[8];
+    //    } p;
+    //#pragma pack(pop)
+
+    //    p.b[0] = 'D';
+    //    p.b[1] = 'A';
+    //    p.b[2] = 'T';
+    //    p.b[3] = 'A';
+    //    p.b[4] = '\0';
+
+    //    p.f[0]
+
+    //    writeBytes((const char*)&p, sizeof(p));
+
+#pragma pack(push, 1)
+    struct iset_struct{
+        char b[5];
+        quint8 index; // (0->20 in the lsit below)
+        char str_ipad_them[16]; // IP's we are sending to, in english
+        char str_port_them[6]; // ports are easier to work with in STRINGS!
+        char use_ip ;} ip; // to use this option, 0 not to.
+#pragma pack(pop)
+
+    ip.b[0] = 'I';
+    ip.b[1] = 'S';
+    ip.b[2] = 'E';
+    ip.b[3] = 'T';
+    ip.b[4] = '\0';
+
+    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
+
+    QString localAddrStr;
+    QString localPortStr = QString("%1").arg(localPort);
+
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
+        // Exclude loopback IPv4 and all IPv6 addresses
+        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        {
+            localAddrStr = hostAddresses.at(i).toString();
+            break;
+        }
+    }
+
+    qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
+
+    ip.index = 0;
+    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), sizeof(ip.str_ipad_them));
+    strncpy(ip.str_port_them, localPortStr.toAscii(), sizeof(ip.str_port_them));
+    ip.use_ip = 1;
 }
 
 void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
@@ -170,6 +226,8 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
 
     // Ail / Elevon / Rudder
     writeBytes((const char*)&p, sizeof(p));
+    p.index = 8;
+    writeBytes((const char*)&p, sizeof(p));
 
     p.index = 25;
     memset(p.f, 0, sizeof(p.f));
@@ -179,6 +237,8 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
     p.f[3] = 0.5f;//throttle;
     // Throttle
     writeBytes((const char*)&p, sizeof(p));
+
+    qDebug() << "CTRLS SENT:" << rollAilerons;
 }
 
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)

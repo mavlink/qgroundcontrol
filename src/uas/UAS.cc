@@ -1047,7 +1047,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #ifdef MAVLINK_ENABLED_PIXHAWK
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
-            qDebug() << "RECIEVED ACK TO GET IMAGE";
             mavlink_data_transmission_handshake_t p;
             mavlink_msg_data_transmission_handshake_decode(&message, &p);
             imageSize = p.size;
