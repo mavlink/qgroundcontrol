@@ -54,11 +54,10 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
 }
 
 QGCXPlaneLink::~QGCXPlaneLink()
-{   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and socket
-    if(connectState){
-       disconnectSimulation();
-    }
+{
+//    if(connectState) {
+//       disconnectSimulation();
+//    }
 }
 
 /**
