@@ -466,6 +466,70 @@ bool QGCXPlaneLink::disconnectSimulation()
     return !connectState;
 }
 
+void QGCXPlaneLink::selectPlane(const QString& plane)
+{
+
+}
+
+void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, double roll, double pitch, double yaw)
+{
+    struct VEH1_struct
+    {
+        quint32 p;
+        double lat_lon_ele[3];
+        float psi_the_phi[3];
+        float gear_flap_vect[3];
+    } pos;
+
+    pos.p = 0;
+    pos.lat_lon_ele[0] = lat;
+    pos.lat_lon_ele[1] = lon;
+    pos.lat_lon_ele[2] = alt;
+}
+
+/**
+ * Sets a random position with an offset of max 1/1000 degree
+ * and max 100 m altitude
+ */
+void QGCXPlaneLink::setRandomPosition()
+{
+    // Initialize generator
+    srand(0);
+
+    double offLat = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
+    double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
+    double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
+
+    if (mav->getAltitude() + offAlt < 0)
+    {
+        offAlt *= -1.0;
+    }
+
+    setPositionAttitude(mav->getLatitude() + offLat,
+                        mav->getLongitude() + offLon,
+                        mav->getAltitude() + offAlt,
+                        mav->getRoll(),
+                        mav->getPitch(),
+                        mav->getYaw());
+}
+
+void QGCXPlaneLink::setRandomAttitude()
+{
+    // Initialize generator
+    srand(0);
+
+    double roll = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
+    double pitch = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
+    double yaw = rand() / static_cast<double>(RAND_MAX) * 2.0 - 1.0;
+
+    setPositionAttitude(mav->getLatitude(),
+                        mav->getLongitude(),
+                        mav->getAltitude(),
+                        roll,
+                        pitch,
+                        yaw);
+}
+
 /**
  * @brief Connect the connection.
  *

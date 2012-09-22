@@ -1,5 +1,6 @@
 #include "QGCHilConfiguration.h"
 #include "ui_QGCHilConfiguration.h"
+#include "QGCXPlaneLink.h"
 
 QGCHilConfiguration::QGCHilConfiguration(QGCHilLink* link, QWidget *parent) :
     QWidget(parent),
@@ -12,6 +13,16 @@ QGCHilConfiguration::QGCHilConfiguration(QGCHilLink* link, QWidget *parent) :
     connect(ui->hostComboBox, SIGNAL(activated(QString)), link, SLOT(setRemoteHost(QString)));
 
     ui->startButton->setText(tr("Connect"));
+
+    QGCXPlaneLink* xplane = dynamic_cast<QGCXPlaneLink*>(link);
+
+    if (xplane)
+    {
+        connect(ui->randomAttitudeButton, SIGNAL(clicked()), link, SLOT(setRandomAttitude()));
+        connect(ui->randomPositionButton, SIGNAL(clicked()), link, SLOT(setRandomPosition()));
+        connect(ui->airframeComboBox, SIGNAL(activated(QString)), link, SLOT(setAirframe(QString)));
+    }
+//    connect(ui->)
 }
 
 void QGCHilConfiguration::toggleSimulation(bool connect)
