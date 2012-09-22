@@ -158,43 +158,6 @@ void QGCXPlaneLink::setRemoteHost(const QString& localHost)
     //    p.f[0]
 
     //    writeBytes((const char*)&p, sizeof(p));
-
-#pragma pack(push, 1)
-    struct iset_struct{
-        char b[5];
-        quint8 index; // (0->20 in the lsit below)
-        char str_ipad_them[16]; // IP's we are sending to, in english
-        char str_port_them[6]; // ports are easier to work with in STRINGS!
-        char use_ip ;} ip; // to use this option, 0 not to.
-#pragma pack(pop)
-
-    ip.b[0] = 'I';
-    ip.b[1] = 'S';
-    ip.b[2] = 'E';
-    ip.b[3] = 'T';
-    ip.b[4] = '\0';
-
-    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-
-    QString localAddrStr;
-    QString localPortStr = QString("%1").arg(localPort);
-
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-        {
-            localAddrStr = hostAddresses.at(i).toString();
-            break;
-        }
-    }
-
-    qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
-
-    ip.index = 0;
-    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), sizeof(ip.str_ipad_them));
-    strncpy(ip.str_port_them, localPortStr.toAscii(), sizeof(ip.str_port_them));
-    ip.use_ip = 1;
 }
 
 void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
@@ -215,8 +178,8 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
     p.b[4] = '\0';
 
     p.index = 12;
-    p.f[0] = rollAilerons;
-    p.f[1] = pitchElevator;
+    p.f[0] = pitchElevator;
+    p.f[1] = rollAilerons;
     p.f[2] = yawRudder;
 
     Q_UNUSED(time);
@@ -230,14 +193,12 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
 
     p.index = 25;
     memset(p.f, 0, sizeof(p.f));
-    p.f[0] = 0.5f;//throttle;
-    p.f[1] = 0.5f;//throttle;
-    p.f[2] = 0.5f;//throttle;
-    p.f[3] = 0.5f;//throttle;
+    p.f[0] = throttle;
+    p.f[1] = throttle;
+    p.f[2] = throttle;
+    p.f[3] = throttle;
     // Throttle
     writeBytes((const char*)&p, sizeof(p));
-
-    qDebug() << "CTRLS SENT:" << rollAilerons;
 }
 
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
@@ -301,14 +262,6 @@ void QGCXPlaneLink::readBytes()
     } p;
     #pragma pack(pop)
 
-    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
-    double lat, lon, alt;
-    float vx, vy, vz, xacc, yacc, zacc;
-    float airspeed;
-    float groundspeed;
-
-    float man_roll, man_pitch, man_yaw;
-
     if (data[0] == 'D' &&
             data[1] == 'A' &&
             data[2] == 'T' &&
@@ -347,9 +300,8 @@ void QGCXPlaneLink::readBytes()
             else if (p.index == 17)
             {
                 //qDebug() << "HDNG" << "pitch" << p.f[0] << "roll" << p.f[1] << "hding true" << p.f[2] << "hding mag" << p.f[3];
-                // XXX Feeding true heading - might need fix
-                pitch = (p.f[0] - 180.0f) / 180.0f * M_PI;
-                roll = (p.f[1] - 180.0f) / 180.0f * M_PI;
+                pitch = p.f[0] / 180.0f * M_PI;
+                roll = p.f[1] / 180.0f * M_PI;
                 yaw = (p.f[2] - 180.0f) / 180.0f * M_PI;
             }
 
@@ -385,6 +337,20 @@ void QGCXPlaneLink::readBytes()
                 //qDebug() << "UNKNOWN #" << p.index << p.f[0] << p.f[1] << p.f[2] << p.f[3];
             }
         }
+    }
+    else if (data[0] == 'S' &&
+             data[1] == 'N' &&
+             data[2] == 'A' &&
+             data[3] == 'P')
+    {
+
+    }
+    else if (data[0] == 'S' &&
+               data[1] == 'T' &&
+               data[2] == 'A' &&
+               data[3] == 'T')
+    {
+
     }
     else
     {
@@ -473,18 +439,52 @@ void QGCXPlaneLink::selectPlane(const QString& plane)
 
 void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, double roll, double pitch, double yaw)
 {
+    #pragma pack(push, 1)
     struct VEH1_struct
     {
+        char header[5];
         quint32 p;
         double lat_lon_ele[3];
         float psi_the_phi[3];
         float gear_flap_vect[3];
     } pos;
+    #pragma pack(pop)
 
+    pos.header[0] = 'V';
+    pos.header[1] = 'E';
+    pos.header[2] = 'H';
+    pos.header[3] = '1';
+    pos.header[4] = '0';
     pos.p = 0;
     pos.lat_lon_ele[0] = lat;
     pos.lat_lon_ele[1] = lon;
     pos.lat_lon_ele[2] = alt;
+    pos.psi_the_phi[0] = roll;
+    pos.psi_the_phi[1] = pitch;
+    pos.psi_the_phi[2] = yaw;
+    pos.gear_flap_vect[0] = 0.0f;
+    pos.gear_flap_vect[1] = 0.0f;
+    pos.gear_flap_vect[2] = 0.0f;
+
+    writeBytes((const char*)&pos, sizeof(pos));
+
+//    pos.header[0] = 'V';
+//    pos.header[1] = 'E';
+//    pos.header[2] = 'H';
+//    pos.header[3] = '1';
+//    pos.header[4] = '0';
+//    pos.p = 0;
+//    pos.lat_lon_ele[0] = -999;
+//    pos.lat_lon_ele[1] = -999;
+//    pos.lat_lon_ele[2] = -999;
+//    pos.psi_the_phi[0] = -999;
+//    pos.psi_the_phi[1] = -999;
+//    pos.psi_the_phi[2] = -999;
+//    pos.gear_flap_vect[0] = -999;
+//    pos.gear_flap_vect[1] = -999;
+//    pos.gear_flap_vect[2] = -999;
+
+//    writeBytes((const char*)&pos, sizeof(pos));
 }
 
 /**
@@ -557,6 +557,48 @@ bool QGCXPlaneLink::connectSimulation()
     {
         uas->startHil();
     }
+
+#pragma pack(push, 1)
+    struct iset_struct
+    {
+        char b[5];
+        int index; // (0->20 in the lsit below)
+        char str_ipad_them[16];
+        char str_port_them[6];
+        char padding[2];
+        int use_ip;
+    } ip; // to use this option, 0 not to.
+#pragma pack(pop)
+
+    ip.b[0] = 'I';
+    ip.b[1] = 'S';
+    ip.b[2] = 'E';
+    ip.b[3] = 'T';
+    ip.b[4] = '0';
+
+    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
+
+    QString localAddrStr;
+    QString localPortStr = QString("%1").arg(localPort);
+
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
+        // Exclude loopback IPv4 and all IPv6 addresses
+        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        {
+            localAddrStr = hostAddresses.at(i).toString();
+            break;
+        }
+    }
+
+    qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
+
+    ip.index = 0;
+    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
+    strncpy(ip.str_port_them, localPortStr.toAscii(), qMin((int)sizeof(ip.str_port_them), 6));
+    ip.use_ip = 1;
+
+    writeBytes((const char*)&ip, sizeof(ip));
 
     // XXX This will later be enabled to start X-Plane from within QGroundControl with the right arguments
 

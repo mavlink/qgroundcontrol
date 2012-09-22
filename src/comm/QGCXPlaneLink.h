@@ -140,6 +140,14 @@ protected:
     bool gpsReceived;
     bool attitudeReceived;
 
+    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
+    double lat, lon, alt;
+    float vx, vy, vz, xacc, yacc, zacc;
+    float airspeed;
+    float groundspeed;
+
+    float man_roll, man_pitch, man_yaw;
+
     void setName(QString name);
 
 };
