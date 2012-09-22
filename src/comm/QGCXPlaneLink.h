@@ -87,6 +87,31 @@ public slots:
     void writeBytes(const char* data, qint64 length);
     bool connectSimulation();
     bool disconnectSimulation();
+    /**
+     * @brief Select airplane model
+     * @param plane the name of the airplane
+     */
+    void selectPlane(const QString& plane);
+    /**
+     * @brief Set the airplane position and attitude
+     * @param lat
+     * @param lon
+     * @param alt
+     * @param roll
+     * @param pitch
+     * @param yaw
+     */
+    void setPositionAttitude(double lat, double lon, double alt, double roll, double pitch, double yaw);
+
+    /**
+     * @brief Set a random position
+     */
+    void setRandomPosition();
+
+    /**
+     * @brief Set a random attitude
+     */
+    void setRandomAttitude();
 
 protected:
     UASInterface* mav;
