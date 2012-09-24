@@ -503,6 +503,11 @@ QString QGCFlightGearLink::getName()
     return name;
 }
 
+QString QGCFlightGearLink::getRemoteHost()
+{
+    return QString("%1:%2").arg(currentHost.toString(), currentPort);
+}
+
 void QGCFlightGearLink::setName(QString name)
 {
     this->name = name;

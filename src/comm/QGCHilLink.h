@@ -19,6 +19,12 @@ public:
      */
     virtual QString getName() = 0;
 
+    /**
+     * @brief Get remote host and port
+     * @return string in format <host>:<port>
+     */
+    virtual QString getRemoteHost() = 0;
+
 public slots:
     virtual void setPort(int port) = 0;
     /** @brief Add a new host to broadcast messages to */

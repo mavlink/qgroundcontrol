@@ -18,6 +18,7 @@
 #include "UASManager.h"
 #include "QGC.h"
 #include <QMutexLocker>
+#include <QSettings>
 
 /**
  * The coordinate frame of the joystick axis is the aeronautical frame like shown on this image:
@@ -34,8 +35,13 @@ JoystickInput::JoystickInput() :
         xAxis(0),
         yAxis(1),
         yawAxis(3),
+        autoButtonMapping(-1),
+        manualButtonMapping(-1),
+        stabilizeButtonMapping(-1),
         joystickName(tr("Unitinialized"))
 {
+    loadSettings();
+
     for (int i = 0; i < 10; i++) {
         calibrationPositive[i] = sdlJoystickMax;
         calibrationNegative[i] = sdlJoystickMin;
@@ -49,9 +55,40 @@ JoystickInput::JoystickInput() :
 
 JoystickInput::~JoystickInput()
 {
+    storeSettings();
     done = true;
-    QGC::SLEEP::usleep(50000);
-    this->deleteLater();
+}
+
+void JoystickInput::loadSettings()
+{
+    // Load defaults from settings
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup("QGC_JOYSTICK_INPUT");
+    xAxis = (settings.value("X_AXIS_MAPPING", xAxis).toInt());
+    yAxis = (settings.value("Y_AXIS_MAPPING", yAxis).toInt());
+    thrustAxis = (settings.value("THRUST_AXIS_MAPPING", thrustAxis).toInt());
+    yawAxis = (settings.value("YAW_AXIS_MAPPING", yawAxis).toInt());
+    autoButtonMapping = (settings.value("AUTO_BUTTON_MAPPING", autoButtonMapping).toInt());
+    stabilizeButtonMapping = (settings.value("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping).toInt());
+    manualButtonMapping = (settings.value("MANUAL_BUTTON_MAPPING", manualButtonMapping).toInt());
+    settings.endGroup();
+}
+
+void JoystickInput::storeSettings()
+{
+    // Store settings
+    QSettings settings;
+    settings.beginGroup("QGC_JOYSTICK_INPUT");
+    settings.setValue("X_AXIS_MAPPING", xAxis);
+    settings.setValue("Y_AXIS_MAPPING", yAxis);
+    settings.setValue("THRUST_AXIS_MAPPING", thrustAxis);
+    settings.setValue("YAW_AXIS_MAPPING", yawAxis);
+    settings.setValue("AUTO_BUTTON_MAPPING", autoButtonMapping);
+    settings.setValue("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping);
+    settings.setValue("MANUAL_BUTTON_MAPPING", manualButtonMapping);
+    settings.endGroup();
+    settings.sync();
 }
 
 
@@ -95,7 +132,7 @@ void JoystickInput::init()
     // Wait for joysticks if none is connected
     while (numJoysticks == 0)
     {
-        QGC::SLEEP::msleep(800);
+        QGC::SLEEP::msleep(400);
         // INITIALIZE SDL Joystick support
         if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
         {

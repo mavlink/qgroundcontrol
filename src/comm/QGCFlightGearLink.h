@@ -63,6 +63,12 @@ public:
      */
     QString getName();
 
+    /**
+     * @brief Get remote host and port
+     * @return string in format <host>:<port>
+     */
+    QString getRemoteHost();
+
     void run();
 
 public slots:

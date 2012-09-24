@@ -2393,9 +2393,9 @@ void UAS::disarmSystem()
 void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust)
 {
     // Scale values
-    double rollPitchScaling = 0.2f;
-    double yawScaling = 0.5f;
-    double thrustScaling = 1.0f;
+    double rollPitchScaling = 0.2f * 1000.0f;
+    double yawScaling = 0.5f * 1000.0f;
+    double thrustScaling = 1.0f * 1000.0f;
 
     manualRollAngle = roll * rollPitchScaling;
     manualPitchAngle = pitch * rollPitchScaling;
