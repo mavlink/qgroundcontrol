@@ -412,7 +412,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
 
 #ifdef _MSC_VER
         //webViewWin->dynamicCall("GoHome()");
-        webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
+        webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/files/images/earth.html");
 #endif
 
         webViewInitialized = true;
