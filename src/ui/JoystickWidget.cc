@@ -9,8 +9,19 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     m_ui->setupUi(this);
     this->joystick = joystick;
 
+    m_ui->rollMapSpinBox->setValue(joystick->getMappingXAxis());
+    m_ui->pitchMapSpinBox->setValue(joystick->getMappingYAxis());
+    m_ui->yawMapSpinBox->setValue(joystick->getMappingYawAxis());
+    m_ui->throttleMapSpinBox->setValue(joystick->getMappingThrustAxis());
+    m_ui->autoMapSpinBox->setValue(joystick->getMappingAutoButton());
+
     connect(this->joystick, SIGNAL(joystickChanged(double,double,double,double,int,int)), this, SLOT(updateJoystick(double,double,double,double,int,int)));
     connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(pressKey(int)));
+    connect(m_ui->rollMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingXAxis(int)));
+    connect(m_ui->pitchMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingYAxis(int)));
+    connect(m_ui->yawMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingYawAxis(int)));
+    connect(m_ui->throttleMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingThrustAxis(int)));
+    connect(m_ui->autoMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingAutoButton(int)));
 
     // Display the widget
     this->window()->setWindowTitle(tr("Joystick Settings"));

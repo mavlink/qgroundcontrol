@@ -52,6 +52,16 @@ public:
     QGCXPlaneLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress localHost = QHostAddress::Any, quint16 localPort = 49005);
     ~QGCXPlaneLink();
 
+    /**
+     * @brief Load X-Plane HIL settings
+     */
+    void loadSettings();
+
+    /**
+     * @brief Store X-Plane HIL settings
+     */
+    void storeSettings();
+
     bool isConnected();
     qint64 bytesAvailable();
     int getPort() const {
@@ -64,6 +74,12 @@ public:
     QString getName();
 
     void run();
+
+    /**
+     * @brief Get remote host and port
+     * @return string in format <host>:<port>
+     */
+    QString getRemoteHost();
 
 public slots:
 //    void setAddress(QString address);

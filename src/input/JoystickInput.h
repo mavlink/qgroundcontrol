@@ -58,6 +58,51 @@ public:
 
     const QString& getName();
 
+    /**
+     * @brief Load joystick settings
+     */
+    void loadSettings();
+
+    /**
+     * @brief Store joystick settings
+     */
+    void storeSettings();
+
+    int getMappingThrustAxis()
+    {
+        return thrustAxis;
+    }
+
+    int getMappingXAxis()
+    {
+        return xAxis;
+    }
+
+    int getMappingYAxis()
+    {
+        return yAxis;
+    }
+
+    int getMappingYawAxis()
+    {
+        return yawAxis;
+    }
+
+    int getMappingAutoButton()
+    {
+        return autoButtonMapping;
+    }
+
+    int getMappingManualButton()
+    {
+        return manualButtonMapping;
+    }
+
+    int getMappingStabilizeButton()
+    {
+        return stabilizeButtonMapping;
+    }
+
     const double sdlJoystickMin;
     const double sdlJoystickMax;
 
@@ -76,6 +121,9 @@ protected:
     int xAxis;
     int yAxis;
     int yawAxis;
+    int autoButtonMapping;
+    int manualButtonMapping;
+    int stabilizeButtonMapping;
     SDL_Event event;
     QString joystickName;
 
@@ -149,6 +197,40 @@ signals:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    void setMappingThrustAxis(int mapping)
+    {
+        thrustAxis = mapping;
+    }
+
+    void setMappingXAxis(int mapping)
+    {
+        xAxis = mapping;
+    }
+
+    void setMappingYAxis(int mapping)
+    {
+        yAxis = mapping;
+    }
+
+    void setMappingYawAxis(int mapping)
+    {
+        yawAxis = mapping;
+    }
+
+    void setMappingAutoButton(int mapping)
+    {
+        autoButtonMapping = mapping;
+    }
+
+    void setMappingManualButton(int mapping)
+    {
+        manualButtonMapping = mapping;
+    }
+
+    void setMappingStabilizeButton(int mapping)
+    {
+        stabilizeButtonMapping = mapping;
+    }
 };
 
 #endif // _JOYSTICKINPUT_H_

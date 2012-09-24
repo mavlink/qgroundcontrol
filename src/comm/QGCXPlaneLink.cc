@@ -51,14 +51,37 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     this->connectState = false;
     this->name = tr("X-Plane Link (localPort:%1)").arg(localPort);
     setRemoteHost(remoteHost);
+    loadSettings();
 }
 
 QGCXPlaneLink::~QGCXPlaneLink()
 {
+    storeSettings();
 //    if(connectState) {
 //       disconnectSimulation();
 //    }
 }
+
+void QGCXPlaneLink::loadSettings()
+{
+    // Load defaults from settings
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup("QGC_XPLANE_LINK");
+    setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString(), remotePort)).toString());
+    settings.endGroup();
+}
+
+void QGCXPlaneLink::storeSettings()
+{
+    // Store settings
+    QSettings settings;
+    settings.beginGroup("QGC_XPLANE_LINK");
+    settings.setValue("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString(), remotePort));
+    settings.endGroup();
+    settings.sync();
+}
+
 
 /**
  * @brief Runs the thread
@@ -102,62 +125,54 @@ void QGCXPlaneLink::processError(QProcess::ProcessError err)
     }
 }
 
-/**
- * @param localHost Hostname in standard formatting, e.g. locallocalHost:14551 or 192.168.1.1:14551
- */
-void QGCXPlaneLink::setRemoteHost(const QString& localHost)
+QString QGCXPlaneLink::getRemoteHost()
 {
-    if (localHost.contains(":"))
+    return QString("%1:%2").arg(remoteHost.toString(), remotePort);
+}
+
+/**
+ * @param newHost Hostname in standard formatting, e.g. localhost:14551 or 192.168.1.1:14551
+ */
+void QGCXPlaneLink::setRemoteHost(const QString& newHost)
+{
+    if (newHost.contains(":"))
     {
-        //qDebug() << "HOST: " << localHost.split(":").first();
-        QHostInfo info = QHostInfo::fromName(localHost.split(":").first());
+        //qDebug() << "HOST: " << newHost.split(":").first();
+        QHostInfo info = QHostInfo::fromName(newHost.split(":").first());
         if (info.error() == QHostInfo::NoError)
         {
-            // Add localHost
-            QList<QHostAddress> localHostAddresses = info.addresses();
+            // Add newHost
+            QList<QHostAddress> newHostAddresses = info.addresses();
             QHostAddress address;
-            for (int i = 0; i < localHostAddresses.size(); i++)
+            for (int i = 0; i < newHostAddresses.size(); i++)
             {
                 // Exclude loopback IPv4 and all IPv6 addresses
-                if (!localHostAddresses.at(i).toString().contains(":"))
+                if (!newHostAddresses.at(i).toString().contains(":"))
                 {
-                    address = localHostAddresses.at(i);
+                    address = newHostAddresses.at(i);
                 }
             }
             remoteHost = address;
             //qDebug() << "Address:" << address.toString();
             // Set localPort according to user input
-            remotePort = localHost.split(":").last().toInt();
+            remotePort = newHost.split(":").last().toInt();
         }
     }
     else
     {
-        QHostInfo info = QHostInfo::fromName(localHost);
+        QHostInfo info = QHostInfo::fromName(newHost);
         if (info.error() == QHostInfo::NoError)
         {
-            // Add localHost
+            // Add newHost
             remoteHost = info.addresses().first();
         }
     }
 
-    //    // Send request to send correct data
-    //#pragma pack(push, 1)
-    //    struct payload {
-    //        char b[5];
-    //        int index;
-    //        float f[8];
-    //    } p;
-    //#pragma pack(pop)
-
-    //    p.b[0] = 'D';
-    //    p.b[1] = 'A';
-    //    p.b[2] = 'T';
-    //    p.b[3] = 'A';
-    //    p.b[4] = '\0';
-
-    //    p.f[0]
-
-    //    writeBytes((const char*)&p, sizeof(p));
+    if (isConnected())
+    {
+        disconnectSimulation();
+        connectSimulation();
+    }
 }
 
 void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
