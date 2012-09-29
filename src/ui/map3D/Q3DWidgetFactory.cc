@@ -42,11 +42,6 @@ Q3DWidgetFactory::get(const std::string& type, QWidget* parent)
     if (type == "PIXHAWK") {
         return QPointer<QWidget>(new Pixhawk3DWidget(parent));
     }
-#ifdef QGC_OSGEARTH_ENABLED
-    else if (type == "MAP3D") {
-        return QPointer<QWidget>(new QMap3D());
-    }
-#endif
     else {
         return QPointer<QWidget>(new Q3DWidget(parent));
     }

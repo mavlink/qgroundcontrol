@@ -80,7 +80,7 @@ void JoystickWidget::setZ(float z)
 
 void JoystickWidget::setHat(float x, float y)
 {
-    updateStatus(tr("Hat position: x: %1, y: %2").arg(x, y));
+    updateStatus(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
 }
 
 void JoystickWidget::clearKeys()

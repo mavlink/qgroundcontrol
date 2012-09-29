@@ -557,7 +557,7 @@ contains(DEPENDENCIES_PRESENT, osg) {
         message("Including sources for osgEarth")
         
         # Enable only if OpenSceneGraph is available
-        SOURCES += src/ui/map3D/QMap3D.cc
+        SOURCES +=
     }
 }
 contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {

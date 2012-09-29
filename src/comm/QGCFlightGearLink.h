@@ -78,6 +78,7 @@ public slots:
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
     void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
+    void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
 //    /** @brief Remove a host from broadcasting messages to */
 //    void removeHost(const QString& host);
     //    void readPendingDatagrams();

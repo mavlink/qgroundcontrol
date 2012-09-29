@@ -1045,6 +1045,20 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
         }
             break;
+        case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
+        {
+            mavlink_servo_output_raw_t raw;
+            mavlink_msg_servo_output_raw_decode(&message, &raw);
+
+            if (hilEnabled)
+            {
+                emit hilActuatorsChanged(static_cast<uint64_t>(getUnixTimeFromMs(raw.time_boot_ms)), static_cast<float>(raw.servo1_raw),
+                                     static_cast<float>(raw.servo2_raw), static_cast<float>(raw.servo3_raw),
+                                     static_cast<float>(raw.servo4_raw), static_cast<float>(raw.servo5_raw), static_cast<float>(raw.servo6_raw),
+                                     static_cast<float>(raw.servo7_raw), static_cast<float>(raw.servo8_raw));
+            }
+        }
+        break;
 #ifdef MAVLINK_ENABLED_PIXHAWK
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
@@ -1096,6 +1110,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
         }
             break;
+
+
+
 #endif
             //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
             //        {
@@ -1205,7 +1222,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         case MAVLINK_MSG_ID_RAW_PRESSURE:
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
-        case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
         case MAVLINK_MSG_ID_DEBUG_VECT:
         case MAVLINK_MSG_ID_DEBUG:
@@ -2394,8 +2410,8 @@ void UAS::disarmSystem()
 void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust)
 {
     // Scale values
-    double rollPitchScaling = 0.2f * 1000.0f;
-    double yawScaling = 0.5f * 1000.0f;
+    double rollPitchScaling = 1.0f * 1000.0f;
+    double yawScaling = 1.0f * 1000.0f;
     double thrustScaling = 1.0f * 1000.0f;
 
     manualRollAngle = roll * rollPitchScaling;

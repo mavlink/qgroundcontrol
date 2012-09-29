@@ -18,8 +18,10 @@ public:
     ~QGCHilConfiguration();
 
 public slots:
-    /** Start / stop simulation */
+    /** @brief Start / stop simulation */
     void toggleSimulation(bool connect);
+    /** @brief Receive status message */
+    void receiveStatusMessage(const QString& message);
 
 protected:
     QGCHilLink* link;

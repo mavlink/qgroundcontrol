@@ -31,6 +31,7 @@ public slots:
     virtual void setRemoteHost(const QString& host) = 0;
     /** @brief Send new control states to the simulation */
     virtual void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode) = 0;
+    virtual void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8) = 0;
     virtual void processError(QProcess::ProcessError err) = 0;
 
     virtual void readBytes() = 0;
@@ -68,6 +69,11 @@ signals:
                         float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
                         int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
     
+    /** @brief Remote host and port changed */
+    void remoteChanged(const QString& hostPort);
+
+    /** @brief Status text message from link */
+    void statusMessage(const QString& message);
 };
 
 #endif // QGCHILLINK_H

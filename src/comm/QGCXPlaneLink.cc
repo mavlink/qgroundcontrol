@@ -44,7 +44,9 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     mav(mav),
     socket(NULL),
     process(NULL),
-    terraSync(NULL)
+    terraSync(NULL),
+    airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
+    xPlaneConnected(false)
 {
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
@@ -68,7 +70,7 @@ void QGCXPlaneLink::loadSettings()
     QSettings settings;
     settings.sync();
     settings.beginGroup("QGC_XPLANE_LINK");
-    setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString(), remotePort)).toString());
+    setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
     settings.endGroup();
 }
 
@@ -173,10 +175,78 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
         disconnectSimulation();
         connectSimulation();
     }
+
+    emit remoteChanged(QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
+}
+
+void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
+{
+    // Only update this for multirotors
+    if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
+        airframeID == AIRFRAME_QUAD_X_ARDRONE ||
+        airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
+    {
+
+        Q_UNUSED(time);
+        Q_UNUSED(act5);
+        Q_UNUSED(act6);
+        Q_UNUSED(act7);
+        Q_UNUSED(act8);
+
+    #pragma pack(push, 1)
+        struct payload {
+            char b[5];
+            int index;
+            float f[8];
+        } p;
+    #pragma pack(pop)
+
+        p.b[0] = 'D';
+        p.b[1] = 'A';
+        p.b[2] = 'T';
+        p.b[3] = 'A';
+        p.b[4] = '\0';
+
+        p.index = 25;
+        memset(p.f, 0, sizeof(p.f));
+
+        if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C)
+        {
+            p.f[0] = act1 / 255.0f;
+            p.f[1] = act2 / 255.0f;
+            p.f[2] = act3 / 255.0f;
+            p.f[3] = act4 / 255.0f;
+        }
+        else if (airframeID == AIRFRAME_QUAD_X_ARDRONE)
+        {
+            p.f[0] = act1 / 500.0f;
+            p.f[1] = act2 / 500.0f;
+            p.f[2] = act3 / 500.0f;
+            p.f[3] = act4 / 500.0f;
+        }
+        else
+        {
+            p.f[0] = (act1 - 1000.0f) / 1000.0f;
+            p.f[1] = (act2 - 1000.0f) / 1000.0f;
+            p.f[2] = (act3 - 1000.0f) / 1000.0f;
+            p.f[3] = (act4 - 1000.0f) / 1000.0f;
+        }
+        // Throttle
+        writeBytes((const char*)&p, sizeof(p));
+    }
 }
 
 void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
 {
+    // Do not update this control type for
+    // all multirotors
+
+    if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
+        airframeID == AIRFRAME_QUAD_X_ARDRONE ||
+        airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
+    {
+        return;
+    }
 
     #pragma pack(push, 1)
     struct payload {
@@ -218,6 +288,7 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
 
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
 {
+    if (!data) return;
     //#define QGCXPlaneLink_DEBUG
 #if 1
     QString bytes;
@@ -277,11 +348,14 @@ void QGCXPlaneLink::readBytes()
     } p;
     #pragma pack(pop)
 
+    bool oldConnectionState = xPlaneConnected;
+
     if (data[0] == 'D' &&
             data[1] == 'A' &&
             data[2] == 'T' &&
             data[3] == 'A')
     {
+        xPlaneConnected = true;
 
         for (unsigned i = 0; i < nsegs; i++)
         {
@@ -296,15 +370,17 @@ void QGCXPlaneLink::readBytes()
 
                 //qDebug() << "SPEEDS:" << "airspeed" << airspeed << "m/s, groundspeed" << groundspeed << "m/s";
             }
-            else if (p.index == 8)
-            {
-                //qDebug() << "MAN:" << p.f[0] << p.f[3] << p.f[7];
-                man_roll = p.f[0];
-                man_pitch = p.f[1];
-                man_yaw = p.f[2];
-                UAS* uas = dynamic_cast<UAS*>(mav);
-                if (uas) uas->setManualControlCommands(man_roll, man_pitch, man_yaw, 0.6);
-            }
+            // Forward controls from X-Plane to MAV, not very useful
+            // better: Connect Joystick to QGroundControl
+//            else if (p.index == 8)
+//            {
+//                //qDebug() << "MAN:" << p.f[0] << p.f[3] << p.f[7];
+//                man_roll = p.f[0];
+//                man_pitch = p.f[1];
+//                man_yaw = p.f[2];
+//                UAS* uas = dynamic_cast<UAS*>(mav);
+//                if (uas) uas->setManualControlCommands(man_roll, man_pitch, man_yaw, 0.6);
+//            }
             else if (p.index == 16)
             {
                 //qDebug() << "ANG VEL:" << p.f[0] << p.f[3] << p.f[7];
@@ -377,6 +453,11 @@ void QGCXPlaneLink::readBytes()
                          pitchspeed, yawspeed, lat*1E7, lon*1E7, alt*1E3,
                          vx, vy, vz, xacc*1000, yacc*1000, zacc*1000);
 
+    if (!oldConnectionState && xPlaneConnected)
+    {
+        emit statusMessage("Receiving from XPlane.");
+    }
+
     //    // Echo data for debugging purposes
     //    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
     //    int i;
@@ -415,6 +496,7 @@ bool QGCXPlaneLink::disconnectSimulation()
     if (mav)
     {
         disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+        disconnect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
         disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
         UAS* uas = dynamic_cast<UAS*>(mav);
         if (uas)
@@ -449,7 +531,23 @@ bool QGCXPlaneLink::disconnectSimulation()
 
 void QGCXPlaneLink::selectPlane(const QString& plane)
 {
+    airframeName = plane;
 
+    if (plane.contains("QRO"))
+    {
+        if (plane.contains("MK"))
+        {
+            airframeID = AIRFRAME_QUAD_X_MK_10INCH_I2C;
+        }
+        else if (plane.contains("ARDRONE"))
+        {
+            airframeID = AIRFRAME_QUAD_X_ARDRONE;
+        }
+        else
+        {
+            airframeID = AIRFRAME_QUAD_DJI_F450_PWM;
+        }
+    }
 }
 
 void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, double roll, double pitch, double yaw)
@@ -569,6 +667,7 @@ bool QGCXPlaneLink::connectSimulation()
     //terraSync = new QProcess(this);
 
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
     connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
 
     UAS* uas = dynamic_cast<UAS*>(mav);
@@ -618,164 +717,6 @@ bool QGCXPlaneLink::connectSimulation()
     ip.use_ip = 1;
 
     writeBytes((const char*)&ip, sizeof(ip));
-
-    // XXX This will later be enabled to start X-Plane from within QGroundControl with the right arguments
-
-//    //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
-//    // Catch process error
-//    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
-//                      this, SLOT(processError(QProcess::ProcessError)));
-//    QObject::connect( terraSync, SIGNAL(error(QProcess::ProcessError)),
-//                      this, SLOT(processError(QProcess::ProcessError)));
-//    // Start X-Plane
-//    QStringList processCall;
-//    QString processFgfs;
-//    QString processTerraSync;
-//    QString fgRoot;
-//    QString fgScenery;
-//    QString aircraft;
-
-//    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
-//    {
-//        aircraft = "Rascal110-JSBSim";
-//    }
-//    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-//    {
-//        aircraft = "arducopter";
-//    }
-//    else
-//    {
-//        aircraft = "Rascal110-JSBSim";
-//    }
-
-//#ifdef Q_OS_MACX
-//    processFgfs = "/Applications/X-Plane.app/Contents/Resources/fgfs";
-//    processTerraSync = "/Applications/X-Plane.app/Contents/Resources/terrasync";
-//    fgRoot = "/Applications/X-Plane.app/Contents/Resources/data";
-//    //fgScenery = "/Applications/X-Plane.app/Contents/Resources/data/Scenery";
-//    fgScenery = "/Applications/X-Plane.app/Contents/Resources/data/Scenery-TerraSync";
-//    //   /Applications/X-Plane.app/Contents/Resources/data/Scenery:
-//#endif
-
-//#ifdef Q_OS_WIN32
-//    processFgfs = "C:\\Program Files (x86)\\X-Plane\\bin\\Win32\\fgfs";
-//    fgRoot = "C:\\Program Files (x86)\\X-Plane\\data";
-//    fgScenery = "C:\\Program Files (x86)\\X-Plane\\data\\Scenery-Terrasync";
-//#endif
-
-//#ifdef Q_OS_LINUX
-//    processFgfs = "fgfs";
-//    fgRoot = "/usr/share/X-Plane/data";
-//    fgScenery = "/usr/share/X-Plane/data/Scenery-Terrasync";
-//#endif
-
-//    // Sanity checks
-//    bool sane = true;
-//    QFileInfo executable(processFgfs);
-//    if (!executable.isExecutable())
-//    {
-//        MainWindow::instance()->showCriticalMessage(tr("X-Plane Failed to Start"), tr("X-Plane was not found at %1").arg(processFgfs));
-//        sane = false;
-//    }
-
-//    QFileInfo root(fgRoot);
-//    if (!root.isDir())
-//    {
-//        MainWindow::instance()->showCriticalMessage(tr("X-Plane Failed to Start"), tr("X-Plane data directory was not found at %1").arg(fgRoot));
-//        sane = false;
-//    }
-
-//    QFileInfo scenery(fgScenery);
-//    if (!scenery.isDir())
-//    {
-//        MainWindow::instance()->showCriticalMessage(tr("X-Plane Failed to Start"), tr("X-Plane scenery directory was not found at %1").arg(fgScenery));
-//        sane = false;
-//    }
-
-//    if (!sane) return false;
-
-//    // --atlas=socket,out,1,locallocalHost,5505,udp
-//    // terrasync -p 5505 -S -d /usr/local/share/TerraSync
-
-//    processCall << QString("--fg-root=%1").arg(fgRoot);
-//    processCall << QString("--fg-scenery=%1").arg(fgScenery);
-//    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-//    {
-//        // FIXME ADD QUAD-Specific protocol here
-//        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(localPort);
-//        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(remotePort);
-//    }
-//    else
-//    {
-//        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(localPort);
-//        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(remotePort);
-//    }
-//    processCall << "--atlas=socket,out,1,locallocalHost,5505,udp";
-//    processCall << "--in-air";
-//    processCall << "--roll=0";
-//    processCall << "--pitch=0";
-//    processCall << "--vc=90";
-//    processCall << "--heading=300";
-//    processCall << "--timeofday=noon";
-//    processCall << "--disable-hud-3d";
-//    processCall << "--disable-fullscreen";
-//    processCall << "--geometry=400x300";
-//    processCall << "--disable-anti-alias-hud";
-//    processCall << "--wind=0@0";
-//    processCall << "--turbulence=0.0";
-//    processCall << "--prop:/sim/frame-rate-throttle-hz=30";
-//    processCall << "--control=mouse";
-//    processCall << "--disable-intro-music";
-//    processCall << "--disable-sound";
-//    processCall << "--disable-random-objects";
-//    processCall << "--disable-ai-models";
-//    processCall << "--shading-flat";
-//    processCall << "--fog-disable";
-//    processCall << "--disable-specular-highlight";
-//    //processCall << "--disable-skyblend";
-//    processCall << "--disable-random-objects";
-//    processCall << "--disable-panel";
-//    //processCall << "--disable-horizon-effect";
-//    processCall << "--disable-clouds";
-//    processCall << "--fdm=jsb";
-//    processCall << "--units-meters";
-//    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-//    {
-//        // Start all engines of the quad
-//        processCall << "--prop:/engines/engine[0]/running=true";
-//        processCall << "--prop:/engines/engine[1]/running=true";
-//        processCall << "--prop:/engines/engine[2]/running=true";
-//        processCall << "--prop:/engines/engine[3]/running=true";
-//    }
-//    else
-//    {
-//        processCall << "--prop:/engines/engine/running=true";
-//    }
-//    processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
-//    processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
-//    processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
-//    // Add new argument with this: processCall << "";
-//    processCall << QString("--aircraft=%2").arg(aircraft);
-
-
-//    QStringList terraSyncArguments;
-//    terraSyncArguments << "-p 5505";
-//    terraSyncArguments << "-S";
-//    terraSyncArguments << QString("-d=%1").arg(fgScenery);
-
-//    terraSync->start(processTerraSync, terraSyncArguments);
-//    process->start(processFgfs, processCall);
-
-
-
-//    emit X-PlaneConnected(connectState);
-//    if (connectState) {
-//        emit X-PlaneConnected();
-//        connectionStartTime = QGC::groundTimeUsecs()/1000;
-//    }
-//    qDebug() << "STARTING SIM";
-
-//        qDebug() << "STARTING: " << processFgfs << processCall;
     return connectState;
 }
 

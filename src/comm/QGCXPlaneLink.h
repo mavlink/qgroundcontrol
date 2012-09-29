@@ -81,6 +81,16 @@ public:
      */
     QString getRemoteHost();
 
+    enum AIRFRAME
+    {
+        AIRFRAME_UNKNOWN = 0,
+        AIRFRAME_QUAD_DJI_F450_PWM,
+        AIRFRAME_QUAD_X_MK_10INCH_I2C,
+        AIRFRAME_QUAD_X_ARDRONE,
+        AIRFRAME_FIXED_WING_BIXLER_II,
+        AIRFRAME_FIXED_WING_BIXLER_II_AILERONS
+    };
+
 public slots:
 //    void setAddress(QString address);
     void setPort(int port);
@@ -88,9 +98,8 @@ public slots:
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
     void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
-//    /** @brief Remove a host from broadcasting messages to */
-//    void removeHost(const QString& host);
-    //    void readPendingDatagrams();
+    /** @brief Send new motor control states to the simulation */
+    void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
     void processError(QProcess::ProcessError err);
 
     void readBytes();
@@ -163,6 +172,9 @@ protected:
     float groundspeed;
 
     float man_roll, man_pitch, man_yaw;
+    QString airframeName;
+    enum AIRFRAME airframeID;
+    bool xPlaneConnected;
 
     void setName(QString name);
 

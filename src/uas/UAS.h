@@ -665,6 +665,8 @@ signals:
     void imageReady(UASInterface* uas);
     /** @brief HIL controls have changed */
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
+    /** @brief HIL actuator outputs have changed */
+    void hilActuatorsChanged(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
