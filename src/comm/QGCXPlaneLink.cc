@@ -317,7 +317,7 @@ void QGCXPlaneLink::readBytes()
                 //qDebug() << "HDNG" << "pitch" << p.f[0] << "roll" << p.f[1] << "hding true" << p.f[2] << "hding mag" << p.f[3];
                 pitch = p.f[0] / 180.0f * M_PI;
                 roll = p.f[1] / 180.0f * M_PI;
-                yaw = (p.f[2] - 180.0f) / 180.0f * M_PI;
+                yaw = p.f[2] / 180.0f * M_PI;
             }
 
 //            else if (p.index == 19)
@@ -552,6 +552,10 @@ void QGCXPlaneLink::setRandomAttitude()
  **/
 bool QGCXPlaneLink::connectSimulation()
 {
+    qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
+
+    start(LowPriority);
+
     if (!mav) return false;
     if (connectState) return false;
 
@@ -772,10 +776,6 @@ bool QGCXPlaneLink::connectSimulation()
 //    qDebug() << "STARTING SIM";
 
 //        qDebug() << "STARTING: " << processFgfs << processCall;
-
-    qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
-
-    start(LowPriority);
     return connectState;
 }
 

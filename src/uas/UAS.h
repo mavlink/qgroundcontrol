@@ -680,6 +680,7 @@ protected:
     quint64 lastVoltageWarning; ///< Time at which the last voltage warning occured
     quint64 lastNonNullTime;    ///< The last timestamp from the MAV that was not null
     unsigned int onboardTimeOffsetInvalidCount;     ///< Count when the offboard time offset estimation seemed wrong
+    bool hilEnabled;            ///< Set to true if HIL mode is enabled from GCS (UAS might be in HIL even if this flag is not set, this defines the GCS HIL setting)
 
 protected slots:
     /** @brief Write settings to disk */

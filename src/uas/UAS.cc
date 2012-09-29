@@ -106,7 +106,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connectionLost(false),
     lastVoltageWarning(0),
     lastNonNullTime(0),
-    onboardTimeOffsetInvalidCount(0)
+    onboardTimeOffsetInvalidCount(0),
+    hilEnabled(false)
 
 {
     for (unsigned int i = 0; i<255;++i)
@@ -2605,6 +2606,8 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
 **/
 void UAS::startHil()
 {
+    if (hilEnabled) return;
+    hilEnabled = true;
     // Connect HIL simulation link
     simulation->connectSimulation();
     mavlink_message_t msg;
@@ -2621,6 +2624,7 @@ void UAS::stopHil()
     mavlink_message_t msg;
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & !MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
+    hilEnabled = false;
 }
 
 void UAS::shutdown()
