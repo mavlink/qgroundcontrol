@@ -79,7 +79,7 @@ void QGCXPlaneLink::storeSettings()
     // Store settings
     QSettings settings;
     settings.beginGroup("QGC_XPLANE_LINK");
-    settings.setValue("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString(), remotePort));
+    settings.setValue("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
     settings.endGroup();
     settings.sync();
 }
@@ -129,7 +129,7 @@ void QGCXPlaneLink::processError(QProcess::ProcessError err)
 
 QString QGCXPlaneLink::getRemoteHost()
 {
-    return QString("%1:%2").arg(remoteHost.toString(), remotePort);
+    return QString("%1:%2").arg(remoteHost.toString()).arg(remotePort);
 }
 
 /**
@@ -548,6 +548,10 @@ void QGCXPlaneLink::selectPlane(const QString& plane)
             airframeID = AIRFRAME_QUAD_DJI_F450_PWM;
         }
     }
+    else
+    {
+        airframeID = AIRFRAME_UNKNOWN;
+    }
 }
 
 void QGCXPlaneLink::setPositionAttitude(double lat, double lon, double alt, double roll, double pitch, double yaw)
@@ -709,7 +713,7 @@ bool QGCXPlaneLink::connectSimulation()
         }
     }
 
-    qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
+    //qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
 
     ip.index = 0;
     strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
