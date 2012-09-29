@@ -214,19 +214,20 @@ void JoystickInput::run()
             }
         }
 
-        // Display all axes
-        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++)
-        {
-            //qDebug() << "\rAXIS" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
-        }
+//        // Display all axes
+//        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++)
+//        {
+//            qDebug() << "\rAXIS" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
+//        }
 
         // THRUST
         double thrust = ((double)SDL_JoystickGetAxis(joystick, thrustAxis) - calibrationNegative[thrustAxis]) / (calibrationPositive[thrustAxis] - calibrationNegative[thrustAxis]);
         // Has to be inverted for Logitech Wingman
         thrust = 1.0f - thrust;
+        thrust = thrust * 2.0f - 1.0f;
         // Bound rounding errors
-        if (thrust > 1) thrust = 1;
-        if (thrust < 0) thrust = 0;
+        if (thrust > 1.0f) thrust = 1.0f;
+        if (thrust < -1.0f) thrust = -1.0f;
         emit thrustChanged((float)thrust);
 
         // X Axis

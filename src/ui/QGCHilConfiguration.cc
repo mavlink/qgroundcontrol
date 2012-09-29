@@ -11,6 +11,8 @@ QGCHilConfiguration::QGCHilConfiguration(QGCHilLink* link, QWidget *parent) :
 
     connect(ui->startButton, SIGNAL(clicked(bool)), this, SLOT(toggleSimulation(bool)));
     connect(ui->hostComboBox, SIGNAL(activated(QString)), link, SLOT(setRemoteHost(QString)));
+    connect(link, SIGNAL(remoteChanged(QString)), ui->hostComboBox, SLOT(setEditText(QString)));
+    connect(link, SIGNAL(statusMessage(QString)), this, SLOT(receiveStatusMessage(QString)));
 
     ui->startButton->setText(tr("Connect"));
 
@@ -22,7 +24,15 @@ QGCHilConfiguration::QGCHilConfiguration(QGCHilLink* link, QWidget *parent) :
         connect(ui->randomPositionButton, SIGNAL(clicked()), link, SLOT(setRandomPosition()));
         connect(ui->airframeComboBox, SIGNAL(activated(QString)), link, SLOT(setAirframe(QString)));
     }
+
+    ui->hostComboBox->clear();
+    ui->hostComboBox->addItem(link->getRemoteHost());
 //    connect(ui->)
+}
+
+void QGCHilConfiguration::receiveStatusMessage(const QString& message)
+{
+    ui->statusLabel->setText(message);
 }
 
 void QGCHilConfiguration::toggleSimulation(bool connect)
