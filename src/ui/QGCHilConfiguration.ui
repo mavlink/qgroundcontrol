@@ -101,6 +101,9 @@
    </item>
    <item row="0" column="1" colspan="3">
     <widget class="QComboBox" name="simComboBox">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
      <item>
       <property name="text">
        <string>X-Plane 10</string>

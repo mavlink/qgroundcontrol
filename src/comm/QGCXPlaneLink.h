@@ -102,6 +102,8 @@ public slots:
     void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
     /** @brief Set the simulator version as text string */
     void setVersion(const QString& version);
+    /** @brief Set the simulator version as integer */
+    void setVersion(unsigned int version);
     QString getVersion()
     {
         return QString("X-Plane %1").arg(xPlaneVersion);
