@@ -100,6 +100,18 @@ public slots:
     void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
     /** @brief Send new motor control states to the simulation */
     void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+    /** @brief Set the simulator version as text string */
+    void setVersion(const QString& version);
+    QString getVersion()
+    {
+        return QString("X-Plane %1").arg(xPlaneVersion);
+    }
+
+    int getAirFrameIndex()
+    {
+        return (int)airframeID;
+    }
+
     void processError(QProcess::ProcessError err);
 
     void readBytes();
@@ -175,6 +187,7 @@ protected:
     QString airframeName;
     enum AIRFRAME airframeID;
     bool xPlaneConnected;
+    unsigned int xPlaneVersion;
 
     void setName(QString name);
 

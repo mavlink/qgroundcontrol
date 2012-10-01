@@ -21,6 +21,11 @@
      </property>
      <item>
       <property name="text">
+       <string>X-Plane default</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
        <string>QRO_X/MK</string>
       </property>
      </item>
@@ -98,7 +103,12 @@
     <widget class="QComboBox" name="simComboBox">
      <item>
       <property name="text">
-       <string>X-Plane</string>
+       <string>X-Plane 10</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>X-Plane 9</string>
       </property>
      </item>
     </widget>

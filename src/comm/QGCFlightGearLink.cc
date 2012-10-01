@@ -41,7 +41,8 @@ This file is part of the QGROUNDCONTROL project
 
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString remoteHost, QHostAddress host, quint16 port) :
     process(NULL),
-    terraSync(NULL)
+    terraSync(NULL),
+    flightGearVersion(0)
 {
     this->host = host;
     this->port = port+mav->getUASID();

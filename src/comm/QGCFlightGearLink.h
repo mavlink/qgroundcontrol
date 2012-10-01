@@ -69,6 +69,16 @@ public:
      */
     QString getRemoteHost();
 
+    QString getVersion()
+    {
+        return QString("FlightGear %1").arg(flightGearVersion);
+    }
+
+    int getAirFrameIndex()
+    {
+        return -1;
+    }
+
     void run();
 
 public slots:
@@ -83,6 +93,11 @@ public slots:
 //    void removeHost(const QString& host);
     //    void readPendingDatagrams();
     void processError(QProcess::ProcessError err);
+    /** @brief Set the simulator version as text string */
+    void setVersion(const QString& version)
+    {
+        Q_UNUSED(version);
+    }
 
     void readBytes();
     /**
@@ -118,6 +133,7 @@ protected:
     UASInterface* mav;
     QProcess* process;
     QProcess* terraSync;
+    unsigned int flightGearVersion;
 
     void setName(QString name);
 

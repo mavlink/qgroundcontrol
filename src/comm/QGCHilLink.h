@@ -25,6 +25,18 @@ public:
      */
     virtual QString getRemoteHost() = 0;
 
+    /**
+     * @brief Get the application name and version
+     * @return A string containing a unique application name and compatibility version
+     */
+    virtual QString getVersion() = 0;
+
+    /**
+     * @brief Get index of currently selected airframe
+     * @return -1 if default is selected, index else
+     */
+    virtual int getAirFrameIndex() = 0;
+
 public slots:
     virtual void setPort(int port) = 0;
     /** @brief Add a new host to broadcast messages to */
@@ -33,6 +45,8 @@ public slots:
     virtual void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode) = 0;
     virtual void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8) = 0;
     virtual void processError(QProcess::ProcessError err) = 0;
+    /** @brief Set the simulator version as text string */
+    virtual void setVersion(const QString& version) = 0;
 
     virtual void readBytes() = 0;
     /**
@@ -74,6 +88,12 @@ signals:
 
     /** @brief Status text message from link */
     void statusMessage(const QString& message);
+
+    /** @brief Airframe changed */
+    void airframeChanged(const QString& airframe);
+
+    /** @brief Selected sim version changed */
+    void versionChanged(const QString& version);
 };
 
 #endif // QGCHILLINK_H
