@@ -42,6 +42,8 @@ This file is part of the QGROUNDCONTROL project
 
 QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     mav(mav),
+    remoteHost(QHostAddress("127.0.0.1")),
+    remotePort(49000),
     socket(NULL),
     process(NULL),
     terraSync(NULL),
@@ -72,7 +74,7 @@ void QGCXPlaneLink::loadSettings()
     settings.sync();
     settings.beginGroup("QGC_XPLANE_LINK");
     setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
-    setVersion(settings.value("XPLANE_VERSION", 10).toString());
+    setVersion(settings.value("XPLANE_VERSION", 10).toInt());
     selectPlane(settings.value("AIRFRAME", "default").toString());
     settings.endGroup();
 }
@@ -115,11 +117,12 @@ void QGCXPlaneLink::setVersion(const QString& version)
     }
 }
 
-//void QGCXPlaneLink::setVersion(unsigned int version)
-//{
-////    bool changed = (xPlaneVersion != version);
-//    xPlaneVersion = version;
-//}
+void QGCXPlaneLink::setVersion(unsigned int version)
+{
+    bool changed = (xPlaneVersion != version);
+    xPlaneVersion = version;
+    if (changed) emit versionChanged(QString("X-Plane %1").arg(xPlaneVersion));
+}
 
 
 /**
@@ -174,6 +177,9 @@ QString QGCXPlaneLink::getRemoteHost()
  */
 void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 {
+    if (newHost.length() == 0)
+        return;
+
     if (newHost.contains(":"))
     {
         //qDebug() << "HOST: " << newHost.split(":").first();
@@ -204,6 +210,7 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
         {
             // Add newHost
             remoteHost = info.addresses().first();
+            if (remotePort == 0) remotePort = 49000;
         }
     }
 
