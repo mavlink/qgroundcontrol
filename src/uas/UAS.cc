@@ -97,7 +97,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     paramManager(NULL),
     attitudeStamped(false),
     lastAttitude(0),
-    simulation(new QGCFlightGearLink(this)),
+    simulation(new QGCXPlaneLink(this)),
     isLocalPositionKnown(false),
     isGlobalPositionKnown(false),
     systemIsArmed(false),
@@ -2592,7 +2592,24 @@ bool UAS::emergencyKILL()
 /**
 * If enabled, connect the fligth gear link. 
 */
-void UAS::enableHil(bool enable)
+void UAS::enableHilFlightGear(bool enable)
+{
+    // Connect Flight Gear Link
+    if (enable)
+    {
+        simulation = new QGCFlightGearLink(this);
+        startHil();
+    }
+    else
+    {
+        stopHil();
+    }
+}
+
+/**
+* If enabled, connect the fligth gear link.
+*/
+void UAS::enableHilXPlane(bool enable)
 {
     // Connect Flight Gear Link
     if (enable)
