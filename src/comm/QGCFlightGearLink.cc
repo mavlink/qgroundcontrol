@@ -230,9 +230,9 @@ void QGCFlightGearLink::readBytes()
     double airspeed;
 
     time = values.at(0).toDouble();
-    lat = values.at(1).toDouble();
-    lon = values.at(2).toDouble();
-    alt = values.at(3).toDouble();
+    lat = values.at(1).toDouble() * 1e7;
+    lon = values.at(2).toDouble() * 1e7;
+    alt = values.at(3).toDouble() * 1e3;
     roll = values.at(4).toDouble();
     pitch = values.at(5).toDouble();
     yaw = values.at(6).toDouble();
@@ -244,9 +244,9 @@ void QGCFlightGearLink::readBytes()
     yacc = values.at(11).toDouble();
     zacc = values.at(12).toDouble();
 
-    vx = values.at(13).toDouble();
-    vy = values.at(14).toDouble();
-    vz = values.at(15).toDouble();
+    vx = values.at(13).toDouble() * 1e2;
+    vy = values.at(14).toDouble() * 1e2;
+    vz = values.at(15).toDouble() * 1e2;
 
     airspeed = values.at(16).toDouble();
 
@@ -322,6 +322,8 @@ bool QGCFlightGearLink::disconnectSimulation()
  **/
 bool QGCFlightGearLink::connectSimulation()
 {
+    qDebug() << "STARTING FLIGHTGEAR LINK";
+
     if (!mav) return false;
     socket = new QUdpSocket(this);
     connectState = socket->bind(host, port);
@@ -377,9 +379,9 @@ bool QGCFlightGearLink::connectSimulation()
 #endif
 
 #ifdef Q_OS_LINUX
-    processFgfs = "fgfs";
-    fgRoot = "/usr/share/flightgear/data";
-    fgScenery = "/usr/share/flightgear/data/Scenery-Terrasync";
+    processFgfs = "/usr/games/fgfs";
+    fgRoot = "/usr/share/games/flightgear";
+    fgScenery = "/usr/share/games/flightgear/Scenery";
 #endif
 
     // Sanity checks
@@ -451,7 +453,8 @@ bool QGCFlightGearLink::connectSimulation()
     //processCall << "--disable-horizon-effect";
     processCall << "--disable-clouds";
     processCall << "--fdm=jsb";
-    processCall << "--units-meters";
+    processCall << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
+    processCall << "--notrim";
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // Start all engines of the quad
