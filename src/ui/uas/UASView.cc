@@ -82,7 +82,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 
     hilAction->setCheckable(true);
     // Flightgear is not ready for prime time
-    hilAction->setEnabled(false);
+    //hilAction->setEnabled(false);
     hilXAction->setCheckable(true);
 
     m_ui->setupUi(this);
@@ -503,6 +503,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     {
         menu.addAction(removeAction);
     }
+    menu.addAction(hilAction);
     menu.addAction(hilXAction);
     // XXX Re-enable later menu.addAction(hilXAction);
     menu.addAction(selectAirframeAction);
