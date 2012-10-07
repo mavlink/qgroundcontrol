@@ -82,23 +82,23 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Failed to Start"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::Crashed:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
         break;
     case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Start Timed Out"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Start Timed Out"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear/TerraSync"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear/TerraSync"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
     default:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Error"), tr("Please check if the path and command is correct."));
         break;
     }
 }
@@ -343,11 +343,12 @@ bool QGCFlightGearLink::connectSimulation()
     QObject::connect( terraSync, SIGNAL(error(QProcess::ProcessError)),
                       this, SLOT(processError(QProcess::ProcessError)));
     // Start Flightgear
-    QStringList processCall;
+    QStringList flightGearArguments;
     QString processFgfs;
     QString processTerraSync;
     QString fgRoot;
     QString fgScenery;
+    QString terraSyncScenery;
     QString aircraft;
 
     if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
@@ -381,7 +382,9 @@ bool QGCFlightGearLink::connectSimulation()
 #ifdef Q_OS_LINUX
     processFgfs = "/usr/games/fgfs";
     fgRoot = "/usr/share/games/flightgear";
-    fgScenery = "/usr/share/games/flightgear/Scenery";
+    fgScenery = "/usr/share/games/flightgear/Scenery/";
+    processTerraSync = "/usr/bin/nice"; //according to http://wiki.flightgear.org/TerraSync, run with lower priority
+    terraSyncScenery = QDir::homePath() + "/.terrasync/Scenery"; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 #endif
 
     // Sanity checks
@@ -407,80 +410,100 @@ bool QGCFlightGearLink::connectSimulation()
         sane = false;
     }
 
+    QFileInfo terraSyncExecutableInfo(processTerraSync);
+    if (!terraSyncExecutableInfo.isExecutable())
+    {
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("TerraSync was not found at %1").arg(processTerraSync));
+        sane = false;
+    }
+
+
     if (!sane) return false;
 
     // --atlas=socket,out,1,localhost,5505,udp
     // terrasync -p 5505 -S -d /usr/local/share/TerraSync
 
-    processCall << QString("--fg-root=%1").arg(fgRoot);
-    processCall << QString("--fg-scenery=%1").arg(fgScenery);
+    /*Prepare FlightGear Arguments */
+    flightGearArguments << QString("--fg-root=%1").arg(fgRoot);
+    flightGearArguments << QString("--fg-scenery=%1:%2").arg(fgScenery).arg(terraSyncScenery); //according to http://wiki.flightgear.org/TerraSync a separate directory is used
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // FIXME ADD QUAD-Specific protocol here
-        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
-        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
+        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
     }
     else
     {
-        processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
-        processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
+        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
     }
-    processCall << "--atlas=socket,out,1,localhost,5505,udp";
-    processCall << "--in-air";
-    processCall << "--roll=0";
-    processCall << "--pitch=0";
-    processCall << "--vc=90";
-    processCall << "--heading=300";
-    processCall << "--timeofday=noon";
-    processCall << "--disable-hud-3d";
-    processCall << "--disable-fullscreen";
-    processCall << "--geometry=400x300";
-    processCall << "--disable-anti-alias-hud";
-    processCall << "--wind=0@0";
-    processCall << "--turbulence=0.0";
-    processCall << "--prop:/sim/frame-rate-throttle-hz=30";
-    processCall << "--control=mouse";
-    processCall << "--disable-intro-music";
-    processCall << "--disable-sound";
-    processCall << "--disable-random-objects";
-    processCall << "--disable-ai-models";
-    processCall << "--shading-flat";
-    processCall << "--fog-disable";
-    processCall << "--disable-specular-highlight";
-    //processCall << "--disable-skyblend";
-    processCall << "--disable-random-objects";
-    processCall << "--disable-panel";
-    //processCall << "--disable-horizon-effect";
-    processCall << "--disable-clouds";
-    processCall << "--fdm=jsb";
-    processCall << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
-    processCall << "--notrim";
+    flightGearArguments << "--atlas=socket,out,1,localhost,5505,udp";
+    flightGearArguments << "--in-air";
+    flightGearArguments << "--roll=0";
+    flightGearArguments << "--pitch=0";
+    flightGearArguments << "--vc=90";
+    flightGearArguments << "--heading=300";
+    flightGearArguments << "--timeofday=noon";
+    flightGearArguments << "--disable-hud-3d";
+    flightGearArguments << "--disable-fullscreen";
+    flightGearArguments << "--geometry=400x300";
+    flightGearArguments << "--disable-anti-alias-hud";
+    flightGearArguments << "--wind=0@0";
+    flightGearArguments << "--turbulence=0.0";
+    flightGearArguments << "--prop:/sim/frame-rate-throttle-hz=30";
+    flightGearArguments << "--control=mouse";
+    flightGearArguments << "--disable-intro-music";
+    flightGearArguments << "--disable-sound";
+    flightGearArguments << "--disable-random-objects";
+    flightGearArguments << "--disable-ai-models";
+    flightGearArguments << "--shading-flat";
+    flightGearArguments << "--fog-disable";
+    flightGearArguments << "--disable-specular-highlight";
+    //flightGearArguments << "--disable-skyblend";
+    flightGearArguments << "--disable-random-objects";
+    flightGearArguments << "--disable-panel";
+    //flightGearArguments << "--disable-horizon-effect";
+    flightGearArguments << "--disable-clouds";
+    flightGearArguments << "--fdm=jsb";
+    flightGearArguments << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
+    flightGearArguments << "--notrim";
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // Start all engines of the quad
-        processCall << "--prop:/engines/engine[0]/running=true";
-        processCall << "--prop:/engines/engine[1]/running=true";
-        processCall << "--prop:/engines/engine[2]/running=true";
-        processCall << "--prop:/engines/engine[3]/running=true";
+        flightGearArguments << "--prop:/engines/engine[0]/running=true";
+        flightGearArguments << "--prop:/engines/engine[1]/running=true";
+        flightGearArguments << "--prop:/engines/engine[2]/running=true";
+        flightGearArguments << "--prop:/engines/engine[3]/running=true";
     }
     else
     {
-        processCall << "--prop:/engines/engine/running=true";
+        flightGearArguments << "--prop:/engines/engine/running=true";
     }
-    processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
-    processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
-    processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
-    // Add new argument with this: processCall << "";
-    processCall << QString("--aircraft=%2").arg(aircraft);
+    flightGearArguments << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
+    flightGearArguments << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
+    flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
+    // Add new argument with this: flightGearArguments << "";
+    flightGearArguments << QString("--aircraft=%2").arg(aircraft);
 
-
+    /*Prepare TerraSync Arguments */
     QStringList terraSyncArguments;
-    terraSyncArguments << "-p 5505";
+#ifdef Q_OS_LINUX
+    terraSyncArguments << "/usr/games/terrasync";
+#endif
+    terraSyncArguments << "-p";
+    terraSyncArguments << "5505";
     terraSyncArguments << "-S";
-    terraSyncArguments << QString("-d=%1").arg(fgScenery);
+    terraSyncArguments << "-d";
+    terraSyncArguments << terraSyncScenery; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 
+#ifdef Q_OS_LINUX
+//    connect (terraSync, SIGNAL(readyReadStandardOutput()), this, SLOT(printTerraSyncOutput()));
+//    connect (terraSync, SIGNAL(readyReadStandardError()), this, SLOT(printTerraSyncError()));
     terraSync->start(processTerraSync, terraSyncArguments);
-    process->start(processFgfs, processCall);
+//    qDebug() << "STARTING: " << processTerraSync << terraSyncArguments;
+#endif
+
+    process->start(processFgfs, flightGearArguments);
 
 
 
@@ -491,10 +514,34 @@ bool QGCFlightGearLink::connectSimulation()
     }
     qDebug() << "STARTING SIM";
 
-        qDebug() << "STARTING: " << processFgfs << processCall;
+//    qDebug() << "STARTING: " << processFgfs << flightGearArguments;
+
 
     start(LowPriority);
     return connectState;
+}
+
+void QGCFlightGearLink::printTerraSyncOutput()
+{
+   qDebug() << "TerraSync stdout:";
+   QByteArray byteArray = terraSync->readAllStandardOutput();
+   QStringList strLines = QString(byteArray).split("\n");
+
+   foreach (QString line, strLines){
+    qDebug() << line;
+   }
+}
+
+void QGCFlightGearLink::printTerraSyncError()
+{
+   qDebug() << "TerraSync stderr:";
+
+   QByteArray byteArray = terraSync->readAllStandardError();
+   QStringList strLines = QString(byteArray).split("\n");
+
+   foreach (QString line, strLines){
+    qDebug() << line;
+   }
 }
 
 /**
