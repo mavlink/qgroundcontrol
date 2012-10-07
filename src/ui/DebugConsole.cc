@@ -61,6 +61,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     lowpassDataRate(0.0f),
     dataRateThreshold(400),
     commandIndex(0),
+    escReceived(false),
+    escIndex(0),
     m_ui(new Ui::DebugConsole)
 {
     // Setup basic user interface
