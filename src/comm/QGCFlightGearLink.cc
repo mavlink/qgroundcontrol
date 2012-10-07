@@ -496,12 +496,10 @@ bool QGCFlightGearLink::connectSimulation()
     terraSyncArguments << "-d";
     terraSyncArguments << terraSyncScenery; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 
-#ifdef Q_OS_LINUX
 //    connect (terraSync, SIGNAL(readyReadStandardOutput()), this, SLOT(printTerraSyncOutput()));
 //    connect (terraSync, SIGNAL(readyReadStandardError()), this, SLOT(printTerraSyncError()));
     terraSync->start(processTerraSync, terraSyncArguments);
 //    qDebug() << "STARTING: " << processTerraSync << terraSyncArguments;
-#endif
 
     process->start(processFgfs, flightGearArguments);
 
