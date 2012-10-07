@@ -110,6 +110,9 @@ public slots:
     bool connectSimulation();
     bool disconnectSimulation();
 
+    void printTerraSyncOutput();
+    void printTerraSyncError();
+
 protected:
     QString name;
     QHostAddress host;
