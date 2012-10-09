@@ -428,7 +428,7 @@ void QGCXPlaneLink::readBytes()
 //                UAS* uas = dynamic_cast<UAS*>(mav);
 //                if (uas) uas->setManualControlCommands(man_roll, man_pitch, man_yaw, 0.6);
 //            }
-            else if (p.index == 16)
+            else if (xPlaneVersion == 10 && p.index == 16)
             {
                 //qDebug() << "ANG VEL:" << p.f[0] << p.f[3] << p.f[7];
                 rollspeed = p.f[2];
@@ -442,6 +442,12 @@ void QGCXPlaneLink::readBytes()
                 roll = p.f[1] / 180.0f * M_PI;
                 yaw = p.f[2] / 180.0f * M_PI;
                 emitUpdate = true;
+            }
+            else if ((xPlaneVersion == 9 && p.index == 17))
+            {
+                rollspeed = p.f[2];
+                pitchspeed = p.f[1];
+                yawspeed = p.f[0];
             }
 
 //            else if (p.index == 19)
