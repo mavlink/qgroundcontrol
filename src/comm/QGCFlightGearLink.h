@@ -49,7 +49,7 @@ class QGCFlightGearLink : public QGCHilLink
     //Q_INTERFACES(QGCFlightGearLinkInterface:LinkInterface)
 
 public:
-    QGCFlightGearLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCFlightGearLink();
 
     bool isConnected();
@@ -137,6 +137,7 @@ protected:
     QProcess* process;
     QProcess* terraSync;
     unsigned int flightGearVersion;
+    QString startupArguments;
 
     void setName(QString name);
 

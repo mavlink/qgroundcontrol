@@ -201,6 +201,9 @@ public slots:
     /** @brief Load custom widgets from default file */
     void loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType);
 
+    /** @brief Loads and shows the HIL Configuration Widget for the given UAS*/
+    void showHILConfigurationWidget(UASInterface *uas);
+
     void closeEvent(QCloseEvent* event);
 
     /** @brief Load data view, allowing to plot flight data */

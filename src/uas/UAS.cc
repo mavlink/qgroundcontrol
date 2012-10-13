@@ -2590,14 +2590,14 @@ bool UAS::emergencyKILL()
 }
 
 /**
-* If enabled, connect the fligth gear link. 
+* If enabled, connect the flight gear link.
 */
-void UAS::enableHilFlightGear(bool enable)
+void UAS::enableHilFlightGear(bool enable, QString options)
 {
     // Connect Flight Gear Link
     if (enable)
     {
-        simulation = new QGCFlightGearLink(this);
+        simulation = new QGCFlightGearLink(this, options);
         startHil();
     }
     else
@@ -2607,13 +2607,14 @@ void UAS::enableHilFlightGear(bool enable)
 }
 
 /**
-* If enabled, connect the fligth gear link.
+* If enabled, connect the X-plane gear link.
 */
 void UAS::enableHilXPlane(bool enable)
 {
-    // Connect Flight Gear Link
+    // Connect X-Plane Link
     if (enable)
     {
+        simulation = new QGCXPlaneLink(this);
         startHil();
     }
     else
