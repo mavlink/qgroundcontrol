@@ -4,6 +4,7 @@
 #include <QWidget>
 
 #include "QGCHilLink.h"
+#include "UAS.h"
 
 namespace Ui {
 class QGCHilConfiguration;
@@ -14,18 +15,19 @@ class QGCHilConfiguration : public QWidget
     Q_OBJECT
     
 public:
-    QGCHilConfiguration(QGCHilLink* link, QWidget *parent = 0);
+    QGCHilConfiguration(UAS* mav, QWidget *parent = 0);
     ~QGCHilConfiguration();
 
 public slots:
-    /** @brief Start / stop simulation */
-    void toggleSimulation(bool connect);
     /** @brief Receive status message */
     void receiveStatusMessage(const QString& message);
 
 protected:
-    QGCHilLink* link;
+    UAS* mav;
     
+private slots:
+    void on_simComboBox_currentIndexChanged(int index);
+
 private:
     Ui::QGCHilConfiguration *ui;
 };

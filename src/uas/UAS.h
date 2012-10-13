@@ -528,7 +528,7 @@ public slots:
     void go();
 
     /** @brief Enable / disable HIL */
-    void enableHilFlightGear(bool enable);
+    void enableHilFlightGear(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
 

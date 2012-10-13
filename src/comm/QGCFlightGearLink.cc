@@ -39,9 +39,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 #include "MainWindow.h"
 
-QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString remoteHost, QHostAddress host, quint16 port) :
+QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     process(NULL),
     terraSync(NULL),
+    startupArguments(startupArguments),
     flightGearVersion(0)
 {
     this->host = host;
@@ -438,35 +439,37 @@ bool QGCFlightGearLink::connectSimulation()
         flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
     }
     flightGearArguments << "--atlas=socket,out,1,localhost,5505,udp";
-    flightGearArguments << "--in-air";
-    flightGearArguments << "--roll=0";
-    flightGearArguments << "--pitch=0";
-    flightGearArguments << "--vc=90";
-    flightGearArguments << "--heading=300";
-    flightGearArguments << "--timeofday=noon";
-    flightGearArguments << "--disable-hud-3d";
-    flightGearArguments << "--disable-fullscreen";
-    flightGearArguments << "--geometry=400x300";
-    flightGearArguments << "--disable-anti-alias-hud";
-    flightGearArguments << "--wind=0@0";
-    flightGearArguments << "--turbulence=0.0";
-    flightGearArguments << "--prop:/sim/frame-rate-throttle-hz=30";
-    flightGearArguments << "--control=mouse";
-    flightGearArguments << "--disable-intro-music";
-    flightGearArguments << "--disable-sound";
-    flightGearArguments << "--disable-random-objects";
-    flightGearArguments << "--disable-ai-models";
-    flightGearArguments << "--shading-flat";
-    flightGearArguments << "--fog-disable";
-    flightGearArguments << "--disable-specular-highlight";
-    //flightGearArguments << "--disable-skyblend";
-    flightGearArguments << "--disable-random-objects";
-    flightGearArguments << "--disable-panel";
-    //flightGearArguments << "--disable-horizon-effect";
-    flightGearArguments << "--disable-clouds";
-    flightGearArguments << "--fdm=jsb";
-    flightGearArguments << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
-    flightGearArguments << "--notrim";
+//    flightGearArguments << "--in-air";
+//    flightGearArguments << "--roll=0";
+//    flightGearArguments << "--pitch=0";
+//    flightGearArguments << "--vc=90";
+//    flightGearArguments << "--heading=300";
+//    flightGearArguments << "--timeofday=noon";
+//    flightGearArguments << "--disable-hud-3d";
+//    flightGearArguments << "--disable-fullscreen";
+//    flightGearArguments << "--geometry=400x300";
+//    flightGearArguments << "--disable-anti-alias-hud";
+//    flightGearArguments << "--wind=0@0";
+//    flightGearArguments << "--turbulence=0.0";
+//    flightGearArguments << "--prop:/sim/frame-rate-throttle-hz=30";
+//    flightGearArguments << "--control=mouse";
+//    flightGearArguments << "--disable-intro-music";
+//    flightGearArguments << "--disable-sound";
+//    flightGearArguments << "--disable-random-objects";
+//    flightGearArguments << "--disable-ai-models";
+//    flightGearArguments << "--shading-flat";
+//    flightGearArguments << "--fog-disable";
+//    flightGearArguments << "--disable-specular-highlight";
+//    //flightGearArguments << "--disable-skyblend";
+//    flightGearArguments << "--disable-random-objects";
+//    flightGearArguments << "--disable-panel";
+//    //flightGearArguments << "--disable-horizon-effect";
+//    flightGearArguments << "--disable-clouds";
+//    flightGearArguments << "--fdm=jsb";
+//    flightGearArguments << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
+//    flightGearArguments << "--notrim";
+
+    flightGearArguments += startupArguments.split(" ");
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // Start all engines of the quad
