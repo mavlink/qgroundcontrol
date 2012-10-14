@@ -65,6 +65,9 @@
      <property name="features">
       <set>QDockWidget::NoDockWidgetFeatures</set>
      </property>
+     <property name="windowTitle">
+      <string>Simulator Options</string>
+     </property>
      <widget class="QWidget" name="dockWidgetContents"/>
     </widget>
    </item>
