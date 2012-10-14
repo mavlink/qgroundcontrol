@@ -350,20 +350,20 @@ bool QGCFlightGearLink::connectSimulation()
     QString fgRoot;
     QString fgScenery;
     QString terraSyncScenery;
-    QString aircraft;
+//    QString aircraft;
 
-    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
-    {
-        aircraft = "Rascal110-JSBSim";
-    }
-    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-    {
-        aircraft = "arducopter";
-    }
-    else
-    {
-        aircraft = "Rascal110-JSBSim";
-    }
+//    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
+//    {
+//        aircraft = "Rascal110-JSBSim";
+//    }
+//    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+//    {
+//        aircraft = "arducopter";
+//    }
+//    else
+//    {
+//        aircraft = "Rascal110-JSBSim";
+//    }
 
 #ifdef Q_OS_MACX
     processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
@@ -486,7 +486,7 @@ bool QGCFlightGearLink::connectSimulation()
     flightGearArguments << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
     flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
     // Add new argument with this: flightGearArguments << "";
-    flightGearArguments << QString("--aircraft=%2").arg(aircraft);
+    //flightGearArguments << QString("--aircraft=%2").arg(aircraft);
 
     /*Prepare TerraSync Arguments */
     QStringList terraSyncArguments;

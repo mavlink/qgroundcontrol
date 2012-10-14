@@ -32,21 +32,14 @@
     <property name="margin">
      <number>9</number>
     </property>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <widget class="QPlainTextEdit" name="optionsPlainTextEdit">
       <property name="plainText">
        <string>--in-air --roll=0 --pitch=0 --vc=90 --heading=300 --timeofday=noon --disable-hud-3d --disable-fullscreen --geometry=400x300 --disable-anti-alias-hud --wind=0@0 --turbulence=0.0 --prop:/sim/frame-rate-throttle-hz=30 --control=mouse --disable-intro-music --disable-sound --disable-random-objects --disable-ai-models --shading-flat --fog-disable --disable-specular-highlight --disable-random-objects --disable-panel --disable-clouds --fdm=jsb --units-meters --notrim --prop:/engines/engine/running=true</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QPushButton" name="startButton">
-      <property name="text">
-       <string>Start</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
+    <item row="4" column="0">
      <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -59,10 +52,24 @@
       </property>
      </spacer>
     </item>
-    <item row="0" column="0">
+    <item row="1" column="0">
      <widget class="QLabel" name="plaintextInfoLabel">
       <property name="text">
        <string>Additional Options:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="startButton">
+      <property name="text">
+       <string>Start</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QComboBox" name="aircraftComboBox">
+      <property name="editable">
+       <bool>true</bool>
       </property>
      </widget>
     </item>

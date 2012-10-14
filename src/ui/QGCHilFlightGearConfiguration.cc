@@ -9,6 +9,22 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav,QWidget *p
     ui(new Ui::QGCHilFlightGearConfiguration)
 {
     ui->setupUi(this);
+
+    QStringList items = QStringList();
+    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
+    {
+        items << "Rascal110-JSBSim";
+        items << "c172p";
+    }
+    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        items << "arducopter";
+    }
+    else
+    {
+        items << "<aircraft>";
+    }
+    ui->aircraftComboBox->addItems(items);
 }
 
 QGCHilFlightGearConfiguration::~QGCHilFlightGearConfiguration()
@@ -18,5 +34,8 @@ QGCHilFlightGearConfiguration::~QGCHilFlightGearConfiguration()
 
 void QGCHilFlightGearConfiguration::on_startButton_clicked()
 {
-    mav->enableHilFlightGear(true, ui->optionsPlainTextEdit->toPlainText());
+    //XXX check validity of inputs
+    QString options = ui->optionsPlainTextEdit->toPlainText();
+    options.append(" --aircraft=" + ui->aircraftComboBox->currentText());
+    mav->enableHilFlightGear(true,  options);
 }
