@@ -2450,8 +2450,6 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     // If system has manual inputs enabled and is armed
     if(((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
-        // XXX FIXME ADD BUTTON SUPPORT
-        quint16 buttons = 0;
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualThrust, (float)manualYawAngle, buttons);
         sendMessage(message);
