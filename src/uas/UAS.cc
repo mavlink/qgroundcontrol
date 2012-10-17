@@ -2435,7 +2435,7 @@ void UAS::disarmSystem()
 * Set the manual control commands. 
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust)
+void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons)
 {
     // Scale values
     double rollPitchScaling = 1.0f * 1000.0f;
