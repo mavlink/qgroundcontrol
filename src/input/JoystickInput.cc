@@ -101,7 +101,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         tmp = dynamic_cast<UAS*>(this->uas);
         if(tmp)
         {
-            disconnect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
+            disconnect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
             disconnect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
         }
     }
@@ -110,7 +110,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 
     tmp = dynamic_cast<UAS*>(this->uas);
     if(tmp) {
-        connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
+        connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
         connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
     }
     if (!isRunning())
@@ -163,7 +163,6 @@ void JoystickInput::init()
  */
 void JoystickInput::run()
 {
-
     init();
 
     forever
@@ -284,16 +283,16 @@ void JoystickInput::run()
 
         // Send new values to rest of groundstation
         emit hatDirectionChanged(xHat, yHat);
-        emit joystickChanged(y, x, yaw, thrust, xHat, yHat);
-
 
         // Display all buttons
+        int buttons = 0;
         for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
         {
             //qDebug() << "BUTTON" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
             if(SDL_JoystickGetButton(joystick, i))
             {
                 emit buttonPressed(i);
+                buttons |= 1 << i;
                 // Check if button is a UAS select button
 
                 if (uasButtonList.contains(i))
@@ -307,6 +306,7 @@ void JoystickInput::run()
             }
 
         }
+        emit joystickChanged(y, x, yaw, thrust, xHat, yHat, buttons);
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
         QGC::SLEEP::msleep(20);
