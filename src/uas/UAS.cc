@@ -2435,7 +2435,7 @@ void UAS::disarmSystem()
 * Set the manual control commands. 
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust)
+void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons)
 {
     // Scale values
     double rollPitchScaling = 1.0f * 1000.0f;
@@ -2450,8 +2450,6 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     // If system has manual inputs enabled and is armed
     if(((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
-        // XXX FIXME ADD BUTTON SUPPORT
-        quint16 buttons = 0;
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualThrust, (float)manualYawAngle, buttons);
         sendMessage(message);
@@ -2592,7 +2590,24 @@ bool UAS::emergencyKILL()
 /**
 * If enabled, connect the fligth gear link. 
 */
-void UAS::enableHil(bool enable)
+void UAS::enableHilFlightGear(bool enable)
+{
+    // Connect Flight Gear Link
+    if (enable)
+    {
+        simulation = new QGCFlightGearLink(this);
+        startHil();
+    }
+    else
+    {
+        stopHil();
+    }
+}
+
+/**
+* If enabled, connect the fligth gear link.
+*/
+void UAS::enableHilXPlane(bool enable)
 {
     // Connect Flight Gear Link
     if (enable)
