@@ -566,7 +566,7 @@ public slots:
     void disarmSystem();
 
     /** @brief Set the values for the manual control of the vehicle */
-    void setManualControlCommands(double roll, double pitch, double yaw, double thrust);
+    void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
     /** @brief Receive a button pressed event from an input device, e.g. joystick */
     void receiveButton(int buttonIndex);
 
