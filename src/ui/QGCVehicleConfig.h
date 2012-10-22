@@ -3,7 +3,9 @@
 
 #include <QWidget>
 #include <QTimer>
+#include <QList>
 
+#include "QGCToolWidget.h"
 #include "UASInterface.h"
 
 namespace Ui {
@@ -18,6 +20,13 @@ public:
     explicit QGCVehicleConfig(QWidget *parent = 0);
     ~QGCVehicleConfig();
 
+    enum RC_MODE {
+        RC_MODE_1 = 1,
+        RC_MODE_2 = 2,
+        RC_MODE_3 = 3,
+        RC_MODE_4 = 4
+    };
+
 public slots:
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
@@ -28,6 +37,8 @@ public slots:
     void stopCalibrationRC();
     /** Start/stop the RC calibration routine */
     void toggleCalibrationRC(bool enabled);
+    /** Change the mode setting of the control inputs */
+    void setRCModeIndex(int newRcMode);
     /** Render the data updated */
     void updateView();
 
@@ -60,6 +71,7 @@ protected:
     int rcMax[chanMax];                 ///< Maximum values
     int rcTrim[chanMax];                ///< Zero-position (center for roll/pitch/yaw, 0 throttle for throttle)
     int rcMapping[chanMax];             ///< PWM to function mappings
+    float rcScaling[chanMax];           ///< Scaling of channel input to control commands
     bool rcRev[chanMax];                ///< Channel reverse
     int rcValue[chanMax];               ///< Last values
     float rcRoll;                       ///< PPM input channel used as roll control input
@@ -73,6 +85,8 @@ protected:
     bool rcCalChanged;                  ///< Set if the calibration changes (and needs to be written)
     bool changed;                       ///< Set if any of the input data changed
     QTimer updateTimer;                 ///< Controls update intervals
+    enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
+    QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     
 private:
     Ui::QGCVehicleConfig *ui;
