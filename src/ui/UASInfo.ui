@@ -118,7 +118,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Recv. Loss</string>
+      <string>MAV RX Loss</string>
      </property>
     </widget>
    </item>
@@ -204,7 +204,7 @@
    <item row="2" column="0">
     <widget class="QLabel" name="label_6">
      <property name="text">
-      <string>Send Loss</string>
+      <string>MAV TX Loss</string>
      </property>
     </widget>
    </item>
