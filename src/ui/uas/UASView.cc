@@ -82,7 +82,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 
     hilAction->setCheckable(true);
     // Flightgear is not ready for prime time
-    hilAction->setEnabled(false);
+    //hilAction->setEnabled(false);
     hilXAction->setCheckable(true);
 
     m_ui->setupUi(this);
@@ -122,8 +122,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
-    connect(hilAction, SIGNAL(triggered(bool)), uas, SLOT(enableHil(bool)));
-    connect(hilXAction, SIGNAL(triggered(bool)), uas, SLOT(enableHil(bool)));
+    connect(hilAction, SIGNAL(triggered(bool)), uas, SLOT(enableHilFlightGear(bool)));
+    connect(hilXAction, SIGNAL(triggered(bool)), uas, SLOT(enableHilXPlane(bool)));
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
     connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
@@ -503,6 +503,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     {
         menu.addAction(removeAction);
     }
+    menu.addAction(hilAction);
     menu.addAction(hilXAction);
     // XXX Re-enable later menu.addAction(hilXAction);
     menu.addAction(selectAirframeAction);

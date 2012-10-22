@@ -531,7 +531,9 @@ public slots:
     void go();
 
     /** @brief Enable / disable HIL */
-    void enableHil(bool enable);
+    void enableHilFlightGear(bool enable);
+    void enableHilXPlane(bool enable);
+
 
     /** @brief Send the full HIL state to the MAV */
 
@@ -567,7 +569,7 @@ public slots:
     void disarmSystem();
 
     /** @brief Set the values for the manual control of the vehicle */
-    void setManualControlCommands(double roll, double pitch, double yaw, double thrust);
+    void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
     /** @brief Receive a button pressed event from an input device, e.g. joystick */
     void receiveButton(int buttonIndex);
 
