@@ -478,6 +478,9 @@ public:
         case MAV_AUTOPILOT_FP:
             return "FP";
             break;
+        case MAV_AUTOPILOT_PX4:
+            return "PX4";
+            break;
         default:
             return "";
             break;

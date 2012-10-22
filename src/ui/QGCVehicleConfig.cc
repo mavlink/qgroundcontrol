@@ -5,12 +5,22 @@
 #include "QGCVehicleConfig.h"
 #include "UASManager.h"
 #include "QGC.h"
+#include "QGCToolWidget.h"
 #include "ui_QGCVehicleConfig.h"
 
 QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     QWidget(parent),
     mav(NULL),
     changed(true),
+    rc_mode(RC_MODE_2),
+    rcRoll(0.0f),
+    rcPitch(0.0f),
+    rcYaw(0.0f),
+    rcThrottle(0.0f),
+    rcMode(0.0f),
+    rcAux1(0.0f),
+    rcAux2(0.0f),
+    rcAux3(0.0f),
     ui(new Ui::QGCVehicleConfig)
 {
     setObjectName("QGC_VEHICLECONFIG");
@@ -19,8 +29,11 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     requestCalibrationRC();
     if (mav) mav->requestParameter(0, "RC_TYPE");
 
+    ui->rcModeComboBox->setCurrentIndex((int)rc_mode - 1);
+
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
     connect(ui->storeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
@@ -41,6 +54,14 @@ QGCVehicleConfig::~QGCVehicleConfig()
     delete ui;
 }
 
+void QGCVehicleConfig::setRCModeIndex(int newRcMode)
+{
+    if (newRcMode > 0 && newRcMode < 5)
+    {
+        rc_mode = (enum RC_MODE) (newRcMode+1);
+        changed = true;
+    }
+}
 
 void QGCVehicleConfig::toggleCalibrationRC(bool enabled)
 {
@@ -57,12 +78,14 @@ void QGCVehicleConfig::toggleCalibrationRC(bool enabled)
 void QGCVehicleConfig::startCalibrationRC()
 {
     ui->rcTypeComboBox->setEnabled(false);
+    ui->rcCalibrationButton->setText(tr("Stop RC Calibration"));
     resetCalibrationRC();
 }
 
 void QGCVehicleConfig::stopCalibrationRC()
 {
     ui->rcTypeComboBox->setEnabled(true);
+    ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
@@ -77,8 +100,15 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
                    SLOT(remoteControlChannelRawChanged(int,float)));
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
-        resetCalibrationRC();
+
+        foreach (QGCToolWidget* tool, toolWidgets)
+        {
+            delete tool;
+        }
     }
+
+    // Reset current state
+    resetCalibrationRC();
 
     // Connect new system
     mav = active;
@@ -86,6 +116,53 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
                SLOT(remoteControlChannelRawChanged(int,float)));
     connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                SLOT(parameterChanged(int,int,QString,QVariant)));
+
+    mav->requestParameters();
+
+    QString defaultsDir = qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower() + "/widgets/";
+
+    QGCToolWidget* tool;
+
+    // Load calibration
+    tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(defaultsDir + "px4_calibration.qgw", false))
+    {
+        toolWidgets.append(tool);
+        ui->sensorLayout->addWidget(tool);
+    }
+    // Load multirotor attitude pid
+    tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(defaultsDir + "px4_mc_attitude_pid_params.qgw", false))
+    {
+        toolWidgets.append(tool);
+        ui->multiRotorAttitudeLayout->addWidget(tool);
+    }
+
+    // Load multirotor position pid
+    tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(defaultsDir + "px4_mc_position_pid_params.qgw", false))
+    {
+        toolWidgets.append(tool);
+        ui->multiRotorPositionLayout->addWidget(tool);
+    }
+
+    // Load fixed wing attitude pid
+    tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(defaultsDir + "px4_fw_attitude_pid_params.qgw", false))
+    {
+        toolWidgets.append(tool);
+        ui->fixedWingAttitudeLayout->addWidget(tool);
+    }
+
+    // Load fixed wing position pid
+    tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(defaultsDir + "px4_fw_position_pid_params.qgw", false))
+    {
+        toolWidgets.append(tool);
+        ui->fixedWingPositionLayout->addWidget(tool);
+    }
+
+    updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 }
 
 void QGCVehicleConfig::resetCalibrationRC()
@@ -177,6 +254,16 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     if (chan < 0 || static_cast<unsigned int>(chan) >= chanMax)
         return;
 
+    if (val < rcMin[chan])
+    {
+        rcMin[chan] = val;
+    }
+
+    if (val > rcMax[chan])
+    {
+        rcMax[chan] = val;
+    }
+
     if (chan == rcMapping[0])
     {
         // ROLL
@@ -252,16 +339,19 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     {
         // AUX1
         rcAux1 = val;
+        rcValue[5] = val;
     }
     else if (chan == rcMapping[6])
     {
         // AUX2
         rcAux2 = val;
+        rcValue[6] = val;
     }
     else if (chan == rcMapping[7])
     {
         // AUX3
         rcAux3 = val;
+        rcValue[7] = val;
     }
 
     changed = true;
@@ -273,6 +363,91 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 {
     Q_UNUSED(uas);
     Q_UNUSED(component);
+
+    // Channel calibration values
+    QRegExp minTpl("RC?_MIN");
+    minTpl.setPatternSyntax(QRegExp::Wildcard);
+    QRegExp maxTpl("RC?_MAX");
+    maxTpl.setPatternSyntax(QRegExp::Wildcard);
+    QRegExp trimTpl("RC?_TRIM");
+    trimTpl.setPatternSyntax(QRegExp::Wildcard);
+    QRegExp revTpl("RC?_REV");
+    revTpl.setPatternSyntax(QRegExp::Wildcard);
+
+    // Do not write the RC type, as these values depend on this
+    // active onboard parameter
+
+    if (minTpl.exactMatch(parameterName)) {
+        bool ok;
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        if (ok && (index > 0) && (index < chanMax))
+        {
+            rcMin[index] = value.toInt();
+        }
+    }
+
+    if (maxTpl.exactMatch(parameterName)) {
+        bool ok;
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        if (ok && (index > 0) && (index < chanMax))
+        {
+            rcMax[index] = value.toInt();
+        }
+    }
+
+    if (trimTpl.exactMatch(parameterName)) {
+        bool ok;
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        if (ok && (index > 0) && (index < chanMax))
+        {
+            rcTrim[index] = value.toInt();
+        }
+    }
+
+    if (revTpl.exactMatch(parameterName)) {
+        bool ok;
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        if (ok && (index > 0) && (index < chanMax))
+        {
+            rcRev[index] = (value.toInt() == -1) ? true : false;
+
+            unsigned int mapindex = rcMapping[index];
+
+            switch (mapindex)
+            {
+            case 0:
+                ui->invertCheckBox->setChecked(rcRev[index]);
+                break;
+            case 1:
+                ui->invertCheckBox_2->setChecked(rcRev[index]);
+                break;
+            case 2:
+                ui->invertCheckBox_3->setChecked(rcRev[index]);
+                break;
+            case 3:
+                ui->invertCheckBox_4->setChecked(rcRev[index]);
+                break;
+            case 4:
+                ui->invertCheckBox_5->setChecked(rcRev[index]);
+                break;
+            case 5:
+                ui->invertCheckBox_6->setChecked(rcRev[index]);
+                break;
+            case 6:
+                ui->invertCheckBox_7->setChecked(rcRev[index]);
+                break;
+            case 7:
+                ui->invertCheckBox_8->setChecked(rcRev[index]);
+                break;
+            }
+        }
+    }
+
+//        mav->setParameter(0, trimTpl.arg(i), rcTrim[i]);
+//        mav->setParameter(0, maxTpl.arg(i), rcMax[i]);
+//        mav->setParameter(0, revTpl.arg(i), (rcRev[i]) ? -1 : 1);
+//    }
+
     if (rcTypeUpdateRequested > 0 && parameterName == QString("RC_TYPE"))
     {
         rcTypeUpdateRequested = 0;
@@ -280,6 +455,82 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         rcType = value.toInt();
         // Request all other parameters as well
         requestCalibrationRC();
+    }
+
+    // Order is: roll, pitch, yaw, throttle, mode sw, aux 1-3
+
+    if (parameterName.contains("RC_MAP_ROLL")) {
+        rcMapping[0] = value.toInt();
+        ui->rollSpinBox->setValue(rcMapping[0]);
+    }
+
+    if (parameterName.contains("RC_MAP_PITCH")) {
+        rcMapping[1] = value.toInt();
+        ui->pitchSpinBox->setValue(rcMapping[1]);
+    }
+
+    if (parameterName.contains("RC_MAP_YAW")) {
+        rcMapping[2] = value.toInt();
+        ui->yawSpinBox->setValue(rcMapping[2]);
+    }
+
+    if (parameterName.contains("RC_MAP_THROTTLE")) {
+        rcMapping[3] = value.toInt();
+        ui->throttleSpinBox->setValue(rcMapping[3]);
+    }
+
+    if (parameterName.contains("RC_MAP_MODE_SW")) {
+        rcMapping[4] = value.toInt();
+        ui->modeSpinBox->setValue(rcMapping[4]);
+    }
+
+    if (parameterName.contains("RC_MAP_AUX1")) {
+        rcMapping[5] = value.toInt();
+        ui->aux1SpinBox->setValue(rcMapping[5]);
+    }
+
+    if (parameterName.contains("RC_MAP_AUX2")) {
+        rcMapping[6] = value.toInt();
+        ui->aux1SpinBox->setValue(rcMapping[6]);
+    }
+
+    if (parameterName.contains("RC_MAP_AUX3")) {
+        rcMapping[7] = value.toInt();
+        ui->aux1SpinBox->setValue(rcMapping[7]);
+    }
+
+    // Scaling
+
+    if (parameterName.contains("RC_SCALE_ROLL")) {
+        rcScaling[0] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_PITCH")) {
+        rcScaling[1] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_YAW")) {
+        rcScaling[2] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_THROTTLE")) {
+        rcScaling[3] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_MODE_SW")) {
+        rcScaling[4] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_AUX1")) {
+        rcScaling[5] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_AUX2")) {
+        rcScaling[6] = value.toInt();
+    }
+
+    if (parameterName.contains("RC_SCALE_AUX3")) {
+        rcScaling[7] = value.toInt();
     }
 }
 
@@ -321,10 +572,47 @@ void QGCVehicleConfig::updateView()
 {
     if (changed)
     {
-        ui->rollSlider->setValue(rcValue[0]);
-        ui->pitchSlider->setValue(rcValue[1]);
-        ui->yawSlider->setValue(rcValue[2]);
-        ui->throttleSlider->setValue(rcValue[3]);
+        if (rc_mode == RC_MODE_1)
+        {
+            ui->rollSlider->setValue(rcRoll);
+            ui->pitchSlider->setValue(rcThrottle);
+            ui->yawSlider->setValue(rcYaw);
+            ui->throttleSlider->setValue(rcPitch);
+        }
+        else if (rc_mode == RC_MODE_2)
+        {
+            ui->rollSlider->setValue(rcRoll);
+            ui->pitchSlider->setValue(rcPitch);
+            ui->yawSlider->setValue(rcYaw);
+            ui->throttleSlider->setValue(rcThrottle);
+        }
+        else if (rc_mode == RC_MODE_3)
+        {
+            ui->rollSlider->setValue(rcYaw);
+            ui->pitchSlider->setValue(rcThrottle);
+            ui->yawSlider->setValue(rcRoll);
+            ui->throttleSlider->setValue(rcPitch);
+        }
+        else if (rc_mode == RC_MODE_4)
+        {
+            ui->rollSlider->setValue(rcYaw);
+            ui->pitchSlider->setValue(rcPitch);
+            ui->yawSlider->setValue(rcRoll);
+            ui->throttleSlider->setValue(rcThrottle);
+        }
+
+        ui->chanLabel->setText(QString("%1/%2").arg(rcValue[0]).arg(rcRoll));
+        ui->chanLabel_2->setText(QString("%1/%2").arg(rcValue[1]).arg(rcPitch));
+        ui->chanLabel_3->setText(QString("%1/%2").arg(rcValue[2]).arg(rcYaw));
+        ui->chanLabel_4->setText(QString("%1/%2").arg(rcValue[3]).arg(rcThrottle));
+        ui->modeSwitchSlider->setValue(rcMode);
+        ui->chanLabel_5->setText(QString("%1/%2").arg(rcValue[4]).arg(rcMode));
+        ui->aux1Slider->setValue(rcAux1);
+        ui->chanLabel_6->setText(QString("%1/%2").arg(rcValue[5]).arg(rcAux1));
+        ui->aux2Slider->setValue(rcAux2);
+        ui->chanLabel_7->setText(QString("%1/%2").arg(rcValue[6]).arg(rcAux2));
+        ui->aux3Slider->setValue(rcAux3);
+        ui->chanLabel_8->setText(QString("%1/%2").arg(rcValue[7]).arg(rcAux3));
         changed = false;
     }
 }
