@@ -39,6 +39,8 @@ public slots:
     void setParamValue(double value);
     /** @brief Set an integer parameter value */
     void setParamValue(int value);
+    /** @brief Show descriptive text next to slider */
+    void showInfo(bool enable);
 
 protected slots:
     /** @brief Request the parameter of this widget from the MAV */
