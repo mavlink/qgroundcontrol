@@ -564,11 +564,11 @@ void MainWindow::buildCommonWidgets()
         addCentralWidget(hudWidget, tr("Head Up Display"));
     }
 
-//    if (!configWidget)
-//    {
-//        configWidget = new QGCVehicleConfig(this);
-//        addCentralWidget(configWidget, tr("Vehicle Configuration"));
-//    }
+    if (!configWidget)
+    {
+        configWidget = new QGCVehicleConfig(this);
+        addCentralWidget(configWidget, tr("Vehicle Configuration"));
+    }
 
     if (!dataplotWidget)
     {
@@ -724,10 +724,14 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
 
 void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType)
 {
-    QString defaultsDir = qApp->applicationDirPath() + "/files/" + autopilotType.toLower() + "/" + systemType.toLower() + "/widgets/";
+    QString defaultsDir = qApp->applicationDirPath() + "/files/" + autopilotType.toLower() + "/widgets/";
+    QString platformDir = qApp->applicationDirPath() + "/files/" + autopilotType.toLower() + "/" + systemType.toLower() + "/widgets/";
 
     QDir widgets(defaultsDir);
     QStringList files = widgets.entryList();
+    QDir platformWidgets(platformDir);
+    files.append(platformWidgets.entryList());
+
     if (files.count() == 0)
     {
         qDebug() << "No default custom widgets for system " << systemType << "autopilot" << autopilotType << " found";
