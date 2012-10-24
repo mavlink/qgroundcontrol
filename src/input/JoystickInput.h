@@ -141,7 +141,7 @@ signals:
      * @param xHat hat vector in forward-backward direction, +1 forward, 0 center, -1 backward
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
      */
-    void joystickChanged(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
+    void joystickChanged(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
 
     /**
      * @brief Thrust lever of the joystick has changed
