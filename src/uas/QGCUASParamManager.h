@@ -42,7 +42,7 @@ public:
     virtual double getParamMin(const QString& param) = 0;
     virtual double getParamMax(const QString& param) = 0;
     virtual double getParamDefault(const QString& param) = 0;
-    virtual const QString& getParamInfo(const QString& param) = 0;
+    virtual QString getParamInfo(const QString& param) = 0;
 
     /** @brief Request an update for the parameter list */
     void requestParameterListUpdate(int component = 0);
