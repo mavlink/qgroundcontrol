@@ -351,20 +351,6 @@ bool QGCFlightGearLink::connectSimulation()
     QString fgScenery;
     QString terraSyncScenery;
     QString fgAircraft;
-//    QString aircraft;
-
-//    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
-//    {
-//        aircraft = "Rascal110-JSBSim";
-//    }
-//    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-//    {
-//        aircraft = "arducopter";
-//    }
-//    else
-//    {
-//        aircraft = "Rascal110-JSBSim";
-//    }
 
 #ifdef Q_OS_MACX
     processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
