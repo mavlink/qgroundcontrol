@@ -15,6 +15,8 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav,QWidget *p
     {
         items << "Rascal110-JSBSim";
         items << "c172p";
+        items << "YardStik";
+        items << "Malolo1";
     }
     else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
