@@ -165,10 +165,28 @@ void QGCParamWidget::loadSettings()
 
 void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QString& airframe)
 {
+    Q_UNUSED(airframe);
+
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+    qDebug() << "ATTEMPTING TO LOAD CSV";
+
     QDir appDir = QApplication::applicationDirPath();
     appDir.cd("files");
-    QString fileName = QString("%1/%2/%3/parameter_tooltips/tooltips.txt").arg(appDir.canonicalPath()).arg(autopilot.toLower()).arg(airframe.toLower());
+    QString fileName = QString("%1/%2/parameter_tooltips/tooltips.txt").arg(appDir.canonicalPath()).arg(autopilot.toLower());
     QFile paramMetaFile(fileName);
+
+    qDebug() << "AUTOPILOT:" << autopilot;
+    qDebug() << "FILENAME: " << fileName;
 
     // Load CSV data
     if (!paramMetaFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -189,7 +207,8 @@ void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QStrin
     QString header = in.readLine();
 
     // Ignore top-level comment lines
-    while (header.startsWith('#') || header.startsWith('/') || header.startsWith('='))
+    while (header.startsWith('#') || header.startsWith('/')
+           || header.startsWith('=') || header.startsWith('^'))
     {
         header = in.readLine();
     }
@@ -266,23 +285,24 @@ void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QStrin
         if (parts.count() > 1)
         {
             // min
-            paramMin.insert(parts.at(0), parts.at(1).toDouble());
+            paramMin.insert(parts.at(0).trimmed(), parts.at(1).toDouble());
         }
         if (parts.count() > 2)
         {
             // max
-            paramMax.insert(parts.at(0), parts.at(2).toDouble());
+            paramMax.insert(parts.at(0).trimmed(), parts.at(2).toDouble());
         }
         if (parts.count() > 3)
         {
             // default
-            paramDefault.insert(parts.at(0), parts.at(3).toDouble());
+            paramDefault.insert(parts.at(0).trimmed(), parts.at(3).toDouble());
         }
         // IGNORING 4 and 5 for now
         if (parts.count() > 6)
         {
             // tooltip
-            paramToolTips.insert(parts.at(0), parts.at(6).trimmed());
+            paramToolTips.insert(parts.at(0).trimmed(), parts.at(6).trimmed());
+            qDebug() << "PARAM META:" << parts.at(0).trimmed();
         }
     }
 }

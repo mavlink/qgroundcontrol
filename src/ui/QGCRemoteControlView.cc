@@ -55,13 +55,13 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     this->setVisible(false);
     //setVisible(false);
 
-    calibrate = new QPushButton(tr("Calibrate"), this);
-    QHBoxLayout *calibrateButtonLayout = new QHBoxLayout();
-    calibrateButtonLayout->addWidget(calibrate, 0, Qt::AlignHCenter);
-    layout->addItem(calibrateButtonLayout, 3, 0, 1, 2);
+//    calibrate = new QPushButton(tr("Calibrate"), this);
+//    QHBoxLayout *calibrateButtonLayout = new QHBoxLayout();
+//    calibrateButtonLayout->addWidget(calibrate, 0, Qt::AlignHCenter);
+//    layout->addItem(calibrateButtonLayout, 3, 0, 1, 2);
 
-    calibrationWindow = new RadioCalibrationWindow(this);
-    connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
+//    calibrationWindow = new RadioCalibrationWindow(this);
+//    connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
 
@@ -91,8 +91,8 @@ void QGCRemoteControlView::setUASId(int id)
             // The UAS exists, disconnect any existing connections
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
             disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
-            disconnect(uas, SIGNAL(radioCalibrationRawReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
-            disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
+            //disconnect(uas, SIGNAL(radioCalibrationRawReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
+            //disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
             disconnect(uas, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
         }
     }
@@ -124,15 +124,15 @@ void QGCRemoteControlView::setUASId(int id)
     {
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
-        calibrationWindow->setUASId(id);
-        connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
+        //calibrationWindow->setUASId(id);
+        //connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
 
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
         connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(setChannelRaw(int,float)));
         connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
 
         // only connect raw channels to calibration window widget
-        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
+        //connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
     }
 }
 
@@ -178,7 +178,7 @@ void QGCRemoteControlView::setRemoteRSSI(float rssiNormalized)
 void QGCRemoteControlView::appendChannelWidget(int channelId)
 {
     // Create new layout
-    QHBoxLayout* layout = new QHBoxLayout(this);
+    QHBoxLayout* layout = new QHBoxLayout();
     // Add content
     layout->addWidget(new QLabel(QString("Channel %1").arg(channelId + 1), this));
     QLabel* raw = new QLabel(this);
