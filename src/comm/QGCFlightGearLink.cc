@@ -350,6 +350,7 @@ bool QGCFlightGearLink::connectSimulation()
     QString fgRoot;
     QString fgScenery;
     QString terraSyncScenery;
+    QString fgAircraft;
 //    QString aircraft;
 
 //    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
@@ -387,6 +388,8 @@ bool QGCFlightGearLink::connectSimulation()
     processTerraSync = "/usr/bin/nice"; //according to http://wiki.flightgear.org/TerraSync, run with lower priority
     terraSyncScenery = QDir::homePath() + "/.terrasync/Scenery"; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 #endif
+
+    fgAircraft = QApplication::applicationDirPath() + "/files/flightgear/Aircraft";
 
     // Sanity checks
     bool sane = true;
@@ -427,6 +430,7 @@ bool QGCFlightGearLink::connectSimulation()
     /*Prepare FlightGear Arguments */
     flightGearArguments << QString("--fg-root=%1").arg(fgRoot);
     flightGearArguments << QString("--fg-scenery=%1:%2").arg(fgScenery).arg(terraSyncScenery); //according to http://wiki.flightgear.org/TerraSync a separate directory is used
+    flightGearArguments << QString("--fg-aircraft=%1").arg(fgAircraft);
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // FIXME ADD QUAD-Specific protocol here
