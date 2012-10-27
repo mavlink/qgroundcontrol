@@ -117,6 +117,7 @@ public slots:
 
     void printTerraSyncOutput();
     void printTerraSyncError();
+    void setStartupArguments(QString startupArguments);
 
 protected:
     QString name;

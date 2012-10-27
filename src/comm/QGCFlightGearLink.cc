@@ -537,6 +537,15 @@ void QGCFlightGearLink::printTerraSyncError()
 }
 
 /**
+ * @brief Set the startup arguments used to start flightgear
+ *
+ **/
+void QGCFlightGearLink::setStartupArguments(QString startupArguments)
+{
+    this->startupArguments = startupArguments;
+}
+
+/**
  * @brief Check if connection is active.
  *
  * @return True if link is connected, false otherwise.
