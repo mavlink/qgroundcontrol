@@ -99,6 +99,11 @@ public slots:
         Q_UNUSED(version);
     }
 
+    void selectAirframe(const QString& airframe)
+    {
+        Q_UNUSED(airframe);
+    }
+
     void readBytes();
     /**
      * @brief Write a number of bytes to the interface.
