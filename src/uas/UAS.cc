@@ -97,7 +97,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     paramManager(NULL),
     attitudeStamped(false),
     lastAttitude(0),
-    simulation(new QGCXPlaneLink(this)),
+    simulation(0),
     isLocalPositionKnown(false),
     isGlobalPositionKnown(false),
     systemIsArmed(false),
@@ -2588,14 +2588,24 @@ bool UAS::emergencyKILL()
 }
 
 /**
-* If enabled, connect the fligth gear link. 
+* If enabled, connect the flight gear link.
 */
-void UAS::enableHilFlightGear(bool enable)
+void UAS::enableHilFlightGear(bool enable, QString options)
 {
+    QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
+    if (!link || !simulation) {
+        // Delete wrong sim
+        if (simulation) {
+            stopHil();
+            delete simulation;
+        }
+        simulation = new QGCFlightGearLink(this, options);
+    }
     // Connect Flight Gear Link
+    link = dynamic_cast<QGCFlightGearLink*>(simulation);
+    link->setStartupArguments(options);
     if (enable)
     {
-        simulation = new QGCFlightGearLink(this);
         startHil();
     }
     else
@@ -2605,11 +2615,20 @@ void UAS::enableHilFlightGear(bool enable)
 }
 
 /**
-* If enabled, connect the fligth gear link.
+* If enabled, connect the X-plane gear link.
 */
 void UAS::enableHilXPlane(bool enable)
 {
-    // Connect Flight Gear Link
+    QGCXPlaneLink* link = dynamic_cast<QGCXPlaneLink*>(simulation);
+    if (!link || !simulation) {
+        if (simulation) {
+            stopHil();
+            delete simulation;
+        }
+        qDebug() << "CREATED NEW XPLANE LINK";
+        simulation = new QGCXPlaneLink(this);
+    }
+    // Connect X-Plane Link
     if (enable)
     {
         startHil();
@@ -2679,7 +2698,7 @@ void UAS::startHil()
 */
 void UAS::stopHil()
 {
-    simulation->disconnectSimulation();
+    if (simulation) simulation->disconnectSimulation();
     mavlink_message_t msg;
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & !MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
