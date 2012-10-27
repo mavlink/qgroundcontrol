@@ -2602,6 +2602,8 @@ void UAS::enableHilFlightGear(bool enable, QString options)
         simulation = new QGCFlightGearLink(this, options);
     }
     // Connect Flight Gear Link
+    link = dynamic_cast<QGCFlightGearLink*>(simulation);
+    link->setStartupArguments(options);
     if (enable)
     {
         startHil();
