@@ -97,7 +97,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     paramManager(NULL),
     attitudeStamped(false),
     lastAttitude(0),
-    simulation(new QGCXPlaneLink(this)),
+    simulation(0),
     isLocalPositionKnown(false),
     isGlobalPositionKnown(false),
     systemIsArmed(false),
@@ -2592,10 +2592,18 @@ bool UAS::emergencyKILL()
 */
 void UAS::enableHilFlightGear(bool enable, QString options)
 {
+    QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
+    if (!link || !simulation) {
+        // Delete wrong sim
+        if (simulation) {
+            stopHil();
+            delete simulation;
+        }
+        simulation = new QGCFlightGearLink(this, options);
+    }
     // Connect Flight Gear Link
     if (enable)
     {
-        simulation = new QGCFlightGearLink(this, options);
         startHil();
     }
     else
@@ -2609,10 +2617,18 @@ void UAS::enableHilFlightGear(bool enable, QString options)
 */
 void UAS::enableHilXPlane(bool enable)
 {
+    QGCXPlaneLink* link = dynamic_cast<QGCXPlaneLink*>(simulation);
+    if (!link || !simulation) {
+        if (simulation) {
+            stopHil();
+            delete simulation;
+        }
+        qDebug() << "CREATED NEW XPLANE LINK";
+        simulation = new QGCXPlaneLink(this);
+    }
     // Connect X-Plane Link
     if (enable)
     {
-        simulation = new QGCXPlaneLink(this);
         startHil();
     }
     else
@@ -2680,7 +2696,7 @@ void UAS::startHil()
 */
 void UAS::stopHil()
 {
-    simulation->disconnectSimulation();
+    if (simulation) simulation->disconnectSimulation();
     mavlink_message_t msg;
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & !MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);

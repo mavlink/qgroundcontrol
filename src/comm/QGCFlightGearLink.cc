@@ -42,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     process(NULL),
     terraSync(NULL),
+    socket(NULL),
     startupArguments(startupArguments),
     flightGearVersion(0)
 {

@@ -130,7 +130,7 @@ public slots:
      * @brief Select airplane model
      * @param plane the name of the airplane
      */
-    void selectPlane(const QString& plane);
+    void selectAirframe(const QString& airframe);
     /**
      * @brief Set the airplane position and attitude
      * @param lat

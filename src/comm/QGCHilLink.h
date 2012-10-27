@@ -48,6 +48,8 @@ public slots:
     /** @brief Set the simulator version as text string */
     virtual void setVersion(const QString& version) = 0;
 
+    virtual void selectAirframe(const QString& airframe) = 0;
+
     virtual void readBytes() = 0;
     /**
      * @brief Write a number of bytes to the interface.
