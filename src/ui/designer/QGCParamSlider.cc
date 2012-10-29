@@ -2,6 +2,7 @@
 #include <QContextMenuEvent>
 #include <QSettings>
 #include <QTimer>
+#include <QToolTip>
 
 #include "QGCParamSlider.h"
 #include "ui_QGCParamSlider.h"
@@ -53,7 +54,8 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     connect(ui->readButton, SIGNAL(clicked()), this, SLOT(requestParameter()));
     connect(ui->editRefreshParamsButton, SIGNAL(clicked()), this, SLOT(refreshParamList()));
     connect(ui->editInfoCheckBox, SIGNAL(clicked(bool)), this, SLOT(showInfo(bool)));
-
+    // connect to self
+    connect(ui->infoLabel, SIGNAL(released()), this, SLOT(showTooltip()));
     // Set the current UAS if present
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
@@ -63,6 +65,17 @@ QGCParamSlider::~QGCParamSlider()
     delete ui;
 }
 
+void QGCParamSlider::showTooltip()
+{
+    QWidget* sender = dynamic_cast<QWidget*>(QObject::sender());
+
+    if (sender)
+    {
+        QPoint point = mapToGlobal(pos());
+        QToolTip::showText(point, sender->toolTip());
+    }
+}
+
 void QGCParamSlider::refreshParamList()
 {
     ui->editSelectParamComboBox->setEnabled(true);
@@ -70,6 +83,7 @@ void QGCParamSlider::refreshParamList()
     if (uas)
     {
         uas->getParamManager()->requestParameterList();
+        ui->editStatusLabel->setText(tr("Parameter list updating.."));
     }
 }
 
@@ -89,7 +103,7 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
         requestParameter();
         // Set param info
         QString text = uas->getParamManager()->getParamInfo(parameterName);
-        ui->infoLabel->setText(text);
+        ui->infoLabel->setToolTip(text);
         // Force-uncheck and hide label if no description is available
         if (ui->editInfoCheckBox->isChecked())
         {
@@ -344,6 +358,11 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
             return;
         }
         ui->valueSlider->setValue(floatToScaledInt(value.toDouble()));
+    }
+
+    if (paramIndex == paramCount - 1)
+    {
+        ui->editStatusLabel->setText(tr("Complete parameter list received."));
     }
 }
 

@@ -191,10 +191,10 @@ void QGCVehicleConfig::writeCalibrationRC()
 
     for (unsigned int i = 0; i < chanMax; ++i)
     {
-        mav->setParameter(0, minTpl.arg(i), rcMin[i]);
-        mav->setParameter(0, trimTpl.arg(i), rcTrim[i]);
-        mav->setParameter(0, maxTpl.arg(i), rcMax[i]);
-        mav->setParameter(0, revTpl.arg(i), (rcRev[i]) ? -1 : 1);
+        mav->setParameter(0, minTpl.arg(i+1), rcMin[i]);
+        mav->setParameter(0, trimTpl.arg(i+1), rcTrim[i]);
+        mav->setParameter(0, maxTpl.arg(i+1), rcMax[i]);
+        mav->setParameter(0, revTpl.arg(i+1), (rcRev[i]) ? -1 : 1);
     }
 
     // Write mappings
@@ -222,13 +222,13 @@ void QGCVehicleConfig::requestCalibrationRC()
 
     for (unsigned int i = 0; i < chanMax; ++i)
     {
-        mav->requestParameter(0, minTpl.arg(i));
+        mav->requestParameter(0, minTpl.arg(i+1));
         QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, trimTpl.arg(i));
+        mav->requestParameter(0, trimTpl.arg(i+1));
         QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, maxTpl.arg(i));
+        mav->requestParameter(0, maxTpl.arg(i+1));
         QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, revTpl.arg(i));
+        mav->requestParameter(0, revTpl.arg(i+1));
         QGC::SLEEP::usleep(5000);
     }
 }
@@ -379,7 +379,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (minTpl.exactMatch(parameterName)) {
         bool ok;
-        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
         if (ok && (index > 0) && (index < chanMax))
         {
             rcMin[index] = value.toInt();
@@ -388,7 +388,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (maxTpl.exactMatch(parameterName)) {
         bool ok;
-        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
         if (ok && (index > 0) && (index < chanMax))
         {
             rcMax[index] = value.toInt();
@@ -397,7 +397,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (trimTpl.exactMatch(parameterName)) {
         bool ok;
-        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
         if (ok && (index > 0) && (index < chanMax))
         {
             rcTrim[index] = value.toInt();
@@ -406,7 +406,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (revTpl.exactMatch(parameterName)) {
         bool ok;
-        unsigned int index = parameterName.mid(2, 1).toInt(&ok);
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
         if (ok && (index > 0) && (index < chanMax))
         {
             rcRev[index] = (value.toInt() == -1) ? true : false;

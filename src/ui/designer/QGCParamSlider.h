@@ -41,6 +41,8 @@ public slots:
     void setParamValue(int value);
     /** @brief Show descriptive text next to slider */
     void showInfo(bool enable);
+    /** @brief Show tool tip of calling element */
+    void showTooltip();
 
 protected slots:
     /** @brief Request the parameter of this widget from the MAV */
