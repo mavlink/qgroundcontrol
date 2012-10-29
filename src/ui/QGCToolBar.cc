@@ -54,7 +54,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     // Add internal actions
     // Add MAV widget
     symbolButton = new QToolButton(this);
-    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
+    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; }");
 	addWidget(symbolButton);
 
     toolBarNameLabel = new QLabel("------", this);
@@ -226,39 +226,6 @@ void QGCToolBar::logging(bool checked)
 void QGCToolBar::addPerspectiveChangeAction(QAction* action)
 {
     insertAction(toggleLoggingAction, action);
-
-    // Set tab style
-    QWidget* widget = widgetForAction(action);
-    widget->setStyleSheet("\
-                          * { font-weight: bold; min-height: 16px; min-width: 24px; \
-                          border-top: 1px solid #BBBBBB; \
-                          border-bottom: 0px; \
-                          border-left: 1px solid #BBBBBB; \
-                          border-right: 1px solid #BBBBBB; \
-                          border-top-left-radius: 5px; \
-                          border-top-right-radius: 5px; \
-                          border-bottom-left-radius: 0px; \
-                          border-bottom-right-radius: 0px; \
-                          max-height: 22px; \
-                          margin-top: 4px; \
-                          margin-left: 2px; \
-                          margin-bottom: 0px; \
-                          margin-right: 2px; \
-                          background-color: #222222; \
-                  } \
-                  *:checked { \
-                          background-color: #000000; \
-                          border-top: 2px solid #379AC3; \
-                          border-bottom: 0px; \
-                          border-left: 2px solid #379AC3; \
-                          border-right: 2px solid #379AC3; \
-                  } \
-                  *:pressed { \
-                          background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0); \
-                          border-top: 2px solid #379AC3; \
-                          border-bottom: 0px; \
-                          border-left: 2px solid #379AC3; \
-                          border-right: 2px solid #379AC3; }");
 }
 
 void QGCToolBar::setActiveUAS(UASInterface* active)
@@ -322,6 +289,8 @@ void QGCToolBar::updateArmingState(bool armed)
 {
     systemArmed = armed;
     changed = true;
+    /* important, immediately update */
+    updateView();
 }
 
 void QGCToolBar::updateView()
@@ -377,6 +346,8 @@ void QGCToolBar::updateState(UASInterface* system, QString name, QString descrip
     Q_UNUSED(description);
     if (state != name) changed = true;
     state = name;
+    /* important, immediately update */
+    updateView();
 }
 
 void QGCToolBar::updateMode(int system, QString name, QString description)
@@ -385,11 +356,16 @@ void QGCToolBar::updateMode(int system, QString name, QString description)
     Q_UNUSED(description);
     if (mode != name) changed = true;
     mode = name;
+    /* important, immediately update */
+    updateView();
 }
 
 void QGCToolBar::updateName(const QString& name)
 {
-    if (systemName != name) changed = true;
+    if (systemName != name)
+    {
+        changed = true;
+    }
     systemName = name;
 }
 

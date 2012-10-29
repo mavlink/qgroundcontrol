@@ -96,46 +96,39 @@ border: 1px solid #777777;
 	margin-top: 1ex; /* leave space at the top for the title */
  }
 
+QDockWidget::close-button, QDockWidget::float-button {
+    border: 1px solid transparent;
+    background: none;
+    padding: 0px;
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background: none;
+}
+
+QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
+     padding: 1px -1px -1px 1px;
+     background: none;
+}
+
  QDockWidget {
-     border: 1px solid #32345E;
+    border: 10px solid #66666B;
+     padding: 2px;
+     margin: 1px;
+     border-radius: 1px;
+     /*background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);*/
   /*   titlebar-close-icon: url(close.png);
      titlebar-normal-icon: url(undock.png);*/
- }
-
- QDockWidget::title {
-     text-align: left; /* align the text to the left */
-     background: lightgray;
-     padding-left: 5px;
- }
-
- QDockWidget::close-button, QDockWidget::float-button {
-     border: 1px solid transparent;
-     background: darkgray;
-     padding: 0px;
- }
-
- QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-     background: gray;
- }
-
- QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
-     padding: 1px -1px -1px 1px;
- }
-
-
-
-QDockWidget::close-button, QDockWidget::float-button {
-	background-color: #181820;
-	color: #EEEEEE;
 }
 
 QDockWidget::title {
     text-align: left;
-    background: #121214;
-    color: #4A4A4F;
-    padding-left: 5px;
-    height: 10px;
-	border-bottom: 1px solid #555555;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #3F556A, stop: 1 #293645);
+    color: #EDEDED;
+    padding-left: 10px;
+    height: 14px;
+    border-bottom: 1px solid #1B1F22;
+	border-bottom: 2px solid #2C3A4A;
 }
 
 QSeparator {
@@ -190,31 +183,36 @@ QPushButton {
 	min-height: 18px;
 	max-height: 18px;
     min-width: 60px;*/
-	border: 2px solid #4A4A4F;
-	border-radius: 3px;
+    min-height: 20px;
+    /*min-width: 24px;*/
+    max-height: 20px;
+	border: 0px solid #59666f;
+	border-radius: 2px;
 	padding-left: 8px;
 	padding-right: 8px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
 }
 
 QPushButton:checked {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #404040, stop: 1 #808080);
-    border: 2px solid #379AC3;
+    border: 0px solid #379AC3;
 }
 
 QPushButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
-    border: 2px solid #379AC3;
+    border: 0px solid #379AC3;
 }
 
 QToolButton {
 	font-weight: bold;
-	min-height: 18px;
-	min-width: 24px;
-	max-height: 18px;
-	border: 2px solid #4A4A4F;
-	border-radius: 3px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
+	min-height: 20px;
+	/*min-width: 24px;*/
+	max-height: 20px;
+	border: 0px solid #4A4A4F;
+	border-radius: 2px;
+        padding-left: 3px;
+    padding-right: 3px;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
 }
 
 QToolButton:checked {
@@ -228,8 +226,9 @@ QToolButton:pressed {
 }
 
 QToolTip {
-    background-color: #090909;
-    border: 1px solid #379AC3;
+    background-color: #3D5368;
+    border: 0px solid #379AC3;
+    margin: 3px;
 	border-radius: 3px;
     color: #DDDDDF;
 }
@@ -400,11 +399,11 @@ QDialog {
  /* Style the tab using the tab sub-control. Note that
      it reads QTabBar _not_ QTabWidget */
  QTabBar::tab {
-     	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
     border: 2px solid #62676B;
-     border-radius: 4px;
-     min-width: 8ex;
-     padding: 2px;
+    border-radius: 4px;
+    min-width: 8ex;
+    padding: 2px;
  }
 
  QTabBar::tab:selected, QTabBar::tab:hover {

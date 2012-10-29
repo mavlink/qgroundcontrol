@@ -47,7 +47,7 @@
       <number>10</number>
      </property>
      <widget class="QWidget" name="curveGroupBox" native="true">
-      <layout class="QGridLayout" name="gridLayout" rowstretch="50,1">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="50,0">
        <property name="leftMargin">
         <number>6</number>
        </property>
@@ -103,8 +103,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>202</width>
-            <height>488</height>
+            <width>884</width>
+            <height>491</height>
            </rect>
           </property>
          </widget>
@@ -164,6 +164,28 @@
            </item>
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_4">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="sizeConstraint">
+              <enum>QLayout::SetMinimumSize</enum>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <spacer name="verticalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
              <item>
               <widget class="QPushButton" name="recolorButton">
                <property name="toolTip">
