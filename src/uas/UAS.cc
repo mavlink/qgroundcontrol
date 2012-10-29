@@ -2263,18 +2263,13 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         for (unsigned int i = 0; i < sizeof(p.param_id); i++)
         {
             // String characters
-            if ((int)i < id.length() && i < (sizeof(p.param_id) - 1))
+            if ((int)i < id.length())
             {
                 p.param_id[i] = id.toAscii()[i];
             }
-            //        // Null termination at end of string or end of buffer
-            //        else if ((int)i == id.length() || i == (sizeof(p.param_id) - 1))
-            //        {
-            //            p.param_id[i] = '\0';
-            //        }
-            // Zero fill
             else
             {
+                // Fill rest with zeros
                 p.param_id[i] = 0;
             }
         }
