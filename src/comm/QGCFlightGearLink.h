@@ -49,7 +49,7 @@ class QGCFlightGearLink : public QGCHilLink
     //Q_INTERFACES(QGCFlightGearLinkInterface:LinkInterface)
 
 public:
-    QGCFlightGearLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCFlightGearLink();
 
     bool isConnected();
@@ -99,6 +99,11 @@ public slots:
         Q_UNUSED(version);
     }
 
+    void selectAirframe(const QString& airframe)
+    {
+        Q_UNUSED(airframe);
+    }
+
     void readBytes();
     /**
      * @brief Write a number of bytes to the interface.
@@ -112,6 +117,7 @@ public slots:
 
     void printTerraSyncOutput();
     void printTerraSyncError();
+    void setStartupArguments(QString startupArguments);
 
 protected:
     QString name;
@@ -137,6 +143,7 @@ protected:
     QProcess* process;
     QProcess* terraSync;
     unsigned int flightGearVersion;
+    QString startupArguments;
 
     void setName(QString name);
 

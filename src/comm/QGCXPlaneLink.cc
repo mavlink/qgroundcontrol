@@ -75,7 +75,7 @@ void QGCXPlaneLink::loadSettings()
     settings.beginGroup("QGC_XPLANE_LINK");
     setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
     setVersion(settings.value("XPLANE_VERSION", 10).toInt());
-    selectPlane(settings.value("AIRFRAME", "default").toString());
+    selectAirframe(settings.value("AIRFRAME", "default").toString());
     settings.endGroup();
 }
 
@@ -182,7 +182,6 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 
     if (newHost.contains(":"))
     {
-        //qDebug() << "HOST: " << newHost.split(":").first();
         QHostInfo info = QHostInfo::fromName(newHost.split(":").first());
         if (info.error() == QHostInfo::NoError)
         {
@@ -198,7 +197,6 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
                 }
             }
             remoteHost = address;
-            //qDebug() << "Address:" << address.toString();
             // Set localPort according to user input
             remotePort = newHost.split(":").last().toInt();
         }
@@ -586,7 +584,7 @@ bool QGCXPlaneLink::disconnectSimulation()
     return !connectState;
 }
 
-void QGCXPlaneLink::selectPlane(const QString& plane)
+void QGCXPlaneLink::selectAirframe(const QString& plane)
 {
     airframeName = plane;
 
@@ -718,6 +716,8 @@ void QGCXPlaneLink::setRandomAttitude()
 bool QGCXPlaneLink::connectSimulation()
 {
     qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
+    // XXX Hack
+    storeSettings();
 
     start(LowPriority);
 
@@ -729,9 +729,6 @@ bool QGCXPlaneLink::connectSimulation()
     if (!connectState) return false;
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-
-    //process = new QProcess(this);
-    //terraSync = new QProcess(this);
 
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));

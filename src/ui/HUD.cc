@@ -70,7 +70,7 @@ HUD::HUD(int width, int height, QWidget* parent)
       yCenterOffset(0.0f),
       vwidth(200.0f),
       vheight(150.0f),
-      vGaugeSpacing(50.0f),
+      vGaugeSpacing(65.0f),
       vPitchPerDeg(6.0f), ///< 4 mm y translation per degree)
       rawBuffer1(NULL),
       rawBuffer2(NULL),
@@ -335,7 +335,7 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(uas);
-    fuelStatus = tr("BAT [%1% | %2V] (%3:%4)").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0')).arg(seconds/60, 2, 10, QChar('0')).arg(seconds%60, 2, 10, QChar('0'));
+    fuelStatus = tr("BAT [%1% | %2V]").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0'));
     if (percent < 20.0f) {
         fuelColor = warningColor;
     } else if (percent < 10.0f) {
@@ -622,7 +622,7 @@ void HUD::paintHUD()
         // Low-pass roll, pitch and yaw
         rollLP = roll;//rollLP * 0.2f + 0.8f * roll;
         pitchLP = pitch;//pitchLP * 0.2f + 0.8f * pitch;
-        yawLP = yaw;//yawLP * 0.2f + 0.8f * yaw;
+        yawLP = (!isinf(yaw) && !isnan(yaw)) ? yaw : yawLP;//yawLP * 0.2f + 0.8f * yaw;
 
         // Translate for yaw
         const float maxYawTrans = 60.0f;
@@ -649,6 +649,8 @@ void HUD::paintHUD()
 
         // Negate to correct direction
         yawTrans = -yawTrans;
+
+        yawTrans = 0;
 
         //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw;
 
@@ -714,20 +716,20 @@ void HUD::paintHUD()
             painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
             painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
-
-
             // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
 
 
             // Draw all fixed indicators
-            // MODE
-            paintText(mode, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 10, &painter);
-            // STATE
-            paintText(state, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 15, &painter);
             // BATTERY
-            paintText(fuelStatus, fuelColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 20, &painter);
+            paintText(fuelStatus, fuelColor, 6.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 6, &painter);
             // Waypoint
-            paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
+            paintText(waypointName, defaultColor, 6.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
+
+            QPen linePen(Qt::SolidLine);
+            linePen.setWidth(refLineWidthToPen(1.0f));
+            linePen.setColor(defaultColor);
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(linePen);
 
             // YAW INDICATOR
             //
@@ -735,15 +737,15 @@ void HUD::paintHUD()
             //    .   .
             //   .......
             //
-            const float yawIndicatorWidth = 4.0f;
-            const float yawIndicatorY = vheight/2.0f - 10.0f;
+            const float yawIndicatorWidth = 12.0f;
+            const float yawIndicatorY = vheight/2.0f - 15.0f;
             QPolygon yawIndicator(4);
             yawIndicator.setPoint(0, QPoint(refToScreenX(0.0f), refToScreenY(yawIndicatorY)));
             yawIndicator.setPoint(1, QPoint(refToScreenX(yawIndicatorWidth/2.0f), refToScreenY(yawIndicatorY+yawIndicatorWidth)));
             yawIndicator.setPoint(2, QPoint(refToScreenX(-yawIndicatorWidth/2.0f), refToScreenY(yawIndicatorY+yawIndicatorWidth)));
             yawIndicator.setPoint(3, QPoint(refToScreenX(0.0f), refToScreenY(yawIndicatorY)));
-            painter.setPen(defaultColor);
             painter.drawPolyline(yawIndicator);
+            painter.setPen(linePen);
 
             // CENTER
 
@@ -752,7 +754,7 @@ void HUD::paintHUD()
             //    __      __
             //       \/\/
             //
-            const float hIndicatorWidth = 7.0f;
+            const float hIndicatorWidth = 20.0f;
             const float hIndicatorY = -25.0f;
             const float hIndicatorYLow = hIndicatorY + hIndicatorWidth / 6.0f;
             const float hIndicatorSegmentWidth = hIndicatorWidth / 7.0f;
@@ -764,18 +766,15 @@ void HUD::paintHUD()
             hIndicator.setPoint(4, QPoint(refToScreenX(0.0f+hIndicatorSegmentWidth*1.0f), refToScreenY(hIndicatorYLow)));
             hIndicator.setPoint(5, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f-hIndicatorSegmentWidth*1.75f), refToScreenY(hIndicatorY)));
             hIndicator.setPoint(6, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
-            painter.setPen(defaultColor);
             painter.drawPolyline(hIndicator);
 
 
             // SETPOINT
-            const float centerWidth = 4.0f;
-            painter.setPen(defaultColor);
-            painter.setBrush(Qt::NoBrush);
+            const float centerWidth = 8.0f;
             // TODO
             //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
 
-            const float centerCrossWidth = 10.0f;
+            const float centerCrossWidth = 20.0f;
             // left
             painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
             // right
@@ -786,12 +785,11 @@ void HUD::paintHUD()
 
 
             // COMPASS
-            const float compassY = -vheight/2.0f + 10.0f;
-            QRectF compassRect(QPointF(refToScreenX(-5.0f), refToScreenY(compassY)), QSizeF(refToScreenX(10.0f), refToScreenY(5.0f)));
+            const float compassY = -vheight/2.0f + 6.0f;
+            QRectF compassRect(QPointF(refToScreenX(-12.0f), refToScreenY(compassY)), QSizeF(refToScreenX(24.0f), refToScreenY(12.0f)));
             painter.setBrush(Qt::NoBrush);
-            painter.setPen(Qt::SolidLine);
-            painter.setPen(defaultColor);
-            painter.drawRoundedRect(compassRect, 2, 2);
+            painter.setPen(linePen);
+            painter.drawRoundedRect(compassRect, 3, 3);
             QString yawAngle;
 
             //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
@@ -803,13 +801,16 @@ void HUD::paintHUD()
             /* final safeguard for really stupid systems */
             int yawCompass = static_cast<int>(yawDeg) % 360;
             yawAngle.sprintf("%03d", yawCompass);
-            paintText(yawAngle, defaultColor, 3.5f, -4.3f, compassY+ 0.97f, &painter);
+            paintText(yawAngle, defaultColor,8.5f, -9.8f, compassY+ 1.7f, &painter);
+
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(linePen);
 
             // CHANGE RATE STRIPS
-            drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);
+            drawChangeRateStrip(-65.0f, -60.0f, 25.0f, -10.0f, 10.0f, -zSpeed, &painter);
 
             // CHANGE RATE STRIPS
-            drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, totalAcc, &painter);
+            drawChangeRateStrip(65.0f, -60.0f, 25.0f, -10.0f, 10.0f, totalAcc, &painter);
 
             // GAUGES
 
@@ -822,10 +823,15 @@ void HUD::paintHUD()
                 gaugeAltitude = -zPos;
             }
 
-            drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, gaugeAltitude, defaultColor, &painter, false);
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(linePen);
+
+            drawChangeIndicatorGauge(-vGaugeSpacing, 35.0f, 30.0f, 10.0f, gaugeAltitude, defaultColor, &painter, false);
+            paintText("alt m", defaultColor, 5.5f, -73.0f, 50, &painter);
 
             // Right speed gauge
-            drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, totalSpeed, defaultColor, &painter, false);
+            drawChangeIndicatorGauge(vGaugeSpacing, 35.0f, 30.0f, 10.0f, totalSpeed, defaultColor, &painter, false);
+            paintText("v m/s", defaultColor, 5.5f, 55.0f, 50, &painter);
 
 
             // Waypoint name
@@ -961,8 +967,8 @@ void HUD::paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter
     const float pitchWidth = 30.0f;
     const float pitchGap = pitchWidth / 2.5f;
     const float pitchHeight = pitchWidth / 12.0f;
-    const float textSize = pitchHeight * 1.1f;
-    const float lineWidth = 0.5f;
+    const float textSize = pitchHeight * 1.6f;
+    const float lineWidth = 1.5f;
 
     // Positive pitch indicator:
     //
@@ -975,7 +981,7 @@ void HUD::paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter
     // Left horizontal line
     drawLine(refPosX-pitchWidth/2.0f, refPosY, refPosX-pitchGap/2.0f, refPosY, lineWidth, defaultColor, painter);
     // Text left
-    paintText(text, defaultColor, textSize, refPosX-pitchWidth/2.0 + 0.75f, refPosY + pitchHeight - 1.75f, painter);
+    paintText(text, defaultColor, textSize, refPosX-pitchWidth/2.0 + 0.75f, refPosY + pitchHeight - 1.3f, painter);
 
     // Right vertical line
     drawLine(refPosX+pitchWidth/2.0f, refPosY, refPosX+pitchWidth/2.0f, refPosY+pitchHeight, lineWidth, defaultColor, painter);
@@ -988,10 +994,10 @@ void HUD::paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter
     const float pitchWidth = 30.0f;
     const float pitchGap = pitchWidth / 2.5f;
     const float pitchHeight = pitchWidth / 12.0f;
-    const float textSize = pitchHeight * 1.1f;
+    const float textSize = pitchHeight * 1.6f;
     const float segmentWidth = ((pitchWidth - pitchGap)/2.0f) / 7.0f; ///< Four lines and three gaps -> 7 segments
 
-    const float lineWidth = 0.1f;
+    const float lineWidth = 1.5f;
 
     // Negative pitch indicator:
     //
@@ -1007,7 +1013,7 @@ void HUD::paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter
         drawLine(refPosX-pitchWidth/2.0+(i*segmentWidth), refPosY, refPosX-pitchWidth/2.0+(i*segmentWidth)+segmentWidth, refPosY, lineWidth, defaultColor, painter);
     }
     // Text left
-    paintText(text, defaultColor, textSize, refPosX-pitchWidth/2.0f + 0.75f, refPosY + pitchHeight - 1.75f, painter);
+    paintText(text, defaultColor, textSize, refPosX-pitchWidth/2.0f + 0.75f, refPosY + pitchHeight - 1.3f, painter);
 
     // Right vertical line
     drawLine(refPosX+pitchGap/2.0, refPosY, refPosX+pitchGap/2.0, refPosY-pitchHeight, lineWidth, defaultColor, painter);
@@ -1080,13 +1086,6 @@ void HUD::drawPolygon(QPolygonF refPolygon, QPainter* painter)
 
 void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter)
 {
-    QBrush brush(defaultColor, Qt::NoBrush);
-    painter->setBrush(brush);
-    QPen rectPen(Qt::SolidLine);
-    rectPen.setWidth(0);
-    rectPen.setColor(defaultColor);
-    painter->setPen(rectPen);
-
     float scaledValue = value;
 
     // Saturate value
@@ -1105,7 +1104,7 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
     //           -
 
     const float width = height / 8.0f;
-    const float lineWidth = 0.5f;
+    const float lineWidth = 1.5f;
 
     // Indicator lines
     // Top horizontal line
@@ -1120,7 +1119,7 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
     // Text
     QString label;
     label.sprintf("< %+06.2f", value);
-    paintText(label, defaultColor, 3.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
+    paintText(label, defaultColor, 6.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
 }
 
 //void HUD::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
@@ -1205,17 +1204,19 @@ void HUD::drawChangeIndicatorGauge(float xRef, float yRef, float radius, float e
     // Draw the circle
     QPen circlePen(Qt::SolidLine);
     if (!solid) circlePen.setStyle(Qt::DotLine);
-    circlePen.setWidth(refLineWidthToPen(0.5f));
     circlePen.setColor(defaultColor);
+    circlePen.setWidth(refLineWidthToPen(2.0f));
     painter->setBrush(Qt::NoBrush);
     painter->setPen(circlePen);
-    drawCircle(xRef, yRef, radius, 200.0f, 170.0f, 1.0f, color, painter);
+    drawCircle(xRef, yRef, radius, 200.0f, 170.0f, 1.5f, color, painter);
 
     QString label;
     label.sprintf("%05.1f", value);
 
+    float textSize = radius / 2.5;
+
     // Draw the value
-    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
+    paintText(label, color, textSize, xRef-textSize*1.7f, yRef-textSize*0.4f, painter);
 
     // Draw the needle
     // Scale the rotation so that the gauge does one revolution
