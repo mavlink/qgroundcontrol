@@ -40,13 +40,16 @@
    <item row="0" column="0" colspan="2">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="rcTab">
       <attribute name="title">
        <string>RC Calibration</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5" columnstretch="1,1,10,1,1,10,1,1,1,1,1,1,1,1,10">
+       <property name="topMargin">
+        <number>20</number>
+       </property>
        <item row="8" column="1" rowspan="3">
         <widget class="QSlider" name="throttleSlider">
          <property name="minimum">
@@ -716,10 +719,26 @@
        <string>Sensor Calibration</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6" columnstretch="70,30">
+       <property name="topMargin">
+        <number>20</number>
+       </property>
        <item row="0" column="1">
         <layout class="QVBoxLayout" name="sensorLayout"/>
        </item>
-       <item row="0" column="0">
+       <item row="1" column="1">
+        <spacer name="verticalSpacer_8">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="0" rowspan="2">
         <widget class="QTextBrowser" name="sensorTips">
          <property name="html">
           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -732,7 +751,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Magnetometer Calibration&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:16pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Carefully follow the instructions. Click on MAG to start the calibration. Watch the communication console for further instructions (Available through Main Menu -&amp;gt; Tool Widgets -&amp;gt; Communication Console). Do not calibrate the vehicle in vincinity of metal, e.g. from a table or chair. Start the calibration, leave the system unmoved on the table. Wait for the double beep. Next move the system in a figure eight, roll and pitch it strongly and perform the figure eight also upside-down. The calibration is finished after the triple beep.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Carefully follow the instructions. Click on MAG to start the calibration. Watch the communication console for further instructions (Available through Main Menu -&amp;gt; Tool Widgets -&amp;gt; Communication Console). Do not calibrate the vehicle in vincinity of metal, e.g. from a table or chair. Start the calibration, leave the system unmoved on the table. Wait for the double beep. Next move the system in a figure eight, roll and pitch it strongly, rotate around all axes and perform the figure eight also upside-down. The calibration is finished after the triple beep.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Accelerometer Calibration&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:16pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
@@ -746,71 +765,106 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="multirotorTab">
       <attribute name="title">
        <string>Multirotor Control</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="QComboBox" name="multiRotorComboBox"/>
-       </item>
-       <item row="0" column="1">
+      <layout class="QGridLayout" name="gridLayout_3" columnstretch="80,0,0">
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <item row="0" column="2">
         <widget class="QPushButton" name="loadMultiRotorDefaultsButton">
          <property name="text">
           <string>Load Platform Defaults</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QWidget" name="multiRotorControlWidget" native="true">
-         <layout class="QGridLayout" name="gridLayout_7">
-          <item row="0" column="1">
-           <widget class="QGroupBox" name="multiRotorControlPositionGroupBox">
-            <property name="title">
-             <string>Position</string>
+       <item row="0" column="0">
+        <spacer name="horizontalSpacer_8">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="multiRotorComboBox"/>
+       </item>
+       <item row="2" column="0" colspan="3">
+        <widget class="QGroupBox" name="multiRotorControlPositionGroupBox">
+         <property name="title">
+          <string>Position</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QScrollArea" name="scrollArea_2">
+            <property name="widgetResizable">
+             <bool>true</bool>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
-             <item>
-              <layout class="QVBoxLayout" name="multiRotorPositionLayout"/>
-             </item>
-            </layout>
+            <widget class="QWidget" name="scrollAreaWidgetContents_2">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>651</width>
+               <height>203</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_4">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="multiRotorPositionLayout"/>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox">
-            <property name="title">
-             <string>Attitude</string>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="3">
+        <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox">
+         <property name="title">
+          <string>Attitude</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="widgetResizable">
+             <bool>true</bool>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-             <property name="margin">
-              <number>0</number>
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>651</width>
+               <height>204</height>
+              </rect>
              </property>
-             <item>
-              <widget class="QScrollArea" name="scrollArea">
-               <property name="widgetResizable">
-                <bool>true</bool>
-               </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>541</width>
-                  <height>417</height>
-                 </rect>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_4">
-                 <property name="margin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <layout class="QVBoxLayout" name="multiRotorAttitudeLayout"/>
-                 </item>
-                </layout>
-               </widget>
-              </widget>
-             </item>
-            </layout>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="multiRotorAttitudeLayout"/>
+              </item>
+             </layout>
+            </widget>
            </widget>
           </item>
          </layout>
@@ -822,37 +876,103 @@ p, li { white-space: pre-wrap; }
       <attribute name="title">
        <string>Fixed Wing Control</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="1" column="0" colspan="2">
-        <widget class="QGroupBox" name="fixedWingControlAttitudeGroupBox">
+      <layout class="QGridLayout" name="gridLayout_4" columnstretch="65,30,19,1">
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <item row="3" column="0" colspan="4">
+        <widget class="QGroupBox" name="fixedWingControlPositionGroupBox">
          <property name="title">
-          <string>Attitude</string>
+          <string>Position</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <property name="margin">
+           <number>0</number>
+          </property>
           <item>
-           <layout class="QVBoxLayout" name="fixedWingAttitudeLayout"/>
+           <widget class="QScrollArea" name="scrollArea_3">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_3">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>651</width>
+               <height>203</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="fixedWingPositionLayout"/>
+              </item>
+             </layout>
+            </widget>
+           </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="0" column="0">
+       <item row="0" column="1">
         <widget class="QComboBox" name="fixedWingComboBox"/>
        </item>
-       <item row="0" column="1">
+       <item row="0" column="2" colspan="2">
         <widget class="QPushButton" name="loadFixedWingDefaultsButton">
          <property name="text">
           <string>Load Platform Defaults</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="0" colspan="2">
-        <widget class="QGroupBox" name="fixedWingControlPositionGroupBox">
-         <property name="title">
-          <string>Position</string>
+       <item row="0" column="0">
+        <spacer name="horizontalSpacer_9">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0" colspan="4">
+        <widget class="QGroupBox" name="fixedWingControlAttitudeGroupBox">
+         <property name="title">
+          <string>Attitude</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="margin">
+           <number>0</number>
+          </property>
           <item>
-           <layout class="QVBoxLayout" name="fixedWingPositionLayout"/>
+           <widget class="QScrollArea" name="scrollArea_4">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_4">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>651</width>
+               <height>204</height>
+              </rect>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="fixedWingAttitudeLayout"/>
+              </item>
+             </layout>
+            </widget>
+           </widget>
           </item>
          </layout>
         </widget>

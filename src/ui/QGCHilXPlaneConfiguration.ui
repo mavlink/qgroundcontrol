@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCHilXPlaneConfiguration</class>
+ <widget class="QWidget" name="QGCHilXPlaneConfiguration">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>243</width>
+    <height>261</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="40,0,0,0">
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Airframe</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="3">
+    <widget class="QComboBox" name="airframeComboBox">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>X-Plane default</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>QRO_X/MK</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>QRO_X/Ardrone</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>QRO_X/PWM</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Unlimited</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Twinjet</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Early Bird</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Reno Racer</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Slowstick</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Tiny</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="2" colspan="2">
+    <widget class="QPushButton" name="setHomeButton">
+     <property name="text">
+      <string>Set HOME</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="3">
+    <widget class="QComboBox" name="hostComboBox">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>127.0.0.1:49000</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="5" column="2" colspan="2">
+    <widget class="QPushButton" name="randomPositionButton">
+     <property name="text">
+      <string>Random POS</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QPushButton" name="randomAttitudeButton">
+     <property name="text">
+      <string>Random ATT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="hostLabel">
+     <property name="text">
+      <string>Host</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QPushButton" name="startButton">
+     <property name="text">
+      <string>Start</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

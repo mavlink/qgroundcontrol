@@ -39,9 +39,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 #include "MainWindow.h"
 
-QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString remoteHost, QHostAddress host, quint16 port) :
+QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     process(NULL),
     terraSync(NULL),
+    socket(NULL),
+    startupArguments(startupArguments),
     flightGearVersion(0)
 {
     this->host = host;
@@ -349,20 +351,7 @@ bool QGCFlightGearLink::connectSimulation()
     QString fgRoot;
     QString fgScenery;
     QString terraSyncScenery;
-    QString aircraft;
-
-    if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
-    {
-        aircraft = "Rascal110-JSBSim";
-    }
-    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-    {
-        aircraft = "arducopter";
-    }
-    else
-    {
-        aircraft = "Rascal110-JSBSim";
-    }
+    QString fgAircraft;
 
 #ifdef Q_OS_MACX
     processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
@@ -386,6 +375,8 @@ bool QGCFlightGearLink::connectSimulation()
     processTerraSync = "/usr/bin/nice"; //according to http://wiki.flightgear.org/TerraSync, run with lower priority
     terraSyncScenery = QDir::homePath() + "/.terrasync/Scenery"; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 #endif
+
+    fgAircraft = QApplication::applicationDirPath() + "/files/flightgear/Aircraft";
 
     // Sanity checks
     bool sane = true;
@@ -426,6 +417,7 @@ bool QGCFlightGearLink::connectSimulation()
     /*Prepare FlightGear Arguments */
     flightGearArguments << QString("--fg-root=%1").arg(fgRoot);
     flightGearArguments << QString("--fg-scenery=%1:%2").arg(fgScenery).arg(terraSyncScenery); //according to http://wiki.flightgear.org/TerraSync a separate directory is used
+    flightGearArguments << QString("--fg-aircraft=%1").arg(fgAircraft);
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // FIXME ADD QUAD-Specific protocol here
@@ -438,35 +430,37 @@ bool QGCFlightGearLink::connectSimulation()
         flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
     }
     flightGearArguments << "--atlas=socket,out,1,localhost,5505,udp";
-    flightGearArguments << "--in-air";
-    flightGearArguments << "--roll=0";
-    flightGearArguments << "--pitch=0";
-    flightGearArguments << "--vc=90";
-    flightGearArguments << "--heading=300";
-    flightGearArguments << "--timeofday=noon";
-    flightGearArguments << "--disable-hud-3d";
-    flightGearArguments << "--disable-fullscreen";
-    flightGearArguments << "--geometry=400x300";
-    flightGearArguments << "--disable-anti-alias-hud";
-    flightGearArguments << "--wind=0@0";
-    flightGearArguments << "--turbulence=0.0";
-    flightGearArguments << "--prop:/sim/frame-rate-throttle-hz=30";
-    flightGearArguments << "--control=mouse";
-    flightGearArguments << "--disable-intro-music";
-    flightGearArguments << "--disable-sound";
-    flightGearArguments << "--disable-random-objects";
-    flightGearArguments << "--disable-ai-models";
-    flightGearArguments << "--shading-flat";
-    flightGearArguments << "--fog-disable";
-    flightGearArguments << "--disable-specular-highlight";
-    //flightGearArguments << "--disable-skyblend";
-    flightGearArguments << "--disable-random-objects";
-    flightGearArguments << "--disable-panel";
-    //flightGearArguments << "--disable-horizon-effect";
-    flightGearArguments << "--disable-clouds";
-    flightGearArguments << "--fdm=jsb";
-    flightGearArguments << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
-    flightGearArguments << "--notrim";
+//    flightGearArguments << "--in-air";
+//    flightGearArguments << "--roll=0";
+//    flightGearArguments << "--pitch=0";
+//    flightGearArguments << "--vc=90";
+//    flightGearArguments << "--heading=300";
+//    flightGearArguments << "--timeofday=noon";
+//    flightGearArguments << "--disable-hud-3d";
+//    flightGearArguments << "--disable-fullscreen";
+//    flightGearArguments << "--geometry=400x300";
+//    flightGearArguments << "--disable-anti-alias-hud";
+//    flightGearArguments << "--wind=0@0";
+//    flightGearArguments << "--turbulence=0.0";
+//    flightGearArguments << "--prop:/sim/frame-rate-throttle-hz=30";
+//    flightGearArguments << "--control=mouse";
+//    flightGearArguments << "--disable-intro-music";
+//    flightGearArguments << "--disable-sound";
+//    flightGearArguments << "--disable-random-objects";
+//    flightGearArguments << "--disable-ai-models";
+//    flightGearArguments << "--shading-flat";
+//    flightGearArguments << "--fog-disable";
+//    flightGearArguments << "--disable-specular-highlight";
+//    //flightGearArguments << "--disable-skyblend";
+//    flightGearArguments << "--disable-random-objects";
+//    flightGearArguments << "--disable-panel";
+//    //flightGearArguments << "--disable-horizon-effect";
+//    flightGearArguments << "--disable-clouds";
+//    flightGearArguments << "--fdm=jsb";
+//    flightGearArguments << "--units-meters"; //XXX: check: the protocol xml has already a conversion from feet to m?
+//    flightGearArguments << "--notrim";
+
+    flightGearArguments += startupArguments.split(" ");
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         // Start all engines of the quad
@@ -483,7 +477,7 @@ bool QGCFlightGearLink::connectSimulation()
     flightGearArguments << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
     flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
     // Add new argument with this: flightGearArguments << "";
-    flightGearArguments << QString("--aircraft=%2").arg(aircraft);
+    //flightGearArguments << QString("--aircraft=%2").arg(aircraft);
 
     /*Prepare TerraSync Arguments */
     QStringList terraSyncArguments;
@@ -540,6 +534,15 @@ void QGCFlightGearLink::printTerraSyncError()
    foreach (QString line, strLines){
     qDebug() << line;
    }
+}
+
+/**
+ * @brief Set the startup arguments used to start flightgear
+ *
+ **/
+void QGCFlightGearLink::setStartupArguments(QString startupArguments)
+{
+    this->startupArguments = startupArguments;
 }
 
 /**

@@ -64,6 +64,7 @@ public slots:
     void updateMode(int sysId, QString status, QString description);
     void updateLoad(UASInterface* uas, double load);
     //void receiveValue(int uasid, QString id, double value, quint64 time);
+    void showHILUi();
     void refresh();
     /** @brief Receive new waypoint information */
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);
