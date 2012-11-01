@@ -268,6 +268,11 @@ win32-msvc2008|win32-msvc2010 {
 	win32-msvc2010 {
 		message(Building for Windows Visual Studio 2010 (32bit))
 	}
+	
+	# Specify multi-process compilation within Visual Studio.
+	# (drastically improves compilation times for multi-core computers)
+	QMAKE_CXXFLAGS_DEBUG += -MP
+	QMAKE_CXXFLAGS_RELEASE += -MP
 
 	# QAxContainer support is needed for the Internet Control
 	# element showing the Google Earth window
