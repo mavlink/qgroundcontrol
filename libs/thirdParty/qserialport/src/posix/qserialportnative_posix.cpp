@@ -28,6 +28,7 @@
 #include <QSocketNotifier>
 #include "qserialportnative.h"
 #include "termioshelper.h"
+#include <unistd.h>
 
 namespace {
   const int kMinReadTimeout = 100;
