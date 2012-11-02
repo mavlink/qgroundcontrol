@@ -105,6 +105,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         {
             delete tool;
         }
+        toolWidgets.clear();
     }
 
     // Reset current state
