@@ -347,8 +347,6 @@ QPortSettings::BaudRate TermiosHelper::baudRate() const
     speed_t ibaud = cfgetispeed(currentAttrs_);
     speed_t obaud = cfgetospeed(currentAttrs_);
 
-    (obaud == ibaud);
-
     Q_ASSERT(ibaud == obaud);
 
     switch ( ibaud ) {
