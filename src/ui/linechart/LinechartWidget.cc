@@ -548,13 +548,13 @@ void LinechartWidget::startLogging()
     // Let user select the log file name
     //QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv *.txt);;"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.log);;"));
 
-    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "") {
+    while (!(fileName.endsWith(".log")) && !abort && fileName != "") {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Unsuitable file extension for logfile");
-        msgBox.setInformativeText("Please choose .txt or .csv as file extension. Click OK to change the file extension, cancel to not start logging.");
+        msgBox.setInformativeText("Please choose .log as file extension. Click OK to change the file extension, cancel to not start logging.");
         msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Ok);
         if(msgBox.exec() != QMessageBox::Ok)
@@ -562,7 +562,7 @@ void LinechartWidget::startLogging()
             abort = true;
             break;
         }
-        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt *.csv);;"));
+        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.log);;"));
     }
 
     qDebug() << "SAVE FILE" << fileName;
@@ -570,7 +570,7 @@ void LinechartWidget::startLogging()
     // Check if the user did not abort the file save dialog
     if (!abort && fileName != "") {
         logFile = new QFile(fileName);
-        if (logFile->open(QIODevice::WriteOnly | QIODevice::Text)) {
+        if (logFile->open(QIODevice::Truncate | QIODevice::WriteOnly | QIODevice::Text)) {
             logging = true;
             logStartTime = 0;
             curvesWidget->setEnabled(false);
