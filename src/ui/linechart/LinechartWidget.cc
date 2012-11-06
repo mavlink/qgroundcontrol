@@ -356,7 +356,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         lastTimestamp = usec;
     } else if (usec != 0) {
         // Difference larger than 5 secs, enforce ground time
-        if (abs((int)((qint64)usec - (quint64)lastTimestamp)) > 5000)
+        if (((qint64)usec - (qint64)lastTimestamp) > 5000)
         {
             autoGroundTimeSet = true;
             if (activePlot) activePlot->groundTime();
@@ -368,7 +368,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         if (activePlot->isVisible(curve+unit))
         {
-            if (usec == 0 || autoGroundTimeSet) usec = QGC::groundTimeMilliseconds();
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -414,7 +414,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         if (activePlot->isVisible(curve+unit))
         {
-            if (usec == 0 || autoGroundTimeSet) usec = QGC::groundTimeMilliseconds();
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -458,7 +458,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         if (activePlot->isVisible(curve+unit))
         {
-            if (usec == 0 || autoGroundTimeSet) usec = QGC::groundTimeMilliseconds();
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
