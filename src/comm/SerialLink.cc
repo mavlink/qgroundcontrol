@@ -563,10 +563,16 @@ bool SerialLink::disconnect()
 
         emit disconnected();
         emit connected(false);
+        if (port) {
+            port->close();
+        }
         return closed;
     }
     else {
-        // No port, so we're disconnected
+        // not running
+        if (port) {
+            port->close();
+        }
         return true;
     }
 
