@@ -28,6 +28,8 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
 #include <QTemporaryFile>
 #include <QTextStream>
 #include <QStringList>
@@ -64,14 +66,15 @@ void LogCompressor::run()
 
     QString outFileName;
 
-    QStringList parts =  QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
+    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
 
-    parts.replace(parts.size()-2, "compressed." + parts.last());
+    parts.replace(0, parts.first() + "_compressed");
+    parts.replace(parts.size()-1, "txt");
     outFileName = parts.join(".");
 
 	// Verify that the output file is useable
     QFile outTmpFile(outFileName);
-    if (!outTmpFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (!outTmpFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
 		emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outTmpFile.fileName()).absoluteFilePath()));
 		return;
 	}

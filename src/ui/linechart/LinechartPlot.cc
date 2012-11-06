@@ -47,7 +47,7 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
     this->plotid = plotid;
     this->plotInterval = interval;
 
-    maxValue = DBL_MIN;
+    maxValue = -DBL_MAX;
     minValue = DBL_MAX;
 
     //lastMaxTimeAdded = QTime();
