@@ -87,6 +87,7 @@ void LogCompressor::run()
 	unsigned int keyCounter = 0;
 	QTextStream in(&infile);
 	QMap<QString, int> messageMap;
+
 	while (!in.atEnd() && keyCounter < keySearchLimit) {
 		QString messageName = in.readLine().split(delimiter).at(2);
 		messageMap.insert(messageName, 0);
@@ -103,66 +104,72 @@ void LogCompressor::run()
 
 	// Open the output file and write the header line to it
 	QStringList headerList(messageMap.keys());
+
 	QString headerLine = "timestamp_ms" + delimiter + headerList.join(delimiter) + "\n";
+    // Clean header names from symbols Matlab considers as Latex syntax
+    headerLine = headerLine.replace(":", "-");
+    headerLine = headerLine.replace("_", "-");
+    headerLine = headerLine.replace(".", "-");
 	outTmpFile.write(headerLine.toLocal8Bit());
 
-	emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimension: ") + headerLine);
+    emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimensions: ") + headerLine);
+
+    // Template list stores a list for populating with data as it's parsed from messages.
+    QStringList templateList;
+    for (int i = 0; i < headerList.size() + 1; ++i) {
+        templateList << (holeFillingEnabled?"NaN":"");
+    }
+
 
 	// Reset our position in the input file before we start the main processing loop.
     in.seek(0);
 
-	// Template list stores a list for populating with data as it's parsed from messages.
-	QStringList templateList;
-	for (int i = 0; i < headerList.size() + 1; ++i) {
-		templateList << (holeFillingEnabled?"NaN":"");
-	}
-	QStringList filledList(templateList);
-	QStringList currentLine = in.readLine().split(delimiter);
-	currentDataLine = 1;
-	while (!in.atEnd()) {
-		// We only overwrite data from the last time set if we aren't doing a zero-order hold
-		if (!holeFillingEnabled) {
-			filledList = templateList;
-		}
-		// Populate this time set with the data from this first message
-		filledList.replace(0, currentLine.at(0));
-		filledList.replace(messageMap.value(currentLine.at(2)), currentLine.at(3));
+    QMap<quint64, QStringList> timestampMap;
 
-		// Continue searching for messages in the same time set and adding that data
-		// to the current time set if appropriate.
-		while (!in.atEnd()) {
-			QStringList newLine = in.readLine().split(delimiter);
-			++currentDataLine;
+    while (!in.atEnd()) {
+        quint64 timestamp = in.readLine().split(delimiter).at(0).toULongLong();
+        timestampMap.insert(timestamp, templateList);
+    }
 
-			if (newLine.at(0) == currentLine.at(0)) {
-				QString currentDataName = newLine.at(2);
-				QString currentDataValue = newLine.at(3);
-				filledList.replace(messageMap.value(currentDataName), currentDataValue);
-			} else {
-				currentLine = newLine;
-				break;
-			}
-		}
 
-		// Write this current time set out to the file
-		QString output = filledList.join(delimiter) + "\n";
-		outTmpFile.write(output.toLocal8Bit());
-	}
+    in.seek(0);
+
+    while (!in.atEnd()) {
+        QStringList newLine = in.readLine().split(delimiter);
+        quint64 timestamp = newLine.at(0).toULongLong();
+        QStringList list = timestampMap.value(timestamp);
+
+        QString currentDataName = newLine.at(2);
+        QString currentDataValue = newLine.at(3);
+        list.replace(messageMap.value(currentDataName), currentDataValue);
+        timestampMap.insert(timestamp, list);
+    }
+
+    int lineCounter = 0;
+
+    foreach (QStringList list, timestampMap.values()) {
+        // Write this current time set out to the file
+        // only do so from the 2nd line on, since the first
+        // line could be incomplete
+        if (lineCounter > 0) {
+            // Set the timestamp
+            list.replace(0,QString("%1").arg(timestampMap.keys().at(lineCounter)));
+            // Write data columns
+            QString output = list.join(delimiter) + "\n";
+            outTmpFile.write(output.toLocal8Bit());
+        }
+        lineCounter++;
+    }
 
 	// We're now done with the source file
 	infile.close();
 
-	// Make sure we remove the source file before replacing it.
-//	QFile::remove(outFileName);
-//	outTmpFile.copy(outFileName);
-//	outTmpFile.close();
     emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
 
 	// Clean up and update the status before we return.
 	currentDataLine = 0;
     emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outFileName));
 	emit finishedFile(outFileName);
-	qDebug() << "Done with logfile processing";
 	running = false;
 }
 
