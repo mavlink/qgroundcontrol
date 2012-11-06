@@ -109,9 +109,7 @@ void LogCompressor::run()
 	emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimension: ") + headerLine);
 
 	// Reset our position in the input file before we start the main processing loop.
-	infile.reset();
-	in.reset();
-	in.resetStatus();
+    in.seek(0);
 
 	// Template list stores a list for populating with data as it's parsed from messages.
 	QStringList templateList;
