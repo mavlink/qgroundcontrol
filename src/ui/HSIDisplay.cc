@@ -108,8 +108,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     laserFix(0),
     iruFix(0),
     mavInitialized(false),
-    topMargin(18.0f),
-    bottomMargin(12.0f),
+    topMargin(20.0f),
+    bottomMargin(14.0f),
     attControlKnown(false),
     xyControlKnown(false),
     zControlKnown(false),
@@ -134,7 +134,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     setPalette(pal);
 
     vwidth = 80.0f;
-    vheight = 80.0f;
+    vheight = 100.0f;
 
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
@@ -213,7 +213,7 @@ void HSIDisplay::renderOverlay()
 
     // Size of the ring instrument
     //const float margin = 0.1f;  // 10% margin of total width on each side
-    float baseRadius = (vheight - topMargin - bottomMargin) / 2.0f - bottomMargin / 2.0f;
+    float baseRadius = (vheight - topMargin - bottomMargin) / 2.0f - (topMargin + bottomMargin) / 2.8f;
 
     // Draw instruments
     // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
@@ -230,16 +230,16 @@ void HSIDisplay::renderOverlay()
     // Draw base instrument
     // ----------------------
     painter.setBrush(Qt::NoBrush);
-    const QColor ringColor = QColor(200, 250, 200);
+    const QColor ringColor = QColor(200, 200, 200);
     QPen pen;
     pen.setColor(ringColor);
-    pen.setWidth(refLineWidthToPen(0.1f));
+    pen.setWidth(refLineWidthToPen(1.0f));
     painter.setPen(pen);
     const int ringCount = 2;
     for (int i = 0; i < ringCount; i++)
     {
         float radius = (vwidth - (topMargin + bottomMargin)*0.3f) / (1.35f * i+1) / 2.0f - bottomMargin / 2.0f;
-        drawCircle(xCenterPos, yCenterPos, radius, 0.1f, ringColor, &painter);
+        drawCircle(xCenterPos, yCenterPos, radius, 1.0f, ringColor, &painter);
         paintText(tr("%1 m").arg(refToMetric(radius), 5, 'f', 1, ' '), QGC::colorCyan, 1.6f, vwidth/2-4, vheight/2+radius+2.2, &painter);
     }
 
@@ -320,25 +320,37 @@ void HSIDisplay::renderOverlay()
     drawWaypoints(painter);
 
     // Draw status flags
-    drawStatusFlag(2,  1, tr("ATT"), attControlEnabled, attControlKnown, painter);
-    drawStatusFlag(22, 1, tr("PXY"), xyControlEnabled,  xyControlKnown,  painter);
-    drawStatusFlag(44, 1, tr("PZ"),  zControlEnabled,   zControlKnown,   painter);
-    drawStatusFlag(66, 1, tr("YAW"), yawControlEnabled, yawControlKnown, painter);
+    drawStatusFlag(1,  1, tr("RAT"), rateControlEnabled, rateControlKnown, painter);
+    drawStatusFlag(17, 1, tr("ATT"), attControlEnabled, attControlKnown, painter);
+    drawStatusFlag(33, 1, tr("PXY"), xyControlEnabled,  xyControlKnown,  painter);
+    drawStatusFlag(49, 1, tr("PZ"),  zControlEnabled,   zControlKnown,   painter);
+    drawStatusFlag(65, 1, tr("YAW"), yawControlEnabled, yawControlKnown, painter);
 
     // Draw position lock indicators
-    drawPositionLock(2,  5, tr("POS"), positionFix, positionFixKnown, painter);
-    drawPositionLock(22, 5, tr("VIS"), visionFix,   visionFixKnown,   painter);
-    drawPositionLock(44, 5, tr("GPS"), gpsFix,      gpsFixKnown,      painter);
-    drawPositionLock(66, 5, tr("IRU"), iruFix,      iruFixKnown,      painter);
+    drawPositionLock(1,  6, tr("POS"), positionFix, positionFixKnown, painter);
+    drawPositionLock(17, 6, tr("GPS"), gpsFix,      gpsFixKnown,      painter);
+    drawStatusFlag(33,   6, tr("FLO"), flowON, flowKnown, flowOK, painter);
+    drawPositionLock(49, 6, tr("VIS"), visionFix,   visionFixKnown,   painter);
+    drawPositionLock(65, 6, tr("IRU"), iruFix,      iruFixKnown,      painter);
+
+    drawStatusFlag(1,   11, tr("GYR"), gyroON, gyroKnown, gyroOK, painter);
+    drawStatusFlag(17,  11, tr("ACC"), accelON, accelKnown, accelOK, painter);
+    drawStatusFlag(33,  11, tr("MAG"), magON, magKnown, magOK, painter);
+    drawStatusFlag(49,  11, tr("BAR"), pressureON, pressureKnown, pressureOK, painter);
+    drawStatusFlag(65,  11, tr("PIT"), diffPressureON, diffPressureKnown, diffPressureOK, painter);
+
+    drawStatusFlag(1, 16, tr("ACT"), actuatorsON, actuatorsKnown, actuatorsOK, painter);
+    drawStatusFlag(17, 16, tr("LAS"), laserON, laserKnown, laserOK, painter);
+    drawStatusFlag(33, 16, tr("VCN"), viconON, viconKnown, viconOK, painter);
 
     // Draw speed to top left
-    paintText(tr("SPEED"), QGC::colorCyan, 2.2f, 2, 11, &painter);
-    paintText(tr("%1 m/s").arg(speed, 5, 'f', 2, '0'), Qt::white, 2.2f, 12, 11, &painter);
+    paintText(tr("SPEED"), QGC::colorCyan, 2.2f, 2, topMargin+2, &painter);
+    paintText(tr("%1 m/s").arg(speed, 5, 'f', 2, '0'), Qt::white, 2.2f, 12, topMargin+2, &painter);
 
     // Draw crosstrack error to top right
     float crossTrackError = 0;
-    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 54, 11, &painter);
-    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 67, 11, &painter);
+    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 54, topMargin+2, &painter);
+    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 67, topMargin+2, &painter);
 
     // Draw position to bottom left
     if (localAvailable > 0)
@@ -391,12 +403,22 @@ void HSIDisplay::renderOverlay()
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, QPainter& painter)
 {
+    drawStatusFlag(x, y, label, status, known, true, painter);
+}
+
+void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, bool ok, QPainter& painter)
+{
     paintText(label, QGC::colorCyan, 2.6f, x, y+0.8f, &painter);
     QColor statusColor(250, 250, 250);
-    if(status) {
-        painter.setBrush(QGC::colorGreen);
-    } else {
+
+    if (!ok) {
         painter.setBrush(QGC::colorDarkYellow);
+    } else {
+        if(status) {
+            painter.setBrush(QGC::colorGreen);
+        } else {
+            painter.setBrush(Qt::darkGray);
+        }
     }
     painter.setPen(Qt::NoPen);
 
@@ -409,7 +431,7 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
     if (!known)
     {
         QPen pen(Qt::yellow);
-        pen.setWidth(2);
+        pen.setWidth(3);
         painter.setPen(pen);
         // Top left to bottom right
         QPointF p1, p2, p3, p4;
@@ -468,7 +490,7 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
     // Cross out instrument if state unknown
     if (!known) {
         QPen pen(Qt::yellow);
-        pen.setWidth(2);
+        pen.setWidth(3);
         painter.setPen(pen);
         // Top left to bottom right
         QPointF p1, p2, p3, p4;
