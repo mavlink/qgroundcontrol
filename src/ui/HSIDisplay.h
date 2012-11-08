@@ -109,6 +109,7 @@ protected slots:
     void drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     /** @brief Draw a status flag indicator */
     void drawStatusFlag(float x, float y, QString label, bool status, bool known, QPainter& painter);
+    void drawStatusFlag(float x, float y, QString label, bool status, bool known, bool ok, QPainter& painter);
     /** @brief Draw a position lock indicator */
     void drawPositionLock(float x, float y, QString label, int status, bool known, QPainter& painter);
     void setBodySetpointCoordinateXY(double x, double y);
@@ -268,6 +269,7 @@ protected:
     float yCenterPos;         ///< Y center of instrument in virtual coordinates
 
     bool positionLock;
+    bool rateControlEnabled;  ///< Rate control enabled
     bool attControlEnabled;   ///< Attitude control enabled
     bool xyControlEnabled;    ///< Horizontal control enabled
     bool zControlEnabled;     ///< Vertical control enabled
@@ -277,10 +279,12 @@ protected:
     int visionFix;            ///< Localizaiton dimensions based on computer vision
     int laserFix;             ///< Localization dimensions based on laser
     int iruFix;               ///< Localization dimensions based on ultrasound
+
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
     float topMargin;          ///< Margin on top of the page, in virtual coordinates
     float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
 
+    bool rateControlKnown;     ///< Rate control status known flag
     bool attControlKnown;     ///< Attitude control status known flag
     bool xyControlKnown;      ///< XY control status known flag
     bool zControlKnown;       ///< Z control status known flag
@@ -291,6 +295,43 @@ protected:
     bool visionFixKnown;      ///< Vision fix status known flag
     bool gpsFixKnown;         ///< GPS fix status known flag
     bool iruFixKnown;         ///< Infrared/Ultrasound fix status known flag
+
+    // System state indicators
+    bool gyroKnown;
+    bool gyroON;
+    bool gyroOK;
+
+    bool accelKnown;
+    bool accelON;
+    bool accelOK;
+
+    bool magKnown;
+    bool magON;
+    bool magOK;
+
+    bool pressureKnown;
+    bool pressureON;
+    bool pressureOK;
+
+    bool diffPressureKnown;
+    bool diffPressureON;
+    bool diffPressureOK;
+
+    bool flowKnown;
+    bool flowON;
+    bool flowOK;
+
+    bool laserKnown;
+    bool laserON;
+    bool laserOK;
+
+    bool viconKnown;
+    bool viconON;
+    bool viconOK;
+
+    bool actuatorsKnown;
+    bool actuatorsON;
+    bool actuatorsOK;
 
     // Data indicators
     bool setPointKnown;       ///< Controller setpoint known status flag
