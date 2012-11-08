@@ -159,9 +159,16 @@ void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float 
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    QString state("%1\t%2\t%3\t%4\t%5\n");
-    state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-    writeBytes(state.toAscii().constData(), state.length());
+    if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
+    {
+        QString state("%1\t%2\t%3\t%4\t%5\n");
+        state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
+        writeBytes(state.toAscii().constData(), state.length());
+    }
+    else
+    {
+        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << isnan(rollAilerons) << ", pitch: " << isnan(pitchElevator) << ", yaw: " << isnan(yawRudder) << ", throttle: " << isnan(throttle);
+    }
     //qDebug() << "Updated controls" << state;
 }
 
