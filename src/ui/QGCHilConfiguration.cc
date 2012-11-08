@@ -41,5 +41,11 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
         hxpconf->show();
         ui->simulatorConfigurationDockWidget->setWidget(hxpconf);
 
+        // Select correct version of XPlane
+        QGCXPlaneLink* xplane = dynamic_cast<QGCXPlaneLink*>(mav->getHILSimulation());
+        if (xplane)
+        {
+            xplane->setVersion((index == 2) ? 10 : 9);
+        }
     }
 }
