@@ -223,10 +223,12 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 
 void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
+    // XXX Control this via the onboard system type exclusively
+    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     // Only update this for multirotors
-    if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
-        airframeID == AIRFRAME_QUAD_X_ARDRONE ||
-        airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
+//    if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
+//        airframeID == AIRFRAME_QUAD_X_ARDRONE ||
+//        airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
     {
 
         Q_UNUSED(time);
@@ -252,27 +254,34 @@ void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float
         p.index = 25;
         memset(p.f, 0, sizeof(p.f));
 
-        if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C)
-        {
-            p.f[0] = act1 / 255.0f;
-            p.f[1] = act2 / 255.0f;
-            p.f[2] = act3 / 255.0f;
-            p.f[3] = act4 / 255.0f;
-        }
-        else if (airframeID == AIRFRAME_QUAD_X_ARDRONE)
-        {
-            p.f[0] = act1 / 500.0f;
-            p.f[1] = act2 / 500.0f;
-            p.f[2] = act3 / 500.0f;
-            p.f[3] = act4 / 500.0f;
-        }
-        else
-        {
-            p.f[0] = (act1 - 1000.0f) / 1000.0f;
-            p.f[1] = (act2 - 1000.0f) / 1000.0f;
-            p.f[2] = (act3 - 1000.0f) / 1000.0f;
-            p.f[3] = (act4 - 1000.0f) / 1000.0f;
-        }
+        p.f[0] = act1;
+        p.f[1] = act2;
+        p.f[2] = act3;
+        p.f[3] = act4;
+
+        // XXX the system corrects for the scale onboard, do not scale again
+
+//        if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C)
+//        {
+//            p.f[0] = act1 / 255.0f;
+//            p.f[1] = act2 / 255.0f;
+//            p.f[2] = act3 / 255.0f;
+//            p.f[3] = act4 / 255.0f;
+//        }
+//        else if (airframeID == AIRFRAME_QUAD_X_ARDRONE)
+//        {
+//            p.f[0] = act1 / 500.0f;
+//            p.f[1] = act2 / 500.0f;
+//            p.f[2] = act3 / 500.0f;
+//            p.f[3] = act4 / 500.0f;
+//        }
+//        else
+//        {
+//            p.f[0] = (act1 - 1000.0f) / 1000.0f;
+//            p.f[1] = (act2 - 1000.0f) / 1000.0f;
+//            p.f[2] = (act3 - 1000.0f) / 1000.0f;
+//            p.f[3] = (act4 - 1000.0f) / 1000.0f;
+//        }
         // Throttle
         writeBytes((const char*)&p, sizeof(p));
     }
@@ -282,7 +291,6 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
 {
     // Do not update this control type for
     // all multirotors
-
     if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
         airframeID == AIRFRAME_QUAD_X_ARDRONE ||
         airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
