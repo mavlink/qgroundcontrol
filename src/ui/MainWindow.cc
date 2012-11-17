@@ -182,6 +182,13 @@ MainWindow::MainWindow(QWidget *parent):
     joystickWidget = 0;
     joystick = new JoystickInput();
 
+#ifdef MOUSE_ENABLED_WIN
+    emit initStatusChanged("Initializing 3D mouse interface.");
+
+    mouseInput = new Mouse3DInput(this);
+    mouse = new Mouse6dofInput(mouseInput);
+#endif //MOUSE_ENABLED_WIN
+
     // Connect link
     if (autoReconnect)
     {

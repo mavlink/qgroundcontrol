@@ -54,6 +54,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
+#include "input/Mouse6dofInput.h"
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
@@ -370,6 +371,12 @@ protected:
     JoystickWidget* joystickWidget;
 
     JoystickInput* joystick;
+
+#ifdef MOUSE_ENABLED_WIN
+    /** 3d Mouse support (WIN only) **/
+    Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
+    Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
+#endif // MOUSE_ENABLED_WIN
 
     /** User interface actions **/
     QAction* connectUASAct;
