@@ -2458,6 +2458,11 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     }
 }
 
+void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)
+{
+// TODO: send mavlink 6DOF manual control message
+}
+
 /**
 * @return the type of the system
 */
