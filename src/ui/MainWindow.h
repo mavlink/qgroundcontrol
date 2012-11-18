@@ -54,7 +54,9 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
+#ifdef MOUSE_ENABLED_WIN
 #include "input/Mouse6dofInput.h"
+#endif // MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
