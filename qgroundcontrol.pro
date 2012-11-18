@@ -625,7 +625,7 @@ win32-msvc2008|win32-msvc2010|linux {
         -llibxbee
 }
 
-#win32-msvc2008|win32-msvc2010 {
+win32-msvc2008|win32-msvc2010 {
     message("Including support for 3DxWare for Windows system.")
     SOURCES  += libs/thirdParty/3DMouse/win/MouseParameters.cpp \
                 libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
@@ -636,4 +636,4 @@ win32-msvc2008|win32-msvc2010|linux {
                 src/input/Mouse6dofInput.h
     INCLUDEPATH += libs/thirdParty/3DMouse/win
     DEFINES += MOUSE_ENABLED_WIN
-#}
+}
