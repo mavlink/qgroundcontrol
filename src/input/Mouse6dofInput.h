@@ -31,6 +31,7 @@ protected:
     Mouse3DInput* mouse3D;
     UASInterface* uas;
     bool done;
+    bool mouseActive;
 
     double xValue;
     double yValue;

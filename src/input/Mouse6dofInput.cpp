@@ -11,9 +11,10 @@
 #include "UASManager.h"
 
 Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
-    mouse3DMax(0.01),   // TODO: check maximum value fot plugged device
+    mouse3DMax(0.075),   // TODO: check maximum value fot plugged device
     uas(NULL),
     done(false),
+    mouseActive(false),
     xValue(0.0),
     yValue(0.0),
     zValue(0.0),
@@ -79,26 +80,30 @@ void Mouse6dofInput::run()
            done = false;
            exit();
         }
-        // Bound x value
-        if (xValue > 1.0) xValue = 1.0;
-        if (xValue < -1.0) xValue = -1.0;
-        // Bound x value
-        if (yValue > 1.0) yValue = 1.0;
-        if (yValue < -1.0) yValue = -1.0;
-        // Bound x value
-        if (zValue > 1.0) zValue = 1.0;
-        if (zValue < -1.0) zValue = -1.0;
-        // Bound x value
-        if (aValue > 1.0) aValue = 1.0;
-        if (aValue < -1.0) aValue = -1.0;
-        // Bound x value
-        if (bValue > 1.0) bValue = 1.0;
-        if (bValue < -1.0) bValue = -1.0;
-        // Bound x value
-        if (cValue > 1.0) cValue = 1.0;
-        if (cValue < -1.0) cValue = -1.0;
 
-        emit mouse6dofChanged(xValue, yValue, zValue, aValue, bValue, cValue);
+        if (mouseActive)
+        {
+            // Bound x value
+            if (xValue > 1.0) xValue = 1.0;
+            if (xValue < -1.0) xValue = -1.0;
+            // Bound x value
+            if (yValue > 1.0) yValue = 1.0;
+            if (yValue < -1.0) yValue = -1.0;
+            // Bound x value
+            if (zValue > 1.0) zValue = 1.0;
+            if (zValue < -1.0) zValue = -1.0;
+            // Bound x value
+            if (aValue > 1.0) aValue = 1.0;
+            if (aValue < -1.0) aValue = -1.0;
+            // Bound x value
+            if (bValue > 1.0) bValue = 1.0;
+            if (bValue < -1.0) bValue = -1.0;
+            // Bound x value
+            if (cValue > 1.0) cValue = 1.0;
+            if (cValue < -1.0) cValue = -1.0;
+
+            emit mouse6dofChanged(xValue, yValue, zValue, aValue, bValue, cValue);
+        }
 
         // Sleep, update rate of 3d mouse is approx. 50 Hz (1000 ms / 50 = 20 ms)
         QGC::SLEEP::msleep(20);
@@ -108,6 +113,8 @@ void Mouse6dofInput::run()
 void Mouse6dofInput::motion3DMouse(std::vector<float> &motionData)
 {
     if (motionData.size() < 6) return;
+    mouseActive = true;
+
     xValue = (double)1.0e2f*motionData[ 1 ] / mouse3DMax;
     yValue = (double)1.0e2f*motionData[ 0 ] / mouse3DMax;
     zValue = (double)1.0e2f*motionData[ 2 ] / mouse3DMax;
@@ -115,5 +122,5 @@ void Mouse6dofInput::motion3DMouse(std::vector<float> &motionData)
     bValue = (double)1.0e2f*motionData[ 3 ] / mouse3DMax;
     cValue = (double)1.0e2f*motionData[ 5 ] / mouse3DMax;
 
-    qDebug() << "NEW 3D MOUSE VALUES -- X" << xValue << " -- Y" << yValue << " -- Z" << zValue << " -- A" << aValue << " -- B" << bValue << " -- C" << cValue;
+    //qDebug() << "NEW 3D MOUSE VALUES -- X" << xValue << " -- Y" << yValue << " -- Z" << zValue << " -- A" << aValue << " -- B" << bValue << " -- C" << cValue;
 }
