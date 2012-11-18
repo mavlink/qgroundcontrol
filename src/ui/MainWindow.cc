@@ -189,6 +189,12 @@ MainWindow::MainWindow(QWidget *parent):
     mouse = new Mouse6dofInput(mouseInput);
 #endif //MOUSE_ENABLED_WIN
 
+#if MOUSE_ENABLED_LINUX
+    emit initStatusChanged("Initializing 3D mouse interface.");
+
+    mouse = new Mouse6dofInput(this);
+#endif //MOUSE_ENABLED_LINUX
+
     // Connect link
     if (autoReconnect)
     {
@@ -1726,3 +1732,11 @@ QList<QAction*> MainWindow::listLinkMenuActions(void)
 {
     return ui.menuNetwork->actions();
 }
+
+#ifdef MOUSE_ENABLED_LINUX
+bool MainWindow::x11Event(XEvent *event)
+{
+    emit x11EventOccured(event);
+    qDebug("XEvent occured...");
+}
+#endif // MOUSE_ENABLED_LINUX
