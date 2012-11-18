@@ -10,7 +10,9 @@
 #define MOUSE6DOFINPUT_H
 
 #include <QThread>
+#ifdef MOUSE_ENABLED_WIN
 #include "Mouse3DInput.h"
+#endif //MOUSE_ENABLED_WIN
 
 #include "UASInterface.h"
 
@@ -19,7 +21,14 @@ class Mouse6dofInput : public QThread
     Q_OBJECT
 
 public:
+#ifdef MOUSE_ENABLED_WIN
     Mouse6dofInput(Mouse3DInput* mouseInput);
+#endif //MOUSE_ENABLED_WIN
+#ifdef MOUSE_ENABLED_LINUX
+    Mouse6dofInput(QWidget* parent);
+    void init3dMouse(QWidget* parent);
+#endif //MOUSE_ENABLED_LINUX
+
     ~Mouse6dofInput();
     void run();
 
@@ -28,7 +37,6 @@ public:
 protected:
     void init();
 
-    Mouse3DInput* mouse3D;
     UASInterface* uas;
     bool done;
     bool mouseActive;

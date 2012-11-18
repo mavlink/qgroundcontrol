@@ -9,7 +9,18 @@
 #include "Mouse6dofInput.h"
 #include "UAS.h"
 #include "UASManager.h"
+#include "QMessageBox"
+#ifdef MOUSE_ENABLED_LINUX
+#include <QX11Info>
+#include <X11/Xlib.h>
+#undef Success              // Eigen library doesn't work if Success is defined
+extern "C"
+{
+#include "xdrvlib.h"
+}
+#endif // MOUSE_ENABLED_LINUX
 
+#ifdef MOUSE_ENABLED_WIN
 Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     mouse3DMax(0.075),   // TODO: check maximum value fot plugged device
     uas(NULL),
@@ -30,6 +41,74 @@ Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     //connect(mouseInput, SIGNAL(On3dmouseKeyUp(int)), this, SLOT);
 
 }
+#endif //MOUSE_ENABLED_WIN
+
+#ifdef MOUSE_ENABLED_LINUX
+Mouse6dofInput::Mouse6dofInput(QWidget *parent) :
+    mouse3DMax(0.075),   // TODO: check maximum value fot plugged device
+    uas(NULL),
+    done(false),
+    mouseActive(false),
+    xValue(0.0),
+    yValue(0.0),
+    zValue(0.0),
+    aValue(0.0),
+    bValue(0.0),
+    cValue(0.0)
+{
+
+}
+#endif //MOUSE_ENABLED_LINUX
+
+#ifdef MOUSE_ENABLED_LINUX
+
+void Mouse6dofInput::init3dMouse(QWidget* parent)
+{
+    if (!mouseActive)
+    {
+//        // man visudo --> then you can omit giving password (success not guarantied..)
+//        qDebug() << "Starting 3DxWare Daemon for 3dConnexion 3dMouse";
+//        QString processProgramm = "gksudo";
+//        QStringList processArguments;
+//        processArguments << "/etc/3DxWare/daemon/3dxsrv -d usb";
+//        process3dxDaemon = new QProcess();
+//        process3dxDaemon->start(processProgramm, processArguments);
+//    //    process3dxDaemon->waitForFinished();
+//    //    {
+//    //        qDebug() << "... continuing without 3DxWare. May not be initialized properly!";
+//    //        qDebug() << "Try in terminal as user root:" << processArguments.last();
+//    //    }
+
+        Display *display = QX11Info::display();
+        if(!display)
+        {
+            qDebug() << "Cannot open display!" << endl;
+        }
+        if ( !MagellanInit( display, winId() ) )
+        {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.setText(tr("No 3DxWare driver is running."));
+            msgBox.setInformativeText(tr("Enter in Terminal 'sudo /etc/3DxWare/daemon/3dxsrv -d usb'"));
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            msgBox.exec();
+
+            qDebug() << "No 3DxWare driver is running!";
+            return;
+        }
+        else
+        {
+            qDebug() << "Initialized 3dMouse";
+            mouseActive = true;
+        }
+    }
+    else
+    {
+        qDebug() << "3dMouse already initialized..";
+    }
+}
+#endif //MOUSE_ENABLED_LINUX
 
 Mouse6dofInput::~Mouse6dofInput()
 {
