@@ -237,7 +237,7 @@ void Mouse6dofInput::button3DMouseDown(int button)
     case 2:
     {
             translationActive = !translationActive;
-            emit mouseTranslationEnabledChanged(translationActive);
+            emit mouseTranslationActiveChanged(translationActive);
             qDebug() << "Changed 3DMouse Translation to" << (bool)translationActive;
         break;
     }

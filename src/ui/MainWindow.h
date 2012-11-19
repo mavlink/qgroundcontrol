@@ -235,8 +235,10 @@ public slots:
 
 signals:
     void initStatusChanged(const QString& message);
+#ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
+#endif //MOUSE_ENABLED_LINUX
 
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
