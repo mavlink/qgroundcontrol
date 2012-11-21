@@ -182,6 +182,20 @@ MainWindow::MainWindow(QWidget *parent):
     joystickWidget = 0;
     joystick = new JoystickInput();
 
+#ifdef MOUSE_ENABLED_WIN
+    emit initStatusChanged("Initializing 3D mouse interface.");
+
+    mouseInput = new Mouse3DInput(this);
+    mouse = new Mouse6dofInput(mouseInput);
+#endif //MOUSE_ENABLED_WIN
+
+#if MOUSE_ENABLED_LINUX
+    emit initStatusChanged("Initializing 3D mouse interface.");
+
+    mouse = new Mouse6dofInput(this);
+    connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
+#endif //MOUSE_ENABLED_LINUX
+
     // Connect link
     if (autoReconnect)
     {
@@ -1719,3 +1733,12 @@ QList<QAction*> MainWindow::listLinkMenuActions(void)
 {
     return ui.menuNetwork->actions();
 }
+
+#ifdef MOUSE_ENABLED_LINUX
+bool MainWindow::x11Event(XEvent *event)
+{
+    emit x11EventOccured(event);
+    //qDebug("XEvent occured...");
+    return false;
+}
+#endif // MOUSE_ENABLED_LINUX
