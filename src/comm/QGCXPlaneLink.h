@@ -190,6 +190,9 @@ protected:
     enum AIRFRAME airframeID;
     bool xPlaneConnected;
     unsigned int xPlaneVersion;
+    quint64 simUpdateLast;
+    quint64 simUpdateLastText;
+    float simUpdateHz;
 
     void setName(QString name);
 

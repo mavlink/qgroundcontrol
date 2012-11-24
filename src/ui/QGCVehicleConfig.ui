@@ -40,7 +40,7 @@
    <item row="0" column="0" colspan="2">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="rcTab">
       <attribute name="title">
@@ -53,10 +53,10 @@
        <item row="8" column="1" rowspan="3">
         <widget class="QSlider" name="throttleSlider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="value">
           <number>0</number>
@@ -69,10 +69,10 @@
        <item row="8" column="4" rowspan="3" colspan="2">
         <widget class="QSlider" name="pitchSlider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="value">
           <number>0</number>
@@ -595,10 +595,10 @@
        <item row="11" column="0">
         <widget class="QSlider" name="yawSlider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="value">
           <number>0</number>
@@ -611,10 +611,10 @@
        <item row="11" column="3">
         <widget class="QSlider" name="rollSlider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="value">
           <number>0</number>
@@ -650,10 +650,10 @@
        <item row="8" column="10" rowspan="3">
         <widget class="QSlider" name="aux1Slider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -663,10 +663,10 @@
        <item row="8" column="11" rowspan="3">
         <widget class="QSlider" name="aux2Slider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -676,10 +676,10 @@
        <item row="8" column="12" rowspan="3" colspan="2">
         <widget class="QSlider" name="aux3Slider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -689,10 +689,10 @@
        <item row="8" column="9" rowspan="3">
         <widget class="QSlider" name="modeSwitchSlider">
          <property name="minimum">
-          <number>-1</number>
+          <number>0</number>
          </property>
          <property name="maximum">
-          <number>1</number>
+          <number>100</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -711,6 +711,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="11" column="14">
+        <widget class="QPushButton" name="setTrimButton">
+         <property name="text">
+          <string>Set Trim</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -815,8 +822,8 @@ p, li { white-space: pre-wrap; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>651</width>
-               <height>203</height>
+               <width>98</width>
+               <height>28</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -852,8 +859,8 @@ p, li { white-space: pre-wrap; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>651</width>
-               <height>204</height>
+               <width>98</width>
+               <height>28</height>
               </rect>
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -899,8 +906,8 @@ p, li { white-space: pre-wrap; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>651</width>
-               <height>203</height>
+               <width>98</width>
+               <height>28</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -959,8 +966,8 @@ p, li { white-space: pre-wrap; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>651</width>
-               <height>204</height>
+               <width>98</width>
+               <height>28</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
