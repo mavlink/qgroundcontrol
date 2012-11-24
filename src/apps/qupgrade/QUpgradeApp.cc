@@ -72,13 +72,21 @@ QUpgradeApp::QUpgradeApp(int &argc, char* argv[]) : QApplication(argc, argv)
 
     // Create main window
     QUpgradeMainWindow* window = new QUpgradeMainWindow();
+    PX4FirmwareUpgrader *upgrader = new PX4FirmwareUpgrader(window);
+    window->setCentralWidget(upgrader);
 
     // Get PX4 upgrade widget and instantiate worker thread
     PX4FirmwareUpgradeWorker* worker = PX4FirmwareUpgradeWorker::putWorkerInThread(this);
-    connect(worker, SIGNAL(detectionStatusChanged(QString)), window->firmwareUpgrader(), SLOT(setDetectionStatusText(QString)));
-    connect(worker, SIGNAL(upgradeStatusChanged(QString)), window->firmwareUpgrader(), SLOT(setFlashStatusText(QString)));
-    connect(worker, SIGNAL(upgradeProgressChanged(int)), window->firmwareUpgrader(), SLOT(setFlashProgress(int)));
-    connect(worker, SIGNAL(validPortFound(QString)), window->firmwareUpgrader(), SLOT(setPortName(QString)));
+
+    connect(worker, SIGNAL(detectionStatusChanged(QString)), upgrader, SLOT(setDetectionStatusText(QString)), Qt::QueuedConnection);
+    connect(worker, SIGNAL(upgradeStatusChanged(QString)), upgrader, SLOT(setFlashStatusText(QString)), Qt::QueuedConnection);
+    connect(worker, SIGNAL(upgradeProgressChanged(int)), upgrader, SLOT(setFlashProgress(int)), Qt::QueuedConnection);
+    connect(worker, SIGNAL(validPortFound(QString)), upgrader, SLOT(setPortName(QString)));
+    connect(upgrader, SIGNAL(firmwareFileNameSet(QString)), worker, SLOT(loadFirmware(QString)), Qt::QueuedConnection);
+    connect(upgrader, SIGNAL(upgrade()), worker, SLOT(upgrade()), Qt::QueuedConnection);
+    connect(this, SIGNAL(lastWindowClosed()), worker, SLOT(abort()), Qt::QueuedConnection);
+
+    worker->loadFirmware("abc");
 
     window->setWindowTitle(applicationName() + " " + applicationVersion());
     window->show();

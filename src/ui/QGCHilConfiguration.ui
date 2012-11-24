@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>305</width>
-    <height>355</height>
+    <width>366</width>
+    <height>301</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,14 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="40,0,0">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="1,100,1" columnstretch="40,0">
+   <item row="2" column="0">
+    <widget class="QLabel" name="statusLabel">
+     <property name="text">
+      <string>Status</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="simLabel">
      <property name="text">
@@ -27,14 +34,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="statusLabel">
-     <property name="text">
-      <string>Status</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="2">
+   <item row="0" column="1">
     <widget class="QComboBox" name="simComboBox">
      <property name="editable">
       <bool>true</bool>
@@ -61,35 +61,12 @@
      </item>
     </widget>
    </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QDockWidget" name="simulatorConfigurationDockWidget">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <item row="1" column="0" colspan="2">
+    <layout class="QVBoxLayout" name="simulatorConfigurationLayout">
+     <property name="spacing">
+      <number>0</number>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>20</width>
-       <height>150</height>
-      </size>
-     </property>
-     <property name="features">
-      <set>QDockWidget::NoDockWidgetFeatures</set>
-     </property>
-     <property name="windowTitle">
-      <string>Simulator Options</string>
-     </property>
-     <widget class="QWidget" name="dockWidgetContents">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </widget>
+    </layout>
    </item>
   </layout>
  </widget>

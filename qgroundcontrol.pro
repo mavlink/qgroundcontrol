@@ -523,7 +523,6 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
     src/ui/mission/QGCMissionDoFinishSearch.cc \
     src/ui/QGCVehicleConfig.cc \
-    src/comm/QGCHilLink.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc
@@ -624,4 +623,37 @@ win32-msvc2008|win32-msvc2010|linux {
 # TO DO: build library when it does not exist already
     LIBS += -Llibs/thirdParty/libxbee/lib \
         -llibxbee
+}
+
+###################################################################
+#### --- 3DConnexion 3d Mice support (e.g. spacenavigator) --- ####
+###################################################################
+
+# xdrvlib only supported by linux (theoretical all X11) systems
+# You have to install the official 3DxWare driver for linux to use 3D mouse support on linux systems!
+linux-g++|linux-g++-64{
+    exists(/usr/local/lib/libxdrvlib.so){
+        message("Including support for Magellan 3DxWare for linux system.")
+        SOURCES  += src/input/Mouse6dofInput.cpp
+        HEADERS  += src/input/Mouse6dofInput.h
+        LIBS += -L/usr/local/lib/ -lxdrvlib
+        INCLUDEPATH *= /usr/local/include
+        DEFINES += MOUSE_ENABLED_LINUX \
+                    ParameterCheck                      # Hack: Has to be defined for magellan usage
+    }
+}
+
+# Support for Windows systems
+# You have to install the official 3DxWare driver for Windows to use the 3D mouse support on Windows systems!
+win32-msvc2008|win32-msvc2010 {
+    message("Including support for 3DxWare for Windows system.")
+    SOURCES  += libs/thirdParty/3DMouse/win/MouseParameters.cpp \
+                libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
+                src/input/Mouse6dofInput.cpp
+    HEADERS  += libs/thirdParty/3DMouse/win/I3dMouseParams.h \
+                libs/thirdParty/3DMouse/win/MouseParameters.h \
+                libs/thirdParty/3DMouse/win/Mouse3DInput.h \
+                src/input/Mouse6dofInput.h
+    INCLUDEPATH += libs/thirdParty/3DMouse/win
+    DEFINES += MOUSE_ENABLED_WIN
 }

@@ -42,10 +42,6 @@ QUpgradeMainWindow::QUpgradeMainWindow(QWidget *parent) :
     ui->setupUi(this);
 }
 
-PX4FirmwareUpgrader* QUpgradeMainWindow::firmwareUpgrader() {
-    return ui->centralwidget;
-}
-
 QUpgradeMainWindow::~QUpgradeMainWindow()
 {
     delete ui;
