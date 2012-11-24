@@ -49,34 +49,42 @@ public slots:
     /** Set the RC channel */
     void setRollChan(int channel) {
         rcMapping[0] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setPitchChan(int channel) {
         rcMapping[1] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setYawChan(int channel) {
         rcMapping[2] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setThrottleChan(int channel) {
         rcMapping[3] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setModeChan(int channel) {
         rcMapping[4] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setAux1Chan(int channel) {
         rcMapping[5] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setAux2Chan(int channel) {
         rcMapping[6] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
     /** Set the RC channel */
     void setAux3Chan(int channel) {
         rcMapping[7] = channel - 1;
+        updateInvertedCheckboxes(channel - 1);
     }
 
     /** Set channel inversion status */
@@ -130,6 +138,8 @@ protected slots:
     void setRCType(int type);
     /** Check timeouts */
     void checktimeOuts();
+    /** Update checkbox status */
+    void updateInvertedCheckboxes(int index);
 
 protected:
     UASInterface* mav;                  ///< The current MAV

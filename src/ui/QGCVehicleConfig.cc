@@ -66,6 +66,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     for (unsigned int i = 0; i < chanMax; i++)
     {
         rcValue[i] = UINT16_MAX;
+        rcMapping[i] = i;
     }
 
     updateTimer.setInterval(150);
@@ -102,14 +103,14 @@ void QGCVehicleConfig::toggleCalibrationRC(bool enabled)
 void QGCVehicleConfig::setTrimPositions()
 {
     // Set trim for roll, pitch, yaw, throttle
-    rcTrim[rcMapping[0]] = rcValue[0]; // roll
-    rcTrim[rcMapping[1]] = rcValue[1]; // pitch
-    rcTrim[rcMapping[2]] = rcValue[2]; // yaw
-    rcTrim[rcMapping[3]] = rcMin[3];   // throttle
-    rcTrim[rcMapping[4]] = ((rcMax[4] - rcMin[4]) / 2.0f) + rcMin[4];   // mode sw
-    rcTrim[rcMapping[5]] = ((rcMax[5] - rcMin[5]) / 2.0f) + rcMin[5];   // aux 1
-    rcTrim[rcMapping[5]] = ((rcMax[6] - rcMin[6]) / 2.0f) + rcMin[6];   // aux 2
-    rcTrim[rcMapping[5]] = ((rcMax[7] - rcMin[7]) / 2.0f) + rcMin[7];   // aux 3
+    rcTrim[rcMapping[0]] = rcValue[rcMapping[0]]; // roll
+    rcTrim[rcMapping[1]] = rcValue[rcMapping[1]]; // pitch
+    rcTrim[rcMapping[2]] = rcValue[rcMapping[2]]; // yaw
+    rcTrim[rcMapping[3]] = rcMin[rcMapping[3]];   // throttle
+    rcTrim[rcMapping[4]] = ((rcMax[rcMapping[4]] - rcMin[rcMapping[4]]) / 2.0f) + rcMin[rcMapping[4]];   // mode sw
+    rcTrim[rcMapping[5]] = ((rcMax[rcMapping[5]] - rcMin[rcMapping[5]]) / 2.0f) + rcMin[rcMapping[5]];   // aux 1
+    rcTrim[rcMapping[6]] = ((rcMax[rcMapping[6]] - rcMin[rcMapping[6]]) / 2.0f) + rcMin[rcMapping[6]];   // aux 2
+    rcTrim[rcMapping[7]] = ((rcMax[rcMapping[7]] - rcMin[rcMapping[7]]) / 2.0f) + rcMin[rcMapping[7]];   // aux 3
 }
 
 void QGCVehicleConfig::detectChannelInversion()
@@ -249,7 +250,7 @@ void QGCVehicleConfig::writeCalibrationRC()
 
     for (unsigned int i = 0; i < chanCount; ++i)
     {
-        qDebug() << "SENDING" << minTpl.arg(i+1) << rcMin[i];
+        //qDebug() << "SENDING" << minTpl.arg(i+1) << rcMin[i];
         mav->setParameter(0, minTpl.arg(i+1), rcMin[i]);
         QGC::SLEEP::usleep(50000);
         mav->setParameter(0, trimTpl.arg(i+1), rcTrim[i]);
@@ -265,9 +266,9 @@ void QGCVehicleConfig::writeCalibrationRC()
     QGC::SLEEP::usleep(50000);
     mav->setParameter(0, "RC_MAP_PITCH", (int32_t)(rcMapping[1]+1));
     QGC::SLEEP::usleep(50000);
-    mav->setParameter(0, "RC_MAP_THROTTLE", (int32_t)(rcMapping[2]+1));
+    mav->setParameter(0, "RC_MAP_YAW", (int32_t)(rcMapping[2]+1));
     QGC::SLEEP::usleep(50000);
-    mav->setParameter(0, "RC_MAP_YAW", (int32_t)(rcMapping[3]+1));
+    mav->setParameter(0, "RC_MAP_THROTTLE", (int32_t)(rcMapping[3]+1));
     QGC::SLEEP::usleep(50000);
     mav->setParameter(0, "RC_MAP_MODE_SW", (int32_t)(rcMapping[4]+1));
     QGC::SLEEP::usleep(50000);
@@ -334,6 +335,9 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
         }
     }
 
+    // Raw value
+    rcValue[chan] = val;
+
     // Normalized value
     float normalized;
 
@@ -354,21 +358,18 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     if (chan == rcMapping[0])
     {
         // ROLL
-        rcValue[0] = val;
         rcRoll = normalized;
     }
-    else if (chan == rcMapping[1])
+    if (chan == rcMapping[1])
     {
         // PITCH
-        rcValue[1] = val;
         rcPitch = normalized;
     }
-    else if (chan == rcMapping[2])
+    if (chan == rcMapping[2])
     {
-        rcValue[2] = val;
         rcYaw = normalized;
     }
-    else if (chan == rcMapping[3])
+    if (chan == rcMapping[3])
     {
         // THROTTLE
         if (rcRev[chan]) {
@@ -377,37 +378,65 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
             rcThrottle = normalized;
         }
 
-        rcValue[3] = val;
         rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
     }
-    else if (chan == rcMapping[4])
+    if (chan == rcMapping[4])
     {
         // MODE SWITCH
         rcMode = normalized;
-        rcValue[4] = val;
     }
-    else if (chan == rcMapping[5])
+    if (chan == rcMapping[5])
     {
         // AUX1
         rcAux1 = normalized;
-        rcValue[5] = val;
     }
-    else if (chan == rcMapping[6])
+    if (chan == rcMapping[6])
     {
         // AUX2
         rcAux2 = normalized;
-        rcValue[6] = val;
     }
-    else if (chan == rcMapping[7])
+    if (chan == rcMapping[7])
     {
         // AUX3
         rcAux3 = normalized;
-        rcValue[7] = val;
     }
 
     changed = true;
 
     //qDebug() << "RC CHAN:" << chan << "PPM:" << val << "NORMALIZED:" << normalized;
+}
+
+void QGCVehicleConfig::updateInvertedCheckboxes(int index)
+{
+    unsigned int mapindex = rcMapping[index];
+
+    switch (mapindex)
+    {
+    case 0:
+        ui->invertCheckBox->setChecked(rcRev[index]);
+        break;
+    case 1:
+        ui->invertCheckBox_2->setChecked(rcRev[index]);
+        break;
+    case 2:
+        ui->invertCheckBox_3->setChecked(rcRev[index]);
+        break;
+    case 3:
+        ui->invertCheckBox_4->setChecked(rcRev[index]);
+        break;
+    case 4:
+        ui->invertCheckBox_5->setChecked(rcRev[index]);
+        break;
+    case 5:
+        ui->invertCheckBox_6->setChecked(rcRev[index]);
+        break;
+    case 6:
+        ui->invertCheckBox_7->setChecked(rcRev[index]);
+        break;
+    case 7:
+        ui->invertCheckBox_8->setChecked(rcRev[index]);
+        break;
+    }
 }
 
 void QGCVehicleConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
@@ -431,7 +460,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
     if (minTpl.exactMatch(parameterName)) {
         bool ok;
         unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        qDebug() << "PARAM:" << parameterName << "index:" << index;
+        //qDebug() << "PARAM:" << parameterName << "index:" << index;
         if (ok && (index >= 0) && (index < chanMax))
         {
             rcMin[index] = value.toInt();
@@ -462,36 +491,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         if (ok && (index >= 0) && (index < chanMax))
         {
             rcRev[index] = (value.toInt() == -1) ? true : false;
-
-            unsigned int mapindex = rcMapping[index];
-
-            switch (mapindex)
-            {
-            case 0:
-                ui->invertCheckBox->setChecked(rcRev[index]);
-                break;
-            case 1:
-                ui->invertCheckBox_2->setChecked(rcRev[index]);
-                break;
-            case 2:
-                ui->invertCheckBox_3->setChecked(rcRev[index]);
-                break;
-            case 3:
-                ui->invertCheckBox_4->setChecked(rcRev[index]);
-                break;
-            case 4:
-                ui->invertCheckBox_5->setChecked(rcRev[index]);
-                break;
-            case 5:
-                ui->invertCheckBox_6->setChecked(rcRev[index]);
-                break;
-            case 6:
-                ui->invertCheckBox_7->setChecked(rcRev[index]);
-                break;
-            case 7:
-                ui->invertCheckBox_8->setChecked(rcRev[index]);
-                break;
-            }
+            updateInvertedCheckboxes(index);
         }
     }
 
@@ -653,31 +653,31 @@ void QGCVehicleConfig::updateView()
             ui->throttleSlider->setValue(rcThrottle * 100);
         }
 
-        ui->chanLabel->setText(QString("%1/%2").arg(rcValue[0]).arg(rcRoll, 5, 'f', 2, QChar(' ')));
-        ui->chanLabel_2->setText(QString("%1/%2").arg(rcValue[1]).arg(rcPitch, 5, 'f', 2, QChar(' ')));
-        ui->chanLabel_3->setText(QString("%1/%2").arg(rcValue[2]).arg(rcYaw, 5, 'f', 2, QChar(' ')));
-        ui->chanLabel_4->setText(QString("%1/%2").arg(rcValue[3]).arg(rcThrottle, 5, 'f', 2, QChar(' ')));
+        ui->chanLabel->setText(QString("%1/%2").arg(rcValue[rcMapping[0]]).arg(rcRoll, 5, 'f', 2, QChar(' ')));
+        ui->chanLabel_2->setText(QString("%1/%2").arg(rcValue[rcMapping[1]]).arg(rcPitch, 5, 'f', 2, QChar(' ')));
+        ui->chanLabel_3->setText(QString("%1/%2").arg(rcValue[rcMapping[2]]).arg(rcYaw, 5, 'f', 2, QChar(' ')));
+        ui->chanLabel_4->setText(QString("%1/%2").arg(rcValue[rcMapping[3]]).arg(rcThrottle, 5, 'f', 2, QChar(' ')));
 
         ui->modeSwitchSlider->setValue(rcMode * 50 + 50);
-        ui->chanLabel_5->setText(QString("%1/%2").arg(rcValue[4]).arg(rcMode, 5, 'f', 2, QChar(' ')));
+        ui->chanLabel_5->setText(QString("%1/%2").arg(rcValue[rcMapping[4]]).arg(rcMode, 5, 'f', 2, QChar(' ')));
 
-        if (rcValue[5] != UINT16_MAX) {
+        if (rcValue[rcMapping[5]] != UINT16_MAX) {
             ui->aux1Slider->setValue(rcAux1 * 50 + 50);
-            ui->chanLabel_6->setText(QString("%1/%2").arg(rcValue[5]).arg(rcAux1, 5, 'f', 2, QChar(' ')));
+            ui->chanLabel_6->setText(QString("%1/%2").arg(rcValue[rcMapping[5]]).arg(rcAux1, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_6->setText(tr("---"));
         }
 
-        if (rcValue[6] != UINT16_MAX) {
+        if (rcValue[rcMapping[6]] != UINT16_MAX) {
             ui->aux2Slider->setValue(rcAux2 * 50 + 50);
-            ui->chanLabel_7->setText(QString("%1/%2").arg(rcValue[6]).arg(rcAux2, 5, 'f', 2, QChar(' ')));
+            ui->chanLabel_7->setText(QString("%1/%2").arg(rcValue[rcMapping[6]]).arg(rcAux2, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_7->setText(tr("---"));
         }
 
-        if (rcValue[7] != UINT16_MAX) {
+        if (rcValue[rcMapping[7]] != UINT16_MAX) {
             ui->aux3Slider->setValue(rcAux3 * 50 + 50);
-            ui->chanLabel_8->setText(QString("%1/%2").arg(rcValue[7]).arg(rcAux3, 5, 'f', 2, QChar(' ')));
+            ui->chanLabel_8->setText(QString("%1/%2").arg(rcValue[rcMapping[7]]).arg(rcAux3, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_8->setText(tr("---"));
         }
