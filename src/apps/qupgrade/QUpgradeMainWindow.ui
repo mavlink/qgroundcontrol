@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="PX4FirmwareUpgrader" name="centralwidget">
+  <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout" rowstretch="0"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -28,14 +28,6 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>PX4FirmwareUpgrader</class>
-   <extends>QWidget</extends>
-   <header location="global">PX4FirmwareUpgrader.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

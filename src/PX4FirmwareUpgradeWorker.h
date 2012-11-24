@@ -2,6 +2,7 @@
 #define PX4FIRMWAREUPGRADEWORKER_H
 
 #include <QObject>
+#include <QJsonDocument>
 
 #include <SerialLink.h>
 
@@ -24,7 +25,7 @@ public slots:
      * @brief Continously scan for bootloaders
      * @return
      */
-    bool startContinousScan();
+    void startContinousScan();
 
     /**
      * @brief Detect connected PX4 bootloaders
@@ -34,14 +35,19 @@ public slots:
      *
      * @return true if found on one link, false else
      */
-    bool detect();
+    void detect();
 
     /**
      * @brief Upgrade the firmware using the currently connected link
      * @param filename file name / path of the firmware file
-     * @return true if upgrade succeeds, false else
      */
-    bool upgrade(const QString &filename);
+    void upgrade();
+
+    /**
+     * @brief Load firmware from disk into memory
+     * @param filename
+     */
+    void loadFirmware(const QString &filename);
 
     /**
      * @brief Receive bytes from a link
@@ -50,9 +56,18 @@ public slots:
      */
     void receiveBytes(LinkInterface* link, QByteArray b);
 
+    /**
+     * @brief Abort upgrade worker
+     */
+    void abort();
+
+protected:
+    bool exitThread;
+
 private:
     SerialLink *link;
     bool insync;
+    QJsonDocument firmware;
 };
 
 #endif // PX4FIRMWAREUPGRADEWORKER_H

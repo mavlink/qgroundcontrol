@@ -66,6 +66,83 @@ public slots:
     void updateAttitudeControllerEnabled(bool enabled);
     void updatePositionXYControllerEnabled(bool enabled);
     void updatePositionZControllerEnabled(bool enabled);
+
+    /** @brief Optical flow status changed */
+    void updateOpticalFlowStatus(bool supported, bool enabled, bool ok) {
+        if (supported && enabled && ok) {
+            visionFix = true;
+        } else {
+            visionFix = false;
+        }
+    }
+
+    /** @brief Vision based localization status changed */
+    void updateVisionLocalizationStatus(bool supported, bool enabled, bool ok) {
+        if (enabled && ok) {
+            visionFix = true;
+        } else {
+            visionFix = false;
+        }
+        visionFixKnown = supported;
+    }
+    /** @brief Infrared / Ultrasound status changed */
+    void updateDistanceSensorStatus(bool supported, bool enabled, bool ok) {
+        if (enabled && ok) {
+            iruFix = true;
+        } else {
+            iruFix = false;
+        }
+        iruFixKnown = supported;
+    }
+    /** @brief Gyroscope status changed */
+    void updateGyroStatus(bool supported, bool enabled, bool ok) {
+        gyroKnown = supported;
+        gyroON = enabled;
+        gyroOK = ok;
+    }
+    /** @brief Accelerometer status changed */
+    void updateAccelStatus(bool supported, bool enabled, bool ok) {
+        accelKnown = supported;
+        accelON = enabled;
+        accelOK = ok;
+    }
+    /** @brief Magnetometer status changed */
+    void updateMagSensorStatus(bool supported, bool enabled, bool ok) {
+        magKnown = supported;
+        magON = enabled;
+        magOK = ok;
+    }
+    /** @brief Barometer status changed */
+    void updateBaroStatus(bool supported, bool enabled, bool ok) {
+        pressureKnown = supported;
+        pressureON = enabled;
+        pressureOK = ok;
+    }
+    /** @brief Differential pressure / airspeed status changed */
+    void updateAirspeedStatus(bool supported, bool enabled, bool ok) {
+        diffPressureKnown = supported;
+        diffPressureON = enabled;
+        diffPressureOK = ok;
+    }
+    /** @brief Actuator status changed */
+    void updateActuatorStatus(bool supported, bool enabled, bool ok) {
+        actuatorsKnown = supported;
+        actuatorsON = enabled;
+        actuatorsOK = ok;
+    }
+    /** @brief Laser scanner status changed */
+    void updateLaserStatus(bool supported, bool enabled, bool ok) {
+        laserKnown = supported;
+        laserON = enabled;
+        laserOK = ok;
+    }
+    /** @brief Vicon / Leica Geotracker status changed */
+    void updateGroundTruthSensorStatus(bool supported, bool enabled, bool ok) {
+        viconKnown = supported;
+        viconON = enabled;
+        viconOK = ok;
+    }
+
     void updateObjectPosition(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance);
     /** @brief Heading control enabled/disabled */
     void updatePositionYawControllerEnabled(bool enabled);
