@@ -1,3 +1,6 @@
+#include <QJsonDocument>
+#include <QFile>
+
 #include "PX4FirmwareUpgradeWorker.h"
 
 #include <SerialLink.h>
@@ -49,21 +52,28 @@ PX4FirmwareUpgradeWorker* PX4FirmwareUpgradeWorker::putWorkerInThread(QObject *p
 
     // Starts an event loop, and emits workerThread->started()
     workerThread->start();
+    return worker;
 }
 
 
-bool PX4FirmwareUpgradeWorker::startContinousScan()
+void PX4FirmwareUpgradeWorker::startContinousScan()
 {
-    while (true) {
-        if (detect()) {
-            break;
-        }
+    exitThread = false;
+    while (!exitThread) {
+//        if (detect()) {
+//            break;
+//        }
+        QGC::SLEEP::msleep(20);
     }
 
-    return true;
+    if (exitThread) {
+        link->disconnect();
+        delete link;
+        exit(0);
+    }
 }
 
-bool PX4FirmwareUpgradeWorker::detect()
+void PX4FirmwareUpgradeWorker::detect()
 {
     if (!link)
     {
@@ -80,7 +90,7 @@ bool PX4FirmwareUpgradeWorker::detect()
         // Ignore known wrong link names
 
         if (ports->at(i).contains("Bluetooth")) {
-            continue;
+            //continue;
         }
 
         link->setPortName(ports->at(i));
@@ -101,12 +111,6 @@ bool PX4FirmwareUpgradeWorker::detect()
             break;
     }
 
-    if (insync) {
-        return true;
-    } else {
-        return false;
-    }
-
     //ui.portName->setCurrentIndex(ui.baudRate->findText(QString("%1").arg(this->link->getPortName())));
 
     // Set port
@@ -119,11 +123,15 @@ void PX4FirmwareUpgradeWorker::receiveBytes(LinkInterface* link, QByteArray b)
 {
     for (int position = 0; position < b.size(); position++) {
         qDebug() << "BYTES";
-        qDebug() << std::hex << (char)(b[position]);
+        qDebug() << (char)(b[position]);
         if (((const char)b[position]) == INSYNC)
         {
             qDebug() << "SYNC";
             insync = true;
+        }
+
+        if (insync && ((const char)b[position]) == OK)
+        {
             emit detectionStatusChanged("Found PX4 board");
         }
     }
@@ -131,7 +139,31 @@ void PX4FirmwareUpgradeWorker::receiveBytes(LinkInterface* link, QByteArray b)
     printf("\n");
 }
 
-bool PX4FirmwareUpgradeWorker::upgrade(const QString &filename)
+void PX4FirmwareUpgradeWorker::loadFirmware(const QString &filename)
 {
+    qDebug() << __FILE__ << __LINE__ << "LOADING FW";
+    QFile f(filename);
+    if (f.open(QIODevice::ReadOnly))
+    {
+        QByteArray buf = f.readAll();
+        f.close();
+        firmware = QJsonDocument::fromBinaryData(buf);
+        if (firmware.isNull()) {
+            emit upgradeStatusChanged(tr("Failed decoding file %1").arg(filename));
+        } else {
+            emit upgradeStatusChanged(tr("Ready to flash %1").arg(filename));
+        }
+    } else {
+        emit upgradeStatusChanged(tr("Failed opening file %1").arg(filename));
+    }
+}
 
+void PX4FirmwareUpgradeWorker::upgrade()
+{
+    emit upgradeStatusChanged(tr("Starting firmware upgrade.."));
+}
+
+void PX4FirmwareUpgradeWorker::abort()
+{
+    exitThread = true;
 }

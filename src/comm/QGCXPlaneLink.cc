@@ -49,7 +49,10 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     terraSync(NULL),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
-    xPlaneVersion(0)
+    xPlaneVersion(0),
+    simUpdateLast(QGC::groundTimeMilliseconds()),
+    simUpdateLastText(QGC::groundTimeMilliseconds()),
+    simUpdateHz(0)
 {
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
@@ -374,7 +377,7 @@ void QGCXPlaneLink::readBytes()
     // Only emit updates on attitude message
     bool emitUpdate = false;
 
-    const qint64 maxLength = 65536;
+    const qint64 maxLength = 1000;
     char data[maxLength];
     QHostAddress sender;
     quint16 senderPort;
@@ -509,8 +512,18 @@ void QGCXPlaneLink::readBytes()
     }
 
     // Send updated state
-    if (emitUpdate)
+    if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 3)
     {
+        simUpdateHz = simUpdateHz * 0.9f + 0.1f * (1000.0f / (QGC::groundTimeMilliseconds() - simUpdateLast));
+        if (QGC::groundTimeMilliseconds() - simUpdateLastText > 2000) {
+            emit statusMessage(tr("Receiving from XPlane at %1 Hz").arg(static_cast<int>(simUpdateHz)));
+            // Reset lowpass with current value
+            simUpdateHz = (1000.0f / (QGC::groundTimeMilliseconds() - simUpdateLast));
+            // Set state
+            simUpdateLastText = QGC::groundTimeMilliseconds();
+        }
+        simUpdateLast = QGC::groundTimeMilliseconds();
+
         emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                          pitchspeed, yawspeed, lat*1E7, lon*1E7, alt*1E3,
                          vx, vy, vz, xacc*1000, yacc*1000, zacc*1000);
@@ -518,7 +531,7 @@ void QGCXPlaneLink::readBytes()
 
     if (!oldConnectionState && xPlaneConnected)
     {
-        emit statusMessage("Receiving from XPlane.");
+        emit statusMessage(tr("Receiving from XPlane."));
     }
 
     //    // Echo data for debugging purposes

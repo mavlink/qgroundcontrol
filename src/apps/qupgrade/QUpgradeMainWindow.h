@@ -48,8 +48,6 @@ public:
     explicit QUpgradeMainWindow(QWidget *parent = 0);
     ~QUpgradeMainWindow();
 
-    PX4FirmwareUpgrader* firmwareUpgrader();
-
 public slots:
 
 protected:
