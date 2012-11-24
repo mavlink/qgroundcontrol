@@ -475,6 +475,7 @@ signals:
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
     /** @brief Emit the new system type */
     void systemTypeSet(UASInterface* uas, unsigned int type);
+
     /** @brief Attitude control enabled/disabled */
     void attitudeControlEnabled(bool enabled);
     /** @brief Position 2D control enabled/disabled */
@@ -483,6 +484,30 @@ signals:
     void positionZControlEnabled(bool enabled);
     /** @brief Heading control enabled/disabled */
     void positionYawControlEnabled(bool enabled);
+    /** @brief Optical flow status changed */
+    void opticalFlowStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Vision based localization status changed */
+    void visionLocalizationStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Infrared / Ultrasound status changed */
+    void distanceSensorStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Gyroscope status changed */
+    void gyroStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Accelerometer status changed */
+    void accelStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Magnetometer status changed */
+    void magSensorStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Barometer status changed */
+    void baroStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Differential pressure / airspeed status changed */
+    void airspeedStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Actuator status changed */
+    void actuatorStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Laser scanner status changed */
+    void laserStatusChanged(bool supported, bool enabled, bool ok);
+    /** @brief Vicon / Leica Geotracker status changed */
+    void groundTruthSensorStatusChanged(bool supported, bool enabled, bool ok);
+
+
     /** @brief Value of a remote control channel (raw) */
     void remoteControlChannelRawChanged(int channelId, float raw);
     /** @brief Value of a remote control channel (scaled)*/

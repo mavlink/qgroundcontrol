@@ -123,7 +123,34 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     userSetPointSet(false),
     userXYSetPointSet(false),
     userZSetPointSet(false),
-    userYawSetPointSet(false)
+    userYawSetPointSet(false),
+    gyroKnown(false),
+    gyroON(false),
+    gyroOK(false),
+    accelKnown(false),
+    accelON(false),
+    accelOK(false),
+    magKnown(false),
+    magON(false),
+    magOK(false),
+    pressureKnown(false),
+    pressureON(false),
+    pressureOK(false),
+    diffPressureKnown(false),
+    diffPressureON(false),
+    diffPressureOK(false),
+    flowKnown(false),
+    flowON(false),
+    flowOK(false),
+    laserKnown(false),
+    laserON(false),
+    laserOK(false),
+    viconKnown(false),
+    viconON(false),
+    viconOK(false),
+    actuatorsKnown(false),
+    actuatorsON(false),
+    actuatorsOK(false)
 {
     refreshTimer->setInterval(updateInterval);
 
@@ -845,6 +872,16 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
         disconnect(this->uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
         disconnect(this->uas, SIGNAL(objectDetected(uint,int,int,QString,int,float,float)), this, SLOT(updateObjectPosition(uint,int,int,QString,int,float,float)));
+
+        disconnect(this->uas, SIGNAL(gyroStatusChanged(bool,bool,bool)), this, SLOT(updateGyroStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(accelStatusChanged(bool,bool,bool)), this, SLOT(updateAccelStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(magSensorStatusChanged(bool,bool,bool)), this, SLOT(updateMagSensorStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(baroStatusChanged(bool,bool,bool)), this, SLOT(updateBaroStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(airspeedStatusChanged(bool,bool,bool)), this, SLOT(updateAirspeedStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(opticalFlowStatusChanged(bool,bool,bool)), this, SLOT(updateOpticalFlowStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(laserStatusChanged(bool,bool,bool)), this, SLOT(updateLaserStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(groundTruthSensorStatusChanged(bool,bool,bool)), this, SLOT(updateGroundTruthSensorStatus(bool,bool,bool)));
+        disconnect(this->uas, SIGNAL(actuatorStatusChanged(bool,bool,bool)), this, SLOT(updateActuatorStatus(bool,bool,bool)));
     }
 
     connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
@@ -866,6 +903,16 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(objectDetected(uint,int,int,QString,int,float,float)), this, SLOT(updateObjectPosition(uint,int,int,QString,int,float,float)));
+
+    connect(uas, SIGNAL(gyroStatusChanged(bool,bool,bool)), this, SLOT(updateGyroStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(accelStatusChanged(bool,bool,bool)), this, SLOT(updateAccelStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(magSensorStatusChanged(bool,bool,bool)), this, SLOT(updateMagSensorStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(baroStatusChanged(bool,bool,bool)), this, SLOT(updateBaroStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(airspeedStatusChanged(bool,bool,bool)), this, SLOT(updateAirspeedStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(opticalFlowStatusChanged(bool,bool,bool)), this, SLOT(updateOpticalFlowStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(laserStatusChanged(bool,bool,bool)), this, SLOT(updateLaserStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(groundTruthSensorStatusChanged(bool,bool,bool)), this, SLOT(updateGroundTruthSensorStatus(bool,bool,bool)));
+    connect(uas, SIGNAL(actuatorStatusChanged(bool,bool,bool)), this, SLOT(updateActuatorStatus(bool,bool,bool)));
 
     this->uas = uas;
 
