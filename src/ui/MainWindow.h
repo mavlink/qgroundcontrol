@@ -54,6 +54,9 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
+#if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
+#include "Mouse6dofInput.h"
+#endif // MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
@@ -232,6 +235,10 @@ public slots:
 
 signals:
     void initStatusChanged(const QString& message);
+#ifdef MOUSE_ENABLED_LINUX
+    /** @brief Forward X11Event to catch 3DMouse inputs */
+    void x11EventOccured(XEvent *event);
+#endif //MOUSE_ENABLED_LINUX
 
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
@@ -370,6 +377,18 @@ protected:
     JoystickWidget* joystickWidget;
 
     JoystickInput* joystick;
+
+#ifdef MOUSE_ENABLED_WIN
+    /** @brief 3d Mouse support (WIN only) */
+    Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
+    Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
+#endif // MOUSE_ENABLED_WIN
+
+#ifdef MOUSE_ENABLED_LINUX
+    /** @brief Reimplementation of X11Event to handle 3dMouse Events (magellan) */
+    bool x11Event(XEvent *event);
+    Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
+#endif // MOUSE_ENABLED_LINUX
 
     /** User interface actions **/
     QAction* connectUASAct;
