@@ -42,7 +42,9 @@
 #endif // MAVLINK_SEPARATE_HELPERS
 
 /* always include the prototypes to ensure we don't get out of sync */
+#ifndef MAVLINK_GET_CHANNEL_STATUS
 MAVLINK_HELPER mavlink_status_t* mavlink_get_channel_status(uint8_t chan);
+#endif
 MAVLINK_HELPER void mavlink_reset_channel_status(uint8_t chan);
 #if MAVLINK_CRC_EXTRA
 MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id, 
@@ -320,8 +322,5 @@ _MAV_RETURN_ARRAY(int32_t,  i32)
 _MAV_RETURN_ARRAY(int64_t,  i64)
 _MAV_RETURN_ARRAY(float,    f)
 _MAV_RETURN_ARRAY(double,   d)
-
-#endif // _MAVLINK_PROTOCOL_H_
-ble,   d)
 
 #endif // _MAVLINK_PROTOCOL_H_
