@@ -316,7 +316,7 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
     p.b[4] = '\0';
 
     p.index = 12;
-    p.f[0] = pitchElevator;
+    p.f[0] = -pitchElevator;
     p.f[1] = rollAilerons;
     p.f[2] = yawRudder;
 
