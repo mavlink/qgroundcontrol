@@ -450,6 +450,13 @@ void QGCXPlaneLink::readBytes()
                 pitch = p.f[0] / 180.0f * M_PI;
                 roll = p.f[1] / 180.0f * M_PI;
                 yaw = p.f[2] / 180.0f * M_PI;
+                // X-Plane expresses yaw as 0..2 PI
+                if (yaw > M_PI) {
+                    yaw -= 2.0 * M_PI;
+                }
+                if (yaw < -M_PI) {
+                    yaw += 2.0 * M_PI;
+                }
                 emitUpdate = true;
             }
             else if ((xPlaneVersion == 9 && p.index == 17))
