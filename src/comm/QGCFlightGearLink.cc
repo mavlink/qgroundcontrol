@@ -338,7 +338,12 @@ bool QGCFlightGearLink::connectSimulation()
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
 
-    mav->startHil();
+
+    UAS* uas = dynamic_cast<UAS*>(mav);
+    if (uas)
+    {
+        uas->startHil();
+    }
 
     //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
     // Catch process error
