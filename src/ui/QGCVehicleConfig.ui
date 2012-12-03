@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>717</width>
+    <width>780</width>
     <height>586</height>
    </rect>
   </property>
@@ -40,7 +40,7 @@
    <item row="0" column="0" colspan="2">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="rcTab">
       <attribute name="title">
@@ -725,7 +725,7 @@
       <attribute name="title">
        <string>Sensor Calibration</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_6" columnstretch="70,30">
+      <layout class="QGridLayout" name="gridLayout_6" columnstretch="55,45">
        <property name="topMargin">
         <number>20</number>
        </property>

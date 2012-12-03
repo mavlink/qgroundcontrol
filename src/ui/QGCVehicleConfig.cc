@@ -543,12 +543,12 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (parameterName.contains("RC_MAP_AUX2")) {
         rcMapping[6] = value.toInt() - 1;
-        ui->aux1SpinBox->setValue(rcMapping[6]+1);
+        ui->aux2SpinBox->setValue(rcMapping[6]+1);
     }
 
     if (parameterName.contains("RC_MAP_AUX3")) {
         rcMapping[7] = value.toInt() - 1;
-        ui->aux1SpinBox->setValue(rcMapping[7]+1);
+        ui->aux3SpinBox->setValue(rcMapping[7]+1);
     }
 
     // Scaling
