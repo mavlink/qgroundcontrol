@@ -172,6 +172,7 @@ macx|macx-g++42|macx-g++|macx-llvm: {
 linux-g++|linux-g++-64{
 
 	CONFIG -= console
+	DEFINES += __STDC_LIMIT_MACROS
 
 	release {
 		DEFINES += QT_NO_DEBUG
