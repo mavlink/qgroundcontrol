@@ -159,9 +159,16 @@ void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float 
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    QString state("%1\t%2\t%3\t%4\t%5\n");
-    state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-    writeBytes(state.toAscii().constData(), state.length());
+    if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
+    {
+        QString state("%1\t%2\t%3\t%4\t%5\n");
+        state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
+        writeBytes(state.toAscii().constData(), state.length());
+    }
+    else
+    {
+        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << isnan(rollAilerons) << ", pitch: " << isnan(pitchElevator) << ", yaw: " << isnan(yawRudder) << ", throttle: " << isnan(throttle);
+    }
     //qDebug() << "Updated controls" << state;
 }
 
@@ -422,19 +429,18 @@ bool QGCFlightGearLink::connectSimulation()
     // terrasync -p 5505 -S -d /usr/local/share/TerraSync
 
     /*Prepare FlightGear Arguments */
-    flightGearArguments << QString("--fg-root=%1").arg(fgRoot);
+    //flightGearArguments << QString("--fg-root=%1").arg(fgRoot);
     flightGearArguments << QString("--fg-scenery=%1:%2").arg(fgScenery).arg(terraSyncScenery); //according to http://wiki.flightgear.org/TerraSync a separate directory is used
     flightGearArguments << QString("--fg-aircraft=%1").arg(fgAircraft);
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
-        // FIXME ADD QUAD-Specific protocol here
-        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
-        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(port);
+        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(currentPort);
     }
     else
     {
-        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
-        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(port);
+        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(currentPort);
     }
     flightGearArguments << "--atlas=socket,out,1,localhost,5505,udp";
 //    flightGearArguments << "--in-air";
