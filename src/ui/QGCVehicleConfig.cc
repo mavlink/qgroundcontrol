@@ -1,4 +1,11 @@
+// On Windows (for VS2010) stdint.h contains the limits normally contained in limits.h
+// It also needs the __STDC_LIMIT_MACROS macro defined in order to include them (done
+// in qgroundcontrol.pri).
+#ifdef WIN32
+#include <stdint.h>
+#else
 #include <limits.h>
+#endif
 
 #include <QTimer>
 
@@ -228,8 +235,8 @@ void QGCVehicleConfig::resetCalibrationRC()
 {
     for (unsigned int i = 0; i < chanMax; ++i)
     {
-        rcMin[i] = INT_MAX;
-        rcMax[i] = INT_MIN;
+        rcMin[i] = (float)INT_MAX;
+        rcMax[i] = (float)INT_MIN;
     }
 }
 
@@ -318,7 +325,7 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     if (chan < 0 || static_cast<unsigned int>(chan) >= chanMax || val < 500 || val > 2500)
         return;
 
-    if (chan + 1 > chanCount) {
+    if (chan + 1 > (int)chanCount) {
         chanCount = chan+1;
     }
 
