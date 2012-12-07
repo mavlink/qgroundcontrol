@@ -285,6 +285,9 @@ win32-msvc2008|win32-msvc2010 {
 
 	# QWebkit is not needed on MS-Windows compilation environment
 	CONFIG -= webkit
+	
+	# Specify the inclusion of (U)INT*_(MAX/MIN) macros within Visual Studio
+	DEFINES += __STDC_LIMIT_MACROS
 
 	# For release builds remove support for various Qt debugging macros.
 	CONFIG(release, debug|release) {
