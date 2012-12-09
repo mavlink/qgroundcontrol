@@ -101,13 +101,11 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 }
 
 quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
-{ 
-    bool isNull = false;
+{
     quint64 ret = 0;
     if (time == 0)
     {
         ret = QGC::groundTimeMilliseconds() - onboardToGCSUnixTimeOffsetAndDelay[systemID];
-        isNull = true;
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -183,7 +181,6 @@ quint64 MAVLinkDecoder::getUnixTimeFromMs(int systemID, quint64 time)
 void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64 time)
 {
     bool multiComponentSourceDetected = false;
-    bool wrongComponent = false;
 
     // Store component ID
     if (componentID[msg->msgid] == -1)
@@ -196,7 +193,6 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         if (componentID[msg->msgid] != msg->compid)
         {
             componentMulti[msg->msgid] = true;
-            wrongComponent = true;
         }
     }
 

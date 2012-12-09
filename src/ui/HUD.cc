@@ -335,6 +335,7 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(uas);
+    Q_UNUSED(seconds);
     fuelStatus = tr("BAT [%1% | %2V]").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0'));
     if (percent < 20.0f) {
         fuelColor = warningColor;
