@@ -573,10 +573,6 @@ void UASView::refresh()
     //qDebug() << "UPDATING UAS WIDGET!" << uas->getUASName();
 
 
-    quint64 lastupdate = 0;
-    //// qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
-    lastupdate = QGC::groundTimeMilliseconds();
-
     if (generalUpdateCount == 4)
     {
 #if (QGC_EVENTLOOP_DEBUG)

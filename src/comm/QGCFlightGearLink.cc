@@ -147,7 +147,15 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
 
 void QGCFlightGearLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
-
+    Q_UNUSED(time);
+    Q_UNUSED(act1);
+    Q_UNUSED(act2);
+    Q_UNUSED(act3);
+    Q_UNUSED(act4);
+    Q_UNUSED(act5);
+    Q_UNUSED(act6);
+    Q_UNUSED(act7);
+    Q_UNUSED(act8);
 }
 
 void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
@@ -225,13 +233,10 @@ void QGCFlightGearLink::readBytes()
     }
 
     // Parse string
-    double time;
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
     double vx, vy, vz, xacc, yacc, zacc;
-    double airspeed;
 
-    time = values.at(0).toDouble();
     lat = values.at(1).toDouble() * 1e7;
     lon = values.at(2).toDouble() * 1e7;
     alt = values.at(3).toDouble() * 1e3;
@@ -249,8 +254,6 @@ void QGCFlightGearLink::readBytes()
     vx = values.at(13).toDouble() * 1e2;
     vy = values.at(14).toDouble() * 1e2;
     vz = values.at(15).toDouble() * 1e2;
-
-    airspeed = values.at(16).toDouble();
 
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
