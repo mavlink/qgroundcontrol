@@ -40,11 +40,11 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
+    socket(NULL),
     process(NULL),
     terraSync(NULL),
-    socket(NULL),
-    startupArguments(startupArguments),
-    flightGearVersion(0)
+    flightGearVersion(0),
+    startupArguments(startupArguments)
 {
     this->host = host;
     this->port = port+mav->getUASID();

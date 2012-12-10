@@ -118,12 +118,6 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     visionFixKnown(false),
     gpsFixKnown(false),
     iruFixKnown(false),
-    setPointKnown(false),
-    positionSetPointKnown(false),
-    userSetPointSet(false),
-    userXYSetPointSet(false),
-    userZSetPointSet(false),
-    userYawSetPointSet(false),
     gyroKnown(false),
     gyroON(false),
     gyroOK(false),
@@ -150,7 +144,13 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     viconOK(false),
     actuatorsKnown(false),
     actuatorsON(false),
-    actuatorsOK(false)
+    actuatorsOK(false),
+    setPointKnown(false),
+    positionSetPointKnown(false),
+    userSetPointSet(false),
+    userXYSetPointSet(false),
+    userZSetPointSet(false),
+    userYawSetPointSet(false)
 {
     refreshTimer->setInterval(updateInterval);
 
