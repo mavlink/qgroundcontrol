@@ -19,8 +19,6 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     QWidget(parent),
     mav(NULL),
     chanCount(0),
-    changed(true),
-    rc_mode(RC_MODE_2),
     rcRoll(0.0f),
     rcPitch(0.0f),
     rcYaw(0.0f),
@@ -29,6 +27,8 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     rcAux1(0.0f),
     rcAux2(0.0f),
     rcAux3(0.0f),
+    changed(true),
+    rc_mode(RC_MODE_2),
     calibrationEnabled(false),
     ui(new Ui::QGCVehicleConfig)
 {

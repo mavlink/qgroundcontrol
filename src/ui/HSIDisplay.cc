@@ -118,12 +118,6 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     visionFixKnown(false),
     gpsFixKnown(false),
     iruFixKnown(false),
-    setPointKnown(false),
-    positionSetPointKnown(false),
-    userSetPointSet(false),
-    userXYSetPointSet(false),
-    userZSetPointSet(false),
-    userYawSetPointSet(false),
     gyroKnown(false),
     gyroON(false),
     gyroOK(false),
@@ -150,7 +144,13 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     viconOK(false),
     actuatorsKnown(false),
     actuatorsON(false),
-    actuatorsOK(false)
+    actuatorsOK(false),
+    setPointKnown(false),
+    positionSetPointKnown(false),
+    userSetPointSet(false),
+    userXYSetPointSet(false),
+    userZSetPointSet(false),
+    userYawSetPointSet(false)
 {
     refreshTimer->setInterval(updateInterval);
 
@@ -1075,11 +1075,12 @@ void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float az
 {
     Q_UNUSED(uasid);
     // If slot is empty, insert object
-    if (satid != 0) // Satellite PRNs currently range from 1-32, but are never zero
-    if (gpsSatellites.contains(satid)) {
-        gpsSatellites.value(satid)->update(satid, elevation, azimuth, snr, used);
-    } else {
-        gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
+    if (satid != 0) { // Satellite PRNs currently range from 1-32, but are never zero
+        if (gpsSatellites.contains(satid)) {
+            gpsSatellites.value(satid)->update(satid, elevation, azimuth, snr, used);
+        } else {
+            gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
+        }
     }
 }
 
