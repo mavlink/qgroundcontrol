@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include <QHostInfo>
 #include "UAS.h"
+#include "UASInterface.h"
 #include "MainWindow.h"
 
 QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress localHost, quint16 localPort) :
@@ -226,12 +227,8 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
 
 void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
-    // XXX Control this via the onboard system type exclusively
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     // Only update this for multirotors
-//    if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
-//        airframeID == AIRFRAME_QUAD_X_ARDRONE ||
-//        airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
     {
 
         Q_UNUSED(time);
@@ -294,9 +291,9 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
 {
     // Do not update this control type for
     // all multirotors
-    if (airframeID == AIRFRAME_QUAD_X_MK_10INCH_I2C ||
-        airframeID == AIRFRAME_QUAD_X_ARDRONE ||
-        airframeID == AIRFRAME_QUAD_DJI_F450_PWM)
+    if (mav->getSystemType() == MAV_TYPE_QUADROTOR ||
+            mav->getSystemType() == MAV_TYPE_HEXAROTOR ||
+            mav->getSystemType() == MAV_TYPE_OCTOROTOR)
     {
         return;
     }
@@ -316,9 +313,26 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
     p.b[4] = '\0';
 
     p.index = 12;
-    p.f[0] = -pitchElevator;
-    p.f[1] = rollAilerons;
-    p.f[2] = yawRudder;
+
+    if (mav->getAirframe() == UASInterface::QGC_AIRFRAME_X8 ||
+            mav->getAirframe() == UASInterface::QGC_AIRFRAME_VIPER_2_0 ||
+            mav->getAirframe() == UASInterface::QGC_AIRFRAME_CAMFLYER_Q)
+    {
+        // de-mix delta-mixed inputs
+        // pitch input - mixed roll and pitch channels
+        p.f[0] = 0.5f * (rollAilerons - pitchElevator);
+        // roll input - mixed roll and pitch channels
+        p.f[1] = 0.5f * (rollAilerons + pitchElevator);
+        // yaw
+        p.f[2] = 0.0f;
+    }
+    else
+    {
+        // direct pass-through
+        p.f[0] = -pitchElevator;
+        p.f[1] = rollAilerons;
+        p.f[2] = yawRudder;
+    }
 
     Q_UNUSED(time);
     Q_UNUSED(systemMode);
