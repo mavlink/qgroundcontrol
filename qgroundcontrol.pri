@@ -18,7 +18,6 @@
 # -------------------------------------------------
 
 message(Qt version $$[QT_VERSION])
-message(Using Qt from $$(QTDIR))
 
 win32-msvc2008|win32-msvc2010 {
 	QMAKE_POST_LINK += $$quote(echo "Copying files"$$escape_expand(\\n))
