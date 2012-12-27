@@ -249,9 +249,9 @@ void QGCFlightGearLink::readBytes()
     pitchspeed = values.at(8).toDouble();
     yawspeed = values.at(9).toDouble();
 
-    xacc = values.at(10).toDouble();
-    yacc = values.at(11).toDouble();
-    zacc = values.at(12).toDouble();
+    xacc = values.at(10).toDouble()*1e3/9.8; // convert to mg's
+    yacc = values.at(11).toDouble()*1e3/9.8;
+    zacc = values.at(12).toDouble()*1e3/9.8;
 
     vx = values.at(13).toDouble() * 1e2;
     vy = values.at(14).toDouble() * 1e2;
