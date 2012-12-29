@@ -50,8 +50,9 @@
 #include "hud2renderersoft.h"
 #include "helper.h"
 
+#include "UASInterface.h"
+
 QT_BEGIN_NAMESPACE
-class QLabel;
 class QWidget;
 QT_END_NAMESPACE
 
@@ -62,6 +63,12 @@ class HUD2 : public QWidget
 public:
     HUD2(QWidget *parent = 0);
     ~HUD2();
+
+protected:
+    UASInterface* uas; ///< The uas currently monitored
+    float roll;
+    float pitch;
+    float yaw;
 
 private:
     HUD2RendererSoft *renderersoft;

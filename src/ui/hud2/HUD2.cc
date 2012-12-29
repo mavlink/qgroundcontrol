@@ -43,22 +43,18 @@
 
 HUD2::~HUD2()
 {
-    if (usegl != true){
-        renderergl = new HUD2RendererGL(&helper, this);
-    }
-    else{
-        renderersoft = new HUD2RendererSoft(&helper, this);
-    }
-
-    disconnect(&timer, SIGNAL(timeout()));
+    disconnect(&timer);
     timer.stop();
-
 }
 
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent)
 {
+    uas = NULL;
     usegl = false;
+    roll = 0.0f;
+    pitch = 0.0f;
+    yaw = 0.0f;
 
     if (usegl == true){
         renderergl = new HUD2RendererGL(&helper, this);
@@ -81,6 +77,7 @@ HUD2::HUD2(QWidget *parent)
 
     timer.start(50);
 }
+
 
 void HUD2::togglerenderer(void)
 {

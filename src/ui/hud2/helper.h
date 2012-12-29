@@ -45,6 +45,8 @@
 #include <QFont>
 #include <QPen>
 
+#include "hudyawindicator.h"
+
 QT_BEGIN_NAMESPACE
 class QPainter;
 class QPaintEvent;
@@ -59,11 +61,17 @@ public:
     void paint(QPainter *painter, QPaintEvent *event, int elapsed);
 
 private:
+    void updatesizes(QRect rect);
+    HudYawIndicator yaw;
+    QRect hudrect; // uses for trcking size changes
+    QPen regularpen;   // regular pen for most works
+    QColor normalcolor;
     QBrush background;
     QBrush circleBrush;
     QFont textFont;
     QPen circlePen;
     QPen textPen;
+
 };
 
 #endif

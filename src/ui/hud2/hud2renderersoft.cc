@@ -46,7 +46,7 @@ HUD2RendererSoft::HUD2RendererSoft(Helper *helper, QWidget *parent)
     : QWidget(parent), helper(helper)
 {
     elapsed = 0;
-    setFixedSize(400, 400);
+    //setFixedSize(400, 400);
 }
 
 void HUD2RendererSoft::animate()

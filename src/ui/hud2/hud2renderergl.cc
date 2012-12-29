@@ -46,7 +46,7 @@ HUD2RendererGL::HUD2RendererGL(Helper *helper, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent), helper(helper)
 {
     elapsed = 0;
-    setFixedSize(400, 400);
+    //setFixedSize(400, 400);
     setAutoFillBackground(false);
 }
 
