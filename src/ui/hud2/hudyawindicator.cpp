@@ -11,6 +11,8 @@
 
 HudYawIndicator::HudYawIndicator()
 {
+    scale = 15;
+
     color = QColor(Qt::green); // default color
     pen = QPen(color);
     poly = QPolygon(4);
@@ -21,8 +23,6 @@ HudYawIndicator::HudYawIndicator()
 }
 
 void HudYawIndicator::updatesize(QRect *rect){
-    const int scale = 15; // height relative to screen height
-
     int h = rect->height() / scale;
     int clearance = h / 2;
 
