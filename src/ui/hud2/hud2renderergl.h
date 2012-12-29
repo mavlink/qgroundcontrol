@@ -38,34 +38,33 @@
 **
 ****************************************************************************/
 
-#include <QtGui>
-#include "glwidget.h"
-#include "widget.h"
-#include "window.h"
+#ifndef HUD2RENDERERGL_H
+#define HUD2RENDERERGL_H
 
-//! [0]
-Window::Window()
-    : QWidget()
+#include <QGLWidget>
+
+class Helper;
+QT_BEGIN_NAMESPACE
+class QPaintEvent;
+class QWidget;
+QT_END_NAMESPACE
+
+class HUD2RendererGL : public QGLWidget
 {
-    Widget *native = new Widget(&helper, this);
-    GLWidget *openGL = new GLWidget(&helper, this);
-    QLabel *nativeLabel = new QLabel(tr("Native"));
-    nativeLabel->setAlignment(Qt::AlignHCenter);
-    QLabel *openGLLabel = new QLabel(tr("OpenGL"));
-    openGLLabel->setAlignment(Qt::AlignHCenter);
+    Q_OBJECT
 
-    QGridLayout *layout = new QGridLayout;
-    layout->addWidget(native, 0, 0);
-    layout->addWidget(openGL, 0, 1);
-    layout->addWidget(nativeLabel, 1, 0);
-    layout->addWidget(openGLLabel, 1, 1);
-    setLayout(layout);
+public:
+    HUD2RendererGL(Helper *helper, QWidget *parent);
 
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), native, SLOT(animate()));
-    connect(timer, SIGNAL(timeout()), openGL, SLOT(animate()));
-    timer->start(50);
+public slots:
+    void animate();
 
-    setWindowTitle(tr("2D Painting on Native and OpenGL Widgets"));
-}
-//! [0]
+protected:
+    void paintEvent(QPaintEvent *event);
+
+private:
+    Helper *helper;
+    int elapsed;
+};
+
+#endif /* HUD2RENDERERGL_H */

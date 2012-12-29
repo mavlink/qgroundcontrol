@@ -39,29 +39,23 @@
 ****************************************************************************/
 
 #include <QtGui>
-#include "glwidget.h"
+#include "hud2renderersoft.h"
 #include "helper.h"
 
-//! [0]
-GLWidget::GLWidget(Helper *helper, QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent), helper(helper)
+HUD2RendererSoft::HUD2RendererSoft(Helper *helper, QWidget *parent)
+    : QWidget(parent), helper(helper)
 {
     elapsed = 0;
-    setFixedSize(200, 200);
-    setAutoFillBackground(false);
+    setFixedSize(400, 400);
 }
-//! [0]
 
-//! [1]
-void GLWidget::animate()
+void HUD2RendererSoft::animate()
 {
     elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
     repaint();
 }
-//! [1]
 
-//! [2]
-void GLWidget::paintEvent(QPaintEvent *event)
+void HUD2RendererSoft::paintEvent(QPaintEvent *event)
 {
     QPainter painter;
     painter.begin(this);
@@ -69,4 +63,4 @@ void GLWidget::paintEvent(QPaintEvent *event)
     helper->paint(&painter, event, elapsed);
     painter.end();
 }
-//! [2]
+

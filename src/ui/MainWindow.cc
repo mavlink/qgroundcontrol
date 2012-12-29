@@ -576,7 +576,14 @@ void MainWindow::buildCommonWidgets()
     if (!hudWidget)
     {
         hudWidget         = new HUD(320, 240, this);
+        //hudWidget         = new HUD2(this);
         addCentralWidget(hudWidget, tr("Head Up Display"));
+    }
+
+    if (!hud2Widget)
+    {
+        hud2Widget         = new HUD2(this);
+        addCentralWidget(hud2Widget, tr("Head Up Display 2"));
     }
 
     if (!configWidget)

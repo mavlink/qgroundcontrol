@@ -38,23 +38,22 @@
 **
 ****************************************************************************/
 
-#ifndef WIDGET_H
-#define WIDGET_H
+#ifndef HUD2RENDERERSOFT_H
+#define HUD2RENDERERSOFT_H
 
 #include <QWidget>
 
-//! [0]
 class Helper;
 QT_BEGIN_NAMESPACE
 class QPaintEvent;
 QT_END_NAMESPACE
 
-class Widget : public QWidget
+class HUD2RendererSoft : public QWidget
 {
     Q_OBJECT
 
 public:
-    Widget(Helper *helper, QWidget *parent);
+    HUD2RendererSoft(Helper *helper, QWidget *parent);
 
 public slots:
     void animate();
@@ -66,6 +65,5 @@ private:
     Helper *helper;
     int elapsed;
 };
-//! [0]
 
-#endif
+#endif /* HUD2RENDERERSOFT_H */

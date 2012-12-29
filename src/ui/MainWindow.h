@@ -52,6 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
+#include "../hud2/HUD2.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
@@ -326,6 +327,7 @@ protected:
     // Center widgets
     QPointer<Linecharts> linechartWidget;
     QPointer<HUD> hudWidget;
+    QPointer<HUD2> hud2Widget;
     QPointer<QGCVehicleConfig> configWidget;
     QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;

@@ -38,29 +38,30 @@
 **
 ****************************************************************************/
 
-#ifndef WINDOW_H
-#define WINDOW_H
-
-#include <QWidget>
-
+#include <QtGui>
+#include "hud2renderergl.h"
 #include "helper.h"
 
-QT_BEGIN_NAMESPACE
-class QLabel;
-class QWidget;
-QT_END_NAMESPACE
-
-//! [0]
-class Window : public QWidget
+HUD2RendererGL::HUD2RendererGL(Helper *helper, QWidget *parent)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent), helper(helper)
 {
-    Q_OBJECT
+    elapsed = 0;
+    setFixedSize(400, 400);
+    setAutoFillBackground(false);
+}
 
-public:
-    Window();
+void HUD2RendererGL::animate()
+{
+    elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
+    repaint();
+}
 
-private:
-    Helper helper;
-};
-//! [0]
+void HUD2RendererGL::paintEvent(QPaintEvent *event)
+{
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    helper->paint(&painter, event, elapsed);
+    painter.end();
+}
 
-#endif
