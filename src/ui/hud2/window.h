@@ -60,7 +60,6 @@ public:
 
 private:
     Helper helper;
-
 };
 //! [0]
 
