@@ -51,48 +51,34 @@ HUD2::~HUD2()
 }
 
 HUD2::HUD2(QWidget *parent)
-    : QWidget(parent), hud2painter(&data)
+    : QWidget(parent),
+      hudpainter(&data)
 {
     uas   = NULL;
     usegl = false;
 
-    renderergl = new HUD2RendererGL(&hud2painter, &data, this);
-    renderersoft = new HUD2RendererSoft(&hud2painter, &data, this);
+    surface_gl = new HUD2PaintSurfaceGL(&hudpainter, &data, this);
+    surface    = new HUD2PaintSurface(&hudpainter, &data, this);
 
-    layout.addWidget(renderersoft, 0, 0);
-    layout.addWidget(renderergl, 0, 0);
+    layout.addWidget(surface,    0, 0);
+    layout.addWidget(surface_gl, 0, 0);
 
     if (usegl == true){
-        renderersoft->hide();
+        surface->hide();
         btn.setText(tr("GL"));
-        connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
+        connect(&timer, SIGNAL(timeout()), surface_gl, SLOT(animate()));
     }
     else{
-        renderergl->hide();
+        surface_gl->hide();
         btn.setText(tr("Soft"));
-        connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
+        connect(&timer, SIGNAL(timeout()), surface, SLOT(animate()));
     }
-
-//    if (usegl == true){
-//        renderergl = new HUD2RendererGL(&hud2painter, &data, this);
-//        renderersoft = NULL;
-//        btn.setText(tr("GL"));
-//        layout.addWidget(renderergl, 0, 0);
-//        connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
-//    }
-//    else{
-//        renderersoft = new HUD2RendererSoft(&hud2painter, &data, this);
-//        renderergl = NULL;
-//        btn.setText(tr("Soft"));
-//        layout.addWidget(renderersoft, 0, 0);
-//        connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
-//    }
 
     connect(&btn, SIGNAL(clicked()), this, SLOT(togglerenderer()));
     layout.addWidget(&btn, 1, 0);
     setLayout(&layout);
 
-    timer.start(50);
+    timer.start(100);
 
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
@@ -103,47 +89,26 @@ HUD2::HUD2(QWidget *parent)
 
 void HUD2::repaint(void){
     if (usegl == true)
-        renderergl->repaint();
+        surface_gl->repaint();
     else
-        renderersoft->repaint();
+        surface->repaint();
 }
 
 
 void HUD2::togglerenderer(void)
 {
     if (usegl == true){
-        renderergl->hide();
-        renderersoft->show();
+        surface_gl->hide();
+        surface->show();
         btn.setText(tr("Soft"));
         usegl = false;
     }
     else{
-        renderergl->show();
-        renderersoft->hide();
+        surface_gl->show();
+        surface->hide();
         btn.setText(tr("GL"));
         usegl = true;
     }
-
-//    if (usegl == true){
-//        disconnect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
-//        layout.removeWidget(renderergl);
-//        delete renderergl;
-//        renderersoft = new HUD2RendererSoft(&hud2painter, &data, this);
-//        connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
-//        layout.addWidget(renderersoft, 0, 0);
-//        btn.setText(tr("Soft"));
-//        usegl = false;
-//    }
-//    else{
-//        disconnect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
-//        layout.removeWidget(renderersoft);
-//        delete renderersoft;
-//        renderergl = new HUD2RendererGL(&hud2painter, &data, this);
-//        connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
-//        layout.addWidget(renderergl, 0, 0);
-//        btn.setText(tr("GL"));
-//        usegl = true;
-//    }
 }
 
 

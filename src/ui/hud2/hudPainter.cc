@@ -38,45 +38,43 @@
 **
 ****************************************************************************/
 
-#ifndef HELPER_H
-#define HELPER_H
+#include <QtGui>
+#include "hudPainter.h"
+#include "HUD2.h"
 
-#include <QBrush>
-#include <QFont>
-#include <QPen>
-
-#include "hudyawindicator.h"
-#include "hudhorizon.h"
-#include "hud2data.h"
-
-QT_BEGIN_NAMESPACE
-class QPainter;
-class QPaintEvent;
-QT_END_NAMESPACE
-
-class HUD2Painter
+HUD2Painter::HUD2Painter(HUD2data *data)
+    :data(data)
 {
-public:
-    HUD2Painter(hud2data *data);
+    normalcolor = QColor(Qt::green);
+    hudrect = QRect(0,0,0,0);
+    background = QBrush(QColor(64, 32, 64));
+    circlePen = QPen(Qt::black);
+    circlePen.setWidth(1);
+    textPen = QPen(Qt::white);
+    textFont.setPixelSize(50);
 
-public:
-    void paint(QPainter *painter, QPaintEvent *event);
+    regularpen = QPen(normalcolor);
+}
 
-private:
-    void updatesizes(QRect rect);
-    HudYawIndicator yaw;
-    HudHorizon horizon;
-    hud2data *data;
+void HUD2Painter::paint(QPainter *painter, QPaintEvent *event)
+{
+    if (hudrect != painter->viewport()){
+        hudrect = painter->viewport();
+        updatesizes(hudrect);
+    }
+    painter->fillRect(event->rect(), background);
+    painter->translate(hudrect.center());
 
-    QRect hudrect; // uses for tracking size changes
-    QPen regularpen;   // regular pen for most works
-    QColor normalcolor;
-    QBrush background;
-    QBrush circleBrush;
-    QFont textFont;
-    QPen circlePen;
-    QPen textPen;
+//    painter->save();
+//    painter->restore();
+    painter->setPen(regularpen);
+    painter->drawLine(0, 0, 100, data->roll * 1000);
+    yaw.paint(painter);
+}
 
-};
+void HUD2Painter::updatesizes(QRect rect){
+    regularpen.setWidthF(rect.height()/100);
+    yaw.updatesize(&rect);
+}
 
-#endif
+

@@ -38,27 +38,35 @@
 **
 ****************************************************************************/
 
-#include <QtGui>
-#include "hud2renderersoft.h"
-#include "helper.h"
+#ifndef HUDSURFACEGL_H
+#define HUDSURFACEGL_H
 
-HUD2RendererSoft::HUD2RendererSoft(HUD2Painter *hud2painter, hud2data *data, QWidget *parent)
-    : QWidget(parent),  data(data), hud2painter(hud2painter)
+#include <QGLWidget>
+#include "hudData.h"
+
+class HUD2Painter;
+QT_BEGIN_NAMESPACE
+class QPaintEvent;
+class QWidget;
+QT_END_NAMESPACE
+
+class HUD2PaintSurfaceGL : public QGLWidget
 {
-    //elapsed = 0;
-    //setFixedSize(400, 400);
-}
+    Q_OBJECT
 
-void HUD2RendererSoft::animate()
-{
-    elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
-    repaint();
-}
+public:
+    HUD2PaintSurfaceGL(HUD2Painter *hudpainter, HUD2data *data, QWidget *parent);
 
-void HUD2RendererSoft::paintEvent(QPaintEvent *event)
-{
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    hud2painter->paint(&painter, event);
-}
+public slots:
+    void animate();
 
+protected:
+    void paintEvent(QPaintEvent *event);
+
+private:
+    HUD2data *data;
+    HUD2Painter *hudpainter;
+    int elapsed;
+};
+
+#endif /* HUD2RENDERERGL_H */

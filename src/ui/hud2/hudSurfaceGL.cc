@@ -39,42 +39,27 @@
 ****************************************************************************/
 
 #include <QtGui>
-#include "helper.h"
-#include "HUD2.h"
+#include "hudSurfaceGL.h"
+#include "hudPainter.h"
 
-HUD2Painter::HUD2Painter(hud2data *data)
-    :data(data)
+HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(HUD2Painter *hudpainter,  HUD2data *data, QWidget *parent)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),  data(data), hudpainter(hudpainter)
 {
-    normalcolor = QColor(Qt::green);
-    hudrect = QRect(0,0,0,0);
-    background = QBrush(QColor(64, 32, 64));
-    circlePen = QPen(Qt::black);
-    circlePen.setWidth(1);
-    textPen = QPen(Qt::white);
-    textFont.setPixelSize(50);
-
-    regularpen = QPen(normalcolor);
+    //elapsed = 0;
+    //setFixedSize(400, 400);
+    setAutoFillBackground(false);
 }
 
-void HUD2Painter::paint(QPainter *painter, QPaintEvent *event)
+void HUD2PaintSurfaceGL::animate()
 {
-    if (hudrect != painter->viewport()){
-        hudrect = painter->viewport();
-        updatesizes(hudrect);
-    }
-    painter->fillRect(event->rect(), background);
-    painter->translate(hudrect.center());
-
-//    painter->save();
-//    painter->restore();
-    painter->setPen(regularpen);
-    painter->drawLine(0, 0, 100, data->roll * 1000);
-    yaw.paint(painter);
+    //elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
+    repaint();
 }
 
-void HUD2Painter::updatesizes(QRect rect){
-    regularpen.setWidthF(rect.height()/100);
-    yaw.updatesize(&rect);
+void HUD2PaintSurfaceGL::paintEvent(QPaintEvent *event)
+{
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    hudpainter->paint(&painter, event);
 }
-
 

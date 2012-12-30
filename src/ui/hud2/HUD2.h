@@ -38,19 +38,19 @@
 **
 ****************************************************************************/
 
-#ifndef WINDOW_H
-#define WINDOW_H
+#ifndef HUD2_H
+#define HUD2_H
 
 #include <QWidget>
 #include <QGridLayout>
 #include <QPushButton>
 #include <QTimer>
 
-#include "hud2renderergl.h"
-#include "hud2renderersoft.h"
-#include "helper.h"
-#include "hudhorizon.h"
-#include "hud2data.h"
+#include "hudSurface.h"
+#include "hudSurfaceGL.h"
+#include "hudPainter.h"
+#include "hudHorizon.h"
+#include "hudData.h"
 
 #include "UASInterface.h"
 
@@ -70,13 +70,13 @@ protected:
     UASInterface* uas; ///< The uas currently monitored
 
 private:
-    HUD2RendererSoft *renderersoft;
-    HUD2RendererGL *renderergl;
-    hud2data data;
+    HUD2PaintSurface *surface;
+    HUD2PaintSurfaceGL *surface_gl;
+    HUD2data data;
     QGridLayout layout;
     QTimer timer;
     QPushButton btn;
-    HUD2Painter hud2painter;
+    HUD2Painter hudpainter;
     bool usegl;
     void repaint(void);
     void createActions(void);

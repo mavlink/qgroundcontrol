@@ -1,10 +1,10 @@
-#ifndef HUD2DATA_H
-#define HUD2DATA_H
+#ifndef HUDDATA_H
+#define HUDDATA_H
 
-class hud2data
+class HUD2data
 {
 public:
-    hud2data();
+    HUD2data();
     float roll;
     float pitch;
     float yaw;

@@ -1,5 +1,5 @@
 #include <QtGui>
-#include "hudhorizon.h"
+#include "hudHorizon.h"
 
 HudHorizon::HudHorizon(QWidget *parent) :
     QWidget(parent)

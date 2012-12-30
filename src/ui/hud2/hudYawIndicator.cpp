@@ -1,6 +1,6 @@
 #include <QColor>
 
-#include "hudyawindicator.h"
+#include "hudYawIndicator.h"
 
 // YAW INDICATOR
 //

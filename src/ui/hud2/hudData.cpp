@@ -1,6 +1,6 @@
-#include "hud2data.h"
+#include "hudData.h"
 
-hud2data::hud2data()
+HUD2data::HUD2data()
 {
     roll = 0;
     pitch = 0;

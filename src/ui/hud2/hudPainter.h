@@ -38,35 +38,45 @@
 **
 ****************************************************************************/
 
-#ifndef HUD2RENDERERGL_H
-#define HUD2RENDERERGL_H
+#ifndef HUDPAINTER_H
+#define HUDPAINTER_H
 
-#include <QGLWidget>
-#include "hud2data.h"
+#include <QBrush>
+#include <QFont>
+#include <QPen>
 
-class HUD2Painter;
+#include "hudYawIndicator.h"
+#include "hudHorizon.h"
+#include "hudData.h"
+
 QT_BEGIN_NAMESPACE
+class QPainter;
 class QPaintEvent;
-class QWidget;
 QT_END_NAMESPACE
 
-class HUD2RendererGL : public QGLWidget
+class HUD2Painter
 {
-    Q_OBJECT
+public:
+    HUD2Painter(HUD2data *data);
 
 public:
-    HUD2RendererGL(HUD2Painter *hud2painter, hud2data *data, QWidget *parent);
-
-public slots:
-    void animate();
-
-protected:
-    void paintEvent(QPaintEvent *event);
+    void paint(QPainter *painter, QPaintEvent *event);
 
 private:
-    hud2data *data;
-    HUD2Painter *hud2painter;
-    int elapsed;
+    void updatesizes(QRect rect);
+    HudYawIndicator yaw;
+    HudHorizon horizon;
+    HUD2data *data;
+
+    QRect hudrect; // uses for tracking size changes
+    QPen regularpen;   // regular pen for most works
+    QColor normalcolor;
+    QBrush background;
+    QBrush circleBrush;
+    QFont textFont;
+    QPen circlePen;
+    QPen textPen;
+
 };
 
-#endif /* HUD2RENDERERGL_H */
+#endif
