@@ -39,7 +39,10 @@
 ****************************************************************************/
 
 #include <QtGui>
+
 #include "HUD2.h"
+#include "UASManager.h"
+#include "UAS.h"
 
 HUD2::~HUD2()
 {
@@ -50,21 +53,21 @@ HUD2::~HUD2()
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent)
 {
-    uas = NULL;
+    uas   = NULL;
     usegl = false;
-    roll = 0.0f;
+    roll  = 0.0f;
     pitch = 0.0f;
-    yaw = 0.0f;
+    yaw   = 0.0f;
 
     if (usegl == true){
-        renderergl = new HUD2RendererGL(&helper, this);
+        renderergl = new HUD2RendererGL(&hud2painter, this);
         renderersoft = NULL;
         btn.setText(tr("GL"));
         layout.addWidget(renderergl, 0, 0);
         connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
     }
     else{
-        renderersoft = new HUD2RendererSoft(&helper, this);
+        renderersoft = new HUD2RendererSoft(&hud2painter, this);
         renderergl = NULL;
         btn.setText(tr("Soft"));
         layout.addWidget(renderersoft, 0, 0);
@@ -76,6 +79,11 @@ HUD2::HUD2(QWidget *parent)
     setLayout(&layout);
 
     timer.start(50);
+
+    // Connect with UAS
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    createActions();
+    if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 
@@ -85,7 +93,7 @@ void HUD2::togglerenderer(void)
         disconnect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
         layout.removeWidget(renderergl);
         delete renderergl;
-        renderersoft = new HUD2RendererSoft(&helper, this);
+        renderersoft = new HUD2RendererSoft(&hud2painter, this);
         connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
         layout.addWidget(renderersoft, 0, 0);
         btn.setText(tr("Soft"));
@@ -95,10 +103,83 @@ void HUD2::togglerenderer(void)
         disconnect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
         layout.removeWidget(renderersoft);
         delete renderersoft;
-        renderergl = new HUD2RendererGL(&helper, this);
+        renderergl = new HUD2RendererGL(&hud2painter, this);
         connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
         layout.addWidget(renderergl, 0, 0);
         btn.setText(tr("GL"));
         usegl = true;
     }
+}
+
+
+void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
+    {
+        this->roll  = roll;
+        this->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
+        this->yaw   = yaw;
+        //qDebug() << "received values: " << roll << pitch << yaw;
+    }
+}
+
+/**
+ * @param uas the UAS/MAV to monitor/display with the HUD
+ */
+void HUD2::setActiveUAS(UASInterface* uas)
+{
+    if (this->uas != NULL) {
+        // Disconnect any previously connected active MAV
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+
+        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+    }
+
+    if (uas) {
+        // Now connect the new UAS
+        // Setup communication
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+
+        // Set new UAS
+        this->uas = uas;
+    }
+}
+
+void HUD2::createActions()
+{
+//    enableHUDAction = new QAction(tr("Enable HUD"), this);
+//    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
+//    enableHUDAction->setCheckable(true);
+//    enableHUDAction->setChecked(hudInstrumentsEnabled);
+//    connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
+
+//    enableVideoAction = new QAction(tr("Enable Video Live feed"), this);
+//    enableVideoAction->setStatusTip(tr("Show the video live feed"));
+//    enableVideoAction->setCheckable(true);
+//    enableVideoAction->setChecked(videoEnabled);
+//    connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
+
+//    selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
+//    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
+//    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }

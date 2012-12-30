@@ -49,6 +49,7 @@
 #include "hud2renderergl.h"
 #include "hud2renderersoft.h"
 #include "helper.h"
+#include "hudhorizon.h"
 
 #include "UASInterface.h"
 
@@ -73,11 +74,19 @@ protected:
 private:
     HUD2RendererSoft *renderersoft;
     HUD2RendererGL *renderergl;
+
     QGridLayout layout;
     QTimer timer;
     QPushButton btn;
-    Helper helper;
+    HUD2Painter hud2painter;
     bool usegl;
+    void createActions(void);
+
+public slots:
+    /** @brief Set the currently monitored UAS */
+    virtual void setActiveUAS(UASInterface* uas);
+    /** @brief Attitude from main autopilot / system state */
+    void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
 
 private slots:
     void togglerenderer(void);

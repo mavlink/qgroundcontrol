@@ -43,7 +43,7 @@
 
 #include <QWidget>
 
-class Helper;
+class HUD2Painter;
 QT_BEGIN_NAMESPACE
 class QPaintEvent;
 QT_END_NAMESPACE
@@ -53,7 +53,7 @@ class HUD2RendererSoft : public QWidget
     Q_OBJECT
 
 public:
-    HUD2RendererSoft(Helper *helper, QWidget *parent);
+    HUD2RendererSoft(HUD2Painter *hud2painter, QWidget *parent);
 
 public slots:
     void animate();
@@ -62,7 +62,7 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private:
-    Helper *helper;
+    HUD2Painter *hud2painter;
     int elapsed;
 };
 

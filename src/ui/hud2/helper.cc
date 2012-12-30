@@ -40,8 +40,9 @@
 
 #include <QtGui>
 #include "helper.h"
+#include "HUD2.h"
 
-Helper::Helper()
+HUD2Painter::HUD2Painter()
 {
     normalcolor = QColor(Qt::green);
     hudrect = QRect(0,0,0,0);
@@ -54,7 +55,7 @@ Helper::Helper()
     regularpen = QPen(normalcolor);
 }
 
-void Helper::paint(QPainter *painter, QPaintEvent *event, int elapsed)
+void HUD2Painter::paint(QPainter *painter, QPaintEvent *event, int elapsed)
 {
     if (hudrect != painter->viewport()){
         hudrect = painter->viewport();
@@ -88,7 +89,7 @@ void Helper::paint(QPainter *painter, QPaintEvent *event, int elapsed)
 //    painter->drawText(QRect(-50, -50, 100, 100), Qt::AlignCenter, "Qt");
 }
 
-void Helper::updatesizes(QRect rect){
+void HUD2Painter::updatesizes(QRect rect){
     regularpen.setWidthF(rect.height()/100);
     yaw.updatesize(&rect);
 }

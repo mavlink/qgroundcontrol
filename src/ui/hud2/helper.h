@@ -46,16 +46,17 @@
 #include <QPen>
 
 #include "hudyawindicator.h"
+#include "hudhorizon.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
 class QPaintEvent;
 QT_END_NAMESPACE
 
-class Helper
+class HUD2Painter
 {
 public:
-    Helper();
+    HUD2Painter();
 
 public:
     void paint(QPainter *painter, QPaintEvent *event, int elapsed);
@@ -63,7 +64,9 @@ public:
 private:
     void updatesizes(QRect rect);
     HudYawIndicator yaw;
-    QRect hudrect; // uses for trcking size changes
+    HudHorizon horizon;
+
+    QRect hudrect; // uses for tracking size changes
     QPen regularpen;   // regular pen for most works
     QColor normalcolor;
     QBrush background;
