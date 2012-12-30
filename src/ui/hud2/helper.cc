@@ -42,7 +42,8 @@
 #include "helper.h"
 #include "HUD2.h"
 
-HUD2Painter::HUD2Painter()
+HUD2Painter::HUD2Painter(hud2data *data)
+    :data(data)
 {
     normalcolor = QColor(Qt::green);
     hudrect = QRect(0,0,0,0);
@@ -55,7 +56,7 @@ HUD2Painter::HUD2Painter()
     regularpen = QPen(normalcolor);
 }
 
-void HUD2Painter::paint(QPainter *painter, QPaintEvent *event, int elapsed)
+void HUD2Painter::paint(QPainter *painter, QPaintEvent *event)
 {
     if (hudrect != painter->viewport()){
         hudrect = painter->viewport();
@@ -65,28 +66,10 @@ void HUD2Painter::paint(QPainter *painter, QPaintEvent *event, int elapsed)
     painter->translate(hudrect.center());
 
 //    painter->save();
-//    painter->setBrush(circleBrush);
-//    painter->setPen(circlePen);
-//    painter->rotate(elapsed * 0.030);
-
-//    qreal r = elapsed/1000.0;
-//    int n = 30;
-//    for (int i = 0; i < n; ++i) {
-//        painter->rotate(30);
-//        qreal radius = 0 + 120.0*((i+r)/n);
-//        qreal circleRadius = 1 + ((i+r)/n)*20;
-//        painter->drawEllipse(QRectF(radius, -circleRadius,
-//                                    circleRadius*2, circleRadius*2));
-//    }
-
 //    painter->restore();
     painter->setPen(regularpen);
-    painter->drawLine(0, 0, 100, elapsed);
+    painter->drawLine(0, 0, 100, data->roll * 1000);
     yaw.paint(painter);
-
-//    painter->setPen(textPen);
-//    painter->setFont(textFont);
-//    painter->drawText(QRect(-50, -50, 100, 100), Qt::AlignCenter, "Qt");
 }
 
 void HUD2Painter::updatesizes(QRect rect){

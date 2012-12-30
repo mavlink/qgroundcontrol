@@ -42,27 +42,24 @@
 #include "hud2renderergl.h"
 #include "helper.h"
 
-static QPainter painter;
-
-HUD2RendererGL::HUD2RendererGL(HUD2Painter *hud2painter, QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent), hud2painter(hud2painter)
+HUD2RendererGL::HUD2RendererGL(HUD2Painter *hud2painter,  hud2data *data, QWidget *parent)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),  data(data), hud2painter(hud2painter)
 {
-    elapsed = 0;
+    //elapsed = 0;
     //setFixedSize(400, 400);
     setAutoFillBackground(false);
 }
 
 void HUD2RendererGL::animate()
 {
-    elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
+    //elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
     repaint();
 }
 
-void HUD2RendererGL::paintEvent(QPaintEvent *event, float f)
+void HUD2RendererGL::paintEvent(QPaintEvent *event)
 {
-    painter.begin(this);
+    QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    hud2painter->paint(&painter, event, elapsed);
-    painter.end();
+    hud2painter->paint(&painter, event);
 }
 

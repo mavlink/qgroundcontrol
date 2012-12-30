@@ -51,28 +51,42 @@ HUD2::~HUD2()
 }
 
 HUD2::HUD2(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent), hud2painter(&data)
 {
     uas   = NULL;
     usegl = false;
-    roll  = 0.0f;
-    pitch = 0.0f;
-    yaw   = 0.0f;
+
+    renderergl = new HUD2RendererGL(&hud2painter, &data, this);
+    renderersoft = new HUD2RendererSoft(&hud2painter, &data, this);
+
+    layout.addWidget(renderersoft, 0, 0);
+    layout.addWidget(renderergl, 0, 0);
 
     if (usegl == true){
-        renderergl = new HUD2RendererGL(&hud2painter, this);
-        renderersoft = NULL;
+        renderersoft->hide();
         btn.setText(tr("GL"));
-        layout.addWidget(renderergl, 0, 0);
         connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
     }
     else{
-        renderersoft = new HUD2RendererSoft(&hud2painter, this);
-        renderergl = NULL;
+        renderergl->hide();
         btn.setText(tr("Soft"));
-        layout.addWidget(renderersoft, 0, 0);
         connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
     }
+
+//    if (usegl == true){
+//        renderergl = new HUD2RendererGL(&hud2painter, &data, this);
+//        renderersoft = NULL;
+//        btn.setText(tr("GL"));
+//        layout.addWidget(renderergl, 0, 0);
+//        connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
+//    }
+//    else{
+//        renderersoft = new HUD2RendererSoft(&hud2painter, &data, this);
+//        renderergl = NULL;
+//        btn.setText(tr("Soft"));
+//        layout.addWidget(renderersoft, 0, 0);
+//        connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
+//    }
 
     connect(&btn, SIGNAL(clicked()), this, SLOT(togglerenderer()));
     layout.addWidget(&btn, 1, 0);
@@ -83,32 +97,53 @@ HUD2::HUD2(QWidget *parent)
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     createActions();
-    if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
+    if (UASManager::instance()->getActiveUAS() != NULL)
+        setActiveUAS(UASManager::instance()->getActiveUAS());
+}
+
+void HUD2::repaint(void){
+    if (usegl == true)
+        renderergl->repaint();
+    else
+        renderersoft->repaint();
 }
 
 
 void HUD2::togglerenderer(void)
 {
     if (usegl == true){
-        disconnect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
-        layout.removeWidget(renderergl);
-        delete renderergl;
-        renderersoft = new HUD2RendererSoft(&hud2painter, this);
-        connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
-        layout.addWidget(renderersoft, 0, 0);
+        renderergl->hide();
+        renderersoft->show();
         btn.setText(tr("Soft"));
         usegl = false;
     }
     else{
-        disconnect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
-        layout.removeWidget(renderersoft);
-        delete renderersoft;
-        renderergl = new HUD2RendererGL(&hud2painter, this);
-        connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
-        layout.addWidget(renderergl, 0, 0);
+        renderergl->show();
+        renderersoft->hide();
         btn.setText(tr("GL"));
         usegl = true;
     }
+
+//    if (usegl == true){
+//        disconnect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
+//        layout.removeWidget(renderergl);
+//        delete renderergl;
+//        renderersoft = new HUD2RendererSoft(&hud2painter, &data, this);
+//        connect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
+//        layout.addWidget(renderersoft, 0, 0);
+//        btn.setText(tr("Soft"));
+//        usegl = false;
+//    }
+//    else{
+//        disconnect(&timer, SIGNAL(timeout()), renderersoft, SLOT(animate()));
+//        layout.removeWidget(renderersoft);
+//        delete renderersoft;
+//        renderergl = new HUD2RendererGL(&hud2painter, &data, this);
+//        connect(&timer, SIGNAL(timeout()), renderergl, SLOT(animate()));
+//        layout.addWidget(renderergl, 0, 0);
+//        btn.setText(tr("GL"));
+//        usegl = true;
+//    }
 }
 
 
@@ -118,9 +153,10 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
     Q_UNUSED(timestamp);
     if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
     {
-        this->roll  = roll;
-        this->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
-        this->yaw   = yaw;
+        data.roll = roll;
+        data.pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
+        data.yaw   = yaw;
+        repaint();
         //qDebug() << "received values: " << roll << pitch << yaw;
     }
 }

@@ -42,10 +42,10 @@
 #include "hud2renderersoft.h"
 #include "helper.h"
 
-HUD2RendererSoft::HUD2RendererSoft(HUD2Painter *hud2painter, QWidget *parent)
-    : QWidget(parent), hud2painter(hud2painter)
+HUD2RendererSoft::HUD2RendererSoft(HUD2Painter *hud2painter, hud2data *data, QWidget *parent)
+    : QWidget(parent),  data(data), hud2painter(hud2painter)
 {
-    elapsed = 0;
+    //elapsed = 0;
     //setFixedSize(400, 400);
 }
 
@@ -57,10 +57,8 @@ void HUD2RendererSoft::animate()
 
 void HUD2RendererSoft::paintEvent(QPaintEvent *event)
 {
-    QPainter painter;
-    painter.begin(this);
+    QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    hud2painter->paint(&painter, event, elapsed);
-    painter.end();
+    hud2painter->paint(&painter, event);
 }
 

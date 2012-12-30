@@ -50,6 +50,7 @@
 #include "hud2renderersoft.h"
 #include "helper.h"
 #include "hudhorizon.h"
+#include "hud2data.h"
 
 #include "UASInterface.h"
 
@@ -67,19 +68,17 @@ public:
 
 protected:
     UASInterface* uas; ///< The uas currently monitored
-    float roll;
-    float pitch;
-    float yaw;
 
 private:
     HUD2RendererSoft *renderersoft;
     HUD2RendererGL *renderergl;
-
+    hud2data data;
     QGridLayout layout;
     QTimer timer;
     QPushButton btn;
     HUD2Painter hud2painter;
     bool usegl;
+    void repaint(void);
     void createActions(void);
 
 public slots:

@@ -42,6 +42,7 @@
 #define HUD2RENDERERSOFT_H
 
 #include <QWidget>
+#include "hud2data.h"
 
 class HUD2Painter;
 QT_BEGIN_NAMESPACE
@@ -53,7 +54,7 @@ class HUD2RendererSoft : public QWidget
     Q_OBJECT
 
 public:
-    HUD2RendererSoft(HUD2Painter *hud2painter, QWidget *parent);
+    HUD2RendererSoft(HUD2Painter *hud2painter, hud2data *data, QWidget *parent);
 
 public slots:
     void animate();
@@ -62,6 +63,7 @@ protected:
     void paintEvent(QPaintEvent *event);
 
 private:
+    hud2data *data;
     HUD2Painter *hud2painter;
     int elapsed;
 };
