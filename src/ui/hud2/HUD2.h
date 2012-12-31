@@ -72,11 +72,12 @@ protected:
 private:
     HUD2PaintSurface *surface;
     HUD2PaintSurfaceGL *surface_gl;
-    HUD2data data;
+    HUD2data *data;
+    hudPainter *hudpainter;
+
     QGridLayout layout;
     QTimer timer;
     QPushButton btn;
-    HUD2Painter hudpainter;
     bool usegl;
     void repaint(void);
     void createActions(void);
@@ -86,6 +87,9 @@ public slots:
     virtual void setActiveUAS(UASInterface* uas);
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
+
+signals:
+    //void visibilityChanged(bool visible);
 
 private slots:
     void togglerenderer(void);

@@ -43,6 +43,7 @@
 
 #include <QGLWidget>
 #include "hudData.h"
+#include "hudPainter.h"
 
 class HUD2Painter;
 QT_BEGIN_NAMESPACE
@@ -55,18 +56,18 @@ class HUD2PaintSurfaceGL : public QGLWidget
     Q_OBJECT
 
 public:
-    HUD2PaintSurfaceGL(HUD2Painter *hudpainter, HUD2data *data, QWidget *parent);
+    HUD2PaintSurfaceGL(hudPainter *hudpainter, HUD2data *data, QWidget *parent);
 
 public slots:
     void animate();
 
 protected:
     void paintEvent(QPaintEvent *event);
+    void resizeEvent(QResizeEvent *event);
 
 private:
     HUD2data *data;
-    HUD2Painter *hudpainter;
-    int elapsed;
+    hudPainter *hudpainter;
 };
 
 #endif /* HUD2RENDERERGL_H */

@@ -51,14 +51,16 @@ HUD2::~HUD2()
 }
 
 HUD2::HUD2(QWidget *parent)
-    : QWidget(parent),
-      hudpainter(&data)
+    : QWidget(parent)
 {
     uas   = NULL;
     usegl = false;
 
-    surface_gl = new HUD2PaintSurfaceGL(&hudpainter, &data, this);
-    surface    = new HUD2PaintSurface(&hudpainter, &data, this);
+    data = new HUD2data();
+    hudpainter = new hudPainter(data, parent);
+
+    surface_gl = new HUD2PaintSurfaceGL(hudpainter, data, this);
+    surface    = new HUD2PaintSurface(hudpainter, data, this);
 
     layout.addWidget(surface,    0, 0);
     layout.addWidget(surface_gl, 0, 0);
@@ -66,12 +68,12 @@ HUD2::HUD2(QWidget *parent)
     if (usegl == true){
         surface->hide();
         btn.setText(tr("GL"));
-        connect(&timer, SIGNAL(timeout()), surface_gl, SLOT(animate()));
+        //connect(&timer, SIGNAL(timeout()), surface_gl, SLOT(animate()));
     }
     else{
         surface_gl->hide();
         btn.setText(tr("Soft"));
-        connect(&timer, SIGNAL(timeout()), surface, SLOT(animate()));
+        //connect(&timer, SIGNAL(timeout()), surface, SLOT(animate()));
     }
 
     connect(&btn, SIGNAL(clicked()), this, SLOT(togglerenderer()));
@@ -118,9 +120,9 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
     Q_UNUSED(timestamp);
     if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
     {
-        data.roll = roll;
-        data.pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
-        data.yaw   = yaw;
+        data->roll = roll;
+        data->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
+        data->yaw   = yaw;
         repaint();
         //qDebug() << "received values: " << roll << pitch << yaw;
     }
@@ -184,3 +186,4 @@ void HUD2::createActions()
 //    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
 //    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }
+

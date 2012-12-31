@@ -42,7 +42,7 @@
 #include "hudSurfaceGL.h"
 #include "hudPainter.h"
 
-HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(HUD2Painter *hudpainter,  HUD2data *data, QWidget *parent)
+HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(hudPainter *hudpainter,  HUD2data *data, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),  data(data), hudpainter(hudpainter)
 {
     //elapsed = 0;
@@ -59,7 +59,11 @@ void HUD2PaintSurfaceGL::animate()
 void HUD2PaintSurfaceGL::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+    painter.fillRect(event->rect(), Qt::black);
     painter.setRenderHint(QPainter::Antialiasing);
     hudpainter->paint(&painter, event);
 }
 
+void HUD2PaintSurfaceGL::resizeEvent(QResizeEvent *event){
+    hudpainter->updateGeometry(event->size());
+}

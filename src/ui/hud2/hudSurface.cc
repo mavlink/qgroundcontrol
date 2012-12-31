@@ -42,7 +42,7 @@
 #include "hudSurface.h"
 #include "hudPainter.h"
 
-HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, HUD2data *data, QWidget *parent)
+HUD2PaintSurface::HUD2PaintSurface(hudPainter *hudpainter, HUD2data *data, QWidget *parent)
     : QWidget(parent),  data(data), hudpainter(hudpainter)
 {
     //elapsed = 0;
@@ -62,3 +62,6 @@ void HUD2PaintSurface::paintEvent(QPaintEvent *event)
     hudpainter->paint(&painter, event);
 }
 
+void HUD2PaintSurface::resizeEvent(QResizeEvent *event){
+    hudpainter->updateGeometry(event->size());
+}
