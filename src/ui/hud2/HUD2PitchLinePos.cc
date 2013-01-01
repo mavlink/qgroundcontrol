@@ -1,9 +1,10 @@
 #include <QtGui>
 #include "HUD2PitchLinePos.h"
 
-HUD2PitchLinePos::HUD2PitchLinePos(QWidget *parent) :
+HUD2PitchLinePos::HUD2PitchLinePos(int *gap, QWidget *parent) :
     QWidget(parent)
 {
+    this->gap = gap;
     this->huddata = huddata;
     this->updateGeometry(new QSize(640, 480));
 }
@@ -16,19 +17,17 @@ void HUD2PitchLinePos::updateGeometry(const QSize *size){
     //     |10                  |
     //
 
-    const int wscale = 9;
-    const int hscale = 28;
-    const int gapscale = 13;
+    const int wscale = 12;
+    const int hscale = 35;
     const int hmin = 3;
 
-    gap = size->width() / gapscale;
     int w = size->width()  / wscale;
     int h = size->height() / hscale;
     if (h < hmin)
         h = hmin;
 
-    int x1 = gap/2;
-    int x2 = gap/2 + w;
+    int x1 = *gap/2;
+    int x2 = *gap/2 + w;
 
     lines[0] = QLine(x1, 0,     x2, 0); // long right
     lines[1] = QLine(-x1, 0,    -x2, 0);// long left
@@ -42,7 +41,7 @@ void HUD2PitchLinePos::paint(QPainter *painter){
     painter->drawLines(lines, 4);
 }
 
-void HUD2PitchLinePos::updateColor(QColor color){
+void HUD2PitchLinePos::setColor(QColor color){
     pen.setColor(color);
 }
 

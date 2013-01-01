@@ -120,8 +120,8 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
     Q_UNUSED(timestamp);
     if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
     {
-        data->roll = roll;
-        data->pitch = pitch*3.35f; // Constant here is the 'focal length' of the projection onto the plane
+        data->roll  = roll;
+        data->pitch = pitch;
         data->yaw   = yaw;
         repaint();
         //qDebug() << "received values: " << roll << pitch << yaw;

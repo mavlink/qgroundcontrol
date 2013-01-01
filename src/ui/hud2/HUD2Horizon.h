@@ -19,12 +19,19 @@ signals:
     void geometryChanged(const QSize *size);
 
 public slots:
-    void updateColor(QColor color);
+    void setColor(QColor color);
     void updateGeometry(const QSize *size);
 
 private:
-    HUD2PitchLinePos pitchlinepos;
+    void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
+    void drawwings(QPainter *painter, QColor color);
     qreal rad2deg(float);
+
+    HUD2PitchLinePos pitchlinepos;
+    int pitchstep_pix;  // pixels between pitch lines (for internal use only)
+    int pitchstep_deg;  // degrees between pitch lines
+    int pitchcount; // how many pitch lines can be fitted on screen
+
     int gap; /* space between right and left parts */
     const HUD2data *huddata;
     QPen pen;

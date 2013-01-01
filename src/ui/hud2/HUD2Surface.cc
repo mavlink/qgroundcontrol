@@ -45,8 +45,9 @@
 HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, HUD2data *huddata, QWidget *parent)
     : QWidget(parent),  huddata(huddata), hudpainter(hudpainter)
 {
-    //elapsed = 0;
-    //setFixedSize(400, 400);
+//    QPalette p;
+//    p.setColor(QPalette::Base, Qt::red);
+//    this->setPalette(p);
 }
 
 void HUD2PaintSurface::animate(){

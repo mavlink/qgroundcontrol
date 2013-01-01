@@ -11,7 +11,7 @@ class HUD2PitchLinePos : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2PitchLinePos(QWidget *parent = 0);
+    explicit HUD2PitchLinePos(int *gap, QWidget *parent = 0);
     void paint(QPainter *painter);
 
 signals:
@@ -19,10 +19,10 @@ signals:
 
 public slots:
     void updateGeometry(const QSize *size);
-    void updateColor(QColor color);
+    void setColor(QColor color);
 
 private:
-    int gap; /* space between right and left parts */
+    const int *gap; /* space between right and left parts */
     const HUD2data *huddata;
     QPen pen;
     QLine lines[4];
