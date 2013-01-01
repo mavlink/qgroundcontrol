@@ -57,7 +57,7 @@ HUD2::HUD2(QWidget *parent)
     usegl = false;
 
     data = new HUD2data();
-    hudpainter = new hudPainter(data, parent);
+    hudpainter = new HUD2Painter(data, parent);
 
     surface_gl = new HUD2PaintSurfaceGL(hudpainter, data, this);
     surface    = new HUD2PaintSurface(hudpainter, data, this);

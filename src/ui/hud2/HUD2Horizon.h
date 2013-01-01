@@ -5,14 +5,14 @@
 #include <QPen>
 #include <QLine>
 
-#include "hudData.h"
+#include "HUD2Data.h"
 #include "HUD2PitchLinePos.h"
 
-class HudHorizon : public QWidget
+class HUD2Horizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HudHorizon(HUD2data *data, QWidget *parent = 0);
+    explicit HUD2Horizon(HUD2data *huddata, QWidget *parent = 0);
     void paint(QPainter *painter, QColor color);
 
 signals:
@@ -26,7 +26,7 @@ private:
     HUD2PitchLinePos pitchlinepos;
     qreal rad2deg(float);
     int gap; /* space between right and left parts */
-    const HUD2data *data;
+    const HUD2data *huddata;
     QPen pen;
     QLine left;
     QLine right;

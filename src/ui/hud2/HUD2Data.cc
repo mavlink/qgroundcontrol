@@ -1,4 +1,4 @@
-#include "hudData.h"
+#include "HUD2Data.h"
 
 HUD2data::HUD2data()
 {

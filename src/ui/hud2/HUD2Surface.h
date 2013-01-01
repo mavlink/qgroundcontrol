@@ -42,8 +42,8 @@
 #define HUDSURFACE_H
 
 #include <QWidget>
-#include "hudData.h"
-#include "hudPainter.h"
+#include "HUD2Data.h"
+#include "HUD2Painter.h"
 
 class HUD2Painter;
 QT_BEGIN_NAMESPACE
@@ -55,7 +55,7 @@ class HUD2PaintSurface : public QWidget
     Q_OBJECT
 
 public:
-    HUD2PaintSurface(hudPainter *hudpainter, HUD2data *data, QWidget *parent);
+    HUD2PaintSurface(HUD2Painter *hudpainter, HUD2data *huddata, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -68,9 +68,8 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2data *data;
-    hudPainter *hudpainter;
-    //HUD2Painter *hudpainter;
+    HUD2data *huddata;
+    HUD2Painter *hudpainter;
     int elapsed;
 };
 

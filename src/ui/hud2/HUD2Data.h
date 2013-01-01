@@ -1,5 +1,5 @@
-#ifndef HUDDATA_H
-#define HUDDATA_H
+#ifndef HUD2DATA_H
+#define HUD2DATA_H
 
 class HUD2data
 {

@@ -6,11 +6,11 @@
 #include <QPaintEvent>
 #include <QPolygon>
 
-class HudYawIndicator
+class HUD2YawIndicator
 {
 
 public:
-    HudYawIndicator();
+    HUD2YawIndicator();
     void updatesize(const QSize *size);
     void paint(QPainter *painter, QColor color);
     void setColor(QColor color);

@@ -5,7 +5,7 @@
 #include <QPen>
 #include <QLine>
 
-#include "hudData.h"
+#include "HUD2Data.h"
 
 class HUD2PitchLinePos : public QWidget
 {

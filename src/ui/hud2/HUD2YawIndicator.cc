@@ -1,6 +1,6 @@
 #include <QColor>
 
-#include "hudYawIndicator.h"
+#include "HUD2YawIndicator.h"
 
 // YAW INDICATOR
 //
@@ -9,7 +9,7 @@
 //   .......
 //
 
-HudYawIndicator::HudYawIndicator()
+HUD2YawIndicator::HUD2YawIndicator()
 {
     scale = 15;
 
@@ -22,7 +22,7 @@ HudYawIndicator::HudYawIndicator()
     poly.setPoint(3, 0, 0);
 }
 
-void HudYawIndicator::updatesize(const QSize *size){
+void HUD2YawIndicator::updatesize(const QSize *size){
     int h = size->height() / scale;
     int clearance = h / 2;
 
@@ -35,12 +35,12 @@ void HudYawIndicator::updatesize(const QSize *size){
     pen.setWidth(2);
 }
 
-void HudYawIndicator::paint(QPainter *painter, QColor color){
+void HUD2YawIndicator::paint(QPainter *painter, QColor color){
     pen.setColor(color);
     painter->setPen(pen);
     painter->drawPolyline(poly);
 }
 
-void HudYawIndicator::setColor(QColor color){
+void HUD2YawIndicator::setColor(QColor color){
     this->color = color;
 }

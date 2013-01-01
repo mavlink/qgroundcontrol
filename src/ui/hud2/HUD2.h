@@ -46,11 +46,11 @@
 #include <QPushButton>
 #include <QTimer>
 
-#include "hudSurface.h"
-#include "hudSurfaceGL.h"
-#include "hudPainter.h"
-#include "hudHorizon.h"
-#include "hudData.h"
+#include "HUD2Surface.h"
+#include "HUD2SurfaceGL.h"
+#include "HUD2Painter.h"
+#include "HUD2Horizon.h"
+#include "HUD2Data.h"
 
 #include "UASInterface.h"
 
@@ -73,7 +73,7 @@ private:
     HUD2PaintSurface *surface;
     HUD2PaintSurfaceGL *surface_gl;
     HUD2data *data;
-    hudPainter *hudpainter;
+    HUD2Painter *hudpainter;
 
     QGridLayout layout;
     QTimer timer;

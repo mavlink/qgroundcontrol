@@ -39,29 +39,27 @@
 ****************************************************************************/
 
 #include <QtGui>
-#include "hudSurfaceGL.h"
-#include "hudPainter.h"
+#include "HUD2Surface.h"
+#include "HUD2Painter.h"
 
-HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(hudPainter *hudpainter,  HUD2data *data, QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),  data(data), hudpainter(hudpainter)
+HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, HUD2data *huddata, QWidget *parent)
+    : QWidget(parent),  huddata(huddata), hudpainter(hudpainter)
 {
     //elapsed = 0;
     //setFixedSize(400, 400);
-    setAutoFillBackground(false);
 }
 
-void HUD2PaintSurfaceGL::animate(){
+void HUD2PaintSurface::animate(){
     repaint();
 }
 
-void HUD2PaintSurfaceGL::paintEvent(QPaintEvent *event)
+void HUD2PaintSurface::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
-    painter.fillRect(event->rect(), Qt::black);
     painter.setRenderHint(QPainter::Antialiasing);
     hudpainter->paint(&painter, event);
 }
 
-void HUD2PaintSurfaceGL::resizeEvent(QResizeEvent *event){
+void HUD2PaintSurface::resizeEvent(QResizeEvent *event){
     hudpainter->updateGeometry(&event->size());
 }

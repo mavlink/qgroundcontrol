@@ -1,11 +1,11 @@
 #include <QColor>
-#include "hudPainter.h"
+#include "HUD2Painter.h"
 
-hudPainter::hudPainter(HUD2data *data, QWidget *parent) :
+HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    horizon(data)
+    horizon(huddata)
 {
-    this->data = data;
+    this->huddata = huddata;
 
     defaultColor = QColor(70, 255, 70);
     warningColor = Qt::yellow;
@@ -14,7 +14,7 @@ hudPainter::hudPainter(HUD2data *data, QWidget *parent) :
     fuelColor = criticalColor;
 }
 
-void hudPainter::paint(QPainter *painter, QPaintEvent *event)
+void HUD2Painter::paint(QPainter *painter, QPaintEvent *event)
 {
     Q_UNUSED(event);
     QRect hudrect = painter->viewport();
@@ -24,7 +24,7 @@ void hudPainter::paint(QPainter *painter, QPaintEvent *event)
     horizon.paint(painter, defaultColor);
 }
 
-void hudPainter::updateGeometry(const QSize *size){
+void HUD2Painter::updateGeometry(const QSize *size){
     yaw.updatesize(size);
     horizon.updateGeometry(size);
 }

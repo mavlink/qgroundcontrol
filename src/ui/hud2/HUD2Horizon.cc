@@ -1,15 +1,15 @@
 #include <QtGui>
-#include "hudHorizon.h"
+#include "HUD2Horizon.h"
 
-HudHorizon::HudHorizon(HUD2data *data, QWidget *parent) :
+HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
     pitchlinepos(parent)
 {
-    this->data = data;
+    this->huddata = huddata;
     this->updateGeometry(new QSize(640, 480));
 }
 
-void HudHorizon::updateGeometry(const QSize *size){
+void HUD2Horizon::updateGeometry(const QSize *size){
     int x1 = size->width();
 
     gap = x1 / 10;
@@ -20,7 +20,7 @@ void HudHorizon::updateGeometry(const QSize *size){
     pitchlinepos.updateGeometry(size);
 }
 
-void HudHorizon::paint(QPainter *painter, QColor color){
+void HUD2Horizon::paint(QPainter *painter, QColor color){
     painter->save();
 
     painter->save();
@@ -28,7 +28,7 @@ void HudHorizon::paint(QPainter *painter, QColor color){
     pitchlinepos.paint(painter);
     painter->restore();
 
-    painter->rotate(-rad2deg(data->roll));
+    painter->rotate(-rad2deg(huddata->roll));
     pen.setColor(color);
     painter->setPen(pen);
     painter->drawLine(left);
@@ -36,10 +36,10 @@ void HudHorizon::paint(QPainter *painter, QColor color){
     painter->restore();
 }
 
-void HudHorizon::updateColor(QColor color){
+void HUD2Horizon::updateColor(QColor color){
     pen.setColor(color);
 }
 
-qreal HudHorizon::rad2deg(float rad){
+qreal HUD2Horizon::rad2deg(float rad){
     return rad * (180.0 / M_PI);
 }
