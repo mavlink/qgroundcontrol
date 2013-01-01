@@ -57,6 +57,9 @@ class HUD2PaintSurface : public QWidget
 public:
     HUD2PaintSurface(hudPainter *hudpainter, HUD2data *data, QWidget *parent);
 
+signals:
+    void geometryChanged(const QSize *size);
+
 public slots:
     void animate();
 

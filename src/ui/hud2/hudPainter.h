@@ -22,11 +22,12 @@ class hudPainter : public QWidget
 public:
     explicit hudPainter(HUD2data *data, QWidget *parent = 0);
     void paint(QPainter *painter, QPaintEvent *event);
-    void updateGeometry(QSize size);
 
 signals:
-    
+    void geometryChanged(const QSize *size);
+
 public slots:
+    void updateGeometry(const QSize *size);
 
 private:
     HudYawIndicator yaw;

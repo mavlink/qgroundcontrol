@@ -6,6 +6,7 @@
 #include <QLine>
 
 #include "hudData.h"
+#include "HUD2PitchLinePos.h"
 
 class HudHorizon : public QWidget
 {
@@ -13,15 +14,16 @@ class HudHorizon : public QWidget
 public:
     explicit HudHorizon(HUD2data *data, QWidget *parent = 0);
     void paint(QPainter *painter, QColor color);
-    void setColor(QColor color);
 
 signals:
-    
+    void geometryChanged(const QSize *size);
+
 public slots:
-    void updateGeometry(QSize *size);
+    void updateColor(QColor color);
+    void updateGeometry(const QSize *size);
 
 private:
-    void paintPitchLinePos(QString text, QPainter* painter);
+    HUD2PitchLinePos pitchlinepos;
     qreal rad2deg(float);
     int gap; /* space between right and left parts */
     const HUD2data *data;

@@ -22,7 +22,7 @@ HudYawIndicator::HudYawIndicator()
     poly.setPoint(3, 0, 0);
 }
 
-void HudYawIndicator::updatesize(QSize *size){
+void HudYawIndicator::updatesize(const QSize *size){
     int h = size->height() / scale;
     int clearance = h / 2;
 

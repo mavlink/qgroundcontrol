@@ -11,7 +11,7 @@ class HudYawIndicator
 
 public:
     HudYawIndicator();
-    void updatesize(QSize *size);
+    void updatesize(const QSize *size);
     void paint(QPainter *painter, QColor color);
     void setColor(QColor color);
 
@@ -22,6 +22,7 @@ private:
     QPen pen;
     QColor color;
     QPolygon poly;
+
 };
 
 #endif // HUDYAWINDICATOR_H

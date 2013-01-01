@@ -50,9 +50,7 @@ HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(hudPainter *hudpainter,  HUD2data *data, 
     setAutoFillBackground(false);
 }
 
-void HUD2PaintSurfaceGL::animate()
-{
-    //elapsed = (elapsed + qobject_cast<QTimer*>(sender())->interval()) % 1000;
+void HUD2PaintSurfaceGL::animate(){
     repaint();
 }
 
@@ -65,5 +63,5 @@ void HUD2PaintSurfaceGL::paintEvent(QPaintEvent *event)
 }
 
 void HUD2PaintSurfaceGL::resizeEvent(QResizeEvent *event){
-    hudpainter->updateGeometry(event->size());
+    hudpainter->updateGeometry(&event->size());
 }

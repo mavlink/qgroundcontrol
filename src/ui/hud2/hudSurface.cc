@@ -63,5 +63,5 @@ void HUD2PaintSurface::paintEvent(QPaintEvent *event)
 }
 
 void HUD2PaintSurface::resizeEvent(QResizeEvent *event){
-    hudpainter->updateGeometry(event->size());
+    hudpainter->updateGeometry(&event->size());
 }

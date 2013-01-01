@@ -24,7 +24,7 @@ void hudPainter::paint(QPainter *painter, QPaintEvent *event)
     horizon.paint(painter, defaultColor);
 }
 
-void hudPainter::updateGeometry(QSize size){
-    yaw.updatesize(&size);
-    horizon.updateGeometry(&size);
+void hudPainter::updateGeometry(const QSize *size){
+    yaw.updatesize(size);
+    horizon.updateGeometry(size);
 }
