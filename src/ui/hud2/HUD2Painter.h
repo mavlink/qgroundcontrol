@@ -20,7 +20,7 @@ class HUD2Painter : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Painter(HUD2data *huddata, QWidget *parent = 0);
+    explicit HUD2Painter(HUD2data *huddata, QWidget *parent);
     void paint(QPainter *painter, QPaintEvent *event);
 
 signals:

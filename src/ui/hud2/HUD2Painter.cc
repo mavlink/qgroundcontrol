@@ -3,7 +3,7 @@
 
 HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    horizon(huddata)
+    horizon(huddata, parent)
 {
     this->huddata = huddata;
 

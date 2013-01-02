@@ -3,7 +3,8 @@
 
 HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    pitchlinepos(&this->gap, parent)
+    pitchline(&this->gap, parent),
+    crosshair(&this->gap, parent)
 {
     this->huddata = huddata;
 }
@@ -11,12 +12,14 @@ HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
 void HUD2Horizon::updateGeometry(const QSize *size){
     const int gapscale = 13;
     gap = size->width() / gapscale;
-    pitchlinepos.updateGeometry(size);
+    pitchline.updateGeometry(size);
 
     int x1 = size->width();
     pen.setWidth(6);
     left.setLine(-x1, 0, -gap/2, 0);
     right.setLine(gap/2, 0, x1, 0);
+
+    crosshair.updateGeometry(size);
 }
 
 /**
@@ -26,15 +29,23 @@ void HUD2Horizon::updateGeometry(const QSize *size){
  * @param pixstep
  */
 void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep){
-    painter->save();
 
+    painter->save();
     int i = 0;
     while (i > -180){
-        painter->translate(0, -pixstep);
-        pitchlinepos.paint(painter);
         i -= degstep;
+        painter->translate(0, -pixstep);
+        pitchline.paint(painter, -i);
     }
+    painter->restore();
 
+    painter->save();
+    i = 0;
+    while (i < 180){
+        i += degstep;
+        painter->translate(0, pixstep);
+        pitchline.paint(painter, -i);
+    }
     painter->restore();
 }
 
@@ -56,11 +67,12 @@ void HUD2Horizon::drawwings(QPainter *painter, QColor color){
  */
 void HUD2Horizon::paint(QPainter *painter, QColor color){
 
+    crosshair.paint(painter, color);
+
     painter->save();
 
-    qreal deginpix = 0.2;
-    qreal degstep = 20;
-    qreal pixstep = degstep / deginpix;
+    qreal degstep = 5;
+    qreal pixstep = 140;
     qreal pitch_deg = rad2deg(huddata->pitch);
 
     QTransform transform;

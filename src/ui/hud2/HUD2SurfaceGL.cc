@@ -45,8 +45,6 @@
 HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(HUD2Painter *hudpainter,  HUD2data *huddata, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),  huddata(huddata), hudpainter(hudpainter)
 {
-    //elapsed = 0;
-    //setFixedSize(400, 400);
     setAutoFillBackground(false);
 }
 

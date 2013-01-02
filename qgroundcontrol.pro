@@ -368,13 +368,14 @@ HEADERS += src/MG.h \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h \
     src/ui/hud2/HUD2.h \
-    src/ui/hud2/HUD2PitchLinePos.h \
     src/ui/hud2/HUD2Horizon.h \
     src/ui/hud2/HUD2Data.h \
     src/ui/hud2/HUD2Painter.h \
     src/ui/hud2/HUD2Surface.h \
     src/ui/hud2/HUD2SurfaceGL.h \
-    src/ui/hud2/HUD2YawIndicator.h
+    src/ui/hud2/HUD2YawIndicator.h \
+    src/ui/hud2/HUD2PitchLine.h \
+    src/ui/hud2/HUD2Crosshair.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -535,13 +536,14 @@ SOURCES += src/main.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
     src/ui/hud2/HUD2.cc \
-    src/ui/hud2/HUD2PitchLinePos.cc \
     src/ui/hud2/HUD2Horizon.cc \
     src/ui/hud2/HUD2Data.cc \
     src/ui/hud2/HUD2Painter.cc \
     src/ui/hud2/HUD2Surface.cc \
     src/ui/hud2/HUD2SurfaceGL.cc \
-    src/ui/hud2/HUD2YawIndicator.cc
+    src/ui/hud2/HUD2YawIndicator.cc \
+    src/ui/hud2/HUD2PitchLine.cc \
+    src/ui/hud2/HUD2Crosshair.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
