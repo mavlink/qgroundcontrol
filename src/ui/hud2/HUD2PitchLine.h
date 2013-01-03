@@ -11,7 +11,7 @@ class HUD2PitchLine : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2PitchLine(int *gap, QWidget *parent);
+    explicit HUD2PitchLine(const int *gapscale, QWidget *parent);
     void paint(QPainter *painter, int deg);
 
 signals:
@@ -26,7 +26,7 @@ private:
     int size_hscale;
     int size_hmin;
     int text_size_min;
-    int *gap; /* space between right and left parts */
+    const int *gapscale; /* space between right and left parts */
     HUD2data *huddata;
 
     QRect update_geometry_lines_pos(int gap, int w, int h);

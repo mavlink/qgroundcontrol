@@ -40,7 +40,6 @@
 
 /*
 TODO:
-- gap and all other sizes must be calculated from constants specified in separate class
 */
 
 #include <QtGui>
@@ -60,7 +59,7 @@ HUD2::HUD2(QWidget *parent)
       surface(&hudpainter, this),
       surface_gl(&hudpainter, this),
       usegl(false)
-{
+{   
     layout = new QGridLayout(this);
     layout->addWidget(&surface,    0, 0);
     layout->addWidget(&surface_gl, 0, 0);

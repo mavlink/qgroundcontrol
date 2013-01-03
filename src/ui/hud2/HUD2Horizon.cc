@@ -3,22 +3,22 @@
 
 HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    pitchline(&this->gap, parent),
-    crosshair(&this->gap, parent)
+    pitchline(&this->gapscale, parent),
+    crosshair(&this->gapscale, parent)
 {
     this->huddata = huddata;
+    this->gapscale = 13;
 }
 
 void HUD2Horizon::updateGeometry(const QSize *size){
-    const int gapscale = 13;
-    gap = size->width() / gapscale;
-    pitchline.updateGeometry(size);
+    int gap = size->width() / gapscale;
 
     int x1 = size->width();
     pen.setWidth(6);
     left.setLine(-x1, 0, -gap/2, 0);
     right.setLine(gap/2, 0, x1, 0);
 
+    pitchline.updateGeometry(size);
     crosshair.updateGeometry(size);
 }
 

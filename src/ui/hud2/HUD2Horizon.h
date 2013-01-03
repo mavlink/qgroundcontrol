@@ -35,7 +35,7 @@ private:
 
     HUD2Crosshair crosshair;
 
-    int gap; /* space between right and left parts */
+    int gapscale; /* space between right and left parts */
     HUD2data *huddata;
     QPen pen;
     QLine left;

@@ -1,15 +1,16 @@
 #include <QtGui>
 #include "HUD2PitchLine.h"
 
-HUD2PitchLine::HUD2PitchLine(int *gap, QWidget *parent) :
+HUD2PitchLine::HUD2PitchLine(const int *gapscale, QWidget *parent) :
     QWidget(parent)
 {
-    this->gap = gap;
+    this->gapscale = gapscale;
     this->huddata = huddata;
 
-    this->size_wscale = 18;
-    this->size_hscale = 50;
-    this->size_hmin   = 3;
+    this->size_wscale   = 18;
+    this->size_hscale   = 50;
+    this->size_hmin     = 3;
+    this->text_size_min = 8;
 
     this->textPen.setColor(Qt::green);
 }
@@ -57,7 +58,6 @@ QRect HUD2PitchLine::update_geometry_lines_neg(int gap, int w, int h){
     //
     //      -10
     //     _ _ _ _|     |_ _ _ _
-    //
     //
 
     int dashcount = 3;
@@ -110,8 +110,9 @@ void HUD2PitchLine::updateGeometry(const QSize *size){
     if (h < size_hmin)
         h = size_hmin;
 
-    textRectPos = update_geometry_lines_pos(*gap, w, h);
-    textRectNeg = update_geometry_lines_neg(*gap, w, h);
+    int gap = size->width() / *gapscale;
+    textRectPos = update_geometry_lines_pos(gap, w, h);
+    textRectNeg = update_geometry_lines_neg(gap, w, h);
     textRectNeg.translate(0, -text_size);
 
     textFont.setPixelSize(text_size);

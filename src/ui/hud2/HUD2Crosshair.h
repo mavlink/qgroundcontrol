@@ -9,7 +9,7 @@ class HUD2Crosshair : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Crosshair(int *gap, QWidget *parent);
+    explicit HUD2Crosshair(const int *gapscale, QWidget *parent);
     void paint(QPainter *painter, QColor color);
 
 signals:
@@ -20,7 +20,7 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
-    int *gap; /* space between right and left parts */
+    const int *gapscale; /* space between right and left parts */
     QPen pen;
     QLine lines[3];
 };
