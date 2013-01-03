@@ -21,6 +21,8 @@ void HUD2Painter::paint(QPainter *painter)
 
     yaw.paint(painter, defaultColor);
     horizon.paint(painter, defaultColor);
+
+    emit paintComplete();
 }
 
 void HUD2Painter::updateGeometry(const QSize *size){

@@ -25,6 +25,7 @@ public:
 
 signals:
     void geometryChanged(const QSize *size);
+    void paintComplete(void);
 
 public slots:
     void updateGeometry(const QSize *size);

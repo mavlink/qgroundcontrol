@@ -25,11 +25,13 @@ private:
     int size_wscale;
     int size_hscale;
     int size_hmin;
+    int text_size_min;
     int *gap; /* space between right and left parts */
     HUD2data *huddata;
 
-    void update_lines_pos(const QRect rect);
-    void update_lines_neg(const QRect rect, QLine *lines_array);
+    QRect update_geometry_lines_pos(int gap, int w, int h);
+    QRect update_geometry_lines_neg(int gap, int w, int h);
+
     QPen pen;
     QLine lines_pos[4];
     QLine lines_neg[8];
@@ -38,7 +40,8 @@ private:
     void draw_text(QPainter *painter, int deg);
     QPen textPen;
     QFont textFont;
-    QRect textRect;
+    QRect textRectPos;
+    QRect textRectNeg;
 
 protected:
 

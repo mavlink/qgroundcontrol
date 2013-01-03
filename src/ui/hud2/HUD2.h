@@ -75,7 +75,7 @@ private:
     HUD2PaintSurface surface;
     HUD2PaintSurfaceGL surface_gl;
 
-    QGridLayout layout;
+    QGridLayout *layout;
     QTimer timer;
     QPushButton btn;
     bool usegl;

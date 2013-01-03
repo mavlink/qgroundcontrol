@@ -38,6 +38,11 @@
 **
 ****************************************************************************/
 
+/*
+TODO:
+- gap and all other sizes must be calculated from constants specified in separate class
+*/
+
 #include <QtGui>
 
 #include "HUD2.h"
@@ -46,41 +51,38 @@
 
 HUD2::~HUD2()
 {
-    disconnect(&timer);
-    timer.stop();
 }
 
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent),
+      uas(NULL),
       hudpainter(&huddata, this),
       surface(&hudpainter, this),
-      surface_gl(&hudpainter, this)
+      surface_gl(&hudpainter, this),
+      usegl(false)
 {
-    uas   = NULL;
-    usegl = false;
-
-    layout.addWidget(&surface,    0, 0);
-    layout.addWidget(&surface_gl, 0, 0);
+    layout = new QGridLayout(this);
+    layout->addWidget(&surface,    0, 0);
+    layout->addWidget(&surface_gl, 0, 0);
 
     if (usegl == true){
         surface.hide();
         btn.setText(tr("GL"));
-        //connect(&timer, SIGNAL(timeout()), surface_gl, SLOT(animate()));
     }
     else{
         surface_gl.hide();
         btn.setText(tr("Soft"));
-        //connect(&timer, SIGNAL(timeout()), surface, SLOT(animate()));
     }
 
     connect(&btn, SIGNAL(clicked()), this, SLOT(togglerenderer()));
-    layout.addWidget(&btn, 1, 0);
-    setLayout(&layout);
+    layout->addWidget(&btn, 1, 0);
+    setLayout(layout);
 
     timer.start(100);
 
     // Connect with UAS
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+            this,                   SLOT(setActiveUAS(UASInterface*)));
     createActions();
     if (UASManager::instance()->getActiveUAS() != NULL)
         setActiveUAS(UASManager::instance()->getActiveUAS());
