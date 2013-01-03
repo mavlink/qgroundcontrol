@@ -42,23 +42,20 @@
 #include "HUD2Surface.h"
 #include "HUD2Painter.h"
 
-HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, HUD2data *huddata, QWidget *parent)
-    : QWidget(parent),  huddata(huddata), hudpainter(hudpainter)
+HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, QWidget *parent)
+    : QWidget(parent), hudpainter(hudpainter)
 {
     QPalette p = this->palette();
     p.setColor(QPalette::Window, QColor(0, 40, 65));
     setPalette(p);
 }
 
-void HUD2PaintSurface::animate(){
-    repaint();
-}
-
 void HUD2PaintSurface::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    hudpainter->paint(&painter, event);
+    hudpainter->paint(&painter);
 }
 
 void HUD2PaintSurface::resizeEvent(QResizeEvent *event){

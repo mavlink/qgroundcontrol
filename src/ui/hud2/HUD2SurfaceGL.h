@@ -56,20 +56,18 @@ class HUD2PaintSurfaceGL : public QGLWidget
     Q_OBJECT
 
 public:
-    HUD2PaintSurfaceGL(HUD2Painter *hudpainter, HUD2data *huddata, QWidget *parent);
+    HUD2PaintSurfaceGL(HUD2Painter *hudpainter, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
 
 public slots:
-    void animate();
 
 protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2data *huddata;
     HUD2Painter *hudpainter;
 };
 

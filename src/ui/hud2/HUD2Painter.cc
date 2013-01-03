@@ -14,10 +14,9 @@ HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     fuelColor = criticalColor;
 }
 
-void HUD2Painter::paint(QPainter *painter, QPaintEvent *event)
+void HUD2Painter::paint(QPainter *painter)
 {
-    Q_UNUSED(event);
-    QRect hudrect = painter->viewport();
+    QRect hudrect = painter->window();
     painter->translate(hudrect.center());
 
     yaw.paint(painter, defaultColor);

@@ -21,7 +21,7 @@ class HUD2Painter : public QWidget
     Q_OBJECT
 public:
     explicit HUD2Painter(HUD2data *huddata, QWidget *parent);
-    void paint(QPainter *painter, QPaintEvent *event);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

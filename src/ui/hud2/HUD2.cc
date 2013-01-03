@@ -51,27 +51,24 @@ HUD2::~HUD2()
 }
 
 HUD2::HUD2(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent),
+      hudpainter(&huddata, this),
+      surface(&hudpainter, this),
+      surface_gl(&hudpainter, this)
 {
     uas   = NULL;
     usegl = false;
 
-    data = new HUD2data();
-    hudpainter = new HUD2Painter(data, parent);
-
-    surface_gl = new HUD2PaintSurfaceGL(hudpainter, data, this);
-    surface    = new HUD2PaintSurface(hudpainter, data, this);
-
-    layout.addWidget(surface,    0, 0);
-    layout.addWidget(surface_gl, 0, 0);
+    layout.addWidget(&surface,    0, 0);
+    layout.addWidget(&surface_gl, 0, 0);
 
     if (usegl == true){
-        surface->hide();
+        surface.hide();
         btn.setText(tr("GL"));
         //connect(&timer, SIGNAL(timeout()), surface_gl, SLOT(animate()));
     }
     else{
-        surface_gl->hide();
+        surface_gl.hide();
         btn.setText(tr("Soft"));
         //connect(&timer, SIGNAL(timeout()), surface, SLOT(animate()));
     }
@@ -91,23 +88,23 @@ HUD2::HUD2(QWidget *parent)
 
 void HUD2::repaint(void){
     if (usegl == true)
-        surface_gl->repaint();
+        surface_gl.repaint();
     else
-        surface->repaint();
+        surface.repaint();
 }
 
 
 void HUD2::togglerenderer(void)
 {
     if (usegl == true){
-        surface_gl->hide();
-        surface->show();
+        surface_gl.hide();
+        surface.show();
         btn.setText(tr("Soft"));
         usegl = false;
     }
     else{
-        surface_gl->show();
-        surface->hide();
+        surface_gl.show();
+        surface.hide();
         btn.setText(tr("GL"));
         usegl = true;
     }
@@ -120,9 +117,9 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
     Q_UNUSED(timestamp);
     if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
     {
-        data->roll  = roll;
-        data->pitch = pitch;
-        data->yaw   = yaw;
+        huddata.roll  = roll;
+        huddata.pitch = pitch;
+        huddata.yaw   = yaw;
         repaint();
         //qDebug() << "received values: " << roll << pitch << yaw;
     }

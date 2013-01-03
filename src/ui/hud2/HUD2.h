@@ -70,10 +70,10 @@ protected:
     UASInterface* uas; ///< The uas currently monitored
 
 private:
-    HUD2PaintSurface *surface;
-    HUD2PaintSurfaceGL *surface_gl;
-    HUD2data *data;
-    HUD2Painter *hudpainter;
+    HUD2data huddata;
+    HUD2Painter hudpainter;
+    HUD2PaintSurface surface;
+    HUD2PaintSurfaceGL surface_gl;
 
     QGridLayout layout;
     QTimer timer;
