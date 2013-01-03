@@ -3,7 +3,8 @@
 
 HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    horizon(huddata, parent)
+    horizon(huddata, parent),
+    altimeter(this)
 {
     this->huddata = huddata;
 
@@ -21,6 +22,7 @@ void HUD2Painter::paint(QPainter *painter)
 
     yaw.paint(painter, defaultColor);
     horizon.paint(painter, defaultColor);
+    altimeter.paint(painter, 10);
 
     emit paintComplete();
 }
@@ -28,4 +30,5 @@ void HUD2Painter::paint(QPainter *painter)
 void HUD2Painter::updateGeometry(const QSize *size){
     yaw.updatesize(size);
     horizon.updateGeometry(size);
+    altimeter.updateGeometry(size);
 }

@@ -9,6 +9,7 @@
 #include "HUD2YawIndicator.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
+#include "HUD2Dial.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -33,6 +34,7 @@ public slots:
 private:
     HUD2YawIndicator yaw;
     HUD2Horizon horizon;
+    HUD2Dial altimeter;
     HUD2data *huddata;
 
     // HUD colors
