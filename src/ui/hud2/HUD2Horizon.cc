@@ -8,17 +8,24 @@ HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
 {
     this->huddata = huddata;
     this->gapscale = 13;
+    this->pitchcount = 4;
+    this->degstep = 5;
 }
 
 void HUD2Horizon::updateGeometry(const QSize *size){
     int gap = size->width() / gapscale;
 
+    // wings
     int x1 = size->width();
     pen.setWidth(6);
-    left.setLine(-x1, 0, -gap/2, 0);
-    right.setLine(gap/2, 0, x1, 0);
+    leftwing.setLine(-x1, 0, -gap/2, 0);
+    rightwing.setLine(gap/2, 0, x1, 0);
 
+    // pitchlines
+    pixstep = size->height() / pitchcount;
     pitchline.updateGeometry(size);
+
+    // crosshair
     crosshair.updateGeometry(size);
 }
 
@@ -32,7 +39,7 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
 
     painter->save();
     int i = 0;
-    while (i > -180){
+    while (i > -360){
         i -= degstep;
         painter->translate(0, -pixstep);
         pitchline.paint(painter, -i);
@@ -41,7 +48,7 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
 
     painter->save();
     i = 0;
-    while (i < 180){
+    while (i < 360){
         i += degstep;
         painter->translate(0, pixstep);
         pitchline.paint(painter, -i);
@@ -56,8 +63,8 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
 void HUD2Horizon::drawwings(QPainter *painter, QColor color){
     pen.setColor(color);
     painter->setPen(pen);
-    painter->drawLine(left);
-    painter->drawLine(right);
+    painter->drawLine(leftwing);
+    painter->drawLine(rightwing);
 }
 
 /**
@@ -67,21 +74,25 @@ void HUD2Horizon::drawwings(QPainter *painter, QColor color){
  */
 void HUD2Horizon::paint(QPainter *painter, QColor color){
 
+    //
     crosshair.paint(painter, color);
-
     painter->save();
 
-    qreal degstep = 5;
-    qreal pixstep = 140;
-    qreal pitch_deg = rad2deg(huddata->pitch);
+    // now perform complex transfomation of painter
+    qreal alpha   = rad2deg(huddata->pitch);
 
     QTransform transform;
-    QPoint center = painter->viewport().center();
-    transform.translate(center.x(), center.y());
-    transform.translate(tan(huddata->roll) * (pitch_deg * pixstep), pitch_deg * pixstep);
-    transform.rotate(-rad2deg(huddata->roll));
-    painter->setTransform(transform);
+    QPoint center;
 
+    center = painter->window().center();
+    transform.translate(center.x(), center.y());
+    qreal delta_y = alpha * (pixstep / degstep);
+    qreal delta_x = tan(huddata->roll) * delta_y;
+
+    transform.translate(delta_x, delta_y);
+    transform.rotate(-rad2deg(huddata->roll));
+
+    painter->setTransform(transform);
     drawpitchlines(painter, degstep, pixstep);
     drawwings(painter, color);
 

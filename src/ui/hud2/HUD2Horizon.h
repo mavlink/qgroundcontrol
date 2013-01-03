@@ -24,22 +24,22 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
+    qreal rad2deg(float);
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
     void drawwings(QPainter *painter, QColor color);
-    qreal rad2deg(float);
 
     HUD2PitchLine pitchline;
-    int pitchstep_pix;  // pixels between pitch lines (for internal use only)
-    int pitchstep_deg;  // degrees between pitch lines
-    int pitchcount; // how many pitch lines can be fitted on screen
+    int degstep;    // vertical screen capacity in degrees
+    qreal pixstep;  // pixels between two lines
+    int pitchcount; // how many pitch lines can be fitted on screen (approximately)
 
     HUD2Crosshair crosshair;
 
     int gapscale; /* space between right and left parts */
     HUD2data *huddata;
     QPen pen;
-    QLine left;
-    QLine right;
+    QLine leftwing;
+    QLine rightwing;
 };
 
 #endif // HUDHORIZON_H
