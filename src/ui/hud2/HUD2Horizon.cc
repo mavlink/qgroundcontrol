@@ -5,10 +5,10 @@
 
 HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    pitchline(&this->gapscale, parent),
-    crosshair(&this->gapscale, parent)
+    pitchline(&this->gapscale, this),
+    crosshair(&this->gapscale, this),
+    huddata(huddata)
 {
-    this->huddata = huddata;
     this->gapscale = 13;
     this->pitchcount = 4;
     this->degstep = 5;

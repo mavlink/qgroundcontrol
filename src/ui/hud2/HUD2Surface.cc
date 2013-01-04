@@ -43,7 +43,8 @@
 #include "HUD2Painter.h"
 
 HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, QWidget *parent)
-    : QWidget(parent), hudpainter(hudpainter)
+    : QWidget(parent),
+      hudpainter(hudpainter)
 {
     QPalette p = this->palette();
     p.setColor(QPalette::Window, QColor(0, 40, 65));

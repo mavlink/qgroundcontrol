@@ -43,9 +43,9 @@
 #include "HUD2Painter.h"
 
 HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(HUD2Painter *hudpainter, QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+      hudpainter(hudpainter)
 {
-    this->hudpainter = hudpainter;
     setAutoFillBackground(false);
 }
 

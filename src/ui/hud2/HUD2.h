@@ -87,6 +87,7 @@ public slots:
     virtual void setActiveUAS(UASInterface* uas);
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
+    void updateGlobalPosition(UASInterface*,double,double,double,quint64);
 
 signals:
     //void visibilityChanged(bool visible);

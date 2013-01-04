@@ -1,10 +1,11 @@
 #include <QColor>
+
 #include "HUD2Painter.h"
 
 HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
-    horizon(huddata, parent),
-    altimeter(this)
+    horizon(huddata, this),
+    altimeter(this, 20, 25, 25)
 {
     this->huddata = huddata;
 
@@ -22,7 +23,7 @@ void HUD2Painter::paint(QPainter *painter)
 
     yaw.paint(painter, defaultColor);
     horizon.paint(painter, defaultColor);
-    altimeter.paint(painter, 10);
+    altimeter.paint(painter, huddata->alt);
 
     emit paintComplete();
 }

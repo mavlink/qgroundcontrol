@@ -2,9 +2,9 @@
 #include "HUD2Crosshair.h"
 
 HUD2Crosshair::HUD2Crosshair(const int *gapscale, QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent),
+    gapscale(gapscale)
 {
-    this->gapscale = gapscale;
 }
 
 void HUD2Crosshair::updateGeometry(const QSize *size){

@@ -40,7 +40,8 @@ private:
     QFont numberFont;
 
     QPen *handPens;     // array with pens for dial hands
-    qreal *handScales;  // scales array for _values_ of hands
+    QLine *handLines;     // array with pens for dial hands
+    qreal *handScales;  // scales array for _values_ of hands relative to full turn
 };
 
 #endif // HUD2DIAL_H

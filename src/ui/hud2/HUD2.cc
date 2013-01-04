@@ -120,7 +120,6 @@ void HUD2::togglerenderer(void)
     }
 }
 
-
 void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
     Q_UNUSED(uas);
@@ -133,6 +132,15 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
         repaint();
         //qDebug() << "received values: " << roll << pitch << yaw;
     }
+}
+
+void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon, double altitude, quint64 timestamp)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    huddata.lat = lat;
+    huddata.lon = lon;
+    huddata.alt = altitude;
 }
 
 /**
