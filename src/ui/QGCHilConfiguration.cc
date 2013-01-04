@@ -24,6 +24,14 @@ QGCHilConfiguration::~QGCHilConfiguration()
 
 void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
 {
+    //clean up
+    QLayoutItem *child;
+    while ((child = ui->simulatorConfigurationLayout->takeAt(0)) != 0)
+    {
+      delete child->widget();
+      delete child;
+    }
+
     if(1 == index)
     {
         // Ensure the sim exists and is disabled
