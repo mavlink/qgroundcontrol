@@ -24,7 +24,6 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
-    qreal rad2deg(float);
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
     void drawwings(QPainter *painter, QColor color);
 

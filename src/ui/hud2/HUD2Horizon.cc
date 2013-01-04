@@ -1,5 +1,7 @@
 #include <QtGui>
+
 #include "HUD2Horizon.h"
+#include "HUD2Math.h"
 
 HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
@@ -79,7 +81,7 @@ void HUD2Horizon::paint(QPainter *painter, QColor color){
     painter->save();
 
     // now perform complex transfomation of painter
-    qreal alpha   = rad2deg(huddata->pitch);
+    qreal alpha = rad2deg(huddata->pitch);
 
     QTransform transform;
     QPoint center;
@@ -101,8 +103,4 @@ void HUD2Horizon::paint(QPainter *painter, QColor color){
 
 void HUD2Horizon::setColor(QColor color){
     pen.setColor(color);
-}
-
-qreal HUD2Horizon::rad2deg(float rad){
-    return rad * (180.0 / M_PI);
 }

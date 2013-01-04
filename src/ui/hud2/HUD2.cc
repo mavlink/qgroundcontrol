@@ -39,6 +39,15 @@
 ****************************************************************************/
 
 /*
+ * Convetions:
+ *
+ * - all outer dimensions specified in percents of widget sizes (height,
+ *   width or diagonal). Type is qreal.
+ * - point with coordinates (0;0) is center of widget.
+ * - all classes use their own internal cached values in pixels.
+ */
+
+/*
 TODO:
 */
 

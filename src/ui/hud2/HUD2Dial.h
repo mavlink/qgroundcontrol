@@ -10,9 +10,8 @@ class HUD2Dial : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Dial(QWidget *parent = 0,
-                      int rscale = 10, int xscale = 80, int yscale = 80, int marks = 10,
-                      int markStep = 1, int hands = 3);
+    explicit HUD2Dial(QWidget *parent = 0, qreal r = 10, qreal x = 10, qreal y = 10,
+                      int marks = 10, int markStep = 1, int hands = 3);
     void paint(QPainter *painter, qreal value);
 
 signals:
@@ -23,15 +22,15 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
-    int rscale;         // radius = h / rscale
-    int r;
-    int xscale;         // center x coordinate in percents (0..100)
-    int x;
-    int yscale;         // center y coordinate in percents (0..100)
-    int y;
-    int marks;          // count of marks with numbers
-    int markStep;       // step between marks' values
-    int hands;          // total number of hands
+    qreal r; // radius
+    int _r;
+    qreal x; // center x coordinate in percents (0..100)
+    int _x;
+    qreal y; // center y coordinate in percents (0..100)
+    int _y;
+    int marks; // count of marks with numbers
+    int markStep; // step between marks' values
+    int hands; // total number of hands
 
     QPen dialPen;       // dial circle
     QPen markPen;       // mark numbers
@@ -41,7 +40,7 @@ private:
     QFont numberFont;
 
     QPen *handPens;     // array with pens for dial hands
-    qreal *handScales;  // scales vor _values_ of hands
+    qreal *handScales;  // scales array for _values_ of hands
 };
 
 #endif // HUD2DIAL_H
