@@ -52,8 +52,10 @@ void HUD2Dial::updateGeometry(const QSize *size){
     int gap = -markSize / 3; // additional gap between number and dial circle
     markFont.setPixelSize(markSize);
     for (int i=0; i<marks/markStep; i+=markStep){
+        // convert numbers to string
         markStrings[i] = QString::number(i);
 
+        // move rectangles for text in need positionsb
         markRects[i].setSize(QSize(markSize, markSize));
         qreal phi = i * (2 * M_PI / marks) - M_PI/2;
         qreal x = cos(phi) * (_r - markSize - gap);

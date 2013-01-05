@@ -9,7 +9,7 @@ int percent2pix_w(const QSize *size, qreal percent){
 }
 
 int percent2pix_d(const QSize *size, qreal percent){
-    qreal d;
+    qreal d; // diagonal
     d = sqrt(size->width() * size->width() + size->height() * size->height());
     return round(percent * d / 100.0);
 }

@@ -32,6 +32,8 @@ HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
                                    10, 1, 3,
                                    handPens, handScales,
                                    this);
+    delete[] handPens;
+    delete[] handScales;
 
     defaultColor = QColor(70, 255, 70);
     warningColor = Qt::yellow;
