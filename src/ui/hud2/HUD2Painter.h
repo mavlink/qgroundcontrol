@@ -32,9 +32,9 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
-    HUD2YawIndicator yaw;
-    HUD2Horizon horizon;
-    HUD2Dial altimeter;
+    HUD2YawIndicator *yaw;
+    HUD2Horizon *horizon;
+    HUD2Dial *altimeter;
     HUD2data *huddata;
 
     // HUD colors

@@ -2,12 +2,36 @@
 
 #include "HUD2Painter.h"
 
+
 HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
-    QWidget(parent),
-    horizon(huddata, this),
-    altimeter(this, 20, 25, 25)
+    QWidget(parent)
 {
     this->huddata = huddata;
+
+    this->horizon = new HUD2Horizon(huddata, this);
+    this->yaw = new HUD2YawIndicator();
+
+    // create some stuff for altimeter
+    int hands = 3;
+    QPen *handPens = new QPen[hands];
+    qreal *handScales = new qreal[hands];
+
+    handPens[0].setColor(Qt::white);
+    handPens[0].setWidth(6);
+    handScales[0] = 1000;
+
+    handPens[1].setColor(Qt::green);
+    handPens[1].setWidth(3);
+    handScales[1] = 100;
+
+    handPens[2].setColor(Qt::red);
+    handPens[2].setWidth(1);
+    handScales[2] = 10;
+
+    this->altimeter = new HUD2Dial(20, 25, 25,
+                                   10, 1, 3,
+                                   handPens, handScales,
+                                   this);
 
     defaultColor = QColor(70, 255, 70);
     warningColor = Qt::yellow;
@@ -21,15 +45,15 @@ void HUD2Painter::paint(QPainter *painter)
     QRect hudrect = painter->window();
     painter->translate(hudrect.center());
 
-    yaw.paint(painter, defaultColor);
-    horizon.paint(painter, defaultColor);
-    altimeter.paint(painter, huddata->alt);
+    yaw->paint(painter, defaultColor);
+    horizon->paint(painter, defaultColor);
+    altimeter->paint(painter, huddata->alt);
 
     emit paintComplete();
 }
 
 void HUD2Painter::updateGeometry(const QSize *size){
-    yaw.updatesize(size);
-    horizon.updateGeometry(size);
-    altimeter.updateGeometry(size);
+    yaw->updatesize(size);
+    horizon->updateGeometry(size);
+    altimeter->updateGeometry(size);
 }

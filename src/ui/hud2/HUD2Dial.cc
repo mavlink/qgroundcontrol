@@ -1,8 +1,10 @@
 #include "HUD2Dial.h"
 #include "HUD2Math.h"
 
-HUD2Dial::HUD2Dial(QWidget *parent, qreal r, qreal x, qreal y,
-                   int marks, int markStep, int hands)
+HUD2Dial::HUD2Dial(qreal r, qreal x, qreal y,
+                   int marks, int markStep, int hands,
+                   QPen *handPens, qreal *handScales,
+                   QWidget *parent)
     : QWidget(parent),
       r(r),
       x(x),
@@ -11,22 +13,21 @@ HUD2Dial::HUD2Dial(QWidget *parent, qreal r, qreal x, qreal y,
       markStep(markStep),
       hands(hands)
 {
-    handPens = new QPen[hands];
-    handLines = new QLine[hands];
-    handScales = new qreal[hands];
+    // marks
+    this->markRects = new QRect[marks];
+    this->markStrings = new QString[marks];
+    this->markPen.setColor(Qt::white);
 
-    handPens[0].setColor(Qt::white);
-    handPens[0].setWidth(6);
-    handScales[0] = 1000;
+    // hands
+    this->handLines  = new QLine[hands]; // will be inited on size change
+    this->handPens   = new QPen[hands];
+    this->handScales = new qreal[hands];
+    for (int i=0; i<hands; i++){
+        this->handPens[i] = handPens[i];
+        this->handScales[i] = handScales[i];
+    }
 
-    handPens[1].setColor(Qt::green);
-    handPens[1].setWidth(3);
-    handScales[1] = 100;
-
-    handPens[2].setColor(Qt::red);
-    handPens[2].setWidth(1);
-    handScales[2] = 10;
-
+    // other
     this->dialPen.setColor(Qt::green);
     this->dialPen.setWidth(0);
 }
@@ -37,39 +38,60 @@ void HUD2Dial::updateGeometry(const QSize *size){
     _y = percent2pix_h(size, y);
     _x = percent2pix_w(size, x);
 
+    // hands
     handLines[0] = QLine(0, 0, 0, -_r/2);
     handLines[1] = QLine(0, 0, 0, -(3*_r)/4 );
     handLines[2] = QLine(0, 0, 0, -_r);
+
+    // marks
+    const int markSizeMin = 8;
+    int markSize = _r / 4;
+    if (markSize < markSizeMin)
+        markSize = markSizeMin;
+
+    int gap = -markSize / 3; // additional gap between number and dial circle
+    markFont.setPixelSize(markSize);
+    for (int i=0; i<marks/markStep; i+=markStep){
+        markStrings[i] = QString::number(i);
+
+        markRects[i].setSize(QSize(markSize, markSize));
+        qreal phi = i * (2 * M_PI / marks) - M_PI/2;
+        qreal x = cos(phi) * (_r - markSize - gap);
+        qreal y = sin(phi) * (_r - markSize - gap);
+        markRects[i].moveCenter(QPoint(x, y));
+    }
+
+    //other
 }
 
 void HUD2Dial::paint(QPainter *painter, qreal value){
     painter->save();
     painter->setPen(dialPen);
-    painter->drawEllipse(QPoint(_x, _y), _r, _r);
-
-    // hands
+    painter->drawEllipse(QPoint(_x, _y), _r, _r); // dial circle
     painter->translate(_x, _y);
 
+    // marks
     painter->save();
-    painter->rotate(360*value / handScales[0]);
-    painter->setPen(handPens[0]);
-    painter->drawLine(handLines[0]);
+    painter->setPen(markPen);
+    painter->setFont(markFont);
+    for (int i=0; i<marks/markStep; i+=markStep){
+        painter->drawText(markRects[i], Qt::AlignCenter, markStrings[i]);
+    }
     painter->restore();
 
-    painter->save();
-    painter->rotate(360*value / handScales[1]);
-    painter->setPen(handPens[1]);
-    painter->drawLine(handLines[1]);
-    painter->restore();
+    // hands
+    for (int i=0; i < hands; i++){
+        painter->save();
+        painter->rotate(360*value / handScales[i]);
+        painter->setPen(handPens[i]);
+        painter->drawLine(handLines[i]);
+        painter->restore();
+    }
 
-    painter->save();
-    painter->rotate(360*value / handScales[2]);
-    painter->setPen(handPens[2]);
-    painter->drawLine(handLines[2]);
-    painter->restore();
-
+    //other
     painter->restore();
 }
 
 void HUD2Dial::setColor(QColor color){
+    Q_UNUSED(color);
 }
