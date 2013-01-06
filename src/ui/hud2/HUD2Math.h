@@ -5,6 +5,13 @@
 #include <QSize>
 #include <QLine>
 
+#define putinrange(v, vmin, vmax){                                            \
+  if (v <= vmin)                                                              \
+    v = vmin;                                                                 \
+  else if (v >= vmax)                                                         \
+    v = vmax;                                                                 \
+}
+
 int percent2pix_h(const QSize *size, qreal percent);
 int percent2pix_w(const QSize *size, qreal percent);
 int percent2pix_d(const QSize *size, qreal percent);
