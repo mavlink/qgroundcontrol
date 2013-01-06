@@ -7,11 +7,11 @@
 
 #include "HUD2Data.h"
 
-class HUD2PitchLine : public QWidget
+class HUD2HorizonPitchLine : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2PitchLine(const int *gapscale, QWidget *parent);
+    explicit HUD2HorizonPitchLine(const int *gapscale, QWidget *parent);
     void paint(QPainter *painter, int deg);
 
 signals:

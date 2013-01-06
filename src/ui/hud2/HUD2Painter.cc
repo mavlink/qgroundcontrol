@@ -9,7 +9,7 @@ HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     this->huddata = huddata;
 
     this->horizon = new HUD2Horizon(huddata, this);
-    this->yaw = new HUD2YawIndicator();
+    this->yaw = new HUD2HorizonYawIndicator();
 
     // create some stuff for altimeter
     int hands = 3;
@@ -28,7 +28,7 @@ HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
     handPens[2].setWidth(1);
     handScales[2] = 10;
 
-    this->altimeter = new HUD2Dial(20, 25, 25,
+    this->altimeter = new HUD2Dial(15, 25, -25,
                                    10, 1, 3,
                                    handPens, handScales,
                                    this);

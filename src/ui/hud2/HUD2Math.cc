@@ -17,3 +17,34 @@ int percent2pix_d(const QSize *size, qreal percent){
 qreal rad2deg(float rad){
     return rad * (180.0 / M_PI);
 }
+
+qreal deg2rad(float deg){
+    return (deg * M_PI) / 180.0;
+}
+
+/**
+ * @brief rotatePoint
+ * @param phi           angle in degrees
+ * @param p
+ * @return
+ */
+QPoint rotatePoint(qreal phi, QPoint p){
+    qreal x = p.x();
+    qreal y = p.y();
+    qreal x_, y_;
+
+    x_ = round(x * cos(deg2rad(phi)) - y * sin(deg2rad(phi)));
+    y_ = round(x * sin(deg2rad(phi)) + y * cos(deg2rad(phi)));
+
+    return QPoint(x_, y_);
+}
+
+/**
+ * @brief rotateLine
+ * @param phi           angle in degrees
+ * @param line
+ * @return
+ */
+QLine rotateLine(qreal phi, QLine line){
+    return QLine(rotatePoint(phi, line.p1()), rotatePoint(phi, line.p2()));
+}

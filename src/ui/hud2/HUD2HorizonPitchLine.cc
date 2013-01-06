@@ -1,7 +1,7 @@
 #include <QtGui>
 #include "HUD2HorizonPitchLine.h"
 
-HUD2PitchLine::HUD2PitchLine(const int *gapscale, QWidget *parent) :
+HUD2HorizonPitchLine::HUD2HorizonPitchLine(const int *gapscale, QWidget *parent) :
     QWidget(parent)
 {
     this->gapscale = gapscale;
@@ -22,7 +22,7 @@ HUD2PitchLine::HUD2PitchLine(const int *gapscale, QWidget *parent) :
  * @param h
  * @return rectangular suitable for text placing
  */
-QRect HUD2PitchLine::update_geometry_lines_pos(int gap, int w, int h){
+QRect HUD2HorizonPitchLine::update_geometry_lines_pos(int gap, int w, int h){
 
     // Positive pitch indicator:
     //
@@ -52,7 +52,7 @@ QRect HUD2PitchLine::update_geometry_lines_pos(int gap, int w, int h){
  * @param lines_array
  * @return rectangular suitable for text placing
  */
-QRect HUD2PitchLine::update_geometry_lines_neg(int gap, int w, int h){
+QRect HUD2HorizonPitchLine::update_geometry_lines_neg(int gap, int w, int h){
 
     // Negative pitch indicator:
     //
@@ -102,7 +102,7 @@ QRect HUD2PitchLine::update_geometry_lines_neg(int gap, int w, int h){
  * @brief HUD2PitchLine::updateGeometry
  * @param size
  */
-void HUD2PitchLine::updateGeometry(const QSize *size){
+void HUD2HorizonPitchLine::updateGeometry(const QSize *size){
     int text_size = 25;
     int w = size->width()  / size_wscale;
     int h = size->height() / size_hscale;
@@ -125,7 +125,7 @@ void HUD2PitchLine::updateGeometry(const QSize *size){
  * @param painter
  * @param deg
  */
-void HUD2PitchLine::draw_text(QPainter *painter, int deg){
+void HUD2HorizonPitchLine::draw_text(QPainter *painter, int deg){
     painter->save();
     painter->setPen(textPen);
     painter->setFont(textFont);
@@ -145,7 +145,7 @@ void HUD2PitchLine::draw_text(QPainter *painter, int deg){
  * @param painter
  * @param deg
  */
-void HUD2PitchLine::paint(QPainter *painter, int deg){    
+void HUD2HorizonPitchLine::paint(QPainter *painter, int deg){
     if (deg > 0)
         painter->drawLines(lines_pos, sizeof(lines_pos)/sizeof(QLine));
     else
@@ -158,7 +158,7 @@ void HUD2PitchLine::paint(QPainter *painter, int deg){
  * @brief HUD2PitchLine::setColor
  * @param color
  */
-void HUD2PitchLine::setColor(QColor color){
+void HUD2HorizonPitchLine::setColor(QColor color){
     pen.setColor(color);
 }
 

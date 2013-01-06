@@ -5,11 +5,11 @@
 #include <QPen>
 #include <QLine>
 
-class HUD2Crosshair : public QWidget
+class HUD2HorizonCrosshair : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Crosshair(const int *gapscale, QWidget *parent);
+    explicit HUD2HorizonCrosshair(const int *gapscale, QWidget *parent);
     void paint(QPainter *painter, QColor color);
 
 signals:

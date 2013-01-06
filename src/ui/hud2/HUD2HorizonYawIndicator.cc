@@ -9,7 +9,7 @@
 //   .......
 //
 
-HUD2YawIndicator::HUD2YawIndicator()
+HUD2HorizonYawIndicator::HUD2HorizonYawIndicator()
 {
     scale = 15;
 
@@ -22,7 +22,7 @@ HUD2YawIndicator::HUD2YawIndicator()
     poly.setPoint(3, 0, 0);
 }
 
-void HUD2YawIndicator::updatesize(const QSize *size){
+void HUD2HorizonYawIndicator::updatesize(const QSize *size){
     int h = size->height() / scale;
     int clearance = h / 2;
 
@@ -35,12 +35,12 @@ void HUD2YawIndicator::updatesize(const QSize *size){
     pen.setWidth(2);
 }
 
-void HUD2YawIndicator::paint(QPainter *painter, QColor color){
+void HUD2HorizonYawIndicator::paint(QPainter *painter, QColor color){
     pen.setColor(color);
     painter->setPen(pen);
-    painter->drawPolyline(poly);
+//    painter->drawPolyline(poly);
 }
 
-void HUD2YawIndicator::setColor(QColor color){
+void HUD2HorizonYawIndicator::setColor(QColor color){
     this->color = color;
 }

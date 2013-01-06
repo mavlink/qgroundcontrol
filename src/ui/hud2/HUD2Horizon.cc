@@ -7,11 +7,12 @@ HUD2Horizon::HUD2Horizon(HUD2data *huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gapscale, this),
     crosshair(&this->gapscale, this),
+    rollindicator(huddata, this),
     huddata(huddata)
 {
     this->gapscale = 13;
-    this->pitchcount = 4;
-    this->degstep = 5;
+    this->pitchcount = 5;
+    this->degstep = 10;
 }
 
 void HUD2Horizon::updateGeometry(const QSize *size){
@@ -29,6 +30,9 @@ void HUD2Horizon::updateGeometry(const QSize *size){
 
     // crosshair
     crosshair.updateGeometry(size);
+
+    // roll indicator
+    rollindicator.updateGeometry(size);
 }
 
 /**
@@ -75,6 +79,9 @@ void HUD2Horizon::drawwings(QPainter *painter, QColor color){
  * @param color
  */
 void HUD2Horizon::paint(QPainter *painter, QColor color){
+
+    // roll indicator
+    rollindicator.paint(painter, color);
 
     //
     crosshair.paint(painter, color);

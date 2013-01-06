@@ -8,6 +8,7 @@
 #include "HUD2Data.h"
 #include "HUD2HorizonPitchLine.h"
 #include "HUD2HorizonCrosshair.h"
+#include "HUD2HorizonRollIndicator.h"
 
 class HUD2Horizon : public QWidget
 {
@@ -27,12 +28,13 @@ private:
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
     void drawwings(QPainter *painter, QColor color);
 
-    HUD2PitchLine pitchline;
+    HUD2HorizonPitchLine pitchline;
     int degstep;    // vertical screen capacity in degrees
     qreal pixstep;  // pixels between two lines
     int pitchcount; // how many pitch lines can be fitted on screen (approximately)
 
-    HUD2Crosshair crosshair;
+    HUD2HorizonCrosshair crosshair;
+    HUD2HorizonRollIndicator rollindicator;
 
     int gapscale; /* space between right and left parts */
     HUD2data *huddata;
