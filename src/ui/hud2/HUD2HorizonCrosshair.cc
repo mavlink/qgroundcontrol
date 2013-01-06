@@ -1,5 +1,5 @@
 #include <QtGui>
-#include "HUD2Crosshair.h"
+#include "HUD2HorizonCrosshair.h"
 
 HUD2Crosshair::HUD2Crosshair(const int *gapscale, QWidget *parent) :
     QWidget(parent),

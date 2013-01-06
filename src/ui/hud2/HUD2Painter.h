@@ -6,7 +6,7 @@
 #include <QFont>
 #include <QPen>
 
-#include "HUD2YawIndicator.h"
+#include "HUD2HorizonYawIndicator.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
 #include "HUD2Dial.h"

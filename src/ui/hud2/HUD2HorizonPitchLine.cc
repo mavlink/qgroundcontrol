@@ -1,5 +1,5 @@
 #include <QtGui>
-#include "HUD2PitchLine.h"
+#include "HUD2HorizonPitchLine.h"
 
 HUD2PitchLine::HUD2PitchLine(const int *gapscale, QWidget *parent) :
     QWidget(parent)

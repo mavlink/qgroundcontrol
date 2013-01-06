@@ -1,6 +1,6 @@
 #include <QColor>
 
-#include "HUD2YawIndicator.h"
+#include "HUD2HorizonYawIndicator.h"
 
 // YAW INDICATOR
 //

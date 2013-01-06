@@ -6,8 +6,8 @@
 #include <QLine>
 
 #include "HUD2Data.h"
-#include "HUD2PitchLine.h"
-#include "HUD2Crosshair.h"
+#include "HUD2HorizonPitchLine.h"
+#include "HUD2HorizonCrosshair.h"
 
 class HUD2Horizon : public QWidget
 {
