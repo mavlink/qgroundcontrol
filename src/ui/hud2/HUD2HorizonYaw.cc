@@ -28,7 +28,7 @@ HUD2HorizonYaw::HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent) :
     textRects  = new QRect[thickLinesCnt];
     textStrings = new QString[thickLinesCnt];
 
-    opaqueBackground = true;
+    opaqueBackground = false;
 }
 
 void HUD2HorizonYaw::updateGeometry(const QSize *size){

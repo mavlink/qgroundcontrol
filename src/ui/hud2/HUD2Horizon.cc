@@ -13,7 +13,7 @@ HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
 {
     this->gapscale = 13;
     this->pitchcount = 5;
-    this->degstep = 30;
+    this->degstep = 10;
 }
 
 void HUD2Horizon::updateGeometry(const QSize *size){
