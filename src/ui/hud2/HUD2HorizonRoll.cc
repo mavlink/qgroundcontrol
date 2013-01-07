@@ -10,7 +10,7 @@ HUD2HorizonRoll::HUD2HorizonRoll(const HUD2Data *huddata, QWidget *parent) :
     huddata(huddata)
 {
     this->thickPen = QPen(Qt::green);
-    this->thickPen.setWidth(4);
+    this->thickPen.setWidth(3);
 
     this->thinPen = QPen(Qt::green);
     this->thinPen.setWidth(1);

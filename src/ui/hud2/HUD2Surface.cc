@@ -46,9 +46,10 @@ HUD2PaintSurface::HUD2PaintSurface(HUD2Painter *hudpainter, QWidget *parent)
     : QWidget(parent),
       hudpainter(hudpainter)
 {
-    QPalette p = this->palette();
-    p.setColor(QPalette::Window, QColor(0, 40, 65));
-    setPalette(p);
+    QPalette p(palette());
+    p.setColor(QPalette::Background, Qt::black);
+    this->setAutoFillBackground(true);
+    this->setPalette(p);
 }
 
 void HUD2PaintSurface::paintEvent(QPaintEvent *event)

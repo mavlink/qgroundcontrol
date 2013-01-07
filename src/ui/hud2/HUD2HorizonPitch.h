@@ -36,8 +36,6 @@ private:
     QLine lines_pos[4];
     QLine lines_neg[8];
 
-    void update_text(const QRect rect);
-    void draw_text(QPainter *painter, int deg);
     QPen textPen;
     QFont textFont;
     QRect textRectPos;

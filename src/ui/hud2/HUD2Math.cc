@@ -55,11 +55,28 @@ QLine rotateLine(qreal phi, QLine line){
  * @return
  */
 qreal wrap_360(qreal angle){
-  if (angle > 360)
-    angle -= 360;
-  else if (angle < 0)
-    angle += 360;
-  return angle;
+    if (angle > 360)
+        angle -= 360;
+    else if (angle < 0)
+        angle += 360;
+    else if (angle == 360)
+        angle = 0;
+    return angle;
+}
+
+/**
+ * @brief wrap_360
+ * @param angle
+ * @return
+ */
+int wrap_360(int angle){
+    if (angle > 360)
+        angle -= 360;
+    else if (angle < 0)
+        angle += 360;
+    else if (angle == 360)
+        angle = 0;
+    return angle;
 }
 
 /**

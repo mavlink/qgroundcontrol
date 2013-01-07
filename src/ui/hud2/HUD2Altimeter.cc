@@ -23,8 +23,8 @@ HUD2Altimeter::HUD2Altimeter(const HUD2Data *huddata, QWidget *parent) :
     handPens[2].setWidth(1);
     handScales[2] = 10;
 
-    this->dial = new HUD2Dial(15, 25, -25,
-                              10, 1, 3,
+    this->dial = new HUD2Dial(15, -40, 35,
+                              10, 1,   3,
                               handPens, handScales,
                               this);
     delete[] handPens;
@@ -37,9 +37,7 @@ void HUD2Altimeter::updateGeometry(const QSize *size){
 
 void HUD2Altimeter::paint(QPainter *painter, QColor color){
     Q_UNUSED(color);
-    painter->save();
     dial->paint(painter, huddata->alt);
-    painter->restore();
 }
 
 void HUD2Altimeter::setColor(QColor color){

@@ -13,7 +13,7 @@ HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
 {
     this->gapscale = 13;
     this->pitchcount = 5;
-    this->degstep = 10;
+    this->degstep = 30;
 }
 
 void HUD2Horizon::updateGeometry(const QSize *size){
@@ -84,9 +84,6 @@ void HUD2Horizon::drawwings(QPainter *painter, QColor color){
  */
 void HUD2Horizon::paint(QPainter *painter, QColor color){
 
-    // yaw
-    yaw.paint(painter, color);
-
     // roll indicator
     rollindicator.paint(painter, color);
 
@@ -113,6 +110,9 @@ void HUD2Horizon::paint(QPainter *painter, QColor color){
     drawwings(painter, color);
 
     painter->restore();
+
+    // yaw
+    yaw.paint(painter, color);
 }
 
 void HUD2Horizon::setColor(QColor color){

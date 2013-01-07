@@ -21,12 +21,21 @@ public slots:
     void updateGeometry(const QSize *size);
     
 private:
-    QPen thickPen;
-    QPen thinPen;
-    QPen arrowPen;
-    QLineF thickLines[8];
-    QLineF thinLines[sizeof(thickLines) / sizeof(thickLines[0])];
-    QRect  rect;
+    QPen   thickPen;
+    QPen   thinPen;
+    QPen   arrowPen;
+    QPen   textPen;
+    QFont  textFont;
+    QLineF *thickLines;
+    int    thickLinesCnt;
+    QLineF *thinLines;
+    int    thinLinesCnt;
+    QRect  *textRects;
+    QString *textStrings;
+    int    overlap; // how many "spare" scratches have on the ends
+    QRect  mainRect;
+    QRect  clipRect;
+    bool   opaqueBackground;
     QLine  arrowLines[2];
 
     qreal scale_interval_pix;

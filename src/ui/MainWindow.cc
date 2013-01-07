@@ -266,7 +266,6 @@ MainWindow::~MainWindow()
         delete joystick;
         joystick = NULL;
     }
-/*
     // Get and delete all dockwidgets and contained
     // widgets
     QObjectList childList(this->children());
@@ -291,7 +290,6 @@ MainWindow::~MainWindow()
         }
     }
     // Delete all UAS objects
-    */
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)

@@ -13,6 +13,9 @@ HUD2HorizonPitch::HUD2HorizonPitch(const int *gapscale, QWidget *parent) :
     this->text_size_min = 8;
 
     this->textPen.setColor(Qt::green);
+
+    pen.setColor(Qt::green);
+    pen.setWidth(2);
 }
 
 /**
@@ -121,37 +124,27 @@ void HUD2HorizonPitch::updateGeometry(const QSize *size){
 }
 
 /**
- * @brief HUD2PitchLine::draw_text
- * @param painter
- * @param deg
- */
-void HUD2HorizonPitch::draw_text(QPainter *painter, int deg){
-    painter->save();
-    painter->setPen(textPen);
-    painter->setFont(textFont);
-    if (deg > 0){
-        //painter->fillRect(textRectPos, Qt::red);
-        painter->drawText(textRectPos, Qt::AlignCenter, QString::number(deg));
-    }
-    else{
-        //painter->fillRect(textRectNeg, Qt::red);
-        painter->drawText(textRectNeg, Qt::AlignCenter, QString::number(deg));
-    }
-    painter->restore();
-}
-
-/**
  * @brief HUD2PitchLine::paint
  * @param painter
  * @param deg
  */
 void HUD2HorizonPitch::paint(QPainter *painter, int deg){
+    painter->save();
+
+    painter->setPen(pen);
     if (deg > 0)
         painter->drawLines(lines_pos, sizeof(lines_pos)/sizeof(QLine));
     else
         painter->drawLines(lines_neg, sizeof(lines_neg)/sizeof(QLine));
 
-    draw_text(painter, deg);
+    painter->setPen(textPen);
+    painter->setFont(textFont);
+    if (deg > 0)
+        painter->drawText(textRectPos, Qt::AlignCenter, QString::number(deg));
+    else
+        painter->drawText(textRectNeg, Qt::AlignCenter, QString::number(deg));
+
+    painter->restore();
 }
 
 /**

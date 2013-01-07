@@ -16,74 +16,109 @@ HUD2HorizonYaw::HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent) :
     this->arrowPen = QPen(Qt::green);
     this->arrowPen.setWidth(2);
 
+    textPen = QPen(Qt::green);
+    textFont = QFont();
+
+    overlap = 8;
     scale_interval_deg = 5;
+    thickLinesCnt = 360 / (2 * scale_interval_deg) + 2*overlap;
+    thinLinesCnt  = 360 / (2 * scale_interval_deg) + 2*overlap;
+    thickLines = new QLineF[thickLinesCnt];
+    thinLines  = new QLineF[thinLinesCnt];
+    textRects  = new QRect[thickLinesCnt];
+    textStrings = new QString[thickLinesCnt];
+
+    opaqueBackground = true;
 }
 
 void HUD2HorizonYaw::updateGeometry(const QSize *size){
-    int w = size->width() / 2;
-    int h = size->height() / 2;
-    int scratch_len = 20;
-    int n = sizeof(thickLines) / sizeof(thickLines[0]);
-    scale_interval_pix = w / (n + 2);
+/*
+  000      010      020
+   ||       ||       ||
+   ||   I   ||   I   ||
+(0;0)          /\
+
+*/
+    int i;
     qreal x;
+    int scratch_len = size->height() / 40;
+    int number_h = (scratch_len * 3 ) / 2;
+    putinrange(number_h, 8, 50);
+    textFont.setPixelSize(number_h);
+    mainRect.setWidth(size->width() / 3);
+    mainRect.setHeight(scratch_len + number_h);
+    clipRect = mainRect;
+    clipRect.translate(-clipRect.width()/2, -clipRect.height());
+    scale_interval_pix = mainRect.width() / 6;
 
-    for(int i=0; i<n; i++){
-        x = i * 2 * scale_interval_pix;
-        thickLines[i] = QLineF(x, 0, x, scratch_len);
-        thickLines[i].translate(0, -h);
+    for(i=0; i<thickLinesCnt; i++){
+        x = (i - overlap) * 2 * scale_interval_pix;
+        thickLines[i] = QLineF(x, 0, x, -scratch_len);
 
-        x += scale_interval_pix;
-        thinLines[i] = QLineF(x, scratch_len/2, x, scratch_len);
-        thinLines[i].translate(0, -h);
+        textRects[i]  = QRect(x, 0, x, -number_h);
+        textRects[i].setWidth(2 * scale_interval_pix);
+        textRects[i].translate(-textRects[i].width()/2, -scratch_len);
+
+        int deg = (i - overlap) * 2 * scale_interval_deg;
+        deg = wrap_360(deg);
+        textStrings[i] = QString::number(deg);
     }
-    rect = QRect(QPoint(0,0), QSize(w, scratch_len));
+    for(i=0; i<thinLinesCnt; i++){
+        x = i * 2 * scale_interval_pix + scale_interval_pix;
+        x -= overlap * 2 * scale_interval_pix;
+        thinLines[i] = QLineF(x, 0, x, -scratch_len/2);
+    }
 
     // arrow
     QPoint p0 = QPoint(0, 0); // top
     QPoint p1 = p0;
     QPoint p2 = p0;
-    p1.rx() += 20;
-    p1.ry() += 20;
-    p2.rx() -= 20;
-    p2.ry() += 20;
+    p1.rx() += scratch_len;
+    p1.ry() += scratch_len;
+    p2.rx() -= scratch_len;
+    p2.ry() += scratch_len;
     arrowLines[0] = QLine(p0, p1);
     arrowLines[1] = QLine(p0, p2);
-
-    arrowLines[0].translate(0, -h + scratch_len);
-    arrowLines[1].translate(0, -h + scratch_len);
 }
 
 void HUD2HorizonYaw::paint(QPainter *painter, QColor color){
     painter->save();
 
     Q_UNUSED(color);
-    int n = 0;
+    int n_arrow = 0;
+    int i;
 
-    n = sizeof(arrowLines) / sizeof(arrowLines[0]);
+    int y = painter->window().height()/2 - mainRect.height();
+    painter->translate(0, -y);
+
+    n_arrow = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
-    painter->drawLines(arrowLines, n);
+    painter->drawLines(arrowLines, n_arrow);
+    painter->setPen(textPen);
+    painter->setFont(textFont);
 
-    qreal yaw_deg   = wrap_360(rad2deg(huddata->yaw));
-    qreal delta_deg = modulusF(yaw_deg, scale_interval_deg);
-    qreal x = (delta_deg * scale_interval_pix) / scale_interval_deg;
+    qreal yaw_deg = wrap_360(rad2deg(huddata->yaw));
+    int deg = wrap_360(round(yaw_deg));
+    painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
 
-    painter->translate(x - scale_interval_pix - rect.width()/2, 0);
-    painter->fillRect(rect, Qt::red); // debug
+    qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 
-    int n_thick = sizeof(thickLines) / sizeof(thickLines[0]);
-    int n_thin = sizeof(thinLines) / sizeof(thinLines[0]);
+    if (opaqueBackground)
+        painter->eraseRect(clipRect);
+    painter->setClipRect(clipRect);
+
+    painter->translate(-x, 0);
 
     painter->setPen(thickPen);
-    if (delta_deg < scale_interval_deg)
-        painter->drawLines(&thickLines[1], n_thick - 1);
-    else
-        painter->drawLines(thickLines, n_thick-1);
+    painter->drawLines(thickLines, thickLinesCnt);
 
     painter->setPen(thinPen);
-    if (delta_deg < scale_interval_deg)
-        painter->drawLines(thinLines, n_thin-1);
-    else
-        painter->drawLines(thinLines, n_thin - 1);
+    painter->drawLines(thinLines, thinLinesCnt);
+
+    painter->setPen(textPen);
+    painter->setFont(textFont);
+    for(i=0; i<thickLinesCnt; i++)
+        painter->drawText(textRects[i], Qt::AlignCenter, textStrings[i]);
 
     painter->restore();
 }
