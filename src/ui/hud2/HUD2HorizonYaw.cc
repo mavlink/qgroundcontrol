@@ -43,7 +43,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize *size){
     qreal x;
     int scratch_len = size->height() / 40;
     int number_h = (scratch_len * 3 ) / 2;
-    putinrange(number_h, 8, 50);
+    clamp(number_h, 8, 50);
     textFont.setPixelSize(number_h);
     mainRect.setWidth(size->width() / 3);
     mainRect.setHeight(scratch_len + number_h);

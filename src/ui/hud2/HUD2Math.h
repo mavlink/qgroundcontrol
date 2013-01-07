@@ -5,7 +5,7 @@
 #include <QSize>
 #include <QLine>
 
-#define putinrange(v, vmin, vmax){                                            \
+#define clamp(v, vmin, vmax){                                            \
   if (v <= vmin)                                                              \
     v = vmin;                                                                 \
   else if (v >= vmax)                                                         \

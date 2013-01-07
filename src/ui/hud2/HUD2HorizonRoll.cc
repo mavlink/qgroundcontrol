@@ -21,10 +21,10 @@ HUD2HorizonRoll::HUD2HorizonRoll(const HUD2Data *huddata, QWidget *parent) :
 
 void HUD2HorizonRoll::updateGeometry(const QSize *size){
     int thick_scratch_len = size->height() / 40;
-    putinrange(thick_scratch_len, 4, 20);
+    clamp(thick_scratch_len, 4, 20);
 
     int thin_scratch_len = thick_scratch_len / 2;
-    putinrange(thin_scratch_len, 2, 10);
+    clamp(thin_scratch_len, 2, 10);
 
     int big_r = size->height() / 2;
     int small_r = big_r - thick_scratch_len;
