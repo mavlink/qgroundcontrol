@@ -63,16 +63,13 @@ void HUD2HorizonYaw::paint(QPainter *painter, QColor color){
     painter->setPen(arrowPen);
     painter->drawLines(arrowLines, n);
 
+    qreal yaw_deg   = wrap_360(rad2deg(huddata->yaw));
+    qreal delta_deg = modulusF(yaw_deg, scale_interval_deg);
+    qreal x = (delta_deg * scale_interval_pix) / scale_interval_deg;
 
-
-    qreal yaw_deg = wrap_360(rad2deg(huddata->yaw));
-    qreal delta_deg = yaw_deg / (2*scale_interval_deg);
-    delta_deg = floor(delta_deg);
-    delta_deg = yaw_deg - delta_deg * 2 * scale_interval_deg;
-
-    qreal x = delta_deg * scale_interval_pix / scale_interval_deg;
     painter->translate(x - scale_interval_pix - rect.width()/2, 0);
-    painter->fillRect(rect, Qt::red);
+    painter->fillRect(rect, Qt::red); // debug
+
     int n_thick = sizeof(thickLines) / sizeof(thickLines[0]);
     int n_thin = sizeof(thinLines) / sizeof(thinLines[0]);
 

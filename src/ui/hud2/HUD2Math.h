@@ -20,5 +20,6 @@ qreal deg2rad(float deg);
 QPoint rotatePoint(qreal phi, QPoint p);
 QLine rotateLine(qreal phi, QLine line);
 qreal wrap_360(qreal angle);
+qreal modulusF(qreal dividend, qreal divisor);
 
 #endif // HUD2MATH_H

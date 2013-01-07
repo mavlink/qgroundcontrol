@@ -49,10 +49,26 @@ QLine rotateLine(qreal phi, QLine line){
     return QLine(rotatePoint(phi, line.p1()), rotatePoint(phi, line.p2()));
 }
 
+/**
+ * @brief wrap_360
+ * @param angle
+ * @return
+ */
 qreal wrap_360(qreal angle){
   if (angle > 360)
     angle -= 360;
   else if (angle < 0)
     angle += 360;
   return angle;
+}
+
+/**
+ * @brief modulusF
+ * @param x
+ * @param divider
+ * @return
+ */
+qreal modulusF(qreal dividend, qreal divisor){
+    qreal n = floor(dividend / divisor);
+    return dividend - n * divisor;
 }
