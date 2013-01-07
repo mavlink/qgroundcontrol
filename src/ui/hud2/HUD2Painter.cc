@@ -18,8 +18,7 @@ HUD2Painter::HUD2Painter(const HUD2Data *huddata, QWidget *parent) :
 
 void HUD2Painter::paint(QPainter *painter)
 {
-    QRect hudrect = painter->window();
-    painter->translate(hudrect.center());
+    painter->translate(painter->window().center());
 
     horizon.paint(painter, defaultColor);
     altimeter.paint(painter, defaultColor);

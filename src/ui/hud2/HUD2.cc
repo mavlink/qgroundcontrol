@@ -43,12 +43,14 @@
  *
  * - all outer dimensions specified in percents of widget sizes (height,
  *   width or diagonal). Type is qreal.
- * - point with coordinates (0;0) is center of widget.
+ * - point with coordinates (0;0) is center of render area.
  * - all classes use their own internal cached values in pixels.
  */
 
 /*
 TODO:
+- convert all sizes to percents
+- ability of roll, pitch, yaw inversion
 */
 
 #include <QtGui>
@@ -56,6 +58,11 @@ TODO:
 #include "HUD2.h"
 #include "UASManager.h"
 #include "UAS.h"
+
+static int repaintCnt = 0;
+static int repaintCntLast = 0;
+static int completeCnt = 0;
+static int completeCntLast = 0;
 
 HUD2::~HUD2()
 {
@@ -67,8 +74,11 @@ HUD2::HUD2(QWidget *parent)
       hudpainter(&huddata, this),
       surface(&hudpainter, this),
       surface_gl(&hudpainter, this),
-      usegl(false)
+      usegl(false),
+      painterReady(true)
 {   
+    connect(&this->hudpainter, SIGNAL(paintComplete()), this, SLOT(paintComplete()));
+
     layout = new QGridLayout(this);
     layout->addWidget(&surface,    0, 0);
     layout->addWidget(&surface_gl, 0, 0);
@@ -86,7 +96,8 @@ HUD2::HUD2(QWidget *parent)
     layout->addWidget(&btn, 1, 0);
     setLayout(layout);
 
-    timer.start(100);
+    fpsTimer.start(1000);
+    connect(&this->fpsTimer, SIGNAL(timeout()), this, SLOT(updateFps()));
 
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
@@ -97,6 +108,8 @@ HUD2::HUD2(QWidget *parent)
 }
 
 void HUD2::repaint(void){
+    painterReady = false;
+
     if (usegl == true)
         surface_gl.repaint();
     else
@@ -129,8 +142,11 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
         huddata.roll  = roll;
         huddata.pitch = pitch;
         huddata.yaw   = yaw;
-        repaint();
-        //qDebug() << "received values: " << roll << pitch << yaw;
+        if(painterReady){
+            repaintCnt++;
+            //qDebug() << "repaint called" << repaintCnt;
+            repaint();
+        }
     }
 }
 
@@ -202,3 +218,13 @@ void HUD2::createActions()
 //    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }
 
+void HUD2::paintComplete(void){
+    painterReady = true;
+    completeCnt++;
+    //qDebug() << "render completed" << completeCnt;
+}
+
+void HUD2::updateFps(void){
+    huddata.fps = repaintCnt - repaintCntLast;
+    repaintCntLast = repaintCnt;
+}

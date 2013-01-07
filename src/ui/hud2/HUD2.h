@@ -76,13 +76,15 @@ private:
     HUD2PaintSurfaceGL surface_gl;
 
     QGridLayout *layout;
-    QTimer timer;
+    QTimer fpsTimer;
     QPushButton btn;
     bool usegl;
+    bool painterReady;
     void repaint(void);
     void createActions(void);
 
 public slots:
+    void paintComplete(void);
     /** @brief Set the currently monitored UAS */
     virtual void setActiveUAS(UASInterface* uas);
     /** @brief Attitude from main autopilot / system state */
@@ -94,6 +96,7 @@ signals:
 
 private slots:
     void togglerenderer(void);
+    void updateFps(void);
 };
 
 #endif

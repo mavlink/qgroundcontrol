@@ -99,7 +99,8 @@ void HUD2HorizonYaw::paint(QPainter *painter, QColor color){
 
     qreal yaw_deg = wrap_360(rad2deg(huddata->yaw));
     int deg = wrap_360(round(yaw_deg));
-    painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
+    //painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
+    painter->drawText(QPoint(0, mainRect.height()), QString::number(huddata->fps));
 
     qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 

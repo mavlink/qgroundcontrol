@@ -11,6 +11,8 @@ public:
     float lat;
     float lon;
     float alt;
+
+    int   fps; // repaints per second
 };
 
 #endif // HUD2DATA_H
