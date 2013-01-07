@@ -1,6 +1,6 @@
 #include "HUD2Data.h"
 
-HUD2data::HUD2data()
+HUD2Data::HUD2Data()
 {
     roll  = 0;
     pitch = 0;

@@ -7,11 +7,11 @@
 
 #include "HUD2Data.h"
 
-class HUD2HorizonPitchLine : public QWidget
+class HUD2HorizonPitch : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonPitchLine(const int *gapscale, QWidget *parent);
+    explicit HUD2HorizonPitch(const int *gapscale, QWidget *parent);
     void paint(QPainter *painter, int deg);
 
 signals:
@@ -27,7 +27,7 @@ private:
     int size_hmin;
     int text_size_min;
     const int *gapscale; /* space between right and left parts */
-    HUD2data *huddata;
+    HUD2Data *huddata;
 
     QRect update_geometry_lines_pos(int gap, int w, int h);
     QRect update_geometry_lines_neg(int gap, int w, int h);

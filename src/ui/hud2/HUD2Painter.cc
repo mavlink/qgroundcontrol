@@ -3,13 +3,13 @@
 #include "HUD2Painter.h"
 
 
-HUD2Painter::HUD2Painter(HUD2data *huddata, QWidget *parent) :
+HUD2Painter::HUD2Painter(HUD2Data *huddata, QWidget *parent) :
     QWidget(parent)
 {
     this->huddata = huddata;
 
     this->horizon = new HUD2Horizon(huddata, this);
-    this->yaw = new HUD2HorizonYawIndicator();
+    this->yaw = new HUD2HorizonYaw(huddata, this);
 
     // create some stuff for altimeter
     int hands = 3;
@@ -55,7 +55,7 @@ void HUD2Painter::paint(QPainter *painter)
 }
 
 void HUD2Painter::updateGeometry(const QSize *size){
-    yaw->updatesize(size);
+    yaw->updateGeometry(size);
     horizon->updateGeometry(size);
     altimeter->updateGeometry(size);
 }

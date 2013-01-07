@@ -48,3 +48,11 @@ QPoint rotatePoint(qreal phi, QPoint p){
 QLine rotateLine(qreal phi, QLine line){
     return QLine(rotatePoint(phi, line.p1()), rotatePoint(phi, line.p2()));
 }
+
+qreal wrap_360(qreal angle){
+  if (angle > 360)
+    angle -= 360;
+  else if (angle < 0)
+    angle += 360;
+  return angle;
+}

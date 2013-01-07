@@ -70,7 +70,7 @@ protected:
     UASInterface* uas; ///< The uas currently monitored
 
 private:
-    HUD2data huddata;
+    HUD2Data huddata;
     HUD2Painter hudpainter;
     HUD2PaintSurface surface;
     HUD2PaintSurfaceGL surface_gl;

@@ -3,9 +3,9 @@
 #include <QtGui>
 
 #include "HUD2Math.h"
-#include "HUD2HorizonRollIndicator.h"
+#include "HUD2HorizonRoll.h"
 
-HUD2HorizonRollIndicator::HUD2HorizonRollIndicator(HUD2data *huddata, QWidget *parent) :
+HUD2HorizonRoll::HUD2HorizonRoll(HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
@@ -19,11 +19,13 @@ HUD2HorizonRollIndicator::HUD2HorizonRollIndicator(HUD2data *huddata, QWidget *p
     this->arrowPen.setWidth(2);
 }
 
-void HUD2HorizonRollIndicator::updateGeometry(const QSize *size){
+void HUD2HorizonRoll::updateGeometry(const QSize *size){
     int thick_scratch_len = size->height() / 40;
     putinrange(thick_scratch_len, 4, 20);
+
     int thin_scratch_len = thick_scratch_len / 2;
     putinrange(thin_scratch_len, 2, 10);
+
     int big_r = size->height() / 2;
     int small_r = big_r - thick_scratch_len;
 
@@ -59,15 +61,15 @@ void HUD2HorizonRollIndicator::updateGeometry(const QSize *size){
     QPoint p0 = QPoint(0, small_r); // top
     QPoint p1 = p0;
     QPoint p2 = p0;
-    p1.rx() += 20;
-    p1.ry() -= 20;
-    p2.rx() -= 20;
-    p2.ry() -= 20;
+    p1.rx() += 30;
+    p1.ry() -= 30;
+    p2.rx() -= 30;
+    p2.ry() -= 30;
     arrowLines[0] = QLine(p0, p1);
     arrowLines[1] = QLine(p0, p2);
 }
 
-void HUD2HorizonRollIndicator::paint(QPainter *painter, QColor color){
+void HUD2HorizonRoll::paint(QPainter *painter, QColor color){
     Q_UNUSED(color);
     int n = 0;
 
@@ -89,6 +91,6 @@ void HUD2HorizonRollIndicator::paint(QPainter *painter, QColor color){
     painter->restore();
 }
 
-void HUD2HorizonRollIndicator::setColor(QColor color){
+void HUD2HorizonRoll::setColor(QColor color){
     Q_UNUSED(color);
 }

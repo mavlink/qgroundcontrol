@@ -6,7 +6,7 @@
 #include <QFont>
 #include <QPen>
 
-#include "HUD2HorizonYawIndicator.h"
+#include "HUD2HorizonYaw.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
 #include "HUD2Dial.h"
@@ -21,7 +21,7 @@ class HUD2Painter : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Painter(HUD2data *huddata, QWidget *parent);
+    explicit HUD2Painter(HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -32,10 +32,10 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
-    HUD2HorizonYawIndicator *yaw;
+    HUD2HorizonYaw *yaw;
     HUD2Horizon *horizon;
     HUD2Dial *altimeter;
-    HUD2data *huddata;
+    HUD2Data *huddata;
 
     // HUD colors
     QColor defaultColor;       ///< Color for most HUD elements, e.g. pitch lines, center cross, change rate gauges
