@@ -6,7 +6,6 @@
 #include <QFont>
 #include <QPen>
 
-#include "HUD2HorizonYaw.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
 #include "HUD2Dial.h"
@@ -32,8 +31,7 @@ public slots:
     void updateGeometry(const QSize *size);
 
 private:
-    HUD2HorizonYaw *yaw;
-    HUD2Horizon *horizon;
+    HUD2Horizon horizon;
     HUD2Dial *altimeter;
     const HUD2Data *huddata;
 

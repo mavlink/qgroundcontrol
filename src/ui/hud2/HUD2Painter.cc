@@ -5,13 +5,9 @@
 
 HUD2Painter::HUD2Painter(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
+    horizon(huddata, this),
     huddata(huddata)
 {
-    //this->huddata = huddata;
-
-    this->horizon = new HUD2Horizon(huddata, this);
-    this->yaw = new HUD2HorizonYaw(huddata, this);
-
     // create some stuff for altimeter
     int hands = 3;
     QPen *handPens = new QPen[hands];
@@ -48,15 +44,13 @@ void HUD2Painter::paint(QPainter *painter)
     QRect hudrect = painter->window();
     painter->translate(hudrect.center());
 
-    yaw->paint(painter, defaultColor);
-    horizon->paint(painter, defaultColor);
+    horizon.paint(painter, defaultColor);
     altimeter->paint(painter, huddata->alt);
 
     emit paintComplete();
 }
 
 void HUD2Painter::updateGeometry(const QSize *size){
-    yaw->updateGeometry(size);
-    horizon->updateGeometry(size);
+    horizon.updateGeometry(size);
     altimeter->updateGeometry(size);
 }

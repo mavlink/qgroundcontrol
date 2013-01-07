@@ -8,6 +8,7 @@ HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
     pitchline(&this->gapscale, this),
     crosshair(&this->gapscale, this),
     rollindicator(huddata, this),
+    yaw(huddata, this),
     huddata(huddata)
 {
     this->gapscale = 13;
@@ -33,6 +34,9 @@ void HUD2Horizon::updateGeometry(const QSize *size){
 
     // roll indicator
     rollindicator.updateGeometry(size);
+
+    // yaw
+    yaw.updateGeometry(size);
 }
 
 /**
@@ -79,6 +83,9 @@ void HUD2Horizon::drawwings(QPainter *painter, QColor color){
  * @param color
  */
 void HUD2Horizon::paint(QPainter *painter, QColor color){
+
+    // yaw
+    yaw.paint(painter, color);
 
     // roll indicator
     rollindicator.paint(painter, color);

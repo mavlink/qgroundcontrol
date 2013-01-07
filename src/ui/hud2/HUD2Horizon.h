@@ -9,6 +9,7 @@
 #include "HUD2HorizonPitch.h"
 #include "HUD2HorizonCrosshair.h"
 #include "HUD2HorizonRoll.h"
+#include "HUD2HorizonYaw.h"
 
 class HUD2Horizon : public QWidget
 {
@@ -35,6 +36,7 @@ private:
 
     HUD2HorizonCrosshair crosshair;
     HUD2HorizonRoll rollindicator;
+    HUD2HorizonYaw yaw;
 
     int gapscale; /* space between right and left parts */
     const HUD2Data *huddata;
