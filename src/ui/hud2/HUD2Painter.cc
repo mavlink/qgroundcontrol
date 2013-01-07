@@ -3,10 +3,11 @@
 #include "HUD2Painter.h"
 
 
-HUD2Painter::HUD2Painter(HUD2Data *huddata, QWidget *parent) :
-    QWidget(parent)
+HUD2Painter::HUD2Painter(const HUD2Data *huddata, QWidget *parent) :
+    QWidget(parent),
+    huddata(huddata)
 {
-    this->huddata = huddata;
+    //this->huddata = huddata;
 
     this->horizon = new HUD2Horizon(huddata, this);
     this->yaw = new HUD2HorizonYaw(huddata, this);

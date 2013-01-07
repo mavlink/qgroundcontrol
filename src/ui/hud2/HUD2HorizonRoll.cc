@@ -5,7 +5,7 @@
 #include "HUD2Math.h"
 #include "HUD2HorizonRoll.h"
 
-HUD2HorizonRoll::HUD2HorizonRoll(HUD2Data *huddata, QWidget *parent) :
+HUD2HorizonRoll::HUD2HorizonRoll(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {

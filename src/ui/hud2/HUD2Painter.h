@@ -21,7 +21,7 @@ class HUD2Painter : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Painter(HUD2Data *huddata, QWidget *parent);
+    explicit HUD2Painter(const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -35,7 +35,7 @@ private:
     HUD2HorizonYaw *yaw;
     HUD2Horizon *horizon;
     HUD2Dial *altimeter;
-    HUD2Data *huddata;
+    const HUD2Data *huddata;
 
     // HUD colors
     QColor defaultColor;       ///< Color for most HUD elements, e.g. pitch lines, center cross, change rate gauges

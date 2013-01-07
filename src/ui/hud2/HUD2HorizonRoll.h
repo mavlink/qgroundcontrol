@@ -10,7 +10,7 @@ class HUD2HorizonRoll : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonRoll(HUD2Data *huddata, QWidget *parent = 0);
+    explicit HUD2HorizonRoll(const HUD2Data *huddata, QWidget *parent = 0);
     void paint(QPainter *painter, QColor color);
 
 signals:
@@ -28,7 +28,7 @@ private:
     QLine thinLines[12];
     QLine arrowLines[2];
 
-    HUD2Data *huddata;
+    const HUD2Data *huddata;
 };
 
 #endif // HUD2HORIZONROLLINDICATOR_H

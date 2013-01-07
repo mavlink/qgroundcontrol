@@ -3,7 +3,7 @@
 #include "HUD2Horizon.h"
 #include "HUD2Math.h"
 
-HUD2Horizon::HUD2Horizon(HUD2Data *huddata, QWidget *parent) :
+HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gapscale, this),
     crosshair(&this->gapscale, this),

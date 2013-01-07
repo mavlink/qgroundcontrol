@@ -14,7 +14,7 @@ class HUD2Horizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Horizon(HUD2Data *huddata, QWidget *parent);
+    explicit HUD2Horizon(const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter, QColor color);
 
 signals:
@@ -37,7 +37,7 @@ private:
     HUD2HorizonRoll rollindicator;
 
     int gapscale; /* space between right and left parts */
-    HUD2Data *huddata;
+    const HUD2Data *huddata;
     QPen pen;
     QLine leftwing;
     QLine rightwing;

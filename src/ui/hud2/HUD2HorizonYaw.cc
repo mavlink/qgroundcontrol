@@ -3,7 +3,7 @@
 #include "HUD2HorizonYaw.h"
 #include "HUD2Math.h"
 
-HUD2HorizonYaw::HUD2HorizonYaw(HUD2Data *huddata, QWidget *parent) :
+HUD2HorizonYaw::HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
