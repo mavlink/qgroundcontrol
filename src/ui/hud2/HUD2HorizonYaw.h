@@ -6,12 +6,15 @@
 
 #include "HUD2Data.h"
 
+#define SIZE_H_MIN      2
+#define SIZE_TEXT_MIN   7
+
 class HUD2HorizonYaw : public QWidget
 {
     Q_OBJECT
 public:
     explicit HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent = 0);
-    void paint(QPainter *painter, QColor color);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

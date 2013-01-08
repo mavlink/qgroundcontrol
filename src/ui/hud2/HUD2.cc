@@ -50,7 +50,9 @@
 /*
 TODO:
 - convert all sizes to percents
-- ability of roll, pitch, yaw inversion
+- dynamic text size for pitch lines
+- dynamic mark size for roll and yaw
+- dynamic line widths
 */
 
 #include <QtGui>
@@ -62,7 +64,6 @@ TODO:
 static int repaintCnt = 0;
 static int repaintCntLast = 0;
 static int completeCnt = 0;
-static int completeCntLast = 0;
 
 HUD2::~HUD2()
 {

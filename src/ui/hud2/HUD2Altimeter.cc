@@ -35,8 +35,7 @@ void HUD2Altimeter::updateGeometry(const QSize *size){
     dial->updateGeometry(size);
 }
 
-void HUD2Altimeter::paint(QPainter *painter, QColor color){
-    Q_UNUSED(color);
+void HUD2Altimeter::paint(QPainter *painter){
     dial->paint(painter, huddata->alt);
 }
 

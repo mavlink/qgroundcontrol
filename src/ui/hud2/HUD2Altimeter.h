@@ -10,7 +10,7 @@ class HUD2Altimeter : public QWidget
     Q_OBJECT
 public:
     explicit HUD2Altimeter(const HUD2Data *huddata, QWidget *parent);
-    void paint(QPainter *painter, QColor color);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

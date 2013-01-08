@@ -1,9 +1,11 @@
 #include <QtGui>
-#include "HUD2HorizonCrosshair.h"
 
-HUD2HorizonCrosshair::HUD2HorizonCrosshair(const int *gapscale, QWidget *parent) :
+#include "HUD2HorizonCrosshair.h"
+#include "HUD2Math.h"
+
+HUD2HorizonCrosshair::HUD2HorizonCrosshair(const qreal *gap, QWidget *parent) :
     QWidget(parent),
-    gapscale(gapscale)
+    gap(gap)
 {
     pen.setColor(Qt::green);
     pen.setWidth(2);
@@ -11,24 +13,23 @@ HUD2HorizonCrosshair::HUD2HorizonCrosshair(const int *gapscale, QWidget *parent)
 
 void HUD2HorizonCrosshair::updateGeometry(const QSize *size){
 
-    int gap = size->width() / *gapscale;
-    int minigap = gap/5;
+    int _gap = percent2pix_w(size, *gap);
+    int minigap = _gap/5;
 
     // left
-    lines[0] = QLine(-gap/2, 0, 0, 0);
+    lines[0] = QLine(-_gap/2, 0, 0, 0);
     lines[0].translate(-minigap, 0);
 
     // right
-    lines[1] = QLine(0, 0, gap/2, 0);
+    lines[1] = QLine(0, 0, _gap/2, 0);
     lines[1].translate(minigap, 0);
 
     // up
-    lines[2] = QLine(0, -gap/2, 0, 0);
+    lines[2] = QLine(0, -_gap/2, 0, 0);
     lines[2].translate(0, -minigap);
 }
 
-void HUD2HorizonCrosshair::paint(QPainter *painter, QColor color){
-    Q_UNUSED(color)
+void HUD2HorizonCrosshair::paint(QPainter *painter){
     painter->save();
     painter->setPen(pen);
     painter->drawLines(lines, 3);

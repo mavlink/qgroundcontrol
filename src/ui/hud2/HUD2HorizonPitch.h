@@ -7,11 +7,14 @@
 
 #include "HUD2Data.h"
 
+#define SIZE_H_MIN      2
+#define SIZE_TEXT_MIN   7
+
 class HUD2HorizonPitch : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonPitch(const int *gapscale, QWidget *parent);
+    explicit HUD2HorizonPitch(const qreal *gap, QWidget *parent);
     void paint(QPainter *painter, int deg);
 
 signals:
@@ -22,21 +25,18 @@ public slots:
     void setColor(QColor color);
 
 private:
-    int size_wscale;
-    int size_hscale;
-    int size_hmin;
-    int text_size_min;
-    const int *gapscale; /* space between right and left parts */
-    HUD2Data *huddata;
+    qreal size_w;
+    qreal size_h;
+    const qreal *gap; /* space between right and left parts */
 
-    QRect update_geometry_lines_pos(int gap, int w, int h);
-    QRect update_geometry_lines_neg(int gap, int w, int h);
+    QRect update_geometry_lines_pos(int _gap, int w, int h);
+    QRect update_geometry_lines_neg(int _gap, int w, int h);
 
-    QPen pen;
+    QPen  pen;
     QLine lines_pos[4];
     QLine lines_neg[8];
 
-    QPen textPen;
+    QPen  textPen;
     QFont textFont;
     QRect textRectPos;
     QRect textRectNeg;

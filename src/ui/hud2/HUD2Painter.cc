@@ -20,8 +20,8 @@ void HUD2Painter::paint(QPainter *painter)
 {
     painter->translate(painter->window().center());
 
-    horizon.paint(painter, defaultColor);
-    altimeter.paint(painter, defaultColor);
+    horizon.paint(painter);
+    altimeter.paint(painter);
 
     emit paintComplete();
 }

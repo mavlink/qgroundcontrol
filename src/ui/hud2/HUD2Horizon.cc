@@ -5,25 +5,25 @@
 
 HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
-    pitchline(&this->gapscale, this),
-    crosshair(&this->gapscale, this),
-    rollindicator(huddata, this),
+    pitchline(&this->gap, this),
+    crosshair(&this->gap, this),
+    roll(&this->gap, huddata, this),
     yaw(huddata, this),
     huddata(huddata)
 {
-    this->gapscale = 13;
+    this->gap = 6;
     this->pitchcount = 5;
     this->degstep = 10;
 }
 
 void HUD2Horizon::updateGeometry(const QSize *size){
-    int gap = size->width() / gapscale;
+    int _gap = percent2pix_w(size, this->gap);
 
     // wings
     int x1 = size->width();
     pen.setWidth(6);
-    leftwing.setLine(-x1, 0, -gap/2, 0);
-    rightwing.setLine(gap/2, 0, x1, 0);
+    leftwing.setLine(-x1, 0, -_gap/2, 0);
+    rightwing.setLine(_gap/2, 0, x1, 0);
 
     // pitchlines
     pixstep = size->height() / pitchcount;
@@ -33,7 +33,7 @@ void HUD2Horizon::updateGeometry(const QSize *size){
     crosshair.updateGeometry(size);
 
     // roll indicator
-    rollindicator.updateGeometry(size);
+    roll.updateGeometry(size);
 
     // yaw
     yaw.updateGeometry(size);
@@ -70,8 +70,8 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
  * @brief HUD2Horizon::drawwings
  * @param painter
  */
-void HUD2Horizon::drawwings(QPainter *painter, QColor color){
-    pen.setColor(color);
+void HUD2Horizon::drawwings(QPainter *painter){
+    pen.setColor(Qt::green);
     painter->setPen(pen);
     painter->drawLine(leftwing);
     painter->drawLine(rightwing);
@@ -82,13 +82,13 @@ void HUD2Horizon::drawwings(QPainter *painter, QColor color){
  * @param painter
  * @param color
  */
-void HUD2Horizon::paint(QPainter *painter, QColor color){
+void HUD2Horizon::paint(QPainter *painter){
 
     // roll indicator
-    rollindicator.paint(painter, color);
+    roll.paint(painter);
 
     //
-    crosshair.paint(painter, color);
+    crosshair.paint(painter);
     painter->save();
 
     // now perform complex transfomation of painter
@@ -107,12 +107,12 @@ void HUD2Horizon::paint(QPainter *painter, QColor color){
 
     painter->setTransform(transform);
     drawpitchlines(painter, degstep, pixstep);
-    drawwings(painter, color);
+    drawwings(painter);
 
     painter->restore();
 
     // yaw
-    yaw.paint(painter, color);
+    yaw.paint(painter);
 }
 
 void HUD2Horizon::setColor(QColor color){

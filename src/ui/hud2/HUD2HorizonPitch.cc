@@ -1,16 +1,14 @@
 #include <QtGui>
+
 #include "HUD2HorizonPitch.h"
+#include "HUD2Math.h"
 
-HUD2HorizonPitch::HUD2HorizonPitch(const int *gapscale, QWidget *parent) :
-    QWidget(parent)
+HUD2HorizonPitch::HUD2HorizonPitch(const qreal *gap, QWidget *parent) :
+    QWidget(parent),
+    gap(gap)
 {
-    this->gapscale = gapscale;
-    this->huddata = huddata;
-
-    this->size_wscale   = 18;
-    this->size_hscale   = 50;
-    this->size_hmin     = 3;
-    this->text_size_min = 8;
+    this->size_w = 6;
+    this->size_h = 2;
 
     this->textPen.setColor(Qt::green);
 
@@ -25,7 +23,7 @@ HUD2HorizonPitch::HUD2HorizonPitch(const int *gapscale, QWidget *parent) :
  * @param h
  * @return rectangular suitable for text placing
  */
-QRect HUD2HorizonPitch::update_geometry_lines_pos(int gap, int w, int h){
+QRect HUD2HorizonPitch::update_geometry_lines_pos(int _gap, int w, int h){
 
     // Positive pitch indicator:
     //
@@ -35,14 +33,14 @@ QRect HUD2HorizonPitch::update_geometry_lines_pos(int gap, int w, int h){
     int x1, x2;
 
     // right
-    x1 = gap/2;
-    x2 = gap/2 + w;
+    x1 = _gap/2;
+    x2 = _gap/2 + w;
     lines_pos[0] = QLine(x1, 0, x2, 0); // horiz
     lines_pos[1] = QLine(x2, 0, x2, h); // vert
 
     // left
-    x1 = -gap/2;
-    x2 = -gap/2 - w;
+    x1 = -_gap/2;
+    x2 = -_gap/2 - w;
     lines_pos[2] = QLine(x1, 0, x2,  0); // horiz
     lines_pos[3] = QLine(x2, 0, x2,  h); // vert
 
@@ -55,7 +53,7 @@ QRect HUD2HorizonPitch::update_geometry_lines_pos(int gap, int w, int h){
  * @param lines_array
  * @return rectangular suitable for text placing
  */
-QRect HUD2HorizonPitch::update_geometry_lines_neg(int gap, int w, int h){
+QRect HUD2HorizonPitch::update_geometry_lines_neg(int _gap, int w, int h){
 
     // Negative pitch indicator:
     //
@@ -71,8 +69,8 @@ QRect HUD2HorizonPitch::update_geometry_lines_neg(int gap, int w, int h){
     QLine l;
 
     // right
-    x1 = gap/2;
-    x2 = gap/2 + w;
+    x1 = _gap/2;
+    x2 = _gap/2 + w;
     lines_neg[line] = QLine(x1, 0, x1, -h); // vert
     line++;
     p0 = QPoint(x1, 0);
@@ -85,8 +83,8 @@ QRect HUD2HorizonPitch::update_geometry_lines_neg(int gap, int w, int h){
     }
 
     // left
-    x1 = -gap/2;
-    x2 = -gap/2 - w;
+    x1 = -_gap/2;
+    x2 = -_gap/2 - w;
     lines_neg[line] = QLine(x1, 0, x1, -h); // vert
     line++;
     p0 = QPoint(x1, 0);
@@ -106,20 +104,21 @@ QRect HUD2HorizonPitch::update_geometry_lines_neg(int gap, int w, int h){
  * @param size
  */
 void HUD2HorizonPitch::updateGeometry(const QSize *size){
-    int text_size = 25;
-    int w = size->width()  / size_wscale;
-    int h = size->height() / size_hscale;
+    int text_size = percent2pix_h(size, 4);
+    int w = percent2pix_w(size, size_w);
+    int h = percent2pix_h(size, size_h);
 
-    if (h < size_hmin)
-        h = size_hmin;
+    clamp(h, SIZE_H_MIN, 50);
+    clamp(text_size, SIZE_TEXT_MIN, 50);
 
-    int gap = size->width() / *gapscale;
-    textRectPos = update_geometry_lines_pos(gap, w, h);
-    textRectNeg = update_geometry_lines_neg(gap, w, h);
+    int _gap = percent2pix_w(size, *gap);
+    textRectPos = update_geometry_lines_pos(_gap, w, h);
+    textRectNeg = update_geometry_lines_neg(_gap, w, h);
     textRectNeg.translate(0, -text_size);
 
     textFont.setPixelSize(text_size);
     textRectPos.setHeight(text_size);
+    textRectPos.translate(0, 2);
     textRectNeg.setHeight(text_size);
 }
 
@@ -133,9 +132,9 @@ void HUD2HorizonPitch::paint(QPainter *painter, int deg){
 
     painter->setPen(pen);
     if (deg > 0)
-        painter->drawLines(lines_pos, sizeof(lines_pos)/sizeof(QLine));
+        painter->drawLines(lines_pos, sizeof(lines_pos)/sizeof(lines_pos[0]));
     else
-        painter->drawLines(lines_neg, sizeof(lines_neg)/sizeof(QLine));
+        painter->drawLines(lines_neg, sizeof(lines_neg)/sizeof(lines_neg[0]));
 
     painter->setPen(textPen);
     painter->setFont(textFont);

@@ -41,12 +41,12 @@ void HUD2HorizonYaw::updateGeometry(const QSize *size){
 */
     int i;
     qreal x;
-    int scratch_len = size->height() / 40;
-    int number_h = (scratch_len * 3 ) / 2;
-    clamp(number_h, 8, 50);
-    textFont.setPixelSize(number_h);
+    int scratch_len = percent2pix_h(size, 3);
+    int text_size = (scratch_len * 3 ) / 2;
+    clamp(text_size, SIZE_TEXT_MIN, 50);
+    textFont.setPixelSize(text_size);
     mainRect.setWidth(size->width() / 3);
-    mainRect.setHeight(scratch_len + number_h);
+    mainRect.setHeight(scratch_len + text_size);
     clipRect = mainRect;
     clipRect.translate(-clipRect.width()/2, -clipRect.height());
     scale_interval_pix = mainRect.width() / 6;
@@ -55,7 +55,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize *size){
         x = (i - overlap) * 2 * scale_interval_pix;
         thickLines[i] = QLineF(x, 0, x, -scratch_len);
 
-        textRects[i]  = QRect(x, 0, x, -number_h);
+        textRects[i]  = QRect(x, 0, x, -text_size);
         textRects[i].setWidth(2 * scale_interval_pix);
         textRects[i].translate(-textRects[i].width()/2, -scratch_len);
 
@@ -81,10 +81,9 @@ void HUD2HorizonYaw::updateGeometry(const QSize *size){
     arrowLines[1] = QLine(p0, p2);
 }
 
-void HUD2HorizonYaw::paint(QPainter *painter, QColor color){
+void HUD2HorizonYaw::paint(QPainter *painter){
     painter->save();
 
-    Q_UNUSED(color);
     int n_arrow = 0;
     int i;
 
