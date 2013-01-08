@@ -81,8 +81,8 @@ int wrap_360(int angle){
 
 /**
  * @brief modulusF
- * @param x
- * @param divider
+ * @param dividend
+ * @param divisor
  * @return
  */
 qreal modulusF(qreal dividend, qreal divisor){
