@@ -268,7 +268,7 @@ MainWindow::~MainWindow()
     }
     // Get and delete all dockwidgets and contained
     // widgets
-    QObjectList childList(this->children());
+/*    QObjectList childList(this->children());
 
     QObjectList::iterator i;
     QDockWidget* dockWidget;
@@ -289,7 +289,7 @@ MainWindow::~MainWindow()
             *i = NULL;
         }
     }
-    // Delete all UAS objects
+    */// Delete all UAS objects
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)

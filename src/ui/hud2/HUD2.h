@@ -45,12 +45,14 @@
 #include <QGridLayout>
 #include <QPushButton>
 #include <QTimer>
+#include <QImage>
 
 #include "HUD2Surface.h"
 #include "HUD2SurfaceGL.h"
 #include "HUD2Painter.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
+#include "HUD2RenderThread.h"
 
 #include "UASInterface.h"
 
@@ -74,29 +76,29 @@ private:
     HUD2Painter hudpainter;
     HUD2PaintSurface surface;
     HUD2PaintSurfaceGL surface_gl;
+    HUD2RenderThread thread;
 
     QGridLayout *layout;
     QTimer fpsTimer;
     QPushButton btn;
     bool usegl;
-    bool painterReady;
     void repaint(void);
     void createActions(void);
 
 public slots:
-    void paintComplete(void);
     /** @brief Set the currently monitored UAS */
     virtual void setActiveUAS(UASInterface* uas);
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
 
+    void rendereReady(const QImage &image);
+
 signals:
     //void visibilityChanged(bool visible);
 
 private slots:
     void togglerenderer(void);
-    void updateFps(void);
 };
 
 #endif

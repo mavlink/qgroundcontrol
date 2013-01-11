@@ -61,12 +61,9 @@ TODO:
 #include "UASManager.h"
 #include "UAS.h"
 
-static int repaintCnt = 0;
-static int repaintCntLast = 0;
-static int completeCnt = 0;
-
 HUD2::~HUD2()
 {
+    qDebug() << "HUD2 exit 1";
 }
 
 HUD2::HUD2(QWidget *parent)
@@ -75,8 +72,8 @@ HUD2::HUD2(QWidget *parent)
       hudpainter(&huddata, this),
       surface(&hudpainter, this),
       surface_gl(&hudpainter, this),
-      usegl(false),
-      painterReady(true)
+      thread(&huddata, this),
+      usegl(false)
 {   
     connect(&this->hudpainter, SIGNAL(paintComplete()), this, SLOT(paintComplete()));
 
@@ -97,19 +94,19 @@ HUD2::HUD2(QWidget *parent)
     layout->addWidget(&btn, 1, 0);
     setLayout(layout);
 
-    fpsTimer.start(1000);
-    connect(&this->fpsTimer, SIGNAL(timeout()), this, SLOT(updateFps()));
-
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this,                   SLOT(setActiveUAS(UASInterface*)));
     createActions();
     if (UASManager::instance()->getActiveUAS() != NULL)
         setActiveUAS(UASManager::instance()->getActiveUAS());
+
+    // painting thread
+    connect(&thread, SIGNAL(renderedImage(const QImage)), this, SLOT(rendereReady(QImage)));
+    thread.start();
 }
 
 void HUD2::repaint(void){
-    painterReady = false;
 
     if (usegl == true)
         surface_gl.repaint();
@@ -143,11 +140,9 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
         huddata.roll  = roll;
         huddata.pitch = pitch;
         huddata.yaw   = yaw;
-        if(painterReady){
-            repaintCnt++;
-            //qDebug() << "repaint called" << repaintCnt;
-            repaint();
-        }
+        repaint();
+
+        thread.render();
     }
 }
 
@@ -219,13 +214,6 @@ void HUD2::createActions()
 //    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }
 
-void HUD2::paintComplete(void){
-    painterReady = true;
-    completeCnt++;
-    //qDebug() << "render completed" << completeCnt;
-}
-
-void HUD2::updateFps(void){
-    huddata.fps = repaintCnt - repaintCntLast;
-    repaintCntLast = repaintCnt;
+void HUD2::rendereReady(const QImage &image){
+    qDebug() << image.width();
 }
