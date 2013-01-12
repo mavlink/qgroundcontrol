@@ -1,5 +1,5 @@
-#ifndef HUDSURFACEGL_H
-#define HUDSURFACEGL_H
+#ifndef HUD2RENDERGL_H
+#define HUD2RENDERGL_H
 
 #include <QGLWidget>
 #include "HUD2Data.h"
@@ -11,12 +11,12 @@ class QPaintEvent;
 class QWidget;
 QT_END_NAMESPACE
 
-class HUD2PaintSurfaceGL : public QGLWidget
+class HUD2RenderGL : public QGLWidget
 {
     Q_OBJECT
 
 public:
-    HUD2PaintSurfaceGL(HUD2Painter *hudpainter, QWidget *parent);
+    HUD2RenderGL(HUD2Painter *hudpainter, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -31,4 +31,4 @@ private:
     HUD2Painter *hudpainter;
 };
 
-#endif /* HUD2RENDERERGL_H */
+#endif /* HUD2RENDERGL_H */

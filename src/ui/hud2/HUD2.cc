@@ -63,30 +63,30 @@ TODO:
 
 HUD2::~HUD2()
 {
-    qDebug() << "HUD2 exit 1";
+    //qDebug() << "HUD2 exit 1";
 }
 
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent),
       uas(NULL),
       hudpainter(&huddata, this),
-      surface(&hudpainter, this),
-      surface_gl(&hudpainter, this),
+      renderNative(&hudpainter, this),
+      renderGL(&hudpainter, this),
       thread(&huddata, this),
       usegl(false)
 {   
     connect(&this->hudpainter, SIGNAL(paintComplete()), this, SLOT(paintComplete()));
 
     layout = new QGridLayout(this);
-    layout->addWidget(&surface,    0, 0);
-    layout->addWidget(&surface_gl, 0, 0);
+    layout->addWidget(&renderNative,    0, 0);
+    layout->addWidget(&renderGL, 0, 0);
 
     if (usegl == true){
-        surface.hide();
+        renderNative.hide();
         btn.setText(tr("GL"));
     }
     else{
-        surface_gl.hide();
+        renderGL.hide();
         btn.setText(tr("Soft"));
     }
 
@@ -109,23 +109,23 @@ HUD2::HUD2(QWidget *parent)
 void HUD2::repaint(void){
 
     if (usegl == true)
-        surface_gl.repaint();
+        renderGL.repaint();
     else
-        surface.repaint();
+        renderNative.repaint();
 }
 
 
 void HUD2::togglerenderer(void)
 {
     if (usegl == true){
-        surface_gl.hide();
-        surface.show();
+        renderGL.hide();
+        renderNative.show();
         btn.setText(tr("Soft"));
         usegl = false;
     }
     else{
-        surface_gl.show();
-        surface.hide();
+        renderGL.show();
+        renderNative.hide();
         btn.setText(tr("GL"));
         usegl = true;
     }

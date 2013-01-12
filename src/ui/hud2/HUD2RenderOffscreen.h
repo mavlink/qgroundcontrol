@@ -1,5 +1,5 @@
-#ifndef HUDSURFACE_H
-#define HUDSURFACE_H
+#ifndef HUD2RENDEROFFSCREEN_H
+#define HUD2RENDEROFFSCREEN_H
 
 #include <QWidget>
 #include "HUD2Data.h"
@@ -10,12 +10,12 @@ QT_BEGIN_NAMESPACE
 class QPaintEvent;
 QT_END_NAMESPACE
 
-class HUD2PaintSurface : public QWidget
+class HUD2RenderOffscreen : public QWidget
 {
     Q_OBJECT
 
 public:
-    HUD2PaintSurface(HUD2Painter *hudpainter, QWidget *parent);
+    HUD2RenderOffscreen(HUD2Painter *hudpainter, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -30,4 +30,4 @@ private:
     HUD2Painter *hudpainter;
 };
 
-#endif /* HUD2RENDERERSOFT_H */
+#endif /* HUD2RENDEROFFSCREEN_H */

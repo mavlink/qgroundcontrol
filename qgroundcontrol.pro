@@ -371,8 +371,6 @@ HEADERS += src/MG.h \
     src/ui/hud2/HUD2Horizon.h \
     src/ui/hud2/HUD2Data.h \
     src/ui/hud2/HUD2Painter.h \
-    src/ui/hud2/HUD2Surface.h \
-    src/ui/hud2/HUD2SurfaceGL.h \
     src/ui/hud2/HUD2Dial.h \
     src/ui/hud2/HUD2Math.h \
     src/ui/hud2/HUD2HorizonCrosshair.h \
@@ -380,7 +378,10 @@ HEADERS += src/MG.h \
     src/ui/hud2/HUD2HorizonRoll.h \
     src/ui/hud2/HUD2HorizonPitch.h \
     src/ui/hud2/HUD2Altimeter.h \
-    src/ui/hud2/HUD2RenderThread.h
+    src/ui/hud2/HUD2RenderThread.h \
+    src/ui/hud2/HUD2RenderNative.h \
+    src/ui/hud2/HUD2RenderGL.h \
+    src/ui/hud2/HUD2RenderOffscreen.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -544,8 +545,6 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2Horizon.cc \
     src/ui/hud2/HUD2Data.cc \
     src/ui/hud2/HUD2Painter.cc \
-    src/ui/hud2/HUD2Surface.cc \
-    src/ui/hud2/HUD2SurfaceGL.cc \
     src/ui/hud2/HUD2Dial.cc \
     src/ui/hud2/HUD2Math.cc \
     src/ui/hud2/HUD2HorizonCrosshair.cc \
@@ -553,7 +552,10 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2HorizonRoll.cc \
     src/ui/hud2/HUD2HorizonPitch.cc \
     src/ui/hud2/HUD2Altimeter.cc \
-    src/ui/hud2/HUD2RenderThread.cc
+    src/ui/hud2/HUD2RenderThread.cc \
+    src/ui/hud2/HUD2RenderNative.cc \
+    src/ui/hud2/HUD2RenderGL.cc \
+    src/ui/hud2/HUD2RenderOffscreen.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

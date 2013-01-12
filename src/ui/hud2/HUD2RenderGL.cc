@@ -1,16 +1,16 @@
 
 #include <QtGui>
-#include "HUD2SurfaceGL.h"
+#include "HUD2RenderGL.h"
 #include "HUD2Painter.h"
 
-HUD2PaintSurfaceGL::HUD2PaintSurfaceGL(HUD2Painter *hudpainter, QWidget *parent)
+HUD2RenderGL::HUD2RenderGL(HUD2Painter *hudpainter, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       hudpainter(hudpainter)
 {
     setAutoFillBackground(false);
 }
 
-void HUD2PaintSurfaceGL::paintEvent(QPaintEvent *event)
+void HUD2RenderGL::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     painter.fillRect(event->rect(), Qt::black);
@@ -18,6 +18,6 @@ void HUD2PaintSurfaceGL::paintEvent(QPaintEvent *event)
     hudpainter->paint(&painter);
 }
 
-void HUD2PaintSurfaceGL::resizeEvent(QResizeEvent *event){
+void HUD2RenderGL::resizeEvent(QResizeEvent *event){
     hudpainter->updateGeometry(&event->size());
 }

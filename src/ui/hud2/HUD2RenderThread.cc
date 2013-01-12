@@ -9,6 +9,7 @@ HUD2RenderThread::HUD2RenderThread(const HUD2Data *huddata, QObject *parent) :
 {
     abort = false;
     //mutex.unlock();
+    image = QImage(1024, 512, QImage::Format_ARGB32_Premultiplied);
 }
 
 HUD2RenderThread::~HUD2RenderThread(){

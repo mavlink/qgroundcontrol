@@ -97,7 +97,7 @@ void HUD2HorizonYaw::paint(QPainter *painter){
     painter->setFont(textFont);
 
     qreal yaw_deg = wrap_360(rad2deg(huddata->yaw));
-    int deg = wrap_360(round(yaw_deg));
+    //int deg = wrap_360(round(yaw_deg));
     //painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
     painter->drawText(QPoint(0, mainRect.height()), QString::number(huddata->fps));
 

@@ -47,8 +47,8 @@
 #include <QTimer>
 #include <QImage>
 
-#include "HUD2Surface.h"
-#include "HUD2SurfaceGL.h"
+#include "HUD2RenderNative.h"
+#include "HUD2RenderGL.h"
 #include "HUD2Painter.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
@@ -74,8 +74,8 @@ protected:
 private:
     HUD2Data huddata;
     HUD2Painter hudpainter;
-    HUD2PaintSurface surface;
-    HUD2PaintSurfaceGL surface_gl;
+    HUD2RenderNative renderNative;
+    HUD2RenderGL renderGL;
     HUD2RenderThread thread;
 
     QGridLayout *layout;

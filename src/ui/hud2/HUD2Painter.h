@@ -1,5 +1,5 @@
-#ifndef HUDPAINTER_NEW_H
-#define HUDPAINTER_NEW_H
+#ifndef HUD2PAINTER_H
+#define HUD2PAINTER_H
 
 #include <QWidget>
 #include <QBrush>
@@ -44,4 +44,4 @@ private:
     QColor fuelColor;          ///< Current color for the fuel message, can be info, warning or critical color
 };
 
-#endif // HUDPAINTER_NEW_H
+#endif // HUD2PAINTER_H
