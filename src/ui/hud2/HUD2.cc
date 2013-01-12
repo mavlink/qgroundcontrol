@@ -69,28 +69,30 @@ HUD2::~HUD2()
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent),
       uas(NULL),
-      renderNative(huddata, this),
-      renderGL(huddata, this),
-      renderOffscreen(huddata, this),
-      usegl(false)
+      renderType(RENDER_TYPE_NATIVE)
 {   
     layout = new QGridLayout(this);
-    layout->addWidget(&renderNative,    0, 0);
-    layout->addWidget(&renderGL, 0, 0);
-    layout->addWidget(&renderOffscreen, 0, 0);
 
-    renderNative.hide();
-
-    if (usegl == true){
-        renderOffscreen.hide();
+    switch(renderType){
+    case RENDER_TYPE_NATIVE:
+        render_instance = new HUD2RenderNative(huddata, this),
+        btn.setText(tr("Native"));
+        break;
+    case RENDER_TYPE_OPENGL:
+        render_instance = new HUD2RenderGL(huddata, this),
         btn.setText(tr("GL"));
-    }
-    else{
-        renderGL.hide();
+        break;
+    case RENDER_TYPE_OFFSCREEN:
+        render_instance = new HUD2RenderOffscreen(huddata, this),
         btn.setText(tr("Offscreen"));
+        break;
+    default:
+        break;
     }
 
-    connect(&btn, SIGNAL(clicked()), this, SLOT(togglerenderer()));
+    layout->addWidget(render_instance, 0, 0);
+
+    connect(&btn, SIGNAL(clicked()), this, SLOT(switchRender()));
     layout->addWidget(&btn, 1, 0);
     setLayout(layout);
 
@@ -102,33 +104,53 @@ HUD2::HUD2(QWidget *parent)
         setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
+
 void HUD2::paint(void){
-
-    if (usegl == true)
-        renderGL.paint();
-    else
-        renderOffscreen.paint();
-        //renderNative.repaint();
+    switch(renderType){
+    case RENDER_TYPE_NATIVE:
+        ((HUD2RenderNative*)render_instance)->paint();
+        break;
+    case RENDER_TYPE_OPENGL:
+        ((HUD2RenderGL*)render_instance)->paint();
+        break;
+    case RENDER_TYPE_OFFSCREEN:
+        ((HUD2RenderOffscreen*)render_instance)->paint();
+        break;
+    default:
+        break;
+    }
 }
 
 
-void HUD2::togglerenderer(void)
+void HUD2::switchRender(void)
 {
-    if (usegl == true){
-        renderGL.hide();
-        //renderNative.show();
-        renderOffscreen.show();
-        btn.setText(tr("Offscreen"));
-        usegl = false;
-    }
-    else{
-        //renderNative.hide();
-        renderOffscreen.hide();
-        renderGL.show();
+    layout->removeWidget(render_instance);
+    delete render_instance;
+
+    renderType++;
+    if (renderType == RENDER_TYPE_ENUM_END)
+        renderType = RENDER_TYPE_NATIVE;
+
+    switch(renderType){
+    case RENDER_TYPE_NATIVE:
+        render_instance = new HUD2RenderNative(huddata, this),
+        btn.setText(tr("Native"));
+        break;
+    case RENDER_TYPE_OPENGL:
+        render_instance = new HUD2RenderGL(huddata, this),
         btn.setText(tr("GL"));
-        usegl = true;
+        break;
+    case RENDER_TYPE_OFFSCREEN:
+        render_instance = new HUD2RenderOffscreen(huddata, this),
+        btn.setText(tr("Offscreen"));
+        break;
+    default:
+        break;
     }
+
+    layout->addWidget(render_instance, 0, 0);
 }
+
 
 void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
@@ -143,6 +165,7 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
     }
 }
 
+
 void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon, double altitude, quint64 timestamp)
 {
     Q_UNUSED(uas);
@@ -151,6 +174,7 @@ void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon, doubl
     huddata.lon = lon;
     huddata.alt = altitude;
 }
+
 
 /**
  * @param uas the UAS/MAV to monitor/display with the HUD

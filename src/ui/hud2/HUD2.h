@@ -60,6 +60,13 @@ QT_BEGIN_NAMESPACE
 class QWidget;
 QT_END_NAMESPACE
 
+typedef enum {
+    RENDER_TYPE_NATIVE = 0,
+    RENDER_TYPE_OPENGL = 1,
+    RENDER_TYPE_OFFSCREEN = 2,
+    RENDER_TYPE_ENUM_END = 3
+}render_type;
+
 class HUD2 : public QWidget
 {
     Q_OBJECT
@@ -73,14 +80,15 @@ protected:
 
 private:
     HUD2Data huddata;
-    HUD2RenderNative renderNative;
-    HUD2RenderGL renderGL;
-    HUD2RenderOffscreen renderOffscreen;
+//    HUD2RenderNative renderNative;
+//    HUD2RenderGL renderGL;
+//    HUD2RenderOffscreen renderOffscreen;
+    QWidget *render_instance;
 
     QGridLayout *layout;
     QTimer fpsTimer;
     QPushButton btn;
-    bool usegl;
+    int renderType;
     void paint(void);
     void createActions(void);
 
@@ -95,7 +103,7 @@ signals:
     //void visibilityChanged(bool visible);
 
 private slots:
-    void togglerenderer(void);
+    void switchRender(void);
 };
 
 #endif

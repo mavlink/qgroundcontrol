@@ -31,7 +31,7 @@ void HUD2RenderThread::run(void){
     while (!abort){
         condition.wait(&syncMutex);
         renderMutex.lock();
-        render->fillRect(image->rect(), Qt::black);
+        render->fillRect(image->rect(), Qt::gray);
         hudpainter.paint(render);
         emit  renderedImage(*image);
         renderMutex.unlock();
