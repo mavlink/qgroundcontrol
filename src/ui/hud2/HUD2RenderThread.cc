@@ -4,22 +4,22 @@
 
 HUD2RenderThread::HUD2RenderThread(HUD2Painter &hudpainter, QObject *parent) :
     QThread(parent),
-    hudpainter(hudpainter),
-    image(QImage(640, 480, QImage::Format_ARGB32_Premultiplied)),
-    render(&image)
+    hudpainter(hudpainter)
 {
     abort = false;
-    render.setRenderHint(QPainter::Antialiasing);
 
-    //mutex.unlock();
-    //image = QImage(512, 512, QImage::Format_ARGB32_Premultiplied);
+    renderMutex.lock();
+    image = new QImage(640, 480, QImage::Format_ARGB32_Premultiplied);
+    render = new QPainter(image);
+    render->setRenderHint(QPainter::Antialiasing);
+    renderMutex.unlock();
 }
 
 HUD2RenderThread::~HUD2RenderThread(){
-    mutex.lock();
+    syncMutex.lock();
     abort = true;
     condition.wakeOne();
-    mutex.unlock();
+    syncMutex.unlock();
 
     wait();
     qDebug() << "RenderThread: destroyed";
@@ -29,12 +29,12 @@ void HUD2RenderThread::run(void){
     qDebug() << "RenderThread: run";
 
     while (!abort){
-        condition.wait(&mutex);
-
-        render.fillRect(image.rect(), Qt::black);
-        hudpainter.paint(&render);
-
-        emit  renderedImage(image);
+        condition.wait(&syncMutex);
+        renderMutex.lock();
+        render->fillRect(image->rect(), Qt::black);
+        hudpainter.paint(render);
+        emit  renderedImage(*image);
+        renderMutex.unlock();
     }
 
     qDebug() << "RenderThread: quit";
@@ -46,12 +46,19 @@ void HUD2RenderThread::paint(void){
     if (!isRunning())
         start(LowPriority);
     else{
-        mutex.lock();
+        syncMutex.lock();
         condition.wakeOne();
-        mutex.unlock();
+        syncMutex.unlock();
     }
 }
 
 void HUD2RenderThread::updateGeometry(const QSize &size){
+    renderMutex.lock();
+    delete render;
+    delete image;
+    image = new QImage(size, QImage::Format_ARGB32_Premultiplied);
+    render = new QPainter(image);
+    render->setRenderHint(QPainter::Antialiasing);
     hudpainter.updateGeometry(size);
+    renderMutex.unlock();
 }

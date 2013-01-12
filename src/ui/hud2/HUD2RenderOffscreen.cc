@@ -9,24 +9,24 @@ HUD2RenderOffscreen::HUD2RenderOffscreen(HUD2Data &huddata, QWidget *parent)
       renderThread(hudpainter, this)
 {
     connect(&renderThread, SIGNAL(renderedImage(const QImage)), this, SLOT(renderReady(QImage)));
-    this->renderThread.start();
+    renderThread.start(QThread::LowPriority);
 }
 
 void HUD2RenderOffscreen::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
     QPainter painter(this);
-    //painter.fillRect(event->rect(), Qt::black);
     painter.drawPixmap(0, 0, pixmap);
 }
 
 void HUD2RenderOffscreen::resizeEvent(QResizeEvent *event){
     renderThread.updateGeometry(event->size());
+    renderThread.paint();
 }
 
 void HUD2RenderOffscreen::renderReady(const QImage &image){
-    this->pixmap = QPixmap::fromImage(image);
-    this->repaint();
+    pixmap = QPixmap::fromImage(image);
+    repaint();
 }
 
 void HUD2RenderOffscreen::paint(void){

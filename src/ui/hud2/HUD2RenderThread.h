@@ -27,11 +27,12 @@ public slots:
     void updateGeometry(const QSize &size);
 
 private:
-    QMutex mutex;
+    QMutex syncMutex; // for syncronization
+    QMutex renderMutex; // for safe change of painter size
     QWaitCondition condition;
     HUD2Painter &hudpainter;
-    QImage image;
-    QPainter render;
+    QImage *image;
+    QPainter *render;
     QTimer timer;
     bool abort;
 };
