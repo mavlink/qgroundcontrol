@@ -2,7 +2,7 @@
 
 #include "HUD2Altimeter.h"
 
-HUD2Altimeter::HUD2Altimeter(const HUD2Data *huddata, QWidget *parent) :
+HUD2Altimeter::HUD2Altimeter(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
@@ -31,12 +31,12 @@ HUD2Altimeter::HUD2Altimeter(const HUD2Data *huddata, QWidget *parent) :
     delete[] handScales;
 }
 
-void HUD2Altimeter::updateGeometry(const QSize *size){
+void HUD2Altimeter::updateGeometry(const QSize &size){
     dial->updateGeometry(size);
 }
 
 void HUD2Altimeter::paint(QPainter *painter){
-    dial->paint(painter, huddata->alt);
+    dial->paint(painter, huddata.alt);
 }
 
 void HUD2Altimeter::setColor(QColor color){

@@ -5,7 +5,7 @@
 #include "HUD2Math.h"
 #include "HUD2HorizonRoll.h"
 
-HUD2HorizonRoll::HUD2HorizonRoll(const qreal *gap, const HUD2Data *huddata, QWidget *parent) :
+HUD2HorizonRoll::HUD2HorizonRoll(const qreal *gap, HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata),
     gap(gap)
@@ -20,14 +20,14 @@ HUD2HorizonRoll::HUD2HorizonRoll(const qreal *gap, const HUD2Data *huddata, QWid
     this->arrowPen.setWidth(2);
 }
 
-void HUD2HorizonRoll::updateGeometry(const QSize *size){
+void HUD2HorizonRoll::updateGeometry(const QSize &size){
     int thick_scratch_len = percent2pix_h(size, 2.5);
     clamp(thick_scratch_len, 4, 20);
 
     int thin_scratch_len = thick_scratch_len / 2;
     clamp(thin_scratch_len, 2, 10);
 
-    int big_r = size->height() / 2;
+    int big_r = size.height() / 2;
     int small_r = big_r - thick_scratch_len;
 
     QLine thick_line = QLine(0, big_r, 0, small_r);
@@ -86,7 +86,7 @@ void HUD2HorizonRoll::paint(QPainter *painter){
 
     n = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
-    painter->rotate(-rad2deg(huddata->roll));
+    painter->rotate(-rad2deg(huddata.roll));
     painter->drawLines(arrowLines, n);
 
     painter->restore();

@@ -32,7 +32,7 @@ HUD2Dial::HUD2Dial(qreal r, qreal x, qreal y,
     this->dialPen.setWidth(0);
 }
 
-void HUD2Dial::updateGeometry(const QSize *size){
+void HUD2Dial::updateGeometry(const QSize &size){
     // main sizes
     _r = percent2pix_h(size, r);
     _y = percent2pix_h(size, y);

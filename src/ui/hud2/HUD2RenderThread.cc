@@ -2,60 +2,56 @@
 
 #include "HUD2RenderThread.h"
 
-HUD2RenderThread::HUD2RenderThread(const HUD2Data *huddata, QObject *parent) :
+HUD2RenderThread::HUD2RenderThread(HUD2Painter &hudpainter, QObject *parent) :
     QThread(parent),
-    huddata(huddata),
-    image(QImage(1024, 512, QImage::Format_ARGB32_Premultiplied))
+    hudpainter(hudpainter),
+    image(QImage(640, 480, QImage::Format_ARGB32_Premultiplied)),
+    render(&image)
 {
     abort = false;
+    render.setRenderHint(QPainter::Antialiasing);
+
     //mutex.unlock();
-    image = QImage(1024, 512, QImage::Format_ARGB32_Premultiplied);
+    //image = QImage(512, 512, QImage::Format_ARGB32_Premultiplied);
 }
 
 HUD2RenderThread::~HUD2RenderThread(){
-    qDebug() << "RenderThread: destructor";
     mutex.lock();
     abort = true;
     condition.wakeOne();
     mutex.unlock();
 
     wait();
+    qDebug() << "RenderThread: destroyed";
 }
 
-/**
- * @brief HUD2RenderThread::run
- */
 void HUD2RenderThread::run(void){
     qDebug() << "RenderThread: run";
 
     while (!abort){
-        qDebug() << "RenderThread: run cycle" << huddata->roll;
         condition.wait(&mutex);
+
+        render.fillRect(image.rect(), Qt::black);
+        hudpainter.paint(&render);
+
         emit  renderedImage(image);
     }
 
+    qDebug() << "RenderThread: quit";
     quit();
 }
 
-/**
- * @brief HUD2RenderThread::render
- */
-void HUD2RenderThread::render(void){
-    qDebug() << "RenderThread: render";
+void HUD2RenderThread::paint(void){
 
     if (!isRunning())
         start(LowPriority);
     else{
-        //mutex.lock();
+        mutex.lock();
         condition.wakeOne();
-        //mutex.unlock();
+        mutex.unlock();
     }
 }
 
-/**
- * @brief HUD2RenderThread::updateGeometry
- * @param size
- */
-void HUD2RenderThread::updateGeometry(const QSize *size){
-    qDebug() << "RenderThread: updateGeometry" << size;
+void HUD2RenderThread::updateGeometry(const QSize &size){
+    hudpainter.updateGeometry(size);
 }

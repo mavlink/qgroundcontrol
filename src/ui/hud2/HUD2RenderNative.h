@@ -15,19 +15,20 @@ class HUD2RenderNative : public QWidget
     Q_OBJECT
 
 public:
-    HUD2RenderNative(HUD2Painter *hudpainter, QWidget *parent);
+    HUD2RenderNative(HUD2Data &huddata, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
 
 public slots:
+    void paint(void);
 
 protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Painter *hudpainter;
+    HUD2Painter hudpainter;
 };
 
 #endif /* HUD2RENDERNATIVE_H */

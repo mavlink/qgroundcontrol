@@ -21,7 +21,7 @@ signals:
 
 public slots:
     void setColor(QColor color);
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
 
 private:
     qreal r; // radius

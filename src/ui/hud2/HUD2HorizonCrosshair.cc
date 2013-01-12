@@ -11,7 +11,7 @@ HUD2HorizonCrosshair::HUD2HorizonCrosshair(const qreal *gap, QWidget *parent) :
     pen.setWidth(2);
 }
 
-void HUD2HorizonCrosshair::updateGeometry(const QSize *size){
+void HUD2HorizonCrosshair::updateGeometry(const QSize &size){
 
     int _gap = percent2pix_w(size, *gap);
     int minigap = _gap/5;

@@ -3,7 +3,7 @@
 #include "HUD2HorizonYaw.h"
 #include "HUD2Math.h"
 
-HUD2HorizonYaw::HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent) :
+HUD2HorizonYaw::HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
@@ -31,7 +31,7 @@ HUD2HorizonYaw::HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent) :
     opaqueBackground = false;
 }
 
-void HUD2HorizonYaw::updateGeometry(const QSize *size){
+void HUD2HorizonYaw::updateGeometry(const QSize &size){
 /*
   000      010      020
    ||       ||       ||
@@ -45,7 +45,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize *size){
     int text_size = (scratch_len * 3 ) / 2;
     clamp(text_size, SIZE_TEXT_MIN, 50);
     textFont.setPixelSize(text_size);
-    mainRect.setWidth(size->width() / 3);
+    mainRect.setWidth(size.width() / 3);
     mainRect.setHeight(scratch_len + text_size);
     clipRect = mainRect;
     clipRect.translate(-clipRect.width()/2, -clipRect.height());
@@ -96,10 +96,10 @@ void HUD2HorizonYaw::paint(QPainter *painter){
     painter->setPen(textPen);
     painter->setFont(textFont);
 
-    qreal yaw_deg = wrap_360(rad2deg(huddata->yaw));
+    qreal yaw_deg = wrap_360(rad2deg(huddata.yaw));
     //int deg = wrap_360(round(yaw_deg));
     //painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
-    painter->drawText(QPoint(0, mainRect.height()), QString::number(huddata->fps));
+    painter->drawText(QPoint(0, mainRect.height()), QString::number(huddata.fps));
 
     qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 

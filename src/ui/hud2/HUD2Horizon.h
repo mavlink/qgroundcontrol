@@ -15,7 +15,7 @@ class HUD2Horizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Horizon(const HUD2Data *huddata, QWidget *parent);
+    explicit HUD2Horizon(HUD2Data &huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -23,7 +23,7 @@ signals:
 
 public slots:
     void setColor(QColor color);
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
 
 private:
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
@@ -39,7 +39,7 @@ private:
     HUD2HorizonYaw yaw;
 
     qreal gap; /* space between right and left parts */
-    const HUD2Data *huddata;
+    HUD2Data &huddata;
     QPen pen;
     QLine leftwing;
     QLine rightwing;

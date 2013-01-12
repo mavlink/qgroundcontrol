@@ -16,19 +16,20 @@ class HUD2RenderGL : public QGLWidget
     Q_OBJECT
 
 public:
-    HUD2RenderGL(HUD2Painter *hudpainter, QWidget *parent);
+    HUD2RenderGL(HUD2Data &huddata, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
 
 public slots:
+    void paint(void);
 
 protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Painter *hudpainter;
+    HUD2Painter hudpainter;
 };
 
 #endif /* HUD2RENDERGL_H */

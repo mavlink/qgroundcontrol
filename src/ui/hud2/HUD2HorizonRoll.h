@@ -10,7 +10,7 @@ class HUD2HorizonRoll : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonRoll(const qreal *gap, const HUD2Data *huddata, QWidget *parent = 0);
+    explicit HUD2HorizonRoll(const qreal *gap, HUD2Data &huddata, QWidget *parent = 0);
     void paint(QPainter *painter);
 
 signals:
@@ -18,7 +18,7 @@ signals:
 
 public slots:
     void setColor(QColor color);
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
 
 private:
     QPen thickPen;
@@ -28,7 +28,7 @@ private:
     QLine thinLines[10];
     QLine arrowLines[2];
 
-    const HUD2Data *huddata;
+    HUD2Data &huddata;
     const qreal *gap;
 };
 

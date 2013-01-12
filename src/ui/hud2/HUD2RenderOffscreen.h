@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "HUD2Data.h"
 #include "HUD2Painter.h"
+#include "HUD2RenderThread.h"
 
 class HUD2Painter;
 QT_BEGIN_NAMESPACE
@@ -15,19 +16,25 @@ class HUD2RenderOffscreen : public QWidget
     Q_OBJECT
 
 public:
-    HUD2RenderOffscreen(HUD2Painter *hudpainter, QWidget *parent);
+    HUD2RenderOffscreen(HUD2Data &huddata, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
 
 public slots:
+    void paint(void);
+
+private slots:
+    void renderReady(const QImage &image);
 
 protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Painter *hudpainter;
+    HUD2Painter hudpainter;
+    HUD2RenderThread renderThread;
+    QPixmap pixmap;
 };
 
 #endif /* HUD2RENDEROFFSCREEN_H */

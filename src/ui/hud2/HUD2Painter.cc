@@ -3,7 +3,7 @@
 #include "HUD2Painter.h"
 
 
-HUD2Painter::HUD2Painter(const HUD2Data *huddata, QWidget *parent) :
+HUD2Painter::HUD2Painter(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     horizon(huddata, this),
     altimeter(huddata, this),
@@ -18,15 +18,16 @@ HUD2Painter::HUD2Painter(const HUD2Data *huddata, QWidget *parent) :
 
 void HUD2Painter::paint(QPainter *painter)
 {
+    painter->save();
     painter->translate(painter->window().center());
-
     horizon.paint(painter);
     altimeter.paint(painter);
+    painter->restore();
 
     emit paintComplete();
 }
 
-void HUD2Painter::updateGeometry(const QSize *size){
+void HUD2Painter::updateGeometry(const QSize &size){
     horizon.updateGeometry(size);
     altimeter.updateGeometry(size);
 }

@@ -7,15 +7,15 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-#include "HUD2Data.h"
+#include "HUD2Painter.h"
 
 class HUD2RenderThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit HUD2RenderThread(const HUD2Data *huddata, QObject *parent = 0);
+    explicit HUD2RenderThread(HUD2Painter &hudpainter, QObject *parent = 0);
     ~HUD2RenderThread();
-    void render(void);
+    void paint(void);
 
 signals:
     void renderedImage(const QImage &image);
@@ -24,13 +24,14 @@ protected:
     void run(void);
 
 public slots:
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
 
 private:
     QMutex mutex;
     QWaitCondition condition;
-    const HUD2Data *huddata;
+    HUD2Painter &hudpainter;
     QImage image;
+    QPainter render;
     QTimer timer;
     bool abort;
 };

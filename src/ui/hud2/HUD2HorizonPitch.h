@@ -21,7 +21,7 @@ signals:
     void geometryChanged(const QSize *size);
 
 public slots:
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
     void setColor(QColor color);
 
 private:

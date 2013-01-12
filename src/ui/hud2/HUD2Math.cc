@@ -1,16 +1,16 @@
 #include "HUD2Math.h"
 
-int percent2pix_h(const QSize *size, qreal percent){
-    return round(percent * size->height() / 100.0);
+int percent2pix_h(QSize size, qreal percent){
+    return round(percent * size.height() / 100.0);
 }
 
-int percent2pix_w(const QSize *size, qreal percent){
-    return round(percent * size->width() / 100.0);
+int percent2pix_w(QSize size, qreal percent){
+    return round(percent * size.width() / 100.0);
 }
 
-int percent2pix_d(const QSize *size, qreal percent){
+int percent2pix_d(QSize size, qreal percent){
     qreal d; // diagonal
-    d = sqrt(size->width() * size->width() + size->height() * size->height());
+    d = sqrt(size.width() * size.width() + size.height() * size.height());
     return round(percent * d / 100.0);
 }
 

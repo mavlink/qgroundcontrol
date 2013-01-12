@@ -69,25 +69,25 @@ HUD2::~HUD2()
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent),
       uas(NULL),
-      hudpainter(&huddata, this),
-      renderNative(&hudpainter, this),
-      renderGL(&hudpainter, this),
-      thread(&huddata, this),
+      renderNative(huddata, this),
+      renderGL(huddata, this),
+      renderOffscreen(huddata, this),
       usegl(false)
 {   
-    connect(&this->hudpainter, SIGNAL(paintComplete()), this, SLOT(paintComplete()));
-
     layout = new QGridLayout(this);
     layout->addWidget(&renderNative,    0, 0);
     layout->addWidget(&renderGL, 0, 0);
+    layout->addWidget(&renderOffscreen, 0, 0);
+
+    renderNative.hide();
 
     if (usegl == true){
-        renderNative.hide();
+        renderOffscreen.hide();
         btn.setText(tr("GL"));
     }
     else{
         renderGL.hide();
-        btn.setText(tr("Soft"));
+        btn.setText(tr("Offscreen"));
     }
 
     connect(&btn, SIGNAL(clicked()), this, SLOT(togglerenderer()));
@@ -100,18 +100,15 @@ HUD2::HUD2(QWidget *parent)
     createActions();
     if (UASManager::instance()->getActiveUAS() != NULL)
         setActiveUAS(UASManager::instance()->getActiveUAS());
-
-    // painting thread
-    connect(&thread, SIGNAL(renderedImage(const QImage)), this, SLOT(rendereReady(QImage)));
-    thread.start();
 }
 
-void HUD2::repaint(void){
+void HUD2::paint(void){
 
     if (usegl == true)
-        renderGL.repaint();
+        renderGL.paint();
     else
-        renderNative.repaint();
+        renderOffscreen.paint();
+        //renderNative.repaint();
 }
 
 
@@ -119,13 +116,15 @@ void HUD2::togglerenderer(void)
 {
     if (usegl == true){
         renderGL.hide();
-        renderNative.show();
-        btn.setText(tr("Soft"));
+        //renderNative.show();
+        renderOffscreen.show();
+        btn.setText(tr("Offscreen"));
         usegl = false;
     }
     else{
+        //renderNative.hide();
+        renderOffscreen.hide();
         renderGL.show();
-        renderNative.hide();
         btn.setText(tr("GL"));
         usegl = true;
     }
@@ -140,9 +139,7 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
         huddata.roll  = roll;
         huddata.pitch = pitch;
         huddata.yaw   = yaw;
-        repaint();
-
-        thread.render();
+        this->paint();
     }
 }
 
@@ -212,8 +209,4 @@ void HUD2::createActions()
 //    selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
 //    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
 //    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
-}
-
-void HUD2::rendereReady(const QImage &image){
-    qDebug() << image.width();
 }

@@ -13,7 +13,7 @@ class HUD2HorizonYaw : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonYaw(const HUD2Data *huddata, QWidget *parent = 0);
+    explicit HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent = 0);
     void paint(QPainter *painter);
 
 signals:
@@ -21,7 +21,7 @@ signals:
 
 public slots:
     void setColor(QColor color);
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
     
 private:
     QPen   thickPen;
@@ -44,7 +44,7 @@ private:
     qreal scale_interval_pix;
     int scale_interval_deg;
 
-    const HUD2Data *huddata;
+    HUD2Data &huddata;
 };
 
 #endif // HUD2HORIZONYAWINDICATOR_H

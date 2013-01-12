@@ -3,7 +3,7 @@
 #include "HUD2Horizon.h"
 #include "HUD2Math.h"
 
-HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
+HUD2Horizon::HUD2Horizon(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
@@ -16,17 +16,17 @@ HUD2Horizon::HUD2Horizon(const HUD2Data *huddata, QWidget *parent) :
     this->degstep = 10;
 }
 
-void HUD2Horizon::updateGeometry(const QSize *size){
+void HUD2Horizon::updateGeometry(const QSize &size){
     int _gap = percent2pix_w(size, this->gap);
 
     // wings
-    int x1 = size->width();
+    int x1 = size.width();
     pen.setWidth(6);
     leftwing.setLine(-x1, 0, -_gap/2, 0);
     rightwing.setLine(_gap/2, 0, x1, 0);
 
     // pitchlines
-    pixstep = size->height() / pitchcount;
+    pixstep = size.height() / pitchcount;
     pitchline.updateGeometry(size);
 
     // crosshair
@@ -92,7 +92,7 @@ void HUD2Horizon::paint(QPainter *painter){
     painter->save();
 
     // now perform complex transfomation of painter
-    qreal alpha = rad2deg(huddata->pitch);
+    qreal alpha = rad2deg(huddata.pitch);
 
     QTransform transform;
     QPoint center;
@@ -100,10 +100,10 @@ void HUD2Horizon::paint(QPainter *painter){
     center = painter->window().center();
     transform.translate(center.x(), center.y());
     qreal delta_y = alpha * (pixstep / degstep);
-    qreal delta_x = tan(huddata->roll) * delta_y;
+    qreal delta_x = tan(huddata.roll) * delta_y;
 
     transform.translate(delta_x, delta_y);
-    transform.rotate(-rad2deg(huddata->roll));
+    transform.rotate(-rad2deg(huddata.roll));
 
     painter->setTransform(transform);
     drawpitchlines(painter, degstep, pixstep);

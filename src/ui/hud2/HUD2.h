@@ -52,7 +52,7 @@
 #include "HUD2Painter.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
-#include "HUD2RenderThread.h"
+#include "HUD2RenderOffscreen.h"
 
 #include "UASInterface.h"
 
@@ -73,16 +73,15 @@ protected:
 
 private:
     HUD2Data huddata;
-    HUD2Painter hudpainter;
     HUD2RenderNative renderNative;
     HUD2RenderGL renderGL;
-    HUD2RenderThread thread;
+    HUD2RenderOffscreen renderOffscreen;
 
     QGridLayout *layout;
     QTimer fpsTimer;
     QPushButton btn;
     bool usegl;
-    void repaint(void);
+    void paint(void);
     void createActions(void);
 
 public slots:
@@ -91,8 +90,6 @@ public slots:
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
-
-    void rendereReady(const QImage &image);
 
 signals:
     //void visibilityChanged(bool visible);

@@ -17,7 +17,7 @@ signals:
 
 public slots:
     void setColor(QColor color);
-    void updateGeometry(const QSize *size);
+    void updateGeometry(const QSize &size);
 
 private:
     const qreal *gap; /* space between right and left parts */

@@ -103,7 +103,7 @@ QRect HUD2HorizonPitch::update_geometry_lines_neg(int _gap, int w, int h){
  * @brief HUD2PitchLine::updateGeometry
  * @param size
  */
-void HUD2HorizonPitch::updateGeometry(const QSize *size){
+void HUD2HorizonPitch::updateGeometry(const QSize &size){
     int text_size = percent2pix_h(size, 4);
     int w = percent2pix_w(size, size_w);
     int h = percent2pix_h(size, size_h);
