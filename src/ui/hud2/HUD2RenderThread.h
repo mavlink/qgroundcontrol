@@ -35,6 +35,7 @@ private:
     QPainter *render;
     QTimer timer;
     bool abort;
+    bool idle;
 };
 
 #endif // RENDERTHREAD_H

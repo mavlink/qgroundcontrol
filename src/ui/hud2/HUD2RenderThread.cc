@@ -7,6 +7,7 @@ HUD2RenderThread::HUD2RenderThread(HUD2Painter &hudpainter, QObject *parent) :
     hudpainter(hudpainter)
 {
     abort = false;
+    idle = true;
 
     renderMutex.lock();
     image = new QImage(640, 480, QImage::Format_ARGB32_Premultiplied);
@@ -31,9 +32,11 @@ void HUD2RenderThread::run(void){
     while (!abort){
         condition.wait(&syncMutex);
         renderMutex.lock();
+        idle = false;
         render->fillRect(image->rect(), Qt::gray);
         hudpainter.paint(render);
         emit  renderedImage(*image);
+        idle = true;
         renderMutex.unlock();
     }
 
@@ -46,9 +49,11 @@ void HUD2RenderThread::paint(void){
     if (!isRunning())
         start(LowPriority);
     else{
-        syncMutex.lock();
-        condition.wakeOne();
-        syncMutex.unlock();
+        if (idle){
+            syncMutex.lock();
+            condition.wakeOne();
+            syncMutex.unlock();
+        }
     }
 }
 
