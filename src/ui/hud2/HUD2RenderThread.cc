@@ -33,7 +33,7 @@ void HUD2RenderThread::run(void){
         condition.wait(&syncMutex);
         renderMutex.lock();
         idle = false;
-        render->fillRect(image->rect(), Qt::gray);
+        render->fillRect(image->rect(), QColor(32,0,0,255));
         hudpainter.paint(render);
         emit  renderedImage(*image);
         idle = true;
