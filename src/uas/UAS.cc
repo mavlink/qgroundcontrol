@@ -2801,6 +2801,10 @@ QString UAS::getAudioModeTextFor(int id)
     {
         mode += "guided";
     }
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
+    {
+        mode += "stabilized";
+    }
     else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
     {
         mode += "manual";
