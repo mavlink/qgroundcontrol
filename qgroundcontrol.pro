@@ -657,3 +657,5 @@ win32-msvc2008|win32-msvc2010 {
     INCLUDEPATH += libs/thirdParty/3DMouse/win
     DEFINES += MOUSE_ENABLED_WIN
 }
+
+unix:!macx:!symbian: LIBS += -losg

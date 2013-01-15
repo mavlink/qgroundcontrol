@@ -49,13 +49,14 @@ To build on Linux:
 
 sudo apt-get install phonon libqt4-dev \
  libphonon-dev libphonon4 phonon-backend-gstreamer \
-qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential
+ qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential \
+ libopenscenegraph-dev
 
 cd directory
 
 git clone https://github.com/mavlink/qgroundcontrol.git
 
-go to thirdParty -> libxbee 
+go to libs/thirdParty -> libxbee 
 
 Create Library -> Readme file in folder
 
