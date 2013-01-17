@@ -1489,13 +1489,13 @@ void HUD::copyImage()
         if (u)
         {
             this->glImage = QGLWidget::convertToGLFormat(u->getImage());
-        }
 
-        // Save to directory if logging is enabled
-        if (imageLoggingEnabled)
-        {
-            u->getImage().save(QString("%1/%2.png").arg(imageLogDirectory).arg(imageLogCounter));
-            imageLogCounter++;
+            // Save to directory if logging is enabled
+            if (imageLoggingEnabled)
+            {
+                u->getImage().save(QString("%1/%2.png").arg(imageLogDirectory).arg(imageLogCounter));
+                imageLogCounter++;
+            }
         }
     }
 }
@@ -1507,7 +1507,7 @@ void HUD::saveImages(bool save)
         QFileDialog dialog(this);
         dialog.setFileMode(QFileDialog::DirectoryOnly);
 
-        QString imageLogDirectory = QFileDialog::getExistingDirectory(this, tr("Select image log directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+        imageLogDirectory = QFileDialog::getExistingDirectory(this, tr("Select image log directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
 
         qDebug() << "Logging to:" << imageLogDirectory;
 
