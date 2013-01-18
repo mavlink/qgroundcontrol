@@ -24,7 +24,7 @@ void HUD2Horizon::updateGeometry(const QSize &size){
     pen.setWidth(6);
     leftwing.setLine(-x1, 0, -_gap/2, 0);
     rightwing.setLine(_gap/2, 0, x1, 0);
-
+    
     // pitchlines
     pixstep = size.height() / pitchcount;
     pitchline.updateGeometry(size);
