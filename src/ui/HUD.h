@@ -86,6 +86,7 @@ public slots:
     void finishImage();
     void saveImage();
     void saveImage(QString fileName);
+    void saveImages(bool save);
     /** @brief Select directory where to load the offline files from */
     void selectOfflineDirectory();
     /** @brief Enable the HUD instruments */
@@ -220,14 +221,18 @@ protected:
     bool hudInstrumentsEnabled;
     bool videoEnabled;
     bool dataStreamEnabled;
+    bool imageLoggingEnabled;
     float xImageFactor;
     float yImageFactor;
     QAction* enableHUDAction;
     QAction* enableVideoAction;
     QAction* selectOfflineDirectoryAction;
     QAction* selectVideoChannelAction;
+    QAction* selectSaveDirectoryAction;
     void paintEvent(QPaintEvent *event);
     bool imageRequested;
+    QString imageLogDirectory;
+    unsigned int imageLogCounter;
 };
 
 #endif // HUD_H
