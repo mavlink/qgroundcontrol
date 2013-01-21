@@ -1609,7 +1609,7 @@ void MainWindow::loadViewState()
             debugConsoleDockWidget->show();
             logPlayerDockWidget->show();
             parametersDockWidget->hide();
-            hsiDockWidget->show();
+            hsiDockWidget->hide();
             headDown1DockWidget->hide();
             headDown2DockWidget->hide();
             rcViewDockWidget->hide();
