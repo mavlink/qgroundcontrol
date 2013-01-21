@@ -257,8 +257,13 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         name = name.arg(messageInfo[msgid].name, fieldName);
     }
 
-    if (multiComponentSourceDetected) name.prepend(QString("C%1:").arg(msg->compid));
+    if (multiComponentSourceDetected)
+    {
+        name.prepend(QString("C%1:").arg(msg->compid));
+    }
+
     name.prepend(QString("M%1:").arg(msg->sysid));
+
     switch (messageInfo[msgid].fields[fieldid].type)
     {
     case MAVLINK_TYPE_CHAR:
