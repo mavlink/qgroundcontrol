@@ -360,7 +360,7 @@ namespace mapcontrol
     }
     void MapGraphicItem::DrawMap2D(QPainter *painter)
     {
-        painter->drawImage(this->boundingRect(),dragons.toImage());
+        painter->setBackground(QBrush(Qt::black));
          if(!lastimage.isNull())
             painter->drawImage(core->GetrenderOffset().X()-lastimagepoint.X(),core->GetrenderOffset().Y()-lastimagepoint.Y(),lastimage);
 
