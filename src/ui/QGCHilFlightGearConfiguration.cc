@@ -41,3 +41,8 @@ void QGCHilFlightGearConfiguration::on_startButton_clicked()
     options.append(" --aircraft=" + ui->aircraftComboBox->currentText());
     mav->enableHilFlightGear(true,  options);
 }
+
+void QGCHilFlightGearConfiguration::on_stopButton_clicked()
+{
+    mav->stopHil();
+}
