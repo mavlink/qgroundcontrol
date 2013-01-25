@@ -3,9 +3,9 @@
 
 #include <QGLWidget>
 #include "HUD2Data.h"
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 
-class HUD2Painter;
+class HUD2Drawer;
 QT_BEGIN_NAMESPACE
 class QPaintEvent;
 class QWidget;
@@ -29,7 +29,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Painter hudpainter;
+    HUD2Drawer hudpainter;
 };
 
 #endif /* HUD2RENDERGL_H */

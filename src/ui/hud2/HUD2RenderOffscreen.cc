@@ -1,7 +1,7 @@
 #include <QtGui>
 
 #include "HUD2RenderOffscreen.h"
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 
 HUD2RenderOffscreen::HUD2RenderOffscreen(HUD2Data &huddata, QWidget *parent)
     : QWidget(parent),

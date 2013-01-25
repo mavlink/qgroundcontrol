@@ -1,9 +1,9 @@
 #include <QColor>
 
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 
 
-HUD2Painter::HUD2Painter(HUD2Data &huddata, QWidget *parent) :
+HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     horizon(huddata, this),
     altimeter(huddata, this),
@@ -16,7 +16,7 @@ HUD2Painter::HUD2Painter(HUD2Data &huddata, QWidget *parent) :
     fuelColor = criticalColor;
 }
 
-void HUD2Painter::paint(QPainter *painter)
+void HUD2Drawer::paint(QPainter *painter)
 {
     painter->save();
     painter->translate(painter->window().center());
@@ -30,7 +30,7 @@ void HUD2Painter::paint(QPainter *painter)
     emit paintComplete();
 }
 
-void HUD2Painter::updateGeometry(const QSize &size){
+void HUD2Drawer::updateGeometry(const QSize &size){
     horizon.updateGeometry(size);
     altimeter.updateGeometry(size);
 }

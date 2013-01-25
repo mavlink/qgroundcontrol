@@ -1,7 +1,7 @@
 
 #include <QtGui>
 #include "HUD2RenderGL.h"
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 
 HUD2RenderGL::HUD2RenderGL(HUD2Data &huddata, QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),

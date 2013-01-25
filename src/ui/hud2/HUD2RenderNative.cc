@@ -1,7 +1,7 @@
 
 #include <QtGui>
 #include "HUD2RenderNative.h"
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 
 HUD2RenderNative::HUD2RenderNative(HUD2Data &huddata, QWidget *parent)
     : QWidget(parent),

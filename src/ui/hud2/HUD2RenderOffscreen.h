@@ -3,10 +3,10 @@
 
 #include <QWidget>
 #include "HUD2Data.h"
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 #include "HUD2RenderThread.h"
 
-class HUD2Painter;
+class HUD2Drawer;
 QT_BEGIN_NAMESPACE
 class QPaintEvent;
 QT_END_NAMESPACE
@@ -32,7 +32,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Painter hudpainter;
+    HUD2Drawer hudpainter;
     HUD2RenderThread renderThread;
     QPixmap pixmap;
 };

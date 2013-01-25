@@ -7,13 +7,13 @@
 #include <QMutex>
 #include <QWaitCondition>
 
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 
 class HUD2RenderThread : public QThread
 {
     Q_OBJECT
 public:
-    explicit HUD2RenderThread(HUD2Painter &hudpainter, QObject *parent = 0);
+    explicit HUD2RenderThread(HUD2Drawer &huddrawer, QObject *parent = 0);
     ~HUD2RenderThread();
     void paint(void);
 
@@ -30,7 +30,7 @@ private:
     QMutex syncMutex; // for syncronization
     QMutex renderMutex; // for safe change of painter size
     QWaitCondition condition;
-    HUD2Painter &hudpainter;
+    HUD2Drawer &huddrawer;
     QImage *image;
     QPainter *render;
     QTimer timer;

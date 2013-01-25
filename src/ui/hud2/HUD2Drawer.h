@@ -17,11 +17,11 @@ class QPaintEvent;
 class QResizeEvent;
 QT_END_NAMESPACE
 
-class HUD2Painter : public QWidget
+class HUD2Drawer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Painter(HUD2Data &huddata, QWidget *parent);
+    explicit HUD2Drawer(HUD2Data &huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
