@@ -19,6 +19,7 @@ HUD2Painter::HUD2Painter(HUD2Data &huddata, QWidget *parent) :
 void HUD2Painter::paint(QPainter *painter)
 {
     painter->save();
+    // all painting will perform relative to center of screen
     painter->translate(painter->window().center());
     horizon.paint(painter);
     altimeter.paint(painter);
