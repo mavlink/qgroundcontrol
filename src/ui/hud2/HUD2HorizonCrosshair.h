@@ -10,7 +10,8 @@ class HUD2HorizonCrosshair : public QWidget
     Q_OBJECT
 public:
     explicit HUD2HorizonCrosshair(const qreal *gap, QWidget *parent);
-    void paint(QPainter *painter);
+    void paint_static(QPainter *painter);
+    void paint_dynamic(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

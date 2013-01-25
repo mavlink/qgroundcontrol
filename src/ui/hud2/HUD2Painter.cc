@@ -20,7 +20,10 @@ void HUD2Painter::paint(QPainter *painter)
 {
     painter->save();
     painter->translate(painter->window().center());
-    horizon.paint(painter);
+
+    horizon.paint_static(painter);
+    horizon.paint_dynamic(painter);
+
     altimeter.paint(painter);
     painter->restore();
 

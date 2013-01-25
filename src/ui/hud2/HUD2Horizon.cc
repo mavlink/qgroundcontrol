@@ -77,18 +77,26 @@ void HUD2Horizon::drawwings(QPainter *painter){
     painter->drawLine(rightwing);
 }
 
-/**
- * @brief HUD2Horizon::paint
- * @param painter
- * @param color
- */
-void HUD2Horizon::paint(QPainter *painter){
+void HUD2Horizon::paint_static(QPainter *painter){
 
     // roll indicator
-    roll.paint(painter);
+    roll.paint_static(painter);
 
     //
-    crosshair.paint(painter);
+    crosshair.paint_static(painter);
+
+    // yaw
+    yaw.paint_static(painter);
+}
+
+void HUD2Horizon::paint_dynamic(QPainter *painter){
+
+    // roll indicator
+    roll.paint_dynamic(painter);
+
+    //
+    crosshair.paint_dynamic(painter);
+
     painter->save();
 
     // now perform complex transfomation of painter
@@ -112,7 +120,7 @@ void HUD2Horizon::paint(QPainter *painter){
     painter->restore();
 
     // yaw
-    yaw.paint(painter);
+    yaw.paint_dynamic(painter);
 }
 
 void HUD2Horizon::setColor(QColor color){

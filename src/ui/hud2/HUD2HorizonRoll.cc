@@ -71,7 +71,7 @@ void HUD2HorizonRoll::updateGeometry(const QSize &size){
     arrowLines[1] = QLine(p0, p2);
 }
 
-void HUD2HorizonRoll::paint(QPainter *painter){
+void HUD2HorizonRoll::paint_static(QPainter *painter){
     int n = 0;
 
     painter->save();
@@ -83,6 +83,14 @@ void HUD2HorizonRoll::paint(QPainter *painter){
     painter->setPen(thinPen);
     n = sizeof(thinLines) / sizeof(thinLines[0]);
     painter->drawLines(thinLines, n);
+
+    painter->restore();
+}
+
+void HUD2HorizonRoll::paint_dynamic(QPainter *painter){
+    int n = 0;
+
+    painter->save();
 
     n = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
