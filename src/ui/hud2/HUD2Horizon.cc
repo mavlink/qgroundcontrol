@@ -92,7 +92,7 @@ void HUD2Horizon::paint(QPainter *painter){
     painter->save();
 
     // now perform complex transfomation of painter
-    qreal alpha = rad2deg(huddata.pitch);
+    qreal alpha = rad2deg(-huddata.pitch);
 
     QTransform transform;
     QPoint center;
@@ -100,10 +100,10 @@ void HUD2Horizon::paint(QPainter *painter){
     center = painter->window().center();
     transform.translate(center.x(), center.y());
     qreal delta_y = alpha * (pixstep / degstep);
-    qreal delta_x = tan(huddata.roll) * delta_y;
+    qreal delta_x = tan(-huddata.roll) * delta_y;
 
     transform.translate(delta_x, delta_y);
-    transform.rotate(-rad2deg(huddata.roll));
+    transform.rotate(rad2deg(huddata.roll));
 
     painter->setTransform(transform);
     drawpitchlines(painter, degstep, pixstep);

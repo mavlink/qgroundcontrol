@@ -86,7 +86,7 @@ void HUD2HorizonRoll::paint(QPainter *painter){
 
     n = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
-    painter->rotate(-rad2deg(huddata.roll));
+    painter->rotate(rad2deg(huddata.roll));
     painter->drawLines(arrowLines, n);
 
     painter->restore();
