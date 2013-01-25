@@ -16,6 +16,8 @@ void HUD2HorizonCrosshair::updateGeometry(const QSize &size){
     int _gap = percent2pix_w(size, *gap);
     int minigap = _gap/5;
 
+    pen.setWidth(percent2pix_h(size, 0.3));
+
     // left
     lines[0] = QLine(-_gap/2, 0, 0, 0);
     lines[0].translate(-minigap, 0);

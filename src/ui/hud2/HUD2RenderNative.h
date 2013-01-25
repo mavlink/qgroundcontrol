@@ -28,7 +28,9 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Drawer hudpainter;
+    QPainter *render_static;
+    QPixmap *pixmap_static;
+    HUD2Drawer huddrawer;
 };
 
 #endif /* HUD2RENDERNATIVE_H */

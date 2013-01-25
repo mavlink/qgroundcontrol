@@ -5,8 +5,8 @@
 
 HUD2RenderOffscreen::HUD2RenderOffscreen(HUD2Data &huddata, QWidget *parent)
     : QWidget(parent),
-      hudpainter(huddata, this),
-      renderThread(hudpainter, this)
+      huddrawer(huddata, this),
+      renderThread(huddrawer, this)
 {
     connect(&renderThread, SIGNAL(renderedImage(const QImage)), this, SLOT(renderReady(QImage)));
     renderThread.start(QThread::LowPriority);

@@ -16,12 +16,19 @@ HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
     fuelColor = criticalColor;
 }
 
-void HUD2Drawer::paint(QPainter *painter)
+void HUD2Drawer::paint_static(QPainter *painter)
+{
+    painter->save();
+    painter->translate(painter->window().center());
+    horizon.paint_static(painter);
+    painter->restore();
+}
+
+void HUD2Drawer::paint_dynamic(QPainter *painter)
 {
     painter->save();
     painter->translate(painter->window().center());
 
-    horizon.paint_static(painter);
     horizon.paint_dynamic(painter);
 
     altimeter.paint(painter);

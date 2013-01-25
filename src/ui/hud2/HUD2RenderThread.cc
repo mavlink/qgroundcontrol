@@ -34,7 +34,8 @@ void HUD2RenderThread::run(void){
         renderMutex.lock();
         idle = false;
         render->fillRect(image->rect(), QColor(32,0,0,255));
-        huddrawer.paint(render);
+        huddrawer.paint_static(render);
+        huddrawer.paint_dynamic(render);
         emit  renderedImage(*image);
         idle = true;
         renderMutex.unlock();

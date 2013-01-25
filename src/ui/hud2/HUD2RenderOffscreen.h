@@ -32,7 +32,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Drawer hudpainter;
+    HUD2Drawer huddrawer;
     HUD2RenderThread renderThread;
     QPixmap pixmap;
 };

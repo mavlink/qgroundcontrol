@@ -29,7 +29,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Drawer hudpainter;
+    HUD2Drawer huddrawer;
 };
 
 #endif /* HUD2RENDERGL_H */
