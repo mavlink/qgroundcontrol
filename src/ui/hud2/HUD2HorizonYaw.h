@@ -14,7 +14,8 @@ class HUD2HorizonYaw : public QWidget
     Q_OBJECT
 public:
     explicit HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent = 0);
-    void paint(QPainter *painter);
+    void paint_static(QPainter *painter);
+    void paint_dynamic(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

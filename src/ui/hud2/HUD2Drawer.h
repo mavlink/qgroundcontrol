@@ -1,5 +1,5 @@
-#ifndef HUD2PAINTER_H
-#define HUD2PAINTER_H
+#ifndef HUD2DRAWER_H
+#define HUD2DRAWER_H
 
 #include <QWidget>
 #include <QBrush>
@@ -17,12 +17,13 @@ class QPaintEvent;
 class QResizeEvent;
 QT_END_NAMESPACE
 
-class HUD2Painter : public QWidget
+class HUD2Drawer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Painter(HUD2Data &huddata, QWidget *parent);
-    void paint(QPainter *painter);
+    explicit HUD2Drawer(HUD2Data &huddata, QWidget *parent);
+    void paint_static(QPainter *painter);
+    void paint_dynamic(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -44,4 +45,4 @@ private:
     QColor fuelColor;          ///< Current color for the fuel message, can be info, warning or critical color
 };
 
-#endif // HUD2PAINTER_H
+#endif // HUD2DRAWER_H

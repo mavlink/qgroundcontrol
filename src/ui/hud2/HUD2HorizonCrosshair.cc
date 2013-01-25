@@ -16,6 +16,8 @@ void HUD2HorizonCrosshair::updateGeometry(const QSize &size){
     int _gap = percent2pix_w(size, *gap);
     int minigap = _gap/5;
 
+    pen.setWidth(percent2pix_h(size, 0.3));
+
     // left
     lines[0] = QLine(-_gap/2, 0, 0, 0);
     lines[0].translate(-minigap, 0);
@@ -29,11 +31,16 @@ void HUD2HorizonCrosshair::updateGeometry(const QSize &size){
     lines[2].translate(0, -minigap);
 }
 
-void HUD2HorizonCrosshair::paint(QPainter *painter){
+void HUD2HorizonCrosshair::paint_static(QPainter *painter){
     painter->save();
     painter->setPen(pen);
     painter->drawLines(lines, 3);
     painter->restore();
+}
+
+void HUD2HorizonCrosshair::paint_dynamic(QPainter *painter){
+    Q_UNUSED(painter);
+    return;
 }
 
 void HUD2HorizonCrosshair::setColor(QColor color){

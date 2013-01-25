@@ -21,11 +21,25 @@ HUD2HorizonRoll::HUD2HorizonRoll(const qreal *gap, HUD2Data &huddata, QWidget *p
 }
 
 void HUD2HorizonRoll::updateGeometry(const QSize &size){
+    int tmp;
+
+    // update pen widths
+    tmp = percent2pix_h(size, 0.6);
+    clamp(tmp, 2, 10);
+    this->thickPen.setWidth(tmp);
+
+    this->arrowPen.setWidth(tmp);
+
+    tmp = percent2pix_h(size, 0.3);
+    clamp(tmp, 1, 5);
+    this->thinPen.setWidth(tmp);
+
+    // update pen lengths
     int thick_scratch_len = percent2pix_h(size, 2.5);
     clamp(thick_scratch_len, 4, 20);
 
-    int thin_scratch_len = thick_scratch_len / 2;
-    clamp(thin_scratch_len, 2, 10);
+    int thin_scratch_len = thick_scratch_len / 3;
+    clamp(thin_scratch_len, 1, 10);
 
     int big_r = size.height() / 2;
     int small_r = big_r - thick_scratch_len;
@@ -60,7 +74,7 @@ void HUD2HorizonRoll::updateGeometry(const QSize &size){
 
     // arrow
     int _gap = percent2pix_w(size, *gap);
-    QPoint p0 = QPoint(0, small_r); // top
+    QPoint p0 = QPoint(0, small_r - arrowPen.width()); // top
     QPoint p1 = p0;
     QPoint p2 = p0;
     p1.rx() += _gap/4;
@@ -71,7 +85,7 @@ void HUD2HorizonRoll::updateGeometry(const QSize &size){
     arrowLines[1] = QLine(p0, p2);
 }
 
-void HUD2HorizonRoll::paint(QPainter *painter){
+void HUD2HorizonRoll::paint_static(QPainter *painter){
     int n = 0;
 
     painter->save();
@@ -84,9 +98,17 @@ void HUD2HorizonRoll::paint(QPainter *painter){
     n = sizeof(thinLines) / sizeof(thinLines[0]);
     painter->drawLines(thinLines, n);
 
+    painter->restore();
+}
+
+void HUD2HorizonRoll::paint_dynamic(QPainter *painter){
+    int n = 0;
+
+    painter->save();
+
     n = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
-    painter->rotate(-rad2deg(huddata.roll));
+    painter->rotate(rad2deg(huddata.roll));
     painter->drawLines(arrowLines, n);
 
     painter->restore();

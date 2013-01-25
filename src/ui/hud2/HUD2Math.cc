@@ -14,6 +14,20 @@ int percent2pix_d(QSize size, qreal percent){
     return round(percent * d / 100.0);
 }
 
+qreal percent2pix_hF(QSize size, qreal percent){
+    return percent * size.height() / 100.0;
+}
+
+qreal percent2pix_wF(QSize size, qreal percent){
+    return percent * size.width() / 100.0;
+}
+
+qreal percent2pix_dF(QSize size, qreal percent){
+    qreal d; // diagonal
+    d = sqrt(size.width() * size.width() + size.height() * size.height());
+    return percent * d / 100.0;
+}
+
 qreal rad2deg(float rad){
     return rad * (180.0 / M_PI);
 }

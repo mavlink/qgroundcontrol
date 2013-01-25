@@ -15,7 +15,8 @@ class HUD2HorizonPitch : public QWidget
     Q_OBJECT
 public:
     explicit HUD2HorizonPitch(const qreal *gap, QWidget *parent);
-    void paint(QPainter *painter, int deg);
+    void paint_static(QPainter *painter, int deg);
+    void paint_dynamic(QPainter *painter, int deg);
 
 signals:
     void geometryChanged(const QSize *size);

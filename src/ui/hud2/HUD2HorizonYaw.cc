@@ -28,7 +28,7 @@ HUD2HorizonYaw::HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent) :
     textRects  = new QRect[thickLinesCnt];
     textStrings = new QString[thickLinesCnt];
 
-    opaqueBackground = false;
+    opaqueBackground = true;
 }
 
 void HUD2HorizonYaw::updateGeometry(const QSize &size){
@@ -81,7 +81,12 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     arrowLines[1] = QLine(p0, p2);
 }
 
-void HUD2HorizonYaw::paint(QPainter *painter){
+void HUD2HorizonYaw::paint_static(QPainter *painter){
+    Q_UNUSED(painter);
+    return;
+}
+
+void HUD2HorizonYaw::paint_dynamic(QPainter *painter){
     painter->save();
 
     int n_arrow = 0;
@@ -99,7 +104,9 @@ void HUD2HorizonYaw::paint(QPainter *painter){
     qreal yaw_deg = wrap_360(rad2deg(huddata.yaw));
     //int deg = wrap_360(round(yaw_deg));
     //painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
-    painter->drawText(QPoint(0, mainRect.height()), QString::number(huddata.fps));
+
+    // number indicator
+    painter->drawText(QPoint(0, mainRect.height()), QString::number(round(yaw_deg)));
 
     qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 

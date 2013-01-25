@@ -2,9 +2,9 @@
 
 #include "HUD2RenderThread.h"
 
-HUD2RenderThread::HUD2RenderThread(HUD2Painter &hudpainter, QObject *parent) :
+HUD2RenderThread::HUD2RenderThread(HUD2Drawer &hudpainter, QObject *parent) :
     QThread(parent),
-    hudpainter(hudpainter)
+    huddrawer(hudpainter)
 {
     abort = false;
     idle = true;
@@ -34,7 +34,8 @@ void HUD2RenderThread::run(void){
         renderMutex.lock();
         idle = false;
         render->fillRect(image->rect(), QColor(32,0,0,255));
-        hudpainter.paint(render);
+        huddrawer.paint_static(render);
+        huddrawer.paint_dynamic(render);
         emit  renderedImage(*image);
         idle = true;
         renderMutex.unlock();
@@ -64,6 +65,6 @@ void HUD2RenderThread::updateGeometry(const QSize &size){
     image = new QImage(size, QImage::Format_ARGB32_Premultiplied);
     render = new QPainter(image);
     render->setRenderHint(QPainter::Antialiasing);
-    hudpainter.updateGeometry(size);
+    huddrawer.updateGeometry(size);
     renderMutex.unlock();
 }

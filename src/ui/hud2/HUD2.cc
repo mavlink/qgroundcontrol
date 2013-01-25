@@ -53,6 +53,7 @@ TODO:
 - dynamic text size for pitch lines
 - dynamic mark size for roll and yaw
 - dynamic line widths
+- split paint in static and dynamic parts
 */
 
 #include <QtGui>

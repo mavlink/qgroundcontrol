@@ -16,7 +16,8 @@ class HUD2Horizon : public QWidget
     Q_OBJECT
 public:
     explicit HUD2Horizon(HUD2Data &huddata, QWidget *parent);
-    void paint(QPainter *painter);
+    void paint_static(QPainter *painter);
+    void paint_dynamic(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -27,7 +28,7 @@ public slots:
 
 private:
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
-    void drawwings(QPainter *painter);
+    void drawhorizon(QPainter *painter);
 
     HUD2HorizonPitch pitchline;
     int degstep;    // vertical screen capacity in degrees
@@ -41,8 +42,8 @@ private:
     qreal gap; /* space between right and left parts */
     HUD2Data &huddata;
     QPen pen;
-    QLine leftwing;
-    QLine rightwing;
+    QLine hirizonleft;
+    QLine horizonright;
 };
 
 #endif // HUDHORIZON_H

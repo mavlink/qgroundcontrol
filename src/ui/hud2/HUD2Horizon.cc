@@ -21,10 +21,10 @@ void HUD2Horizon::updateGeometry(const QSize &size){
 
     // wings
     int x1 = size.width();
-    pen.setWidth(6);
-    leftwing.setLine(-x1, 0, -_gap/2, 0);
-    rightwing.setLine(_gap/2, 0, x1, 0);
-
+    pen.setWidth(percent2pix_h(size, 1));
+    hirizonleft.setLine(-x1, 0, -_gap, 0);
+    horizonright.setLine(_gap, 0, x1, 0);
+    
     // pitchlines
     pixstep = size.height() / pitchcount;
     pitchline.updateGeometry(size);
@@ -52,7 +52,8 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
     while (i > -360){
         i -= degstep;
         painter->translate(0, -pixstep);
-        pitchline.paint(painter, -i);
+        pitchline.paint_static(painter, -i);
+        pitchline.paint_dynamic(painter, -i);
     }
     painter->restore();
 
@@ -61,7 +62,8 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
     while (i < 360){
         i += degstep;
         painter->translate(0, pixstep);
-        pitchline.paint(painter, -i);
+        pitchline.paint_static(painter, -i);
+        pitchline.paint_dynamic(painter, -i);
     }
     painter->restore();
 }
@@ -70,29 +72,37 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
  * @brief HUD2Horizon::drawwings
  * @param painter
  */
-void HUD2Horizon::drawwings(QPainter *painter){
+void HUD2Horizon::drawhorizon(QPainter *painter){
     pen.setColor(Qt::green);
     painter->setPen(pen);
-    painter->drawLine(leftwing);
-    painter->drawLine(rightwing);
+    painter->drawLine(hirizonleft);
+    painter->drawLine(horizonright);
 }
 
-/**
- * @brief HUD2Horizon::paint
- * @param painter
- * @param color
- */
-void HUD2Horizon::paint(QPainter *painter){
+void HUD2Horizon::paint_static(QPainter *painter){
 
     // roll indicator
-    roll.paint(painter);
+    roll.paint_static(painter);
 
     //
-    crosshair.paint(painter);
+    crosshair.paint_static(painter);
+
+    // yaw
+    yaw.paint_static(painter);
+}
+
+void HUD2Horizon::paint_dynamic(QPainter *painter){
+
+    // roll indicator
+    roll.paint_dynamic(painter);
+
+    //
+    crosshair.paint_dynamic(painter);
+
     painter->save();
 
     // now perform complex transfomation of painter
-    qreal alpha = rad2deg(huddata.pitch);
+    qreal alpha = rad2deg(-huddata.pitch);
 
     QTransform transform;
     QPoint center;
@@ -100,19 +110,19 @@ void HUD2Horizon::paint(QPainter *painter){
     center = painter->window().center();
     transform.translate(center.x(), center.y());
     qreal delta_y = alpha * (pixstep / degstep);
-    qreal delta_x = tan(huddata.roll) * delta_y;
+    qreal delta_x = tan(-huddata.roll) * delta_y;
 
     transform.translate(delta_x, delta_y);
-    transform.rotate(-rad2deg(huddata.roll));
+    transform.rotate(rad2deg(huddata.roll));
 
     painter->setTransform(transform);
     drawpitchlines(painter, degstep, pixstep);
-    drawwings(painter);
+    drawhorizon(painter);
 
     painter->restore();
 
     // yaw
-    yaw.paint(painter);
+    yaw.paint_dynamic(painter);
 }
 
 void HUD2Horizon::setColor(QColor color){

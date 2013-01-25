@@ -15,6 +15,10 @@
 int percent2pix_h(QSize size, qreal percent);
 int percent2pix_w(QSize size, qreal percent);
 int percent2pix_d(QSize size, qreal percent);
+qreal percent2pix_hF(QSize size, qreal percent);
+qreal percent2pix_wF(QSize size, qreal percent);
+qreal percent2pix_dF(QSize size, qreal percent);
+
 qreal rad2deg(float rad);
 qreal deg2rad(float deg);
 QPoint rotatePoint(qreal phi, QPoint p);

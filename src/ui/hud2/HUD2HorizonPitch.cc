@@ -104,6 +104,12 @@ QRect HUD2HorizonPitch::update_geometry_lines_neg(int _gap, int w, int h){
  * @param size
  */
 void HUD2HorizonPitch::updateGeometry(const QSize &size){
+
+    int tmp;
+    tmp = percent2pix_d(size, 0.3);
+    clamp(tmp, 2, 10);
+    pen.setWidth(tmp);
+
     int text_size = percent2pix_h(size, 4);
     int w = percent2pix_w(size, size_w);
     int h = percent2pix_h(size, size_h);
@@ -122,12 +128,12 @@ void HUD2HorizonPitch::updateGeometry(const QSize &size){
     textRectNeg.setHeight(text_size);
 }
 
-/**
- * @brief HUD2PitchLine::paint
- * @param painter
- * @param deg
- */
-void HUD2HorizonPitch::paint(QPainter *painter, int deg){
+void HUD2HorizonPitch::paint_static(QPainter *painter, int deg){
+    Q_UNUSED(deg);
+    Q_UNUSED(painter);
+}
+
+void HUD2HorizonPitch::paint_dynamic(QPainter *painter, int deg){
     painter->save();
 
     painter->setPen(pen);
@@ -146,10 +152,6 @@ void HUD2HorizonPitch::paint(QPainter *painter, int deg){
     painter->restore();
 }
 
-/**
- * @brief HUD2PitchLine::setColor
- * @param color
- */
 void HUD2HorizonPitch::setColor(QColor color){
     pen.setColor(color);
 }

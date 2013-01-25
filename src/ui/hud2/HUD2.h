@@ -49,7 +49,7 @@
 
 #include "HUD2RenderNative.h"
 #include "HUD2RenderGL.h"
-#include "HUD2Painter.h"
+#include "HUD2Drawer.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
 #include "HUD2RenderOffscreen.h"
