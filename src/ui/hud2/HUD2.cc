@@ -97,6 +97,10 @@ HUD2::HUD2(QWidget *parent)
     layout->addWidget(&btn, 1, 0);
     setLayout(layout);
 
+    fpsLimiter.setInterval(20);
+    connect(&fpsLimiter, SIGNAL(timeout()), this, SLOT(enableRepaint()));
+    fpsLimiter.start();
+
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this,                   SLOT(setActiveUAS(UASInterface*)));
@@ -150,8 +154,6 @@ void HUD2::switchRender(void)
     }
 
     layout->addWidget(render_instance, 0, 0);
-    int tmp = render_instance->width();
-    render_instance->setGeometry(10,10,10,10);
 }
 
 
@@ -164,7 +166,10 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
         huddata.roll  = roll;
         huddata.pitch = pitch;
         huddata.yaw   = yaw;
-        this->paint();
+        if (repaintEnabled){
+            this->paint();
+            repaintEnabled = false;
+        }
     }
 }
 
@@ -236,4 +241,8 @@ void HUD2::createActions()
 //    selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
 //    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
 //    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
+}
+
+void HUD2::enableRepaint(void){
+    repaintEnabled = true;
 }
