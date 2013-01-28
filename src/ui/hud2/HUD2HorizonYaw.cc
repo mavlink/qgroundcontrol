@@ -95,9 +95,6 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     arrowLines[1] = QLine(p0, p2);
 
     // rectangle for number indicator
-//    numRect.setWidth(scratch_len * 5);
-//    numRect.setHeight(scratch_len);
-//    numRect.setTopLeft(p0);
     numRect = QRect(p0, QSize((scratch_len * 7) / 2, scratch_len * 2));
     numRect.translate(-numRect.width()/2, scratch_len);
 }
