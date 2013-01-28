@@ -72,6 +72,8 @@ HUD2::HUD2(QWidget *parent)
       uas(NULL),
       renderType(RENDER_TYPE_NATIVE)
 {   
+    setMinimumSize(160, 120);
+
     layout = new QGridLayout(this);
 
     switch(renderType){

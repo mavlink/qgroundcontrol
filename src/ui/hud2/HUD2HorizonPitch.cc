@@ -107,7 +107,7 @@ void HUD2HorizonPitch::updateGeometry(const QSize &size){
 
     int tmp;
     tmp = percent2pix_d(size, 0.3);
-    clamp(tmp, 2, 10);
+    clamp(tmp, 1, 10);
     pen.setWidth(tmp);
 
     int text_size = percent2pix_h(size, 4);

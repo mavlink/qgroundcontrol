@@ -504,6 +504,14 @@ void MainWindow::buildCommonWidgets()
         addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
     }
 
+    if (!headUpDockWidget2)
+    {
+        headUpDockWidget2 = new QDockWidget(tr("HUD2"), this);
+        headUpDockWidget2->setWidget( new HUD2(this));
+        headUpDockWidget2->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET_2");
+        addTool(headUpDockWidget2, tr("Head Up Display 2"), Qt::RightDockWidgetArea);
+    }
+
     if (!video1DockWidget)
     {
         video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);

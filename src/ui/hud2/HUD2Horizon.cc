@@ -21,7 +21,9 @@ void HUD2Horizon::updateGeometry(const QSize &size){
 
     // wings
     int x1 = size.width();
-    pen.setWidth(percent2pix_h(size, 1));
+    int tmp = percent2pix_h(size, 1);
+    clamp(tmp, 2, 10);
+    pen.setWidth(tmp);
     hirizonleft.setLine(-x1, 0, -_gap, 0);
     horizonright.setLine(_gap, 0, x1, 0);
     
