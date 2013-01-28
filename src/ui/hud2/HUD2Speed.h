@@ -1,19 +1,20 @@
-#ifndef HUD2HORIZONYAWINDICATOR_H
-#define HUD2HORIZONYAWINDICATOR_H
+#ifndef HUD2SPEED_H
+#define HUD2SPEED_H
 
 #include <QWidget>
 #include <QPen>
 
-#include "HUD2Data.h"
-
 #define SIZE_H_MIN      2
 #define SIZE_TEXT_MIN   7
 
-class HUD2HorizonYaw : public QWidget
+#include "HUD2Data.h"
+
+class HUD2Speed : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent = 0);
+    explicit HUD2Speed(HUD2Data &huddata, QWidget *parent = 0);
+    
     void paint_static(QPainter *painter);
     void paint_dynamic(QPainter *painter);
 
@@ -23,7 +24,7 @@ signals:
 public slots:
     void setColor(QColor color);
     void updateGeometry(const QSize &size);
-    
+
 private:
     QPen   thickPen;
     QPen   thinPen;
@@ -36,7 +37,7 @@ private:
     int    thinLinesCnt;
     QRect  *textRects;
     QString *textStrings;
-    int    overlap; // how many "spare" scratches have on the ends to realize "gapless" rotation
+    int    overlap; // how many "spare" scratches have on the ends
     QRect  mainRect;
     QRect  clipRect;
     QRect  numRect;
@@ -49,4 +50,4 @@ private:
     HUD2Data &huddata;
 };
 
-#endif // HUD2HORIZONYAWINDICATOR_H
+#endif // HUD2SPEED_H

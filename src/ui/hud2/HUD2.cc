@@ -72,6 +72,8 @@ HUD2::HUD2(QWidget *parent)
       uas(NULL),
       renderType(RENDER_TYPE_NATIVE)
 {   
+    setMinimumSize(160, 120);
+
     layout = new QGridLayout(this);
 
     switch(renderType){
@@ -96,6 +98,10 @@ HUD2::HUD2(QWidget *parent)
     connect(&btn, SIGNAL(clicked()), this, SLOT(switchRender()));
     layout->addWidget(&btn, 1, 0);
     setLayout(layout);
+
+    fpsLimiter.setInterval(20);
+    connect(&fpsLimiter, SIGNAL(timeout()), this, SLOT(enableRepaint()));
+    fpsLimiter.start();
 
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
@@ -162,7 +168,10 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
         huddata.roll  = roll;
         huddata.pitch = pitch;
         huddata.yaw   = yaw;
-        this->paint();
+        if (repaintEnabled){
+            this->paint();
+            repaintEnabled = false;
+        }
     }
 }
 
@@ -235,3 +244,8 @@ void HUD2::createActions()
 //    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
 //    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }
+
+void HUD2::enableRepaint(void){
+    repaintEnabled = true;
+}
+

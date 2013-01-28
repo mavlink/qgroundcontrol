@@ -80,14 +80,12 @@ protected:
 
 private:
     HUD2Data huddata;
-//    HUD2RenderNative renderNative;
-//    HUD2RenderGL renderGL;
-//    HUD2RenderOffscreen renderOffscreen;
     QWidget *render_instance;
 
     QGridLayout *layout;
-    QTimer fpsTimer;
     QPushButton btn;
+    QTimer fpsLimiter;
+    bool repaintEnabled;
     int renderType;
     void paint(void);
     void createActions(void);
@@ -98,6 +96,9 @@ public slots:
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
+
+private slots:
+    void enableRepaint(void);
 
 signals:
     //void visibilityChanged(bool visible);

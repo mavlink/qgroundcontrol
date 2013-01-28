@@ -10,6 +10,7 @@
 #include "HUD2Data.h"
 #include "HUD2Dial.h"
 #include "HUD2Altimeter.h"
+#include "HUD2FpsIndicator.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -35,6 +36,7 @@ public slots:
 private:
     HUD2Horizon horizon;
     HUD2Altimeter altimeter;
+    HUD2FpsIndicator fps;
     HUD2Data &huddata;
 
     // HUD colors

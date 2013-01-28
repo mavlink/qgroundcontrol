@@ -355,6 +355,7 @@ protected:
     QPointer<QDockWidget> watchdogControlDockWidget;
 
     QPointer<QDockWidget> headUpDockWidget;
+    QPointer<QDockWidget> headUpDockWidget2;
     QPointer<QDockWidget> video1DockWidget;
     QPointer<QDockWidget> video2DockWidget;
     QPointer<QDockWidget> rgbd1DockWidget;
