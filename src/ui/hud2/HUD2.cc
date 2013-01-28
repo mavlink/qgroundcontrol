@@ -150,6 +150,8 @@ void HUD2::switchRender(void)
     }
 
     layout->addWidget(render_instance, 0, 0);
+    int tmp = render_instance->width();
+    render_instance->setGeometry(10,10,10,10);
 }
 
 

@@ -39,6 +39,7 @@ private:
     int    overlap; // how many "spare" scratches have on the ends
     QRect  mainRect;
     QRect  clipRect;
+    QRect  numRect;
     bool   opaqueBackground;
     QLine  arrowLines[2];
 

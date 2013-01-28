@@ -39,6 +39,20 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
 (0;0)          /\
 
 */
+    int tmp;
+
+    // update pen widths
+    tmp = percent2pix_h(size, 0.6);
+    clamp(tmp, 2, 10);
+    this->thickPen.setWidth(tmp);
+
+    tmp = percent2pix_h(size, 0.3);
+    clamp(tmp, 1, 5);
+    this->thinPen.setWidth(tmp);
+
+    this->arrowPen.setWidth(tmp);
+
+    // rect sizes
     int i;
     qreal x;
     int scratch_len = percent2pix_h(size, 3);
@@ -70,7 +84,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     }
 
     // arrow
-    QPoint p0 = QPoint(0, 0); // top
+    QPoint p0 = QPoint(0, 0 + arrowPen.width()); // top
     QPoint p1 = p0;
     QPoint p2 = p0;
     p1.rx() += scratch_len;
@@ -79,6 +93,13 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     p2.ry() += scratch_len;
     arrowLines[0] = QLine(p0, p1);
     arrowLines[1] = QLine(p0, p2);
+
+    // rectangle for number indicator
+//    numRect.setWidth(scratch_len * 5);
+//    numRect.setHeight(scratch_len);
+//    numRect.setTopLeft(p0);
+    numRect = QRect(p0, QSize((scratch_len * 7) / 2, scratch_len * 2));
+    numRect.translate(-numRect.width()/2, scratch_len);
 }
 
 void HUD2HorizonYaw::paint_static(QPainter *painter){
@@ -98,16 +119,19 @@ void HUD2HorizonYaw::paint_dynamic(QPainter *painter){
     n_arrow = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
     painter->drawLines(arrowLines, n_arrow);
-    painter->setPen(textPen);
-    painter->setFont(textFont);
-
-    qreal yaw_deg = wrap_360(rad2deg(huddata.yaw));
-    //int deg = wrap_360(round(yaw_deg));
-    //painter->drawText(QPoint(0, mainRect.height()), QString::number(deg));
 
     // number indicator
-    painter->drawText(QPoint(0, mainRect.height()), QString::number(round(yaw_deg)));
+    if (opaqueBackground)
+        painter->eraseRect(numRect);
+    painter->drawRoundedRect(numRect, 1, 1);
+    painter->setPen(textPen);
+    painter->setFont(textFont);
+    char str[4];
+    qreal yaw_deg = wrap_360(rad2deg(huddata.yaw));
+    snprintf(str, sizeof(str), "%03d", (int)round(yaw_deg));
+    painter->drawText(numRect, Qt::AlignCenter, str);
 
+    // ribbon compass
     qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 
     if (opaqueBackground)

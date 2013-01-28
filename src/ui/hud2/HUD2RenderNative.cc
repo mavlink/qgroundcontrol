@@ -40,3 +40,7 @@ void HUD2RenderNative::resizeEvent(QResizeEvent *event){
 void HUD2RenderNative::paint(void){
     this->repaint();
 }
+
+//void HUD2RenderNative::forceResize(void){
+//    this->repaint();
+//}
