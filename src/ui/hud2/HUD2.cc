@@ -246,3 +246,4 @@ void HUD2::createActions()
 void HUD2::enableRepaint(void){
     repaintEnabled = true;
 }
+

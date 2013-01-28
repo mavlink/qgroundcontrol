@@ -21,6 +21,7 @@ void HUD2Drawer::paint_static(QPainter *painter)
     painter->save();
     painter->translate(painter->window().center());
     horizon.paint_static(painter);
+    fps.paint_static(painter);
     painter->restore();
 }
 
@@ -30,8 +31,9 @@ void HUD2Drawer::paint_dynamic(QPainter *painter)
     painter->translate(painter->window().center());
 
     horizon.paint_dynamic(painter);
-
     altimeter.paint(painter);
+    fps.paint_dynamic(painter);
+
     painter->restore();
 
     emit paintComplete();
@@ -40,4 +42,5 @@ void HUD2Drawer::paint_dynamic(QPainter *painter)
 void HUD2Drawer::updateGeometry(const QSize &size){
     horizon.updateGeometry(size);
     altimeter.updateGeometry(size);
+    fps.updateGeometry(size);
 }
