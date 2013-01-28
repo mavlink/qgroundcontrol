@@ -226,7 +226,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCVehicleConfig.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
-    src/ui/QGCHilXPlaneConfiguration.ui
+    src/ui/QGCHilXPlaneConfiguration.ui \
+    src/ui/hud2/HUD2Dialog.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -383,7 +384,8 @@ HEADERS += src/MG.h \
     src/ui/hud2/HUD2RenderOffscreen.h \
     src/ui/hud2/HUD2Drawer.h \
     src/ui/hud2/HUD2Speed.h \
-    src/ui/hud2/HUD2FpsIndicator.h
+    src/ui/hud2/HUD2FpsIndicator.h \
+    src/ui/hud2/HUD2Dialog.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -559,7 +561,8 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2RenderOffscreen.cc \
     src/ui/hud2/HUD2Drawer.cc \
     src/ui/hud2/HUD2Speed.cc \
-    src/ui/hud2/HUD2FpsIndicator.cc
+    src/ui/hud2/HUD2FpsIndicator.cc \
+    src/ui/hud2/HUD2Dialog.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

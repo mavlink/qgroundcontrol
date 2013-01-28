@@ -62,6 +62,8 @@ TODO:
 #include "UASManager.h"
 #include "UAS.h"
 
+#include "HUD2Dialog.h"
+
 HUD2::~HUD2()
 {
     //qDebug() << "HUD2 exit 1";
@@ -228,24 +230,26 @@ void HUD2::setActiveUAS(UASInterface* uas)
 
 void HUD2::createActions()
 {
-//    enableHUDAction = new QAction(tr("Enable HUD"), this);
-//    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
-//    enableHUDAction->setCheckable(true);
-//    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction = new QAction(tr("Enable HUD"), this);
+    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
+    enableHUDAction->setCheckable(true);
+    enableHUDAction->setChecked(hudInstrumentsEnabled);
 //    connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
-
-//    enableVideoAction = new QAction(tr("Enable Video Live feed"), this);
-//    enableVideoAction->setStatusTip(tr("Show the video live feed"));
-//    enableVideoAction->setCheckable(true);
-//    enableVideoAction->setChecked(videoEnabled);
-//    connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
-
-//    selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
-//    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
-//    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }
 
 void HUD2::enableRepaint(void){
     repaintEnabled = true;
 }
 
+void HUD2::toggleAntialising(bool aa){
+    qDebug() << "antialising" << aa;
+}
+
+void HUD2::contextMenuEvent (QContextMenuEvent* event)
+{
+    QMenu menu(this);
+
+    HUD2Dialog *d = new HUD2Dialog();
+    d->show();
+    menu.addAction(enableHUDAction);
+}

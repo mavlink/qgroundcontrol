@@ -77,6 +77,7 @@ public:
 
 protected:
     UASInterface* uas; ///< The uas currently monitored
+    void contextMenuEvent (QContextMenuEvent* event);
 
 private:
     HUD2Data huddata;
@@ -96,6 +97,8 @@ public slots:
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
+
+    void toggleAntialising(bool aa);
 
 private slots:
     void enableRepaint(void);
