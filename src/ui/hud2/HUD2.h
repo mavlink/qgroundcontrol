@@ -83,8 +83,8 @@ private:
     HUD2RenderGL *render_gl;
 
     QGridLayout *layout;
-    QPushButton btn;
     QTimer fpsLimiter;
+    uint fpsLimit;
     bool repaintEnabled;
     int renderType;
     void paint(void);
@@ -99,6 +99,7 @@ public slots:
 
     void toggleAntialising(bool aa);
     void switchRender(int type);
+    void setFpsLimit(int limit);
 
 private slots:
     void enableRepaint(void);

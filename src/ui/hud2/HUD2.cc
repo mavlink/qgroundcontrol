@@ -74,6 +74,8 @@ HUD2::HUD2(QWidget *parent)
       uas(NULL),
       renderType(RENDER_TYPE_NATIVE)
 {   
+    fpsLimit = 100;
+
     setMinimumSize(160, 120);
 
     layout = new QGridLayout(this);
@@ -93,7 +95,7 @@ HUD2::HUD2(QWidget *parent)
 
     setLayout(layout);
 
-    fpsLimiter.setInterval(20);
+    fpsLimiter.setInterval(1000 / fpsLimit);
     connect(&fpsLimiter, SIGNAL(timeout()), this, SLOT(enableRepaint()));
     fpsLimiter.start();
 
@@ -136,6 +138,7 @@ void HUD2::switchRender(int type)
         layout->addWidget(render_gl, 0, 0);
         break;
     default:
+        qDebug() << "UNHANDLED RENDER TYPE";
         break;
     }
     renderType = type;
@@ -244,4 +247,9 @@ void HUD2::contextMenuEvent (QContextMenuEvent* event)
     d->exec();
     delete d;
     //menu.addAction(enableHUDAction);
+}
+
+void HUD2::setFpsLimit(int limit){
+    fpsLimit = limit;
+    fpsLimiter.setInterval(1000 / fpsLimit);
 }
