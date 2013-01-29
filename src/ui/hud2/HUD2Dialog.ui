@@ -81,7 +81,7 @@
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QCheckBox" name="checkBox_2">
+      <widget class="QCheckBox" name="fpsCounterCheckBox">
        <property name="text">
         <string>FPS counter</string>
        </property>
@@ -156,7 +156,7 @@
       <widget class="QSpinBox" name="fpsSpinBox"/>
      </item>
      <item row="0" column="0">
-      <widget class="QCheckBox" name="AAcheckBox">
+      <widget class="QCheckBox" name="aacheckBox">
        <property name="text">
         <string>Antialiasing</string>
        </property>

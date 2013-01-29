@@ -15,12 +15,12 @@ HUD2Dialog::HUD2Dialog(QWidget *parent) :
     settings.beginGroup("QGC_HUD2");
 
     // antialiasing
-    connect(ui->AAcheckBox, SIGNAL(clicked(bool)), parent, SLOT(toggleAntialising(bool)));
+    connect(ui->aacheckBox, SIGNAL(clicked(bool)), parent, SLOT(toggleAntialising(bool)));
     bool aa = settings.value("ANTIALIASING", true).toBool();
     if (aa)
-        ui->AAcheckBox->setCheckState(Qt::Checked);
+        ui->aacheckBox->setCheckState(Qt::Checked);
     else
-        ui->AAcheckBox->setCheckState(Qt::Unchecked);
+        ui->aacheckBox->setCheckState(Qt::Unchecked);
 
     // render type
     int renderType = settings.value("RENDER_TYPE", 0).toInt();
