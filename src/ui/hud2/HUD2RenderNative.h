@@ -22,6 +22,7 @@ signals:
 
 public slots:
     void paint(void);
+    void toggleAntialiasing(bool aa);
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -31,6 +32,7 @@ private:
     QPainter *render_static;
     QPixmap *pixmap_static;
     HUD2Drawer huddrawer;
+    bool antiAliasing;
 };
 
 #endif /* HUD2RENDERNATIVE_H */

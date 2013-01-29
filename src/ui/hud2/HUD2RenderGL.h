@@ -23,6 +23,7 @@ signals:
 
 public slots:
     void paint(void);
+    void toggleAntialiasing(bool aa);
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -30,6 +31,7 @@ protected:
 
 private:
     HUD2Drawer huddrawer;
+    bool antiAliasing;
 };
 
 #endif /* HUD2RENDERGL_H */

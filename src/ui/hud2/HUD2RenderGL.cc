@@ -8,13 +8,15 @@ HUD2RenderGL::HUD2RenderGL(HUD2Data &huddata, QWidget *parent)
       huddrawer(huddata, this)
 {
     setAutoFillBackground(false);
+    antiAliasing = true;
 }
 
 void HUD2RenderGL::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     painter.fillRect(event->rect(), Qt::black);
-    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::Antialiasing, antiAliasing);
+    painter.setRenderHint(QPainter::TextAntialiasing, antiAliasing);
     huddrawer.paint_static(&painter);
     huddrawer.paint_dynamic(&painter);
 }
@@ -24,5 +26,10 @@ void HUD2RenderGL::resizeEvent(QResizeEvent *event){
 }
 
 void HUD2RenderGL::paint(void){
+    this->repaint();
+}
+
+void HUD2RenderGL::toggleAntialiasing(bool aa){
+    this->antiAliasing = aa;
     this->repaint();
 }

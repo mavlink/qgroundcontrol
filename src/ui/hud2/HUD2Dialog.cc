@@ -1,3 +1,5 @@
+#include "HUD2.h"
+
 #include "HUD2Dialog.h"
 #include "ui_HUD2Dialog.h"
 
@@ -6,6 +8,7 @@ HUD2Dialog::HUD2Dialog(QWidget *parent) :
     ui(new Ui::HUD2Dialog)
 {
     ui->setupUi(this);
+    connect(ui->AAcheckBox, SIGNAL(clicked(bool)), parent, SLOT(toggleAntialising(bool)));
 }
 
 HUD2Dialog::~HUD2Dialog()

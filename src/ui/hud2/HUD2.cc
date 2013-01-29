@@ -230,10 +230,10 @@ void HUD2::setActiveUAS(UASInterface* uas)
 
 void HUD2::createActions()
 {
-    enableHUDAction = new QAction(tr("Enable HUD"), this);
-    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
-    enableHUDAction->setCheckable(true);
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+//    enableHUDAction = new QAction(tr("Enable HUD"), this);
+//    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
+//    enableHUDAction->setCheckable(true);
+//    enableHUDAction->setChecked(hudInstrumentsEnabled);
 //    connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
 }
 
@@ -242,14 +242,24 @@ void HUD2::enableRepaint(void){
 }
 
 void HUD2::toggleAntialising(bool aa){
-    qDebug() << "antialising" << aa;
+    switch(renderType){
+    case RENDER_TYPE_NATIVE:
+        ((HUD2RenderNative*)render_instance)->toggleAntialiasing(aa);
+        break;
+    case RENDER_TYPE_OPENGL:
+        ((HUD2RenderGL*)render_instance)->toggleAntialiasing(aa);
+        break;
+    default:
+        break;
+    }
 }
 
 void HUD2::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
 
-    HUD2Dialog *d = new HUD2Dialog();
-    d->show();
-    menu.addAction(enableHUDAction);
+    HUD2Dialog *d = new HUD2Dialog(this);
+    d->exec();
+    delete d;
+    //menu.addAction(enableHUDAction);
 }
