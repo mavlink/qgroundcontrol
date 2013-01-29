@@ -87,10 +87,6 @@ HUD2::HUD2(QWidget *parent)
         render_instance = new HUD2RenderGL(huddata, this),
         btn.setText(tr("GL"));
         break;
-    case RENDER_TYPE_OFFSCREEN:
-        render_instance = new HUD2RenderOffscreen(huddata, this),
-        btn.setText(tr("Offscreen"));
-        break;
     default:
         break;
     }
@@ -122,9 +118,6 @@ void HUD2::paint(void){
     case RENDER_TYPE_OPENGL:
         ((HUD2RenderGL*)render_instance)->paint();
         break;
-    case RENDER_TYPE_OFFSCREEN:
-        ((HUD2RenderOffscreen*)render_instance)->paint();
-        break;
     default:
         break;
     }
@@ -148,10 +141,6 @@ void HUD2::switchRender(void)
     case RENDER_TYPE_OPENGL:
         render_instance = new HUD2RenderGL(huddata, this),
         btn.setText(tr("GL"));
-        break;
-    case RENDER_TYPE_OFFSCREEN:
-        render_instance = new HUD2RenderOffscreen(huddata, this),
-        btn.setText(tr("Offscreen"));
         break;
     default:
         break;
@@ -256,6 +245,7 @@ void HUD2::toggleAntialising(bool aa){
 
 void HUD2::contextMenuEvent (QContextMenuEvent* event)
 {
+    Q_UNUSED(event);
     QMenu menu(this);
 
     HUD2Dialog *d = new HUD2Dialog(this);

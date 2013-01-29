@@ -52,7 +52,6 @@
 #include "HUD2Drawer.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
-#include "HUD2RenderOffscreen.h"
 
 #include "UASInterface.h"
 
@@ -63,8 +62,7 @@ QT_END_NAMESPACE
 typedef enum {
     RENDER_TYPE_NATIVE = 0,
     RENDER_TYPE_OPENGL = 1,
-    RENDER_TYPE_OFFSCREEN = 2,
-    RENDER_TYPE_ENUM_END = 3
+    RENDER_TYPE_ENUM_END = 2
 }render_type;
 
 class HUD2 : public QWidget

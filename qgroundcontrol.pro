@@ -378,10 +378,8 @@ HEADERS += src/MG.h \
     src/ui/hud2/HUD2HorizonRoll.h \
     src/ui/hud2/HUD2HorizonPitch.h \
     src/ui/hud2/HUD2Altimeter.h \
-    src/ui/hud2/HUD2RenderThread.h \
     src/ui/hud2/HUD2RenderNative.h \
     src/ui/hud2/HUD2RenderGL.h \
-    src/ui/hud2/HUD2RenderOffscreen.h \
     src/ui/hud2/HUD2Drawer.h \
     src/ui/hud2/HUD2Speed.h \
     src/ui/hud2/HUD2FpsIndicator.h \
@@ -555,10 +553,8 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2HorizonRoll.cc \
     src/ui/hud2/HUD2HorizonPitch.cc \
     src/ui/hud2/HUD2Altimeter.cc \
-    src/ui/hud2/HUD2RenderThread.cc \
     src/ui/hud2/HUD2RenderNative.cc \
     src/ui/hud2/HUD2RenderGL.cc \
-    src/ui/hud2/HUD2RenderOffscreen.cc \
     src/ui/hud2/HUD2Drawer.cc \
     src/ui/hud2/HUD2Speed.cc \
     src/ui/hud2/HUD2FpsIndicator.cc \
