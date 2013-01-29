@@ -5,7 +5,7 @@
 #include <QSize>
 #include <QLine>
 
-#define clamp(v, vmin, vmax){                                                 \
+#define hud2_clamp(v, vmin, vmax){                                            \
   if (v <= vmin)                                                              \
     v = vmin;                                                                 \
   else if (v >= vmax)                                                         \

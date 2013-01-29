@@ -47,8 +47,9 @@ void HUD2RenderNative::paint(void){
 void HUD2RenderNative::toggleAntialiasing(bool aa){
     this->antiAliasing = aa;
 
+    // hack to force update static background
     QSize size = this->size();
-    this->resize(0,0);
+    this->resize(100,100); // do not set (0,0) here. It cause problems with render device
     this->resize(size);
     this->repaint();
 }

@@ -107,15 +107,15 @@ void HUD2HorizonPitch::updateGeometry(const QSize &size){
 
     int tmp;
     tmp = percent2pix_d(size, 0.3);
-    clamp(tmp, 1, 10);
+    hud2_clamp(tmp, 1, 10);
     pen.setWidth(tmp);
 
     int text_size = percent2pix_h(size, 4);
     int w = percent2pix_w(size, size_w);
     int h = percent2pix_h(size, size_h);
 
-    clamp(h, SIZE_H_MIN, 50);
-    clamp(text_size, SIZE_TEXT_MIN, 50);
+    hud2_clamp(h, SIZE_H_MIN, 50);
+    hud2_clamp(text_size, SIZE_TEXT_MIN, 50);
 
     int _gap = percent2pix_w(size, *gap);
     textRectPos = update_geometry_lines_pos(_gap, w, h);

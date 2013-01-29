@@ -25,21 +25,21 @@ void HUD2HorizonRoll::updateGeometry(const QSize &size){
 
     // update pen widths
     tmp = percent2pix_h(size, 0.6);
-    clamp(tmp, 2, 10);
+    hud2_clamp(tmp, 2, 10);
     this->thickPen.setWidth(tmp);
 
     this->arrowPen.setWidth(tmp);
 
     tmp = percent2pix_h(size, 0.3);
-    clamp(tmp, 1, 5);
+    hud2_clamp(tmp, 1, 5);
     this->thinPen.setWidth(tmp);
 
     // update pen lengths
     int thick_scratch_len = percent2pix_h(size, 2.5);
-    clamp(thick_scratch_len, 4, 20);
+    hud2_clamp(thick_scratch_len, 4, 20);
 
     int thin_scratch_len = thick_scratch_len / 3;
-    clamp(thin_scratch_len, 1, 10);
+    hud2_clamp(thin_scratch_len, 1, 10);
 
     int big_r = size.height() / 2;
     int small_r = big_r - thick_scratch_len;

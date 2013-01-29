@@ -43,11 +43,11 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
 
     // update pen widths
     tmp = percent2pix_h(size, 0.6);
-    clamp(tmp, 2, 10);
+    hud2_clamp(tmp, 2, 10);
     this->thickPen.setWidth(tmp);
 
     tmp = percent2pix_h(size, 0.3);
-    clamp(tmp, 1, 5);
+    hud2_clamp(tmp, 1, 5);
     this->thinPen.setWidth(tmp);
 
     this->arrowPen.setWidth(tmp);
@@ -57,7 +57,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     qreal x;
     int scratch_len = percent2pix_h(size, 3);
     int text_size = (scratch_len * 3 ) / 2;
-    clamp(text_size, SIZE_TEXT_MIN, 50);
+    hud2_clamp(text_size, SIZE_TEXT_MIN, 50);
     textFont.setPixelSize(text_size);
     mainRect.setWidth(size.width() / 3);
     mainRect.setHeight(scratch_len + text_size);

@@ -52,12 +52,17 @@
 #include "HUD2Drawer.h"
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
+#include "HUD2Dialog.h"
 
 #include "UASInterface.h"
 
 QT_BEGIN_NAMESPACE
 class QWidget;
 QT_END_NAMESPACE
+
+#define HUD2_FPS_MIN        1
+#define HUD2_FPS_DEFAULT    50
+#define HUD2_FPS_MAX        100
 
 typedef enum {
     RENDER_TYPE_NATIVE = 0,
@@ -81,11 +86,13 @@ private:
     HUD2Data huddata;
     HUD2RenderNative *render_native;
     HUD2RenderGL *render_gl;
+    HUD2Dialog *settings_dialog;
 
     QGridLayout *layout;
     QTimer fpsLimiter;
-    uint fpsLimit;
-    bool repaintEnabled;
+    int fpsLimit;
+    bool repaintEnabled; // used in FPS limiter
+    bool antiAliasing;
     int renderType;
     void paint(void);
     void createActions(void);

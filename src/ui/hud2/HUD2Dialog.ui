@@ -150,18 +150,7 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QComboBox" name="renderComboBox">
-       <item>
-        <property name="text">
-         <string>OpenGL</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Native</string>
-        </property>
-       </item>
-      </widget>
+      <widget class="QComboBox" name="renderComboBox"/>
      </item>
      <item row="2" column="1">
       <widget class="QSpinBox" name="fpsSpinBox"/>

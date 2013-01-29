@@ -44,37 +44,50 @@
  * - all outer dimensions specified in percents of widget sizes (height,
  *   width or diagonal). Type is qreal.
  * - point with coordinates (0;0) is center of render area.
- * - all classes use their own internal cached values in pixels.
  */
 
 /*
 TODO:
 - convert all sizes to percents
-- dynamic text size for pitch lines
-- dynamic mark size for roll and yaw
-- dynamic line widths
-- split paint in static and dynamic parts
+- colored background for horizon
 */
 
 #include <QtGui>
 
 #include "HUD2.h"
+#include "HUD2Math.h"
+
 #include "UASManager.h"
 #include "UAS.h"
 
-#include "HUD2Dialog.h"
-
 HUD2::~HUD2()
 {
-    //qDebug() << "HUD2 exit 1";
+    switch(renderType){
+    case RENDER_TYPE_NATIVE:
+        delete render_native;
+        break;
+    case RENDER_TYPE_OPENGL:
+        delete render_gl;
+        break;
+    default:
+        break;
+    }
+    delete layout;
 }
 
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent),
-      uas(NULL),
-      renderType(RENDER_TYPE_NATIVE)
-{   
-    fpsLimit = 100;
+      uas(NULL)
+{
+    // Load settings
+    QSettings settings;
+    settings.beginGroup("QGC_HUD2");
+    renderType = settings.value("RENDER_TYPE", 0).toInt();
+    hud2_clamp(renderType, 0, (RENDER_TYPE_ENUM_END - 1));
+    fpsLimit = settings.value("FPS_LIMIT", HUD2_FPS_DEFAULT).toInt();
+    hud2_clamp(fpsLimit, HUD2_FPS_MIN, HUD2_FPS_MAX);
+    antiAliasing = settings.value("ANTIALIASING", true).toBool();
+    settings.endGroup();
 
     setMinimumSize(160, 120);
 
@@ -92,6 +105,8 @@ HUD2::HUD2(QWidget *parent)
     default:
         break;
     }
+
+    toggleAntialising(antiAliasing);
 
     setLayout(layout);
 
@@ -124,7 +139,9 @@ void HUD2::paint(void){
 
 void HUD2::switchRender(int type)
 {
-    switch(type){
+    renderType = type;
+
+    switch(renderType){
     case RENDER_TYPE_NATIVE:
         layout->removeWidget(render_gl);
         delete render_gl;
@@ -141,7 +158,13 @@ void HUD2::switchRender(int type)
         qDebug() << "UNHANDLED RENDER TYPE";
         break;
     }
-    renderType = type;
+
+    // update anti aliasing settings for new render
+    toggleAntialising(antiAliasing);
+
+    // Save settings
+    QSettings settings;
+    settings.setValue("QGC_HUD2/RENDER_TYPE", renderType);
 }
 
 
@@ -226,6 +249,8 @@ void HUD2::enableRepaint(void){
 }
 
 void HUD2::toggleAntialising(bool aa){
+    antiAliasing = aa;
+
     switch(renderType){
     case RENDER_TYPE_NATIVE:
         render_native->toggleAntialiasing(aa);
@@ -236,6 +261,10 @@ void HUD2::toggleAntialising(bool aa){
     default:
         break;
     }
+
+    // Save settings
+    QSettings settings;
+    settings.setValue("QGC_HUD2/ANTIALIASING", aa);
 }
 
 void HUD2::contextMenuEvent (QContextMenuEvent* event)
@@ -243,13 +272,18 @@ void HUD2::contextMenuEvent (QContextMenuEvent* event)
     Q_UNUSED(event);
     QMenu menu(this);
 
-    HUD2Dialog *d = new HUD2Dialog(this);
-    d->exec();
-    delete d;
+    settings_dialog = new HUD2Dialog(this);
+    settings_dialog->exec();
+    delete settings_dialog;
     //menu.addAction(enableHUDAction);
 }
 
 void HUD2::setFpsLimit(int limit){
     fpsLimit = limit;
     fpsLimiter.setInterval(1000 / fpsLimit);
+
+    // Save settings
+    QSettings settings;
+    hud2_clamp(fpsLimit, HUD2_FPS_MIN, HUD2_FPS_MAX);
+    settings.setValue("QGC_HUD2/FPS_LIMIT", fpsLimit);
 }
