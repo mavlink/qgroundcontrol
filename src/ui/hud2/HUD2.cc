@@ -80,21 +80,17 @@ HUD2::HUD2(QWidget *parent)
 
     switch(renderType){
     case RENDER_TYPE_NATIVE:
-        render_instance = new HUD2RenderNative(huddata, this),
-        btn.setText(tr("Native"));
+        render_native = new HUD2RenderNative(huddata, this);
+        layout->addWidget(render_native, 0, 0);
         break;
     case RENDER_TYPE_OPENGL:
-        render_instance = new HUD2RenderGL(huddata, this),
-        btn.setText(tr("GL"));
+        render_gl = new HUD2RenderGL(huddata, this);
+        layout->addWidget(render_gl, 0, 0);
         break;
     default:
         break;
     }
 
-    layout->addWidget(render_instance, 0, 0);
-
-    connect(&btn, SIGNAL(clicked()), this, SLOT(switchRender()));
-    layout->addWidget(&btn, 1, 0);
     setLayout(layout);
 
     fpsLimiter.setInterval(20);
@@ -113,10 +109,10 @@ HUD2::HUD2(QWidget *parent)
 void HUD2::paint(void){
     switch(renderType){
     case RENDER_TYPE_NATIVE:
-        ((HUD2RenderNative*)render_instance)->paint();
+        render_native->paint();
         break;
     case RENDER_TYPE_OPENGL:
-        ((HUD2RenderGL*)render_instance)->paint();
+        render_gl->paint();
         break;
     default:
         break;
@@ -124,29 +120,25 @@ void HUD2::paint(void){
 }
 
 
-void HUD2::switchRender(void)
+void HUD2::switchRender(int type)
 {
-    layout->removeWidget(render_instance);
-    delete render_instance;
-
-    renderType++;
-    if (renderType == RENDER_TYPE_ENUM_END)
-        renderType = RENDER_TYPE_NATIVE;
-
-    switch(renderType){
+    switch(type){
     case RENDER_TYPE_NATIVE:
-        render_instance = new HUD2RenderNative(huddata, this),
-        btn.setText(tr("Native"));
+        layout->removeWidget(render_gl);
+        delete render_gl;
+        render_native = new HUD2RenderNative(huddata, this);
+        layout->addWidget(render_native, 0, 0);
         break;
     case RENDER_TYPE_OPENGL:
-        render_instance = new HUD2RenderGL(huddata, this),
-        btn.setText(tr("GL"));
+        layout->removeWidget(render_native);
+        delete render_native;
+        render_gl = new HUD2RenderGL(huddata, this);
+        layout->addWidget(render_gl, 0, 0);
         break;
     default:
         break;
     }
-
-    layout->addWidget(render_instance, 0, 0);
+    renderType = type;
 }
 
 
@@ -233,10 +225,10 @@ void HUD2::enableRepaint(void){
 void HUD2::toggleAntialising(bool aa){
     switch(renderType){
     case RENDER_TYPE_NATIVE:
-        ((HUD2RenderNative*)render_instance)->toggleAntialiasing(aa);
+        render_native->toggleAntialiasing(aa);
         break;
     case RENDER_TYPE_OPENGL:
-        ((HUD2RenderGL*)render_instance)->toggleAntialiasing(aa);
+        render_gl->toggleAntialiasing(aa);
         break;
     default:
         break;

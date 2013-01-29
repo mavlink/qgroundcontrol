@@ -79,7 +79,8 @@ protected:
 
 private:
     HUD2Data huddata;
-    QWidget *render_instance;
+    HUD2RenderNative *render_native;
+    HUD2RenderGL *render_gl;
 
     QGridLayout *layout;
     QPushButton btn;
@@ -97,6 +98,7 @@ public slots:
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
 
     void toggleAntialising(bool aa);
+    void switchRender(int type);
 
 private slots:
     void enableRepaint(void);
@@ -105,7 +107,7 @@ signals:
     //void visibilityChanged(bool visible);
 
 private slots:
-    void switchRender(void);
+
 };
 
 #endif

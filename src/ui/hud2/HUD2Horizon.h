@@ -44,6 +44,10 @@ private:
     QPen pen;
     QLine hirizonleft;
     QLine horizonright;
+
+    bool coloredBackground;
+    QColor sky;
+    QColor ground;
 };
 
 #endif // HUDHORIZON_H
