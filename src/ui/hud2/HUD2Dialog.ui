@@ -6,70 +6,102 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>519</width>
+    <height>362</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QCheckBox" name="AAcheckBox">
-   <property name="geometry">
-    <rect>
-     <x>280</x>
-     <y>160</y>
-     <width>101</width>
-     <height>19</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Antialiasing</string>
-   </property>
-  </widget>
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
-     <width>151</width>
-     <height>131</height>
+     <y>200</y>
+     <width>211</width>
+     <height>151</height>
     </rect>
    </property>
    <property name="title">
     <string>Instruments</string>
    </property>
-   <widget class="QCheckBox" name="checkBox">
+   <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>20</y>
-      <width>79</width>
-      <height>19</height>
+      <width>191</width>
+      <height>121</height>
      </rect>
     </property>
-    <property name="text">
-     <string>CheckBox</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox_2">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>79</width>
-      <height>19</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>CheckBox</string>
-    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="2" column="1">
+      <widget class="QComboBox" name="comboBox_6">
+       <item>
+        <property name="text">
+         <string>Ribbon</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Number</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Both</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="comboBox">
+       <item>
+        <property name="text">
+         <string>Ribbon</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Number</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Both</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="checkBox">
+       <property name="text">
+        <string>Compass</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QCheckBox" name="checkBox_2">
+       <property name="text">
+        <string>FPS counter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="checkBox_3">
+       <property name="text">
+        <string>CheckBox</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>260</y>
+     <x>130</x>
+     <y>320</y>
      <width>379</width>
      <height>33</height>
     </rect>
@@ -81,43 +113,96 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox">
+  <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>210</y>
-     <width>91</width>
-     <height>24</height>
+     <x>300</x>
+     <y>10</y>
+     <width>211</width>
+     <height>131</height>
     </rect>
    </property>
-   <item>
-    <property name="text">
-     <string>Ribbon</string>
+   <property name="title">
+    <string>Rendering</string>
+   </property>
+   <widget class="QWidget" name="gridLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>19</y>
+      <width>191</width>
+      <height>111</height>
+     </rect>
     </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Number</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>Both</string>
-    </property>
-   </item>
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Render</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>FPS limit</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="comboBox_2">
+       <item>
+        <property name="text">
+         <string>OpenGL</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Native</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Offscrean</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSpinBox" name="spinBox"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="AAcheckBox">
+       <property name="text">
+        <string>Antialiasing</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>190</y>
-     <width>91</width>
-     <height>16</height>
+     <x>10</x>
+     <y>10</y>
+     <width>201</width>
+     <height>131</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Compass</string>
+   <property name="currentIndex">
+    <number>0</number>
    </property>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>Tab 1</string>
+    </attribute>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
+     <string>Tab 2</string>
+    </attribute>
+   </widget>
   </widget>
  </widget>
  <resources/>
