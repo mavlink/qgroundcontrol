@@ -132,7 +132,7 @@ void HUD2HorizonYaw::paint_dynamic(QPainter *painter){
     qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 
     if (opaqueBackground)
-        painter->eraseRect(clipRect);
+        painter->fillRect(clipRect, Qt::black);
     painter->setClipRect(clipRect);
 
     painter->translate(-x, 0);
