@@ -63,21 +63,20 @@ void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qrea
 
 void HUD2IndicatorHorizon::paint(QPainter *painter){
 
+    qreal pitch = rad2deg(-huddata.pitch);
+    qreal delta_y = pitch * (pixstep / degstep);
+    qreal delta_x = tan(-huddata.roll) * delta_y;
+
+
+
     painter->save();
     painter->translate(painter->window().center());
     crosshair.paint(painter);
 
     // now perform complex transfomation of painter
-    qreal alpha = rad2deg(-huddata.pitch);
-
+    QPoint center = painter->window().center();
     QTransform transform;
-    QPoint center;
-
-    center = painter->window().center();
     transform.translate(center.x(), center.y());
-    qreal delta_y = alpha * (pixstep / degstep);
-    qreal delta_x = tan(-huddata.roll) * delta_y;
-
     transform.translate(delta_x, delta_y);
     transform.rotate(rad2deg(huddata.roll));
 
@@ -93,22 +92,21 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
 
     painter->restore();
 
+    // sky and ground poligons
+    painter->save();
+    QPolygon sky_polygon(1);
+    sky_polygon[0] = QPoint(0, 0);
+    int tmp = round(painter->window().width() * tan(huddata.roll) / 2);
+    sky_polygon.putPoints(1, 1, 0, painter->window().height() / 2 + delta_y - tmp);
+    sky_polygon.putPoints(2, 1, painter->window().width(), painter->window().height() / 2 + delta_y + tmp);
+    sky_polygon.putPoints(3, 1, painter->window().width(), 0);
 
+    QBrush sky_brush = QBrush(Qt::blue);
+    painter->setBrush(sky_brush);
+    painter->setPen(QPen(Qt::blue));
+    painter->drawPolygon(sky_polygon);
 
-//    painter->resetTransform();
-//    painter->save();
-//    QPolygon polygon(1);
-//    polygon[0] = QPoint(0, 0);
-//    //polygon.putPoints(1, 2, 0,170, 180,190);
-//    polygon.putPoints(1, 1, 0,170);
-//    polygon.putPoints(2, 1, 180,190);
-
-//    QBrush sky_brush = QBrush(Qt::blue);
-//    painter->setBrush(sky_brush);
-//    painter->setPen(QPen(Qt::blue));
-//    painter->drawPolygon(polygon);
-
-//    painter->restore();
+    painter->restore();
 }
 
 void HUD2IndicatorHorizon::setColor(QColor color){
