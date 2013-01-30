@@ -1,19 +1,19 @@
-#ifndef HUDHORIZON_H
-#define HUDHORIZON_H
+#ifndef HUD2INDICATORHORIZON_H
+#define HUD2INDICATORHORIZON_H
 
 #include <QWidget>
 #include <QPen>
 #include <QLine>
 
 #include "HUD2Data.h"
-#include "HUD2HorizonPitch.h"
-#include "HUD2HorizonCrosshair.h"
+#include "HUD2IndicatorHorizonPitchline.h"
+#include "HUD2IndicatorHorizonCrosshair.h"
 
-class HUD2Horizon : public QWidget
+class HUD2IndicatorHorizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Horizon(HUD2Data &huddata, QWidget *parent);
+    explicit HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -27,12 +27,12 @@ private:
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
     void drawhorizon(QPainter *painter);
 
-    HUD2HorizonPitch pitchline;
+    HUD2IndicatorHorizonPitchline pitchline;
     int degstep;    // vertical screen capacity in degrees
     qreal pixstep;  // pixels between two lines
     int pitchcount; // how many pitch lines can be fitted on screen (approximately)
 
-    HUD2HorizonCrosshair crosshair;
+    HUD2IndicatorHorizonCrosshair crosshair;
 
     qreal gap; /* space between right and left parts */
     HUD2Data &huddata;
@@ -45,4 +45,4 @@ private:
     QColor ground;
 };
 
-#endif // HUDHORIZON_H
+#endif // HUD2INDICATORHORIZON_H

@@ -1,16 +1,16 @@
-#ifndef HUD2FPSINDICATOR_H
-#define HUD2FPSINDICATOR_H
+#ifndef HUD2INDICATORFPS_H
+#define HUD2INDICATORFPS_H
 
 #include <QWidget>
 #include <QTimer>
 #include <QPen>
 #include <QFont>
 
-class HUD2FpsIndicator : public QWidget
+class HUD2IndicatorFps : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2FpsIndicator(QWidget *parent = 0);
+    explicit HUD2IndicatorFps(QWidget *parent = 0);
     void paint(QPainter *painter);
 
 signals:
@@ -31,4 +31,4 @@ private:
     QFont font;
 };
 
-#endif // HUD2FPSINDICATOR_H
+#endif // HUD2INDICATORFPS_H

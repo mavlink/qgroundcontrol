@@ -1,5 +1,5 @@
-#ifndef HUD2SPEED_H
-#define HUD2SPEED_H
+#ifndef HUD2INDICATORSPEED_H
+#define HUD2INDICATORSPEED_H
 
 #include <QWidget>
 #include <QPen>
@@ -9,14 +9,12 @@
 
 #include "HUD2Data.h"
 
-class HUD2Speed : public QWidget
+class HUD2IndicatorSpeed : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Speed(HUD2Data &huddata, QWidget *parent = 0);
-    
-    void paint_static(QPainter *painter);
-    void paint_dynamic(QPainter *painter);
+    explicit HUD2IndicatorSpeed(HUD2Data &huddata, QWidget *parent = 0);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -50,4 +48,4 @@ private:
     HUD2Data &huddata;
 };
 
-#endif // HUD2SPEED_H
+#endif // HUD2INDICATORSPEED_H

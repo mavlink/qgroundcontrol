@@ -48,8 +48,8 @@
 
 /*
 TODO:
-- convert all sizes to percents
 - colored background for horizon
+- convert all sizes to percents
 - own code for detection of invisible elements in yaw and pitch idicators
 */
 

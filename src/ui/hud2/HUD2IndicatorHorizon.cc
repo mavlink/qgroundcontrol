@@ -1,9 +1,9 @@
 #include <QtGui>
 
-#include "HUD2Horizon.h"
+#include "HUD2IndicatorHorizon.h"
 #include "HUD2Math.h"
 
-HUD2Horizon::HUD2Horizon(HUD2Data &huddata, QWidget *parent) :
+HUD2IndicatorHorizon::HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
@@ -14,16 +14,16 @@ HUD2Horizon::HUD2Horizon(HUD2Data &huddata, QWidget *parent) :
     this->degstep = 10;
 }
 
-void HUD2Horizon::updateGeometry(const QSize &size){
-    int _gap = percent2pix_w(size, this->gap);
+void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
+    int a = percent2pix_w(size, this->gap);
 
     // wings
     int x1 = size.width() / 2;
     int tmp = percent2pix_h(size, 1);
     hud2_clamp(tmp, 2, 10);
     pen.setWidth(tmp);
-    hirizonleft.setLine(-x1, 0, -_gap, 0);
-    horizonright.setLine(_gap, 0, x1, 0);
+    hirizonleft.setLine(-x1, 0, -a, 0);
+    horizonright.setLine(a, 0, x1, 0);
     
     // pitchlines
     pixstep = size.height() / pitchcount;
@@ -39,7 +39,7 @@ void HUD2Horizon::updateGeometry(const QSize &size){
  * @param degstep
  * @param pixstep
  */
-void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep){
+void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep){
 
     painter->save();
     int i = 0;
@@ -64,14 +64,14 @@ void HUD2Horizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep
  * @brief HUD2Horizon::drawwings
  * @param painter
  */
-void HUD2Horizon::drawhorizon(QPainter *painter){
+void HUD2IndicatorHorizon::drawhorizon(QPainter *painter){
     pen.setColor(Qt::green);
     painter->setPen(pen);
     painter->drawLine(hirizonleft);
     painter->drawLine(horizonright);
 }
 
-void HUD2Horizon::paint(QPainter *painter){
+void HUD2IndicatorHorizon::paint(QPainter *painter){
 
     //
     crosshair.paint(painter);
@@ -99,6 +99,6 @@ void HUD2Horizon::paint(QPainter *painter){
     painter->restore();
 }
 
-void HUD2Horizon::setColor(QColor color){
+void HUD2IndicatorHorizon::setColor(QColor color){
     pen.setColor(color);
 }

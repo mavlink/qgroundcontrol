@@ -1,9 +1,9 @@
 #include <QtGui>
 
-#include "HUD2HorizonPitch.h"
+#include "HUD2IndicatorHorizonPitchline.h"
 #include "HUD2Math.h"
 
-HUD2HorizonPitch::HUD2HorizonPitch(const qreal *gap, QWidget *parent) :
+HUD2IndicatorHorizonPitchline::HUD2IndicatorHorizonPitchline(const qreal *gap, QWidget *parent) :
     QWidget(parent),
     gap(gap)
 {
@@ -23,7 +23,7 @@ HUD2HorizonPitch::HUD2HorizonPitch(const qreal *gap, QWidget *parent) :
  * @param h
  * @return rectangular suitable for text placing
  */
-QRect HUD2HorizonPitch::update_geometry_lines_pos(int _gap, int w, int h){
+QRect HUD2IndicatorHorizonPitchline::update_geometry_lines_pos(int _gap, int w, int h){
 
     // Positive pitch indicator:
     //
@@ -53,7 +53,7 @@ QRect HUD2HorizonPitch::update_geometry_lines_pos(int _gap, int w, int h){
  * @param lines_array
  * @return rectangular suitable for text placing
  */
-QRect HUD2HorizonPitch::update_geometry_lines_neg(int _gap, int w, int h){
+QRect HUD2IndicatorHorizonPitchline::update_geometry_lines_neg(int _gap, int w, int h){
 
     // Negative pitch indicator:
     //
@@ -103,7 +103,7 @@ QRect HUD2HorizonPitch::update_geometry_lines_neg(int _gap, int w, int h){
  * @brief HUD2PitchLine::updateGeometry
  * @param size
  */
-void HUD2HorizonPitch::updateGeometry(const QSize &size){
+void HUD2IndicatorHorizonPitchline::updateGeometry(const QSize &size){
 
     int tmp;
     tmp = percent2pix_d(size, 0.3);
@@ -128,7 +128,7 @@ void HUD2HorizonPitch::updateGeometry(const QSize &size){
     textRectNeg.setHeight(text_size);
 }
 
-void HUD2HorizonPitch::paint(QPainter *painter, int deg){
+void HUD2IndicatorHorizonPitchline::paint(QPainter *painter, int deg){
     painter->save();
 
     painter->setPen(pen);
@@ -147,7 +147,7 @@ void HUD2HorizonPitch::paint(QPainter *painter, int deg){
     painter->restore();
 }
 
-void HUD2HorizonPitch::setColor(QColor color){
+void HUD2IndicatorHorizonPitchline::setColor(QColor color){
     pen.setColor(color);
 }
 

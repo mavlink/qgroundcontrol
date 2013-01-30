@@ -1,8 +1,8 @@
 #include <QtGui>
 
-#include "HUD2FpsIndicator.h"
+#include "HUD2IndicatorFps.h"
 
-HUD2FpsIndicator::HUD2FpsIndicator(QWidget *parent) :
+HUD2IndicatorFps::HUD2IndicatorFps(QWidget *parent) :
     QWidget(parent)
 {
     pen = QPen(Qt::green);
@@ -17,11 +17,11 @@ HUD2FpsIndicator::HUD2FpsIndicator(QWidget *parent) :
     timer.start();
 }
 
-void HUD2FpsIndicator::updateGeometry(const QSize &size){
+void HUD2IndicatorFps::updateGeometry(const QSize &size){
     Q_UNUSED(size);
 }
 
-void HUD2FpsIndicator::paint(QPainter *painter){
+void HUD2IndicatorFps::paint(QPainter *painter){
     frames++;
     painter->save();
     painter->setPen(pen);
@@ -31,11 +31,11 @@ void HUD2FpsIndicator::paint(QPainter *painter){
     painter->restore();
 }
 
-void HUD2FpsIndicator::setColor(QColor color){
+void HUD2IndicatorFps::setColor(QColor color){
     pen.setColor(color);
 }
 
-void HUD2FpsIndicator::calc(void){
+void HUD2IndicatorFps::calc(void){
     fps = frames;
     frames = 0;
 }

@@ -1,15 +1,15 @@
-#ifndef HUD2CROSSHAIR_H
-#define HUD2CROSSHAIR_H
+#ifndef HUD2INDICATORCROSSHAIR_H
+#define HUD2INDICATORCROSSHAIR_H
 
 #include <QWidget>
 #include <QPen>
 #include <QLine>
 
-class HUD2HorizonCrosshair : public QWidget
+class HUD2IndicatorHorizonCrosshair : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonCrosshair(const qreal *gap, QWidget *parent);
+    explicit HUD2IndicatorHorizonCrosshair(const qreal *gap, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -25,4 +25,4 @@ private:
     QLine lines[3];
 };
 
-#endif
+#endif /* HUD2INDICATORCROSSHAIR_H */

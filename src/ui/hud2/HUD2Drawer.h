@@ -6,9 +6,9 @@
 #include <QFont>
 #include <QPen>
 
-#include "HUD2Horizon.h"
+#include "HUD2IndicatorHorizon.h"
 #include "HUD2Data.h"
-#include "HUD2FpsIndicator.h"
+#include "HUD2IndicatorFps.h"
 #include "HUD2IndicatorRoll.h"
 #include "HUD2IndicatorYaw.h"
 
@@ -33,10 +33,10 @@ public slots:
     void updateGeometry(const QSize &size);
 
 private:
-    HUD2Horizon horizon;
+    HUD2IndicatorHorizon horizon;
     HUD2IndicatorRoll roll;
     HUD2IndicatorYaw yaw;
-    HUD2FpsIndicator fps;
+    HUD2IndicatorFps fps;
     HUD2Data &huddata;
 
     // HUD colors

@@ -1,5 +1,5 @@
-#ifndef HUD2PITCHLINE_H
-#define HUD2PITCHLINE_H
+#ifndef HUD2INDICATORHORIZONPITCHLINE_H
+#define HUD2INDICATORHORIZONPITCHLINE_H
 
 #include <QWidget>
 #include <QPen>
@@ -10,11 +10,11 @@
 #define SIZE_H_MIN      2
 #define SIZE_TEXT_MIN   7
 
-class HUD2HorizonPitch : public QWidget
+class HUD2IndicatorHorizonPitchline : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonPitch(const qreal *gap, QWidget *parent);
+    explicit HUD2IndicatorHorizonPitchline(const qreal *gap, QWidget *parent);
     void paint(QPainter *painter, int deg);
 
 signals:
@@ -45,4 +45,4 @@ protected:
 
 };
 
-#endif // HUD2PITCHLINE_H
+#endif // HUD2INDICATORHORIZONPITCHLINE_H
