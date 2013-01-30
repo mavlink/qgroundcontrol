@@ -17,8 +17,7 @@ void HUD2RenderGL::paintEvent(QPaintEvent *event)
     painter.fillRect(event->rect(), Qt::black);
     painter.setRenderHint(QPainter::Antialiasing, antiAliasing);
     painter.setRenderHint(QPainter::TextAntialiasing, antiAliasing);
-    huddrawer.paint_static(&painter);
-    huddrawer.paint_dynamic(&painter);
+    huddrawer.paint(&painter);
 }
 
 void HUD2RenderGL::resizeEvent(QResizeEvent *event){

@@ -16,8 +16,7 @@ class HUD2Horizon : public QWidget
     Q_OBJECT
 public:
     explicit HUD2Horizon(HUD2Data &huddata, QWidget *parent);
-    void paint_static(QPainter *painter);
-    void paint_dynamic(QPainter *painter);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

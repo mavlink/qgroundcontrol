@@ -11,8 +11,7 @@ class HUD2FpsIndicator : public QWidget
     Q_OBJECT
 public:
     explicit HUD2FpsIndicator(QWidget *parent = 0);
-    void paint_static(QPainter *painter);
-    void paint_dynamic(QPainter *painter);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);

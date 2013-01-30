@@ -128,12 +128,7 @@ void HUD2HorizonPitch::updateGeometry(const QSize &size){
     textRectNeg.setHeight(text_size);
 }
 
-void HUD2HorizonPitch::paint_static(QPainter *painter, int deg){
-    Q_UNUSED(deg);
-    Q_UNUSED(painter);
-}
-
-void HUD2HorizonPitch::paint_dynamic(QPainter *painter, int deg){
+void HUD2HorizonPitch::paint(QPainter *painter, int deg){
     painter->save();
 
     painter->setPen(pen);

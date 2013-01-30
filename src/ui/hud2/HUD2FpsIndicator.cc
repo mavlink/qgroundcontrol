@@ -8,7 +8,7 @@ HUD2FpsIndicator::HUD2FpsIndicator(QWidget *parent) :
     pen = QPen(Qt::green);
     pen.setWidth(1);
 
-    font.setPixelSize(7);
+    font.setPixelSize(8);
 
     fps = 0;
     frames = 0;
@@ -21,11 +21,7 @@ void HUD2FpsIndicator::updateGeometry(const QSize &size){
     Q_UNUSED(size);
 }
 
-void HUD2FpsIndicator::paint_static(QPainter *painter){
-    Q_UNUSED(painter);
-}
-
-void HUD2FpsIndicator::paint_dynamic(QPainter *painter){
+void HUD2FpsIndicator::paint(QPainter *painter){
     frames++;
     painter->save();
     painter->setPen(pen);

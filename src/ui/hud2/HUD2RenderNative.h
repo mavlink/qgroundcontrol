@@ -29,8 +29,6 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    QPainter *render_static;
-    QPixmap *pixmap_static;
     HUD2Drawer huddrawer;
     bool antiAliasing;
 };

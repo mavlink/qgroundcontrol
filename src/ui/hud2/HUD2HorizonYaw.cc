@@ -65,6 +65,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     clipRect.translate(-clipRect.width()/2, -clipRect.height());
     scale_interval_pix = mainRect.width() / 6;
 
+    // ribbon lines
     for(i=0; i<thickLinesCnt; i++){
         x = (i - overlap) * 2 * scale_interval_pix;
         thickLines[i] = QLineF(x, 0, x, -scratch_len);
@@ -99,12 +100,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     numRect.translate(-numRect.width()/2, scratch_len);
 }
 
-void HUD2HorizonYaw::paint_static(QPainter *painter){
-    Q_UNUSED(painter);
-    return;
-}
-
-void HUD2HorizonYaw::paint_dynamic(QPainter *painter){
+void HUD2HorizonYaw::paint(QPainter *painter){
     painter->save();
 
     int n_arrow = 0;
@@ -132,7 +128,7 @@ void HUD2HorizonYaw::paint_dynamic(QPainter *painter){
     qreal x = (yaw_deg * scale_interval_pix) / scale_interval_deg;
 
     if (opaqueBackground)
-        painter->fillRect(clipRect, Qt::black);
+        painter->eraseRect(clipRect);
     painter->setClipRect(clipRect);
 
     painter->translate(-x, 0);

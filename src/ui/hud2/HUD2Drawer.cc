@@ -16,23 +16,13 @@ HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
     fuelColor = criticalColor;
 }
 
-void HUD2Drawer::paint_static(QPainter *painter)
-{
-    painter->save();
-    // all painting will perform relative to center of screen
-    painter->translate(painter->window().center());
-    horizon.paint_static(painter);
-    fps.paint_static(painter);
-    painter->restore();
-}
-
-void HUD2Drawer::paint_dynamic(QPainter *painter)
+void HUD2Drawer::paint(QPainter *painter)
 {
     painter->save();
     painter->translate(painter->window().center());
 
-    horizon.paint_dynamic(painter);
-    fps.paint_dynamic(painter);
+    horizon.paint(painter);
+    fps.paint(painter);
 
     painter->restore();
 
