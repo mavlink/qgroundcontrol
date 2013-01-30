@@ -1,16 +1,16 @@
-#ifndef HUD2HORIZONROLLINDICATOR_H
-#define HUD2HORIZONROLLINDICATOR_H
+#ifndef HUD2INDICATORROLL_H
+#define HUD2INDICATORROLL_H
 
 #include <QWidget>
 #include <QPen>
 
 #include "HUD2Data.h"
 
-class HUD2HorizonRoll : public QWidget
+class HUD2IndicatorRoll : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonRoll(const qreal *gap, HUD2Data &huddata, QWidget *parent = 0);
+    explicit HUD2IndicatorRoll(HUD2Data &huddata, QWidget *parent = 0);
     void paint(QPainter *painter);
 
 signals:
@@ -29,7 +29,6 @@ private:
     QLine arrowLines[2];
 
     HUD2Data &huddata;
-    const qreal *gap;
 };
 
-#endif // HUD2HORIZONROLLINDICATOR_H
+#endif // HUD2INDICATORROLL_H

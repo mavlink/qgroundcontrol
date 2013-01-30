@@ -9,6 +9,7 @@
 #include "HUD2Horizon.h"
 #include "HUD2Data.h"
 #include "HUD2FpsIndicator.h"
+#include "HUD2IndicatorRoll.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -32,6 +33,7 @@ public slots:
 
 private:
     HUD2Horizon horizon;
+    HUD2IndicatorRoll roll;
     HUD2FpsIndicator fps;
     HUD2Data &huddata;
 

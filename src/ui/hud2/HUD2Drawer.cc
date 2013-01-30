@@ -7,6 +7,7 @@
 HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     horizon(huddata, this),
+    roll(huddata, this),
     huddata(huddata)
 {
     defaultColor = QColor(70, 255, 70);
@@ -21,6 +22,7 @@ void HUD2Drawer::paint(QPainter *painter)
     painter->save();
     painter->translate(painter->window().center());
 
+    roll.paint(painter);
     horizon.paint(painter);
     fps.paint(painter);
 
@@ -30,6 +32,7 @@ void HUD2Drawer::paint(QPainter *painter)
 }
 
 void HUD2Drawer::updateGeometry(const QSize &size){
+    roll.updateGeometry(size);
     horizon.updateGeometry(size);
     fps.updateGeometry(size);
 }

@@ -7,7 +7,6 @@ HUD2Horizon::HUD2Horizon(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
-    roll(&this->gap, huddata, this),
     yaw(huddata, this),
     huddata(huddata)
 {
@@ -33,9 +32,6 @@ void HUD2Horizon::updateGeometry(const QSize &size){
 
     // crosshair
     crosshair.updateGeometry(size);
-
-    // roll indicator
-    roll.updateGeometry(size);
 
     // yaw
     yaw.updateGeometry(size);
@@ -80,9 +76,6 @@ void HUD2Horizon::drawhorizon(QPainter *painter){
 }
 
 void HUD2Horizon::paint(QPainter *painter){
-
-    // roll indicator
-    roll.paint(painter);
 
     //
     crosshair.paint(painter);

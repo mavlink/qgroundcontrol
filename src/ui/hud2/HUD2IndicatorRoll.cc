@@ -3,12 +3,11 @@
 #include <QtGui>
 
 #include "HUD2Math.h"
-#include "HUD2HorizonRoll.h"
+#include "HUD2IndicatorRoll.h"
 
-HUD2HorizonRoll::HUD2HorizonRoll(const qreal *gap, HUD2Data &huddata, QWidget *parent) :
+HUD2IndicatorRoll::HUD2IndicatorRoll(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
-    huddata(huddata),
-    gap(gap)
+    huddata(huddata)
 {
     this->thickPen = QPen(Qt::green);
     this->thickPen.setWidth(3);
@@ -20,7 +19,7 @@ HUD2HorizonRoll::HUD2HorizonRoll(const qreal *gap, HUD2Data &huddata, QWidget *p
     this->arrowPen.setWidth(2);
 }
 
-void HUD2HorizonRoll::updateGeometry(const QSize &size){
+void HUD2IndicatorRoll::updateGeometry(const QSize &size){
     int tmp;
 
     // update pen widths
@@ -34,7 +33,7 @@ void HUD2HorizonRoll::updateGeometry(const QSize &size){
     hud2_clamp(tmp, 1, 5);
     this->thinPen.setWidth(tmp);
 
-    // update pen lengths
+    // update line lengths
     int thick_scratch_len = percent2pix_h(size, 2.5);
     hud2_clamp(thick_scratch_len, 4, 20);
 
@@ -73,19 +72,19 @@ void HUD2HorizonRoll::updateGeometry(const QSize &size){
     }
 
     // arrow
-    int _gap = percent2pix_w(size, *gap);
+    int a = percent2pix_h(size, 9);
     QPoint p0 = QPoint(0, small_r - arrowPen.width()); // top
     QPoint p1 = p0;
     QPoint p2 = p0;
-    p1.rx() += _gap/4;
-    p1.ry() -= _gap/4;
-    p2.rx() -= _gap/4;
-    p2.ry() -= _gap/4;
+    p1.rx() += a/4;
+    p1.ry() -= a/4;
+    p2.rx() -= a/4;
+    p2.ry() -= a/4;
     arrowLines[0] = QLine(p0, p1);
     arrowLines[1] = QLine(p0, p2);
 }
 
-void HUD2HorizonRoll::paint(QPainter *painter){
+void HUD2IndicatorRoll::paint(QPainter *painter){
     int n = 0;
 
     painter->save();
@@ -106,6 +105,6 @@ void HUD2HorizonRoll::paint(QPainter *painter){
     painter->restore();
 }
 
-void HUD2HorizonRoll::setColor(QColor color){
+void HUD2IndicatorRoll::setColor(QColor color){
     Q_UNUSED(color);
 }
