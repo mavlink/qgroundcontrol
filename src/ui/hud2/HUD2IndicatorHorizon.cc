@@ -12,6 +12,7 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent) :
     this->gap = 6;
     this->pitchcount = 5;
     this->degstep = 10;
+    this->pen.setColor(Qt::green);
 }
 
 void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
@@ -60,23 +61,11 @@ void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qrea
     painter->restore();
 }
 
-/**
- * @brief HUD2Horizon::drawwings
- * @param painter
- */
-void HUD2IndicatorHorizon::drawhorizon(QPainter *painter){
-    pen.setColor(Qt::green);
-    painter->setPen(pen);
-    painter->drawLine(hirizonleft);
-    painter->drawLine(horizonright);
-}
-
 void HUD2IndicatorHorizon::paint(QPainter *painter){
 
-    //
-    crosshair.paint(painter);
-
     painter->save();
+    painter->translate(painter->window().center());
+    crosshair.paint(painter);
 
     // now perform complex transfomation of painter
     qreal alpha = rad2deg(-huddata.pitch);
@@ -93,10 +82,33 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     transform.rotate(rad2deg(huddata.roll));
 
     painter->setTransform(transform);
-    drawpitchlines(painter, degstep, pixstep);
-    drawhorizon(painter);
+
+    // pitchlines
+    this->drawpitchlines(painter, degstep, pixstep);
+
+    // horizon lines
+    painter->setPen(pen);
+    painter->drawLine(hirizonleft);
+    painter->drawLine(horizonright);
 
     painter->restore();
+
+
+
+//    painter->resetTransform();
+//    painter->save();
+//    QPolygon polygon(1);
+//    polygon[0] = QPoint(0, 0);
+//    //polygon.putPoints(1, 2, 0,170, 180,190);
+//    polygon.putPoints(1, 1, 0,170);
+//    polygon.putPoints(2, 1, 180,190);
+
+//    QBrush sky_brush = QBrush(Qt::blue);
+//    painter->setBrush(sky_brush);
+//    painter->setPen(QPen(Qt::blue));
+//    painter->drawPolygon(polygon);
+
+//    painter->restore();
 }
 
 void HUD2IndicatorHorizon::setColor(QColor color){

@@ -43,12 +43,12 @@
  *
  * - all outer dimensions specified in percents of widget sizes (height,
  *   width or diagonal). Type is qreal.
- * - point with coordinates (0;0) is center of render area.
  */
 
 /*
 TODO:
 - colored background for horizon
+- tiny pitch lines on horizon
 - convert all sizes to percents
 - own code for detection of invisible elements in yaw and pitch idicators
 */

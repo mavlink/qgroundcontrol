@@ -88,6 +88,7 @@ void HUD2IndicatorRoll::paint(QPainter *painter){
     int n = 0;
 
     painter->save();
+    painter->translate(painter->window().center());
 
     painter->setPen(thickPen);
     n = sizeof(thickLines) / sizeof(thickLines[0]);

@@ -26,8 +26,7 @@ void HUD2IndicatorFps::paint(QPainter *painter){
     painter->save();
     painter->setPen(pen);
     painter->setFont(font);
-    painter->translate(-painter->window().width() / 2, painter->window().height() / 2);
-    painter->drawText(0, 0, QString::number(fps));
+    painter->drawText(0, painter->window().height(), QString::number(fps));
     painter->restore();
 }
 

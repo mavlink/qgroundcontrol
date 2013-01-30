@@ -20,15 +20,10 @@ HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
 
 void HUD2Drawer::paint(QPainter *painter)
 {
-    painter->save();
-    painter->translate(painter->window().center());
-
     roll.paint(painter);
     horizon.paint(painter);
     yaw.paint(painter);
     fps.paint(painter);
-
-    painter->restore();
 
     emit paintComplete();
 }

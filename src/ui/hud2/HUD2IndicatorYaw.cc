@@ -102,6 +102,7 @@ void HUD2IndicatorYaw::updateGeometry(const QSize &size){
 
 void HUD2IndicatorYaw::paint(QPainter *painter){
     painter->save();
+    painter->translate(painter->window().center());
 
     int n_arrow = 0;
     int i;
