@@ -8,7 +8,6 @@
 #include "HUD2Data.h"
 #include "HUD2HorizonPitch.h"
 #include "HUD2HorizonCrosshair.h"
-#include "HUD2HorizonYaw.h"
 
 class HUD2Horizon : public QWidget
 {
@@ -34,7 +33,6 @@ private:
     int pitchcount; // how many pitch lines can be fitted on screen (approximately)
 
     HUD2HorizonCrosshair crosshair;
-    HUD2HorizonYaw yaw;
 
     qreal gap; /* space between right and left parts */
     HUD2Data &huddata;

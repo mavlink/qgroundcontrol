@@ -1,9 +1,9 @@
 #include <QtGui>
 
-#include "HUD2HorizonYaw.h"
+#include "HUD2IndicatorYaw.h"
 #include "HUD2Math.h"
 
-HUD2HorizonYaw::HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent) :
+HUD2IndicatorYaw::HUD2IndicatorYaw(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
@@ -31,7 +31,7 @@ HUD2HorizonYaw::HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent) :
     opaqueBackground = true;
 }
 
-void HUD2HorizonYaw::updateGeometry(const QSize &size){
+void HUD2IndicatorYaw::updateGeometry(const QSize &size){
 /*
   000      010      020
    ||       ||       ||
@@ -100,7 +100,7 @@ void HUD2HorizonYaw::updateGeometry(const QSize &size){
     numRect.translate(-numRect.width()/2, scratch_len);
 }
 
-void HUD2HorizonYaw::paint(QPainter *painter){
+void HUD2IndicatorYaw::paint(QPainter *painter){
     painter->save();
 
     int n_arrow = 0;
@@ -147,6 +147,6 @@ void HUD2HorizonYaw::paint(QPainter *painter){
     painter->restore();
 }
 
-void HUD2HorizonYaw::setColor(QColor color){
+void HUD2IndicatorYaw::setColor(QColor color){
     Q_UNUSED(color);
 }

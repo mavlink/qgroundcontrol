@@ -1,5 +1,5 @@
-#ifndef HUD2HORIZONYAWINDICATOR_H
-#define HUD2HORIZONYAWINDICATOR_H
+#ifndef HUD2INDICATORYAW_H
+#define HUD2INDICATORYAW_H
 
 #include <QWidget>
 #include <QPen>
@@ -9,11 +9,11 @@
 #define SIZE_H_MIN      2
 #define SIZE_TEXT_MIN   7
 
-class HUD2HorizonYaw : public QWidget
+class HUD2IndicatorYaw : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2HorizonYaw(HUD2Data &huddata, QWidget *parent = 0);
+    explicit HUD2IndicatorYaw(HUD2Data &huddata, QWidget *parent = 0);
     void paint(QPainter *painter);
 
 signals:
@@ -48,4 +48,4 @@ private:
     HUD2Data &huddata;
 };
 
-#endif // HUD2HORIZONYAWINDICATOR_H
+#endif // HUD2INDICATORYAW_H

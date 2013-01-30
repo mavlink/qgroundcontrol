@@ -7,7 +7,6 @@ HUD2Horizon::HUD2Horizon(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
-    yaw(huddata, this),
     huddata(huddata)
 {
     this->gap = 6;
@@ -32,9 +31,6 @@ void HUD2Horizon::updateGeometry(const QSize &size){
 
     // crosshair
     crosshair.updateGeometry(size);
-
-    // yaw
-    yaw.updateGeometry(size);
 }
 
 /**
@@ -101,9 +97,6 @@ void HUD2Horizon::paint(QPainter *painter){
     drawhorizon(painter);
 
     painter->restore();
-
-    // yaw
-    yaw.paint(painter);
 }
 
 void HUD2Horizon::setColor(QColor color){

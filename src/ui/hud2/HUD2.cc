@@ -50,6 +50,7 @@
 TODO:
 - convert all sizes to percents
 - colored background for horizon
+- own code for detection of invisible elements in yaw and pitch idicators
 */
 
 #include <QtGui>
