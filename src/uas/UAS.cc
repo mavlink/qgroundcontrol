@@ -1100,6 +1100,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             imageWidth = p.width;
             imageHeight = p.height;
             imageStart = QGC::groundTimeMilliseconds();
+            imagePacketsArrived = 0;
+
         }
             break;
 
@@ -1132,7 +1134,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if ((imagePacketsArrived >= imagePackets))
             {
                 // Restart statemachine
-                imagePacketsArrived = 0;
                 emit imageReady(this);
                 //qDebug() << "imageReady emitted. all packets arrived";
             }
