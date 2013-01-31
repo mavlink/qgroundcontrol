@@ -11,8 +11,13 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent) :
 {
     this->gap = 6;
     this->pitchcount = 5;
-    this->degstep = 10;
+    this->degstep = 20;
     this->pen.setColor(Qt::green);
+
+    skyPen   = QPen(Qt::darkBlue);
+    skyBrush = QBrush(Qt::darkBlue);
+    gndPen   = QPen(Qt::darkRed);
+    gndBrush = QBrush(Qt::darkRed);
 }
 
 void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
@@ -61,73 +66,66 @@ void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qrea
     painter->restore();
 }
 
+static int _getline_y(QLine L, int x){
+    int x1 = L.p1().rx();
+    int y1 = L.p1().ry();
+    int x2 = L.p2().rx();
+    int y2 = L.p2().ry();
+
+    return ((x2*y1 - x1*y2) + x * (y2 - y1)) / (x2 -x1);
+}
+
 void HUD2IndicatorHorizon::paint(QPainter *painter){
 
     qreal pitch = rad2deg(-huddata.pitch);
     qreal delta_y = pitch * (pixstep / degstep);
     qreal delta_x = tan(-huddata.roll) * delta_y;
 
-
-
-
-    // sky and ground poligons
-//    painter->save();
-//    QPolygon sky_polygon(1);
-//    sky_polygon[0] = QPoint(0, 0);
-//    int tmp = round(painter->window().width() * tan(huddata.roll) / 2);
-//    sky_polygon.putPoints(1, 1, 0, painter->window().height() / 2 + delta_y - tmp);
-//    sky_polygon.putPoints(2, 1, painter->window().width(), painter->window().height() / 2 + delta_y + tmp);
-//    sky_polygon.putPoints(3, 1, painter->window().width(), 0);
-//    sky_polygon.putPoints(4, 1, painter->window().width(), 0);
-
-//    painter->setBrush(QBrush(Qt::blue));
-//    painter->setPen(QPen(Qt::blue));
-//    painter->drawPolygon(sky_polygon);
-//    painter->restore();
-
-    painter->save();
-    painter->translate(painter->window().center());
-    int w = painter->window().width();
-    int h = painter->window().height();
-    QPointF pts[] = {
-        QPointF(-w/2.0, -h/2.0), // up left
-        QPointF(w/2.0, -h/2.0), // up right
-        QPointF(w, h/2), // down right
-        QPointF(0, h/2) // down left
-    };
-
-    QPointF p = QPointF(-delta_x, delta_y);
-    p = rotatePoint(rad2deg(huddata.roll), p);
-    // y = kx +b
-    // k = tan()
-    qreal k = tan(huddata.roll);
-    qreal b = p.ry() - k * p.rx();
-    pts[2] = QPointF(w/2.0, w/2.0 * k + b);
-    pts[3] = QPointF(-w/2.0, -w/2.0 * k + b);
-
-
-    painter->setBrush(QBrush(Qt::blue));
-    painter->setPen(QPen(Qt::blue));
-    painter->drawPolygon(pts, 4);
-    painter->restore();
-
-
-
-
-
-
-    // pitch and horizon lines
-    painter->save();
-    painter->translate(painter->window().center());
-    crosshair.paint(painter);
-
-    // now perform complex transfomation of painter
+    // create complex transfomation
     QPoint center = painter->window().center();
     QTransform transform;
     transform.translate(center.x(), center.y());
     transform.translate(delta_x, delta_y);
     transform.rotate(rad2deg(huddata.roll));
 
+    // draw colored background
+    /* some kind of hack:
+     * - create rectangle
+     * - apply transform to it
+     * - from output polygon got points laying on horizon line
+     * - use line formulae to calculate points of new polygon with minimal area
+     */
+    painter->save();
+    QRect rect = QRect(QPoint(-1000,0), QPoint(1000,1000));
+    QPolygon poly = transform.mapToPolygon(rect);
+    QLine line = QLine(poly.point(0), poly.point(1));
+
+    int x = 0;
+    int w = painter->window().width();
+    int h = painter->window().height();
+    QPoint point_left = QPoint(x, _getline_y(line, x));
+    x = w;
+    QPoint point_right = QPoint(x, _getline_y(line, x));
+
+    poly.setPoint(0, point_left);
+    poly.setPoint(1, point_right);
+    poly.setPoint(2, w, 0);
+    poly.setPoint(3, 0, 0);
+
+    painter->setBrush(skyBrush);
+    painter->setPen(skyPen);
+    painter->drawPolygon(poly);
+
+    poly.setPoint(2, w, h);
+    poly.setPoint(3, 0, h);
+    painter->setBrush(gndBrush);
+    painter->setPen(gndPen);
+    painter->drawPolygon(poly);
+
+    painter->restore();
+
+    // draw other stuff
+    painter->save();
     painter->setTransform(transform);
 
     // pitchlines
@@ -138,6 +136,12 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     painter->drawLine(hirizonleft);
     painter->drawLine(horizonright);
 
+    painter->restore();
+
+    // central cross
+    painter->save();
+    painter->translate(painter->window().center());
+    crosshair.paint(painter);
     painter->restore();
 }
 

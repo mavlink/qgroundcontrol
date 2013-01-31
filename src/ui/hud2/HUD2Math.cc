@@ -114,3 +114,4 @@ qreal modulusF(qreal dividend, qreal divisor){
     qreal n = floor(dividend / divisor);
     return dividend - n * divisor;
 }
+

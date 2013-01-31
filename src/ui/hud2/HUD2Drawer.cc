@@ -20,8 +20,8 @@ HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
 
 void HUD2Drawer::paint(QPainter *painter)
 {
-    roll.paint(painter);
     horizon.paint(painter);
+    roll.paint(painter);
     yaw.paint(painter);
     fps.paint(painter);
 
@@ -29,8 +29,8 @@ void HUD2Drawer::paint(QPainter *painter)
 }
 
 void HUD2Drawer::updateGeometry(const QSize &size){
-    roll.updateGeometry(size);
     horizon.updateGeometry(size);
+    roll.updateGeometry(size);
     yaw.updateGeometry(size);
     fps.updateGeometry(size);
 }

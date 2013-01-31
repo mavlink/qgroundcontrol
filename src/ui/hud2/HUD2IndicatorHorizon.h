@@ -41,8 +41,12 @@ private:
     QLine horizonright;
 
     bool coloredBackground;
-    QColor sky;
-    QColor ground;
+    QColor skyColor;
+    QColor gndColor;
+    QPen   skyPen;
+    QPen   gndPen;
+    QBrush skyBrush;
+    QBrush gndBrush;
 };
 
 #endif // HUD2INDICATORHORIZON_H
