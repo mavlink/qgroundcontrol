@@ -28,11 +28,11 @@ qreal percent2pix_dF(QSize size, qreal percent){
     return percent * d / 100.0;
 }
 
-qreal rad2deg(float rad){
+qreal rad2deg(qreal rad){
     return rad * (180.0 / M_PI);
 }
 
-qreal deg2rad(float deg){
+qreal deg2rad(qreal deg){
     return (deg * M_PI) / 180.0;
 }
 
@@ -51,6 +51,17 @@ QPoint rotatePoint(qreal phi, QPoint p){
     y_ = round(x * sin(deg2rad(phi)) + y * cos(deg2rad(phi)));
 
     return QPoint(x_, y_);
+}
+
+QPointF rotatePoint(qreal phi, QPointF p){
+    qreal x = p.x();
+    qreal y = p.y();
+    qreal x_, y_;
+
+    x_ = (x * cos(deg2rad(phi)) - y * sin(deg2rad(phi)));
+    y_ = (x * sin(deg2rad(phi)) + y * cos(deg2rad(phi)));
+
+    return QPointF(x_, y_);
 }
 
 /**

@@ -69,6 +69,54 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
 
 
 
+
+    // sky and ground poligons
+//    painter->save();
+//    QPolygon sky_polygon(1);
+//    sky_polygon[0] = QPoint(0, 0);
+//    int tmp = round(painter->window().width() * tan(huddata.roll) / 2);
+//    sky_polygon.putPoints(1, 1, 0, painter->window().height() / 2 + delta_y - tmp);
+//    sky_polygon.putPoints(2, 1, painter->window().width(), painter->window().height() / 2 + delta_y + tmp);
+//    sky_polygon.putPoints(3, 1, painter->window().width(), 0);
+//    sky_polygon.putPoints(4, 1, painter->window().width(), 0);
+
+//    painter->setBrush(QBrush(Qt::blue));
+//    painter->setPen(QPen(Qt::blue));
+//    painter->drawPolygon(sky_polygon);
+//    painter->restore();
+
+    painter->save();
+    painter->translate(painter->window().center());
+    int w = painter->window().width();
+    int h = painter->window().height();
+    QPointF pts[] = {
+        QPointF(-w/2.0, -h/2.0), // up left
+        QPointF(w/2.0, -h/2.0), // up right
+        QPointF(w, h/2), // down right
+        QPointF(0, h/2) // down left
+    };
+
+    QPointF p = QPointF(-delta_x, delta_y);
+    p = rotatePoint(rad2deg(huddata.roll), p);
+    // y = kx +b
+    // k = tan()
+    qreal k = tan(huddata.roll);
+    qreal b = p.ry() - k * p.rx();
+    pts[2] = QPointF(w/2.0, w/2.0 * k + b);
+    pts[3] = QPointF(-w/2.0, -w/2.0 * k + b);
+
+
+    painter->setBrush(QBrush(Qt::blue));
+    painter->setPen(QPen(Qt::blue));
+    painter->drawPolygon(pts, 4);
+    painter->restore();
+
+
+
+
+
+
+    // pitch and horizon lines
     painter->save();
     painter->translate(painter->window().center());
     crosshair.paint(painter);
@@ -89,22 +137,6 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     painter->setPen(pen);
     painter->drawLine(hirizonleft);
     painter->drawLine(horizonright);
-
-    painter->restore();
-
-    // sky and ground poligons
-    painter->save();
-    QPolygon sky_polygon(1);
-    sky_polygon[0] = QPoint(0, 0);
-    int tmp = round(painter->window().width() * tan(huddata.roll) / 2);
-    sky_polygon.putPoints(1, 1, 0, painter->window().height() / 2 + delta_y - tmp);
-    sky_polygon.putPoints(2, 1, painter->window().width(), painter->window().height() / 2 + delta_y + tmp);
-    sky_polygon.putPoints(3, 1, painter->window().width(), 0);
-
-    QBrush sky_brush = QBrush(Qt::blue);
-    painter->setBrush(sky_brush);
-    painter->setPen(QPen(Qt::blue));
-    painter->drawPolygon(sky_polygon);
 
     painter->restore();
 }
