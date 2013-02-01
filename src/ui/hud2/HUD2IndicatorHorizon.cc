@@ -139,10 +139,7 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     painter->restore();
 
     // central cross
-    painter->save();
-    painter->translate(painter->window().center());
     crosshair.paint(painter);
-    painter->restore();
 }
 
 void HUD2IndicatorHorizon::setColor(QColor color){
