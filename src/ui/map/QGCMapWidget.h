@@ -143,13 +143,13 @@ protected:
         EDIT_MODE_SAFE_AREA,
         EDIT_MODE_CACHING
     };
-    editMode currEditMode;            ///< The current edit mode on the map
+    editMode currEditMode;              ///< The current edit mode on the map
     bool followUAVEnabled;              ///< Does the map follow the UAV?
     mapcontrol::UAVTrailType::Types trailType; ///< Time or distance based trail dots
     float trailInterval;                ///< Time or distance between trail items
     int followUAVID;                    ///< Which UAV should be tracked?
     bool mapInitialized;                ///< Map initialized?
-
+    float homeAltitude;                 ///< Home altitude
 
 };
 

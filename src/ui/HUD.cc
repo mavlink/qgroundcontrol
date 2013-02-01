@@ -123,7 +123,8 @@ HUD::HUD(int width, int height, QWidget* parent)
       videoEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageRequested(false)
+      imageRequested(false),
+      imageLoggingEnabled(false)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -224,7 +225,7 @@ void HUD::contextMenuEvent (QContextMenuEvent* event)
     //menu.addAction(selectHUDColorAction);
     menu.addAction(enableVideoAction);
     menu.addAction(selectOfflineDirectoryAction);
-    //menu.addAction(selectVideoChannelAction);
+    menu.addAction(selectSaveDirectoryAction);
     menu.exec(event->globalPos());
 }
 
@@ -242,9 +243,14 @@ void HUD::createActions()
     enableVideoAction->setChecked(videoEnabled);
     connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
 
-    selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
+    selectOfflineDirectoryAction = new QAction(tr("Load image log"), this);
     selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
     connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
+
+    selectSaveDirectoryAction = new QAction(tr("Save images to directory"), this);
+    selectSaveDirectoryAction->setStatusTip(tr("Save images from image stream to a directory"));
+    selectSaveDirectoryAction->setCheckable(true);
+    connect(selectSaveDirectoryAction, SIGNAL(triggered(bool)), this, SLOT(saveImages(bool)));
 }
 
 /**
@@ -1483,6 +1489,44 @@ void HUD::copyImage()
         if (u)
         {
             this->glImage = QGLWidget::convertToGLFormat(u->getImage());
+
+            // Save to directory if logging is enabled
+            if (imageLoggingEnabled)
+            {
+                u->getImage().save(QString("%1/%2.png").arg(imageLogDirectory).arg(imageLogCounter));
+                imageLogCounter++;
+            }
         }
     }
+}
+
+void HUD::saveImages(bool save)
+{
+    if (save)
+    {
+        QFileDialog dialog(this);
+        dialog.setFileMode(QFileDialog::DirectoryOnly);
+
+        imageLogDirectory = QFileDialog::getExistingDirectory(this, tr("Select image log directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+
+        qDebug() << "Logging to:" << imageLogDirectory;
+
+        if (imageLogDirectory != "")
+        {
+            imageLogCounter = 0;
+            imageLoggingEnabled = true;
+            qDebug() << "Logging on";
+        }
+        else
+        {
+            imageLoggingEnabled = false;
+            selectSaveDirectoryAction->setChecked(false);
+        }
+    }
+    else
+    {
+        imageLoggingEnabled = false;
+        selectSaveDirectoryAction->setChecked(false);
+    }
+
 }
