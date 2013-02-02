@@ -89,7 +89,7 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     transform.rotate(rad2deg(huddata.roll));
 
     // draw colored background
-    /* some kind of hack to obtain poligon with minimal neede area:
+    /* some kind of hack to create poligon with minimal needed area:
      * - create rectangle
      * - apply transform to it
      * - from output polygon got points laying on horizon line

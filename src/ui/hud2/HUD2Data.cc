@@ -8,4 +8,6 @@ HUD2Data::HUD2Data()
     alt   = 0;
     lat   = 0;
     lon   = 0;
+    airspeed = 0;
+    groundspeed = 0;
 }

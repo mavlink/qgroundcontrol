@@ -47,6 +47,8 @@
 
 /*
 TODO:
+- try float coordinates for numbers in yaw indicator
+- numer label in roll indicator
 - colored background for horizon
 - tiny pitch lines on horizon
 - convert all sizes to percents

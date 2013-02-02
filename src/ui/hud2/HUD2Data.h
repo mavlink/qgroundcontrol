@@ -12,7 +12,9 @@ public:
     float lon;
     float alt;
 
-    int   fps; // repaints per second
+    float airspeed;
+    float groundspeed;
+//    int   fps; // repaints per second
 };
 
 #endif // HUD2DATA_H

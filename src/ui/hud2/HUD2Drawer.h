@@ -11,6 +11,8 @@
 #include "HUD2IndicatorFps.h"
 #include "HUD2IndicatorRoll.h"
 #include "HUD2IndicatorYaw.h"
+#include "HUD2IndicatorSpeed.h"
+#include "HUD2IndicatorClimb.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -36,8 +38,9 @@ private:
     HUD2IndicatorHorizon horizon;
     HUD2IndicatorRoll roll;
     HUD2IndicatorYaw yaw;
+    HUD2IndicatorSpeed speed;
+    HUD2IndicatorClimb climb;
     HUD2IndicatorFps fps;
-    HUD2Data &huddata;
 
     // HUD colors
     QColor defaultColor;       ///< Color for most HUD elements, e.g. pitch lines, center cross, change rate gauges

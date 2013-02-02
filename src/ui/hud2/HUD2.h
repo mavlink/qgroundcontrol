@@ -90,7 +90,7 @@ private:
     QGridLayout *layout;
     QTimer fpsLimiter;
     int fpsLimit;
-    bool repaintEnabled; // used in FPS limiter
+    bool repaintEnabled; // used for FPS limiting
     bool antiAliasing;
     int renderType;
     void paint(void);
