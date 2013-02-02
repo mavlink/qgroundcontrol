@@ -397,7 +397,7 @@ void QGCToolBar::setSystemType(UASInterface* uas, unsigned int systemType)
             symbolButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/antenn-tracker.svg"));
+            symbolButton->setIcon(QIcon(":/files/images/mavs/antenna-tracker.svg"));
             break;
         case MAV_TYPE_GCS:
             symbolButton->setIcon(QIcon(":files/images/mavs/groundstation.svg"));
