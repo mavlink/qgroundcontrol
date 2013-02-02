@@ -33,6 +33,7 @@ void HUD2IndicatorHorizonCrosshair::updateGeometry(const QSize &size){
 
 void HUD2IndicatorHorizonCrosshair::paint(QPainter *painter){
     painter->save();
+    painter->translate(painter->window().center());
     painter->setPen(pen);
     painter->drawLines(lines, 3);
     painter->restore();

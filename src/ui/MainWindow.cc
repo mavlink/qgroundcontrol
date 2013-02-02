@@ -359,6 +359,7 @@ void MainWindow::buildCustomWidget()
             Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
 
             addDockWidget(location, dock);
+            dock->hide();
         }
     }
 }
@@ -763,7 +764,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         tool->setMainMenuAction(showAction);
         ui.menuTools->addAction(showAction);
         this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-        dock->setVisible(true);
+        dock->hide();
     }
     else
     {
@@ -1622,7 +1623,7 @@ void MainWindow::loadViewState()
             debugConsoleDockWidget->show();
             logPlayerDockWidget->show();
             parametersDockWidget->hide();
-            hsiDockWidget->show();
+            hsiDockWidget->hide();
             headDown1DockWidget->hide();
             headDown2DockWidget->hide();
             rcViewDockWidget->hide();

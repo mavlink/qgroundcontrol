@@ -436,7 +436,6 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         // Make sure the curve will be created if it does not yet exist
         if(!label)
         {
-            //qDebug() << "ADDING CURVE IN APPENDDATE DOUBLE";
             addCurve(curve, unit);
         }
     }

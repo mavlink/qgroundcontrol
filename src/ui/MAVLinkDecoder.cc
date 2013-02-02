@@ -215,7 +215,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         char buf[11];
         strncpy(buf, debug.name, 10);
         buf[10] = '\0';
-        name = QString(buf);
+        name = QString("%1.%2").arg(buf).arg(fieldName);
         time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG)
@@ -245,20 +245,18 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         name = QString(buf);
         time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
-//    else if (msgid == MAVLINK_MSG_ID_HIGHRES_IMU)
-//    {
-//        mavlink_highres_imu_t d;
-//        mavlink_msg_highres_imu_decode(msg, &d);
-//        name = name.arg(debug.name).arg(fieldName);
-//        time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
-//    }
     else
     {
-        name = name.arg(messageInfo[msgid].name, fieldName);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
     }
 
-    if (multiComponentSourceDetected) name.prepend(QString("C%1:").arg(msg->compid));
-    name.prepend(QString("M%1:").arg(msg->sysid));
+    if (multiComponentSourceDetected)
+    {
+        name = name.prepend(QString("C%1:").arg(msg->compid));
+    }
+
+    name = name.prepend(QString("M%1:").arg(msg->sysid));
+
     switch (messageInfo[msgid].fields[fieldid].type)
     {
     case MAVLINK_TYPE_CHAR:
@@ -301,7 +299,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             int8_t* nums = (int8_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("int8_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
             }
@@ -319,7 +317,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             uint16_t* nums = (uint16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("uint16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
             }
@@ -337,7 +335,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             int16_t* nums = (int16_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("int16_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
             }
@@ -355,7 +353,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             uint32_t* nums = (uint32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("uint32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
             }
@@ -373,7 +371,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             int32_t* nums = (int32_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("int32_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
             }
@@ -391,9 +389,9 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             float* nums = (float*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("float[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
-                emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
+                emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, (float)(nums[j]), time);
             }
         }
         else
@@ -409,7 +407,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             double* nums = (double*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("double[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
             }
@@ -427,7 +425,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             uint64_t* nums = (uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("uint64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, (quint64) nums[j], time);
             }
@@ -445,7 +443,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         {
             int64_t* nums = (int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset);
             fieldType = QString("int64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, (qint64) nums[j], time);
             }
@@ -458,5 +456,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             emit valueChanged(msg->sysid, name, fieldType, (qint64) n, time);
         }
         break;
+    default:
+        qDebug() << "WARNING: UNKNOWN MAVLINK TYPE";
     }
 }

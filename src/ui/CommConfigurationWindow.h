@@ -67,7 +67,7 @@ class CommConfigurationWindow : public QWidget
     Q_OBJECT
 
 public:
-    CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
+    CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent = 0);
     ~CommConfigurationWindow();
 
     QAction* getAction();

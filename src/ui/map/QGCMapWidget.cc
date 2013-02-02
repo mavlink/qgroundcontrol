@@ -15,7 +15,8 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     trailType(mapcontrol::UAVTrailType::ByTimeElapsed),
     trailInterval(2.0f),
     followUAVID(0),
-    mapInitialized(false)
+    mapInitialized(false),
+    homeAltitude(0)
 {
     // Widget is inactive until shown
     loadSettings(false);
@@ -38,6 +39,8 @@ void QGCMapWidget::showEvent(QShowEvent* event)
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
+    connect(UASManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(updateHomePosition(double,double,double)));
+
     foreach (UASInterface* uas, UASManager::instance()->getUASList())
     {
         addUAS(uas);
@@ -205,6 +208,7 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+
         updateSelectedSystem(uas->getUASID());
         followUAVID = uas->getUASID();
 
@@ -381,6 +385,7 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
 {
     Home->SetCoord(internals::PointLatLng(latitude, longitude));
     Home->SetAltitude(altitude);
+    homeAltitude = altitude;
     SetShowHome(true);                      // display the HOME position on the map
 }
 
@@ -441,7 +446,9 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     wp->blockSignals(true);
     wp->setLatitude(pos.Lat());
     wp->setLongitude(pos.Lng());
-    wp->setAltitude(waypoint->Altitude());
+    // XXX Magic values
+    wp->setAltitude(homeAltitude + 50.0f);
+    wp->setAcceptanceRadius(10.0f);
     wp->blockSignals(false);
 
 
