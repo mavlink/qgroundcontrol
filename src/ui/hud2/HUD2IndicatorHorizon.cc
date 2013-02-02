@@ -66,11 +66,11 @@ void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qrea
     painter->restore();
 }
 
-static int _getline_y(QLine L, int x){
-    int x1 = L.p1().rx();
-    int y1 = L.p1().ry();
-    int x2 = L.p2().rx();
-    int y2 = L.p2().ry();
+static int _getline_y(QPoint p1, QPoint p2, int x){
+    int x1 = p1.rx();
+    int y1 = p1.ry();
+    int x2 = p2.rx();
+    int y2 = p2.ry();
 
     return ((x2*y1 - x1*y2) + x * (y2 - y1)) / (x2 -x1);
 }
@@ -89,23 +89,22 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     transform.rotate(rad2deg(huddata.roll));
 
     // draw colored background
-    /* some kind of hack:
+    /* some kind of hack to obtain poligon with minimal neede area:
      * - create rectangle
      * - apply transform to it
      * - from output polygon got points laying on horizon line
-     * - use line formulae to calculate points of new polygon with minimal area
+     * - use line formulae to calculate points of new polygon
      */
     painter->save();
     QRect rect = QRect(QPoint(-1000,0), QPoint(1000,1000));
     QPolygon poly = transform.mapToPolygon(rect);
-    QLine line = QLine(poly.point(0), poly.point(1));
 
     int x = 0;
     int w = painter->window().width();
     int h = painter->window().height();
-    QPoint point_left = QPoint(x, _getline_y(line, x));
+    QPoint point_left = QPoint(x, _getline_y(poly.point(0), poly.point(1), x));
     x = w;
-    QPoint point_right = QPoint(x, _getline_y(line, x));
+    QPoint point_right = QPoint(x, _getline_y(poly.point(0), poly.point(1), x));
 
     poly.setPoint(0, point_left);
     poly.setPoint(1, point_right);
