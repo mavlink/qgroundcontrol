@@ -16,6 +16,7 @@ TODO:
 - battery indicator
 - altimeter
 - climb meter
+- hide numbers on ribbon when screen size less than critical
 */
 
 #include <QtGui>

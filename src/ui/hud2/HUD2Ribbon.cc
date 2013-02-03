@@ -1,4 +1,4 @@
-#include <QPainter>
+#include <QtGui>
 
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
@@ -13,7 +13,7 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     hideNegative = false;
 
     bigScratchLenStep = 10.0;
-    bigScratchNumStep = 1;
+    bigScratchValueStep = 1;
     smallScratchCnt = 4;
     clipLen = 50;
 
@@ -25,54 +25,84 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     smallPen.setColor(Qt::green);
     smallPen.setWidth(1);
 
-    font = QFont();
-    font.setPixelSize(15);
+    labelFont = QFont();
+    labelFont.setPixelSize(15);
 }
 
 void HUD2Ribbon::updateGeometry(const QSize &size){
+    qreal gap_percent = 6; // space between screen border and scratches
+    qreal len_percent = 2; // length of big scratch
+    qreal fontsize_percent = 2.0; // font size of labels on ribbon
 
-    _big_pixstep = percent2pix_hF(size, bigScratchLenStep);
-    _small_pixstep = _big_pixstep / (smallScratchCnt + 1);
+    big_pixstep = percent2pix_hF(size, bigScratchLenStep);
+    small_pixstep = big_pixstep / (smallScratchCnt + 1);
 
-    qreal gap = 20; // space between screen border and scratches
-    int len = 20; // length of big scratch
+    qreal gap = percent2pix_wF(size, gap_percent);
+    qreal len = percent2pix_wF(size, len_percent);
+    hud2_clamp(len, 4, 20);
 
+    // set scratch and lable rect
     if (mirrored){
         int w = size.width();
-        _scratch_big = QLineF(QPointF(w - gap, 0), QPointF(w - len - gap, 0));
-        _scratch_small = QLineF(QPointF(w - (len / 2) - gap, 0), QPointF(w - len - gap, 0));
+        scratch_big = QLineF(QPointF(w - gap, 0), QPointF(w - len - gap, 0));
+        scratch_small = QLineF(QPointF(w - (len / 2) - gap, 0), QPointF(w - len - gap, 0));
+        labelRect = QRectF(w - gap, 0, gap, big_pixstep);
+        labelRect.translate(0, -labelRect.height()/2);
     }
     else{
-        _scratch_big = QLineF(QPoint(gap, 0), QPoint(gap + len, 0));
-        _scratch_small = QLineF(QPoint(gap + len/2, 0), QPoint(gap + len, 0));
+        scratch_big = QLineF(QPoint(gap, 0), QPoint(gap + len, 0));
+        scratch_small = QLineF(QPoint(gap + len/2, 0), QPoint(gap + len, 0));
+        labelRect = QRectF(0, 0, gap, big_pixstep);
+        labelRect.translate(0, -labelRect.height()/2);
     }
 
+    // set font size
+    int fntsize = percent2pix_d(size, fontsize_percent);
+    hud2_clamp(fntsize, 8, 50);
+    labelFont.setPixelSize(fntsize);
 }
 
 void HUD2Ribbon::paint(QPainter *painter){
-    QLineF scratchBig   = _scratch_big;
-    QLineF scratchSmall = _scratch_small;
+    QRectF _labelRect = labelRect;
+    QLineF _scratchBig   = scratch_big;
+    QLineF _scratchSmall = scratch_small;
 
     // translate starting point of ribbon
-    qreal shift = *value * bigScratchNumStep * _big_pixstep;
-    scratchBig.translate(0, modulusF(shift, _big_pixstep));
-    scratchSmall.translate(0, modulusF(shift, _big_pixstep));
+    qreal shift = (*value * big_pixstep) / bigScratchValueStep;
+    _scratchBig.translate(0, modulusF(shift, big_pixstep));
+    _scratchSmall.translate(0, modulusF(shift, big_pixstep));
+    _labelRect.translate(0, modulusF(shift, big_pixstep));
 
     // draw scratches
     painter->save();
 
+    qreal v = *value;
+    qDebug() << v;
     for (int i=0; i<6; i++){
         painter->setPen(bigPen);
-        painter->drawLine(scratchBig);
-        scratchBig.translate(0, _big_pixstep);
+        painter->drawLine(_scratchBig);
+
+
+
+
+        painter->setFont(labelFont);
+        painter->drawText(_labelRect, Qt::AlignCenter, QString::number((int)round(v)));
+        v -= bigScratchValueStep;
+
+
+
+
+
+        _scratchBig.translate(0, big_pixstep);
+        _labelRect.translate(0, big_pixstep);
 
         painter->setPen(smallPen);
         for (int n=0; n<smallScratchCnt; n++){
-            scratchSmall.translate(0, _small_pixstep);
-            painter->drawLine(scratchSmall);
+            _scratchSmall.translate(0, small_pixstep);
+            painter->drawLine(_scratchSmall);
         }
         // to skip rendering small scratch under the big one
-        scratchSmall.translate(0, _small_pixstep);
+        _scratchSmall.translate(0, small_pixstep);
     }
 
     painter->restore();
