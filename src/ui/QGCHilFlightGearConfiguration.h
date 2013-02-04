@@ -24,6 +24,7 @@ protected:
     
 private slots:
     void on_startButton_clicked();
+    void on_stopButton_clicked();
 
 private:
     Ui::QGCHilFlightGearConfiguration *ui;
