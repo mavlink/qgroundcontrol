@@ -8,18 +8,23 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     value(value),
     mirrored(mirrored)
 {
-    mirrored = false;
     rotated90 = false;
     hideNegative = false;
+    opaqueNum = false;
+    opaqueRibbon = false;
 
-    bigScratchLenStep = 10.0;
+    bigScratchLenStep = 20.0;
     bigScratchValueStep = 1;
     smallScratchCnt = 4;
-    clipLen = 50;
+    stepsOnScreen = 4;
 
     bigPen = QPen();
     bigPen.setColor(Qt::green);
     bigPen.setWidth(3);
+
+    medPen = QPen();
+    medPen.setColor(Qt::green);
+    medPen.setWidth(2);
 
     smallPen = QPen();
     smallPen.setColor(Qt::green);
@@ -29,10 +34,55 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     labelFont.setPixelSize(15);
 }
 
+/**
+ * @brief Constructs 5-point polygon for number indicator pointing to (0,0) coordinates
+ *        <==|
+ * @param w width of rectangular part
+ * @param h height
+ * @return
+ */
+static QPolygon numIndicator(int w, int h, bool mirrored){
+    QPolygon poly = QPolygon(5);
+    QPoint p = QPoint(0, 0);
+    poly.setPoint(0, p);
+
+    if (mirrored){
+        p.rx() -= h/2;
+        p.ry() -= h/2;
+        poly.setPoint(1, p);
+
+        p.rx() -= w;
+        poly.setPoint(2, p);
+
+        p.ry() += h;
+        poly.setPoint(3, p);
+
+        p.rx() += w;
+        poly.setPoint(4, p);
+    }
+    else{
+        p.rx() += h/2;
+        p.ry() -= h/2;
+        poly.setPoint(1, p);
+
+        p.rx() += w;
+        poly.setPoint(2, p);
+
+        p.ry() += h;
+        poly.setPoint(3, p);
+
+        p.rx() -= w;
+        poly.setPoint(4, p);
+    }
+
+    return poly;
+}
+
 void HUD2Ribbon::updateGeometry(const QSize &size){
     qreal gap_percent = 6; // space between screen border and scratches
     qreal len_percent = 2; // length of big scratch
     qreal fontsize_percent = 2.0; // font size of labels on ribbon
+    qreal num_w_percent = gap_percent * 1.5; // width of number indicator
 
     big_pixstep = percent2pix_hF(size, bigScratchLenStep);
     small_pixstep = big_pixstep / (smallScratchCnt + 1);
@@ -41,16 +91,20 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     qreal len = percent2pix_wF(size, len_percent);
     hud2_clamp(len, 4, 20);
 
-    // set scratch and lable rect
+    // font size for labels
+    int fntsize = percent2pix_d(size, fontsize_percent);
+    hud2_clamp(fntsize, 7, 50);
+    labelFont.setPixelSize(fntsize);
+
+    // scratches
+    int w_scratch;
+    w_scratch = size.width();
+
     if (mirrored){
-        int w = size.width();
-        scratch_big = QLineF(QPointF(w - gap, 0), QPointF(w - len - gap, 0));
-        scratch_small = QLineF(QPointF(w - (len / 2) - gap, 0), QPointF(w - len - gap, 0));
-
-        labelRect = QRectF(w - gap, 0, gap, big_pixstep);
+        scratch_big = QLineF(QPointF(w_scratch - gap, 0), QPointF(w_scratch - len - gap, 0));
+        scratch_small = QLineF(QPointF(w_scratch - (len / 2) - gap, 0), QPointF(w_scratch - len - gap, 0));
+        labelRect = QRectF(w_scratch - gap, 0, gap, big_pixstep);
         labelRect.translate(0, -labelRect.height()/2);
-
-
     }
     else{
         scratch_big = QLineF(QPoint(gap, 0), QPoint(gap + len, 0));
@@ -60,16 +114,60 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
         labelRect.translate(0, -labelRect.height()/2);
     }
 
-    // set font size
-    int fntsize = percent2pix_d(size, fontsize_percent);
-    hud2_clamp(fntsize, 8, 50);
-    labelFont.setPixelSize(fntsize);
+    // number
+    int w_num, h_num;
+    w_num = percent2pix_d(size, num_w_percent);
+    hud2_clamp(w_num, 25, 500);
+    if (fntsize > 12)
+        h_num = fntsize + 8;
+    else
+        h_num = fntsize + 4;
+
+    if (mirrored){
+        numPoly = numIndicator(w_num, h_num, mirrored);
+        numPoly.translate(w_scratch - gap - len, 0);
+    }
+    else{
+        numPoly = numIndicator(w_num, h_num, mirrored);
+        numPoly.translate(gap+len, 0);
+    }
+
+    // clip rectangle
+    int w_clip = gap + len + 1;
+    if (mirrored)
+        clipRect = QRect(w_scratch - gap - len, 0, w_clip,  big_pixstep * stepsOnScreen);
+    else
+        clipRect = QRect(0, 0, w_clip,  big_pixstep * stepsOnScreen);
+    clipRect.setTop(clipRect.top() + big_pixstep/2);
+    clipRect.setBottom(clipRect.bottom() - big_pixstep/2);
+}
+
+static QString numStrVal(qreal value, int decimals){
+    hud2_clamp(decimals, 0, 4);
+    if (decimals == 0)
+        return QString::number((int)round(value));
+    else
+        return QString::number(value, 'f', decimals);
+}
+
+static QRect numStrRect(QPolygon &poly, bool mirrored){
+    QRect rect = poly.boundingRect();
+
+    if (mirrored)
+        rect.setLeft(rect.left() - rect.height() / 2);
+    else
+        rect.setRight(rect.right() + rect.height() / 2);
+
+    return rect;
 }
 
 void HUD2Ribbon::paint(QPainter *painter){
-    QRectF _labelRect = labelRect;
-    QLineF _scratchBig   = scratch_big;
-    QLineF _scratchSmall = scratch_small;
+    QRectF   _labelRect     = labelRect;
+    QLineF   _scratchBig    = scratch_big;
+    QLineF   _scratchSmall  = scratch_small;
+    QPolygon _numPoly       = numPoly;
+    qreal v = *value;
+    int i = 0;
 
     // translate starting point of ribbon
     qreal shift = (*value * big_pixstep) / bigScratchValueStep;
@@ -77,14 +175,11 @@ void HUD2Ribbon::paint(QPainter *painter){
     _scratchSmall.translate(0, modulusF(shift, big_pixstep));
     _labelRect.translate(0, modulusF(shift, big_pixstep));
 
-    // draw scratches
     painter->save();
 
-    qreal v = *value;
-    qDebug() << v;
-
-    int stepsOnScreen = 7;
-    int i = 0;
+    if (opaqueRibbon)
+        painter->fillRect(clipRect, Qt::black);
+    painter->setClipRect(clipRect);
 
     // scratches big
     painter->setPen(bigPen);
@@ -107,24 +202,26 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     // numbers
     painter->setFont(labelFont);
+    v = v + stepsOnScreen / 2;
     for (i=0; i<stepsOnScreen; i++){
-        painter->drawText(_labelRect, Qt::AlignCenter, QString::number((int)round(v)));
+        painter->drawText(_labelRect, Qt::AlignCenter, QString::number((int)v));
         v -= bigScratchValueStep;
         _labelRect.translate(0, big_pixstep);
     }
 
+    painter->setClipping(false);
+
     // arrow
-    int m = 10;
-    QPolygon arrow = QPolygon(3);
-    QPoint p0 = QPoint(100, 100);
-    QPoint p1 = QPoint(p0.x() + m, p0.ry() - m);
-    QPoint p2 = QPoint(p0.x() + m, p0.ry() + m);
-    arrow.setPoint(0, p0);
-    arrow.setPoint(1, p1);
-    arrow.setPoint(2, p2);
+    _numPoly.translate(0, big_pixstep * (stepsOnScreen / 2));
+    if (opaqueNum)
+        painter->setBrush(Qt::black);
+    painter->setPen(medPen);
+    painter->drawPolygon(_numPoly);
 
-    painter->drawPolygon(arrow);
+    // text in arrow
+    painter->drawText(numStrRect(_numPoly, mirrored), Qt::AlignCenter, numStrVal(*value, 2));
 
+    // make clean
     painter->restore();
 }
 

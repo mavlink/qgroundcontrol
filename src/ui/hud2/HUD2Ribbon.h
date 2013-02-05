@@ -27,20 +27,25 @@ private:
     bool mirrored;
     bool rotated90;
     bool hideNegative; // do not draw negative values. Use it in speedometers.
+    bool opaqueNum;
+    bool opaqueRibbon;
 
     qreal bigScratchLenStep; // step in percents of widget sizes
     qreal big_pixstep;
     qreal bigScratchValueStep; // numerical value step
     int smallScratchCnt; // how many small scratches between 2 big. Can be 0.
+    int stepsOnScreen;
     qreal small_pixstep;
-    qreal clipLen; // length of clipping rectangle
+    QRect clipRect; // clipping rectangle (automatically calculated)
 
     QPen bigPen;
+    QPen medPen;
     QPen smallPen;
     QLineF scratch_big;
     QLineF scratch_small;
     QFont  labelFont;
     QRectF labelRect;
+    QPolygon numPoly;
 };
 
 #endif // HUD2RIBBON_H
