@@ -97,20 +97,21 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     labelFont.setPixelSize(fntsize);
 
     // scratches
-    int w_scratch;
-    w_scratch = size.width();
+    int w_render;
+    w_render = size.width();
 
     if (mirrored){
-        scratch_big = QLineF(QPointF(w_scratch - gap, 0), QPointF(w_scratch - len - gap, 0));
-        scratch_small = QLineF(QPointF(w_scratch - (len / 2) - gap, 0), QPointF(w_scratch - len - gap, 0));
-        labelRect = QRectF(w_scratch - gap, 0, gap, big_pixstep);
+        scratch_big = QLineF(QPointF(w_render, 0), QPointF(w_render - len, 0));
+        scratch_small = QLineF(QPointF(w_render - (len / 2), 0), QPointF(w_render - len, 0));
+
+        labelRect = QRectF(w_render - gap - len, 0, gap, big_pixstep);
         labelRect.translate(0, -labelRect.height()/2);
     }
     else{
-        scratch_big = QLineF(QPoint(gap, 0), QPoint(gap + len, 0));
-        scratch_small = QLineF(QPoint(gap + len/2, 0), QPoint(gap + len, 0));
+        scratch_big = QLineF(QPoint(0, 0), QPoint(len, 0));
+        scratch_small = QLineF(QPoint(len/2, 0), QPoint(len, 0));
 
-        labelRect = QRectF(0, 0, gap, big_pixstep);
+        labelRect = QRectF(len, 0, gap, big_pixstep);
         labelRect.translate(0, -labelRect.height()/2);
     }
 
@@ -125,23 +126,24 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
 
     if (mirrored){
         numPoly = numIndicator(w_num, h_num, mirrored);
-        numPoly.translate(w_scratch - gap - len, 0);
+        numPoly.translate(w_render - len, 0);
     }
     else{
         numPoly = numIndicator(w_num, h_num, mirrored);
-        numPoly.translate(gap+len, 0);
+        numPoly.translate(len, 0);
     }
 
     // clip rectangle
     int w_clip = gap + len + 1;
     if (mirrored)
-        clipRect = QRect(w_scratch - gap - len, 0, w_clip,  big_pixstep * stepsOnScreen);
+        clipRect = QRect(w_render - gap - len, 0, w_clip,  big_pixstep * stepsOnScreen);
     else
         clipRect = QRect(0, 0, w_clip,  big_pixstep * stepsOnScreen);
     clipRect.setTop(clipRect.top() + big_pixstep/2);
     clipRect.setBottom(clipRect.bottom() - big_pixstep/2);
 }
 
+// helper
 static QString numStrVal(qreal value, int decimals){
     hud2_clamp(decimals, 0, 4);
     if (decimals == 0)
@@ -150,6 +152,7 @@ static QString numStrVal(qreal value, int decimals){
         return QString::number(value, 'f', decimals);
 }
 
+// helper
 static QRect numStrRect(QPolygon &poly, bool mirrored){
     QRect rect = poly.boundingRect();
 
@@ -179,7 +182,22 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     if (opaqueRibbon)
         painter->fillRect(clipRect, Qt::black);
-    painter->setClipRect(clipRect);
+
+    // arrow
+    _numPoly.translate(0, big_pixstep * (stepsOnScreen / 2));
+    if (opaqueNum)
+        painter->setBrush(Qt::black);
+    painter->setPen(medPen);
+    painter->drawPolygon(_numPoly);
+
+    // text in arrow
+    painter->setFont(labelFont);
+    painter->drawText(numStrRect(_numPoly, mirrored), Qt::AlignCenter, numStrVal(*value, 2));
+
+    // clipping area. Consist of long verical rectangle for ribbon and
+    // small horisontal rectangle for number
+    QRegion clipReg = QRegion(clipRect) - QRegion(_numPoly.boundingRect());
+    painter->setClipRegion(clipReg);
 
     // scratches big
     painter->setPen(bigPen);
@@ -204,22 +222,12 @@ void HUD2Ribbon::paint(QPainter *painter){
     painter->setFont(labelFont);
     v = v + stepsOnScreen / 2;
     for (i=0; i<stepsOnScreen; i++){
+        //painter->fillRect(_labelRect, Qt::red);
         painter->drawText(_labelRect, Qt::AlignCenter, QString::number((int)v));
         v -= bigScratchValueStep;
         _labelRect.translate(0, big_pixstep);
     }
 
-    painter->setClipping(false);
-
-    // arrow
-    _numPoly.translate(0, big_pixstep * (stepsOnScreen / 2));
-    if (opaqueNum)
-        painter->setBrush(Qt::black);
-    painter->setPen(medPen);
-    painter->drawPolygon(_numPoly);
-
-    // text in arrow
-    painter->drawText(numStrRect(_numPoly, mirrored), Qt::AlignCenter, numStrVal(*value, 2));
 
     // make clean
     painter->restore();
