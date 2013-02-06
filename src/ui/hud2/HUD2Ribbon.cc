@@ -82,7 +82,7 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     qreal gap_percent = 6; // space between screen border and scratches
     qreal len_percent = 2; // length of big scratch
     qreal fontsize_percent = 2.0; // font size of labels on ribbon
-    qreal num_w_percent = gap_percent * 1.5; // width of number indicator
+    qreal num_w_percent = gap_percent * 1.2; // width of number indicator
 
     big_pixstep = percent2pix_hF(size, bigScratchLenStep);
     small_pixstep = big_pixstep / (smallScratchCnt + 1);
@@ -165,10 +165,10 @@ static QRect numStrRect(QPolygon &poly, bool mirrored){
 }
 
 void HUD2Ribbon::paint(QPainter *painter){
-    QRectF   _labelRect     = labelRect;
-    QLineF   _scratchBig    = scratch_big;
-    QLineF   _scratchSmall  = scratch_small;
-    QPolygon _numPoly       = numPoly;
+    QRectF _labelRect = labelRect;
+    QLineF _scratchBig = scratch_big;
+    QLineF _scratchSmall = scratch_small;
+    QPolygon _numPoly = numPoly;
     qreal v = *value;
     int i = 0;
 
@@ -227,7 +227,6 @@ void HUD2Ribbon::paint(QPainter *painter){
         v -= bigScratchValueStep;
         _labelRect.translate(0, big_pixstep);
     }
-
 
     // make clean
     painter->restore();
