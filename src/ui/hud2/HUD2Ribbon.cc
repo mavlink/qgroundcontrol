@@ -9,14 +9,13 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     mirrored(mirrored)
 {
     rotated90 = false;
-    hideNegative = false;
     opaqueNum = false;
     opaqueRibbon = false;
 
     bigScratchLenStep = 20.0;
     bigScratchValueStep = 1;
-    smallScratchCnt = 4;
-    stepsOnScreen = 4;
+    stepsSmall = 4;
+    stepsBig = 4;
 
     bigPen = QPen();
     bigPen.setColor(Qt::green);
@@ -32,6 +31,10 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
 
     labelFont = QFont();
     labelFont.setPixelSize(15);
+
+    scratchBig = new QLine[1];
+    scratchSmall = new QLine[1];
+    labelRect = new QRect[1];
 }
 
 /**
@@ -79,16 +82,17 @@ static QPolygon numIndicator(int w, int h, bool mirrored){
 }
 
 void HUD2Ribbon::updateGeometry(const QSize &size){
+    int i = 0;
     qreal gap_percent = 6; // space between screen border and scratches
     qreal len_percent = 2; // length of big scratch
     qreal fontsize_percent = 2.0; // font size of labels on ribbon
     qreal num_w_percent = gap_percent * 1.2; // width of number indicator
 
     big_pixstep = percent2pix_hF(size, bigScratchLenStep);
-    small_pixstep = big_pixstep / (smallScratchCnt + 1);
+    small_pixstep = big_pixstep / (stepsSmall + 1);
 
-    qreal gap = percent2pix_wF(size, gap_percent);
-    qreal len = percent2pix_wF(size, len_percent);
+    int gap = percent2pix_w(size, gap_percent);
+    int len = percent2pix_w(size, len_percent);
     hud2_clamp(len, 4, 20);
 
     // font size for labels
@@ -100,22 +104,55 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     int w_render;
     w_render = size.width();
 
-    if (mirrored){
-        scratch_big = QLineF(QPointF(w_render, 0), QPointF(w_render - len, 0));
-        scratch_small = QLineF(QPointF(w_render - (len / 2), 0), QPointF(w_render - len, 0));
 
-        labelRect = QRectF(w_render - gap - len, 0, gap, big_pixstep);
-        labelRect.translate(0, -labelRect.height()/2);
+    delete[] scratchBig;
+    delete[] scratchSmall;
+    delete[] labelRect;
+
+    if (mirrored){
+        // big scratches
+        scratchBig = new QLine[stepsBig];
+        scratchBig[0] = QLine(QPoint(w_render, 0), QPoint(w_render - len, 0));
+        for (i=0; i<stepsBig; i++){
+            scratchBig[i] = scratchBig[0];
+            scratchBig[i].translate(0, round(big_pixstep * i));
+        }
+
+        // small scratches
+        smallStepsCnt = (stepsBig + 2) * stepsSmall;
+        int n = smallStepsCnt;
+
+        scratchSmall = new QLine[n];
+        scratchSmall[0] = QLine(QPoint(w_render - (len / 2), 0), QPoint(w_render - len, 0));
+        scratchSmall[0].translate(0, round(-big_pixstep));
+
+        for (i=0; i<n; i++){
+            scratchSmall[i] = scratchSmall[0];
+            scratchSmall[i].translate(0, round(small_pixstep * i));
+            // TODO: skip rendering small scratch under the big one
+        }
+
+        // rectangles for labels
+        labelRect = new QRect[stepsBig];
+        labelRect[0] = QRect(w_render - gap - len, 0, gap, big_pixstep);
+        labelRect[0].translate(0, -labelRect[0].height()/2);
+        for (i=0; i<stepsBig; i++){
+            labelRect[i] = labelRect[0];
+            labelRect[i].translate(0, round(big_pixstep * i));
+        }
     }
     else{
-        scratch_big = QLineF(QPoint(0, 0), QPoint(len, 0));
-        scratch_small = QLineF(QPoint(len/2, 0), QPoint(len, 0));
+        scratchBig = new QLine[stepsBig];
+        scratchSmall = new QLine[stepsBig*10];
+        labelRect = new QRect[stepsBig];
+//        scratch_big = QLineF(QPoint(0, 0), QPoint(len, 0));
+//        scratch_small = QLineF(QPoint(len/2, 0), QPoint(len, 0));
 
-        labelRect = QRectF(len, 0, gap, big_pixstep);
-        labelRect.translate(0, -labelRect.height()/2);
+//        labelRect = QRectF(len, 0, gap, big_pixstep);
+//        labelRect.translate(0, -labelRect.height()/2);
     }
 
-    // number
+    // main number
     int w_num, h_num;
     w_num = percent2pix_d(size, num_w_percent);
     hud2_clamp(w_num, 25, 500);
@@ -136,9 +173,9 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     // clip rectangle
     int w_clip = gap + len + 1;
     if (mirrored)
-        clipRect = QRect(w_render - gap - len, 0, w_clip,  big_pixstep * stepsOnScreen);
+        clipRect = QRect(w_render - gap - len, 0, w_clip,  big_pixstep * stepsBig);
     else
-        clipRect = QRect(0, 0, w_clip,  big_pixstep * stepsOnScreen);
+        clipRect = QRect(0, 0, w_clip,  big_pixstep * stepsBig);
     clipRect.setTop(clipRect.top() + big_pixstep/2);
     clipRect.setBottom(clipRect.bottom() - big_pixstep/2);
 }
@@ -165,18 +202,14 @@ static QRect numStrRect(QPolygon &poly, bool mirrored){
 }
 
 void HUD2Ribbon::paint(QPainter *painter){
-    QRectF _labelRect = labelRect;
-    QLineF _scratchBig = scratch_big;
-    QLineF _scratchSmall = scratch_small;
     QPolygon _numPoly = numPoly;
     qreal v = *value;
     int i = 0;
 
     // translate starting point of ribbon
     qreal shift = (*value * big_pixstep) / bigScratchValueStep;
-    _scratchBig.translate(0, modulusF(shift, big_pixstep));
-    _scratchSmall.translate(0, modulusF(shift, big_pixstep));
-    _labelRect.translate(0, modulusF(shift, big_pixstep));
+    shift = modulusF(shift, big_pixstep);
+    shift = round(shift);
 
     painter->save();
 
@@ -184,7 +217,7 @@ void HUD2Ribbon::paint(QPainter *painter){
         painter->fillRect(clipRect, Qt::black);
 
     // arrow
-    _numPoly.translate(0, big_pixstep * (stepsOnScreen / 2));
+    _numPoly.translate(0, big_pixstep * (stepsBig / 2));
     if (opaqueNum)
         painter->setBrush(Qt::black);
     painter->setPen(medPen);
@@ -199,33 +232,24 @@ void HUD2Ribbon::paint(QPainter *painter){
     QRegion clipReg = QRegion(clipRect) - QRegion(_numPoly.boundingRect());
     painter->setClipRegion(clipReg);
 
+    // translate painter to shift whole ribbon
+    painter->translate(0, shift);
+
     // scratches big
     painter->setPen(bigPen);
-    for (i=0; i<stepsOnScreen; i++){
-        painter->drawLine(_scratchBig);
-        _scratchBig.translate(0, big_pixstep);
-    }
+    painter->drawLines(scratchBig, stepsBig);
 
     // scratches small
     painter->setPen(smallPen);
-    _scratchSmall.translate(0, -big_pixstep);
-    for (i=0; i<(stepsOnScreen + 1); i++){
-        for (int n=0; n<smallScratchCnt; n++){
-            _scratchSmall.translate(0, small_pixstep);
-            painter->drawLine(_scratchSmall);
-        }
-        // to skip rendering small scratch under the big one
-        _scratchSmall.translate(0, small_pixstep);
-    }
+    painter->drawLines(scratchSmall, smallStepsCnt);
 
-    // numbers
+    // number labels
     painter->setFont(labelFont);
-    v = v + stepsOnScreen / 2;
-    for (i=0; i<stepsOnScreen; i++){
+    v = v + stepsBig / 2;
+    for (i=0; i<stepsBig; i++){
         //painter->fillRect(_labelRect, Qt::red);
-        painter->drawText(_labelRect, Qt::AlignCenter, QString::number((int)v));
+        painter->drawText(labelRect[i], Qt::AlignCenter, QString::number((int)v));
         v -= bigScratchValueStep;
-        _labelRect.translate(0, big_pixstep);
     }
 
     // make clean
