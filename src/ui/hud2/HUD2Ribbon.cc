@@ -243,7 +243,11 @@ void HUD2Ribbon::paint(QPainter *painter){
     painter->setClipRegion(clipReg);
 
     // translate painter to shift whole ribbon
-    painter->translate(0, shift);
+    // for antialiased painter we add halpixel shift to prevent bluring of lines
+    if (painter->Antialiasing)
+        painter->translate(0, shift + 0.5);
+    else
+        painter->translate(0, shift);
 
     // scratches big
     painter->setPen(bigPen);
