@@ -19,7 +19,7 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent) :
     gndPen   = QPen(Qt::darkRed);
     gndBrush = QBrush(Qt::darkRed);
 
-    coloredBackground = false;
+    coloredBackground = true;
 }
 
 void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
