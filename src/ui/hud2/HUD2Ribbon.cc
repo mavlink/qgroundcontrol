@@ -21,9 +21,9 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     bigPen.setColor(Qt::green);
     bigPen.setWidth(3);
 
-    medPen = QPen();
-    medPen.setColor(Qt::green);
-    medPen.setWidth(2);
+    arrowPen = QPen();
+    arrowPen.setColor(Qt::green);
+    arrowPen.setWidth(2);
 
     smallPen = QPen();
     smallPen.setColor(Qt::green);
@@ -173,11 +173,11 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
 
     if (mirrored){
         numPoly = numIndicator(w_num, h_num, mirrored);
-        numPoly.translate(w_render - len, 0);
+        numPoly.translate(w_render - len - 2, 0);
     }
     else{
         numPoly = numIndicator(w_num, h_num, mirrored);
-        numPoly.translate(len, 0);
+        numPoly.translate(len + 2, 0);
     }
 
     // clip rectangle
@@ -230,7 +230,7 @@ void HUD2Ribbon::paint(QPainter *painter){
     _numPoly.translate(0, big_pixstep * (stepsBig / 2));
     if (opaqueNum)
         painter->setBrush(Qt::black);
-    painter->setPen(medPen);
+    painter->setPen(arrowPen);
     painter->drawPolygon(_numPoly);
 
     // text in arrow

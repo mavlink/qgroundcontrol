@@ -18,6 +18,8 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent) :
     skyBrush = QBrush(Qt::darkBlue);
     gndPen   = QPen(Qt::darkRed);
     gndBrush = QBrush(Qt::darkRed);
+
+    coloredBackground = false;
 }
 
 void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
@@ -88,40 +90,43 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     transform.translate(delta_x, delta_y);
     transform.rotate(rad2deg(huddata.roll));
 
-    // draw colored background
-    /* some kind of hack to create poligon with minimal needed area:
-     * - create rectangle
-     * - apply transform to it
-     * - from output polygon got points laying on horizon line
-     * - use line formulae to calculate points of new polygon
-     */
-    painter->save();
-    QRect rect = QRect(QPoint(-1000,0), QPoint(1000,1000));
-    QPolygon poly = transform.mapToPolygon(rect);
+    if (coloredBackground){
+        // draw colored background
+        /* some kind of hack to create poligon with minimal needed area:
+         * - create rectangle
+         * - apply transform to it
+         * - from output polygon got points laying on horizon line
+         * - use line formulae to calculate points of new polygon
+         */
 
-    int x = 0;
-    int w = painter->window().width();
-    int h = painter->window().height();
-    QPoint point_left = QPoint(x, _getline_y(poly.point(0), poly.point(1), x));
-    x = w;
-    QPoint point_right = QPoint(x, _getline_y(poly.point(0), poly.point(1), x));
+        painter->save();
+        QRect rect = QRect(QPoint(-1000,0), QPoint(1000,1000));
+        QPolygon poly = transform.mapToPolygon(rect);
 
-    poly.setPoint(0, point_left);
-    poly.setPoint(1, point_right);
-    poly.setPoint(2, w, 0);
-    poly.setPoint(3, 0, 0);
+        int x = 0;
+        int w = painter->window().width();
+        int h = painter->window().height();
+        QPoint point_left = QPoint(x, _getline_y(poly.point(0), poly.point(1), x));
+        x = w;
+        QPoint point_right = QPoint(x, _getline_y(poly.point(0), poly.point(1), x));
 
-    painter->setBrush(skyBrush);
-    painter->setPen(skyPen);
-    painter->drawPolygon(poly);
+        poly.setPoint(0, point_left);
+        poly.setPoint(1, point_right);
+        poly.setPoint(2, w, 0);
+        poly.setPoint(3, 0, 0);
 
-    poly.setPoint(2, w, h);
-    poly.setPoint(3, 0, h);
-    painter->setBrush(gndBrush);
-    painter->setPen(gndPen);
-    painter->drawPolygon(poly);
+        painter->setBrush(skyBrush);
+        painter->setPen(skyPen);
+        painter->drawPolygon(poly);
 
-    painter->restore();
+        poly.setPoint(2, w, h);
+        poly.setPoint(3, 0, h);
+        painter->setBrush(gndBrush);
+        painter->setPen(gndPen);
+        painter->drawPolygon(poly);
+
+        painter->restore();
+    }
 
     // draw other stuff
     painter->save();

@@ -39,7 +39,7 @@ private:
     QRect clipRect; // clipping rectangle
 
     QPen bigPen;
-    QPen medPen;
+    QPen arrowPen;
     QPen smallPen;
     QLine *scratchBig;
     QLine *scratchSmall;
