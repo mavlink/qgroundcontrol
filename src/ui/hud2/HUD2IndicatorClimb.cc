@@ -1,3 +1,4 @@
+#include <qmath.h>
 #include <QPainter>
 
 #include "HUD2IndicatorClimb.h"
@@ -6,7 +7,7 @@ HUD2IndicatorClimb::HUD2IndicatorClimb(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
-    ribbon = new HUD2Ribbon(&huddata.alt, true, this);
+    ribbon = new HUD2Ribbon(&huddata.yaw, (180.0 / M_PI), true, this);
 }
 
 void HUD2IndicatorClimb::updateGeometry(const QSize &size){

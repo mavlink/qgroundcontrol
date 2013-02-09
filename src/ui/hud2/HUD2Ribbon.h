@@ -9,7 +9,7 @@ class HUD2Ribbon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Ribbon(const float *value, bool mirrored, QWidget *parent);
+    explicit HUD2Ribbon(const float *value, qreal multiplier, bool mirrored, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -23,6 +23,7 @@ public slots:
 
 private:
     const float *value;
+    qreal multiplier; //value will be multiplied by this value
 
     bool mirrored;
     bool rotated90;

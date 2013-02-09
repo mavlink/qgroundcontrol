@@ -3,9 +3,10 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
+HUD2Ribbon::HUD2Ribbon(const float *value, qreal multiplier, bool mirrored, QWidget *parent) :
     QWidget(parent),
     value(value),
+    multiplier(multiplier),
     mirrored(mirrored)
 {
     rotated90 = false;
@@ -13,7 +14,7 @@ HUD2Ribbon::HUD2Ribbon(const float *value, bool mirrored, QWidget *parent) :
     opaqueRibbon = false;
 
     bigScratchLenStep = 20.0;
-    bigScratchValueStep = 1;
+    bigScratchValueStep = 10;
     stepsSmall = 4;
     stepsBig = 4;
 
@@ -213,11 +214,11 @@ static QRect num_str_rect(QPolygon &poly, bool mirrored){
 
 void HUD2Ribbon::paint(QPainter *painter){
     QPolygon _numPoly = numPoly;
-    qreal v = *value;
+    qreal v = *value * multiplier;
     int i = 0;
 
     // translate starting point of ribbon
-    qreal shift = (*value * big_pixstep) / bigScratchValueStep;
+    qreal shift = (v * big_pixstep) / bigScratchValueStep;
     shift = modulusF(shift, big_pixstep);
     shift = round(shift);
 
@@ -235,7 +236,7 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     // text in arrow
     painter->setFont(labelFont);
-    painter->drawText(num_str_rect(_numPoly, mirrored), Qt::AlignCenter, num_str_val(*value, 2));
+    painter->drawText(num_str_rect(_numPoly, mirrored), Qt::AlignCenter, num_str_val(v, 2));
 
     // clipping area. Consist of long verical rectangle for ribbon and
     // small horisontal rectangle for number
