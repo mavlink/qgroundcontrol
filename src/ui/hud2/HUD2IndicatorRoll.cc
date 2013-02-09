@@ -43,8 +43,8 @@ void HUD2IndicatorRoll::updateGeometry(const QSize &size){
     int big_r = size.height() / 2;
     int small_r = big_r - thick_scratch_len;
 
-    QLine thick_line = QLine(0, big_r, 0, small_r);
-    QLine thin_line = QLine(0, small_r, 0, small_r + thin_scratch_len);
+    QLineF thick_line = QLineF(0, big_r, 0, small_r);
+    QLineF thin_line = QLineF(0, small_r, 0, small_r + thin_scratch_len);
 
     // big scratches
     int phi_step = 30;

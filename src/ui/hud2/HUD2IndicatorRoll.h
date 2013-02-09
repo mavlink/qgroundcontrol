@@ -24,8 +24,8 @@ private:
     QPen thickPen;
     QPen thinPen;
     QPen arrowPen;
-    QLine thickLines[5];
-    QLine thinLines[10];
+    QLineF thickLines[5];
+    QLineF thinLines[10];
     QLine arrowLines[2];
 
     HUD2Data &huddata;
