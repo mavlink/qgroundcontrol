@@ -33,7 +33,7 @@ private:
     qreal big_pixstep;
     qreal bigScratchValueStep; // numerical value step
     int stepsSmall; // how many small scratches between 2 big. Can be 0.
-    int smallStepsCnt; // overall count of small scratches in ribbon.
+    int smallStepsTotal; // overall count of small scratches in ribbon.
     int stepsBig;
     qreal small_pixstep;
     QRect clipRect; // clipping rectangle

@@ -104,52 +104,62 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     int w_render;
     w_render = size.width();
 
-
     delete[] scratchBig;
     delete[] scratchSmall;
     delete[] labelRect;
+    smallStepsTotal = (stepsBig + 1) * stepsSmall;
 
     if (mirrored){
-        // big scratches
+        // big scratch
         scratchBig = new QLine[stepsBig];
         scratchBig[0] = QLine(QPoint(w_render, 0), QPoint(w_render - len, 0));
-        for (i=0; i<stepsBig; i++){
-            scratchBig[i] = scratchBig[0];
-            scratchBig[i].translate(0, round(big_pixstep * i));
-        }
-
-        // small scratches
-        smallStepsCnt = (stepsBig + 2) * stepsSmall;
-        int n = smallStepsCnt;
-
-        scratchSmall = new QLine[n];
+        // small scratch
+        scratchSmall = new QLine[smallStepsTotal];
         scratchSmall[0] = QLine(QPoint(w_render - (len / 2), 0), QPoint(w_render - len, 0));
         scratchSmall[0].translate(0, round(-big_pixstep));
-
-        for (i=0; i<n; i++){
-            scratchSmall[i] = scratchSmall[0];
-            scratchSmall[i].translate(0, round(small_pixstep * i));
-            // TODO: skip rendering small scratch under the big one
-        }
-
-        // rectangles for labels
+        // rectangle for labels
         labelRect = new QRect[stepsBig];
         labelRect[0] = QRect(w_render - gap - len, 0, gap, big_pixstep);
         labelRect[0].translate(0, -labelRect[0].height()/2);
-        for (i=0; i<stepsBig; i++){
-            labelRect[i] = labelRect[0];
-            labelRect[i].translate(0, round(big_pixstep * i));
-        }
     }
     else{
+        // big scratch
         scratchBig = new QLine[stepsBig];
-        scratchSmall = new QLine[stepsBig*10];
+        scratchBig[0] = QLine(QPoint(0, 0), QPoint(len, 0));
+        // small scratch
+        scratchSmall = new QLine[smallStepsTotal];
+        scratchSmall[0] = QLine(QPoint(len / 2, 0), QPoint(len, 0));
+        scratchSmall[0].translate(0, round(-big_pixstep));
+        // rectangle for labels
         labelRect = new QRect[stepsBig];
-//        scratch_big = QLineF(QPoint(0, 0), QPoint(len, 0));
-//        scratch_small = QLineF(QPoint(len/2, 0), QPoint(len, 0));
+        labelRect[0] = QRect(len, 0, gap, big_pixstep);
+        labelRect[0].translate(0, -labelRect[0].height()/2);
+    }
 
-//        labelRect = QRectF(len, 0, gap, big_pixstep);
-//        labelRect.translate(0, -labelRect.height()/2);
+    qreal shift;
+    // big scratches
+    shift = 0;
+    for (i=1; i<stepsBig; i++){
+        shift += big_pixstep;
+        scratchBig[i] = scratchBig[0];
+        scratchBig[i].translate(0, round(shift));
+    }
+    // small scratches
+    shift = 0;
+    for (i=1; i<smallStepsTotal; i++){
+        shift += small_pixstep;
+        scratchSmall[i] = scratchSmall[0];
+        scratchSmall[i].translate(0, round(shift));
+        // to skip rendering small scratch under the big one
+        if (i % stepsSmall == 0)
+            shift += small_pixstep;
+    }
+    // rectangles for labels
+    shift = 0;
+    for (i=1; i<stepsBig; i++){
+        shift += big_pixstep;
+        labelRect[i] = labelRect[0];
+        labelRect[i].translate(0, round(shift));
     }
 
     // main number
@@ -181,7 +191,7 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
 }
 
 // helper
-static QString numStrVal(qreal value, int decimals){
+static QString num_str_val(qreal value, int decimals){
     hud2_clamp(decimals, 0, 4);
     if (decimals == 0)
         return QString::number((int)round(value));
@@ -190,7 +200,7 @@ static QString numStrVal(qreal value, int decimals){
 }
 
 // helper
-static QRect numStrRect(QPolygon &poly, bool mirrored){
+static QRect num_str_rect(QPolygon &poly, bool mirrored){
     QRect rect = poly.boundingRect();
 
     if (mirrored)
@@ -225,7 +235,7 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     // text in arrow
     painter->setFont(labelFont);
-    painter->drawText(numStrRect(_numPoly, mirrored), Qt::AlignCenter, numStrVal(*value, 2));
+    painter->drawText(num_str_rect(_numPoly, mirrored), Qt::AlignCenter, num_str_val(*value, 2));
 
     // clipping area. Consist of long verical rectangle for ribbon and
     // small horisontal rectangle for number
@@ -241,7 +251,7 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     // scratches small
     painter->setPen(smallPen);
-    painter->drawLines(scratchSmall, smallStepsCnt);
+    painter->drawLines(scratchSmall, smallStepsTotal);
 
     // number labels
     painter->setFont(labelFont);

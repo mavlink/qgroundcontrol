@@ -23,8 +23,8 @@ qreal rad2deg(qreal rad);
 qreal deg2rad(qreal deg);
 QPoint rotatePoint(qreal phi, QPoint p);
 QPointF rotatePoint(qreal phi, QPointF p);
-
 QLine rotateLine(qreal phi, QLine line);
+QLineF rotateLine(qreal phi, QLineF line);
 qreal wrap_360(qreal angle);
 int wrap_360(int angle);
 qreal modulusF(qreal dividend, qreal divisor);

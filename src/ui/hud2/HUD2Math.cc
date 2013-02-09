@@ -64,14 +64,12 @@ QPointF rotatePoint(qreal phi, QPointF p){
     return QPointF(x_, y_);
 }
 
-/**
- * @brief rotateLine
- * @param phi           angle in degrees
- * @param line
- * @return
- */
 QLine rotateLine(qreal phi, QLine line){
     return QLine(rotatePoint(phi, line.p1()), rotatePoint(phi, line.p2()));
+}
+
+QLineF rotateLine(qreal phi, QLineF line){
+    return QLineF(rotatePoint(phi, line.p1()), rotatePoint(phi, line.p2()));
 }
 
 /**
