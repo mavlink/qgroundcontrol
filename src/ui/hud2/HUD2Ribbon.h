@@ -32,7 +32,7 @@ private:
 
     qreal bigScratchLenStep; // step in percents of widget sizes
     qreal big_pixstep;
-    qreal bigScratchValueStep; // numerical value step
+    int bigScratchValueStep; // numerical value step
     int stepsSmall; // how many small scratches between 2 big. Can be 0.
     int smallStepsTotal; // overall count of small scratches in ribbon.
     int stepsBig;

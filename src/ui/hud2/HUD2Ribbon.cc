@@ -13,10 +13,12 @@ HUD2Ribbon::HUD2Ribbon(const float *value, qreal multiplier, bool mirrored, QWid
     opaqueNum = false;
     opaqueRibbon = false;
 
-    bigScratchLenStep = 20.0;
+    bigScratchLenStep = 15.0;
     bigScratchValueStep = 10;
     stepsSmall = 4;
     stepsBig = 4;
+    if ((stepsBig < 2) || ((stepsBig % 2) != 0))
+        qFatal("Ribbon's stepsBig value must be even AND more than 0");
 
     bigPen = QPen();
     bigPen.setColor(Qt::green);
@@ -260,11 +262,15 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     // number labels
     painter->setFont(labelFont);
-    v = v + stepsBig / 2;
+    int v_int = int(v);
+    v_int /= bigScratchValueStep;
+    if (v < 0)
+        v_int -= 1;
+    v_int *= bigScratchValueStep;
+    v_int += (stepsBig * bigScratchValueStep) / 2;
     for (i=0; i<stepsBig; i++){
-        //painter->fillRect(_labelRect, Qt::red);
-        painter->drawText(labelRect[i], Qt::AlignCenter, QString::number((int)v));
-        v -= bigScratchValueStep;
+        painter->drawText(labelRect[i], Qt::AlignCenter, QString::number(v_int));
+        v_int -= bigScratchValueStep;
     }
 
     // make clean
