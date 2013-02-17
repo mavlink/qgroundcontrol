@@ -13,6 +13,7 @@
 #include "HUD2IndicatorYaw.h"
 #include "HUD2IndicatorSpeed.h"
 #include "HUD2IndicatorClimb.h"
+#include "HUD2IndicatorCompass.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -37,9 +38,10 @@ public slots:
 private:
     HUD2IndicatorHorizon horizon;
     HUD2IndicatorRoll roll;
-    HUD2IndicatorYaw yaw;
+    //HUD2IndicatorYaw yaw;
     HUD2IndicatorSpeed speed;
     HUD2IndicatorClimb climb;
+    HUD2IndicatorCompass compass;
     HUD2IndicatorFps fps;
 
     // HUD colors

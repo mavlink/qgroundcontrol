@@ -5,12 +5,19 @@
 #include <QPen>
 #include <QFont>
 
+typedef enum {
+    POSITION_LEFT = 0,
+    POSITION_RIGHT = 1,
+    POSITION_TOP = 2,
+    POSITION_BOTTOM = 3
+}screen_position;
+
 class HUD2Ribbon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Ribbon(const float *value, qreal multiplier, bool mirrored, QWidget *parent);
-    void paint(QPainter *painter);
+    explicit HUD2Ribbon(screen_position position, QWidget *parent);
+    void paint(QPainter *painter, float value);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -22,11 +29,9 @@ public slots:
 public slots:
 
 private:
-    const float *value;
-    qreal multiplier; //value will be multiplied by this value
-
-    bool mirrored;
-    bool rotated90;
+    void updateRibbon(const QSize &size, int gap, int len);
+    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len);
+    screen_position position;
     bool opaqueNum;
     bool opaqueRibbon;
 

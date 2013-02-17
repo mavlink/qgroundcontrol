@@ -1,13 +1,13 @@
-#include <qmath.h>
 #include <QPainter>
 
 #include "HUD2IndicatorClimb.h"
+#include "HUD2Math.h"
 
 HUD2IndicatorClimb::HUD2IndicatorClimb(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
-    ribbon = new HUD2Ribbon(&huddata.yaw, (180.0 / M_PI), true, this);
+    ribbon = new HUD2Ribbon(POSITION_RIGHT, this);
 }
 
 void HUD2IndicatorClimb::updateGeometry(const QSize &size){
@@ -16,7 +16,7 @@ void HUD2IndicatorClimb::updateGeometry(const QSize &size){
 
 void HUD2IndicatorClimb::paint(QPainter *painter){
     painter->save();
-    ribbon->paint(painter);
+    ribbon->paint(painter, rad2deg(huddata.roll));
     painter->restore();
 }
 
