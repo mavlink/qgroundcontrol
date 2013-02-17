@@ -266,10 +266,9 @@ MainWindow::~MainWindow()
         delete joystick;
         joystick = NULL;
     }
-
     // Get and delete all dockwidgets and contained
     // widgets
-    QObjectList childList(this->children());
+/*    QObjectList childList(this->children());
 
     QObjectList::iterator i;
     QDockWidget* dockWidget;
@@ -290,7 +289,7 @@ MainWindow::~MainWindow()
             *i = NULL;
         }
     }
-    // Delete all UAS objects
+    */// Delete all UAS objects
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)
@@ -506,6 +505,14 @@ void MainWindow::buildCommonWidgets()
         addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
     }
 
+    if (!headUpDockWidget2)
+    {
+        headUpDockWidget2 = new QDockWidget(tr("HUD2"), this);
+        headUpDockWidget2->setWidget( new HUD2(this));
+        headUpDockWidget2->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET_2");
+        addTool(headUpDockWidget2, tr("Head Up Display 2"), Qt::RightDockWidgetArea);
+    }
+
     if (!video1DockWidget)
     {
         video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
@@ -577,7 +584,14 @@ void MainWindow::buildCommonWidgets()
     if (!hudWidget)
     {
         hudWidget         = new HUD(320, 240, this);
+        //hudWidget         = new HUD2(this);
         addCentralWidget(hudWidget, tr("Head Up Display"));
+    }
+
+    if (!hud2Widget)
+    {
+        hud2Widget         = new HUD2(this);
+        addCentralWidget(hud2Widget, tr("Head Up Display 2"));
     }
 
     if (!configWidget)
