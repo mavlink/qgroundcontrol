@@ -178,6 +178,12 @@ void UASControlWidget::transmitMode()
     UASInterface* mav = UASManager::instance()->getUASForId(this->uas);
     if (mav)
     {
+        // include armed state
+        if (engineOn)
+            uasMode |= MAV_MODE_FLAG_SAFETY_ARMED;
+        else
+            uasMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+
         mav->setMode(uasMode);
         QString mode = ui.modeComboBox->currentText();
 
