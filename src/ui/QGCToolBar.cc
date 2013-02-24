@@ -97,17 +97,23 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 
     toolBarWpLabel = new QLabel("WP--", this);
     toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
-	toolBarWpLabel->setToolTip(tr("Current mission"));
+    toolBarWpLabel->setToolTip(tr("Current waypoint"));
     addWidget(toolBarWpLabel);
 
     toolBarDistLabel = new QLabel("--- ---- m", this);
-	toolBarDistLabel->setToolTip(tr("Distance to current mission"));
+    toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
     addWidget(toolBarDistLabel);
 
     toolBarMessageLabel = new QLabel("No system messages.", this);
     toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
 	toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
+
+    connectButton = new QPushButton(tr("Connect"), this);
+    connectButton->setCheckable(true);
+    connectButton->setToolTip(tr("Connect wireless link to MAV"));
+    addWidget(connectButton);
+    connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
 
     // DONE INITIALIZING BUTTONS
 
@@ -448,6 +454,31 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     Q_UNUSED(severity);
     if (lastSystemMessage != text) changed = true;
     lastSystemMessage = text;
+}
+
+void QGCToolBar::connectLink(bool connect)
+{
+    if (connect && LinkManager::instance()->getLinks().count() < 3)
+    {
+        MainWindow::instance()->addLink();
+    } else if (connect) {
+        LinkManager::instance()->getLinks().last()->connect();
+    } else if (!connect && LinkManager::instance()->getLinks().count() > 2) {
+        LinkManager::instance()->getLinks().last()->disconnect();
+    }
+
+    if (LinkManager::instance()->getLinks().count() > 2) {
+        if (LinkManager::instance()->getLinks().last()->isConnected())
+        {
+            connectButton->setText(tr("Disconnect"));
+        }
+        else
+        {
+            connectButton->setText(tr("Connect"));
+        }
+
+    }
+
 }
 
 QGCToolBar::~QGCToolBar()

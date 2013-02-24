@@ -235,8 +235,8 @@ void QGCVehicleConfig::resetCalibrationRC()
 {
     for (unsigned int i = 0; i < chanMax; ++i)
     {
-        rcMin[i] = (float)INT_MAX;
-        rcMax[i] = (float)INT_MIN;
+        rcMin[i] = 1200;
+        rcMax[i] = 1800;
     }
 }
 
