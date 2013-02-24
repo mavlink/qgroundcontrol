@@ -168,17 +168,6 @@ void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QStrin
     Q_UNUSED(airframe);
 
     qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
-    qDebug() << "ATTEMPTING TO LOAD CSV";
 
     QDir appDir = QApplication::applicationDirPath();
     appDir.cd("files");
