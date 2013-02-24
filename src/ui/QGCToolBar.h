@@ -27,6 +27,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolBar>
 #include <QAction>
 #include <QToolButton>
+#include <QPushButton>
 #include <QLabel>
 #include <QProgressBar>
 #include "UASInterface.h"
@@ -72,6 +73,8 @@ public slots:
     void updateView();
     /** @brief Update connection timeout time */
     void heartbeatTimeout(bool timeout, unsigned int ms);
+    /** @brief Create or connect link */
+    void connectLink(bool connect);
 
 protected:
     void createCustomWidgets();
@@ -88,6 +91,7 @@ protected:
     QLabel* toolBarWpLabel;
     QLabel* toolBarDistLabel;
     QLabel* toolBarMessageLabel;
+    QPushButton* connectButton;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
     QGCMAVLinkLogPlayer* player;
