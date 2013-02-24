@@ -459,7 +459,6 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     if (lastSystemMessage != text) changed = true;
     lastSystemMessage = text;
     lastSystemMessageTimeMs = QGC::groundTimeMilliseconds();
-    QTimer::singleShot(16000, this, SLOT(clearStatusString()));
 }
 
 void QGCToolBar::connectLink(bool connect)
