@@ -887,6 +887,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
+            case MAV_PARAM_TYPE_UINT8:
+            {
+                // Variant
+                QVariant param(val.param_uint8);
+                parameters.value(component)->insert(parameterName, param);
+                // Emit change
+                emit parameterChanged(uasId, message.compid, parameterName, param);
+                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                //qDebug() << "RECEIVED PARAM:" << param;
+            }
             case MAV_PARAM_TYPE_UINT32:
             {
                 // Variant
