@@ -1186,7 +1186,7 @@ void HSIDisplay::drawSetpointXYZYaw(float x, float y, float z, float yaw, const 
     }
 }
 
-void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float width, const QVector<Waypoint*>& list, int i, const QPointF& p)
+void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float width, const Waypoint *w, const QPointF& p)
 {
     painter.setBrush(Qt::NoBrush);
 
@@ -1206,19 +1206,20 @@ void HSIDisplay::drawWaypoint(QPainter& painter, const QColor& color, float widt
     poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
 
     float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
-    float acceptRadius = list.at(i)->getAcceptanceRadius();
+    float acceptRadius = w->getAcceptanceRadius();
+    double yawDiff = w->getYaw()/180.0*M_PI-yaw;
 
     // Draw background
     pen.setColor(Qt::black);
     painter.setPen(pen);
-    drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f*3.0f), Qt::black, &painter);
+    drawLine(p.x(), p.y(), p.x()+sin(yawDiff) * radius, p.y()-cos(yawDiff) * radius, refLineWidthToPen(0.4f*3.0f), Qt::black, &painter);
     drawPolygon(poly, &painter);
     drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 3.0, Qt::black, &painter);
 
     // Draw foreground
     pen.setColor(color);
     painter.setPen(pen);
-    drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, p.y()-cos(list.at(i)->getYaw()/180.0*M_PI-yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+    drawLine(p.x(), p.y(), p.x()+sin(yawDiff) * radius, p.y()-cos(yawDiff) * radius, refLineWidthToPen(0.4f), color, &painter);
     drawPolygon(poly, &painter);
     drawCircle(p.x(), p.y(), metricToRef(acceptRadius), 1.0, Qt::green, &painter);
 }
@@ -1227,51 +1228,65 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 {
     if (uas)
     {
+        // Grab all waypoints.
         const QVector<Waypoint*>& list = uas->getWaypointManager()->getWaypointEditableList();
+        const int numWaypoints = list.size();
 
         // Do not work on empty lists
-        if (list.size() == 0) return;
+        if (list.size() == 0)
+        {
+            return;
+        }
 
-        QColor color;
+        // Make sure any drawn shapes are not filled-in.
         painter.setBrush(Qt::NoBrush);
 
-        // XXX Ugly hacks, needs rewrite
-
         QPointF lastWaypoint;
-        QPointF currentWaypoint;
-        int currentIndex = 0;
-
-        for (int i = 0; i < list.size(); i++)
+        for (int i = 0; i < numWaypoints; i++)
         {
+            const Waypoint *w = list.at(i);
             QPointF in;
-            if (list.at(i)->getFrame() == MAV_FRAME_LOCAL_NED)
+            // Use local coordinates as-is.
+            int frameRef = w->getFrame();
+            if (frameRef == MAV_FRAME_LOCAL_NED)
             {
-                // Do not transform
-                in = QPointF(list.at(i)->getX(), list.at(i)->getY());
-            } else {
-                // Transform to local coordinates first
-                double x = list.at(i)->getX();
-                double y = list.at(i)->getY();
-                in = QPointF(x, y);
+                in = QPointF(w->getX(), w->getY());
             }
+            else if (frameRef == MAV_FRAME_LOCAL_ENU)
+            {
+                in = QPointF(w->getY(), w->getX());
+            }
+            // Convert global coordinates into the local ENU frame, then display them.
+            else if (frameRef == MAV_FRAME_GLOBAL || frameRef == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+                // Get the position of the GPS origin for the MAV.
+
+                // Transform the lat/lon for this waypoint into the local frame
+                double e, n, u;
+                UASManager::instance()->wgs84ToEnu(w->getX(), w->getY(),w->getZ(), &e, &n, &u);
+                in = QPointF(n, e);
+            }
+            // Otherwise we don't process this waypoint.
+            // FIXME: This code will probably fail if the last waypoint found is not a valid one.
+            else {
+                continue;
+            }
+
             // Transform from world to body coordinates
             in = metricWorldToBody(in);
             // Scale from metric to screen reference coordinates
             QPointF p = metricBodyToRef(in);
 
-            // Select color based on if this is the current waypoint
-            if (list.at(i)->getCurrent())
+            // Select color based on if this is the current waypoint.
+            if (w->getCurrent())
             {
-                currentIndex = i;
-                currentWaypoint = p;
+                drawWaypoint(painter, QGC::colorYellow, refLineWidthToPen(0.8f), w, p);
             }
             else
             {
-                drawWaypoint(painter, QGC::colorCyan, refLineWidthToPen(0.4f), list, i, p);
+                drawWaypoint(painter, QGC::colorCyan, refLineWidthToPen(0.4f), w, p);
             }
 
-            // DRAW CONNECTING LINE
-            // Draw line from last waypoint to this one
+            // Draw connecting line from last waypoint to this one.
             if (!lastWaypoint.isNull())
             {
                 drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f*2.0f), Qt::black, &painter);
@@ -1279,8 +1294,6 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             }
             lastWaypoint = p;
         }
-
-        drawWaypoint(painter, QGC::colorYellow, refLineWidthToPen(0.8f), list, currentIndex, currentWaypoint);
     }
 }
 
