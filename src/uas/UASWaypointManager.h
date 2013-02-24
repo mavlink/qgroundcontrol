@@ -57,7 +57,7 @@ private:
         WP_IDLE = 0,        ///< Waiting for commands
         WP_SENDLIST,        ///< Initial state for sending waypoints to the MAV
         WP_SENDLIST_SENDWPS,///< Sending waypoints
-        WP_GETLIST,         ///< Initial state for retrieving wayppoints from the MAV
+        WP_GETLIST,         ///< Initial state for retrieving waypoints from the MAV
         WP_GETLIST_GETWPS,  ///< Receiving waypoints
         WP_CLEARLIST,       ///< Clearing waypoint list on the MAV
         WP_SETCURRENT       ///< Setting new current waypoint on the MAV
