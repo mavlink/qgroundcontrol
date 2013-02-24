@@ -13,6 +13,7 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav,QWidget *p
     QStringList items = QStringList();
     if (mav->getSystemType() == MAV_TYPE_FIXED_WING)
     {
+        items << "EasyStar";
         items << "Rascal110-JSBSim";
         items << "c172p";
         items << "YardStik";

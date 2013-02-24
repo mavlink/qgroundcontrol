@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<initialize name="reset00">
+  <!--
+    This file sets up the aircraft to start off
+    from the runway in preparation for takeoff.
+  -->
+  <ubody>       0.0 </ubody>
+  <vbody>       0.0 </vbody>
+  <wbody>       0.0 </wbody>
+  <latitude>   47.0 </latitude>
+  <longitude> 122.0 </longitude>
+  <phi>         0.0 </phi>
+  <theta>       0.0 </theta>
+  <psi>       150.0 </psi>
+  <altitude>   4.7  </altitude>
+</initialize>
