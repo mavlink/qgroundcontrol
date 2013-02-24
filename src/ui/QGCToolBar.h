@@ -75,6 +75,8 @@ public slots:
     void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Create or connect link */
     void connectLink(bool connect);
+    /** @brief Clear status string */
+    void clearStatusString();
 
 protected:
     void createCustomWidgets();
@@ -104,6 +106,7 @@ protected:
     QString mode;
     QString systemName;
     QString lastSystemMessage;
+    quint64 lastSystemMessageTimeMs;
     QTimer updateViewTimer;
     bool systemArmed;
 };

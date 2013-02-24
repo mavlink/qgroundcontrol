@@ -110,7 +110,6 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     addWidget(toolBarMessageLabel);
 
     connectButton = new QPushButton(tr("Connect"), this);
-    connectButton->setCheckable(true);
     connectButton->setToolTip(tr("Connect wireless link to MAV"));
     addWidget(connectButton);
     connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
@@ -309,7 +308,12 @@ void QGCToolBar::updateView()
     toolBarStateLabel->setText(tr("%1").arg(state));
     toolBarModeLabel->setText(tr("%1").arg(mode));
     toolBarNameLabel->setText(systemName);
-    toolBarMessageLabel->setText(lastSystemMessage);
+    // expire after 15 seconds
+    if (QGC::groundTimeMilliseconds() - lastSystemMessageTimeMs < 15000) {
+        toolBarMessageLabel->setText(lastSystemMessage);
+    } else {
+        toolBarMessageLabel->setText("");
+    }
 
     if (systemArmed)
     {
@@ -454,6 +458,8 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     Q_UNUSED(severity);
     if (lastSystemMessage != text) changed = true;
     lastSystemMessage = text;
+    lastSystemMessageTimeMs = QGC::groundTimeMilliseconds();
+    QTimer::singleShot(16000, this, SLOT(clearStatusString()));
 }
 
 void QGCToolBar::connectLink(bool connect)
@@ -479,6 +485,12 @@ void QGCToolBar::connectLink(bool connect)
 
     }
 
+}
+
+void QGCToolBar::clearStatusString()
+{
+    lastSystemMessage = "";
+    changed = true;
 }
 
 QGCToolBar::~QGCToolBar()
