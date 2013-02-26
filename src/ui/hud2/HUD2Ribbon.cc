@@ -321,6 +321,10 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
 
     painter->save();
 
+    if (!ribbonVertical()){
+        painter->translate(painter->window().width()/2 - big_pixstep * (stepsBig / 2), 0);
+    }
+
     if (opaqueRibbon)
         painter->fillRect(clipRect, Qt::black);
 
