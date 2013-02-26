@@ -50,9 +50,8 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, QWidget *parent) :
  * @return
  */
 void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len){
-    QPolygon poly = QPolygon(5);
-    QPoint p = QPoint(0, 0);
-    poly.setPoint(0, p);
+    QPolygon poly;
+    QPoint p;
 
     int w, h;
     w = percent2pix_d(size, num_w_percent);
@@ -64,6 +63,10 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
 
     switch (position){
     case POSITION_RIGHT:
+        poly = QPolygon(5);
+        p = QPoint(0, 0);
+        poly.setPoint(0, p);
+
         p.rx() -= h/2;
         p.ry() -= h/2;
         poly.setPoint(1, p);
@@ -80,6 +83,10 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
         break;
 
     case POSITION_LEFT:
+        poly = QPolygon(5);
+        p = QPoint(0, 0);
+        poly.setPoint(0, p);
+
         p.rx() += h/2;
         p.ry() -= h/2;
         poly.setPoint(1, p);
@@ -96,18 +103,29 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
         break;
 
     case POSITION_TOP:
-        p.rx() += w/2;
+        poly = QPolygon(7);
+        p = QPoint(0, 0);
+        poly.setPoint(0, p);
+
+        p.rx() += h/2;
         p.ry() += h/2;
         poly.setPoint(1, p);
 
-        p.ry() += h;
+        p.rx() += w/2 - h/2;
         poly.setPoint(2, p);
 
-        p.rx() -= w;
+        p.ry() += h;
         poly.setPoint(3, p);
 
-        p.ry() -= h;
+        p.rx() -= w;
         poly.setPoint(4, p);
+
+        p.ry() -= h;
+        poly.setPoint(5, p);
+
+        p.rx() += w/2 - h/2;
+        poly.setPoint(6, p);
+
         poly.translate(0, len + 2);
         break;
 
