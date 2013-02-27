@@ -30,7 +30,7 @@ public slots:
 
 private:
     void updateRibbon(const QSize &size, int gap, int len);
-    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len);
+    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
     screen_position position;
     bool opaqueNum;
     bool opaqueRibbon;

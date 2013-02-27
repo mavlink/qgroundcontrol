@@ -45,11 +45,8 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, QWidget *parent) :
  *      /        |
  *      \        |
  *        --------
- * @param w width of rectangular part
- * @param h height
- * @return
  */
-void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len){
+void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap){
     QPolygon poly;
     QPoint p;
 
@@ -79,7 +76,7 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
 
         p.rx() += w;
         poly.setPoint(4, p);
-        poly.translate(size.width() - len - 2, 0);
+        poly.translate(size.width() - len - gap - 2, 0);
         break;
 
     case POSITION_LEFT:
@@ -99,7 +96,7 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
 
         p.rx() -= w;
         poly.setPoint(4, p);
-        poly.translate(len + 2, 0);
+        poly.translate(len + gap + 2, 0);
         break;
 
     case POSITION_TOP:
@@ -126,7 +123,7 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
         p.rx() += w/2 - h/2;
         poly.setPoint(6, p);
 
-        poly.translate(0, len + 2);
+        poly.translate(0, len + 2 + gap/2);
         break;
 
     default:
@@ -155,20 +152,20 @@ void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
 
     switch(position){
     case POSITION_RIGHT:
-        scratchBig[0] = QLine(QPoint(w_render, 0), QPoint(w_render - len, 0));
-        scratchSmall[0] = QLine(QPoint(w_render - (len / 2), 0), QPoint(w_render - len, 0));
-        labelRect[0] = QRect(w_render - gap - len, 0, gap, big_pixstep);
+        scratchBig[0] = QLine(QPoint(w_render - gap, 0), QPoint(w_render - len - gap, 0));
+        scratchSmall[0] = QLine(QPoint(w_render - (len / 2) - gap, 0), QPoint(w_render - len - gap, 0));
+        labelRect[0] = QRect(w_render - gap, 0, gap, big_pixstep);
         break;
     case POSITION_LEFT:
-        scratchBig[0] = QLine(QPoint(0, 0), QPoint(len, 0));
-        scratchSmall[0] = QLine(QPoint(len / 2, 0), QPoint(len, 0));
-        labelRect[0] = QRect(len, 0, gap, big_pixstep);
+        scratchBig[0] = QLine(QPoint(gap, 0), QPoint(gap + len, 0));
+        scratchSmall[0] = QLine(QPoint(gap + len / 2, 0), QPoint(gap + len, 0));
+        labelRect[0] = QRect(0, 0, gap, big_pixstep);
         break;
     case POSITION_TOP:
-        scratchBig[0] = QLine(QPoint(0, 0), QPoint(0, len));
-        scratchSmall[0] = QLine(QPoint(0, len / 2), QPoint(0, len));
+        scratchBig[0] = QLine(QPoint(0, gap/2), QPoint(0, len + gap/2));
+        scratchSmall[0] = QLine(QPoint(0, len/2 + gap/2), QPoint(0, len + gap/2));
         //( int x, int y, int width, int height )
-        labelRect[0] = QRect(0, len, big_pixstep, gap);
+        labelRect[0] = QRect(0, 0, big_pixstep, gap/2);
         break;
 
     default:
@@ -248,7 +245,7 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     updateRibbon(size, gap, len);
 
     // polygon for main number indicator
-    updateNumIndicator(size, num_w_percent, fntsize, len);
+    updateNumIndicator(size, num_w_percent, fntsize, len, gap);
 
     // clip rectangle
     int w_clip = gap + len + 1;
@@ -343,10 +340,8 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
     painter->setFont(labelFont);
     painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(v, 2));
 
-    // clipping area. Consist of long verical rectangle for ribbon and
-    // small horisontal rectangle for number
-    QRegion clipReg = QRegion(clipRect) - QRegion(_numPoly.boundingRect());
-    painter->setClipRegion(clipReg);
+    // clipping area
+    painter->setClipRegion(clipRect);
 
     // translate painter to shift whole ribbon
     // for antialiased painter we add halpixel shift to prevent bluring of lines
@@ -358,7 +353,7 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
     }
     else{
         if (painter->Antialiasing)
-            painter->translate(shift + 0.5, 0);
+            painter->translate(shift + 0.75, 0);
         else
             painter->translate(shift, 0);
     }
