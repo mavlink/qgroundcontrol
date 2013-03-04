@@ -16,7 +16,7 @@ class HUD2Ribbon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Ribbon(screen_position position, QWidget *parent);
+    explicit HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360);
     void paint(QPainter *painter, float value);
 
 signals:
@@ -34,6 +34,7 @@ private:
     screen_position position;
     bool opaqueNum;
     bool opaqueRibbon;
+    bool wrap360; // suitable for compass like device
 
     qreal bigScratchLenStep; // step in percents of widget sizes
     qreal big_pixstep;

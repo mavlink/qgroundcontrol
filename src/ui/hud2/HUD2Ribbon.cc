@@ -3,14 +3,15 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(screen_position position, QWidget *parent) :
+HUD2Ribbon::HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360) :
     QWidget(parent),
-    position(position)
+    position(position),
+    wrap360(wrap360)
 {
     opaqueNum = false;
     opaqueRibbon = false;
 
-    bigScratchLenStep = 15.0;
+    bigScratchLenStep = 20.0;
     bigScratchValueStep = 10;
     stepsSmall = 4;
     stepsBig = 4;
@@ -338,7 +339,10 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
 
     // text in indicator
     painter->setFont(labelFont);
-    painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(v, 2));
+    if (wrap360)
+        painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(wrap_360(v), 2));
+    else
+        painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(v, 2));
 
     // clipping area
     painter->setClipRegion(clipRect);
@@ -374,8 +378,12 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
         v_int -= 1;
     v_int *= bigScratchValueStep;
     v_int += (stepsBig * bigScratchValueStep) / 2;
+
     for (i=0; i<stepsBig; i++){
-        painter->drawText(labelRect[i], Qt::AlignCenter, QString::number(v_int));
+        if (wrap360)
+            painter->drawText(labelRect[i], Qt::AlignCenter, QString::number(wrap_360(v_int)));
+        else
+            painter->drawText(labelRect[i], Qt::AlignCenter, QString::number(v_int));
         v_int -= bigScratchValueStep;
     }
 

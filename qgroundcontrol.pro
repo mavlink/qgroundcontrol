@@ -560,7 +560,7 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2IndicatorSpeed.cc \
     src/ui/hud2/HUD2Ribbon.cc \
     src/ui/hud2/HUD2IndicatorClimb.cc \
-    src/ui/hud2/HUD2IndicatorCompass.cpp
+    src/ui/hud2/HUD2IndicatorCompass.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

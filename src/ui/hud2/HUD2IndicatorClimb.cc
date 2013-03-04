@@ -7,7 +7,7 @@ HUD2IndicatorClimb::HUD2IndicatorClimb(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
-    ribbon = new HUD2Ribbon(POSITION_RIGHT, this);
+    ribbon = new HUD2Ribbon(POSITION_RIGHT, this, false);
 }
 
 void HUD2IndicatorClimb::updateGeometry(const QSize &size){

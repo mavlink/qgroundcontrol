@@ -7,7 +7,7 @@ HUD2IndicatorCompass::HUD2IndicatorCompass(HUD2Data &huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
-    ribbon = new HUD2Ribbon(POSITION_TOP, this);
+    ribbon = new HUD2Ribbon(POSITION_TOP, this, true);
 }
 
 void HUD2IndicatorCompass::updateGeometry(const QSize &size){
@@ -16,7 +16,7 @@ void HUD2IndicatorCompass::updateGeometry(const QSize &size){
 
 void HUD2IndicatorCompass::paint(QPainter *painter){
     painter->save();
-    ribbon->paint(painter, wrap_360(rad2deg(huddata.yaw)));
+    ribbon->paint(painter, rad2deg(huddata.yaw));
     painter->restore();
 }
 
