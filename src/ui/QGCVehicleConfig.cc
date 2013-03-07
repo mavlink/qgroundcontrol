@@ -113,7 +113,16 @@ void QGCVehicleConfig::setTrimPositions()
     rcTrim[rcMapping[0]] = rcValue[rcMapping[0]]; // roll
     rcTrim[rcMapping[1]] = rcValue[rcMapping[1]]; // pitch
     rcTrim[rcMapping[2]] = rcValue[rcMapping[2]]; // yaw
-    rcTrim[rcMapping[3]] = rcMin[rcMapping[3]];   // throttle
+    // Set trim to min if stick is close to min
+    if (abs(rcValue[rcMapping[3]] - rcMin[rcMapping[3]]) < 100)
+    {
+        rcTrim[rcMapping[3]] = rcMin[rcMapping[3]];   // throttle
+    }
+    // Set trim to max if stick is close to max
+    if (abs(rcValue[rcMapping[3]] - rcMax[rcMapping[3]]) < 100)
+    {
+        rcTrim[rcMapping[3]] = rcMax[rcMapping[3]];   // throttle
+    }
     rcTrim[rcMapping[4]] = ((rcMax[rcMapping[4]] - rcMin[rcMapping[4]]) / 2.0f) + rcMin[rcMapping[4]];   // mode sw
     rcTrim[rcMapping[5]] = ((rcMax[rcMapping[5]] - rcMin[rcMapping[5]]) / 2.0f) + rcMin[rcMapping[5]];   // aux 1
     rcTrim[rcMapping[6]] = ((rcMax[rcMapping[6]] - rcMin[rcMapping[6]]) / 2.0f) + rcMin[rcMapping[6]];   // aux 2
