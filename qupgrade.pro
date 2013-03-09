@@ -41,6 +41,7 @@ HEADERS += \
     src/QGC.h \
     src/apps/qupgrade/QUpgradeApp.h \
     src/apps/qupgrade/QUpgradeMainWindow.h \
+    src/apps/qupgrade/uploader.h \
     libs/qextserialport/qextserialenumerator.h \
     src/ui/PX4FirmwareUpgrader.h \
     src/PX4FirmwareUpgradeWorker.h
@@ -52,6 +53,7 @@ SOURCES += \
     src/apps/qupgrade/main.cc \
     src/apps/qupgrade/QUpgradeApp.cc \
     src/apps/qupgrade/QUpgradeMainWindow.cc \
+    src/apps/qupgrade/uploader.cpp \
     src/ui/PX4FirmwareUpgrader.cc \
     src/PX4FirmwareUpgradeWorker.cc
 

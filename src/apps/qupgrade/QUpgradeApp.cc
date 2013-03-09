@@ -86,7 +86,7 @@ QUpgradeApp::QUpgradeApp(int &argc, char* argv[]) : QApplication(argc, argv)
     connect(upgrader, SIGNAL(upgrade()), worker, SLOT(upgrade()), Qt::QueuedConnection);
     connect(this, SIGNAL(lastWindowClosed()), worker, SLOT(abort()), Qt::QueuedConnection);
 
-    worker->loadFirmware("abc");
+    worker->loadFirmware("/Users/user/src/Firmware/Images/px4io.bin");
 
     window->setWindowTitle(applicationName() + " " + applicationVersion());
     window->show();
