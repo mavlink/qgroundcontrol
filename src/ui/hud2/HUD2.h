@@ -80,6 +80,8 @@ public:
 protected:
     UASInterface* uas; ///< The uas currently monitored
     void contextMenuEvent (QContextMenuEvent* event);
+    QAction* renderDialogHUDAction;
+    QAction* instrumentsDialogHUDAction;
 
 private:
     HUD2Data huddata;
@@ -109,7 +111,8 @@ public slots:
 
 private slots:
     void enableRepaint(void);
-
+    void renderDialog(void);
+    void instrumentsDialog(void);
 signals:
     //void visibilityChanged(bool visible);
 

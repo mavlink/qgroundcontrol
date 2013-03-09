@@ -18,6 +18,8 @@ class HUD2Ribbon : public QWidget
 public:
     explicit HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360);
     void paint(QPainter *painter, float value);
+    bool opaqueNeedle;
+    bool opaqueRibbon;
 
 signals:
     void geometryChanged(const QSize *size);
@@ -32,15 +34,13 @@ private:
     void updateRibbon(const QSize &size, int gap, int len);
     void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
     screen_position position;
-    bool opaqueNum;
-    bool opaqueRibbon;
     bool wrap360; // suitable for compass like device
 
     qreal bigScratchLenStep; // step in percents of widget sizes
     qreal big_pixstep;
     int bigScratchValueStep; // numerical value step
     int stepsSmall; // how many small scratches between 2 big. Can be 0.
-    int smallStepsTotal; // overall count of small scratches in ribbon.
+    int small_steps_total; // overall count of small scratches in ribbon (internal use only).
     int stepsBig;
     qreal small_pixstep;
     QRect clipRect; // clipping rectangle

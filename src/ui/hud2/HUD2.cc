@@ -204,11 +204,27 @@ void HUD2::setActiveUAS(UASInterface* uas)
 
 void HUD2::createActions()
 {
-//    enableHUDAction = new QAction(tr("Enable HUD"), this);
-//    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
-//    enableHUDAction->setCheckable(true);
-//    enableHUDAction->setChecked(hudInstrumentsEnabled);
-//    connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
+    renderDialogHUDAction = new QAction(tr("Render"), this);
+    renderDialogHUDAction->setStatusTip(tr("Render settings"));
+    connect(renderDialogHUDAction, SIGNAL(triggered(bool)), this, SLOT(renderDialog()));
+
+    instrumentsDialogHUDAction = new QAction(tr("Instruments"), this);
+    instrumentsDialogHUDAction->setStatusTip(tr("Instruments settings"));
+    connect(instrumentsDialogHUDAction, SIGNAL(triggered(bool)), this, SLOT(instrumentsDialog()));
+}
+
+void HUD2::renderDialog()
+{
+    settings_dialog = new HUD2Dialog(this);
+    settings_dialog->exec();
+    delete settings_dialog;
+}
+
+void HUD2::instrumentsDialog()
+{
+    settings_dialog = new HUD2Dialog(this);
+    settings_dialog->exec();
+    delete settings_dialog;
 }
 
 void HUD2::enableRepaint(void){
@@ -239,10 +255,9 @@ void HUD2::contextMenuEvent (QContextMenuEvent* event)
     Q_UNUSED(event);
     QMenu menu(this);
 
-    settings_dialog = new HUD2Dialog(this);
-    settings_dialog->exec();
-    delete settings_dialog;
-    //menu.addAction(enableHUDAction);
+    menu.addAction(renderDialogHUDAction);
+    menu.addAction(instrumentsDialogHUDAction);
+    menu.exec(event->globalPos());
 }
 
 void HUD2::setFpsLimit(int limit){

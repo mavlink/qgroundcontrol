@@ -8,7 +8,7 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360) 
     position(position),
     wrap360(wrap360)
 {
-    opaqueNum = false;
+    opaqueNeedle = false;
     opaqueRibbon = false;
 
     bigScratchLenStep = 20.0;
@@ -143,12 +143,12 @@ void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
     h_render = size.height();
 
     // scratches
-    smallStepsTotal = (stepsBig + 1) * stepsSmall;
+    small_steps_total = (stepsBig + 1) * stepsSmall;
     delete[] scratchBig;
     delete[] scratchSmall;
     delete[] labelRect;
     scratchBig = new QLine[stepsBig];
-    scratchSmall = new QLine[smallStepsTotal];
+    scratchSmall = new QLine[small_steps_total];
     labelRect = new QRect[stepsBig];
 
     switch(position){
@@ -192,7 +192,7 @@ void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
         scratchSmall[0].translate(0, round(-big_pixstep));
     else
         scratchSmall[0].translate(round(-big_pixstep), 0);
-    for (i=1; i<smallStepsTotal; i++){
+    for (i=1; i<small_steps_total; i++){
         shift += small_pixstep;
         scratchSmall[i] = scratchSmall[0];
         if (ribbonVertical())
@@ -332,12 +332,12 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
     else
         _numPoly.translate(big_pixstep * (stepsBig / 2), 0);
 
-    if (opaqueNum)
+    if (opaqueNeedle)
         painter->setBrush(Qt::black);
     painter->setPen(arrowPen);
     painter->drawPolygon(_numPoly);
 
-    // text in indicator
+    // text in needle
     painter->setFont(labelFont);
     if (wrap360)
         painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(wrap_360(v), 2));
@@ -368,7 +368,7 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
 
     // scratches small
     painter->setPen(smallPen);
-    painter->drawLines(scratchSmall, smallStepsTotal);
+    painter->drawLines(scratchSmall, small_steps_total);
 
     // number labels
     painter->setFont(labelFont);
@@ -394,3 +394,8 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
 void HUD2Ribbon::setColor(QColor color){
     Q_UNUSED(color);
 }
+
+
+
+
+
