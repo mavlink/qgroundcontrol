@@ -2,7 +2,7 @@
 
 #include "HUD2IndicatorSpeed.h"
 
-HUD2IndicatorSpeed::HUD2IndicatorSpeed(HUD2Data &huddata, QWidget *parent) :
+HUD2IndicatorSpeed::HUD2IndicatorSpeed(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
@@ -15,7 +15,7 @@ void HUD2IndicatorSpeed::updateGeometry(const QSize &size){
 
 void HUD2IndicatorSpeed::paint(QPainter *painter){
     painter->save();
-    ribbon->paint(painter, huddata.alt);
+    ribbon->paint(painter, huddata->alt);
     painter->restore();
 }
 

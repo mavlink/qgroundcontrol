@@ -3,9 +3,9 @@
 #include "HUD2RenderNative.h"
 #include "HUD2Drawer.h"
 
-HUD2RenderNative::HUD2RenderNative(HUD2Data &huddata, QWidget *parent)
+HUD2RenderNative::HUD2RenderNative(HUD2Drawer *huddrawer, QWidget *parent)
     : QWidget(parent),
-      huddrawer(huddata, this)
+      huddrawer(huddrawer)
 {
     antiAliasing = true;
     QPalette p(palette());
@@ -20,11 +20,11 @@ void HUD2RenderNative::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, antiAliasing);
     painter.setRenderHint(QPainter::TextAntialiasing, antiAliasing);
-    huddrawer.paint(&painter);
+    huddrawer->paint(&painter);
 }
 
 void HUD2RenderNative::resizeEvent(QResizeEvent *event){
-    huddrawer.updateGeometry(event->size());
+    huddrawer->updateGeometry(event->size());
 }
 
 void HUD2RenderNative::paint(void){

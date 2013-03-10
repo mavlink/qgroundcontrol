@@ -3,7 +3,7 @@
 #include "HUD2IndicatorHorizon.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorHorizon::HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent) :
+HUD2IndicatorHorizon::HUD2IndicatorHorizon(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
@@ -79,16 +79,16 @@ static int _getline_y(QPoint p1, QPoint p2, int x){
 
 void HUD2IndicatorHorizon::paint(QPainter *painter){
 
-    qreal pitch = rad2deg(-huddata.pitch);
+    qreal pitch = rad2deg(-huddata->pitch);
     qreal delta_y = pitch * (pixstep / degstep);
-    qreal delta_x = tan(-huddata.roll) * delta_y;
+    qreal delta_x = tan(-huddata->roll) * delta_y;
 
     // create complex transfomation
     QPoint center = painter->window().center();
     QTransform transform;
     transform.translate(center.x(), center.y());
     transform.translate(delta_x, delta_y);
-    transform.rotate(rad2deg(huddata.roll));
+    transform.rotate(rad2deg(huddata->roll));
 
     if (coloredBackground){
         // draw colored background

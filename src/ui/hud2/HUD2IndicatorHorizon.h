@@ -13,7 +13,7 @@ class HUD2IndicatorHorizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorHorizon(HUD2Data &huddata, QWidget *parent);
+    explicit HUD2IndicatorHorizon(const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -35,7 +35,7 @@ private:
     HUD2IndicatorHorizonCrosshair crosshair;
 
     qreal gap; /* space between right and left parts */
-    HUD2Data &huddata;
+    const HUD2Data *huddata;
     QPen pen;
     QLine hirizonleft;
     QLine horizonright;

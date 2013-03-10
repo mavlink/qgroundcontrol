@@ -15,7 +15,7 @@ class HUD2RenderNative : public QWidget
     Q_OBJECT
 
 public:
-    HUD2RenderNative(HUD2Data &huddata, QWidget *parent);
+    HUD2RenderNative(HUD2Drawer *huddrawer, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -29,7 +29,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Drawer huddrawer;
+    HUD2Drawer *huddrawer;
     bool antiAliasing;
 };
 

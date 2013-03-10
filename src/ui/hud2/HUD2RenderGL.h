@@ -16,7 +16,7 @@ class HUD2RenderGL : public QGLWidget
     Q_OBJECT
 
 public:
-    HUD2RenderGL(HUD2Data &huddata, QWidget *parent);
+    HUD2RenderGL(HUD2Drawer *huddrawer, QWidget *parent);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -30,7 +30,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    HUD2Drawer huddrawer;
+    HUD2Drawer *huddrawer;
     bool antiAliasing;
 };
 

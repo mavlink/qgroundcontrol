@@ -10,7 +10,7 @@ class HUD2IndicatorClimb : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorClimb(HUD2Data &huddata, QWidget *parent);
+    explicit HUD2IndicatorClimb(const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -21,7 +21,7 @@ public slots:
     void updateGeometry(const QSize &size);
 
 private:
-    HUD2Data &huddata;
+    const HUD2Data *huddata;
     HUD2Ribbon *ribbon;
 };
 

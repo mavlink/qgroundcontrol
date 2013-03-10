@@ -51,7 +51,7 @@
 #include "HUD2RenderGL.h"
 #include "HUD2Drawer.h"
 #include "HUD2Data.h"
-#include "HUD2Dialog.h"
+#include "HUD2RenderDialog.h"
 
 #include "UASInterface.h"
 
@@ -87,7 +87,7 @@ private:
     HUD2Data huddata;
     HUD2RenderNative *render_native;
     HUD2RenderGL *render_gl;
-    HUD2Dialog *settings_dialog;
+    HUD2Drawer huddrawer;
 
     QGridLayout *layout;
     QTimer fpsLimiter;
@@ -112,7 +112,7 @@ public slots:
 private slots:
     void enableRepaint(void);
     void renderDialog(void);
-    void instrumentsDialog(void);
+
 signals:
     //void visibilityChanged(bool visible);
 

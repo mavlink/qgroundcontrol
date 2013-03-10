@@ -10,7 +10,7 @@ class HUD2IndicatorCompass : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorCompass(HUD2Data &huddata, QWidget *parent);
+    explicit HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -23,7 +23,7 @@ public slots:
     void setNeedleOpacity(bool opacity);
 
 private:
-    HUD2Data &huddata;
+    const HUD2Data *huddata;
     HUD2Ribbon *ribbon;
 };
 

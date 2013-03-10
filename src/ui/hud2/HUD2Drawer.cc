@@ -2,13 +2,13 @@
 #include <QPainter>
 
 #include "HUD2Drawer.h"
+#include "HUD2Dialog.h"
 
 
-HUD2Drawer::HUD2Drawer(HUD2Data &huddata, QWidget *parent) :
+HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     horizon(huddata, this),
     roll(huddata, this),
-    //yaw(huddata, this),
     speed(huddata, this),
     climb(huddata, this),
     compass(huddata, this)
@@ -24,7 +24,6 @@ void HUD2Drawer::paint(QPainter *painter)
 {
     horizon.paint(painter);
     roll.paint(painter);
-    //yaw.paint(painter);
     speed.paint(painter);
     climb.paint(painter);
     compass.paint(painter);
@@ -36,9 +35,14 @@ void HUD2Drawer::paint(QPainter *painter)
 void HUD2Drawer::updateGeometry(const QSize &size){
     horizon.updateGeometry(size);
     roll.updateGeometry(size);
-    //yaw.updateGeometry(size);
     speed.updateGeometry(size);
     climb.updateGeometry(size);
     compass.updateGeometry(size);
     fps.updateGeometry(size);
+}
+
+void HUD2Drawer::showDialog(void){
+    HUD2Dialog *dialog = new HUD2Dialog(this);
+    dialog->exec();
+    delete dialog;
 }

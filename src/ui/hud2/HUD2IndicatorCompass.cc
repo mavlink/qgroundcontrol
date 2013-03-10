@@ -3,7 +3,7 @@
 #include "HUD2IndicatorCompass.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorCompass::HUD2IndicatorCompass(HUD2Data &huddata, QWidget *parent) :
+HUD2IndicatorCompass::HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     huddata(huddata)
 {
@@ -16,7 +16,7 @@ void HUD2IndicatorCompass::updateGeometry(const QSize &size){
 
 void HUD2IndicatorCompass::paint(QPainter *painter){
     painter->save();
-    ribbon->paint(painter, rad2deg(huddata.yaw));
+    ribbon->paint(painter, rad2deg(huddata->yaw));
     painter->restore();
 }
 

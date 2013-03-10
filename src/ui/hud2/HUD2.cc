@@ -44,7 +44,8 @@ HUD2::~HUD2()
 
 HUD2::HUD2(QWidget *parent)
     : QWidget(parent),
-      uas(NULL)
+      uas(NULL),
+      huddrawer(&huddata, this)
 {
     // Load settings
     QSettings settings;
@@ -62,11 +63,11 @@ HUD2::HUD2(QWidget *parent)
 
     switch(renderType){
     case RENDER_TYPE_NATIVE:
-        render_native = new HUD2RenderNative(huddata, this);
+        render_native = new HUD2RenderNative(&huddrawer, this);
         layout->addWidget(render_native, 0, 0);
         break;
     case RENDER_TYPE_OPENGL:
-        render_gl = new HUD2RenderGL(huddata, this);
+        render_gl = new HUD2RenderGL(&huddrawer, this);
         layout->addWidget(render_gl, 0, 0);
         break;
     default:
@@ -112,13 +113,13 @@ void HUD2::switchRender(int type)
     case RENDER_TYPE_NATIVE:
         layout->removeWidget(render_gl);
         delete render_gl;
-        render_native = new HUD2RenderNative(huddata, this);
+        render_native = new HUD2RenderNative(&huddrawer, this);
         layout->addWidget(render_native, 0, 0);
         break;
     case RENDER_TYPE_OPENGL:
         layout->removeWidget(render_native);
         delete render_native;
-        render_gl = new HUD2RenderGL(huddata, this);
+        render_gl = new HUD2RenderGL(&huddrawer, this);
         layout->addWidget(render_gl, 0, 0);
         break;
     default:
@@ -209,20 +210,13 @@ void HUD2::createActions()
     connect(renderDialogHUDAction, SIGNAL(triggered(bool)), this, SLOT(renderDialog()));
 
     instrumentsDialogHUDAction = new QAction(tr("Instruments"), this);
-    instrumentsDialogHUDAction->setStatusTip(tr("Instruments settings"));
-    connect(instrumentsDialogHUDAction, SIGNAL(triggered(bool)), this, SLOT(instrumentsDialog()));
+    instrumentsDialogHUDAction->setStatusTip(tr("HUD instruments settings"));
+    connect(instrumentsDialogHUDAction, SIGNAL(triggered(bool)), &huddrawer, SLOT(showDialog()));
 }
 
 void HUD2::renderDialog()
 {
-    settings_dialog = new HUD2Dialog(this);
-    settings_dialog->exec();
-    delete settings_dialog;
-}
-
-void HUD2::instrumentsDialog()
-{
-    settings_dialog = new HUD2Dialog(this);
+    HUD2RenderDialog *settings_dialog = new HUD2RenderDialog(this);
     settings_dialog->exec();
     delete settings_dialog;
 }
