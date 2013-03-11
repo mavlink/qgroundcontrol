@@ -2,7 +2,7 @@
 #define PX4FIRMWAREUPGRADEWORKER_H
 
 #include <QObject>
-#include <QJsonDocument>
+//#include <QJsonDocument>
 
 #include <SerialLink.h>
 
@@ -67,7 +67,7 @@ protected:
 private:
     SerialLink *link;
     bool insync;
-    QJsonDocument firmware;
+    //QJsonDocument firmware;
 };
 
 #endif // PX4FIRMWAREUPGRADEWORKER_H
