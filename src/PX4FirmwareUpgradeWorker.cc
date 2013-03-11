@@ -1,4 +1,4 @@
-#include <QJsonDocument>
+//#include <QJsonDocument>
 #include <QFile>
 
 #include "PX4FirmwareUpgradeWorker.h"
