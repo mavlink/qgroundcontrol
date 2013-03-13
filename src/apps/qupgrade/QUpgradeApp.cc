@@ -78,15 +78,15 @@ QUpgradeApp::QUpgradeApp(int &argc, char* argv[]) : QApplication(argc, argv)
     // Get PX4 upgrade widget and instantiate worker thread
     PX4FirmwareUpgradeWorker* worker = PX4FirmwareUpgradeWorker::putWorkerInThread(this);
 
-    connect(worker, SIGNAL(detectionStatusChanged(QString)), upgrader, SLOT(setDetectionStatusText(QString)), Qt::QueuedConnection);
-    connect(worker, SIGNAL(upgradeStatusChanged(QString)), upgrader, SLOT(setFlashStatusText(QString)), Qt::QueuedConnection);
-    connect(worker, SIGNAL(upgradeProgressChanged(int)), upgrader, SLOT(setFlashProgress(int)), Qt::QueuedConnection);
-    connect(worker, SIGNAL(validPortFound(QString)), upgrader, SLOT(setPortName(QString)));
-    connect(upgrader, SIGNAL(firmwareFileNameSet(QString)), worker, SLOT(loadFirmware(QString)), Qt::QueuedConnection);
-    connect(upgrader, SIGNAL(upgrade()), worker, SLOT(upgrade()), Qt::QueuedConnection);
-    connect(this, SIGNAL(lastWindowClosed()), worker, SLOT(abort()), Qt::QueuedConnection);
+//    connect(worker, SIGNAL(detectionStatusChanged(QString)), upgrader, SLOT(setDetectionStatusText(QString)), Qt::QueuedConnection);
+//    connect(worker, SIGNAL(upgradeStatusChanged(QString)), upgrader, SLOT(setFlashStatusText(QString)), Qt::QueuedConnection);
+//    connect(worker, SIGNAL(upgradeProgressChanged(int)), upgrader, SLOT(setFlashProgress(int)), Qt::QueuedConnection);
+//    connect(worker, SIGNAL(validPortFound(QString)), upgrader, SLOT(setPortName(QString)));
+//    connect(upgrader, SIGNAL(firmwareFileNameSet(QString)), worker, SLOT(loadFirmware(QString)), Qt::QueuedConnection);
+//    connect(upgrader, SIGNAL(upgrade()), worker, SLOT(upgrade()), Qt::QueuedConnection);
+//    connect(this, SIGNAL(lastWindowClosed()), worker, SLOT(abort()), Qt::QueuedConnection);
 
-    worker->loadFirmware("abc");
+    worker->loadFirmware("/Users/lomeier/src/Firmware/Images/px4fmu.bin");
 
     window->setWindowTitle(applicationName() + " " + applicationVersion());
     window->show();
