@@ -373,23 +373,23 @@ bool QGCFlightGearLink::connectSimulation()
 #ifdef Q_OS_MACX
     processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
     processTerraSync = "/Applications/FlightGear.app/Contents/Resources/terrasync";
-    fgRoot = "/Applications/FlightGear.app/Contents/Resources/data";
+    //fgRoot = "/Applications/FlightGear.app/Contents/Resources/data";
     //fgScenery = "/Applications/FlightGear.app/Contents/Resources/data/Scenery";
-    fgScenery = "/Applications/FlightGear.app/Contents/Resources/data/Scenery-TerraSync";
+    terraSyncScenery = "/Applications/FlightGear.app/Contents/Resources/data/Scenery-TerraSync";
     //   /Applications/FlightGear.app/Contents/Resources/data/Scenery:
 #endif
 
 #ifdef Q_OS_WIN32
     processFgfs = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
-    fgRoot = "C:\\Program Files (x86)\\FlightGear\\data";
-    fgScenery = "C:\\Program Files (x86)\\FlightGear\\data\\Scenery-Terrasync";
+    //fgRoot = "C:\\Program Files (x86)\\FlightGear\\data";
+    terraSyncScenery = "C:\\Program Files (x86)\\FlightGear\\data\\Scenery-Terrasync";
 #endif
 
 #ifdef Q_OS_LINUX
-    processFgfs = "/usr/games/fgfs";
-    fgRoot = "/usr/share/games/flightgear";
-    fgScenery = "/usr/share/games/flightgear/Scenery/";
-    processTerraSync = "/usr/bin/nice"; //according to http://wiki.flightgear.org/TerraSync, run with lower priority
+    processFgfs = "fgfs";
+    //fgRoot = "/usr/share/games/flightgear";
+    //fgScenery = "/usr/share/games/flightgear/Scenery/";
+    processTerraSync = "nice"; //according to http://wiki.flightgear.org/TerraSync, run with lower priority
     terraSyncScenery = QDir::homePath() + "/.terrasync/Scenery"; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 #endif
 
@@ -397,33 +397,33 @@ bool QGCFlightGearLink::connectSimulation()
 
     // Sanity checks
     bool sane = true;
-    QFileInfo executable(processFgfs);
-    if (!executable.isExecutable())
-    {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("FlightGear was not found at %1").arg(processFgfs));
-        sane = false;
-    }
+//    QFileInfo executable(processFgfs);
+//    if (!executable.isExecutable())
+//    {
+//        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("FlightGear was not found at %1").arg(processFgfs));
+//        sane = false;
+//    }
 
-    QFileInfo root(fgRoot);
-    if (!root.isDir())
-    {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("FlightGear data directory was not found at %1").arg(fgRoot));
-        sane = false;
-    }
+//    QFileInfo root(fgRoot);
+//    if (!root.isDir())
+//    {
+//        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("FlightGear data directory was not found at %1").arg(fgRoot));
+//        sane = false;
+//    }
 
-    QFileInfo scenery(fgScenery);
-    if (!scenery.isDir())
-    {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("FlightGear scenery directory was not found at %1").arg(fgScenery));
-        sane = false;
-    }
+//    QFileInfo scenery(fgScenery);
+//    if (!scenery.isDir())
+//    {
+//        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("FlightGear scenery directory was not found at %1").arg(fgScenery));
+//        sane = false;
+//    }
 
-    QFileInfo terraSyncExecutableInfo(processTerraSync);
-    if (!terraSyncExecutableInfo.isExecutable())
-    {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("TerraSync was not found at %1").arg(processTerraSync));
-        sane = false;
-    }
+//    QFileInfo terraSyncExecutableInfo(processTerraSync);
+//    if (!terraSyncExecutableInfo.isExecutable())
+//    {
+//        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("TerraSync was not found at %1").arg(processTerraSync));
+//        sane = false;
+//    }
 
 
     if (!sane) return false;
@@ -433,7 +433,7 @@ bool QGCFlightGearLink::connectSimulation()
 
     /*Prepare FlightGear Arguments */
     //flightGearArguments << QString("--fg-root=%1").arg(fgRoot);
-    flightGearArguments << QString("--fg-scenery=%1:%2").arg(fgScenery).arg(terraSyncScenery); //according to http://wiki.flightgear.org/TerraSync a separate directory is used
+    flightGearArguments << QString("--fg-scenery=%1:%2").arg(terraSyncScenery); //according to http://wiki.flightgear.org/TerraSync a separate directory is used
     flightGearArguments << QString("--fg-aircraft=%1").arg(fgAircraft);
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
@@ -498,7 +498,7 @@ bool QGCFlightGearLink::connectSimulation()
     /*Prepare TerraSync Arguments */
     QStringList terraSyncArguments;
 #ifdef Q_OS_LINUX
-    terraSyncArguments << "/usr/games/terrasync";
+    terraSyncArguments << "terrasync";
 #endif
     terraSyncArguments << "-p";
     terraSyncArguments << "5505";
@@ -506,6 +506,12 @@ bool QGCFlightGearLink::connectSimulation()
     terraSyncArguments << "-d";
     terraSyncArguments << terraSyncScenery; //according to http://wiki.flightgear.org/TerraSync a separate directory is used
 
+#ifdef Q_OS_LINUX
+     /* Setting environment */
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    process->setProcessEnvironment(env);
+    terraSync->setProcessEnvironment(env);
+#endif
 //    connect (terraSync, SIGNAL(readyReadStandardOutput()), this, SLOT(printTerraSyncOutput()));
 //    connect (terraSync, SIGNAL(readyReadStandardError()), this, SLOT(printTerraSyncError()));
     terraSync->start(processTerraSync, terraSyncArguments);
