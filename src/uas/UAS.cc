@@ -2642,6 +2642,33 @@ void UAS::enableHilFlightGear(bool enable, QString options)
 }
 
 /**
+* If enabled, connect the JSBSim link.
+*/
+void UAS::enableHilJSBSim(bool enable, QString options)
+{
+    QGCJSBSimLink* link = dynamic_cast<QGCJSBSimLink*>(simulation);
+    if (!link || !simulation) {
+        // Delete wrong sim
+        if (simulation) {
+            stopHil();
+            delete simulation;
+        }
+        simulation = new QGCJSBSimLink(this, options);
+    }
+    // Connect Flight Gear Link
+    link = dynamic_cast<QGCJSBSimLink*>(simulation);
+    link->setStartupArguments(options);
+    if (enable)
+    {
+        startHil();
+    }
+    else
+    {
+        stopHil();
+    }
+}
+
+/**
 * If enabled, connect the X-plane gear link.
 */
 void UAS::enableHilXPlane(bool enable)
