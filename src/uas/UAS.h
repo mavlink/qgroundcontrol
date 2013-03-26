@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLink.h"
 #include "QGCHilLink.h"
 #include "QGCFlightGearLink.h"
+#include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 
 /**
@@ -532,6 +533,7 @@ public slots:
 
     /** @brief Enable / disable HIL */
     void enableHilFlightGear(bool enable, QString options);
+    void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
 

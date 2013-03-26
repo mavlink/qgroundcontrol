@@ -226,6 +226,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCVehicleConfig.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
+    src/ui/QGCHilJSBSimConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui
 INCLUDEPATH += src \
     src/ui \
@@ -255,6 +256,7 @@ HEADERS += src/MG.h \
     src/comm/ProtocolInterface.h \
     src/comm/MAVLinkProtocol.h \
     src/comm/QGCFlightGearLink.h \
+    src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
     src/ui/CommConfigurationWindow.h \
     src/ui/SerialConfigurationWindow.h \
@@ -366,6 +368,7 @@ HEADERS += src/MG.h \
     src/comm/QGCHilLink.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
+    src/ui/QGCHilJSBSimConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
@@ -420,6 +423,7 @@ SOURCES += src/main.cc \
     src/comm/SerialLink.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/QGCFlightGearLink.cc \
+    src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
     src/ui/CommConfigurationWindow.cc \
     src/ui/SerialConfigurationWindow.cc \
@@ -525,6 +529,7 @@ SOURCES += src/main.cc \
     src/ui/QGCVehicleConfig.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
+    src/ui/QGCHilJSBSimConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
