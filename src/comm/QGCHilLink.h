@@ -80,10 +80,19 @@ signals:
      **/
     void simulationConnected(bool connected);
 
-    /** @brief State update from FlightGear */
+    /** @brief State update from simulation */
     void hilStateChanged(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
                         float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
                         int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+
+    void sensorHilGpsChanged(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites);
+
+    void sensorHilRawImuChanged(quint64 time_us, float xacc, float yacc, float zacc,
+                                                  float xgyro, float ygyro, float zgyro,
+                                                  float xmag, float ymag, float zmag,
+                                                  float abs_pressure, float diff_pressure,
+                                                  float pressure_alt, float temperature,
+                                                  quint16 fields_updated);
     
     /** @brief Remote host and port changed */
     void remoteChanged(const QString& hostPort);
