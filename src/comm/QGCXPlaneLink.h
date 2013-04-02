@@ -184,6 +184,7 @@ protected:
     float vx, vy, vz, xacc, yacc, zacc;
     float airspeed;
     float groundspeed;
+    float xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature;
 
     float man_roll, man_pitch, man_yaw;
     QString airframeName;
@@ -193,6 +194,7 @@ protected:
     quint64 simUpdateLast;
     quint64 simUpdateLastText;
     float simUpdateHz;
+    bool sensorHilEnabled;
 
     void setName(QString name);
 

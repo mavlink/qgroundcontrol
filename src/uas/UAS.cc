@@ -2706,6 +2706,48 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
     }
 }
 
+void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
+                                    float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed)
+{
+    if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_highres_imu_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                   time_us, xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
+                                     xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature,
+                                     fields_changed);
+        sendMessage(msg);
+    }
+    else
+    {
+        // Attempt to set HIL mode
+        mavlink_message_t msg;
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_HIL_ENABLED, navMode);
+        sendMessage(msg);
+        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
+    }
+}
+
+void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites)
+{
+    if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_gps_raw_int_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                   time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, cog*1e2, satellites);
+        sendMessage(msg);
+    }
+    else
+    {
+        // Attempt to set HIL mode
+        mavlink_message_t msg;
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_HIL_ENABLED, navMode);
+        sendMessage(msg);
+        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
+    }
+}
+
+
 /**
 * Connect flight gear link.
 **/

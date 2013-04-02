@@ -328,6 +328,19 @@ public slots:
     /** @brief Get the current battery type and specs */
     virtual QString getBatterySpecs() = 0;
 
+    /** @brief Send the full HIL state to the MAV */
+    virtual void sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
+                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc) = 0;
+
+    /** @brief RAW sensors for sensor HIL */
+    virtual void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
+                                        float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed) = 0;
+
+    /** @brief Send raw GPS for sensor HIL */
+    virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites) = 0;
+
+
 protected:
     QColor color;
 
