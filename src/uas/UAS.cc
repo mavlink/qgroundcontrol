@@ -2693,7 +2693,7 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
         mavlink_message_t msg;
         mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
-                                   lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+                                   lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000, yacc*1000, zacc*1000);
         sendMessage(msg);
     }
     else

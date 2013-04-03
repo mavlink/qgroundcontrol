@@ -354,6 +354,35 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
     writeBytes((const char*)&p, sizeof(p));
 }
 
+Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
+  double c__ = cos(yaw);
+  double _c_ = cos(pitch);
+  double __c = cos(roll);
+  double s__ = sin(yaw);
+  double _s_ = sin(pitch);
+  double __s = sin(roll);
+  double cc_ = c__ * _c_;
+  double cs_ = c__ * _s_;
+  double sc_ = s__ * _c_;
+  double ss_ = s__ * _s_;
+  double c_c = c__ * __c;
+  double c_s = c__ * __s;
+  double s_c = s__ * __c;
+  double s_s = s__ * __s;
+  double _cc = _c_ * __c;
+  double _cs = _c_ * __s;
+  double csc = cs_ * __c;
+  double css = cs_ * __s;
+  double ssc = ss_ * __c;
+  double sss = ss_ * __s;
+  Eigen::Matrix3f wRo;
+  wRo <<
+    cc_  , css-s_c,  csc+s_s,
+    sc_  , sss+c_c,  ssc-c_s,
+    -_s_  ,     _cs,      _cc;
+  return wRo;
+}
+
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
 {
     if (!data) return;
@@ -442,6 +471,12 @@ void QGCXPlaneLink::readBytes()
 
                 //qDebug() << "SPEEDS:" << "airspeed" << airspeed << "m/s, groundspeed" << groundspeed << "m/s";
             }
+            if (p.index == 4)
+            {
+                xacc = p.f[5] * 9.81f;
+                xacc = p.f[6] * 9.81f;
+                zacc = -p.f[4] * 9.81f;
+            }
             else if (p.index == 6 && xPlaneVersion == 10)
             {
                 // inHg to kPa
@@ -518,8 +553,8 @@ void QGCXPlaneLink::readBytes()
             else if (p.index == 21 && xPlaneVersion == 10)
             {
                 vx = p.f[3];
-                vy = p.f[4];
-                vz = p.f[5];
+                vy = -p.f[5];
+                vz = p.f[4];
             }
             else if (p.index == 12)
             {
@@ -593,8 +628,8 @@ void QGCXPlaneLink::readBytes()
             emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, cog, satellites);
         } else {
             emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
-                         pitchspeed, yawspeed, lat*1E7, lon*1E7, alt*1E3,
-                         vx, vy, vz, xacc*1000, yacc*1000, zacc*1000);
+                         pitchspeed, yawspeed, lat, lon, alt,
+                         vx, vy, vz, xacc, yacc, zacc);
         }
     }
 
