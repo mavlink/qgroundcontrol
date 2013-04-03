@@ -1279,14 +1279,16 @@ void HUD::drawCircle(float refX, float refY, float radius, float startDeg, float
 
 void HUD::resizeGL(int w, int h)
 {
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, w, 0, h, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glPolygonMode(GL_FRONT, GL_FILL);
-    //FIXME
-    paintHUD();
+    if (isVisible()) {
+        glViewport(0, 0, w, h);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0, w, 0, h, -1, 1);
+        glMatrixMode(GL_MODELVIEW);
+        glPolygonMode(GL_FRONT, GL_FILL);
+        //FIXME
+        paintHUD();
+    }
 }
 
 void HUD::selectWaypoint(int uasId, int id)
