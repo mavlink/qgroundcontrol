@@ -678,8 +678,8 @@ bool QGCXPlaneLink::disconnectSimulation()
         disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
         disconnect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
 
-        disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
-        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(uint64_t, double, double, double, int, float, float, float, float, int)));
+        disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, int)));
         disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)));
 
         UAS* uas = dynamic_cast<UAS*>(mav);
@@ -862,8 +862,8 @@ bool QGCXPlaneLink::connectSimulation()
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
 
-    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(uint64_t, double, double, double, int, float, float, float, float, int)));
+    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, int)));
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)));
 
     UAS* uas = dynamic_cast<UAS*>(mav);
