@@ -1691,10 +1691,22 @@ QList<int> UAS::getComponentIds()
 void UAS::setMode(int mode)
 {
     //this->mode = mode; //no call assignament, update receive message from UAS
+
+    // Strip armed / disarmed call, this is not relevant for setting the mode
+    uint8_t newMode = mode;
+    newMode &= (~(uint8_t)MAV_MODE_FLAG_SAFETY_ARMED);
+    // Now set current state (request no change)
+    newMode |= (uint8_t)(this->mode) & (uint8_t)(MAV_MODE_FLAG_SAFETY_ARMED);
+
+    // Strip HIL part, replace it with current system state
+    newMode &= (~(uint8_t)MAV_MODE_FLAG_HIL_ENABLED);
+    // Now set current state (request no change)
+    newMode |= (uint8_t)(this->mode) & (uint8_t)(MAV_MODE_FLAG_HIL_ENABLED);
+
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode, (uint16_t)navMode);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newMode, (uint16_t)navMode);
     sendMessage(msg);
-    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
+    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << newMode;
 }
 
 /**
@@ -2720,7 +2732,7 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
         mavlink_message_t msg;
         mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
-                                   lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+                                   lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000, yacc*1000, zacc*1000);
         sendMessage(msg);
     }
     else
