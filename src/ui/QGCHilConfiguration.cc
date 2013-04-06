@@ -2,6 +2,7 @@
 #include "ui_QGCHilConfiguration.h"
 
 #include "QGCHilFlightGearConfiguration.h"
+#include "QGCHilJSBSimConfiguration.h"
 #include "QGCHilXPlaneConfiguration.h"
 
 QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
@@ -46,7 +47,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
         }
 
     }
-    else if(2 == index || 3 == index)
+    else if (2 == index || 3 == index)
     {
         // Ensure the sim exists and is disabled
         mav->enableHilXPlane(false);
@@ -60,6 +61,19 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
         {
             xplane->setVersion((index == 2) ? 10 : 9);
             connect(xplane, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
+        }
+    }
+    else if (4)
+    {
+        // Ensure the sim exists and is disabled
+        mav->enableHilJSBSim(false, "");
+        QGCHilJSBSimConfiguration* hfgconf = new QGCHilJSBSimConfiguration(mav, this);
+        hfgconf->show();
+        ui->simulatorConfigurationLayout->addWidget(hfgconf);
+        QGCJSBSimLink* jsb = dynamic_cast<QGCJSBSimLink*>(mav->getHILSimulation());
+        if (jsb)
+        {
+            connect(jsb, SIGNAL(statusMessage(QString)), ui->statusLabel, SLOT(setText(QString)));
         }
     }
 }
