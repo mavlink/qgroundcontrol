@@ -476,12 +476,14 @@ void QGCXPlaneLink::readBytes()
                 xacc = p.f[5] * 9.81f;
                 xacc = p.f[6] * 9.81f;
                 zacc = -p.f[4] * 9.81f;
+                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
             else if (p.index == 6 && xPlaneVersion == 10)
             {
                 // inHg to kPa
                 abs_pressure = p.f[0] * 3.3863886666718317f;
                 temperature = p.f[1];
+                fields_changed |= (1 << 9) | (1 << 12);
             }
             // Forward controls from X-Plane to MAV, not very useful
             // better: Connect Joystick to QGroundControl
@@ -500,7 +502,7 @@ void QGCXPlaneLink::readBytes()
                 rollspeed = p.f[2];
                 pitchspeed = p.f[1];
                 yawspeed = p.f[0];
-                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
+                fields_changed |= (1 << 3) | (1 << 4) | (1 << 5);
             }
             else if ((xPlaneVersion == 10 && p.index == 17) || (xPlaneVersion == 9 && p.index == 18))
             {
@@ -528,6 +530,7 @@ void QGCXPlaneLink::readBytes()
                 xmag = cos(yawmag) * 0.4f - sin(yawmag) * 0.0f + 0.0f;
                 ymag = sin(yawmag) * 0.4f - sin(yawmag) * 0.0f + 0.0f;
                 zmag = 0.0f            + 0.0f            + 1.0f * 0.4f;
+                fields_changed |= (1 << 6) | (1 << 7) | (1 << 8);
 
                 emitUpdate = true;
             }
@@ -536,7 +539,7 @@ void QGCXPlaneLink::readBytes()
                 rollspeed = p.f[2];
                 pitchspeed = p.f[1];
                 yawspeed = p.f[0];
-                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
+                fields_changed |= (1 << 3) | (1 << 4) | (1 << 5);
             }
 
 //            else if (p.index == 19)
@@ -614,6 +617,8 @@ void QGCXPlaneLink::readBytes()
         {
             diff_pressure = 0.0f;
             pressure_alt = alt;
+            // set pressure alt to changed
+            fields_changed |= (1 << 11);
 
             emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
                                         xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
