@@ -904,6 +904,26 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
                 //qDebug() << "RECEIVED PARAM:" << param;
             }
+            case MAV_PARAM_TYPE_INT8:
+            {
+                // Variant
+                QVariant param(val.param_int8);
+                parameters.value(component)->insert(parameterName, param);
+                // Emit change
+                emit parameterChanged(uasId, message.compid, parameterName, param);
+                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                //qDebug() << "RECEIVED PARAM:" << param;
+            }
+            case MAV_PARAM_TYPE_INT16:
+            {
+                // Variant
+                QVariant param(val.param_int16);
+                parameters.value(component)->insert(parameterName, param);
+                // Emit change
+                emit parameterChanged(uasId, message.compid, parameterName, param);
+                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                //qDebug() << "RECEIVED PARAM:" << param;
+            }
             case MAV_PARAM_TYPE_UINT32:
             {
                 // Variant
@@ -2265,6 +2285,10 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         // Assign correct value based on QVariant
         switch (value.type())
         {
+        case QVariant::Char:
+	    union_value.param_int8 = value.toChar().toAscii();
+            p.param_type = MAV_PARAM_TYPE_INT8;
+            break;
         case QVariant::Int:
             union_value.param_int32 = value.toInt();
             p.param_type = MAV_PARAM_TYPE_INT32;
