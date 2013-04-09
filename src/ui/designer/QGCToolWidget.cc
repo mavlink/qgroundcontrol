@@ -154,6 +154,7 @@ bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
     if (groups.length() > 0)
     {
         QString widgetName = groups.first();
+	this->setObjectName(widgetName);
         if (singleinstance && QGCToolWidget::instances()->keys().contains(widgetName)) return false;
         // Do not use setTitle() here,
         // interferes with loading settings

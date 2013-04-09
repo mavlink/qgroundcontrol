@@ -184,6 +184,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     mav->requestParameters();
 
     QString defaultsDir = qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower() + "/widgets/";
+    qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
 
     QGCToolWidget* tool;
 
@@ -202,7 +203,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_mc_attitude_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-        ui->multiRotorAttitudeLayout->addWidget(tool);
+	QGroupBox *box = new QGroupBox(this);
+	box->setTitle(tool->objectName());
+	box->setLayout(new QVBoxLayout());
+	box->layout()->addWidget(tool);
+	ui->multiRotorAttitudeLayout->addWidget(box);
+	//ui->multiRotorAttitudeLayout->addWidget(tool);
     } else {
         delete tool;
     }
@@ -212,7 +218,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_mc_position_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-        ui->multiRotorPositionLayout->addWidget(tool);
+	QGroupBox *box = new QGroupBox(this);
+	box->setTitle(tool->objectName());
+	box->setLayout(new QVBoxLayout());
+	box->layout()->addWidget(tool);
+	ui->multiRotorAttitudeLayout->addWidget(box);
+	//ui->multiRotorPositionLayout->addWidget(tool);
     } else {
         delete tool;
     }
@@ -222,7 +233,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_fw_attitude_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-        ui->fixedWingAttitudeLayout->addWidget(tool);
+	QGroupBox *box = new QGroupBox(this);
+	box->setTitle(tool->objectName());
+	box->setLayout(new QVBoxLayout());
+	box->layout()->addWidget(tool);
+	ui->multiRotorAttitudeLayout->addWidget(box);
+	//ui->fixedWingAttitudeLayout->addWidget(tool);
     } else {
         delete tool;
     }
@@ -232,7 +248,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_fw_position_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-        ui->fixedWingPositionLayout->addWidget(tool);
+	QGroupBox *box = new QGroupBox(this);
+	box->setTitle(tool->objectName());
+	box->setLayout(new QVBoxLayout());
+	box->layout()->addWidget(tool);
+	ui->multiRotorAttitudeLayout->addWidget(box);
+	//ui->fixedWingPositionLayout->addWidget(tool);
     } else {
         delete tool;
     }
