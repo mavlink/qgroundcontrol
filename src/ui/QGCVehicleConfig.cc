@@ -8,6 +8,7 @@
 #endif
 
 #include <QTimer>
+#include <QDir>
 
 #include "QGCVehicleConfig.h"
 #include "UASManager.h"
@@ -188,9 +189,66 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     QGCToolWidget* tool;
 
+    QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
+    QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
+    QDir vehicledir = QDir(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/widgets");
+    if (!autopilotdir.exists("general"))
+    {
+     //TODO: Throw some kind of error here. There is no general configuration directory
+        qDebug() << "invalid general dir";
+    }
+    if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
+    {
+        //TODO: Throw an error here too, no autopilot specific configuration
+        qDebug() << "invalid vehicle dir";
+    }
+    qDebug() << autopilotdir.absolutePath();
+    qDebug() << generaldir.absolutePath();
+    qDebug() << vehicledir.absolutePath();
+
+    foreach (QString file,generaldir.entryList(QDir::Files | QDir::NoDotAndDotDot))
+    {
+        if (file.toLower().endsWith(".qgw")) {
+            tool = new QGCToolWidget("", this);
+            if (tool->loadSettings(generaldir.absoluteFilePath(file), false))
+            {
+                toolWidgets.append(tool);
+                //ui->sensorLayout->addWidget(tool);
+                QGroupBox *box = new QGroupBox(this);
+                box->setTitle(tool->objectName());
+                box->setLayout(new QVBoxLayout());
+                box->layout()->addWidget(tool);
+                ui->multiRotorAttitudeLayout->addWidget(box);
+            } else {
+                delete tool;
+            }
+        }
+    }
+
+    foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
+    {
+        if (file.toLower().endsWith(".qgw")) {
+            tool = new QGCToolWidget("", this);
+            if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
+            {
+                toolWidgets.append(tool);
+                //ui->sensorLayout->addWidget(tool);
+                QGroupBox *box = new QGroupBox(this);
+                box->setTitle(tool->objectName());
+                box->setLayout(new QVBoxLayout());
+                box->layout()->addWidget(tool);
+                ui->fixedWingAttitudeLayout->addWidget(box);
+            } else {
+                delete tool;
+            }
+        }
+    }
+
+
+
     // Load calibration
     tool = new QGCToolWidget("", this);
-    if (tool->loadSettings(defaultsDir + "px4_calibration.qgw", false))
+    if (tool->loadSettings(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/calibration.qgw", false))
     {
         toolWidgets.append(tool);
         ui->sensorLayout->addWidget(tool);
@@ -199,6 +257,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     }
 
     // Load multirotor attitude pid
+    /*
     tool = new QGCToolWidget("", this);
     if (tool->loadSettings(defaultsDir + "px4_mc_attitude_pid_params.qgw", false))
     {
@@ -256,7 +315,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 	//ui->fixedWingPositionLayout->addWidget(tool);
     } else {
         delete tool;
-    }
+    }*/
 
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 }
