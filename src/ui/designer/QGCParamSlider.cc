@@ -22,6 +22,8 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->intValueSpinBox->hide();
+    ui->valueSlider->setEnabled(false);
+    ui->doubleValueSpinBox->setEnabled(false);
     uas = NULL;
 
     scaledInt = ui->valueSlider->maximum() - ui->valueSlider->minimum();
@@ -231,6 +233,9 @@ void QGCParamSlider::endEditMode()
     ui->valueSlider->show();
     switch (parameterValue.type())
     {
+    case QVariant::Char:
+        ui->intValueSpinBox->show();
+        break;
     case QVariant::Int:
         ui->intValueSpinBox->show();
         break;
@@ -273,6 +278,10 @@ void QGCParamSlider::setSliderValue(int sliderValue)
 {
     switch (parameterValue.type())
     {
+    case QVariant::Char:
+        parameterValue = (int)scaledIntToFloat(sliderValue);
+        ui->intValueSpinBox->setValue(parameterValue.toInt());
+        break;
     case QVariant::Int:
         parameterValue = (int)scaledIntToFloat(sliderValue);
         ui->intValueSpinBox->setValue(parameterValue.toInt());
@@ -336,27 +345,39 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
         parameterValue = value;
         switch (value.type())
         {
+        case QVariant::Char:
+            ui->intValueSpinBox->show();
+            ui->intValueSpinBox->setEnabled(true);
+            ui->doubleValueSpinBox->hide();
+            ui->intValueSpinBox->setValue(value.toUInt());
+            ui->intValueSpinBox->setMinimum(-ui->intValueSpinBox->maximum());
+            break;
         case QVariant::Int:
             ui->intValueSpinBox->show();
+            ui->intValueSpinBox->setEnabled(true);
             ui->doubleValueSpinBox->hide();
-            ui->intValueSpinBox->setValue(value.toDouble());
+            ui->intValueSpinBox->setValue(value.toInt());
             ui->intValueSpinBox->setMinimum(-ui->intValueSpinBox->maximum());
             break;
         case QVariant::UInt:
             ui->intValueSpinBox->show();
+            ui->intValueSpinBox->setEnabled(true);
             ui->doubleValueSpinBox->hide();
-            ui->intValueSpinBox->setValue(value.toDouble());
+            ui->intValueSpinBox->setValue(value.toUInt());
             ui->intValueSpinBox->setMinimum(0);
             break;
         case QMetaType::Float:
-            ui->doubleValueSpinBox->setValue(value.toDouble());
+            ui->doubleValueSpinBox->setValue(value.toFloat());
             ui->doubleValueSpinBox->show();
+            ui->doubleValueSpinBox->setEnabled(true);
+
             ui->intValueSpinBox->hide();
             break;
         default:
             qCritical() << "ERROR: NO VALID PARAM TYPE";
             return;
         }
+        ui->valueSlider->setEnabled(true);
         ui->valueSlider->setValue(floatToScaledInt(value.toDouble()));
     }
 
