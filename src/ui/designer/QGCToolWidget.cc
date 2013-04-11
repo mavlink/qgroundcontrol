@@ -11,6 +11,7 @@
 #include <QDesktopServices>
 
 #include "QGCParamSlider.h"
+#include "QGCComboBox.h"
 #include "QGCCommandButton.h"
 #include "UASManager.h"
 
@@ -192,6 +193,11 @@ void QGCToolWidget::loadSettings(QSettings& settings)
             {
                 item = new QGCParamSlider(this);
                 //qDebug() << "CREATED PARAM SLIDER";
+            }
+            else if (type == "COMBO")
+            {
+                item = new QGCComboBox(this);
+                qDebug() << "CREATED PARAM COMBOBOX";
             }
 
             if (item)
