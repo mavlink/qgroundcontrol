@@ -39,6 +39,8 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     ui->editItemNameLabel->hide();
     ui->itemValueLabel->hide();
     ui->itemNameLabel->hide();
+    ui->editOptionComboBox->setEnabled(false);
+    isDisabled = true;
 
     ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
     ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
@@ -192,6 +194,10 @@ void QGCComboBox::startEditMode()
     ui->editItemNameLabel->show();
     ui->itemValueLabel->show();
     ui->itemNameLabel->show();
+    if (isDisabled)
+    {
+        ui->editOptionComboBox->setEnabled(true);
+    }
     isInEditMode = true;
 }
 
@@ -223,6 +229,10 @@ void QGCComboBox::endEditMode()
     ui->itemValueLabel->hide();
     ui->itemNameLabel->hide();
     ui->nameLabel->show();
+    if (isDisabled)
+    {
+        ui->editOptionComboBox->setEnabled(false);
+    }
     isInEditMode = false;
     emit editingFinished();
 }
@@ -293,6 +303,8 @@ void QGCComboBox::setParameterValue(int uas, int component, int paramCount, int 
 
     if (component == this->component && parameterName == this->parameterName)
     {
+        ui->editOptionComboBox->setEnabled(true);
+        isDisabled = false;
         for (int i=0;i<ui->editOptionComboBox->count();i++)
         {
             if (comboBoxTextToValMap[ui->editOptionComboBox->itemText(i)] == value.toInt())
