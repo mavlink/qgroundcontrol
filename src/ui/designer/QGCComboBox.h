@@ -53,6 +53,7 @@ protected:
     QVariant parameterValue;          ///< Value of the parameter
     double parameterScalingFactor; ///< Factor to scale the parameter between slider and true value
     float parameterMin;
+    bool isDisabled;
     float parameterMax;
     int component;                 ///< ID of the MAV component to address
     //double scaledInt;
