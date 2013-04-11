@@ -205,7 +205,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     qDebug() << autopilotdir.absolutePath();
     qDebug() << generaldir.absolutePath();
     qDebug() << vehicledir.absolutePath();
-
+    int left = true;
     foreach (QString file,generaldir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
@@ -218,13 +218,22 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout());
                 box->layout()->addWidget(tool);
-                ui->multiRotorAttitudeLayout->addWidget(box);
+                if (left)
+                {
+                    left = false;
+                    ui->leftGeneralLayout->addWidget(box);
+                }
+                else
+                {
+                    left = true;
+                    ui->rightGeneralLayout->addWidget(box);
+                }
             } else {
                 delete tool;
             }
         }
     }
-
+    left = true;
     foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
@@ -237,7 +246,17 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout());
                 box->layout()->addWidget(tool);
-                ui->fixedWingAttitudeLayout->addWidget(box);
+                if (left)
+                {
+                    left = false;
+                    ui->leftHWSpecificLayout->addWidget(box);
+                }
+                else
+                {
+                    left = true;
+                    ui->rightHWSpecificLayout->addWidget(box);
+                }
+
             } else {
                 delete tool;
             }

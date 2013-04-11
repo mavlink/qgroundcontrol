@@ -40,7 +40,7 @@
    <item row="0" column="0" colspan="2">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="rcTab">
       <attribute name="title">
@@ -776,69 +776,111 @@ p, li { white-space: pre-wrap; }
       <attribute name="title">
        <string>General Config</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_3" columnstretch="80,0,0">
-       <property name="topMargin">
-        <number>20</number>
-       </property>
-       <item row="0" column="0">
-        <spacer name="horizontalSpacer_8">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <spacer name="horizontalSpacer_8">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QComboBox" name="multiRotorComboBox"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadMultiRotorDefaultsButton">
+           <property name="text">
+            <string>Load Platform Defaults</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="loadMultiRotorDefaultsButton">
-         <property name="text">
-          <string>Load Platform Defaults</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="multiRotorComboBox"/>
-       </item>
-       <item row="1" column="0" colspan="3">
-        <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox">
-         <property name="title">
-          <string>Configuration</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="margin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QScrollArea" name="scrollArea">
-            <property name="widgetResizable">
-             <bool>true</bool>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox">
+           <property name="title">
+            <string>Configuration</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="margin">
+             <number>0</number>
             </property>
-            <widget class="QWidget" name="scrollAreaWidgetContents">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>0</y>
-               <width>740</width>
-               <height>442</height>
-              </rect>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <property name="margin">
-               <number>0</number>
+            <item>
+             <widget class="QScrollArea" name="scrollArea">
+              <property name="widgetResizable">
+               <bool>true</bool>
               </property>
-              <item>
-               <layout class="QVBoxLayout" name="multiRotorAttitudeLayout"/>
-              </item>
-             </layout>
-            </widget>
-           </widget>
-          </item>
-         </layout>
-        </widget>
+              <widget class="QWidget" name="scrollAreaWidgetContents">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>364</width>
+                 <height>449</height>
+                </rect>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <property name="margin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <layout class="QVBoxLayout" name="leftGeneralLayout"/>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox_2">
+           <property name="title">
+            <string>Configuration</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="margin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QScrollArea" name="scrollArea_2">
+              <property name="widgetResizable">
+               <bool>true</bool>
+              </property>
+              <widget class="QWidget" name="scrollAreaWidgetContents_2">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>364</width>
+                 <height>449</height>
+                </rect>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <property name="margin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <layout class="QVBoxLayout" name="rightGeneralLayout"/>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -846,69 +888,111 @@ p, li { white-space: pre-wrap; }
       <attribute name="title">
        <string>Hardware Specific Config</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_4" columnstretch="65,0,0,0">
-       <property name="topMargin">
-        <number>20</number>
-       </property>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="fixedWingComboBox"/>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <spacer name="horizontalSpacer_9">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QComboBox" name="fixedWingComboBox"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadFixedWingDefaultsButton">
+           <property name="text">
+            <string>Load Platform Defaults</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
-       <item row="0" column="2" colspan="2">
-        <widget class="QPushButton" name="loadFixedWingDefaultsButton">
-         <property name="text">
-          <string>Load Platform Defaults</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <spacer name="horizontalSpacer_9">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="1" column="0" colspan="4">
-        <widget class="QGroupBox" name="fixedWingControlAttitudeGroupBox">
-         <property name="title">
-          <string>Configuration</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <property name="margin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QScrollArea" name="scrollArea_4">
-            <property name="widgetResizable">
-             <bool>true</bool>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QGroupBox" name="fixedWingControlAttitudeGroupBox">
+           <property name="title">
+            <string>Configuration</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <property name="margin">
+             <number>0</number>
             </property>
-            <widget class="QWidget" name="scrollAreaWidgetContents_4">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>0</y>
-               <width>740</width>
-               <height>442</height>
-              </rect>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_7">
-              <property name="margin">
-               <number>0</number>
+            <item>
+             <widget class="QScrollArea" name="scrollArea_4">
+              <property name="widgetResizable">
+               <bool>true</bool>
               </property>
-              <item>
-               <layout class="QVBoxLayout" name="fixedWingAttitudeLayout"/>
-              </item>
-             </layout>
-            </widget>
-           </widget>
-          </item>
-         </layout>
-        </widget>
+              <widget class="QWidget" name="scrollAreaWidgetContents_4">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>364</width>
+                 <height>449</height>
+                </rect>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_7">
+                <property name="margin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <layout class="QVBoxLayout" name="leftHWSpecificLayout"/>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="fixedWingControlAttitudeGroupBox_2">
+           <property name="title">
+            <string>Configuration</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="margin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QScrollArea" name="scrollArea_5">
+              <property name="widgetResizable">
+               <bool>true</bool>
+              </property>
+              <widget class="QWidget" name="scrollAreaWidgetContents_5">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>364</width>
+                 <height>449</height>
+                </rect>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_8">
+                <property name="margin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <layout class="QVBoxLayout" name="rightHWSpecificLayout"/>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
