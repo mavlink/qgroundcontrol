@@ -267,7 +267,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Load calibration
     tool = new QGCToolWidget("", this);
-    if (tool->loadSettings(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/calibration.qgw", false))
+    if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
     {
         toolWidgets.append(tool);
         ui->sensorLayout->addWidget(tool);
