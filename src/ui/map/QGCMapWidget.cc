@@ -19,7 +19,56 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     homeAltitude(0)
 {
     // Widget is inactive until shown
+    defaultGuidedAlt = -1;
     loadSettings(false);
+
+    this->setContextMenuPolicy(Qt::ActionsContextMenu);
+
+}
+void QGCMapWidget::guidedActionTriggered()
+{
+    if (currWPManager)
+    {
+        if (defaultGuidedAlt == -1)
+        {
+            if (!guidedAltActionTriggered())
+            {
+                return;
+            }
+        }
+        // Create new waypoint and send it to the WPManager to send out.
+        internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+        qDebug() << "Guided action requested. Lat:" << pos.Lat() << "Lon:" << pos.Lng();
+        Waypoint wp;
+        wp.setLatitude(pos.Lat());
+        wp.setLongitude(pos.Lng());
+        wp.setAltitude(defaultGuidedAlt);
+        currWPManager->goToWaypoint(&wp);
+    }
+}
+bool QGCMapWidget::guidedAltActionTriggered()
+{
+    bool ok = false;
+    int tmpalt = QInputDialog::getInt(this,"Altitude","Enter default altitude (in meters) of destination point for guided mode",100,0,30000,1,&ok);
+    if (!ok)
+    {
+        //Use has chosen cancel. Do not send the waypoint
+        return false;
+    }
+    defaultGuidedAlt = tmpalt;
+    guidedActionTriggered();
+    return true;
+}
+
+void QGCMapWidget::mousePressEvent(QMouseEvent *event)
+{
+    mapcontrol::OPMapWidget::mousePressEvent(event);
+}
+
+void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    mousePressPos = event->pos();
+    mapcontrol::OPMapWidget::mouseReleaseEvent(event);
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -202,6 +251,17 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
     if (uas)
     {
         currWPManager = uas->getWaypointManager();
+        if (currWPManager->guidedModeSupported())
+        {
+            QAction *guidedaction = new QAction(this);
+            guidedaction->setText("Go To Here (Guided Mode)");
+            connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedActionTriggered()));
+            this->addAction(guidedaction);
+            guidedaction = new QAction(this);
+            guidedaction->setText("Go To Here Alt (Guided Mode)");
+            connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
+            this->addAction(guidedaction);
+        }
 
         // Connect the waypoint manager / data storage to the UI
         connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
