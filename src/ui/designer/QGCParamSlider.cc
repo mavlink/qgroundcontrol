@@ -309,6 +309,10 @@ void QGCParamSlider::setSliderValue(int sliderValue)
 void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, QVariant value)
 {
     Q_UNUSED(paramCount);
+    if (ui->nameLabel->text() == "Name")
+    {
+        ui->nameLabel->setText(parameterName);
+    }
     // Check if this component and parameter are part of the list
     bool found = false;
     for (int i = 0; i< ui->editSelectComponentComboBox->count(); ++i)
@@ -448,6 +452,13 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
 
     // Get param value after settings have been loaded
     //requestParameter();
+}
+void QGCParamSlider::setParamMinMax(double min, double max)
+{
+    parameterMin = min;
+    parameterMax = max;
+    ui->editMinSpinBox->setValue(min);
+    ui->editMaxSpinBox->setValue(max);
 }
 
 void QGCParamSlider::readSettings(const QSettings& settings)

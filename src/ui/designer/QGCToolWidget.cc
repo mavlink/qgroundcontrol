@@ -203,6 +203,12 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
     //int size = settings.beginReadArray("QGC_TOOL_WIDGET_ITEMS");
     int size = settingsMap["count"].toInt();
     //qDebug() << "CHILDREN SIZE:" << size;
+    if (paramToItemMap.contains(parameterName))
+    {
+        //slider->setParameterValue(uas,component,0,-1,paramname,value);
+        //paramToItemMap[parameterName]->set
+        return;
+    }
 
     for (int j = 0; j < size; j++)
     {
@@ -220,6 +226,7 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
             if (checkparam == parameterName)
             {
                 item = new QGCParamSlider(this);
+                paramToItemMap[parameterName] = item;
                 addToolWidget(item);
                 item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settingsMap);
 
@@ -236,6 +243,7 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
                 item = new QGCComboBox(this);
                 addToolWidget(item);
                 item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settingsMap);
+                paramToItemMap[parameterName] = item;
                 return;
             }
 
@@ -500,6 +508,22 @@ QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
     static QList<QGCToolWidgetItem*>* instances;
     if (!instances) instances = new QList<QGCToolWidgetItem*>();
     return instances;
+}
+void QGCToolWidget::addParam(int uas,int component,QString paramname,QVariant value)
+{
+    QGCParamSlider* slider = new QGCParamSlider(this);
+    connect(slider, SIGNAL(destroyed()), this, SLOT(storeSettings()));
+    if (ui->hintLabel)
+    {
+        ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
+    }
+    toolLayout->addWidget(slider);
+    slider->setActiveUAS(mav);
+    slider->setParamMinMax(0,100);
+    slider->setParameterValue(uas,component,0,-1,paramname,value);
+
+
 }
 
 void QGCToolWidget::addParam()

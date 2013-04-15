@@ -144,6 +144,7 @@ protected slots:
     void updateInvertedCheckboxes(int index);
 
 protected:
+    bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
     static const unsigned int chanMax = 8;    ///< Maximum number of channels
     unsigned int chanCount;               ///< Actual channels

@@ -45,6 +45,8 @@ public slots:
     /** @brief Show tool tip of calling element */
     void showTooltip();
 
+    void setParamMinMax(double min, double max);
+
 protected slots:
     /** @brief Request the parameter of this widget from the MAV */
     void requestParameter();

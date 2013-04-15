@@ -65,6 +65,7 @@ signals:
     void titleChanged(QString);
 
 protected:
+    QMap<QString,QGCToolWidgetItem*> paramToItemMap;
     QList<QString> paramList;
     QVariantMap settingsMap;
     QAction* addParamAction;
@@ -90,6 +91,7 @@ protected:
     void hideEvent(QHideEvent* event);
 public slots:
     void setTitle(QString title);
+    void addParam(int uas,int component,QString paramname,QVariant value);
 protected slots:
     void addParam();
     void addCommand();
