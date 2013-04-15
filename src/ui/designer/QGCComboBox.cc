@@ -78,7 +78,7 @@ void QGCComboBox::showTooltip()
 
     if (sender)
     {
-        QPoint point = mapToGlobal(pos());
+        QPoint point = mapToGlobal(ui->infoLabel->pos());
         QToolTip::showText(point, sender->toolTip());
     }
 }
