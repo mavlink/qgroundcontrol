@@ -34,6 +34,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     calibrationEnabled(false),
     ui(new Ui::QGCVehicleConfig)
 {
+    doneLoadingConfig = false;
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
 
@@ -322,6 +323,7 @@ void QGCVehicleConfig::loadConfig()
     if (!xmlfile.open(QIODevice::ReadOnly))
     {
         loadQgcConfig();
+        doneLoadingConfig = true;
         return;
     }
 
@@ -491,6 +493,8 @@ void QGCVehicleConfig::loadConfig()
            mav->getParamManager()->setParamInfo(paramTooltips);
     }
     emit configReady();
+    doneLoadingConfig = true;
+    mav->requestParameters();
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
@@ -761,7 +765,10 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 {
     Q_UNUSED(uas);
     Q_UNUSED(component);
-
+    if (!doneLoadingConfig)
+    {
+        return;
+    }
     if (paramToWidgetMap.contains(parameterName))
     {
         paramToWidgetMap[parameterName]->setParameterValue(uas,component,parameterName,value);
@@ -777,7 +784,49 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
     }
     else
     {
+        bool found = false;
         qDebug() << "Param with no widget:" << parameterName;
+        for (int i=0;i<toolWidgets.size();i++)
+        {
+            if (parameterName.startsWith(toolWidgets[i]->objectName()))
+            {
+                //It should be grouped with this one.
+                qDebug() << parameterName << toolWidgets[i]->objectName();
+                toolWidgets[i]->addParam(uas,component,parameterName,value);
+                paramToWidgetMap[parameterName] = toolWidgets[i];
+                found  = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            QGCToolWidget *tool = new QGCToolWidget("", this);
+            QString tooltitle = parameterName;
+            if (parameterName.split("_").size() > 1)
+            {
+                tooltitle = parameterName.split("_")[0] + "_";
+            }
+            tool->setTitle(tooltitle);
+            tool->setObjectName(tooltitle);
+            //tool->setSettings(set);
+            tool->addParam(uas,component,parameterName,value);
+            paramToWidgetMap[parameterName] = tool;
+            toolWidgets.append(tool);
+            QGroupBox *box = new QGroupBox(this);
+            box->setTitle(tool->objectName());
+            box->setLayout(new QVBoxLayout());
+            box->layout()->addWidget(tool);
+
+            if (ui->leftHWSpecificLayout->count() > ui->rightHWSpecificLayout->count())
+            {
+                ui->rightHWSpecificLayout->addWidget(box);
+            }
+            else
+            {
+                ui->leftHWSpecificLayout->addWidget(box);
+            }
+            toolToBoxMap[tool] = box;
+        }
     }
 
     // Channel calibration values

@@ -886,7 +886,7 @@ p, li { white-space: pre-wrap; }
      </widget>
      <widget class="QWidget" name="fixedWingTab">
       <attribute name="title">
-       <string>Hardware Specific Config</string>
+       <string>Advanced Config</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
