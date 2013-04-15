@@ -282,18 +282,12 @@
    <item row="2" column="3">
     <widget class="QToolButton" name="infoLabel">
      <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/status/dialog-information.svg</normaloff>:/files/images/status/dialog-information.svg</iconset>
+      <string>?</string>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../../qgroundcontrol.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

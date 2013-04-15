@@ -40,8 +40,8 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     ui->editLine1->hide();
     ui->editLine2->hide();
 
-    ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-    ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+    //ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+    //ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
 
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 
@@ -102,7 +102,7 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
         connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
         uas = activeUas;
         // Update current param value
-        requestParameter();
+        //requestParameter();
         // Set param info
         QString text = uas->getParamManager()->getParamInfo(parameterName);
         ui->infoLabel->setToolTip(text);
@@ -428,6 +428,27 @@ void QGCParamSlider::writeSettings(QSettings& settings)
     settings.setValue("QGC_PARAM_SLIDER_DISPLAY_INFO", ui->editInfoCheckBox->isChecked());
     settings.sync();
 }
+void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings)
+{
+    parameterName = settings.value(pre + "QGC_PARAM_SLIDER_PARAMID").toString();
+    component = settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt();
+    ui->nameLabel->setText(settings.value(pre + "QGC_PARAM_SLIDER_DESCRIPTION").toString());
+    ui->editNameLabel->setText(settings.value(pre + "QGC_PARAM_SLIDER_DESCRIPTION").toString());
+    //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
+    ui->editSelectParamComboBox->addItem(settings.value(pre + "QGC_PARAM_SLIDER_PARAMID").toString());
+    ui->editSelectParamComboBox->setCurrentIndex(ui->editSelectParamComboBox->count()-1);
+    ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt()), settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt());
+    ui->editMinSpinBox->setValue(settings.value(pre + "QGC_PARAM_SLIDER_MIN").toFloat());
+    ui->editMaxSpinBox->setValue(settings.value(pre + "QGC_PARAM_SLIDER_MAX").toFloat());
+    showInfo(settings.value(pre + "QGC_PARAM_SLIDER_DISPLAY_INFO", true).toBool());
+    ui->editSelectParamComboBox->setEnabled(true);
+    ui->editSelectComponentComboBox->setEnabled(true);
+
+    setActiveUAS(UASManager::instance()->getActiveUAS());
+
+    // Get param value after settings have been loaded
+    //requestParameter();
+}
 
 void QGCParamSlider::readSettings(const QSettings& settings)
 {
@@ -448,5 +469,5 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
     // Get param value after settings have been loaded
-    requestParameter();
+    //requestParameter();
 }

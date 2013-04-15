@@ -31,6 +31,7 @@ public slots:
     void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, const QVariant value);
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
+    void readSettings(const QString& pre,const QVariantMap& settings);
     void refreshParamList();
     void setActiveUAS(UASInterface *uas);
     void selectComponent(int componentIndex);

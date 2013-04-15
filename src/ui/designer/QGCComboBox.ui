@@ -247,11 +247,7 @@
       <enum>Qt::LeftToRight</enum>
      </property>
      <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/status/dialog-information.svg</normaloff>:/files/images/status/dialog-information.svg</iconset>
+      <string>?</string>
      </property>
      <property name="popupMode">
       <enum>QToolButton::DelayedPopup</enum>
@@ -285,8 +281,6 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../../qgroundcontrol.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

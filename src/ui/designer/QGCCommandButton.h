@@ -25,6 +25,7 @@ public slots:
     void endEditMode();
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
+    void readSettings(const QString& pre,const QVariantMap& settings);
 
 private:
     Ui::QGCCommandButton *ui;

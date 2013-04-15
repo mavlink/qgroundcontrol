@@ -65,7 +65,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent, QSettings* s
 
     // Enforce storage if this not loaded from settings
     // is MUST NOT BE SAVED if it was loaded from settings!
-    if (!settings) storeWidgetsToSettings();
+    //if (!settings) storeWidgetsToSettings();
 }
 
 QGCToolWidget::~QGCToolWidget()
@@ -168,6 +168,130 @@ bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
     {
         return false;
     }
+}
+void QGCToolWidget::setSettings(QVariantMap& settings)
+{
+    settingsMap = settings;
+    QString widgetName = getTitle();
+    int size = settingsMap["count"].toInt();
+    for (int j = 0; j < size; j++)
+    {
+        QString type = settings.value(widgetName + "\\" + QString::number(j) + "\\" + "TYPE", "UNKNOWN").toString();
+        if (type == "SLIDER")
+        {
+            QString checkparam = settingsMap.value(widgetName + "\\" + QString::number(j) + "\\" + "QGC_PARAM_SLIDER_PARAMID").toString();
+            paramList.append(checkparam);
+        }
+        else if (type == "COMBO")
+        {
+            QString checkparam = settingsMap.value(widgetName + "\\" + QString::number(j) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID").toString();
+            paramList.append(checkparam);
+        }
+    }
+}
+QList<QString> QGCToolWidget::getParamList()
+{
+    return paramList;
+}
+void QGCToolWidget::setParameterValue(int uas, int component, QString parameterName, const QVariant value)
+{
+//settings.setValue("QGC_PARAM_SLIDER_PARAMID", parameterName);
+//settings.setValue("QGC_PARAM_COMBOBOX_PARAMID", parameterName);
+    QString widgetName = getTitle();
+    //settings.beginGroup(widgetName);
+    //qDebug() << "LOADING FOR" << widgetName;
+    //int size = settings.beginReadArray("QGC_TOOL_WIDGET_ITEMS");
+    int size = settingsMap["count"].toInt();
+    //qDebug() << "CHILDREN SIZE:" << size;
+
+    for (int j = 0; j < size; j++)
+    {
+        QString type = settingsMap.value(widgetName + "\\" + QString::number(j) + "\\" + "TYPE", "UNKNOWN").toString();
+        QGCToolWidgetItem* item = NULL;
+        if (type == "COMMANDBUTTON")
+        {
+            return;
+            //item = new QGCCommandButton(this);
+            //qDebug() << "CREATED COMMANDBUTTON";
+        }
+        else if (type == "SLIDER")
+        {
+            QString checkparam = settingsMap.value(widgetName + "\\" + QString::number(j) + "\\" + "QGC_PARAM_SLIDER_PARAMID").toString();
+            if (checkparam == parameterName)
+            {
+                item = new QGCParamSlider(this);
+                addToolWidget(item);
+                item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settingsMap);
+
+                return;
+            }
+
+            //qDebug() << "CREATED PARAM SLIDER";
+        }
+        else if (type == "COMBO")
+        {
+            QString checkparam = settingsMap.value(widgetName + "\\" + QString::number(j) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID").toString();
+            if (checkparam == parameterName)
+            {
+                item = new QGCComboBox(this);
+                addToolWidget(item);
+                item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settingsMap);
+                return;
+            }
+
+            //qDebug() << "CREATED PARAM COMBOBOX";
+        }
+    }
+}
+
+void QGCToolWidget::loadSettings(QVariantMap& settings)
+{
+
+    QString widgetName = getTitle();
+    //settings.beginGroup(widgetName);
+    qDebug() << "LOADING FOR" << widgetName;
+    //int size = settings.beginReadArray("QGC_TOOL_WIDGET_ITEMS");
+    int size = settings["count"].toInt();
+    qDebug() << "CHILDREN SIZE:" << size;
+    for (int j = 0; j < size; j++)
+    {
+        QApplication::processEvents();
+        //settings.setArrayIndex(j);
+        QString type = settings.value(widgetName + "\\" + QString::number(j) + "\\" + "TYPE", "UNKNOWN").toString();
+        if (type != "UNKNOWN")
+        {
+            QGCToolWidgetItem* item = NULL;
+            if (type == "COMMANDBUTTON")
+            {
+                item = new QGCCommandButton(this);
+                //qDebug() << "CREATED COMMANDBUTTON";
+            }
+            else if (type == "SLIDER")
+            {
+                item = new QGCParamSlider(this);
+                //qDebug() << "CREATED PARAM SLIDER";
+            }
+            else if (type == "COMBO")
+            {
+                item = new QGCComboBox(this);
+                //qDebug() << "CREATED PARAM COMBOBOX";
+            }
+            if (item)
+            {
+                // Configure and add to layout
+                addToolWidget(item);
+                item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settings);
+
+                //qDebug() << "Created tool widget";
+            }
+        }
+        else
+        {
+            qDebug() << "UNKNOWN TOOL WIDGET TYPE" << type;
+        }
+    }
+    //settings.endArray();
+    //settings.endGroup();
 }
 
 void QGCToolWidget::loadSettings(QSettings& settings)
@@ -480,7 +604,7 @@ void QGCToolWidget::setTitle(QString title)
     QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
     if (parent) parent->setWindowTitle(title);
     // Store all widgets
-    storeWidgetsToSettings();
+    //storeWidgetsToSettings();
 
     emit titleChanged(title);
     if (mainMenuAction) mainMenuAction->setText(title);
