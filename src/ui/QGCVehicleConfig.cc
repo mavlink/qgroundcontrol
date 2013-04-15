@@ -9,6 +9,7 @@
 
 #include <QTimer>
 #include <QDir>
+#include <QXmlStreamReader>
 
 #include "QGCVehicleConfig.h"
 #include "UASManager.h"
@@ -149,46 +150,8 @@ void QGCVehicleConfig::stopCalibrationRC()
     ui->rcTypeComboBox->setEnabled(true);
     ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
 }
-
-void QGCVehicleConfig::setActiveUAS(UASInterface* active)
+void QGCVehicleConfig::loadQgcConfig()
 {
-    // Do nothing if system is the same or NULL
-    if ((active == NULL) || mav == active) return;
-
-    if (mav)
-    {
-        // Disconnect old system
-        disconnect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
-                   SLOT(remoteControlChannelRawChanged(int,float)));
-        disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
-                   SLOT(parameterChanged(int,int,QString,QVariant)));
-
-        foreach (QGCToolWidget* tool, toolWidgets)
-        {
-            delete tool;
-        }
-        toolWidgets.clear();
-    }
-
-    // Reset current state
-    resetCalibrationRC();
-
-    chanCount = 0;
-
-    // Connect new system
-    mav = active;
-    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
-               SLOT(remoteControlChannelRawChanged(int,float)));
-    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
-               SLOT(parameterChanged(int,int,QString,QVariant)));
-
-    mav->requestParameters();
-
-    QString defaultsDir = qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower() + "/widgets/";
-    qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
-
-    QGCToolWidget* tool;
-
     QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
     QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
     QDir vehicledir = QDir(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/widgets");
@@ -202,10 +165,8 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         //TODO: Throw an error here too, no autopilot specific configuration
         qDebug() << "invalid vehicle dir";
     }
-    qDebug() << autopilotdir.absolutePath();
-    qDebug() << generaldir.absolutePath();
-    qDebug() << vehicledir.absolutePath();
-    int left = true;
+    QGCToolWidget *tool;
+    bool left = true;
     foreach (QString file,generaldir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
@@ -281,12 +242,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_mc_attitude_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-	QGroupBox *box = new QGroupBox(this);
-	box->setTitle(tool->objectName());
-	box->setLayout(new QVBoxLayout());
-	box->layout()->addWidget(tool);
-	ui->multiRotorAttitudeLayout->addWidget(box);
-	//ui->multiRotorAttitudeLayout->addWidget(tool);
+    QGroupBox *box = new QGroupBox(this);
+    box->setTitle(tool->objectName());
+    box->setLayout(new QVBoxLayout());
+    box->layout()->addWidget(tool);
+    ui->multiRotorAttitudeLayout->addWidget(box);
+    //ui->multiRotorAttitudeLayout->addWidget(tool);
     } else {
         delete tool;
     }
@@ -296,12 +257,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_mc_position_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-	QGroupBox *box = new QGroupBox(this);
-	box->setTitle(tool->objectName());
-	box->setLayout(new QVBoxLayout());
-	box->layout()->addWidget(tool);
-	ui->multiRotorAttitudeLayout->addWidget(box);
-	//ui->multiRotorPositionLayout->addWidget(tool);
+    QGroupBox *box = new QGroupBox(this);
+    box->setTitle(tool->objectName());
+    box->setLayout(new QVBoxLayout());
+    box->layout()->addWidget(tool);
+    ui->multiRotorAttitudeLayout->addWidget(box);
+    //ui->multiRotorPositionLayout->addWidget(tool);
     } else {
         delete tool;
     }
@@ -311,12 +272,12 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_fw_attitude_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-	QGroupBox *box = new QGroupBox(this);
-	box->setTitle(tool->objectName());
-	box->setLayout(new QVBoxLayout());
-	box->layout()->addWidget(tool);
-	ui->multiRotorAttitudeLayout->addWidget(box);
-	//ui->fixedWingAttitudeLayout->addWidget(tool);
+    QGroupBox *box = new QGroupBox(this);
+    box->setTitle(tool->objectName());
+    box->setLayout(new QVBoxLayout());
+    box->layout()->addWidget(tool);
+    ui->multiRotorAttitudeLayout->addWidget(box);
+    //ui->fixedWingAttitudeLayout->addWidget(tool);
     } else {
         delete tool;
     }
@@ -326,19 +287,261 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     if (tool->loadSettings(defaultsDir + "px4_fw_position_pid_params.qgw", false))
     {
         toolWidgets.append(tool);
-	QGroupBox *box = new QGroupBox(this);
-	box->setTitle(tool->objectName());
-	box->setLayout(new QVBoxLayout());
-	box->layout()->addWidget(tool);
-	ui->multiRotorAttitudeLayout->addWidget(box);
-	//ui->fixedWingPositionLayout->addWidget(tool);
+    QGroupBox *box = new QGroupBox(this);
+    box->setTitle(tool->objectName());
+    box->setLayout(new QVBoxLayout());
+    box->layout()->addWidget(tool);
+    ui->multiRotorAttitudeLayout->addWidget(box);
+    //ui->fixedWingPositionLayout->addWidget(tool);
     } else {
         delete tool;
     }*/
+}
+
+void QGCVehicleConfig::loadConfig()
+{
+    QGCToolWidget* tool;
+
+    QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
+    QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
+    QDir vehicledir = QDir(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/widgets");
+    if (!autopilotdir.exists("general"))
+    {
+     //TODO: Throw some kind of error here. There is no general configuration directory
+        qDebug() << "invalid general dir";
+    }
+    if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
+    {
+        //TODO: Throw an error here too, no autopilot specific configuration
+        qDebug() << "invalid vehicle dir";
+    }
+    qDebug() << autopilotdir.absolutePath();
+    qDebug() << generaldir.absolutePath();
+    qDebug() << vehicledir.absolutePath();
+    QFile xmlfile(autopilotdir.absolutePath() + "/arduplane.pdef.xml");
+    if (!xmlfile.open(QIODevice::ReadOnly))
+    {
+        loadQgcConfig();
+        return;
+    }
+
+    QXmlStreamReader xml(xmlfile.readAll());
+    xmlfile.close();
+    while (!xml.atEnd())
+    {
+        if (xml.isStartElement() && xml.name() == "paramfile")
+        {
+            //Beginning of the file
+            xml.readNext();
+            while ((xml.name() != "paramfile") && !xml.atEnd())
+            {
+                QString valuetype = "";
+                if (xml.isStartElement() && (xml.name() == "vehicles" || xml.name() == "libraries")) //Enter into the vehicles loop
+                {
+                    valuetype = xml.name().toString();
+                    xml.readNext();
+                    while ((xml.name() != valuetype) && !xml.atEnd())
+                    {
+                        if (xml.isStartElement() && xml.name() == "parameters") //This is a parameter block
+                        {
+                            QString parametersname = "";
+                            if (xml.attributes().hasAttribute("name"))
+                            {
+                                    parametersname = xml.attributes().value("name").toString();
+                            }
+                            QVariantMap set;
+                            set["title"] = parametersname;
+                            QString setname = parametersname;
+                            xml.readNext();
+                            int arraycount = 0;
+                            while ((xml.name() != "parameters") && !xml.atEnd())
+                            {
+                                if (xml.isStartElement() && xml.name() == "param")
+                                {
+                                    //set.setArrayIndex(arraycount++);
+                                    QString humanname = xml.attributes().value("humanName").toString();
+                                    QString name = xml.attributes().value("name").toString();
+                                    if (name.contains(":"))
+                                    {
+                                        name = name.split(":")[1];
+                                    }
+                                    QString docs = xml.attributes().value("documentation").toString();
+                                    paramTooltips[name] = name + " - " + docs;
+                                   // qDebug() << "Found param:" << name << humanname;
+
+                                    int type = -1; //Type of item
+                                    QMap<QString,QString> fieldmap;
+                                    xml.readNext();
+                                    while ((xml.name() != "param") && !xml.atEnd())
+                                    {
+                                        if (xml.isStartElement() && xml.name() == "values")
+                                        {
+                                            type = 1; //1 is a combobox
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "TYPE"] = "COMBO";
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_DESCRIPTION"] = humanname;
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID"] = name;
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_COMPONENTID"] = 1;
+                                            int paramcount = 0;
+                                            xml.readNext();
+                                            while ((xml.name() != "values") && !xml.atEnd())
+                                            {
+                                                if (xml.isStartElement() && xml.name() == "value")
+                                                {
+
+                                                    QString code = xml.attributes().value("code").toString();
+                                                    QString arg = xml.readElementText();
+                                                    set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_TEXT"] = arg;
+                                                    set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_VAL"] = code.toInt();
+                                                    paramcount++;
+                                                    //qDebug() << "Code:" << code << "Arg:" << arg;
+                                                }
+                                                xml.readNext();
+                                            }
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_COUNT"] = paramcount;
+                                        }
+                                        if (xml.isStartElement() && xml.name() == "field")
+                                        {
+                                            type = 2; //2 is a slider
+                                            QString fieldtype = xml.attributes().value("name").toString();
+                                            QString text = xml.readElementText();
+                                            fieldmap[fieldtype] = text;
+                                           // qDebug() << "Field:" << fieldtype << "Text:" << text;
+                                        }
+                                        xml.readNext();
+                                    }
+                                    if (type == -1)
+                                    {
+                                        //Nothing inside! Assume it's a value
+                                        type = 2;
+                                        QString fieldtype = "Range";
+                                        QString text = "0 100";
+                                        fieldmap[fieldtype] = text;
+                                    }
+                                    if (type == 2)
+                                    {
+                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "TYPE"] = "SLIDER";
+                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_DESCRIPTION"] = humanname;
+                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_PARAMID"] = name;
+                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_COMPONENTID"] = 1;
+                                        if (fieldmap.contains("Range"))
+                                        {
+                                            float min = 0;
+                                            float max = 0;
+                                            if (fieldmap["Range"].split(" ").size() > 1)
+                                            {
+                                                min = fieldmap["Range"].split(" ")[0].trimmed().toFloat();
+                                                max = fieldmap["Range"].split(" ")[1].trimmed().toFloat();
+                                            }
+                                            else if (fieldmap["Range"].split("-").size() > 1)
+                                            {
+                                                min = fieldmap["Range"].split("-")[0].trimmed().toFloat();
+                                                max = fieldmap["Range"].split("-")[1].trimmed().toFloat();
+                                            }
+
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_MIN"] = min;
+                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_MAX"] = max;
+                                        }
+                                    }
+                                    arraycount++;
+                                }
+                                xml.readNext();
+                            }
+                            set["count"] = arraycount;
+
+                            tool = new QGCToolWidget("", this);
+                            tool->setTitle(parametersname);
+                            tool->setObjectName(parametersname);
+                            tool->setSettings(set);
+                            QList<QString> paramlist = tool->getParamList();
+                            for (int i=0;i<paramlist.size();i++)
+                            {
+                                paramToWidgetMap[paramlist[i]] = tool;
+                            }
+
+                            toolWidgets.append(tool);
+                            QGroupBox *box = new QGroupBox(this);
+                            box->setTitle(tool->objectName());
+                            box->setLayout(new QVBoxLayout());
+                            box->layout()->addWidget(tool);
+                            if (valuetype == "vehicles")
+                            {
+                                ui->leftGeneralLayout->addWidget(box);
+                            }
+                            else if (valuetype == "libraries")
+                            {
+                                ui->rightGeneralLayout->addWidget(box);
+                            }
+                            box->hide();
+                            toolToBoxMap[tool] = box;
+
+
+                        }
+                        xml.readNext();
+                    }
+
+                }
+
+                xml.readNext();
+            }
+        }
+        xml.readNext();
+    }
+    if (mav)
+    {
+           mav->getParamManager()->setParamInfo(paramTooltips);
+    }
+    emit configReady();
+}
+
+void QGCVehicleConfig::setActiveUAS(UASInterface* active)
+{
+    // Do nothing if system is the same or NULL
+    if ((active == NULL) || mav == active) return;
+
+    if (mav)
+    {
+        // Disconnect old system
+        disconnect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+                   SLOT(remoteControlChannelRawChanged(int,float)));
+        disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+                   SLOT(parameterChanged(int,int,QString,QVariant)));
+
+        foreach (QGCToolWidget* tool, toolWidgets)
+        {
+            delete tool;
+        }
+        toolWidgets.clear();
+    }
+
+    // Reset current state
+    resetCalibrationRC();
+
+    chanCount = 0;
+
+    // Connect new system
+    mav = active;
+    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+               SLOT(remoteControlChannelRawChanged(int,float)));
+    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+               SLOT(parameterChanged(int,int,QString,QVariant)));
+
+    if (!paramTooltips.isEmpty())
+    {
+           mav->getParamManager()->setParamInfo(paramTooltips);
+    }
+
+    mav->requestParameters();
+
+    QString defaultsDir = qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower() + "/widgets/";
+    qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
+
+
+    //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
+    //amount of time it actually takes to load the configuration windows.
+    QTimer::singleShot(1,this,SLOT(loadConfig()));
 
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 }
-
 void QGCVehicleConfig::resetCalibrationRC()
 {
     for (unsigned int i = 0; i < chanMax; ++i)
@@ -558,6 +761,24 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 {
     Q_UNUSED(uas);
     Q_UNUSED(component);
+
+    if (paramToWidgetMap.contains(parameterName))
+    {
+        paramToWidgetMap[parameterName]->setParameterValue(uas,component,parameterName,value);
+        if (toolToBoxMap.contains(paramToWidgetMap[parameterName]))
+        {
+            qDebug() << "Parameter update:" << parameterName;
+            toolToBoxMap[paramToWidgetMap[parameterName]]->show();
+        }
+        else
+        {
+            qDebug() << "ERROR!!!!!!!!!! widget with no box:" << parameterName;
+        }
+    }
+    else
+    {
+        qDebug() << "Param with no widget:" << parameterName;
+    }
 
     // Channel calibration values
     QRegExp minTpl("RC?_MIN");

@@ -127,7 +127,6 @@ public:
     QList<QAction*> listLinkMenuActions(void);
 
 public slots:
-
     /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status, int timeout);
     /** @brief Shows a status message on the bottom status bar */

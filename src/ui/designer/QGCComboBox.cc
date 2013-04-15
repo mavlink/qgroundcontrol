@@ -11,7 +11,7 @@
 
 
 QGCComboBox::QGCComboBox(QWidget *parent) :
-    QGCToolWidgetItem("Slider", parent),
+    QGCToolWidgetItem("Combo", parent),
     parameterName(""),
     parameterValue(0.0f),
     parameterScalingFactor(0.0),
@@ -41,10 +41,8 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     ui->itemNameLabel->hide();
     ui->editOptionComboBox->setEnabled(false);
     isDisabled = true;
-
-    ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-    ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-
+    //ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+   // ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
     connect(ui->editOptionComboBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(comboBoxIndexChanged(QString)));
     connect(ui->editAddItemButton,SIGNAL(clicked()),this,SLOT(addButtonClicked()));
@@ -64,7 +62,9 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     // connect to self
     connect(ui->infoLabel, SIGNAL(released()), this, SLOT(showTooltip()));
     // Set the current UAS if present
+
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
 }
 
 QGCComboBox::~QGCComboBox()
@@ -107,7 +107,7 @@ void QGCComboBox::setActiveUAS(UASInterface* activeUas)
         connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
         uas = activeUas;
         // Update current param value
-        requestParameter();
+        //requestParameter();
         // Set param info
         QString text = uas->getParamManager()->getParamInfo(parameterName);
         ui->infoLabel->setToolTip(text);
@@ -351,7 +351,34 @@ void QGCComboBox::writeSettings(QSettings& settings)
     }
     settings.sync();
 }
+void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
+{
+    parameterName = settings.value(pre + "QGC_PARAM_COMBOBOX_PARAMID").toString();
+    component = settings.value(pre + "QGC_PARAM_COMBOBOX_COMPONENTID").toInt();
+    ui->nameLabel->setText(settings.value(pre + "QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
+    ui->editNameLabel->setText(settings.value(pre + "QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
+    //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
+    ui->editSelectParamComboBox->addItem(settings.value(pre + "QGC_PARAM_COMBOBOX_PARAMID").toString());
+    ui->editSelectParamComboBox->setCurrentIndex(ui->editSelectParamComboBox->count()-1);
+    ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value(pre + "QGC_PARAM_COMBOBOX_COMPONENTID").toInt()), settings.value(pre + "QGC_PARAM_COMBOBOX_COMPONENTID").toInt());
+    showInfo(settings.value(pre + "QGC_PARAM_COMBOBOX_DISPLAY_INFO", true).toBool());
+    ui->editSelectParamComboBox->setEnabled(true);
+    ui->editSelectComponentComboBox->setEnabled(true);
 
+
+    int num = settings.value(pre + "QGC_PARAM_COMBOBOX_COUNT").toInt();
+    for (int i=0;i<num;i++)
+    {
+        ui->editOptionComboBox->addItem(settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString());
+        //qDebug() << "Adding val:" << settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString() << settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
+        comboBoxTextToValMap[settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
+    }
+
+    setActiveUAS(UASManager::instance()->getActiveUAS());
+
+    // Get param value after settings have been loaded
+   // requestParameter();
+}
 void QGCComboBox::readSettings(const QSettings& settings)
 {
     parameterName = settings.value("QGC_PARAM_COMBOBOX_PARAMID").toString();
@@ -394,7 +421,6 @@ void QGCComboBox::delButtonClicked()
 }
 void QGCComboBox::comboBoxIndexChanged(QString val)
 {
-    qDebug() << "comboboxchanged:" << comboBoxTextToValMap[val] << val;
     switch (parameterValue.type())
     {
     case QVariant::Char:

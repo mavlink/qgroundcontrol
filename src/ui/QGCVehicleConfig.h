@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QList>
+#include <QGroupBox>
 
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
@@ -30,7 +31,8 @@ public:
 public slots:
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
-
+    void loadQgcConfig();
+    void loadConfig();
     /** Start the RC calibration routine */
     void startCalibrationRC();
     /** Stop the RC calibration routine */
@@ -169,12 +171,16 @@ protected:
     enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     bool calibrationEnabled;            ///< calibration mode on / off
+    QMap<QString,QGCToolWidget*> paramToWidgetMap;
+    QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;
+    QMap<QString,QString> paramTooltips;
     
 private:
     Ui::QGCVehicleConfig *ui;
 
 signals:
     void visibilityChanged(bool visible);
+    void configReady();
 };
 
 #endif // QGCVEHICLECONFIG_H

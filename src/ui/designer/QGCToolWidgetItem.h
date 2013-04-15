@@ -26,6 +26,7 @@ public slots:
     }
     virtual void writeSettings(QSettings& settings) = 0;
     virtual void readSettings(const QSettings& settings) = 0;
+    virtual void readSettings(const QString& pre,const QVariantMap& settings) = 0;
     virtual void setActiveUAS(UASInterface *uas);
 
 signals:

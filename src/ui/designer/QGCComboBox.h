@@ -28,6 +28,7 @@ public slots:
     /** @brief Update the UI with the new parameter value */
     void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, const QVariant value);
     void writeSettings(QSettings& settings);
+    void readSettings(const QString& pre,const QVariantMap& settings);
     void readSettings(const QSettings& settings);
     void refreshParamList();
     void setActiveUAS(UASInterface *uas);

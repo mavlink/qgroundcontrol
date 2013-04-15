@@ -241,7 +241,58 @@ void QGCCommandButton::writeSettings(QSettings& settings)
     settings.setValue("QGC_COMMAND_BUTTON_PARAM7",  ui->editParam7SpinBox->value());
     settings.sync();
 }
+void QGCCommandButton::readSettings(const QString& pre,const QVariantMap& settings)
+{
+    ui->editButtonName->setText(settings.value(pre + "QGC_COMMAND_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
+    ui->editCommandComboBox->setCurrentIndex(settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt());
+    ui->commandButton->setText(settings.value(pre + "QGC_COMMAND_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
 
+    int commandId = settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt();
+
+    ui->editParam1SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM1", 0.0).toDouble());
+    ui->editParam2SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM2", 0.0).toDouble());
+    ui->editParam3SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM3", 0.0).toDouble());
+    ui->editParam4SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM4", 0.0).toDouble());
+    ui->editParam5SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM5", 0.0).toDouble());
+    ui->editParam6SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM6", 0.0).toDouble());
+    ui->editParam7SpinBox->setValue(settings.value(pre + "QGC_COMMAND_BUTTON_PARAM7", 0.0).toDouble());
+
+    ui->editCommandComboBox->setCurrentIndex(0);
+
+    // Find combobox entry for this data
+    for (int i = 0; i < ui->editCommandComboBox->count(); ++i)
+    {
+        if (commandId == ui->editCommandComboBox->itemData(i).toInt())
+        {
+            ui->editCommandComboBox->setCurrentIndex(i);
+        }
+    }
+
+    ui->editParamsVisibleCheckBox->setChecked(settings.value(pre + "QGC_COMMAND_BUTTON_PARAMS_VISIBLE").toBool());
+    if (ui->editParamsVisibleCheckBox->isChecked())
+    {
+        ui->editParam1SpinBox->show();
+        ui->editParam2SpinBox->show();
+        ui->editParam3SpinBox->show();
+        ui->editParam4SpinBox->show();
+        ui->editParam5SpinBox->show();
+        ui->editParam6SpinBox->show();
+        ui->editParam7SpinBox->show();
+    }
+    else
+    {
+        ui->editParam1SpinBox->hide();
+        ui->editParam2SpinBox->hide();
+        ui->editParam3SpinBox->hide();
+        ui->editParam4SpinBox->hide();
+        ui->editParam5SpinBox->hide();
+        ui->editParam6SpinBox->hide();
+        ui->editParam7SpinBox->hide();
+    }
+
+    ui->editNameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+    ui->nameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+}
 void QGCCommandButton::readSettings(const QSettings& settings)
 {
     ui->editButtonName->setText(settings.value("QGC_COMMAND_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
