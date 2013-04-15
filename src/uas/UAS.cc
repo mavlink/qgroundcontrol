@@ -80,6 +80,10 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     latitude(0.0),
     longitude(0.0),
     altitude(0.0),
+    globalEstimatorActive(false),
+    latitude_gps(0.0),
+    longitude_gps(0.0),
+    altitude_gps(0.0),
     roll(0.0),
     pitch(0.0),
     yaw(0.0),
@@ -733,6 +737,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             latitude = pos.lat/(double)1E7;
             longitude = pos.lon/(double)1E7;
             altitude = pos.alt/1000.0;
+            globalEstimatorActive = true;
             speedX = pos.vx/100.0;
             speedY = pos.vy/100.0;
             speedZ = pos.vz/100.0;
@@ -772,10 +777,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (pos.fix_type > 2)
             {
-                emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
-                latitude = pos.lat/(double)1E7;
-                longitude = pos.lon/(double)1E7;
-                altitude = pos.alt/1000.0;
+                latitude_gps = pos.lat/(double)1E7;
+                longitude_gps = pos.lon/(double)1E7;
+                altitude_gps = pos.alt/1000.0;
+
+                if (!globalEstimatorActive) {
+                    latitude = latitude_gps;
+                    longitude = longitude_gps;
+                    altitude = altitude_gps;
+                    emit globalPositionChanged(this, latitude, longitude, altitude, time);
+                }
+
                 positionLock = true;
                 isGlobalPositionKnown = true;
 
@@ -784,18 +796,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (!isnan(alt) && !isinf(alt))
                 {
                     alt = 0;
-                    //emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
+                    emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
                 }
-                // FIXME REMOVE LATER emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
                 // Smaller than threshold and not NaN
 
                 float vel = pos.vel/100.0f;
 
-                if (vel < 1000000 && !isnan(vel) && !isinf(vel))
+                if (!globalEstimatorActive && (vel < 1000000) && !isnan(vel) && !isinf(vel))
                 {
-                    // FIXME REMOVE LATER emit valueChanged(uasId, "speed", "m/s", vel, time);
-                    //qDebug() << "GOT GPS RAW";
-                    // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                    emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
                 }
                 else
                 {
@@ -905,7 +914,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, param);
                 emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-//                qDebug() << "RECEIVED PARAM:" << param;
             }
                 break;
             case MAV_PARAM_TYPE_INT32:
