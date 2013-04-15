@@ -804,7 +804,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 if (!globalEstimatorActive && (vel < 1000000) && !isnan(vel) && !isinf(vel))
                 {
-                    emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                    emit speedChanged(this, vel, 0.0, 0.0, time);
                 }
                 else
                 {
