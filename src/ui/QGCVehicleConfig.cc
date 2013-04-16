@@ -843,13 +843,13 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
     else
     {
         bool found = false;
-        qDebug() << "Param with no widget:" << parameterName;
+       // qDebug() << "Param with no widget:" << parameterName;
         for (int i=0;i<toolWidgets.size();i++)
         {
             if (parameterName.startsWith(toolWidgets[i]->objectName()))
             {
                 //It should be grouped with this one.
-                qDebug() << parameterName << toolWidgets[i]->objectName();
+                //qDebug() << parameterName << toolWidgets[i]->objectName();
                 toolWidgets[i]->addParam(uas,component,parameterName,value);
                 libParamToWidgetMap->insert(parameterName,toolWidgets[i]);
                 found  = true;
