@@ -520,7 +520,6 @@ void QGCToolWidget::addParam(int uas,int component,QString paramname,QVariant va
     }
     toolLayout->addWidget(slider);
     slider->setActiveUAS(mav);
-    slider->setParamMinMax(0,100);
     slider->setParameterValue(uas,component,0,-1,paramname,value);
 
 

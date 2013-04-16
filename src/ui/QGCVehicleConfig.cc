@@ -774,7 +774,14 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         paramToWidgetMap[parameterName]->setParameterValue(uas,component,parameterName,value);
         if (toolToBoxMap.contains(paramToWidgetMap[parameterName]))
         {
-            qDebug() << "Parameter update:" << parameterName;
+            if (value.type() == QVariant::Char)
+            {
+                qDebug() << "Parameter update (char):" << parameterName << QVariant(value.toUInt());
+            }
+            else
+            {
+                qDebug() << "Parameter update:" << parameterName << value;
+            }
             toolToBoxMap[paramToWidgetMap[parameterName]]->show();
         }
         else

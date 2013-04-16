@@ -45,13 +45,15 @@ public slots:
     /** @brief Show tool tip of calling element */
     void showTooltip();
 
-    void setParamMinMax(double min, double max);
-
 protected slots:
     /** @brief Request the parameter of this widget from the MAV */
     void requestParameter();
 
 protected:
+    //The below variables, and usage in QGCParamSlider.cc are a bit of a hack, since disconnect() does not seem to take effect
+    //immediatly (perhaps it is put into the event loop?) - MLC
+    bool valueModLock;              ///< Used to keep the slider/spinboxes from updating each other during user input
+    bool valueModLockParam;         ///< Used to keep the slider/spinboxes from udpating each other when a new parametervalue comes in
     QString parameterName;         ///< Key/Name of the parameter
     QVariant parameterValue;          ///< Value of the parameter
     double parameterScalingFactor; ///< Factor to scale the parameter between slider and true value
