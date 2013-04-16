@@ -55,6 +55,7 @@ public:
     JoystickInput();
 	~JoystickInput();
     void run();
+    void shutdown();
 
     const QString& getName();
 
