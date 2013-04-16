@@ -20,6 +20,8 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     component(0),
     ui(new Ui::QGCParamSlider)
 {
+    valueModLock = false;
+    valueModLockParam = false;
     ui->setupUi(this);
     ui->intValueSpinBox->hide();
     ui->valueSlider->setEnabled(false);
@@ -131,13 +133,33 @@ void QGCParamSlider::showInfo(bool enable)
 void QGCParamSlider::setParamValue(double value)
 {
     parameterValue = (float)value;
-    ui->valueSlider->setValue(floatToScaledInt(value));
+     //disconnect(ui->valueSlider,SIGNAL(valueChanged(int)));
+    if (!valueModLock && !valueModLockParam)
+    {
+        valueModLock = true;
+        ui->valueSlider->setValue(floatToScaledInt(value));
+    }
+    else
+    {
+        valueModLock = false;
+    }
+    //connect(ui->valueSlider, SIGNAL(valueChanged(int)), this, SLOT(setSliderValue(int)));
 }
 
 void QGCParamSlider::setParamValue(int value)
 {
     parameterValue = value;
-    ui->valueSlider->setValue(floatToScaledInt(value));
+    // disconnect(ui->valueSlider,SIGNAL(valueChanged(int)));
+    if (!valueModLock && !valueModLockParam)
+    {
+        valueModLock = true;
+        ui->valueSlider->setValue(floatToScaledInt(value));
+    }
+    else
+    {
+        valueModLock = false;
+    }
+    //connect(ui->valueSlider, SIGNAL(valueChanged(int)), this, SLOT(setSliderValue(int)));
 }
 
 void QGCParamSlider::selectComponent(int componentIndex)
@@ -276,27 +298,36 @@ void QGCParamSlider::sendParameter()
 
 void QGCParamSlider::setSliderValue(int sliderValue)
 {
-    switch (parameterValue.type())
+    if (!valueModLock && !valueModLockParam)
     {
-    case QVariant::Char:
-        parameterValue = QVariant(QChar((unsigned char)scaledIntToFloat(sliderValue)));
-        ui->intValueSpinBox->setValue(parameterValue.toInt());
-        break;
-    case QVariant::Int:
-        parameterValue = (int)scaledIntToFloat(sliderValue);
-        ui->intValueSpinBox->setValue(parameterValue.toInt());
-        break;
-    case QVariant::UInt:
-        parameterValue = (unsigned int)scaledIntToFloat(sliderValue);
-        ui->intValueSpinBox->setValue(parameterValue.toUInt());
-        break;
-    case QMetaType::Float:
-        parameterValue = scaledIntToFloat(sliderValue);
-        ui->doubleValueSpinBox->setValue(parameterValue.toFloat());
-        break;
-    default:
-        qCritical() << "ERROR: NO VALID PARAM TYPE";
-        return;
+        valueModLock = true;
+        switch (parameterValue.type())
+        {
+        case QVariant::Char:
+            parameterValue = QVariant(QChar((unsigned char)scaledIntToFloat(sliderValue)));
+            ui->intValueSpinBox->setValue(parameterValue.toInt());
+            break;
+        case QVariant::Int:
+            parameterValue = (int)scaledIntToFloat(sliderValue);
+            ui->intValueSpinBox->setValue(parameterValue.toInt());
+            break;
+        case QVariant::UInt:
+            parameterValue = (unsigned int)scaledIntToFloat(sliderValue);
+            ui->intValueSpinBox->setValue(parameterValue.toUInt());
+            break;
+        case QMetaType::Float:
+            parameterValue = scaledIntToFloat(sliderValue);
+            ui->doubleValueSpinBox->setValue(parameterValue.toFloat());
+            break;
+        default:
+            qCritical() << "ERROR: NO VALID PARAM TYPE";
+            valueModLock = false;
+            return;
+        }
+    }
+    else
+    {
+        valueModLock = false;
     }
 }
 
@@ -348,6 +379,7 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
     {
         parameterValue = value;
         ui->valueSlider->setEnabled(true);
+        valueModLockParam = true;
         switch (value.type())
         {
         case QVariant::Char:
@@ -357,6 +389,11 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
             ui->intValueSpinBox->setValue(value.toUInt());
             ui->intValueSpinBox->setMinimum(-ui->intValueSpinBox->maximum());
             ui->valueSlider->setValue(floatToScaledInt(value.toUInt()));
+            if (parameterMax == 0 && parameterMin == 0)
+            {
+                ui->editMaxSpinBox->setValue(255);
+                ui->editMinSpinBox->setValue(0);
+            }
             break;
         case QVariant::Int:
             ui->intValueSpinBox->show();
@@ -365,6 +402,11 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
             ui->intValueSpinBox->setValue(value.toInt());
             ui->valueSlider->setValue(floatToScaledInt(value.toInt()));
             ui->intValueSpinBox->setMinimum(-ui->intValueSpinBox->maximum());
+            if (parameterMax == 0 && parameterMin == 0)
+            {
+                ui->editMaxSpinBox->setValue(65535);
+                ui->editMinSpinBox->setValue(0);
+            }
             break;
         case QVariant::UInt:
             ui->intValueSpinBox->show();
@@ -373,6 +415,11 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
             ui->intValueSpinBox->setValue(value.toUInt());
             ui->valueSlider->setValue(floatToScaledInt(value.toUInt()));
             ui->intValueSpinBox->setMinimum(0);
+            if (parameterMax == 0 && parameterMin == 0)
+            {
+                ui->editMaxSpinBox->setValue(65535);
+                ui->editMinSpinBox->setValue(0);
+            }
             break;
         case QMetaType::Float:
             ui->doubleValueSpinBox->setValue(value.toFloat());
@@ -380,12 +427,20 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
             ui->doubleValueSpinBox->setEnabled(true);
             ui->intValueSpinBox->hide();
             ui->valueSlider->setValue(floatToScaledInt(value.toFloat()));
+            if (parameterMax == 0 && parameterMin == 0)
+            {
+                ui->editMaxSpinBox->setValue(10000);
+                ui->editMinSpinBox->setValue(0);
+            }
             break;
         default:
             qCritical() << "ERROR: NO VALID PARAM TYPE";
+            valueModLockParam = false;
             return;
         }
-
+        valueModLockParam = false;
+        parameterMax = ui->editMaxSpinBox->value();
+        parameterMin = ui->editMinSpinBox->value();
     }
 
     if (paramIndex == paramCount - 1)
@@ -444,6 +499,10 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
     ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt()), settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt());
     ui->editMinSpinBox->setValue(settings.value(pre + "QGC_PARAM_SLIDER_MIN").toFloat());
     ui->editMaxSpinBox->setValue(settings.value(pre + "QGC_PARAM_SLIDER_MAX").toFloat());
+    parameterMax = ui->editMaxSpinBox->value();
+    parameterMin = ui->editMinSpinBox->value();
+    //ui->valueSlider->setMaximum(parameterMax);
+    //ui->valueSlider->setMinimum(parameterMin);
     showInfo(settings.value(pre + "QGC_PARAM_SLIDER_DISPLAY_INFO", true).toBool());
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
@@ -452,13 +511,6 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
 
     // Get param value after settings have been loaded
     //requestParameter();
-}
-void QGCParamSlider::setParamMinMax(double min, double max)
-{
-    parameterMin = min;
-    parameterMax = max;
-    ui->editMinSpinBox->setValue(min);
-    ui->editMaxSpinBox->setValue(max);
 }
 
 void QGCParamSlider::readSettings(const QSettings& settings)
