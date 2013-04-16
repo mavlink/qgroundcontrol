@@ -466,7 +466,7 @@ void QGCVehicleConfig::loadConfig()
                                 {
                                     systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
                                 }
-                                else if (parametersname == "ArduCoptor") //MAV_TYPE_QUADROTOR "QUADROTOR
+                                else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
                                 {
                                     systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
                                 }
