@@ -172,7 +172,10 @@ protected:
     enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     bool calibrationEnabled;            ///< calibration mode on / off
-    QMap<QString,QGCToolWidget*> paramToWidgetMap;
+
+    QMap<QString,QGCToolWidget*> *paramToWidgetMap;
+    QMap<QString,QGCToolWidget*> *libParamToWidgetMap;
+    QMap<QString,QMap<QString,QGCToolWidget*>*> systemTypeToParamMap;
     QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;
     QMap<QString,QString> paramTooltips;
     
