@@ -174,6 +174,33 @@ QString MAVLinkProtocol::getLogfileName()
     }
 }
 
+void MAVLinkProtocol::linkStatusChanged(bool connected)
+{
+    LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
+
+    if (link) {
+        if (connected) {
+            // Send command to start MAVLink
+            // XXX hacky but safe
+            // Start NSH
+            const char init[] = {0x0d, 0x0d, 0x0d};
+            link->writeBytes(init, 1);
+            QGC::SLEEP::msleep(500);
+
+            // Stop any running mavlink instance
+            char* cmd = "mavlink stop\n";
+            link->writeBytes(cmd, strlen(cmd));
+            link->writeBytes(init, 2);
+            cmd = "uorb start";
+            link->writeBytes(cmd, strlen(cmd));
+            link->writeBytes(init, 2);
+            cmd = "sh /etc/init.d/rc.usb\n";
+            link->writeBytes(cmd, strlen(cmd));
+            link->writeBytes(init, 4);
+        }
+    }
+}
+
 /**
  * The bytes are copied by calling the LinkInterface::readBytes() method.
  * This method parses all incoming bytes and constructs a MAVLink packet.

@@ -55,6 +55,7 @@ public:
 
 public slots:
     virtual void receiveBytes(LinkInterface *link, QByteArray b) = 0;
+    virtual void linkStatusChanged(bool connected) = 0;
 
 signals:
     /** @brief Update the packet loss from one system */
