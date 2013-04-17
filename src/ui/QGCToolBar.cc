@@ -38,7 +38,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     batteryVoltage(0),
     wpId(0),
     wpDistance(0),
-    systemArmed(false)
+    systemArmed(false),
+    lastLogDirectory(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation))
 {
     setObjectName("QGC_TOOLBAR");
 
@@ -123,6 +124,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     // Set the toolbar to be updated every 2s
     connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateViewTimer.start(2000);
+
+    loadSettings();
 }
 
 void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
@@ -171,13 +174,13 @@ void QGCToolBar::playLogFile(bool checked)
             player->playPause(false);
             if (checked)
             {
-                if (!player->selectLogFile()) return;
+                if (!player->selectLogFile(lastLogDirectory)) return;
             }
         }
         // If no replaying happens already, start it
         else
         {
-            if (!player->selectLogFile()) return;
+            if (!player->selectLogFile(lastLogDirectory)) return;
         }
         player->playPause(checked);
     }
@@ -192,7 +195,7 @@ void QGCToolBar::logging(bool checked)
     if (checked)
     {
 		// Prompt the user for a filename/location to save to
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file to save to"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file to save to"), lastLogDirectory, tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
 
 		// Check that they didn't cancel out
 		if (fileName.isNull())
@@ -224,6 +227,7 @@ void QGCToolBar::logging(bool checked)
         {
             MainWindow::instance()->getMAVLink()->setLogfileName(fileName);
             MainWindow::instance()->getMAVLink()->enableLogging(true);
+            lastLogDirectory = file.absoluteDir().absolutePath(); //save last log directory
         }
     }
 }
@@ -486,6 +490,24 @@ void QGCToolBar::connectLink(bool connect)
 
 }
 
+
+void QGCToolBar::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_TOOLBAR");
+    lastLogDirectory = settings.value("LAST_LOG_DIRECTORY", lastLogDirectory).toString();
+    settings.endGroup();
+}
+
+void QGCToolBar::storeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_TOOLBAR");
+    settings.setValue("LAST_LOG_DIRECTORY", lastLogDirectory);
+    settings.endGroup();
+    settings.sync();
+}
+
 void QGCToolBar::clearStatusString()
 {
     lastSystemMessage = "";
@@ -494,6 +516,7 @@ void QGCToolBar::clearStatusString()
 
 QGCToolBar::~QGCToolBar()
 {
+    storeSettings();
     if (toggleLoggingAction) toggleLoggingAction->deleteLater();
     if (logReplayAction) logReplayAction->deleteLater();
 }
