@@ -61,10 +61,12 @@ public slots:
     void setSettings(QVariantMap& settings);
     QList<QString> getParamList();
     void setParameterValue(int uas, int component, QString parameterName, const QVariant value);
+    bool fromMetaData() { return isFromMetaData; }
 signals:
     void titleChanged(QString);
 
 protected:
+    bool isFromMetaData;
     QMap<QString,QGCToolWidgetItem*> paramToItemMap;
     QList<QString> paramList;
     QVariantMap settingsMap;

@@ -461,7 +461,7 @@ void QGCVehicleConfig::loadConfig()
                             QList<QString> paramlist = tool->getParamList();
                             for (int i=0;i<paramlist.size();i++)
                             {
-                                qDebug() << "Adding:" << paramlist[i] << parametersname;
+                                //qDebug() << "Adding:" << paramlist[i] << parametersname;
                                 if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
                                 {
                                     systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
