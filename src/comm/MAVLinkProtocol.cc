@@ -184,7 +184,7 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
             // XXX hacky but safe
             // Start NSH
             const char init[] = {0x0d, 0x0d, 0x0d};
-            link->writeBytes(init, 1);
+            link->writeBytes(init, sizeof(init));
             QGC::SLEEP::msleep(500);
 
             // Stop any running mavlink instance
