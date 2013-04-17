@@ -49,7 +49,7 @@ public slots:
     /** @brief Reset the logfile */
     bool reset(int packetIndex=0);
     /** @brief Select logfile */
-    bool selectLogFile();
+    bool selectLogFile(const QString startDirectory);
     /** @brief Load log file */
     bool loadLogFile(const QString& file);
     /** @brief Jump to a position in the logfile */

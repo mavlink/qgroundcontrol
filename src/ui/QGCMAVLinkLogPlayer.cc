@@ -167,9 +167,14 @@ bool QGCMAVLinkLogPlayer::reset(int packetIndex)
     }
 }
 
-bool QGCMAVLinkLogPlayer::selectLogFile()
+/**
+ * @brief QGCMAVLinkLogPlayer::selectLogFile
+ * @param startDirectory Directory where the file dialog will be opened
+ * @return filename of the logFile
+ */
+bool QGCMAVLinkLogPlayer::selectLogFile(const QString startDirectory)
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name to replay"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name to replay"), startDirectory, tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
 
     if (fileName == "")
     {
@@ -370,6 +375,7 @@ void QGCMAVLinkLogPlayer::logLoop()
             //qDebug() << "START TIME: " << startTime;
 
             // Check if these bytes could be correctly decoded
+            // TODO
             if (!ok)
             {
                 ui->logStatsLabel->setText(tr("Error decoding first timestamp, aborting."));
@@ -381,14 +387,15 @@ void QGCMAVLinkLogPlayer::logLoop()
 
 
         // Initialization seems fine, load next chunk
+        //this is ok because before we already read the timestamp of this paket before
         QByteArray chunk = logFile.read(timeLen+packetLen);
-        QByteArray packet = chunk.mid(0, packetLen);
+        QByteArray packet = chunk.left(packetLen);
 
         // Emit this packet
         emit bytesReady(logLink, packet);
 
         // Check if reached end of file before reading next timestamp
-        if (chunk.length() < timeLen+packetLen || logFile.atEnd())
+        if (chunk.length() < (timeLen + packetLen) || logFile.atEnd())
         {
             // Reached end of file
             reset();
@@ -400,6 +407,7 @@ void QGCMAVLinkLogPlayer::logLoop()
         }
 
         // End of file not reached, read next timestamp
+        // which is located after current packet
         QByteArray rawTime = chunk.mid(packetLen);
 
         // This is the timestamp of the next packet
