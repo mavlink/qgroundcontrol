@@ -22,6 +22,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent, QSettings* s
         widgetTitle(title),
         ui(new Ui::QGCToolWidget)
 {
+    isFromMetaData = false;
     ui->setupUi(this);
     if (settings) loadSettings(*settings);
 
@@ -109,6 +110,7 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     }
 
     QList<QGCToolWidget*> newWidgets;
+    settings->beginGroup("Custom_Tool_Widgets");
     int size = settings->beginReadArray("QGC_TOOL_WIDGET_NAMES");
     for (int i = 0; i < size; i++)
     {
@@ -140,6 +142,8 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     {
         newWidgets.at(i)->loadSettings(*settings);
     }
+    settings->endGroup();
+    settings->sync();
     delete settings;
 
     return instances()->values();
@@ -171,6 +175,7 @@ bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
 }
 void QGCToolWidget::setSettings(QVariantMap& settings)
 {
+    isFromMetaData = true;
     settingsMap = settings;
     QString widgetName = getTitle();
     int size = settingsMap["count"].toInt();
@@ -365,18 +370,23 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
         //qDebug() << "STORING SETTINGS TO DEFAULT" << settings->fileName();
     }
 
+    settings->beginGroup("Custom_Tool_Widgets");
     int preArraySize = settings->beginReadArray("QGC_TOOL_WIDGET_NAMES");
     settings->endArray();
 
     settings->beginWriteArray("QGC_TOOL_WIDGET_NAMES");
+    int num = 0;
     for (int i = 0; i < qMax(preArraySize, instances()->size()); ++i)
     {
-        settings->setArrayIndex(i);
         if (i < instances()->size())
         {
             // Updating value
-            settings->setValue("TITLE", instances()->values().at(i)->getTitle());
-            //qDebug() << "WRITING TITLE" << instances()->values().at(i)->getTitle();
+            if (!instances()->values().at(i)->fromMetaData())
+            {
+                settings->setArrayIndex(num++);
+                settings->setValue("TITLE", instances()->values().at(i)->getTitle());
+                //qDebug() << "WRITING TITLE" << instances()->values().at(i)->getTitle();
+            }
         }
         else
         {
@@ -391,6 +401,8 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
     {
         instances()->values().at(i)->storeSettings(*settings);
     }
+    settings->endGroup();
+    settings->sync();
     delete settings;
 }
 
@@ -408,6 +420,11 @@ void QGCToolWidget::storeSettings(const QString& settingsFile)
 
 void QGCToolWidget::storeSettings(QSettings& settings)
 {
+    if (isFromMetaData)
+    {
+        //Refuse to store if this is loaded from metadata or dynamically generated.
+        return;
+    }
     //qDebug() << "WRITING WIDGET" << widgetTitle << "TO SETTINGS";
     settings.beginGroup(widgetTitle);
     settings.beginWriteArray("QGC_TOOL_WIDGET_ITEMS");
@@ -511,6 +528,7 @@ QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
 }
 void QGCToolWidget::addParam(int uas,int component,QString paramname,QVariant value)
 {
+    isFromMetaData = true;
     QGCParamSlider* slider = new QGCParamSlider(this);
     connect(slider, SIGNAL(destroyed()), this, SLOT(storeSettings()));
     if (ui->hintLabel)
@@ -611,11 +629,11 @@ void QGCToolWidget::setWindowTitle(const QString& title)
 void QGCToolWidget::setTitle(QString title)
 {
     // Remove references to old title
-    QSettings settings;
+    /*QSettings settings;
     settings.beginGroup(widgetTitle);
     settings.remove("");
     settings.endGroup();
-    settings.sync();
+    settings.sync();*/
 
     if (instances()->contains(widgetTitle)) instances()->remove(widgetTitle);
 
@@ -645,10 +663,11 @@ void QGCToolWidget::deleteWidget()
     // Hide
     this->hide();
     instances()->remove(getTitle());
-    QSettings settings;
+    /*QSettings settings;
     settings.beginGroup(getTitle());
     settings.remove("");
     settings.endGroup();
+    storeWidgetsToSettings();*/
     storeWidgetsToSettings();
 
     // Delete
