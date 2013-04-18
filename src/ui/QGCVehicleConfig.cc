@@ -39,6 +39,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     systemTypeToParamMap["QUADROTOR"] = new QMap<QString,QGCToolWidget*>();
     systemTypeToParamMap["GROUND_ROVER"] = new QMap<QString,QGCToolWidget*>();
     libParamToWidgetMap = new QMap<QString,QGCToolWidget*>();
+
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
 
@@ -163,12 +164,12 @@ void QGCVehicleConfig::loadQgcConfig()
     if (!autopilotdir.exists("general"))
     {
      //TODO: Throw some kind of error here. There is no general configuration directory
-        qDebug() << "invalid general dir";
+        qWarning() << "Invalid general dir. no general configuration will be loaded.";
     }
     if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
     {
         //TODO: Throw an error here too, no autopilot specific configuration
-        qDebug() << "invalid vehicle dir";
+        qWarning() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
     }
     QGCToolWidget *tool;
     bool left = true;
@@ -215,12 +216,12 @@ void QGCVehicleConfig::loadQgcConfig()
                 if (left)
                 {
                     left = false;
-                    ui->leftHWSpecificLayout->addWidget(box);
+                    ui->leftAdvancedLayout->addWidget(box);
                 }
                 else
                 {
                     left = true;
-                    ui->rightHWSpecificLayout->addWidget(box);
+                    ui->rightAdvancedLayout->addWidget(box);
                 }
 
             } else {
@@ -232,6 +233,7 @@ void QGCVehicleConfig::loadQgcConfig()
 
 
     // Load calibration
+    //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
     tool = new QGCToolWidget("", this);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
     {
@@ -240,67 +242,6 @@ void QGCVehicleConfig::loadQgcConfig()
     } else {
         delete tool;
     }
-
-    // Load multirotor attitude pid
-    /*
-    tool = new QGCToolWidget("", this);
-    if (tool->loadSettings(defaultsDir + "px4_mc_attitude_pid_params.qgw", false))
-    {
-        toolWidgets.append(tool);
-    QGroupBox *box = new QGroupBox(this);
-    box->setTitle(tool->objectName());
-    box->setLayout(new QVBoxLayout());
-    box->layout()->addWidget(tool);
-    ui->multiRotorAttitudeLayout->addWidget(box);
-    //ui->multiRotorAttitudeLayout->addWidget(tool);
-    } else {
-        delete tool;
-    }
-
-    // Load multirotor position pid
-    tool = new QGCToolWidget("", this);
-    if (tool->loadSettings(defaultsDir + "px4_mc_position_pid_params.qgw", false))
-    {
-        toolWidgets.append(tool);
-    QGroupBox *box = new QGroupBox(this);
-    box->setTitle(tool->objectName());
-    box->setLayout(new QVBoxLayout());
-    box->layout()->addWidget(tool);
-    ui->multiRotorAttitudeLayout->addWidget(box);
-    //ui->multiRotorPositionLayout->addWidget(tool);
-    } else {
-        delete tool;
-    }
-
-    // Load fixed wing attitude pid
-    tool = new QGCToolWidget("", this);
-    if (tool->loadSettings(defaultsDir + "px4_fw_attitude_pid_params.qgw", false))
-    {
-        toolWidgets.append(tool);
-    QGroupBox *box = new QGroupBox(this);
-    box->setTitle(tool->objectName());
-    box->setLayout(new QVBoxLayout());
-    box->layout()->addWidget(tool);
-    ui->multiRotorAttitudeLayout->addWidget(box);
-    //ui->fixedWingAttitudeLayout->addWidget(tool);
-    } else {
-        delete tool;
-    }
-
-    // Load fixed wing position pid
-    tool = new QGCToolWidget("", this);
-    if (tool->loadSettings(defaultsDir + "px4_fw_position_pid_params.qgw", false))
-    {
-        toolWidgets.append(tool);
-    QGroupBox *box = new QGroupBox(this);
-    box->setTitle(tool->objectName());
-    box->setLayout(new QVBoxLayout());
-    box->layout()->addWidget(tool);
-    ui->multiRotorAttitudeLayout->addWidget(box);
-    //ui->fixedWingPositionLayout->addWidget(tool);
-    } else {
-        delete tool;
-    }*/
 }
 
 void QGCVehicleConfig::loadConfig()
@@ -313,18 +254,18 @@ void QGCVehicleConfig::loadConfig()
     if (!autopilotdir.exists("general"))
     {
      //TODO: Throw some kind of error here. There is no general configuration directory
-        qDebug() << "invalid general dir";
+        qWarning() << "Invalid general dir. no general configuration will be loaded.";
     }
     if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
     {
         //TODO: Throw an error here too, no autopilot specific configuration
-        qDebug() << "invalid vehicle dir";
+        qWarning() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
     }
     qDebug() << autopilotdir.absolutePath();
     qDebug() << generaldir.absolutePath();
     qDebug() << vehicledir.absolutePath();
     QFile xmlfile(autopilotdir.absolutePath() + "/arduplane.pdef.xml");
-    if (!xmlfile.open(QIODevice::ReadOnly))
+    if (xmlfile.exists() && !xmlfile.open(QIODevice::ReadOnly))
     {
         loadQgcConfig();
         doneLoadingConfig = true;
@@ -333,11 +274,12 @@ void QGCVehicleConfig::loadConfig()
 
     QXmlStreamReader xml(xmlfile.readAll());
     xmlfile.close();
+
+    //TODO: Testing to ensure that incorrectly formated XML won't break this.
     while (!xml.atEnd())
     {
         if (xml.isStartElement() && xml.name() == "paramfile")
         {
-            //Beginning of the file
             xml.readNext();
             while ((xml.name() != "paramfile") && !xml.atEnd())
             {
@@ -364,7 +306,6 @@ void QGCVehicleConfig::loadConfig()
                             {
                                 if (xml.isStartElement() && xml.name() == "param")
                                 {
-                                    //set.setArrayIndex(arraycount++);
                                     QString humanname = xml.attributes().value("humanName").toString();
                                     QString name = xml.attributes().value("name").toString();
                                     if (name.contains(":"))
@@ -373,7 +314,6 @@ void QGCVehicleConfig::loadConfig()
                                     }
                                     QString docs = xml.attributes().value("documentation").toString();
                                     paramTooltips[name] = name + " - " + docs;
-                                   // qDebug() << "Found param:" << name << humanname;
 
                                     int type = -1; //Type of item
                                     QMap<QString,QString> fieldmap;
@@ -399,7 +339,6 @@ void QGCVehicleConfig::loadConfig()
                                                     set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_TEXT"] = arg;
                                                     set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_VAL"] = code.toInt();
                                                     paramcount++;
-                                                    //qDebug() << "Code:" << code << "Arg:" << arg;
                                                 }
                                                 xml.readNext();
                                             }
@@ -411,16 +350,15 @@ void QGCVehicleConfig::loadConfig()
                                             QString fieldtype = xml.attributes().value("name").toString();
                                             QString text = xml.readElementText();
                                             fieldmap[fieldtype] = text;
-                                           // qDebug() << "Field:" << fieldtype << "Text:" << text;
                                         }
                                         xml.readNext();
                                     }
                                     if (type == -1)
                                     {
-                                        //Nothing inside! Assume it's a value
+                                        //Nothing inside! Assume it's a value, give it a default range.
                                         type = 2;
                                         QString fieldtype = "Range";
-                                        QString text = "0 100";
+                                        QString text = "0 100"; //TODO: Determine a better way of figuring out default ranges.
                                         fieldmap[fieldtype] = text;
                                     }
                                     if (type == 2)
@@ -433,6 +371,7 @@ void QGCVehicleConfig::loadConfig()
                                         {
                                             float min = 0;
                                             float max = 0;
+                                            //Some range fields list "0-10" and some list "0 10". Handle both.
                                             if (fieldmap["Range"].split(" ").size() > 1)
                                             {
                                                 min = fieldmap["Range"].split(" ")[0].trimmed().toFloat();
@@ -461,7 +400,7 @@ void QGCVehicleConfig::loadConfig()
                             QList<QString> paramlist = tool->getParamList();
                             for (int i=0;i<paramlist.size();i++)
                             {
-                                //qDebug() << "Adding:" << paramlist[i] << parametersname;
+                                //Based on the airframe, we add the parameter to different categories.
                                 if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
                                 {
                                     systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
@@ -478,7 +417,6 @@ void QGCVehicleConfig::loadConfig()
                                 {
                                     libParamToWidgetMap->insert(paramlist[i],tool);
                                 }
-                                //paramToWidgetMap[paramlist[i]] = tool;
                             }
 
                             toolWidgets.append(tool);
@@ -513,9 +451,8 @@ void QGCVehicleConfig::loadConfig()
     {
            mav->getParamManager()->setParamInfo(paramTooltips);
     }
-    emit configReady();
     doneLoadingConfig = true;
-    mav->requestParameters();
+    mav->requestParameters(); //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
@@ -556,6 +493,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     }
     else
     {
+        //Indication that we have no meta data for this system type.
         qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
     }
 
@@ -797,59 +735,47 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
     Q_UNUSED(component);
     if (!doneLoadingConfig)
     {
+        //We do not want to attempt to generate any UI elements until loading of the config file is complete.
+        //We should re-request params later if needed, that is not implemented yet.
         return;
     }
+
     if (paramToWidgetMap->contains(parameterName))
     {
+        //Main group of parameters of the selected airframe
         paramToWidgetMap->value(parameterName)->setParameterValue(uas,component,parameterName,value);
         if (toolToBoxMap.contains(paramToWidgetMap->value(parameterName)))
         {
-            if (value.type() == QVariant::Char)
-            {
-                //qDebug() << "Parameter update (char):" << parameterName << QVariant(value.toUInt());
-            }
-            else
-            {
-                //qDebug() << "Parameter update:" << parameterName << value;
-            }
             toolToBoxMap[paramToWidgetMap->value(parameterName)]->show();
         }
         else
         {
-            qDebug() << "ERROR!!!!!!!!!! widget with no box:" << parameterName;
+            qCritical() << "Widget with no box, possible memory corruption for param:" << parameterName;
         }
     }
     else if (libParamToWidgetMap->contains(parameterName))
     {
-        //It's a lib param
+        //All the library parameters
         libParamToWidgetMap->value(parameterName)->setParameterValue(uas,component,parameterName,value);
         if (toolToBoxMap.contains(libParamToWidgetMap->value(parameterName)))
         {
-            if (value.type() == QVariant::Char)
-            {
-                //qDebug() << "Parameter update (char):" << parameterName << QVariant(value.toUInt());
-            }
-            else
-            {
-                //qDebug() << "Parameter update:" << parameterName << value;
-            }
             toolToBoxMap[libParamToWidgetMap->value(parameterName)]->show();
         }
         else
         {
-            qDebug() << "ERROR!!!!!!!!!! widget with no box:" << parameterName;
+            qCritical() << "Widget with no box, possible memory corruption for param:" << parameterName;
         }
     }
     else
     {
+        //Param recieved that we have no metadata for. Search to see if it belongs in a
+        //group with some other params
         bool found = false;
-       // qDebug() << "Param with no widget:" << parameterName;
         for (int i=0;i<toolWidgets.size();i++)
         {
             if (parameterName.startsWith(toolWidgets[i]->objectName()))
             {
-                //It should be grouped with this one.
-                //qDebug() << parameterName << toolWidgets[i]->objectName();
+                //It should be grouped with this one, add it.
                 toolWidgets[i]->addParam(uas,component,parameterName,value);
                 libParamToWidgetMap->insert(parameterName,toolWidgets[i]);
                 found  = true;
@@ -858,6 +784,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         }
         if (!found)
         {
+            //New param type, create a QGroupBox for it.
             QGCToolWidget *tool = new QGCToolWidget("", this);
             QString tooltitle = parameterName;
             if (parameterName.split("_").size() > 1)
@@ -875,13 +802,15 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             box->setLayout(new QVBoxLayout());
             box->layout()->addWidget(tool);
 
-            if (ui->leftHWSpecificLayout->count() > ui->rightHWSpecificLayout->count())
+
+            //Make sure we have similar number of widgets on each side.
+            if (ui->leftAdvancedLayout->count() > ui->rightAdvancedLayout->count())
             {
-                ui->rightHWSpecificLayout->addWidget(box);
+                ui->rightAdvancedLayout->addWidget(box);
             }
             else
             {
-                ui->leftHWSpecificLayout->addWidget(box);
+                ui->leftAdvancedLayout->addWidget(box);
             }
             toolToBoxMap[tool] = box;
         }
