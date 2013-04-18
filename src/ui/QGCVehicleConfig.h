@@ -31,7 +31,9 @@ public:
 public slots:
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
+    /** Fallback function, automatically called by loadConfig() upon failure to find and xml file*/
     void loadQgcConfig();
+    /** Load configuration from xml file */
     void loadConfig();
     /** Start the RC calibration routine */
     void startCalibrationRC();
@@ -173,18 +175,17 @@ protected:
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     bool calibrationEnabled;            ///< calibration mode on / off
 
-    QMap<QString,QGCToolWidget*> *paramToWidgetMap;
-    QMap<QString,QGCToolWidget*> *libParamToWidgetMap;
-    QMap<QString,QMap<QString,QGCToolWidget*>*> systemTypeToParamMap;
-    QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;
-    QMap<QString,QString> paramTooltips;
+    QMap<QString,QGCToolWidget*> *paramToWidgetMap;                     ///< Holds the current active MAV's parameter widgets.
+    QMap<QString,QGCToolWidget*> *libParamToWidgetMap;                  ///< Holds the library parameter widgets
+    QMap<QString,QMap<QString,QGCToolWidget*>*> systemTypeToParamMap;   ///< Holds all loaded MAV specific parameter widgets, for every MAV.
+    QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;                       ///< Easy method of figuring out which QGroupBox is tied to which ToolWidget.
+    QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
     
 private:
     Ui::QGCVehicleConfig *ui;
 
 signals:
     void visibilityChanged(bool visible);
-    void configReady();
 };
 
 #endif // QGCVEHICLECONFIG_H

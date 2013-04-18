@@ -200,18 +200,11 @@ QList<QString> QGCToolWidget::getParamList()
 }
 void QGCToolWidget::setParameterValue(int uas, int component, QString parameterName, const QVariant value)
 {
-//settings.setValue("QGC_PARAM_SLIDER_PARAMID", parameterName);
-//settings.setValue("QGC_PARAM_COMBOBOX_PARAMID", parameterName);
     QString widgetName = getTitle();
-    //settings.beginGroup(widgetName);
-    //qDebug() << "LOADING FOR" << widgetName;
-    //int size = settings.beginReadArray("QGC_TOOL_WIDGET_ITEMS");
     int size = settingsMap["count"].toInt();
-    //qDebug() << "CHILDREN SIZE:" << size;
     if (paramToItemMap.contains(parameterName))
     {
-        //slider->setParameterValue(uas,component,0,-1,paramname,value);
-        //paramToItemMap[parameterName]->set
+        //If we already have an item for this parameter, updates are handled internally.
         return;
     }
 
@@ -221,9 +214,8 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
         QGCToolWidgetItem* item = NULL;
         if (type == "COMMANDBUTTON")
         {
-            return;
-            //item = new QGCCommandButton(this);
-            //qDebug() << "CREATED COMMANDBUTTON";
+            //This shouldn't happen, but I'm not sure... so lets test for it.
+            continue;
         }
         else if (type == "SLIDER")
         {
@@ -234,11 +226,8 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
                 paramToItemMap[parameterName] = item;
                 addToolWidget(item);
                 item->readSettings(widgetName + "\\" + QString::number(j) + "\\",settingsMap);
-
                 return;
             }
-
-            //qDebug() << "CREATED PARAM SLIDER";
         }
         else if (type == "COMBO")
         {
@@ -251,8 +240,6 @@ void QGCToolWidget::setParameterValue(int uas, int component, QString parameterN
                 paramToItemMap[parameterName] = item;
                 return;
             }
-
-            //qDebug() << "CREATED PARAM COMBOBOX";
         }
     }
 }

@@ -881,6 +881,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (parameters.value(component)->contains(parameterName)) parameters.value(component)->remove(parameterName);
 
             // Insert with correct type
+            // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
             switch (value.param_type)
             {
             case MAV_PARAM_TYPE_REAL32:
@@ -2334,6 +2335,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         mavlink_param_union_t union_value;
 
         // Assign correct value based on QVariant
+        // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
         if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
         {
             switch (value.type())
