@@ -80,6 +80,8 @@ public slots:
 
 protected:
     void createCustomWidgets();
+    void storeSettings();
+    void loadSettings();
 
     QAction* toggleLoggingAction;
     QAction* logReplayAction;
@@ -109,6 +111,7 @@ protected:
     quint64 lastSystemMessageTimeMs;
     QTimer updateViewTimer;
     bool systemArmed;
+    QString lastLogDirectory;
 };
 
 #endif // QGCTOOLBAR_H
