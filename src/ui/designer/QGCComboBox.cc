@@ -39,6 +39,7 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     ui->editItemNameLabel->hide();
     ui->itemValueLabel->hide();
     ui->itemNameLabel->hide();
+    ui->infoLabel->hide();
     ui->editOptionComboBox->setEnabled(false);
     isDisabled = true;
     //ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
@@ -110,7 +111,11 @@ void QGCComboBox::setActiveUAS(UASInterface* activeUas)
         //requestParameter();
         // Set param info
         QString text = uas->getParamManager()->getParamInfo(parameterName);
-        ui->infoLabel->setToolTip(text);
+        if (text != "")
+        {
+            ui->infoLabel->setToolTip(text);
+            ui->infoLabel->show();
+        }
         // Force-uncheck and hide label if no description is available
         if (ui->editInfoCheckBox->isChecked())
         {
@@ -165,7 +170,7 @@ void QGCComboBox::selectParameter(int paramIndex)
 
             // Description
             QString text = uas->getParamManager()->getParamInfo(parameterName);
-            ui->infoLabel->setText(text);
+            //ui->infoLabel->setText(text);
             showInfo(!(text.length() > 0));
         }
     }
@@ -369,6 +374,11 @@ void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
     int num = settings.value(pre + "QGC_PARAM_COMBOBOX_COUNT").toInt();
     for (int i=0;i<num;i++)
     {
+        QString pixmapfn = settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_IMG","").toString();
+        if (pixmapfn != "")
+        {
+            comboBoxIndexToPixmap[i] = QPixmap(pixmapfn);
+        }
         ui->editOptionComboBox->addItem(settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString());
         //qDebug() << "Adding val:" << settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString() << settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
         comboBoxTextToValMap[settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
@@ -397,6 +407,11 @@ void QGCComboBox::readSettings(const QSettings& settings)
     int num = settings.value("QGC_PARAM_COMBOBOX_COUNT").toInt();
     for (int i=0;i<num;i++)
     {
+        QString pixmapfn = settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_IMG","").toString();
+        if (pixmapfn != "")
+        {
+            comboBoxIndexToPixmap[i] = QPixmap(pixmapfn);
+        }
         ui->editOptionComboBox->addItem(settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString());
         qDebug() << "Adding val:" << settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i)).toString() << settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
         comboBoxTextToValMap[settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
@@ -421,6 +436,7 @@ void QGCComboBox::delButtonClicked()
 }
 void QGCComboBox::comboBoxIndexChanged(QString val)
 {
+    ui->imageLabel->setPixmap(comboBoxIndexToPixmap[ui->editOptionComboBox->currentIndex()]);
     switch (parameterValue.type())
     {
     case QVariant::Char:

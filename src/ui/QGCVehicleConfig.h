@@ -32,7 +32,7 @@ public slots:
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
     /** Fallback function, automatically called by loadConfig() upon failure to find and xml file*/
-    void loadQgcConfig();
+    void loadQgcConfig(bool primary);
     /** Load configuration from xml file */
     void loadConfig();
     /** Start the RC calibration routine */

@@ -156,7 +156,8 @@ void QGCVehicleConfig::stopCalibrationRC()
     ui->rcTypeComboBox->setEnabled(true);
     ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
 }
-void QGCVehicleConfig::loadQgcConfig()
+
+void QGCVehicleConfig::loadQgcConfig(bool primary)
 {
     QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
     QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
@@ -185,15 +186,18 @@ void QGCVehicleConfig::loadQgcConfig()
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout());
                 box->layout()->addWidget(tool);
-                if (left)
+                if (!primary)
                 {
-                    left = false;
-                    ui->leftGeneralLayout->addWidget(box);
-                }
-                else
-                {
-                    left = true;
-                    ui->rightGeneralLayout->addWidget(box);
+                    if (left)
+                    {
+                        left = false;
+                        ui->leftGeneralLayout->addWidget(box);
+                    }
+                    else
+                    {
+                        left = true;
+                        ui->rightGeneralLayout->addWidget(box);
+                    }
                 }
             } else {
                 delete tool;
@@ -213,15 +217,18 @@ void QGCVehicleConfig::loadQgcConfig()
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout());
                 box->layout()->addWidget(tool);
-                if (left)
+                if (!primary)
                 {
-                    left = false;
-                    ui->leftAdvancedLayout->addWidget(box);
-                }
-                else
-                {
-                    left = true;
-                    ui->rightAdvancedLayout->addWidget(box);
+                    if (left)
+                    {
+                        left = false;
+                        ui->leftAdvancedLayout->addWidget(box);
+                    }
+                    else
+                    {
+                        left = true;
+                        ui->rightAdvancedLayout->addWidget(box);
+                    }
                 }
 
             } else {
@@ -230,18 +237,112 @@ void QGCVehicleConfig::loadQgcConfig()
         }
     }
 
+    //Load tabs for general configuration
+    foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+    {
+        QWidget *tab = new QWidget(ui->tabWidget);
+        tab->setLayout(new QVBoxLayout());
+        ui->tabWidget->insertTab(2,tab,dir);
+        tab->show();
+        QGroupBox *gbox = new QGroupBox(tab);
+        tab->layout()->addWidget(gbox);
+        gbox->show();
+        gbox->setLayout(new QVBoxLayout());
+        QDir newdir = QDir(generaldir.absoluteFilePath(dir));
+        foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
+        {
+            if (file.toLower().endsWith(".qgw")) {
+                tool = new QGCToolWidget("", this);
+                if (tool->loadSettings(newdir.absoluteFilePath(file), false))
+                {
+                    toolWidgets.append(tool);
+                    //ui->sensorLayout->addWidget(tool);
+                    QGroupBox *box = new QGroupBox(this);
+                    box->setTitle(tool->objectName());
+                    box->setLayout(new QVBoxLayout());
+                    box->layout()->addWidget(tool);
+                    gbox->layout()->addWidget(box);
+                } else {
+                    delete tool;
+                }
+            }
+        }
+    }
+
+    //Load tabs for vehicle specific configuration
+    foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
+    {
+        QWidget *tab = new QWidget(ui->tabWidget);
+        tab->setLayout(new QVBoxLayout());
+        ui->tabWidget->insertTab(2,tab,dir);
+        tab->show();
+        QGroupBox *gbox = new QGroupBox(tab);
+        tab->layout()->addWidget(gbox);
+        gbox->show();
+        gbox->setLayout(new QVBoxLayout());
+        QDir newdir = QDir(vehicledir.absoluteFilePath(dir));
+        foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
+        {
+            if (file.toLower().endsWith(".qgw")) {
+                tool = new QGCToolWidget("", this);
+                tool->addUAS(mav);
+                if (tool->loadSettings(newdir.absoluteFilePath(file), false))
+                {
+                    toolWidgets.append(tool);
+                    //ui->sensorLayout->addWidget(tool);
+                    QGroupBox *box = new QGroupBox(this);
+                    box->setTitle(tool->objectName());
+                    box->setLayout(new QVBoxLayout());
+                    box->layout()->addWidget(tool);
+                    gbox->layout()->addWidget(box);
+                } else {
+                    delete tool;
+                }
+            }
+        }
+    }
 
 
     // Load calibration
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
     tool = new QGCToolWidget("", this);
+    tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
     {
         toolWidgets.append(tool);
-        ui->sensorLayout->addWidget(tool);
+        QGroupBox *box = new QGroupBox(this);
+        box->setTitle(tool->objectName());
+        box->setLayout(new QVBoxLayout());
+        box->layout()->addWidget(tool);
+        ui->sensorLayout->addWidget(box);
     } else {
         delete tool;
     }
+
+
+    tool = new QGCToolWidget("", this);
+    tool->addUAS(mav);
+    if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
+    {
+        toolWidgets.append(tool);
+        QGroupBox *box = new QGroupBox(this);
+        box->setTitle(tool->objectName());
+        box->setLayout(new QVBoxLayout());
+        box->layout()->addWidget(tool);
+        ui->sensorLayout->addWidget(box);
+    } else {
+        delete tool;
+    }
+    //description.txt
+    QFile sensortipsfile(autopilotdir.absolutePath() + "/general/calibration/description.txt");
+    sensortipsfile.open(QIODevice::ReadOnly);
+    ui->sensorTips->setHtml(sensortipsfile.readAll());
+    sensortipsfile.close();
+
+
+
+
+
 }
 
 void QGCVehicleConfig::loadConfig()
@@ -267,10 +368,11 @@ void QGCVehicleConfig::loadConfig()
     QFile xmlfile(autopilotdir.absolutePath() + "/arduplane.pdef.xml");
     if (xmlfile.exists() && !xmlfile.open(QIODevice::ReadOnly))
     {
-        loadQgcConfig();
+        loadQgcConfig(false);
         doneLoadingConfig = true;
         return;
     }
+    loadQgcConfig(true);
 
     QXmlStreamReader xml(xmlfile.readAll());
     xmlfile.close();
@@ -394,6 +496,7 @@ void QGCVehicleConfig::loadConfig()
                             set["count"] = arraycount;
 
                             tool = new QGCToolWidget("", this);
+                            tool->addUAS(mav);
                             tool->setTitle(parametersname);
                             tool->setObjectName(parametersname);
                             tool->setSettings(set);
