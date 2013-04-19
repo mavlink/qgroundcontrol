@@ -531,6 +531,8 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt()), settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt());
     ui->editMinSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MIN").toFloat());
     ui->editMaxSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MAX").toFloat());
+    parameterMax = ui->editMaxSpinBox->value();
+    parameterMin = ui->editMinSpinBox->value();
     showInfo(settings.value("QGC_PARAM_SLIDER_DISPLAY_INFO", true).toBool());
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
