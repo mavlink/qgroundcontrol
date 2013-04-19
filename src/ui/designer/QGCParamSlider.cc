@@ -41,6 +41,7 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     ui->editMaxSpinBox->hide();
     ui->editLine1->hide();
     ui->editLine2->hide();
+    ui->infoLabel->hide();
 
     //ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
     //ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
@@ -107,7 +108,11 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
         //requestParameter();
         // Set param info
         QString text = uas->getParamManager()->getParamInfo(parameterName);
-        ui->infoLabel->setToolTip(text);
+        if (text != "")
+        {
+            ui->infoLabel->setToolTip(text);
+            ui->infoLabel->show();
+        }
         // Force-uncheck and hide label if no description is available
         if (ui->editInfoCheckBox->isChecked())
         {
@@ -195,9 +200,10 @@ void QGCParamSlider::selectParameter(int paramIndex)
             }
 
             // Description
-            QString text = uas->getParamManager()->getParamInfo(parameterName);
-            ui->infoLabel->setText(text);
-            showInfo(!(text.length() > 0));
+            //QString text = uas->getParamManager()->getParamInfo(parameterName);
+            //ui->infoLabel->setText(text);
+
+            //showInfo(!(text.length() > 0));
         }
     }
 }

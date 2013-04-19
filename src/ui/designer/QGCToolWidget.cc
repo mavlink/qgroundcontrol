@@ -12,6 +12,7 @@
 
 #include "QGCParamSlider.h"
 #include "QGCComboBox.h"
+#include "QGCTextLabel.h"
 #include "QGCCommandButton.h"
 #include "UASManager.h"
 
@@ -148,6 +149,20 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
 
     return instances()->values();
 }
+void QGCToolWidget::showLabel(QString name,int num)
+{
+    for (int i=0;i<toolItemList.size();i++)
+    {
+        if (toolItemList[i]->objectName() == name)
+        {
+            QGCTextLabel *label = qobject_cast<QGCTextLabel*>(toolItemList[i]);
+            if (label)
+            {
+                label->enableText(num);
+            }
+        }
+    }
+}
 
 /**
  * @param singleinstance If this is set to true, the widget settings will only be loaded if not another widget with the same title exists
@@ -266,6 +281,11 @@ void QGCToolWidget::loadSettings(QVariantMap& settings)
                 item = new QGCCommandButton(this);
                 //qDebug() << "CREATED COMMANDBUTTON";
             }
+            else if (type == "TEXT")
+            {
+                item = new QGCTextLabel(this);
+                item->setActiveUAS(mav);
+            }
             else if (type == "SLIDER")
             {
                 item = new QGCParamSlider(this);
@@ -310,18 +330,29 @@ void QGCToolWidget::loadSettings(QSettings& settings)
             QGCToolWidgetItem* item = NULL;
             if (type == "COMMANDBUTTON")
             {
-                item = new QGCCommandButton(this);
+                QGCCommandButton *button = new QGCCommandButton(this);
+                connect(button,SIGNAL(showLabel(QString,int)),this,SLOT(showLabel(QString,int)));
+                item = button;
+                item->setActiveUAS(mav);
                 //qDebug() << "CREATED COMMANDBUTTON";
             }
             else if (type == "SLIDER")
             {
                 item = new QGCParamSlider(this);
+                item->setActiveUAS(mav);
                 //qDebug() << "CREATED PARAM SLIDER";
             }
             else if (type == "COMBO")
             {
                 item = new QGCComboBox(this);
+                item->setActiveUAS(mav);
                 qDebug() << "CREATED PARAM COMBOBOX";
+            }
+            else if (type == "TEXT")
+            {
+                item = new QGCTextLabel(this);
+                item->setObjectName(settings.value("QGC_TEXT_ID").toString());
+                item->setActiveUAS(mav);
             }
 
             if (item)
@@ -565,6 +596,7 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
     }
     connect(widget, SIGNAL(destroyed()), this, SLOT(storeSettings()));
     toolLayout->addWidget(widget);
+    toolItemList.append(widget);
 }
 
 void QGCToolWidget::exportWidget()

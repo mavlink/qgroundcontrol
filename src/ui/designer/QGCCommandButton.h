@@ -26,8 +26,10 @@ public slots:
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
     void readSettings(const QString& pre,const QVariantMap& settings);
-
+signals:
+    void showLabel(QString name, int num);
 private:
+    QString showlabelname;
     Ui::QGCCommandButton *ui;
     UASInterface* uas;
 };

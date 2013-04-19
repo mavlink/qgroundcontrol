@@ -116,7 +116,10 @@ void QGCCommandButton::sendCommand()
                 float param6 = ui->editParam6SpinBox->value();
                 float param7 = ui->editParam7SpinBox->value();
                 int component = ui->editComponentSpinBox->value();
-
+                if (showlabelname != "")
+                {
+                    emit showLabel(showlabelname,index);
+                }
                 QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, param5, param6, param7, component);
                 //qDebug() << __FILE__ << __LINE__ << "SENDING COMMAND" << index;
             }
@@ -308,6 +311,8 @@ void QGCCommandButton::readSettings(const QSettings& settings)
     ui->editParam5SpinBox->setValue(settings.value("QGC_COMMAND_BUTTON_PARAM5", 0.0).toDouble());
     ui->editParam6SpinBox->setValue(settings.value("QGC_COMMAND_BUTTON_PARAM6", 0.0).toDouble());
     ui->editParam7SpinBox->setValue(settings.value("QGC_COMMAND_BUTTON_PARAM7", 0.0).toDouble());
+
+    showlabelname = settings.value("QGC_COMMAND_BUTTON_LABEL","").toString();
 
     ui->editCommandComboBox->setCurrentIndex(0);
 
