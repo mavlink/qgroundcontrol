@@ -49,6 +49,8 @@ public slots:
     /** @brief Reset the logfile */
     bool reset(int packetIndex=0);
     /** @brief Select logfile */
+    bool selectLogFile(const QString startDirectory);
+    /** @brief Select logfile */
     bool selectLogFile();
     /** @brief Load log file */
     bool loadLogFile(const QString& file);
@@ -81,7 +83,11 @@ protected:
     unsigned int currPacketCount;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
     static const int timeLen = sizeof(quint64);
+    QString lastLogDirectory;
     void changeEvent(QEvent *e);
+
+    void loadSettings();
+    void storeSettings();
 
 private:
     Ui::QGCMAVLinkLogPlayer *ui;

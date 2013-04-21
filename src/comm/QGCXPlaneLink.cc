@@ -474,14 +474,29 @@ void QGCXPlaneLink::readBytes()
             if (p.index == 4)
             {
                 xacc = p.f[5] * 9.81f;
-                xacc = p.f[6] * 9.81f;
+                yacc = p.f[6] * 9.81f;
                 zacc = -p.f[4] * 9.81f;
+
+                Eigen::Vector3f g(0, 0, -9.81f);
+
+                Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
+
+                Eigen::Vector3f gr = R.transpose().eval() * g;
+
+                // TODO Add centrip. accel
+
+                xacc = gr[0];
+                yacc = gr[1];
+                zacc = gr[2];
+
+                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
             else if (p.index == 6 && xPlaneVersion == 10)
             {
-                // inHg to kPa
-                abs_pressure = p.f[0] * 3.3863886666718317f;
+                // inHg to hPa (hecto Pascal / millibar)
+                abs_pressure = p.f[0] * 33.863886666718317f;
                 temperature = p.f[1];
+                fields_changed |= (1 << 9) | (1 << 12);
             }
             // Forward controls from X-Plane to MAV, not very useful
             // better: Connect Joystick to QGroundControl
@@ -494,13 +509,13 @@ void QGCXPlaneLink::readBytes()
 //                UAS* uas = dynamic_cast<UAS*>(mav);
 //                if (uas) uas->setManualControlCommands(man_roll, man_pitch, man_yaw, 0.6);
 //            }
-            else if (xPlaneVersion == 10 && p.index == 16)
+            else if ((xPlaneVersion == 10 && p.index == 16) || (xPlaneVersion == 9 && p.index == 17))
             {
-                //qDebug() << "ANG VEL:" << p.f[0] << p.f[3] << p.f[7];
-                rollspeed = p.f[2];
-                pitchspeed = p.f[1];
-                yawspeed = p.f[0];
-                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
+                // Cross checked with XPlane flight
+                pitchspeed = p.f[0];
+                rollspeed = p.f[1];
+                yawspeed = p.f[2];
+                fields_changed |= (1 << 3) | (1 << 4) | (1 << 5);
             }
             else if ((xPlaneVersion == 10 && p.index == 17) || (xPlaneVersion == 9 && p.index == 18))
             {
@@ -508,6 +523,9 @@ void QGCXPlaneLink::readBytes()
                 pitch = p.f[0] / 180.0f * M_PI;
                 roll = p.f[1] / 180.0f * M_PI;
                 yaw = p.f[2] / 180.0f * M_PI;
+
+                yaw = yaw;
+
                 // X-Plane expresses yaw as 0..2 PI
                 if (yaw > M_PI) {
                     yaw -= 2.0 * M_PI;
@@ -516,7 +534,7 @@ void QGCXPlaneLink::readBytes()
                     yaw += 2.0 * M_PI;
                 }
 
-                float yawmag = p.f[3];
+                float yawmag = p.f[3] / 180.0f * M_PI;
 
                 if (yawmag > M_PI) {
                     yawmag -= 2.0 * M_PI;
@@ -525,18 +543,16 @@ void QGCXPlaneLink::readBytes()
                     yawmag += 2.0 * M_PI;
                 }
 
-                xmag = cos(yawmag) * 0.4f - sin(yawmag) * 0.0f + 0.0f;
-                ymag = sin(yawmag) * 0.4f - sin(yawmag) * 0.0f + 0.0f;
-                zmag = 0.0f            + 0.0f            + 1.0f * 0.4f;
+                // Normal rotation matrix, but since we rotate the
+                // vector [0.25 0 0.45]', we end up with these relevant
+                // matrix parts.
+
+                xmag = cos(-yawmag) * 0.25f;
+                ymag = sin(-yawmag) * 0.25f;
+                zmag = 0.45f;
+                fields_changed |= (1 << 6) | (1 << 7) | (1 << 8);
 
                 emitUpdate = true;
-            }
-            else if ((xPlaneVersion == 9 && p.index == 17))
-            {
-                rollspeed = p.f[2];
-                pitchspeed = p.f[1];
-                yawspeed = p.f[0];
-                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
 
 //            else if (p.index == 19)
@@ -614,23 +630,24 @@ void QGCXPlaneLink::readBytes()
         {
             diff_pressure = 0.0f;
             pressure_alt = alt;
+            // set pressure alt to changed
+            fields_changed |= (1 << 11);
 
             emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
                                         xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
-
-            int gps_fix_type = 3;
-            float eph = 0.3;
-            float epv = 0.6;
-            float vel = sqrt(vx*vx + vy*vy + vz*vz);
-            float cog = yaw;
-            int satellites = 8;
-
-            emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, cog, satellites);
-        } else {
-            emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
-                         pitchspeed, yawspeed, lat, lon, alt,
-                         vx, vy, vz, xacc, yacc, zacc);
         }
+
+        int gps_fix_type = 3;
+        float eph = 0.3;
+        float epv = 0.6;
+        float vel = sqrt(vx*vx + vy*vy + vz*vz);
+        float cog = yaw;
+        int satellites = 8;
+
+        emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, cog, satellites);
+        emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
+                     pitchspeed, yawspeed, lat, lon, alt,
+                     vx, vy, vz, xacc, yacc, zacc);
     }
 
     if (!oldConnectionState && xPlaneConnected)
@@ -678,8 +695,8 @@ bool QGCXPlaneLink::disconnectSimulation()
         disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
         disconnect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
 
-        disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
-        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(uint64_t, double, double, double, int, float, float, float, float, int)));
+        disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, int)));
         disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)));
 
         UAS* uas = dynamic_cast<UAS*>(mav);
@@ -862,8 +879,8 @@ bool QGCXPlaneLink::connectSimulation()
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
 
-    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(uint64_t, double, double, double, int, float, float, float, float, int)));
+    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, int)));
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)));
 
     UAS* uas = dynamic_cast<UAS*>(mav);

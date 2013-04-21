@@ -278,9 +278,13 @@ protected: //COMMENTS FOR TEST UNIT
     double localX;
     double localY;
     double localZ;
-    double latitude;
-    double longitude;
-    double altitude;
+    double latitude;            ///< Global latitude as estimated by position estimator
+    double longitude;           ///< Global longitude as estimated by position estimator
+    double altitude;            ///< Global altitude as estimated by position estimator
+    bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
+    double latitude_gps;        ///< Global latitude as estimated by raw GPS
+    double longitude_gps;       ///< Global longitude as estimated by raw GPS
+    double altitude_gps;        ///< Global altitude as estimated by raw GPS
     double speedX;              ///< True speed in X axis
     double speedY;              ///< True speed in Y axis
     double speedZ;              ///< True speed in Z axis
@@ -699,6 +703,7 @@ protected:
     quint64 lastNonNullTime;    ///< The last timestamp from the MAV that was not null
     unsigned int onboardTimeOffsetInvalidCount;     ///< Count when the offboard time offset estimation seemed wrong
     bool hilEnabled;            ///< Set to true if HIL mode is enabled from GCS (UAS might be in HIL even if this flag is not set, this defines the GCS HIL setting)
+    bool sensorHil;             ///< True if sensor HIL is enabled
 
 protected slots:
     /** @brief Write settings to disk */

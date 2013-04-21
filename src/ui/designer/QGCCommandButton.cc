@@ -118,7 +118,7 @@ void QGCCommandButton::sendCommand()
                 int component = ui->editComponentSpinBox->value();
 
                 QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, param5, param6, param7, component);
-                qDebug() << __FILE__ << __LINE__ << "SENDING COMMAND" << index;
+                //qDebug() << __FILE__ << __LINE__ << "SENDING COMMAND" << index;
             }
         }
     }
@@ -226,7 +226,7 @@ void QGCCommandButton::endEditMode()
 
 void QGCCommandButton::writeSettings(QSettings& settings)
 {
-    qDebug() << "COMMAND BUTTON WRITING SETTINGS";
+    //qDebug() << "COMMAND BUTTON WRITING SETTINGS";
     settings.setValue("TYPE", "COMMANDBUTTON");
     settings.setValue("QGC_COMMAND_BUTTON_DESCRIPTION", ui->nameLabel->text());
     settings.setValue("QGC_COMMAND_BUTTON_BUTTONTEXT", ui->commandButton->text());
