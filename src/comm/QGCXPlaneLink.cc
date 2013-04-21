@@ -473,10 +473,7 @@ void QGCXPlaneLink::readBytes()
             }
             if (p.index == 4)
             {
-                xacc = p.f[5] * 9.81f;
-                yacc = p.f[6] * 9.81f;
-                zacc = -p.f[4] * 9.81f;
-
+                // Do not actually use the XPlane value, but calculate our own
                 Eigen::Vector3f g(0, 0, -9.81f);
 
                 Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
