@@ -2734,14 +2734,14 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
     {
         if (sensorHil) {
             // Emit attitude for cross-check
-            emit attitudeChanged(this, 201, roll, pitch, yaw, time_us/1000);
-            emit valueChanged(uasId, "roll sim", "rad", roll, time_us/1000);
-            emit valueChanged(uasId, "pitch sim", "rad", pitch, time_us/1000);
-            emit valueChanged(uasId, "yaw sim", "rad", yaw, time_us/1000);
+            emit attitudeChanged(this, 201, roll, pitch, yaw, getUnixTime());
+            emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
+            emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
+            emit valueChanged(uasId, "yaw sim", "rad", yaw, getUnixTime());
 
-            emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, time_us/1000);
-            emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, time_us/1000);
-            emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, time_us/1000);
+            emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, getUnixTime());
+            emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, getUnixTime());
+            emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, getUnixTime());
         } else {
             mavlink_message_t msg;
             mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
