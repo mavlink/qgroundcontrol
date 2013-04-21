@@ -274,6 +274,10 @@ void CommConfigurationWindow::setConnection()
 {
     if(!link->isConnected()) {
         link->connect();
+        QGC::SLEEP::msleep(100);
+        if (link->isConnected())
+            // Auto-close window on connect
+            this->window()->close();
     } else {
         link->disconnect();
     }

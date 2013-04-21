@@ -791,24 +791,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 positionLock = true;
                 isGlobalPositionKnown = true;
 
-                // Check for NaN
-                int alt = pos.alt;
-                if (!isnan(alt) && !isinf(alt))
-                {
-                    alt = 0;
-                    emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
-                }
                 // Smaller than threshold and not NaN
 
                 float vel = pos.vel/100.0f;
 
-                if (!globalEstimatorActive && (vel < 1000000) && !isnan(vel) && !isinf(vel))
-                {
-                    emit speedChanged(this, vel, 0.0, 0.0, time);
-                }
-                else
-                {
-                    emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                if (!globalEstimatorActive) {
+                    if ((vel < 1000000) && !isnan(vel) && !isinf(vel))
+                    {
+                        emit speedChanged(this, vel, 0.0, 0.0, time);
+                    }
+                    else
+                    {
+                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                    }
                 }
             }
         }
@@ -2737,11 +2732,23 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
 {
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
-        mavlink_message_t msg;
-        mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
-                                   time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
-                                   lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000, yacc*1000, zacc*1000);
-        sendMessage(msg);
+        if (sensorHil) {
+            // Emit attitude for cross-check
+            emit attitudeChanged(this, 201, roll, pitch, yaw, time_us/1000);
+            emit valueChanged(uasId, "roll sim", "rad", roll, time_us/1000);
+            emit valueChanged(uasId, "pitch sim", "rad", pitch, time_us/1000);
+            emit valueChanged(uasId, "yaw sim", "rad", yaw, time_us/1000);
+
+            emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, time_us/1000);
+            emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, time_us/1000);
+            emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, time_us/1000);
+        } else {
+            mavlink_message_t msg;
+            mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                       time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
+                                       lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000, yacc*1000, zacc*1000);
+            sendMessage(msg);
+        }
     }
     else
     {
@@ -2764,6 +2771,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
                                      xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature,
                                      fields_changed);
         sendMessage(msg);
+        sensorHil = true;
     }
     else
     {
@@ -2802,6 +2810,7 @@ void UAS::startHil()
 {
     if (hilEnabled) return;
     hilEnabled = true;
+    sensorHil = false;
     mavlink_message_t msg;
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
@@ -2819,6 +2828,7 @@ void UAS::stopHil()
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & !MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
     hilEnabled = false;
+    sensorHil = false;
 }
 
 void UAS::shutdown()

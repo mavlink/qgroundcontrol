@@ -23,6 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QToolButton>
 #include <QLabel>
+#include <QSpacerItem>
 #include "QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
@@ -39,7 +40,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     wpId(0),
     wpDistance(0),
     systemArmed(false),
-    lastLogDirectory(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation))
+    lastLogDirectory(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation)),
+    currentLink(NULL)
 {
     setObjectName("QGC_TOOLBAR");
 
@@ -110,8 +112,13 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 	toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
 
+    QWidget* spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    addWidget(spacer);
+
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setToolTip(tr("Connect wireless link to MAV"));
+    connectButton->setCheckable(true);
     addWidget(connectButton);
     connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
 
@@ -120,6 +127,16 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 	// Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    if (LinkManager::instance()->getLinks().count() > 2)
+        addLink(LinkManager::instance()->getLinks().last());
+    // XXX implies that connect button is always active for the last used link
+    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+
+    // Update label if required
+    if (LinkManager::instance()->getLinks().count() < 3) {
+        connectButton->setText(tr("New Link"));
+    }
 
     // Set the toolbar to be updated every 2s
     connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
@@ -465,8 +482,52 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     lastSystemMessageTimeMs = QGC::groundTimeMilliseconds();
 }
 
+void QGCToolBar::addLink(LinkInterface* link)
+{
+    // XXX magic number
+    if (LinkManager::instance()->getLinks().count() > 2) {
+        currentLink = link;
+        connect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
+        updateLinkState(link->isConnected());
+    }
+}
+
+void QGCToolBar::removeLink(LinkInterface* link)
+{
+    if (link == currentLink) {
+        currentLink = NULL;
+        // XXX magic number
+        if (LinkManager::instance()->getLinks().count() > 2) {
+            currentLink = LinkManager::instance()->getLinks().last();
+            updateLinkState(currentLink->isConnected());
+        } else {
+            connectButton->setText(tr("New Link"));
+        }
+    }
+}
+
+void QGCToolBar::updateLinkState(bool connected)
+{
+    if (currentLink && currentLink->isConnected())
+    {
+        connectButton->setText(tr("Disconnect"));
+        connectButton->blockSignals(true);
+        connectButton->setChecked(true);
+        connectButton->blockSignals(false);
+    }
+    else
+    {
+        connectButton->setText(tr("Connect"));
+        connectButton->blockSignals(true);
+        connectButton->setChecked(false);
+        connectButton->blockSignals(false);
+    }
+}
+
 void QGCToolBar::connectLink(bool connect)
 {
+    // No serial port yet present
+    // XXX magic number
     if (connect && LinkManager::instance()->getLinks().count() < 3)
     {
         MainWindow::instance()->addLink();
@@ -475,19 +536,6 @@ void QGCToolBar::connectLink(bool connect)
     } else if (!connect && LinkManager::instance()->getLinks().count() > 2) {
         LinkManager::instance()->getLinks().last()->disconnect();
     }
-
-    if (LinkManager::instance()->getLinks().count() > 2) {
-        if (LinkManager::instance()->getLinks().last()->isConnected())
-        {
-            connectButton->setText(tr("Disconnect"));
-        }
-        else
-        {
-            connectButton->setText(tr("Connect"));
-        }
-
-    }
-
 }
 
 
