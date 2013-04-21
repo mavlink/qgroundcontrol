@@ -45,6 +45,12 @@ public:
 public slots:
     /** @brief Set the system that is currently displayed by this widget */
     void setActiveUAS(UASInterface* active);
+    /** @brief Set the link which is currently handled with connecting / disconnecting */
+    void addLink(LinkInterface* link);
+    /** @brief Remove link which is currently handled */
+    void removeLink(LinkInterface* link);
+    /** @brief Update the link state */
+    void updateLinkState(bool connected);
     /** @brief Set the system state */
     void updateState(UASInterface* system, QString name, QString description);
     /** @brief Set the system mode */
@@ -112,6 +118,7 @@ protected:
     QTimer updateViewTimer;
     bool systemArmed;
     QString lastLogDirectory;
+    LinkInterface* currentLink;
 };
 
 #endif // QGCTOOLBAR_H
