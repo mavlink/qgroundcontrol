@@ -111,7 +111,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lastVoltageWarning(0),
     lastNonNullTime(0),
     onboardTimeOffsetInvalidCount(0),
-    hilEnabled(false)
+    hilEnabled(false),
+    lastSendTimeGPS(0)
 
 {
     for (unsigned int i = 0; i<255;++i)
@@ -2785,11 +2786,16 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
 
 void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites)
 {
+    // Only send at 10 Hz max rate
+    if (QGC::groundTimeMilliseconds() - lastSendTimeGPS < 100)
+        return;
+
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         mavlink_message_t msg;
         mavlink_msg_gps_raw_int_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, cog*1e2, satellites);
+        lastSendTimeGPS = QGC::groundTimeMilliseconds();
         sendMessage(msg);
     }
     else
