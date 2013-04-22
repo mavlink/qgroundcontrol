@@ -155,6 +155,8 @@ public slots:
     void stopVideoCapture();
     void saveScreen();
 
+    /** @brief Load configuration view */
+    void loadConfigurationView();
     /** @brief Load default view when no MAV is connected */
     void loadUnconnectedView();
     /** @brief Load view for pilot */
@@ -265,6 +267,7 @@ protected:
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
+        VIEW_CONFIGURATION,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
