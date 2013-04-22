@@ -186,18 +186,15 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout());
                 box->layout()->addWidget(tool);
-                if (!primary)
+                if (left)
                 {
-                    if (left)
-                    {
-                        left = false;
-                        ui->leftGeneralLayout->addWidget(box);
-                    }
-                    else
-                    {
-                        left = true;
-                        ui->rightGeneralLayout->addWidget(box);
-                    }
+                    left = false;
+                    ui->leftGeneralLayout->addWidget(box);
+                }
+                else
+                {
+                    left = true;
+                    ui->rightGeneralLayout->addWidget(box);
                 }
             } else {
                 delete tool;
@@ -217,20 +214,16 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout());
                 box->layout()->addWidget(tool);
-                if (!primary)
+                if (left)
                 {
-                    if (left)
-                    {
-                        left = false;
-                        ui->leftAdvancedLayout->addWidget(box);
-                    }
-                    else
-                    {
-                        left = true;
-                        ui->rightAdvancedLayout->addWidget(box);
-                    }
+                    left = false;
+                    ui->leftAdvancedLayout->addWidget(box);
                 }
-
+                else
+                {
+                    left = true;
+                    ui->rightAdvancedLayout->addWidget(box);
+                }
             } else {
                 delete tool;
             }
@@ -241,13 +234,17 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
         QWidget *tab = new QWidget(ui->tabWidget);
-        tab->setLayout(new QVBoxLayout());
         ui->tabWidget->insertTab(2,tab,dir);
+        tab->setLayout(new QVBoxLayout());
         tab->show();
-        QGroupBox *gbox = new QGroupBox(tab);
-        tab->layout()->addWidget(gbox);
-        gbox->show();
-        gbox->setLayout(new QVBoxLayout());
+        QScrollArea *area = new QScrollArea();
+        tab->layout()->addWidget(area);
+        QWidget *scrollArea = new QWidget();
+        scrollArea->setLayout(new QVBoxLayout());
+        area->setWidget(scrollArea);
+        area->setWidgetResizable(true);
+        area->show();
+        scrollArea->show();
         QDir newdir = QDir(generaldir.absoluteFilePath(dir));
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
@@ -261,7 +258,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
                     box->setTitle(tool->objectName());
                     box->setLayout(new QVBoxLayout());
                     box->layout()->addWidget(tool);
-                    gbox->layout()->addWidget(box);
+                    scrollArea->layout()->addWidget(box);
                 } else {
                     delete tool;
                 }
@@ -273,13 +270,18 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
         QWidget *tab = new QWidget(ui->tabWidget);
-        tab->setLayout(new QVBoxLayout());
         ui->tabWidget->insertTab(2,tab,dir);
+        tab->setLayout(new QVBoxLayout());
         tab->show();
-        QGroupBox *gbox = new QGroupBox(tab);
-        tab->layout()->addWidget(gbox);
-        gbox->show();
-        gbox->setLayout(new QVBoxLayout());
+        QScrollArea *area = new QScrollArea();
+        tab->layout()->addWidget(area);
+        QWidget *scrollArea = new QWidget();
+        scrollArea->setLayout(new QVBoxLayout());
+        area->setWidget(scrollArea);
+        area->setWidgetResizable(true);
+        area->show();
+        scrollArea->show();
+
         QDir newdir = QDir(vehicledir.absoluteFilePath(dir));
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
@@ -290,11 +292,13 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
                 {
                     toolWidgets.append(tool);
                     //ui->sensorLayout->addWidget(tool);
-                    QGroupBox *box = new QGroupBox(this);
+                    QGroupBox *box = new QGroupBox();
                     box->setTitle(tool->objectName());
                     box->setLayout(new QVBoxLayout());
                     box->layout()->addWidget(tool);
-                    gbox->layout()->addWidget(box);
+                    scrollArea->layout()->addWidget(box);
+                    box->show();
+                    //gbox->layout()->addWidget(box);
                 } else {
                     delete tool;
                 }

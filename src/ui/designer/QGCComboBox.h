@@ -49,6 +49,10 @@ protected slots:
     /** @brief Updates current parameter based on new combobox value */
     void comboBoxIndexChanged(QString val);
 protected:
+    bool visibleEnabled;
+    QString visibleParam;
+    int visibleVal;
+    QMap<QString,QString> comboBoxTextToParamMap;
     QMap<int,QPixmap> comboBoxIndexToPixmap;
     QMap<QString,int> comboBoxTextToValMap; ///< Comboboxtext/parameter value map
     QString parameterName;         ///< Key/Name of the parameter
