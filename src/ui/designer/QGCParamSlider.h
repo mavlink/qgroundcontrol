@@ -50,6 +50,9 @@ protected slots:
     void requestParameter();
 
 protected:
+    bool visibleEnabled;
+    QString visibleParam;
+    int visibleVal;
     //The below variables, and usage in QGCParamSlider.cc are a bit of a hack, since disconnect() does not seem to take effect
     //immediatly (perhaps it is put into the event loop?) - MLC
     bool valueModLock;              ///< Used to keep the slider/spinboxes from updating each other during user input

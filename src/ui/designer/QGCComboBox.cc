@@ -249,6 +249,7 @@ void QGCComboBox::sendParameter()
         // Set value, param manager handles retransmission
         if (uas->getParamManager())
         {
+            qDebug() << "Sending param:" << parameterName << "to component" << component << "with a value of" << parameterValue;
             uas->getParamManager()->setParameter(component, parameterName, parameterValue);
         }
         else
@@ -305,9 +306,33 @@ void QGCComboBox::setParameterValue(int uas, int component, int paramCount, int 
     Q_UNUSED(uas);
 
      //comboBoxTextToValMap[ui->editItemNameLabel->text()] = ui->editItemValueSpinBox->value();
-
+    if (visibleParam != "")
+    {
+        if (parameterName == visibleParam)
+        {
+            if (visibleVal == value.toInt())
+            {
+                this->uas->requestParameter(this->component,this->parameterName);
+                visibleEnabled = true;
+                this->show();
+            }
+            else
+            {
+                //Disable the component here.
+                //ui->valueSlider->setEnabled(false);
+                //ui->intValueSpinBox->setEnabled(false);
+                //ui->doubleValueSpinBox->setEnabled(false);
+                visibleEnabled = false;
+                this->hide();
+            }
+        }
+    }
     if (component == this->component && parameterName == this->parameterName)
     {
+        if (!visibleEnabled)
+        {
+            return;
+        }
         ui->editOptionComboBox->setEnabled(true);
         isDisabled = false;
         for (int i=0;i<ui->editOptionComboBox->count();i++)
@@ -369,8 +394,9 @@ void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
     showInfo(settings.value(pre + "QGC_PARAM_COMBOBOX_DISPLAY_INFO", true).toBool());
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
-
-
+    visibleParam = settings.value(pre+"QGC_PARAM_COMBOBOX_VISIBLE_PARAM","").toString();
+    visibleVal = settings.value(pre+"QGC_PARAM_COMBOBOX_VISIBLE_VAL",0).toInt();
+    QString type = settings.value(pre + "QGC_PARAM_COMBOBOX_TYPE","PARAM").toString();
     int num = settings.value(pre + "QGC_PARAM_COMBOBOX_COUNT").toInt();
     for (int i=0;i<num;i++)
     {
@@ -382,6 +408,11 @@ void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
         ui->editOptionComboBox->addItem(settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString());
         //qDebug() << "Adding val:" << settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString() << settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
         comboBoxTextToValMap[settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
+        if (type == "INDIVIDUAL")
+        {
+            comboBoxTextToParamMap[settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value(pre + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_PARAM").toString();
+            ui->editOptionComboBox->setEnabled(true);
+        }
     }
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
@@ -391,20 +422,27 @@ void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
 }
 void QGCComboBox::readSettings(const QSettings& settings)
 {
-    parameterName = settings.value("QGC_PARAM_COMBOBOX_PARAMID").toString();
-    component = settings.value("QGC_PARAM_COMBOBOX_COMPONENTID").toInt();
-    ui->nameLabel->setText(settings.value("QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
-    ui->editNameLabel->setText(settings.value("QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
-    //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
-    ui->editSelectParamComboBox->addItem(settings.value("QGC_PARAM_COMBOBOX_PARAMID").toString());
-    ui->editSelectParamComboBox->setCurrentIndex(ui->editSelectParamComboBox->count()-1);
-    ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value("QGC_PARAM_COMBOBOX_COMPONENTID").toInt()), settings.value("QGC_PARAM_COMBOBOX_COMPONENTID").toInt());
-    showInfo(settings.value("QGC_PARAM_COMBOBOX_DISPLAY_INFO", true).toBool());
-    ui->editSelectParamComboBox->setEnabled(true);
-    ui->editSelectComponentComboBox->setEnabled(true);
+    QVariantMap map;
+    foreach (QString key,settings.allKeys())
+    {
+        map[key] = settings.value(key);
+    }
+
+    readSettings("",map);
+
+    //parameterName = settings.value("QGC_PARAM_COMBOBOX_PARAMID").toString();
+    //component = settings.value("QGC_PARAM_COMBOBOX_COMPONENTID").toInt();
+    //ui->nameLabel->setText(settings.value("QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
+    //ui->editNameLabel->setText(settings.value("QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
+    //ui->editSelectParamComboBox->addItem(settings.value("QGC_PARAM_COMBOBOX_PARAMID").toString());
+    //ui->editSelectParamComboBox->setCurrentIndex(ui->editSelectParamComboBox->count()-1);
+    //ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value("QGC_PARAM_COMBOBOX_COMPONENTID").toInt()), settings.value("QGC_PARAM_COMBOBOX_COMPONENTID").toInt());
+    //showInfo(settings.value("QGC_PARAM_COMBOBOX_DISPLAY_INFO", true).toBool());
+    //ui->editSelectParamComboBox->setEnabled(true);
+    //ui->editSelectComponentComboBox->setEnabled(true);
 
 
-    int num = settings.value("QGC_PARAM_COMBOBOX_COUNT").toInt();
+    /*int num = settings.value("QGC_PARAM_COMBOBOX_COUNT").toInt();
     for (int i=0;i<num;i++)
     {
         QString pixmapfn = settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_IMG","").toString();
@@ -415,12 +453,12 @@ void QGCComboBox::readSettings(const QSettings& settings)
         ui->editOptionComboBox->addItem(settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString());
         qDebug() << "Adding val:" << settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i)).toString() << settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
         comboBoxTextToValMap[settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_TEXT").toString()] = settings.value("QGC_PARAM_COMBOBOX_ITEM_" + QString::number(i) + "_VAL").toInt();
-    }
+    }*/
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    //setActiveUAS(UASManager::instance()->getActiveUAS());*/
 
     // Get param value after settings have been loaded
-    requestParameter();
+    //requestParameter();
 }
 void QGCComboBox::addButtonClicked()
 {
@@ -437,6 +475,10 @@ void QGCComboBox::delButtonClicked()
 void QGCComboBox::comboBoxIndexChanged(QString val)
 {
     ui->imageLabel->setPixmap(comboBoxIndexToPixmap[ui->editOptionComboBox->currentIndex()]);
+    if (comboBoxTextToParamMap.contains(ui->editOptionComboBox->currentText()))
+    {
+        parameterName = comboBoxTextToParamMap.value(ui->editOptionComboBox->currentText());
+    }
     switch (parameterValue.type())
     {
     case QVariant::Char:

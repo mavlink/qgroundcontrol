@@ -21,6 +21,7 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     ui(new Ui::QGCParamSlider)
 {
     valueModLock = false;
+    visibleEnabled = true;
     valueModLockParam = false;
     ui->setupUi(this);
     ui->intValueSpinBox->hide();
@@ -380,9 +381,42 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
         ui->editSelectParamComboBox->addItem(parameterName, paramIndex);
     }
 
+    if (this->parameterName == "RC5_MIN")
+    {
+        int stopper = 1;
+    }
+    if (parameterName == "RC5_MIN")
+    {
+        int stpoper = 1;
+    }
+    if (visibleParam != "")
+    {
+        if (parameterName == visibleParam)
+        {
+            if (visibleVal == value.toInt())
+            {
+                this->uas->requestParameter(this->component,this->parameterName);
+                visibleEnabled = true;
+                this->show();
+            }
+            else
+            {
+                //Disable the component here.
+                ui->valueSlider->setEnabled(false);
+                ui->intValueSpinBox->setEnabled(false);
+                ui->doubleValueSpinBox->setEnabled(false);
+                visibleEnabled = false;
+                this->hide();
+            }
+        }
+    }
     Q_UNUSED(uas);
     if (component == this->component && parameterName == this->parameterName)
     {
+        if (!visibleEnabled)
+        {
+            return;
+        }
         parameterValue = value;
         ui->valueSlider->setEnabled(true);
         valueModLockParam = true;
@@ -505,6 +539,8 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
     ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt()), settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt());
     ui->editMinSpinBox->setValue(settings.value(pre + "QGC_PARAM_SLIDER_MIN").toFloat());
     ui->editMaxSpinBox->setValue(settings.value(pre + "QGC_PARAM_SLIDER_MAX").toFloat());
+    visibleParam = settings.value(pre+"QGC_PARAM_SLIDER_VISIBLE_PARAM","").toString();
+    visibleVal = settings.value(pre+"QGC_PARAM_SLIDER_VISIBLE_VAL",0).toInt();
     parameterMax = ui->editMaxSpinBox->value();
     parameterMin = ui->editMinSpinBox->value();
     //ui->valueSlider->setMaximum(parameterMax);
@@ -521,6 +557,14 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
 
 void QGCParamSlider::readSettings(const QSettings& settings)
 {
+    QVariantMap map;
+    foreach (QString key,settings.allKeys())
+    {
+        map[key] = settings.value(key);
+    }
+
+    readSettings("",map);
+    return;
     parameterName = settings.value("QGC_PARAM_SLIDER_PARAMID").toString();
     component = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
@@ -531,6 +575,9 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt()), settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt());
     ui->editMinSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MIN").toFloat());
     ui->editMaxSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MAX").toFloat());
+    visibleParam = settings.value("QGC_PARAM_SLIDER_VISIBLE_PARAM","").toString();
+             //QGC_TOOL_WIDGET_ITEMS\1\QGC_PARAM_SLIDER_VISIBLE_PARAM=RC5_FUNCTION
+    visibleVal = settings.value("QGC_PARAM_SLIDER_VISIBLE_VAL",0).toInt();
     parameterMax = ui->editMaxSpinBox->value();
     parameterMin = ui->editMinSpinBox->value();
     showInfo(settings.value("QGC_PARAM_SLIDER_DISPLAY_INFO", true).toBool());
