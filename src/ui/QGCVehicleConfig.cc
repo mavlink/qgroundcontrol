@@ -399,17 +399,28 @@ void QGCVehicleConfig::loadConfig()
                             {
                                     parametersname = xml.attributes().value("name").toString();
                             }
-                            QVariantMap set;
-                            set["title"] = parametersname;
+                            QVariantMap genset;
+                            QVariantMap advset;
+
                             QString setname = parametersname;
                             xml.readNext();
-                            int arraycount = 0;
+                            int genarraycount = 0;
+                            int advarraycount = 0;
                             while ((xml.name() != "parameters") && !xml.atEnd())
                             {
                                 if (xml.isStartElement() && xml.name() == "param")
                                 {
                                     QString humanname = xml.attributes().value("humanName").toString();
                                     QString name = xml.attributes().value("name").toString();
+                                    QString tab= xml.attributes().value("user").toString();
+                                    if (tab == "Advanced")
+                                    {
+                                        advset["title"] = parametersname;
+                                    }
+                                    else
+                                    {
+                                        genset["title"] = parametersname;
+                                    }
                                     if (name.contains(":"))
                                     {
                                         name = name.split(":")[1];
@@ -425,10 +436,20 @@ void QGCVehicleConfig::loadConfig()
                                         if (xml.isStartElement() && xml.name() == "values")
                                         {
                                             type = 1; //1 is a combobox
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "TYPE"] = "COMBO";
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_DESCRIPTION"] = humanname;
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID"] = name;
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_COMPONENTID"] = 1;
+                                            if (tab == "Advanced")
+                                            {
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "TYPE"] = "COMBO";
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_COMBOBOX_DESCRIPTION"] = humanname;
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID"] = name;
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_COMBOBOX_COMPONENTID"] = 1;
+                                            }
+                                            else
+                                            {
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "TYPE"] = "COMBO";
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_COMBOBOX_DESCRIPTION"] = humanname;
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_COMBOBOX_PARAMID"] = name;
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_COMBOBOX_COMPONENTID"] = 1;
+                                            }
                                             int paramcount = 0;
                                             xml.readNext();
                                             while ((xml.name() != "values") && !xml.atEnd())
@@ -438,13 +459,28 @@ void QGCVehicleConfig::loadConfig()
 
                                                     QString code = xml.attributes().value("code").toString();
                                                     QString arg = xml.readElementText();
-                                                    set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_TEXT"] = arg;
-                                                    set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_VAL"] = code.toInt();
+                                                    if (tab == "Advanced")
+                                                    {
+                                                        advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_TEXT"] = arg;
+                                                        advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_VAL"] = code.toInt();
+                                                    }
+                                                    else
+                                                    {
+                                                        genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_TEXT"] = arg;
+                                                        genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_COMBOBOX_ITEM_" + QString::number(paramcount) + "_VAL"] = code.toInt();
+                                                    }
                                                     paramcount++;
                                                 }
                                                 xml.readNext();
                                             }
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_COMBOBOX_COUNT"] = paramcount;
+                                            if (tab == "Advanced")
+                                            {
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_COMBOBOX_COUNT"] = paramcount;
+                                            }
+                                            else
+                                            {
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_COMBOBOX_COUNT"] = paramcount;
+                                            }
                                         }
                                         if (xml.isStartElement() && xml.name() == "field")
                                         {
@@ -465,10 +501,20 @@ void QGCVehicleConfig::loadConfig()
                                     }
                                     if (type == 2)
                                     {
-                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "TYPE"] = "SLIDER";
-                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_DESCRIPTION"] = humanname;
-                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_PARAMID"] = name;
-                                        set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_COMPONENTID"] = 1;
+                                        if (tab == "Advanced")
+                                        {
+                                            advset[setname + "\\" + QString::number(advarraycount) + "\\" + "TYPE"] = "SLIDER";
+                                            advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_SLIDER_DESCRIPTION"] = humanname;
+                                            advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_SLIDER_PARAMID"] = name;
+                                            advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_SLIDER_COMPONENTID"] = 1;
+                                        }
+                                        else
+                                        {
+                                            genset[setname + "\\" + QString::number(genarraycount) + "\\" + "TYPE"] = "SLIDER";
+                                            genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_SLIDER_DESCRIPTION"] = humanname;
+                                            genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_SLIDER_PARAMID"] = name;
+                                            genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_SLIDER_COMPONENTID"] = 1;
+                                        }
                                         if (fieldmap.contains("Range"))
                                         {
                                             float min = 0;
@@ -484,59 +530,123 @@ void QGCVehicleConfig::loadConfig()
                                                 min = fieldmap["Range"].split("-")[0].trimmed().toFloat();
                                                 max = fieldmap["Range"].split("-")[1].trimmed().toFloat();
                                             }
-
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_MIN"] = min;
-                                            set[setname + "\\" + QString::number(arraycount) + "\\" + "QGC_PARAM_SLIDER_MAX"] = max;
+                                            if (tab == "Advanced")
+                                            {
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_SLIDER_MIN"] = min;
+                                                advset[setname + "\\" + QString::number(advarraycount) + "\\" + "QGC_PARAM_SLIDER_MAX"] = max;
+                                            }
+                                            else
+                                            {
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_SLIDER_MIN"] = min;
+                                                genset[setname + "\\" + QString::number(genarraycount) + "\\" + "QGC_PARAM_SLIDER_MAX"] = max;
+                                            }
                                         }
                                     }
-                                    arraycount++;
+                                    if (tab == "Advanced")
+                                    {
+                                        advarraycount++;
+                                        advset["count"] = advarraycount;
+                                    }
+                                    else
+                                    {
+                                        genarraycount++;
+                                        genset["count"] = genarraycount;
+                                    }
                                 }
                                 xml.readNext();
                             }
-                            set["count"] = arraycount;
+                            if (genarraycount > 0)
+                            {
+                                tool = new QGCToolWidget("", this);
+                                tool->addUAS(mav);
+                                tool->setTitle(parametersname);
+                                tool->setObjectName(parametersname);
+                                tool->setSettings(genset);
+                                QList<QString> paramlist = tool->getParamList();
+                                for (int i=0;i<paramlist.size();i++)
+                                {
+                                    //Based on the airframe, we add the parameter to different categories.
+                                    if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
+                                    {
+                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                    }
+                                    else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
+                                    {
+                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                    }
+                                    else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
+                                    {
+                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                    }
+                                    else
+                                    {
+                                        libParamToWidgetMap->insert(paramlist[i],tool);
+                                    }
+                                }
 
-                            tool = new QGCToolWidget("", this);
-                            tool->addUAS(mav);
-                            tool->setTitle(parametersname);
-                            tool->setObjectName(parametersname);
-                            tool->setSettings(set);
-                            QList<QString> paramlist = tool->getParamList();
-                            for (int i=0;i<paramlist.size();i++)
+                                toolWidgets.append(tool);
+                                QGroupBox *box = new QGroupBox(this);
+                                box->setTitle(tool->objectName());
+                                box->setLayout(new QVBoxLayout());
+                                box->layout()->addWidget(tool);
+                                if (valuetype == "vehicles")
+                                {
+                                    ui->leftGeneralLayout->addWidget(box);
+                                }
+                                else if (valuetype == "libraries")
+                                {
+                                    ui->rightGeneralLayout->addWidget(box);
+                                }
+                                box->hide();
+                                toolToBoxMap[tool] = box;
+                            }
+                            if (advarraycount > 0)
                             {
-                                //Based on the airframe, we add the parameter to different categories.
-                                if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
+                                tool = new QGCToolWidget("", this);
+                                tool->addUAS(mav);
+                                tool->setTitle(parametersname);
+                                tool->setObjectName(parametersname);
+                                tool->setSettings(advset);
+                                QList<QString> paramlist = tool->getParamList();
+                                for (int i=0;i<paramlist.size();i++)
                                 {
-                                    systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                    //Based on the airframe, we add the parameter to different categories.
+                                    if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
+                                    {
+                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                    }
+                                    else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
+                                    {
+                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                    }
+                                    else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
+                                    {
+                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                    }
+                                    else
+                                    {
+                                        libParamToWidgetMap->insert(paramlist[i],tool);
+                                    }
                                 }
-                                else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
+
+                                toolWidgets.append(tool);
+                                QGroupBox *box = new QGroupBox(this);
+                                box->setTitle(tool->objectName());
+                                box->setLayout(new QVBoxLayout());
+                                box->layout()->addWidget(tool);
+                                if (valuetype == "vehicles")
                                 {
-                                    systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                    ui->leftAdvancedLayout->addWidget(box);
                                 }
-                                else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
+                                else if (valuetype == "libraries")
                                 {
-                                    systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                    ui->rightAdvancedLayout->addWidget(box);
                                 }
-                                else
-                                {
-                                    libParamToWidgetMap->insert(paramlist[i],tool);
-                                }
+                                box->hide();
+                                toolToBoxMap[tool] = box;
                             }
 
-                            toolWidgets.append(tool);
-                            QGroupBox *box = new QGroupBox(this);
-                            box->setTitle(tool->objectName());
-                            box->setLayout(new QVBoxLayout());
-                            box->layout()->addWidget(tool);
-                            if (valuetype == "vehicles")
-                            {
-                                ui->leftGeneralLayout->addWidget(box);
-                            }
-                            else if (valuetype == "libraries")
-                            {
-                                ui->rightGeneralLayout->addWidget(box);
-                            }
-                            box->hide();
-                            toolToBoxMap[tool] = box;
+
 
 
                         }
