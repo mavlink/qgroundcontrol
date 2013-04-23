@@ -18,8 +18,8 @@ QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
     // class, but this is something to clean up for later.
 
     QSettings settings;
-    int i = settings.value("SIMULATOR_INDEX", -1).toInt();
     settings.beginGroup("QGC_HILCONFIG");
+    int i = settings.value("SIMULATOR_INDEX", -1).toInt();
 
     if (i > 0) {
         ui->simComboBox->blockSignals(true);
