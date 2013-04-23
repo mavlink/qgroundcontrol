@@ -22,10 +22,10 @@ QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
     settings.beginGroup("QGC_HILCONFIG");
 
     if (i > 0) {
-        on_simComboBox_currentIndexChanged(i);
         ui->simComboBox->blockSignals(true);
         ui->simComboBox->setCurrentIndex(i);
         ui->simComboBox->blockSignals(false);
+        on_simComboBox_currentIndexChanged(i);
     }
 
     settings.endGroup();
