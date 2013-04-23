@@ -236,7 +236,7 @@ MainWindow::MainWindow(QWidget *parent):
         const int screenWidth = QApplication::desktop()->width();
         const int screenHeight = QApplication::desktop()->height();
 
-        if (screenWidth < 1400)
+        if (screenWidth < 1500)
         {
             resize(screenWidth, screenHeight - 80);
             show();
