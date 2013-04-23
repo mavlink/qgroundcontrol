@@ -26,7 +26,7 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     ui(new Ui::QGCMAVLinkLogPlayer)
 {
     ui->setupUi(this);
-    ui->gridLayout->setAlignment(Qt::AlignTop);
+    ui->horizontalLayout->setAlignment(Qt::AlignTop);
 
     // Connect protocol
     connect(this, SIGNAL(bytesReady(LinkInterface*,QByteArray)), mavlink, SLOT(receiveBytes(LinkInterface*,QByteArray)));

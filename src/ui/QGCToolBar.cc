@@ -30,8 +30,6 @@ This file is part of the QGROUNDCONTROL project
 
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
-    toggleLoggingAction(NULL),
-    logReplayAction(NULL),
     mav(NULL),
     player(NULL),
     changed(true),
@@ -40,109 +38,12 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     wpId(0),
     wpDistance(0),
     systemArmed(false),
-    lastLogDirectory(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation)),
-    currentLink(NULL)
+    currentLink(NULL),
+    firstAction(NULL)
 {
     setObjectName("QGC_TOOLBAR");
 
-    toggleLoggingAction = new QAction(QIcon(":"), "Logging", this);
-    toggleLoggingAction->setCheckable(true);
-    logReplayAction = new QAction(QIcon(":"), "Replay", this);
-    logReplayAction->setCheckable(false);
-
-    addAction(toggleLoggingAction);
-    addAction(logReplayAction);
-
-    // CREATE TOOLBAR ITEMS
-    // Add internal actions
-    // Add MAV widget
-    symbolButton = new QToolButton(this);
-    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; }");
-	addWidget(symbolButton);
-
-    toolBarNameLabel = new QLabel("------", this);
-	toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
-    addWidget(toolBarNameLabel);
-
-    toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
-    toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
-    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
-    addWidget(toolBarTimeoutLabel);
-
-    toolBarSafetyLabel = new QLabel("SAFE", this);
-    toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
-	toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
-    addWidget(toolBarSafetyLabel);
-
-    toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #3C7B9E; }");
-	toolBarModeLabel->setToolTip(tr("Vehicle mode"));
-    addWidget(toolBarModeLabel);
-
-    toolBarStateLabel = new QLabel("------", this);
-    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #FEC654; }");
-	toolBarStateLabel->setToolTip(tr("Vehicle state"));
-    addWidget(toolBarStateLabel);
-
-    toolBarBatteryBar = new QProgressBar(this);
-    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
-    toolBarBatteryBar->setMinimum(0);
-    toolBarBatteryBar->setMaximum(100);
-    toolBarBatteryBar->setMinimumWidth(20);
-    toolBarBatteryBar->setMaximumWidth(100);
-    toolBarBatteryBar->setToolTip(tr("Battery charge level"));
-    addWidget(toolBarBatteryBar);
-
-    toolBarBatteryVoltageLabel = new QLabel("xx.x V");
-    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
-	toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
-    addWidget(toolBarBatteryVoltageLabel);
-
-    toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
-    toolBarWpLabel->setToolTip(tr("Current waypoint"));
-    addWidget(toolBarWpLabel);
-
-    toolBarDistLabel = new QLabel("--- ---- m", this);
-    toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
-    addWidget(toolBarDistLabel);
-
-    toolBarMessageLabel = new QLabel("No system messages.", this);
-    toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
-	toolBarMessageLabel->setToolTip(tr("Most recent system message"));
-    addWidget(toolBarMessageLabel);
-
-    QWidget* spacer = new QWidget();
-    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    addWidget(spacer);
-
-    connectButton = new QPushButton(tr("Connect"), this);
-    connectButton->setToolTip(tr("Connect wireless link to MAV"));
-    connectButton->setCheckable(true);
-    addWidget(connectButton);
-    connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
-
-    // DONE INITIALIZING BUTTONS
-
-	// Configure the toolbar for the current default UAS
-    setActiveUAS(UASManager::instance()->getActiveUAS());
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
-    if (LinkManager::instance()->getLinks().count() > 2)
-        addLink(LinkManager::instance()->getLinks().last());
-    // XXX implies that connect button is always active for the last used link
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
-
-    // Update label if required
-    if (LinkManager::instance()->getLinks().count() < 3) {
-        connectButton->setText(tr("New Link"));
-    }
-
-    // Set the toolbar to be updated every 2s
-    connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
-    updateViewTimer.start(2000);
-
-    loadSettings();
+    // Do not load UI, wait for actions
 }
 
 void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
@@ -172,86 +73,109 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
     }
 }
 
-void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
+void QGCToolBar::createUI()
 {
-    this->player = player;
-    connect(toggleLoggingAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
-    connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
-}
+    // CREATE TOOLBAR ITEMS
+    // Add internal actions
+    // Add MAV widget
+    symbolButton = new QToolButton(this);
+    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; }");
+    addWidget(symbolButton);
 
-void QGCToolBar::playLogFile(bool checked)
-{
-    // Check if player exists
-    if (player)
-    {
-        // If a logfile is already replayed, stop the replay
-        // and select a new logfile
-        if (player->isPlayingLogFile())
-        {
-            player->playPause(false);
-            if (checked)
-            {
-                if (!player->selectLogFile(lastLogDirectory)) return;
-            }
-        }
-        // If no replaying happens already, start it
-        else
-        {
-            if (!player->selectLogFile(lastLogDirectory)) return;
-        }
-        player->playPause(checked);
+    toolBarNameLabel = new QLabel("------", this);
+    toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
+    addWidget(toolBarNameLabel);
+
+    toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
+    toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
+    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+    addWidget(toolBarTimeoutLabel);
+
+    toolBarSafetyLabel = new QLabel("SAFE", this);
+    toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
+    toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
+    addWidget(toolBarSafetyLabel);
+
+    toolBarModeLabel = new QLabel("------", this);
+    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #3C7B9E; }");
+    toolBarModeLabel->setToolTip(tr("Vehicle mode"));
+    addWidget(toolBarModeLabel);
+
+    toolBarStateLabel = new QLabel("------", this);
+    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #FEC654; }");
+    toolBarStateLabel->setToolTip(tr("Vehicle state"));
+    addWidget(toolBarStateLabel);
+
+    toolBarBatteryBar = new QProgressBar(this);
+    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+    toolBarBatteryBar->setMinimum(0);
+    toolBarBatteryBar->setMaximum(100);
+    toolBarBatteryBar->setMinimumWidth(20);
+    toolBarBatteryBar->setMaximumWidth(100);
+    toolBarBatteryBar->setToolTip(tr("Battery charge level"));
+    addWidget(toolBarBatteryBar);
+
+    toolBarBatteryVoltageLabel = new QLabel("xx.x V");
+    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
+    toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
+    addWidget(toolBarBatteryVoltageLabel);
+
+    toolBarWpLabel = new QLabel("WP--", this);
+    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
+    toolBarWpLabel->setToolTip(tr("Current waypoint"));
+    addWidget(toolBarWpLabel);
+
+    toolBarDistLabel = new QLabel("--- ---- m", this);
+    toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
+    addWidget(toolBarDistLabel);
+
+    toolBarMessageLabel = new QLabel("No system messages.", this);
+    toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
+    toolBarMessageLabel->setToolTip(tr("Most recent system message"));
+    addWidget(toolBarMessageLabel);
+
+    QWidget* spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    addWidget(spacer);
+
+    connectButton = new QPushButton(tr("Connect"), this);
+    connectButton->setToolTip(tr("Connect wireless link to MAV"));
+    connectButton->setCheckable(true);
+    addWidget(connectButton);
+    connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
+
+    // DONE INITIALIZING BUTTONS
+
+    // Configure the toolbar for the current default UAS
+    setActiveUAS(UASManager::instance()->getActiveUAS());
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    if (LinkManager::instance()->getLinks().count() > 2)
+        addLink(LinkManager::instance()->getLinks().last());
+    // XXX implies that connect button is always active for the last used link
+    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+
+    // Update label if required
+    if (LinkManager::instance()->getLinks().count() < 3) {
+        connectButton->setText(tr("New Link"));
     }
-}
 
-void QGCToolBar::logging(bool checked)
-{
-    // Stop logging in any case
-    MainWindow::instance()->getMAVLink()->enableLogging(false);
+    // Set the toolbar to be updated every 2s
+    connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
+    updateViewTimer.start(2000);
 
-	// If the user is enabling logging
-    if (checked)
-    {
-		// Prompt the user for a filename/location to save to
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file to save to"), lastLogDirectory, tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
-
-		// Check that they didn't cancel out
-		if (fileName.isNull())
-		{
-			toggleLoggingAction->setChecked(false);
-			return;
-		}
-
-		// Make sure the file's named properly
-        if (!fileName.endsWith(".mavlink"))
-        {
-            fileName.append(".mavlink");
-        }
-
-		// Check that we can save the logfile
-        QFileInfo file(fileName);
-        if ((file.exists() && !file.isWritable()))
-        {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText(tr("The selected logfile is not writable"));
-            msgBox.setInformativeText(tr("Please make sure that the file %1 is writable or select a different file").arg(fileName));
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
-        }
-		// Otherwise we're off and logging
-        else
-        {
-            MainWindow::instance()->getMAVLink()->setLogfileName(fileName);
-            MainWindow::instance()->getMAVLink()->enableLogging(true);
-            lastLogDirectory = file.absoluteDir().absolutePath(); //save last log directory
-        }
-    }
+    loadSettings();
 }
 
 void QGCToolBar::addPerspectiveChangeAction(QAction* action)
 {
-    insertAction(toggleLoggingAction, action);
+    if (firstAction) {
+        insertAction(firstAction, action);
+    } else {
+        addAction(action);
+        firstAction = action;
+        createUI();
+    }
 }
 
 void QGCToolBar::setActiveUAS(UASInterface* active)
@@ -508,6 +432,7 @@ void QGCToolBar::removeLink(LinkInterface* link)
 
 void QGCToolBar::updateLinkState(bool connected)
 {
+    Q_UNUSED(connected);
     if (currentLink && currentLink->isConnected())
     {
         connectButton->setText(tr("Disconnect"));
@@ -543,7 +468,6 @@ void QGCToolBar::loadSettings()
 {
     QSettings settings;
     settings.beginGroup("QGC_TOOLBAR");
-    lastLogDirectory = settings.value("LAST_LOG_DIRECTORY", lastLogDirectory).toString();
     settings.endGroup();
 }
 
@@ -551,7 +475,6 @@ void QGCToolBar::storeSettings()
 {
     QSettings settings;
     settings.beginGroup("QGC_TOOLBAR");
-    settings.setValue("LAST_LOG_DIRECTORY", lastLogDirectory);
     settings.endGroup();
     settings.sync();
 }
@@ -565,6 +488,4 @@ void QGCToolBar::clearStatusString()
 QGCToolBar::~QGCToolBar()
 {
     storeSettings();
-    if (toggleLoggingAction) toggleLoggingAction->deleteLater();
-    if (logReplayAction) logReplayAction->deleteLater();
 }

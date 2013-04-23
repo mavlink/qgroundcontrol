@@ -23,8 +23,8 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
 
     if (xplane)
     {
-        connect(ui->randomAttitudeButton, SIGNAL(clicked()), link, SLOT(setRandomAttitude()));
-        connect(ui->randomPositionButton, SIGNAL(clicked()), link, SLOT(setRandomPosition()));
+//        connect(ui->randomAttitudeButton, SIGNAL(clicked()), link, SLOT(setRandomAttitude()));
+//        connect(ui->randomPositionButton, SIGNAL(clicked()), link, SLOT(setRandomPosition()));
         connect(ui->airframeComboBox, SIGNAL(activated(QString)), link, SLOT(selectAirframe(QString)));
         ui->airframeComboBox->setCurrentIndex(link->getAirFrameIndex());
     }
