@@ -340,6 +340,7 @@ HEADERS += src/MG.h \
     libs/qextserialport/qextserialenumerator.h \
     src/QGCGeo.h \
     src/ui/QGCToolBar.h \
+    src/ui/QGCStatusBar.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
@@ -503,6 +504,7 @@ SOURCES += src/main.cc \
     src/ui/map/QGCMapTool.cc \
     src/ui/map/QGCMapToolBar.cc \
     src/ui/QGCToolBar.cc \
+    src/ui/QGCStatusBar.cc \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/WaypointViewOnlyView.cc \

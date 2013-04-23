@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>243</width>
-    <height>261</height>
+    <width>249</width>
+    <height>100</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,12 +17,25 @@
    <property name="margin">
     <number>0</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
+   <item row="3" column="0" colspan="2">
+    <widget class="QPushButton" name="startButton">
      <property name="text">
-      <string>Airframe</string>
+      <string>Start</string>
      </property>
     </widget>
+   </item>
+   <item row="5" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
    <item row="0" column="1" colspan="3">
     <widget class="QComboBox" name="airframeComboBox">
@@ -100,20 +113,6 @@
      </item>
     </widget>
    </item>
-   <item row="5" column="2" colspan="2">
-    <widget class="QPushButton" name="randomPositionButton">
-     <property name="text">
-      <string>Random POS</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QPushButton" name="randomAttitudeButton">
-     <property name="text">
-      <string>Random ATT</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
     <widget class="QLabel" name="hostLabel">
      <property name="text">
@@ -121,25 +120,12 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QPushButton" name="startButton">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
      <property name="text">
-      <string>Start</string>
+      <string>Airframe</string>
      </property>
     </widget>
-   </item>
-   <item row="6" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>

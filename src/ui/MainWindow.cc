@@ -57,6 +57,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkMessageSender.h"
 #include "QGCRGBDView.h"
 #include "QGCFirmwareUpdate.h"
+#include "QGCStatusBar.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -141,7 +142,7 @@ MainWindow::MainWindow(QWidget *parent):
     configureWindowName();
 
     // Setup corners
-    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::BottomDockWidgetArea);
 
     // Setup UI state machines
 	centerStackActionGroup->setExclusive(true);
@@ -152,10 +153,14 @@ MainWindow::MainWindow(QWidget *parent):
     // Load Toolbar
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);
-    // Add actions
-    toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
+    // Add actions (inverted order due to insert)
+    toolBar->addPerspectiveChangeAction(ui.actionSimulation_View);
     toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
     toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
+    toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
+
+    customStatusBar = new QGCStatusBar(this);
+    this->setStatusBar(customStatusBar);
 
     emit initStatusChanged("Building common widgets.");
 
@@ -373,6 +378,10 @@ void MainWindow::buildCommonWidgets()
     // Add generic MAVLink decoder
     mavlinkDecoder = new MAVLinkDecoder(mavlink, this);
 
+    // Log player
+    logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
+    customStatusBar->setLogPlayer(logPlayer);
+
     // Dock widgets
     if (!controlDockWidget)
     {
@@ -418,15 +427,15 @@ void MainWindow::buildCommonWidgets()
         addTool(debugConsoleDockWidget, tr("Communication Console"), Qt::BottomDockWidgetArea);
     }
 
-    if (!logPlayerDockWidget)
-    {
-        logPlayerDockWidget = new QDockWidget(tr("MAVLink Log Player"), this);
-        logPlayer = new QGCMAVLinkLogPlayer(mavlink, this);
-        toolBar->setLogPlayer(logPlayer);
-        logPlayerDockWidget->setWidget(logPlayer);
-        logPlayerDockWidget->setObjectName("MAVLINK_LOG_PLAYER_DOCKWIDGET");
-        addTool(logPlayerDockWidget, tr("MAVLink Log Replay"), Qt::RightDockWidgetArea);
-    }
+//    if (!logPlayerDockWidget)
+//    {
+//        logPlayerDockWidget = new QDockWidget(tr("MAVLink Log Player"), this);
+//        logPlayer = new QGCMAVLinkLogPlayer(mavlink, this);
+//        customStatusBar->setLogPlayer(logPlayer);
+//        logPlayerDockWidget->setWidget(logPlayer);
+//        logPlayerDockWidget->setObjectName("MAVLINK_LOG_PLAYER_DOCKWIDGET");
+//        addTool(logPlayerDockWidget, tr("MAVLink Log Replay"), Qt::RightDockWidgetArea);
+//    }
 
     if (!mavlinkInspectorWidget)
     {
@@ -664,7 +673,7 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
     // Add simulation configuration widget
     UAS* mav = dynamic_cast<UAS*>(uas);
 
-    if (mav)
+    if (mav && !hilDocks.contains(mav->getUASID()))
     {
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
         QString hilDockName = tr("HIL Config (%1)").arg(uas->getUASName());
@@ -672,11 +681,13 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
         hilDock->setWidget(hconf);
         hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
         addTool(hilDock, hilDockName, Qt::RightDockWidgetArea);
+        hilDocks.insert(mav->getUASID(), hilDock);
 
+        if (currentView != VIEW_SIMULATION)
+            hilDock->hide();
+        else
+            hilDock->show();
     }
-
-    // Reload view state in case new widgets were added
-    loadViewState();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -1035,6 +1046,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionEngineersView);
     perspectives->addAction(ui.actionMavlinkView);
     perspectives->addAction(ui.actionPilotsView);
+    perspectives->addAction(ui.actionSimulation_View);
     perspectives->addAction(ui.actionOperatorsView);
     perspectives->addAction(ui.actionFirmwareUpdateView);
     perspectives->addAction(ui.actionUnconnectedView);
@@ -1044,6 +1056,7 @@ void MainWindow::connectCommonActions()
     if (currentView == VIEW_ENGINEER) ui.actionEngineersView->setChecked(true);
     if (currentView == VIEW_MAVLINK) ui.actionMavlinkView->setChecked(true);
     if (currentView == VIEW_PILOT) ui.actionPilotsView->setChecked(true);
+    if (currentView == VIEW_SIMULATION) ui.actionSimulation_View->setChecked(true);
     if (currentView == VIEW_OPERATOR) ui.actionOperatorsView->setChecked(true);
     if (currentView == VIEW_FIRMWAREUPDATE) ui.actionFirmwareUpdateView->setChecked(true);
     if (currentView == VIEW_UNCONNECTED) ui.actionUnconnectedView->setChecked(true);
@@ -1072,6 +1085,7 @@ void MainWindow::connectCommonActions()
 
     // Views actions
     connect(ui.actionPilotsView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
+    connect(ui.actionSimulation_View, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionOperatorsView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
@@ -1383,6 +1397,9 @@ void MainWindow::UASCreated(UASInterface* uas)
             }
         }
 
+        // HIL
+        showHILConfigurationWidget(uas);
+
         // Line chart
         if (!linechartWidget)
         {
@@ -1439,6 +1456,9 @@ void MainWindow::UASCreated(UASInterface* uas)
                     break;
                 case VIEW_PILOT:
                     loadPilotView();
+                    break;
+                case VIEW_SIMULATION:
+                    loadSimulationView();
                     break;
                 case VIEW_UNCONNECTED:
                     loadUnconnectedView();
@@ -1532,8 +1552,7 @@ void MainWindow::loadViewState()
             waypointsDockWidget->hide();
             infoDockWidget->hide();
             debugConsoleDockWidget->show();
-            logPlayerDockWidget->show();
-            mavlinkInspectorWidget->show();
+            //mavlinkInspectorWidget->show();
             //mavlinkSenderWidget->show();
             parametersDockWidget->show();
             hsiDockWidget->hide();
@@ -1551,7 +1570,7 @@ void MainWindow::loadViewState()
             waypointsDockWidget->hide();
             infoDockWidget->hide();
             debugConsoleDockWidget->hide();
-            logPlayerDockWidget->hide();
+//            logPlayerDockWidget->hide();
             mavlinkInspectorWidget->hide();
             parametersDockWidget->hide();
             hsiDockWidget->show();
@@ -1569,7 +1588,7 @@ void MainWindow::loadViewState()
             waypointsDockWidget->hide();
             infoDockWidget->hide();
             debugConsoleDockWidget->hide();
-            logPlayerDockWidget->hide();
+//            logPlayerDockWidget->hide();
             mavlinkInspectorWidget->show();
             //mavlinkSenderWidget->show();
             parametersDockWidget->hide();
@@ -1588,7 +1607,7 @@ void MainWindow::loadViewState()
             waypointsDockWidget->hide();
             infoDockWidget->hide();
             debugConsoleDockWidget->hide();
-            logPlayerDockWidget->hide();
+//            logPlayerDockWidget->hide();
             mavlinkInspectorWidget->hide();
             //mavlinkSenderWidget->hide();
             parametersDockWidget->hide();
@@ -1607,7 +1626,7 @@ void MainWindow::loadViewState()
             waypointsDockWidget->show();
             infoDockWidget->hide();
             debugConsoleDockWidget->show();
-            logPlayerDockWidget->show();
+//            logPlayerDockWidget->show();
             parametersDockWidget->hide();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
@@ -1618,6 +1637,18 @@ void MainWindow::loadViewState()
             video2DockWidget->hide();
             mavlinkInspectorWidget->hide();
             break;
+
+        case VIEW_SIMULATION:
+            centerStack->setCurrentWidget(mapWidget);
+            controlDockWidget->show();
+            waypointsDockWidget->show();
+            parametersDockWidget->show();
+            mavlinkInspectorWidget->hide();
+            foreach (int key, hilDocks.keys()) {
+                hilDocks.value(key)->show();
+            }
+            break;
+
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
@@ -1627,7 +1658,7 @@ void MainWindow::loadViewState()
             waypointsDockWidget->hide();
             infoDockWidget->hide();
             debugConsoleDockWidget->show();
-            logPlayerDockWidget->show();
+//            logPlayerDockWidget->show();
             parametersDockWidget->hide();
             hsiDockWidget->hide();
             headDown1DockWidget->hide();
@@ -1688,6 +1719,17 @@ void MainWindow::loadPilotView()
         storeViewState();
         currentView = VIEW_PILOT;
         ui.actionPilotsView->setChecked(true);
+        loadViewState();
+    }
+}
+
+void MainWindow::loadSimulationView()
+{
+    if (currentView != VIEW_SIMULATION)
+    {
+        storeViewState();
+        currentView = VIEW_SIMULATION;
+        ui.actionSimulation_View->setChecked(true);
         loadViewState();
     }
 }

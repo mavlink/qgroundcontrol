@@ -37,6 +37,14 @@ public:
         return logFile.isOpen();
     }
 
+    /**
+     * @brief Set the last log file name
+     * @param filename
+     */
+    void setLastLogFile(const QString& filename) {
+        lastLogDirectory = filename;
+    }
+
 public slots:
     /** @brief Toggle between play and pause */
     void playPauseToggle();

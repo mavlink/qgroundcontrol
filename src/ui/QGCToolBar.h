@@ -61,12 +61,6 @@ public slots:
     void setSystemType(UASInterface* uas, unsigned int systemType);
     /** @brief Received system text message */
     void receiveTextMessage(int uasid, int componentid, int severity, QString text);
-    /** @brief Start / stop logging */
-    void logging(bool checked);
-    /** @brief Start playing logfile */
-    void playLogFile(bool checked);
-    /** @brief Set log playing component */
-    void setLogPlayer(QGCMAVLinkLogPlayer* player);
     /** @brief Update battery charge state */
     void updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds);
     /** @brief Update current waypoint */
@@ -88,9 +82,8 @@ protected:
     void createCustomWidgets();
     void storeSettings();
     void loadSettings();
+    void createUI();
 
-    QAction* toggleLoggingAction;
-    QAction* logReplayAction;
     UASInterface* mav;
     QToolButton* symbolButton;
     QLabel* toolBarNameLabel;
@@ -117,8 +110,8 @@ protected:
     quint64 lastSystemMessageTimeMs;
     QTimer updateViewTimer;
     bool systemArmed;
-    QString lastLogDirectory;
     LinkInterface* currentLink;
+    QAction* firstAction;
 };
 
 #endif // QGCTOOLBAR_H
