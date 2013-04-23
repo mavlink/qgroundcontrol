@@ -236,9 +236,10 @@ MainWindow::MainWindow(QWidget *parent):
         const int screenWidth = QApplication::desktop()->width();
         const int screenHeight = QApplication::desktop()->height();
 
-        if (screenWidth < 1200)
+        if (screenWidth < 1400)
         {
-            showFullScreen();
+            resize(screenWidth, screenHeight - 80);
+            show();
         }
         else
         {
@@ -680,7 +681,7 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
         QDockWidget* hilDock = new QDockWidget(hilDockName, this);
         hilDock->setWidget(hconf);
         hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
-        addTool(hilDock, hilDockName, Qt::RightDockWidgetArea);
+        addTool(hilDock, hilDockName, Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
 
         if (currentView != VIEW_SIMULATION)
