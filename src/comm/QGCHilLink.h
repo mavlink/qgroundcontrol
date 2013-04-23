@@ -37,6 +37,12 @@ public:
      */
     virtual int getAirFrameIndex() = 0;
 
+    /**
+     * @brief Check if sensor level HIL is enabled
+     * @return true if sensor HIL is enabled
+     */
+    virtual bool sensorHilEnabled() = 0;
+
 public slots:
     virtual void setPort(int port) = 0;
     /** @brief Add a new host to broadcast messages to */
@@ -47,6 +53,8 @@ public slots:
     virtual void processError(QProcess::ProcessError err) = 0;
     /** @brief Set the simulator version as text string */
     virtual void setVersion(const QString& version) = 0;
+    /** @brief Enable sensor-level HIL (instead of state-level HIL) */
+    virtual void enableSensorHIL(bool enable) = 0;
 
     virtual void selectAirframe(const QString& airframe) = 0;
 
@@ -105,6 +113,9 @@ signals:
 
     /** @brief Selected sim version changed */
     void versionChanged(const QString& version);
+
+    /** @brief Sensor leve HIL state changed */
+    void sensorHilChanged(bool enabled);
 };
 
 #endif // QGCHILLINK_H

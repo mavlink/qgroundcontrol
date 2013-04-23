@@ -54,7 +54,7 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLast(QGC::groundTimeMilliseconds()),
     simUpdateLastText(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    sensorHilEnabled(true)
+    _sensorHilEnabled(true)
 {
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
@@ -81,6 +81,7 @@ void QGCXPlaneLink::loadSettings()
     setRemoteHost(settings.value("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort)).toString());
     setVersion(settings.value("XPLANE_VERSION", 10).toInt());
     selectAirframe(settings.value("AIRFRAME", "default").toString());
+    _sensorHilEnabled = settings.value("SENSOR_HIL", _sensorHilEnabled).toBool();
     settings.endGroup();
 }
 
@@ -92,6 +93,7 @@ void QGCXPlaneLink::storeSettings()
     settings.setValue("REMOTE_HOST", QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
     settings.setValue("XPLANE_VERSION", xPlaneVersion);
     settings.setValue("AIRFRAME", airframeName);
+    settings.setValue("SENSOR_HIL", _sensorHilEnabled);
     settings.endGroup();
     settings.sync();
 }
@@ -623,7 +625,7 @@ void QGCXPlaneLink::readBytes()
         }
         simUpdateLast = QGC::groundTimeMilliseconds();
 
-        if (sensorHilEnabled)
+        if (_sensorHilEnabled)
         {
             diff_pressure = 0.0f;
             pressure_alt = alt;

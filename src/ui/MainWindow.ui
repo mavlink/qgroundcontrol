@@ -497,7 +497,7 @@
      <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
    </property>
    <property name="text">
-    <string>Simulation View</string>
+    <string>Simulation</string>
    </property>
    <property name="toolTip">
     <string>Open the simulation view</string>
