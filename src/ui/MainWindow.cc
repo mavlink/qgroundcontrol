@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent):
     lowPowerMode(false)
 {
     hide();
+    isAdvancedMode = false;
     emit initStatusChanged("Loading UI Settings..");
     loadSettings();
     if (!settings.contains("CURRENT_VIEW"))
@@ -163,12 +164,13 @@ MainWindow::MainWindow(QWidget *parent):
     actions << ui.actionPilotsView;
     actions << ui.actionEngineersView;
     actions << ui.actionSimulation_View;
+    actions << ui.actionConfiguration_2;
     toolBar->setPerspectiveChangeActions(actions);
 
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
-    toolBar->addPerspectiveChangeAction(ui.actionConfiguration_2);
+
 
     emit initStatusChanged("Building common widgets.");
 
@@ -387,6 +389,8 @@ void MainWindow::buildCommonWidgets()
     if (!controlDockWidget)
     {
         controlDockWidget = new QDockWidget(tr("Control"), this);
+        dockToTitleBarMap[controlDockWidget] = controlDockWidget->titleBarWidget();
+        controlDockWidget->setTitleBarWidget(new QWidget(this));
         controlDockWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
         controlDockWidget->setWidget( new UASControlWidget(this) );
         addTool(controlDockWidget, tr("Control"), Qt::LeftDockWidgetArea);
@@ -394,7 +398,9 @@ void MainWindow::buildCommonWidgets()
 
     if (!listDockWidget)
     {
-        listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
+        listDockWidget = new QDockWidget(/*tr("Unmanned Systems"), */this);
+        dockToTitleBarMap[listDockWidget] = listDockWidget->titleBarWidget();
+        listDockWidget->setTitleBarWidget(new QWidget(this));
         listDockWidget->setWidget( new UASListWidget(this) );
         listDockWidget->setObjectName("UNMANNED_SYSTEMS_LIST_DOCKWIDGET");
         addTool(listDockWidget, tr("Unmanned Systems"), Qt::RightDockWidgetArea);
@@ -404,6 +410,8 @@ void MainWindow::buildCommonWidgets()
     {
         waypointsDockWidget = new QDockWidget(tr("Mission Plan"), this);
         waypointsDockWidget->setWidget( new QGCWaypointListMulti(this) );
+        dockToTitleBarMap[waypointsDockWidget] = waypointsDockWidget->titleBarWidget();
+        waypointsDockWidget->setTitleBarWidget(new QWidget(this));
         waypointsDockWidget->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
         addTool(waypointsDockWidget, tr("Mission Plan"), Qt::BottomDockWidgetArea);
     }
@@ -411,6 +419,8 @@ void MainWindow::buildCommonWidgets()
     if (!infoDockWidget)
     {
         infoDockWidget = new QDockWidget(tr("Status Details"), this);
+        dockToTitleBarMap[infoDockWidget] = infoDockWidget->titleBarWidget();
+        infoDockWidget->setTitleBarWidget(new QWidget(this));
         infoDockWidget->setWidget( new UASInfoWidget(this) );
         infoDockWidget->setObjectName("UAS_STATUS_DETAILS_DOCKWIDGET");
         addTool(infoDockWidget, tr("Status Details"), Qt::RightDockWidgetArea);
@@ -419,6 +429,8 @@ void MainWindow::buildCommonWidgets()
     if (!debugConsoleDockWidget)
     {
         debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
+        dockToTitleBarMap[debugConsoleDockWidget] = debugConsoleDockWidget->titleBarWidget();
+        debugConsoleDockWidget->setTitleBarWidget(new QWidget(this));
         debugConsoleDockWidget->setWidget( new DebugConsole(this) );
         debugConsoleDockWidget->setObjectName("COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET");
 
@@ -441,6 +453,8 @@ void MainWindow::buildCommonWidgets()
     if (!mavlinkInspectorWidget)
     {
         mavlinkInspectorWidget = new QDockWidget(tr("MAVLink Message Inspector"), this);
+        dockToTitleBarMap[mavlinkInspectorWidget] = mavlinkInspectorWidget->titleBarWidget();
+        mavlinkInspectorWidget->setTitleBarWidget(new QWidget(this));
         mavlinkInspectorWidget->setWidget( new QGCMAVLinkInspector(mavlink, this) );
         mavlinkInspectorWidget->setObjectName("MAVLINK_INSPECTOR_DOCKWIDGET");
         addTool(mavlinkInspectorWidget, tr("MAVLink Inspector"), Qt::RightDockWidgetArea);
@@ -467,6 +481,8 @@ void MainWindow::buildCommonWidgets()
     if (!parametersDockWidget)
     {
         parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
+        dockToTitleBarMap[parametersDockWidget] = parametersDockWidget->titleBarWidget();
+        parametersDockWidget->setTitleBarWidget(new QWidget(this));
         parametersDockWidget->setWidget( new ParameterInterface(this) );
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
         addTool(parametersDockWidget, tr("Onboard Parameters"), Qt::RightDockWidgetArea);
@@ -475,6 +491,8 @@ void MainWindow::buildCommonWidgets()
     if (!hsiDockWidget)
     {
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+        dockToTitleBarMap[hsiDockWidget] = hsiDockWidget->titleBarWidget();
+        hsiDockWidget->setTitleBarWidget(new QWidget(this));
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
         addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
@@ -483,6 +501,8 @@ void MainWindow::buildCommonWidgets()
     if (!headDown1DockWidget)
     {
         headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
+        dockToTitleBarMap[headDown1DockWidget] = headDown1DockWidget->titleBarWidget();
+        headDown1DockWidget->setTitleBarWidget(new QWidget(this));
         HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
         hdDisplay->addSource(mavlinkDecoder);
         headDown1DockWidget->setWidget(hdDisplay);
@@ -493,6 +513,8 @@ void MainWindow::buildCommonWidgets()
     if (!headDown2DockWidget)
     {
         headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
+        dockToTitleBarMap[headDown2DockWidget] = headDown2DockWidget->titleBarWidget();
+        headDown2DockWidget->setTitleBarWidget(new QWidget(this));
         HDDisplay* hdDisplay = new HDDisplay(acceptList2, "Actuator Status", this);
         hdDisplay->addSource(mavlinkDecoder);
         headDown2DockWidget->setWidget(hdDisplay);
@@ -503,6 +525,8 @@ void MainWindow::buildCommonWidgets()
     if (!rcViewDockWidget)
     {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
+        dockToTitleBarMap[rcViewDockWidget] = rcViewDockWidget->titleBarWidget();
+        rcViewDockWidget->setTitleBarWidget(new QWidget(this));
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
         rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
         addTool(rcViewDockWidget, tr("Radio Control"), Qt::BottomDockWidgetArea);
@@ -511,6 +535,8 @@ void MainWindow::buildCommonWidgets()
     if (!headUpDockWidget)
     {
         headUpDockWidget = new QDockWidget(tr("HUD"), this);
+        dockToTitleBarMap[headUpDockWidget] = headUpDockWidget->titleBarWidget();
+        headUpDockWidget->setTitleBarWidget(new QWidget(this));
         headUpDockWidget->setWidget( new HUD(320, 240, this));
         headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
         addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
@@ -519,6 +545,8 @@ void MainWindow::buildCommonWidgets()
     if (!video1DockWidget)
     {
         video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
+        dockToTitleBarMap[video1DockWidget] = video1DockWidget->titleBarWidget();
+        video1DockWidget->setTitleBarWidget(new QWidget(this));
         QGCRGBDView* video1 =  new QGCRGBDView(160, 120, this);
         video1->enableHUDInstruments(false);
         video1->enableVideo(false);
@@ -531,6 +559,8 @@ void MainWindow::buildCommonWidgets()
     if (!video2DockWidget)
     {
         video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
+        dockToTitleBarMap[video2DockWidget] = video2DockWidget->titleBarWidget();
+        video2DockWidget->setTitleBarWidget(new QWidget(this));
         QGCRGBDView* video2 =  new QGCRGBDView(160, 120, this);
         video2->enableHUDInstruments(false);
         video2->enableVideo(false);
@@ -1049,6 +1079,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionPilotsView);
     perspectives->addAction(ui.actionSimulation_View);
     perspectives->addAction(ui.actionOperatorsView);
+    perspectives->addAction(ui.actionConfiguration_2);
     perspectives->addAction(ui.actionFirmwareUpdateView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->setExclusive(true);
@@ -1072,6 +1103,7 @@ void MainWindow::connectCommonActions()
 
     // Connect actions from ui
     connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
+    connect(ui.actionAdvanced_Mode,SIGNAL(triggered()),this,SLOT(setAdvancedMode()));
 
     // Connect internal actions
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
@@ -1686,6 +1718,35 @@ void MainWindow::loadViewState()
     if (settings.contains(getWindowStateKey()))
     {
         restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
+    }
+}
+void MainWindow::setAdvancedMode()
+{
+    if (!isAdvancedMode)
+    {
+        ui.actionAdvanced_Mode->setChecked(true);
+        isAdvancedMode = true;
+        for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
+        {
+            //QWidget *widget = i.value();
+            QWidget *widget = i.key()->titleBarWidget();
+            i.key()->setTitleBarWidget(i.value());
+            dockToTitleBarMap[i.key()] = widget;
+
+        }
+    }
+    else
+    {
+        ui.actionAdvanced_Mode->setChecked(false);
+        isAdvancedMode = false;
+        for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
+        {
+            //QWidget *widget = i.value();
+            QWidget *widget = i.key()->titleBarWidget();
+            i.key()->setTitleBarWidget(i.value());
+            dockToTitleBarMap[i.key()] = widget;
+
+        }
     }
 }
 
