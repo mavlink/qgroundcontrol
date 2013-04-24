@@ -155,6 +155,8 @@ public slots:
     void stopVideoCapture();
     void saveScreen();
 
+    /** @brief Sets advanced mode, allowing for editing of tool widget locations */
+    void setAdvancedMode();
     /** @brief Load configuration view */
     void loadConfigurationView();
     /** @brief Load default view when no MAV is connected */
@@ -419,6 +421,8 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private:
+    QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
+    bool isAdvancedMode;
     Ui::MainWindow ui;
 
     QString getWindowStateKey();

@@ -72,6 +72,7 @@
     <addaction name="actionJoystickSettings"/>
     <addaction name="actionSettings"/>
     <addaction name="menuPreferences"/>
+    <addaction name="actionAdvanced_Mode"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -467,15 +468,26 @@
    </property>
    <property name="toolTip">
     <string>Open the simulation view</string>
-    </property>
+   </property>
   </action>
   <action name="actionConfiguration_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
     <string>Configuration</string>
+   </property>
+  </action>
+  <action name="actionAdvanced_Mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Advanced Mode</string>
    </property>
   </action>
  </widget>
