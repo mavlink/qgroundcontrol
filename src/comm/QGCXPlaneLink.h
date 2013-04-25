@@ -91,6 +91,20 @@ public:
         AIRFRAME_FIXED_WING_BIXLER_II_AILERONS
     };
 
+    QString getVersion()
+    {
+        return QString("X-Plane %1").arg(xPlaneVersion);
+    }
+
+    int getAirFrameIndex()
+    {
+        return (int)airframeID;
+    }
+
+    bool sensorHilEnabled() {
+        return _sensorHilEnabled;
+    }
+
 public slots:
 //    void setAddress(QString address);
     void setPort(int port);
@@ -104,14 +118,11 @@ public slots:
     void setVersion(const QString& version);
     /** @brief Set the simulator version as integer */
     void setVersion(unsigned int version);
-    QString getVersion()
-    {
-        return QString("X-Plane %1").arg(xPlaneVersion);
-    }
 
-    int getAirFrameIndex()
-    {
-        return (int)airframeID;
+    void enableSensorHIL(bool enable) {
+        if (enable != _sensorHilEnabled)
+            _sensorHilEnabled = enable;
+            emit sensorHilChanged(enable);
     }
 
     void processError(QProcess::ProcessError err);
@@ -194,10 +205,9 @@ protected:
     quint64 simUpdateLast;
     quint64 simUpdateLastText;
     float simUpdateHz;
-    bool sensorHilEnabled;
+    bool _sensorHilEnabled;
 
     void setName(QString name);
-
 };
 
 #endif // QGCXPLANESIMULATIONLINK_H

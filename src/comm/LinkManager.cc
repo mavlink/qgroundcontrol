@@ -74,7 +74,7 @@ void LinkManager::add(LinkInterface* link)
     if (!links.contains(link))
     {
         if(!link) return;
-        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
+        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeObj(QObject*)));
         links.append(link);
         emit newLink(link);
     }
@@ -147,7 +147,7 @@ bool LinkManager::disconnectLink(LinkInterface* link)
     return link->disconnect();
 }
 
-void LinkManager::removeLink(QObject* link)
+void LinkManager::removeObj(QObject* link)
 {
     LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
     if (linkInterface)
@@ -173,6 +173,10 @@ bool LinkManager::removeLink(LinkInterface* link)
         {
             protocolLinks.remove(proto, link);
         }
+
+        // Emit removal of link
+        emit linkRemoved(link);
+
         return true;
     }
     return false;

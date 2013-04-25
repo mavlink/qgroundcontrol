@@ -323,7 +323,7 @@
      <normaloff>:/files/images/status/weather-overcast.svg</normaloff>:/files/images/status/weather-overcast.svg</iconset>
    </property>
    <property name="text">
-    <string>Operator</string>
+    <string>Mission</string>
    </property>
    <property name="shortcut">
     <string>Meta+O</string>
@@ -338,7 +338,7 @@
      <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
-    <string>Engineer</string>
+    <string>Development</string>
    </property>
    <property name="shortcut">
     <string>Meta+E</string>
@@ -377,7 +377,7 @@
      <normaloff>:/files/images/status/network-wireless-encrypted.svg</normaloff>:/files/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
-    <string>Pilot</string>
+    <string>Flight</string>
    </property>
    <property name="shortcut">
     <string>Meta+P</string>
@@ -486,6 +486,21 @@
    </property>
    <property name="toolTip">
     <string>Update the firmware of one of the connected autopilots</string>
+   </property>
+  </action>
+  <action name="actionSimulation_View">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../qgroundcontrol.qrc">
+     <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Simulation</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the simulation view</string>
    </property>
   </action>
  </widget>

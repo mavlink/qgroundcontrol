@@ -541,9 +541,9 @@ public slots:
     void enableHilXPlane(bool enable);
 
     /** @brief Send the full HIL state to the MAV */
-    void sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+    void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                        float vx, float vy, float vz, float xacc, float yacc, float zacc);
 
     /** @brief RAW sensors for sensor HIL */
     void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
@@ -703,6 +703,8 @@ protected:
     quint64 lastNonNullTime;    ///< The last timestamp from the MAV that was not null
     unsigned int onboardTimeOffsetInvalidCount;     ///< Count when the offboard time offset estimation seemed wrong
     bool hilEnabled;            ///< Set to true if HIL mode is enabled from GCS (UAS might be in HIL even if this flag is not set, this defines the GCS HIL setting)
+    bool sensorHil;             ///< True if sensor HIL is enabled
+    quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
 
 protected slots:
     /** @brief Write settings to disk */

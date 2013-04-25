@@ -37,6 +37,12 @@ public:
      */
     virtual int getAirFrameIndex() = 0;
 
+    /**
+     * @brief Check if sensor level HIL is enabled
+     * @return true if sensor HIL is enabled
+     */
+    virtual bool sensorHilEnabled() = 0;
+
 public slots:
     virtual void setPort(int port) = 0;
     /** @brief Add a new host to broadcast messages to */
@@ -47,6 +53,8 @@ public slots:
     virtual void processError(QProcess::ProcessError err) = 0;
     /** @brief Set the simulator version as text string */
     virtual void setVersion(const QString& version) = 0;
+    /** @brief Enable sensor-level HIL (instead of state-level HIL) */
+    virtual void enableSensorHIL(bool enable) = 0;
 
     virtual void selectAirframe(const QString& airframe) = 0;
 
@@ -81,9 +89,9 @@ signals:
     void simulationConnected(bool connected);
 
     /** @brief State update from simulation */
-    void hilStateChanged(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+    void hilStateChanged(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
+                                          float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                                          float vx, float vy, float vz, float xacc, float yacc, float zacc);
 
     void sensorHilGpsChanged(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites);
 
@@ -105,6 +113,9 @@ signals:
 
     /** @brief Selected sim version changed */
     void versionChanged(const QString& version);
+
+    /** @brief Sensor leve HIL state changed */
+    void sensorHilChanged(bool enabled);
 };
 
 #endif // QGCHILLINK_H

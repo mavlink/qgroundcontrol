@@ -86,6 +86,7 @@ class QGCMapTool;
 class QGCMAVLinkMessageSender;
 class QGCFirmwareUpdate;
 class QSplashScreen;
+class QGCStatusBar;
 
 /**
  * @brief Main Application Window
@@ -159,6 +160,8 @@ public slots:
     void loadUnconnectedView();
     /** @brief Load view for pilot */
     void loadPilotView();
+    /** @brief Load view for simulation */
+    void loadSimulationView();
     /** @brief Load view for engineer */
     void loadEngineerView();
     /** @brief Load view for operator */
@@ -260,6 +263,7 @@ protected:
         VIEW_ENGINEER,
         VIEW_OPERATOR,
         VIEW_PILOT,
+        VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
@@ -367,11 +371,13 @@ protected:
     QPointer<QDockWidget> slugsCamControlWidget;
 
     QPointer<QGCToolBar> toolBar;
+    QPointer<QGCStatusBar> customStatusBar;
 
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
     QPointer<QDockWidget> mavlinkSenderWidget;
     QGCMAVLinkLogPlayer* logPlayer;
+    QMap<int, QDockWidget*> hilDocks;
 
     // Popup widgets
     JoystickWidget* joystickWidget;

@@ -1,3 +1,5 @@
+#include <QSettings>
+
 #include "QGCHilConfiguration.h"
 #include "ui_QGCHilConfiguration.h"
 
@@ -11,6 +13,22 @@ QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
     ui(new Ui::QGCHilConfiguration)
 {
     ui->setupUi(this);
+
+    // XXX its quite wrong that this is implicitely a factory
+    // class, but this is something to clean up for later.
+
+    QSettings settings;
+    settings.beginGroup("QGC_HILCONFIG");
+    int i = settings.value("SIMULATOR_INDEX", -1).toInt();
+
+    if (i > 0) {
+        ui->simComboBox->blockSignals(true);
+        ui->simComboBox->setCurrentIndex(i);
+        ui->simComboBox->blockSignals(false);
+        on_simComboBox_currentIndexChanged(i);
+    }
+
+    settings.endGroup();
 }
 
 void QGCHilConfiguration::receiveStatusMessage(const QString& message)
@@ -20,6 +38,11 @@ void QGCHilConfiguration::receiveStatusMessage(const QString& message)
 
 QGCHilConfiguration::~QGCHilConfiguration()
 {
+    QSettings settings;
+    settings.beginGroup("QGC_HILCONFIG");
+    settings.setValue("SIMULATOR_INDEX", ui->simComboBox->currentIndex());
+    settings.endGroup();
+    settings.sync();
     delete ui;
 }
 
@@ -29,8 +52,8 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
     QLayoutItem *child;
     while ((child = ui->simulatorConfigurationLayout->takeAt(0)) != 0)
     {
-      delete child->widget();
-      delete child;
+        delete child->widget();
+        delete child;
     }
 
     if(1 == index)

@@ -111,7 +111,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lastVoltageWarning(0),
     lastNonNullTime(0),
     onboardTimeOffsetInvalidCount(0),
-    hilEnabled(false)
+    hilEnabled(false),
+    lastSendTimeGPS(0)
 
 {
     for (unsigned int i = 0; i<255;++i)
@@ -791,24 +792,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 positionLock = true;
                 isGlobalPositionKnown = true;
 
-                // Check for NaN
-                int alt = pos.alt;
-                if (!isnan(alt) && !isinf(alt))
-                {
-                    alt = 0;
-                    emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
-                }
                 // Smaller than threshold and not NaN
 
                 float vel = pos.vel/100.0f;
 
-                if (!globalEstimatorActive && (vel < 1000000) && !isnan(vel) && !isinf(vel))
-                {
-                    emit speedChanged(this, vel, 0.0, 0.0, time);
-                }
-                else
-                {
-                    emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                if (!globalEstimatorActive) {
+                    if ((vel < 1000000) && !isnan(vel) && !isinf(vel))
+                    {
+                        emit speedChanged(this, vel, 0.0, 0.0, time);
+                    }
+                    else
+                    {
+                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                    }
                 }
             }
         }
@@ -2732,16 +2728,32 @@ void UAS::enableHilXPlane(bool enable)
 * @param zacc Z acceleration (mg)
 */
 void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                       float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                       int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
+                       float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                       float vx, float vy, float vz, float xacc, float yacc, float zacc)
 {
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
-        mavlink_message_t msg;
-        mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
-                                   time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
-                                   lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000, yacc*1000, zacc*1000);
-        sendMessage(msg);
+        if (sensorHil) {
+            // Emit attitude for cross-check
+            emit attitudeChanged(this, 201, roll, pitch, yaw, getUnixTime());
+            emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
+            emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
+            emit valueChanged(uasId, "yaw sim", "rad", yaw, getUnixTime());
+
+            emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, getUnixTime());
+            emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, getUnixTime());
+            emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, getUnixTime());
+
+            emit valueChanged(uasId, "vx sim", "rad", vx*100, getUnixTime());
+            emit valueChanged(uasId, "vy sim", "rad", vy*100, getUnixTime());
+            emit valueChanged(uasId, "vz sim", "rad", vz*100, getUnixTime());
+        } else {
+            mavlink_message_t msg;
+            mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                       time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
+                                       lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000/9.81, yacc*1000/9.81, zacc*1000/9.81);
+            sendMessage(msg);
+        }
     }
     else
     {
@@ -2764,6 +2776,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
                                      xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature,
                                      fields_changed);
         sendMessage(msg);
+        sensorHil = true;
     }
     else
     {
@@ -2777,11 +2790,16 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
 
 void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites)
 {
+    // Only send at 10 Hz max rate
+    if (QGC::groundTimeMilliseconds() - lastSendTimeGPS < 100)
+        return;
+
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         mavlink_message_t msg;
         mavlink_msg_gps_raw_int_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, cog*1e2, satellites);
+        lastSendTimeGPS = QGC::groundTimeMilliseconds();
         sendMessage(msg);
     }
     else
@@ -2802,6 +2820,7 @@ void UAS::startHil()
 {
     if (hilEnabled) return;
     hilEnabled = true;
+    sensorHil = false;
     mavlink_message_t msg;
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
@@ -2819,6 +2838,7 @@ void UAS::stopHil()
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & !MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
     hilEnabled = false;
+    sensorHil = false;
 }
 
 void UAS::shutdown()
