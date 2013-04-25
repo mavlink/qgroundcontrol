@@ -52,6 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
+#include "submainwindow.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
@@ -285,7 +286,7 @@ protected:
      * @param title     The entry that will appear in the Menu and in the QDockedWidget title bar
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
-    void addTool(QDockWidget* widget, const QString& title, Qt::DockWidgetArea location=Qt::RightDockWidgetArea);
+    void addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area);
 
     /**
      * @brief Adds an already instantiated QWidget to the center stack
@@ -332,12 +333,20 @@ protected:
     QActionGroup* centerStackActionGroup;
 
     // Center widgets
-    QPointer<Linecharts> linechartWidget;
-    QPointer<HUD> hudWidget;
-    QPointer<QGCVehicleConfig> configWidget;
-    QPointer<QGCMapTool> mapWidget;
-    QPointer<XMLCommProtocolWidget> protocolWidget;
-    QPointer<QGCDataPlot2D> dataplotWidget;
+    QPointer<SubMainWindow> plannerView;
+    QPointer<SubMainWindow> pilotView;
+    QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> dataView;
+    QPointer<SubMainWindow> engineeringView;
+    QPointer<SubMainWindow> simView;
+
+    // Center widgets
+    //QPointer<Linecharts> linechartWidget;
+    //QPointer<HUD> hudWidget;
+    //QPointer<QGCVehicleConfig> configWidget;
+    //QPointer<QGCMapTool> mapWidget;
+    //QPointer<XMLCommProtocolWidget> protocolWidget;
+    //QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> _3DWidget;
 #endif
@@ -421,7 +430,9 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private:
+    QMap<QAction*,QString > menuToDockNameMap;
     QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
+    QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
     bool isAdvancedMode;
     Ui::MainWindow ui;
 
