@@ -640,7 +640,7 @@ void QGCXPlaneLink::readBytes()
         float eph = 0.3;
         float epv = 0.6;
         float vel = sqrt(vx*vx + vy*vy + vz*vz);
-        float cog = ((yaw + M_PI) / M_PI) * 180.0f;
+        float cog = atan2(vy, vx);
         int satellites = 8;
 
         emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, cog, satellites);

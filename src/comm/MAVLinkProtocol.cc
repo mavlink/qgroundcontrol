@@ -185,7 +185,6 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
             // Start NSH
             const char init[] = {0x0d, 0x0d, 0x0d};
             link->writeBytes(init, sizeof(init));
-            QGC::SLEEP::msleep(500);
 
             // Stop any running mavlink instance
             char* cmd = "mavlink stop\n";
