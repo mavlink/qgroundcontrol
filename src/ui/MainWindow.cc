@@ -137,7 +137,6 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
-    statusBar()->setSizeGripEnabled(true);
 
     configureWindowName();
 
@@ -160,7 +159,8 @@ MainWindow::MainWindow(QWidget *parent):
     toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
 
     customStatusBar = new QGCStatusBar(this);
-    this->setStatusBar(customStatusBar);
+    setStatusBar(customStatusBar);
+    statusBar()->setSizeGripEnabled(true);
 
     emit initStatusChanged("Building common widgets.");
 
@@ -301,16 +301,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent * event)
 {
-    if (height() < 800)
-    {
-        ui.statusBar->setVisible(false);
-    }
-    else
-    {
-        ui.statusBar->setVisible(true);
-        ui.statusBar->setSizeGripEnabled(true);
-    }
-
     if (width() > 1200)
     {
         toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
