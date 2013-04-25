@@ -2796,9 +2796,16 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
 
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
+        float course = cog;
+        // map to 0..2pi
+        if (course < 0)
+            course += 2.0f * M_PI;
+        // scale from radians to degrees
+        course = (course / M_PI) * 180.0f;
+
         mavlink_message_t msg;
         mavlink_msg_gps_raw_int_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
-                                   time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, cog*1e2, satellites);
+                                   time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, course*1e2, satellites);
         lastSendTimeGPS = QGC::groundTimeMilliseconds();
         sendMessage(msg);
     }

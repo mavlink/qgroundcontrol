@@ -549,7 +549,18 @@ public slots:
     void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                                         float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed);
 
-    /** @brief Send raw GPS for sensor HIL */
+    /**
+     * @param time_us
+     * @param lat
+     * @param lon
+     * @param alt
+     * @param fix_type
+     * @param eph
+     * @param epv
+     * @param vel
+     * @param cog course over ground, in radians, -pi..pi
+     * @param satellites
+     */
     void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites);
 
 
