@@ -385,7 +385,73 @@ void MainWindow::buildCommonWidgets()
     logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
     customStatusBar->setLogPlayer(logPlayer);
 
+
+    // Center widgets
+    if (!plannerView)
+    {
+        plannerView = new SubMainWindow(this);
+        plannerView->setCentralWidget(new QGCMapTool(this));
+        //mapWidget = new QGCMapTool(this);
+        addCentralWidget(plannerView, "Maps");
+    }
+
+    //pilotView
+    if (!pilotView)
+    {
+        pilotView = new SubMainWindow(this);
+        pilotView->setObjectName("VIEW_PILOT");
+        pilotView->setCentralWidget(new HUD(320,240,this));
+        //hudWidget         = new HUD(320, 240, this);
+        //addCentralWidget(hudWidget, tr("Head Up Display"));
+        //mapWidget = new QGCMapTool(this);
+        addCentralWidget(pilotView, "Pilot");
+    }
+    if (!configView)
+    {
+        configView = new SubMainWindow(this);
+        configView->setObjectName("VIEW_CONFIGURATION");
+        configView->setCentralWidget(new QGCVehicleConfig(this));
+        addCentralWidget(configView,"Config");
+
+    }
+    if (!engineeringView)
+    {
+        engineeringView = new SubMainWindow(this);
+        engineeringView->setObjectName("VIEW_ENGINEER");
+        engineeringView->setCentralWidget(new XMLCommProtocolWidget(this));
+        addCentralWidget(engineeringView,"Mavlink Generator");
+    }
+    if (!dataView)
+    {
+        dataView = new SubMainWindow(this);
+        dataView->setObjectName("VIEW_DATA");
+        dataView->setCentralWidget(new QGCDataPlot2D(this));
+        addCentralWidget(dataView,tr("Logfile Plot"));
+    }
+    if (!simView)
+    {
+        simView = new SubMainWindow(this);
+        simView->setObjectName("VIEW_SIMULATOR");
+        simView->setCentralWidget(new QGCMapTool(this));
+        addCentralWidget(simView,tr("Simulation View"));
+    }
+
     // Dock widgets
+    /*    QAction* tempAction = ui.menuTools->addAction(title);
+
+    tempAction->setCheckable(true);
+    QVariant var;
+    var.setValue((QWidget*)widget);
+    tempAction->setData(var);
+    connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+    connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+    tempAction->setChecked(widget->isVisible());
+    addDockWidget(area, widget);*/
+
+    QAction* tempAction = ui.menuTools->addAction(tr("Control"));
+    tempAction->setCheckable(true);
+    connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+
     if (!controlDockWidget)
     {
         controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -393,41 +459,98 @@ void MainWindow::buildCommonWidgets()
         controlDockWidget->setTitleBarWidget(new QWidget(this));
         controlDockWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
         controlDockWidget->setWidget( new UASControlWidget(this) );
-        addTool(controlDockWidget, tr("Control"), Qt::LeftDockWidgetArea);
+        //addTool(controlDockWidget, tr("Control"), Qt::LeftDockWidgetArea);
+        addTool(simView,VIEW_SIMULATION,controlDockWidget,tr("Control"),Qt::LeftDockWidgetArea);
+
+
+        //addDockWidgetToWindow()
+       /* QDockWidget *widget = new QDockWidget(tr("Control"), plannerView);
+        dockToTitleBarMap[widget] = widget->titleBarWidget();
+        widget->setTitleBarWidget(new QWidget(this));
+        widget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
+        widget->setWidget( new UASControlWidget(this) );
+        plannerView->addDockWidget(Qt::LeftDockWidgetArea, widget);
+
+        centralWidgetToDockWidgetsMap["Maps"]["Control"] = widget;
+        QAction* tempAction = ui.menuTools->addAction("Control");
+        tempAction->setCheckable(true);
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        tempAction->setChecked(widget->isVisible());*/
     }
+
 
     if (!listDockWidget)
     {
-        listDockWidget = new QDockWidget(/*tr("Unmanned Systems"), */this);
+        /*listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
         dockToTitleBarMap[listDockWidget] = listDockWidget->titleBarWidget();
         listDockWidget->setTitleBarWidget(new QWidget(this));
         listDockWidget->setWidget( new UASListWidget(this) );
         listDockWidget->setObjectName("UNMANNED_SYSTEMS_LIST_DOCKWIDGET");
-        addTool(listDockWidget, tr("Unmanned Systems"), Qt::RightDockWidgetArea);
+        addTool(listDockWidget, tr("Unmanned Systems"), Qt::RightDockWidgetArea);*/
+        QDockWidget *listDockWidget1 = new QDockWidget(/*tr("Unmanned Systems"), */this);
+        dockToTitleBarMap[listDockWidget1] = listDockWidget1->titleBarWidget();
+        listDockWidget1->setTitleBarWidget(new QWidget(this));
+        listDockWidget1->setWidget( new UASListWidget(this) );
+        listDockWidget1->setObjectName("UNMANNED_SYSTEMS_LIST_DOCKWIDGET");
+        addTool(pilotView,VIEW_PILOT,listDockWidget1, tr("Unmanned Systems"), Qt::RightDockWidgetArea);
+        QDockWidget *listDockWidget2 = new QDockWidget(/*tr("Unmanned Systems"), */this);
+        dockToTitleBarMap[listDockWidget2] = listDockWidget2->titleBarWidget();
+        listDockWidget2->setTitleBarWidget(new QWidget(this));
+        listDockWidget2->setWidget( new UASListWidget(this) );
+        listDockWidget2->setObjectName("UNMANNED_SYSTEMS_LIST_DOCKWIDGET");
+        addTool(plannerView,VIEW_OPERATOR,listDockWidget2, tr("Unmanned Systems"), Qt::RightDockWidgetArea);
+
+        //pilotView
+        //plannerView
     }
 
     if (!waypointsDockWidget)
     {
-        waypointsDockWidget = new QDockWidget(tr("Mission Plan"), this);
+        /*waypointsDockWidget = new QDockWidget(tr("Mission Plan"), this);
         waypointsDockWidget->setWidget( new QGCWaypointListMulti(this) );
         dockToTitleBarMap[waypointsDockWidget] = waypointsDockWidget->titleBarWidget();
         waypointsDockWidget->setTitleBarWidget(new QWidget(this));
         waypointsDockWidget->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
-        addTool(waypointsDockWidget, tr("Mission Plan"), Qt::BottomDockWidgetArea);
+        addTool(waypointsDockWidget, tr("Mission Plan"), Qt::BottomDockWidgetArea);*/
+
+        QDockWidget *waypointsDockWidget1 = new QDockWidget(tr("Mission Plan"), this);
+        waypointsDockWidget1->setWidget( new QGCWaypointListMulti(this) );
+        dockToTitleBarMap[waypointsDockWidget1] = waypointsDockWidget1->titleBarWidget();
+        waypointsDockWidget1->setTitleBarWidget(new QWidget(this));
+        waypointsDockWidget1->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
+        addTool(plannerView,VIEW_OPERATOR,waypointsDockWidget1, tr("Mission Plan"), Qt::BottomDockWidgetArea);
+
+        QDockWidget *waypointsDockWidget2 = new QDockWidget(tr("Mission Plan"), this);
+        waypointsDockWidget2->setWidget( new QGCWaypointListMulti(this) );
+        dockToTitleBarMap[waypointsDockWidget2] = waypointsDockWidget2->titleBarWidget();
+        waypointsDockWidget2->setTitleBarWidget(new QWidget(this));
+        waypointsDockWidget2->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
+        addTool(simView,VIEW_SIMULATION,waypointsDockWidget2, tr("Mission Plan"), Qt::BottomDockWidgetArea);
+
+
+
+        //plannerView
+        //simView
     }
 
     if (!infoDockWidget)
     {
-        infoDockWidget = new QDockWidget(tr("Status Details"), this);
+        /*infoDockWidget = new QDockWidget(tr("Status Details"), this);
         dockToTitleBarMap[infoDockWidget] = infoDockWidget->titleBarWidget();
         infoDockWidget->setTitleBarWidget(new QWidget(this));
         infoDockWidget->setWidget( new UASInfoWidget(this) );
         infoDockWidget->setObjectName("UAS_STATUS_DETAILS_DOCKWIDGET");
-        addTool(infoDockWidget, tr("Status Details"), Qt::RightDockWidgetArea);
+        addTool(infoDockWidget, tr("Status Details"), Qt::RightDockWidgetArea);*/
+        QAction* tempAction = ui.menuTools->addAction(tr("Status Details"));
+        tempAction->setCheckable(true);
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        //connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+        //tempAction->setChecked(widget->isVisible());
     }
 
     if (!debugConsoleDockWidget)
     {
+        /*
         debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
         dockToTitleBarMap[debugConsoleDockWidget] = debugConsoleDockWidget->titleBarWidget();
         debugConsoleDockWidget->setTitleBarWidget(new QWidget(this));
@@ -437,7 +560,10 @@ void MainWindow::buildCommonWidgets()
         DebugConsole *debugConsole = dynamic_cast<DebugConsole*>(debugConsoleDockWidget->widget());
         connect(mavlinkDecoder, SIGNAL(textMessageReceived(int, int, int, const QString)), debugConsole, SLOT(receiveTextMessage(int, int, int, const QString)));
 
-        addTool(debugConsoleDockWidget, tr("Communication Console"), Qt::BottomDockWidgetArea);
+        addTool(debugConsoleDockWidget, tr("Communication Console"), Qt::BottomDockWidgetArea);*/
+        QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
+        tempAction->setCheckable(true);
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
 
 //    if (!logPlayerDockWidget)
@@ -452,12 +578,21 @@ void MainWindow::buildCommonWidgets()
 
     if (!mavlinkInspectorWidget)
     {
-        mavlinkInspectorWidget = new QDockWidget(tr("MAVLink Message Inspector"), this);
+        /*mavlinkInspectorWidget = new QDockWidget(tr("MAVLink Message Inspector"), this);
         dockToTitleBarMap[mavlinkInspectorWidget] = mavlinkInspectorWidget->titleBarWidget();
         mavlinkInspectorWidget->setTitleBarWidget(new QWidget(this));
         mavlinkInspectorWidget->setWidget( new QGCMAVLinkInspector(mavlink, this) );
         mavlinkInspectorWidget->setObjectName("MAVLINK_INSPECTOR_DOCKWIDGET");
-        addTool(mavlinkInspectorWidget, tr("MAVLink Inspector"), Qt::RightDockWidgetArea);
+        addTool(mavlinkInspectorWidget, tr("MAVLink Inspector"), Qt::RightDockWidgetArea);*/
+
+
+        QDockWidget *mavlinkInspectorWidget1 = new QDockWidget(tr("MAVLink Message Inspector"), this);
+        dockToTitleBarMap[mavlinkInspectorWidget1] = mavlinkInspectorWidget1->titleBarWidget();
+        mavlinkInspectorWidget1->setTitleBarWidget(new QWidget(this));
+        mavlinkInspectorWidget1->setWidget( new QGCMAVLinkInspector(mavlink, this) );
+        mavlinkInspectorWidget1->setObjectName("MAVLINK_INSPECTOR_DOCKWIDGET");
+        addTool(engineeringView,VIEW_ENGINEER,mavlinkInspectorWidget1, tr("MAVLink Inspector"), Qt::RightDockWidgetArea);
+
     }
 
     if (!mavlinkSenderWidget)
@@ -480,71 +615,130 @@ void MainWindow::buildCommonWidgets()
 
     if (!parametersDockWidget)
     {
-        parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
+        /*parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
         dockToTitleBarMap[parametersDockWidget] = parametersDockWidget->titleBarWidget();
         parametersDockWidget->setTitleBarWidget(new QWidget(this));
         parametersDockWidget->setWidget( new ParameterInterface(this) );
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
-        addTool(parametersDockWidget, tr("Onboard Parameters"), Qt::RightDockWidgetArea);
+        addTool(parametersDockWidget, tr("Onboard Parameters"), Qt::RightDockWidgetArea);*/
+
+        QDockWidget *parametersDockWidget1 = new QDockWidget(tr("Onboard Parameters"), this);
+        dockToTitleBarMap[parametersDockWidget1] = parametersDockWidget1->titleBarWidget();
+        parametersDockWidget1->setTitleBarWidget(new QWidget(this));
+        parametersDockWidget1->setWidget( new ParameterInterface(this) );
+        parametersDockWidget1->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
+        addTool(engineeringView,VIEW_ENGINEER,parametersDockWidget1, tr("Onboard Parameters"), Qt::RightDockWidgetArea);
+
+        QDockWidget *parametersDockWidget2 = new QDockWidget(tr("Onboard Parameters"), this);
+        dockToTitleBarMap[parametersDockWidget2] = parametersDockWidget2->titleBarWidget();
+        parametersDockWidget2->setTitleBarWidget(new QWidget(this));
+        parametersDockWidget2->setWidget( new ParameterInterface(this) );
+        parametersDockWidget2->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
+        addTool(simView,VIEW_SIMULATION,parametersDockWidget2, tr("Onboard Parameters"), Qt::RightDockWidgetArea);
     }
 	
     if (!hsiDockWidget)
     {
-        hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+        /*hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         dockToTitleBarMap[hsiDockWidget] = hsiDockWidget->titleBarWidget();
         hsiDockWidget->setTitleBarWidget(new QWidget(this));
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
-        addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
+        addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);*/
+
+        QDockWidget *hsiDockWidget1 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+        dockToTitleBarMap[hsiDockWidget1] = hsiDockWidget1->titleBarWidget();
+        hsiDockWidget1->setTitleBarWidget(new QWidget(this));
+        hsiDockWidget1->setWidget( new HSIDisplay(this) );
+        hsiDockWidget1->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
+        addTool(pilotView,VIEW_PILOT,hsiDockWidget1, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
+
+        QDockWidget *hsiDockWidget2 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+        dockToTitleBarMap[hsiDockWidget2] = hsiDockWidget2->titleBarWidget();
+        hsiDockWidget2->setTitleBarWidget(new QWidget(this));
+        hsiDockWidget2->setWidget( new HSIDisplay(this) );
+        hsiDockWidget2->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
+        addTool(simView,VIEW_SIMULATION,hsiDockWidget2, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
     }
 	
     if (!headDown1DockWidget)
     {
-        headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
+       /* headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
         dockToTitleBarMap[headDown1DockWidget] = headDown1DockWidget->titleBarWidget();
         headDown1DockWidget->setTitleBarWidget(new QWidget(this));
         HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
         hdDisplay->addSource(mavlinkDecoder);
         headDown1DockWidget->setWidget(hdDisplay);
-        headDown1DockWidget->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");
-        addTool(headDown1DockWidget, tr("Flight Display"), Qt::RightDockWidgetArea);
+        headDown1DockWidget->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");*/
+        //addTool(headDown1DockWidget, tr("Flight Display"), Qt::RightDockWidgetArea);
+
+        QDockWidget *headDown1DockWidget1 = new QDockWidget(tr("Flight Display"), this);
+        dockToTitleBarMap[headDown1DockWidget1] = headDown1DockWidget1->titleBarWidget();
+        headDown1DockWidget1->setTitleBarWidget(new QWidget(this));
+        HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
+        hdDisplay->addSource(mavlinkDecoder);
+        headDown1DockWidget1->setWidget(hdDisplay);
+        headDown1DockWidget1->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");
+        addTool(pilotView,VIEW_PILOT,headDown1DockWidget1, tr("Flight Display"), Qt::RightDockWidgetArea);
+
     }
 
     if (!headDown2DockWidget)
     {
-        headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
+        /*headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
         dockToTitleBarMap[headDown2DockWidget] = headDown2DockWidget->titleBarWidget();
         headDown2DockWidget->setTitleBarWidget(new QWidget(this));
         HDDisplay* hdDisplay = new HDDisplay(acceptList2, "Actuator Status", this);
         hdDisplay->addSource(mavlinkDecoder);
         headDown2DockWidget->setWidget(hdDisplay);
         headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
-        addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);
+        //addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);*/
+
+
+        QDockWidget *headDown2DockWidget1 = new QDockWidget(tr("Actuator Status"), this);
+        dockToTitleBarMap[headDown2DockWidget1] = headDown2DockWidget1->titleBarWidget();
+        headDown2DockWidget1->setTitleBarWidget(new QWidget(this));
+        HDDisplay* hdDisplay = new HDDisplay(acceptList2, "Actuator Status", this);
+        hdDisplay->addSource(mavlinkDecoder);
+        headDown2DockWidget1->setWidget(hdDisplay);
+        headDown2DockWidget1->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
+        addTool(pilotView,VIEW_PILOT,headDown2DockWidget1, tr("Actuator Status"), Qt::RightDockWidgetArea);
     }
 	
     if (!rcViewDockWidget)
     {
-        rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
+        /*rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         dockToTitleBarMap[rcViewDockWidget] = rcViewDockWidget->titleBarWidget();
         rcViewDockWidget->setTitleBarWidget(new QWidget(this));
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
-        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
-        addTool(rcViewDockWidget, tr("Radio Control"), Qt::BottomDockWidgetArea);
+        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");*/
+        QAction* tempAction = ui.menuTools->addAction(tr("Radio Control"));
+        tempAction->setCheckable(true);
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        //addTool(rcViewDockWidget, tr("Radio Control"), Qt::BottomDockWidgetArea);
     }
 
     if (!headUpDockWidget)
     {
-        headUpDockWidget = new QDockWidget(tr("HUD"), this);
+        /*headUpDockWidget = new QDockWidget(tr("HUD"), this);
         dockToTitleBarMap[headUpDockWidget] = headUpDockWidget->titleBarWidget();
         headUpDockWidget->setTitleBarWidget(new QWidget(this));
         headUpDockWidget->setWidget( new HUD(320, 240, this));
-        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
-        addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
+        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");*/
+       // addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
+
+        QDockWidget *headUpDockWidget1 = new QDockWidget(tr("HUD"), this);
+        dockToTitleBarMap[headUpDockWidget1] = headUpDockWidget1->titleBarWidget();
+        headUpDockWidget1->setTitleBarWidget(new QWidget(this));
+        headUpDockWidget1->setWidget( new HUD(320, 240, this));
+        headUpDockWidget1->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
+        headUpDockWidget1->setMinimumWidth(this->width()/1.5);
+        addTool(simView,VIEW_SIMULATION,headUpDockWidget1, tr("Head Up Display"), Qt::RightDockWidgetArea);
     }
 
     if (!video1DockWidget)
     {
-        video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
+       /* video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
         dockToTitleBarMap[video1DockWidget] = video1DockWidget->titleBarWidget();
         video1DockWidget->setTitleBarWidget(new QWidget(this));
         QGCRGBDView* video1 =  new QGCRGBDView(160, 120, this);
@@ -552,13 +746,13 @@ void MainWindow::buildCommonWidgets()
         video1->enableVideo(false);
         // FIXME select video stream as well
         video1DockWidget->setWidget(video1);
-        video1DockWidget->setObjectName("VIDEO_STREAM_1_DOCK_WIDGET");
-        addTool(video1DockWidget, tr("Video Stream 1"), Qt::LeftDockWidgetArea);
+        video1DockWidget->setObjectName("VIDEO_STREAM_1_DOCK_WIDGET");*/
+        //addTool(video1DockWidget, tr("Video Stream 1"), Qt::LeftDockWidgetArea);
     }
 
     if (!video2DockWidget)
     {
-        video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
+        /*video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
         dockToTitleBarMap[video2DockWidget] = video2DockWidget->titleBarWidget();
         video2DockWidget->setTitleBarWidget(new QWidget(this));
         QGCRGBDView* video2 =  new QGCRGBDView(160, 120, this);
@@ -566,9 +760,9 @@ void MainWindow::buildCommonWidgets()
         video2->enableVideo(false);
         // FIXME select video stream as well
         video2DockWidget->setWidget(video2);
-        video2DockWidget->setObjectName("VIDEO_STREAM_2_DOCK_WIDGET");
-        addTool(video2DockWidget, tr("Video Stream 2"), Qt::LeftDockWidgetArea);
-    }
+        video2DockWidget->setObjectName("VIDEO_STREAM_2_DOCK_WIDGET");*/
+       // addTool(video2DockWidget, tr("Video Stream 2"), Qt::LeftDockWidgetArea);
+    }//
 
 //    if (!rgbd1DockWidget) {
 //        rgbd1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
@@ -595,18 +789,14 @@ void MainWindow::buildCommonWidgets()
     // Custom widgets, added last to all menus and layouts
     buildCustomWidget();
 
-    // Center widgets
-    if (!mapWidget)
-    {
-        mapWidget = new QGCMapTool(this);
-        addCentralWidget(mapWidget, "Maps");
-    }
 
-    if (!protocolWidget)
+
+    /*if (!protocolWidget)
     {
         protocolWidget    = new XMLCommProtocolWidget(this);
         addCentralWidget(protocolWidget, "Mavlink Generator");
-    }
+    }*/
+
 
 //    if (!firmwareUpdateWidget)
 //    {
@@ -614,23 +804,24 @@ void MainWindow::buildCommonWidgets()
 //        addCentralWidget(firmwareUpdateWidget, "Firmware Update");
 //    }
 
-    if (!hudWidget)
+    /*if (!hudWidget)
     {
         hudWidget         = new HUD(320, 240, this);
         addCentralWidget(hudWidget, tr("Head Up Display"));
-    }
+    }*/
 
-    if (!configWidget)
+    /*if (!configWidget)
     {
         configWidget = new QGCVehicleConfig(this);
         addCentralWidget(configWidget, tr("Vehicle Configuration"));
-    }
+    }*/
 
-    if (!dataplotWidget)
+
+    /*if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
         addCentralWidget(dataplotWidget, tr("Logfile Plot"));
-    }
+    }*/
 
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget)
@@ -649,28 +840,70 @@ void MainWindow::buildCommonWidgets()
 #endif
 }
 
-void MainWindow::addTool(QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
+void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
 {
-    QAction* tempAction = ui.menuTools->addAction(title);
-
-    tempAction->setCheckable(true);
-    QVariant var;
-    var.setValue((QWidget*)widget);
-    tempAction->setData(var);
-    connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-    connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
-    tempAction->setChecked(widget->isVisible());
-    addDockWidget(area, widget);
+    QList<QAction*> actionlist = ui.menuTools->actions();
+    bool found = false;
+    for (int i=0;i<actionlist.size();i++)
+    {
+        if (actionlist[i]->text() == title)
+        {
+            found = true;
+        }
+    }
+    if (!found)
+    {
+        QAction* tempAction = ui.menuTools->addAction(title);
+        tempAction->setCheckable(true);
+        menuToDockNameMap[tempAction] = title;
+        if (!centralWidgetToDockWidgetsMap.contains(view))
+        {
+            centralWidgetToDockWidgetsMap[view] = QMap<QString,QWidget*>();
+        }
+        centralWidgetToDockWidgetsMap[view][title]= widget;
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+        tempAction->setChecked(widget->isVisible());
+    }
+    parent->addDockWidget(area,widget);
 }
 
 
 void MainWindow::showTool(bool show)
 {
-    QAction* act = qobject_cast<QAction *>(sender());
-    QWidget* widget = qVariantValue<QWidget *>(act->data());
-    widget->setVisible(show);
-}
+    //Called when a menu item is clicked on, regardless of view.
 
+    QAction* act = qobject_cast<QAction *>(sender());
+    if (menuToDockNameMap.contains(act))
+    {
+        QString name = menuToDockNameMap[act];
+        if (centralWidgetToDockWidgetsMap.contains(currentView))
+        {
+            if (centralWidgetToDockWidgetsMap[currentView].contains(name))
+            {
+                centralWidgetToDockWidgetsMap[currentView][name]->show();
+            }
+            else
+            {
+                //if (name == )
+
+            }
+        }
+    }
+    //QWidget* widget = qVariantValue<QWidget *>(act->data());
+    //widget->setVisible(show);
+}
+/*void addToolByName(QString name,SubMainWindow parent,const QString& title, Qt::DockWidgetArea area)
+{
+    if (name == "Control")
+    {
+        QDockWidget *widget = new QDockWidget(tr("Control"),this);
+        dockToTitleBarMap[widget] = widget->titleBarWidget();
+        widget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
+        widget->setWidget(new UASControlWidget(this));
+        addTool(parent,VIEW_SIMULATION,widget,tr("Control"),area);
+    }
+}*/
 void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
 {
     // Check if this widget already has been added
@@ -711,7 +944,7 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
         QDockWidget* hilDock = new QDockWidget(hilDockName, this);
         hilDock->setWidget(hconf);
         hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
-        addTool(hilDock, hilDockName, Qt::LeftDockWidgetArea);
+        //addTool(hilDock, hilDockName, Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
 
         if (currentView != VIEW_SIMULATION)
@@ -1440,13 +1673,13 @@ void MainWindow::UASCreated(UASInterface* uas)
         showHILConfigurationWidget(uas);
 
         // Line chart
-        if (!linechartWidget)
+        /*if (!linechartWidget)
         {
             // Center widgets
             linechartWidget = new Linecharts(this);
             linechartWidget->addSource(mavlinkDecoder);
             addCentralWidget(linechartWidget, tr("Realtime Plot"));
-        }
+        }*/
 
         // Load default custom widgets for this autopilot type
         loadCustomWidgetsFromDefaults(uas->getSystemTypeName(), uas->getAutopilotTypeName());
@@ -1460,7 +1693,7 @@ void MainWindow::UASCreated(UASInterface* uas)
                 detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
                 detectionDockWidget->setWidget( new ObjectDetectionView("files/images/patterns", this) );
                 detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
-                addTool(detectionDockWidget, tr("Object Recognition"), Qt::RightDockWidgetArea);
+                //addTool(detectionDockWidget, tr("Object Recognition"), Qt::RightDockWidgetArea);
             }
 
             if (!watchdogControlDockWidget)
@@ -1468,7 +1701,7 @@ void MainWindow::UASCreated(UASInterface* uas)
                 watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
                 watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
                 watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
-                addTool(watchdogControlDockWidget, tr("Process Control"), Qt::BottomDockWidgetArea);
+                //addTool(watchdogControlDockWidget, tr("Process Control"), Qt::BottomDockWidgetArea);
             }
         }
 
@@ -1565,10 +1798,10 @@ void MainWindow::loadViewState()
     // Restore center stack state
     int index = settings.value(getWindowStateKey()+"CENTER_WIDGET", -1).toInt();
     // The offline plot view is usually the consequence of a logging run, always show the realtime view first
-    if (centerStack->indexOf(dataplotWidget) == index)
+    if (centerStack->indexOf(dataView) == index)
     {
         // Rewrite to realtime plot
-        index = centerStack->indexOf(linechartWidget);
+        //index = centerStack->indexOf(linechartWidget);
     }
 
     if (index != -1)
@@ -1585,11 +1818,11 @@ void MainWindow::loadViewState()
         switch (currentView)
         {
         case VIEW_CONFIGURATION:
-            centerStack->setCurrentWidget(configWidget);
+            centerStack->setCurrentWidget(configView);
             break;
         case VIEW_ENGINEER:
-            centerStack->setCurrentWidget(linechartWidget);
-            controlDockWidget->hide();
+            centerStack->setCurrentWidget(dataView);
+            /*controlDockWidget->hide();
             listDockWidget->hide();
             waypointsDockWidget->hide();
             infoDockWidget->hide();
@@ -1603,11 +1836,11 @@ void MainWindow::loadViewState()
             rcViewDockWidget->hide();
             headUpDockWidget->hide();
             video1DockWidget->hide();
-            video2DockWidget->hide();
+            video2DockWidget->hide();*/
             break;
         case VIEW_PILOT:
-            centerStack->setCurrentWidget(hudWidget);
-            controlDockWidget->hide();
+            centerStack->setCurrentWidget(pilotView);
+            /*controlDockWidget->hide();
             listDockWidget->hide();
             waypointsDockWidget->hide();
             infoDockWidget->hide();
@@ -1621,11 +1854,11 @@ void MainWindow::loadViewState()
             rcViewDockWidget->hide();
             headUpDockWidget->hide();
             video1DockWidget->hide();
-            video2DockWidget->hide();
+            video2DockWidget->hide();*/
             break;
         case VIEW_MAVLINK:
-            centerStack->setCurrentWidget(protocolWidget);
-            controlDockWidget->hide();
+            centerStack->setCurrentWidget(engineeringView);
+            /*controlDockWidget->hide();
             listDockWidget->hide();
             waypointsDockWidget->hide();
             infoDockWidget->hide();
@@ -1640,11 +1873,11 @@ void MainWindow::loadViewState()
             rcViewDockWidget->hide();
             headUpDockWidget->hide();
             video1DockWidget->hide();
-            video2DockWidget->hide();
+            video2DockWidget->hide();*/
             break;
         case VIEW_FIRMWAREUPDATE:
             centerStack->setCurrentWidget(firmwareUpdateWidget);
-            controlDockWidget->hide();
+            /*controlDockWidget->hide();
             listDockWidget->hide();
             waypointsDockWidget->hide();
             infoDockWidget->hide();
@@ -1659,11 +1892,11 @@ void MainWindow::loadViewState()
             rcViewDockWidget->hide();
             headUpDockWidget->hide();
             video1DockWidget->hide();
-            video2DockWidget->hide();
+            video2DockWidget->hide();*/
             break;
         case VIEW_OPERATOR:
-            centerStack->setCurrentWidget(mapWidget);
-            controlDockWidget->hide();
+            centerStack->setCurrentWidget(plannerView);
+            /*controlDockWidget->hide();
             listDockWidget->show();
             waypointsDockWidget->show();
             infoDockWidget->hide();
@@ -1677,27 +1910,34 @@ void MainWindow::loadViewState()
             headUpDockWidget->show();
             video1DockWidget->hide();
             video2DockWidget->hide();
-            mavlinkInspectorWidget->hide();
+            mavlinkInspectorWidget->hide();*/
             break;
 
         case VIEW_SIMULATION:
-            centerStack->setCurrentWidget(mapWidget);
-            controlDockWidget->show();
+            //plannerView->centralWidget();
+            centerStack->setCurrentWidget(simView);
+            /*controlDockWidget->show();
             waypointsDockWidget->show();
             parametersDockWidget->show();
             mavlinkInspectorWidget->hide();
             foreach (int key, hilDocks.keys()) {
                 hilDocks.value(key)->show();
-            }
+            }*/
             break;
 
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
-            centerStack->setCurrentWidget(mapWidget);
-            controlDockWidget->hide();
-            listDockWidget->show();
-            waypointsDockWidget->hide();
+            //centerStack->setCurrentWidget(mapWidget);
+            if (controlDockWidget)
+            {
+                controlDockWidget->hide();
+            }
+            if (listDockWidget)
+            {
+                listDockWidget->show();
+            }
+            /*waypointsDockWidget->hide();
             infoDockWidget->hide();
             debugConsoleDockWidget->show();
 //            logPlayerDockWidget->show();
@@ -1709,7 +1949,7 @@ void MainWindow::loadViewState()
             headUpDockWidget->show();
             video1DockWidget->hide();
             video2DockWidget->hide();
-            mavlinkInspectorWidget->hide();
+            mavlinkInspectorWidget->show();*/
             break;
         }
     }
@@ -1840,16 +2080,21 @@ void MainWindow::loadFirmwareUpdateView()
 void MainWindow::loadDataView(QString fileName)
 {
     // Plot is now selected, now load data from file
-    if (dataplotWidget)
+    if (dataView)
     {
-        dataplotWidget->loadFile(fileName);
+        //dataView->setCentralWidget(new QGCDataPlot2D(this));
+        QGCDataPlot2D *plot = qobject_cast<QGCDataPlot2D*>(dataView->centralWidget());
+        if (plot)
+        {
+            plot->loadFile(fileName);
+        }
     }
-    QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+    /*QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
     if (centerStack)
     {
-        centerStack->setCurrentWidget(dataplotWidget);
+        centerStack->setCurrentWidget(dataView);
         dataplotWidget->loadFile(fileName);
-    }
+    }*/
 }
 
 

@@ -374,7 +374,8 @@ HEADERS += src/MG.h \
     src/ui/QGCHilJSBSimConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h \
     src/ui/designer/QGCComboBox.h \
-    src/ui/designer/QGCTextLabel.h
+    src/ui/designer/QGCTextLabel.h \
+    src/ui/submainwindow.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -538,7 +539,8 @@ SOURCES += src/main.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
     src/ui/designer/QGCComboBox.cc \
-    src/ui/designer/QGCTextLabel.cc
+    src/ui/designer/QGCTextLabel.cc \
+    src/ui/submainwindow.cpp
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
