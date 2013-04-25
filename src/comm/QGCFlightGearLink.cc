@@ -244,9 +244,9 @@ void QGCFlightGearLink::readBytes()
     double lat, lon, alt;
     double vx, vy, vz, xacc, yacc, zacc;
 
-    lat = values.at(1).toDouble() * 1e7;
-    lon = values.at(2).toDouble() * 1e7;
-    alt = values.at(3).toDouble() * 1e3;
+    lat = values.at(1).toDouble();
+    lon = values.at(2).toDouble();
+    alt = values.at(3).toDouble();
     roll = values.at(4).toDouble();
     pitch = values.at(5).toDouble();
     yaw = values.at(6).toDouble();
@@ -254,13 +254,13 @@ void QGCFlightGearLink::readBytes()
     pitchspeed = values.at(8).toDouble();
     yawspeed = values.at(9).toDouble();
 
-    xacc = values.at(10).toDouble()*1e3/9.8; // convert to mg's
-    yacc = values.at(11).toDouble()*1e3/9.8;
-    zacc = values.at(12).toDouble()*1e3/9.8;
+    xacc = values.at(10).toDouble();
+    yacc = values.at(11).toDouble();
+    zacc = values.at(12).toDouble();
 
-    vx = values.at(13).toDouble() * 1e2;
-    vy = values.at(14).toDouble() * 1e2;
-    vz = values.at(15).toDouble() * 1e2;
+    vx = values.at(13).toDouble();
+    vy = values.at(14).toDouble();
+    vz = values.at(15).toDouble();
 
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
@@ -299,7 +299,7 @@ bool QGCFlightGearLink::disconnectSimulation()
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
     disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)));
 
     if (process)
     {
@@ -346,7 +346,7 @@ bool QGCFlightGearLink::connectSimulation()
     terraSync = new QProcess(this);
 
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)));
 
 
     UAS* uas = dynamic_cast<UAS*>(mav);

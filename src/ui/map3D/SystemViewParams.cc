@@ -18,6 +18,7 @@ SystemViewParams::SystemViewParams(int systemId)
  , mSetpointHistoryLength(100)
 {
 
+    setObjectName("RGBD VIEW PARAMS");
 }
 
 bool&

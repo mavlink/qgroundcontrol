@@ -81,6 +81,10 @@ public:
 
     void run();
 
+    bool sensorHilEnabled() {
+        return _sensorHilEnabled;
+    }
+
 public slots:
 //    void setAddress(QString address);
     void setPort(int port);
@@ -102,6 +106,12 @@ public slots:
     void selectAirframe(const QString& airframe)
     {
         script = airframe;
+    }
+
+    void enableSensorHIL(bool enable) {
+        if (enable != _sensorHilEnabled)
+            _sensorHilEnabled = enable;
+            emit sensorHilChanged(enable);
     }
 
     void readBytes();
@@ -142,6 +152,7 @@ protected:
     unsigned int flightGearVersion;
     QString startupArguments;
     QString script;
+    bool _sensorHilEnabled;
 
     void setName(QString name);
 

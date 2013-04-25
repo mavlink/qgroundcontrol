@@ -19,6 +19,7 @@ ViewParamWidget::ViewParamWidget(GlobalViewParamsPtr& globalViewParams,
  , mFollowCameraComboBox(new QComboBox(this))
  , mTabWidget(new QTabWidget(this))
 {
+    setObjectName("RGBD VIEW PARAMS WIDGET");
     QVBoxLayout* layout = new QVBoxLayout;
     QWidget* widget = new QWidget;
     widget->setLayout(layout);

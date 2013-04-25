@@ -79,6 +79,10 @@ public:
         return -1;
     }
 
+    bool sensorHilEnabled() {
+        return _sensorHilEnabled;
+    }
+
     void run();
 
 public slots:
@@ -102,6 +106,12 @@ public slots:
     void selectAirframe(const QString& airframe)
     {
         Q_UNUSED(airframe);
+    }
+
+    void enableSensorHIL(bool enable) {
+        if (enable != _sensorHilEnabled)
+            _sensorHilEnabled = enable;
+            emit sensorHilChanged(enable);
     }
 
     void readBytes();
@@ -144,6 +154,7 @@ protected:
     QProcess* terraSync;
     unsigned int flightGearVersion;
     QString startupArguments;
+    bool _sensorHilEnabled;
 
     void setName(QString name);
 
