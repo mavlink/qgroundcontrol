@@ -2728,8 +2728,8 @@ void UAS::enableHilXPlane(bool enable)
 * @param zacc Z acceleration (mg)
 */
 void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                       float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                       int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
+                       float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                       float vx, float vy, float vz, float xacc, float yacc, float zacc)
 {
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
@@ -2743,11 +2743,15 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
             emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, getUnixTime());
             emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, getUnixTime());
             emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, getUnixTime());
+
+            emit valueChanged(uasId, "vx sim", "rad", vx*100, getUnixTime());
+            emit valueChanged(uasId, "vy sim", "rad", vy*100, getUnixTime());
+            emit valueChanged(uasId, "vz sim", "rad", vz*100, getUnixTime());
         } else {
             mavlink_message_t msg;
             mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                        time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
-                                       lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000, yacc*1000, zacc*1000);
+                                       lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000/9.81, yacc*1000/9.81, zacc*1000/9.81);
             sendMessage(msg);
         }
     }

@@ -541,9 +541,9 @@ public slots:
     void enableHilXPlane(bool enable);
 
     /** @brief Send the full HIL state to the MAV */
-    void sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+    void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                        float vx, float vy, float vz, float xacc, float yacc, float zacc);
 
     /** @brief RAW sensors for sensor HIL */
     void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,

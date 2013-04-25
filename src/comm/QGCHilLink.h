@@ -89,9 +89,9 @@ signals:
     void simulationConnected(bool connected);
 
     /** @brief State update from simulation */
-    void hilStateChanged(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
-                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+    void hilStateChanged(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
+                                          float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                                          float vx, float vy, float vz, float xacc, float yacc, float zacc);
 
     void sensorHilGpsChanged(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites);
 
