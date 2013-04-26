@@ -200,7 +200,7 @@ void QGCRemoteControlView::redraw()
     if(isVisible() && updated)
     {
         // Update percent bars and raw labels
-        for(int i = 0; (i < progressBars.count()) && (i < rawLabels.count()) && (i < normalized.count()); i++)
+        for(int i = 0; (i < progressBars.count()) && (i < rawLabels.count()) && (i < normalized.count()) && (i < raw.count()); i++)
         {
             rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
             int vv = normalized.at(i)*100.0f;
