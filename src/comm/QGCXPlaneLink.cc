@@ -567,8 +567,8 @@ void QGCXPlaneLink::readBytes()
             }
             else if (p.index == 21 && xPlaneVersion == 10)
             {
-                vx = p.f[3];
-                vy = -p.f[5];
+                vy = p.f[3];
+                vx = -p.f[5];
                 vz = p.f[4];
             }
             else if (p.index == 12)
