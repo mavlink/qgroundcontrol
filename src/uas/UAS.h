@@ -716,6 +716,7 @@ protected:
     bool hilEnabled;            ///< Set to true if HIL mode is enabled from GCS (UAS might be in HIL even if this flag is not set, this defines the GCS HIL setting)
     bool sensorHil;             ///< True if sensor HIL is enabled
     quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
+    quint64 lastSendTimeSensors;
 
 protected slots:
     /** @brief Write settings to disk */

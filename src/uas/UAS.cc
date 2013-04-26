@@ -112,7 +112,9 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lastNonNullTime(0),
     onboardTimeOffsetInvalidCount(0),
     hilEnabled(false),
-    lastSendTimeGPS(0)
+    sensorHil(false),
+    lastSendTimeGPS(0),
+    lastSendTimeSensors(0)
 
 {
     for (unsigned int i = 0; i<255;++i)
@@ -2733,7 +2735,7 @@ void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, flo
 {
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
-        if (sensorHil) {
+        if (QGC::groundTimeMilliseconds() - lastSendTimeSensors < 100) {
             // Emit attitude for cross-check
             emit attitudeChanged(this, 201, roll, pitch, yaw, getUnixTime());
             emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
@@ -2777,6 +2779,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
                                      fields_changed);
         sendMessage(msg);
         sensorHil = true;
+        lastSendTimeSensors = QGC::groundTimeMilliseconds();
     }
     else
     {
