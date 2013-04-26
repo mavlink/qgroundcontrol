@@ -228,6 +228,7 @@ public slots:
      */
     void showTool(bool visible);
 
+
     /**
      * @brief Shows a Widget from the center stack based on the action sender
      *
@@ -265,8 +266,8 @@ protected:
     typedef enum _VIEW_SECTIONS
     {
         VIEW_ENGINEER,
-        VIEW_OPERATOR,
-        VIEW_PILOT,
+        VIEW_MISSION,
+        VIEW_FLIGHT,
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
@@ -287,7 +288,7 @@ protected:
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
     void addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area);
-
+void createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth=0,int minheight=0);
     /**
      * @brief Adds an already instantiated QWidget to the center stack
      *
