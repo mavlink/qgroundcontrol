@@ -2729,7 +2729,7 @@ void UAS::enableHilXPlane(bool enable)
 * @param yacc Y acceleration (mg)
 * @param zacc Z acceleration (mg)
 */
-void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float xacc, float yacc, float zacc)
 {

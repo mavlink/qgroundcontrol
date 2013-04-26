@@ -139,10 +139,9 @@ void QGCRemoteControlView::setUASId(int id)
 void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
 {
 
-    if (this->raw.size() <= channelId) {
+    if (this->raw.count() <= channelId) {
         // This is a new channel, append it
         this->raw.append(raw);
-        //this->normalized.append(0);
         appendChannelWidget(channelId);
         updated = true;
     } else {
@@ -154,7 +153,7 @@ void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
 
 void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
 {
-    if (this->normalized.size() <= channelId) // using raw vector as size indicator
+    if (this->normalized.count() <= channelId) // using raw vector as size indicator
     {
         // This is a new channel, append it
         this->normalized.append(normalized);
@@ -200,19 +199,11 @@ void QGCRemoteControlView::redraw()
 {
     if(isVisible() && updated)
     {
-        // Update raw values
-        //for(int i = 0; i < rawLabels.count(); i++)
-        //{
-        //rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
-        //}
-
-        // Update percent bars
-        for(int i = 0; i < progressBars.count(); i++)
+        // Update percent bars and raw labels
+        for(int i = 0; (i < progressBars.count()) && (i < rawLabels.count()) && (i < normalized.count()); i++)
         {
             rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
             int vv = normalized.at(i)*100.0f;
-            //progressBars.at(i)->setValue(vv);
-//            int vv = raw.at(i)*1.0f;
             progressBars.at(i)->setValue(vv);
         }
         // Update RSSI
