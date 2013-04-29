@@ -102,7 +102,7 @@ void QGCToolBar::createUI()
     addWidget(toolBarSafetyLabel);
 
     toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #3C7B9E; }");
+    toolBarModeLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }");
     toolBarModeLabel->setToolTip(tr("Vehicle mode"));
     toolBarModeLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarModeLabel);
@@ -130,7 +130,7 @@ void QGCToolBar::createUI()
     addWidget(toolBarBatteryVoltageLabel);
 
     toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 18px; color: #3C7B9E; }");
+    toolBarWpLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 18px; color: #ACEBFE; }");
     toolBarWpLabel->setToolTip(tr("Current waypoint"));
     toolBarWpLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarWpLabel);
@@ -141,7 +141,7 @@ void QGCToolBar::createUI()
     addWidget(toolBarDistLabel);
 
     toolBarMessageLabel = new QLabel("", this);
-    toolBarMessageLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #3C7B9E; }");
+    toolBarMessageLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }");
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
 
@@ -153,6 +153,7 @@ void QGCToolBar::createUI()
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setToolTip(tr("Connect wireless link to MAV"));
     connectButton->setCheckable(true);
+    connectButton->setStyleSheet("QPushButton {min-height: 20px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5AAA49, stop: 1 #106B38);  margin-left: 4px; margin-right: 4px; border-radius: 4px; border: 1px solid #085B35; } QPushButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #FFD450); color: #222222; border-color: #D1892A}");
     addWidget(connectButton);
     connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
 
@@ -196,7 +197,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         first->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         first->setCheckable(true);
         connect(first, SIGNAL(clicked(bool)), actions.first(), SIGNAL(triggered(bool)));
-        first->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #757575); color: #CCCCCC; }");
+        first->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
         addWidget(first);
         group->addButton(first);
 
@@ -211,7 +212,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
             btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
             btn->setCheckable(true);
             connect(btn, SIGNAL(clicked(bool)), actions.at(i), SIGNAL(triggered(bool)));
-            btn->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: -2px; margin-right: -2px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #757575); color: #CCCCCC; }");
+            btn->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: -2px; margin-right: -2px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
             addWidget(btn);
             group->addButton(btn);
         }
@@ -225,7 +226,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         last->setCheckable(true);
         connect(last, SIGNAL(clicked(bool)), actions.last(), SIGNAL(triggered(bool)));
         last->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        last->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: 0px; margin-right: 8px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-right-radius: 6px; border-top-right-radius: 6px; border-right: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #757575); color: #CCCCCC; }");
+        last->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: 0px; margin-right: 8px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-right-radius: 6px; border-top-right-radius: 6px; border-right: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
         addWidget(last);
         group->addButton(last);
     } else {
