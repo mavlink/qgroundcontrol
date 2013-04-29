@@ -141,14 +141,6 @@
      <string>Main Widget</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuPlugins">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="title">
-     <string>Plugins</string>
-    </property>
-   </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuConnected_Systems"/>
@@ -156,7 +148,6 @@
    <addaction name="menuPerspectives"/>
    <addaction name="menuMain"/>
    <addaction name="menuTools"/>
-   <addaction name="menuPlugins"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -338,7 +329,7 @@
      <normaloff>:/files/images/apps/utilities-system-monitor.svg</normaloff>:/files/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
-    <string>Development</string>
+    <string>Plot</string>
    </property>
    <property name="shortcut">
     <string>Meta+E</string>

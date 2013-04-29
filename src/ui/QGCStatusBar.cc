@@ -40,9 +40,11 @@ QGCStatusBar::QGCStatusBar(QWidget *parent) :
     toggleLoggingButton = new QPushButton("Logging", this);
     toggleLoggingButton->setCheckable(true);
 
-    addWidget(toggleLoggingButton);
+    addPermanentWidget(toggleLoggingButton);
 
     loadSettings();
+
+    setStyleSheet("QStatusBar {margin: 1px; border-bottom: 1px solid #252525; border-top: 1px solid #969696; padding: 1px");
 }
 
 void QGCStatusBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
