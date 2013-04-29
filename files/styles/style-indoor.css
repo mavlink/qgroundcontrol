@@ -1,4 +1,4 @@
-* { font-family: "Bitstream Vera Sans"; font: "Roman"; font-size: 12px; }
+* { font-family: "Bitstream Vera Sans"; font: "Roman"; font-size: 12px; border: 0px solid; }
 QWidget#colorIcon {}
 
 QWidget {
@@ -6,6 +6,8 @@ background-color: #050508;
 color: #DDDDDF;
 background-clip: border;
 font-size: 11px;
+border: 0px;
+padding: 1px;
 }
 
 QGroupBox {
@@ -186,7 +188,8 @@ QPushButton {
     min-height: 20px;
     /*min-width: 24px;*/
     max-height: 20px;
-	border: 0px solid #59666f;
+	border: 1px solid #465158;
+    margin: 1px;
 	border-radius: 2px;
 	padding-left: 8px;
 	padding-right: 8px;
@@ -194,13 +197,11 @@ QPushButton {
 }
 
 QPushButton:checked {
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #404040, stop: 1 #808080);
-    border: 0px solid #379AC3;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #09A2B2, stop: 1 #414B52);
 }
 
 QPushButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
-    border: 0px solid #379AC3;
 }
 
 QToolButton {
@@ -208,21 +209,20 @@ QToolButton {
 	min-height: 20px;
 	/*min-width: 24px;*/
 	max-height: 20px;
-	border: 0px solid #4A4A4F;
+	border: 1px solid #4A4A4F;
+    margin: 1px;
 	border-radius: 2px;
-        padding-left: 3px;
+    padding-left: 3px;
     padding-right: 3px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
 }
 
 QToolButton:checked {
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
-    border: 2px solid #379AC3;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #09A2B2, stop: 1 #414B52);
 }
 
 QToolButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
-    border: 2px solid #379AC3;
 }
 
 QToolTip {
@@ -259,6 +259,10 @@ QMenuBar::item:disabled:pressed {
     border: none;
 }
 
+QSlider {
+    background-color: transparent;
+}
+
 QSlider::groove:horizontal {
      border: 1px solid #999999;
      height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
@@ -266,9 +270,24 @@ QSlider::groove:horizontal {
      margin: 2px 0;
  }
 
+ QSlider::groove:disabled:horizontal {
+     border: 1px solid #AAAAAA;
+     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
+     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6A6A6F, stop:1 #6A6A6F);
+     margin: 2px 0;
+ }
+
  QSlider::handle:horizontal {
      background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
      border: 2px solid #379AC3;
+     width: 18px;
+     margin: -5px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+     border-radius: 3px;
+ }
+
+ QSlider::handle:disabled:horizontal {
+     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #535258, stop: 1 #050508);
+     border: 2px solid #444444;
      width: 18px;
      margin: -5px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
      border-radius: 3px;

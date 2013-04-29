@@ -135,6 +135,12 @@ MainWindow::MainWindow(QWidget *parent):
     ui.setupUi(this);
     hide();
 
+    // We only need this menu if we have more than one system
+    ui.menuConnected_Systems->setEnabled(false);
+
+    // XXX This menu probably doesn't make sense and should go, not just hide
+    ui.menuUnmanned_System->setEnabled(false);
+
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
 
@@ -153,10 +159,14 @@ MainWindow::MainWindow(QWidget *parent):
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);
     // Add actions (inverted order due to insert)
-    toolBar->addPerspectiveChangeAction(ui.actionSimulation_View);
-    toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
-    toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
-    toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
+
+    QList<QAction*> actions;
+
+    actions << ui.actionOperatorsView;
+    actions << ui.actionPilotsView;
+    actions << ui.actionEngineersView;
+    actions << ui.actionSimulation_View;
+    toolBar->setPerspectiveChangeActions(actions);
 
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
@@ -1271,6 +1281,10 @@ void MainWindow::UASSpecsChanged(int uas)
 
 void MainWindow::UASCreated(UASInterface* uas)
 {
+
+    // Check if this is the 2nd system and we need a switch menu
+    if (UASManager::instance()->getUASList().count() > 1)
+        ui.menuConnected_Systems->setEnabled(true);
 
     // Connect the UAS to the full user interface
 

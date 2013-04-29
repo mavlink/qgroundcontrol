@@ -54,11 +54,11 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         // Alternate colors to increase visibility
         if ((ms / 1000) % 2 == 0)
         {
-            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
         }
         else
         {
-            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.dark(250).name()));
+            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.dark(250).name()));
         }
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
     }
@@ -75,67 +75,79 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
 
 void QGCToolBar::createUI()
 {
+    setStyleSheet("QToolBar {margin: 1px; border-bottom: 1px solid #484848; border-top: 1px solid #969696; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #8B8B8B, stop:0.3 #808080, stop:0.34 #747474, stop:1 #484848);}");
+
     // CREATE TOOLBAR ITEMS
     // Add internal actions
     // Add MAV widget
     symbolButton = new QToolButton(this);
-    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; }");
+    symbolButton->setStyleSheet("QWidget { margin-left: 10px; background-color: #050508; color: #DDDDDF; background-clip: border; }");
     addWidget(symbolButton);
 
     toolBarNameLabel = new QLabel("------", this);
     toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
+    toolBarNameLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarNameLabel);
 
     toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
     toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
-    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+    toolBarTimeoutLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarTimeoutLabel);
 
     toolBarSafetyLabel = new QLabel("SAFE", this);
-    toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
+    toolBarSafetyLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #14C814; }");
     toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
+    toolBarSafetyLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarSafetyLabel);
 
     toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #3C7B9E; }");
+    toolBarModeLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #3C7B9E; }");
     toolBarModeLabel->setToolTip(tr("Vehicle mode"));
+    toolBarModeLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarModeLabel);
 
     toolBarStateLabel = new QLabel("------", this);
-    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #FEC654; }");
+    toolBarStateLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #FEC654; }");
     toolBarStateLabel->setToolTip(tr("Vehicle state"));
+    toolBarStateLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarStateLabel);
 
     toolBarBatteryBar = new QProgressBar(this);
-    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
     toolBarBatteryBar->setMinimumWidth(20);
     toolBarBatteryBar->setMaximumWidth(100);
+    toolBarBatteryBar->setValue(0);
     toolBarBatteryBar->setToolTip(tr("Battery charge level"));
     addWidget(toolBarBatteryBar);
 
     toolBarBatteryVoltageLabel = new QLabel("xx.x V");
     toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
     toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
+    toolBarBatteryVoltageLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarBatteryVoltageLabel);
 
     toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
+    toolBarWpLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 18px; color: #3C7B9E; }");
     toolBarWpLabel->setToolTip(tr("Current waypoint"));
+    toolBarWpLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarWpLabel);
 
     toolBarDistLabel = new QLabel("--- ---- m", this);
     toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
+    toolBarDistLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarDistLabel);
 
-    toolBarMessageLabel = new QLabel("No system messages.", this);
-    toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
+    toolBarMessageLabel = new QLabel("", this);
+    toolBarMessageLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #3C7B9E; }");
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
 
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    spacer->setStyleSheet("* { margin: 0px; background-color: transparent; min-height: 28px}");
     addWidget(spacer);
 
     connectButton = new QPushButton(tr("Connect"), this);
@@ -165,17 +177,63 @@ void QGCToolBar::createUI()
     updateViewTimer.start(2000);
 
     loadSettings();
+
+    changed = false;
 }
 
-void QGCToolBar::addPerspectiveChangeAction(QAction* action)
+void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
 {
-    if (firstAction) {
-        insertAction(firstAction, action);
+    if (actions.count() > 1)
+    {
+        QButtonGroup* group = new QButtonGroup(this);
+        group->setExclusive(true);
+
+        QToolButton *first = new QToolButton(this);
+        // Add first button
+        first->setIcon(actions.first()->icon());
+        first->setText(actions.first()->text());
+        first->setToolTip(actions.first()->toolTip());
+        first->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        first->setCheckable(true);
+        connect(first, SIGNAL(clicked(bool)), actions.first(), SIGNAL(triggered(bool)));
+        first->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #757575); color: #CCCCCC; }");
+        addWidget(first);
+        group->addButton(first);
+
+        for (int i = 1; i < actions.count() - 1; i++)
+        {
+            // Add last button
+            QToolButton *btn = new QToolButton(this);
+            // Add first button
+            btn->setIcon(actions.at(i)->icon());
+            btn->setText(actions.at(i)->text());
+            btn->setToolTip(actions.at(i)->toolTip());
+            btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+            btn->setCheckable(true);
+            connect(btn, SIGNAL(clicked(bool)), actions.at(i), SIGNAL(triggered(bool)));
+            btn->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: -2px; margin-right: -2px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #757575); color: #CCCCCC; }");
+            addWidget(btn);
+            group->addButton(btn);
+        }
+
+        // Add last button
+        QToolButton *last = new QToolButton(this);
+        // Add first button
+        last->setIcon(actions.last()->icon());
+        last->setText(actions.last()->text());
+        last->setToolTip(actions.last()->toolTip());
+        last->setCheckable(true);
+        connect(last, SIGNAL(clicked(bool)), actions.last(), SIGNAL(triggered(bool)));
+        last->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        last->setStyleSheet("QToolButton { min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: 0px; margin-right: 8px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-right-radius: 6px; border-top-right-radius: 6px; border-right: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #757575); color: #CCCCCC; }");
+        addWidget(last);
+        group->addButton(last);
     } else {
-        addAction(action);
-        firstAction = action;
-        createUI();
+        qDebug() << __FILE__ << __LINE__ << "Not enough perspective change actions provided";
     }
+
+    // Add the "rest"
+    createUI();
 }
 
 void QGCToolBar::setActiveUAS(UASInterface* active)
@@ -222,7 +280,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     systemArmed = mav->isArmed();
     toolBarNameLabel->setText(mav->getUASName());
     toolBarNameLabel->setStyleSheet(QString("QLabel { font: bold 16px; color: %1; }").arg(mav->getColor().name()));
-    symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
+    symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 14px; border: 0px solid #484848; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
     toolBarModeLabel->setText(mav->getShortMode());
     toolBarStateLabel->setText(mav->getShortState());
     toolBarTimeoutLabel->setStyleSheet(QString(""));
@@ -249,25 +307,31 @@ void QGCToolBar::updateView()
     toolBarDistLabel->setText(tr("%1 m").arg(wpDistance, 6, 'f', 2, '0'));
     toolBarWpLabel->setText(tr("WP%1").arg(wpId));
     toolBarBatteryBar->setValue(batteryPercent);
+    if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
+        toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: yellow; }");
+    } else if (batteryPercent >= 30 && toolBarBatteryBar->value() < 30){
+        toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+    }
+
     toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
     toolBarStateLabel->setText(tr("%1").arg(state));
     toolBarModeLabel->setText(tr("%1").arg(mode));
     toolBarNameLabel->setText(systemName);
     // expire after 15 seconds
     if (QGC::groundTimeMilliseconds() - lastSystemMessageTimeMs < 15000) {
-        toolBarMessageLabel->setText(lastSystemMessage);
+        toolBarMessageLabel->setText(tr("%1").arg(lastSystemMessage));
     } else {
-        toolBarMessageLabel->setText("");
+        toolBarMessageLabel->setText(tr("%1").arg(""));
     }
 
     if (systemArmed)
     {
-        toolBarSafetyLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
+        toolBarSafetyLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
         toolBarSafetyLabel->setText(tr("ARMED"));
     }
     else
     {
-        toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
+        toolBarSafetyLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #14C814; }");
         toolBarSafetyLabel->setText(tr("SAFE"));
     }
 
@@ -481,8 +545,11 @@ void QGCToolBar::storeSettings()
 
 void QGCToolBar::clearStatusString()
 {
-    lastSystemMessage = "";
-    changed = true;
+    if (toolBarMessageLabel->text().length() > 0)
+    {
+        lastSystemMessage = "";
+        changed = true;
+    }
 }
 
 QGCToolBar::~QGCToolBar()

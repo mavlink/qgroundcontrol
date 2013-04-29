@@ -44,6 +44,11 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     setAccelerationFactorInt(49);
     ui->speedSlider->setValue(49);
     ui->positionSlider->setValue(ui->positionSlider->minimum());
+
+    ui->playButton->setEnabled(false);
+    ui->speedSlider->setEnabled(false);
+    ui->positionSlider->setEnabled(false);
+
     loadSettings();
 }
 
@@ -254,6 +259,11 @@ void QGCMAVLinkLogPlayer::setAccelerationFactorInt(int factor)
 
 bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 {
+    // Enable controls
+    ui->playButton->setEnabled(true);
+    ui->speedSlider->setEnabled(true);
+    ui->positionSlider->setEnabled(true);
+
     // Check if logging is still enabled
     if (mavlink->loggingEnabled())
     {
