@@ -44,7 +44,9 @@ QGCStatusBar::QGCStatusBar(QWidget *parent) :
 
     loadSettings();
 
-    setStyleSheet("QStatusBar {margin: 1px; border-bottom: 1px solid #252525; border-top: 1px solid #969696; padding: 1px");
+    //setStyleSheet("QStatusBar {margin: 1px; border-bottom: 1px solid #252525; border-top: 1px solid #969696; padding: 1px");
+    setStyleSheet("* { border-color: transparent; margin: 0px; } QWidget { border-color: transparent; } QStatusBar {border-bottom: 1px solid #101010; border-top: 1px solid #4F4F4F; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818);}");
+
 }
 
 void QGCStatusBar::setLogPlayer(QGCMAVLinkLogPlayer* player)

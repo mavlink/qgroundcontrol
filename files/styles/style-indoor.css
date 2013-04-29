@@ -1,13 +1,11 @@
-* { font-family: "Bitstream Vera Sans"; font: "Roman"; font-size: 12px; border: 0px solid; }
+/** { font-family: "Bitstream Vera Sans"; font: "Roman"; font-size: 12px; }*/
 QWidget#colorIcon {}
 
 QWidget {
-background-color: #151518;
+background-color: #191919;
 color: #DDDDDF;
-background-clip: border;
+/*background-clip: border;*/
 font-size: 11px;
-border: 0px;
-padding: 1px;
 }
 
 QGroupBox {
