@@ -75,7 +75,7 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
 
 void QGCToolBar::createUI()
 {
-    setStyleSheet("QToolBar {margin: 1px; border-bottom: 1px solid #484848; border-top: 1px solid #969696; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #8B8B8B, stop:0.3 #808080, stop:0.34 #747474, stop:1 #484848);}");
+    setStyleSheet("QToolBar {margin: 0px; border-bottom: 1px solid #484848; border-top: 1px solid #969696; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #8B8B8B, stop:0.3 #808080, stop:0.34 #747474, stop:1 #484848);}");
 
     // CREATE TOOLBAR ITEMS
     // Add internal actions

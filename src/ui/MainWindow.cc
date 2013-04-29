@@ -1672,7 +1672,7 @@ void MainWindow::loadViewState()
             headUpDockWidget->show();
             video1DockWidget->hide();
             video2DockWidget->hide();
-            mavlinkInspectorWidget->show();
+            mavlinkInspectorWidget->hide();
             break;
         }
     }
