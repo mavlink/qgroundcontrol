@@ -5,6 +5,7 @@
 #include "MAV2DIcon.h"
 #include "Waypoint2DIcon.h"
 #include "UASWaypointManager.h"
+#include "ArduPilotMegaMAV.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapcontrol::OPMapWidget(parent),
@@ -58,6 +59,16 @@ bool QGCMapWidget::guidedAltActionTriggered()
     defaultGuidedAlt = tmpalt;
     guidedActionTriggered();
     return true;
+}
+void QGCMapWidget::cameraActionTriggered()
+{
+    ArduPilotMegaMAV *newmav = qobject_cast<ArduPilotMegaMAV*>(this->uas);
+    if (newmav)
+    {
+        newmav->setMountConfigure(4,true,true,true);
+        internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+        newmav->setMountControl(pos.Lat(),pos.Lng(),100,true);
+    }
 }
 
 void QGCMapWidget::mousePressEvent(QMouseEvent *event)
@@ -237,6 +248,7 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
 {
     // Only execute if proper UAS is set
     if (!uas) return;
+    this->uas = uas;
 
     // Disconnect old MAV manager
     if (currWPManager)
@@ -251,6 +263,12 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
     if (uas)
     {
         currWPManager = uas->getWaypointManager();
+        QList<QAction*> actionList = this->actions();
+        for (int i=0;i<actionList.size();i++)
+        {
+            this->removeAction(actionList[i]);
+            actionList[i]->deleteLater();
+        }
         if (currWPManager->guidedModeSupported())
         {
             QAction *guidedaction = new QAction(this);
@@ -261,6 +279,14 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
             guidedaction->setText("Go To Here Alt (Guided Mode)");
             connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
             this->addAction(guidedaction);
+
+            if (uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
+            {
+                QAction *cameraaction = new QAction(this);
+                cameraaction->setText("Point Camera Here");
+                connect(cameraaction,SIGNAL(triggered()),this,SLOT(cameraActionTriggered()));
+                this->addAction(cameraaction);
+            }
         }
 
         // Connect the waypoint manager / data storage to the UI
