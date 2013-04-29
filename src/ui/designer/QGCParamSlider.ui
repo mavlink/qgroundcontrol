@@ -171,7 +171,7 @@
       <string>Read the current parameter value on the system</string>
      </property>
      <property name="text">
-      <string>R</string>
+      <string>Get</string>
      </property>
     </widget>
    </item>
@@ -223,7 +223,7 @@
       <string>Transmit the current slider value to the system</string>
      </property>
      <property name="text">
-      <string>W</string>
+      <string>Set</string>
      </property>
     </widget>
    </item>
