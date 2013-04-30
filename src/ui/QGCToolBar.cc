@@ -147,7 +147,7 @@ void QGCToolBar::createUI()
 
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    spacer->setStyleSheet("* { margin: 0px; background-color: transparent; min-height: 28px}");
+    spacer->setStyleSheet("* { margin: 0px; background-color: transparent; min-height: 24px}");
     addWidget(spacer);
 
     connectButton = new QPushButton(tr("Connect"), this);

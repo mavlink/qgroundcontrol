@@ -43,7 +43,6 @@ QGroupBox {
 	border: 1px solid #EEEEEE;
 	border-radius: 5px;
 	padding: 0px 0px 0px 0px;
-margin-top: 1ex; /* leave space at the top for the title */
 	margin: 0px;
 }
 
@@ -55,26 +54,22 @@ margin-top: 1ex; /* leave space at the top for the title */
      font: bold 8px;
  }
 
- QDockWidget {
-	font: bold;
-    border: 1px solid #32345E;
-}
-
 QPushButton {
 	font-weight: bold;
 	font-size: 12px;
-	border: 1px solid #999999;
-	border-radius: 10px;
-	min-width:22px;
-	max-width: 36px;
+	border: 1px solid #465158;
+    margin: 1px;
+	border-radius: 2px;
+	min-width:16px;
+	max-width: 16px;
 	min-height: 16px;
 	max-height: 16px;
 	padding: 2px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777777, stop: 1 #555555);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
 }
 
 QPushButton:pressed {
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444444, stop: 1 #555555);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #09A2B2, stop: 1 #414B52);
 }
 </string>
   </property>
@@ -270,8 +265,8 @@ QPushButton:pressed {
         </property>
         <property name="minimumSize">
          <size>
-          <width>28</width>
-          <height>22</height>
+          <width>24</width>
+          <height>24</height>
          </size>
         </property>
         <property name="focusPolicy">
@@ -302,8 +297,8 @@ QPushButton:pressed {
         </property>
         <property name="minimumSize">
          <size>
-          <width>28</width>
-          <height>22</height>
+          <width>24</width>
+          <height>24</height>
          </size>
         </property>
         <property name="focusPolicy">
@@ -334,8 +329,8 @@ QPushButton:pressed {
         </property>
         <property name="minimumSize">
          <size>
-          <width>28</width>
-          <height>22</height>
+          <width>24</width>
+          <height>24</height>
          </size>
         </property>
         <property name="focusPolicy">
