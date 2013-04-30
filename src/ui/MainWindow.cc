@@ -136,10 +136,7 @@ MainWindow::MainWindow(QWidget *parent):
     hide();
 
     // We only need this menu if we have more than one system
-    ui.menuConnected_Systems->setEnabled(false);
-
-    // XXX This menu probably doesn't make sense and should go, not just hide
-    ui.menuUnmanned_System->setEnabled(false);
+//    ui.menuConnected_Systems->setEnabled(false);
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -1257,8 +1254,8 @@ void MainWindow::addLink(LinkInterface *link)
 void MainWindow::setActiveUAS(UASInterface* uas)
 {
     // Enable and rename menu
-    ui.menuUnmanned_System->setTitle(uas->getUASName());
-    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
+//    ui.menuUnmanned_System->setTitle(uas->getUASName());
+//    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
 }
 
 void MainWindow::UASSpecsChanged(int uas)
@@ -1268,14 +1265,14 @@ void MainWindow::UASSpecsChanged(int uas)
     {
         if (activeUAS->getUASID() == uas)
         {
-            ui.menuUnmanned_System->setTitle(activeUAS->getUASName());
+//            ui.menuUnmanned_System->setTitle(activeUAS->getUASName());
         }
     }
     else
     {
         // Last system deleted
-        ui.menuUnmanned_System->setTitle(tr("No System"));
-        ui.menuUnmanned_System->setEnabled(false);
+//        ui.menuUnmanned_System->setTitle(tr("No System"));
+//        ui.menuUnmanned_System->setEnabled(false);
     }
 }
 
@@ -1284,7 +1281,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Check if this is the 2nd system and we need a switch menu
     if (UASManager::instance()->getUASList().count() > 1)
-        ui.menuConnected_Systems->setEnabled(true);
+//        ui.menuConnected_Systems->setEnabled(true);
 
     // Connect the UAS to the full user interface
 
@@ -1364,12 +1361,12 @@ void MainWindow::UASCreated(UASInterface* uas)
             break;
         }
 
-        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
-        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
-        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+//        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
+//        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
+//        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
         connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
 
-        ui.menuConnected_Systems->addAction(uasAction);
+//        ui.menuConnected_Systems->addAction(uasAction);
 
         // FIXME Should be not inside the mainwindow
         if (debugConsoleDockWidget)
@@ -1482,8 +1479,8 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     //}
 
-    if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
-    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
+//    if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
+//    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
 
     // Reload view state in case new widgets were added
     loadViewState();
@@ -1494,18 +1491,18 @@ void MainWindow::UASDeleted(UASInterface* uas)
     if (UASManager::instance()->getUASList().count() == 0)
     {
         // Last system deleted
-        ui.menuUnmanned_System->setTitle(tr("No System"));
-        ui.menuUnmanned_System->setEnabled(false);
+//        ui.menuUnmanned_System->setTitle(tr("No System"));
+//        ui.menuUnmanned_System->setEnabled(false);
     }
 
-    QAction* act;
-    QList<QAction*> actions = ui.menuConnected_Systems->actions();
+//    QAction* act;
+//    QList<QAction*> actions = ui.menuConnected_Systems->actions();
 
-    foreach (act, actions)
-    {
-        if (act->text().contains(uas->getUASName()))
-            ui.menuConnected_Systems->removeAction(act);
-    }
+//    foreach (act, actions)
+//    {
+//        if (act->text().contains(uas->getUASName()))
+//            ui.menuConnected_Systems->removeAction(act);
+//    }
 }
 
 /**
