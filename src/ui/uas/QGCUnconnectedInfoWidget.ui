@@ -7,39 +7,72 @@
     <x>0</x>
     <y>0</y>
     <width>372</width>
-    <height>299</height>
+    <height>309</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="90,100">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="90,30">
    <item row="0" column="0">
     <widget class="QToolButton" name="connectButton">
      <property name="minimumSize">
       <size>
-       <width>0</width>
-       <height>0</height>
+       <width>150</width>
+       <height>150</height>
+      </size>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>150</width>
+       <height>150</height>
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true"/>
+      <string notr="true">
+QToolButton {
+color: #222222;
+background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #80B81D, stop: 1 #306807);
+margin: 15px;
+padding: 20px;
+border-radius: 18px;
+min-height: 100px;
+border: 2px solid #085B35;
+}
+
+QToolButton:pressed {
+background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #306807, stop: 1 #80B81D);
+color: #222222;
+border-color: #D1892A;
+}
+
+QToolButton:checked {
+background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #306807, stop: 1 #80B81D);
+color: #222222;
+border-color: #D1892A;
+}</string>
      </property>
      <property name="text">
-      <string>Click Icon to Connect</string>
+      <string/>
      </property>
      <property name="icon">
       <iconset resource="../../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
+       <normaloff>:/files/images/actions/qgroundcontrol-connect.svg</normaloff>:/files/images/actions/qgroundcontrol-connect.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
-       <width>180</width>
-       <height>200</height>
+       <width>140</width>
+       <height>140</height>
       </size>
      </property>
      <property name="toolButtonStyle">
-      <enum>Qt::ToolButtonTextUnderIcon</enum>
+      <enum>Qt::ToolButtonIconOnly</enum>
      </property>
     </widget>
    </item>

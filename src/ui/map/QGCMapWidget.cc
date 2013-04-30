@@ -55,8 +55,8 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         SetFollowMouse(true);				    // we want a contiuous mouse position reading
 
         SetShowHome(true);					    // display the HOME position on the map
-        Home->SetSafeArea(30);                         // set radius (meters)
-        Home->SetShowSafeArea(true);                                         // show the safe area
+        Home->SetSafeArea(0);                         // set radius (meters)
+        Home->SetShowSafeArea(false);                                         // show the safe area
         Home->SetCoord(pos_lat_lon);             // set the HOME position
 
         setFrameStyle(QFrame::NoFrame);      // no border frame

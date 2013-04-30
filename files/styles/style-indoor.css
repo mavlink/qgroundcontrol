@@ -113,8 +113,7 @@ QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
 
  QDockWidget {
     border: 10px solid #66666B;
-     padding: 2px;
-     margin: 1px;
+     /*padding: 2px;*/
      border-radius: 1px;
      /*background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);*/
   /*   titlebar-close-icon: url(close.png);
@@ -269,9 +268,9 @@ QSlider::groove:horizontal {
  }
 
  QSlider::groove:disabled:horizontal {
-     border: 1px solid #AAAAAA;
+     border: 1px solid #454545;
      height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
-     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6A6A6F, stop:1 #6A6A6F);
+     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4A4A4F, stop:1 #4A4A4F);
      margin: 2px 0;
  }
 

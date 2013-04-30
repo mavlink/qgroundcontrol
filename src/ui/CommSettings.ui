@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>413</width>
-    <height>484</height>
+    <height>373</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,9 +15,6 @@
   </property>
   <layout class="QGridLayout" name="gridLayout_2" rowstretch="1,1,1,100,100,1">
    <property name="margin">
-    <number>6</number>
-   </property>
-   <property name="spacing">
     <number>6</number>
    </property>
    <item row="0" column="0">
@@ -62,6 +59,13 @@
        </property>
       </widget>
      </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="advancedOptionsCheckBox">
+       <property name="text">
+        <string>Advanced Options</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item row="2" column="0" colspan="2">
@@ -94,7 +98,7 @@
            <x>0</x>
            <y>0</y>
            <width>393</width>
-           <height>154</height>
+           <height>76</height>
           </rect>
          </property>
         </widget>
@@ -126,7 +130,7 @@
            <x>0</x>
            <y>0</y>
            <width>393</width>
-           <height>154</height>
+           <height>76</height>
           </rect>
          </property>
         </widget>
@@ -169,7 +173,7 @@
      <item>
       <widget class="QPushButton" name="deleteButton">
        <property name="text">
-        <string>Delete</string>
+        <string>Delete Link</string>
        </property>
       </widget>
      </item>
