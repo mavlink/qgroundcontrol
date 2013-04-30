@@ -82,30 +82,6 @@
     <addaction name="actionAdd_Link"/>
     <addaction name="separator"/>
    </widget>
-   <widget class="QMenu" name="menuConnected_Systems">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="title">
-     <string>Select System</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuUnmanned_System">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="title">
-     <string>System</string>
-    </property>
-    <property name="separatorsCollapsible">
-     <bool>false</bool>
-    </property>
-    <addaction name="actionShutdownMAV"/>
-    <addaction name="actionLiftoff"/>
-    <addaction name="actionLand"/>
-    <addaction name="actionEmergency_Land"/>
-    <addaction name="actionEmergency_Kill"/>
-   </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>Tool Widgets</string>
@@ -143,8 +119,6 @@
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
-   <addaction name="menuConnected_Systems"/>
-   <addaction name="menuUnmanned_System"/>
    <addaction name="menuPerspectives"/>
    <addaction name="menuMain"/>
    <addaction name="menuTools"/>
