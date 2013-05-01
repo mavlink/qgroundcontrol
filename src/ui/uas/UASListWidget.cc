@@ -65,6 +65,8 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     uasViews = QMap<UASInterface*, UASView*>();
 
     this->setVisible(false);
+
+    connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
 }
 
 UASListWidget::~UASListWidget()

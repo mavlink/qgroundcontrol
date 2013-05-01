@@ -52,6 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
+#include "submainwindow.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
@@ -127,7 +128,6 @@ public:
     QList<QAction*> listLinkMenuActions(void);
 
 public slots:
-
     /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status, int timeout);
     /** @brief Shows a status message on the bottom status bar */
@@ -156,6 +156,10 @@ public slots:
     void stopVideoCapture();
     void saveScreen();
 
+    /** @brief Sets advanced mode, allowing for editing of tool widget locations */
+    void setAdvancedMode();
+    /** @brief Load configuration view */
+    void loadConfigurationView();
     /** @brief Load default view when no MAV is connected */
     void loadUnconnectedView();
     /** @brief Load view for pilot */
@@ -224,6 +228,7 @@ public slots:
      */
     void showTool(bool visible);
 
+
     /**
      * @brief Shows a Widget from the center stack based on the action sender
      *
@@ -261,11 +266,12 @@ protected:
     typedef enum _VIEW_SECTIONS
     {
         VIEW_ENGINEER,
-        VIEW_OPERATOR,
-        VIEW_PILOT,
+        VIEW_MISSION,
+        VIEW_FLIGHT,
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
+        VIEW_CONFIGURATION,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
@@ -281,8 +287,9 @@ protected:
      * @param title     The entry that will appear in the Menu and in the QDockedWidget title bar
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
-    void addTool(QDockWidget* widget, const QString& title, Qt::DockWidgetArea location=Qt::RightDockWidgetArea);
-
+    void addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area);
+    void loadDockWidget(QString name);
+void createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth=0,int minheight=0);
     /**
      * @brief Adds an already instantiated QWidget to the center stack
      *
@@ -328,12 +335,20 @@ protected:
     QActionGroup* centerStackActionGroup;
 
     // Center widgets
-    QPointer<Linecharts> linechartWidget;
-    QPointer<HUD> hudWidget;
-    QPointer<QGCVehicleConfig> configWidget;
-    QPointer<QGCMapTool> mapWidget;
-    QPointer<XMLCommProtocolWidget> protocolWidget;
-    QPointer<QGCDataPlot2D> dataplotWidget;
+    QPointer<SubMainWindow> plannerView;
+    QPointer<SubMainWindow> pilotView;
+    QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> dataView;
+    QPointer<SubMainWindow> engineeringView;
+    QPointer<SubMainWindow> simView;
+
+    // Center widgets
+    //QPointer<Linecharts> linechartWidget;
+    //QPointer<HUD> hudWidget;
+    //QPointer<QGCVehicleConfig> configWidget;
+    //QPointer<QGCMapTool> mapWidget;
+    //QPointer<XMLCommProtocolWidget> protocolWidget;
+    //QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> _3DWidget;
 #endif
@@ -417,6 +432,10 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private:
+    QMap<QAction*,QString > menuToDockNameMap;
+    QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
+    QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
+    bool isAdvancedMode;
     Ui::MainWindow ui;
 
     QString getWindowStateKey();
