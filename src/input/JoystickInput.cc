@@ -130,7 +130,7 @@ void JoystickInput::init()
     int numJoysticks = SDL_NumJoysticks();
 
     // Wait for joysticks if none is connected
-    while (numJoysticks == 0)
+    while (numJoysticks == 0 && !done)
     {
         QGC::SLEEP::msleep(400);
         // INITIALIZE SDL Joystick support
@@ -139,6 +139,10 @@ void JoystickInput::init()
             printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
         }
         numJoysticks = SDL_NumJoysticks();
+    }
+    if (done)
+    {
+        return;
     }
 
     printf("%d Input devices found:\n", numJoysticks);
@@ -157,6 +161,10 @@ void JoystickInput::init()
     // Make sure active UAS is set
     setActiveUAS(UASManager::instance()->getActiveUAS());
 }
+void JoystickInput::shutdown()
+{
+    done = true;
+}
 
 /**
  * @brief Execute the Joystick process
@@ -169,8 +177,9 @@ void JoystickInput::run()
     {
         if (done)
         {
-           done = false;
-           exit();
+            done = false;
+            exit();
+            return;
         }
         while(SDL_PollEvent(&event))
         {

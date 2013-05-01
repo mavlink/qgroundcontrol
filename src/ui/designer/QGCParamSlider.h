@@ -31,6 +31,7 @@ public slots:
     void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, const QVariant value);
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
+    void readSettings(const QString& pre,const QVariantMap& settings);
     void refreshParamList();
     void setActiveUAS(UASInterface *uas);
     void selectComponent(int componentIndex);
@@ -49,6 +50,13 @@ protected slots:
     void requestParameter();
 
 protected:
+    bool visibleEnabled;
+    QString visibleParam;
+    int visibleVal;
+    //The below variables, and usage in QGCParamSlider.cc are a bit of a hack, since disconnect() does not seem to take effect
+    //immediatly (perhaps it is put into the event loop?) - MLC
+    bool valueModLock;              ///< Used to keep the slider/spinboxes from updating each other during user input
+    bool valueModLockParam;         ///< Used to keep the slider/spinboxes from udpating each other when a new parametervalue comes in
     QString parameterName;         ///< Key/Name of the parameter
     QVariant parameterValue;          ///< Value of the parameter
     double parameterScalingFactor; ///< Factor to scale the parameter between slider and true value

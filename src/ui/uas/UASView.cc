@@ -290,7 +290,7 @@ void UASView::hideEvent(QHideEvent* event)
     // React only to internal (pre-display)
     // events
     Q_UNUSED(event);
-    refreshTimer->stop();
+   // refreshTimer->stop();
 }
 
 void UASView::receiveHeartbeat(UASInterface* uas)

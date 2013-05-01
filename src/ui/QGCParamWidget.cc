@@ -400,6 +400,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
     if (map && map->contains(parameterName))
     {
         justWritten = true;
+        QVariant newval = map->value(parameterName);
         if (map->value(parameterName) != value)
         {
             writeMismatch = true;
@@ -551,7 +552,14 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             {
                 //qDebug() << "UPDATED CHILD";
                 parameterItem = child;
-                parameterItem->setData(1, Qt::DisplayRole, value);
+                if (value.type() == QVariant::Char)
+                {
+                    parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+                }
+                else
+                {
+                    parameterItem->setData(1, Qt::DisplayRole, value);
+                }
                 found = true;
             }
         }
@@ -564,7 +572,14 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             // CREATE PARAMETER ITEM
             parameterItem = new QTreeWidgetItem(plist);
             // CONFIGURE PARAMETER ITEM
-            parameterItem->setData(1, Qt::DisplayRole, value);
+            if (value.type() == QVariant::Char)
+            {
+                parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+            }
+            else
+            {
+                parameterItem->setData(1, Qt::DisplayRole, value);
+            }
 
             compParamGroups->value(parent)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
@@ -705,6 +720,12 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             case QMetaType::Float:
             {
                 QVariant fixedValue(value.toFloat());
+                parameters.value(key)->insert(str, fixedValue);
+            }
+                break;
+            case QMetaType::QChar:
+            {
+                QVariant fixedValue(QChar((unsigned char)value.toUInt()));
                 parameters.value(key)->insert(str, fixedValue);
             }
                 break;
@@ -999,6 +1020,13 @@ void QGCParamWidget::setParameter(int component, QString parameterName, QVariant
 
     switch (parameters.value(component)->value(parameterName).type())
     {
+    case QVariant::Char:
+    {
+        QVariant fixedValue(QChar((unsigned char)value.toInt()));
+        emit parameterChanged(component, parameterName, fixedValue);
+        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+    }
+        break;
     case QVariant::Int:
     {
         QVariant fixedValue(value.toInt());

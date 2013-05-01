@@ -58,6 +58,7 @@ public:
     double getParamMax(const QString& param) { return paramMax.value(param, 0.0f); }
     double getParamDefault(const QString& param) { return paramDefault.value(param, 0.0f); }
     QString getParamInfo(const QString& param) { return paramToolTips.value(param, ""); }
+    void setParamInfo(const QMap<QString,QString>& param) { paramToolTips = param; }
 
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */

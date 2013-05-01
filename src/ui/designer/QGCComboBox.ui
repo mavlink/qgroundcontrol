@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCComboBox</class>
+ <widget class="QWidget" name="QGCComboBox">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>789</width>
+    <height>244</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="10,0,0,0,0,0,0,0,0,0,0,0">
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
+    <number>3</number>
+   </property>
+   <property name="horizontalSpacing">
+    <number>6</number>
+   </property>
+   <property name="verticalSpacing">
+    <number>12</number>
+   </property>
+   <item row="4" column="7">
+    <widget class="QLabel" name="nameLabel">
+     <property name="minimumSize">
+      <size>
+       <width>60</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Name</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="8">
+    <widget class="QToolButton" name="infoLabel">
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="text">
+      <string>?</string>
+     </property>
+     <property name="popupMode">
+      <enum>QToolButton::DelayedPopup</enum>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonIconOnly</enum>
+     </property>
+     <property name="autoRaise">
+      <bool>false</bool>
+     </property>
+     <property name="arrowType">
+      <enum>Qt::NoArrow</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="9">
+    <widget class="QLineEdit" name="editNameLabel">
+     <property name="text">
+      <string>&lt;Parameter Name / Label&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="9">
+    <widget class="QLineEdit" name="editItemNameLabel"/>
+   </item>
+   <item row="7" column="7">
+    <widget class="QSpinBox" name="editItemValueSpinBox"/>
+   </item>
+   <item row="4" column="9">
+    <widget class="QComboBox" name="editOptionComboBox"/>
+   </item>
+   <item row="7" column="8">
+    <widget class="QLabel" name="itemNameLabel">
+     <property name="text">
+      <string>Name</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="8">
+    <widget class="QComboBox" name="editSelectComponentComboBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="toolTip">
+      <string>Select component</string>
+     </property>
+     <property name="statusTip">
+      <string>Select component</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="10">
+    <widget class="QPushButton" name="editAddItemButton">
+     <property name="text">
+      <string>Add Item</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="11">
+    <widget class="QPushButton" name="editRemoveItemButton">
+     <property name="text">
+      <string>Delete Item</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="6">
+    <widget class="QLabel" name="itemValueLabel">
+     <property name="text">
+      <string>Value</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="9">
+    <widget class="QComboBox" name="editSelectParamComboBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="toolTip">
+      <string>Select parameter</string>
+     </property>
+     <property name="statusTip">
+      <string>Select parameter</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="12">
+    <widget class="Line" name="editLine1">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="11">
+    <widget class="QPushButton" name="readButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Read the current parameter value on the system</string>
+     </property>
+     <property name="statusTip">
+      <string>Read the current parameter value on the system</string>
+     </property>
+     <property name="text">
+      <string>Get</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="11">
+    <widget class="QPushButton" name="editDoneButton">
+     <property name="text">
+      <string>Done</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="10">
+    <widget class="QPushButton" name="writeButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Transmit the current slider value to the system</string>
+     </property>
+     <property name="statusTip">
+      <string>Transmit the current slider value to the system</string>
+     </property>
+     <property name="text">
+      <string>Set</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="10">
+    <widget class="QCheckBox" name="editInfoCheckBox">
+     <property name="text">
+      <string>Show Info</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="0" colspan="12">
+    <widget class="Line" name="editLine2">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="2" colspan="10">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="0" colspan="3">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="11" column="3" colspan="7">
+    <widget class="QLabel" name="editStatusLabel">
+     <property name="text">
+      <string>Please click first on refresh to update selection menus..</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="11">
+    <widget class="QPushButton" name="editRefreshParamsButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Refresh</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="12">
+    <widget class="QLabel" name="imageLabel">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>150</height>
+      </size>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
