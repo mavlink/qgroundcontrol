@@ -2,30 +2,30 @@
 QWidget#colorIcon {}
 
 QWidget {
-background-color: #191919;
-color: #DDDDDF;
-/*background-clip: border;*/
-font-size: 11px;
+    background-color: #222222;
+    color: #FFFFFF;
+    background-clip: border;
+    font-size: 11px;
 }
 
 QGroupBox {
-border: 1px solid #66666B;
-border-radius: 3px;
-padding: 10px 0px 0px 0px;
-margin-top: 1ex; /* leave space at the top for the title */
+    border: 1px solid #66666B;
+    border-radius: 3px;
+    padding: 10px 0px 0px 0px;
+    margin-top: 1ex; /* leave space at the top for the title */
 }
 
 QCheckBox {
-/*background-color: #252528;*/
-color: #DDDDDF;
+    /*background-color: #252528;*/
+    color: #DDDDDF;
 }
 
 QCheckBox::indicator {
     border: 1px solid #777777;
     border-radius: 2px;
-    color: #DDDDDF;
-         width: 10px;
-     height: 10px;
+    color: #FFFFFF;
+    width: 10px;
+    height: 10px;
 }
 
 QLineEdit {
@@ -80,9 +80,8 @@ border: 1px solid #777777;
  }
  
  QMainWindow::separator {
-     background: #090909;
-     width: 2px; /* when vertical */
-     height: 2px; /* when horizontal */
+     width: 0px; /* when vertical */
+     height: 0px; /* when horizontal */
  }
 
  QMainWindow::separator:hover {
