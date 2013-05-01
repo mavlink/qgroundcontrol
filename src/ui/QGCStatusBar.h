@@ -47,6 +47,7 @@ public slots:
     void logging(bool checked);
     /** @brief Set log playing component */
     void setLogPlayer(QGCMAVLinkLogPlayer* player);
+    virtual void paintEvent(QPaintEvent * event);
 
 protected:
     void storeSettings();
