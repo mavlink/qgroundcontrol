@@ -177,12 +177,7 @@ QDoubleSpinBox::down-button {
 }
 
 QPushButton {
-	/*font-weight: bold;
-	min-height: 18px;
-	max-height: 18px;
-    min-width: 60px;*/
     min-height: 20px;
-    /*min-width: 24px;*/
     max-height: 20px;
 	border: 1px solid #465158;
     margin: 1px;
@@ -190,6 +185,10 @@ QPushButton {
 	padding-left: 8px;
 	padding-right: 8px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
+}
+
+QPushButton:disabled {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
 QPushButton:checked {
@@ -211,6 +210,10 @@ QToolButton {
     padding-left: 3px;
     padding-right: 3px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
+}
+
+QToolButton:disabled {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
 QToolButton:checked {
@@ -432,6 +435,10 @@ QDialog {
 
 QLabel {
     background-color: transparent;
+}
+
+QLabel:disabled {
+    color: #353535;
 }
 
 QLabel#toolBarNameLabel {

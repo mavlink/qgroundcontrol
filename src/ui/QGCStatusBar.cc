@@ -61,7 +61,7 @@ void QGCStatusBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
     this->player = player;
     addPermanentWidget(player);
     connect(toggleLoggingButton, SIGNAL(clicked(bool)), this, SLOT(logging(bool)));
-
+    //connect(MainWindow::instance()->getMAVLink(), SIGNAL(loggingChanged(bool)), toggleLoggingButton, SLOT(setChecked(bool)));
 
     // XXX Mutex issue if called like this
 //    toggleLoggingButton->blockSignals(true);
