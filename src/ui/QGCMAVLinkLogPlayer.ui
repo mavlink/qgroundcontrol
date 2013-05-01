@@ -135,7 +135,7 @@
       <string>Select the logfile to replay</string>
      </property>
      <property name="text">
-      <string>Select File</string>
+      <string>Replay Logfile</string>
      </property>
     </widget>
    </item>

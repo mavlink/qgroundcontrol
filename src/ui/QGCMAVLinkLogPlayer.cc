@@ -48,6 +48,9 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     ui->playButton->setEnabled(false);
     ui->speedSlider->setEnabled(false);
     ui->positionSlider->setEnabled(false);
+    ui->speedLabel->setEnabled(false);
+    ui->logFileNameLabel->setEnabled(false);
+    ui->logStatsLabel->setEnabled(false);
 
     loadSettings();
 }
@@ -263,6 +266,9 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     ui->playButton->setEnabled(true);
     ui->speedSlider->setEnabled(true);
     ui->positionSlider->setEnabled(true);
+    ui->speedLabel->setEnabled(true);
+    ui->logFileNameLabel->setEnabled(true);
+    ui->logStatsLabel->setEnabled(true);
 
     // Check if logging is still enabled
     if (mavlink->loggingEnabled())
