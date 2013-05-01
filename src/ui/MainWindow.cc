@@ -94,7 +94,7 @@ MainWindow* MainWindow::instance(QSplashScreen* screen)
 **/
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
-    currentView(VIEW_UNCONNECTED),
+    currentView(VIEW_MISSION),
     currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
