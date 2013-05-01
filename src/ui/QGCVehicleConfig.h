@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QList>
+#include <QGroupBox>
 
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
@@ -30,7 +31,10 @@ public:
 public slots:
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
-
+    /** Fallback function, automatically called by loadConfig() upon failure to find and xml file*/
+    void loadQgcConfig(bool primary);
+    /** Load configuration from xml file */
+    void loadConfig();
     /** Start the RC calibration routine */
     void startCalibrationRC();
     /** Stop the RC calibration routine */
@@ -142,6 +146,7 @@ protected slots:
     void updateInvertedCheckboxes(int index);
 
 protected:
+    bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
     static const unsigned int chanMax = 8;    ///< Maximum number of channels
     unsigned int chanCount;               ///< Actual channels
@@ -169,6 +174,12 @@ protected:
     enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     bool calibrationEnabled;            ///< calibration mode on / off
+
+    QMap<QString,QGCToolWidget*> *paramToWidgetMap;                     ///< Holds the current active MAV's parameter widgets.
+    QMap<QString,QGCToolWidget*> *libParamToWidgetMap;                  ///< Holds the library parameter widgets
+    QMap<QString,QMap<QString,QGCToolWidget*>*> systemTypeToParamMap;   ///< Holds all loaded MAV specific parameter widgets, for every MAV.
+    QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;                       ///< Easy method of figuring out which QGroupBox is tied to which ToolWidget.
+    QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
     
 private:
     Ui::QGCVehicleConfig *ui;

@@ -45,6 +45,7 @@ public slots:
     void importWidget();
     /** @brief Store all widgets of this type to QSettings */
     static void storeWidgetsToSettings(QString settingsFile=QString());
+    void loadSettings(QVariantMap& settings);
     /** @brief Load this widget from a QSettings object */
     void loadSettings(QSettings& settings);
     /** @brief Load this widget from a settings file */
@@ -57,11 +58,20 @@ public slots:
     void storeSettings();
     /** @brief Store the view id and dock widget area */
     void setViewVisibilityAndDockWidgetArea(int view, bool visible, Qt::DockWidgetArea area);
-
+    void setSettings(QVariantMap& settings);
+    QList<QString> getParamList();
+    void setParameterValue(int uas, int component, QString parameterName, const QVariant value);
+    bool fromMetaData() { return isFromMetaData; }
+    void showLabel(QString name,int num);
 signals:
     void titleChanged(QString);
 
 protected:
+    bool isFromMetaData;
+    QMap<QString,QGCToolWidgetItem*> paramToItemMap;
+    QList<QGCToolWidgetItem*> toolItemList;
+    QList<QString> paramList;
+    QVariantMap settingsMap;
     QAction* addParamAction;
     QAction* addCommandAction;
     QAction* setTitleAction;
@@ -83,12 +93,14 @@ protected:
     void addToolWidget(QGCToolWidgetItem* widget);
 
     void hideEvent(QHideEvent* event);
-
+public slots:
+    void setTitle(QString title);
+    void addParam(int uas,int component,QString paramname,QVariant value);
 protected slots:
     void addParam();
     void addCommand();
     void setTitle();
-    void setTitle(QString title);
+
     void setWindowTitle(const QString& title);
 
 

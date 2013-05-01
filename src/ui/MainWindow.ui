@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -72,6 +72,7 @@
     <addaction name="actionJoystickSettings"/>
     <addaction name="actionSettings"/>
     <addaction name="menuPreferences"/>
+    <addaction name="actionAdvanced_Mode"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -101,9 +102,11 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
-    <addaction name="actionOperatorsView"/>
+    <addaction name="actionMissionView"/>
+    <addaction name="actionFlightView"/>
+    <addaction name="actionConfiguration_2"/>
     <addaction name="actionEngineersView"/>
-    <addaction name="actionPilotsView"/>
+    <addaction name="actionSimulationView"/>
     <addaction name="separator"/>
     <addaction name="actionFirmwareUpdateView"/>
     <addaction name="actionMavlinkView"/>
@@ -279,7 +282,7 @@
     <string>Developer Credits</string>
    </property>
   </action>
-  <action name="actionOperatorsView">
+  <action name="actionMissionView">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -333,7 +336,7 @@
     <string>Select Stylesheet</string>
    </property>
   </action>
-  <action name="actionPilotsView">
+  <action name="actionFlightView">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -466,6 +469,31 @@
    </property>
    <property name="toolTip">
     <string>Open the simulation view</string>
+   </property>
+  </action>
+  <action name="actionConfiguration_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../qgroundcontrol.qrc">
+     <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Configuration</string>
+   </property>
+  </action>
+  <action name="actionAdvanced_Mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Advanced Mode</string>
+   </property>
+  </action>
+  <action name="actionSimulationView">
+   <property name="text">
+    <string>Simulation</string>
    </property>
   </action>
  </widget>

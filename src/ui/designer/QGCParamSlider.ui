@@ -171,7 +171,7 @@
       <string>Read the current parameter value on the system</string>
      </property>
      <property name="text">
-      <string>R</string>
+      <string>Get</string>
      </property>
     </widget>
    </item>
@@ -223,7 +223,7 @@
       <string>Transmit the current slider value to the system</string>
      </property>
      <property name="text">
-      <string>W</string>
+      <string>Set</string>
      </property>
     </widget>
    </item>
@@ -282,18 +282,12 @@
    <item row="2" column="3">
     <widget class="QToolButton" name="infoLabel">
      <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../../../qgroundcontrol.qrc">
-       <normaloff>:/files/images/status/dialog-information.svg</normaloff>:/files/images/status/dialog-information.svg</iconset>
+      <string>?</string>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../../qgroundcontrol.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

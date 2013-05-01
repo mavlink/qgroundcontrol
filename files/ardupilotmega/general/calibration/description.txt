@@ -1,0 +1,19 @@
+<html>
+<body>
+<h1>Sensor Calibration</h1>
+
+The APM sensors can be calibrated with the buttons on the right. Gyroscope (GYRO) and Magnometer (MAG) calibrations have to be performed with a static, unmoved system. The Accelerometer (ACCEL) calibrations involve rotating the vehicle around. Please ensure all props are removed and motor power is off.
+
+<h2>Magnetometer Calibration</h2>
+
+Ensure the vehicle is clear of any metal, magnetic, or ferrus materials, and sitting on a flat surface. Click the MAG button and wait for the calibration to complete.
+
+<h2>Accelerometer Calibration</h2>
+
+Ensure the vehicle is on a absolutely level surface and click ACCEL. Follow the instructions that will show up below the button. This calibration procedure will require moving the vehicle at 90 degree angles (upright, left, right, front, back, and upside down), then clicking the button to save that position.
+
+<h2>Gyroscope Calibration</h2>
+
+Place the vehicle on an absolutely flat surface, and click the GYRO button. wait for the system to calibrate.
+</body>
+</html>
