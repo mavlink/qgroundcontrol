@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent):
     lowPowerMode(false)
 {
     hide();
+    dockWidgetTitleBarEnabled = true;
     isAdvancedMode = false;
     emit initStatusChanged("Loading UI Settings..");
     loadSettings();
@@ -606,12 +607,24 @@ void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,Q
     QDockWidget *widget = new QDockWidget(title,this);
     if (!isAdvancedMode)
     {
-        dockToTitleBarMap[widget] = widget->titleBarWidget();
-        widget->setTitleBarWidget(new QWidget(this));
+        if (dockWidgetTitleBarEnabled)
+        {
+            dockToTitleBarMap[widget] = widget->titleBarWidget();
+            QLabel *label = new QLabel(this);
+            label->setText(title);
+            widget->setTitleBarWidget(label);
+        }
+        else
+        {
+            dockToTitleBarMap[widget] = widget->titleBarWidget();
+            widget->setTitleBarWidget(new QWidget(this));
+        }
     }
     else
     {
-        dockToTitleBarMap[widget] = new QWidget(this);
+        QLabel *label = new QLabel(this);
+        label->setText(title);
+        dockToTitleBarMap[widget] = label;
     }
     widget->setObjectName(objectname);
     widget->setWidget(child);
@@ -903,7 +916,9 @@ void MainWindow::loadSettings()
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
+    dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled).toBool();
     settings.endGroup();
+    enableDockWidgetTitleBars(dockWidgetTitleBarEnabled);
 }
 
 void MainWindow::storeSettings()
@@ -988,6 +1003,35 @@ void MainWindow::saveScreen()
     if (!screenFileName.isEmpty())
     {
         window.save(screenFileName, format.toAscii());
+    }
+}
+void MainWindow::enableDockWidgetTitleBars(bool enabled)
+{
+    if (!isAdvancedMode)
+    {
+        dockWidgetTitleBarEnabled = enabled;
+        QSettings settings;
+        settings.beginGroup("QGC_MAINWINDOW");
+        settings.setValue("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled);
+        settings.endGroup();
+        settings.sync();
+        if (enabled)
+        {
+            for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
+            {
+                QLabel *label = new QLabel(this);
+                label->setText(i.value()->windowTitle());
+                i.key()->setTitleBarWidget(label);
+                label->setEnabled(false);
+            }
+        }
+        else
+        {
+            for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
+            {
+                i.key()->setTitleBarWidget(0);
+            }
+        }
     }
 }
 
@@ -1745,7 +1789,6 @@ void MainWindow::setAdvancedMode()
             QWidget *widget = i.key()->titleBarWidget();
             i.key()->setTitleBarWidget(i.value());
             dockToTitleBarMap[i.key()] = widget;
-
         }
     }
 }
