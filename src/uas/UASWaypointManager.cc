@@ -799,6 +799,40 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
 
     }
 }
+bool UASWaypointManager::guidedModeSupported()
+{
+    return (uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA);
+}
+
+void UASWaypointManager::goToWaypoint(Waypoint *wp)
+{
+    //Don't try to send a guided mode message to an AP that does not support it.
+    if (uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
+    {
+        mavlink_mission_item_t mission;
+        memset(&mission, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
+        //const Waypoint *cur_s = waypointsEditable.at(i);
+
+        mission.autocontinue = 0;
+        mission.current = 2; //2 for guided mode
+        mission.param1 = wp->getParam1();
+        mission.param2 = wp->getParam2();
+        mission.param3 = wp->getParam3();
+        mission.param4 = wp->getParam4();
+        mission.frame = wp->getFrame();
+        mission.command = wp->getAction();
+        mission.seq = 0;     // don't read out the sequence number of the waypoint class
+        mission.x = wp->getX();
+        mission.y = wp->getY();
+        mission.z = wp->getZ();
+        mavlink_message_t message;
+        mission.target_system = uasid;
+        mission.target_component = MAV_COMP_ID_MISSIONPLANNER;
+        mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &mission);
+        uas->sendMessage(message);
+        QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
+    }
+}
 
 void UASWaypointManager::writeWaypoints()
 {

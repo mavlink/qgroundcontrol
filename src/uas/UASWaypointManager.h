@@ -66,7 +66,9 @@ private:
 public:
     UASWaypointManager(UAS* uas=NULL);   ///< Standard constructor
     ~UASWaypointManager();
+    bool guidedModeSupported();
 
+    void goToWaypoint(Waypoint *wp);
     /** @name Received message handlers */
     /*@{*/
     void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);                            ///< Handles received waypoint count messages
