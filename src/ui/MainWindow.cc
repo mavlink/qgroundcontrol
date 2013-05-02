@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilLink.h>
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
-
+#include "dockwidgettitlebareventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -613,6 +613,7 @@ void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,Q
             QLabel *label = new QLabel(this);
             label->setText(title);
             widget->setTitleBarWidget(label);
+            label->installEventFilter(new DockWidgetTitleBarEventFilter());
         }
         else
         {
@@ -625,6 +626,8 @@ void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,Q
         QLabel *label = new QLabel(this);
         label->setText(title);
         dockToTitleBarMap[widget] = label;
+        label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        label->hide();
     }
     widget->setObjectName(objectname);
     widget->setWidget(child);
@@ -1007,29 +1010,30 @@ void MainWindow::saveScreen()
 }
 void MainWindow::enableDockWidgetTitleBars(bool enabled)
 {
+    dockWidgetTitleBarEnabled = enabled;
+    QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
+    settings.setValue("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled);
+    settings.endGroup();
+    settings.sync();
     if (!isAdvancedMode)
     {
-        dockWidgetTitleBarEnabled = enabled;
-        QSettings settings;
-        settings.beginGroup("QGC_MAINWINDOW");
-        settings.setValue("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled);
-        settings.endGroup();
-        settings.sync();
         if (enabled)
         {
             for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
             {
                 QLabel *label = new QLabel(this);
-                label->setText(i.value()->windowTitle());
+                label->setText(i.key()->windowTitle());
                 i.key()->setTitleBarWidget(label);
-                label->setEnabled(false);
+                //label->setEnabled(false);
+                label->installEventFilter(new DockWidgetTitleBarEventFilter());
             }
         }
         else
         {
             for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
             {
-                i.key()->setTitleBarWidget(0);
+                i.key()->setTitleBarWidget(new QWidget(this));
             }
         }
     }
