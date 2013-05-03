@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilLink.h>
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
-
+#include "dockwidgettitlebareventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent):
     lowPowerMode(false)
 {
     hide();
+    dockWidgetTitleBarEnabled = true;
     isAdvancedMode = false;
     emit initStatusChanged("Loading UI Settings..");
     loadSettings();
@@ -358,7 +359,10 @@ void MainWindow::buildCustomWidget()
         QDockWidget* dock = dynamic_cast<QDockWidget*>(tool->parentWidget());
         if (!dock)
         {
-            QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
+            QSettings settings;
+            settings.beginGroup("QGC_MAINWINDOW");
+
+            /*QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
             dock->setObjectName(tool->objectName()+"_DOCK");
             dock->setWidget(tool);
             connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
@@ -367,13 +371,36 @@ void MainWindow::buildCustomWidget()
             connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
             connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
             widgets.at(i)->setMainMenuAction(showAction);
-            ui.menuTools->addAction(showAction);
+            ui.menuTools->addAction(showAction);*/
 
             // Load dock widget location (default is bottom)
             Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
 
-            addDockWidget(location, dock);
-            dock->hide();
+            //addDockWidget(location, dock);
+            //dock->hide();
+            int view = settings.value(QString("TOOL_PARENT_") + tool->objectName(),-1).toInt();
+            //settings.setValue(QString("TOOL_PARENT_") + "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView);
+            settings.endGroup();
+            switch (view)
+            {
+            case VIEW_ENGINEER:
+                createDockWidget(dataView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            case VIEW_FLIGHT:
+                createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            case VIEW_SIMULATION:
+                createDockWidget(simView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            case VIEW_MISSION:
+                createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            default:
+                createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            }
+
+            //createDockWidget(0,tool,tool->getTitle(),tool->objectName(),view,location);
         }
     }
 }
@@ -603,17 +630,36 @@ void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* w
 
 void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
 {
+    if (child->objectName() == "")
+    {
+        child->setObjectName(objectname);
+    }
     QDockWidget *widget = new QDockWidget(title,this);
     if (!isAdvancedMode)
     {
-        dockToTitleBarMap[widget] = widget->titleBarWidget();
-        widget->setTitleBarWidget(new QWidget(this));
+        if (dockWidgetTitleBarEnabled)
+        {
+            dockToTitleBarMap[widget] = widget->titleBarWidget();
+            QLabel *label = new QLabel(this);
+            label->setText(title);
+            widget->setTitleBarWidget(label);
+            label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        }
+        else
+        {
+            dockToTitleBarMap[widget] = widget->titleBarWidget();
+            widget->setTitleBarWidget(new QWidget(this));
+        }
     }
     else
     {
-        dockToTitleBarMap[widget] = new QWidget(this);
+        QLabel *label = new QLabel(this);
+        label->setText(title);
+        dockToTitleBarMap[widget] = label;
+        label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        label->hide();
     }
-    widget->setObjectName(objectname);
+    widget->setObjectName(child->objectName()+"DOCK");
     widget->setWidget(child);
     if (minheight != 0 || minwidth != 0)
     {
@@ -810,26 +856,35 @@ void MainWindow::connectCommonWidgets()
 
 void MainWindow::createCustomWidget()
 {
-    QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
-    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", dock);
+    //void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
+    //QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
 
     if (QGCToolWidget::instances()->size() < 2)
     {
         // This is the first widget
         ui.menuTools->addSeparator();
     }
+    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
+    createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView,Qt::BottomDockWidgetArea);
+    //tool->setObjectName("UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()));
+    QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
+    settings.setValue(QString("TOOL_PARENT_") + tool->objectName(),currentView);
+    settings.endGroup();
 
-    connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-    dock->setWidget(tool);
 
-    QAction* showAction = new QAction(tool->getTitle(), this);
-    showAction->setCheckable(true);
-    connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-    connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-    tool->setMainMenuAction(showAction);
-    ui.menuTools->addAction(showAction);
-    this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-    dock->setVisible(true);
+
+    //connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+    //dock->setWidget(tool);
+
+    //QAction* showAction = new QAction(tool->getTitle(), this);
+    //showAction->setCheckable(true);
+    //connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+    //connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+    //tool->setMainMenuAction(showAction);
+    //ui.menuTools->addAction(showAction);
+    //this->addDockWidget(Qt::BottomDockWidgetArea, dock);
+    //dock->setVisible(true);
 }
 
 void MainWindow::loadCustomWidget()
@@ -844,8 +899,35 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
     QGCToolWidget* tool = new QGCToolWidget("", this);
     if (tool->loadSettings(fileName, true) || !singleinstance)
     {
+        qDebug() << "Loading custom tool:" << tool->getTitle() << tool->objectName();
+        QSettings settings;
+        settings.beginGroup("QGC_MAINWINDOW");
+        //settings.setValue(QString("TOOL_PARENT_") + "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView);
+
+        int view = settings.value(QString("TOOL_PARENT_") + tool->objectName(),-1).toInt();
+        switch (view)
+        {
+        case VIEW_ENGINEER:
+            createDockWidget(dataView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_FLIGHT:
+            createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_SIMULATION:
+            createDockWidget(simView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_MISSION:
+            createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        default:
+            createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        }
+
+
+        settings.endGroup();
         // Add widget to UI
-        QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
+        /*QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
         connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
         dock->setWidget(tool);
         tool->setParent(dock);
@@ -857,7 +939,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         tool->setMainMenuAction(showAction);
         ui.menuTools->addAction(showAction);
         this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-        dock->hide();
+        dock->hide();*/
     }
     else
     {
@@ -903,7 +985,9 @@ void MainWindow::loadSettings()
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
+    dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled).toBool();
     settings.endGroup();
+    enableDockWidgetTitleBars(dockWidgetTitleBarEnabled);
 }
 
 void MainWindow::storeSettings()
@@ -988,6 +1072,36 @@ void MainWindow::saveScreen()
     if (!screenFileName.isEmpty())
     {
         window.save(screenFileName, format.toAscii());
+    }
+}
+void MainWindow::enableDockWidgetTitleBars(bool enabled)
+{
+    dockWidgetTitleBarEnabled = enabled;
+    QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
+    settings.setValue("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled);
+    settings.endGroup();
+    settings.sync();
+    if (!isAdvancedMode)
+    {
+        if (enabled)
+        {
+            for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
+            {
+                QLabel *label = new QLabel(this);
+                label->setText(i.key()->windowTitle());
+                i.key()->setTitleBarWidget(label);
+                //label->setEnabled(false);
+                label->installEventFilter(new DockWidgetTitleBarEventFilter());
+            }
+        }
+        else
+        {
+            for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
+            {
+                i.key()->setTitleBarWidget(new QWidget(this));
+            }
+        }
     }
 }
 
@@ -1504,14 +1618,32 @@ void MainWindow::UASCreated(UASInterface* uas)
         // HIL
         showHILConfigurationWidget(uas);
 
-        // Line chart
-        /*if (!linechartWidget)
+        if (!linechartWidget)
         {
-            // Center widgets
             linechartWidget = new Linecharts(this);
+            //linechartWidget->hide();
+
+        }
+
+
+        // Line chart
+        //if (!linechartWidget)
+        //{
+
+            // Center widgets
+
+            //linechartWidget->addSystem(uas);
+
             linechartWidget->addSource(mavlinkDecoder);
-            addCentralWidget(linechartWidget, tr("Realtime Plot"));
-        }*/
+            //addCentralWidget(linechartWidget, tr("Realtime Plot"));
+            if (dataView->centralWidget() != linechartWidget)
+            {
+                dataView->setCentralWidget(linechartWidget);
+                linechartWidget->show();
+            }
+            //dataView->setCentralWidget(linechartWidget);
+            //linechartWidget->show();
+        //}
 
         // Load default custom widgets for this autopilot type
         loadCustomWidgetsFromDefaults(uas->getSystemTypeName(), uas->getAutopilotTypeName());
@@ -1707,6 +1839,7 @@ void MainWindow::loadViewState()
         {
             if (widgetname != "")
             {
+                qDebug() << "Loading widget:" << widgetname;
                 loadDockWidget(widgetname);
             }
         }
@@ -1745,7 +1878,6 @@ void MainWindow::setAdvancedMode()
             QWidget *widget = i.key()->titleBarWidget();
             i.key()->setTitleBarWidget(i.value());
             dockToTitleBarMap[i.key()] = widget;
-
         }
     }
 }
