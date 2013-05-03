@@ -351,7 +351,7 @@ void createDockWidget(QWidget *parent,QWidget *child,QString title,QString objec
     QPointer<SubMainWindow> simView;
 
     // Center widgets
-    //QPointer<Linecharts> linechartWidget;
+    QPointer<Linecharts> linechartWidget;
     //QPointer<HUD> hudWidget;
     //QPointer<QGCVehicleConfig> configWidget;
     //QPointer<QGCMapTool> mapWidget;
