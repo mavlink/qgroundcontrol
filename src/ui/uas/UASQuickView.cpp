@@ -49,6 +49,18 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         uasPropertyToLabelMap["altitude"] = item;
     }
 
+    {
+        QAction *action = new QAction("satelliteCount",this);
+        action->setCheckable(true);
+        action->setChecked(true);
+        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
+        this->addAction(action);
+        UASQuickViewItem *item = new UASQuickViewItem(this);
+        item->setTitle("satelliteCount");
+        ui.verticalLayout->addWidget(item);
+        uasPropertyToLabelMap["satelliteCount"] = item;
+    }
+
     updateTimer = new QTimer(this);
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
     updateTimer->start(1000);
