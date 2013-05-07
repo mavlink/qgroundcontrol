@@ -630,10 +630,10 @@ void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* w
 
 void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
 {
-    if (child->objectName() == "")
-    {
+    //if (child->objectName() == "")
+    //{
         child->setObjectName(objectname);
-    }
+    //}
     QDockWidget *widget = new QDockWidget(title,this);
     if (!isAdvancedMode)
     {
@@ -659,7 +659,7 @@ void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,Q
         label->installEventFilter(new DockWidgetTitleBarEventFilter());
         label->hide();
     }
-    widget->setObjectName(child->objectName()+"DOCK");
+    widget->setObjectName(child->objectName());
     widget->setWidget(child);
     if (minheight != 0 || minwidth != 0)
     {
@@ -865,7 +865,7 @@ void MainWindow::createCustomWidget()
         ui.menuTools->addSeparator();
     }
     QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
-    createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView,Qt::BottomDockWidgetArea);
+    createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
     //tool->setObjectName("UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()));
     QSettings settings;
     settings.beginGroup("QGC_MAINWINDOW");
@@ -908,19 +908,19 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         switch (view)
         {
         case VIEW_ENGINEER:
-            createDockWidget(dataView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            createDockWidget(dataView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         case VIEW_FLIGHT:
-            createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         case VIEW_SIMULATION:
-            createDockWidget(simView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            createDockWidget(simView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         case VIEW_MISSION:
-            createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         default:
-            createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         }
 
