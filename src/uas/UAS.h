@@ -100,26 +100,74 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
+    Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
+    Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
+    Q_PROPERTY(double localZ READ getLocalZ WRITE setLocalZ NOTIFY localZChanged)
+    Q_PROPERTY(double latitude READ getLatitude WRITE setLatitude NOTIFY latitudeChanged)
+    Q_PROPERTY(double longitude READ getLongitude WRITE setLongitude NOTIFY longitudeChanged)
+    Q_PROPERTY(double altitude READ getAltitude WRITE setAltitude NOTIFY altitudeChanged)
+    Q_PROPERTY(bool isLocalPositionKnown READ localPositionKnown)
+    Q_PROPERTY(bool isGlobalPositionKnown READ globalPositionKnown)
+    Q_PROPERTY(double roll READ getRoll)
+    Q_PROPERTY(double pitch READ getPitch)
+    Q_PROPERTY(double yaw READ getYaw)
+
+    void setLocalX(double val)
+    {
+        localX = val;
+        emit localXChanged(val,"localX");
+    }
     double getLocalX() const
     {
         return localX;
+    }
+
+    void setLocalY(double val)
+    {
+        localY = val;
+        emit localYChanged(val,"localY");
     }
     double getLocalY() const
     {
         return localY;
     }
+
+    void setLocalZ(double val)
+    {
+        localZ = val;
+        emit localZChanged(val,"localZ");
+    }
     double getLocalZ() const
     {
         return localZ;
+    }
+
+    void setLatitude(double val)
+    {
+        latitude = val;
+        emit latitudeChanged(val,"latitude");
     }
     double getLatitude() const
     {
         return latitude;
     }
+
+    void setLongitude(double val)
+    {
+        longitude = val;
+        emit longitudeChanged(val,"longitude");
+    }
     double getLongitude() const
     {
         return longitude;
     }
+
+    void setAltitude(double val)
+    {
+        altitude = val;
+        emit altitudeChanged(val,"altitude");
+    }
+
     double getAltitude() const
     {
         return altitude;
@@ -698,6 +746,14 @@ signals:
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
     /** @brief HIL actuator outputs have changed */
     void hilActuatorsChanged(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+
+    void localXChanged(double val,QString name);
+    void localYChanged(double val,QString name);
+    void localZChanged(double val,QString name);
+    void longitudeChanged(double val,QString name);
+    void latitudeChanged(double val,QString name);
+    void altitudeChanged(double val,QString name);
+    void altitudeChanged(int uasid, double altitude);
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
