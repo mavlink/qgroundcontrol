@@ -1344,6 +1344,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_RAW_IMU:
         case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
+        {
+            //mavlink_set_local_position_setpoint_t p;
+            //mavlink_msg_set_local_position_setpoint_decode(&message, &p);
+            //emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw);
+            mavlink_nav_controller_output_t p;
+            mavlink_msg_nav_controller_output_decode(&message,&p);
+            setDistToWaypoint(p.wp_dist);
+        }
+            break;
         case MAVLINK_MSG_ID_RAW_PRESSURE:
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
