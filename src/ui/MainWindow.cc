@@ -528,13 +528,8 @@ void MainWindow::buildCommonWidgets()
     tempAction->setCheckable(true);
     connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
-    {
-        QAction* tempAction = ui.menuTools->addAction(tr("Quick View"));
-        tempAction->setCheckable(true);
-        menuToDockNameMap[tempAction] = "UAS_INFO_QUICKVIEW_DOCKWIDGET";
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
 
-    }
+    createDockWidget(plannerView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
     createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
 
 
