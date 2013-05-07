@@ -81,9 +81,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     latitude_gps(0.0),
     longitude_gps(0.0),
     altitude_gps(0.0),
-    roll(0.0),
-    pitch(0.0),
-    yaw(0.0),
     statusTimeout(new QTimer(this)),
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -621,9 +618,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (!wrongComponent)
             {
                 lastAttitude = time;
-                roll = QGC::limitAngleToPMPIf(attitude.roll);
-                pitch = QGC::limitAngleToPMPIf(attitude.pitch);
-                yaw = QGC::limitAngleToPMPIf(attitude.yaw);
+                //roll = QGC::limitAngleToPMPIf(attitude.roll);
+                setRoll(QGC::limitAngleToPMPIf(attitude.roll));
+                //pitch = QGC::limitAngleToPMPIf(attitude.pitch);
+                setPitch(QGC::limitAngleToPMPIf(attitude.pitch));
+                //yaw = QGC::limitAngleToPMPIf(attitude.yaw);
+                setYaw(QGC::limitAngleToPMPIf(attitude.yaw));
 
                 //                // Emit in angles
 
@@ -643,7 +643,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 //                }
 
                 attitudeKnown = true;
-                emit attitudeChanged(this, roll, pitch, yaw, time);
+                emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
         }
@@ -677,8 +677,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (!attitudeKnown)
             {
-                yaw = QGC::limitAngleToPMPId((((double)hud.heading-180.0)/360.0)*M_PI);
-                emit attitudeChanged(this, roll, pitch, yaw, time);
+                //yaw = QGC::limitAngleToPMPId((((double)hud.heading-180.0)/360.0)*M_PI);
+                setYaw(QGC::limitAngleToPMPId((((double)hud.heading-180.0)/360.0)*M_PI));
+                emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
             }
 
             emit altitudeChanged(uasId, hud.alt);
@@ -777,9 +778,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 loc_type = 0; 
             }
             emit localizationChanged(this, loc_type);
+            setSatelliteCount(pos.satellites_visible);
 
             if (pos.fix_type > 2)
             {
+
                 latitude_gps = pos.lat/(double)1E7;
                 longitude_gps = pos.lon/(double)1E7;
                 altitude_gps = pos.alt/1000.0;
@@ -822,6 +825,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 emit gpsSatelliteStatusChanged(uasId, (unsigned char)pos.satellite_prn[i], (unsigned char)pos.satellite_elevation[i], (unsigned char)pos.satellite_azimuth[i], (unsigned char)pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
             }
+            setSatelliteCount(pos.satellites_visible);
         }
             break;
         case MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN:

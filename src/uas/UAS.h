@@ -106,11 +106,12 @@ public:
     Q_PROPERTY(double latitude READ getLatitude WRITE setLatitude NOTIFY latitudeChanged)
     Q_PROPERTY(double longitude READ getLongitude WRITE setLongitude NOTIFY longitudeChanged)
     Q_PROPERTY(double altitude READ getAltitude WRITE setAltitude NOTIFY altitudeChanged)
+    Q_PROPERTY(double satelliteCount READ getSatelliteCount WRITE setSatelliteCount NOTIFY satelliteCountChanged)
     Q_PROPERTY(bool isLocalPositionKnown READ localPositionKnown)
     Q_PROPERTY(bool isGlobalPositionKnown READ globalPositionKnown)
-    Q_PROPERTY(double roll READ getRoll)
-    Q_PROPERTY(double pitch READ getPitch)
-    Q_PROPERTY(double yaw READ getYaw)
+    Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY rollChanged)
+    Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
+    Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
 
     void setLocalX(double val)
     {
@@ -172,6 +173,18 @@ public:
     {
         return altitude;
     }
+
+    void setSatelliteCount(double val)
+    {
+        satelliteCount = val;
+        emit satelliteCountChanged(val,"satelliteCount");
+    }
+
+    double getSatelliteCount() const
+    {
+        return satelliteCount;
+    }
+
     virtual bool localPositionKnown() const
     {
         return isLocalPositionKnown;
@@ -181,14 +194,34 @@ public:
         return isGlobalPositionKnown;
     }
 
+    void setRoll(double val)
+    {
+        roll = val;
+        emit rollChanged(val,"roll");
+    }
+
     double getRoll() const
     {
         return roll;
     }
+
+    void setPitch(double val)
+    {
+        pitch = val;
+        emit pitchChanged(val,"pitch");
+    }
+
     double getPitch() const
     {
         return pitch;
     }
+
+    void setYaw(double val)
+    {
+        yaw = val;
+        emit yawChanged(val,"yaw");
+    }
+
     double getYaw() const
     {
         return yaw;
@@ -329,6 +362,7 @@ protected: //COMMENTS FOR TEST UNIT
     double latitude;            ///< Global latitude as estimated by position estimator
     double longitude;           ///< Global longitude as estimated by position estimator
     double altitude;            ///< Global altitude as estimated by position estimator
+    double satelliteCount;      ///< Number of satellites visible to raw GPS
     bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
     double latitude_gps;        ///< Global latitude as estimated by raw GPS
     double longitude_gps;       ///< Global longitude as estimated by raw GPS
@@ -754,6 +788,10 @@ signals:
     void latitudeChanged(double val,QString name);
     void altitudeChanged(double val,QString name);
     void altitudeChanged(int uasid, double altitude);
+    void rollChanged(double val,QString name);
+    void pitchChanged(double val,QString name);
+    void yawChanged(double val,QString name);
+    void satelliteCountChanged(double val,QString name);
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
