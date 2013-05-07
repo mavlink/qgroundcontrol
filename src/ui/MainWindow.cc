@@ -58,6 +58,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCRGBDView.h"
 #include "QGCFirmwareUpdate.h"
 #include "QGCStatusBar.h"
+#include "UASQuickView.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -527,6 +528,13 @@ void MainWindow::buildCommonWidgets()
     tempAction->setCheckable(true);
     connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
+    {
+        QAction* tempAction = ui.menuTools->addAction(tr("Quick View"));
+        tempAction->setCheckable(true);
+        menuToDockNameMap[tempAction] = "UAS_INFO_QUICKVIEW_DOCKWIDGET";
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+
+    }
     createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
 
 
@@ -734,6 +742,10 @@ void MainWindow::loadDockWidget(QString name)
     else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
+    else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",currentView,Qt::LeftDockWidgetArea);
     }
     else
     {

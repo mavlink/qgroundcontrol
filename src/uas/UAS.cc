@@ -77,9 +77,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     localX(0.0),
     localY(0.0),
     localZ(0.0),
-    latitude(0.0),
-    longitude(0.0),
-    altitude(0.0),
     globalEstimatorActive(false),
     latitude_gps(0.0),
     longitude_gps(0.0),
@@ -737,14 +734,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_global_position_int_t pos;
             mavlink_msg_global_position_int_decode(&message, &pos);
             quint64 time = getUnixTime();
-            latitude = pos.lat/(double)1E7;
-            longitude = pos.lon/(double)1E7;
-            altitude = pos.alt/1000.0;
+            //latitude = pos.lat/(double)1E7;
+            setLatitude(pos.lat/(double)1E7);
+            //longitude = pos.lon/(double)1E7;
+            setLongitude(pos.lon/(double)1E7);
+            //altitude = pos.alt/1000.0;
+            setAltitude(pos.alt/1000.0);
             globalEstimatorActive = true;
             speedX = pos.vx/100.0;
             speedY = pos.vy/100.0;
             speedZ = pos.vz/100.0;
-            emit globalPositionChanged(this, latitude, longitude, altitude, time);
+            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
             emit speedChanged(this, speedX, speedY, speedZ, time);
 
             // Set internal state
@@ -785,10 +785,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 altitude_gps = pos.alt/1000.0;
 
                 if (!globalEstimatorActive) {
-                    latitude = latitude_gps;
-                    longitude = longitude_gps;
-                    altitude = altitude_gps;
-                    emit globalPositionChanged(this, latitude, longitude, altitude, time);
+                    //latitude = latitude_gps;
+                    setLatitude(latitude_gps);
+                    //longitude = longitude_gps;
+                    setLongitude(longitude_gps);
+                    //altitude = altitude_gps;
+                    setAltitude(altitude_gps);
+                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
                 }
 
                 positionLock = true;
