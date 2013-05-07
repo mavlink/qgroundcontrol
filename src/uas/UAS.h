@@ -112,6 +112,7 @@ public:
     Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY rollChanged)
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
     Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
+    Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
 
     void setLocalX(double val)
     {
@@ -192,6 +193,17 @@ public:
     virtual bool globalPositionKnown() const
     {
         return isGlobalPositionKnown;
+    }
+
+    void setDistToWaypoint(double val)
+    {
+        distToWaypoint = val;
+        emit distToWaypointChanged(val,"distToWaypoint");
+    }
+
+    double getDistToWaypoint() const
+    {
+        return distToWaypoint;
     }
 
     void setRoll(double val)
@@ -370,6 +382,7 @@ protected: //COMMENTS FOR TEST UNIT
     double speedX;              ///< True speed in X axis
     double speedY;              ///< True speed in Y axis
     double speedZ;              ///< True speed in Z axis
+    double distToWaypoint;       ///< Distance to next waypoint
     double roll;
     double pitch;
     double yaw;
@@ -792,6 +805,7 @@ signals:
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
+    void distToWaypointChanged(double val,QString name);
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
