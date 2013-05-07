@@ -543,8 +543,8 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCTextLabel.cc \
     src/ui/submainwindow.cpp \
     src/ui/dockwidgettitlebareventfilter.cpp \
-    src/ui/uas/UASQuickView.cpp \
-    src/ui/uas/UASQuickViewItem.cpp
+    src/ui/uas/UASQuickViewItem.cc \
+    src/ui/uas/UASQuickView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
