@@ -118,6 +118,7 @@ public:
     {
         localX = val;
         emit localXChanged(val,"localX");
+        emit valueChanged(this->uasId,"localX","M",QVariant(val),getUnixTime());
     }
     double getLocalX() const
     {
@@ -128,6 +129,7 @@ public:
     {
         localY = val;
         emit localYChanged(val,"localY");
+        emit valueChanged(this->uasId,"localY","M",QVariant(val),getUnixTime());
     }
     double getLocalY() const
     {
@@ -138,6 +140,7 @@ public:
     {
         localZ = val;
         emit localZChanged(val,"localZ");
+        emit valueChanged(this->uasId,"localZ","M",QVariant(val),getUnixTime());
     }
     double getLocalZ() const
     {
@@ -148,6 +151,7 @@ public:
     {
         latitude = val;
         emit latitudeChanged(val,"latitude");
+        emit valueChanged(this->uasId,"latitude","deg",QVariant(val),getUnixTime());
     }
     double getLatitude() const
     {
@@ -158,6 +162,7 @@ public:
     {
         longitude = val;
         emit longitudeChanged(val,"longitude");
+        emit valueChanged(this->uasId,"longitude","deg",QVariant(val),getUnixTime());
     }
     double getLongitude() const
     {
@@ -168,6 +173,7 @@ public:
     {
         altitude = val;
         emit altitudeChanged(val,"altitude");
+        emit valueChanged(this->uasId,"altitude","M",QVariant(val),getUnixTime());
     }
 
     double getAltitude() const
@@ -179,6 +185,7 @@ public:
     {
         satelliteCount = val;
         emit satelliteCountChanged(val,"satelliteCount");
+        emit valueChanged(this->uasId,"satelliteCount","M",QVariant(val),getUnixTime());
     }
 
     double getSatelliteCount() const
@@ -199,6 +206,7 @@ public:
     {
         distToWaypoint = val;
         emit distToWaypointChanged(val,"distToWaypoint");
+        emit valueChanged(this->uasId,"distToWaypoint","M",QVariant(val),getUnixTime());
     }
 
     double getDistToWaypoint() const
@@ -806,6 +814,8 @@ signals:
     void yawChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
     void distToWaypointChanged(double val,QString name);
+
+
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
