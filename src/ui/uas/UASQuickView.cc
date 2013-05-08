@@ -106,6 +106,7 @@ void UASQuickView::setActiveUAS(UASInterface* uas)
         return;
     }
     this->uas = uas;
+    connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
     uasPropertyList.clear();
     qDebug() << "UASInfoWidget property count:" << uas->metaObject()->propertyCount();
     for (int i=0;i<uas->metaObject()->propertyCount();i++)
@@ -151,13 +152,18 @@ void UASQuickView::actionTriggered(bool checked)
     else
     {
         ui.verticalLayout->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
-        uasPropertyToLabelMap.remove(senderlabel->text());
         uasPropertyToLabelMap[senderlabel->text()]->deleteLater();
+        uasPropertyToLabelMap.remove(senderlabel->text());
+
     }
+}
+void UASQuickView::valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs)
+{
+    uasPropertyValueMap[name] = value.toDouble();
 }
 
 void UASQuickView::valChanged(double val,QString type)
 {
     //qDebug() << "Value changed:" << type << val;
-    uasPropertyValueMap[type] = val;
+   // uasPropertyValueMap[type] = val;
 }
