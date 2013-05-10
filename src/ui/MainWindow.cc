@@ -433,7 +433,8 @@ void MainWindow::buildCommonWidgets()
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
-        pilotView->setCentralWidget(new HUD(320,240,this));
+        //pilotView->setCentralWidget(new HUD(320,240,this));
+        pilotView->setCentralWidget(new QGCMapTool(this));
         //hudWidget         = new HUD(320, 240, this);
         //addCentralWidget(hudWidget, tr("Head Up Display"));
         //mapWidget = new QGCMapTool(this);
@@ -476,7 +477,7 @@ void MainWindow::buildCommonWidgets()
     connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
 
         createDockWidget(simView,new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",VIEW_SIMULATION,Qt::LeftDockWidgetArea);
-        createDockWidget(pilotView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+
         createDockWidget(plannerView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
 
         {
@@ -506,8 +507,6 @@ void MainWindow::buildCommonWidgets()
         tempAction->setCheckable(true);
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
         }
-
-        createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::BottomDockWidgetArea);
         createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
 
 
@@ -523,13 +522,27 @@ void MainWindow::buildCommonWidgets()
     acceptList2->append("0,RAW_PRESSURE.pres_abs,hPa,65500");
 
 
-    HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
-    hdDisplay->addSource(mavlinkDecoder);
-    createDockWidget(pilotView,hdDisplay,tr("Flight Display"),"HEAD_DOWN_DISPLAY_1_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
+    //HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
+    //hdDisplay->addSource(mavlinkDecoder);
+    //createDockWidget(pilotView,hdDisplay,tr("Flight Display"),"HEAD_DOWN_DISPLAY_1_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
-    HDDisplay* hdDisplay2 = new HDDisplay(acceptList2, "Actuator Status", this);
-    hdDisplay2->addSource(mavlinkDecoder);
-    createDockWidget(pilotView,hdDisplay2,tr("Actuator Status"),"HEAD_DOWN_DISPLAY_2_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
+    //HDDisplay* hdDisplay2 = new HDDisplay(acceptList2, "Actuator Status", this);
+    //hdDisplay2->addSource(mavlinkDecoder);
+    //createDockWidget(pilotView,hdDisplay2,tr("Actuator Status"),"HEAD_DOWN_DISPLAY_2_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
+
+    {
+    QAction* tempAction = ui.menuTools->addAction(tr("Flight Display"));
+    tempAction->setCheckable(true);
+    connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+    menuToDockNameMap[tempAction] = "HEAD_DOWN_DISPLAY_1_DOCKWIDGET";
+    }
+
+    {
+    QAction* tempAction = ui.menuTools->addAction(tr("Actuator Status"));
+    tempAction->setCheckable(true);
+    connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+    menuToDockNameMap[tempAction] = "HEAD_DOWN_DISPLAY_2_DOCKWIDGET";
+    }
 
     {
     QAction* tempAction = ui.menuTools->addAction(tr("Radio Control"));
@@ -537,8 +550,13 @@ void MainWindow::buildCommonWidgets()
     connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
 
-    createDockWidget(plannerView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
+
     createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
+
+    createDockWidget(pilotView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
+    createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
+    createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+    createDockWidget(pilotView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
 
     // Custom widgets, added last to all menus and layouts
