@@ -2,7 +2,7 @@
 QWidget#colorIcon {}
 
 QWidget {
-    background-color: #222222;
+    background-color: #222224;
     color: #FFFFFF;
     background-clip: border;
     font-size: 11px;
@@ -80,8 +80,9 @@ border: 1px solid #777777;
  }
  
  QMainWindow::separator {
-     width: 0px; /* when vertical */
-     height: 0px; /* when horizontal */
+    background-color: #323235;
+    width: 2px; /* when vertical */
+    height: 2px; /* when horizontal */
  }
 
  QMainWindow::separator:hover {
