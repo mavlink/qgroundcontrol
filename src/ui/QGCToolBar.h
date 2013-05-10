@@ -78,6 +78,8 @@ public slots:
     void connectLink(bool connect);
     /** @brief Clear status string */
     void clearStatusString();
+    /** @brief Set an activity action as checked in menu */
+    void advancedActivityTriggered(QAction* action);
 
 protected:
     void createCustomWidgets();

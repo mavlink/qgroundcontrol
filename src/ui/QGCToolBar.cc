@@ -197,7 +197,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         first->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         first->setCheckable(true);
         connect(first, SIGNAL(clicked(bool)), actions.first(), SIGNAL(triggered(bool)));
-        first->setStyleSheet("QToolButton { min-width: 60px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
+        first->setStyleSheet("QToolButton { min-width: 60px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
         addWidget(first);
         group->addButton(first);
 
@@ -247,13 +247,20 @@ void QGCToolBar::setPerspectiveChangeAdvancedActions(const QList<QAction*> &acti
             menu->addAction(actions.at(i));
         }
 
-        menu->setStyleSheet("QMenu { font-weight: bold; min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); border: 1px solid #484848; } QMenu:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
+        menu->setStyleSheet("QMenu { font-weight: bold; min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); border: 1px solid #484848; } QMenu::item:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
 
         advancedButton->setMenu(menu);
+        connect(menu, SIGNAL(triggered(QAction*)), this, SLOT(advancedActivityTriggered(QAction*)));
 
     } else {
         qDebug() << __FILE__ << __LINE__ << "Not enough perspective change actions provided";
     }
+}
+
+void QGCToolBar::advancedActivityTriggered(QAction* action)
+{
+    if (action->isChecked())
+        advancedButton->setChecked(true);
 }
 
 void QGCToolBar::setActiveUAS(UASInterface* active)
