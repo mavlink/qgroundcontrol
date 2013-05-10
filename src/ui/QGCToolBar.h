@@ -40,6 +40,7 @@ class QGCToolBar : public QToolBar
 public:
     explicit QGCToolBar(QWidget* parent = 0);
     void setPerspectiveChangeActions(const QList<QAction*> &action);
+    void setPerspectiveChangeAdvancedActions(const QList<QAction*> &action);
     ~QGCToolBar();
 
 public slots:
@@ -112,6 +113,8 @@ protected:
     bool systemArmed;
     LinkInterface* currentLink;
     QAction* firstAction;
+    QPushButton *advancedButton;
+    QButtonGroup *group;
 };
 
 #endif // QGCTOOLBAR_H

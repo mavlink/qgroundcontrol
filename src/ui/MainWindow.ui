@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -480,7 +480,10 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Configuration</string>
+    <string>Config</string>
+   </property>
+   <property name="toolTip">
+    <string>Configuration options of the vehicle.</string>
    </property>
   </action>
   <action name="actionAdvanced_Mode">
