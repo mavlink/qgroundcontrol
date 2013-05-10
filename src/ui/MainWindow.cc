@@ -161,16 +161,20 @@ MainWindow::MainWindow(QWidget *parent):
     // Load Toolbar
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);
-    // Add actions (inverted order due to insert)
 
+    // Add actions for average users (displayed next to each other)
     QList<QAction*> actions;
-
     actions << ui.actionMissionView;
     actions << ui.actionFlightView;
-    actions << ui.actionEngineersView;
-    actions << ui.actionSimulation_View;
     actions << ui.actionConfiguration_2;
     toolBar->setPerspectiveChangeActions(actions);
+
+    // Add actions for advanced users (displayed in dropdown under "advanced")
+    QList<QAction*> advancedActions;
+    advancedActions << ui.actionSimulation_View;
+    advancedActions << ui.actionEngineersView;
+
+    toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
 
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
