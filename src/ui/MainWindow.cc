@@ -95,7 +95,7 @@ MainWindow* MainWindow::instance(QSplashScreen* screen)
 **/
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
-    currentView(VIEW_MISSION),
+    currentView(VIEW_FLIGHT),
     currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
@@ -167,8 +167,8 @@ MainWindow::MainWindow(QWidget *parent):
 
     QList<QAction*> actions;
 
-    actions << ui.actionMissionView;
     actions << ui.actionFlightView;
+    actions << ui.actionMissionView;
     actions << ui.actionEngineersView;
     actions << ui.actionSimulation_View;
     actions << ui.actionConfiguration_2;
@@ -478,7 +478,15 @@ void MainWindow::buildCommonWidgets()
         createDockWidget(simView,new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         createDockWidget(pilotView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
         createDockWidget(plannerView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
-        createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
+
+        {
+        //createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
+        QAction* tempAction = ui.menuTools->addAction(tr("Mission Plan"));
+        tempAction->setCheckable(true);
+        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        menuToDockNameMap[tempAction] = "WAYPOINT_LIST_DOCKWIDGET";
+        }
+
         createDockWidget(simView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
         createDockWidget(engineeringView,new QGCMAVLinkInspector(mavlink,this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
 
