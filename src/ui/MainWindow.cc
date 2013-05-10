@@ -1711,7 +1711,7 @@ void MainWindow::UASCreated(UASInterface* uas)
             // Load last view if setting is present
             if (settings.contains("CURRENT_VIEW_WITH_UAS_CONNECTED"))
             {
-                int view = settings.value("CURRENT_VIEW_WITH_UAS_CONNECTED").toInt();
+                /*int view = settings.value("CURRENT_VIEW_WITH_UAS_CONNECTED").toInt();
                 switch (view)
                 {
                 case VIEW_ENGINEER:
@@ -1736,11 +1736,11 @@ void MainWindow::UASCreated(UASInterface* uas)
                 default:
                     loadOperatorView();
                     break;
-                }
+                }*/
             }
             else
             {
-                loadOperatorView();
+               // loadOperatorView();
             }
         }
 

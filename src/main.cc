@@ -64,7 +64,6 @@ void msgHandler( QtMsgType type, const char* msg )
 
 int main(int argc, char *argv[])
 {
-
 // install the message handler
 #ifdef Q_OS_WIN
     qInstallMsgHandler( msgHandler );

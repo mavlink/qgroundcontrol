@@ -9,7 +9,6 @@
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapcontrol::OPMapWidget(parent),
-    currWPManager(NULL),
     firingWaypointChange(NULL),
     maxUpdateInterval(2.1f), // 2 seconds
     followUAVEnabled(false),
@@ -17,17 +16,42 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     trailInterval(2.0f),
     followUAVID(0),
     mapInitialized(false),
-    homeAltitude(0)
+    homeAltitude(0),
+    uas(0)
 {
+    //currWPManager = new UASWaypointManager(NULL); //Create a waypoint manager that is null.
+    currWPManager = UASManager::instance()->getActiveUASWaypointManager();
+    connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
+    connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+    connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
+    connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+    offlineMode = true;
     // Widget is inactive until shown
     defaultGuidedAlt = -1;
     loadSettings(false);
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
+    QAction *guidedaction = new QAction(this);
+    guidedaction->setText("Go To Here (Guided Mode)");
+    connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedActionTriggered()));
+    this->addAction(guidedaction);
+    guidedaction = new QAction(this);
+    guidedaction->setText("Go To Here Alt (Guided Mode)");
+    connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
+    this->addAction(guidedaction);
+    QAction *cameraaction = new QAction(this);
+    cameraaction->setText("Point Camera Here");
+    connect(cameraaction,SIGNAL(triggered()),this,SLOT(cameraActionTriggered()));
+    this->addAction(cameraaction);
 }
 void QGCMapWidget::guidedActionTriggered()
 {
+    if (!uas)
+    {
+        QMessageBox::information(0,"Error","Please connect first");
+        return;
+    }
     if (currWPManager)
     {
         if (defaultGuidedAlt == -1)
@@ -49,6 +73,11 @@ void QGCMapWidget::guidedActionTriggered()
 }
 bool QGCMapWidget::guidedAltActionTriggered()
 {
+    if (!uas)
+    {
+        QMessageBox::information(0,"Error","Please connect first");
+        return false;
+    }
     bool ok = false;
     int tmpalt = QInputDialog::getInt(this,"Altitude","Enter default altitude (in meters) of destination point for guided mode",100,0,30000,1,&ok);
     if (!ok)
@@ -62,6 +91,11 @@ bool QGCMapWidget::guidedAltActionTriggered()
 }
 void QGCMapWidget::cameraActionTriggered()
 {
+    if (!uas)
+    {
+        QMessageBox::information(0,"Error","Please connect first");
+        return;
+    }
     ArduPilotMegaMAV *newmav = qobject_cast<ArduPilotMegaMAV*>(this->uas);
     if (newmav)
     {
@@ -262,32 +296,14 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
 
     if (uas)
     {
-        currWPManager = uas->getWaypointManager();
-        QList<QAction*> actionList = this->actions();
-        for (int i=0;i<actionList.size();i++)
-        {
-            this->removeAction(actionList[i]);
-            actionList[i]->deleteLater();
-        }
-        if (currWPManager->guidedModeSupported())
-        {
-            QAction *guidedaction = new QAction(this);
-            guidedaction->setText("Go To Here (Guided Mode)");
-            connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedActionTriggered()));
-            this->addAction(guidedaction);
-            guidedaction = new QAction(this);
-            guidedaction->setText("Go To Here Alt (Guided Mode)");
-            connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
-            this->addAction(guidedaction);
+        //UASWaypointManager *old = currWPManager;
 
-            if (uas->getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-            {
-                QAction *cameraaction = new QAction(this);
-                cameraaction->setText("Point Camera Here");
-                connect(cameraaction,SIGNAL(triggered()),this,SLOT(cameraActionTriggered()));
-                this->addAction(cameraaction);
-            }
-        }
+        currWPManager = uas->getWaypointManager();
+
+        updateSelectedSystem(uas->getUASID());
+        followUAVID = uas->getUASID();
+
+        updateWaypointList(uas->getUASID());
 
         // Connect the waypoint manager / data storage to the UI
         connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
@@ -295,11 +311,27 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
 
-        updateSelectedSystem(uas->getUASID());
-        followUAVID = uas->getUASID();
+        /*if (offlineMode)
+        {
+
+            if (QMessageBox::question(0,"Question","Do you want to append the offline waypoints to the ones currently on the UAV?",QMessageBox::Yes,QMessageBox::No) == QMessageBox::Yes)
+            {
+                //Need to transfer all waypoints from the offline mode WPManager to the online mode.
+                for (int i=0;i<old->getWaypointEditableList().size();i++)
+                {
+                    Waypoint *wp = currWPManager->createWaypoint();
+                    wp->setLatitude(old->getWaypointEditableList()[i]->getLatitude());
+                    wp->setLongitude(old->getWaypointEditableList()[i]->getLongitude());
+                    wp->setAltitude(old->getWaypointEditableList()[i]->getAltitude());
+                }
+            }
+            offlineMode = false;
+            old->deleteLater();
+        }*/
+
 
         // Delete all waypoints and add waypoint from new system
-        updateWaypointList(uas->getUASID());
+
     }
 }
 
@@ -563,7 +595,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-    if (uasInstance->getWaypointManager() == currWPManager || uas == -1)
+    if (!uasInstance || uasInstance->getWaypointManager() == currWPManager || uas == -1)
     {
         // Only accept waypoints in global coordinate frame
         if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType())
