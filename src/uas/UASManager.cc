@@ -235,7 +235,8 @@ UASManager::UASManager() :
         homeLat(47.3769),
         homeLon(8.549444),
         homeAlt(470.0),
-        homeFrame(MAV_FRAME_GLOBAL)
+        homeFrame(MAV_FRAME_GLOBAL),
+        offlineUASWaypointManager(NULL)
 {
     loadSettings();
     setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
@@ -280,6 +281,22 @@ void UASManager::addUAS(UASInterface* uas)
     if (firstUAS)
     {
         setActiveUAS(uas);
+        if (offlineUASWaypointManager->getWaypointEditableList().size() > 0)
+        {
+            if (QMessageBox::question(0,"Question","Do you want to append the offline waypoints to the ones currently on the UAV?",QMessageBox::Yes,QMessageBox::No) == QMessageBox::Yes)
+            {
+                //Need to transfer all waypoints from the offline mode WPManager to the online mode.
+                for (int i=0;i<offlineUASWaypointManager->getWaypointEditableList().size();i++)
+                {
+                    Waypoint *wp = uas->getWaypointManager()->createWaypoint();
+                    wp->setLatitude(offlineUASWaypointManager->getWaypointEditableList()[i]->getLatitude());
+                    wp->setLongitude(offlineUASWaypointManager->getWaypointEditableList()[i]->getLongitude());
+                    wp->setAltitude(offlineUASWaypointManager->getWaypointEditableList()[i]->getAltitude());
+                }
+            }
+            offlineUASWaypointManager->deleteLater();
+            offlineUASWaypointManager = 0;
+        }
     }
 }
 
@@ -335,6 +352,20 @@ UASInterface* UASManager::getActiveUAS()
 UASInterface* UASManager::silentGetActiveUAS()
 {
     return activeUAS; ///< Return zero pointer if no UAS has been loaded
+}
+UASWaypointManager *UASManager::getActiveUASWaypointManager()
+{
+    if (activeUAS)
+    {
+        return activeUAS->getWaypointManager();
+    }
+    if (!offlineUASWaypointManager)
+    {
+        offlineUASWaypointManager = new UASWaypointManager(NULL);
+    }
+    return offlineUASWaypointManager;
+
+
 }
 
 bool UASManager::launchActiveUAS()

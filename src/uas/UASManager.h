@@ -58,6 +58,12 @@ public:
      * @return NULL pointer if no UAS exists, active UAS else
      **/
     UASInterface* getActiveUAS();
+    /**
+     * @brief getActiveUASWaypointManager
+     * @return uas->getUASWaypointManager(), or if not connected, a singleton instance of a UASWaypointManager.
+     */
+    UASWaypointManager *getActiveUASWaypointManager();
+
     UASInterface* silentGetActiveUAS();
     /**
      * @brief Get the UAS with this id
@@ -244,6 +250,7 @@ protected:
     UASManager();
     QList<UASInterface*> systems;
     UASInterface* activeUAS;
+    UASWaypointManager *offlineUASWaypointManager;
     QMutex activeUASMutex;
     double homeLat;
     double homeLon;
