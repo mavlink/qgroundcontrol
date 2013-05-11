@@ -1,5 +1,7 @@
 #include <QtGui>
+#include <QSettings>
 
+#include "HUD2Drawer.h"
 #include "HUD2IndicatorHorizon.h"
 #include "HUD2Math.h"
 
@@ -9,17 +11,30 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(const HUD2Data *huddata, QWidget *par
     crosshair(&this->gap, this),
     huddata(huddata)
 {
+    QColor color;
+    QSettings settings;
+    settings.beginGroup("QGC_HUD2");
+
     this->gap = 6;
     this->pitchcount = 5;
     this->degstep = 20;
-    this->pen.setColor(Qt::green);
 
-    skyPen   = QPen(Qt::darkBlue);
-    skyBrush = QBrush(Qt::darkBlue);
-    gndPen   = QPen(Qt::darkRed);
-    gndBrush = QBrush(Qt::darkRed);
+    color = settings.value("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT).value<QColor>();
+    this->pen.setColor(color);
+    pitchline.setColor(color);
+    crosshair.setColor(color);
+
+    color = settings.value("SKY_COLOR", SKY_COLOR_DEFAULT).value<QColor>();
+    skyPen   = QPen(color);
+    skyBrush = QBrush(color);
+
+    color = settings.value("GND_COLOR", GND_COLOR_DEFAULT).value<QColor>();
+    gndPen   = QPen(color);
+    gndBrush = QBrush(color);
 
     coloredBackground = true;
+
+    settings.endGroup();
 }
 
 void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
@@ -148,4 +163,16 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
 
 void HUD2IndicatorHorizon::setColor(QColor color){
     pen.setColor(color);
+    pitchline.setColor(color);
+    crosshair.setColor(color);
+}
+
+void HUD2IndicatorHorizon::setSkyColor(QColor color){
+    skyPen.setColor(color);
+    skyBrush.setColor(color);
+}
+
+void HUD2IndicatorHorizon::setGndColor(QColor color){
+    gndPen.setColor(color);
+    gndBrush.setColor(color);
 }

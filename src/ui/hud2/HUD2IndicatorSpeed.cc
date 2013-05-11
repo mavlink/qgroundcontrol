@@ -20,5 +20,5 @@ void HUD2IndicatorSpeed::paint(QPainter *painter){
 }
 
 void HUD2IndicatorSpeed::setColor(QColor color){
-    Q_UNUSED(color);
+    ribbon->setColor(color);
 }

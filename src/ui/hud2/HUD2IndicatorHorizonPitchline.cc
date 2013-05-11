@@ -149,5 +149,6 @@ void HUD2IndicatorHorizonPitchline::paint(QPainter *painter, int deg){
 
 void HUD2IndicatorHorizonPitchline::setColor(QColor color){
     pen.setColor(color);
+    textPen.setColor(color);
 }
 

@@ -107,5 +107,7 @@ void HUD2IndicatorRoll::paint(QPainter *painter){
 }
 
 void HUD2IndicatorRoll::setColor(QColor color){
-    Q_UNUSED(color);
+    thickPen.setColor(color);
+    thinPen.setColor(color);
+    arrowPen.setColor(color);
 }

@@ -20,6 +20,10 @@ class QPaintEvent;
 class QResizeEvent;
 QT_END_NAMESPACE
 
+#define INSTRUMENTS_COLOR_DEFAULT   (Qt::green)
+#define SKY_COLOR_DEFAULT           (Qt::darkBlue)
+#define GND_COLOR_DEFAULT           (Qt::darkRed)
+
 class HUD2Drawer : public QWidget
 {
     Q_OBJECT
@@ -34,6 +38,7 @@ signals:
 public slots:
     void updateGeometry(const QSize &size);
     void showDialog(void);
+    void showColorDialog(void);
 
 private:
     HUD2IndicatorHorizon horizon;

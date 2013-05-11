@@ -392,7 +392,9 @@ void HUD2Ribbon::paint(QPainter *painter, float value){
 }
 
 void HUD2Ribbon::setColor(QColor color){
-    Q_UNUSED(color);
+    bigPen.setColor(color);
+    arrowPen.setColor(color);
+    smallPen.setColor(color);
 }
 
 

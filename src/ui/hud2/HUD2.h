@@ -82,6 +82,7 @@ protected:
     void contextMenuEvent (QContextMenuEvent* event);
     QAction* renderDialogHUDAction;
     QAction* instrumentsDialogHUDAction;
+    QAction* colorDialogHUDAction;
 
 private:
     HUD2Data huddata;

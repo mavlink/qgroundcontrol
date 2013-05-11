@@ -21,6 +21,8 @@ signals:
 
 public slots:
     void setColor(QColor color);
+    void setSkyColor(QColor color);
+    void setGndColor(QColor color);
     void updateGeometry(const QSize &size);
 
 private:

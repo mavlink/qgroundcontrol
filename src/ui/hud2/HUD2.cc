@@ -212,6 +212,10 @@ void HUD2::createActions()
     instrumentsDialogHUDAction = new QAction(tr("Instruments"), this);
     instrumentsDialogHUDAction->setStatusTip(tr("HUD instruments settings"));
     connect(instrumentsDialogHUDAction, SIGNAL(triggered(bool)), &huddrawer, SLOT(showDialog()));
+
+    colorDialogHUDAction = new QAction(tr("Colors"), this);
+    colorDialogHUDAction->setStatusTip(tr("Color settings"));
+    connect(colorDialogHUDAction, SIGNAL(triggered(bool)), &huddrawer, SLOT(showColorDialog()));
 }
 
 void HUD2::renderDialog()
@@ -251,6 +255,7 @@ void HUD2::contextMenuEvent (QContextMenuEvent* event)
 
     menu.addAction(renderDialogHUDAction);
     menu.addAction(instrumentsDialogHUDAction);
+    menu.addAction(colorDialogHUDAction);
     menu.exec(event->globalPos());
 }
 
@@ -263,3 +268,4 @@ void HUD2::setFpsLimit(int limit){
     hud2_clamp(fpsLimit, HUD2_FPS_MIN, HUD2_FPS_MAX);
     settings.setValue("QGC_HUD2/FPS_LIMIT", fpsLimit);
 }
+

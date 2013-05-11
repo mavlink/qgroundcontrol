@@ -1,8 +1,10 @@
 #include <QColor>
 #include <QPainter>
+#include <QSettings>
 
 #include "HUD2Drawer.h"
 #include "HUD2Dialog.h"
+#include "HUD2ColorDialog.h"
 
 
 HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
@@ -11,13 +13,26 @@ HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
     roll(huddata, this),
     speed(huddata, this),
     climb(huddata, this),
-    compass(huddata, this)
+    compass(huddata, this),
+    fps(this)
 {
     defaultColor = QColor(70, 255, 70);
     warningColor = Qt::yellow;
     criticalColor = Qt::red;
     infoColor = QColor(20, 200, 20);
     fuelColor = criticalColor;
+
+    QColor color;
+    QSettings settings;
+    settings.beginGroup("QGC_HUD2");
+    color = settings.value("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT).value<QColor>();
+    roll.setColor(color);
+    speed.setColor(color);
+    climb.setColor(color);
+    compass.setColor(color);
+    fps.setColor(color);
+
+    settings.endGroup();
 }
 
 void HUD2Drawer::paint(QPainter *painter)
@@ -46,3 +61,11 @@ void HUD2Drawer::showDialog(void){
     dialog->exec();
     delete dialog;
 }
+
+void HUD2Drawer::showColorDialog(void){
+    HUD2ColorDialog *colorDialog = new HUD2ColorDialog(
+                &horizon, &roll, &speed, &climb, &compass, &fps, this);
+    colorDialog->exec();
+    delete colorDialog;
+}
+

@@ -21,5 +21,5 @@ void HUD2IndicatorClimb::paint(QPainter *painter){
 }
 
 void HUD2IndicatorClimb::setColor(QColor color){
-    Q_UNUSED(color);
+    ribbon->setColor(color);
 }

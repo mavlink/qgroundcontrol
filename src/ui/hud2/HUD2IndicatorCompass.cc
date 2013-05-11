@@ -21,7 +21,7 @@ void HUD2IndicatorCompass::paint(QPainter *painter){
 }
 
 void HUD2IndicatorCompass::setColor(QColor color){
-    Q_UNUSED(color);
+    ribbon->setColor(color);
 }
 
 void HUD2IndicatorCompass::setRibbonOpacity(bool opacity){
