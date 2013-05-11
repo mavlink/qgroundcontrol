@@ -1,5 +1,6 @@
 #include <QSettings>
 #include <QColorDialog>
+#include <QMessageBox>
 
 #include "HUD2Drawer.h"
 #include "HUD2ColorDialog.h"
@@ -125,20 +126,28 @@ void HUD2ColorDialog::on_gndButton_clicked()
 void HUD2ColorDialog::on_defaultsButton_clicked()
 {
     QSettings settings;
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT);
-    settings.setValue("SKY_COLOR", SKY_COLOR_DEFAULT);
-    settings.setValue("GND_COLOR", GND_COLOR_DEFAULT);
+    int r = QMessageBox::question(this, tr("Defaults"),
+                    tr("Are you sure you want to\n"
+                       "reset colors to default values?"),
+                    QMessageBox::Yes ,
+                    QMessageBox::No | QMessageBox::Default | QMessageBox::Escape);
 
-    this->horizon->setColor(INSTRUMENTS_COLOR_DEFAULT);
-    this->roll->setColor(INSTRUMENTS_COLOR_DEFAULT);
-    this->speed->setColor(INSTRUMENTS_COLOR_DEFAULT);
-    this->climb->setColor(INSTRUMENTS_COLOR_DEFAULT);
-    this->compass->setColor(INSTRUMENTS_COLOR_DEFAULT);
-    this->fps->setColor(INSTRUMENTS_COLOR_DEFAULT);
+    if (QMessageBox::Yes == r){
+        settings.beginGroup("QGC_HUD2");
+        settings.setValue("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT);
+        settings.setValue("SKY_COLOR", SKY_COLOR_DEFAULT);
+        settings.setValue("GND_COLOR", GND_COLOR_DEFAULT);
 
-    this->horizon->setSkyColor(SKY_COLOR_DEFAULT);
-    this->horizon->setGndColor(GND_COLOR_DEFAULT);
+        this->horizon->setColor(INSTRUMENTS_COLOR_DEFAULT);
+        this->roll->setColor(INSTRUMENTS_COLOR_DEFAULT);
+        this->speed->setColor(INSTRUMENTS_COLOR_DEFAULT);
+        this->climb->setColor(INSTRUMENTS_COLOR_DEFAULT);
+        this->compass->setColor(INSTRUMENTS_COLOR_DEFAULT);
+        this->fps->setColor(INSTRUMENTS_COLOR_DEFAULT);
 
-    settings.endGroup();
+        this->horizon->setSkyColor(SKY_COLOR_DEFAULT);
+        this->horizon->setGndColor(GND_COLOR_DEFAULT);
+
+        settings.endGroup();
+    }
 }
