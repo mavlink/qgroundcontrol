@@ -154,7 +154,7 @@ void QGCComboBox::selectParameter(int paramIndex)
         if (uas->getParamManager())
         {
             // Current value
-            uas->getParamManager()->requestParameterUpdate(component, parameterName);
+            //uas->getParamManager()->requestParameterUpdate(component, parameterName);
 
             // Minimum
             if (uas->getParamManager()->isParamMinKnown(parameterName))
