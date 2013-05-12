@@ -100,30 +100,99 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
+    Q_PROPERTY(double localX READ getLocalX WRITE setLocalX NOTIFY localXChanged)
+    Q_PROPERTY(double localY READ getLocalY WRITE setLocalY NOTIFY localYChanged)
+    Q_PROPERTY(double localZ READ getLocalZ WRITE setLocalZ NOTIFY localZChanged)
+    Q_PROPERTY(double latitude READ getLatitude WRITE setLatitude NOTIFY latitudeChanged)
+    Q_PROPERTY(double longitude READ getLongitude WRITE setLongitude NOTIFY longitudeChanged)
+    Q_PROPERTY(double altitude READ getAltitude WRITE setAltitude NOTIFY altitudeChanged)
+    Q_PROPERTY(double satelliteCount READ getSatelliteCount WRITE setSatelliteCount NOTIFY satelliteCountChanged)
+    Q_PROPERTY(bool isLocalPositionKnown READ localPositionKnown)
+    Q_PROPERTY(bool isGlobalPositionKnown READ globalPositionKnown)
+    Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY rollChanged)
+    Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
+    Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
+    Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
+
+    void setLocalX(double val)
+    {
+        localX = val;
+        emit localXChanged(val,"localX");
+        emit valueChanged(this->uasId,"localX","M",QVariant(val),getUnixTime());
+    }
     double getLocalX() const
     {
         return localX;
+    }
+
+    void setLocalY(double val)
+    {
+        localY = val;
+        emit localYChanged(val,"localY");
+        emit valueChanged(this->uasId,"localY","M",QVariant(val),getUnixTime());
     }
     double getLocalY() const
     {
         return localY;
     }
+
+    void setLocalZ(double val)
+    {
+        localZ = val;
+        emit localZChanged(val,"localZ");
+        emit valueChanged(this->uasId,"localZ","M",QVariant(val),getUnixTime());
+    }
     double getLocalZ() const
     {
         return localZ;
+    }
+
+    void setLatitude(double val)
+    {
+        latitude = val;
+        emit latitudeChanged(val,"latitude");
+        emit valueChanged(this->uasId,"latitude","deg",QVariant(val),getUnixTime());
     }
     double getLatitude() const
     {
         return latitude;
     }
+
+    void setLongitude(double val)
+    {
+        longitude = val;
+        emit longitudeChanged(val,"longitude");
+        emit valueChanged(this->uasId,"longitude","deg",QVariant(val),getUnixTime());
+    }
     double getLongitude() const
     {
         return longitude;
     }
+
+    void setAltitude(double val)
+    {
+        altitude = val;
+        emit altitudeChanged(val,"altitude");
+        emit valueChanged(this->uasId,"altitude","M",QVariant(val),getUnixTime());
+    }
+
     double getAltitude() const
     {
         return altitude;
     }
+
+    void setSatelliteCount(double val)
+    {
+        satelliteCount = val;
+        emit satelliteCountChanged(val,"satelliteCount");
+        emit valueChanged(this->uasId,"satelliteCount","M",QVariant(val),getUnixTime());
+    }
+
+    double getSatelliteCount() const
+    {
+        return satelliteCount;
+    }
+
     virtual bool localPositionKnown() const
     {
         return isLocalPositionKnown;
@@ -133,14 +202,46 @@ public:
         return isGlobalPositionKnown;
     }
 
+    void setDistToWaypoint(double val)
+    {
+        distToWaypoint = val;
+        emit distToWaypointChanged(val,"distToWaypoint");
+        emit valueChanged(this->uasId,"distToWaypoint","M",QVariant(val),getUnixTime());
+    }
+
+    double getDistToWaypoint() const
+    {
+        return distToWaypoint;
+    }
+
+    void setRoll(double val)
+    {
+        roll = val;
+        emit rollChanged(val,"roll");
+    }
+
     double getRoll() const
     {
         return roll;
     }
+
+    void setPitch(double val)
+    {
+        pitch = val;
+        emit pitchChanged(val,"pitch");
+    }
+
     double getPitch() const
     {
         return pitch;
     }
+
+    void setYaw(double val)
+    {
+        yaw = val;
+        emit yawChanged(val,"yaw");
+    }
+
     double getYaw() const
     {
         return yaw;
@@ -281,6 +382,7 @@ protected: //COMMENTS FOR TEST UNIT
     double latitude;            ///< Global latitude as estimated by position estimator
     double longitude;           ///< Global longitude as estimated by position estimator
     double altitude;            ///< Global altitude as estimated by position estimator
+    double satelliteCount;      ///< Number of satellites visible to raw GPS
     bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
     double latitude_gps;        ///< Global latitude as estimated by raw GPS
     double longitude_gps;       ///< Global longitude as estimated by raw GPS
@@ -288,6 +390,7 @@ protected: //COMMENTS FOR TEST UNIT
     double speedX;              ///< True speed in X axis
     double speedY;              ///< True speed in Y axis
     double speedZ;              ///< True speed in Z axis
+    double distToWaypoint;       ///< Distance to next waypoint
     double roll;
     double pitch;
     double yaw;
@@ -698,6 +801,21 @@ signals:
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
     /** @brief HIL actuator outputs have changed */
     void hilActuatorsChanged(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+
+    void localXChanged(double val,QString name);
+    void localYChanged(double val,QString name);
+    void localZChanged(double val,QString name);
+    void longitudeChanged(double val,QString name);
+    void latitudeChanged(double val,QString name);
+    void altitudeChanged(double val,QString name);
+    void altitudeChanged(int uasid, double altitude);
+    void rollChanged(double val,QString name);
+    void pitchChanged(double val,QString name);
+    void yawChanged(double val,QString name);
+    void satelliteCountChanged(double val,QString name);
+    void distToWaypointChanged(double val,QString name);
+
+
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */

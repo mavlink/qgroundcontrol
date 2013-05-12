@@ -117,11 +117,13 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     {
         settings->setArrayIndex(i);
         QString name = settings->value("TITLE", "").toString();
+        QString objname = settings->value("OBJECT_NAME", "").toString();
 
         if (!instances()->contains(name) && name.length() != 0)
         {
             //qDebug() << "CREATED WIDGET:" << name;
             QGCToolWidget* tool = new QGCToolWidget(name, parent, settings);
+            tool->setObjectName(objname);
             newWidgets.append(tool);
         }
         else if (name.length() == 0)
@@ -403,6 +405,7 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
             {
                 settings->setArrayIndex(num++);
                 settings->setValue("TITLE", instances()->values().at(i)->getTitle());
+                settings->setValue("OBJECT_NAME", instances()->values().at(i)->objectName());
                 //qDebug() << "WRITING TITLE" << instances()->values().at(i)->getTitle();
             }
         }

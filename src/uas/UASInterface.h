@@ -449,6 +449,7 @@ signals:
     void valueChanged(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+    void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs);
 
     void voltageChanged(int uasId, double voltage);
     void waypointUpdated(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool active);

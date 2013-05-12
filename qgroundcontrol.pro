@@ -226,7 +226,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
     src/ui/designer/QGCComboBox.ui \
-    src/ui/designer/QGCTextLabel.ui
+    src/ui/designer/QGCTextLabel.ui \
+    src/ui/uas/UASQuickView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -372,7 +373,10 @@ HEADERS += src/MG.h \
     src/ui/QGCHilXPlaneConfiguration.h \
     src/ui/designer/QGCComboBox.h \
     src/ui/designer/QGCTextLabel.h \
-    src/ui/submainwindow.h
+    src/ui/submainwindow.h \
+    src/ui/dockwidgettitlebareventfilter.h \
+    src/ui/uas/UASQuickView.h \
+    src/ui/uas/UASQuickViewItem.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -537,7 +541,10 @@ SOURCES += src/main.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
     src/ui/designer/QGCComboBox.cc \
     src/ui/designer/QGCTextLabel.cc \
-    src/ui/submainwindow.cpp
+    src/ui/submainwindow.cpp \
+    src/ui/dockwidgettitlebareventfilter.cpp \
+    src/ui/uas/UASQuickViewItem.cc \
+    src/ui/uas/UASQuickView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

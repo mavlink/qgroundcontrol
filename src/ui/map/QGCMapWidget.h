@@ -137,6 +137,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent* event);
 
     UASWaypointManager* currWPManager; ///< The current waypoint manager
+    bool offlineMode;
     QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
     QMap<mapcontrol::WayPointItem*, Waypoint*> iconsToWaypoints;
     Waypoint* firingWaypointChange;

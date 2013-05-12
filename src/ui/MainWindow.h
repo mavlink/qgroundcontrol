@@ -119,6 +119,12 @@ public:
         return autoReconnect;
     }
 
+    /** @brief Get title bar mode setting */
+    bool dockWidgetTitleBarsEnabled()
+    {
+        return dockWidgetTitleBarEnabled;
+    }
+
     /** @brief Get low power mode setting */
     bool lowPowerModeEnabled()
     {
@@ -186,6 +192,8 @@ public slots:
     void reloadStylesheet();
     /** @brief Let the user select the CSS style sheet */
     void selectStylesheet();
+    /** @breif Enable title bars on dock widgets when no in advanced mode */
+    void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
     /** @brief Save power by reducing update rates */
@@ -343,7 +351,7 @@ void createDockWidget(QWidget *parent,QWidget *child,QString title,QString objec
     QPointer<SubMainWindow> simView;
 
     // Center widgets
-    //QPointer<Linecharts> linechartWidget;
+    QPointer<Linecharts> linechartWidget;
     //QPointer<HUD> hudWidget;
     //QPointer<QGCVehicleConfig> configWidget;
     //QPointer<QGCMapTool> mapWidget;
@@ -436,6 +444,7 @@ private:
     QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
     QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
     bool isAdvancedMode;
+    bool dockWidgetTitleBarEnabled;
     Ui::MainWindow ui;
 
     QString getWindowStateKey();
