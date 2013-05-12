@@ -42,7 +42,7 @@ void HUD2ColorDialog::on_instrumentsButton_clicked()
     settings.beginGroup("QGC_HUD2");
     old_color = settings.value("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT).value<QColor>();
 
-    d = new QColorDialog(this);
+    d = new QColorDialog(old_color, this);
     connect(d, SIGNAL(currentColorChanged(QColor)), this->horizon,  SLOT(setColor(QColor)));
     connect(d, SIGNAL(currentColorChanged(QColor)), this->roll,     SLOT(setColor(QColor)));
     connect(d, SIGNAL(currentColorChanged(QColor)), this->speed,    SLOT(setColor(QColor)));
@@ -80,7 +80,7 @@ void HUD2ColorDialog::on_skyButton_clicked()
     old_color = settings.value("SKY_COLOR", SKY_COLOR_DEFAULT).value<QColor>();
 
     QColorDialog *d;
-    d = new QColorDialog(this);
+    d = new QColorDialog(old_color, this);
     connect(d, SIGNAL(currentColorChanged(QColor)), this->horizon, SLOT(setSkyColor(QColor)));
     result = d->exec();
 
@@ -101,13 +101,13 @@ void HUD2ColorDialog::on_gndButton_clicked()
     QColor old_color;
     QColor new_color;
     QSettings settings;
+    QColorDialog *d;
     int result;
 
     settings.beginGroup("QGC_HUD2");
     old_color = settings.value("GND_COLOR", GND_COLOR_DEFAULT).value<QColor>();
 
-    QColorDialog *d;
-    d = new QColorDialog(this);
+    d = new QColorDialog(old_color, this);
     connect(d, SIGNAL(currentColorChanged(QColor)), this->horizon, SLOT(setGndColor(QColor)));
     result = d->exec();
 
@@ -129,8 +129,8 @@ void HUD2ColorDialog::on_defaultsButton_clicked()
     int r = QMessageBox::question(this, tr("Defaults"),
                     tr("Are you sure you want to\n"
                        "reset colors to default values?"),
-                    QMessageBox::Yes ,
-                    QMessageBox::No | QMessageBox::Default | QMessageBox::Escape);
+                    QMessageBox::Yes | QMessageBox::Default,
+                    QMessageBox::No  | QMessageBox::Escape);
 
     if (QMessageBox::Yes == r){
         settings.beginGroup("QGC_HUD2");

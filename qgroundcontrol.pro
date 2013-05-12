@@ -227,7 +227,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
-    src/ui/hud2/HUD2InstrumentsDialog_.ui \
     src/ui/hud2/HUD2RenderDialog.ui \
     src/ui/hud2/HUD2InstrumentDialog.ui \
     src/ui/hud2/HUD2Dialog.ui \
