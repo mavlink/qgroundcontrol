@@ -44,12 +44,17 @@ QGCStatusBar::QGCStatusBar(QWidget *parent) :
 
     loadSettings();
 
-    setStyleSheet("QWidget {border-color: transparent; } QStatusBar {border-color: transparent; border: 0px; border-bottom: 1px solid #101010; border-top: 1px solid #4F4F4F; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818);}");
+    setStyleSheet("QStatusBar { border: 0px; border-bottom: 1px solid #101010; border-top: 1px solid #4F4F4F; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818); } ");
 }
 
 void QGCStatusBar::paintEvent(QPaintEvent * event)
 {
-//    if (currentMessage().length() != 0) {
+    QPainter p(this);
+    QStyleOption opt;
+    opt.initFrom(this);
+    style()->drawPrimitive(QStyle::PE_PanelStatusBar, &opt, &p, this);
+    //QStatusBar::paintEvent(event);
+//    if (currentMessage().length() == 0) {
 //        QStatusBar::paintEvent(event);
 //    } else {
 

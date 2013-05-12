@@ -104,9 +104,14 @@ MainWindow::MainWindow(QWidget *parent):
     lowPowerMode(false)
 {
     hide();
+
     isAdvancedMode = false;
     emit initStatusChanged("Loading UI Settings..");
     loadSettings();
+
+    emit initStatusChanged("Loading Style.");
+    loadStyle(currentStyle);
+
     if (settings.contains("ADVANCED_MODE"))
     {
         isAdvancedMode = settings.value("ADVANCED_MODE").toBool();
@@ -131,9 +136,6 @@ MainWindow::MainWindow(QWidget *parent):
     }
 
     settings.sync();
-
-    emit initStatusChanged("Loading Style.");
-    loadStyle(currentStyle);
 
     emit initStatusChanged("Setting up user interface.");
 
@@ -175,10 +177,10 @@ MainWindow::MainWindow(QWidget *parent):
     advancedActions << ui.actionEngineersView;
 
     toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
-
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
+
 
 
     emit initStatusChanged("Building common widgets.");
@@ -393,7 +395,6 @@ void MainWindow::buildCommonWidgets()
     // Log player
     logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
     customStatusBar->setLogPlayer(logPlayer);
-
 
     // Center widgets
     if (!plannerView)
