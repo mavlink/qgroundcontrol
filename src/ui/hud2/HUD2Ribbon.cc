@@ -397,7 +397,13 @@ void HUD2Ribbon::setColor(QColor color){
     smallPen.setColor(color);
 }
 
+void HUD2Ribbon::setOpacityNeedle(bool op){
+    this->opaqueNeedle = op;
+}
 
+void HUD2Ribbon::setOpacityRibbon(bool op){
+    this->opaqueRibbon = op;
+}
 
 
 

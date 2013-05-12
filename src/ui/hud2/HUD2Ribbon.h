@@ -18,14 +18,14 @@ class HUD2Ribbon : public QWidget
 public:
     explicit HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360);
     void paint(QPainter *painter, float value);
-    bool opaqueNeedle;
-    bool opaqueRibbon;
 
 signals:
     void geometryChanged(const QSize *size);
 
 public slots:
     void setColor(QColor color);
+    void setOpacityNeedle(bool op);
+    void setOpacityRibbon(bool op);
     void updateGeometry(const QSize &size);
 
 public slots:
@@ -53,6 +53,8 @@ private:
     QRect *labelRect;
     QFont labelFont;
     QPolygon numPoly;
+    bool opaqueNeedle;
+    bool opaqueRibbon;
 };
 
 #endif // HUD2RIBBON_H

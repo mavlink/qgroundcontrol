@@ -30,11 +30,8 @@ public:
     
 private slots:
     void on_instrumentsButton_clicked();
-
     void on_skyButton_clicked();
-
     void on_gndButton_clicked();
-
     void on_defaultsButton_clicked();
 
 private:

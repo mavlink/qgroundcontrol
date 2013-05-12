@@ -23,11 +23,3 @@ void HUD2IndicatorCompass::paint(QPainter *painter){
 void HUD2IndicatorCompass::setColor(QColor color){
     ribbon->setColor(color);
 }
-
-void HUD2IndicatorCompass::setRibbonOpacity(bool opacity){
-    ribbon->opaqueRibbon = opacity;
-}
-
-void HUD2IndicatorCompass::setNeedleOpacity(bool opacity){
-    ribbon->opaqueNeedle = opacity;
-}

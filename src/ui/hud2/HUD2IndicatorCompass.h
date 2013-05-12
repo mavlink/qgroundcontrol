@@ -19,8 +19,6 @@ signals:
 public slots:
     void setColor(QColor color);
     void updateGeometry(const QSize &size);
-    void setRibbonOpacity(bool opacity);
-    void setNeedleOpacity(bool opacity);
 
 private:
     const HUD2Data *huddata;
