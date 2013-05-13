@@ -387,24 +387,30 @@ void MainWindow::buildCustomWidget()
             int view = settings.value(QString("TOOL_PARENT_") + tool->objectName(),-1).toInt();
             //settings.setValue(QString("TOOL_PARENT_") + "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView);
             settings.endGroup();
+
+            QDockWidget* dock;
+
             switch (view)
             {
             case VIEW_ENGINEER:
-                createDockWidget(dataView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                dock = createDockWidget(dataView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
             case VIEW_FLIGHT:
-                createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                dock = createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
             case VIEW_SIMULATION:
-                createDockWidget(simView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                dock = createDockWidget(simView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
             case VIEW_MISSION:
-                createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                dock = createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
             default:
-                createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                dock = createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
             }
+
+            // XXX temporary "fix"
+            dock->hide();
 
             //createDockWidget(0,tool,tool->getTitle(),tool->objectName(),view,location);
         }
@@ -663,7 +669,7 @@ void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* w
     parent->addDockWidget(area,widget);
 }
 
-void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
+QDockWidget* MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
 {
     //if (child->objectName() == "")
     //{
@@ -702,6 +708,8 @@ void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,Q
         widget->setMinimumWidth(minwidth);
     }
     addTool(qobject_cast<SubMainWindow*>(parent),view,widget,title,area);
+
+    return widget;
 }
 void MainWindow::loadDockWidget(QString name)
 {
