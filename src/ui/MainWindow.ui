@@ -115,15 +115,9 @@
     <addaction name="actionFullscreen"/>
     <addaction name="actionNormal"/>
    </widget>
-   <widget class="QMenu" name="menuMain">
-    <property name="title">
-     <string>Main Widget</string>
-    </property>
-   </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuPerspectives"/>
-   <addaction name="menuMain"/>
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>

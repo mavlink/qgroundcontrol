@@ -836,16 +836,16 @@ void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
     {
         centerStack->addWidget(widget);
 
-        QAction* tempAction = ui.menuMain->addAction(title);
+//        QAction* tempAction = ui.menuMain->addAction(title);
 
-        tempAction->setCheckable(true);
-        QVariant var;
-        var.setValue((QWidget*)widget);
-        tempAction->setData(var);
-        centerStackActionGroup->addAction(tempAction);
-        connect(tempAction,SIGNAL(triggered()),this, SLOT(showCentralWidget()));
+//        tempAction->setCheckable(true);
+//        QVariant var;
+//        var.setValue((QWidget*)widget);
+//        tempAction->setData(var);
+//        centerStackActionGroup->addAction(tempAction);
+//        connect(tempAction,SIGNAL(triggered()),this, SLOT(showCentralWidget()));
         //connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
-        tempAction->setChecked(widget->isVisible());
+//        tempAction->setChecked(widget->isVisible());
     }
 }
 
