@@ -16,8 +16,8 @@ class HUD2Ribbon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360);
-    void paint(QPainter *painter, float value);
+    explicit HUD2Ribbon(screen_position position, bool wrap360, const float *value, QWidget *parent);
+    void paint(QPainter *painter);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -27,14 +27,18 @@ public slots:
     void setOpacityNeedle(bool op);
     void setOpacityRibbon(bool op);
     void updateGeometry(const QSize &size);
+    void setValuePtr(const float *value);
 
 public slots:
 
 private:
-    void updateRibbon(const QSize &size, int gap, int len);
-    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
+    const float *value;
     screen_position position;
     bool wrap360; // suitable for compass like device
+
+private:
+    void updateRibbon(const QSize &size, int gap, int len);
+    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
 
     qreal bigScratchLenStep; // step in percents of widget sizes
     qreal big_pixstep;

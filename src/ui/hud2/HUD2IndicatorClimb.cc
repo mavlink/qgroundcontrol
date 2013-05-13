@@ -3,23 +3,8 @@
 #include "HUD2IndicatorClimb.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorClimb::HUD2IndicatorClimb(const HUD2Data *huddata, QWidget *parent) :
-    QWidget(parent),
-    huddata(huddata)
+HUD2IndicatorClimb::HUD2IndicatorClimb(const float *value, QWidget *parent) :
+    HUD2Ribbon(POSITION_RIGHT, false, value, parent)
 {
-    ribbon = new HUD2Ribbon(POSITION_RIGHT, this, false);
-}
 
-void HUD2IndicatorClimb::updateGeometry(const QSize &size){
-    ribbon->updateGeometry(size);
-}
-
-void HUD2IndicatorClimb::paint(QPainter *painter){
-    painter->save();
-    ribbon->paint(painter, rad2deg(huddata->roll));
-    painter->restore();
-}
-
-void HUD2IndicatorClimb::setColor(QColor color){
-    ribbon->setColor(color);
 }

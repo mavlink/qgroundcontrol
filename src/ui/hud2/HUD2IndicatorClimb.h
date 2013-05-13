@@ -6,23 +6,11 @@
 #include "HUD2Data.h"
 #include "HUD2Ribbon.h"
 
-class HUD2IndicatorClimb : public QWidget
+class HUD2IndicatorClimb : public HUD2Ribbon
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorClimb(const HUD2Data *huddata, QWidget *parent);
-    void paint(QPainter *painter);
-
-signals:
-    void geometryChanged(const QSize *size);
-
-public slots:
-    void setColor(QColor color);
-    void updateGeometry(const QSize &size);
-
-private:
-    const HUD2Data *huddata;
-    HUD2Ribbon *ribbon;
+    explicit HUD2IndicatorClimb(const float *value, QWidget *parent);
 };
 
 #endif // HUD2INDICATORCLIMB_H

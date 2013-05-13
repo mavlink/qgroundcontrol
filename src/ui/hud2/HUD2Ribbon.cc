@@ -3,8 +3,9 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(screen_position position, QWidget *parent, bool wrap360) :
+HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, const float *value, QWidget *parent) :
     QWidget(parent),
+    value(value),
     position(position),
     wrap360(wrap360)
 {
@@ -138,9 +139,8 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
 void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
     qreal shift;
     int i = 0;
-    int w_render, h_render;
+    int w_render;
     w_render = size.width();
-    h_render = size.height();
 
     // scratches
     small_steps_total = (stepsBig + 1) * stepsSmall;
@@ -307,9 +307,9 @@ static QRect num_str_rect(QPolygon &poly, screen_position position){
     return rect;
 }
 
-void HUD2Ribbon::paint(QPainter *painter, float value){
+void HUD2Ribbon::paint(QPainter *painter){
     QPolygon _numPoly = numPoly;
-    qreal v = value;
+    qreal v = *this->value;
     int i = 0;
 
     // calculate shift for starting point of ribbon
@@ -405,5 +405,6 @@ void HUD2Ribbon::setOpacityRibbon(bool op){
     this->opaqueRibbon = op;
 }
 
-
-
+void HUD2Ribbon::setValuePtr(const float *value){
+    this->value = value;
+}

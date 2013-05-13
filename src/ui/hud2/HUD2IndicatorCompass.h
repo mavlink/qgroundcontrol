@@ -6,23 +6,14 @@
 #include "HUD2Data.h"
 #include "HUD2Ribbon.h"
 
-class HUD2IndicatorCompass : public QWidget
+
+class HUD2IndicatorCompass : public HUD2Ribbon
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent);
-    void paint(QPainter *painter);
-
-signals:
-    void geometryChanged(const QSize *size);
-
-public slots:
-    void setColor(QColor color);
-    void updateGeometry(const QSize &size);
-
-private:
-    const HUD2Data *huddata;
-    HUD2Ribbon *ribbon;
+    explicit HUD2IndicatorCompass(const float *value, QWidget *parent);
 };
+
+
 
 #endif // HUD2INDICATORCOMPASS_H

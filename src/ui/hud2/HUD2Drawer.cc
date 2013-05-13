@@ -11,9 +11,9 @@ HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     horizon(huddata, this),
     roll(huddata, this),
-    speed(huddata, this),
-    climb(huddata, this),
-    compass(huddata, this),
+    speed(&huddata->airspeed, this),
+    climb(&huddata->alt, this),
+    compass(&huddata->yaw, this),
     fps(this)
 {
     defaultColor = QColor(70, 255, 70);

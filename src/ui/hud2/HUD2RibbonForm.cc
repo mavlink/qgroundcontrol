@@ -3,8 +3,8 @@
 
 HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
     QWidget(parent),
-    ribbon(ribbon),
-    ui(new Ui::HUD2RibbonForm)
+    ui(new Ui::HUD2RibbonForm),
+    ribbon(ribbon)
 {
     ui->setupUi(this);
 }
@@ -15,5 +15,9 @@ HUD2RibbonForm::~HUD2RibbonForm()
 }
 
 void HUD2RibbonForm::on_checkBoxNeedle_toggled(bool checked){
-    this->ribbon->setOpacityNeedle(checked);
+    ribbon->setOpacityNeedle(checked);
+}
+
+void HUD2RibbonForm::on_checkBoxRibbon_toggled(bool checked){
+    ribbon->setOpacityRibbon(checked);
 }
