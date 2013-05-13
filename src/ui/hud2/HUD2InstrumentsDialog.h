@@ -11,9 +11,7 @@
 #include "HUD2IndicatorHorizon.h"
 #include "HUD2IndicatorFps.h"
 #include "HUD2IndicatorRoll.h"
-#include "HUD2IndicatorSpeed.h"
-#include "HUD2IndicatorClimb.h"
-#include "HUD2IndicatorCompass.h"
+#include "HUD2Ribbon.h"
 
 namespace Ui {
 class HUD2InstrumentsDialog;
@@ -26,9 +24,9 @@ class HUD2InstrumentsDialog : public QDialog
 public:
     explicit HUD2InstrumentsDialog(HUD2IndicatorHorizon *horizon,
                                    HUD2IndicatorRoll *roll,
-                                   HUD2IndicatorSpeed *speed,
-                                   HUD2IndicatorClimb *climb,
-                                   HUD2IndicatorCompass *compass,
+                                   HUD2Ribbon *speed,
+                                   HUD2Ribbon *climb,
+                                   HUD2Ribbon *compass,
                                    HUD2IndicatorFps *fps,
                                    QWidget *parent);
     ~HUD2InstrumentsDialog();

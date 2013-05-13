@@ -19,6 +19,8 @@ HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
     ui->comboBox->addItem("pitch");
     ui->comboBox->addItem("roll");
     ui->comboBox->addItem("yaw");
+
+    ui->comboBox->setCurrentIndex(ribbon->getValueIdx());
 }
 
 HUD2RibbonForm::~HUD2RibbonForm()

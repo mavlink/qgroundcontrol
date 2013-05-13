@@ -8,9 +8,9 @@
 
 HUD2ColorDialog::HUD2ColorDialog(HUD2IndicatorHorizon *horizon,
                                  HUD2IndicatorRoll *roll,
-                                 HUD2IndicatorSpeed *speed,
-                                 HUD2IndicatorClimb *climb,
-                                 HUD2IndicatorCompass *compass,
+                                 HUD2Ribbon *speed,
+                                 HUD2Ribbon *climb,
+                                 HUD2Ribbon *compass,
                                  HUD2IndicatorFps *fps,
                                  QWidget *parent) :
     QDialog(parent),

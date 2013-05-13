@@ -9,13 +9,8 @@
 TODO:
 - try float coordinates for numbers in yaw indicator
 - numer label in roll indicator
-- colored background for horizon
 - tiny pitch lines on horizon
-- convert all sizes to percents
-- code for detection of invisible elements in yaw and pitch idicators
 - battery indicator
-- altimeter
-- climb meter
 - hide numbers on ribbon when screen size less than critical
 */
 
@@ -136,11 +131,13 @@ void HUD2::switchRender(int type)
 }
 
 
-void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
+void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch,
+                          double yaw, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
+    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch)
+                     && !isnan(yaw) && !isinf(yaw))
     {
         huddata.roll  = roll;
         huddata.pitch = pitch;
@@ -152,8 +149,8 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch, double y
     }
 }
 
-
-void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon, double altitude, quint64 timestamp)
+void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon,
+                                double altitude, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
@@ -162,6 +159,17 @@ void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon, doubl
     huddata.alt = altitude;
 }
 
+void HUD2::updateBattery(UASInterface* uas, double voltage, double percent, int seconds){
+    Q_UNUSED(uas);
+    huddata.batt_voltage = voltage;
+    huddata.batt_charge = percent;
+    huddata.batt_time = seconds;
+}
+
+void HUD2::updateThrust(UASInterface* uas, double thrust){
+    Q_UNUSED(uas);
+    huddata.thrust = thrust;
+}
 
 /**
  * @param uas the UAS/MAV to monitor/display with the HUD

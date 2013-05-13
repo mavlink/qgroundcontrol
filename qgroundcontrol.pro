@@ -385,9 +385,6 @@ HEADERS += src/MG.h \
     src/ui/hud2/HUD2IndicatorHorizonPitchline.h \
     src/ui/hud2/HUD2IndicatorHorizonCrosshair.h \
     src/ui/hud2/HUD2Ribbon.h \
-    src/ui/hud2/HUD2IndicatorSpeed.h \
-    src/ui/hud2/HUD2IndicatorClimb.h \
-    src/ui/hud2/HUD2IndicatorCompass.h \
     src/ui/hud2/HUD2RenderDialog.h \
     src/ui/hud2/HUD2ColorDialog.h \
     src/ui/hud2/HUD2RibbonForm.h \
@@ -564,10 +561,7 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2IndicatorHorizon.cc \
     src/ui/hud2/HUD2IndicatorHorizonPitchline.cc \
     src/ui/hud2/HUD2IndicatorHorizonCrosshair.cc \
-    src/ui/hud2/HUD2IndicatorSpeed.cc \
     src/ui/hud2/HUD2Ribbon.cc \
-    src/ui/hud2/HUD2IndicatorClimb.cc \
-    src/ui/hud2/HUD2IndicatorCompass.cc \
     src/ui/hud2/HUD2RenderDialog.cc \
     src/ui/hud2/HUD2ColorDialog.cc \
     src/ui/hud2/HUD2RibbonForm.cc \

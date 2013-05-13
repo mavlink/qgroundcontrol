@@ -18,11 +18,13 @@ class HUD2Ribbon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Ribbon(screen_position position, bool wrap360, QString name, HUD2Data *huddata, QWidget *parent);
+    explicit HUD2Ribbon(screen_position position, bool wrap360, QString name,
+                        const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
     bool getOpacityNeedle(void){return opaqueNeedle;}
     bool getOpacityRibbon(void){return opaqueRibbon;}
     bool getEnabled(void){return enabled;}
+    int getValueIdx(void){return value_idx;}
 
 signals:
     void geometryChanged(const QSize *size);
@@ -38,13 +40,15 @@ public slots:
 public slots:
 
 private:
-    float *valuep;
+    const float *valuep;
     screen_position position;
     bool wrap360; // suitable for compass like device
     bool enabled;
     QString name;
-    HUD2Data *huddata;
+    const HUD2Data *huddata;
+    int value_idx;
 
+private:
     void updateRibbon(const QSize &size, int gap, int len);
     void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
 

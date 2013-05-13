@@ -7,13 +7,13 @@
 #include "HUD2ColorDialog.h"
 
 
-HUD2Drawer::HUD2Drawer(HUD2Data *huddata, QWidget *parent) :
+HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     horizon(&huddata->pitch, &huddata->roll, this),
     roll(&huddata->roll, this),
-    speed(huddata, this),
-    climb(huddata, this),
-    compass(huddata, this),
+    speed(POSITION_LEFT, false, QString("SPEEDOMETER"), huddata, this),
+    climb(POSITION_RIGHT, false, QString("CLIMBMETER"), huddata, this),
+    compass(POSITION_TOP, true, QString("COMPASS"), huddata, this),
     fps(this)
 {
     defaultColor = QColor(70, 255, 70);
@@ -31,6 +31,14 @@ HUD2Drawer::HUD2Drawer(HUD2Data *huddata, QWidget *parent) :
     climb.setColor(color);
     compass.setColor(color);
     fps.setColor(color);
+
+    // set more or less suitable defaults
+    if (!settings.contains("SPEEDOMETER_VALUE_INDEX"))
+        settings.setValue("SPEEDOMETER_VALUE_INDEX", VALUE_IDX_AIRSPEED);
+    if (!settings.contains("CLIMBMETER_VALUE_INDEX"))
+        settings.setValue("CLIMBMETER_VALUE_INDEX", VALUE_IDX_ALT);
+    if (!settings.contains("COMPASS_VALUE_INDEX"))
+        settings.setValue("COMPASS_VALUE_INDEX", VALUE_IDX_YAW);
 
     settings.endGroup();
 }

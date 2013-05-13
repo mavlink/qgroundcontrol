@@ -3,7 +3,7 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, HUD2Data *huddata, QWidget *parent) :
+HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     position(position),
     wrap360(wrap360),
@@ -16,7 +16,8 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, HUD
     opaqueNeedle = settings.value(name + QString("_OPAQUE_NEEDLE"), false).toBool();
     opaqueRibbon = settings.value(name + QString("_OPAQUE_RIBBON"), false).toBool();
     enabled = settings.value(name + QString("_ENABLED"), true).toBool();
-    setValuePtr(settings.value(name + QString("_VALUE_INDEX"), 0).toInt());
+    value_idx = settings.value(name + QString("_VALUE_INDEX"), 0).toInt();
+    setValuePtr(value_idx);
 
     settings.endGroup();
 
@@ -439,6 +440,8 @@ void HUD2Ribbon::setEnabled(bool checked){
 }
 
 void HUD2Ribbon::setValuePtr(int value_idx){
+    this->value_idx = value_idx;
+
     switch(value_idx){
     case VALUE_IDX_AIRSPEED:
         valuep = &huddata->airspeed;
@@ -460,6 +463,7 @@ void HUD2Ribbon::setValuePtr(int value_idx){
         break;
     default:
         valuep = &huddata->airspeed;
+        this->value_idx = VALUE_IDX_AIRSPEED;
         break;
     }
 }

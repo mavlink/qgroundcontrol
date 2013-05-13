@@ -105,6 +105,8 @@ public slots:
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
+    void updateThrust(UASInterface* uas, double thrust);
+    void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
 
     void toggleAntialising(bool aa);
     void switchRender(int type);

@@ -3,11 +3,11 @@
 
 typedef enum {
     VALUE_IDX_AIRSPEED = 0,
-    VALUE_IDX_ALT,
-    VALUE_IDX_GROUNDSPEED,
-    VALUE_IDX_PITCH,
-    VALUE_IDX_ROLL,
-    VALUE_IDX_YAW
+    VALUE_IDX_ALT = 1,
+    VALUE_IDX_GROUNDSPEED = 2,
+    VALUE_IDX_PITCH = 3,
+    VALUE_IDX_ROLL = 4,
+    VALUE_IDX_YAW = 5
 }value_idx_enum;
 
 class HUD2Data
@@ -20,10 +20,12 @@ public:
     float lat;
     float lon;
     float alt;
-
     float airspeed;
     float groundspeed;
-//    int   fps; // repaints per second
+    float batt_voltage;
+    float batt_charge;
+    int   batt_time;
+    float thrust;
 };
 
 #endif // HUD2DATA_H
