@@ -5,9 +5,9 @@
 #include "HUD2Math.h"
 #include "HUD2IndicatorRoll.h"
 
-HUD2IndicatorRoll::HUD2IndicatorRoll(const HUD2Data *huddata, QWidget *parent) :
+HUD2IndicatorRoll::HUD2IndicatorRoll(const float *value, QWidget *parent) :
     QWidget(parent),
-    huddata(huddata)
+    value(value)
 {
     this->thickPen = QPen(Qt::green);
     this->thickPen.setWidth(3);
@@ -100,7 +100,7 @@ void HUD2IndicatorRoll::paint(QPainter *painter){
 
     n = sizeof(arrowLines) / sizeof(arrowLines[0]);
     painter->setPen(arrowPen);
-    painter->rotate(rad2deg(huddata->roll));
+    painter->rotate(rad2deg(*value));
     painter->drawLines(arrowLines, n);
 
     painter->restore();

@@ -5,11 +5,12 @@
 #include "HUD2IndicatorHorizon.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorHorizon::HUD2IndicatorHorizon(const HUD2Data *huddata, QWidget *parent) :
+HUD2IndicatorHorizon::HUD2IndicatorHorizon(const float *pitch, const float *roll, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
-    huddata(huddata)
+    pitch(pitch),
+    roll(roll)
 {
     QColor color;
     QSettings settings;
@@ -32,7 +33,7 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(const HUD2Data *huddata, QWidget *par
     gndPen   = QPen(color);
     gndBrush = QBrush(color);
 
-    coloredBackground = true;
+    coloredBackground = settings.value("HORIZON_COLORED_BG", true).toBool();;
 
     settings.endGroup();
 }
@@ -47,7 +48,7 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
     pen.setWidth(tmp);
     hirizonleft.setLine(-x1, 0, -a, 0);
     horizonright.setLine(a, 0, x1, 0);
-    
+
     // pitchlines
     pixstep = size.height() / pitchcount;
     pitchline.updateGeometry(size);
@@ -94,16 +95,16 @@ static int _getline_y(QPoint p1, QPoint p2, int x){
 
 void HUD2IndicatorHorizon::paint(QPainter *painter){
 
-    qreal pitch = rad2deg(-huddata->pitch);
-    qreal delta_y = pitch * (pixstep / degstep);
-    qreal delta_x = tan(-huddata->roll) * delta_y;
+    qreal pitch_ = rad2deg(-*pitch);
+    qreal delta_y = pitch_ * (pixstep / degstep);
+    qreal delta_x = tan(-*roll) * delta_y;
 
     // create complex transfomation
     QPoint center = painter->window().center();
     QTransform transform;
     transform.translate(center.x(), center.y());
     transform.translate(delta_x, delta_y);
-    transform.rotate(rad2deg(huddata->roll));
+    transform.rotate(rad2deg(*roll));
 
     if (coloredBackground){
         // draw colored background
@@ -176,3 +177,5 @@ void HUD2IndicatorHorizon::setGndColor(QColor color){
     gndPen.setColor(color);
     gndBrush.setColor(color);
 }
+
+

@@ -1,3 +1,5 @@
+#include <QSettings>
+
 #include "HUD2RibbonForm.h"
 #include "ui_HUD2RibbonForm.h"
 
@@ -7,6 +9,11 @@ HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
     ribbon(ribbon)
 {
     ui->setupUi(this);
+    ui->checkBoxNeedle->setChecked(ribbon->getOpacityNeedle());
+    ui->checkBoxRibbon->setChecked(ribbon->getOpacityRibbon());
+    ui->checkBoxEnable->setChecked(ribbon->getEnabled());
+
+    ui->comboBox->addItem("test", 10);
 }
 
 HUD2RibbonForm::~HUD2RibbonForm()
@@ -20,4 +27,18 @@ void HUD2RibbonForm::on_checkBoxNeedle_toggled(bool checked){
 
 void HUD2RibbonForm::on_checkBoxRibbon_toggled(bool checked){
     ribbon->setOpacityRibbon(checked);
+}
+
+void HUD2RibbonForm::on_checkBoxEnable_toggled(bool checked){
+    ribbon->setEnabled(checked);
+}
+
+void HUD2RibbonForm::on_comboBox_activated(int index)
+{
+    switch(index){
+    case 0:
+        ribbon->setValuePtr(0);
+    case 1:
+        ribbon->setValuePtr(1);
+    }
 }

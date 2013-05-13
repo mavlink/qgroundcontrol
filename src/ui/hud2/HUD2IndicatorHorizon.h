@@ -13,8 +13,9 @@ class HUD2IndicatorHorizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorHorizon(const HUD2Data *huddata, QWidget *parent);
+    explicit HUD2IndicatorHorizon(const float *pitch, const float *roll, QWidget *parent);
     void paint(QPainter *painter);
+    bool getColoredBg(void){return coloredBackground;}
 
 signals:
     void geometryChanged(const QSize *size);
@@ -24,6 +25,7 @@ public slots:
     void setSkyColor(QColor color);
     void setGndColor(QColor color);
     void updateGeometry(const QSize &size);
+    void setColoredBg(bool checked){coloredBackground = checked;}
 
 private:
     void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
@@ -37,7 +39,6 @@ private:
     HUD2IndicatorHorizonCrosshair crosshair;
 
     qreal gap; /* space between right and left parts */
-    const HUD2Data *huddata;
     QPen pen;
     QLine hirizonleft;
     QLine horizonright;
@@ -49,6 +50,9 @@ private:
     QPen   gndPen;
     QBrush skyBrush;
     QBrush gndBrush;
+
+    const float *pitch;
+    const float *roll;
 };
 
 #endif // HUD2INDICATORHORIZON_H

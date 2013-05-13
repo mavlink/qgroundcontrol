@@ -17,8 +17,8 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>10</y>
-     <width>161</width>
+     <y>30</y>
+     <width>131</width>
      <height>19</height>
     </rect>
    </property>
@@ -30,13 +30,36 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>30</y>
+     <y>50</y>
      <width>141</width>
      <height>19</height>
     </rect>
    </property>
    <property name="text">
     <string>Opaque ribbon</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBoxEnable">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>111</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Enabled</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>70</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
    </property>
   </widget>
  </widget>

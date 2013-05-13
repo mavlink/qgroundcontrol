@@ -11,7 +11,7 @@ class HUD2IndicatorCompass : public HUD2Ribbon
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorCompass(const float *value, QWidget *parent);
+    explicit HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent);
 };
 
 

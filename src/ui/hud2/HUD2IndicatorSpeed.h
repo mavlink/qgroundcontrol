@@ -10,7 +10,7 @@ class HUD2IndicatorSpeed : public HUD2Ribbon
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorSpeed(const float *value, QWidget *parent);
+    explicit HUD2IndicatorSpeed(const HUD2Data *huddata, QWidget *parent);
 };
 
 

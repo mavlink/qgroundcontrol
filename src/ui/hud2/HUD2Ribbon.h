@@ -5,6 +5,8 @@
 #include <QPen>
 #include <QFont>
 
+#include "HUD2Data.h"
+
 typedef enum {
     POSITION_LEFT = 0,
     POSITION_RIGHT = 1,
@@ -16,8 +18,11 @@ class HUD2Ribbon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Ribbon(screen_position position, bool wrap360, const float *value, QWidget *parent);
+    explicit HUD2Ribbon(screen_position position, bool wrap360, QString name, const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
+    bool getOpacityNeedle(void){return opaqueNeedle;}
+    bool getOpacityRibbon(void){return opaqueRibbon;}
+    bool getEnabled(void){return enabled;}
 
 signals:
     void geometryChanged(const QSize *size);
@@ -26,17 +31,20 @@ public slots:
     void setColor(QColor color);
     void setOpacityNeedle(bool op);
     void setOpacityRibbon(bool op);
+    void setEnabled(bool checked);
     void updateGeometry(const QSize &size);
-    void setValuePtr(const float *value);
+    void setValuePtr(int value_idx);
 
 public slots:
 
 private:
-    const float *value;
+    const float *valuep;
     screen_position position;
     bool wrap360; // suitable for compass like device
+    bool enabled;
+    QString name;
+    const HUD2Data *huddata;
 
-private:
     void updateRibbon(const QSize &size, int gap, int len);
     void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
 

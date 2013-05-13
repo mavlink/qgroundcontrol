@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "HUD2Ribbon.h"
+#include "HUD2Data.h"
 
 namespace Ui {
 class HUD2RibbonForm;
@@ -19,6 +20,8 @@ public:
 private slots:
     void on_checkBoxNeedle_toggled(bool checked);
     void on_checkBoxRibbon_toggled(bool checked);
+    void on_checkBoxEnable_toggled(bool checked);
+    void on_comboBox_activated(int index);
 
 private:
     Ui::HUD2RibbonForm *ui;

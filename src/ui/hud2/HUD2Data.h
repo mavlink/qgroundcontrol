@@ -1,6 +1,15 @@
 #ifndef HUD2DATA_H
 #define HUD2DATA_H
 
+typedef enum {
+    VALUE_IDX_AIRSPEED = 0,
+    VALUE_IDX_ALT,
+    VALUE_IDX_GROUNDSPEED,
+    VALUE_IDX_PITCH,
+    VALUE_IDX_ROLL,
+    VALUE_IDX_YAW
+}value_idx_enum;
+
 class HUD2Data
 {
 public:

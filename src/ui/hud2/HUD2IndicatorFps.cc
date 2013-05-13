@@ -5,6 +5,7 @@
 HUD2IndicatorFps::HUD2IndicatorFps(QWidget *parent) :
     QWidget(parent)
 {
+    enabled = true;
     pen = QPen(Qt::green);
     pen.setWidth(1);
 
@@ -22,12 +23,14 @@ void HUD2IndicatorFps::updateGeometry(const QSize &size){
 }
 
 void HUD2IndicatorFps::paint(QPainter *painter){
-    frames++;
-    painter->save();
-    painter->setPen(pen);
-    painter->setFont(font);
-    painter->drawText(0, painter->window().height(), QString::number(fps));
-    painter->restore();
+    if (enabled){
+        frames++;
+        painter->save();
+        painter->setPen(pen);
+        painter->setFont(font);
+        painter->drawText(0, painter->window().height(), QString::number(fps));
+        painter->restore();
+    }
 }
 
 void HUD2IndicatorFps::setColor(QColor color){
@@ -35,6 +38,10 @@ void HUD2IndicatorFps::setColor(QColor color){
 }
 
 void HUD2IndicatorFps::calc(void){
-    fps = frames;
-    frames = 0;
+    if (enabled){
+        fps = frames;
+        frames = 0;
+    }
 }
+
+

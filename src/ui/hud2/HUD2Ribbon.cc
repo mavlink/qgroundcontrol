@@ -3,14 +3,22 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, const float *value, QWidget *parent) :
+HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
-    value(value),
     position(position),
-    wrap360(wrap360)
+    wrap360(wrap360),
+    name(name),
+    huddata(huddata)
 {
-    opaqueNeedle = false;
-    opaqueRibbon = false;
+    QSettings settings;
+
+    settings.beginGroup("QGC_HUD2");
+    opaqueNeedle = settings.value(name + QString("_OPAQUE_NEEDLE"), false).toBool();
+    opaqueRibbon = settings.value(name + QString("_OPAQUE_RIBBON"), false).toBool();
+    enabled = settings.value(name + QString("_ENABLED"), true).toBool();
+    setValuePtr(settings.value(name + QString("_VALUE_INDEX"), 0).toInt());
+
+    settings.endGroup();
 
     bigScratchLenStep = 20.0;
     bigScratchValueStep = 10;
@@ -308,8 +316,12 @@ static QRect num_str_rect(QPolygon &poly, screen_position position){
 }
 
 void HUD2Ribbon::paint(QPainter *painter){
+
+    if (!enabled)
+        return;
+
     QPolygon _numPoly = numPoly;
-    qreal v = *this->value;
+    qreal v = *valuep;
     int i = 0;
 
     // calculate shift for starting point of ribbon
@@ -399,12 +411,49 @@ void HUD2Ribbon::setColor(QColor color){
 
 void HUD2Ribbon::setOpacityNeedle(bool op){
     this->opaqueNeedle = op;
+
+    QSettings settings;
+    QString str = name + "_OPAQUE_NEEDLE";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, op);
+    settings.endGroup();
 }
 
 void HUD2Ribbon::setOpacityRibbon(bool op){
     this->opaqueRibbon = op;
+
+    QSettings settings;
+    QString str = name + "_OPAQUE_RIBBON";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, op);
+    settings.endGroup();
 }
 
-void HUD2Ribbon::setValuePtr(const float *value){
-    this->value = value;
+void HUD2Ribbon::setEnabled(bool checked){
+    enabled = checked;
+    QSettings settings;
+    QString str = name + "_ENABLED";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, checked);
+    settings.endGroup();
 }
+
+void HUD2Ribbon::setValuePtr(int value_idx){
+    switch(value_idx){
+    case VALUE_IDX_AIRSPEED:
+        valuep = &huddata->airspeed;
+    case VALUE_IDX_ALT:
+        valuep = &huddata->alt;
+    case VALUE_IDX_GROUNDSPEED:
+        valuep = &huddata->groundspeed;
+    case VALUE_IDX_PITCH:
+        valuep = &huddata->pitch;
+    case VALUE_IDX_ROLL:
+        valuep = &huddata->roll;
+    case VALUE_IDX_YAW:
+        valuep = &huddata->yaw;
+    }
+}
+
+
+
