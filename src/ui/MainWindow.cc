@@ -784,7 +784,15 @@ void MainWindow::loadDockWidget(QString name)
     }
     else
     {
-        qDebug() << "Error loading window:" << name;
+        if (customWidgetNameToFilenameMap.contains(name))
+        {
+            loadCustomWidget(customWidgetNameToFilenameMap[name],currentView);
+            //customWidgetNameToFilenameMap.remove(name);
+        }
+        else
+        {
+            qDebug() << "Error loading window:" << name;
+        }
     }
 }
 
@@ -940,6 +948,45 @@ void MainWindow::loadCustomWidget()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     if (fileName != "") loadCustomWidget(fileName);
 }
+void MainWindow::loadCustomWidget(const QString& fileName, int view)
+{
+    QGCToolWidget* tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(fileName, true))
+    {
+        qDebug() << "Loading custom tool:" << tool->getTitle() << tool->objectName();
+        switch ((VIEW_SECTIONS)view)
+        {
+        case VIEW_ENGINEER:
+            createDockWidget(dataView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_FLIGHT:
+            createDockWidget(pilotView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_SIMULATION:
+            createDockWidget(simView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        case VIEW_MISSION:
+            createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            break;
+        default:
+            {
+                //Delete tool, create menu item to tie it to.
+                customWidgetNameToFilenameMap[tool->objectName()+"DOCK"] = fileName;
+                QAction* tempAction = ui.menuTools->addAction(tool->getTitle());
+                menuToDockNameMap[tempAction] = tool->objectName()+"DOCK";
+                tempAction->setCheckable(true);
+                connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+                tool->deleteLater();
+                //createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            }
+            break;
+        }
+    }
+    else
+    {
+        return;
+    }
+}
 
 void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
 {
@@ -967,7 +1014,16 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
             createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         default:
-            createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            {
+                //Delete tool, create menu item to tie it to.
+                customWidgetNameToFilenameMap[tool->objectName()+"DOCK"] = fileName;
+                QAction* tempAction = ui.menuTools->addAction(tool->getTitle());
+                menuToDockNameMap[tempAction] = tool->objectName()+"DOCK";
+                tempAction->setCheckable(true);
+                connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+                tool->deleteLater();
+                //createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
+            }
             break;
         }
 
