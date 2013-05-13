@@ -3,7 +3,7 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, const HUD2Data *huddata, QWidget *parent) :
+HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     position(position),
     wrap360(wrap360),
@@ -442,16 +442,25 @@ void HUD2Ribbon::setValuePtr(int value_idx){
     switch(value_idx){
     case VALUE_IDX_AIRSPEED:
         valuep = &huddata->airspeed;
+        break;
     case VALUE_IDX_ALT:
         valuep = &huddata->alt;
+        break;
     case VALUE_IDX_GROUNDSPEED:
         valuep = &huddata->groundspeed;
+        break;
     case VALUE_IDX_PITCH:
         valuep = &huddata->pitch;
+        break;
     case VALUE_IDX_ROLL:
         valuep = &huddata->roll;
+        break;
     case VALUE_IDX_YAW:
         valuep = &huddata->yaw;
+        break;
+    default:
+        valuep = &huddata->airspeed;
+        break;
     }
 }
 

@@ -13,7 +13,12 @@ HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
     ui->checkBoxRibbon->setChecked(ribbon->getOpacityRibbon());
     ui->checkBoxEnable->setChecked(ribbon->getEnabled());
 
-    ui->comboBox->addItem("test", 10);
+    ui->comboBox->addItem("airspeed");
+    ui->comboBox->addItem("alt");
+    ui->comboBox->addItem("groundspeed");
+    ui->comboBox->addItem("pitch");
+    ui->comboBox->addItem("roll");
+    ui->comboBox->addItem("yaw");
 }
 
 HUD2RibbonForm::~HUD2RibbonForm()
@@ -33,12 +38,6 @@ void HUD2RibbonForm::on_checkBoxEnable_toggled(bool checked){
     ribbon->setEnabled(checked);
 }
 
-void HUD2RibbonForm::on_comboBox_activated(int index)
-{
-    switch(index){
-    case 0:
-        ribbon->setValuePtr(0);
-    case 1:
-        ribbon->setValuePtr(1);
-    }
+void HUD2RibbonForm::on_comboBox_activated(int index){
+    ribbon->setValuePtr(index);
 }

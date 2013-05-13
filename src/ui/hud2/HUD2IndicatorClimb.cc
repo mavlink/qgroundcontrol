@@ -3,7 +3,7 @@
 #include "HUD2IndicatorClimb.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorClimb::HUD2IndicatorClimb(const HUD2Data *data, QWidget *parent) :
-    HUD2Ribbon(POSITION_RIGHT, false, QString("CLIMBMETER"), data, parent)
+HUD2IndicatorClimb::HUD2IndicatorClimb(HUD2Data *huddata, QWidget *parent) :
+    HUD2Ribbon(POSITION_RIGHT, false, QString("CLIMBMETER"), huddata, parent)
 {
 }

@@ -10,7 +10,7 @@ class HUD2IndicatorClimb : public HUD2Ribbon
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorClimb(const HUD2Data *data, QWidget *parent);
+    explicit HUD2IndicatorClimb(HUD2Data *huddata, QWidget *parent);
 };
 
 #endif // HUD2INDICATORCLIMB_H

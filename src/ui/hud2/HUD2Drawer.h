@@ -28,7 +28,7 @@ class HUD2Drawer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2Drawer(const HUD2Data *huddata, QWidget *parent);
+    explicit HUD2Drawer(HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:

@@ -7,7 +7,7 @@
 #include "HUD2ColorDialog.h"
 
 
-HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
+HUD2Drawer::HUD2Drawer(HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     horizon(&huddata->pitch, &huddata->roll, this),
     roll(&huddata->roll, this),
