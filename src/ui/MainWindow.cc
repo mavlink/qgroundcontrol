@@ -1311,14 +1311,46 @@ void MainWindow::connectCommonActions()
     perspectives->setExclusive(true);
 
     // Mark the right one as selected
-    if (currentView == VIEW_ENGINEER) ui.actionEngineersView->setChecked(true);
-    if (currentView == VIEW_MAVLINK) ui.actionMavlinkView->setChecked(true);
-    if (currentView == VIEW_FLIGHT) ui.actionFlightView->setChecked(true);
-    if (currentView == VIEW_SIMULATION) ui.actionSimulation_View->setChecked(true);
-    if (currentView == VIEW_MISSION) ui.actionMissionView->setChecked(true);
-    if (currentView == VIEW_CONFIGURATION) ui.actionConfiguration_2->setChecked(true);
-    if (currentView == VIEW_FIRMWAREUPDATE) ui.actionFirmwareUpdateView->setChecked(true);
-    if (currentView == VIEW_UNCONNECTED) ui.actionUnconnectedView->setChecked(true);
+    if (currentView == VIEW_ENGINEER)
+    {
+        ui.actionEngineersView->setChecked(true);
+        ui.actionEngineersView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_MAVLINK)
+    {
+        ui.actionMavlinkView->setChecked(true);
+        ui.actionMavlinkView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_FLIGHT)
+    {
+        ui.actionFlightView->setChecked(true);
+        ui.actionFlightView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_SIMULATION)
+    {
+        ui.actionSimulation_View->setChecked(true);
+        ui.actionSimulation_View->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_MISSION)
+    {
+        ui.actionMissionView->setChecked(true);
+        ui.actionMissionView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_CONFIGURATION)
+    {
+        ui.actionConfiguration_2->setChecked(true);
+        ui.actionConfiguration_2->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_FIRMWAREUPDATE)
+    {
+        ui.actionFirmwareUpdateView->setChecked(true);
+        ui.actionFirmwareUpdateView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_UNCONNECTED)
+    {
+        ui.actionUnconnectedView->setChecked(true);
+        ui.actionUnconnectedView->activate(QAction::Trigger);
+    }
 
     // The UAS actions are not enabled without connection to system
     ui.actionLiftoff->setEnabled(false);
