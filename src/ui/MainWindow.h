@@ -215,6 +215,7 @@ public slots:
 
     /** @brief Load a custom tool widget from a file */
     void loadCustomWidget(const QString& fileName, bool singleinstance=false);
+    void loadCustomWidget(const QString& fileName, int view);
 
     /** @brief Load custom widgets from default file */
     void loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType);
@@ -440,6 +441,7 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private:
+    QMap<QString,QString> customWidgetNameToFilenameMap;
     QMap<QAction*,QString > menuToDockNameMap;
     QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
     QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
