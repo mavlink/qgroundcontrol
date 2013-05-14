@@ -433,7 +433,7 @@ void HUD::updateLoad(UASInterface* uas, double load)
  */
 float HUD::refToScreenX(float x)
 {
-    //qDebug() << "sX: " << (scalingFactor * x);
+    //qDebug() << "sX: " << (scalingFactor * x) << "Orig:" << x;
     return (scalingFactor * x);
 }
 /**
@@ -814,10 +814,10 @@ void HUD::paintHUD()
             painter.setPen(linePen);
 
             // CHANGE RATE STRIPS
-            drawChangeRateStrip(-65.0f, -60.0f, 25.0f, -10.0f, 10.0f, -zSpeed, &painter);
+            drawChangeRateStrip(-95.0f, -60.0f, 40.0f, -10.0f, 10.0f, -zSpeed, &painter);
 
             // CHANGE RATE STRIPS
-            drawChangeRateStrip(65.0f, -60.0f, 25.0f, -10.0f, 10.0f, totalAcc, &painter);
+            drawChangeRateStrip(95.0f, -60.0f, 40.0f, -10.0f, 10.0f, totalAcc, &painter,true);
 
             // GAUGES
 
@@ -833,11 +833,11 @@ void HUD::paintHUD()
             painter.setBrush(Qt::NoBrush);
             painter.setPen(linePen);
 
-            drawChangeIndicatorGauge(-vGaugeSpacing, 35.0f, 30.0f, 10.0f, gaugeAltitude, defaultColor, &painter, false);
+            drawChangeIndicatorGauge(-vGaugeSpacing, 35.0f, 15.0f, 10.0f, gaugeAltitude, defaultColor, &painter, false);
             paintText("alt m", defaultColor, 5.5f, -73.0f, 50, &painter);
 
             // Right speed gauge
-            drawChangeIndicatorGauge(vGaugeSpacing, 35.0f, 30.0f, 10.0f, totalSpeed, defaultColor, &painter, false);
+            drawChangeIndicatorGauge(vGaugeSpacing, 35.0f, 15.0f, 10.0f, totalSpeed, defaultColor, &painter, false);
             paintText("v m/s", defaultColor, 5.5f, 55.0f, 50, &painter);
 
 
@@ -1091,7 +1091,7 @@ void HUD::drawPolygon(QPolygonF refPolygon, QPainter* painter)
     painter->drawPolygon(draw);
 }
 
-void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter)
+void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter,bool reverse)
 {
     float scaledValue = value;
 
@@ -1115,18 +1115,43 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
 
     // Indicator lines
     // Top horizontal line
-    drawLine(xRef, yRef, xRef+width, yRef, lineWidth, defaultColor, painter);
-    // Vertical main line
-    drawLine(xRef+width/2.0f, yRef, xRef+width/2.0f, yRef+height, lineWidth, defaultColor, painter);
-    // Zero mark
-    drawLine(xRef, yRef+height/2.0f, xRef+width, yRef+height/2.0f, lineWidth, defaultColor, painter);
-    // Horizontal bottom line
-    drawLine(xRef, yRef+height, xRef+width, yRef+height, lineWidth, defaultColor, painter);
+    if (reverse)
+    {
+        drawLine(xRef, yRef, xRef-width, yRef, lineWidth, defaultColor, painter);
+        // Vertical main line
+        drawLine(xRef-width/2.0f, yRef, xRef-width/2.0f, yRef+height, lineWidth, defaultColor, painter);
+        // Zero mark
+        drawLine(xRef, yRef+height/2.0f, xRef-width, yRef+height/2.0f, lineWidth, defaultColor, painter);
+        // Horizontal bottom line
+        drawLine(xRef, yRef+height, xRef-width, yRef+height, lineWidth, defaultColor, painter);
 
-    // Text
-    QString label;
-    label.sprintf("< %+06.2f", value);
-    paintText(label, defaultColor, 6.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
+        // Text
+        QString label;
+        label.sprintf("%+06.2f >", value);
+
+        QFont font("Bitstream Vera Sans");
+        // Enforce minimum font size of 5 pixels
+        //int fSize = qMax(5, (int)(6.0f*scalingFactor*1.26f));
+        font.setPixelSize(6.0f * 1.26f);
+
+        QFontMetrics metrics = QFontMetrics(font);
+        paintText(label, defaultColor, 6.0f, (xRef-width) - metrics.width(label), yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
+    }
+    else
+    {
+        drawLine(xRef, yRef, xRef+width, yRef, lineWidth, defaultColor, painter);
+        // Vertical main line
+        drawLine(xRef+width/2.0f, yRef, xRef+width/2.0f, yRef+height, lineWidth, defaultColor, painter);
+        // Zero mark
+        drawLine(xRef, yRef+height/2.0f, xRef+width, yRef+height/2.0f, lineWidth, defaultColor, painter);
+        // Horizontal bottom line
+        drawLine(xRef, yRef+height, xRef+width, yRef+height, lineWidth, defaultColor, painter);
+
+        // Text
+        QString label;
+        label.sprintf("< %+06.2f", value);
+        paintText(label, defaultColor, 6.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
+    }
 }
 
 //void HUD::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
