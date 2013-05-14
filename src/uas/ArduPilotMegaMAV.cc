@@ -31,8 +31,16 @@ ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
     UAS(mavlink, id)//,
     // place other initializers here
 {
+    //This does not seem to work. Manually request each stream type at a specified rate.
     // Ask for all streams at 4 Hz
-    enableAllDataTransmission(4);
+    //enableAllDataTransmission(4);
+    enableExtendedSystemStatusTransmission(2);
+    enablePositionTransmission(3);
+    enableExtra1Transmission(10);
+    enableExtra2Transmission(10);
+    enableExtra3Transmission(2);
+    enableRawSensorDataTransmission(2);
+    enableRCChannelDataTransmission(2);
 }
 
 /**
