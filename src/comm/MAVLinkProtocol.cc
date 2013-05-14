@@ -384,25 +384,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Create a new UAS object
                 uas = QGCMAVLinkUASFactory::createUAS(this, link, message.sysid, &heartbeat);
 
-                //This is the first instance of this UAS being known, request update rates:
-
-                mavlink_message_t newmsg;
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,2,2,1); // Extended Status, 2hz
-                sendMessage(link,newmsg);
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,6,3,1); //Position 3hz
-                sendMessage(link,newmsg);
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,10,10,1); //Extra 1 10hz
-                sendMessage(link,newmsg);
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,11,10,1); //Extra 2 10hz
-                sendMessage(link,newmsg);
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,12,2,1); //Extra 3 2hz
-                sendMessage(link,newmsg);
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,1,2,1); //Raw Sensors 2hz
-                sendMessage(link,newmsg);
-                mavlink_msg_request_data_stream_pack(1,255,&newmsg,message.sysid,message.compid,3,2,1); //RC Channels 2hz
-                sendMessage(link,newmsg);
-
-
             }
 
             // Only count message if UAS exists for this message
