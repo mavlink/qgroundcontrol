@@ -213,7 +213,8 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
                        int dataBits, int stopBits) :
     port(NULL),
     ports(new QVector<QString>()),
-    m_stopp(false)
+    m_stopp(false),
+    bytesRead(0)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
@@ -396,6 +397,10 @@ void SerialLink::run()
     hardwareConnect();
 
     // Qt way to make clear what a while(1) loop does
+    quint64 msecs = QDateTime::currentMSecsSinceEpoch();
+    quint64 bytes = 0;
+    bool triedreset = false;
+    bool triedDTR = false;
     forever
     {
         {
@@ -408,6 +413,37 @@ void SerialLink::run()
         }
         // Check if new bytes have arrived, if yes, emit the notification signal
         checkForBytes();
+        if (bytes != bytesRead)
+        {
+            bytes = bytesRead;
+            msecs = QDateTime::currentMSecsSinceEpoch();
+        }
+        else
+        {
+            if (QDateTime::currentMSecsSinceEpoch() - msecs > 10000)
+            {
+                //It's been 10 seconds since the last data came in. Reset and try again
+                msecs = QDateTime::currentMSecsSinceEpoch();
+                if (!triedDTR && triedreset)
+                {
+                    triedDTR = true;
+                    qDebug() << "No data!!! Attempting reset via DTR.";
+                    port->setDtr(true);
+                    this->msleep(250);
+                    port->setDtr(false);
+                }
+                else if (!triedreset)
+                {
+                    qDebug() << "No data!!! Attempting reset via reboot command.";
+                    port->write("reboot\r\n",8);
+                    triedreset = true;
+                }
+                else
+                {
+                    qDebug() << "No data!!!";
+                }
+            }
+        }
         /* Serial data isn't arriving that fast normally, this saves the thread
                  * from consuming too much processing time
                  */
@@ -435,6 +471,7 @@ void SerialLink::checkForBytes()
         if(available > 0)
         {
             readBytes();
+            bytesRead += available;
         }
         else if (available < 0) {
             /* Error, close port */

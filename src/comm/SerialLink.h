@@ -144,6 +144,7 @@ protected slots:
     void checkForBytes();
 
 protected:
+    quint64 bytesRead;
     TNX::QSerialPort * port;
     TNX::QPortSettings portSettings;
 #ifdef _WIN32
