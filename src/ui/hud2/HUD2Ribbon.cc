@@ -3,12 +3,13 @@
 #include "HUD2Ribbon.h"
 #include "HUD2Math.h"
 
-HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, const HUD2Data *huddata, QWidget *parent) :
+HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name,
+                       const double *valuep, QWidget *parent) :
     QWidget(parent),
+    valuep(valuep),
     position(position),
     wrap360(wrap360),
-    name(name),
-    huddata(huddata)
+    name(name)
 {
     QSettings settings;
 
@@ -16,16 +17,14 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, con
     opaqueNeedle = settings.value(name + QString("_OPAQUE_NEEDLE"), false).toBool();
     opaqueRibbon = settings.value(name + QString("_OPAQUE_RIBBON"), false).toBool();
     enabled = settings.value(name + QString("_ENABLED"), true).toBool();
-    value_idx = settings.value(name + QString("_VALUE_INDEX"), 0).toInt();
-    setValuePtr(value_idx);
 
+    bigScratchLenStep = settings.value(name + QString("_BIG_SCRATCH_LEN_STEP"), 20.0).toDouble();
+    bigScratchValueStep = settings.value(name + QString("_BIG_SCRATCH_VALUE_STEP"), 10).toInt();
+    stepsSmall = settings.value(name + QString("_STEPS_SMALL"), 4).toInt();
+    stepsBig = settings.value(name + QString("_STEPS_BIG"), 4).toInt();
     settings.endGroup();
 
-    bigScratchLenStep = 20.0;
-    bigScratchValueStep = 10;
-    stepsSmall = 4;
-    stepsBig = 4;
-    if ((stepsBig < 2) || ((stepsBig % 2) != 0))
+    if (! stepBigGood(stepsBig))
         qFatal("Ribbon's stepsBig value must be even AND more than 0");
 
     bigPen = QPen();
@@ -57,7 +56,8 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name, con
  *      \        |
  *        --------
  */
-void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap){
+void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent,
+                                    int fntsize, int len, int gap){
     QPolygon poly;
     QPoint p;
 
@@ -141,7 +141,7 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent, int 
         qFatal("unhandled case");
     }
 
-    numPoly = poly;
+    needlePoly = poly;
 }
 
 
@@ -231,6 +231,8 @@ void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
 }
 
 void HUD2Ribbon::updateGeometry(const QSize &size){
+    this->size = size;
+
     qreal gap_percent = 6;
     qreal len_percent = 2; // length of big scratch
     qreal fontsize_percent = 2.0; // font size of labels on ribbon
@@ -321,7 +323,7 @@ void HUD2Ribbon::paint(QPainter *painter){
     if (!enabled)
         return;
 
-    QPolygon _numPoly = numPoly;
+    QPolygon _numPoly = needlePoly;
     qreal v = *valuep;
     int i = 0;
 
@@ -404,6 +406,13 @@ void HUD2Ribbon::paint(QPainter *painter){
     painter->restore();
 }
 
+bool HUD2Ribbon::stepBigGood(int s){
+    if ((s < 2) || ((s % 2) != 0))
+        return false;
+    else
+        return true;
+}
+
 void HUD2Ribbon::setColor(QColor color){
     bigPen.setColor(color);
     arrowPen.setColor(color);
@@ -439,34 +448,53 @@ void HUD2Ribbon::setEnabled(bool checked){
     settings.endGroup();
 }
 
-void HUD2Ribbon::setValuePtr(int value_idx){
-    this->value_idx = value_idx;
+void HUD2Ribbon::setBigScratchLenStep(double lstep){
+    this->bigScratchLenStep = lstep;
+    this->updateGeometry(this->size);
 
-    switch(value_idx){
-    case VALUE_IDX_AIRSPEED:
-        valuep = &huddata->airspeed;
-        break;
-    case VALUE_IDX_ALT:
-        valuep = &huddata->alt;
-        break;
-    case VALUE_IDX_GROUNDSPEED:
-        valuep = &huddata->groundspeed;
-        break;
-    case VALUE_IDX_PITCH:
-        valuep = &huddata->pitch;
-        break;
-    case VALUE_IDX_ROLL:
-        valuep = &huddata->roll;
-        break;
-    case VALUE_IDX_YAW:
-        valuep = &huddata->yaw;
-        break;
-    default:
-        valuep = &huddata->airspeed;
-        this->value_idx = VALUE_IDX_AIRSPEED;
-        break;
-    }
+    QSettings settings;
+    QString str = name + "_BIG_SCRATCH_LEN_STEP";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, lstep);
+    settings.endGroup();
 }
 
+void HUD2Ribbon::setBigScratchValueStep(int vstep){
+    this->bigScratchValueStep = vstep;
+    this->updateGeometry(this->size);
+
+    QSettings settings;
+    QString str = name + "_BIG_SCRATCH_VALUE_STEP";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, vstep);
+    settings.endGroup();
+}
+
+void HUD2Ribbon::setStepsSmall(int steps){
+    this->stepsSmall = steps;
+    this->updateGeometry(this->size);
+
+    QSettings settings;
+    QString str = name + "_STEPS_SMALL";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, steps);
+    settings.endGroup();
+}
+
+void HUD2Ribbon::setStepsBig(int steps){
+    steps *= 2;
+
+    if (! stepBigGood(steps))
+        qFatal("Ribbon's stepsBig value must be even AND more than 0");
+
+    this->stepsBig = steps;
+    this->updateGeometry(this->size);
+
+    QSettings settings;
+    QString str = name + "_STEPS_BIG";
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue(str, steps);
+    settings.endGroup();
+}
 
 

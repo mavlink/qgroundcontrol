@@ -18,9 +18,6 @@ public:
     ~HUD2RibbonForm();
     
 private slots:
-    void on_checkBoxNeedle_toggled(bool checked);
-    void on_checkBoxRibbon_toggled(bool checked);
-    void on_checkBoxEnable_toggled(bool checked);
     void on_comboBox_activated(int index);
 
 private:

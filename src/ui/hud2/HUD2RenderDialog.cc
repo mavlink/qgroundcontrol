@@ -42,3 +42,4 @@ HUD2RenderDialog::~HUD2RenderDialog()
 {
     delete ui;
 }
+

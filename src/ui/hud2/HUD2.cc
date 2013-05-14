@@ -7,7 +7,9 @@
 
 /*
 TODO:
-- try float coordinates for numbers in yaw indicator
+- position setting for ribbons (default is center)
+- save last used tab number from instruments dialog in settings file
+- hints for settings
 - numer label in roll indicator
 - tiny pitch lines on horizon
 - battery indicator
@@ -149,6 +151,16 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch,
         this->paint();
         repaintEnabled = false;
     }
+}
+
+void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon,
+                                double altitude, quint64 timestamp)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    Q_UNUSED(lat);
+    Q_UNUSED(lon);
+    huddata.alt_gnss = altitude;
 }
 
 void HUD2::updateBattery(UASInterface* uas, double voltage, double percent, int seconds){

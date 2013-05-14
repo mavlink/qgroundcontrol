@@ -17,7 +17,8 @@ public:
     double roll;
     double pitch;
     double yaw;
-    double alt;
+    double alt;// from vfr_hud message
+    double alt_gnss;
     double climb;
     double airspeed;
     double groundspeed;

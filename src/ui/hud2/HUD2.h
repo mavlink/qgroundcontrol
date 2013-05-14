@@ -107,7 +107,7 @@ public slots:
     void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
     void updateAltitude(int uasid, double alt);
     void updateSpeed(UASInterface* uas, double airspeed, double unused, double climb, quint64 time);
-
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double altitude, quint64 timestamp);
     void toggleAntialising(bool aa);
     void switchRender(int type);
     void setFpsLimit(int limit);

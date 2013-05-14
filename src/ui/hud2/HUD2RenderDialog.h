@@ -15,6 +15,8 @@ public:
     explicit HUD2RenderDialog(QWidget *parent = 0);
     ~HUD2RenderDialog();
     
+private slots:
+
 private:
     Ui::HUD2RenderDialog *ui;
 };
