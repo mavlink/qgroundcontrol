@@ -5,7 +5,7 @@
 #include "HUD2IndicatorHorizon.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorHorizon::HUD2IndicatorHorizon(const float *pitch, const float *roll, QWidget *parent) :
+HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch, const double *roll, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),

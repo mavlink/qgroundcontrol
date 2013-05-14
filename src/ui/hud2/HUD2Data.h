@@ -14,18 +14,17 @@ class HUD2Data
 {
 public:
     HUD2Data();
-    float roll;
-    float pitch;
-    float yaw;
-    float lat;
-    float lon;
-    float alt;
-    float airspeed;
-    float groundspeed;
-    float batt_voltage;
-    float batt_charge;
-    int   batt_time;
-    float thrust;
+    double roll;
+    double pitch;
+    double yaw;
+    double alt;
+    double climb;
+    double airspeed;
+    double groundspeed;
+    double batt_voltage;
+    double batt_charge;
+    int    batt_time;
+    double thrust;
 };
 
 #endif // HUD2DATA_H

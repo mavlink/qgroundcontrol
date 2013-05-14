@@ -5,7 +5,7 @@
 #include "HUD2Math.h"
 #include "HUD2IndicatorRoll.h"
 
-HUD2IndicatorRoll::HUD2IndicatorRoll(const float *value, QWidget *parent) :
+HUD2IndicatorRoll::HUD2IndicatorRoll(const double *value, QWidget *parent) :
     QWidget(parent),
     value(value)
 {

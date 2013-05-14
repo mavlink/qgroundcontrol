@@ -13,7 +13,7 @@ class HUD2IndicatorHorizon : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorHorizon(const float *pitch, const float *roll, QWidget *parent);
+    explicit HUD2IndicatorHorizon(const double *pitch, const double *roll, QWidget *parent);
     void paint(QPainter *painter);
     bool getColoredBg(void){return coloredBackground;}
 
@@ -51,8 +51,8 @@ private:
     QBrush skyBrush;
     QBrush gndBrush;
 
-    const float *pitch;
-    const float *roll;
+    const double *pitch;
+    const double *roll;
 };
 
 #endif // HUD2INDICATORHORIZON_H

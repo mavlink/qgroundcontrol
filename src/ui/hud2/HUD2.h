@@ -102,11 +102,11 @@ private:
 public slots:
     /** @brief Set the currently monitored UAS */
     virtual void setActiveUAS(UASInterface* uas);
-    /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
-    void updateGlobalPosition(UASInterface*,double,double,double,quint64);
     void updateThrust(UASInterface* uas, double thrust);
     void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
+    void updateAltitude(int uasid, double alt);
+    void updateSpeed(UASInterface* uas, double airspeed, double unused, double climb, quint64 time);
 
     void toggleAntialising(bool aa);
     void switchRender(int type);

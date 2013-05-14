@@ -37,10 +37,8 @@ public slots:
     void updateGeometry(const QSize &size);
     void setValuePtr(int value_idx);
 
-public slots:
-
 private:
-    const float *valuep;
+    const double *valuep;
     screen_position position;
     bool wrap360; // suitable for compass like device
     bool enabled;

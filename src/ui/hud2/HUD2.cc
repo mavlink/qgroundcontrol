@@ -136,27 +136,19 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch,
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch)
-                     && !isnan(yaw) && !isinf(yaw))
-    {
-        huddata.roll  = roll;
-        huddata.pitch = pitch;
-        huddata.yaw   = yaw;
-        if (repaintEnabled){
-            this->paint();
-            repaintEnabled = false;
-        }
-    }
-}
 
-void HUD2::updateGlobalPosition(UASInterface* uas, double lat, double lon,
-                                double altitude, quint64 timestamp)
-{
-    Q_UNUSED(uas);
-    Q_UNUSED(timestamp);
-    huddata.lat = lat;
-    huddata.lon = lon;
-    huddata.alt = altitude;
+    if (!isnan(roll) && !isinf(roll))
+        huddata.roll  = roll;
+    if (!isnan(pitch) && !isinf(pitch))
+        huddata.pitch = pitch;
+    if (!isnan(yaw) && !isinf(yaw))
+        huddata.yaw   = rad2deg(yaw);
+
+    if (repaintEnabled)
+    {
+        this->paint();
+        repaintEnabled = false;
+    }
 }
 
 void HUD2::updateBattery(UASInterface* uas, double voltage, double percent, int seconds){
@@ -171,6 +163,20 @@ void HUD2::updateThrust(UASInterface* uas, double thrust){
     huddata.thrust = thrust;
 }
 
+void HUD2::updateAltitude(int uasid, double alt){
+    Q_UNUSED(uasid);
+    huddata.alt = alt;
+}
+
+void HUD2::updateSpeed(UASInterface *uas, double airspeed, double unused,
+                       double climb, quint64 time){
+    Q_UNUSED(uas);
+    Q_UNUSED(unused);
+    Q_UNUSED(time);
+    huddata.airspeed = airspeed;
+    huddata.climb = climb;
+}
+
 /**
  * @param uas the UAS/MAV to monitor/display with the HUD
  */
@@ -178,33 +184,57 @@ void HUD2::setActiveUAS(UASInterface* uas)
 {
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
-        disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-        disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),
+                   this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)),
+                   this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)),
+                   this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)),
+                   this, SLOT(updateState(UASInterface*,QString)));
+        disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)),
+                   this, SLOT(updateMode(int,QString,QString)));
+        disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)),
+                   this, SLOT(receiveHeartbeat(UASInterface*)));
+        disconnect(this->uas, SIGNAL(altitudeChanged(int,double)),
+                   this, SLOT(updateAltitude(int,double)));
+        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)),
+                   this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
 
-        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
+                   this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)),
+                   this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(waypointSelected(int,int)),
+                   this, SLOT(selectWaypoint(int, int)));
     }
 
     if (uas) {
         // Now connect the new UAS
         // Setup communication
-        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
-        connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)),
+                this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)),
+                this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)),
+                this, SLOT(updateState(UASInterface*,QString)));
+        connect(uas, SIGNAL(modeChanged(int,QString,QString)),
+                this, SLOT(updateMode(int,QString,QString)));
+        connect(uas, SIGNAL(heartbeat(UASInterface*)),
+                this, SLOT(receiveHeartbeat(UASInterface*)));
+        connect(uas, SIGNAL(altitudeChanged(int,double)),
+                this, SLOT(updateAltitude(int,double)));
+        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
 
-        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(waypointSelected(int,int)),
+                this, SLOT(selectWaypoint(int, int)));
 
         // Set new UAS
         this->uas = uas;

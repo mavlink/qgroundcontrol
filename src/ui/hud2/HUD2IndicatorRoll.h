@@ -10,7 +10,7 @@ class HUD2IndicatorRoll : public QWidget
 {
     Q_OBJECT
 public:
-    explicit HUD2IndicatorRoll(const float *value, QWidget *parent);
+    explicit HUD2IndicatorRoll(const double *value, QWidget *parent);
     void paint(QPainter *painter);
 
 signals:
@@ -28,7 +28,7 @@ private:
     QLineF thinLines[10];
     QLine arrowLines[2];
 
-    const float *value;
+    const double *value;
 };
 
 #endif // HUD2INDICATORROLL_H
