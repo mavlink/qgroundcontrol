@@ -9,12 +9,12 @@
 TODO:
 - position setting for ribbons (default is center)
 - save last used tab number from instruments dialog in settings file
-- hints for settings
 - numer label in roll indicator
 - pitch scaler
 - tiny pitch lines on horizon
 - battery indicator
 - hide numbers on ribbon when screen size less than critical
+- message widget
 */
 
 #include <QtGui>

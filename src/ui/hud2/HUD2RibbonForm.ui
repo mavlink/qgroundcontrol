@@ -55,9 +55,9 @@
   <widget class="QComboBox" name="comboBox">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>30</y>
-     <width>101</width>
+     <x>20</x>
+     <y>200</y>
+     <width>81</width>
      <height>24</height>
     </rect>
    </property>
@@ -66,8 +66,8 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>80</y>
-     <width>171</width>
+     <y>70</y>
+     <width>201</width>
      <height>116</height>
     </rect>
    </property>
@@ -75,40 +75,56 @@
     <item row="0" column="1">
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>TextLabel</string>
+       <string>Big scratch size step</string>
       </property>
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QSpinBox" name="bigScratchValueStep"/>
+     <widget class="QSpinBox" name="bigScratchValueStep">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How much differ &lt;span style=&quot; font-weight:600;&quot;&gt;values&lt;/span&gt; of 2 sequental big scrates.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
     </item>
     <item row="0" column="0">
-     <widget class="QDoubleSpinBox" name="bigScratchLenStep"/>
+     <widget class="QDoubleSpinBox" name="bigScratchLenStep">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Space between 2 big scratches in percents of screen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
     </item>
     <item row="2" column="0">
-     <widget class="QSpinBox" name="stepsSmall"/>
+     <widget class="QSpinBox" name="stepsSmall">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How many small scrathes between 2 sequental big scratches.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
     </item>
     <item row="1" column="1">
      <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>TextLabel</string>
+       <string>Big scratch value step</string>
       </property>
      </widget>
     </item>
     <item row="3" column="0">
-     <widget class="QSpinBox" name="stepsBig"/>
+     <widget class="QSpinBox" name="stepsBig">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How many big scratches in one ribbon. Note: this value will be automatically twiced by application.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
     </item>
     <item row="2" column="1">
      <widget class="QLabel" name="label_3">
       <property name="text">
-       <string>TextLabel</string>
+       <string>Small scratch count</string>
       </property>
      </widget>
     </item>
     <item row="3" column="1">
      <widget class="QLabel" name="label_4">
       <property name="text">
-       <string>TextLabel</string>
+       <string>Big scratch count</string>
       </property>
      </widget>
     </item>
