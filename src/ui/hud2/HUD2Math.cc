@@ -77,7 +77,7 @@ QLineF rotateLine(qreal phi, QLineF line){
  * @param angle
  * @return
  */
-qreal wrap_360(qreal angle){
+double wrap_360(double angle){
     if (angle > 360)
         angle -= 360;
     else if (angle < 0)
@@ -108,8 +108,8 @@ int wrap_360(int angle){
  * @param divisor
  * @return
  */
-qreal modulusF(qreal dividend, qreal divisor){
-    qreal n = floor(dividend / divisor);
+double modulusF(double dividend, double divisor){
+    double n = floor(dividend / divisor);
     return dividend - n * divisor;
 }
 

@@ -24,8 +24,8 @@ class HUD2InstrumentsDialog : public QDialog
 public:
     explicit HUD2InstrumentsDialog(HUD2IndicatorHorizon *horizon,
                                    HUD2IndicatorRoll *roll,
-                                   HUD2Ribbon *speed,
-                                   HUD2Ribbon *climb,
+                                   HUD2Ribbon *speedometer,
+                                   HUD2Ribbon *altimeter,
                                    HUD2Ribbon *compass,
                                    HUD2IndicatorFps *fps,
                                    QWidget *parent);

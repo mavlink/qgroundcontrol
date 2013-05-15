@@ -25,8 +25,8 @@ QPoint rotatePoint(qreal phi, QPoint p);
 QPointF rotatePoint(qreal phi, QPointF p);
 QLine rotateLine(qreal phi, QLine line);
 QLineF rotateLine(qreal phi, QLineF line);
-qreal wrap_360(qreal angle);
+double wrap_360(double angle);
 int wrap_360(int angle);
-qreal modulusF(qreal dividend, qreal divisor);
+double modulusF(double dividend, double divisor);
 
 #endif // HUD2MATH_H
