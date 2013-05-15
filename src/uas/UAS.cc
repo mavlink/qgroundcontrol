@@ -2523,6 +2523,15 @@ void UAS::executeCommand(MAV_CMD command)
     mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
     sendMessage(msg);
 }
+void UAS::executeCommandAck(int num, bool success)
+{
+    mavlink_message_t msg;
+    mavlink_command_ack_t ack;
+    ack.command = num;
+    ack.result = (success ? 1 : 0);
+    mavlink_msg_command_ack_encode(mavlink->getSystemId(),mavlink->getComponentId(),&msg,&ack);
+    sendMessage(msg);
+}
 
 void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component)
 {

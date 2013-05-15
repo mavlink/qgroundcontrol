@@ -40,6 +40,9 @@ public:
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    void sendTxRequests();
+private:
+    QTimer *txReqTimer;
 };
 
 #endif // ARDUPILOTMAV_H

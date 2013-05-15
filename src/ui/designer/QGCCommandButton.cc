@@ -13,6 +13,9 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    responsecount = 0;
+    responsenum = 0;
+
     connect(ui->commandButton, SIGNAL(clicked()), this, SLOT(sendCommand()));
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
     connect(ui->editButtonName, SIGNAL(textChanged(QString)), this, SLOT(setCommandButtonName(QString)));
@@ -95,6 +98,29 @@ void QGCCommandButton::sendCommand()
 {
     if (QGCToolWidgetItem::uas)
     {
+        if (responsenum != 0)
+        {
+            if (responsecount == 0)
+            {
+                //We're finished. Reset.
+                qDebug() << "Finished sequence";
+                QGCToolWidgetItem::uas->executeCommandAck(responsenum-responsecount,true);
+                responsecount = responsenum;
+                return;
+            }
+            if (responsecount < responsenum)
+            {
+                qDebug() << responsecount << responsenum;
+                QGCToolWidgetItem::uas->executeCommandAck(responsenum-responsecount,true);
+                responsecount--;
+                return;
+            }
+            else
+            {
+                qDebug() << "No sequence yet, sending command";
+                responsecount--;
+            }
+        }
         // Check if command text is a number
         bool ok;
         int index = 0;
@@ -295,6 +321,9 @@ void QGCCommandButton::readSettings(const QString& pre,const QVariantMap& settin
 
     ui->editNameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     ui->nameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+
+    responsenum = settings.value(pre + "QGC_COMMAND_BUTTON_RESPONSE",0).toInt();
+    responsecount = responsenum;
 }
 void QGCCommandButton::readSettings(const QSettings& settings)
 {
@@ -349,4 +378,6 @@ void QGCCommandButton::readSettings(const QSettings& settings)
 
     ui->editNameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     ui->nameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+    responsenum = settings.value("QGC_COMMAND_BUTTON_RESPONSE",0).toInt();
+    responsecount = responsenum;
 }
