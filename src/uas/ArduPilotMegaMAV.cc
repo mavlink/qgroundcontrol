@@ -34,6 +34,15 @@ ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
     //This does not seem to work. Manually request each stream type at a specified rate.
     // Ask for all streams at 4 Hz
     //enableAllDataTransmission(4);
+    txReqTimer = new QTimer(this);
+    connect(txReqTimer,SIGNAL(timeout()),this,SLOT(sendTxRequests()));
+
+    QTimer::singleShot(5000,this,SLOT(sendTxRequests())); //Send an initial TX request in 5 seconds.
+
+    txReqTimer->start(300000); //Resend the TX requests every 5 minutes.
+}
+void ArduPilotMegaMAV::sendTxRequests()
+{
     enableExtendedSystemStatusTransmission(2);
     enablePositionTransmission(3);
     enableExtra1Transmission(10);

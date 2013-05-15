@@ -398,9 +398,11 @@ void SerialLink::run()
 
     // Qt way to make clear what a while(1) loop does
     quint64 msecs = QDateTime::currentMSecsSinceEpoch();
+    quint64 initialmsecs = QDateTime::currentMSecsSinceEpoch();
     quint64 bytes = 0;
     bool triedreset = false;
     bool triedDTR = false;
+    int timeout = 2500;
     forever
     {
         {
@@ -420,10 +422,19 @@ void SerialLink::run()
         }
         else
         {
-            if (QDateTime::currentMSecsSinceEpoch() - msecs > 10000)
+            if (QDateTime::currentMSecsSinceEpoch() - msecs > timeout)
             {
                 //It's been 10 seconds since the last data came in. Reset and try again
                 msecs = QDateTime::currentMSecsSinceEpoch();
+                if (msecs - initialmsecs > 25000)
+                {
+                    //After initial 25 seconds, timeouts are increased to 30 seconds.
+                    //This prevents temporary silences from things like calibration commands
+                    //from screwing things up. In all reality, timeouts should be enabled/disabled
+                    //for events like that on a case by case basis.
+                    //TODO ^^
+                    timeout = 30000;
+                }
                 if (!triedDTR && triedreset)
                 {
                     triedDTR = true;

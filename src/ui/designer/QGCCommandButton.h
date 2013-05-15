@@ -29,6 +29,8 @@ public slots:
 signals:
     void showLabel(QString name, int num);
 private:
+    int responsenum;
+    int responsecount;
     QString showlabelname;
     Ui::QGCCommandButton *ui;
     UASInterface* uas;
