@@ -19,7 +19,7 @@ class HUD2Ribbon : public QWidget
     Q_OBJECT
 public:
     explicit HUD2Ribbon(screen_position position, bool wrap360, QString name,
-                        const double *valuep, QWidget *parent);
+                        const HUD2Data *huddata, QWidget *parent);
     void paint(QPainter *painter);
     bool getOpacityNeedle(void){return opaqueNeedle;}
     bool getOpacityRibbon(void){return opaqueRibbon;}
@@ -47,9 +47,13 @@ private:
     void updateRibbon(const QSize &size, int gap, int len);
     void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
     bool stepBigGood(int s);
+    /** @brief Process data personally for subclass. For example, convert from rad to deg */
+    virtual double processData(void) = 0;
+
+protected:
+    const HUD2Data *huddata;
 
 private:
-    const double *valuep;
     screen_position position;
     bool wrap360; // suitable for compass like device
     bool enabled;

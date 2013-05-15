@@ -4,9 +4,9 @@
 #include "HUD2Math.h"
 
 HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name,
-                       const double *valuep, QWidget *parent) :
+                       const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
-    valuep(valuep),
+    huddata(huddata),
     position(position),
     wrap360(wrap360),
     name(name)
@@ -324,7 +324,7 @@ void HUD2Ribbon::paint(QPainter *painter){
         return;
 
     QPolygon _numPoly = needlePoly;
-    qreal v = *valuep;
+    double v = processData();
     int i = 0;
 
     // calculate shift for starting point of ribbon

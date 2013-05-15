@@ -146,7 +146,7 @@ void HUD2::updateAttitude(UASInterface* uas, double roll, double pitch,
     if (!isnan(pitch) && !isinf(pitch))
         huddata.pitch = pitch;
     if (!isnan(yaw) && !isinf(yaw))
-        huddata.yaw   = rad2deg(yaw);
+        huddata.yaw   = yaw;
 
     if (repaintEnabled)
     {
