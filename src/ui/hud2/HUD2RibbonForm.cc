@@ -19,7 +19,7 @@ HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
     ui->checkBoxEnable->setChecked(ribbon->getEnabled());
     connect(ui->checkBoxNeedle, SIGNAL(toggled(bool)), ribbon, SLOT(setOpacityNeedle(bool)));
     connect(ui->checkBoxRibbon, SIGNAL(toggled(bool)), ribbon, SLOT(setOpacityRibbon(bool)));
-    connect(ui->checkBoxEnable, SIGNAL(toggled(bool)), ribbon, SLOT(setOpacityEnable(bool)));
+    connect(ui->checkBoxEnable, SIGNAL(toggled(bool)), ribbon, SLOT(setEnabled(bool)));
 
     ui->bigScratchLenStep->setRange(1, 100);
     ui->bigScratchLenStep->setSingleStep(0.5);
