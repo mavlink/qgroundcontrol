@@ -5,7 +5,8 @@
 #include "HUD2IndicatorHorizon.h"
 #include "HUD2Math.h"
 
-HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch, const double *roll, QWidget *parent) :
+HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch,
+                                           const double *roll, QWidget *parent) :
     QWidget(parent),
     pitchline(&this->gap, this),
     crosshair(&this->gap, this),
@@ -17,7 +18,7 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch, const double *ro
     settings.beginGroup("QGC_HUD2");
 
     this->gap = 6;
-    this->pitchcount = 5;
+    this->pitchcount = 5.3;
     this->degstep = 20;
 
     color = settings.value("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT).value<QColor>();

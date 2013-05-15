@@ -44,16 +44,16 @@ public slots:
     void setStepsBig(int);
 
 private:
+    void updateRibbon(const QSize &size, int gap, int len);
+    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
+    bool stepBigGood(int s);
+
+private:
     const double *valuep;
     screen_position position;
     bool wrap360; // suitable for compass like device
     bool enabled;
     QString name;
-
-private:
-    void updateRibbon(const QSize &size, int gap, int len);
-    void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
-    bool stepBigGood(int s);
 
     qreal bigScratchLenStep; // step in percents of widget sizes
     qreal big_pixstep;// percentage recalculated to pixels (internal use only)
@@ -63,7 +63,7 @@ private:
     int stepsBig; // value must be even AND more than 0
     qreal small_pixstep;// percentage recalculated to pixels (internal use only)
     QRect clipRect; // clipping rectangle
-    QSize size;
+    QSize size; // cached value to recalculate all sizes after changing of settings
 
     QPen bigPen;
     QPen arrowPen;

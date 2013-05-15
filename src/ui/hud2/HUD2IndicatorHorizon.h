@@ -34,7 +34,7 @@ private:
     HUD2IndicatorHorizonPitchline pitchline;
     int degstep;    // vertical screen capacity in degrees
     qreal pixstep;  // pixels between two lines
-    int pitchcount; // how many pitch lines can be fitted on screen (approximately)
+    qreal pitchcount; // how many pitch lines can be fitted on screen (approximately)
 
     HUD2IndicatorHorizonCrosshair crosshair;
 

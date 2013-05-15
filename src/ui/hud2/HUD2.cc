@@ -11,6 +11,7 @@ TODO:
 - save last used tab number from instruments dialog in settings file
 - numer label in roll indicator
 - pitch scaler
+- ivert angles for horizon
 - tiny pitch lines on horizon
 - battery indicator
 - hide numbers on ribbon when screen size less than critical
@@ -181,12 +182,12 @@ void HUD2::updateAltitude(int uasid, double alt){
     huddata.alt = alt;
 }
 
-void HUD2::updateSpeed(UASInterface *uas, double airspeed, double unused,
+void HUD2::updateSpeed(UASInterface *uas, double airspeed, double groundspeed,
                        double climb, quint64 time){
     Q_UNUSED(uas);
-    Q_UNUSED(unused);
     Q_UNUSED(time);
     huddata.airspeed = airspeed;
+    huddata.groundspeed = groundspeed;
     huddata.climb = climb;
 }
 
