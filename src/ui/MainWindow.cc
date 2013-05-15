@@ -339,6 +339,12 @@ void MainWindow::resizeEvent(QResizeEvent * event)
 
 QString MainWindow::getWindowStateKey()
 {
+    if (UASManager::instance()->getActiveUAS())
+    {
+        return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
+    }
+    else
+
     return QString::number(currentView)+"_windowstate";
 }
 
@@ -1105,7 +1111,7 @@ void MainWindow::storeSettings()
         settings.setValue(getWindowGeometryKey(), saveGeometry());
         // Save the last current view in any case
         settings.setValue("CURRENT_VIEW", currentView);
-        // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
+        // Save the current window state, but only if a system is connected (else no real number of widgets would be present))
         if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
         // Save the current view only if a UAS is connected
         if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
@@ -1607,6 +1613,13 @@ void MainWindow::setActiveUAS(UASInterface* uas)
     // Enable and rename menu
 //    ui.menuUnmanned_System->setTitle(uas->getUASName());
 //    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
+    if (settings.contains(getWindowStateKey()))
+    {
+        SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
+        //settings.setValue(getWindowStateKey(), win->saveState(QGC::applicationVersion()))
+        win->restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
+    }
+
 }
 
 void MainWindow::UASSpecsChanged(int uas)
