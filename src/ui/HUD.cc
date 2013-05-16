@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Head Up Display (HUD)
+ *   @brief Head Up Display (HUD_old)
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -52,14 +52,14 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 /**
- * @warning The HUD widget will not start painting its content automatically
- *          to update the view, start the auto-update by calling HUD::start().
+ * @warning The HUD_old widget will not start painting its content automatically
+ *          to update the view, start the auto-update by calling HUD_old::start().
  *
  * @param width
  * @param height
  * @param parent
  */
-HUD::HUD(int width, int height, QWidget* parent)
+HUD_old::HUD_old(int width, int height, QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       uas(NULL),
       yawInt(0.0f),
@@ -119,7 +119,7 @@ HUD::HUD(int width, int height, QWidget* parent)
       load(0.0f),
       offlineDirectory(""),
       nextOfflineImage(""),
-      hudInstrumentsEnabled(true),
+      HUDInstrumentsEnabled(true),
       videoEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
@@ -151,7 +151,7 @@ HUD::HUD(int width, int height, QWidget* parent)
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD_old()));
 
     // Resize to correct size and fill with image
     resize(this->width(), this->height());
@@ -186,17 +186,17 @@ HUD::HUD(int width, int height, QWidget* parent)
     if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
-HUD::~HUD()
+HUD_old::~HUD_old()
 {
     refreshTimer->stop();
 }
 
-QSize HUD::sizeHint() const
+QSize HUD_old::sizeHint() const
 {
     return QSize(width(), (width()*3.0f)/4);
 }
 
-void HUD::showEvent(QShowEvent* event)
+void HUD_old::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
@@ -205,7 +205,7 @@ void HUD::showEvent(QShowEvent* event)
     emit visibilityChanged(true);
 }
 
-void HUD::hideEvent(QHideEvent* event)
+void HUD_old::hideEvent(QHideEvent* event)
 {
     // React only to internal (pre-display)
     // events
@@ -214,27 +214,27 @@ void HUD::hideEvent(QHideEvent* event)
     emit visibilityChanged(false);
 }
 
-void HUD::contextMenuEvent (QContextMenuEvent* event)
+void HUD_old::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
     // Update actions
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     enableVideoAction->setChecked(videoEnabled);
 
     menu.addAction(enableHUDAction);
-    //menu.addAction(selectHUDColorAction);
+    //menu.addAction(selectHUD_oldColorAction);
     menu.addAction(enableVideoAction);
     menu.addAction(selectOfflineDirectoryAction);
     menu.addAction(selectSaveDirectoryAction);
     menu.exec(event->globalPos());
 }
 
-void HUD::createActions()
+void HUD_old::createActions()
 {
-    enableHUDAction = new QAction(tr("Enable HUD"), this);
-    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
+    enableHUDAction = new QAction(tr("Enable HUD_old"), this);
+    enableHUDAction->setStatusTip(tr("Show the HUD_old instruments in this window"));
     enableHUDAction->setCheckable(true);
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
 
     enableVideoAction = new QAction(tr("Enable Video Live feed"), this);
@@ -255,9 +255,9 @@ void HUD::createActions()
 
 /**
  *
- * @param uas the UAS/MAV to monitor/display with the HUD
+ * @param uas the UAS/MAV to monitor/display with the HUD_old
  */
-void HUD::setActiveUAS(UASInterface* uas)
+void HUD_old::setActiveUAS(UASInterface* uas)
 {
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
@@ -308,7 +308,7 @@ void HUD::setActiveUAS(UASInterface* uas)
     }
 }
 
-//void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
+//void HUD_old::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
 //{
 ////    updateValue(uas, "roll desired", rollDesired, msec);
 ////    updateValue(uas, "pitch desired", pitchDesired, msec);
@@ -316,7 +316,7 @@ void HUD::setActiveUAS(UASInterface* uas)
 ////    updateValue(uas, "thrust desired", thrustDesired, msec);
 //}
 
-void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
+void HUD_old::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
@@ -328,7 +328,7 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
     }
 }
 
-void HUD::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)
+void HUD_old::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
@@ -338,7 +338,7 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
     }
 }
 
-void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
+void HUD_old::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
@@ -352,18 +352,18 @@ void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int s
     }
 }
 
-void HUD::receiveHeartbeat(UASInterface*)
+void HUD_old::receiveHeartbeat(UASInterface*)
 {
 }
 
-void HUD::updateThrust(UASInterface* uas, double thrust)
+void HUD_old::updateThrust(UASInterface* uas, double thrust)
 {
     Q_UNUSED(uas);
     Q_UNUSED(thrust);
 //    updateValue(uas, "thrust", thrust, MG::TIME::getGroundTimeNow());
 }
 
-void HUD::updateLocalPosition(UASInterface* uas,double x,double y,double z,quint64 timestamp)
+void HUD_old::updateLocalPosition(UASInterface* uas,double x,double y,double z,quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
@@ -372,7 +372,7 @@ void HUD::updateLocalPosition(UASInterface* uas,double x,double y,double z,quint
     this->zPos = z;
 }
 
-void HUD::updateGlobalPosition(UASInterface* uas,double lat, double lon, double altitude, quint64 timestamp)
+void HUD_old::updateGlobalPosition(UASInterface* uas,double lat, double lon, double altitude, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
@@ -381,7 +381,7 @@ void HUD::updateGlobalPosition(UASInterface* uas,double lat, double lon, double 
     this->alt = altitude;
 }
 
-void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 timestamp)
+void HUD_old::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
@@ -397,9 +397,9 @@ void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 times
  * Updates the current system state, but only if the uas matches the currently monitored uas.
  *
  * @param uas the system the state message originates from
- * @param state short state text, displayed in HUD
+ * @param state short state text, displayed in HUD_old
  */
-void HUD::updateState(UASInterface* uas,QString state)
+void HUD_old::updateState(UASInterface* uas,QString state)
 {
     // Only one UAS is connected at a time
     Q_UNUSED(uas);
@@ -410,9 +410,9 @@ void HUD::updateState(UASInterface* uas,QString state)
  * Updates the current system mode, but only if the uas matches the currently monitored uas.
  *
  * @param uas the system the state message originates from
- * @param mode short mode text, displayed in HUD
+ * @param mode short mode text, displayed in HUD_old
  */
-void HUD::updateMode(int id,QString mode, QString description)
+void HUD_old::updateMode(int id,QString mode, QString description)
 {
     // Only one UAS is connected at a time
     Q_UNUSED(id);
@@ -420,7 +420,7 @@ void HUD::updateMode(int id,QString mode, QString description)
     this->mode = mode;
 }
 
-void HUD::updateLoad(UASInterface* uas, double load)
+void HUD_old::updateLoad(UASInterface* uas, double load)
 {
     Q_UNUSED(uas);
     this->load = load;
@@ -431,7 +431,7 @@ void HUD::updateLoad(UASInterface* uas, double load)
  * @param y coordinate in pixels to be converted to reference mm units
  * @return the screen coordinate relative to the QGLWindow origin
  */
-float HUD::refToScreenX(float x)
+float HUD_old::refToScreenX(float x)
 {
     //qDebug() << "sX: " << (scalingFactor * x) << "Orig:" << x;
     return (scalingFactor * x);
@@ -440,7 +440,7 @@ float HUD::refToScreenX(float x)
  * @param x coordinate in pixels to be converted to reference mm units
  * @return the screen coordinate relative to the QGLWindow origin
  */
-float HUD::refToScreenY(float y)
+float HUD_old::refToScreenY(float y)
 {
     //qDebug() << "sY: " << (scalingFactor * y);
     return (scalingFactor * y);
@@ -451,7 +451,7 @@ float HUD::refToScreenY(float y)
  * the x and y center offsets.
  *
  */
-void HUD::paintCenterBackground(float roll, float pitch, float yaw)
+void HUD_old::paintCenterBackground(float roll, float pitch, float yaw)
 {
     Q_UNUSED(yaw);
 
@@ -459,7 +459,7 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     float referenceWidth = 70.0;
     float referenceHeight = 70.0;
 
-    // HUD is assumed to be 200 x 150 mm
+    // HUD_old is assumed to be 200 x 150 mm
     // so that positions can be hardcoded
     // but can of course be scaled.
 
@@ -522,7 +522,7 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
  * @param refX position in reference units (mm of the real instrument). This is relative to the measurement unit position, NOT in pixels.
  * @param refY position in reference units (mm of the real instrument). This is relative to the measurement unit position, NOT in pixels.
  */
-void HUD::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
+void HUD_old::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
 {
     QPen prevPen = painter->pen();
     float pPositionX = refToScreenX(refX) - (fontSize*scalingFactor*0.072f);
@@ -546,7 +546,7 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
     painter->setPen(prevPen);
 }
 
-void HUD::initializeGL()
+void HUD_old::initializeGL()
 {
     bool antialiasing = true;
 
@@ -575,7 +575,7 @@ void HUD::initializeGL()
  * @param referenceWidth width in the reference mm-unit space
  * @param referenceHeight width in the reference mm-unit space
  */
-void HUD::setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight)
+void HUD_old::setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight)
 {
     int pixelWidth  = (int)(referenceWidth * scalingFactor);
     int pixelHeight = (int)(referenceHeight * scalingFactor);
@@ -601,12 +601,12 @@ void HUD::setupGLView(float referencePositionX, float referencePositionY, float 
     //glScalef(scaleX, scaleY, 1.0f);
 }
 
-void HUD::paintRollPitchStrips()
+void HUD_old::paintRollPitchStrips()
 {
 }
 
 
-void HUD::paintEvent(QPaintEvent *event)
+void HUD_old::paintEvent(QPaintEvent *event)
 {
     // Event is not needed
     // the event is ignored as this widget
@@ -614,7 +614,7 @@ void HUD::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
 }
 
-void HUD::paintHUD()
+void HUD_old::paintHUD_old()
 {
     if (isVisible()) {
         //    static quint64 interval = 0;
@@ -711,7 +711,7 @@ void HUD::paintHUD()
 
         // END OF OPENGL PAINTING
 
-        if (hudInstrumentsEnabled) {
+        if (HUDInstrumentsEnabled) {
 
             //glEnable(GL_MULTISAMPLE);
 
@@ -900,7 +900,7 @@ void HUD::paintHUD()
 /**
  * @param pitch pitch angle in degrees (-180 to 180)
  */
-void HUD::paintPitchLines(float pitch, QPainter* painter)
+void HUD_old::paintPitchLines(float pitch, QPainter* painter)
 {
     QString label;
 
@@ -967,7 +967,7 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
     }
 }
 
-void HUD::paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter* painter)
+void HUD_old::paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter* painter)
 {
     //painter->setPen(QPen(QBrush, normalStrokeWidth));
 
@@ -996,7 +996,7 @@ void HUD::paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter
     drawLine(refPosX+pitchWidth/2.0f, refPosY, refPosX+pitchGap/2.0f, refPosY, lineWidth, defaultColor, painter);
 }
 
-void HUD::paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter* painter)
+void HUD_old::paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter* painter)
 {
     const float pitchWidth = 30.0f;
     const float pitchGap = pitchWidth / 2.5f;
@@ -1046,7 +1046,7 @@ void rotatePointClockWise(QPointF& p, float angle)
     p.setY((-1.0f * sin(angle) * p.x()) + cos(angle) * p.y());
 }
 
-float HUD::refLineWidthToPen(float line)
+float HUD_old::refLineWidthToPen(float line)
 {
     return line * 2.50f;
 }
@@ -1059,7 +1059,7 @@ float HUD::refLineWidthToPen(float line)
  * @param angle rotation angle, in radians
  * @return p Polygon p rotated by angle around the origin point
  */
-void HUD::rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin)
+void HUD_old::rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin)
 {
     // Standard 2x2 rotation matrix, counter-clockwise
     //
@@ -1078,7 +1078,7 @@ void HUD::rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin)
     }
 }
 
-void HUD::drawPolygon(QPolygonF refPolygon, QPainter* painter)
+void HUD_old::drawPolygon(QPolygonF refPolygon, QPainter* painter)
 {
     // Scale coordinates
     QPolygonF draw(refPolygon.size());
@@ -1091,7 +1091,7 @@ void HUD::drawPolygon(QPolygonF refPolygon, QPainter* painter)
     painter->drawPolygon(draw);
 }
 
-void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter,bool reverse)
+void HUD_old::drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter,bool reverse)
 {
     float scaledValue = value;
 
@@ -1154,7 +1154,7 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
     }
 }
 
-//void HUD::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
+//void HUD_old::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
 //{
 //    Q_UNUSED(maxWidth);
 //    Q_UNUSED(maxHeight);
@@ -1231,7 +1231,7 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
 //    }
 //}
 
-void HUD::drawChangeIndicatorGauge(float xRef, float yRef, float radius, float expectedMaxChange, float value, const QColor& color, QPainter* painter, bool solid)
+void HUD_old::drawChangeIndicatorGauge(float xRef, float yRef, float radius, float expectedMaxChange, float value, const QColor& color, QPainter* painter, bool solid)
 {
     // Draw the circle
     QPen circlePen(Qt::SolidLine);
@@ -1277,7 +1277,7 @@ void HUD::drawChangeIndicatorGauge(float xRef, float yRef, float radius, float e
     drawPolygon(p, painter);
 }
 
-void HUD::drawLine(float refX1, float refY1, float refX2, float refY2, float width, const QColor& color, QPainter* painter)
+void HUD_old::drawLine(float refX1, float refY1, float refX2, float refY2, float width, const QColor& color, QPainter* painter)
 {
     QPen pen(Qt::SolidLine);
     pen.setWidth(refLineWidthToPen(width));
@@ -1286,7 +1286,7 @@ void HUD::drawLine(float refX1, float refY1, float refX2, float refY2, float wid
     painter->drawLine(QPoint(refToScreenX(refX1), refToScreenY(refY1)), QPoint(refToScreenX(refX2), refToScreenY(refY2)));
 }
 
-void HUD::drawEllipse(float refX, float refY, float radiusX, float radiusY, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
+void HUD_old::drawEllipse(float refX, float refY, float radiusX, float radiusY, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
 {
     Q_UNUSED(startDeg);
     Q_UNUSED(endDeg);
@@ -1297,12 +1297,12 @@ void HUD::drawEllipse(float refX, float refY, float radiusX, float radiusY, floa
     painter->drawEllipse(QPointF(refToScreenX(refX), refToScreenY(refY)), refToScreenX(radiusX), refToScreenY(radiusY));
 }
 
-void HUD::drawCircle(float refX, float refY, float radius, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
+void HUD_old::drawCircle(float refX, float refY, float radius, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
 {
     drawEllipse(refX, refY, radius, radius, startDeg, endDeg, lineWidth, color, painter);
 }
 
-void HUD::resizeGL(int w, int h)
+void HUD_old::resizeGL(int w, int h)
 {
     if (isVisible()) {
         glViewport(0, 0, w, h);
@@ -1312,17 +1312,17 @@ void HUD::resizeGL(int w, int h)
         glMatrixMode(GL_MODELVIEW);
         glPolygonMode(GL_FRONT, GL_FILL);
         //FIXME
-        paintHUD();
+        paintHUD_old();
     }
 }
 
-void HUD::selectWaypoint(int uasId, int id)
+void HUD_old::selectWaypoint(int uasId, int id)
 {
     Q_UNUSED(uasId);
     waypointName = tr("WP") + QString::number(id);
 }
 
-void HUD::setImageSize(int width, int height, int depth, int channels)
+void HUD_old::setImageSize(int width, int height, int depth, int channels)
 {
     // Allocate raw image in correct size
     if (width != receivedWidth || height != receivedHeight || depth != receivedDepth || channels != receivedChannels || image == NULL) {
@@ -1378,10 +1378,10 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
 
 }
 
-void HUD::startImage(int imgid, int width, int height, int depth, int channels)
+void HUD_old::startImage(int imgid, int width, int height, int depth, int channels)
 {
     Q_UNUSED(imgid);
-    //qDebug() << "HUD: starting image (" << width << "x" << height << ", " << depth << "bits) with " << channels << "channels";
+    //qDebug() << "HUD_old: starting image (" << width << "x" << height << ", " << depth << "bits) with " << channels << "channels";
 
     // Copy previous image to screen if it hasn't been finished properly
     finishImage();
@@ -1391,7 +1391,7 @@ void HUD::startImage(int imgid, int width, int height, int depth, int channels)
     imageStarted = true;
 }
 
-void HUD::finishImage()
+void HUD_old::finishImage()
 {
     if (imageStarted) {
         commitRawDataToGL();
@@ -1399,7 +1399,7 @@ void HUD::finishImage()
     }
 }
 
-void HUD::commitRawDataToGL()
+void HUD_old::commitRawDataToGL()
 {
     qDebug() << __FILE__ << __LINE__ << "Copying raw data to GL buffer:" << rawImage << receivedWidth << receivedHeight << image->format();
     if (image != NULL) {
@@ -1429,19 +1429,19 @@ void HUD::commitRawDataToGL()
     update();
 }
 
-void HUD::saveImage(QString fileName)
+void HUD_old::saveImage(QString fileName)
 {
     image->save(fileName);
 }
 
-void HUD::saveImage()
+void HUD_old::saveImage()
 {
     //Bring up popup
     QString fileName = "output.png";
     saveImage(fileName);
 }
 
-void HUD::startImage(quint64 timestamp)
+void HUD_old::startImage(quint64 timestamp)
 {
     if (videoEnabled && offlineDirectory != "") {
         // Load and diplay image file
@@ -1449,7 +1449,7 @@ void HUD::startImage(quint64 timestamp)
     }
 }
 
-void HUD::selectOfflineDirectory()
+void HUD_old::selectOfflineDirectory()
 {
     QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
     if (fileName != "") {
@@ -1457,17 +1457,17 @@ void HUD::selectOfflineDirectory()
     }
 }
 
-void HUD::enableHUDInstruments(bool enabled)
+void HUD_old::enableHUD_oldInstruments(bool enabled)
 {
-    hudInstrumentsEnabled = enabled;
+    HUDInstrumentsEnabled = enabled;
 }
 
-void HUD::enableVideo(bool enabled)
+void HUD_old::enableVideo(bool enabled)
 {
     videoEnabled = enabled;
 }
 
-void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int startIndex)
+void HUD_old::setPixels(int imgid, const unsigned char* imageData, int length, int startIndex)
 {
     Q_UNUSED(imgid);
     //    qDebug() << "at" << __FILE__ << __LINE__ << ": Received startindex" << startIndex << "and length" << length << "(" << startIndex+length << "of" << rawExpectedBytes << "bytes)";
@@ -1478,7 +1478,7 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
         if (startIndex+length > rawExpectedBytes)
         {
-            qDebug() << "HUD: OVERFLOW! startIndex:" << startIndex << "length:" << length << "image raw size" << ((receivedWidth * receivedHeight * receivedChannels * receivedDepth) / 8) - 1;
+            qDebug() << "HUD_old: OVERFLOW! startIndex:" << startIndex << "length:" << length << "image raw size" << ((receivedWidth * receivedHeight * receivedChannels * receivedDepth) / 8) - 1;
         }
         else
         {
@@ -1489,7 +1489,7 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
             // Check if we just reached the end of the image
             if (startIndex+length == rawExpectedBytes)
             {
-                //qDebug() << "HUD: END OF IMAGE REACHED!";
+                //qDebug() << "HUD_old: END OF IMAGE REACHED!";
                 finishImage();
                 rawLastIndex = 0;
             }
@@ -1507,11 +1507,11 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
     }
 }
 
-void HUD::copyImage()
+void HUD_old::copyImage()
 {
-    if (isVisible() && hudInstrumentsEnabled)
+    if (isVisible() && HUDInstrumentsEnabled)
     {
-        //qDebug() << "HUD::copyImage()";
+        //qDebug() << "HUD_old::copyImage()";
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u)
         {
@@ -1527,7 +1527,7 @@ void HUD::copyImage()
     }
 }
 
-void HUD::saveImages(bool save)
+void HUD_old::saveImages(bool save)
 {
     if (save)
     {

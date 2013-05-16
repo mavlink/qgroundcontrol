@@ -6,7 +6,7 @@
 #include "UASManager.h"
 
 QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
-    HUD(width, height, parent),
+    HUD_old(width, height, parent),
     rgbEnabled(false),
     depthEnabled(false)
 {
@@ -70,7 +70,7 @@ void QGCRGBDView::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
     }
 
-    HUD::setActiveUAS(uas);
+    HUD_old::setActiveUAS(uas);
 }
 
 void QGCRGBDView::clearData(void)
@@ -85,7 +85,7 @@ void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
 {
     QMenu menu(this);
     // Update actions
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     //enableVideoAction->setChecked(videoEnabled);
     enableRGBAction->setChecked(rgbEnabled);
     enableDepthAction->setChecked(depthEnabled);

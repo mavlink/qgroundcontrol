@@ -29,8 +29,8 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#ifndef HUD_H
-#define HUD_H
+#ifndef HUD_old_H
+#define HUD_old_H
 
 #include <QImage>
 #include <QGLWidget>
@@ -41,18 +41,18 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 
 /**
- * @brief Displays a Head Up Display (HUD)
+ * @brief Displays a Head Up Display (HUD_old)
  *
- * This class represents a head up display (HUD) and draws this HUD in an OpenGL widget (QGLWidget).
- * It can superimpose the HUD over the current live image stream (any arriving image stream will be auto-
+ * This class represents a head up display (HUD_old) and draws this HUD_old in an OpenGL widget (QGLWidget).
+ * It can superimpose the HUD_old over the current live image stream (any arriving image stream will be auto-
  * matically used as background), or it draws the classic blue-brown background known from instruments.
  */
-class HUD : public QGLWidget
+class HUD_old : public QGLWidget
 {
     Q_OBJECT
 public:
-    HUD(int width = 640, int height = 480, QWidget* parent = NULL);
-    ~HUD();
+    HUD_old(int width = 640, int height = 480, QWidget* parent = NULL);
+    ~HUD_old();
 
     void setImageSize(int width, int height, int depth, int channels);
     void resizeGL(int w, int h);
@@ -90,7 +90,7 @@ public slots:
     /** @brief Select directory where to load the offline files from */
     void selectOfflineDirectory();
     /** @brief Enable the HUD instruments */
-    void enableHUDInstruments(bool enabled);
+    void enableHUD_oldInstruments(bool enabled);
     /** @brief Enable Video */
     void enableVideo(bool enabled);
     /** @brief Copy an image from the current active UAS */
@@ -103,9 +103,9 @@ protected slots:
     void paintPitchLines(float pitch, QPainter* painter);
     /** @brief Paint text on top of the image and OpenGL drawings */
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
-    /** @brief Setup the OpenGL view for drawing a sub-component of the HUD */
+    /** @brief Setup the OpenGL view for drawing a sub-component of the HUD_old */
     void setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight);
-    void paintHUD();
+    void paintHUD_old();
     void paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter* painter);
     void paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter* painter);
 
@@ -156,8 +156,8 @@ protected:
     float vGaugeSpacing; ///< Virtual spacing of the gauges from the center, 50 mm per default
     float vPitchPerDeg; ///< Virtual pitch to mm conversion. Currently one degree is 3 mm up/down in the pitch markings
 
-    int xCenter; ///< Center of the HUD instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
-    int yCenter; ///< Center of the HUD instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
+    int xCenter; ///< Center of the HUD_old instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
+    int yCenter; ///< Center of the HUD_old instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
 
     // Image buffers
     unsigned char* rawBuffer1; ///< Double buffer 1 for the image
@@ -172,8 +172,8 @@ protected:
     int receivedWidth;         ///< Width in pixels of the current image
     int receivedHeight;        ///< Height in pixels of the current image
 
-    // HUD colors
-    QColor defaultColor;       ///< Color for most HUD elements, e.g. pitch lines, center cross, change rate gauges
+    // HUD_old colors
+    QColor defaultColor;       ///< Color for most HUD_old elements, e.g. pitch lines, center cross, change rate gauges
     QColor setPointColor;      ///< Color for the current control set point, e.g. yaw desired
     QColor warningColor;       ///< Color for warning messages
     QColor criticalColor;      ///< Color for caution messages
@@ -184,17 +184,17 @@ protected:
     int warningBlinkRate;      ///< Blink rate of warning messages, will be rounded to the refresh rate
 
     QTimer* refreshTimer;      ///< The main timer, controls the update rate
-    QPainter* hudPainter;
-    QFont font;                ///< The HUD font, per default the free Bitstream Vera SANS, which is very close to actual HUD fonts
-    QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD font is directly loaded from file rather than from the system)
+    QPainter* HUD_oldPainter;
+    QFont font;                ///< The HUD_old font, per default the free Bitstream Vera SANS, which is very close to actual HUD_old fonts
+    QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD_old font is directly loaded from file rather than from the system)
     bool noCamera;             ///< No camera images available, draw the ground/sky box to indicate the horizon
     bool hardwareAcceleration; ///< Enable hardware acceleration
 
-    float strongStrokeWidth;   ///< Strong line stroke width, used throughout the HUD
-    float normalStrokeWidth;   ///< Normal line stroke width, used throughout the HUD
-    float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
+    float strongStrokeWidth;   ///< Strong line stroke width, used throughout the HUD_old
+    float normalStrokeWidth;   ///< Normal line stroke width, used throughout the HUD_old
+    float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD_old
 
-    QString waypointName;      ///< Waypoint name displayed in HUD
+    QString waypointName;      ///< Waypoint name displayed in HUD_old
     float roll;
     float pitch;
     float yaw;
@@ -218,7 +218,7 @@ protected:
     float load;
     QString offlineDirectory;
     QString nextOfflineImage;
-    bool hudInstrumentsEnabled;
+    bool HUDInstrumentsEnabled;
     bool videoEnabled;
     bool dataStreamEnabled;
     bool imageLoggingEnabled;
@@ -235,4 +235,4 @@ protected:
     unsigned int imageLogCounter;
 };
 
-#endif // HUD_H
+#endif // HUD_old_H
