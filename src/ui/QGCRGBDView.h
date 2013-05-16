@@ -3,7 +3,7 @@
 
 #include "HUD.h"
 
-class QGCRGBDView : public HUD
+class QGCRGBDView : public HUD_old
 {
     Q_OBJECT
 public:
