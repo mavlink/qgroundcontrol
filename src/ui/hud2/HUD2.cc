@@ -12,9 +12,7 @@ TODO:
 - numer label in roll indicator
 - pitch scaler
 - ivert angles for horizon
-- tiny pitch lines on horizon
 - battery indicator
-- hide numbers on ribbon when screen size less than critical
 - message widget
 */
 

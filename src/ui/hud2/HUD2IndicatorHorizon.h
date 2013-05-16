@@ -28,15 +28,16 @@ public slots:
     void setColoredBg(bool checked){coloredBackground = checked;}
 
 private:
-    void drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep);
+    void drawpitchlines(QPainter *painter, qreal bigScratchValueStep, qreal big_pixstep,
+                        qreal dx, qreal dy, qreal roll);
     void drawhorizon(QPainter *painter);
 
     HUD2IndicatorHorizonPitchline pitchline;
-    int degstep;    // vertical screen capacity in degrees
-    qreal pixstep;  // pixels between two lines
-    qreal pitchcount; // how many pitch lines can be fitted on screen (approximately)
-
     HUD2IndicatorHorizonCrosshair crosshair;
+
+    int bigScratchValueStep;    // numerical value step
+    qreal big_pixstep;          // pixels between two lines (internal use only)
+    qreal bigScratchLenStep;    // step in percents of widget sizes
 
     qreal gap; /* space between right and left parts */
     QPen pen;

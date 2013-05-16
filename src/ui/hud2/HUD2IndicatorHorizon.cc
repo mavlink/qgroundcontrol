@@ -18,8 +18,8 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch,
     settings.beginGroup("QGC_HUD2");
 
     this->gap = 6;
-    this->pitchcount = 5.3;
-    this->degstep = 20;
+    this->bigScratchLenStep = 20;
+    this->bigScratchValueStep = 20;
 
     color = settings.value("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT).value<QColor>();
     this->pen.setColor(color);
@@ -51,7 +51,7 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
     horizonright.setLine(a, 0, x1, 0);
 
     // pitchlines
-    pixstep = size.height() / pitchcount;
+    big_pixstep = (size.height() * bigScratchLenStep) / 100.0;
     pitchline.updateGeometry(size);
 
     // crosshair
@@ -64,25 +64,105 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
  * @param degstep
  * @param pixstep
  */
-void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep){
+void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep,
+                                qreal pixstep, qreal dx, qreal dy, qreal roll){
+
+    // estimate how many pitchlines we have to draw
+    // dy positive down
+    // dy positive right
+
+    int up, down;
+    QRect rect = painter->window();
+    int h = rect.height();
+    int w = rect.width();
+//    // check singularity
+//    if ((roll < 0.1) && (roll > -0.1)){
+//        // uav is pretty vertical
+//        up = ceil((h/2 + dy) / pixstep);
+//        up += 1; // to be safer
+//        down = ceil((h/2 - dy) / pixstep);
+//        down += 1;  // to be safer
+//    }
+//    else{
+//        // deduce line equation
+//        qreal k = tan(roll + M_PI/2);
+//        qreal b = -dy - k*dx;
+//        qreal x, y;
+
+//        x = -w/2;
+//        y = x * k + b;
+//        y -= dy;
+//        x -= dx;
+//        up = ceil(sqrt(y*y + x*x) / pixstep);
+//        up += 1;
+//        qDebug() << up << h << dy << pixstep;
+
+//        y = h/2;
+//        x = (y - b) / k;
+//        y -= dy;
+//        x -= dx;
+//        down = ceil(sqrt(y*y + x*x) / pixstep);
+//        down += 1;
+//    }
+
+//    painter->save();
+//    int i = 0;
+//    while (i > -down){
+//        i--;
+//        painter->translate(0, -pixstep);
+//        pitchline.paint(painter, -i*degstep);
+//    }
+//    painter->restore();
+
+
+
+//    painter->save();
+//    i = 0;
+//    while (i < up){
+//        i++;
+//        painter->translate(0, pixstep);
+//        pitchline.paint(painter, -i*degstep);
+//    }
+//    painter->restore();
+
+//    painter->save();
+//    int i = 0;
+//    while (i > -360){
+//        i -= degstep;
+//        painter->translate(0, -pixstep);
+//        pitchline.paint(painter, -i);
+//    }
+//    painter->restore();
+
+//    painter->save();
+//    i = 0;
+//    while (i < 360){
+//        i += degstep;
+//        painter->translate(0, pixstep);
+//        pitchline.paint(painter, -i);
+//    }
+//    painter->restore();
 
     painter->save();
     int i = 0;
-    while (i > -360){
-        i -= degstep;
+    while (rect.contains(0, -pixstep*i + h/2)){
+        i++;
         painter->translate(0, -pixstep);
-        pitchline.paint(painter, -i);
+        pitchline.paint(painter, degstep*i);
     }
     painter->restore();
+    qDebug() << "down" << i;
+    qDebug() << "rect" << rect;
 
     painter->save();
     i = 0;
-    while (i < 360){
-        i += degstep;
+    while (rect.contains(0, pixstep*i + h/2)){
+        i++;
         painter->translate(0, pixstep);
-        pitchline.paint(painter, -i);
+        pitchline.paint(painter, -degstep*i);
     }
     painter->restore();
+    qDebug() << "up" << i;
 }
 
 static int _getline_y(QPoint p1, QPoint p2, int x){
@@ -97,7 +177,7 @@ static int _getline_y(QPoint p1, QPoint p2, int x){
 void HUD2IndicatorHorizon::paint(QPainter *painter){
 
     qreal pitch_ = rad2deg(-*pitch);
-    qreal delta_y = pitch_ * (pixstep / degstep);
+    qreal delta_y = pitch_ * (big_pixstep / bigScratchValueStep);
     qreal delta_x = tan(-*roll) * delta_y;
 
     // create complex transfomation
@@ -150,7 +230,8 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     painter->setTransform(transform);
 
     // pitchlines
-    this->drawpitchlines(painter, degstep, pixstep);
+    this->drawpitchlines(painter, bigScratchValueStep, big_pixstep,
+                         delta_x, delta_y, *roll);
 
     // horizon lines
     painter->setPen(pen);

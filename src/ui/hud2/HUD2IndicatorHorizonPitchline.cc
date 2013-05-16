@@ -99,10 +99,6 @@ QRect HUD2IndicatorHorizonPitchline::update_geometry_lines_neg(int _gap, int w, 
     return QRect(x2, 0, w, h);
 }
 
-/**
- * @brief HUD2PitchLine::updateGeometry
- * @param size
- */
 void HUD2IndicatorHorizonPitchline::updateGeometry(const QSize &size){
 
     int tmp;

@@ -13,6 +13,7 @@ HUD2InstrumentsDialog::HUD2InstrumentsDialog(HUD2IndicatorHorizon *horizon,
 {
     ui->setupUi(this);
 
+    Q_UNUSED(roll);
     HUD2RibbonForm *speed_form = new HUD2RibbonForm(speedometer, this);
     HUD2RibbonForm *climb_form = new HUD2RibbonForm(altimeter, this);
     HUD2RibbonForm *compass_form = new HUD2RibbonForm(compass, this);
