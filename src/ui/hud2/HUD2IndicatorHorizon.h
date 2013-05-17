@@ -29,7 +29,7 @@ public slots:
 
 private:
     void drawpitchlines(QPainter *painter, qreal bigScratchValueStep, qreal big_pixstep,
-                        qreal dx, qreal dy, qreal roll);
+                        qreal dx, qreal dy, qreal roll, QRect *rect);
     void drawhorizon(QPainter *painter);
 
     HUD2IndicatorHorizonPitchline pitchline;

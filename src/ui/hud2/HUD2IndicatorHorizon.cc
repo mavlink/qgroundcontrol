@@ -65,104 +65,25 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
  * @param pixstep
  */
 void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep,
-                                qreal pixstep, qreal dx, qreal dy, qreal roll){
-
-    // estimate how many pitchlines we have to draw
-    // dy positive down
-    // dy positive right
-
-    int up, down;
-    QRect rect = painter->window();
-    int h = rect.height();
-    int w = rect.width();
-//    // check singularity
-//    if ((roll < 0.1) && (roll > -0.1)){
-//        // uav is pretty vertical
-//        up = ceil((h/2 + dy) / pixstep);
-//        up += 1; // to be safer
-//        down = ceil((h/2 - dy) / pixstep);
-//        down += 1;  // to be safer
-//    }
-//    else{
-//        // deduce line equation
-//        qreal k = tan(roll + M_PI/2);
-//        qreal b = -dy - k*dx;
-//        qreal x, y;
-
-//        x = -w/2;
-//        y = x * k + b;
-//        y -= dy;
-//        x -= dx;
-//        up = ceil(sqrt(y*y + x*x) / pixstep);
-//        up += 1;
-//        qDebug() << up << h << dy << pixstep;
-
-//        y = h/2;
-//        x = (y - b) / k;
-//        y -= dy;
-//        x -= dx;
-//        down = ceil(sqrt(y*y + x*x) / pixstep);
-//        down += 1;
-//    }
-
-//    painter->save();
-//    int i = 0;
-//    while (i > -down){
-//        i--;
-//        painter->translate(0, -pixstep);
-//        pitchline.paint(painter, -i*degstep);
-//    }
-//    painter->restore();
-
-
-
-//    painter->save();
-//    i = 0;
-//    while (i < up){
-//        i++;
-//        painter->translate(0, pixstep);
-//        pitchline.paint(painter, -i*degstep);
-//    }
-//    painter->restore();
-
-//    painter->save();
-//    int i = 0;
-//    while (i > -360){
-//        i -= degstep;
-//        painter->translate(0, -pixstep);
-//        pitchline.paint(painter, -i);
-//    }
-//    painter->restore();
-
-//    painter->save();
-//    i = 0;
-//    while (i < 360){
-//        i += degstep;
-//        painter->translate(0, pixstep);
-//        pitchline.paint(painter, -i);
-//    }
-//    painter->restore();
+                 qreal pixstep, qreal dx, qreal dy, qreal roll, QRect *rect){
 
     painter->save();
     int i = 0;
-    while (rect.contains(0, -pixstep*i + h/2)){
-        i++;
+    while (i > -120){
+        i -= degstep;
         painter->translate(0, -pixstep);
-        pitchline.paint(painter, degstep*i);
+        pitchline.paint(painter, -i);
     }
     painter->restore();
-    qDebug() << "down" << i;
-    qDebug() << "rect" << rect;
 
     painter->save();
     i = 0;
-    while (rect.contains(0, pixstep*i + h/2)){
-        i++;
+    while (i < 120){
+        i += degstep;
         painter->translate(0, pixstep);
-        pitchline.paint(painter, -degstep*i);
+        pitchline.paint(painter, -i);
     }
     painter->restore();
-    qDebug() << "up" << i;
 }
 
 static int _getline_y(QPoint p1, QPoint p2, int x){
@@ -226,12 +147,13 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     }
 
     // draw other stuff
+    QRect rect = painter->window();
     painter->save();
     painter->setTransform(transform);
 
     // pitchlines
     this->drawpitchlines(painter, bigScratchValueStep, big_pixstep,
-                         delta_x, delta_y, *roll);
+                         delta_x, delta_y, *roll, &rect);
 
     // horizon lines
     painter->setPen(pen);
