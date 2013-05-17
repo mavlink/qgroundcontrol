@@ -27,7 +27,7 @@ public:
     double getBigScratchLenStep(void){return bigScratchLenStep;}
     int getBigScratchValueStep(void){return bigScratchValueStep;}
     int getStepsSmall(void){return stepsSmall;}
-    int getStepsBig(void){return stepsBig;}
+    int getStepsBig(void){return stepsBig / 2;}
 
 signals:
     void geometryChanged(const QSize *size);
