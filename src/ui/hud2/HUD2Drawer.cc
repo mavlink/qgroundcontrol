@@ -3,8 +3,8 @@
 #include <QSettings>
 
 #include "HUD2Drawer.h"
-#include "HUD2InstrumentsDialog.h"
-#include "HUD2ColorDialog.h"
+#include "HUD2DialogInstruments.h"
+#include "HUD2DialogColor.h"
 
 
 HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
@@ -57,14 +57,14 @@ void HUD2Drawer::updateGeometry(const QSize &size){
 }
 
 void HUD2Drawer::showDialog(void){
-    HUD2InstrumentsDialog *d = new HUD2InstrumentsDialog(
+    HUD2DialogInstruments *d = new HUD2DialogInstruments(
                 &horizon, &roll, &speedometer, &altimeter, &compass, &fps, this);
     d->exec();
     delete d;
 }
 
 void HUD2Drawer::showColorDialog(void){
-    HUD2ColorDialog *d = new HUD2ColorDialog(
+    HUD2DialogColor *d = new HUD2DialogColor(
                 &horizon, &roll, &speedometer, &altimeter, &compass, &fps, this);
     d->exec();
     delete d;

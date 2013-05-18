@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HUD2HorizonForm</class>
- <widget class="QWidget" name="HUD2HorizonForm">
+ <class>HUD2FormHorizon</class>
+ <widget class="QWidget" name="HUD2FormHorizon">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>220</width>
-    <height>61</height>
+    <width>225</width>
+    <height>66</height>
    </rect>
   </property>
   <property name="windowTitle">

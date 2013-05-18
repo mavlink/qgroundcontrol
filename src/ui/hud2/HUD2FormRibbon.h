@@ -6,22 +6,22 @@
 #include "HUD2Data.h"
 
 namespace Ui {
-class HUD2RibbonForm;
+class HUD2FormRibbon;
 }
 
-class HUD2RibbonForm : public QWidget
+class HUD2FormRibbon : public QWidget
 {
     Q_OBJECT
     
 public:
-    explicit HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent);
-    ~HUD2RibbonForm();
+    explicit HUD2FormRibbon(HUD2Ribbon *ribbon, QWidget *parent);
+    ~HUD2FormRibbon();
     
 private slots:
     void on_comboBox_activated(int index);
 
 private:
-    Ui::HUD2RibbonForm *ui;
+    Ui::HUD2FormRibbon *ui;
     HUD2Ribbon *ribbon;
 };
 

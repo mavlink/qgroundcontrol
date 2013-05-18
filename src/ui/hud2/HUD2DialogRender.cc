@@ -2,12 +2,12 @@
 
 #include "HUD2.h"
 
-#include "HUD2RenderDialog.h"
-#include "ui_HUD2RenderDialog.h"
+#include "HUD2DialogRender.h"
+#include "ui_HUD2DialogRender.h"
 
-HUD2RenderDialog::HUD2RenderDialog(QWidget *parent) :
+HUD2DialogRender::HUD2DialogRender(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::HUD2RenderDialog)
+    ui(new Ui::HUD2DialogRender)
 {
     ui->setupUi(this);
 
@@ -38,7 +38,7 @@ HUD2RenderDialog::HUD2RenderDialog(QWidget *parent) :
     settings.endGroup();
 }
 
-HUD2RenderDialog::~HUD2RenderDialog()
+HUD2DialogRender::~HUD2DialogRender()
 {
     delete ui;
 }

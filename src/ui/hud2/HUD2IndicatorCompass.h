@@ -3,10 +3,10 @@
 
 #include "HUD2Ribbon.h"
 
-class HUD2Compass : public HUD2Ribbon
+class HUD2IndicatorCompass : public HUD2Ribbon
 {
 public:
-    HUD2Compass(const HUD2Data *huddata, QWidget *parent);
+    HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent);
 private:
     double processData(void);
 };

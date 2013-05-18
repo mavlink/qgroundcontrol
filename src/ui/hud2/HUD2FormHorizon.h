@@ -5,22 +5,22 @@
 #include "HUD2IndicatorHorizon.h"
 
 namespace Ui {
-class HUD2HorizonForm;
+class HUD2FormHorizon;
 }
 
-class HUD2HorizonForm : public QWidget
+class HUD2FormHorizon : public QWidget
 {
     Q_OBJECT
     
 public:
-    explicit HUD2HorizonForm(HUD2IndicatorHorizon *horizon, QWidget *parent);
-    ~HUD2HorizonForm();
+    explicit HUD2FormHorizon(HUD2IndicatorHorizon *horizon, QWidget *parent);
+    ~HUD2FormHorizon();
     
 private slots:
     void on_checkBox_toggled(bool checked);
 
 private:
-    Ui::HUD2HorizonForm *ui;
+    Ui::HUD2FormHorizon *ui;
     HUD2IndicatorHorizon *horizon;
 };
 

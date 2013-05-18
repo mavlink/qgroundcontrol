@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HUD2RenderDialog</class>
- <widget class="QDialog" name="HUD2RenderDialog">
+ <class>HUD2DialogRender</class>
+ <widget class="QDialog" name="HUD2DialogRender">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -87,7 +87,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>clicked(QAbstractButton*)</signal>
-   <receiver>HUD2RenderDialog</receiver>
+   <receiver>HUD2DialogRender</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">

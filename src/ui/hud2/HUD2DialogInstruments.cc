@@ -1,7 +1,7 @@
-#include "HUD2InstrumentsDialog.h"
-#include "ui_HUD2InstrumentsDialog.h"
+#include "HUD2DialogInstruments.h"
+#include "ui_HUD2DialogInstruments.h"
 
-HUD2InstrumentsDialog::HUD2InstrumentsDialog(HUD2IndicatorHorizon *horizon,
+HUD2DialogInstruments::HUD2DialogInstruments(HUD2IndicatorHorizon *horizon,
                                              HUD2IndicatorRoll *roll,
                                              HUD2Ribbon *speedometer,
                                              HUD2Ribbon *altimeter,
@@ -9,16 +9,16 @@ HUD2InstrumentsDialog::HUD2InstrumentsDialog(HUD2IndicatorHorizon *horizon,
                                              HUD2IndicatorFps *fps,
                                              QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::HUD2InstrumentsDialog)
+    ui(new Ui::HUD2DialogInstruments)
 {
     ui->setupUi(this);
 
     Q_UNUSED(roll);
-    HUD2RibbonForm *speed_form = new HUD2RibbonForm(speedometer, this);
-    HUD2RibbonForm *climb_form = new HUD2RibbonForm(altimeter, this);
-    HUD2RibbonForm *compass_form = new HUD2RibbonForm(compass, this);
-    HUD2HorizonForm *horizon_form = new HUD2HorizonForm(horizon, this);
-    HUD2FpsForm *fps_form = new HUD2FpsForm(fps, this);
+    HUD2FormRibbon *speed_form = new HUD2FormRibbon(speedometer, this);
+    HUD2FormRibbon *climb_form = new HUD2FormRibbon(altimeter, this);
+    HUD2FormRibbon *compass_form = new HUD2FormRibbon(compass, this);
+    HUD2FormHorizon *horizon_form = new HUD2FormHorizon(horizon, this);
+    HUD2FormFps *fps_form = new HUD2FormFps(fps, this);
 
     ui->tabWidget->addTab(speed_form, "speed");
     ui->tabWidget->addTab(climb_form, "alt");
@@ -27,7 +27,9 @@ HUD2InstrumentsDialog::HUD2InstrumentsDialog(HUD2IndicatorHorizon *horizon,
     ui->tabWidget->addTab(horizon_form, "horizon");
 }
 
-HUD2InstrumentsDialog::~HUD2InstrumentsDialog()
+HUD2DialogInstruments::~HUD2DialogInstruments()
 {
     delete ui;
 }
+
+

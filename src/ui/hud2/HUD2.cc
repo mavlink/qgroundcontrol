@@ -270,7 +270,7 @@ void HUD2::createActions()
 
 void HUD2::renderDialog()
 {
-    HUD2RenderDialog *settings_dialog = new HUD2RenderDialog(this);
+    HUD2DialogRender *settings_dialog = new HUD2DialogRender(this);
     settings_dialog->exec();
     delete settings_dialog;
 }

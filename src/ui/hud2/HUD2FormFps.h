@@ -5,22 +5,22 @@
 #include "HUD2IndicatorFps.h"
 
 namespace Ui {
-class HUD2FpsForm;
+class HUD2FormFps;
 }
 
-class HUD2FpsForm : public QWidget
+class HUD2FormFps : public QWidget
 {
     Q_OBJECT
     
 public:
-    explicit HUD2FpsForm(HUD2IndicatorFps *fps, QWidget *parent);
-    ~HUD2FpsForm();
+    explicit HUD2FormFps(HUD2IndicatorFps *fps, QWidget *parent);
+    ~HUD2FormFps();
 
 private slots:
     void on_checkBox_toggled(bool checked);
 
 private:
-    Ui::HUD2FpsForm *ui;
+    Ui::HUD2FormFps *ui;
     HUD2IndicatorFps *fps;
 };
 

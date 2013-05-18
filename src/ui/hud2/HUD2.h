@@ -51,7 +51,7 @@
 #include "HUD2RenderGL.h"
 #include "HUD2Drawer.h"
 #include "HUD2Data.h"
-#include "HUD2RenderDialog.h"
+#include "HUD2DialogRender.h"
 
 #include "UASInterface.h"
 

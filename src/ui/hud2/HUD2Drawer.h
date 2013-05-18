@@ -11,9 +11,9 @@
 #include "HUD2Ribbon.h"
 #include "HUD2IndicatorFps.h"
 #include "HUD2IndicatorRoll.h"
-#include "HUD2Compass.h"
-#include "HUD2Speedometer.h"
-#include "HUD2Altimeter.h"
+#include "HUD2IndicatorSpeedometer.h"
+#include "HUD2IndicatorCompass.h"
+#include "HUD2IndicatorAltimeter.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -44,9 +44,9 @@ public slots:
 private:
     HUD2IndicatorHorizon horizon;
     HUD2IndicatorRoll roll;
-    HUD2Speedometer speedometer;
-    HUD2Altimeter altimeter;
-    HUD2Compass compass;
+    HUD2IndicatorSpeedometer speedometer;
+    HUD2IndicatorAltimeter altimeter;
+    HUD2IndicatorCompass compass;
     HUD2IndicatorFps fps;
 
     // HUD colors

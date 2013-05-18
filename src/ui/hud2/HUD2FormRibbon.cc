@@ -1,11 +1,11 @@
 #include <QSettings>
 
-#include "HUD2RibbonForm.h"
-#include "ui_HUD2RibbonForm.h"
+#include "HUD2FormRibbon.h"
+#include "ui_HUD2FormRibbon.h"
 
-HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
+HUD2FormRibbon::HUD2FormRibbon(HUD2Ribbon *ribbon, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::HUD2RibbonForm),
+    ui(new Ui::HUD2FormRibbon),
     ribbon(ribbon)
 {
     ui->setupUi(this);
@@ -44,12 +44,12 @@ HUD2RibbonForm::HUD2RibbonForm(HUD2Ribbon *ribbon, QWidget *parent) :
             ribbon, SLOT(setStepsBig(int)));
 }
 
-HUD2RibbonForm::~HUD2RibbonForm()
+HUD2FormRibbon::~HUD2FormRibbon()
 {
     delete ui;
 }
 
-void HUD2RibbonForm::on_comboBox_activated(int index){
+void HUD2FormRibbon::on_comboBox_activated(int index){
     Q_UNUSED(index);
 }
 

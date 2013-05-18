@@ -4,21 +4,21 @@
 #include <QDialog>
 
 namespace Ui {
-class HUD2RenderDialog;
+class HUD2DialogRender;
 }
 
-class HUD2RenderDialog : public QDialog
+class HUD2DialogRender : public QDialog
 {
     Q_OBJECT
     
 public:
-    explicit HUD2RenderDialog(QWidget *parent = 0);
-    ~HUD2RenderDialog();
+    explicit HUD2DialogRender(QWidget *parent = 0);
+    ~HUD2DialogRender();
     
 private slots:
 
 private:
-    Ui::HUD2RenderDialog *ui;
+    Ui::HUD2DialogRender *ui;
 };
 
 #endif // HUD2RENDERDIALOG_H

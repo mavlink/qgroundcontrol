@@ -3,10 +3,10 @@
 #include <QMessageBox>
 
 #include "HUD2Drawer.h"
-#include "HUD2ColorDialog.h"
-#include "ui_HUD2ColorDialog.h"
+#include "HUD2DialogColor.h"
+#include "ui_HUD2DialogColor.h"
 
-HUD2ColorDialog::HUD2ColorDialog(HUD2IndicatorHorizon *horizon,
+HUD2DialogColor::HUD2DialogColor(HUD2IndicatorHorizon *horizon,
                                  HUD2IndicatorRoll *roll,
                                  HUD2Ribbon *speed,
                                  HUD2Ribbon *climb,
@@ -20,18 +20,18 @@ HUD2ColorDialog::HUD2ColorDialog(HUD2IndicatorHorizon *horizon,
     climb(climb),
     compass(compass),
     fps(fps),
-    ui(new Ui::HUD2ColorDialog)
+    ui(new Ui::HUD2DialogColor)
 {
     ui->setupUi(this);
 
 }
 
-HUD2ColorDialog::~HUD2ColorDialog()
+HUD2DialogColor::~HUD2DialogColor()
 {
     delete ui;
 }
 
-void HUD2ColorDialog::on_instrumentsButton_clicked()
+void HUD2DialogColor::on_instrumentsButton_clicked()
 {
     QColorDialog *d;
     QColor old_color;
@@ -69,7 +69,7 @@ void HUD2ColorDialog::on_instrumentsButton_clicked()
     settings.endGroup();
 }
 
-void HUD2ColorDialog::on_skyButton_clicked()
+void HUD2DialogColor::on_skyButton_clicked()
 {
     QColor old_color;
     QColor new_color;
@@ -96,7 +96,7 @@ void HUD2ColorDialog::on_skyButton_clicked()
     settings.endGroup();
 }
 
-void HUD2ColorDialog::on_gndButton_clicked()
+void HUD2DialogColor::on_gndButton_clicked()
 {
     QColor old_color;
     QColor new_color;
@@ -123,7 +123,7 @@ void HUD2ColorDialog::on_gndButton_clicked()
     settings.endGroup();
 }
 
-void HUD2ColorDialog::on_defaultsButton_clicked()
+void HUD2DialogColor::on_defaultsButton_clicked()
 {
     QSettings settings;
     int r = QMessageBox::question(this, tr("Defaults"),

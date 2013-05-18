@@ -227,12 +227,12 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
-    src/ui/hud2/HUD2RenderDialog.ui \
-    src/ui/hud2/HUD2ColorDialog.ui \
-    src/ui/hud2/HUD2RibbonForm.ui \
-    src/ui/hud2/HUD2InstrumentsDialog.ui \
-    src/ui/hud2/HUD2FpsForm.ui \
-    src/ui/hud2/HUD2HorizonForm.ui
+    src/ui/hud2/HUD2FormHorizon.ui \
+    src/ui/hud2/HUD2FormFps.ui \
+    src/ui/hud2/HUD2FormRibbon.ui \
+    src/ui/hud2/HUD2DialogRender.ui \
+    src/ui/hud2/HUD2DialogInstruments.ui \
+    src/ui/hud2/HUD2DialogColor.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -385,15 +385,15 @@ HEADERS += src/MG.h \
     src/ui/hud2/HUD2IndicatorHorizonPitchline.h \
     src/ui/hud2/HUD2IndicatorHorizonCrosshair.h \
     src/ui/hud2/HUD2Ribbon.h \
-    src/ui/hud2/HUD2RenderDialog.h \
-    src/ui/hud2/HUD2ColorDialog.h \
-    src/ui/hud2/HUD2RibbonForm.h \
-    src/ui/hud2/HUD2InstrumentsDialog.h \
-    src/ui/hud2/HUD2FpsForm.h \
-    src/ui/hud2/HUD2HorizonForm.h \
-    src/ui/hud2/HUD2Compass.h \
-    src/ui/hud2/HUD2Altimeter.h \
-    src/ui/hud2/HUD2Speedometer.h
+    src/ui/hud2/HUD2FormRibbon.h \
+    src/ui/hud2/HUD2FormFps.h \
+    src/ui/hud2/HUD2FormHorizon.h \
+    src/ui/hud2/HUD2DialogRender.h \
+    src/ui/hud2/HUD2DialogColor.h \
+    src/ui/hud2/HUD2DialogInstruments.h \
+    src/ui/hud2/HUD2IndicatorSpeedometer.h \
+    src/ui/hud2/HUD2IndicatorAltimeter.h \
+    src/ui/hud2/HUD2IndicatorCompass.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -565,15 +565,15 @@ SOURCES += src/main.cc \
     src/ui/hud2/HUD2IndicatorHorizonPitchline.cc \
     src/ui/hud2/HUD2IndicatorHorizonCrosshair.cc \
     src/ui/hud2/HUD2Ribbon.cc \
-    src/ui/hud2/HUD2RenderDialog.cc \
-    src/ui/hud2/HUD2ColorDialog.cc \
-    src/ui/hud2/HUD2RibbonForm.cc \
-    src/ui/hud2/HUD2InstrumentsDialog.cc \
-    src/ui/hud2/HUD2FpsForm.cc \
-    src/ui/hud2/HUD2HorizonForm.cc \
-    src/ui/hud2/HUD2Altimeter.cc \
-    src/ui/hud2/HUD2Speedometer.cc \
-    src/ui/hud2/HUD2Compass.cc
+    src/ui/hud2/HUD2FormRibbon.cc \
+    src/ui/hud2/HUD2FormFps.cc \
+    src/ui/hud2/HUD2FormHorizon.cc \
+    src/ui/hud2/HUD2DialogRender.cc \
+    src/ui/hud2/HUD2DialogInstruments.cc \
+    src/ui/hud2/HUD2DialogColor.cc \
+    src/ui/hud2/HUD2IndicatorAltimeter.cc \
+    src/ui/hud2/HUD2IndicatorCompass.cc \
+    src/ui/hud2/HUD2IndicatorSpeedometer.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
