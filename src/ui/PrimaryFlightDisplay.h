@@ -84,6 +84,7 @@ public:
     PrimaryFlightDisplay(int width = 640, int height = 480, QWidget* parent = NULL);
     ~PrimaryFlightDisplay();
 
+public slots:
     /** @brief Attitude from main autopilot / system state */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
@@ -100,6 +101,7 @@ public:
     void updateLoad(UASInterface*, double);
     void selectWaypoint(int uasId, int id);
 
+protected:
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *e);
 
@@ -115,10 +117,9 @@ public:
     // dongfang: We have no context menu. Viewonly.
     // void contextMenuEvent (QContextMenuEvent* event);
 
+protected:
     // dongfang: What is that?
     void createActions();
-
-    static const int updateInterval = 40;
 
 public slots:
     /** @brief Set the currently monitored UAS */
@@ -207,6 +208,9 @@ private:
 
     static const int tickValues[];
     static const QString compassWindNames[];
+
+    static const int updateInterval = 40;
+
 
 signals:
     

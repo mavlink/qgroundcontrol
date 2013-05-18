@@ -170,6 +170,8 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
         this->heading = yaw;
     }
     // TODO: Else-part. We really should have an "attitude bad or unknown" indication instead of just freezing.
+
+    qDebug("r,p,y: %f,%f,%f", roll, pitch, yaw);
 }
 
 /*
@@ -184,6 +186,8 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, int component, doub
     Q_UNUSED(pitch);
     Q_UNUSED(yaw);
     Q_UNUSED(timestamp);
+
+    qDebug("ignore (!!!) r,p,y: %f,%f,%f", roll, pitch, yaw);
 }
 
 void PrimaryFlightDisplay::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
@@ -1122,3 +1126,5 @@ void PrimaryFlightDisplay::doPaint() {
     paintAllInOne();
 #endif
 }
+
+void PrimaryFlightDisplay:: createActions() {}
