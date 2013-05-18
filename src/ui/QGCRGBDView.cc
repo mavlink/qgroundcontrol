@@ -6,7 +6,7 @@
 #include "UASManager.h"
 
 QGCRGBDView::QGCRGBDView(int width, int height, QWidget *parent) :
-    HUD_old(width, height, parent),
+    HUD(width, height, parent),
     rgbEnabled(false),
     depthEnabled(false)
 {
@@ -70,7 +70,7 @@ void QGCRGBDView::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(rgbdImageChanged(UASInterface*)), this, SLOT(updateData(UASInterface*)));
     }
 
-    HUD_old::setActiveUAS(uas);
+    HUD::setActiveUAS(uas);
 }
 
 void QGCRGBDView::clearData(void)
