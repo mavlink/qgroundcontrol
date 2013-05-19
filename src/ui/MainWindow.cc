@@ -1266,49 +1266,50 @@ void MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
 void MainWindow::selectStylesheet()
 {
     // Let user select style sheet
-    styleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), styleFileName, tr("CSS Stylesheet (*.css);;"));
+    QString newStyleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), styleFileName, tr("CSS Stylesheet (*.css);;"));
 
-    if (!styleFileName.endsWith(".css"))
+    // Load the new style sheet if a valid one was selected.
+    if (!newStyleFileName.isNull())
     {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("QGroundControl did lot load a new style"));
-        msgBox.setInformativeText(tr("No suitable .css file selected. Please select a valid .css file."));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-        return;
+        QFile styleSheet(newStyleFileName);
+        if (styleSheet.exists())
+        {
+            styleFileName = newStyleFileName;
+            reloadStylesheet();
+        }
     }
-
-    // Load style sheet
-    reloadStylesheet();
 }
 
 void MainWindow::reloadStylesheet()
 {
     // Load style sheet
-    QFile* styleSheet = new QFile(styleFileName);
-    if (!styleSheet->exists())
+    QFile styleSheet(styleFileName);
+
+    // Default to the indoor stylesheet if an invalid stylesheet was chosen.
+    if (!styleSheet.exists())
     {
-        styleSheet = new QFile(":files/styles/style-indoor.css");
+        styleSheet.setFileName(":files/styles/style-indoor.css");
     }
-    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
+
+    // Load the new stylesheet.
+    // We also replace an 'ICONDIR' token here with the proper application path.
+    if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QString style = QString(styleSheet->readAll());
+        QString style = QString(styleSheet.readAll());
         style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/styles/");
         qApp->setStyleSheet(style);
     }
+    // Otherwise alert the user to the failure.
     else
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("QGroundControl did lot load a new style"));
+        msgBox.setText(tr("QGroundControl did not load a new style"));
         msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(styleFileName));
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
     }
-    delete styleSheet;
 }
 
 /**
