@@ -18,8 +18,10 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch,
     settings.beginGroup("QGC_HUD2");
 
     this->gap = 6;
-    this->bigScratchLenStep = 20;
-    this->bigScratchValueStep = 20;
+
+    bigScratchLenStep = settings.value("HORIZON_BIG_SCRATCH_LEN_STEP", 20.0).toDouble();
+    bigScratchValueStep = settings.value("HORIZON_BIG_SCRATCH_VALUE_STEP", 10).toInt();
+    stepsBig = settings.value("HORIZON_STEPS_BIG", 4).toInt();
 
     color = settings.value("INSTRUMENTS_COLOR", INSTRUMENTS_COLOR_DEFAULT).value<QColor>();
     this->pen.setColor(color);
@@ -40,6 +42,8 @@ HUD2IndicatorHorizon::HUD2IndicatorHorizon(const double *pitch,
 }
 
 void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
+    this->size_cached = size;
+
     int a = percent2pix_w(size, this->gap);
 
     // wings
@@ -51,7 +55,7 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
     horizonright.setLine(a, 0, x1, 0);
 
     // pitchlines
-    big_pixstep = (size.height() * bigScratchLenStep) / 100.0;
+    big_pixstep = percent2pix_hF(size, bigScratchLenStep);
     pitchline.updateGeometry(size);
 
     // crosshair
@@ -64,24 +68,20 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
  * @param degstep
  * @param pixstep
  */
-void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep,
-                 qreal pixstep, qreal dx, qreal dy, qreal roll, QRect *rect){
+void HUD2IndicatorHorizon::drawpitchlines(QPainter *painter, qreal degstep, qreal pixstep){
+    int i = 1;
 
     painter->save();
-    int i = 0;
-    while (i > -120){
-        i -= degstep;
-        painter->translate(0, -pixstep);
-        pitchline.paint(painter, -i);
+    for (i=1; i<=stepsBig; i++){
+        painter->translate(0, pixstep);
+        pitchline.paint(painter, -i * degstep);
     }
     painter->restore();
 
     painter->save();
-    i = 0;
-    while (i < 120){
-        i += degstep;
-        painter->translate(0, pixstep);
-        pitchline.paint(painter, -i);
+    for (i=1; i<=stepsBig; i++){
+        painter->translate(0, -pixstep);
+        pitchline.paint(painter, i * degstep);
     }
     painter->restore();
 }
@@ -147,13 +147,11 @@ void HUD2IndicatorHorizon::paint(QPainter *painter){
     }
 
     // draw other stuff
-    QRect rect = painter->window();
     painter->save();
     painter->setTransform(transform);
 
     // pitchlines
-    this->drawpitchlines(painter, bigScratchValueStep, big_pixstep,
-                         delta_x, delta_y, *roll, &rect);
+    this->drawpitchlines(painter, bigScratchValueStep, big_pixstep);
 
     // horizon lines
     painter->setPen(pen);
@@ -182,4 +180,41 @@ void HUD2IndicatorHorizon::setGndColor(QColor color){
     gndBrush.setColor(color);
 }
 
+void HUD2IndicatorHorizon::setColoredBg(bool checked){
+    coloredBackground = checked;
+    QSettings settings;
 
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue("QGC_HUD2_HORIZON_COLORED_BG", checked);
+    settings.endGroup();
+}
+
+void HUD2IndicatorHorizon::setBigScratchLenStep(double value){
+    bigScratchLenStep = value;
+    updateGeometry(size_cached);
+    QSettings settings;
+
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue("HORIZON_BIG_SCRATCH_LEN_STEP", value);
+    settings.endGroup();
+}
+
+void HUD2IndicatorHorizon::setBigScratchValueStep(int value){
+    bigScratchValueStep = value;
+    updateGeometry(size_cached);
+    QSettings settings;
+
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue("HORIZON_BIG_SCRATCH_VALUE_STEP", value);
+    settings.endGroup();
+}
+
+void HUD2IndicatorHorizon::setStepsBig(int value){
+    stepsBig = value;
+    updateGeometry(size_cached);
+    QSettings settings;
+
+    settings.beginGroup("QGC_HUD2");
+    settings.setValue("HORIZON_STEPS_BIG", value);
+    settings.endGroup();
+}

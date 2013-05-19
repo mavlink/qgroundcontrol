@@ -15,9 +15,6 @@ class HUD2FormHorizon : public QWidget
 public:
     explicit HUD2FormHorizon(HUD2IndicatorHorizon *horizon, QWidget *parent);
     ~HUD2FormHorizon();
-    
-private slots:
-    void on_checkBox_toggled(bool checked);
 
 private:
     Ui::HUD2FormHorizon *ui;

@@ -59,15 +59,15 @@ private:
     bool enabled;
     QString name;
 
-    qreal bigScratchLenStep; // step in percents of widget sizes
-    qreal big_pixstep;// percentage recalculated to pixels (internal use only)
-    int bigScratchValueStep; // numerical value step
-    int stepsSmall; // how many small scratches between 2 big. Can be 0.
-    int small_steps_total; // overall count of small scratches in ribbon (internal use only).
-    int stepsBig; // value must be even AND more than 0
-    qreal small_pixstep;// percentage recalculated to pixels (internal use only)
-    QRect clipRect; // clipping rectangle
-    QSize size; // cached value to recalculate all sizes after changing of settings
+    qreal bigScratchLenStep;    // step in percents of widget sizes
+    qreal big_pixstep;          // percentage recalculated to pixels (internal use only)
+    int bigScratchValueStep;    // numerical value step
+    int stepsSmall;             // how many small scratches between 2 big. Can be 0.
+    int small_steps_total;      // overall count of small scratches in ribbon (internal use only).
+    int stepsBig;               // value must be even AND more than 0
+    qreal small_pixstep;        // percentage recalculated to pixels (internal use only)
+    QRect clipRect;             // clipping rectangle
+    QSize size_cached;          // cached value to recalculate all sizes after changing of settings
 
     QPen bigPen;
     QPen arrowPen;

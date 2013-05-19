@@ -231,7 +231,7 @@ void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
 }
 
 void HUD2Ribbon::updateGeometry(const QSize &size){
-    this->size = size;
+    this->size_cached = size;
 
     qreal gap_percent = 6;
     qreal len_percent = 2; // length of big scratch
@@ -450,7 +450,7 @@ void HUD2Ribbon::setEnabled(bool checked){
 
 void HUD2Ribbon::setBigScratchLenStep(double lstep){
     this->bigScratchLenStep = lstep;
-    this->updateGeometry(this->size);
+    this->updateGeometry(this->size_cached);
 
     QSettings settings;
     QString str = name + "_BIG_SCRATCH_LEN_STEP";
@@ -461,7 +461,7 @@ void HUD2Ribbon::setBigScratchLenStep(double lstep){
 
 void HUD2Ribbon::setBigScratchValueStep(int vstep){
     this->bigScratchValueStep = vstep;
-    this->updateGeometry(this->size);
+    this->updateGeometry(this->size_cached);
 
     QSettings settings;
     QString str = name + "_BIG_SCRATCH_VALUE_STEP";
@@ -472,7 +472,7 @@ void HUD2Ribbon::setBigScratchValueStep(int vstep){
 
 void HUD2Ribbon::setStepsSmall(int steps){
     this->stepsSmall = steps;
-    this->updateGeometry(this->size);
+    this->updateGeometry(this->size_cached);
 
     QSettings settings;
     QString str = name + "_STEPS_SMALL";
@@ -488,7 +488,7 @@ void HUD2Ribbon::setStepsBig(int steps){
         qFatal("Ribbon's stepsBig value must be even AND more than 0");
 
     this->stepsBig = steps;
-    this->updateGeometry(this->size);
+    this->updateGeometry(this->size_cached);
 
     QSettings settings;
     QString str = name + "_STEPS_BIG";
