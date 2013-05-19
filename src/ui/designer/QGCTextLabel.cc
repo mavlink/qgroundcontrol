@@ -33,8 +33,6 @@ QGCTextLabel::~QGCTextLabel()
     delete ui;
 }
 
-
-
 void QGCTextLabel::startEditMode()
 {
     // Hide elements
@@ -122,14 +120,14 @@ void QGCTextLabel::readSettings(const QString& pre,const QVariantMap& settings)
 
     //int commandId = settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt();
 
-
-
-
     //ui->editNameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     //ui->nameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
 }
 void QGCTextLabel::textMessageReceived(int uasid, int component, int severity, QString message)
 {
+    Q_UNUSED(uasid);
+    Q_UNUSED(component);
+    Q_UNUSED(severity);
     if (enabledNum != -1)
     {
         //SUCCESS: Executed CMD: 241
@@ -166,10 +164,6 @@ void QGCTextLabel::readSettings(const QSettings& settings)
         ui->nameLabel->setText(ui->editNameLabel->text());
         ui->textLabel->setText("");
         connect(uas,SIGNAL(textMessageReceived(int,int,int,QString)),this,SLOT(textMessageReceived(int,int,int,QString)));
-    }
-    else
-    {
-
     }
 }
 void QGCTextLabel::enableText(int num)
