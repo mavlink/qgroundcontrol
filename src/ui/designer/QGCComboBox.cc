@@ -42,8 +42,6 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     ui->infoLabel->hide();
     ui->editOptionComboBox->setEnabled(false);
     isDisabled = true;
-    //ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-   // ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
     connect(ui->editOptionComboBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(comboBoxIndexChanged(QString)));
     connect(ui->editAddItemButton,SIGNAL(clicked()),this,SLOT(addButtonClicked()));
