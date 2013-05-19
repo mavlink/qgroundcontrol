@@ -5,8 +5,6 @@
 HUD2IndicatorMessage::HUD2IndicatorMessage(QWidget *parent) :
     QWidget(parent)
 {
-    timeout = 10;
-    maxmsg = 4;
     labelFont.setPixelSize(15);
 }
 

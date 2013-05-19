@@ -24,8 +24,6 @@ public slots:
 signals:
 
 public:
-    int timeout;
-    int maxmsg;
     QFont labelFont;
     QList<hud2_msg_t> list;
 };

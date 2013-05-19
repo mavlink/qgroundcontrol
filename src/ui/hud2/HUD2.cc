@@ -207,6 +207,8 @@ void HUD2::setActiveUAS(UASInterface* uas)
                    this, SLOT(updateAltitude(int,double)));
         disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)),
                    this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(textMessageReceived(int,int,int,QString)),
+                   this, SLOT(updateTextMessage(int,int,int,QString)));
 
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
                    this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
