@@ -22,7 +22,7 @@ class HUD2DialogInstruments : public QDialog
     Q_OBJECT
     
 public:
-    explicit HUD2DialogInstruments(HUD2IndicatorHorizon *horizon,
+    explicit HUD2DialogInstruments(HUD2FormHorizon *horizon_form,
                                    HUD2IndicatorRoll *roll,
                                    HUD2Ribbon *speedometer,
                                    HUD2Ribbon *altimeter,
@@ -30,9 +30,8 @@ public:
                                    HUD2IndicatorFps *fps,
                                    QWidget *parent);
     ~HUD2DialogInstruments();
-    
+
 private slots:
-    void on_tabWidget_selected(const QString &arg1);
 
 private:
     Ui::HUD2DialogInstruments *ui;

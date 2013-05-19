@@ -5,8 +5,7 @@
 
 HUD2FormRibbon::HUD2FormRibbon(HUD2Ribbon *ribbon, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::HUD2FormRibbon),
-    ribbon(ribbon)
+    ui(new Ui::HUD2FormRibbon)
 {
     ui->setupUi(this);
 
@@ -42,6 +41,11 @@ HUD2FormRibbon::HUD2FormRibbon(HUD2Ribbon *ribbon, QWidget *parent) :
     ui->stepsBig->setValue(ribbon->getStepsBig());
     connect(ui->stepsBig, SIGNAL(valueChanged(int)),
             ribbon, SLOT(setStepsBig(int)));
+
+    ui->verticalLayout->addWidget(new QCheckBox());
+
+    ui->verticalLayout->addSpacerItem(new
+            QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 HUD2FormRibbon::~HUD2FormRibbon()

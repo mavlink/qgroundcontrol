@@ -8,6 +8,7 @@
 #include "HUD2Data.h"
 #include "HUD2IndicatorHorizonPitchline.h"
 #include "HUD2IndicatorHorizonCrosshair.h"
+#include "HUD2FormHorizon.h"
 
 class HUD2IndicatorHorizon : public QWidget
 {
@@ -15,7 +16,7 @@ class HUD2IndicatorHorizon : public QWidget
 public:
     explicit HUD2IndicatorHorizon(const double *pitch, const double *roll, QWidget *parent);
     void paint(QPainter *painter);
-    bool getColoredBg(void){return coloredBackground;}
+    HUD2FormHorizon *getForm(void);
 
 signals:
     void geometryChanged(const QSize *size);
@@ -30,17 +31,13 @@ public slots:
     void setBigScratchValueStep(int value);
     void setStepsBig(int value);
 
-public slots:
-    int     getStepsBig(void){return stepsBig;}
-    double  getBigScratchLenStep(void){return bigScratchLenStep;}
-    int     getBigScratchValueStep(void){return bigScratchValueStep;}
-
 private:
     void drawpitchlines(QPainter *painter, qreal bigScratchValueStep, qreal big_pixstep);
     void drawhorizon(QPainter *painter);
 
     HUD2IndicatorHorizonPitchline pitchline;
     HUD2IndicatorHorizonCrosshair crosshair;
+    HUD2FormHorizon *form;
 
     int bigScratchValueStep;    // numerical value step
     qreal big_pixstep;          // pixels between two lines (internal use only)

@@ -60,9 +60,13 @@ void HUD2Drawer::updateGeometry(const QSize &size){
 }
 
 void HUD2Drawer::showDialog(void){
+    HUD2FormHorizon *horizon_form = horizon.getForm();
+
     HUD2DialogInstruments *d = new HUD2DialogInstruments(
-                &horizon, &roll, &speedometer, &altimeter, &compass, &fps, this);
+                horizon_form, &roll, &speedometer, &altimeter, &compass, &fps, this);
     d->exec();
+
+    delete horizon_form;
     delete d;
 }
 

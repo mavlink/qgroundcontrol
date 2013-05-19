@@ -218,3 +218,29 @@ void HUD2IndicatorHorizon::setStepsBig(int value){
     settings.setValue("HORIZON_STEPS_BIG", value);
     settings.endGroup();
 }
+
+HUD2FormHorizon *HUD2IndicatorHorizon::getForm(void){
+    form = new HUD2FormHorizon(this);
+
+    form->ui->checkBox->setChecked(coloredBackground);
+    connect(form->ui->checkBox, SIGNAL(toggled(bool)), this, SLOT(setColoredBg(bool)));
+
+    form->ui->bigScratchLenStep->setRange(1, 100);
+    form->ui->bigScratchLenStep->setSingleStep(0.5);
+    form->ui->bigScratchLenStep->setValue(bigScratchLenStep);
+    connect(form->ui->bigScratchLenStep, SIGNAL(valueChanged(double)),
+            this, SLOT(setBigScratchLenStep(double)));
+
+    form->ui->bigScratchValueStep->setRange(1, 10000);
+    form->ui->bigScratchValueStep->setValue(bigScratchValueStep);
+    connect(form->ui->bigScratchValueStep, SIGNAL(valueChanged(int)),
+            this, SLOT(setBigScratchValueStep(int)));
+
+    form->ui->stepsBig->setRange(1, 10);
+    form->ui->stepsBig->setSingleStep(1);
+    form->ui->stepsBig->setValue(stepsBig);
+    connect(form->ui->stepsBig, SIGNAL(valueChanged(int)),
+            this, SLOT(setStepsBig(int)));
+
+    return form;
+}

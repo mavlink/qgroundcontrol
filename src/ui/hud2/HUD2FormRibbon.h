@@ -22,7 +22,6 @@ private slots:
 
 private:
     Ui::HUD2FormRibbon *ui;
-    HUD2Ribbon *ribbon;
 };
 
 #endif // HUD2RIBBONFORM_H
