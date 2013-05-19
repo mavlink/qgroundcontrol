@@ -47,22 +47,3 @@ HUD2DialogInstruments::~HUD2DialogInstruments()
 
     delete ui;
 }
-
-void HUD2DialogInstruments::on_tabWidget_selected(const QString &arg1){
-    Q_UNUSED(arg1);
-
-//    int idx = ui->tabWidget->currentIndex();
-
-//    QSettings settings;
-//    settings.beginGroup("QGC_HUD2");
-//    settings.setValue("DIALOG_INSTRUMENTS_LAST_TAB", idx);
-//    settings.endGroup();
-}
-
-void HUD2DialogInstruments::on_tabWidget_currentChanged(int index)
-{
-//    QSettings settings;
-//    settings.beginGroup("QGC_HUD2");
-//    settings.setValue("DIALOG_INSTRUMENTS_LAST_TAB", index);
-//    settings.endGroup();
-}

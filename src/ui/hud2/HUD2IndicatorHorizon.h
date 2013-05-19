@@ -26,6 +26,8 @@ public slots:
     void setColor(QColor color);
     void setSkyColor(QColor color);
     void setGndColor(QColor color);
+
+private slots:
     void setColoredBg(bool checked);
     void setBigScratchLenStep(double value);
     void setBigScratchValueStep(int value);

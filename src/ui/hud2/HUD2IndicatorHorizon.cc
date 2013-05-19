@@ -242,5 +242,6 @@ HUD2FormHorizon *HUD2IndicatorHorizon::getForm(void){
     connect(form->ui->stepsBig, SIGNAL(valueChanged(int)),
             this, SLOT(setStepsBig(int)));
 
+    form->ui->verticalLayout->addWidget(new QCheckBox());
     return form;
 }
