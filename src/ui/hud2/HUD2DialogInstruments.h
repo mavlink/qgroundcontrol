@@ -32,10 +32,6 @@ public:
     ~HUD2DialogInstruments();
     
 private slots:
-
-
-    void on_tabWidget_currentChanged(int index);
-
     void on_tabWidget_selected(const QString &arg1);
 
 private:
