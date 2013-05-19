@@ -75,8 +75,6 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
 
 void QGCToolBar::createUI()
 {
-    setStyleSheet("QToolBar {margin: 0px; border-bottom: 1px solid #484848; border-top: 1px solid #969696; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #8B8B8B, stop:0.3 #808080, stop:0.34 #747474, stop:1 #484848);}");
-
     // CREATE TOOLBAR ITEMS
     // Add internal actions
     // Add MAV widget
@@ -114,7 +112,6 @@ void QGCToolBar::createUI()
     addWidget(toolBarStateLabel);
 
     toolBarBatteryBar = new QProgressBar(this);
-    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
     toolBarBatteryBar->setMinimumWidth(20);
@@ -337,9 +334,9 @@ void QGCToolBar::updateView()
     toolBarWpLabel->setText(tr("WP%1").arg(wpId));
     toolBarBatteryBar->setValue(batteryPercent);
     if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
-        toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: yellow; }");
+        toolBarBatteryBar->setStyleSheet("QProgressBar::chunk { background-color: green}");
     } else if (batteryPercent >= 30 && toolBarBatteryBar->value() < 30){
-        toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+        toolBarBatteryBar->setStyleSheet("QProgressBar::chunk { background-color: yellow}");
     }
 
     toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
