@@ -497,4 +497,9 @@ void HUD2Ribbon::setStepsBig(int steps){
     settings.endGroup();
 }
 
+void HUD2Ribbon::setValueSource(double *value)
+{
+    this->value = value;
+}
+
 

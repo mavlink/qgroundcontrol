@@ -42,6 +42,7 @@ public slots:
     void setBigScratchValueStep(int);
     void setStepsSmall(int);
     void setStepsBig(int);
+    void setValueSource(double *value);
 
 private:
     void updateRibbon(const QSize &size, int gap, int len);
@@ -54,6 +55,7 @@ protected:
     const HUD2Data *huddata;
 
 private:
+    double *value;
     screen_position position;
     bool wrap360; // suitable for compass like device
     bool enabled;
