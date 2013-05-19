@@ -24,9 +24,6 @@ QGCTextLabel::QGCTextLabel(QWidget *parent) :
     ui->editLine1->hide();
     ui->editLine2->hide();
 
-    ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-    ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-
     // Add commands to combo box
 
 }
@@ -49,7 +46,6 @@ void QGCTextLabel::startEditMode()
     ui->editComponentSpinBox->show();
     ui->editLine1->show();
     ui->editLine2->show();
-    //setStyleSheet("QGroupBox { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
 
     // Attempt to undock the dock widget
     QWidget* p = this;
@@ -82,7 +78,6 @@ void QGCTextLabel::endEditMode()
 
     // Write to settings
     emit editingFinished();
-    //setStyleSheet("");
 
     // Attempt to dock the dock widget
     QWidget* p = this;
