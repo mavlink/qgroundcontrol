@@ -308,6 +308,13 @@ QSlider::groove:horizontal {
      border-radius: 3px;
  }
 
+QStatusBar {
+    border: 0px;
+    border-bottom: 1px solid #101010;
+    border-top: 1px solid #4F4F4F;
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818);
+}
+
 QPushButton#forceLandButton {
 	font-weight: bold;
 	min-height: 30px;
