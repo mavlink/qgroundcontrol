@@ -1,7 +1,6 @@
 /*
 TODO:
 - position setting for ribbons (default is center)
-- save last used tab number from instruments dialog in settings file
 - numer label in roll indicator
 - ivert angles for horizon
 - battery indicator
