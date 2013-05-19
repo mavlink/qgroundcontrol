@@ -845,6 +845,7 @@ void MainWindow::showTool(bool show)
 }*/
 void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
 {
+    Q_UNUSED(title);
     // Check if this widget already has been added
     if (centerStack->indexOf(widget) == -1)
     {
@@ -1610,6 +1611,7 @@ void MainWindow::addLink(LinkInterface *link)
 
 void MainWindow::setActiveUAS(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     // Enable and rename menu
 //    ui.menuUnmanned_System->setTitle(uas->getUASName());
 //    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
@@ -1870,6 +1872,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
 void MainWindow::UASDeleted(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     if (UASManager::instance()->getUASList().count() == 0)
     {
         // Last system deleted
