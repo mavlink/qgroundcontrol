@@ -4,11 +4,11 @@
 #include <QtGui>
 #include <QWidget>
 
-typedef struct my_msg_t{
+typedef struct hud2_msg_t{
     QColor color;
     QStaticText txt;
     QTime timeout;
-} my_msg_t;
+} hud2_msg_t;
 
 class HUD2IndicatorMessage : public QWidget
 {
@@ -27,7 +27,7 @@ public:
     int timeout;
     int maxmsg;
     QFont labelFont;
-    QList<my_msg_t> list;
+    QList<hud2_msg_t> list;
 };
 
 #endif // HUD2INDICATORMESSAGE_H

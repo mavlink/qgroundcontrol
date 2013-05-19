@@ -13,7 +13,7 @@ HUD2IndicatorMessage::HUD2IndicatorMessage(QWidget *parent) :
 void HUD2IndicatorMessage::updateTextMessage(int uasid, int componentid,
                                              int severity, QString text)
 {
-    my_msg_t msg;
+    hud2_msg_t msg;
 
     msg.timeout = QTime::currentTime();
     msg.timeout = msg.timeout.addSecs(4);
@@ -57,7 +57,7 @@ void HUD2IndicatorMessage::updateGeometry(const QSize &size){
 
 void HUD2IndicatorMessage::paint(QPainter *painter){
     int N;
-    my_msg_t msg;
+    hud2_msg_t msg;
     QSizeF msg_size;
 
     N = list.length();
