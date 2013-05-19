@@ -14,6 +14,7 @@
 #include "HUD2IndicatorSpeedometer.h"
 #include "HUD2IndicatorCompass.h"
 #include "HUD2IndicatorAltimeter.h"
+#include "HUD2IndicatorMessage.h"
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -40,6 +41,7 @@ public slots:
     void updateGeometry(const QSize &size);
     void showDialog(void);
     void showColorDialog(void);
+    void updateTextMessage(int uasid, int componentid, int severity, QString text);
 
 private:
     HUD2IndicatorHorizon horizon;
@@ -48,6 +50,7 @@ private:
     HUD2IndicatorAltimeter altimeter;
     HUD2IndicatorCompass compass;
     HUD2IndicatorFps fps;
+    HUD2IndicatorMessage msg;
 
     // HUD colors
     QColor defaultColor;       ///< Color for most HUD elements, e.g. pitch lines, center cross, change rate gauges

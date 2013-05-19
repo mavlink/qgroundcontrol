@@ -108,6 +108,7 @@ public slots:
     void updateAltitude(int uasid, double alt);
     void updateSpeed(UASInterface* uas, double airspeed, double groundspeed, double climb, quint64 time);
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double altitude, quint64 timestamp);
+    void updateTextMessage(int uasid, int componentid, int severity, QString text);
     void toggleAntialising(bool aa);
     void switchRender(int type);
     void setFpsLimit(int limit);

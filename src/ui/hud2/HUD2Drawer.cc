@@ -14,7 +14,8 @@ HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
     speedometer(huddata, this),
     altimeter(huddata, this),
     compass(huddata, this),
-    fps(this)
+    fps(this),
+    msg(this)
 {
     defaultColor = QColor(70, 255, 70);
     warningColor = Qt::yellow;
@@ -43,6 +44,7 @@ void HUD2Drawer::paint(QPainter *painter)
     altimeter.paint(painter);
     compass.paint(painter);
     fps.paint(painter);
+    msg.paint(painter);
 
     emit paintComplete();
 }
@@ -54,6 +56,7 @@ void HUD2Drawer::updateGeometry(const QSize &size){
     altimeter.updateGeometry(size);
     compass.updateGeometry(size);
     fps.updateGeometry(size);
+    msg.updateGeometry(size);
 }
 
 void HUD2Drawer::showDialog(void){
@@ -68,5 +71,9 @@ void HUD2Drawer::showColorDialog(void){
                 &horizon, &roll, &speedometer, &altimeter, &compass, &fps, this);
     d->exec();
     delete d;
+}
+
+void HUD2Drawer::updateTextMessage(int uasid, int componentid, int severity, QString text){
+    this->msg.updateTextMessage(uasid, componentid, severity, text);
 }
 
