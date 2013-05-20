@@ -10,6 +10,12 @@
     <height>427</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
@@ -23,8 +29,8 @@
       <attribute name="toolTip">
        <string>General Settings</string>
       </attribute>
-      <layout class="QGridLayout" name="generalPaneGridLayout">
-       <item row="0" column="0">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
         <widget class="QCheckBox" name="audioMuteCheckBox">
          <property name="text">
           <string>Mute all audio output</string>
@@ -35,7 +41,7 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item>
         <widget class="QCheckBox" name="reconnectCheckBox">
          <property name="text">
           <string>Automatically reconnect last link on application startup</string>
@@ -46,31 +52,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QRadioButton" name="nativeStyle">
-         <property name="text">
-          <string>Use native platform look and feel (Windows/Linux/Mac OS)</string>
-         </property>
-         <property name="autoExclusive">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QRadioButton" name="indoorStyle">
-         <property name="text">
-          <string>Use indoor mission style (black background)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QRadioButton" name="outdoorStyle">
-         <property name="text">
-          <string>Use outdoor mission style (light background)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
+       <item>
         <widget class="QCheckBox" name="lowPowerCheckBox">
          <property name="toolTip">
           <string>Lowers all update rates to save battery power</string>
@@ -80,7 +62,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item>
         <widget class="QCheckBox" name="titleBarCheckBox">
          <property name="text">
           <string>Show Docked Widget title bars when NOT in advanced Mode.</string>
@@ -88,6 +70,76 @@
          <property name="checked">
           <bool>false</bool>
          </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="styleFrame">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Box</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QComboBox" name="styleChooser">
+            <item>
+             <property name="text">
+              <string>Dark (for indoor use)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Light (for outdoor use)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Custom dark (for indoor use)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Custom light (for outdoor use)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="customStyleFrame">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Plain</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QLineEdit" name="lineEdit"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="customStyleFileButton">
+               <property name="text">
+                <string>Select</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
