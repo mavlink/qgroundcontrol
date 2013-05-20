@@ -96,7 +96,7 @@ MainWindow* MainWindow::instance(QSplashScreen* screen)
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
     currentView(VIEW_FLIGHT),
-    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
+    currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
     centerStackActionGroup(new QActionGroup(this)),
@@ -111,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent):
     loadSettings();
 
     emit initStatusChanged("Loading Style.");
-    loadStyle(currentStyle);
+    loadStyle(currentStyle, QString());
 
     if (settings.contains("ADVANCED_MODE"))
     {
@@ -181,8 +181,6 @@ MainWindow::MainWindow(QWidget *parent):
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
-
-
 
     emit initStatusChanged("Building common widgets.");
 
@@ -1220,96 +1218,47 @@ void MainWindow::enableAutoReconnect(bool enabled)
     autoReconnect = enabled;
 }
 
-void MainWindow::loadNativeStyle()
+bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
 {
-    loadStyle(QGC_MAINWINDOW_STYLE_NATIVE);
-}
-
-void MainWindow::loadIndoorStyle()
-{
-    loadStyle(QGC_MAINWINDOW_STYLE_INDOOR);
-}
-
-void MainWindow::loadOutdoorStyle()
-{
-    loadStyle(QGC_MAINWINDOW_STYLE_OUTDOOR);
-}
-
-void MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
-{
-    switch (style) {
-    case QGC_MAINWINDOW_STYLE_NATIVE: {
-        // Native mode means setting no style
-        // so if we were already in native mode
-        // take no action
-        // Only if a style was set, remove it.
-        if (style != currentStyle) {
-            qApp->setStyleSheet("");
-            showInfoMessage(tr("Please restart QGroundControl"), tr("Please restart QGroundControl to switch to fully native look and feel. Currently you have loaded Qt's plastique style."));
-        }
-    }
-    break;
-    case QGC_MAINWINDOW_STYLE_INDOOR:
 	qApp->setStyle("plastique");
-        styleFileName = ":files/styles/style-indoor.css";
-        reloadStylesheet();
+
+	// Set up the 
+    switch (style)
+	{
+	default:
+		style = QGC_MAINWINDOW_STYLE_DARK;
+    case QGC_MAINWINDOW_STYLE_DARK:
+        styleFileName = ":files/styles/style-dark.css";
         break;
-    case QGC_MAINWINDOW_STYLE_OUTDOOR:
-	qApp->setStyle("plastique");
-        styleFileName = ":files/styles/style-outdoor.css";
-        reloadStylesheet();
+    case QGC_MAINWINDOW_STYLE_LIGHT:
+        styleFileName = ":files/styles/style-light.css";
+        break;
+    case QGC_MAINWINDOW_STYLE_CUSTOM_DARK:
+    case QGC_MAINWINDOW_STYLE_CUSTOM_LIGHT:
+        styleFileName = cssFile;
         break;
     }
     currentStyle = style;
+
+	return loadStyleSheet(styleFileName);
 }
 
-void MainWindow::selectStylesheet()
+bool MainWindow::loadStyleSheet(QString cssFile)
 {
-    // Let user select style sheet
-    QString newStyleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), styleFileName, tr("CSS Stylesheet (*.css);;"));
-
-    // Load the new style sheet if a valid one was selected.
-    if (!newStyleFileName.isNull())
-    {
-        QFile styleSheet(newStyleFileName);
-        if (styleSheet.exists())
-        {
-            styleFileName = newStyleFileName;
-            reloadStylesheet();
-        }
-    }
-}
-
-void MainWindow::reloadStylesheet()
-{
-    // Load style sheet
-    QFile styleSheet(styleFileName);
-
-    // Default to the indoor stylesheet if an invalid stylesheet was chosen.
-    if (!styleSheet.exists())
-    {
-        styleSheet.setFileName(":files/styles/style-indoor.css");
-    }
-
     // Load the new stylesheet.
-    // We also replace an 'ICONDIR' token here with the proper application path.
+    QFile styleSheet(cssFile);
+
+    // Attempt to open the stylesheet, replacing the 'ICONDIR' token here with the proper application path.
     if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QString style = QString(styleSheet.readAll());
         style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/styles/");
         qApp->setStyleSheet(style);
+		return true;
     }
-    // Otherwise alert the user to the failure.
-    else
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("QGroundControl did not load a new style"));
-        msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(styleFileName));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-    }
+
+    // Otherwise alert return a failure code.
+	return false;
 }
 
 /**
@@ -1449,9 +1398,6 @@ void MainWindow::connectCommonActions()
 
     connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
-
-    connect(ui.actionReloadStylesheet, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
-    connect(ui.actionSelectStylesheet, SIGNAL(triggered()), this, SLOT(selectStylesheet()));
 
     // Help Actions
     connect(ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));

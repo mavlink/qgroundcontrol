@@ -17,9 +17,12 @@ public:
     ~QGCSettingsWidget();
 
 public slots:
+	void styleChanged(int index);
 
 private:
     Ui::QGCSettingsWidget *ui;
+	void selectStylesheet();
+	bool updateStyle();
 };
 
 #endif // QGCSETTINGSWIDGET_H

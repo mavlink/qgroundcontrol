@@ -103,15 +103,22 @@ public:
 
     enum QGC_MAINWINDOW_STYLE
     {
-        QGC_MAINWINDOW_STYLE_NATIVE,
-        QGC_MAINWINDOW_STYLE_INDOOR,
-        QGC_MAINWINDOW_STYLE_OUTDOOR
+        QGC_MAINWINDOW_STYLE_DARK,
+        QGC_MAINWINDOW_STYLE_LIGHT,
+        QGC_MAINWINDOW_STYLE_CUSTOM_DARK,
+        QGC_MAINWINDOW_STYLE_CUSTOM_LIGHT
     };
 
     /** @brief Get current visual style */
     int getStyle()
     {
         return currentStyle;
+    }
+
+    /** @brief Get current visual style */
+    QString getStyleSheet()
+    {
+        return styleFileName;
     }
     /** @brief Get auto link reconnect setting */
     bool autoReconnectEnabled()
@@ -188,24 +195,17 @@ public slots:
     /** @brief Show the project roadmap */
     void showRoadMap();
 
-    /** @brief Reload the CSS style sheet */
-    void reloadStylesheet();
-    /** @brief Let the user select the CSS style sheet */
-    void selectStylesheet();
     /** @breif Enable title bars on dock widgets when no in advanced mode */
     void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
-    /** @brief Switch to native application style */
-    void loadNativeStyle();
-    /** @brief Switch to indoor mission style */
-    void loadIndoorStyle();
-    /** @brief Switch to outdoor mission style */
-    void loadOutdoorStyle();
-    /** @brief Load a specific style */
-    void loadStyle(QGC_MAINWINDOW_STYLE style);
+    /** @brief Load a specific style.
+	  * If it's a custom style, load the file indicated by the cssFile path.
+	  */
+    bool loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile);
+    bool loadStyleSheet(QString cssFile);
 
     /** @brief Add a custom tool widget */
     void createCustomWidget();
