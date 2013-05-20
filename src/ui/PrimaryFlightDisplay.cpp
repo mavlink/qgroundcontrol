@@ -10,14 +10,17 @@
 #include <QPainterPath>
 #include <QResizeEvent>
 #include <math.h>
-
+#include <cmath>
 /*
  *@TODO:
  * global fixed pens
  * repaint on demand multiple canvases
  * multi implementation with shared model class
  */
-
+double round(double value, int digits=0)
+{
+  return floor(value * pow(10, digits) + 0.5) / pow(10, digits);
+}
 const int PrimaryFlightDisplay::tickValues[] = {10, 20, 30, 45, 60};
 const QString PrimaryFlightDisplay::compassWindNames[] = {
     QString("N"),
@@ -35,7 +38,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
 
     roll(0),
     pitch(0),
-    heading(NAN),
+    heading(0),
     aboveASLAltitude(0),
     GPSAltitude(0),
     aboveHomeAltitude(0),
@@ -80,7 +83,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
 }
 
 PrimaryFlightDisplay::~PrimaryFlightDisplay()
@@ -165,9 +168,9 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
     if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw))
     {
         // TODO: Units conversion?
-        this->roll = roll;
-        this->pitch = pitch;
-        this->heading = yaw;
+        this->roll = roll * (180.0 / M_PI);
+        this->pitch = pitch * (180.0 / M_PI);
+        this->heading = yaw * (180.0 / M_PI);
     }
     // TODO: Else-part. We really should have an "attitude bad or unknown" indication instead of just freezing.
 
@@ -309,7 +312,7 @@ void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
     // the event is ignored as this widget
     // is refreshed automatically
     Q_UNUSED(event);
-    makeDummyData();
+    //makeDummyData();
     doPaint();
 }
 
@@ -319,7 +322,7 @@ void PrimaryFlightDisplay::paintOnTimer() {
      *The whole tainted-flag shebang.
      *well not really so critical. Worst problem is deletion?
      */
-    makeDummyData();
+    //makeDummyData();
     doPaint();
 }
 
