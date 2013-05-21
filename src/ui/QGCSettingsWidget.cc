@@ -47,11 +47,11 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),MainWindow::instance(),SLOT(enableDockWidgetTitleBars(bool)));
 
     // Style
-    MainWindow::QGC_MAINWINDOW_STYLE style = (MainWindow::QGC_MAINWINDOW_STYLE)MainWindow::instance()->getStyle();
+    MainWindow::QGC_MAINWINDOW_STYLE style = MainWindow::instance()->getStyle();
     ui->styleChooser->setCurrentIndex(style);
-	connect(ui->styleChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(styleChanged(int)));
-	connect(ui->darkStyleCustomButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
-	connect(ui->lightStyleCustomButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
+    connect(ui->styleChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(styleChanged(int)));
+    connect(ui->styleCustomButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
+    connect(ui->styleDefaultButton, SIGNAL(clicked()), this, SLOT(setDefaultStyle()));
 
     // Close / destroy
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(deleteLater()));
@@ -65,68 +65,96 @@ QGCSettingsWidget::~QGCSettingsWidget()
 void QGCSettingsWidget::selectStylesheet()
 {
     // Let user select style sheet. The root directory for the file picker is the user's home directory if they haven't loaded a custom style.
-	// Otherwise it defaults to the directory of that custom file.
-	QString findDir;
-	if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_CUSTOM_DARK || MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_CUSTOM_LIGHT)
-	{
-		findDir = QDir::homePath();
-	}
-	else
-	{
-		findDir = MainWindow::instance()->getStyleSheet();
-	}
-
-	QString newStyleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), findDir, tr("CSS Stylesheet (*.css);;"));
-
-    // Load the new style sheet if a valid one was selected.
-    if (!newStyleFileName.isNull())
+    // Otherwise it defaults to the directory of that custom file.
+    QString findDir;
+    QString oldStylesheet(ui->styleSheetFile->text());
+    QFile styleSheet(oldStylesheet);
+    if (styleSheet.exists() && oldStylesheet[0] != ':')
     {
-        QFile styleSheet(newStyleFileName);
-        if (styleSheet.exists())
+        findDir = styleSheet.fileName();
+    }
+    else
+    {
+        findDir = QDir::homePath();
+    }
+
+    // Prompt the user to select a new style sheet. Do nothing if they cancel.
+    QString newStyleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), findDir, tr("CSS Stylesheet (*.css);;"));
+    if (newStyleFileName.isNull()) {
+        return;
+    }
+
+    // Load the new style sheet if a valid one was selected, notifying the user
+    // of an error if necessary.
+    QFile newStyleFile(newStyleFileName);
+    if (!newStyleFile.exists() || !updateStyle(newStyleFileName))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText(tr("QGroundControl did not load a new style"));
+        msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(newStyleFileName));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+    }
+    // And update the UI as needed.
+    else
+    {
+        switch (ui->styleChooser->currentIndex())
         {
-            if (!updateStyle())
-			{
-				QMessageBox msgBox;
-				msgBox.setIcon(QMessageBox::Information);
-				msgBox.setText(tr("QGroundControl did not load a new style"));
-				msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(newStyleFileName));
-				msgBox.setStandardButtons(QMessageBox::Ok);
-				msgBox.setDefaultButton(QMessageBox::Ok);
-				msgBox.exec();
-			}
+        case 0:
+            darkStyleSheet = newStyleFileName;
+            ui->styleSheetFile->setText(darkStyleSheet);
+            MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, darkStyleSheet);
+        case 1:
+            lightStyleSheet = newStyleFileName;
+            ui->styleSheetFile->setText(lightStyleSheet);
+            MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, lightStyleSheet);
         }
-		else
-		{
-			QMessageBox msgBox;
-			msgBox.setIcon(QMessageBox::Information);
-			msgBox.setText(tr("QGroundControl did not load a new style"));
-			msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(newStyleFileName));
-			msgBox.setStandardButtons(QMessageBox::Ok);
-			msgBox.setDefaultButton(QMessageBox::Ok);
-			msgBox.exec();
-		}
     }
 }
 
-bool QGCSettingsWidget::updateStyle()
+bool QGCSettingsWidget::updateStyle(QString style)
 {
-	switch (ui->styleChooser->currentIndex())
-	{
-	case 0:
-		return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, QString());
-	case 1:
-		return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, QString());
-	case 2:
-		return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_CUSTOM_DARK, QString());
-	case 3:
-		return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_CUSTOM_LIGHT, QString());
-	default:
-		return false;
-	}
+    switch (ui->styleChooser->currentIndex())
+    {
+    case 0:
+        darkStyleSheet = style;
+        return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, darkStyleSheet);
+    case 1:
+        lightStyleSheet = style;
+        return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, lightStyleSheet);
+    default:
+        return false;
+    }
 }
 
 void QGCSettingsWidget::styleChanged(int index)
-{	
-	// And trigger a style update.
-	updateStyle();
+{
+    if (index == 1)
+    {
+        ui->styleSheetFile->setText(lightStyleSheet);
+        updateStyle(lightStyleSheet);
+    }
+    else
+    {
+        ui->styleSheetFile->setText(darkStyleSheet);
+        updateStyle(darkStyleSheet);
+    }
+}
+
+void QGCSettingsWidget::setDefaultStyle()
+{
+    if (ui->styleChooser->currentIndex() == 1)
+    {
+        lightStyleSheet = MainWindow::defaultLightStyle;
+        ui->styleSheetFile->setText(lightStyleSheet);
+        updateStyle(lightStyleSheet);
+    }
+    else
+    {
+        darkStyleSheet = MainWindow::defaultDarkStyle;
+        ui->styleSheetFile->setText(darkStyleSheet);
+        updateStyle(darkStyleSheet);
+    }
 }

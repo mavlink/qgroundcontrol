@@ -17,12 +17,15 @@ public:
     ~QGCSettingsWidget();
 
 public slots:
-	void styleChanged(int index);
+    void styleChanged(int index);
+    void setDefaultStyle();
+    void selectStylesheet();
 
 private:
-    Ui::QGCSettingsWidget *ui;
-	void selectStylesheet();
-	bool updateStyle();
+    Ui::QGCSettingsWidget* ui;
+    QString darkStyleSheet;
+    QString lightStyleSheet;
+    bool updateStyle(QString style);
 };
 
 #endif // QGCSETTINGSWIDGET_H

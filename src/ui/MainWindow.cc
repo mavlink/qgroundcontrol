@@ -68,8 +68,11 @@ This file is part of the QGROUNDCONTROL project
 #include "PxQuadMAV.h"
 #include "SlugsMAV.h"
 
-
 #include "LogCompressor.h"
+
+// Set up some constants
+const QString MainWindow::defaultDarkStyle = ":files/styles/style-dark.css";
+const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 
 MainWindow* MainWindow::instance(QSplashScreen* screen)
 {
@@ -156,7 +159,7 @@ MainWindow::MainWindow(QWidget *parent):
     setCorner(Qt::BottomRightCorner, Qt::BottomDockWidgetArea);
 
     // Setup UI state machines
-	centerStackActionGroup->setExclusive(true);
+    centerStackActionGroup->setExclusive(true);
 
     centerStack = new QStackedWidget(this);
     setCentralWidget(centerStack);
@@ -1220,45 +1223,31 @@ void MainWindow::enableAutoReconnect(bool enabled)
 
 bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
 {
-	qApp->setStyle("plastique");
+    qApp->setStyle("plastique");
 
-	// Set up the 
-    switch (style)
-	{
-	default:
-		style = QGC_MAINWINDOW_STYLE_DARK;
-    case QGC_MAINWINDOW_STYLE_DARK:
-        darkStyleFileName = ":files/styles/style-dark.css";
-        break;
-    case QGC_MAINWINDOW_STYLE_LIGHT:
-        styleFileName = ":files/styles/style-light.css";
-        break;
-    case QGC_MAINWINDOW_STYLE_CUSTOM_DARK:
-    case QGC_MAINWINDOW_STYLE_CUSTOM_LIGHT:
-        styleFileName = cssFile;
-        break;
-    }
+    // Store the new style classification.
     currentStyle = style;
 
-	return loadStyleSheet(styleFileName);
-}
-
-bool MainWindow::loadStyleSheet(QString cssFile)
-{
     // Load the new stylesheet.
     QFile styleSheet(cssFile);
 
     // Attempt to open the stylesheet, replacing the 'ICONDIR' token here with the proper application path.
     if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
     {
+        // Signal to the user that the app will pause to apply a new stylesheet
+        qApp->setOverrideCursor(Qt::WaitCursor);
+
         QString style = QString(styleSheet.readAll());
-        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/styles/");
+        style.replace("ICONDIR", QCoreApplication::applicationDirPath() + "files/styles/");
         qApp->setStyleSheet(style);
-		return true;
+
+        // And restore the cursor before returning.
+        qApp->restoreOverrideCursor();
+        return true;
     }
 
     // Otherwise alert return a failure code.
-	return false;
+    return false;
 }
 
 /**
@@ -1499,8 +1488,8 @@ void MainWindow::addLink()
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
-	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions)
     {
@@ -1526,8 +1515,8 @@ void MainWindow::addLink(LinkInterface *link)
 
     bool found(false);
 
-	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions)
     {
@@ -1614,7 +1603,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         QIcon icon;
         // Set matching icon
         switch (uas->getSystemType())
-		{
+        {
         case MAV_TYPE_GENERIC:
             icon = QIcon(":files/images/mavs/generic.svg");
             break;
