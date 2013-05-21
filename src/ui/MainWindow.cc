@@ -115,6 +115,7 @@ MainWindow::MainWindow(QWidget *parent):
     loadSettings();
 
     emit initStatusChanged("Loading Style.");
+    qApp->setStyle("plastique");
     if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
     {
         loadStyle(currentStyle, lightStyleFileName);
@@ -1235,8 +1236,6 @@ void MainWindow::enableAutoReconnect(bool enabled)
 
 bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
 {
-    qApp->setStyle("plastique");
-
     // Store the new style classification.
     currentStyle = style;
 
@@ -1249,8 +1248,7 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
         // Signal to the user that the app will pause to apply a new stylesheet
         qApp->setOverrideCursor(Qt::WaitCursor);
 
-        QString style = QString(styleSheet.readAll());
-        style.replace("ICONDIR", QCoreApplication::applicationDirPath() + "files/styles/");
+        QString style(styleSheet.readAll());
         qApp->setStyleSheet(style);
 
         if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
