@@ -17,9 +17,6 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
 {
     ui->setupUi(this);
 
-	// Set the frame holding the options for the custom style frame to hidden by default
-	ui->customStyleFrame->setVisible(false);
-
     // Add all protocols
     QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
     foreach (ProtocolInterface* protocol, protocols) {
@@ -53,7 +50,8 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     MainWindow::QGC_MAINWINDOW_STYLE style = (MainWindow::QGC_MAINWINDOW_STYLE)MainWindow::instance()->getStyle();
     ui->styleChooser->setCurrentIndex(style);
 	connect(ui->styleChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(styleChanged(int)));
-	connect(ui->customStyleFileButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
+	connect(ui->darkStyleCustomButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
+	connect(ui->lightStyleCustomButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
 
     // Close / destroy
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(deleteLater()));
@@ -128,18 +126,7 @@ bool QGCSettingsWidget::updateStyle()
 }
 
 void QGCSettingsWidget::styleChanged(int index)
-{
-	// If a custom style is selected, enable the advanced view for the custom stylesheet. Otherwise,
-	// make sure it's hidden.
-	if (index == 2 || index == 3)
-	{
-		ui->customStyleFrame->setVisible(true);
-	}
-	else
-	{
-		ui->customStyleFrame->setVisible(false);
-	}
-	
+{	
 	// And trigger a style update.
 	updateStyle();
 }
