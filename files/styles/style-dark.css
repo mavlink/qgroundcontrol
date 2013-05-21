@@ -303,30 +303,6 @@ QStatusBar {
     border-bottom: 1px solid #101010;
     border-top: 1px solid #4F4F4F;
     background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818);
-} 
-
-QPushButton#forceLandButton {
-    font-weight: bold;
-    min-height: 30px;
-    color: #000000;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffee01, stop:1 #ae8f00) url("ICONDIR/control/emergency-button.png");
-    background-clip: border;
-    border-width: 1px;
-    border-color: #555555;
-    border-radius: 5px;
-}
-
-QPushButton:pressed#forceLandButton {
-    font-weight: bold;
-    min-height: 30px;
-    color: #000000;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bbaa00, stop:1 #a05b00) url("ICONDIR/control/emergency-button.png");
-    background-clip: border;
-    border-width: 1px;
-    border-color: #555555;
-    border-radius: 5px;
 }
 
 QPushButton#killButton {
@@ -334,7 +310,7 @@ QPushButton#killButton {
     min-height: 30px;
     color: #000000;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffb917, stop:1 #b37300) url("ICONDIR/control/emergency-button.png");
+                             stop:0 #ffb917, stop:1 #b37300)
     background-clip: border;
     border-width: 1px;
     border-color: #555555;
@@ -346,7 +322,7 @@ QPushButton:pressed#killButton {
     min-height: 30px;
     color: #000000;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bb8500, stop:1 #903000) url("ICONDIR/control/emergency-button.png");
+                             stop:0 #bb8500, stop:1 #903000);
     background-clip: border;
     border-width: 1px;
     border-color: #555555;

@@ -113,6 +113,27 @@ QGroupBox::title {
     font: bold 8px;
 }
 
+QLabel {
+    background: rgba(0,0,0,0);
+}
+
+QLabel#toolBarNameLabel {
+    font: bold 16px;
+}
+
+QLabel#toolBarModeLabel {
+    font: 12px;
+}
+
+QLabel#toolBarStateLabel {
+    font: 12px;
+}
+
+QLabel#toolBarMessageLabel {
+    font: 12px;
+    font-style: italic;
+}
+
 QLineEdit {
     border-radius: 2px;
     border-width: 1px;
@@ -163,33 +184,10 @@ QPushButton {
     padding-right: 8px;
 }
 
-QPushButton#forceLandButton {
+QPushButton#forceLandButton, QPushButton#killButton {
     font-weight: bold;
     min-height: 30px;
     background-clip: border;
-    border-width: 1px;
-    border-radius: 5px;
-}
-
-QPushButton:pressed#forceLandButton {
-    font-weight: bold;
-    min-height: 30px;
-    background-clip: border;
-    border-width: 1px;
-    border-radius: 5px;
-}
-
-QPushButton#killButton {
-    font-weight: bold;
-    min-height: 30px;
-    background-clip: border;
-    border-width: 1px;
-    border-radius: 5px;
-}
-
-QPushButton:pressed#killButton {
-    font-weight: bold;
-    min-height: 30px;
     border-width: 1px;
     border-radius: 5px;
 }
@@ -260,49 +258,40 @@ QSlider::handle:vertical {
     border-radius: 3px;
 }
 
-QSpinBox {
-    min-height: 14px;
-    max-height: 18px;
+QSpinBox, QDoubleSpinBox {
     border-radius: 5px;
     border-width: 1px;
+	border-style: solid;
+	padding-right: 16px; /* make room for the arrows */
+}
+
+QSpinBox::up-button, QDoubleSpinBox::up-button {
+	subcontrol-origin: border;
+	subcontrol-position: top right; /* position at the top right corner */
+	width: 16px;
+	padding-right: 1px;
+	border: none;
+}
+
+QSpinBox::down-button, QDoubleSpinBox::down-button {
+	subcontrol-origin: border;
+	subcontrol-position: bottom right; /* position at bottom right corner */
+	width: 16px;
+	padding-right: 1px;
+	border: none;
+}
+
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+	width: 16px;
+}
+
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+	width: 16px;
+}
+
+QStatusBar {
+    border-width: 1px 0;
     border-style: solid;
-}
-
-QSpinBox::up-button {
-    subcontrol-origin: border;
-    subcontrol-position: top right; /* position at the top right corner */
-    border-image: url(:/files/images/actions/go-up.svg) 1;
-    border-width: 1px;
-}
-
-QSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right; /* position at the top right corner */
-    border-image: url(:/files/images/actions/go-down.svg) 1;
-    border-width: 1px;
-}
-
-QTextEdit {
-    border-radius: 2px;
-    border-width: 1px;
-    border-style: solid;
-}
-
-QToolButton {
-    font-weight: bold;
-    min-height: 20px;
-    max-height: 20px;
-    margin: 1px;
-    border-radius: 2px;
-    border-width: 2px;
-    border-style: solid;
-    padding-left: 3px;
-    padding-right: 3px;
-}
-
-QToolTip {
-    margin: 3px;
-    border-radius: 3px;
 }
 
 QTabWidget::pane { /* The tab widget frame */
@@ -327,36 +316,33 @@ QTabBar::tab {
     border-style: solid;
 }
 
+QTextEdit {
+    border-radius: 2px;
+    border-width: 1px;
+    border-style: solid;
+}
+
 QToolBar {
     margin: 0;
     border-width: 1px 0;
     border-style: solid;
 }
 
-QLabel {
-    background: rgba(0,0,0,0);
-}
-
-QLabel#toolBarNameLabel {
-    font: bold 16px;
-}
-
-QLabel#toolBarModeLabel {
-    font: 12px;
-}
-
-QLabel#toolBarStateLabel {
-    font: 12px;
-}
-
-QLabel#toolBarMessageLabel {
-    font: 12px;
-    font-style: italic;
-}
-
-QStatusBar {
-    border-width: 1px 0;
+QToolButton {
+    font-weight: bold;
+    min-height: 20px;
+    max-height: 20px;
+    margin: 1px;
+    border-radius: 2px;
+    border-width: 2px;
     border-style: solid;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+QToolTip {
+    margin: 3px;
+    border-radius: 3px;
 }
 
 /** The following are the style-specific colorings for QGC. **/
@@ -382,7 +368,7 @@ QCheckBox::indicator {
 }
 
 QCheckBox::indicator:checked {
-    background-color: #000;
+    background-color: #777;
 }
 
 QComboBox {
@@ -406,20 +392,6 @@ QDockWidget::close-button, QDockWidget::float-button {
 
 QDockWidget::close-button:hover, QDockWidget::float-button:hover {
     background-color: #AAA;
-}
-
-QDoubleSpinBox {
-    border: 1px solid #4A4A4F;
-}
-
-QDoubleSpinBox::up-button {
-    border-image: url(:/files/images/actions/go-up.svg) 1;
-    border-width: 1px;
-}
-
-QDoubleSpinBox::down-button {
-    border-image: url(:/files/images/actions/go-down.svg) 1;
-    border-width: 1px;
 }
 
 QGroupBox {
@@ -495,48 +467,20 @@ QProgressBar QLabel {
 
 QPushButton {
     border-style: solid;
-    border-color: #4A4A4F;
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #C3C2C8, stop: 1 #828288);
+    border-color: #444;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #CCC, stop: 1 #888);
 }
 
 QPushButton:checked {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #404040, stop: 1 #808080);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444, stop: 1 #888);
 }
 
 QPushButton:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333, stop: 1 #b0b0b0);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
 }
 
 QPushButton:pressed {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
-}
-
-QPushButton#forceLandButton {
-    border-color: #222;
-}
-
-QPushButton#forceLandButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffee01, stop:1 #ae8f00) url("ICONDIR/control/emergency-button.png");
-}
-
-QPushButton:pressed#forceLandButton {
-    color: #000;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bbaa00, stop:1 #a05b00) url("ICONDIR/control/emergency-button.png");
-    border-color: #222;
-}
-
-QPushButton#killButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffb917, stop:1 #b37300) url("ICONDIR/control/emergency-button.png");
-    border-color: #222;
-}
-
-QPushButton:pressed#killButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bb8500, stop:1 #903000) url("ICONDIR/control/emergency-button.png");
-    border-color: #222;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #666);
 }
 
 QPushButton#controlButton {
@@ -555,30 +499,38 @@ QSpinBox {
     border-color: #4A4A4F;
 }
 
-QSpinBox::up-button {
-    border-image: url(:/files/images/actions/go-up.svg) 1;
-    border-width: 1px;
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+	image: url(:/files/images/actions/go-up.svg);
+	width: 16px;
 }
 
-QSpinBox::down-button {
-    border-image: url(:/files/images/actions/go-down.svg) 1;
-    border-width: 1px;
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+	image: url(:/files/images/actions/go-down.svg);
+	width: 16px;
 }
 
 QStatusBar {
-    border-bottom-color: #101010;
+    border-bottom-color: #111;
     border-top-color: #EEE;
-    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #090909, stop:0.3 #404040, stop:0.34 #383838, stop:1 #F6F6F6);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #CCC, stop: 1 #888);
 }
 
 QTabBar::tab {
-   border-color: #62676B;
-   background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #F6F6F6);
+    border-color: #62676B;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #CCC, stop: 1 #888);
 }
 
-QTabBar::tab:selected, QTabBar::tab:hover {
-   border-color: #379AC3;
-   background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #F6F6F6);
+QTabBar::tab:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
+}
+
+QTabBar::tab:pressed {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #666);
+}
+
+QTabBar::tab:selected {
+    border-color: #379AC3;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #666);
 }
 
 QTabWidget::pane { /* The tab widget frame */
@@ -586,7 +538,7 @@ QTabWidget::pane { /* The tab widget frame */
 }
 
 QTextEdit {
-    border-color: #111;
+    border-color: #222;
 }
 
 QToolBar {
@@ -609,6 +561,5 @@ QToolButton:pressed {
 }
 
 QToolTip {
-    background-color: #404040;
     color: #000;
 }
