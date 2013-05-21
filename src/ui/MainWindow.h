@@ -104,13 +104,14 @@ public:
     enum QGC_MAINWINDOW_STYLE
     {
         QGC_MAINWINDOW_STYLE_DARK,
-        QGC_MAINWINDOW_STYLE_LIGHT,
-        QGC_MAINWINDOW_STYLE_CUSTOM_DARK,
-        QGC_MAINWINDOW_STYLE_CUSTOM_LIGHT
+        QGC_MAINWINDOW_STYLE_LIGHT
     };
 
+    static const QString defaultDarkStyle;
+    static const QString defaultLightStyle;
+
     /** @brief Get current visual style */
-    int getStyle()
+    QGC_MAINWINDOW_STYLE getStyle()
     {
         return currentStyle;
     }
@@ -202,10 +203,9 @@ public slots:
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
     /** @brief Load a specific style.
-	  * If it's a custom style, load the file indicated by the cssFile path.
-	  */
+      * If it's a custom style, load the file indicated by the cssFile path.
+      */
     bool loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile);
-    bool loadStyleSheet(QString cssFile);
 
     /** @brief Add a custom tool widget */
     void createCustomWidget();
@@ -328,7 +328,7 @@ protected:
     void buildCommonWidgets();
     void connectCommonWidgets();
     void connectCommonActions();
-	void connectSenseSoarActions();
+    void connectSenseSoarActions();
 
     void loadSettings();
     void storeSettings();

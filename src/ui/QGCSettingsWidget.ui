@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>392</width>
-    <height>313</height>
+    <width>528</width>
+    <height>321</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -77,38 +77,18 @@
          <property name="title">
           <string>Style</string>
          </property>
+         <property name="flat">
+          <bool>false</bool>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout">
             <property name="sizeConstraint">
              <enum>QLayout::SetMinimumSize</enum>
             </property>
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Use:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
             <item>
              <widget class="QComboBox" name="styleChooser">
               <item>
@@ -128,7 +108,7 @@
           <item>
            <layout class="QHBoxLayout" name="DarkStyleLayout">
             <item>
-             <widget class="QLabel" name="label_2">
+             <widget class="QLabel" name="label">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                 <horstretch>0</horstretch>
@@ -136,56 +116,22 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Dark:</string>
+               <string>Stylesheet:</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="darkStyleFile"/>
+             <widget class="QLineEdit" name="styleSheetFile"/>
             </item>
             <item>
-             <widget class="QPushButton" name="darkStyleCustomButton">
+             <widget class="QPushButton" name="styleCustomButton">
               <property name="text">
                <string>Custom</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="darkStyleDefaultButton">
-              <property name="text">
-               <string>Default</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="LightStyleLayout">
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Light:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="lightStyleFile"/>
-            </item>
-            <item>
-             <widget class="QPushButton" name="lightStyleCustomButton">
-              <property name="text">
-               <string>Custom</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="lightStyleDefaultButton">
+             <widget class="QPushButton" name="styleDefaultButton">
               <property name="text">
                <string>Default</string>
               </property>
