@@ -1228,7 +1228,7 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
 	default:
 		style = QGC_MAINWINDOW_STYLE_DARK;
     case QGC_MAINWINDOW_STYLE_DARK:
-        styleFileName = ":files/styles/style-dark.css";
+        darkStyleFileName = ":files/styles/style-dark.css";
         break;
     case QGC_MAINWINDOW_STYLE_LIGHT:
         styleFileName = ":files/styles/style-light.css";
