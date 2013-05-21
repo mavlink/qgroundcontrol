@@ -1,3 +1,5 @@
+#include <QtGui>
+
 #include "HUD2IndicatorSpeedometer.h"
 #include "HUD2Data.h"
 
@@ -8,5 +10,22 @@ HUD2IndicatorSpeedometer::HUD2IndicatorSpeedometer(const HUD2Data *huddata, QWid
 
 double HUD2IndicatorSpeedometer::processData(void)
 {
-    return huddata->airspeed;
+    switch(src){
+    case SPEEDOMETER_AIR:
+        return huddata->airspeed;
+        break;
+
+    case SPEEDOMETER_GROUND:
+        return huddata->groundspeed;
+        break;
+
+    default:
+        return huddata->airspeed;
+        break;
+    }
+}
+
+void HUD2IndicatorSpeedometer::selectSource(int index)
+{
+    this->src = (speedometer_source_t)index;
 }

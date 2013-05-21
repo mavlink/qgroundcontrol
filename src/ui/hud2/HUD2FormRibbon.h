@@ -20,7 +20,7 @@ public:
 private slots:
     void on_comboBox_activated(int index);
 
-private:
+protected:
     Ui::HUD2FormRibbon *ui;
 };
 

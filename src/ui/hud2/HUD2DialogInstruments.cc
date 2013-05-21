@@ -5,9 +5,9 @@
 
 HUD2DialogInstruments::HUD2DialogInstruments(HUD2FormHorizon *horizon_form,
                                              HUD2IndicatorRoll *roll,
-                                             HUD2Ribbon *speedometer,
-                                             HUD2Ribbon *altimeter,
-                                             HUD2Ribbon *compass,
+                                             HUD2IndicatorSpeedometer *speedometer,
+                                             HUD2IndicatorAltimeter *altimeter,
+                                             HUD2IndicatorCompass *compass,
                                              HUD2IndicatorFps *fps,
                                              QWidget *parent) :
     QDialog(parent),
@@ -22,13 +22,13 @@ HUD2DialogInstruments::HUD2DialogInstruments(HUD2FormHorizon *horizon_form,
 
     Q_UNUSED(roll);
 
-    HUD2FormRibbon *speed_form = new HUD2FormRibbon(speedometer, this);
-    HUD2FormRibbon *climb_form = new HUD2FormRibbon(altimeter, this);
-    HUD2FormRibbon *compass_form = new HUD2FormRibbon(compass, this);
+    HUD2FormSpeedometer *speed_form = new HUD2FormSpeedometer(speedometer, this);
+    HUD2FormAltimeter *altimveter_form = new HUD2FormAltimeter(altimeter, this);
+    HUD2FormCompass *compass_form = new HUD2FormCompass(compass, this);
     HUD2FormFps *fps_form = new HUD2FormFps(fps, this);
 
     ui->tabWidget->addTab(speed_form, "speed");
-    ui->tabWidget->addTab(climb_form, "alt");
+    ui->tabWidget->addTab(altimveter_form, "alt");
     ui->tabWidget->addTab(compass_form, "compass");
     ui->tabWidget->addTab(horizon_form, "horizon");
     ui->tabWidget->addTab(fps_form, "fps");
