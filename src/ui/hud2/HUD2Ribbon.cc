@@ -4,9 +4,8 @@
 #include "HUD2Math.h"
 
 HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name,
-                       const HUD2Data *huddata, QWidget *parent) :
+                       QWidget *parent) :
     QWidget(parent),
-    huddata(huddata),
     position(position),
     wrap360(wrap360),
     name(name)
@@ -496,10 +495,4 @@ void HUD2Ribbon::setStepsBig(int steps){
     settings.setValue(str, steps);
     settings.endGroup();
 }
-
-void HUD2Ribbon::setValueSource(double *value)
-{
-    this->value = value;
-}
-
 

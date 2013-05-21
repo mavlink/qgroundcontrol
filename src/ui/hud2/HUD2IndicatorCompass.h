@@ -7,8 +7,10 @@ class HUD2IndicatorCompass : public HUD2Ribbon
 {
 public:
     HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent);
+
 private:
     double processData(void);
+    const HUD2Data *huddata;
 };
 
 #endif // HUD2COMPASS_H

@@ -22,6 +22,7 @@ private:
 
 private:
     speedometer_source_t src;
+    const HUD2Data *huddata;
 };
 
 #endif // HUD2SPEEDOMETER_H

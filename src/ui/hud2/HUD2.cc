@@ -168,7 +168,7 @@ void HUD2::updateThrust(UASInterface* uas, double thrust){
 
 void HUD2::updateAltitude(int uasid, double alt){
     Q_UNUSED(uasid);
-    huddata.alt = alt;
+    huddata.alt_baro = alt;
 }
 
 void HUD2::updateSpeed(UASInterface *uas, double airspeed, double groundspeed,
