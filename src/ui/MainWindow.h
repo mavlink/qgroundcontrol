@@ -116,10 +116,16 @@ public:
         return currentStyle;
     }
 
-    /** @brief Get current visual style */
-    QString getStyleSheet()
+    /** @brief Get current light visual style */
+    QString getLightStyleSheet()
     {
-        return styleFileName;
+        return lightStyleFileName;
+    }
+
+    /** @brief Get current dark visual style */
+    QString getDarkStyleSheet()
+    {
+        return darkStyleFileName;
     }
     /** @brief Get auto link reconnect setting */
     bool autoReconnectEnabled()
@@ -433,7 +439,8 @@ protected:
     LogCompressor* comp;
     QString screenFileName;
     QTimer* videoTimer;
-    QString styleFileName;
+    QString darkStyleFileName;
+    QString lightStyleFileName;
     bool autoReconnect;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
