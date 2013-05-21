@@ -1148,13 +1148,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_STATUSTEXT:
         {
             QByteArray b;
-            b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
+            b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
             mavlink_msg_statustext_get_text(&message, b.data());
-            //b.append('\0');
+            // Ensure NUL-termination
+            b[b.length()-1] = '\0';
             QString text = QString(b);
             int severity = mavlink_msg_statustext_get_severity(&message);
-            //qDebug() << "RECEIVED STATUS:" << text;false
-            //emit statusTextReceived(severity, text);
 
             if (text.startsWith("#audio:"))
             {
