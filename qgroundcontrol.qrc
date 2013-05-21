@@ -88,7 +88,7 @@
         <file>files/images/status/audio-volume-low.svg</file>
         <file>files/images/status/audio-volume-high.svg</file>
         <file>files/images/status/colorbars.png</file>
-        <file>files/styles/style-indoor.css</file>
+        <file>files/styles/style-dark.css</file>
         <file>files/images/splash.png</file>
         <file>files/audio/alert.wav</file>
         <file>demo-log.txt</file>
@@ -98,7 +98,7 @@
         <file>files/images/earth.html</file>
         <file>files/images/mapproviders/googleearth.svg</file>
         <file>files/images/contrib/slugs.png</file>
-        <file>files/styles/style-outdoor.css</file>
+        <file>files/styles/style-light.css</file>
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
