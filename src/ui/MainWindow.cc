@@ -103,7 +103,8 @@ MainWindow::MainWindow(QWidget *parent):
     aboutToCloseFlag(false),
     changingViewsFlag(false),
     centerStackActionGroup(new QActionGroup(this)),
-    styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
+    darkStyleFileName(defaultDarkStyle),
+    lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
     lowPowerMode(false)
 {
@@ -114,7 +115,14 @@ MainWindow::MainWindow(QWidget *parent):
     loadSettings();
 
     emit initStatusChanged("Loading Style.");
-    loadStyle(currentStyle, QString());
+    if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        loadStyle(currentStyle, lightStyleFileName);
+    }
+    else
+    {
+        loadStyle(currentStyle, darkStyleFileName);
+    }
 
     if (settings.contains("ADVANCED_MODE"))
     {
@@ -1095,6 +1103,8 @@ void MainWindow::loadSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
+    darkStyleFileName = settings.value("DARK_STYLE_FILENAME", darkStyleFileName).toString();
+    lightStyleFileName = settings.value("LIGHT_STYLE_FILENAME", lightStyleFileName).toString();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled).toBool();
     settings.endGroup();
@@ -1107,6 +1117,8 @@ void MainWindow::storeSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue("AUTO_RECONNECT", autoReconnect);
     settings.setValue("CURRENT_STYLE", currentStyle);
+    settings.setValue("DARK_STYLE_FILENAME", darkStyleFileName);
+    settings.setValue("LIGHT_STYLE_FILENAME", lightStyleFileName);
     settings.endGroup();
     if (!aboutToCloseFlag && isVisible())
     {
@@ -1240,6 +1252,15 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
         QString style = QString(styleSheet.readAll());
         style.replace("ICONDIR", QCoreApplication::applicationDirPath() + "files/styles/");
         qApp->setStyleSheet(style);
+
+        if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            lightStyleFileName = cssFile;
+        }
+        else
+        {
+            darkStyleFileName = cssFile;
+        }
 
         // And restore the cursor before returning.
         qApp->restoreOverrideCursor();

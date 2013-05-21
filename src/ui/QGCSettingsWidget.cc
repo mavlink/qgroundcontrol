@@ -13,7 +13,8 @@
 
 QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     QDialog(parent, flags),
-    ui(new Ui::QGCSettingsWidget)
+    ui(new Ui::QGCSettingsWidget),
+    mainWindow((MainWindow*)parent)
 {
     ui->setupUi(this);
 
@@ -35,23 +36,34 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), ui->audioMuteCheckBox, SLOT(setChecked(bool)));
 
     // Reconnect
-    ui->reconnectCheckBox->setChecked(MainWindow::instance()->autoReconnectEnabled());
-    connect(ui->reconnectCheckBox, SIGNAL(clicked(bool)), MainWindow::instance(), SLOT(enableAutoReconnect(bool)));
+    ui->reconnectCheckBox->setChecked(mainWindow->autoReconnectEnabled());
+    connect(ui->reconnectCheckBox, SIGNAL(clicked(bool)), mainWindow, SLOT(enableAutoReconnect(bool)));
 
     // Low power mode
-    ui->lowPowerCheckBox->setChecked(MainWindow::instance()->lowPowerModeEnabled());
-    connect(ui->lowPowerCheckBox, SIGNAL(clicked(bool)), MainWindow::instance(), SLOT(enableLowPowerMode(bool)));
+    ui->lowPowerCheckBox->setChecked(mainWindow->lowPowerModeEnabled());
+    connect(ui->lowPowerCheckBox, SIGNAL(clicked(bool)), mainWindow, SLOT(enableLowPowerMode(bool)));
 
     //Dock widget title bars
-    ui->titleBarCheckBox->setChecked(MainWindow::instance()->dockWidgetTitleBarsEnabled());
-    connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),MainWindow::instance(),SLOT(enableDockWidgetTitleBars(bool)));
+    ui->titleBarCheckBox->setChecked(mainWindow->dockWidgetTitleBarsEnabled());
+    connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),mainWindow,SLOT(enableDockWidgetTitleBars(bool)));
 
-    // Style
-    MainWindow::QGC_MAINWINDOW_STYLE style = MainWindow::instance()->getStyle();
+    // Intialize the style UI to the proper values obtained from the MainWindow.
+    MainWindow::QGC_MAINWINDOW_STYLE style = mainWindow->getStyle();
     ui->styleChooser->setCurrentIndex(style);
+    if (style == MainWindow::QGC_MAINWINDOW_STYLE_DARK)
+    {
+        ui->styleSheetFile->setText(mainWindow->getDarkStyleSheet());
+    }
+    else
+    {
+        ui->styleSheetFile->setText(mainWindow->getLightStyleSheet());
+    }
+
+    // And then connect all the signals for the UI for changing styles.
     connect(ui->styleChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(styleChanged(int)));
     connect(ui->styleCustomButton, SIGNAL(clicked()), this, SLOT(selectStylesheet()));
     connect(ui->styleDefaultButton, SIGNAL(clicked()), this, SLOT(setDefaultStyle()));
+    connect(ui->styleSheetFile, SIGNAL(editingFinished()), this, SLOT(lineEditFinished()));
 
     // Close / destroy
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(deleteLater()));
@@ -100,17 +112,7 @@ void QGCSettingsWidget::selectStylesheet()
     // And update the UI as needed.
     else
     {
-        switch (ui->styleChooser->currentIndex())
-        {
-        case 0:
-            darkStyleSheet = newStyleFileName;
-            ui->styleSheetFile->setText(darkStyleSheet);
-            MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, darkStyleSheet);
-        case 1:
-            lightStyleSheet = newStyleFileName;
-            ui->styleSheetFile->setText(lightStyleSheet);
-            MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, lightStyleSheet);
-        }
+        ui->styleSheetFile->setText(newStyleFileName);
     }
 }
 
@@ -119,13 +121,27 @@ bool QGCSettingsWidget::updateStyle(QString style)
     switch (ui->styleChooser->currentIndex())
     {
     case 0:
-        darkStyleSheet = style;
-        return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, darkStyleSheet);
+        return mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, style);
     case 1:
-        lightStyleSheet = style;
-        return MainWindow::instance()->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, lightStyleSheet);
+        return mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, style);
     default:
         return false;
+    }
+}
+
+void QGCSettingsWidget::lineEditFinished()
+{
+    QString newStyleFileName(ui->styleSheetFile->text());
+    QFile newStyleFile(newStyleFileName);
+    if (!newStyleFile.exists() || !updateStyle(newStyleFileName))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText(tr("QGroundControl did not load a new style"));
+        msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(newStyleFileName));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
     }
 }
 
@@ -133,13 +149,13 @@ void QGCSettingsWidget::styleChanged(int index)
 {
     if (index == 1)
     {
-        ui->styleSheetFile->setText(lightStyleSheet);
-        updateStyle(lightStyleSheet);
+        ui->styleSheetFile->setText(mainWindow->getLightStyleSheet());
+        mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, mainWindow->getLightStyleSheet());
     }
     else
     {
-        ui->styleSheetFile->setText(darkStyleSheet);
-        updateStyle(darkStyleSheet);
+        ui->styleSheetFile->setText(mainWindow->getDarkStyleSheet());
+        mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, mainWindow->getDarkStyleSheet());
     }
 }
 
@@ -147,14 +163,12 @@ void QGCSettingsWidget::setDefaultStyle()
 {
     if (ui->styleChooser->currentIndex() == 1)
     {
-        lightStyleSheet = MainWindow::defaultLightStyle;
-        ui->styleSheetFile->setText(lightStyleSheet);
-        updateStyle(lightStyleSheet);
+        ui->styleSheetFile->setText(MainWindow::defaultLightStyle);
+        mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_LIGHT, MainWindow::defaultLightStyle);
     }
     else
     {
-        darkStyleSheet = MainWindow::defaultDarkStyle;
-        ui->styleSheetFile->setText(darkStyleSheet);
-        updateStyle(darkStyleSheet);
+        ui->styleSheetFile->setText(MainWindow::defaultDarkStyle);
+        mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, MainWindow::defaultDarkStyle);
     }
 }
