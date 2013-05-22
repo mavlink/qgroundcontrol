@@ -883,18 +883,23 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
     if (mav && !hilDocks.contains(mav->getUASID()))
     {
-        QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
-        QString hilDockName = tr("HIL Config (%1)").arg(uas->getUASName());
-        QDockWidget* hilDock = new QDockWidget(hilDockName, this);
-        hilDock->setWidget(hconf);
-        hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
-        //addTool(hilDock, hilDockName, Qt::LeftDockWidgetArea);
-        hilDocks.insert(mav->getUASID(), hilDock);
+        //QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
+        //createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
 
-        if (currentView != VIEW_SIMULATION)
-            hilDock->hide();
-        else
-            hilDock->show();
+        QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
+
+        QString hilDockName = tr("HIL Config (%1)").arg(uas->getUASName());
+        createDockWidget(centerStack->currentWidget(),hconf,hilDockName,QString("HIL_CONFIG_%1").arg(uas->getUASID()),currentView,Qt::LeftDockWidgetArea);
+        //QDockWidget* hilDock = new QDockWidget(hilDockName, this);
+        //hilDock->setWidget(hconf);
+        //hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
+        //addTool(hilDock, hilDockName, Qt::LeftDockWidgetArea);
+        //hilDocks.insert(mav->getUASID(), hilDock);
+
+        //if (currentView != VIEW_SIMULATION)
+        //    hilDock->hide();
+        //else
+        //    hilDock->show();
     }
 }
 
