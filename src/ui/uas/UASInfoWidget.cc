@@ -34,7 +34,7 @@ This file is part of the PIXHAWK project
 #include <float.h>
 #include <UASInfoWidget.h>
 #include <UASManager.h>
-#include <MG.h>
+#include <QGC.h>
 #include <QTimer>
 #include <QDir>
 #include <cstdlib>
@@ -46,20 +46,12 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
 {
     ui.setupUi(this);
     this->name = name;
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
     activeUAS = NULL;
 
-    //instruments = new QMap<QString, QProgressBar*>();
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    setActiveUAS(UASManager::instance()->getActiveUAS());
 
-    // Set default battery type
-    //    setBattery(0, LIPOLY, 3);
-    startTime = MG::TIME::getGroundTimeNow();
-    //    startVoltage = 0.0f;
-
-    //    lastChargeLevel = 0.5f;
-    //    lastRemainingTime = 1;
+    startTime = QGC::groundTimeMilliseconds();
 
     // Set default values
     /** Set two voltage decimals and zero charge level decimals **/
@@ -117,7 +109,8 @@ void UASInfoWidget::addUAS(UASInterface* uas)
 
 void UASInfoWidget::setActiveUAS(UASInterface* uas)
 {
-    activeUAS = uas;
+    if (uas)
+        activeUAS = uas;
 }
 
 void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)

@@ -93,14 +93,23 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Update measurements the first time
     updateTrafficMeasurements();
 
+    // First connect management slots, then make sure to add all existing objects
+    // Connect to link manager to get notified about new links
+    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+    // Connect to UAS manager to get notified about new UAS
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(uasCreated(UASInterface*)));
+
     // Get a list of all existing links
     links = QList<LinkInterface*>();
     foreach (LinkInterface* link, LinkManager::instance()->getLinks()) {
         addLink(link);
     }
 
-    // Connect to link manager to get notified about new links
-    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+    // Get a list of all existing UAS
+    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
+        uasCreated(uas);
+    }
+
     // Connect link combo box
     connect(m_ui->linkComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(linkSelected(int)));
     // Connect send button
@@ -169,6 +178,12 @@ void DebugConsole::storeSettings()
     //qDebug() << "Storing settings!";
 }
 
+void DebugConsole::uasCreated(UASInterface* uas)
+{
+    connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)),
+            this, SLOT(receiveTextMessage(int,int,int,QString)), Qt::UniqueConnection);
+}
+
 /**
  * Add a link to the debug console output
  */
@@ -183,8 +198,8 @@ void DebugConsole::addLink(LinkInterface* link)
     linkSelected(m_ui->linkComboBox->currentIndex());
 
     // Register for name changes
-    connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)));
-    connect(link, SIGNAL(deleteLink(LinkInterface* const)), this, SLOT(removeLink(LinkInterface* const)));
+    connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)), Qt::UniqueConnection);
+    connect(link, SIGNAL(deleteLink(LinkInterface* const)), this, SLOT(removeLink(LinkInterface* const)), Qt::UniqueConnection);
 }
 
 void DebugConsole::removeLink(LinkInterface* const linkInterface)

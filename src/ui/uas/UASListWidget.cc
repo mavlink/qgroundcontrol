@@ -67,6 +67,11 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     this->setVisible(false);
 
     connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
+
+    // Get a list of all existing UAS
+    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
+        addUAS(uas);
+    }
 }
 
 UASListWidget::~UASListWidget()
