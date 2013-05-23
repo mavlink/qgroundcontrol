@@ -1,0 +1,79 @@
+Messages interpreted in UAS.cc:
+MAVLINK_MSG_ID_HEARTBEAT
+MAVLINK_MSG_ID_SYS_STATUS
+MAVLINK_MSG_ID_ATTITUDE
+MAVLINK_MSG_ID_LOCAL_POSITION_NED_SYSTEM_GLOBAL_OFFSET
+MAVLINK_MSG_ID_HIL_CONTROLS
+MAVLINK_MSG_ID_VFR_HUD
+MAVLINK_MSG_ID_LOCAL_POSITION_NED
+MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE
+MAVLINK_MSG_ID_GLOBAL_POSITION_INT
+MAVLINK_MSG_ID_GPS_RAW_INT
+MAVLINK_MSG_ID_GPS_STATUS
+MAVLINK_MSG_ID_GPS_GLOBAL_ORIGIN
+MAVLINK_MSG_ID_RC_CHANNELS_RAW
+MAVLINK_MSG_ID_RC_CHANNELS_SCALED
+MAVLINK_MSG_ID_PARAM_VALUE
+MAVLINK_MSG_ID_COMMAND_ACK
+MAVLINK_MSG_ID_MISSION_COUNT
+MAVLINK_MSG_ID_MISSION_ITEM
+MAVLINK_MSG_ID_MISSION_ACK
+MAVLINK_MSG_ID_MISSION_REQUEST
+MAVLINK_MSG_ID_MISSION_ITEM_REACHED (we want a new signal for this one)
+currentWaypointChanged
+MAVLINK_MSG_ID_MISSION_CURRENT
+MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT
+MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT
+MAVLINK_MSG_ID_STATUSTEXT
+MAVLINK_MSG_ID_SERVO_OUTPUT_RAW
+MAVLINK_MSG_ID_RAW_IMU
+MAVLINK_MSG_ID_SCALED_IMU
+MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT
+MAVLINK_MSG_ID_RAW_PRESSURE
+MAVLINK_MSG_ID_SCALED_PRESSURE
+MAVLINK_MSG_ID_OPTICAL_FLOW
+MAVLINK_MSG_ID_DEBUG_VECT
+MAVLINK_MSG_ID_DEBUG
+MAVLINK_MSG_ID_NAMED_VALUE_FLOAT
+MAVLINK_MSG_ID_NAMED_VALUE_INT
+MAVLINK_MSG_ID_MANUAL_CONTROL
+MAVLINK_MSG_ID_HIGHRES_IMU
+
+Signals of interest:
+
+On UAS.cc:
+// General
+value_changed (custom value tracking)
+
+// Mode:
+armingChanged (ARMED etc)
+statusChanged
+modechanged
+navModeChanged
+
+// System Status
+loadChanged
+Do we already have these in some form? Can they be merged?
+batteryChanged
+voltageChanged
+gpsLocalizationChanged
+satelliteCountChanged
+
+// Mission status
+currentWaypointChanged (on WaypointManager)
+new type for MAVLINK_MSG_ID_MISSION_ITEM_REACHED
+distToWaypointChanged
+
+// Link Status
+heartbeatTimeout
+dropRateChanged
+
+// Attitude & speed
+attitudeChanged
+speedChanged
+speedChanged (when message is MAVLINK_MSG_ID_VFR_HUD: x is airspeed, y is zero and z is VV)
+
+// Position (if used)
+globalPositionChanged
+homePositionChanged (for pointer to home. Or we ignore signals and suck the data
+off the UAS instance)

@@ -5,7 +5,6 @@
 #include <QPen>
 #include "UASInterface.h"
 
-#define SEPARATE_LAYOUT
 #define LINEWIDTH 0.007
 
 // all in units of display height
@@ -26,7 +25,7 @@
 
 //#define USE_TAPE_COMPASS
 //#define USE_DISK_COMPASS
-#define USE_DISK2_COMPASS
+//#define USE_DISK2_COMPASS
 
 // We want no numbers on the scale, just principal winds or half-winds and ticks.
 // With whole winds there are 45 deg per wind, with half-winds 22.5
@@ -48,7 +47,7 @@
 #define COMPASS_DISK2_ARROWTICK 45
 #define COMPASS_DISK2_MAJORLINEWIDTH 0.006
 #define COMPASS_DISK2_MINORLINEWIDTH 0.004
-#define COMPASS_SCALE_TEXT_SIZE 0.03
+#define COMPASS_SCALE_TEXT_SIZE 0.16
 
 // The altitude difference between top and bottom of scale
 #define ALTIMETER_LINEAR_SPAN 35
@@ -65,15 +64,16 @@
 // every 10 meters there is a number
 #define ALTIMETER_PROJECTED_MAJOR_RESOLUTION 10
 // min. and max. vertical velocity
-
 //#define ALTIMETER_PROJECTED
+
+#define TAPES_TEXT_SIZE 0.028
 
 #define ALTIMETER_VVI_SPAN 10
 #define ALTIMETER_VVI_LOGARITHMIC true
 
 #define SHOW_ZERO_ON_SCALES true
-#define SCALE_TEXT_SIZE 0.042
-#define SMALL_TEXT_SIZE 0.035
+#define SCALE_TEXT_SIZE 0.040
+#define PANELS_TEXT_SIZE 0.030
 
 #define UNKNOWN_BATTERY -1
 
@@ -90,7 +90,7 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 //    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
-    void updateBattery(UASInterface*, double, double, int);
+    void updateBattery(UASInterface*, double, double, double, int);
     void receiveHeartbeat(UASInterface*);
     void updateThrust(UASInterface*, double);
     void updateLocalPosition(UASInterface*,double,double,double,quint64);
@@ -102,6 +102,17 @@ public slots:
     void selectWaypoint(int uasId, int id);
 
 protected:
+    enum Layout {
+        FEATUREPANELS_IN_CORNERS,       // For a wide and low container.
+        FEATUREPANELS_AT_BOTTOM,        // For higher container.
+        COMPASS_SEPARATED               // For a very high container. Feature panels are at bottom.
+    };
+
+    enum Style {
+        OPAGUE_TAPES,                   // Hzon not visible through tapes nor through feature panels. Frames with margins between.
+        TRANSLUCENT_TAPES               // Hzon visible through tapes and (frameless) feature panels.
+    };
+
     void paintEvent(QPaintEvent *event);
     void resizeEvent(QResizeEvent *e);
 
@@ -119,6 +130,7 @@ protected:
 
 protected:
     // dongfang: What is that?
+    // dongfang: OK it's for UI interaction. Presently, there is none.
     void createActions();
 
 public slots:
@@ -126,7 +138,6 @@ public slots:
     virtual void setActiveUAS(UASInterface* uas);
 
 protected slots:
-    void paintOnTimer();
 
 signals:
     void visibilityChanged(bool visible);
@@ -145,14 +156,11 @@ private:
     void drawPitchScale(QPainter& painter, QRectF area, bool drawNumbersLeft, bool drawNumbersRight);
     void drawRollScale(QPainter& painter, QRectF area, bool drawTicks, bool drawNumbers);
     void drawAIAttitudeScales(QPainter& painter, QRectF area);
-#if defined(USE_DISK_COMPASS) || defined(USE_DISK2_COMPASS)
     void drawCompassDisk(QPainter& painter, QRectF area);
-#else
-    void drawCompassTape(QPainter& painter, QRectF area, float yaw);
-#endif
     void drawAltimeter(QPainter& painter, QRectF area, float altitude, float maxAltitude, float vv);
 
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
+    void fillInstrumentOpagueBackground(QPainter& painter, QRectF edge);
     void drawInstrumentBackground(QPainter& painter, QRectF edge);
 
     void drawLinkStatsPanel(QPainter& painter, QRectF area);
@@ -160,10 +168,7 @@ private:
     void drawMissionStatsPanel(QPainter& painter, QRectF area);
     void drawSensorsStatsPanel(QPainter& painter, QRectF area);
 
-    void makeDummyData();
     void doPaint();
-    void paintAllInOne();
-    void paintSeparate();
 
     float roll;
     float pitch;
@@ -180,11 +185,14 @@ private:
 
     float groundSpeed;
     float airSpeed;
+    float verticalVelocity;
 
     QString mode;
     QString state;
-
     float load;
+
+    Layout layout;
+    Style style;
 
     QPen whitePen;
     QPen redPen;
@@ -194,7 +202,8 @@ private:
 
     QPen instrumentEdgePen;
     QBrush instrumentBackground;
-    QBrush HUDInstrumentBackground;
+    QBrush instrumentOpagueBackground;
+    //QBrush HUDInstrumentBackground;
 
     QFont font;
 
@@ -204,6 +213,7 @@ private:
 
     //QString energyStatus; ///< Current fuel level / battery voltage
     double batteryVoltage;
+    double batteryCurrent;
     double batteryCharge;
 
     static const int tickValues[];

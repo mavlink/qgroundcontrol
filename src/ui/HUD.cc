@@ -261,9 +261,9 @@ void HUD::setActiveUAS(UASInterface* uas)
 {
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*, double, double, double, quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int, double, double, double, quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
@@ -286,7 +286,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
@@ -338,10 +338,11 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
     }
 }
 
-void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
+void HUD::updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
+    Q_UNUSED(current);
     fuelStatus = tr("BAT [%1% | %2V]").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0'));
     if (percent < 20.0f) {
         fuelColor = warningColor;

@@ -57,6 +57,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     warnLevelPercent(20.0f),
     currentVoltage(12.6f),
     lpVoltage(12.0f),
+    currentCurrent(0.4f),
     batteryRemainingEstimateEnabled(true),
     mode(-1),
     status(-1),
@@ -447,7 +448,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             QString audiomodeText = getAudioModeTextFor(static_cast<int>(state.base_mode));
 
-
             if ((state.system_status != this->status) && state.system_status != MAV_STATE_UNINIT)
             {
                 statechanged = true;
@@ -539,7 +539,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             lpVoltage = filterVoltage(currentVoltage);
             tickLowpassVoltage = tickLowpassVoltage*0.8f + 0.2f*currentVoltage;
 
-
             // We don't want to tick above the threshold
             if (tickLowpassVoltage > tickVoltage)
             {
@@ -567,20 +566,23 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 chargeLevel = state.battery_remaining;
             }
-            emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
+
+            emit batteryChanged(this, lpVoltage, currentCurrent, getChargeLevel(), timeRemaining);
 			emit valueChanged(uasId, name.arg("battery_remaining"), "%", getChargeLevel(), time);
-            emit voltageChanged(message.sysid, currentVoltage);
+            // emit voltageChanged(message.sysid, currentVoltage);
 			emit valueChanged(uasId, name.arg("battery_voltage"), "V", currentVoltage, time);
 
 			// And if the battery current draw is measured, log that also.
 			if (state.current_battery != -1)
 			{
-				emit valueChanged(uasId, name.arg("battery_current"), "A", ((double)state.current_battery) / 100.0f, time);
+                currentCurrent = ((double)state.current_battery)/100.0f;
+                emit valueChanged(uasId, name.arg("battery_current"), "A", currentCurrent, time);
 			}
 
             // LOW BATTERY ALARM
             if (lpVoltage < warnVoltage && (currentVoltage - 0.2f) < warnVoltage && (currentVoltage > 3.3))
             {
+                // An audio alarm. Does not generate any signals.
                 startLowBattAlarm();
             }
             else
@@ -682,7 +684,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
             }
 
+            // dongfang: For APM, this altitude is the mix altitude[m]
             emit altitudeChanged(uasId, hud.alt);
+            // dongfang: For APM, airspeed is  airspeed or AHRS estimated airspeed
+            // dongfang: For APM, climb rate is barometric
+            // dongfang: The signal has no parameter for groundspeed.
+            // dongfang: The signal is emitted also from other places,
+            // such as GPS xyz speeds. This will cause a mix of signals
+            // from different sensors, which will probably not be so good.
+            float weAlsoWantGroundSpeedPlease = hud.groundspeed;
             emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, time);
         }
             break;
