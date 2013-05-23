@@ -178,7 +178,10 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
     statusClearTimer.start(3000);
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+    if (UASManager::instance()->getActiveUAS())
+    {
+        setActiveUAS(UASManager::instance()->getActiveUAS());
+    }
 
     setFocusPolicy(Qt::StrongFocus);
 }
