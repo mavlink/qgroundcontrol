@@ -71,6 +71,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LogCompressor.h"
 
 // Set up some constants
+const QString MainWindow::baseStyle = ":files/styles/style-base.css";
 const QString MainWindow::defaultDarkStyle = ":files/styles/style-dark.css";
 const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 
@@ -1242,15 +1243,21 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
     // Load the new stylesheet.
     QFile styleSheet(cssFile);
 
-    // Attempt to open the stylesheet, replacing the 'ICONDIR' token here with the proper application path.
+    // Attempt to open the stylesheet.
     if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         // Signal to the user that the app will pause to apply a new stylesheet
         qApp->setOverrideCursor(Qt::WaitCursor);
 
-        QString style(styleSheet.readAll());
-        qApp->setStyleSheet(style);
+		// Now fetch the base stylesheet.
+		QFile baseStyleSheet(baseStyle);
+		QString newStyle(baseStyleSheet.readAll());
+		
+		// Then append the desired coloring and apply to QGC.
+		newStyle.append(styleSheet.readAll());
+		qApp->setStyleSheet(newStyle);
 
+		// And save the new stylesheet path.
         if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
         {
             lightStyleFileName = cssFile;
@@ -1260,7 +1267,7 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
             darkStyleFileName = cssFile;
         }
 
-        // And restore the cursor before returning.
+        // Finally restore the cursor before returning.
         qApp->restoreOverrideCursor();
         return true;
     }
