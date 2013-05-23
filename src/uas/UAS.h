@@ -354,6 +354,7 @@ protected: //COMMENTS FOR TEST UNIT
     float warnLevelPercent;     ///< Warning level, in percent
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
+    double currentCurrent;      ///< Battery current currently measured
     bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
     float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current

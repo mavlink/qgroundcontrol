@@ -470,7 +470,7 @@ signals:
      * @param percent remaining capacity in percent
      * @param seconds estimated remaining flight time in seconds
      */
-    void batteryChanged(UASInterface* uas, double voltage, double percent, int seconds);
+    void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void statusChanged(UASInterface* uas, QString status);
     void actuatorChanged(UASInterface*, int actId, double value);
     void thrustChanged(UASInterface*, double thrust);

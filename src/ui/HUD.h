@@ -69,7 +69,7 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 //    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
-    void updateBattery(UASInterface*, double, double, int);
+    void updateBattery(UASInterface*, double, double, double, int);
     void receiveHeartbeat(UASInterface*);
     void updateThrust(UASInterface*, double);
     void updateLocalPosition(UASInterface*,double,double,double,quint64);
