@@ -1682,43 +1682,17 @@ void MainWindow::UASCreated(UASInterface* uas)
             break;
         }
 
+        // XXX The multi-UAS selection menu has been disabled for now,
+        // its redundant with right-clicking the UAS in the list.
+        // this code piece might be removed later if this is the final
+        // conclusion (May 2013)
 //        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
 //        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
 //        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
-        connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
-
 //        ui.menuConnected_Systems->addAction(uasAction);
 
-        // FIXME Should be not inside the mainwindow
-        if (debugConsoleDockWidget)
-        {
-            DebugConsole *debugConsole = dynamic_cast<DebugConsole*>(debugConsoleDockWidget->widget());
-            if (debugConsole)
-            {
-                connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)),
-                        debugConsole, SLOT(receiveTextMessage(int,int,int,QString)));
-            }
-        }
 
-        // Health / System status indicator
-        if (infoDockWidget)
-        {
-            UASInfoWidget *infoWidget = dynamic_cast<UASInfoWidget*>(infoDockWidget->widget());
-            if (infoWidget)
-            {
-                infoWidget->addUAS(uas);
-            }
-        }
-
-        // UAS List
-        if (listDockWidget)
-        {
-            UASListWidget *listWidget = dynamic_cast<UASListWidget*>(listDockWidget->widget());
-            if (listWidget)
-            {
-                listWidget->addUAS(uas);
-            }
-        }
+        connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
 
         // HIL
         showHILConfigurationWidget(uas);
@@ -1730,25 +1704,12 @@ void MainWindow::UASCreated(UASInterface* uas)
 
         }
 
-
-        // Line chart
-        //if (!linechartWidget)
-        //{
-
-            // Center widgets
-
-            //linechartWidget->addSystem(uas);
-
-            linechartWidget->addSource(mavlinkDecoder);
-            //addCentralWidget(linechartWidget, tr("Realtime Plot"));
-            if (dataView->centralWidget() != linechartWidget)
-            {
-                dataView->setCentralWidget(linechartWidget);
-                linechartWidget->show();
-            }
-            //dataView->setCentralWidget(linechartWidget);
-            //linechartWidget->show();
-        //}
+        linechartWidget->addSource(mavlinkDecoder);
+        if (dataView->centralWidget() != linechartWidget)
+        {
+            dataView->setCentralWidget(linechartWidget);
+            linechartWidget->show();
+        }
 
         // Load default custom widgets for this autopilot type
         loadCustomWidgetsFromDefaults(uas->getSystemTypeName(), uas->getAutopilotTypeName());
