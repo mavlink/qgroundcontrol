@@ -19,18 +19,18 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="1,2,1">
+  <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="1,4,1">
    <item>
     <widget class="QScrollArea" name="scrollArea_6">
      <property name="minimumSize">
       <size>
-       <width>125</width>
+       <width>135</width>
        <height>0</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>125</width>
+       <width>135</width>
        <height>16777215</height>
       </size>
      </property>
@@ -42,7 +42,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>123</width>
+        <width>133</width>
         <height>582</height>
        </rect>
       </property>
@@ -57,13 +57,13 @@
            <property name="minimumSize">
             <size>
              <width>100</width>
-             <height>100</height>
+             <height>75</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>100</width>
-             <height>100</height>
+             <width>16777215</width>
+             <height>16777215</height>
             </size>
            </property>
            <property name="text">
@@ -77,13 +77,7 @@ Calibration</string>
            <property name="minimumSize">
             <size>
              <width>100</width>
-             <height>100</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>100</height>
+             <height>75</height>
             </size>
            </property>
            <property name="text">
@@ -97,13 +91,7 @@ Calibration</string>
            <property name="minimumSize">
             <size>
              <width>100</width>
-             <height>100</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>100</height>
+             <height>75</height>
             </size>
            </property>
            <property name="text">
@@ -117,13 +105,7 @@ Config</string>
            <property name="minimumSize">
             <size>
              <width>100</width>
-             <height>100</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>100</height>
+             <height>75</height>
             </size>
            </property>
            <property name="text">
@@ -806,8 +788,8 @@ p, li { white-space: pre-wrap; }
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>314</width>
-                  <height>508</height>
+                  <width>98</width>
+                  <height>28</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -881,8 +863,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>314</width>
-                   <height>434</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -918,8 +900,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>313</width>
-                   <height>434</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -997,8 +979,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>161</width>
-                   <height>446</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1034,8 +1016,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>160</width>
-                   <height>446</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -1085,7 +1067,7 @@ p, li { white-space: pre-wrap; }
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>40</width>
+       <width>30</width>
        <height>20</height>
       </size>
      </property>
