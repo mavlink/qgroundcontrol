@@ -128,8 +128,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
 
     // Connect with UAS
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    //start();
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
+    setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 HDDisplay::~HDDisplay()
@@ -476,6 +476,8 @@ void HDDisplay::renderOverlay()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
+    if (!uas)
+        return;
     // Disconnect any previously connected active UAS
     if (this->uas != NULL) {
         removeSource(this->uas);

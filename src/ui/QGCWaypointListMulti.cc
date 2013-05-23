@@ -15,6 +15,12 @@ QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
     WaypointList* list = new WaypointList(ui->stackedWidget, NULL);
     lists.insert(offline_uas_id, list);
     ui->stackedWidget->addWidget(list);
+
+    if (UASManager::instance()->getActiveUAS()) {
+        systemCreated(UASManager::instance()->getActiveUAS());
+        systemSetActive(UASManager::instance()->getActiveUAS()->getUASID());
+    }
+
 }
 
 void QGCWaypointListMulti::systemDeleted(QObject* uas)

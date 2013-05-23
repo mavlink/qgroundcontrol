@@ -45,6 +45,8 @@ namespace Ui
 class DebugConsole;
 }
 
+class UASInterface;
+
 /**
  * @brief Shows a debug console
  *
@@ -61,6 +63,8 @@ public:
 public slots:
     /** @brief Add a link to the list of monitored links */
     void addLink(LinkInterface* link);
+    /** @brief Add a UAS to the list of monitored UAS */
+    void uasCreated(UASInterface* uas);
     /** @brief Remove a link from the list */
     void removeLink(LinkInterface* const link);
     /** @brief Update a link name */

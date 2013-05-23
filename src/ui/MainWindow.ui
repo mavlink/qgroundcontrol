@@ -81,6 +81,7 @@
     </property>
     <addaction name="actionNewCustomWidget"/>
     <addaction name="actionLoadCustomWidgetFile"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
