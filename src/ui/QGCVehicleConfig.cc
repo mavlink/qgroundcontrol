@@ -275,7 +275,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         QPushButton *button = new QPushButton(ui->scrollAreaWidgetContents_3);
         connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
         ui->navBarLayout->insertWidget(2,button);
-        button->setMinimumHeight(100);
+        button->setMinimumHeight(75);
         button->setMinimumWidth(100);
         button->show();
         button->setText(dir);
@@ -328,7 +328,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         ui->stackedWidget->insertWidget(2,tab);
         buttonToWidgetMap[button] = tab;
 
-        button->setMinimumHeight(100);
+        button->setMinimumHeight(75);
         button->setMinimumWidth(100);
         button->show();
         button->setText(dir);
