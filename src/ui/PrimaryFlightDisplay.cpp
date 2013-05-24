@@ -20,7 +20,7 @@
  */
 double PrimaryFlightDisplay_round(double value, int digits=0)
 {
-  return floor(value * pow(10, digits) + 0.5) / pow(10, digits);
+    return floor(value * pow(10, digits) + 0.5) / pow(10, digits);
 }
 
 const int PrimaryFlightDisplay::tickValues[] = {10, 20, 30, 45, 60};
@@ -71,7 +71,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     fineLineWidth(1),
 
     instrumentEdgePen(QColor::fromHsvF(0, 0, 0.65, 0.5)),
-//    AIEdgePen(QColor::fromHsvF(0, 0, 0.65, 0.5)),
+    //    AIEdgePen(QColor::fromHsvF(0, 0, 0.65, 0.5)),
 
     instrumentBackground(QColor::fromHsvF(0, 0, 0.3, 0.3)),
     instrumentOpagueBackground(QColor::fromHsvF(0, 0, 0.3, 1.0))
@@ -130,7 +130,7 @@ void PrimaryFlightDisplay::resizeEvent(QResizeEvent *e) {
     qreal size = e->size().width();
     if(e->size().height()<size) size = e->size().height();
 
-    lineWidth = constrain(size*LINEWIDTH, 2, 4);
+    lineWidth = constrain(size*LINEWIDTH, 1, 6);
     fineLineWidth = constrain(size*LINEWIDTH*2/3, 1, 2);
 
     instrumentEdgePen.setWidthF(fineLineWidth);
@@ -212,7 +212,9 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
         // TODO: Units conversion? // Called from UAS.cc l. 646
         this->roll = roll * (180.0 / M_PI);
         this->pitch = pitch * (180.0 / M_PI);
-        this->heading = yaw * (180.0 / M_PI);
+        yaw = yaw * (180.0 / M_PI);
+        if (yaw<0) yaw+=360;
+        this->heading = yaw;
     }
     // TODO: Else-part. We really should have an "attitude bad or unknown" indication instead of just freezing.
 
@@ -227,17 +229,16 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, int component, doub
 {
     Q_UNUSED(uas);
     Q_UNUSED(component);
-    Q_UNUSED(roll);
-    Q_UNUSED(pitch);
-    Q_UNUSED(yaw);
     Q_UNUSED(timestamp);
-// Called from UAS.cc l. 616
+    // Called from UAS.cc l. 616
     if (!isnan(roll) && !isinf(roll) && !isnan(pitch) && !isinf(pitch) && !isnan(yaw) && !isinf(yaw)) {
-    this->roll = roll * (180.0 / M_PI);
-    this->pitch = pitch * (180.0 / M_PI);
-    this->heading = yaw * (180.0 / M_PI);
-}
-qDebug("(2) r,p,y: %f,%f,%f", roll, pitch, yaw);
+        this->roll = roll * (180.0 / M_PI);
+        this->pitch = pitch * (180.0 / M_PI);
+        yaw = yaw * (180.0 / M_PI);
+        if (yaw<0) yaw+=360;
+        this->heading = yaw;
+    }
+    qDebug("(2) r,p,y: %f,%f,%f", roll, pitch, yaw);
 
 }
 
@@ -627,7 +628,7 @@ void PrimaryFlightDisplay::drawRollScale(
 void PrimaryFlightDisplay::drawAIAttitudeScales(
         QPainter& painter,
         QRectF area
-    ) {
+        ) {
     // To save computations, we do these transformations once for both scales:
     painter.resetTransform();
     painter.translate(area.center());
@@ -650,15 +651,8 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area) {
     float radius = area.width()/2;
     float innerRadius = radius * 0.96;
     painter.resetTransform();
-
-    if (layout == COMPASS_SEPARATED) {
-        painter.setBrush(instrumentOpagueBackground);
-        painter.setPen(instrumentEdgePen);
-    }
-    else {
-        painter.setBrush(instrumentBackground);
-        painter.setPen(instrumentEdgePen);
-    }
+    painter.setBrush(instrumentBackground);
+    painter.setPen(instrumentEdgePen);
     painter.drawEllipse(area);
     painter.setBrush(Qt::NoBrush);
 
@@ -681,8 +675,8 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area) {
         bool isMajor = displayTick % COMPASS_DISK_MAJORTICK == 0;
 
         if (displayTick==30 || displayTick==60 ||
-            displayTick==120 || displayTick==150 ||
-            displayTick==210 || displayTick==240 ||
+                displayTick==120 || displayTick==150 ||
+                displayTick==210 || displayTick==240 ||
                 displayTick==300 || displayTick==330) {
             // draw a number
             QString s_number;
@@ -704,18 +698,18 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area) {
                 }
                 if (displayTick%90 == 0) {
                     // Also draw a label
-             QString name = compassWindNames[displayTick / 45];
-             painter.setPen(scalePen);
-            drawTextCenter(painter, name, mediumTextSize, 0, -innerRadius*0.75);
+                    QString name = compassWindNames[displayTick / 45];
+                    painter.setPen(scalePen);
+                    drawTextCenter(painter, name, mediumTextSize, 0, -innerRadius*0.75);
                 }
+            }
         }
-}
-            // draw the scale lines. If an arrow was drawn, stay off from it.
+        // draw the scale lines. If an arrow was drawn, stay off from it.
 
-            QPointF p_start = drewArrow ? QPoint(0, -innerRadius*0.94) : QPoint(0, -innerRadius);
-            QPoint p_end = isMajor ? QPoint(0, -innerRadius*0.86) : QPoint(0, -innerRadius*0.90);
+        QPointF p_start = drewArrow ? QPoint(0, -innerRadius*0.94) : QPoint(0, -innerRadius);
+        QPoint p_end = isMajor ? QPoint(0, -innerRadius*0.86) : QPoint(0, -innerRadius*0.90);
 
-            painter.setPen(scalePen);
+        painter.setPen(scalePen);
         painter.drawLine(p_start, p_end);
         painter.resetTransform();
     }
@@ -733,8 +727,6 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area) {
     painter.setPen(instrumentEdgePen);
     painter.drawRoundedRect(compassRect, instrumentEdgePen.widthF()*2/3, instrumentEdgePen.widthF()*2/3);
 
-    if (heading < 0) heading += 360;
-    else if (heading >= 360) heading -= 360;
     /* final safeguard for really stupid systems */
     int yawCompass = static_cast<int>(heading) % 360;
 
@@ -749,13 +741,108 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area) {
     drawTextCenter(painter, yawAngle, largeTextSize, 0, -radius*0.38);
 }
 
+// TODO: Merge common code above and below this line.....
+
+void PrimaryFlightDisplay::drawSeparateCompassDisk(QPainter& painter, QRectF area) {
+    float radius = area.width()/2;
+    float innerRadius = radius * 0.96;
+    painter.resetTransform();
+
+    painter.setBrush(instrumentOpagueBackground);
+    painter.setPen(instrumentEdgePen);
+    painter.drawEllipse(area);
+    painter.setBrush(Qt::NoBrush);
+
+    QPen scalePen(Qt::white);
+    scalePen.setWidthF(fineLineWidth);
+
+    for (int displayTick=0; displayTick<360; displayTick+=COMPASS_DISK_RESOLUTION) {
+        // yaw is in center.
+        float off = displayTick - heading;
+        // wrap that to ]-180..180]
+        if (off<=-180) off+= 360; else if (off>180) off -= 360;
+
+        painter.translate(area.center());
+        painter.rotate(off);
+        bool drewArrow = false;
+        bool isMajor = displayTick % COMPASS_DISK_MAJORTICK == 0;
+
+        if (displayTick==30 || displayTick==60 ||
+                displayTick==120 || displayTick==150 ||
+                displayTick==210 || displayTick==240 ||
+                displayTick==300 || displayTick==330) {
+            // draw a number
+            QString s_number;
+            s_number.sprintf("%d", displayTick/10);
+            painter.setPen(scalePen);
+            drawTextCenter(painter, s_number, mediumTextSize, 0, -innerRadius*0.75);
+        } else {
+            if (displayTick % COMPASS_DISK_ARROWTICK == 0) {
+                if (displayTick!=0) {
+                    QPainterPath markerPath(QPointF(0, -innerRadius*(1-COMPASS_DISK_MARKERHEIGHT/2)));
+                    markerPath.lineTo(innerRadius*COMPASS_DISK_MARKERWIDTH/4, -innerRadius);
+                    markerPath.lineTo(-innerRadius*COMPASS_DISK_MARKERWIDTH/4, -innerRadius);
+                    markerPath.closeSubpath();
+                    painter.setPen(scalePen);
+                    painter.setBrush(Qt::SolidPattern);
+                    painter.drawPath(markerPath);
+                    painter.setBrush(Qt::NoBrush);
+                    drewArrow = true;
+                }
+                if (displayTick%90 == 0) {
+                    // Also draw a label
+                    QString name = compassWindNames[displayTick / 45];
+                    painter.setPen(scalePen);
+                    drawTextCenter(painter, name, mediumTextSize, 0, -innerRadius*0.75);
+                }
+            }
+        }
+        // draw the scale lines. If an arrow was drawn, stay off from it.
+
+        QPointF p_start = drewArrow ? QPoint(0, -innerRadius*0.94) : QPoint(0, -innerRadius);
+        QPoint p_end = isMajor ? QPoint(0, -innerRadius*0.86) : QPoint(0, -innerRadius*0.90);
+
+        painter.setPen(scalePen);
+        painter.drawLine(p_start, p_end);
+        painter.resetTransform();
+    }
+
+    painter.setPen(scalePen);
+    //painter.setBrush(Qt::SolidPattern);
+    painter.translate(area.center());
+    QPainterPath markerPath(QPointF(0, -radius-2));
+    markerPath.lineTo(radius*COMPASS_DISK_MARKERWIDTH/2,  -radius-radius*COMPASS_DISK_MARKERHEIGHT-2);
+    markerPath.lineTo(-radius*COMPASS_DISK_MARKERWIDTH/2, -radius-radius*COMPASS_DISK_MARKERHEIGHT-2);
+    markerPath.closeSubpath();
+    painter.drawPath(markerPath);
+
+    QRectF headingNumberRect(-radius/3, radius*0.13, radius*2/3, radius*0.28);
+    painter.setPen(instrumentEdgePen);
+    painter.drawRoundedRect(headingNumberRect, instrumentEdgePen.widthF()*2/3, instrumentEdgePen.widthF()*2/3);
+
+    //    if (heading < 0) heading += 360;
+    //    else if (heading >= 360) heading -= 360;
+    /* final safeguard for really stupid systems */
+    int yawCompass = static_cast<int>(heading) % 360;
+
+    QString yawAngle;
+    yawAngle.sprintf("%03d", yawCompass);
+
+    QPen pen;
+    pen.setWidthF(lineWidth);
+    pen.setColor(Qt::white);
+    painter.setPen(pen);
+
+    drawTextCenter(painter, yawAngle, largeTextSize, 0, radius/4);
+}
+
 void PrimaryFlightDisplay::drawAltimeter(
         QPainter& painter,
         QRectF area, // the area where to draw the tape.
         float altitude,
         float maxAltitude,
         float vv
-    ) {
+        ) {
 
     Q_UNUSED(vv)
     Q_UNUSED(maxAltitude)
@@ -776,7 +863,7 @@ void PrimaryFlightDisplay::drawAltimeter(
     float numbersLeft = 0.42*w;
     float markerHalfHeight = 0.06*h;
     float rightEdge = w-instrumentEdgePen.widthF()*2;
-    float markerTip = tickmarkLeft;
+    float markerTip = (tickmarkLeft*2+tickmarkRight)/3;
 
     // altitude scale
 #ifdef ALTIMETER_PROJECTED
@@ -821,7 +908,7 @@ void PrimaryFlightDisplay::drawAltimeter(
     painter.resetTransform();
     painter.translate(area.left(), area.center().y());
 
-    pen.setWidthF(fineLineWidth);
+    pen.setWidthF(lineWidth);
     pen.setColor(Qt::white);
     painter.setPen(pen);
 
@@ -1122,7 +1209,7 @@ void PrimaryFlightDisplay::doPaint() {
 
         qreal panelsWidth = width() / 4.0f;
         qreal remainingHeight = height() - aiheight;
-        qreal panelsHeight = remainingHeight / 5.0f;
+        qreal panelsHeight = remainingHeight / 3.0f;
         QPoint compassCenter;
         qreal maxCompassDiam;
         if(remainingHeight > width()) {
@@ -1149,7 +1236,14 @@ void PrimaryFlightDisplay::doPaint() {
             // diagonal between 2 panel corners
             qreal xd = width()-panelsWidth*2;
             qreal yd = height()-panelsHeight - AIArea.bottom();
-            maxCompassDiam = sqrt(xd*xd + yd*yd);
+            maxCompassDiam = qSqrt(xd*xd + yd*yd);
+            if (maxCompassDiam > remainingHeight) {
+                maxCompassDiam = width() - panelsWidth*2;
+                if (maxCompassDiam > remainingHeight) {
+                    // If still too large, lower.
+                    // compassCenter.setY();
+                }
+            }
         }
 
         qreal compassDiam = maxCompassDiam * 0.8;
@@ -1168,7 +1262,7 @@ void PrimaryFlightDisplay::doPaint() {
 
     if (layout==COMPASS_SEPARATED) {
         painter.setClipping(false);
-        drawAICompassDisk(painter, compassArea);
+        drawSeparateCompassDisk(painter, compassArea);
     }
     else {
         drawAICompassDisk(painter, compassArea);
