@@ -56,7 +56,7 @@ class WaypointList : public QWidget
     Q_OBJECT
     Q_DISABLE_COPY(WaypointList)
 public:
-    WaypointList(QWidget* parent = NULL, UASInterface* uas = NULL);
+    WaypointList(QWidget* parent = NULL, UASWaypointManager* wpm = NULL);
     virtual ~WaypointList();
 
 public slots:
