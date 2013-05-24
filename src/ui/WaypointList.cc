@@ -34,15 +34,17 @@ This file is part of the PIXHAWK project
 #include "WaypointList.h"
 #include "ui_WaypointList.h"
 #include <UASInterface.h>
+#include <UAS.h>
 #include <UASManager.h>
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMouseEvent>
 
-WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
+WaypointList::WaypointList(QWidget *parent, UASWaypointManager* wpm) :
     QWidget(parent),
     uas(NULL),
+    WPM(wpm),
     mavX(0.0),
     mavY(0.0),
     mavZ(0.0),
@@ -96,27 +98,31 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 
     connect(m_ui->refreshButton, SIGNAL(clicked()), this, SLOT(refresh()));
 
+    if (WPM) {
+        // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
+        if (!WPM->getUAS())
+        {
+            // Hide buttons, which don't make sense without valid UAS
+            m_ui->positionAddButton->hide();
+            m_ui->transmitButton->hide();
+            m_ui->readButton->hide();
+            m_ui->refreshButton->hide();
+            //FIXME: The whole "Onboard Waypoints"-tab should be hidden, instead of "refresh" button
+            UnconnectedUASInfoWidget* inf = new UnconnectedUASInfoWidget(this);
+            viewOnlyListLayout->insertWidget(0, inf); //insert a "NO UAV" info into the Onboard Tab
+            showOfflineWarning = true;
+        } else {
+            setUAS(static_cast<UASInterface*>(WPM->getUAS()));
+        }
 
-    // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
-    if (uas)
-    {
-        WPM = uas->getWaypointManager();
+        /* connect slots */
+        connect(WPM, SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
+        connect(WPM, SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
+        connect(WPM, SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
+        connect(WPM, SIGNAL(waypointViewOnlyListChanged(void)),                  this, SLOT(waypointViewOnlyListChanged(void)));
+        connect(WPM, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(updateWaypointViewOnly(int,Waypoint*)));
+        connect(WPM, SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointViewOnlyChanged(quint16)));
     }
-    else
-    {
-        // Hide buttons, which don't make sense without valid UAS
-        m_ui->positionAddButton->hide();
-        m_ui->transmitButton->hide();
-        m_ui->readButton->hide();
-        m_ui->refreshButton->hide();
-        //FIXME: The whole "Onboard Waypoints"-tab should be hidden, instead of "refresh" button       
-        UnconnectedUASInfoWidget* inf = new UnconnectedUASInfoWidget(this);
-        viewOnlyListLayout->insertWidget(0, inf); //insert a "NO UAV" info into the Onboard Tab
-        showOfflineWarning = true;
-        WPM = new UASWaypointManager(NULL);
-    }
-
-    setUAS(uas);
 
     // STATUS LABEL
     updateStatusLabel("");
@@ -154,27 +160,37 @@ void WaypointList::updateAttitude(UASInterface* uas, double roll, double pitch, 
 
 void WaypointList::setUAS(UASInterface* uas)
 {
-    if (this->uas == NULL && uas != NULL)
+    if (!uas)
+        return;
+
+    if (this->uas != NULL)
     {
-        WPM = uas->getWaypointManager();
+        // Clear current list
+        on_clearWPListButton_clicked();
+        // Disconnect everything
+        disconnect(WPM, SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
+        disconnect(WPM, SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
+        disconnect(WPM, SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
+        disconnect(WPM, SIGNAL(waypointViewOnlyListChanged(void)),                  this, SLOT(waypointViewOnlyListChanged(void)));
+        disconnect(WPM, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(updateWaypointViewOnly(int,Waypoint*)));
+        disconnect(WPM, SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointViewOnlyChanged(quint16)));
+        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     }
-    if (this->uas == NULL)
-    {
-        this->uas = uas;
-        connect(WPM, SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
-        connect(WPM, SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
-        connect(WPM, SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
-        connect(WPM, SIGNAL(waypointViewOnlyListChanged(void)),                  this, SLOT(waypointViewOnlyListChanged(void)));
-        connect(WPM, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(updateWaypointViewOnly(int,Waypoint*)));
-        connect(WPM, SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointViewOnlyChanged(quint16)));
-        if (uas != NULL)
-        {
-            connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
-            connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
-        }
-        //connect(WPM,SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
-        //connect(WPM,SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
-    }
+
+    WPM = uas->getWaypointManager();
+
+    this->uas = uas;
+    connect(WPM, SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
+    connect(WPM, SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
+    connect(WPM, SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
+    connect(WPM, SIGNAL(waypointViewOnlyListChanged(void)),                  this, SLOT(waypointViewOnlyListChanged(void)));
+    connect(WPM, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(updateWaypointViewOnly(int,Waypoint*)));
+    connect(WPM, SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointViewOnlyChanged(quint16)));
+    connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+    //connect(WPM,SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
+    //connect(WPM,SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
 
     // Update list
     read();
@@ -583,8 +599,6 @@ void WaypointList::changeEvent(QEvent *e)
 
 void WaypointList::on_clearWPListButton_clicked()
 {
-
-
     if (uas) {
         emit clearPathclicked();
         const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
@@ -592,11 +606,6 @@ void WaypointList::on_clearWPListButton_clicked()
             WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
             widget->remove();
         }
-    } else {
-//        if(isGlobalWP)
-//        {
-//           emit clearPathclicked();
-//        }
     }
 }
 
