@@ -625,6 +625,7 @@ void PrimaryFlightDisplay::drawRollScale(
     }
 }
 
+
 void PrimaryFlightDisplay::drawAIAttitudeScales(
         QPainter& painter,
         QRectF area
@@ -816,7 +817,7 @@ void PrimaryFlightDisplay::drawSeparateCompassDisk(QPainter& painter, QRectF are
     markerPath.closeSubpath();
     painter.drawPath(markerPath);
 
-    QRectF headingNumberRect(-radius/3, radius*0.13, radius*2/3, radius*0.28);
+    QRectF headingNumberRect(-radius/3, radius*0.12, radius*2/3, radius*0.28);
     painter.setPen(instrumentEdgePen);
     painter.drawRoundedRect(headingNumberRect, instrumentEdgePen.widthF()*2/3, instrumentEdgePen.widthF()*2/3);
 
