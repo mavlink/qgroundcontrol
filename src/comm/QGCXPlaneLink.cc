@@ -54,7 +54,7 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLast(QGC::groundTimeMilliseconds()),
     simUpdateLastText(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    _sensorHilEnabled(true)
+    _sensorHilEnabled(false)
 {
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;

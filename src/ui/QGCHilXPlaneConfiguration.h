@@ -20,6 +20,8 @@ public:
 public slots:
     /** @brief Start / stop simulation */
     void toggleSimulation(bool connect);
+    /** @brief Set X-Plane version */
+    void setVersion(int version);
 
 protected:
     QGCHilLink* link;

@@ -22,9 +22,9 @@ QGCHilConfiguration::QGCHilConfiguration(UAS *mav, QWidget *parent) :
     int i = settings.value("SIMULATOR_INDEX", -1).toInt();
 
     if (i > 0) {
-        ui->simComboBox->blockSignals(true);
+//        ui->simComboBox->blockSignals(true);
         ui->simComboBox->setCurrentIndex(i);
-        ui->simComboBox->blockSignals(false);
+//        ui->simComboBox->blockSignals(false);
         on_simComboBox_currentIndexChanged(i);
     }
 
@@ -44,6 +44,11 @@ QGCHilConfiguration::~QGCHilConfiguration()
     settings.endGroup();
     settings.sync();
     delete ui;
+}
+
+void QGCHilConfiguration::setVersion(QString version)
+{
+
 }
 
 void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
