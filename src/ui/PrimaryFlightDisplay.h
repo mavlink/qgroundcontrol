@@ -5,13 +5,26 @@
 #include <QPen>
 #include "UASInterface.h"
 
-#define LINEWIDTH 0.007
+#define LINEWIDTH 0.0032f
+
+//#define TAPES_TEXT_SIZE 0.028
+//#define AI_TEXT_SIZE 0.040
+//#define AI_TEXT_MIN_PIXELS 12
+//#define AI_TEXT_MAX_PIXELS 36
+//#define PANELS_TEXT_SIZE 0.030
+//#define COMPASS_SCALE_TEXT_SIZE 0.16
+
+#define SMALL_TEXT_SIZE 0.028f
+#define MEDIUM_TEXT_SIZE (SMALL_TEXT_SIZE*1.2f)
+#define LARGE_TEXT_SIZE (MEDIUM_TEXT_SIZE*1.2f)
+
+#define SHOW_ZERO_ON_SCALES true
 
 // all in units of display height
-#define ROLL_SCALE_RADIUS 0.42
-#define ROLL_SCALE_TICKMARKLENGTH 0.04
-#define ROLL_SCALE_MARKERWIDTH 0.06
-#define ROLL_SCALE_MARKERHEIGHT 0.04
+#define ROLL_SCALE_RADIUS 0.42f
+#define ROLL_SCALE_TICKMARKLENGTH 0.04f
+#define ROLL_SCALE_MARKERWIDTH 0.06f
+#define ROLL_SCALE_MARKERHEIGHT 0.04f
 // scale max. degrees
 #define ROLL_SCALE_RANGE 60
 
@@ -23,31 +36,22 @@
 #define PITCH_SCALE_MINORLENGTH 0.04
 #define PITCH_SCALE_HALFRANGE 20
 
-//#define USE_TAPE_COMPASS
-//#define USE_DISK_COMPASS
-//#define USE_DISK2_COMPASS
-
-// We want no numbers on the scale, just principal winds or half-winds and ticks.
-// With whole winds there are 45 deg per wind, with half-winds 22.5
-#define COMPASS_TAPE_RESOLUTION 15
-// number of degrees side to side
-#define COMPASS_TAPE_SPAN 120
-
 // The number of degrees to either side of the heading to draw the compass disk.
 // 180 is valid, this will draw a complete disk. If the disk is partly clipped
 // away, less will do.
+
+#define COMPASS_DISK_MAJORTICK 10
+#define COMPASS_DISK_ARROWTICK 45
+#define COMPASS_DISK_MAJORLINEWIDTH 0.006
+#define COMPASS_DISK_MINORLINEWIDTH 0.004
 #define COMPASS_DISK_SPAN 180
 #define COMPASS_DISK_RESOLUTION 15
 #define COMPASS_DISK_MARKERWIDTH 0.2
 #define COMPASS_DISK_MARKERHEIGHT 0.133
 
-#define COMPASS_DISK2_SPAN 180
-#define COMPASS_DISK2_RESOLUTION 5
-#define COMPASS_DISK2_MAJORTICK 10
-#define COMPASS_DISK2_ARROWTICK 45
-#define COMPASS_DISK2_MAJORLINEWIDTH 0.006
-#define COMPASS_DISK2_MINORLINEWIDTH 0.004
-#define COMPASS_SCALE_TEXT_SIZE 0.16
+
+#define ALTIMETER_VVI_SPAN 10
+#define ALTIMETER_VVI_LOGARITHMIC true
 
 // The altitude difference between top and bottom of scale
 #define ALTIMETER_LINEAR_SPAN 35
@@ -65,15 +69,6 @@
 #define ALTIMETER_PROJECTED_MAJOR_RESOLUTION 10
 // min. and max. vertical velocity
 //#define ALTIMETER_PROJECTED
-
-#define TAPES_TEXT_SIZE 0.028
-
-#define ALTIMETER_VVI_SPAN 10
-#define ALTIMETER_VVI_LOGARITHMIC true
-
-#define SHOW_ZERO_ON_SCALES true
-#define SCALE_TEXT_SIZE 0.040
-#define PANELS_TEXT_SIZE 0.030
 
 #define UNKNOWN_BATTERY -1
 
@@ -156,7 +151,7 @@ private:
     void drawPitchScale(QPainter& painter, QRectF area, bool drawNumbersLeft, bool drawNumbersRight);
     void drawRollScale(QPainter& painter, QRectF area, bool drawTicks, bool drawNumbers);
     void drawAIAttitudeScales(QPainter& painter, QRectF area);
-    void drawCompassDisk(QPainter& painter, QRectF area);
+    void drawAICompassDisk(QPainter& painter, QRectF area);
     void drawAltimeter(QPainter& painter, QRectF area, float altitude, float maxAltitude, float vv);
 
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
@@ -189,21 +184,34 @@ private:
 
     QString mode;
     QString state;
-    float load;
+    float load;         //
 
-    Layout layout;
-    Style style;
+    Layout layout;      // The display layout.
+    Style style;        // The AI style (tapes translusent or opague)
 
+    /* This idea did not work
     QPen whitePen;
     QPen redPen;
     QPen amberPen;
     QPen greenPen;
     QPen blackPen;
+    */
 
+    QColor redColor;
+    QColor amberColor;
+    QColor greenColor;
+
+    qreal lineWidth;
+    qreal fineLineWidth;
+
+    qreal smallTestSize;
+    qreal mediumTextSize;
+    qreal largeTextSize;
+
+    // Globally used stuff only.
     QPen instrumentEdgePen;
     QBrush instrumentBackground;
     QBrush instrumentOpagueBackground;
-    //QBrush HUDInstrumentBackground;
 
     QFont font;
 
