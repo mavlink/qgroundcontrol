@@ -854,6 +854,9 @@ void HSIDisplay::setMetricWidth(double width)
  */
 void HSIDisplay::setActiveUAS(UASInterface* uas)
 {
+    if (!uas)
+        return;
+
     if (this->uas != NULL) {
         disconnect(this->uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
