@@ -14,7 +14,7 @@
 //#define PANELS_TEXT_SIZE 0.030
 //#define COMPASS_SCALE_TEXT_SIZE 0.16
 
-#define SMALL_TEXT_SIZE 0.028f
+#define SMALL_TEXT_SIZE 0.03f
 #define MEDIUM_TEXT_SIZE (SMALL_TEXT_SIZE*1.2f)
 #define LARGE_TEXT_SIZE (MEDIUM_TEXT_SIZE*1.2f)
 
@@ -152,6 +152,8 @@ private:
     void drawRollScale(QPainter& painter, QRectF area, bool drawTicks, bool drawNumbers);
     void drawAIAttitudeScales(QPainter& painter, QRectF area);
     void drawAICompassDisk(QPainter& painter, QRectF area);
+    void drawSeparateCompassDisk(QPainter& painter, QRectF area);
+
     void drawAltimeter(QPainter& painter, QRectF area, float altitude, float maxAltitude, float vv);
 
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
