@@ -3,20 +3,21 @@
 #include "HUD2RenderNative.h"
 #include "HUD2Drawer.h"
 
-HUD2RenderNative::HUD2RenderNative(HUD2Drawer *huddrawer, QWidget *parent)
-    : QWidget(parent),
-      huddrawer(huddrawer)
+HUD2RenderNative::HUD2RenderNative(HUD2Drawer *huddrawer, QWidget *parent) :
+    QWidget(parent),
+    huddrawer(huddrawer),
+    plt(palette())
 {
     antiAliasing = true;
-    QPalette p(palette());
-    p.setColor(QPalette::Background, Qt::black);
-//    this->setAutoFillBackground(true);
-//    this->setPalette(p);
+    plt.setColor(QPalette::Background, Qt::black);
 }
 
 void HUD2RenderNative::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
+    this->setAutoFillBackground(true);
+    this->setPalette(plt);
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, antiAliasing);
     painter.setRenderHint(QPainter::TextAntialiasing, antiAliasing);

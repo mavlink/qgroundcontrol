@@ -31,6 +31,7 @@ protected:
 private:
     HUD2Drawer *huddrawer;
     bool antiAliasing;
+    QPalette plt;
 };
 
 #endif /* HUD2RENDERNATIVE_H */
