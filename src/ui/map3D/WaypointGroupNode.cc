@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/ShapeDrawable>
 
 #include "Imagery.h"
+#include "UASManager.h"
 
 WaypointGroupNode::WaypointGroupNode(const QColor& color)
  : mColor(color)
@@ -70,6 +71,16 @@ WaypointGroupNode::update(UASInterface* uas, MAV_FRAME frame)
         Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
         robotZ = -altitude;
     }
+    else if (frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)
+    {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+        double altitude = uas->getAltitude() + UASManager::instance()->getHomeAltitude();
+
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
+        robotZ = -altitude;
+    }
     else if (frame == MAV_FRAME_LOCAL_NED)
     {
         robotX = uas->getLocalX();
@@ -82,7 +93,7 @@ WaypointGroupNode::update(UASInterface* uas, MAV_FRAME frame)
         removeChild(0, getNumChildren());
     }
 
-    const QVector<Waypoint *>& list = uas->getWaypointManager()->getWaypointEditableList();
+    const QList<Waypoint *>& list = uas->getWaypointManager()->getWaypointEditableList();
 
     for (int i = 0; i < list.size(); i++)
     {
