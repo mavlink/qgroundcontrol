@@ -52,7 +52,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    connect(ui->storeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
@@ -729,18 +729,24 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
            mav->getParamManager()->setParamInfo(paramTooltips);
     }
 
-   //    mav->requestParameters();
-
-    QString defaultsDir = qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower() + "/widgets/";
     qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
-
 
     //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
     //amount of time it actually takes to load the configuration windows.
     QTimer::singleShot(1,this,SLOT(loadConfig()));
 
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
+
+    // Since a system is now connected, enable the VehicleConfig UI.
+    ui->tabWidget->setEnabled(true);
+    ui->setButton->setEnabled(true);
+    ui->refreshButton->setEnabled(true);
+    ui->readButton->setEnabled(true);
+    ui->writeButton->setEnabled(true);
+    ui->loadFileButton->setEnabled(true);
+    ui->saveFileButton->setEnabled(true);
 }
+
 void QGCVehicleConfig::resetCalibrationRC()
 {
     for (unsigned int i = 0; i < chanMax; ++i)
