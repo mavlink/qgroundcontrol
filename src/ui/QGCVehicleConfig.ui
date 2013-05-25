@@ -1033,9 +1033,6 @@ p, li { white-space: pre-wrap; }
             </property>
             <item>
              <widget class="QScrollArea" name="scrollArea_5">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
