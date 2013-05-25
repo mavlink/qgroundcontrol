@@ -174,6 +174,7 @@ void QGCVehicleConfig::stopCalibrationRC()
 
 void QGCVehicleConfig::loadQgcConfig(bool primary)
 {
+    Q_UNUSED(primary);
     QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
     QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
     QDir vehicledir = QDir(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/widgets");
@@ -321,7 +322,6 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
-
     // Load calibration
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
     tool = new QGCToolWidget("", this);
@@ -338,7 +338,6 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         delete tool;
     }
 
-
     tool = new QGCToolWidget("", this);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
@@ -352,16 +351,12 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     } else {
         delete tool;
     }
+
     //description.txt
     QFile sensortipsfile(autopilotdir.absolutePath() + "/general/calibration/description.txt");
     sensortipsfile.open(QIODevice::ReadOnly);
     ui->sensorTips->setHtml(sensortipsfile.readAll());
     sensortipsfile.close();
-
-
-
-
-
 }
 
 void QGCVehicleConfig::loadConfig()
@@ -679,10 +674,8 @@ void QGCVehicleConfig::loadConfig()
         }
         xml.readNext();
     }
-    if (mav)
-    {
-           mav->getParamManager()->setParamInfo(paramTooltips);
-    }
+
+    mav->getParamManager()->setParamInfo(paramTooltips);
     doneLoadingConfig = true;
     mav->requestParameters(); //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
 }
