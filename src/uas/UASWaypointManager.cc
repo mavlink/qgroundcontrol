@@ -139,7 +139,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
         if (read_to_edit == true){
             while(waypointsEditable.count()>0) {
                 Waypoint *t = waypointsEditable[0];
-                waypointsEditable.remove(0);
+                waypointsEditable.removeAt(0);
                 delete t;
             }
             emit waypointEditableListChanged();
@@ -425,7 +425,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
             }
         }
 
-        waypointsEditable.remove(seq);
+        waypointsEditable.removeAt(seq);
         delete t;
         t = NULL;
 
@@ -496,7 +496,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
     while(waypointsEditable.count()>0) {
         Waypoint *t = waypointsEditable[0];
-        waypointsEditable.remove(0);
+        waypointsEditable.removeAt(0);
         delete t;
     }
 
@@ -549,12 +549,12 @@ void UASWaypointManager::clearWaypointList()
     }
 }
 
-const QVector<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
+const QList<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
 {
     // TODO Keep this global frame list up to date
     // with complete waypoint list
     // instead of filtering on each request
-    QVector<Waypoint*> wps;
+    QList<Waypoint*> wps;
     foreach (Waypoint* wp, waypointsEditable)
     {
         if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
@@ -565,12 +565,12 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
     return wps;
 }
 
-const QVector<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointList()
+const QList<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointList()
 {
     // TODO Keep this global frame list up to date
     // with complete waypoint list
     // instead of filtering on each request
-    QVector<Waypoint*> wps;
+    QList<Waypoint*> wps;
     foreach (Waypoint* wp, waypointsEditable)
     {
         if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
@@ -581,12 +581,12 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointLi
     return wps;
 }
 
-const QVector<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
+const QList<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
 {
     // TODO Keep this global frame list up to date
     // with complete waypoint list
     // instead of filtering on each request
-    QVector<Waypoint*> wps;
+    QList<Waypoint*> wps;
     foreach (Waypoint* wp, waypointsEditable)
     {
         if (wp->isNavigationType())
@@ -775,7 +775,7 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
         //Clear the old view-list before receiving the new one
         while(waypointsViewOnly.size()>0) {
             Waypoint *t = waypointsViewOnly[0];
-            waypointsViewOnly.remove(0);
+            waypointsViewOnly.removeAt(0);
             delete t;
         }
         emit waypointViewOnlyListChanged();

@@ -254,15 +254,15 @@ void WaypointList::addEditable()
 void WaypointList::addEditable(bool onCurrentPosition)
 {
 
-    const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+    const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
     Waypoint *wp;
-    if (waypoints.size() > 0 &&
+    if (waypoints.count() > 0 &&
             !(onCurrentPosition && uas && (uas->localPositionKnown() || uas->globalPositionKnown())))
     {
         // Create waypoint with last frame
-        Waypoint *last = waypoints.at(waypoints.size()-1);
+        Waypoint *last = waypoints.last();
         wp = WPM->createWaypoint();
-        wp->blockSignals(true);
+//        wp->blockSignals(true);
         MAV_FRAME frame = (MAV_FRAME)last->getFrame();
         wp->setFrame(frame);
         if (frame == MAV_FRAME_GLOBAL || frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)
@@ -280,8 +280,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
         wp->setParam1(last->getParam3());
         wp->setParam1(last->getParam4());
         wp->setAutocontinue(last->getAutoContinue());
-
-        wp->blockSignals(false);
+//        wp->blockSignals(false);
         wp->setAction(last->getAction());
 //        WPM->addWaypointEditable(wp);
     }
@@ -367,61 +366,6 @@ void WaypointList::addCurrentPositionWaypoint() {
     addEditable(true);
 }
 
-
-//int WaypointList::addCurrentPositionWaypoint()
-//{
-//    if (uas)
-//    {
-//        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
-//        Waypoint *wp;
-//        Waypoint *last = 0;
-//        if (waypoints.size() > 0)
-//        {
-//            last = waypoints.at(waypoints.size()-1);
-//        }
-
-//        if (uas->globalPositionKnown())
-//        {
-//            float acceptanceRadiusGlobal = 10.0f;
-//            float holdTime = 0.0f;
-//            float yawGlobal = 0.0f;
-//            if (last)
-//            {
-//                acceptanceRadiusGlobal = last->getAcceptanceRadius();
-//                holdTime = last->getHoldTime();
-//                yawGlobal = last->getYaw();
-//            }
-//            // Create global frame waypoint per default
-//            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
-//            WPM->addWaypointEditable(wp);
-//            updateStatusLabel(tr("Added GLOBAL, ALTITUDE OVER GROUND waypoint"));
-//            return 0;
-//        }
-//        else if (uas->localPositionKnown())
-//        {
-//            float acceptanceRadiusLocal = 0.2f;
-//            float holdTime = 0.5f;
-//            if (last)
-//            {
-//                acceptanceRadiusLocal = last->getAcceptanceRadius();
-//                holdTime = last->getHoldTime();
-//            }
-//            // Create local frame waypoint as second option
-//            wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, false, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-//            WPM->addWaypointEditable(wp);
-//            updateStatusLabel(tr("Added LOCAL (NED) waypoint"));
-//            return 0;
-//        }
-//        else
-//        {
-//            // Do nothing
-//            updateStatusLabel(tr("Not adding waypoint, no position of MAV known yet."));
-//            return 1;
-//        }
-//    }
-//    return 1;
-//}
-
 void WaypointList::updateStatusLabel(const QString &string)
 {
     // Status label in write widget
@@ -443,11 +387,11 @@ void WaypointList::changeCurrentWaypoint(quint16 seq)
 void WaypointList::currentWaypointEditableChanged(quint16 seq)
 {
         WPM->setCurrentEditable(seq);
-        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+        const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
 
-        if (seq < waypoints.size())
+        if (seq < waypoints.count())
         {
-            for(int i = 0; i < waypoints.size(); i++)
+            for(int i = 0; i < waypoints.count(); i++)
             {
                 WaypointEditableView* widget = wpEditableViews.find(waypoints[i]).value();
 
@@ -466,11 +410,11 @@ void WaypointList::currentWaypointEditableChanged(quint16 seq)
 // Update waypointViews to correctly indicate the new current waypoint
 void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
 {
-    const QVector<Waypoint *> &waypoints = WPM->getWaypointViewOnlyList();
+    const QList<Waypoint *> &waypoints = WPM->getWaypointViewOnlyList();
 
-    if (seq < waypoints.size())
+    if (seq < waypoints.count())
     {
-        for(int i = 0; i < waypoints.size(); i++)
+        for(int i = 0; i < waypoints.count(); i++)
         {
             WaypointViewOnlyView* widget = wpViewOnlyViews.find(waypoints[i]).value();
 
@@ -504,7 +448,7 @@ void WaypointList::waypointViewOnlyListChanged()
 {
     // Prevent updates to prevent visual flicker
     this->setUpdatesEnabled(false);
-    const QVector<Waypoint *> &waypoints = WPM->getWaypointViewOnlyList();
+    const QList<Waypoint *> &waypoints = WPM->getWaypointViewOnlyList();
 
     if (!wpViewOnlyViews.empty()) {
         QMapIterator<Waypoint*,WaypointViewOnlyView*> viewIt(wpViewOnlyViews);
@@ -513,12 +457,12 @@ void WaypointList::waypointViewOnlyListChanged()
             viewIt.next();
             Waypoint *cur = viewIt.key();
             int i;
-            for (i = 0; i < waypoints.size(); i++) {
+            for (i = 0; i < waypoints.count(); i++) {
                 if (waypoints[i] == cur) {
                     break;
                 }
             }
-            if (i == waypoints.size()) {
+            if (i == waypoints.count()) {
                 WaypointViewOnlyView* widget = wpViewOnlyViews.find(cur).value();
                 widget->hide();
                 viewOnlyListLayout->removeWidget(widget);
@@ -528,7 +472,7 @@ void WaypointList::waypointViewOnlyListChanged()
     }
 
     // then add/update the views for each waypoint in the list
-    for(int i = 0; i < waypoints.size(); i++) {
+    for(int i = 0; i < waypoints.count(); i++) {
         Waypoint *wp = waypoints[i];
         if (!wpViewOnlyViews.contains(wp)) {
             WaypointViewOnlyView* wpview = new WaypointViewOnlyView(wp, this);
@@ -556,7 +500,7 @@ void WaypointList::waypointEditableListChanged()
 {
     // Prevent updates to prevent visual flicker
     this->setUpdatesEnabled(false);
-    const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+    const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
 
     if (!wpEditableViews.empty()) {
         QMapIterator<Waypoint*,WaypointEditableView*> viewIt(wpEditableViews);
@@ -565,12 +509,12 @@ void WaypointList::waypointEditableListChanged()
             viewIt.next();
             Waypoint *cur = viewIt.key();
             int i;
-            for (i = 0; i < waypoints.size(); i++) {
+            for (i = 0; i < waypoints.count(); i++) {
                 if (waypoints[i] == cur) {
                     break;
                 }
             }
-            if (i == waypoints.size()) {
+            if (i == waypoints.count()) {
                 WaypointEditableView* widget = wpEditableViews.find(cur).value();
                 widget->hide();
                 editableListLayout->removeWidget(widget);
@@ -580,7 +524,7 @@ void WaypointList::waypointEditableListChanged()
     }
 
     // then add/update the views for each waypoint in the list
-    for(int i = 0; i < waypoints.size(); i++) {
+    for(int i = 0; i < waypoints.count(); i++) {
         Waypoint *wp = waypoints[i];
         if (!wpEditableViews.contains(wp)) {
             WaypointEditableView* wpview = new WaypointEditableView(wp, this);
@@ -610,34 +554,34 @@ void WaypointList::waypointEditableListChanged()
 
 void WaypointList::moveUp(Waypoint* wp)
 {
-    const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+    const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
 
     //get the current position of wp in the local storage
     int i;
-    for (i = 0; i < waypoints.size(); i++) {
+    for (i = 0; i < waypoints.count(); i++) {
         if (waypoints[i] == wp)
             break;
     }
 
     // if wp was found and its not the first entry, move it
-    if (i < waypoints.size() && i > 0) {
+    if (i < waypoints.count() && i > 0) {
         WPM->moveWaypoint(i, i-1);
     }
 }
 
 void WaypointList::moveDown(Waypoint* wp)
 {    
-    const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+    const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
 
     //get the current position of wp in the local storage
     int i;
-    for (i = 0; i < waypoints.size(); i++) {
+    for (i = 0; i < waypoints.count(); i++) {
         if (waypoints[i] == wp)
             break;
     }
 
     // if wp was found and its not the last entry, move it
-    if (i < waypoints.size()-1) {
+    if (i < waypoints.count()-1) {
         WPM->moveWaypoint(i, i+1);
     }
 }
@@ -664,72 +608,25 @@ void WaypointList::on_clearWPListButton_clicked()
 {
     if (uas) {
         emit clearPathclicked();
-        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
-        while(!waypoints.isEmpty()) { //for(int i = 0; i <= waypoints.size(); i++)
+        const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+        while(!waypoints.isEmpty()) {
             WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
             widget->remove();
         }
     }
 }
 
-///** @brief The MapWidget informs that a waypoint global was changed on the map */
-
-//void WaypointList::waypointGlobalChanged(QPointF coordinate, int indexWP)
-//{
-//    if (uas)
-//    {
-//        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
-//        if (waypoints.size() > 0)
-//        {
-//            Waypoint *temp = waypoints.at(indexWP);
-
-//            temp->setX(coordinate.x());
-//            temp->setY(coordinate.y());
-
-//            //WaypointGlobalView* widget = wpGlobalViews.find(waypoints[indexWP]).value();
-//            //widget->updateValues();
-//        }
-//    }
-
-
-//}
-
-///** @brief The MapWidget informs that a waypoint global was changed on the map */
-
-//void WaypointList::waypointGlobalPositionChanged(Waypoint* wp)
-//{
-//    QPointF coordinate;
-//    coordinate.setX(wp->getX());
-//    coordinate.setY(wp->getY());
-
-//   emit ChangeWaypointGlobalPosition(wp->getId(), coordinate);
-
-
-//}
-
 void WaypointList::clearWPWidget()
 {    
         // Get list
-        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+        const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
 
 
         // XXX delete wps as well
 
         // Clear UI elements
-        while(!waypoints.isEmpty()) { //for(int i = 0; i <= waypoints.size(); i++)
+        while(!waypoints.isEmpty()) {
             WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
             widget->remove();
         }
 }
-
-//void WaypointList::setIsLoadFileWP()
-//{
-//    loadFileGlobalWP = true;
-//}
-
-//void WaypointList::setIsReadGlobalWP(bool value)
-//{
-//    // FIXME James Check this
-//    Q_UNUSED(value);
-//    // readGlobalWP = value;
-//}
