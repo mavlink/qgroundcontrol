@@ -377,14 +377,6 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
         ui->editSelectParamComboBox->addItem(parameterName, paramIndex);
     }
 
-    if (this->parameterName == "RC5_MIN")
-    {
-        int stopper = 1;
-    }
-    if (parameterName == "RC5_MIN")
-    {
-        int stpoper = 1;
-    }
     if (visibleParam != "")
     {
         if (parameterName == visibleParam)
