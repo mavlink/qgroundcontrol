@@ -1058,9 +1058,9 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (minTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
         //qDebug() << "PARAM:" << parameterName << "index:" << index;
-        if (ok && (index >= 0) && (index < chanMax))
+        if (ok && index < chanMax)
         {
             rcMin[index] = value.toInt();
         }
@@ -1068,8 +1068,8 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (maxTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        if (ok && (index >= 0) && (index < chanMax))
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        if (ok && index < chanMax)
         {
             rcMax[index] = value.toInt();
         }
@@ -1077,8 +1077,8 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (trimTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        if (ok && (index >= 0) && (index < chanMax))
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        if (ok && index < chanMax)
         {
             rcTrim[index] = value.toInt();
         }
@@ -1086,8 +1086,8 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (revTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        if (ok && (index >= 0) && (index < chanMax))
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        if (ok && index < chanMax)
         {
             rcRev[index] = (value.toInt() == -1) ? true : false;
             updateInvertedCheckboxes(index);
