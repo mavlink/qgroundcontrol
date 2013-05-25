@@ -199,8 +199,8 @@ void WaypointList::setUAS(UASInterface* uas)
 void WaypointList::saveWaypoints()
 {
 
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
-        WPM->saveWaypoints(fileName);
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
+    WPM->saveWaypoints(fileName);
 
 }
 
@@ -248,116 +248,179 @@ void WaypointList::refresh()
 
 void WaypointList::addEditable()
 {
+    addEditable(false);
+}
 
-        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
-        Waypoint *wp;
-        if (waypoints.size() > 0)
+void WaypointList::addEditable(bool onCurrentPosition)
+{
+
+    const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+    Waypoint *wp;
+    if (waypoints.size() > 0 &&
+            !(onCurrentPosition && uas && (uas->localPositionKnown() || uas->globalPositionKnown())))
+    {
+        // Create waypoint with last frame
+        Waypoint *last = waypoints.at(waypoints.size()-1);
+        wp = WPM->createWaypoint();
+        wp->blockSignals(true);
+        MAV_FRAME frame = (MAV_FRAME)last->getFrame();
+        wp->setFrame(frame);
+        if (frame == MAV_FRAME_GLOBAL || frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
-            // Create waypoint with last frame
-            Waypoint *last = waypoints.at(waypoints.size()-1);
-            wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getParam1(), last->getParam2(), last->getParam3(), last->getParam4(),
-                              last->getAutoContinue(), false, last->getFrame(), last->getAction());
-            WPM->addWaypointEditable(wp);
+            wp->setLatitude(last->getLatitude());
+            wp->setLongitude(last->getLongitude());
+            wp->setAltitude(last->getAltitude());
+        } else {
+            wp->setX(last->getX());
+            wp->setY(last->getY());
+            wp->setZ(last->getZ());
         }
-        else
-        {            
-            if (uas)
+        wp->setParam1(last->getParam1());
+        wp->setParam1(last->getParam2());
+        wp->setParam1(last->getParam3());
+        wp->setParam1(last->getParam4());
+        wp->setAutocontinue(last->getAutoContinue());
+
+        wp->blockSignals(false);
+        wp->setAction(last->getAction());
+//        WPM->addWaypointEditable(wp);
+    }
+    else
+    {
+        if (uas)
+        {
+            // Create first waypoint at current MAV position
+            if (uas->globalPositionKnown())
             {
-                // Create first waypoint at current MAV position
-                if (uas->localPositionKnown() || uas->globalPositionKnown())
+                if (onCurrentPosition)
                 {
-                	if(addCurrentPositionWaypoint())
-                	{
-                 	   updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
-                 	  wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-                 	  WPM->addWaypointEditable(wp);
-                	}
+
+                    if (WPM->getFrameRecommendation() == MAV_FRAME_GLOBAL) {
+                        updateStatusLabel(tr("Added default GLOBAL (Abs alt.) waypoint."));
+                    } else {
+                        updateStatusLabel(tr("Added default GLOBAL (Relative alt.) waypoint."));
+                    }
+                    wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                    WPM->addWaypointEditable(wp);
+
+                } else {
+
+                    if (WPM->getFrameRecommendation() == MAV_FRAME_GLOBAL) {
+                        updateStatusLabel(tr("Added default GLOBAL (Abs alt.) waypoint."));
+                    } else {
+                        updateStatusLabel(tr("Added default GLOBAL (Relative alt.) waypoint."));
+                    }
+                    wp = new Waypoint(0, UASManager::instance()->getHomeLatitude(),
+                                      UASManager::instance()->getHomeLongitude(),
+                                      WPM->getAltitudeRecommendation(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                    WPM->addWaypointEditable(wp);
                 }
-                else
+            }
+            else if (uas->localPositionKnown())
+            {
+                if (onCurrentPosition)
                 {
-                    // MAV connected, but position unknown, add default waypoint
-                   updateStatusLabel(tr("WARNING: No position known. Adding default LOCAL (NED) waypoint"));
-                   wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-                   WPM->addWaypointEditable(wp);
+                    updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
+                    wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                    WPM->addWaypointEditable(wp);
+                } else {
+                    updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
+                    wp = new Waypoint(0, 0, 0, -0.50, 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                    WPM->addWaypointEditable(wp);
                 }
             }
             else
             {
-                //Since no UAV available, create first default waypoint.
-                 updateStatusLabel(tr("No UAV connected. Adding default LOCAL (NED) waypoint"));
-                wp = new Waypoint(0, 0, 0, -0.50, 0, 0.20, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                // MAV connected, but position unknown, add default waypoint
+                updateStatusLabel(tr("WARNING: No position known. Adding default LOCAL (NED) waypoint"));
+                wp = new Waypoint(0, UASManager::instance()->getHomeLatitude(),
+                                  UASManager::instance()->getHomeLongitude(),
+                                  WPM->getAltitudeRecommendation(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
                 WPM->addWaypointEditable(wp);
-                //create a popup notifying the user about the limitations of offline editing
-                if (showOfflineWarning == true)
-                {
-                    QMessageBox msgBox;
-                    msgBox.setIcon(QMessageBox::Warning);
-                    msgBox.setText("Offline editor!");
-                    msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
-                    msgBox.setStandardButtons(QMessageBox::Ok);
-                    msgBox.setDefaultButton(QMessageBox::Ok);
-                    msgBox.exec();
-                    showOfflineWarning = false;
-                }
             }
-        }
-
-}
-
-
-int WaypointList::addCurrentPositionWaypoint()
-{    
-    if (uas)
-    {
-        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
-        Waypoint *wp;
-        Waypoint *last = 0;
-        if (waypoints.size() > 0)
-        {
-            last = waypoints.at(waypoints.size()-1);
-        }
-
-        if (uas->globalPositionKnown())
-        {
-            float acceptanceRadiusGlobal = 10.0f;
-            float holdTime = 0.0f;
-            float yawGlobal = 0.0f;
-            if (last)
-            {
-                acceptanceRadiusGlobal = last->getAcceptanceRadius();
-                holdTime = last->getHoldTime();
-                yawGlobal = last->getYaw();
-            }
-            // Create global frame waypoint per default
-            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
-            WPM->addWaypointEditable(wp);
-            updateStatusLabel(tr("Added GLOBAL, ALTITUDE OVER GROUND waypoint"));
-            return 0;
-        }
-        else if (uas->localPositionKnown())
-        {
-            float acceptanceRadiusLocal = 0.2f;
-            float holdTime = 0.5f;
-            if (last)
-            {
-                acceptanceRadiusLocal = last->getAcceptanceRadius();
-                holdTime = last->getHoldTime();
-            }
-            // Create local frame waypoint as second option
-            wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, false, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-            WPM->addWaypointEditable(wp);
-            updateStatusLabel(tr("Added LOCAL (NED) waypoint"));
-            return 0;
         }
         else
         {
-            // Do nothing
-            updateStatusLabel(tr("Not adding waypoint, no position of MAV known yet."));
-            return 1;
+            //Since no UAV available, create first default waypoint.
+            updateStatusLabel(tr("No UAV connected. Adding default GLOBAL (NED) waypoint"));
+            wp = new Waypoint(0, UASManager::instance()->getHomeLatitude(),
+                              UASManager::instance()->getHomeLongitude(),
+                              WPM->getAltitudeRecommendation(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+            WPM->addWaypointEditable(wp);
+            //create a popup notifying the user about the limitations of offline editing
+            if (showOfflineWarning == true)
+            {
+                QMessageBox msgBox;
+                msgBox.setIcon(QMessageBox::Warning);
+                msgBox.setText("Offline editor!");
+                msgBox.setInformativeText("You are using the offline mission editor. Please don't forget to save your mission plan before connecting the UAV, otherwise it will be lost.");
+                msgBox.setStandardButtons(QMessageBox::Ok);
+                msgBox.setDefaultButton(QMessageBox::Ok);
+                msgBox.exec();
+                showOfflineWarning = false;
+            }
         }
     }
-    return 1;
 }
+
+void WaypointList::addCurrentPositionWaypoint() {
+    addEditable(true);
+}
+
+
+//int WaypointList::addCurrentPositionWaypoint()
+//{
+//    if (uas)
+//    {
+//        const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+//        Waypoint *wp;
+//        Waypoint *last = 0;
+//        if (waypoints.size() > 0)
+//        {
+//            last = waypoints.at(waypoints.size()-1);
+//        }
+
+//        if (uas->globalPositionKnown())
+//        {
+//            float acceptanceRadiusGlobal = 10.0f;
+//            float holdTime = 0.0f;
+//            float yawGlobal = 0.0f;
+//            if (last)
+//            {
+//                acceptanceRadiusGlobal = last->getAcceptanceRadius();
+//                holdTime = last->getHoldTime();
+//                yawGlobal = last->getYaw();
+//            }
+//            // Create global frame waypoint per default
+//            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, false, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
+//            WPM->addWaypointEditable(wp);
+//            updateStatusLabel(tr("Added GLOBAL, ALTITUDE OVER GROUND waypoint"));
+//            return 0;
+//        }
+//        else if (uas->localPositionKnown())
+//        {
+//            float acceptanceRadiusLocal = 0.2f;
+//            float holdTime = 0.5f;
+//            if (last)
+//            {
+//                acceptanceRadiusLocal = last->getAcceptanceRadius();
+//                holdTime = last->getHoldTime();
+//            }
+//            // Create local frame waypoint as second option
+//            wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, false, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+//            WPM->addWaypointEditable(wp);
+//            updateStatusLabel(tr("Added LOCAL (NED) waypoint"));
+//            return 0;
+//        }
+//        else
+//        {
+//            // Do nothing
+//            updateStatusLabel(tr("Not adding waypoint, no position of MAV known yet."));
+//            return 1;
+//        }
+//    }
+//    return 1;
+//}
 
 void WaypointList::updateStatusLabel(const QString &string)
 {
@@ -646,11 +709,17 @@ void WaypointList::on_clearWPListButton_clicked()
 
 void WaypointList::clearWPWidget()
 {    
+        // Get list
         const QVector<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+
+
+        // XXX delete wps as well
+
+        // Clear UI elements
         while(!waypoints.isEmpty()) { //for(int i = 0; i <= waypoints.size(); i++)
             WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
             widget->remove();
-        }    
+        }
 }
 
 //void WaypointList::setIsLoadFileWP()
