@@ -112,9 +112,11 @@ public:
     int getLocalFrameCount();   ///< Get the count of local waypoints in the list
     /*@}*/
 
-    UAS* getUAS() {
-        return this->uas;    ///< Returns the owning UAS
-    }
+    UAS* getUAS();
+    float getAltitudeRecommendation();
+    int getFrameRecommendation();
+    float getAcceptanceRadiusRecommendation();
+    float getHomeAltitudeOffsetDefault();
 
 private:
     /** @name Message send functions */
@@ -176,6 +178,9 @@ private:
     QTimer protocol_timer;                          ///< Timer to catch timeouts
     bool standalone;                                ///< If standalone is set, do not write to UAS
     quint16 uasid;
+
+    // XXX export to settings
+    static const float defaultAltitudeHomeOffset   = 30.0f;    ///< Altitude offset in meters from home for new waypoints
 };
 
 #endif // UASWAYPOINTMANAGER_H

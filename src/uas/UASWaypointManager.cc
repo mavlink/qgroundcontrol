@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include "UAS.h"
 #include "mavlink_types.h"
+#include "UASManager.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 20        ///< minimum delay between sent messages
@@ -136,7 +137,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 
         //Clear the old edit-list before receiving the new one
         if (read_to_edit == true){
-            while(waypointsEditable.size()>0) {
+            while(waypointsEditable.count()>0) {
                 Waypoint *t = waypointsEditable[0];
                 waypointsEditable.remove(0);
                 delete t;
@@ -331,10 +332,10 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 
 int UASWaypointManager::setCurrentEditable(quint16 seq)
 {
-    if (seq < waypointsEditable.size()) {
+    if (seq < waypointsEditable.count()) {
         if(current_state == WP_IDLE) {
             //update local main storage
-            for(int i = 0; i < waypointsEditable.size(); i++) {
+            for(int i = 0; i < waypointsEditable.count(); i++) {
                 if (waypointsEditable[i]->getId() == seq) {
                     waypointsEditable[i]->setCurrent(true);
                 } else {
@@ -370,13 +371,13 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 {
     if (wp)
     {
-        wp->setId(waypointsEditable.size());
-        if (enforceFirstActive && waypointsEditable.size() == 0)
+        wp->setId(waypointsEditable.count());
+        if (enforceFirstActive && waypointsEditable.count() == 0)
         {
             wp->setCurrent(true);
             currentWaypointEditable = wp;
         }
-        waypointsEditable.insert(waypointsEditable.size(), wp);
+        waypointsEditable.insert(waypointsEditable.count(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
 
         emit waypointEditableListChanged();
@@ -390,13 +391,15 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     Waypoint* wp = new Waypoint();
-    wp->setId(waypointsEditable.size());
-    if (enforceFirstActive && waypointsEditable.size() == 0)
+    wp->setId(waypointsEditable.count());
+    wp->setFrame((MAV_FRAME)getFrameRecommendation());
+    wp->setAltitude(getAltitudeRecommendation());
+    if (enforceFirstActive && waypointsEditable.count() == 0)
     {
         wp->setCurrent(true);
         currentWaypointEditable = wp;
     }
-    waypointsEditable.insert(waypointsEditable.size(), wp);
+    waypointsEditable.append(wp);
     connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
 
     emit waypointEditableListChanged();
@@ -406,17 +409,17 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 
 int UASWaypointManager::removeWaypoint(quint16 seq)
 {
-    if (seq < waypointsEditable.size())
+    if (seq < waypointsEditable.count())
     {
         Waypoint *t = waypointsEditable[seq];
 
         if (t->getCurrent() == true) //trying to remove the current waypoint
         {
-            if (seq+1 < waypointsEditable.size()) // setting the next waypoint as current
+            if (seq+1 < waypointsEditable.count()) // setting the next waypoint as current
             {
                 waypointsEditable[seq+1]->setCurrent(true);
             }
-            else if (seq-1 >= 0) //if deleting the last on the list, then setting the previous waypoint as current
+            else if (seq-1 >= 0) // if deleting the last on the list, then setting the previous waypoint as current
             {
                 waypointsEditable[seq-1]->setCurrent(true);
             }
@@ -426,7 +429,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
         delete t;
         t = NULL;
 
-        for(int i = seq; i < waypointsEditable.size(); i++)
+        for(int i = seq; i < waypointsEditable.count(); i++)
         {
             waypointsEditable[i]->setId(i);
         }
@@ -440,7 +443,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
 
 void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
 {
-    if (cur_seq != new_seq && cur_seq < waypointsEditable.size() && new_seq < waypointsEditable.size())
+    if (cur_seq != new_seq && cur_seq < waypointsEditable.count() && new_seq < waypointsEditable.count())
     {
         Waypoint *t = waypointsEditable[cur_seq];
         if (cur_seq < new_seq) {
@@ -477,7 +480,7 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
     //write the waypoint list version to the first line for compatibility check
     out << "QGC WPL 120\r\n";
 
-    for (int i = 0; i < waypointsEditable.size(); i++)
+    for (int i = 0; i < waypointsEditable.count(); i++)
     {
         waypointsEditable[i]->setId(i);
         waypointsEditable[i]->save(out);
@@ -491,7 +494,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
 
-    while(waypointsEditable.size()>0) {
+    while(waypointsEditable.count()>0) {
         Waypoint *t = waypointsEditable[0];
         waypointsEditable.remove(0);
         delete t;
@@ -512,8 +515,8 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
             Waypoint *t = new Waypoint();
             if(t->load(in))
             {
-                t->setId(waypointsEditable.size());
-                waypointsEditable.insert(waypointsEditable.size(), t);
+                t->setId(waypointsEditable.count());
+                waypointsEditable.insert(waypointsEditable.count(), t);
             }
             else
             {
@@ -532,7 +535,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
 void UASWaypointManager::clearWaypointList()
 {
-    if(current_state == WP_IDLE)
+    if (current_state == WP_IDLE)
     {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
@@ -779,7 +782,7 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
         /* THIS PART WAS MOVED TO handleWaypointCount. THE EDIT-LIST SHOULD NOT BE CLEARED UNLESS THERE IS A RESPONSE FROM UAV.
         //Clear the old edit-list before receiving the new one
         if (read_to_edit == true){
-            while(waypointsEditable.size()>0) {
+            while(waypointsEditable.count()>0) {
                 Waypoint *t = waypointsEditable[0];
                 waypointsEditable.remove(0);
                 delete t;
@@ -1022,4 +1025,40 @@ void UASWaypointManager::sendWaypointAck(quint8 type)
     mavlink_msg_mission_ack_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpa);
     uas->sendMessage(message);
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
+}
+
+UAS* UASWaypointManager::getUAS() {
+    return this->uas;    ///< Returns the owning UAS
+}
+
+float UASWaypointManager::getAltitudeRecommendation()
+{
+    if (waypointsEditable.count() > 0) {
+        return waypointsEditable.last()->getAltitude();
+    } else {
+        return UASManager::instance()->getHomeAltitude() + getHomeAltitudeOffsetDefault();
+    }
+}
+
+int UASWaypointManager::getFrameRecommendation()
+{
+    if (waypointsEditable.count() > 0) {
+        return static_cast<int>(waypointsEditable.last()->getFrame());
+    } else {
+        return MAV_FRAME_GLOBAL;
+    }
+}
+
+float UASWaypointManager::getAcceptanceRadiusRecommendation()
+{
+    if (waypointsEditable.count() > 0) {
+        return waypointsEditable.last()->getAcceptanceRadius();
+    } else {
+        return 10.0f;
+    }
+}
+
+float UASWaypointManager::getHomeAltitudeOffsetDefault()
+{
+    return defaultAltitudeHomeOffset;
 }
