@@ -9,8 +9,13 @@ public:
     HUD2IndicatorCompass(const HUD2Data *huddata, QWidget *parent);
 
 private:
+    const QString &getLabelTop(void);
+    const QString &getLabelBot(void);
     double processData(void);
+
+private:
     const HUD2Data *huddata;
+    QString label;
 };
 
 #endif // HUD2COMPASS_H

@@ -22,6 +22,7 @@ public:
     void paint(QPainter *painter);
     bool getOpacityNeedle(void){return opaqueNeedle;}
     bool getOpacityRibbon(void){return opaqueRibbon;}
+    bool getOpacityTags(void){return opaqueTags;}
     bool getEnabled(void){return enabled;}
     double getBigScratchLenStep(void){return bigScratchLenStep;}
     int getBigScratchValueStep(void){return bigScratchValueStep;}
@@ -36,11 +37,13 @@ public slots:
     void setColor(QColor color);
     void setOpacityNeedle(bool op);
     void setOpacityRibbon(bool op);
+    void setOpacityTags(bool op);
     void setEnabled(bool checked);
     void setBigScratchLenStep(double);
     void setBigScratchValueStep(int);
     void setStepsSmall(int);
     void setStepsBig(int);
+    void syncSettings(void);
 
 private:
     void updateRibbon(const QSize &size, int gap, int len);
@@ -48,12 +51,16 @@ private:
     bool stepBigGood(int s);
     /** @brief Process data personally for subclass. For example, convert from rad to deg */
     virtual double processData(void) = 0;
+    virtual const QString &getLabelTop(void) = 0;
+    virtual const QString &getLabelBot(void) = 0;
+
+protected:
+    QString name;
 
 private:
     screen_position position;
     bool wrap360; // suitable for compass like device
     bool enabled;
-    QString name;
 
     qreal bigScratchLenStep;    // step in percents of widget sizes
     qreal big_pixstep;          // percentage recalculated to pixels (internal use only)
@@ -63,6 +70,8 @@ private:
     int stepsBig;               // value must be even AND more than 0
     qreal small_pixstep;        // percentage recalculated to pixels (internal use only)
     QRect clipRect;             // clipping rectangle
+    QRect tagRectTop;           // rectangle for top tag
+    QRect tagRectBot;           // rectangle for bottom tag
     QSize size_cached;          // cached value to recalculate all sizes after changing of settings
 
     QPen bigPen;
@@ -75,6 +84,7 @@ private:
     QPolygon needlePoly;
     bool opaqueNeedle;
     bool opaqueRibbon;
+    bool opaqueTags;
 };
 
 #endif // HUD2RIBBON_H

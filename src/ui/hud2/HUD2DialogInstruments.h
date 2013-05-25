@@ -40,6 +40,10 @@ private slots:
 
 private:
     Ui::HUD2DialogInstruments *ui;
+    HUD2FormSpeedometer *speed_form;
+    HUD2FormAltimeter *altimveter_form;
+    HUD2FormCompass *compass_form;
+    HUD2FormFps *fps_form;
 };
 
 #endif // HUD2INSTRUMENTSDIALOG_H

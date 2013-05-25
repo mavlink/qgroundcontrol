@@ -32,6 +32,7 @@ private slots:
     void setBigScratchLenStep(double value);
     void setBigScratchValueStep(int value);
     void setStepsBig(int value);
+    void syncSettings(void);
 
 private:
     void drawpitchlines(QPainter *painter, qreal bigScratchValueStep, qreal big_pixstep);

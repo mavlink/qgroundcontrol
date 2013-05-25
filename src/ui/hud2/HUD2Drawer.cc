@@ -11,8 +11,8 @@ HUD2Drawer::HUD2Drawer(const HUD2Data *huddata, QWidget *parent) :
     QWidget(parent),
     horizon(&huddata->pitch, &huddata->roll, this),
     roll(&huddata->roll, this),
-    speedometer(huddata, this),
-    altimeter(huddata, this),
+    speedometer(huddata, "SPEEDOMETER", this),
+    altimeter(huddata, "ALTIMETER", this),
     compass(huddata, this),
     fps(this),
     msg(this)

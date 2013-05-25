@@ -54,6 +54,16 @@
      </widget>
     </item>
     <item>
+     <widget class="QCheckBox" name="checkBoxTags">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Opacity of tags around indicator, e.g climbmeter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Opaque tags</string>
+      </property>
+     </widget>
+    </item>
+    <item>
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="0">
        <widget class="QSpinBox" name="stepsSmall">

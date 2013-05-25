@@ -15,10 +15,13 @@ HUD2FormRibbon::HUD2FormRibbon(HUD2Ribbon *ribbon, QWidget *parent) :
 
     ui->checkBoxNeedle->setChecked(ribbon->getOpacityNeedle());
     ui->checkBoxRibbon->setChecked(ribbon->getOpacityRibbon());
+    ui->checkBoxTags->setChecked(ribbon->getOpacityTags());
     ui->checkBoxEnable->setChecked(ribbon->getEnabled());
+
     connect(ui->checkBoxNeedle, SIGNAL(toggled(bool)), ribbon, SLOT(setOpacityNeedle(bool)));
     connect(ui->checkBoxRibbon, SIGNAL(toggled(bool)), ribbon, SLOT(setOpacityRibbon(bool)));
     connect(ui->checkBoxEnable, SIGNAL(toggled(bool)), ribbon, SLOT(setEnabled(bool)));
+    connect(ui->checkBoxTags, SIGNAL(toggled(bool)), ribbon, SLOT(setOpacityTags(bool)));
 
     ui->bigScratchLenStep->setRange(1, 100);
     ui->bigScratchLenStep->setSingleStep(0.5);

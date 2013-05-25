@@ -6,21 +6,22 @@
 HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name,
                        QWidget *parent) :
     QWidget(parent),
+    name(name),
     position(position),
-    wrap360(wrap360),
-    name(name)
+    wrap360(wrap360)
 {
     QSettings settings;
 
     settings.beginGroup("QGC_HUD2");
-    opaqueNeedle = settings.value(name + QString("_OPAQUE_NEEDLE"), false).toBool();
-    opaqueRibbon = settings.value(name + QString("_OPAQUE_RIBBON"), false).toBool();
-    enabled = settings.value(name + QString("_ENABLED"), true).toBool();
+    opaqueNeedle = settings.value(name + "_OPAQUE_NEEDLE", false).toBool();
+    opaqueRibbon = settings.value(name + "_OPAQUE_RIBBON", false).toBool();
+    opaqueTags = settings.value(name + "_OPAQUE_TAGS", false).toBool();
+    enabled = settings.value(name + "_ENABLED", true).toBool();
 
-    bigScratchLenStep = settings.value(name + QString("_BIG_SCRATCH_LEN_STEP"), 20.0).toDouble();
-    bigScratchValueStep = settings.value(name + QString("_BIG_SCRATCH_VALUE_STEP"), 10).toInt();
-    stepsSmall = settings.value(name + QString("_STEPS_SMALL"), 4).toInt();
-    stepsBig = settings.value(name + QString("_STEPS_BIG"), 4).toInt();
+    bigScratchLenStep = settings.value(name + "_BIG_SCRATCH_LEN_STEP", 20.0).toDouble();
+    bigScratchValueStep = settings.value(name + "_BIG_SCRATCH_VALUE_STEP", 10).toInt();
+    stepsSmall = settings.value(name + "_STEPS_SMALL", 4).toInt();
+    stepsBig = settings.value(name + "_STEPS_BIG", 4).toInt();
     settings.endGroup();
 
     if (! stepBigGood(stepsBig))
@@ -232,10 +233,10 @@ void HUD2Ribbon::updateRibbon(const QSize &size, int gap, int len){
 void HUD2Ribbon::updateGeometry(const QSize &size){
     this->size_cached = size;
 
-    qreal gap_percent = 6;
+    qreal gap_percent = 7;
     qreal len_percent = 2; // length of big scratch
     qreal fontsize_percent = 2.0; // font size of labels on ribbon
-    qreal num_w_percent = gap_percent * 1.2; // width of number indicator
+    qreal num_w_percent = gap_percent * 1.0; // width of number indicator
 
     if (ribbonVertical())
         big_pixstep = percent2pix_hF(size, bigScratchLenStep);
@@ -283,6 +284,25 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
     else{
         clipRect.setLeft(clipRect.left() + big_pixstep/2);
         clipRect.setRight(clipRect.right() - big_pixstep/2);
+    }
+
+    // rectangles for tags
+    if (ribbonVertical()){
+        tagRectTop = clipRect;
+        tagRectTop.setHeight(fntsize);
+        tagRectTop.translate(0, -fntsize);
+
+        tagRectBot = clipRect;
+        tagRectBot.translate(0, clipRect.height());
+        tagRectBot.setHeight(fntsize);
+
+        // adjust sizes
+        tagRectTop.setWidth(tagRectTop.width() * 2);
+        tagRectBot.setWidth(tagRectBot.width() * 2);
+        if (POSITION_RIGHT == position){
+            tagRectTop.translate(-clipRect.width(), 0);
+            tagRectBot.translate(-clipRect.width(), 0);
+        }
     }
 }
 
@@ -354,9 +374,9 @@ void HUD2Ribbon::paint(QPainter *painter){
     // text in needle
     painter->setFont(labelFont);
     if (wrap360)
-        painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(wrap_360(v), 2));
+        painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(wrap_360(v), 1));
     else
-        painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(v, 2));
+        painter->drawText(num_str_rect(_numPoly, position), Qt::AlignCenter, num_str_val(v, 1));
 
     // clipping area
     painter->setClipRegion(clipRect);
@@ -403,6 +423,50 @@ void HUD2Ribbon::paint(QPainter *painter){
 
     // make clean
     painter->restore();
+
+    // draw instrument specific tags
+    if (0 != getLabelTop().length()){
+        painter->save();
+        painter->setFont(labelFont);
+        painter->setPen(smallPen);
+        if (opaqueTags)
+            painter->fillRect(tagRectTop, Qt::black);
+        if (POSITION_LEFT == position)
+            painter->drawText(tagRectTop, Qt::AlignCenter, getLabelTop());
+        else
+            painter->drawText(tagRectTop, Qt::AlignCenter, getLabelTop());
+        painter->restore();
+    }
+
+    if (0 != getLabelBot().length()){
+        painter->save();
+        painter->setFont(labelFont);
+        painter->setPen(smallPen);
+        if (opaqueTags)
+            painter->fillRect(tagRectBot, Qt::black);
+        if (POSITION_LEFT == position)
+            painter->drawText(tagRectBot, Qt::AlignCenter, getLabelBot());
+        else
+            painter->drawText(tagRectBot, Qt::AlignCenter, getLabelBot());
+        painter->restore();
+    }
+}
+
+void HUD2Ribbon::syncSettings(void)
+{
+    QSettings settings;
+    settings.beginGroup("QGC_HUD2");
+
+    settings.setValue((name + "_OPAQUE_NEEDLE"), opaqueNeedle);
+    settings.setValue((name + "_OPAQUE_RIBBON"), opaqueRibbon);
+    settings.setValue((name + "_OPAQUE_TAGS"), opaqueTags);
+    settings.setValue((name + "_ENABLED"), enabled);
+    settings.setValue((name + "_BIG_SCRATCH_LEN_STEP"), bigScratchLenStep);
+    settings.setValue((name + "_BIG_SCRATCH_VALUE_STEP"), bigScratchValueStep);
+    settings.setValue((name + "_STEPS_SMALL"), stepsSmall);
+    settings.setValue((name + "_STEPS_BIG"), stepsBig);
+
+    settings.endGroup();
 }
 
 bool HUD2Ribbon::stepBigGood(int s){
@@ -420,64 +484,33 @@ void HUD2Ribbon::setColor(QColor color){
 
 void HUD2Ribbon::setOpacityNeedle(bool op){
     this->opaqueNeedle = op;
-
-    QSettings settings;
-    QString str = name + "_OPAQUE_NEEDLE";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, op);
-    settings.endGroup();
 }
 
 void HUD2Ribbon::setOpacityRibbon(bool op){
     this->opaqueRibbon = op;
+}
 
-    QSettings settings;
-    QString str = name + "_OPAQUE_RIBBON";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, op);
-    settings.endGroup();
+void HUD2Ribbon::setOpacityTags(bool op){
+    this->opaqueTags = op;
 }
 
 void HUD2Ribbon::setEnabled(bool checked){
-    enabled = checked;
-    QSettings settings;
-    QString str = name + "_ENABLED";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, checked);
-    settings.endGroup();
+    this->enabled = checked;
 }
 
 void HUD2Ribbon::setBigScratchLenStep(double lstep){
     this->bigScratchLenStep = lstep;
     this->updateGeometry(this->size_cached);
-
-    QSettings settings;
-    QString str = name + "_BIG_SCRATCH_LEN_STEP";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, lstep);
-    settings.endGroup();
 }
 
 void HUD2Ribbon::setBigScratchValueStep(int vstep){
     this->bigScratchValueStep = vstep;
     this->updateGeometry(this->size_cached);
-
-    QSettings settings;
-    QString str = name + "_BIG_SCRATCH_VALUE_STEP";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, vstep);
-    settings.endGroup();
 }
 
 void HUD2Ribbon::setStepsSmall(int steps){
     this->stepsSmall = steps;
     this->updateGeometry(this->size_cached);
-
-    QSettings settings;
-    QString str = name + "_STEPS_SMALL";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, steps);
-    settings.endGroup();
 }
 
 void HUD2Ribbon::setStepsBig(int steps){
@@ -488,11 +521,5 @@ void HUD2Ribbon::setStepsBig(int steps){
 
     this->stepsBig = steps;
     this->updateGeometry(this->size_cached);
-
-    QSettings settings;
-    QString str = name + "_STEPS_BIG";
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue(str, steps);
-    settings.endGroup();
 }
 

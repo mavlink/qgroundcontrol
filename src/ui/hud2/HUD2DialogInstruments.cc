@@ -11,7 +11,11 @@ HUD2DialogInstruments::HUD2DialogInstruments(HUD2FormHorizon *horizon_form,
                                              HUD2IndicatorFps *fps,
                                              QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::HUD2DialogInstruments)
+    ui(new Ui::HUD2DialogInstruments),
+    speed_form(new HUD2FormSpeedometer(speedometer, this)),
+    altimveter_form(new HUD2FormAltimeter(altimeter, this)),
+    compass_form(new HUD2FormCompass(compass, this)),
+    fps_form(new HUD2FormFps(fps, this))
 {
     QSettings settings;
     settings.beginGroup("QGC_HUD2");
@@ -21,11 +25,6 @@ HUD2DialogInstruments::HUD2DialogInstruments(HUD2FormHorizon *horizon_form,
     ui->setupUi(this);
 
     Q_UNUSED(roll);
-
-    HUD2FormSpeedometer *speed_form = new HUD2FormSpeedometer(speedometer, this);
-    HUD2FormAltimeter *altimveter_form = new HUD2FormAltimeter(altimeter, this);
-    HUD2FormCompass *compass_form = new HUD2FormCompass(compass, this);
-    HUD2FormFps *fps_form = new HUD2FormFps(fps, this);
 
     ui->tabWidget->addTab(speed_form, "speed");
     ui->tabWidget->addTab(altimveter_form, "alt");

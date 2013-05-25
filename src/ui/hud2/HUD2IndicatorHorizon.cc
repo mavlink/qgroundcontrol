@@ -182,40 +182,33 @@ void HUD2IndicatorHorizon::setGndColor(QColor color){
 
 void HUD2IndicatorHorizon::setColoredBg(bool checked){
     coloredBackground = checked;
-    QSettings settings;
-
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue("QGC_HUD2_HORIZON_COLORED_BG", checked);
-    settings.endGroup();
 }
 
 void HUD2IndicatorHorizon::setBigScratchLenStep(double value){
     bigScratchLenStep = value;
     updateGeometry(size_cached);
-    QSettings settings;
-
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue("HORIZON_BIG_SCRATCH_LEN_STEP", value);
-    settings.endGroup();
 }
 
 void HUD2IndicatorHorizon::setBigScratchValueStep(int value){
     bigScratchValueStep = value;
     updateGeometry(size_cached);
-    QSettings settings;
-
-    settings.beginGroup("QGC_HUD2");
-    settings.setValue("HORIZON_BIG_SCRATCH_VALUE_STEP", value);
-    settings.endGroup();
 }
 
 void HUD2IndicatorHorizon::setStepsBig(int value){
     stepsBig = value;
     updateGeometry(size_cached);
-    QSettings settings;
+}
 
+void HUD2IndicatorHorizon::syncSettings()
+{
+    QSettings settings;
     settings.beginGroup("QGC_HUD2");
-    settings.setValue("HORIZON_STEPS_BIG", value);
+
+    settings.setValue("HORIZON_STEPS_BIG", stepsBig);
+    settings.setValue("HORIZON_BIG_SCRATCH_VALUE_STEP", bigScratchValueStep);
+    settings.setValue("HORIZON_BIG_SCRATCH_LEN_STEP", bigScratchLenStep);
+    settings.setValue("HORIZON_COLORED_BG", coloredBackground);
+
     settings.endGroup();
 }
 
@@ -241,6 +234,8 @@ HUD2FormHorizon *HUD2IndicatorHorizon::getForm(void){
     form->ui->stepsBig->setValue(stepsBig);
     connect(form->ui->stepsBig, SIGNAL(valueChanged(int)),
             this, SLOT(setStepsBig(int)));
+
+    connect(form, SIGNAL(destroyed()), this, SLOT(syncSettings()));
 
     return form;
 }
