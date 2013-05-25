@@ -263,11 +263,7 @@ void QGCParamSlider::endEditMode()
     switch (parameterValue.type())
     {
     case QVariant::Char:
-        ui->intValueSpinBox->show();
-        break;
     case QVariant::Int:
-        ui->intValueSpinBox->show();
-        break;
     case QVariant::UInt:
         ui->intValueSpinBox->show();
         break;
