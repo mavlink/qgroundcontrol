@@ -1234,7 +1234,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
     if (uas)
     {
         // Grab all waypoints.
-        const QVector<Waypoint*>& list = uas->getWaypointManager()->getWaypointEditableList();
+        const QList<Waypoint*>& list = uas->getWaypointManager()->getWaypointEditableList();
         const int numWaypoints = list.size();
 
         // Do not work on empty lists
