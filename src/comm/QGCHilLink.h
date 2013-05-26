@@ -114,6 +114,9 @@ signals:
     /** @brief Selected sim version changed */
     void versionChanged(const QString& version);
 
+    /** @brief Selected sim version changed */
+    void versionChanged(const int version);
+
     /** @brief Sensor leve HIL state changed */
     void sensorHilChanged(bool enabled);
 };

@@ -32,8 +32,15 @@
 #define PITCHTRANSLATION 65.0
 // 10 degrees for each line
 #define PITCH_SCALE_RESOLUTION 5
-#define PITCH_SCALE_MAJORLENGTH 0.08
-#define PITCH_SCALE_MINORLENGTH 0.04
+#define PITCH_SCALE_MAJORWIDTH 0.1
+#define PITCH_SCALE_MINORWIDTH 0.066
+
+// Beginning from PITCH_SCALE_WIDTHREDUCTION_FROM degrees of +/- pitch, the
+// width of the lines is reduced, down to PITCH_SCALE_WIDTHREDUCTION times
+// the normal width. This helps keep orientation in extreme attitudes.
+#define PITCH_SCALE_WIDTHREDUCTION_FROM 30
+#define PITCH_SCALE_WIDTHREDUCTION 0.4
+
 #define PITCH_SCALE_HALFRANGE 20
 
 // The number of degrees to either side of the heading to draw the compass disk.
@@ -61,6 +68,7 @@
 #define ALTIMETER_LINEAR_MAJOR_RESOLUTION 10
 // min. and max. vertical velocity
 
+// Projected: An experiment. Make tape appear projected from a cylinder, like a French "drum" style gauge.
 // The altitude difference between top and bottom of scale
 #define ALTIMETER_PROJECTED_SPAN 50
 // every 5 meters there is a tick mark
@@ -70,7 +78,16 @@
 // min. and max. vertical velocity
 //#define ALTIMETER_PROJECTED
 
+
+// Now the same thing for airspeed!
+#define AIRSPEED_LINEAR_SPAN 10
+#define AIRSPEED_LINEAR_RESOLUTION 1
+#define AIRSPEED_LINEAR_MAJOR_RESOLUTION 5
+
 #define UNKNOWN_BATTERY -1
+#define UNKNOWN_ATTITUDE 0
+#define UNKNOWN_ALTITUDE -1000
+#define UNKNOWN_SPEED -1
 
 class PrimaryFlightDisplay : public QWidget
 {
@@ -155,7 +172,7 @@ private:
     void drawSeparateCompassDisk(QPainter& painter, QRectF area);
 
     void drawAltimeter(QPainter& painter, QRectF area, float altitude, float maxAltitude, float vv);
-
+    void drawVelocityMeter(QPainter& painter, QRectF area);
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
     void fillInstrumentOpagueBackground(QPainter& painter, QRectF edge);
     void drawInstrumentBackground(QPainter& painter, QRectF edge);
@@ -166,6 +183,8 @@ private:
     void drawSensorsStatsPanel(QPainter& painter, QRectF area);
 
     void doPaint();
+
+    UASInterface* uas;          ///< The uas currently monitored
 
     float roll;
     float pitch;
@@ -180,13 +199,18 @@ private:
     // The MP "set home altitude" button will not be repeated here if it did that.
     float aboveHomeAltitude;
 
-    float groundSpeed;
-    float airSpeed;
+    float groundspeed;
+    float airspeed;
     float verticalVelocity;
 
+    bool uavIsArmed;
     QString mode;
     QString state;
     float load;         //
+
+    double batteryVoltage;
+    double batteryCurrent;
+    double batteryCharge;
 
     Layout layout;      // The display layout.
     Style style;        // The AI style (tapes translusent or opague)
@@ -218,13 +242,6 @@ private:
     QFont font;
 
     QTimer* refreshTimer;       ///< The main timer, controls the update rate
-
-    UASInterface* uas;          ///< The uas currently monitored
-
-    //QString energyStatus; ///< Current fuel level / battery voltage
-    double batteryVoltage;
-    double batteryCurrent;
-    double batteryCharge;
 
     static const int tickValues[];
     static const QString compassWindNames[];

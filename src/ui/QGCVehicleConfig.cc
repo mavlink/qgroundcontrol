@@ -39,6 +39,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     systemTypeToParamMap["FIXED_WING"] = new QMap<QString,QGCToolWidget*>();
     systemTypeToParamMap["QUADROTOR"] = new QMap<QString,QGCToolWidget*>();
     systemTypeToParamMap["GROUND_ROVER"] = new QMap<QString,QGCToolWidget*>();
+    systemTypeToParamMap["BOAT"] = new QMap<QString,QGCToolWidget*>();
     libParamToWidgetMap = new QMap<QString,QGCToolWidget*>();
 
     setObjectName("QGC_VEHICLECONFIG");
@@ -786,6 +787,8 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     {
         //Indication that we have no meta data for this system type.
         qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
+        systemTypeToParamMap[mav->getSystemTypeName()] = new QMap<QString,QGCToolWidget*>();
+        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
     }
 
     if (!paramTooltips.isEmpty())
