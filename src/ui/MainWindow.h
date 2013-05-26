@@ -106,8 +106,7 @@ public:
         QGC_MAINWINDOW_STYLE_DARK,
         QGC_MAINWINDOW_STYLE_LIGHT
     };
-	
-    static const QString baseStyle;
+
     static const QString defaultDarkStyle;
     static const QString defaultLightStyle;
 
