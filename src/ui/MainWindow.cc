@@ -71,7 +71,6 @@ This file is part of the QGROUNDCONTROL project
 #include "LogCompressor.h"
 
 // Set up some constants
-const QString MainWindow::baseStyle = ":files/styles/style-base.css";
 const QString MainWindow::defaultDarkStyle = ":files/styles/style-dark.css";
 const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 
@@ -1249,15 +1248,9 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
         // Signal to the user that the app will pause to apply a new stylesheet
         qApp->setOverrideCursor(Qt::WaitCursor);
 
-		// Now fetch the base stylesheet.
-		QFile baseStyleSheet(baseStyle);
-		QString newStyle(baseStyleSheet.readAll());
-		
-		// Then append the desired coloring and apply to QGC.
-		newStyle.append(styleSheet.readAll());
-		qApp->setStyleSheet(newStyle);
+        qApp->setStyleSheet(styleSheet.readAll());
 
-		// And save the new stylesheet path.
+        // And save the new stylesheet path.
         if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
         {
             lightStyleFileName = cssFile;
