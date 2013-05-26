@@ -1,6 +1,5 @@
 /*
 TODO:
-- use Q_ASSERT_X macro in ribbon
 - position setting for ribbons (default is center)
 - numer label in roll indicator
 - ivert angles for horizon

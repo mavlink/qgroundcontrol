@@ -48,7 +48,7 @@ public slots:
 private:
     void updateRibbon(const QSize &size, int gap, int len);
     void updateNumIndicator(const QSize &size, qreal num_w_percent, int fntsize, int len, int gap);
-    bool stepBigGood(int s);
+    void assertBigGood(int s, const char *where);
     /** @brief Process data personally for subclass. For example, convert from rad to deg */
     virtual double processData(void) = 0;
     virtual const QString &getLabelTop(void) = 0;

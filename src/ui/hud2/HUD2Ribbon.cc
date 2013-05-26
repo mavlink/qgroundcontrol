@@ -22,10 +22,8 @@ HUD2Ribbon::HUD2Ribbon(screen_position position, bool wrap360, QString name,
     bigScratchValueStep = settings.value(name + "_BIG_SCRATCH_VALUE_STEP", 10).toInt();
     stepsSmall = settings.value(name + "_STEPS_SMALL", 4).toInt();
     stepsBig = settings.value(name + "_STEPS_BIG", 4).toInt();
+    assertBigGood(stepsBig, "ribbon constructor");
     settings.endGroup();
-
-    if (! stepBigGood(stepsBig))
-        qFatal("Ribbon's stepsBig value must be even AND more than 0");
 
     bigPen = QPen();
     bigPen.setColor(Qt::green);
@@ -469,11 +467,9 @@ void HUD2Ribbon::syncSettings(void)
     settings.endGroup();
 }
 
-bool HUD2Ribbon::stepBigGood(int s){
-    if ((s < 2) || ((s % 2) != 0))
-        return false;
-    else
-        return true;
+void HUD2Ribbon::assertBigGood(int s, const char *where){
+    Q_ASSERT_X((s % 2) == 0, where, "stepBig value must be even");
+    Q_ASSERT_X(s >= 2, where, "stepBig value must be more or equal to 2");
 }
 
 void HUD2Ribbon::setColor(QColor color){
@@ -515,10 +511,7 @@ void HUD2Ribbon::setStepsSmall(int steps){
 
 void HUD2Ribbon::setStepsBig(int steps){
     steps *= 2;
-
-    if (! stepBigGood(steps))
-        qFatal("Ribbon's stepsBig value must be even AND more than 0");
-
+    assertBigGood(steps, "ribbon setStepsBig slot");
     this->stepsBig = steps;
     this->updateGeometry(this->size_cached);
 }
