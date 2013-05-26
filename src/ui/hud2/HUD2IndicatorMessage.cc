@@ -49,7 +49,7 @@ void HUD2IndicatorMessage::updateGeometry(const QSize &size){
 
     qreal fontsize_percent = 2.0; // font size of labels on ribbon
     int fntsize = percent2pix_d(size, fontsize_percent);
-    hud2_clamp(fntsize, 7, 50);
+    fntsize = qBound(7, fntsize, 50);
     labelFont.setPixelSize(fntsize);
 }
 

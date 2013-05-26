@@ -49,7 +49,7 @@ void HUD2IndicatorHorizon::updateGeometry(const QSize &size){
     // wings
     int x1 = size.width() / 2;
     int tmp = percent2pix_h(size, 1);
-    hud2_clamp(tmp, 2, 10);
+    tmp = qBound(2, tmp, 10);
     pen.setWidth(tmp);
     hirizonleft.setLine(-x1, 0, -a, 0);
     horizonright.setLine(a, 0, x1, 0);

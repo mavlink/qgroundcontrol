@@ -63,7 +63,7 @@ void HUD2Ribbon::updateNumIndicator(const QSize &size, qreal num_w_percent,
 
     int w, h;
     w = percent2pix_d(size, num_w_percent);
-    hud2_clamp(w, 25, 500);
+    w = qBound(25, w, 500);
     if (fntsize > 12)
         h = fntsize + 8;
     else
@@ -246,11 +246,11 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
 
     int gap = percent2pix_w(size, gap_percent);
     int len = percent2pix_w(size, len_percent);
-    hud2_clamp(len, 4, 20);
+    len = qBound(4, len, 20);
 
     // font size for labels
     int fntsize = percent2pix_d(size, fontsize_percent);
-    hud2_clamp(fntsize, 7, 50);
+    fntsize = qBound(7, fntsize, 50);
     labelFont.setPixelSize(fntsize);
 
     // generate scratches and rectangles for ribbon
@@ -308,7 +308,7 @@ void HUD2Ribbon::updateGeometry(const QSize &size){
 
 // helper
 static QString num_str_val(qreal value, int decimals){
-    hud2_clamp(decimals, 0, 4);
+    decimals = qBound(0, decimals, 4);
     if (decimals == 0)
         return QString::number((int)round(value));
     else
