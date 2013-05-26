@@ -38,26 +38,29 @@ const QString PrimaryFlightDisplay::compassWindNames[] = {
 PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *parent) :
     QWidget(parent),
 
-    roll(0),
-    pitch(0),
+    uas(NULL),
+
+    roll(UNKNOWN_ATTITUDE),
+    pitch(UNKNOWN_ATTITUDE),
     //    heading(NAN),
-    heading(0),
-    aboveASLAltitude(0),
-    GPSAltitude(0),
-    aboveHomeAltitude(0),
-    groundSpeed(0),
-    airSpeed(0),
+    heading(UNKNOWN_ATTITUDE),
+    aboveASLAltitude(UNKNOWN_ALTITUDE),
+    GPSAltitude(UNKNOWN_ALTITUDE),
+    aboveHomeAltitude(UNKNOWN_ALTITUDE),
+    groundspeed(UNKNOWN_SPEED),
+    airspeed(UNKNOWN_SPEED),
+    verticalVelocity(UNKNOWN_SPEED),
 
-    mode(""),
-    state(""),
-
+    uavIsArmed(false),      // TODO: This is an assumption. We have no idea!
+    mode("-"),
+    state("-"),
     load(0),
 
     font("Bitstream Vera Sans"),
     refreshTimer(new QTimer(this)),
-    uas(NULL),
 
     batteryVoltage(UNKNOWN_BATTERY),
+    batteryCurrent(UNKNOWN_BATTERY),
     batteryCharge(UNKNOWN_BATTERY),
 
     layout(FEATUREPANELS_IN_CORNERS),
@@ -146,7 +149,7 @@ void PrimaryFlightDisplay::resizeEvent(QResizeEvent *e) {
         layout = FEATUREPANELS_AT_BOTTOM;
     else
         layout = FEATUREPANELS_IN_CORNERS;
-    qDebug("Width %d height %d decision %d", e->size().width(), e->size().height(), layout);
+    // qDebug("Width %d height %d decision %d", e->size().width(), e->size().height(), layout);
 }
 
 void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
@@ -172,6 +175,7 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+
         disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
@@ -188,10 +192,12 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+
         connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        connect(uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
 
         //connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
@@ -218,7 +224,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
     }
     // TODO: Else-part. We really should have an "attitude bad or unknown" indication instead of just freezing.
 
-    qDebug("r,p,y: %f,%f,%f", roll, pitch, yaw);
+    //qDebug("r,p,y: %f,%f,%f", roll, pitch, yaw);
 }
 
 /*
@@ -238,7 +244,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, int component, doub
         if (yaw<0) yaw+=360;
         this->heading = yaw;
     }
-    qDebug("(2) r,p,y: %f,%f,%f", roll, pitch, yaw);
+    // qDebug("(2) r,p,y: %f,%f,%f", roll, pitch, yaw);
 
 }
 
@@ -246,16 +252,7 @@ void PrimaryFlightDisplay::updateBattery(UASInterface* uas, double voltage, doub
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
-    /*
-    energyStatus = tr("BAT [%1V | %2V%]").arg(voltage, 4, 'f', 1, QChar('0')).arg(percent, 2, 'f', 0, QChar('0'));
-    if (percent < 20.0f) {
-        fuelColor = warningColor;
-    } else if (percent < 10.0f) {
-        fuelColor = criticalColor;
-    } else {
-        fuelColor = infoColor;
-    }
-    */
+
     batteryVoltage = voltage;
     batteryCurrent = current;
     batteryCharge = percent;
@@ -314,8 +311,8 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas,double x,double y,doubl
     // totalAcc = (newTotalSpeed - totalSpeed) / ((double)(lastSpeedUpdate - timestamp)/1000.0);
 
     // TODO: Change to real data.
-    groundSpeed = newTotalSpeed;
-    airSpeed = x;
+    groundspeed = newTotalSpeed;
+    airspeed = x;
     verticalVelocity = z;
 }
 
@@ -487,7 +484,7 @@ void PrimaryFlightDisplay::drawAIGlobalFeatures(
     painter.resetTransform();
     painter.translate(area.center());
 
-    painter.rotate(roll);
+    painter.rotate(-roll);
     painter.translate(0, pitchAngleToTranslation(area.height(), pitch));
 
     qreal w = area.width();
@@ -553,7 +550,18 @@ void PrimaryFlightDisplay::drawPitchScale(
     int _max = snap+PITCH_SCALE_HALFRANGE;
     for (int degrees=_min; degrees<=_max; degrees+=PITCH_SCALE_RESOLUTION) {
         bool isMajor = degrees % (PITCH_SCALE_RESOLUTION*2) == 0;
-        float linewidth =  isMajor ? PITCH_SCALE_MAJORLENGTH : PITCH_SCALE_MINORLENGTH;
+        float linewidth =  isMajor ? PITCH_SCALE_MAJORWIDTH : PITCH_SCALE_MINORWIDTH;
+        if (abs(degrees) > PITCH_SCALE_WIDTHREDUCTION_FROM) {
+            // we want: 1 at PITCH_SCALE_WIDTHREDUCTION_FROM and PITCH_SCALE_WIDTHREDUCTION at 90.
+            // That is PITCH_SCALE_WIDTHREDUCTION + (1-PITCH_SCALE_WIDTHREDUCTION) * f(pitch)
+            // where f(90)=0 and f(PITCH_SCALE_WIDTHREDUCTION_FROM)=1
+            // f(p) = (90-p) * 1/(90-PITCH_SCALE_WIDTHREDUCTION_FROM)
+            // or PITCH_SCALE_WIDTHREDUCTION + f(pitch) - f(pitch) * PITCH_SCALE_WIDTHREDUCTION
+            // or PITCH_SCALE_WIDTHREDUCTION (1-f(pitch)) + f(pitch)
+            int fromVertical = abs(pitch>=0 ? 90-pitch : -90-pitch);
+            float temp = fromVertical * 1/(90.0f-PITCH_SCALE_WIDTHREDUCTION_FROM);
+            linewidth *= (PITCH_SCALE_WIDTHREDUCTION * (1-temp) + temp);
+        }
         float shift = pitchAngleToTranslation(h, pitch-degrees);
         painter.translate(0, shift);
         QPointF start(-linewidth*h, 0);
@@ -567,8 +575,8 @@ void PrimaryFlightDisplay::drawPitchScale(
             if (SHOW_ZERO_ON_SCALES || degrees) {
                 QString s_number; //= QString("%d").arg(degrees);
                 s_number.sprintf("%d", displayDegrees);
-                if (drawNumbersLeft)  drawTextRightCenter(painter, s_number, mediumTextSize, -PITCH_SCALE_MAJORLENGTH * h-10, 0);
-                if (drawNumbersRight) drawTextLeftCenter(painter, s_number, mediumTextSize, PITCH_SCALE_MAJORLENGTH * h+10, 0);
+                if (drawNumbersLeft)  drawTextRightCenter(painter, s_number, mediumTextSize, -PITCH_SCALE_MAJORWIDTH * h-10, 0);
+                if (drawNumbersRight) drawTextLeftCenter(painter, s_number, mediumTextSize, PITCH_SCALE_MAJORWIDTH * h+10, 0);
             }
         }
 
@@ -633,7 +641,7 @@ void PrimaryFlightDisplay::drawAIAttitudeScales(
     // To save computations, we do these transformations once for both scales:
     painter.resetTransform();
     painter.translate(area.center());
-    painter.rotate(roll);
+    painter.rotate(-roll);
     QTransform saved = painter.transform();
 
     drawRollScale(painter, area, true, true);
@@ -843,7 +851,7 @@ void PrimaryFlightDisplay::drawAltimeter(
         float altitude,
         float maxAltitude,
         float vv
-        ) {
+    ) {
 
     Q_UNUSED(vv)
     Q_UNUSED(maxAltitude)
@@ -925,14 +933,98 @@ void PrimaryFlightDisplay::drawAltimeter(
     drawTextCenter(painter, s_alt, /* TAPES_TEXT_SIZE*width()*/ mediumTextSize, xCenter, 0);
 }
 
+void PrimaryFlightDisplay::drawVelocityMeter(
+        QPainter& painter,
+        QRectF area
+        ) {
+
+    painter.resetTransform();
+
+    QPen pen;
+    pen.setWidthF(lineWidth);
+    pen.setColor(Qt::white);
+    painter.setPen(pen);
+
+    float h = area.height();
+    float w = area.width();
+    float effectiveHalfHeight = h*0.45;
+    float tickmarkLeft = 0.6*w;
+    float tickmarkRight = 0.7*w;
+    float numbersLeft = 0.42*w;
+    float markerHalfHeight = 0.06*h;
+    float rightEdge = w-instrumentEdgePen.widthF()*2;
+    float markerTip = (tickmarkLeft*2+tickmarkRight)/3;
+
+    float start = airspeed - AIRSPEED_LINEAR_SPAN/2;
+    float end = airspeed + AIRSPEED_LINEAR_SPAN/2;
+    int firstTick = ceil(start / AIRSPEED_LINEAR_RESOLUTION) * AIRSPEED_LINEAR_RESOLUTION;
+    int lastTick = floor(end / AIRSPEED_LINEAR_RESOLUTION) * AIRSPEED_LINEAR_RESOLUTION;
+    for (int tickSpeed = firstTick; tickSpeed <= lastTick; tickSpeed += AIRSPEED_LINEAR_RESOLUTION) {
+        float y = (tickSpeed-airspeed)*effectiveHalfHeight/(AIRSPEED_LINEAR_SPAN/2);
+        bool hasText = tickSpeed % AIRSPEED_LINEAR_MAJOR_RESOLUTION == 0;
+        painter.resetTransform();
+        painter.translate(area.left(), area.center().y() - y);
+        painter.drawLine(tickmarkLeft, 0, tickmarkRight, 0);
+        if (hasText) {
+            QString s_speed;
+            s_speed.sprintf("%d", tickSpeed);
+            drawTextLeftCenter(painter, s_speed, mediumTextSize, numbersLeft, 0);
+        }
+    }
+
+    QPainterPath markerPath(QPoint(markerTip, 0));
+    markerPath.lineTo(markerTip+markerHalfHeight, markerHalfHeight);
+    markerPath.lineTo(rightEdge, markerHalfHeight);
+    markerPath.lineTo(rightEdge, -markerHalfHeight);
+    markerPath.lineTo(markerTip+markerHalfHeight, -markerHalfHeight);
+    markerPath.closeSubpath();
+
+    painter.resetTransform();
+    painter.translate(area.left(), area.center().y());
+
+    pen.setWidthF(lineWidth);
+    pen.setColor(Qt::white);
+    painter.setPen(pen);
+
+    painter.setBrush(Qt::SolidPattern);
+    painter.drawPath(markerPath);
+    painter.setBrush(Qt::NoBrush);
+
+    pen.setColor(Qt::white);
+    painter.setPen(pen);
+    QString s_alt;
+    s_alt.sprintf("%3.0f", airspeed);
+    float xCenter = (markerTip+rightEdge)/2;
+    drawTextCenter(painter, s_alt, /* TAPES_TEXT_SIZE*width()*/ mediumTextSize, xCenter, 0);
+}
+
 void PrimaryFlightDisplay::drawSysStatsPanel (
         QPainter& painter,
         QRectF area) {
     // Timer
     // Battery
     // Armed/not
-    QString s_volts("12.4V 21A");
-    QString s_arm("Armed");
+
+    /*
+    energyStatus = tr("BAT [%1V | %2V%]").arg(voltage, 4, 'f', 1, QChar('0')).arg(percent, 2, 'f', 0, QChar('0'));
+    if (percent < 20.0f) {
+        fuelColor = warningColor;
+    } else if (percent < 10.0f) {
+        fuelColor = criticalColor;
+    } else {
+        fuelColor = infoColor;
+    }
+    */
+
+    QString voltageStatus = batteryVoltage == UNKNOWN_BATTERY ? "-V" :
+            tr("%1V").arg(batteryVoltage, 4, 'f', 1, QChar('0'));
+    QString chargeStatus = batteryCharge == UNKNOWN_BATTERY ? "-%" :
+            tr("%2%").arg(batteryCharge, 2, 'f', 0, QChar('0'));
+    // We ignore current right now.
+
+    QString batteryStatus = voltageStatus.append(" ").append(chargeStatus);
+
+    QString s_arm = uavIsArmed ? "Armed" : "Disarmed";
 
     painter.resetTransform();
 
@@ -946,7 +1038,7 @@ void PrimaryFlightDisplay::drawSysStatsPanel (
     pen.setColor(amberColor);
     painter.setPen(pen);
 
-    drawTextCenter(painter, s_volts, mediumTextSize, 0, -area.height()/6);
+    drawTextCenter(painter, batteryStatus, mediumTextSize, 0, -area.height()/6);
     pen.setColor(redColor);
     drawTextCenter(painter, s_arm, mediumTextSize, 0, area.height()/6);
 }

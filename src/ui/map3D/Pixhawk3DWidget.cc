@@ -834,7 +834,7 @@ Pixhawk3DWidget::moveWaypointPosition(void)
         return;
     }
 
-    const QVector<Waypoint *> waypoints =
+    const QList<Waypoint *> waypoints =
         mActiveUAS->getWaypointManager()->getWaypointEditableList();
     Waypoint* waypoint = waypoints.at(mSelectedWpIndex);
 
@@ -882,7 +882,7 @@ Pixhawk3DWidget::moveWaypointHeading(void)
         return;
     }
 
-    const QVector<Waypoint *> waypoints =
+    const QList<Waypoint *> waypoints =
         mActiveUAS->getWaypointManager()->getWaypointEditableList();
     Waypoint* waypoint = waypoints.at(mSelectedWpIndex);
 
@@ -929,7 +929,7 @@ Pixhawk3DWidget::setWaypointAltitude(void)
     }
 
     bool ok;
-    const QVector<Waypoint *> waypoints =
+    const QList<Waypoint *> waypoints =
         mActiveUAS->getWaypointManager()->getWaypointEditableList();
     Waypoint* waypoint = waypoints.at(mSelectedWpIndex);
 
@@ -960,7 +960,7 @@ Pixhawk3DWidget::clearAllWaypoints(void)
 {
     if (mActiveUAS)
     {
-        const QVector<Waypoint *> waypoints =
+        const QList<Waypoint *> waypoints =
             mActiveUAS->getWaypointManager()->getWaypointEditableList();
         for (int i = waypoints.size() - 1; i >= 0; --i)
         {

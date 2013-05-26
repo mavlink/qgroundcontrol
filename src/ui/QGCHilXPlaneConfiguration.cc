@@ -32,11 +32,18 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
         ui->sensorHilCheckBox->setChecked(link->sensorHilEnabled());
         connect(link, SIGNAL(sensorHilChanged(bool)), ui->sensorHilCheckBox, SLOT(setChecked(bool)));
         connect(ui->sensorHilCheckBox, SIGNAL(clicked(bool)), link, SLOT(enableSensorHIL(bool)));
+
+        connect(link, SIGNAL(versionChanged(int)), this, SLOT(setVersion(int)));
     }
 
     ui->hostComboBox->clear();
     ui->hostComboBox->addItem(link->getRemoteHost());
 
+
+}
+
+void QGCHilXPlaneConfiguration::setVersion(int version)
+{
 
 }
 
