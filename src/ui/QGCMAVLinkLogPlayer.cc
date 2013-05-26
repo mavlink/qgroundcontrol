@@ -3,6 +3,7 @@
 #include <QDesktopServices>
 
 #include "MainWindow.h"
+#include "SerialLink.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGC.h"
 #include "ui_QGCMAVLinkLogPlayer.h"
@@ -360,6 +361,22 @@ bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 
         // Reset current state
         reset(0);
+
+        // Check if a serial link is connected
+
+        bool linkWarning = false;
+        foreach (LinkInterface* link, LinkManager::instance()->getLinks())
+        {
+            SerialLink* s = dynamic_cast<SerialLink*>(link);
+
+            if (s && s->isConnected())
+                linkWarning = true;
+        }
+
+        if (linkWarning)
+            MainWindow::instance()->showInfoMessage(tr("Active MAVLink links found"), tr("Currently other links are connected. It is recommended to disconnect any active link before replaying a log."));
+
+        play();
 
         return true;
     }

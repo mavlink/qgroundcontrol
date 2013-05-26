@@ -21,6 +21,7 @@ public:
 public slots:
     /** @brief Receive status message */
     void receiveStatusMessage(const QString& message);
+    void setVersion(QString version);
 
 protected:
     UAS* mav;

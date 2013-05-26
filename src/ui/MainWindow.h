@@ -233,7 +233,7 @@ public slots:
     void closeEvent(QCloseEvent* event);
 
     /** @brief Load data view, allowing to plot flight data */
-    void loadDataView(QString fileName);
+//    void loadDataView(QString fileName);
 
     /**
      * @brief Shows a Docked Widget based on the action sender
@@ -354,7 +354,7 @@ protected:
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
     QPointer<SubMainWindow> configView;
-    QPointer<SubMainWindow> dataView;
+    QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
 

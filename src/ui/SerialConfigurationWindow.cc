@@ -218,6 +218,9 @@ void SerialConfigurationWindow::setupPortList()
     // Get the ports available on this system
     QVector<QString>* ports = link->getCurrentPorts();
 
+    QString storedName = this->link->getPortName();
+    bool storedFound = false;
+
     // Add the ports in reverse order, because we prepend them to the list
     for (int i = ports->size() - 1; i >= 0; --i)
     {
@@ -227,9 +230,14 @@ void SerialConfigurationWindow::setupPortList()
             ui.portName->insertItem(0, ports->at(i));
             if (!userConfigured) ui.portName->setEditText(ports->at(i));
         }
+
+        // Check if the stored link name is still present
+        if (ports->at(i).contains(storedName) || storedName.contains(ports->at(i)))
+            storedFound = true;
     }
 
-    ui.portName->setEditText(this->link->getPortName());
+    if (storedFound)
+        ui.portName->setEditText(storedName);
 }
 
 void SerialConfigurationWindow::enableFlowControl(bool flow)
