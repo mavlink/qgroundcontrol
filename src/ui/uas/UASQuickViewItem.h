@@ -13,10 +13,12 @@ public:
 private:
     QLabel *titleLabel;
     QLabel *valueLabel;
+protected:
+    virtual void paintEvent(QPaintEvent *);
 signals:
-    
+
 public slots:
-    
+
 };
 
 #endif // UASQUICKVIEWITEM_H

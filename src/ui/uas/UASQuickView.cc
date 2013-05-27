@@ -1,9 +1,12 @@
 #include "UASQuickView.h"
 #include <QMetaMethod>
 #include <QDebug>
-UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
+UASQuickView::UASQuickView(QWidget *parent) :
+    QWidget(parent),
+    m_ui(new Ui::UASQuickView)
 {
-    ui.setupUi(this);
+    m_ui->setupUi(this);
+
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
     connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
     if (UASManager::instance()->getActiveUAS())
@@ -21,7 +24,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
         item->setTitle("latitude");
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap["latitude"] = item;
     }
 
@@ -33,7 +36,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
         item->setTitle("longitude");
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap["longitude"] = item;
     }
 
@@ -45,7 +48,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
         item->setTitle("altitude");
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap["altitude"] = item;
     }
 
@@ -57,7 +60,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
         item->setTitle("satelliteCount");
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap["satelliteCount"] = item;
     }
 
@@ -69,7 +72,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
         item->setTitle("distToWaypoint");
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap["distToWaypoint"] = item;
     }
 
@@ -146,12 +149,12 @@ void UASQuickView::actionTriggered(bool checked)
     {
         UASQuickViewItem *item = new UASQuickViewItem(this);
         item->setTitle(senderlabel->text());
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap[senderlabel->text()] = item;
     }
     else
     {
-        ui.verticalLayout->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
+        this->layout()->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
         uasPropertyToLabelMap[senderlabel->text()]->deleteLater();
         uasPropertyToLabelMap.remove(senderlabel->text());
 

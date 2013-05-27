@@ -1,26 +1,50 @@
 #include "UASQuickViewItem.h"
 #include <QVBoxLayout>
+#include <QStyleOption>
+#include <QPainter>
+#include <QSizePolicy>
 
-UASQuickViewItem::UASQuickViewItem(QWidget *parent) : QWidget(parent)
+UASQuickViewItem::UASQuickViewItem(QWidget *parent) :
+    QWidget(parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout();
-    this->setLayout(layout);
+    QVBoxLayout* layout = new QVBoxLayout();
+    layout->setMargin(0);
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
+
     titleLabel = new QLabel(this);
     titleLabel->setAlignment(Qt::AlignHCenter);
-    this->layout()->addWidget(titleLabel);
+    titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
+    titleLabel->setObjectName(QString::fromUtf8("title"));
+    layout->addWidget(titleLabel);
+
     valueLabel = new QLabel(this);
     valueLabel->setAlignment(Qt::AlignHCenter);
-    valueLabel->setText("<h1>0.00</h1>");
-    this->layout()->addWidget(valueLabel);
-    layout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    valueLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
+    valueLabel->setObjectName(QString::fromUtf8("value"));
+    valueLabel->setText("0.00");
+    layout->addWidget(valueLabel);
+
+    layout->addSpacerItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    this->setLayout(layout);
 }
 
 void UASQuickViewItem::setValue(double value)
 {
-    valueLabel->setText("<h1>" + QString::number(value,'f',4) + "</h1>");
+    valueLabel->setText(QString::number(value,'f',4));
 }
 
 void UASQuickViewItem::setTitle(QString title)
 {
     titleLabel->setText(title);
 }
+
+/**
+ * Implement paintEvent() so that stylesheets work for our custom widget.
+ */
+void UASQuickViewItem::paintEvent(QPaintEvent *)
+ {
+     QStyleOption opt;
+     opt.init(this);
+     QPainter p(this);
+     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+ }
