@@ -113,6 +113,18 @@ public:
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
     Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
     Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
+    Q_PROPERTY(double groundSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY groundSpeedChanged)
+
+    void setGroundSpeed(double val)
+    {
+        groundSpeed = val;
+        emit groundSpeedChanged(val,"groundSpeed");
+        emit valueChanged(this->uasId,"groundSpeed","m/s",QVariant(val),getUnixTime());
+    }
+    double getGroundSpeed() const
+    {
+        return groundSpeed;
+    }
 
     void setLocalX(double val)
     {
@@ -391,6 +403,7 @@ protected: //COMMENTS FOR TEST UNIT
     double speedY;              ///< True speed in Y axis
     double speedZ;              ///< True speed in Z axis
     double distToWaypoint;       ///< Distance to next waypoint
+    double groundSpeed;         ///< GPS Groundspeed
     double roll;
     double pitch;
     double yaw;
@@ -816,6 +829,7 @@ signals:
     void yawChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
     void distToWaypointChanged(double val,QString name);
+    void groundSpeedChanged(double val, QString name);
 
 
 
