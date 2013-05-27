@@ -392,12 +392,12 @@ QToolTip {
     color: #DDD;
 }
 
-WaypointEditableView {
+WaypointEditableView, WaypointViewOnlyView {
     border: 1px solid #777;
     border-radius: 5px;
     margin-bottom: 3px;
 }
 
-WaypointEditableView QCheckBox, WaypointEditableView .QWidget {
+WaypointEditableView QCheckBox, WaypointEditableView .QWidget, WaypointViewOnlyView QCheckBox, WaypointViewOnlyView .QWidget {
     background: none;
 }
