@@ -254,12 +254,15 @@ QPushButton:pressed, QToolButton:pressed {
 QPushButton:pressed#killButton {
     font-weight: bold;
     min-height: 30px;
-    color: #000000;
+    color: #000;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #bb8500, stop:1 #903000);
     background-clip: border;
-    border-width: 1px;
-    border-color: #555555;
+    border: 1px solid #555;
     border-radius: 5px;
+}
+
+QScrollBar {
+    border: 1px solid #333;
 }
 
 QSeparator {
@@ -391,4 +394,14 @@ QToolTip {
     margin: 3px;
     border-radius: 3px;
     color: #000;
+}
+
+WaypointEditableView {
+    border: 1px solid #333;
+    border-radius: 5px;
+    margin-bottom: 3px;
+}
+
+WaypointEditableView QCheckBox, WaypointEditableView .QWidget {
+    background: none;
 }
