@@ -652,6 +652,9 @@ void WaypointEditableView::changeEvent(QEvent *e)
     }
 }
 
+/**
+ * Implement paintEvent() so that stylesheets work for our custom widget.
+ */
 void WaypointEditableView::paintEvent(QPaintEvent *)
  {
      QStyleOption opt;
