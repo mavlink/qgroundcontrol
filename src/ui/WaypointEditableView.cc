@@ -20,7 +20,7 @@
 #include "WaypointEditableView.h"
 #include "ui_WaypointEditableView.h"
 
-
+#include "MainWindow.h"
 #include "mission/QGCMissionNavWaypoint.h"
 #include "mission/QGCMissionNavLoiterUnlim.h"
 #include "mission/QGCMissionNavLoiterTurns.h"
@@ -488,41 +488,41 @@ void WaypointEditableView::updateValues()
     {
         m_ui->autoContinue->setChecked(wp->getAutoContinue());
     }
-    m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
 
+    m_ui->idLabel->setText(QString::number(wp->getId()));
 
-
-    QColor backGroundColor = QGC::colorBackground;
-
+    // Style alternating rows of Missions as lighter/darker.
+    QString backGroundColor;
     static int lastId = -1;
     int currId = wp->getId() % 2;
-
     if (currId != lastId)
     {
-
-        // qDebug() << "COLOR ID: " << currId;
         if (currId == 1)
         {
-            //backGroundColor = backGroundColor.lighter(150);
-            backGroundColor = QColor("#252528").lighter(150);
+            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+            {
+                backGroundColor = "#999";
+            }
+            else
+            {
+                backGroundColor = "#333";
+            }
         }
         else
         {
-            backGroundColor = QColor("#252528").lighter(250);
+            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+            {
+                backGroundColor = "#CCC";
+            }
+            else
+            {
+                backGroundColor = "#555";
+            }
         }
-        // qDebug() << "COLOR:" << backGroundColor.name();
 
-        // Update color based on id
-        QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; }").arg(backGroundColor.name());
-        QString labelStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; }").arg(backGroundColor.name());
-        QString checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; }").arg(backGroundColor.name());
-        QString widgetSlotStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; } QSpinBox {background-color: #252528 } QDoubleSpinBox {background-color: #252528 } QComboBox {background-color: #252528 }").arg(backGroundColor.name()); //FIXME There should be a way to declare background color for widgetSlot without letting the children inherit this color. Here, background color for every widget-type (QSpinBox, etc.) has to be declared separately to overrule the coloring of QWidget.
+        QString newStyle = QString("WaypointEditableView {background-color: %1}").arg(backGroundColor);
 
-        m_ui->autoContinue->setStyleSheet(checkBoxStyle);
-        m_ui->selectedBox->setStyleSheet(checkBoxStyle);
-        m_ui->idLabel->setStyleSheet(labelStyle);
-        m_ui->groupBox->setStyleSheet(groupBoxStyle);
-        m_ui->customActionWidget->setStyleSheet(widgetSlotStyle);
+        this->setStyleSheet(newStyle);
         lastId = currId;
     }
 
@@ -651,3 +651,11 @@ void WaypointEditableView::changeEvent(QEvent *e)
         break;
     }
 }
+
+void WaypointEditableView::paintEvent(QPaintEvent *)
+ {
+     QStyleOption opt;
+     opt.init(this);
+     QPainter p(this);
+     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+ }

@@ -254,11 +254,10 @@ QPushButton:pressed, QToolButton:pressed {
 QPushButton:pressed#killButton {
     font-weight: bold;
     min-height: 30px;
-    color: #000000;
+    color: #000;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #bb8500, stop:1 #903000);
     background-clip: border;
-    border-width: 1px;
-    border-color: #555555;
+    border: 1px solid #555;
     border-radius: 5px;
 }
 
@@ -271,7 +270,7 @@ QSlider {
 }
 
 QSlider::groove:horizontal {
-    border: 1px solid #999999;
+    border: 1px solid #999;
     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     background-color: #4A4A4A;
     margin: 2px 0;
@@ -284,7 +283,7 @@ QSlider::groove:horizontal:disabled {
 }
  
 QSlider::groove:vertical {
-    border: 1px solid #999999;
+    border: 1px solid #999;
     width: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     background-color: #4A4A4A;
     margin: 2px 0;
@@ -300,7 +299,7 @@ QSlider::handle:horizontal {
 
 QSlider::handle:horizontal:disabled {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #535258, stop: 1 #050508);
-    border: 2px solid #444444;
+    border: 2px solid #444;
     width: 18px;
     margin: -5px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
     border-radius: 3px;
@@ -321,7 +320,7 @@ QSizeGrip {
 QSpinBox, QDoubleSpinBox {
     min-height: 14px;
     max-height: 18px;
-    border: 1px solid #4A4A4A;
+    border: 1px solid #777;
     border-radius: 5px;
 }
 
@@ -360,7 +359,7 @@ QTabBar::tab:hover {
 
 QTabBar::tab:selected {
     border: 2px solid #379AC3;
-    background: #CCC;
+    background: #555;
 }
 
 QTabWidget::tab-bar {
@@ -391,4 +390,14 @@ QToolTip {
     margin: 3px;
     border-radius: 3px;
     color: #DDD;
+}
+
+WaypointEditableView {
+    border: 1px solid #777;
+    border-radius: 5px;
+    margin-bottom: 3px;
+}
+
+WaypointEditableView QCheckBox, WaypointEditableView .QWidget {
+    background: none;
 }
