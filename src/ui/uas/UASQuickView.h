@@ -19,10 +19,9 @@ private:
     QMap<QString,double> uasPropertyValueMap;
     QMap<QString,UASQuickViewItem*> uasPropertyToLabelMap;
     QTimer *updateTimer;
-protected:
-    Ui::Form ui;
+    Ui::UASQuickView* m_ui;
 signals:
-    
+
 public slots:
     void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs);
     void actionTriggered(bool checked);

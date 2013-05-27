@@ -396,6 +396,17 @@ QToolTip {
     color: #000;
 }
 
+UASQuickViewItem QLabel {
+    padding: 0;
+    margin: 0;
+    min-height: 1em;
+    font-weight: bold;
+}
+
+UASQuickViewItem QLabel#value {
+    font-size: 20pt;
+}
+
 WaypointEditableView, WaypointViewOnlyView {
     border: 1px solid #333;
     border-radius: 5px;
