@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCToolBar</class>
+ <widget class="QWidget" name="QGCToolBar">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>640</width>
+    <height>66</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="QLabel" name="symbolLabel">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="pixmap">
+      <pixmap resource="../../qgroundcontrol.qrc">:/files/images/mavs/unknown.svg</pixmap>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarNameLabel">
+     <property name="toolTip">
+      <string>Currently controlled vehicle</string>
+     </property>
+     <property name="text">
+      <string>------</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarSafetyLabel">
+     <property name="toolTip">
+      <string>Vehicle safety state</string>
+     </property>
+     <property name="text">
+      <string>SAFE</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarTimeoutLabel">
+     <property name="toolTip">
+      <string>System timed out, interval since last message</string>
+     </property>
+     <property name="text">
+      <string>UNCONNECTED</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarModeLabel">
+     <property name="toolTip">
+      <string>Vehicle mode</string>
+     </property>
+     <property name="text">
+      <string>------</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarStateLabel">
+     <property name="toolTip">
+      <string>Vehicle state</string>
+     </property>
+     <property name="text">
+      <string>------</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="toolBarBatteryBar">
+     <property name="toolTip">
+      <string>Battery charge level</string>
+     </property>
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarBatteryVoltageLabel">
+     <property name="toolTip">
+      <string>Battery voltage</string>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="text">
+      <string>xx.x V</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarStateLabel_2">
+     <property name="toolTip">
+      <string>Most recent system message</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarWpLabel">
+     <property name="toolTip">
+      <string>Current waypoint</string>
+     </property>
+     <property name="text">
+      <string>WP--</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarDistLabel">
+     <property name="toolTip">
+      <string>Distance to current waypoint</string>
+     </property>
+     <property name="text">
+      <string>-- ---- m</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="toolBarMessageLabel">
+     <property name="toolTip">
+      <string>Most recent system message</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::MinimumExpanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>24</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QPushButton" name="connectButton">
+     <property name="toolTip">
+      <string>Connect wireless link to MAV</string>
+     </property>
+     <property name="text">
+      <string>Connect</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../qgroundcontrol.qrc"/>
+ </resources>
+ <connections/>
+</ui>

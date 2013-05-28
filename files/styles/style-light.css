@@ -265,6 +265,22 @@ QPushButton:pressed#killButton {
     border-radius: 5px;
 }
 
+QPushButton#connectButton {
+    min-height: 20px;
+    color: #222222; 
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5AAA49, stop: 1 #106B38); 
+    margin-left: 4px;
+    margin-right: 4px;
+    border-radius: 4px;
+    border: 1px solid #085B35;
+}
+
+QPushButton:checked#connectButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #FFD450);
+    color: #222222;
+    border-color: #D1892A;
+}
+
 QScrollBar {
     border: 1px solid #333;
 }
