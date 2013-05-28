@@ -131,7 +131,7 @@ QLineEdit {
 }
 
 QMainWindow::separator {
-    background-color: #090909;
+    background-color: #CCC;
     width: 2px; /* when vertical */
     height: 2px; /* when horizontal */
 }
@@ -145,7 +145,7 @@ QMenu {
 }
 
 QMenu::item:selected {
-    background-color: #CCC;
+    background-color: #000;
 }
 
 QMenu::separator {
