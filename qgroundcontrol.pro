@@ -226,7 +226,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
     src/ui/designer/QGCComboBox.ui \
     src/ui/designer/QGCTextLabel.ui \
-    src/ui/uas/UASQuickView.ui
+    src/ui/uas/UASQuickView.ui \
+    src/ui/QGCToolBar.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \

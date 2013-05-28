@@ -25,6 +25,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QLabel>
 #include <QSpacerItem>
 #include "QGCToolBar.h"
+#include "ui_QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
 
@@ -39,9 +40,9 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     wpDistance(0),
     systemArmed(false),
     currentLink(NULL),
-    firstAction(NULL)
+    firstAction(NULL),
+    m_ui(new Ui::QGCToolBar)
 {
-    setObjectName("QGC_TOOLBAR");
 
     // Do not load UI, wait for actions
 }
@@ -85,83 +86,7 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
 
 void QGCToolBar::createUI()
 {
-    // CREATE TOOLBAR ITEMS
-    // Add internal actions
-    // Add MAV widget
-    symbolButton = new QToolButton(this);
-    symbolButton->setStyleSheet("QWidget { margin-left: 10px; background-color: #050508; color: #DDDDDF; background-clip: border; }");
-    addWidget(symbolButton);
-
-    toolBarNameLabel = new QLabel("------", this);
-    toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
-    toolBarNameLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarNameLabel);
-
-    toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
-    toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
-    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
-    toolBarTimeoutLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarTimeoutLabel);
-
-    toolBarSafetyLabel = new QLabel("SAFE", this);
-    toolBarSafetyLabel->setStyleSheet("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: #14C814; }");
-    toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
-    toolBarSafetyLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarSafetyLabel);
-
-    toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }");
-    toolBarModeLabel->setToolTip(tr("Vehicle mode"));
-    toolBarModeLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarModeLabel);
-
-    toolBarStateLabel = new QLabel("------", this);
-    toolBarStateLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #FEC654; }");
-    toolBarStateLabel->setToolTip(tr("Vehicle state"));
-    toolBarStateLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarStateLabel);
-
-    toolBarBatteryBar = new QProgressBar(this);
-    toolBarBatteryBar->setMinimum(0);
-    toolBarBatteryBar->setMaximum(100);
-    toolBarBatteryBar->setMinimumWidth(20);
-    toolBarBatteryBar->setMaximumWidth(100);
-    toolBarBatteryBar->setValue(0);
-    toolBarBatteryBar->setToolTip(tr("Battery charge level"));
-    addWidget(toolBarBatteryBar);
-
-    toolBarBatteryVoltageLabel = new QLabel("xx.x V");
-    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
-    toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
-    toolBarBatteryVoltageLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarBatteryVoltageLabel);
-
-    toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 18px; color: #ACEBFE; }");
-    toolBarWpLabel->setToolTip(tr("Current waypoint"));
-    toolBarWpLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarWpLabel);
-
-    toolBarDistLabel = new QLabel("--- ---- m", this);
-    toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
-    toolBarDistLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarDistLabel);
-
-    toolBarMessageLabel = new QLabel("", this);
-    toolBarMessageLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }");
-    toolBarMessageLabel->setToolTip(tr("Most recent system message"));
-    addWidget(toolBarMessageLabel);
-
-    QWidget* spacer = new QWidget();
-    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    spacer->setStyleSheet("* { margin: 0px; background-color: transparent; min-height: 24px}");
-    addWidget(spacer);
-
-    connectButton = new QPushButton(tr("Connect"), this);
-    connectButton->setToolTip(tr("Connect wireless link to MAV"));
-    connectButton->setCheckable(true);
-    connectButton->setStyleSheet("QPushButton {min-height: 20px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5AAA49, stop: 1 #106B38);  margin-left: 4px; margin-right: 4px; border-radius: 4px; border: 1px solid #085B35; } QPushButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #FFD450); color: #222222; border-color: #D1892A}");
-    addWidget(connectButton);
+    m_ui->setupUi(this);
     connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
 
     // DONE INITIALIZING BUTTONS
@@ -240,7 +165,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         qDebug() << __FILE__ << __LINE__ << "Not enough perspective change actions provided";
     }
 
-    // Add the "rest"
+    // Add the rest
     createUI();
 }
 
