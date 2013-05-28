@@ -122,6 +122,11 @@ WaypointList::WaypointList(QWidget *parent, UASWaypointManager* wpm) :
         connect(WPM, SIGNAL(waypointViewOnlyListChanged(void)),                  this, SLOT(waypointViewOnlyListChanged(void)));
         connect(WPM, SIGNAL(waypointViewOnlyChanged(int,Waypoint*)), this, SLOT(updateWaypointViewOnly(int,Waypoint*)));
         connect(WPM, SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointViewOnlyChanged(quint16)));
+
+        //Even if there are no waypoints, since this is a new instance and there is an
+        //existing WPM, then we need to assume things have changed, and act appropriatly.
+        waypointEditableListChanged();
+        waypointViewOnlyListChanged();
     }
 
     // STATUS LABEL
