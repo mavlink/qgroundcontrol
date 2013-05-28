@@ -43,7 +43,7 @@ QDialog {
 }
 
 QDockWidget {
-    border: 10px solid #666;
+    border: 1px solid #666;
     border-radius: 1px;
 }
 
