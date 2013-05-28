@@ -2,6 +2,7 @@
 #include <QMetaMethod>
 #include <QDebug>
 #include "UASQuickViewItemSelect.h"
+#include "UASQuickViewTextItem.h"
 #include <QSettings>
 UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
 {
@@ -146,7 +147,7 @@ void UASQuickView::loadSettings()
 
 void UASQuickView::valueEnabled(QString value)
 {
-    UASQuickViewItem *item = new UASQuickViewItem(this);
+    UASQuickViewItem *item = new UASQuickViewTextItem(this);
     item->setTitle(value);
     ui.verticalLayout->addWidget(item);
     uasPropertyToLabelMap[value] = item;
@@ -359,7 +360,7 @@ void UASQuickView::actionTriggered(bool checked)
     }
     if (checked)
     {
-        UASQuickViewItem *item = new UASQuickViewItem(this);
+        UASQuickViewItem *item = new UASQuickViewTextItem(this);
         item->setTitle(senderlabel->text());
         ui.verticalLayout->addWidget(item);
         uasPropertyToLabelMap[senderlabel->text()] = item;
