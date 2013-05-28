@@ -101,6 +101,10 @@ QLabel:disabled {
     color: #AAA;
 }
 
+QLabel#noUas {
+    font-size: 30pt;
+}
+
 QLabel#toolBarNameLabel {
     font: bold 16px;
     color: #3C7B9E;

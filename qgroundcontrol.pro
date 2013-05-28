@@ -202,7 +202,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCMAVLinkInspector.ui \
     src/ui/WaypointViewOnlyView.ui \    
     src/ui/WaypointEditableView.ui \    
-    src/ui/UnconnectedUASInfoWidget.ui \
     src/ui/mavlink/QGCMAVLinkMessageSender.ui \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.ui \
     src/ui/QGCPluginHost.ui \
@@ -346,7 +345,6 @@ HEADERS += src/MG.h \
     src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointEditableView.h \    
-    src/ui/UnconnectedUASInfoWidget.h \
     src/ui/QGCRGBDView.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
@@ -515,7 +513,6 @@ SOURCES += src/main.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/WaypointViewOnlyView.cc \
     src/ui/WaypointEditableView.cc \
-    src/ui/UnconnectedUASInfoWidget.cc \
     src/ui/QGCRGBDView.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
