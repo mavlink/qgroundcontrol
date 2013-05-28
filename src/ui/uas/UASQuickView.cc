@@ -75,21 +75,8 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         ui.verticalLayout->addWidget(item);
         uasPropertyToLabelMap["distToWaypoint"] = item;
     }*/
-    QSettings settings;
-    int size = settings.beginReadArray("UAS_QUICK_VIEW_ITEMS");
-    for (int i=0;i<size;i++)
-    {
-        settings.setArrayIndex(i);
-        QString nameval = settings.value("name").toString();
-        QString typeval = settings.value("type").toString();
-        if (typeval == "text" && !uasPropertyToLabelMap.contains(nameval))
-        {
-            valueEnabled(nameval);
-        }
-        //QString name = settings.value("name").toString();
-        //QString var = settings.value("variable").toString();
-    }
 
+    loadSettings();
     //If we don't have any predefined settings, set some defaults.
     if (uasPropertyValueMap.size() == 0)
     {
@@ -127,6 +114,36 @@ void UASQuickView::actionTriggered()
     }
     quickViewSelectDialog->show();
 }
+void UASQuickView::saveSettings()
+{
+    QSettings settings;
+    settings.beginWriteArray("UAS_QUICK_VIEW_ITEMS");
+    int count = 0;
+    for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
+    {
+        settings.setArrayIndex(count++);
+        settings.setValue("name",i.key());
+        settings.setValue("type","text");
+    }
+    settings.endArray();
+    settings.sync();
+}
+void UASQuickView::loadSettings()
+{
+    QSettings settings;
+    int size = settings.beginReadArray("UAS_QUICK_VIEW_ITEMS");
+    for (int i=0;i<size;i++)
+    {
+        settings.setArrayIndex(i);
+        QString nameval = settings.value("name").toString();
+        QString typeval = settings.value("type").toString();
+        if (typeval == "text" && !uasPropertyToLabelMap.contains(nameval))
+        {
+            valueEnabled(nameval);
+        }
+    }
+}
+
 void UASQuickView::valueEnabled(QString value)
 {
     UASQuickViewItem *item = new UASQuickViewItem(this);
@@ -138,19 +155,8 @@ void UASQuickView::valueEnabled(QString value)
     {
         uasPropertyValueMap[value] = 0;
     }
-    QSettings settings;
-    settings.beginWriteArray("UAS_QUICK_VIEW_ITEMS");
-    int count = 0;
-    for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
-    {
-        settings.setArrayIndex(count++);
-        settings.setValue("name",i.key());
-        settings.setValue("type","text");
-        //QString name = settings.value("name").toString();
-        //QString var = settings.value("variable").toString();
-    }
-    settings.endArray();
-    settings.sync();
+    saveSettings();
+
 }
 
 void UASQuickView::valueDisabled(QString value)
@@ -163,19 +169,7 @@ void UASQuickView::valueDisabled(QString value)
         ui.verticalLayout->removeWidget(item);
         item->deleteLater();
         uasEnabledPropertyList.removeOne(value);
-        QSettings settings;
-        settings.beginWriteArray("UAS_QUICK_VIEW_ITEMS");
-        int count = 0;
-        for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
-        {
-            settings.setArrayIndex(count++);
-            settings.setValue("name",i.key());
-            settings.setValue("type","text");
-            //QString name = settings.value("name").toString();
-            //QString var = settings.value("variable").toString();
-        }
-        settings.endArray();
-        settings.sync();
+        saveSettings();
     }
 }
 

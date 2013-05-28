@@ -18,11 +18,27 @@ public:
     void addSource(MAVLinkDecoder *decoder);
 private:
     UASInterface *uas;
+
+    /** List of enabled properties */
     QList<QString> uasEnabledPropertyList;
+
+    /** Maps from the property name to the current value */
     QMap<QString,double> uasPropertyValueMap;
+
+    /** Maps from property name to the display item */
     QMap<QString,UASQuickViewItem*> uasPropertyToLabelMap;
+
+    /** Timer for updating the UI */
     QTimer *updateTimer;
+
+    /** Selection dialog for selectin/deselecting gauge items */
     UASQuickViewItemSelect *quickViewSelectDialog;
+
+    /** Saves gauge layout to settings file */
+    void saveSettings();
+
+    /** Loads gauge layout from settings file */
+    void loadSettings();
 protected:
     Ui::Form ui;
 signals:
