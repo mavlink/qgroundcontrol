@@ -208,7 +208,7 @@ QPushButton, QToolButton {
     border-radius: 2px;
     padding-left: 8px;
     padding-right: 8px;
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #B8D3E6, stop: 1 #899FAD);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
 }
 
 QToolButton {
@@ -244,7 +244,7 @@ QPushButton:disabled, QToolButton:disabled {
 }
 
 QPushButton:hover, QToolButton:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #B8D3E6, stop: 1 #899FAD);
 }
 
 QPushButton:pressed, QToolButton:pressed {
