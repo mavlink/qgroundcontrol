@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 20        ///< minimum delay between sent messages
 #define PROTOCOL_MAX_RETRIES 5      ///< maximum number of send retries (after timeout)
-
+const float UASWaypointManager::defaultAltitudeHomeOffset   = 30.0f;
 UASWaypointManager::UASWaypointManager(UAS* _uas)
     : uas(_uas),
       current_retries(0),
