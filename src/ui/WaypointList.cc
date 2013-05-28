@@ -103,11 +103,12 @@ WaypointList::WaypointList(QWidget *parent, UASWaypointManager* wpm) :
         // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
         if (!WPM->getUAS())
         {
-            // Hide buttons, which don't make sense without valid UAS
-            m_ui->positionAddButton->hide();
-            m_ui->transmitButton->hide();
-            m_ui->readButton->hide();
-            m_ui->refreshButton->hide();
+            // Disable buttons which don't make sense without valid UAS.
+            m_ui->positionAddButton->setEnabled(false);
+            m_ui->transmitButton->setEnabled(false);
+            m_ui->readButton->setEnabled(false);
+            m_ui->refreshButton->setEnabled(false);
+
             //FIXME: The whole "Onboard Waypoints"-tab should be hidden, instead of "refresh" button
             // Insert a "NO UAV" info into the Onboard Tab
             QLabel* noUas = new QLabel(this);
@@ -184,6 +185,12 @@ void WaypointList::setUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     }
+
+    // Now that there's a valid UAS, enable the UI.
+    m_ui->positionAddButton->setEnabled(true);
+    m_ui->transmitButton->setEnabled(true);
+    m_ui->readButton->setEnabled(true);
+    m_ui->refreshButton->setEnabled(true);
 
     WPM = uas->getWaypointManager();
 
