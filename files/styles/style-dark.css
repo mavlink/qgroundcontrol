@@ -127,9 +127,9 @@ QLineEdit {
 }
 
 QMainWindow::separator {
-   background-color: #323235;
-   width: 2px; /* when vertical */
-   height: 2px; /* when horizontal */
+    background-color: #323235;
+    width: 2px; /* when vertical */
+    height: 2px; /* when horizontal */
 }
 
 QMainWindow::separator:hover {

@@ -98,7 +98,7 @@ QLabel {
 }
 
 QLabel:disabled {
-    color: #353535;
+    color: #AAA;
 }
 
 QLabel#toolBarNameLabel {
@@ -127,9 +127,9 @@ QLineEdit {
 }
 
 QMainWindow::separator {
-   background-color: #090909;
-   width: 2px; /* when vertical */
-   height: 2px; /* when horizontal */
+    background-color: #090909;
+    width: 2px; /* when vertical */
+    height: 2px; /* when horizontal */
 }
 
 QMainWindow::separator:hover {
