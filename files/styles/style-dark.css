@@ -70,6 +70,47 @@ QDockWidget::title {
     height: 14px;
 }
 
+QGCToolBar QLabel {
+    font-size: 10pt;
+    margin: 3px 2px;
+}
+
+QGCToolBar QLabel#symbolLabel {
+    background-clip: content;
+}
+
+QGCToolBar QToolButton#firstAction {
+    margin-left: 8px;
+    border-bottom-left-radius: 6px;
+    border-top-left-radius: 6px;
+    border-right: none;
+}
+
+QGCToolBar QToolButton {
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-radius: 0;
+    text-align: left;
+}
+/*    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFb917, stop:1 #B37300);*/
+
+QGCToolBar QToolButton#advancedButton {
+    margin-left: 0;
+    margin-right: 13px;
+    padding-left: 4px;
+    padding-right: 8px;
+    border-radius: 0;
+    border-bottom-right-radius: 6px;
+    border-top-right-radius: 6px;
+    border-left: none;
+}
+
+QGCToolBar .QWidget {
+    margin: 0;
+    background-color: transparent;
+}
+
 QGCToolWidgetItem {
     border: 1px solid #666;
     border-radius: 3px;

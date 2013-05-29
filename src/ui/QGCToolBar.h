@@ -119,7 +119,7 @@ protected:
     bool systemArmed;
     LinkInterface* currentLink;
     QAction* firstAction;
-    QPushButton *advancedButton;
+    QToolButton *advancedButton;
     QButtonGroup *group;
 };
 
