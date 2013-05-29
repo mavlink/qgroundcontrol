@@ -226,6 +226,7 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         advancedButton->setCheckable(true);
         advancedButton->setObjectName("advancedButton");
         advancedButton->setPopupMode(QToolButton::InstantPopup);
+        advancedButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         addWidget(advancedButton);
         group->addButton(advancedButton);
     } else {
