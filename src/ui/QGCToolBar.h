@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QProgressBar>
 #include "UASInterface.h"
 #include "QGCMAVLinkLogPlayer.h"
-#include "ui_QGCToolBar.h"
 
 class QGCToolBar : public QToolBar
 {
@@ -91,7 +90,7 @@ protected:
     void createUI();
 
     UASInterface* mav;
-    QToolButton* symbolButton;
+    QLabel* symbolLabel;
     QLabel* toolBarNameLabel;
     QLabel* toolBarTimeoutLabel;
     QLabel* toolBarSafetyLabel;
@@ -122,8 +121,6 @@ protected:
     QAction* firstAction;
     QPushButton *advancedButton;
     QButtonGroup *group;
-private:
-    Ui::QGCToolBar *m_ui;
 };
 
 #endif // QGCTOOLBAR_H
