@@ -70,8 +70,55 @@ QDockWidget::title {
     height: 14px;
 }
 
-QGCToolBar {
-    min-height: 60px;
+QGCToolBar QLabel {
+    font-size: 10pt;
+    margin: 3px 2px;
+}
+
+QGCToolBar QLabel#symbolLabel {
+    background-clip: content;
+}
+
+QGCToolBar QLabel#toolBarBatteryBar {
+    color: #008000;
+}
+
+QGCToolBar QLabel#toolBarTimeoutLabel {
+    border-radius: 4px;
+    padding: 0;
+    color: #000;
+    background-color: #FF0037;
+}
+
+QGCToolBar QToolButton#firstAction {
+    margin-left: 8px;
+    border-bottom-left-radius: 6px;
+    border-top-left-radius: 6px;
+    border-right: none;
+}
+
+QGCToolBar QToolButton {
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-radius: 0;
+    text-align: left;
+}
+
+QGCToolBar QToolButton#advancedButton {
+    margin-left: 0;
+    margin-right: 13px;
+    padding-left: 4px;
+    padding-right: 8px;
+    border-radius: 0;
+    border-bottom-right-radius: 6px;
+    border-top-right-radius: 6px;
+    border-left: none;
+}
+
+QGCToolBar .QWidget {
+    margin: 0;
+    background-color: transparent;
 }
 
 QGCToolWidgetItem {
@@ -149,13 +196,22 @@ QMenu {
 }
 
 QMenu::item:selected {
-    background-color: #000;
+    background-color: #CCC;
+}
+
+QMenu::item:checked {
+    background-color: #B8D3E6;
 }
 
 QMenu::separator {
     height: 1px;
     background: #379AC3;
     margin: 8px 5px 4px 5px;
+}
+
+QMenu::icon, QMenu::icon:selected, QMenu::icon:disabled, QMenu::icon:checked {
+    background: #F00;
+    border: none;
 }
 
 QMenuBar::item:selected {
@@ -213,7 +269,7 @@ QPushButton, QToolButton {
     max-height: 20px;
     border: 1px solid #465158;
     margin: 1px;
-    border-radius: 2px;
+    border-radius: 4px;
     padding-left: 8px;
     padding-right: 8px;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
@@ -239,16 +295,31 @@ QPushButton#killButton {
     border-radius: 5px;
 }
 
+QPushButton#connectButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
+}
+
+QPushButton#deleteButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0037, stop: 1 #AC0025);
+}
+
 QPushButton:checked, QToolButton:checked {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444, stop: 1 #888);
+    color: #FFF;
+}
+
+QPushButton:checked#connectButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #B37300);
+    color: #000;
 }
 
 QPushButton:checked#controlButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #b76f11, stop: 1 #e1a718);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #09A2B2, stop: 1 #414B52);
 }
 
 QPushButton:disabled, QToolButton:disabled {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #EEE, stop: 1 #CCC);
+    color: #AAA;
 }
 
 QPushButton:hover, QToolButton:hover {
@@ -267,22 +338,6 @@ QPushButton:pressed#killButton {
     background-clip: border;
     border: 1px solid #555;
     border-radius: 5px;
-}
-
-QPushButton#connectButton {
-    min-height: 20px;
-    color: #222222; 
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5AAA49, stop: 1 #106B38); 
-    margin-left: 4px;
-    margin-right: 4px;
-    border-radius: 4px;
-    border: 1px solid #085B35;
-}
-
-QPushButton:checked#connectButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #FFD450);
-    color: #222222;
-    border-color: #D1892A;
 }
 
 QScrollBar {
@@ -411,43 +466,6 @@ QToolBar {
     border-bottom-color: #484848;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #CCC, stop: 1 #888);
 }
-
-QToolButton#symbolButton {
-    margin-left: 10px;
-    background-color: #050508;
-    color: #DDD;
-    background-clip: border;
-}
-QLabel#toolBarTimeoutLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px;
- border-radius: 4px;
-}
-QLabel#toolBarBatteryVoltageLabel {
-    margin: 0 0 0 4px; font: 14px; 
-}
-QLabel#toolBarWpLabel { margin: 3px 2px; font: 18px; color: #ACEBFE; }
-QLabel#toolBarMessageLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }
-QPushButton#connectButton {min-height: 20px; color: #222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5AAA49, stop: 1 #106B38);  margin-left: 4px; margin-right: 4px; border-radius: 4px; border: 1px solid #085B35; }
-QPushButton:checked#connectButton { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #FFD450); color: #222; border-color: #D1892A}
-QLabel#toolBarSafetyLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: #14C814; }
-QLabel#toolBarModeLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }
-QLabel#toolBarStateLabel { margin: 3px 2px; font: 14px; color: #FEC654; }
-QToolButton#firstAction { min-width: 60px; color: #222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; }
-QToolButton:checked#firstAction { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDD; }
-QGCToolBar QToolButton { min-width: 60px; color: #222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: -2px; margin-right: -2px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border-top: 1px solid #484848; border-bottom: 1px solid #484848; }
-QGCToolBar QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDD; }
-QPushButton#advancedButton { min-width: 60px; font-weight: bold; text-align: left; color: #222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: 0px; margin-right: 13px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-right-radius: 6px; border-top-right-radius: 6px; border-right: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; }
-QPushButton:checked#advancedButton { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDD; }
-
-QGCToolBar QMenu { font-weight: bold; min-width: 70px; color: #222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); border: 1px solid #484848; }
-QGCToolBar QMenu::item:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDD; }
-
-QGCToolBar .QWidget {
-    margin: 0px;
-background-color: transparent;
-min-height: 24px;
-    background-color: #F00;
-}
-
             
 QToolTip {
     background-color: #F6F6F6;
