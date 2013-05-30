@@ -275,7 +275,7 @@ void HSIDisplay::renderOverlay()
         ringColor = QGC::colorBlack;
         positionColor = QColor(20, 20, 200);
         setpointColor = QColor(150, 250, 150);
-        labelColor = QGC::colorBlack;
+        labelColor = QColor(26, 75, 95);
         valueColor = QColor(40, 40, 40);
         statusColor = QGC::colorOrange;
         waypointLineColor = QGC::colorDarkYellow;
@@ -283,7 +283,7 @@ void HSIDisplay::renderOverlay()
     }
     else
     {
-        ringColor = QColor(200, 200, 200);
+        ringColor = QColor(255, 255, 255);
         positionColor = QColor(20, 20, 200);
         setpointColor = QColor(150, 250, 150);
         labelColor = QGC::colorCyan;
@@ -464,17 +464,23 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, bool ok, QPainter& painter)
 {
-    paintText(label, QGC::colorCyan, 2.6f, x, y+0.8f, &painter);
     QColor statusColor;
+    QColor labelColor;
     if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         statusColor = QColor(40, 40, 40);
+        labelColor = QColor(26, 75, 95);
     }
     else
     {
         statusColor = QColor(250, 250, 250);
+        labelColor = QGC::colorCyan;
     }
 
+    // Draw the label.
+    paintText(label, labelColor, 2.6f, x, y+0.8f, &painter);
+
+    // Determine color of status rectangle.
     if (!ok) {
         painter.setBrush(QGC::colorDarkYellow);
     } else {
@@ -486,11 +492,12 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
     }
     painter.setPen(Qt::NoPen);
 
+    // Draw the status rectangle.
     float indicatorWidth = refToScreenX(7.0f);
     float indicatorHeight = refToScreenY(4.0f);
-
     painter.drawRect(QRect(refToScreenX(x+7.3f), refToScreenY(y+0.05), indicatorWidth, indicatorHeight));
     paintText((status) ? tr("ON") : tr("OFF"), statusColor, 2.6f, x+7.9f, y+0.8f, &painter);
+
     // Cross out instrument if state unknown
     if (!known)
     {
@@ -515,7 +522,8 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
 
 void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, bool known, QPainter& painter)
 {
-    paintText(label, QGC::colorCyan, 2.6f, x, y+0.8f, &painter);
+    // Select color scheme based on light or dark window theme.
+    QColor labelColor;
     QColor negStatusColor(200, 20, 20);
     QColor intermediateStatusColor (Qt::yellow);
     QColor posStatusColor(20, 200, 20);
@@ -523,32 +531,34 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
     if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         statusColor = QColor(40, 40, 40);
+        labelColor = QColor(26, 75, 95);
     }
     else
     {
         statusColor = QColor(250, 250, 250);
-    }
-    if (status == 3) {
-        painter.setBrush(posStatusColor);
-    } else if (status == 2) {
-        painter.setBrush(intermediateStatusColor.dark(150));
-    } else {
-        painter.setBrush(negStatusColor);
+        labelColor = QGC::colorCyan;
     }
 
-    // Lock text
+    // Draw the label.
+    paintText(label, labelColor, 2.6f, x, y+0.8f, &painter);
+
+    // based on the status, choose both the coloring and lock text.
     QString lockText;
     switch (status) {
     case 1:
+        painter.setBrush(intermediateStatusColor.dark(150));
         lockText = tr("LOC");
         break;
     case 2:
+        painter.setBrush(intermediateStatusColor.dark(150));
         lockText = tr("2D");
         break;
     case 3:
+        painter.setBrush(posStatusColor);
         lockText = tr("3D");
         break;
     default:
+        painter.setBrush(negStatusColor);
         lockText = tr("NO");
         break;
     }
@@ -559,6 +569,7 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
     painter.setPen(Qt::NoPen);
     painter.drawRect(QRect(refToScreenX(x+7.3f), refToScreenY(y+0.05), refToScreenX(7.0f), refToScreenY(4.0f)));
     paintText(lockText, statusColor, 2.6f, x+7.9f, y+0.8f, &painter);
+
     // Cross out instrument if state unknown
     if (!known) {
         QPen pen(Qt::yellow);
