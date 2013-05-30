@@ -24,6 +24,7 @@
 #include "ui_HDDisplay.h"
 #include "MG.h"
 #include "QGC.h"
+#include "MainWindow.h"
 #include <QDebug>
 
 HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
@@ -443,7 +444,15 @@ void HDDisplay::renderOverlay()
     //painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.5f));
-    const QColor gaugeColor = QColor(200, 200, 200);
+    QColor gaugeColor;
+    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        gaugeColor = QColor(0, 0, 0);
+    }
+    else
+    {
+        gaugeColor = QColor(255, 255, 255);
+    }
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
     //drawGauge(15.0f+gaugeWidth*1.7f, 15.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
@@ -575,6 +584,20 @@ void HDDisplay::drawChangeRateStrip(float xRef, float yRef, float height, float 
 
 void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float max, QString name, float value, const QColor& color, QPainter* painter, bool symmetric, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid)
 {
+    // Select color scheme based on light or dark theme.
+    QColor valueColor;
+    QColor backgroundColor;
+    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        valueColor = QColor(26, 75, 95);
+        backgroundColor = QColor(246, 246, 246);
+    }
+    else
+    {
+        valueColor = QGC::colorCyan;
+        backgroundColor = QColor(34, 34, 34);
+    }
+
     // Draw the circle
     QPen circlePen(Qt::SolidLine);
 
@@ -634,7 +657,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     const float textY = yRef+radius/2.0f;
 
     // Draw background rectangle
-    QBrush brush(QGC::colorBackground, Qt::SolidPattern);
+    QBrush brush(backgroundColor, Qt::SolidPattern);
     painter->setBrush(brush);
     painter->setPen(Qt::NoPen);
 
@@ -663,7 +686,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
 
     // Draw the value
     //painter->setPen(textColor);
-    paintText(label, QGC::colorCyan, textHeight, textX, textY+nameHeight, painter);
+    paintText(label, valueColor, textHeight, textX, textY+nameHeight, painter);
     //paintText(label, color, ((radius - radius/3.0f)*1.1f), xRef-radius/2.5f, yRef+radius/3.0f, painter);
 
     // Draw the needle
