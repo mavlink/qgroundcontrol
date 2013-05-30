@@ -43,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include <qmath.h>
 //#include "Waypoint2DIcon.h"
 #include "MAV2DIcon.h"
+#include "MainWindow.h"
 
 #include <QDebug>
 
@@ -259,7 +260,39 @@ void HSIDisplay::renderOverlay()
     // Draw base instrument
     // ----------------------
     painter.setBrush(Qt::NoBrush);
-    const QColor ringColor = QColor(200, 200, 200);
+
+    // Set the color scheme depending on the light/dark theme employed.
+    QColor ringColor;
+    QColor positionColor;
+    QColor setpointColor;
+    QColor labelColor;
+    QColor valueColor;
+    QColor statusColor;
+    QColor waypointLineColor;
+    QColor attitudeColor;
+    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        ringColor = QGC::colorBlack;
+        positionColor = QColor(20, 20, 200);
+        setpointColor = QColor(150, 250, 150);
+        labelColor = QGC::colorBlack;
+        valueColor = QColor(40, 40, 40);
+        statusColor = QGC::colorOrange;
+        waypointLineColor = QGC::colorDarkYellow;
+        attitudeColor = QColor(200, 20, 20);
+    }
+    else
+    {
+        ringColor = QColor(200, 200, 200);
+        positionColor = QColor(20, 20, 200);
+        setpointColor = QColor(150, 250, 150);
+        labelColor = QGC::colorCyan;
+        valueColor = QColor(255, 255, 255);
+        statusColor = QGC::colorOrange;
+        waypointLineColor = QGC::colorYellow;
+        attitudeColor = QColor(200, 20, 20);
+    }
+
     QPen pen;
     pen.setColor(ringColor);
     pen.setWidth(refLineWidthToPen(1.0f));
@@ -269,7 +302,7 @@ void HSIDisplay::renderOverlay()
     {
         float radius = (vwidth - (topMargin + bottomMargin)*0.3f) / (1.35f * i+1) / 2.0f - bottomMargin / 2.0f;
         drawCircle(xCenterPos, yCenterPos, radius, 1.0f, ringColor, &painter);
-        paintText(tr("%1 m").arg(refToMetric(radius), 5, 'f', 1, ' '), QGC::colorCyan, 1.6f, vwidth/2-4, vheight/2+radius+2.2, &painter);
+        paintText(tr("%1 m").arg(refToMetric(radius), 5, 'f', 1, ' '), valueColor, 1.6f, vwidth/2-4, vheight/2+radius+7, &painter);
     }
 
     // Draw orientation labels
@@ -320,11 +353,9 @@ void HSIDisplay::renderOverlay()
     // Draw state indicator
 
     // Draw position
-    QColor positionColor(20, 20, 200);
     drawPositionDirection(xCenterPos, yCenterPos, baseRadius, positionColor, &painter);
 
     // Draw attitude
-    QColor attitudeColor(200, 20, 20);
     drawAttitudeDirection(xCenterPos, yCenterPos, baseRadius, attitudeColor, &painter);
 
 
@@ -339,9 +370,6 @@ void HSIDisplay::renderOverlay()
     float angleDiff = uiYawSet - bodyYawSet;
 
     float normAngleDiff = fabs(atan2(sin(angleDiff), cos(angleDiff)));
-
-    //if (((userSetPointSet) || (normAngleDiff > 0.05f) || dragStarted) && !(setPointDist < 0.08f && mavInitialized))
-
 
     // Labels on outer part and bottom
 
@@ -373,13 +401,13 @@ void HSIDisplay::renderOverlay()
     drawStatusFlag(33, 16, tr("VCN"), viconON, viconKnown, viconOK, painter);
 
     // Draw speed to top left
-    paintText(tr("SPEED"), QGC::colorCyan, 2.2f, 2, topMargin+2, &painter);
-    paintText(tr("%1 m/s").arg(speed, 5, 'f', 2, '0'), Qt::white, 2.2f, 12, topMargin+2, &painter);
+    paintText(tr("SPEED"), labelColor, 2.2f, 2, topMargin+2, &painter);
+    paintText(tr("%1 m/s").arg(speed, 5, 'f', 2, '0'), valueColor, 2.2f, 12, topMargin+2, &painter);
 
     // Draw crosstrack error to top right
     float crossTrackError = 0;
-    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 54, topMargin+2, &painter);
-    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 67, topMargin+2, &painter);
+    paintText(tr("XTRACK"), labelColor, 2.2f, 54, topMargin+2, &painter);
+    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), valueColor, 2.2f, 67, topMargin+2, &painter);
 
     // Draw position to bottom left
     if (localAvailable > 0)
@@ -388,8 +416,8 @@ void HSIDisplay::renderOverlay()
         QString str;
         float offset = (globalAvailable > 0) ? -3.0f : 0.0f;
         str.sprintf("%05.2f %05.2f %05.2f m", x, y, z);
-        paintText(tr("POS"), QGC::colorCyan, 2.6f, 2, vheight - offset - 2.0f, &painter);
-        paintText(str, Qt::white, 2.6f, 10, vheight - offset - 2.0f, &painter);
+        paintText(tr("POS"), labelColor, 2.6f, 2, vheight - offset - 4.0f, &painter);
+        paintText(str, valueColor, 2.6f, 10, vheight - offset - 4.0f, &painter);
     }
 
     if (globalAvailable > 0)
@@ -397,8 +425,8 @@ void HSIDisplay::renderOverlay()
         // Position
         QString str;
         str.sprintf("lat: %05.2f lon: %06.2f alt: %06.2f", lat, lon, alt);
-        paintText(tr("GPS"), QGC::colorCyan, 2.6f, 2, vheight- 2.0f, &painter);
-        paintText(str, Qt::white, 2.6f, 10, vheight - 2.0f, &painter);
+        paintText(tr("GPS"), labelColor, 2.6f, 2, vheight- 4.0f, &painter);
+        paintText(str, valueColor, 2.6f, 10, vheight - 4.0f, &painter);
     }
 
     // Draw Safety
@@ -407,26 +435,25 @@ void HSIDisplay::renderOverlay()
     //    drawSafetyArea(QPointF(x1, y1), QPointF(x2, y2), QGC::colorYellow, painter);
 
     // Draw status message
-    paintText(statusMessage, QGC::colorOrange, 2.8f, 8, 15, &painter);
+    paintText(statusMessage, statusColor, 2.8f, 8, 15, &painter);
 
     // Draw setpoint over waypoints
     if (positionSetPointKnown || setPointKnown)
     {
         // Draw setpoint
-        drawSetpointXYZYaw(bodyXSetCoordinate, bodyYSetCoordinate, bodyZSetCoordinate, bodyYawSet, QGC::colorYellow, painter);
+        drawSetpointXYZYaw(bodyXSetCoordinate, bodyYSetCoordinate, bodyZSetCoordinate, bodyYawSet, setpointColor, painter);
         // Draw travel direction line
         QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
         // Transform from body to world coordinates
         m = metricWorldToBody(m);
         // Scale from metric body to screen reference units
         QPointF s = metricBodyToRef(m);
-        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::colorYellow, &painter);
+        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, setpointColor, &painter);
     }
 
     if ((userSetPointSet || dragStarted) && ((normAngleDiff > 0.05f) || !(setPointDist < 0.08f && mavInitialized)))
     {
-        QColor spColor(150, 250, 150);
-        drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, spColor, painter);
+        drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, setpointColor, painter);
     }
 }
 
@@ -438,7 +465,15 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bo
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, bool ok, QPainter& painter)
 {
     paintText(label, QGC::colorCyan, 2.6f, x, y+0.8f, &painter);
-    QColor statusColor(250, 250, 250);
+    QColor statusColor;
+    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        statusColor = QColor(40, 40, 40);
+    }
+    else
+    {
+        statusColor = QColor(250, 250, 250);
+    }
 
     if (!ok) {
         painter.setBrush(QGC::colorDarkYellow);
@@ -484,7 +519,15 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, b
     QColor negStatusColor(200, 20, 20);
     QColor intermediateStatusColor (Qt::yellow);
     QColor posStatusColor(20, 200, 20);
-    QColor statusColor(250, 250, 250);
+    QColor statusColor;
+    if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        statusColor = QColor(40, 40, 40);
+    }
+    else
+    {
+        statusColor = QColor(250, 250, 250);
+    }
     if (status == 3) {
         painter.setBrush(posStatusColor);
     } else if (status == 2) {
