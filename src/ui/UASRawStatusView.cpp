@@ -15,7 +15,7 @@ UASRawStatusView::UASRawStatusView(QWidget *parent) : QWidget(parent)
     connect(timer,SIGNAL(timeout()),this,SLOT(updateTableTimerTick()));
     timer->start(2000);
 }
-void UASRawStatusView::setDecoder(MAVLinkDecoder *decoder)
+void UASRawStatusView::addSource(MAVLinkDecoder *decoder)
 {
     connect(decoder,SIGNAL(valueChanged(int,QString,QString,double,quint64)),this,SLOT(valueChanged(int,QString,QString,double,quint64)));
     connect(decoder,SIGNAL(valueChanged(int,QString,QString,qint8,quint64)),this,SLOT(valueChanged(int,QString,QString,qint8,quint64)));

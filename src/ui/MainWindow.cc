@@ -585,12 +585,13 @@ void MainWindow::buildCommonWidgets()
     //createDockWidget(pilotView,quickview,tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
+    infoview->addSource(mavlinkDecoder);
     createDockWidget(pilotView,infoview,tr("Info View"),"UAS_INFO_INFOVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
 
-    UASRawStatusView *view = new UASRawStatusView();
-    view->setDecoder(mavlinkDecoder);
-    view->show();
+    //UASRawStatusView *view = new UASRawStatusView();
+    //view->setDecoder(mavlinkDecoder);
+    //view->show();
     //hddisplay->addSource(mavlinkDecoder);
     //createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
     //pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);

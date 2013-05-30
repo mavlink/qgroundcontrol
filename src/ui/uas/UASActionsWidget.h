@@ -12,7 +12,6 @@ class UASActionsWidget : public QWidget
 public:
     explicit UASActionsWidget(QWidget *parent = 0);
     ~UASActionsWidget();
-    
 private:
     Ui::UASActionsWidget ui;
     UASInterface *m_uas;

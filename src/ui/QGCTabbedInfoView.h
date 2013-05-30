@@ -3,7 +3,10 @@
 
 #include <QWidget>
 #include "ui_QGCTabbedInfoView.h"
-
+#include "MAVLinkDecoder.h"
+#include "UASActionsWidget.h"
+#include "UASQuickView.h"
+#include "UASRawStatusView.h"
 class QGCTabbedInfoView : public QWidget
 {
     Q_OBJECT
@@ -11,9 +14,13 @@ class QGCTabbedInfoView : public QWidget
 public:
     explicit QGCTabbedInfoView(QWidget *parent = 0);
     ~QGCTabbedInfoView();
-    
+    void addSource(MAVLinkDecoder *decoder);
 private:
+    MAVLinkDecoder *m_decoder;
     Ui::QGCTabbedInfoView ui;
+    UASActionsWidget *actionsWidget;
+    UASQuickView *quickView;
+    UASRawStatusView *rawView;
 };
 
 #endif // QGCTABBEDINFOVIEW_H
