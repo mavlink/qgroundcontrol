@@ -79,11 +79,15 @@ QGCToolBar QLabel#symbolLabel {
     background-clip: content;
 }
 
-QGCToolBar QToolButton#firstAction {
-    margin-left: 8px;
-    border-bottom-left-radius: 6px;
-    border-top-left-radius: 6px;
-    border-right: none;
+QGCToolBar QLabel#toolBarBatteryBar {
+    color: #008000;
+}
+
+QGCToolBar QLabel#toolBarTimeoutLabel {
+    border-radius: 4px;
+    padding: 0;
+    color: #000;
+    background-color: #FF0037;
 }
 
 QGCToolBar QToolButton {
@@ -104,6 +108,13 @@ QGCToolBar QToolButton#advancedButton {
     border-bottom-right-radius: 6px;
     border-top-right-radius: 6px;
     border-left: none;
+}
+
+QGCToolBar QToolButton#firstAction {
+    margin-left: 8px;
+    border-bottom-left-radius: 6px;
+    border-top-left-radius: 6px;
+    border-right: none;
 }
 
 QGCToolBar .QWidget {
@@ -146,26 +157,6 @@ QLabel#noUas {
     font-size: 30pt;
 }
 
-QLabel#toolBarNameLabel {
-    font: bold 16px;
-    color: #3C7B9E;
-}
-
-QLabel#toolBarModeLabel {
-    font: 12px;
-}
-
-QLabel#toolBarStateLabel {
-    font: 12px;
-    color: #3C7B9E;
-}
-
-QLabel#toolBarMessageLabel {
-    font: 12px;
-    font-style: italic;
-    color: #3C7B9E;
-}
-
 QLineEdit {
     border: 1px solid #777;
     border-radius: 2px;
@@ -187,6 +178,10 @@ QMenu {
 
 QMenu::item:selected {
     background-color: #666;
+}
+
+QMenu::item:checked {
+    background-color: #B8D3E6;
 }
 
 QMenu::separator {
@@ -217,7 +212,7 @@ QProgressBar {
     text-align: center;
     padding: 2px;
     color: #DDD;
-    background-color: #111;
+    background: #111;
     height: 10px;
 }
 
@@ -256,14 +251,17 @@ QPushButton, QToolButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
 }
 
-QToolButton {
-    padding-left: 3px;
-    padding-right: 3px;
+QPushButton#connectButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
 }
 
 QPushButton#controlButton {
     min-height: 25px;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A0AE00, stop: 1 #909E00);
+}
+
+QPushButton#deleteButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0037, stop: 1 #AC0025);
 }
 
 QPushButton#killButton {
@@ -278,6 +276,11 @@ QPushButton#killButton {
 
 QPushButton:checked, QToolButton:checked {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #09A2B2, stop: 1 #414B52);
+}
+
+QPushButton:checked#connectButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #B37300);
+    color: #000;
 }
 
 QPushButton:checked#controlButton {
@@ -306,6 +309,10 @@ QPushButton:pressed#killButton {
     border-radius: 5px;
 }
 
+QScrollBar {
+    border: 1px solid #333;
+}
+
 QSeparator {
     color: #EEE;
 }
@@ -323,6 +330,7 @@ QSlider::groove:horizontal {
 
 QSlider::groove:horizontal:disabled {
     border: 1px solid #454545;
+    background-color: #CCC;
     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     margin: 2px 0;
 }
@@ -388,7 +396,7 @@ QSpinBox::up-button, QDoubleSpinBox::up-button {
 }
 
 QStatusBar {
-    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop:0.34 #383838, stop:1 #181818);
 }
 
 QTabBar::tab {
@@ -426,7 +434,12 @@ QTextEdit {
 QToolBar {
     border-top-color: #969696;
     border-bottom-color: #484848;
-    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4B4B4B, stop:0.3 #404040, stop:0.34 #383838, stop:1 #181818);
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop: 0.34 #383838, stop:1 #181818);
+}
+
+QToolButton {
+    padding-left: 3px;
+    padding-right: 3px;
 }
 
 QToolTip {
