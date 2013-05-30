@@ -54,10 +54,10 @@ navModeChanged
 // System Status
 loadChanged
 Do we already have these in some form? Can they be merged?
-batteryChanged
-voltageChanged
+batteryChanged  (DONE)
+voltageChanged  (DONE)
 gpsLocalizationChanged
-satelliteCountChanged
+satelliteCountChanged   (DONE)
 
 // Mission status
 currentWaypointChanged (on WaypointManager)
