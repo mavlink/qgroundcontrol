@@ -12,7 +12,7 @@ class UASRawStatusView : public QWidget
 public:
     explicit UASRawStatusView(QWidget *parent = 0);
     ~UASRawStatusView();
-    void setDecoder(MAVLinkDecoder *decoder);
+    void addSource(MAVLinkDecoder *decoder);
 private slots:
     void updateTableTimerTick();
     void valueChanged(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec);
