@@ -180,7 +180,7 @@ private:
     quint16 uasid;
 
     // XXX export to settings
-    static const float defaultAltitudeHomeOffset   = 30.0f;    ///< Altitude offset in meters from home for new waypoints
+    static const float defaultAltitudeHomeOffset;    ///< Altitude offset in meters from home for new waypoints
 };
 
 #endif // UASWAYPOINTMANAGER_H
