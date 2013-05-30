@@ -175,7 +175,7 @@ QMenu {
     border: 1px solid #379AC3;
 }
 
-QMenu::item:selected {
+QMenu::item:selected, QMenu::item:checked:selected {
     background-color: #CCC;
 }
 
