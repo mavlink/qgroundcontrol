@@ -63,6 +63,9 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     batteryCurrent(UNKNOWN_BATTERY),
     batteryCharge(UNKNOWN_BATTERY),
 
+    GPSFixType(UNKNOWN_GPSFIXTYPE),
+    satelliteCount(UNKNOWN_COUNT),
+
     layout(FEATUREPANELS_IN_CORNERS),
     style(OPAGUE_TAPES),
 
@@ -180,6 +183,9 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        disconnect(this->uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
+        disconnect(this->uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
+        disconnect(this->uas, SIGNAL(localizationChanged(UASInterface* uas, int fix)), this, SLOT(updateGPSFixType(UASInterface*,int)));
 
         //disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
@@ -198,6 +204,7 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
         connect(uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
+        connect(uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
 
         //connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
@@ -256,6 +263,16 @@ void PrimaryFlightDisplay::updateBattery(UASInterface* uas, double voltage, doub
     batteryVoltage = voltage;
     batteryCurrent = current;
     batteryCharge = percent;
+}
+
+void PrimaryFlightDisplay::updateGPSFixType(UASInterface* uas, int fixType) {
+    Q_UNUSED(uas);
+    this->GPSFixType = fixType;
+}
+
+void PrimaryFlightDisplay::updateSatelliteCount(double count, QString name) {
+    Q_UNUSED(uas)
+    this->satelliteCount = (int)count;
 }
 
 void PrimaryFlightDisplay::receiveHeartbeat(UASInterface*)
@@ -950,10 +967,10 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     float effectiveHalfHeight = h*0.45;
     float tickmarkLeft = 0.6*w;
     float tickmarkRight = 0.7*w;
-    float numbersLeft = 0.42*w;
+    float numbersRight = 0.42*w;
     float markerHalfHeight = 0.06*h;
-    float rightEdge = w-instrumentEdgePen.widthF()*2;
-    float markerTip = (tickmarkLeft*2+tickmarkRight)/3;
+    float leftEdge = instrumentEdgePen.widthF()*2;
+    float markerTip = (tickmarkLeft+tickmarkRight*2)/3;
 
     float start = airspeed - AIRSPEED_LINEAR_SPAN/2;
     float end = airspeed + AIRSPEED_LINEAR_SPAN/2;
@@ -963,20 +980,22 @@ void PrimaryFlightDisplay::drawVelocityMeter(
         float y = (tickSpeed-airspeed)*effectiveHalfHeight/(AIRSPEED_LINEAR_SPAN/2);
         bool hasText = tickSpeed % AIRSPEED_LINEAR_MAJOR_RESOLUTION == 0;
         painter.resetTransform();
+
         painter.translate(area.left(), area.center().y() - y);
         painter.drawLine(tickmarkLeft, 0, tickmarkRight, 0);
+
         if (hasText) {
             QString s_speed;
             s_speed.sprintf("%d", tickSpeed);
-            drawTextLeftCenter(painter, s_speed, mediumTextSize, numbersLeft, 0);
+            drawTextRightCenter(painter, s_speed, mediumTextSize, numbersRight, 0);
         }
     }
 
     QPainterPath markerPath(QPoint(markerTip, 0));
-    markerPath.lineTo(markerTip+markerHalfHeight, markerHalfHeight);
-    markerPath.lineTo(rightEdge, markerHalfHeight);
-    markerPath.lineTo(rightEdge, -markerHalfHeight);
-    markerPath.lineTo(markerTip+markerHalfHeight, -markerHalfHeight);
+    markerPath.lineTo(markerTip-markerHalfHeight, markerHalfHeight);
+    markerPath.lineTo(leftEdge, markerHalfHeight);
+    markerPath.lineTo(leftEdge, -markerHalfHeight);
+    markerPath.lineTo(markerTip-markerHalfHeight, -markerHalfHeight);
     markerPath.closeSubpath();
 
     painter.resetTransform();
@@ -993,8 +1012,8 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     pen.setColor(Qt::white);
     painter.setPen(pen);
     QString s_alt;
-    s_alt.sprintf("%3.0f", airspeed);
-    float xCenter = (markerTip+rightEdge)/2;
+    s_alt.sprintf("%3.1f", airspeed);
+    float xCenter = (markerTip+leftEdge)/2;
     drawTextCenter(painter, s_alt, /* TAPES_TEXT_SIZE*width()*/ mediumTextSize, xCenter, 0);
 }
 
@@ -1367,7 +1386,7 @@ void PrimaryFlightDisplay::doPaint() {
     // Y: 1 single margin below above gadget.
 
     drawAltimeter(painter, altimeterArea, aboveASLAltitude, 1000, 0);
-    drawAltimeter(painter, velocityMeterArea, aboveASLAltitude, 1000, 0);
+    drawVelocityMeter(painter, velocityMeterArea);
 
     drawSensorsStatsPanel(painter, sensorsStatsArea);
     drawLinkStatsPanel(painter, linkStatsArea);

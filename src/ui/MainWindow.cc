@@ -345,14 +345,7 @@ QString MainWindow::getWindowStateKey()
         return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
     }
     else
-<<<<<<< HEAD
-    {
         return QString::number(currentView)+"_windowstate";
-    }
-=======
-
-        return QString::number(currentView)+"_windowstate";
->>>>>>> lorenz/master
 }
 
 QString MainWindow::getWindowGeometryKey()
@@ -901,22 +894,7 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
         //createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
 
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
-<<<<<<< HEAD
-
-        QString hilDockName = tr("HIL Config (%1)").arg(uas->getUASName());
-        createDockWidget(centerStack->currentWidget(),hconf,hilDockName,QString("HIL_CONFIG_%1").arg(uas->getUASID()),currentView,Qt::LeftDockWidgetArea);
-        //QDockWidget* hilDock = new QDockWidget(hilDockName, this);
-        //hilDock->setWidget(hconf);
-        //hilDock->setObjectName(QString("HIL_CONFIG_%1").arg(uas->getUASID()));
-        //addTool(hilDock, hilDockName, Qt::LeftDockWidgetArea);
-        //hilDocks.insert(mav->getUASID(), hilDock);
-
-        //if (currentView != VIEW_SIMULATION)
-        //    hilDock->hide();
-        //else
-        //    hilDock->show();
-=======
-        QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
+       QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
         QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockName.toUpper().replace(" ", "_"),VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
 
@@ -924,7 +902,6 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
         //            hilDock->hide();
         //        else
         //            hilDock->show();
->>>>>>> lorenz/master
     }
 }
 
@@ -1772,14 +1749,8 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
 
-<<<<<<< HEAD
-        // HIL
-        //We only want to show it when it's explicitly requested. This is now handled by loadViewState()
-        //showHILConfigurationWidget(uas);
-=======
     // HIL
     showHILConfigurationWidget(uas);
->>>>>>> lorenz/master
 
     if (!linechartWidget)
     {

@@ -88,6 +88,8 @@
 #define UNKNOWN_ATTITUDE 0
 #define UNKNOWN_ALTITUDE -1000
 #define UNKNOWN_SPEED -1
+#define UNKNOWN_COUNT -1
+#define UNKNOWN_GPSFIXTYPE -1
 
 class PrimaryFlightDisplay : public QWidget
 {
@@ -111,6 +113,8 @@ public slots:
     void updateState(UASInterface*,QString);
     void updateMode(int id,QString mode, QString description);
     void updateLoad(UASInterface*, double);
+    void updateGPSFixType(UASInterface*,int);
+    void updateSatelliteCount(double count,QString sth);
     void selectWaypoint(int uasId, int id);
 
 protected:
@@ -212,16 +216,12 @@ private:
     double batteryCurrent;
     double batteryCharge;
 
+    int GPSFixType;
+    int satelliteCount;
+
     Layout layout;      // The display layout.
     Style style;        // The AI style (tapes translusent or opague)
 
-    /* This idea did not work
-    QPen whitePen;
-    QPen redPen;
-    QPen amberPen;
-    QPen greenPen;
-    QPen blackPen;
-    */
 
     QColor redColor;
     QColor amberColor;
