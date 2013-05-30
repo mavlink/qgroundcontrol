@@ -52,7 +52,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    connect(ui->storeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
@@ -174,6 +174,7 @@ void QGCVehicleConfig::stopCalibrationRC()
 
 void QGCVehicleConfig::loadQgcConfig(bool primary)
 {
+    Q_UNUSED(primary);
     QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
     QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
     QDir vehicledir = QDir(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/widgets");
@@ -321,7 +322,6 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
-
     // Load calibration
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
     tool = new QGCToolWidget("", this);
@@ -338,7 +338,6 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         delete tool;
     }
 
-
     tool = new QGCToolWidget("", this);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
@@ -352,16 +351,12 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     } else {
         delete tool;
     }
+
     //description.txt
     QFile sensortipsfile(autopilotdir.absolutePath() + "/general/calibration/description.txt");
     sensortipsfile.open(QIODevice::ReadOnly);
     ui->sensorTips->setHtml(sensortipsfile.readAll());
     sensortipsfile.close();
-
-
-
-
-
 }
 
 void QGCVehicleConfig::loadConfig()
@@ -679,10 +674,8 @@ void QGCVehicleConfig::loadConfig()
         }
         xml.readNext();
     }
-    if (mav)
-    {
-           mav->getParamManager()->setParamInfo(paramTooltips);
-    }
+
+    mav->getParamManager()->setParamInfo(paramTooltips);
     doneLoadingConfig = true;
     mav->requestParameters(); //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
 }
@@ -736,18 +729,24 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
            mav->getParamManager()->setParamInfo(paramTooltips);
     }
 
-   //    mav->requestParameters();
-
-    QString defaultsDir = qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower() + "/widgets/";
     qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
-
 
     //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
     //amount of time it actually takes to load the configuration windows.
     QTimer::singleShot(1,this,SLOT(loadConfig()));
 
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
+
+    // Since a system is now connected, enable the VehicleConfig UI.
+    ui->tabWidget->setEnabled(true);
+    ui->setButton->setEnabled(true);
+    ui->refreshButton->setEnabled(true);
+    ui->readButton->setEnabled(true);
+    ui->writeButton->setEnabled(true);
+    ui->loadFileButton->setEnabled(true);
+    ui->saveFileButton->setEnabled(true);
 }
+
 void QGCVehicleConfig::resetCalibrationRC()
 {
     for (unsigned int i = 0; i < chanMax; ++i)
@@ -1065,9 +1064,9 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (minTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
         //qDebug() << "PARAM:" << parameterName << "index:" << index;
-        if (ok && (index >= 0) && (index < chanMax))
+        if (ok && index < chanMax)
         {
             rcMin[index] = value.toInt();
         }
@@ -1075,8 +1074,8 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (maxTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        if (ok && (index >= 0) && (index < chanMax))
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        if (ok && index < chanMax)
         {
             rcMax[index] = value.toInt();
         }
@@ -1084,8 +1083,8 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (trimTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        if (ok && (index >= 0) && (index < chanMax))
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        if (ok && index < chanMax)
         {
             rcTrim[index] = value.toInt();
         }
@@ -1093,8 +1092,8 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
 
     if (revTpl.exactMatch(parameterName)) {
         bool ok;
-        int index = parameterName.mid(2, 1).toInt(&ok) - 1;
-        if (ok && (index >= 0) && (index < chanMax))
+        unsigned int index = parameterName.mid(2, 1).toInt(&ok) - 1;
+        if (ok && index < chanMax)
         {
             rcRev[index] = (value.toInt() == -1) ? true : false;
             updateInvertedCheckboxes(index);
