@@ -250,17 +250,16 @@ QPushButton, QToolButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #BBB, stop: 1 #777);
 }
 
-QPushButton#connectButton {
+QPushButton#connectButton, QPushButton#controlButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
 }
 
 QPushButton#controlButton {
     min-height: 25px;
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A0AE00, stop: 1 #909E00);
 }
 
 QPushButton#deleteButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF0037, stop: 1 #AC0025);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #D9002F, stop: 1 #AC0025);
 }
 
 QPushButton#killButton {
@@ -278,13 +277,9 @@ QPushButton:checked, QToolButton:checked {
     color: #FFF;
 }
 
-QPushButton:checked#connectButton {
+QPushButton:checked#connectButton, QPushButton:checked#controlButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #B37300);
     color: #000;
-}
-
-QPushButton:checked#controlButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #09A2B2, stop: 1 #414B52);
 }
 
 QPushButton:disabled, QToolButton:disabled {
@@ -296,8 +291,24 @@ QPushButton:hover, QToolButton:hover {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #B8D3E6, stop: 1 #899FAD);
 }
 
+QPushButton:hover#connectButton, QPushButton:hover#controlButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #87FF6D, stop: 1 #1FD16D);
+}
+
+QPushButton:hover#deleteButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #F20034, stop: 1 #9E0022);
+}
+
 QPushButton:pressed, QToolButton:pressed {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #666);
+}
+
+QPushButton:pressed#connectButton, QPushButton:pressed#controlButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #62B84E, stop: 1 #148A47);
+}
+
+QPushButton:pressed#deleteButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #C9002C, stop: 1 #9C0021);
 }
 
 QPushButton:pressed#killButton {
@@ -323,7 +334,7 @@ QSlider {
 }
 
 QSlider::groove:horizontal {
-    border: 1px solid #999999;
+    border: 1px solid #999;
     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     background-color: #4A4A4A;
     margin: 2px 0;
@@ -337,7 +348,7 @@ QSlider::groove:horizontal:disabled {
 }
 
 QSlider::groove:vertical {
-    border: 1px solid #999999;
+    border: 1px solid #999;
     width: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     background-color: #4A4A4A;
     margin: 2px 0;
