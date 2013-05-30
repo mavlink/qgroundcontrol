@@ -14,6 +14,7 @@ public:
     void hideMinMax();
     void setMin(int value);
     void setMax(int value);
+    void setName(QString name);
     int value() { return m_value; }
     int min() { return m_min; }
     int max() { return m_max; }
