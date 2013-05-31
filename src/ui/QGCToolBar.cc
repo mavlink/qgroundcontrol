@@ -168,6 +168,7 @@ void QGCToolBar::createUI()
         addLink(LinkManager::instance()->getLinks().last());
     // XXX implies that connect button is always active for the last used link
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+    connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
 
     // Update label if required
     if (LinkManager::instance()->getLinks().count() < 3) {
