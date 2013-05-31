@@ -7,7 +7,7 @@
 
 #define SEPARATE_COMPASS_ASPECTRATIO (3.0f/4.0f)
 
-#define LINEWIDTH 0.0032f
+#define LINEWIDTH 0.0036f
 
 //#define TAPES_TEXT_SIZE 0.028
 //#define AI_TEXT_SIZE 0.040
@@ -41,9 +41,9 @@
 // width of the lines is reduced, down to PITCH_SCALE_WIDTHREDUCTION times
 // the normal width. This helps keep orientation in extreme attitudes.
 #define PITCH_SCALE_WIDTHREDUCTION_FROM 30
-#define PITCH_SCALE_WIDTHREDUCTION 0.4
+#define PITCH_SCALE_WIDTHREDUCTION 0.3
 
-#define PITCH_SCALE_HALFRANGE 20
+#define PITCH_SCALE_HALFRANGE 15
 
 // The number of degrees to either side of the heading to draw the compass disk.
 // 180 is valid, this will draw a complete disk. If the disk is partly clipped
@@ -53,23 +53,20 @@
 #define COMPASS_DISK_ARROWTICK 45
 #define COMPASS_DISK_MAJORLINEWIDTH 0.006
 #define COMPASS_DISK_MINORLINEWIDTH 0.004
-#define COMPASS_DISK_SPAN 180
-#define COMPASS_DISK_RESOLUTION 15
+#define COMPASS_DISK_RESOLUTION 10
 #define COMPASS_SEPARATE_DISK_RESOLUTION 5
 #define COMPASS_DISK_MARKERWIDTH 0.2
 #define COMPASS_DISK_MARKERHEIGHT 0.133
 
-
-#define ALTIMETER_VVI_SPAN 10
-#define ALTIMETER_VVI_LOGARITHMIC true
+#define TAPE_GAUGES_TICKWIDTH_MAJOR 0.25
+#define TAPE_GAUGES_TICKWIDTH_MINOR 0.15
 
 // The altitude difference between top and bottom of scale
-#define ALTIMETER_LINEAR_SPAN 35
+#define ALTIMETER_LINEAR_SPAN 50
 // every 5 meters there is a tick mark
 #define ALTIMETER_LINEAR_RESOLUTION 5
 // every 10 meters there is a number
 #define ALTIMETER_LINEAR_MAJOR_RESOLUTION 10
-// min. and max. vertical velocity
 
 // Projected: An experiment. Make tape appear projected from a cylinder, like a French "drum" style gauge.
 // The altitude difference between top and bottom of scale
@@ -81,9 +78,12 @@
 // min. and max. vertical velocity
 //#define ALTIMETER_PROJECTED
 
+// min. and max. vertical velocity
+#define ALTIMETER_VVI_SPAN 5
+#define ALTIMETER_VVI_WIDTH 0.2
 
 // Now the same thing for airspeed!
-#define AIRSPEED_LINEAR_SPAN 10
+#define AIRSPEED_LINEAR_SPAN 15
 #define AIRSPEED_LINEAR_RESOLUTION 1
 #define AIRSPEED_LINEAR_MAJOR_RESOLUTION 5
 
@@ -107,23 +107,10 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 //    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
-    void updateBattery(UASInterface*, double, double, double, int);
-    void receiveHeartbeat(UASInterface*);
-    void updateThrust(UASInterface*, double);
-    void updateLocalPosition(UASInterface*,double,double,double,quint64);
-    void updateGlobalPosition(UASInterface*,double,double,double,quint64);
     void updateSpeed(UASInterface*,double,double,double,quint64);
-    void updateState(UASInterface*,QString);
-    void updateMode(int id,QString mode, QString description);
-    void updateLoad(UASInterface*, double);
-    void updateGPSFixType(UASInterface*,int);
-    void updateSatelliteCount(double count,QString sth);
-    void selectWaypoint(int uasId, int id);
 
 protected:
     enum Layout {
-        //FEATUREPANELS_IN_CORNERS,       // For a wide and low container.
-        //FEATUREPANELS_AT_BOTTOM,        // For higher container.
         COMPASS_INTEGRATED,
         COMPASS_SEPARATED               // For a very high container. Feature panels are at bottom.
     };
@@ -174,10 +161,10 @@ private:
     void drawTextCenterTop(QPainter& painter, QString text, float fontSize, float x, float y);
     void drawAIGlobalFeatures(QPainter& painter, QRectF mainArea, QRectF paintArea);
     void drawAIAirframeFixedFeatures(QPainter& painter, QRectF area);
-    void drawPitchScale(QPainter& painter, QRectF area, bool drawNumbersLeft, bool drawNumbersRight);
+    void drawPitchScale(QPainter& painter, QRectF area, float intrusion, bool drawNumbersLeft, bool drawNumbersRight);
     void drawRollScale(QPainter& painter, QRectF area, bool drawTicks, bool drawNumbers);
-    void drawAIAttitudeScales(QPainter& painter, QRectF area);
-    void drawAICompassDisk(QPainter& painter, QRectF area);
+    void drawAIAttitudeScales(QPainter& painter, QRectF area, float intrusion);
+    void drawAICompassDisk(QPainter& painter, QRectF area, float halfspan);
     void drawSeparateCompassDisk(QPainter& painter, QRectF area);
 
     void drawAltimeter(QPainter& painter, QRectF area, float altitude, float maxAltitude, float vv);
@@ -186,10 +173,12 @@ private:
     void fillInstrumentOpagueBackground(QPainter& painter, QRectF edge);
     void drawInstrumentBackground(QPainter& painter, QRectF edge);
 
+    /* This information is not currently included. These headers left in as a memo for restoration later.
     void drawLinkStatsPanel(QPainter& painter, QRectF area);
     void drawSysStatsPanel(QPainter& painter, QRectF area);
     void drawMissionStatsPanel(QPainter& painter, QRectF area);
     void drawSensorsStatsPanel(QPainter& painter, QRectF area);
+    */
 
     void doPaint();
 
@@ -211,18 +200,6 @@ private:
     float groundspeed;
     float airspeed;
     float verticalVelocity;
-
-    bool uavIsArmed;
-    QString mode;
-    QString state;
-    float load;         //
-
-    double batteryVoltage;
-    double batteryCurrent;
-    double batteryCharge;
-
-    int GPSFixType;
-    int satelliteCount;
 
     Layout layout;      // The display layout.
     Style style;        // The AI style (tapes translusent or opague)

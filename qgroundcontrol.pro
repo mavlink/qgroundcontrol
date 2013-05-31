@@ -681,4 +681,5 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 unix:!macx:!symbian: LIBS += -losg
 
 OTHER_FILES += \
-    dongfang_notes.txt
+    dongfang_notes.txt \
+    src/ui/dongfang-scrapyard.txt
