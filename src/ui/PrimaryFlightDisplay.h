@@ -5,6 +5,8 @@
 #include <QPen>
 #include "UASInterface.h"
 
+#define SEPARATE_COMPASS_ASPECTRATIO (3.0f/4.0f)
+
 #define LINEWIDTH 0.0032f
 
 //#define TAPES_TEXT_SIZE 0.028
@@ -53,6 +55,7 @@
 #define COMPASS_DISK_MINORLINEWIDTH 0.004
 #define COMPASS_DISK_SPAN 180
 #define COMPASS_DISK_RESOLUTION 15
+#define COMPASS_SEPARATE_DISK_RESOLUTION 5
 #define COMPASS_DISK_MARKERWIDTH 0.2
 #define COMPASS_DISK_MARKERHEIGHT 0.133
 
@@ -119,14 +122,16 @@ public slots:
 
 protected:
     enum Layout {
-        FEATUREPANELS_IN_CORNERS,       // For a wide and low container.
-        FEATUREPANELS_AT_BOTTOM,        // For higher container.
+        //FEATUREPANELS_IN_CORNERS,       // For a wide and low container.
+        //FEATUREPANELS_AT_BOTTOM,        // For higher container.
+        COMPASS_INTEGRATED,
         COMPASS_SEPARATED               // For a very high container. Feature panels are at bottom.
     };
 
     enum Style {
-        OPAGUE_TAPES,                   // Hzon not visible through tapes nor through feature panels. Frames with margins between.
-        TRANSLUCENT_TAPES               // Hzon visible through tapes and (frameless) feature panels.
+        NO_OVERLAYS,                    // Hzon not visible through tapes nor through feature panels. Frames with margins between.
+        OVERLAY_HORIZONTAL,             // Hzon visible through tapes and (frameless) feature panels.
+        OVERLAY_HSI                     // Hzon visible through everything except bottom feature panels.
     };
 
     void paintEvent(QPaintEvent *event);
@@ -167,7 +172,7 @@ private:
     void drawTextRightCenter(QPainter& painter, QString text, float fontSize, float x, float y);
     void drawTextCenterBottom(QPainter& painter, QString text, float fontSize, float x, float y);
     void drawTextCenterTop(QPainter& painter, QString text, float fontSize, float x, float y);
-    void drawAIGlobalFeatures(QPainter& painter, QRectF area);
+    void drawAIGlobalFeatures(QPainter& painter, QRectF mainArea, QRectF paintArea);
     void drawAIAirframeFixedFeatures(QPainter& painter, QRectF area);
     void drawPitchScale(QPainter& painter, QRectF area, bool drawNumbersLeft, bool drawNumbersRight);
     void drawRollScale(QPainter& painter, QRectF area, bool drawTicks, bool drawNumbers);
