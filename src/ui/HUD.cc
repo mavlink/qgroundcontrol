@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "MG.h"
 #include "QGC.h"
+#include "MainWindow.h"
 
 // Fix for some platforms, e.g. windows
 #ifndef GL_MULTISAMPLE
@@ -83,12 +84,6 @@ HUD::HUD(int width, int height, QWidget* parent)
       receivedChannels(1),
       receivedWidth(640),
       receivedHeight(480),
-      defaultColor(QColor(70, 200, 70)),
-      setPointColor(QColor(200, 20, 200)),
-      warningColor(Qt::yellow),
-      criticalColor(Qt::red),
-      infoColor(QColor(20, 200, 20)),
-      fuelColor(criticalColor),
       warningBlinkRate(5),
       refreshTimer(new QTimer(this)),
       noCamera(true),
@@ -123,8 +118,8 @@ HUD::HUD(int width, int height, QWidget* parent)
       videoEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageRequested(false),
-      imageLoggingEnabled(false)
+      imageLoggingEnabled(false),
+      imageRequested(false)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -135,19 +130,42 @@ HUD::HUD(int width, int height, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scalingFactor = this->width()/vwidth;
 
-    // Fill with black background
+    // Generate a background image that's dependent on the current color scheme.
     QImage fill = QImage(width, height, QImage::Format_Indexed8);
-    fill.setNumColors(3);
-    fill.setColor(0, qRgb(0, 0, 0));
-    fill.setColor(1, qRgb(0, 0, 0));
-    fill.setColor(2, qRgb(0, 0, 0));
-    fill.fill(0);
+    if (((MainWindow*)parent)->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        fill.fill(255);
+    }
+    else
+    {
+        fill.fill(0);
+    }
+    glImage = QGLWidget::convertToGLFormat(fill);
+
+    // Now set the other default colors based on the current color scheme.
+    if (((MainWindow*)parent)->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        defaultColor = QColor(0x01, 0x47, 0x01);
+        setPointColor = QColor(0x82, 0x17, 0x82);
+        warningColor = Qt::darkYellow;
+        criticalColor = Qt::darkRed;
+        infoColor = QColor(0x07, 0x82, 0x07);
+        fuelColor = criticalColor;
+    }
+    else
+    {
+        defaultColor = QColor(70, 200, 70);
+        setPointColor = QColor(200, 20, 200);
+        warningColor = Qt::yellow;
+        criticalColor = Qt::red;
+        infoColor = QColor(20, 200, 20);
+        fuelColor = criticalColor;
+    }
 
     //QString imagePath = "/Users/user/Desktop/frame0000.png";
     //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
     //fill = QImage(imagePath);
 
-    glImage = QGLWidget::convertToGLFormat(fill);
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
@@ -1362,7 +1380,14 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
         }
 
         // Fill first channel of image with black pixels
-        image->fill(0);
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            image->fill(255);
+        }
+        else
+        {
+            image->fill(0);
+        }
         glImage = QGLWidget::convertToGLFormat(*image);
 
         qDebug() << __FILE__ << __LINE__ << "Setting up image";
