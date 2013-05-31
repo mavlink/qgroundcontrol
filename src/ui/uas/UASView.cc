@@ -722,9 +722,9 @@ void UASView::changeEvent(QEvent *e)
  * Implement paintEvent() so that stylesheets work for our custom widget.
  */
 void UASView::paintEvent(QPaintEvent *)
- {
-     QStyleOption opt;
-     opt.init(this);
-     QPainter p(this);
-     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
- }
+{
+    QStyleOption opt;
+    opt.init(this);
+    QPainter p(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
