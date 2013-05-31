@@ -6,7 +6,6 @@ DockWidgetTitleBarEventFilter::DockWidgetTitleBarEventFilter(QObject *parent) : 
 }
 bool DockWidgetTitleBarEventFilter::eventFilter(QObject *object,QEvent *event)
 {
-    qDebug() << event->type();
     if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease)
     {
         return true;
