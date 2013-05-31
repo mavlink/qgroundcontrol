@@ -80,8 +80,6 @@ public slots:
     void updateActiveUAS(UASInterface* uas, bool active);
     /** @brief Set the widget into critical mode */
     void heartbeatTimeout(bool timeout, unsigned int ms);
-    /** @brief Set the background color for the widget */
-    void setBackgroundColor();
     /** @brief Bring up the dialog to rename the system */
     void rename();
     /** @brief Select airframe for this vehicle */
@@ -100,6 +98,7 @@ protected:
     quint64 startTime;
     bool timeout;
     bool iconIsRed;
+    bool disconnected;
     int timeRemaining;
     float chargeLevel;
     UASInterface* uas;
@@ -146,6 +145,7 @@ protected:
 
 private:
     Ui::UASView *m_ui;
+    virtual void paintEvent(QPaintEvent *);
 
 signals:
     void uasInFocus(UASInterface* uas);

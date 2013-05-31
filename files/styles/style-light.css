@@ -258,18 +258,8 @@ QPushButton#controlButton {
     min-height: 25px;
 }
 
-QPushButton#deleteButton {
+QPushButton#deleteButton, QPushButton#killButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #D9002F, stop: 1 #AC0025);
-}
-
-QPushButton#killButton {
-    font-weight: bold;
-    min-height: 30px;
-    color: #000;
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFb917, stop: 1 #B37300);
-    background-clip: border;
-    border: 1px solid #555;
-    border-radius: 5px;
 }
 
 QPushButton:checked, QToolButton:checked {
@@ -278,8 +268,16 @@ QPushButton:checked, QToolButton:checked {
 }
 
 QPushButton:checked#connectButton, QPushButton:checked#controlButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #B37300);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #E38000, stop: 1 #945F00);
     color: #000;
+}
+
+QPushButton:checked:hover#connectButton, QPushButton:checked:hover#controlButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #B37300);
+}
+
+QPushButton:checked:pressed#connectButton, QPushButton:checked:pressed#controlButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #DB7C00, stop: 1 #825400);
 }
 
 QPushButton:disabled, QToolButton:disabled {
@@ -295,7 +293,7 @@ QPushButton:hover#connectButton, QPushButton:hover#controlButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #87FF6D, stop: 1 #1FD16D);
 }
 
-QPushButton:hover#deleteButton {
+QPushButton:hover#deleteButton, QPushButton#killButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #F20034, stop: 1 #9E0022);
 }
 
@@ -307,18 +305,8 @@ QPushButton:pressed#connectButton, QPushButton:pressed#controlButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #62B84E, stop: 1 #148A47);
 }
 
-QPushButton:pressed#deleteButton {
+QPushButton:pressed#deleteButton, QPushButton#killButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #C9002C, stop: 1 #9C0021);
-}
-
-QPushButton:pressed#killButton {
-    font-weight: bold;
-    min-height: 30px;
-    color: #000;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #bb8500, stop:1 #903000);
-    background-clip: border;
-    border: 1px solid #555;
-    border-radius: 5px;
 }
 
 QScrollBar {
@@ -326,7 +314,7 @@ QScrollBar {
 }
 
 QSeparator {
-    color: #EEE;
+    color: #000;
 }
 
 QSlider {
@@ -471,6 +459,25 @@ UASQuickViewItem QLabel {
 
 UASQuickViewItem QLabel#value {
     font-size: 20pt;
+}
+
+UASView {
+    background: #D0D0D0;
+    border: 1px solid #666;
+    border-radius: 12px;
+}
+
+UASView QLabel#heartBeatLabel, UASView QLabel#typeLabel {
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 2px;
+}
+
+QGCUnconnectedInfoWidget QPushButton#connectButton {
+    min-height: 150px;
+    max-height: 275px;
+    margin: 15px;
+    padding: 20px;
 }
 
 WaypointEditableView, WaypointViewOnlyView {

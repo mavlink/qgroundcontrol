@@ -47,6 +47,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         startTime(0),
         timeout(false),
         iconIsRed(true),
+        disconnected(false),
         timeRemaining(0),
         chargeLevel(0),
         uas(uas),
@@ -104,7 +105,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(navModeChanged(int, int, QString)), this, SLOT(updateNavMode(int, int, QString)));
 
     // Setup UAS selection
-    connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
+    connect(this, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
 
     // Setup user interaction
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
@@ -139,8 +140,6 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         m_ui->nameLabel->setText(uas->getUASName());
     }
 
-    setBackgroundColor();
-
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -153,7 +152,13 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         refreshTimer->start(updateInterval);
     }
 
-    // Hide kill and shutdown buttons per default
+    // Style some elements by default to the UAS' color.
+    heartbeatColor = uas->getColor();
+    QString colorstyle("QLabel { background-color: %1; }");
+    m_ui->typeLabel->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+    updateActiveUAS(uas, false);
+
+    // Hide kill and shutdown buttons by default
     m_ui->killButton->hide();
     m_ui->shutdownButton->hide();
 
@@ -193,30 +198,6 @@ void UASView::showStatusText(int uasid, int componentid, int severity, QString t
     stateDesc = text;
 }
 
-/**
- * Set the background color based on the MAV color. If the MAV is selected as the
- * currently actively controlled system, the frame color is highlighted
- */
-void UASView::setBackgroundColor()
-{
-    // UAS color
-    QColor uasColor = uas->getColor();
-    QString colorstyle;
-    QString borderColor = "#4A4A4F";
-    if (isActive)
-    {
-        borderColor = "#FA4A4F";
-        uasColor = uasColor.darker(475);
-    }
-    else
-    {
-        uasColor = uasColor.darker(675);
-    }
-    colorstyle = colorstyle.sprintf("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X; border: 2px solid %s; }",
-                                    uasColor.red(), uasColor.green(), uasColor.blue(), borderColor.toStdString().c_str());
-    m_ui->uasViewFrame->setStyleSheet(colorstyle);
-}
-
 void UASView::setUASasActive(bool active)
 {
     if (active)
@@ -230,7 +211,14 @@ void UASView::updateActiveUAS(UASInterface* uas, bool active)
     if (uas == this->uas)
     {
         this->isActive = active;
-        setBackgroundColor();
+        if (active)
+        {
+            setStyleSheet("UASView { border-width: 3px}");
+        }
+        else
+        {
+            setStyleSheet(QString("UASView { border-color: %1}").arg(heartbeatColor.name()));
+        }
     }
 }
 
@@ -295,11 +283,16 @@ void UASView::hideEvent(QHideEvent* event)
 
 void UASView::receiveHeartbeat(UASInterface* uas)
 {
-    Q_UNUSED(uas);
-    heartbeatColor = QColor(20, 200, 20);
-    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
-    m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
-    if (timeout) setBackgroundColor();
+    heartbeatColor = uas->getColor();
+    QString colorstyle("QLabel { background-color: %1; }");
+    m_ui->heartBeatLabel->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+
+    // If we're returning from a disconnection, recolor things properly.
+    if (disconnected)
+    {
+        updateActiveUAS(this->uas, this->isActive);
+        disconnected = false;
+    }
     timeout = false;
 }
 
@@ -323,22 +316,22 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
         switch (systemType)
         {
         case MAV_TYPE_GENERIC:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/generic.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/generic.svg"));
             break;
         case MAV_TYPE_FIXED_WING:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/fixed-wing.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/fixed-wing.svg"));
             break;
         case MAV_TYPE_QUADROTOR:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/quadrotor.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/quadrotor.svg"));
             break;
         case MAV_TYPE_COAXIAL:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/coaxial.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/coaxial.svg"));
             break;
         case MAV_TYPE_HELICOPTER:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/helicopter.svg"));
             break;
         case MAV_TYPE_ANTENNA_TRACKER:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/unknown.svg"));
             break;
         case MAV_TYPE_GCS: {
                 // A groundstation is a special system type, update widget
@@ -356,44 +349,44 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
                 m_ui->landButton->hide();
                 m_ui->shutdownButton->hide();
                 m_ui->abortButton->hide();
-                m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/groundstation.svg"));
+                m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/groundstation.svg"));
             }
             break;
         case MAV_TYPE_AIRSHIP:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/airship.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/airship.svg"));
             break;
         case MAV_TYPE_FREE_BALLOON:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/free-balloon.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/free-balloon.svg"));
             break;
         case MAV_TYPE_ROCKET:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/rocket.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/rocket.svg"));
             break;
         case MAV_TYPE_GROUND_ROVER:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/ground-rover.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/ground-rover.svg"));
             break;
         case MAV_TYPE_SURFACE_BOAT:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/surface-boat.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/surface-boat.svg"));
             break;
         case MAV_TYPE_SUBMARINE:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/submarine.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/submarine.svg"));
             break;
         case MAV_TYPE_HEXAROTOR:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/hexarotor.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/hexarotor.svg"));
             break;
         case MAV_TYPE_OCTOROTOR:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/octorotor.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/octorotor.svg"));
             break;
         case MAV_TYPE_TRICOPTER:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/tricopter.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/tricopter.svg"));
             break;
         case MAV_TYPE_FLAPPING_WING:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/flapping-wing.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/flapping-wing.svg"));
             break;
         case MAV_TYPE_KITE:
-            m_ui->typeButton->setIcon(QIcon(":files/images/mavs/kite.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":files/images/mavs/kite.svg"));
             break;
         default:
-            m_ui->typeButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
+            m_ui->typeLabel->setPixmap(QPixmap(":/files/images/mavs/unknown.svg"));
             break;
         }
     }
@@ -677,54 +670,39 @@ void UASView::refresh()
     }
     generalUpdateCount++;
 
-    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
-
     if (timeout)
     {
         // CRITICAL CONDITION, NO HEARTBEAT
+        disconnected = true;
 
-        QString borderColor = "#FFFF00";
-        if (isActive)
-        {
-            borderColor = "#FA4A4F";
-        }
-
+        QColor warnColor;
         if (iconIsRed)
         {
-            QColor warnColor(Qt::red);
-            m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
-            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
-            m_ui->uasViewFrame->setStyleSheet(style);
+            warnColor = Qt::red;
         }
         else
         {
-            QColor warnColor(Qt::black);
-            m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
-            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
-            m_ui->uasViewFrame->setStyleSheet(style);
-
+            warnColor = Qt::darkRed;
             refreshTimer->setInterval(errorUpdateInterval);
             refreshTimer->start();
         }
+        QString style = QString("UASView {background-color: %1;}").arg(warnColor.name());
+        this->setStyleSheet(style);
         iconIsRed = !iconIsRed;
     }
     else
     {
+        // If we're not in low power mode, add the additional visual effect of
+        // fading out the color of the heartbeat for this UAS.
         if (!lowPowerModeEnabled)
         {
-            // Fade heartbeat icon
-            // Make color darker
-            heartbeatColor = heartbeatColor.darker(210);
-
-            //m_ui->heartbeatIcon->setAutoFillBackground(true);
-            m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+            heartbeatColor = heartbeatColor.darker(110);
+            QString colorstyle("QLabel {background-color: %1;}");
+            m_ui->heartBeatLabel->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
             refreshTimer->setInterval(updateInterval);
             refreshTimer->start();
         }
     }
-    //setUpdatesEnabled(true);
-
-    //setUpdatesEnabled(false);
 }
 
 void UASView::changeEvent(QEvent *e)
@@ -739,3 +717,14 @@ void UASView::changeEvent(QEvent *e)
         break;
     }
 }
+
+/**
+ * Implement paintEvent() so that stylesheets work for our custom widget.
+ */
+void UASView::paintEvent(QPaintEvent *)
+ {
+     QStyleOption opt;
+     opt.init(this);
+     QPainter p(this);
+     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+ }
