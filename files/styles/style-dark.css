@@ -70,6 +70,18 @@ QDockWidget::title {
     height: 14px;
 }
 
+QGCMAVLinkLogPlayer {
+    background: none;
+}
+
+QGCMAVLinkLogPlayer QLabel {
+	color: #FFF;
+}
+
+QGCMAVLinkLogPlayer QLabel:disabled {
+	color: #AAA;
+}
+
 QGCToolBar QLabel {
     font-size: 10pt;
     margin: 3px 2px;
@@ -182,6 +194,7 @@ QMenu::item:selected, QMenu::item:checked:selected {
 
 QMenu::item:checked {
     background-color: #B8D3E6;
+	color: #000;
 }
 
 QMenu::separator {
@@ -329,7 +342,7 @@ QSlider::groove:horizontal {
 
 QSlider::groove:horizontal:disabled {
     border: 1px solid #454545;
-    background-color: #CCC;
+    background-color: #4A4A4A;
     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     margin: 2px 0;
 }

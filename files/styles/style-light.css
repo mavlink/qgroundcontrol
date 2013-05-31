@@ -70,6 +70,18 @@ QDockWidget::title {
     height: 14px;
 }
 
+QGCMAVLinkLogPlayer {
+    background: none;
+}
+
+QGCMAVLinkLogPlayer QLabel {
+	color: #FFF;
+}
+
+QGCMAVLinkLogPlayer QLabel:disabled {
+	color: #666;
+}
+
 QGCToolBar QLabel {
     font-size: 10pt;
     margin: 3px 2px;
@@ -329,7 +341,7 @@ QSlider::groove:horizontal {
 }
 
 QSlider::groove:horizontal:disabled {
-    border: 1px solid #454545;
+    border: 1px solid #999;
     background-color: #CCC;
     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
     margin: 2px 0;
