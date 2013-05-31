@@ -32,6 +32,14 @@ QCheckBox::indicator:checked {
     background-color: #379AC3;
 }
 
+QCheckBox::indicator:disabled {
+    border-color: #555;
+}
+
+QCheckBox::indicator:disabled:checked {
+    background-color: #AAA;
+}
+
 QComboBox {
     border: 1px solid #777;
     border-radius: 2px;
