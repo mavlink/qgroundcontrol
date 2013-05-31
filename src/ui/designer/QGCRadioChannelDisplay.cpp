@@ -31,7 +31,7 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
         painter.drawRect(0,0,width()-1,(height()-1) - (painter.fontMetrics().height() * 2));
         painter.setBrush(Qt::SolidPattern);
         painter.setPen(QColor::fromRgb(50,255,50));
-        int newval = (height()-2-(painter.fontMetrics().height() * 2)) * ((float)m_value / 3000.0);
+        int newval = (height()-2-(painter.fontMetrics().height() * 2)) * ((float)m_value / 3001.0);
         int newvaly = (height()-2-(painter.fontMetrics().height() * 2)) - newval;
         painter.drawRect(1,newvaly,width()-3,((height()-2) - newvaly - (painter.fontMetrics().height() * 2)));
         QString valstr = QString::number(m_value);
@@ -64,7 +64,7 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
         painter.drawRect(0,0,width()-1,(height()-1) - (painter.fontMetrics().height() * 2));
         painter.setBrush(Qt::SolidPattern);
         painter.setPen(QColor::fromRgb(50,255,50));
-        painter.drawRect(1,1,(width()-1) * ((float)m_value / 3000.0),(height()-3) - (painter.fontMetrics().height() * 2));
+        painter.drawRect(1,1,(width()-3) * ((float)m_value / 3000.0),(height()-3) - (painter.fontMetrics().height() * 2));
         painter.setPen(QColor::fromRgb(255,255,255));
         QString valstr = QString::number(m_value);
         painter.drawText((width()/2.0) - (painter.fontMetrics().width(m_name)/2.0),((height()-3) - (painter.fontMetrics().height()*1)),m_name);
