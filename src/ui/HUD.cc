@@ -694,9 +694,11 @@ void HUD::paintHUD()
         glPushMatrix();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Fill with black background
-        if (videoEnabled) {
-            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
+        // If video is enabled, get the next frame.
+        if (videoEnabled)
+        {
+            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists())
+            {
                 qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
                 QImage fill = QImage(nextOfflineImage);
 
@@ -708,6 +710,7 @@ void HUD::paintHUD()
 
         }
 
+        // And if either video or the data stream is enabled, draw the next frame.
         if (dataStreamEnabled || videoEnabled)
         {
             glRasterPos2i(0, 0);
@@ -719,7 +722,10 @@ void HUD::paintHUD()
             // Resize to correct size and fill with image
             glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
             //qDebug() << "DRAWING GL IMAGE";
-        } else {
+        }
+        // But if no video frame should be shown, paint the sky/ground background.
+        else
+        {
             // Blue / brown background
             paintCenterBackground(roll, pitch, yawTrans);
         }
@@ -729,11 +735,9 @@ void HUD::paintHUD()
 
         // END OF OPENGL PAINTING
 
-        if (hudInstrumentsEnabled) {
-
-            //glEnable(GL_MULTISAMPLE);
-
-            // QT PAINTING
+        // Paint all the instrument data using Qt.
+        if (hudInstrumentsEnabled)
+        {
             //makeCurrent();
             QPainter painter;
             painter.begin(this);
@@ -742,7 +746,6 @@ void HUD::paintHUD()
             painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
             // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
-
 
             // Draw all fixed indicators
             // BATTERY
