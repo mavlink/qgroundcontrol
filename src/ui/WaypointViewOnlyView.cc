@@ -17,13 +17,13 @@ WaypointViewOnlyView::WaypointViewOnlyView(Waypoint* wp, QWidget *parent) :
 }
 
 void WaypointViewOnlyView::changedAutoContinue(int state)
-{    
+{
     bool new_value = false;
     if (state != 0)
     {
         new_value = true;
     }
-    wp->setAutocontinue(new_value);    
+    wp->setAutocontinue(new_value);
     emit changeAutoContinue(wp->getId(),new_value);
 }
 
@@ -32,7 +32,7 @@ void WaypointViewOnlyView::changedCurrent(int state)
 {
     Q_UNUSED(state);
     //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
-    m_ui->current->blockSignals(true);    
+    m_ui->current->blockSignals(true);
 
     if (m_ui->current->isChecked() == false)
     {
@@ -60,7 +60,7 @@ void WaypointViewOnlyView::changedCurrent(int state)
 void WaypointViewOnlyView::setCurrent(bool state)
 //This is a slot receiving signals from UASWaypointManager. The state given here is the true representation of what the "current" waypoint on UAV is.
 {
-    m_ui->current->blockSignals(true);    
+    m_ui->current->blockSignals(true);
     if (state == true)
     {
         wp->setCurrent(true);
@@ -90,32 +90,14 @@ void WaypointViewOnlyView::updateValues()
     int currId = wp->getId() % 2;
     if (currId != lastId)
     {
-        QString backGroundColor;
         if (currId == 1)
         {
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                backGroundColor = "#999";
-            }
-            else
-            {
-                backGroundColor = "#333";
-            }
+            this->setProperty("RowColoring", "odd");
         }
         else
         {
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                backGroundColor = "#CCC";
-            }
-            else
-            {
-                backGroundColor = "#555";
-            }
+            this->setProperty("RowColoring", "even");
         }
-
-        QString newStyle = QString("WaypointViewOnlyView {background-color: %1}").arg(backGroundColor);
-        this->setStyleSheet(newStyle);
 
         lastId = currId;
     }
@@ -160,7 +142,7 @@ void WaypointViewOnlyView::updateValues()
     if (m_ui->current->isChecked() != wp->getCurrent())
     {
         m_ui->current->blockSignals(true);
-        m_ui->current->setChecked(wp->getCurrent());        
+        m_ui->current->setChecked(wp->getCurrent());
         m_ui->current->blockSignals(false);
     }
     if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
@@ -310,7 +292,7 @@ void WaypointViewOnlyView::updateValues()
         break;
     }
     case MAV_CMD_NAV_LAND:
-    {        
+    {
         switch (wp->getFrame())
         {
         case MAV_FRAME_GLOBAL_RELATIVE_ALT:
@@ -329,7 +311,7 @@ void WaypointViewOnlyView::updateValues()
         break;
     }
     case MAV_CMD_NAV_TAKEOFF:
-    {        
+    {
         switch (wp->getFrame())
         {
         case MAV_FRAME_GLOBAL_RELATIVE_ALT:

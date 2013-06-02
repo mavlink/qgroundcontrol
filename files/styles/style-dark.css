@@ -506,6 +506,14 @@ WaypointEditableView, WaypointViewOnlyView {
     margin-bottom: 3px;
 }
 
+WaypointEditableView[RowColoring="odd"], WaypointViewOnlyView[RowColoring="odd"] {
+    background-color: #333;
+}
+
+WaypointEditableView[RowColoring="even"], WaypointViewOnlyView[RowColoring="even"] {
+    background-color: #555;
+}
+
 WaypointEditableView QCheckBox, WaypointEditableView .QWidget, WaypointViewOnlyView QCheckBox, WaypointViewOnlyView .QWidget {
     background: none;
 }
