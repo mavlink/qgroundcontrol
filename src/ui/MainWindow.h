@@ -51,7 +51,6 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 #include "ObjectDetectionView.h"
-#include "HUD.h"
 #include "submainwindow.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
@@ -257,6 +256,7 @@ public slots:
     void configureWindowName();
 
 signals:
+    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
     void initStatusChanged(const QString& message);
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */

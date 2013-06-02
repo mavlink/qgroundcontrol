@@ -34,8 +34,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QDesktopServices>
 #include <QFileDialog>
-
 #include <QDebug>
+
 #include <cmath>
 #include <qmath.h>
 #include <limits>
@@ -130,42 +130,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scalingFactor = this->width()/vwidth;
 
-    // Generate a background image that's dependent on the current color scheme.
-    QImage fill = QImage(width, height, QImage::Format_Indexed8);
-    if (((MainWindow*)parent)->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        fill.fill(255);
-    }
-    else
-    {
-        fill.fill(0);
-    }
-    glImage = QGLWidget::convertToGLFormat(fill);
-
-    // Now set the other default colors based on the current color scheme.
-    if (((MainWindow*)parent)->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-    {
-        defaultColor = QColor(0x01, 0x47, 0x01);
-        setPointColor = QColor(0x82, 0x17, 0x82);
-        warningColor = Qt::darkYellow;
-        criticalColor = Qt::darkRed;
-        infoColor = QColor(0x07, 0x82, 0x07);
-        fuelColor = criticalColor;
-    }
-    else
-    {
-        defaultColor = QColor(70, 200, 70);
-        setPointColor = QColor(200, 20, 200);
-        warningColor = Qt::yellow;
-        criticalColor = Qt::red;
-        infoColor = QColor(20, 200, 20);
-        fuelColor = criticalColor;
-    }
-
-    //QString imagePath = "/Users/user/Desktop/frame0000.png";
-    //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
-    //fill = QImage(imagePath);
-
+    // Set up the initial color theme. This can be updated by a styleChanged
+    // signal from MainWindow.
+    styleChanged(((MainWindow*)parent)->getStyle());
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
@@ -173,14 +140,6 @@ HUD::HUD(int width, int height, QWidget* parent)
 
     // Resize to correct size and fill with image
     resize(this->width(), this->height());
-    //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-
-    // Set size once
-    //setFixedSize(fill.size());
-    //setMinimumSize(fill.size());
-    //setMaximumSize(fill.size());
-    // Lock down the size
-    //setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 
     fontDatabase = QFontDatabase();
     const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
@@ -195,6 +154,11 @@ HUD::HUD(int width, int height, QWidget* parent)
     } else {
         if (font.family() != fontFamilyName) qDebug() << "ERROR! WRONG FONT LOADED: " << fontFamilyName;
     }
+
+    // Connect the themeChanged signal from the MainWindow to this widget, so it
+    // can change it's styling accordingly.
+    connect((MainWindow*)parent, SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+            this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
@@ -212,6 +176,41 @@ HUD::~HUD()
 QSize HUD::sizeHint() const
 {
     return QSize(width(), (width()*3.0f)/4);
+}
+
+void HUD::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme)
+{
+    // Generate a background image that's dependent on the current color scheme.
+    QImage fill = QImage(width(), height(), QImage::Format_Indexed8);
+    if (newTheme == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        fill.fill(255);
+    }
+    else
+    {
+        fill.fill(0);
+    }
+    glImage = QGLWidget::convertToGLFormat(fill);
+
+    // Now set the other default colors based on the current color scheme.
+    if (newTheme == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        defaultColor = QColor(0x01, 0x47, 0x01);
+        setPointColor = QColor(0x82, 0x17, 0x82);
+        warningColor = Qt::darkYellow;
+        criticalColor = Qt::darkRed;
+        infoColor = QColor(0x07, 0x82, 0x07);
+        fuelColor = criticalColor;
+    }
+    else
+    {
+        defaultColor = QColor(70, 200, 70);
+        setPointColor = QColor(200, 20, 200);
+        warningColor = Qt::yellow;
+        criticalColor = Qt::red;
+        infoColor = QColor(20, 200, 20);
+        fuelColor = criticalColor;
+    }
 }
 
 void HUD::showEvent(QShowEvent* event)
