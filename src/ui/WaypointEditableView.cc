@@ -61,7 +61,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     MissionNavTakeoffWidget = NULL;
     MissionNavSweepWidget = NULL;
     MissionConditionDelayWidget = NULL;
-    MissionDoJumpWidget = NULL;    
+    MissionDoJumpWidget = NULL;
     MissionDoStartSearchWidget = NULL;
     MissionDoFinishSearchWidget = NULL;
     MissionOtherWidget = NULL;
@@ -78,7 +78,7 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     //m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
     m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
     //m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
-    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);    
+    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
 #ifdef MAVLINK_ENABLED_PIXHAWK
     m_ui->comboBox_action->addItem(tr("NAV: Sweep"),MAV_CMD_NAV_SWEEP);
     m_ui->comboBox_action->addItem(tr("Do: Start Search"),MAV_CMD_DO_START_SEARCH);
@@ -141,7 +141,7 @@ void WaypointEditableView::changedAutoContinue(int state)
 }
 
 void WaypointEditableView::updateActionView(int action)
-{    
+{
     //Hide all
     if(MissionNavWaypointWidget) MissionNavWaypointWidget->hide();
     if(MissionNavLoiterUnlimWidget) MissionNavLoiterUnlimWidget->hide();
@@ -349,25 +349,25 @@ void WaypointEditableView::changedFrame(int index)
 }
 
 void WaypointEditableView::changedCurrent(int state)
-{    
+{
     if (state == 0)
     {
         if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
-        {            
+        {
             m_ui->selectedBox->setChecked(true);
             m_ui->selectedBox->setCheckState(Qt::Checked);
         }
         else
-        {            
+        {
             m_ui->selectedBox->setChecked(false);
-            m_ui->selectedBox->setCheckState(Qt::Unchecked);            
+            m_ui->selectedBox->setCheckState(Qt::Unchecked);
         }
     }
     else
-    {       
+    {
         wp->setCurrent(true);
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
-    }    
+    }
 }
 
 void WaypointEditableView::updateValues()
@@ -449,7 +449,7 @@ void WaypointEditableView::updateValues()
     MAV_FRAME frame = wp->getFrame();
     int frame_index = m_ui->comboBox_frame->findData(frame);
     if (m_ui->comboBox_frame->currentIndex() != frame_index) {
-        m_ui->comboBox_frame->setCurrentIndex(frame_index);        
+        m_ui->comboBox_frame->setCurrentIndex(frame_index);
     }
 
     // Update action
@@ -492,37 +492,18 @@ void WaypointEditableView::updateValues()
     m_ui->idLabel->setText(QString::number(wp->getId()));
 
     // Style alternating rows of Missions as lighter/darker.
-    QString backGroundColor;
     static int lastId = -1;
     int currId = wp->getId() % 2;
     if (currId != lastId)
     {
         if (currId == 1)
         {
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                backGroundColor = "#999";
-            }
-            else
-            {
-                backGroundColor = "#333";
-            }
+            this->setProperty("RowColoring", "odd");
         }
         else
         {
-            if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
-            {
-                backGroundColor = "#CCC";
-            }
-            else
-            {
-                backGroundColor = "#555";
-            }
+            this->setProperty("RowColoring", "even");
         }
-
-        QString newStyle = QString("WaypointEditableView {background-color: %1}").arg(backGroundColor);
-
-        this->setStyleSheet(newStyle);
         lastId = currId;
     }
 
