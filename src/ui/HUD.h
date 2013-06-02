@@ -39,6 +39,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include <QVector3D>
 #include "UASInterface.h"
+#include "MainWindow.h"
 
 /**
  * @brief Displays a Head Up Display (HUD)
@@ -59,7 +60,7 @@ public:
 
 public slots:
     void initializeGL();
-    //void paintGL();
+    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
 
     /** @brief Set the currently monitored UAS */
     virtual void setActiveUAS(UASInterface* uas);
