@@ -39,16 +39,37 @@
 */
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     uasId(id),
-    startTime(QGC::groundTimeMilliseconds()),
-    commStatus(COMM_DISCONNECTED),
-    name(""),
-    autopilot(-1),
     links(new QList<LinkInterface*>()),
     unknownPackets(),
     mavlink(protocol),
-    waypointManager(this),
+    commStatus(COMM_DISCONNECTED),
+    receiveDropRate(0),
+    sendDropRate(0),
+    statusTimeout(new QTimer(this)),
+
+    name(""),
+    type(MAV_TYPE_GENERIC),
+    airframe(QGC_AIRFRAME_GENERIC),
+    autopilot(-1),
+    systemIsArmed(false),
+    mode(-1),
+    // custom_mode not initialized
+    navMode(-1),
+    status(-1),
+    // shortModeText not initialized
+    // shortStateText not initialized
+
+    // actuatorValues not initialized
+    // actuatorNames not initialized
+    // motorValues not initialized
+    // motorNames mnot initialized
     thrustSum(0),
     thrustMax(10),
+
+    // batteryType not initialized
+    // cells not initialized
+    // fullVoltage not initialized
+    // emptyVoltage not initialized
     startVoltage(-1.0f),
     tickVoltage(10.5f),
     lastTickVoltageValue(13.0f),
@@ -59,10 +80,13 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lpVoltage(12.0f),
     currentCurrent(0.4f),
     batteryRemainingEstimateEnabled(true),
-    mode(-1),
-    status(-1),
-    navMode(-1),
+    // chargeLevel not initialized
+    // timeRemaining  not initialized
+    lowBattAlarm(false),
+
+    startTime(QGC::groundTimeMilliseconds()),
     onboardTimeOffset(0),
+
     controlRollManual(true),
     controlPitchManual(true),
     controlYawManual(true),
@@ -71,10 +95,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     manualPitchAngle(0),
     manualYawAngle(0),
     manualThrust(0),
-    receiveDropRate(0),
-    sendDropRate(0),
-    lowBattAlarm(false),
+
     positionLock(false),
+    isLocalPositionKnown(false),
+    isGlobalPositionKnown(false),
+
     localX(0.0),
     localY(0.0),
     localZ(0.0),
@@ -82,7 +107,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     latitude_gps(0.0),
     longitude_gps(0.0),
     altitude_gps(0.0),
-    statusTimeout(new QTimer(this)),
+    nedPosGlobalOffset(0,0,0),
+    nedAttGlobalOffset(0,0,0),
+
+
+    waypointManager(this),
+
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
     receivedObstacleListTimestamp(0.0),
@@ -90,18 +120,17 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedPointCloudTimestamp(0.0),
     receivedRGBDImageTimestamp(0.0),
     #endif
-    paramsOnceRequested(false),
-    airframe(QGC_AIRFRAME_GENERIC),
+
     attitudeKnown(false),
-    paramManager(NULL),
     attitudeStamped(false),
     lastAttitude(0),
+
+    paramsOnceRequested(false),
+    paramManager(NULL),
+
     simulation(0),
-    isLocalPositionKnown(false),
-    isGlobalPositionKnown(false),
-    systemIsArmed(false),
-    nedPosGlobalOffset(0,0,0),
-    nedAttGlobalOffset(0,0,0),
+
+    // The protected members.
     connectionLost(false),
     lastVoltageWarning(0),
     lastNonNullTime(0),
@@ -110,7 +139,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     sensorHil(false),
     lastSendTimeGPS(0),
     lastSendTimeSensors(0)
-
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -124,7 +152,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings(); 
-    type = MAV_TYPE_GENERIC;
     // Initial signals
     emit disarmed();
     emit armingChanged(false);  
@@ -646,7 +673,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-                emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
+                emit attitudeRotationRatesChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
         }
             break;
@@ -685,15 +712,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // dongfang: For APM, this altitude is the mix altitude[m]
-            emit altitudeChanged(uasId, hud.alt);
-            // dongfang: For APM, airspeed is  airspeed or AHRS estimated airspeed
-            // dongfang: For APM, climb rate is barometric
-            // dongfang: The signal has no parameter for groundspeed.
-            // dongfang: The signal is emitted also from other places,
-            // such as GPS xyz speeds. This will cause a mix of signals
-            // from different sensors, which will probably not be so good.
-            float weAlsoWantGroundSpeedPlease = hud.groundspeed;
-            emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, time);
+            emit altitudeChanged(this, PRIMARY_ALTITUDE, hud.alt, time);
+
+            // This makes the lateral velocity zero when it might really not be, problematic.
+            // emit speedChanged(this, PRIMARY_SPEED, hud.airspeed, 0.0f, hud.climb, time);
+            emit speedChanged(this, PRIMARY_SPEED, hud.airspeed, time);
+            emit speedChanged(this, GROUNDSPEED_BY_UAV, hud.groundspeed, time);
+            emit climbRateChanged(this, BAROMETRIC_ALTITUDE, hud.groundspeed, time);
         }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
@@ -707,7 +732,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Emit position always with component ID
             emit localPositionChanged(this, message.compid, pos.x, pos.y, pos.z, time);
 
-
             if (!wrongComponent)
             {
                 localX = pos.x;
@@ -717,7 +741,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Emit
 
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+                emit velocityChanged(this, MAV_FRAME_LOCAL_NED, pos.vx, pos.vy, pos.vz, time);
 
                 // Set internal state
                 if (!positionLock) {
@@ -745,18 +769,29 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_global_position_int_t pos;
             mavlink_msg_global_position_int_decode(&message, &pos);
             quint64 time = getUnixTime();
-            //latitude = pos.lat/(double)1E7;
             setLatitude(pos.lat/(double)1E7);
-            //longitude = pos.lon/(double)1E7;
             setLongitude(pos.lon/(double)1E7);
-            //altitude = pos.alt/1000.0;
+
+            // dongfang: Beware. There are 2 altitudes in this message; neither is the primary.
+            // pos.alt is GPS altitude and pos.relative_alt is above-home altitude.
+            // It would be nice if APM could be modified to present the primary (mix) alt. instead
+            // of the GPS alt. in this message.
             setAltitude(pos.alt/1000.0);
+
             globalEstimatorActive = true;
+
             speedX = pos.vx/100.0;
             speedY = pos.vy/100.0;
             speedZ = pos.vz/100.0;
+
             emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
-            emit speedChanged(this, speedX, speedY, speedZ, time);
+            // dongfang: The altitude is GPS altitude. Bugger. It needs to be changed to primary.
+            emit altitudeChanged(this, GPS_ALTITUDE, getAltitude(), time);
+            // We had some frame mess here, global and local axes were mixed.
+            emit velocityChanged(this, MAV_FRAME_GLOBAL, speedX, speedY, speedZ, time);
+
+            double groundspeed = qSqrt(speedX*speedX+speedY*speedY);
+            emit speedChanged(this, GROUNDSPEED_BY_GPS, groundspeed, time);
 
             // Set internal state
             if (!positionLock)
@@ -797,14 +832,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 longitude_gps = pos.lon/(double)1E7;
                 altitude_gps = pos.alt/1000.0;
 
+                // If no GLOBAL_POSITION_INT messages ever received, use these raw GPS values instead.
                 if (!globalEstimatorActive) {
-                    //latitude = latitude_gps;
                     setLatitude(latitude_gps);
-                    //longitude = longitude_gps;
                     setLongitude(longitude_gps);
-                    //altitude = altitude_gps;
                     setAltitude(altitude_gps);
                     emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
+                    emit altitudeChanged(this, GPS_ALTITUDE, getAltitude(), time);
                 }
 
                 positionLock = true;
@@ -814,10 +848,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 float vel = pos.vel/100.0f;
 
+                // If no GLOBAL_POSITION_INT messages ever received, use these raw GPS values instead.
                 if (!globalEstimatorActive) {
                     if ((vel < 1000000) && !isnan(vel) && !isinf(vel))
                     {
-                        emit speedChanged(this, vel, 0.0, 0.0, time);
+                        // TODO: Other sources also? Actually this condition does not quite belong here.
+                        emit speedChanged(this, GROUNDSPEED_BY_GPS, vel, time);
                     }
                     else
                     {
@@ -1360,6 +1396,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_nav_controller_output_t p;
             mavlink_msg_nav_controller_output_decode(&message,&p);
             setDistToWaypoint(p.wp_dist);
+            setBearingToWaypoint(p.nav_bearing);
+            //setAltitudeError(p.alt_error);
+            //setSpeedError(p.aspd_error);
+            //setCrosstrackingError(p.xtrack_error);
+            emit navigationControllerErrorsChanged(this, p.alt_error, p.aspd_error, p.xtrack_error);
         }
             break;
         case MAVLINK_MSG_ID_RAW_PRESSURE:
@@ -1491,7 +1532,7 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
 /**
 * Set the home position of the UAS.
 * @param lat The latitude fo the home position
-* @param lon The longitute of the home position
+* @param lon The longitude of the home position
 * @param alt The altitude of the home position
 */
 void UAS::setHomePosition(double lat, double lon, double alt)
