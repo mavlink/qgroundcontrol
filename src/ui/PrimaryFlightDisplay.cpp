@@ -40,16 +40,20 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
 
     uas(NULL),
 
+    altimeterMode(GPS_MAIN),
+    altimeterFrame(ASL),
+    speedMode(GROUND_MAIN),
+
     roll(UNKNOWN_ATTITUDE),
     pitch(UNKNOWN_ATTITUDE),
     //    heading(NAN),
     heading(UNKNOWN_ATTITUDE),
-    aboveASLAltitude(UNKNOWN_ALTITUDE),
+    primaryAltitude(UNKNOWN_ALTITUDE),
     GPSAltitude(UNKNOWN_ALTITUDE),
     aboveHomeAltitude(UNKNOWN_ALTITUDE),
+    primarySpeed(UNKNOWN_SPEED),
     groundspeed(UNKNOWN_SPEED),
-    airspeed(UNKNOWN_SPEED),
-    verticalVelocity(UNKNOWN_SPEED),
+    verticalVelocity(UNKNOWN_ALTITUDE),
 
     font("Bitstream Vera Sans"),
     refreshTimer(new QTimer(this)),
@@ -169,18 +173,20 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
-        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
-        disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-        disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
-        disconnect(this->uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
-        disconnect(this->uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
+        //disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
+        //disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        //disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        //disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        //disconnect(this->uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
+        //disconnect(this->uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
         disconnect(this->uas, SIGNAL(localizationChanged(UASInterface* uas, int fix)), this, SLOT(updateGPSFixType(UASInterface*,int)));
 
         //disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        //disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*, SpeedMeasurementSource, double, quint64)), this, SLOT(updateSpeed(UASInterface*,SpeedMeasurementSource,double,quint64)));
+        disconnect(this->uas, SIGNAL(climbRateChanged(UASInterface*, AltitudeMeasurementSource, double, quint64)), this, SLOT(updateClimbRate(UASInterface*, AltitudeMeasurementSource, double, quint64)));
+        disconnect(this->uas, SIGNAL(altitudeChanged(UASInterface*, AltitudeMeasurementSource, double)), this, SLOT(updateAltitude(UASInterface*, AltitudeMeasurementSource, double, quint64)));
     }
 
     if (uas) {
@@ -189,17 +195,19 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
-        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
-        connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
-        connect(uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
-        connect(uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
+        //connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
+        //connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        //connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        //connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        //connect(uas, SIGNAL(armingChanged(bool)), this, SLOT(updateArmed(bool)));
+        //connect(uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
 
         //connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        //connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        connect(uas, SIGNAL(speedChanged(UASInterface*, SpeedMeasurementSource, double, quint64)), this, SLOT(updateSpeed(UASInterface*,SpeedMeasurementSource,double,quint64)));
+        connect(uas, SIGNAL(climbRateChanged(UASInterface*, AltitudeMeasurementSource, double, quint64)), this, SLOT(updateClimbRate(UASInterface*, AltitudeMeasurementSource, double, quint64)));
+        connect(uas, SIGNAL(altitudeChanged(UASInterface*, AltitudeMeasurementSource, double, quint64)), this, SLOT(updateAltitude(UASInterface*, AltitudeMeasurementSource, double, quint64)));
 
         // Set new UAS
         this->uas = uas;
@@ -249,29 +257,59 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, int component, doub
  * TODO! Examine what data comes with this call, should we consider it airspeed, ground speed or
  * should we not consider it at all?
  */
-void PrimaryFlightDisplay::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 timestamp)
+void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, SpeedMeasurementSource source, double speed, quint64 timestamp)
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    Q_UNUSED(z);
-    /*
-    this->xSpeed = x;
-    this->ySpeed = y;
-    this->zSpeed = z;
-    */
 
-    double newTotalSpeed = qSqrt(x*x + y*y/*+ zSpeed*zSpeed */);
-    // totalAcc = (newTotalSpeed - totalSpeed) / ((double)(lastSpeedUpdate - timestamp)/1000.0);
+    if (source == PRIMARY_SPEED) {
+        primarySpeed = speed;
+        didReceivePrimarySpeed = true;
+    } else if (source == GROUNDSPEED_BY_GPS || source == GROUNDSPEED_BY_UAV) {
+        groundspeed = speed;
+        if (!didReceivePrimarySpeed)
+            primarySpeed = speed;
+    }
+}
 
-    // TODO: Change to real data.
-    groundspeed = newTotalSpeed;
-    airspeed = x;
-    verticalVelocity = z;
+void PrimaryFlightDisplay::updateClimbRate(UASInterface* uas, AltitudeMeasurementSource source, double climbRate, quint64 timestamp) {
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    verticalVelocity = climbRate;
+}
+
+void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, AltitudeMeasurementSource source, double altitude, quint64 timestamp) {
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    if (source == PRIMARY_ALTITUDE) {
+        primaryAltitude = altitude;
+        didReceivePrimaryAltitude = true;
+    } else if (source == GPS_ALTITUDE) {
+        GPSAltitude = altitude;
+        if (!didReceivePrimaryAltitude)
+            primaryAltitude = altitude;
+    }
 }
 
 /*
  * Private and such
  */
+
+// TODO: Move to UAS. Real working implementation.
+bool PrimaryFlightDisplay::isAirplane() {
+    if (!this->uas)
+        return false;
+    switch(this->uas->getSystemType()) {
+    case MAV_TYPE_GENERIC:
+    case MAV_TYPE_FIXED_WING:
+    case MAV_TYPE_AIRSHIP:
+    case MAV_TYPE_FLAPPING_WING:
+        return true;
+    default:
+        return false;
+    }
+}
+
 void PrimaryFlightDisplay::drawTextCenter (
         QPainter& painter,
         QString text,
@@ -832,11 +870,9 @@ void PrimaryFlightDisplay::drawAltimeter(
         QPainter& painter,
         QRectF area, // the area where to draw the tape.
         float primaryAltitude,
-        float maxAltitude,
+        float secondaryAltitude,
         float vv
     ) {
-
-    Q_UNUSED(maxAltitude)
 
     painter.resetTransform();
     fillInstrumentBackground(painter, area);
@@ -849,8 +885,14 @@ void PrimaryFlightDisplay::drawAltimeter(
 
     float h = area.height();
     float w = area.width();
+    float secondaryAltitudeBoxHeight = mediumTextSize * 2;
     // The height where we being with new tickmarks.
     float effectiveHalfHeight = h*0.45;
+
+    // not yet implemented: Display of secondary altitude.
+    // if (isAirplane())
+    //    effectiveHalfHeight-= secondaryAltitudeBoxHeight;
+
     float markerHalfHeight = mediumTextSize*0.8;
     float leftEdge = instrumentEdgePen.widthF()*2;
     float rightEdge = w-leftEdge;
@@ -929,26 +971,34 @@ void PrimaryFlightDisplay::drawAltimeter(
     drawTextCenter(painter, s_alt, /* TAPES_TEXT_SIZE*width()*/ mediumTextSize, xCenter, 0);
 
     if (vv == UNKNOWN_ALTITUDE) return;
-    float vvPixHeight = vv/ALTIMETER_VVI_SPAN * effectiveHalfHeight;
-    if (abs (vvPixHeight)<markerHalfHeight) return;
+    float vvPixHeight = -vv/ALTIMETER_VVI_SPAN * effectiveHalfHeight;
+    if (abs (vvPixHeight)<markerHalfHeight) return; // hidden behind marker.
 
-    float vvSign = vvPixHeight>0 ? -1 : 1;
+    float vvSign = vvPixHeight>0 ? 1 : -1; // reverse y sign
 
     // QRectF vvRect(rightEdge - w*ALTIMETER_VVI_WIDTH, markerHalfHeight*vvSign, w*ALTIMETER_VVI_WIDTH, abs(vvPixHeight)*vvSign);
     QPointF vvArrowBegin(rightEdge - w*ALTIMETER_VVI_WIDTH/2, markerHalfHeight*vvSign);
-    QPointF vvArrowEnd(rightEdge - w*ALTIMETER_VVI_WIDTH/2, -vvPixHeight);
+    QPointF vvArrowEnd(rightEdge - w*ALTIMETER_VVI_WIDTH/2, vvPixHeight);
     painter.drawLine(vvArrowBegin, vvArrowEnd);
 
-    QPointF vvArrowHead(rightEdge, -vvPixHeight+w*ALTIMETER_VVI_WIDTH);
+    // Yeah this is a repitition of above code but we are goigd to trash it all anyway, so no fix.
+    float vvArowHeadSize = abs(vvPixHeight - markerHalfHeight*vvSign);
+    if (vvArowHeadSize > w*ALTIMETER_VVI_WIDTH/3) vvArowHeadSize = w*ALTIMETER_VVI_WIDTH/3;
+
+    float xcenter = rightEdge-w*ALTIMETER_VVI_WIDTH/2;
+
+    QPointF vvArrowHead(xcenter+vvArowHeadSize, vvPixHeight - vvSign *vvArowHeadSize);
     painter.drawLine(vvArrowHead, vvArrowEnd);
 
-    vvArrowHead = QPointF(rightEdge-ALTIMETER_VVI_WIDTH, -vvPixHeight+w*ALTIMETER_VVI_WIDTH);
+    vvArrowHead = QPointF(xcenter-vvArowHeadSize, vvPixHeight - vvSign * vvArowHeadSize);
     painter.drawLine(vvArrowHead, vvArrowEnd);
 }
 
 void PrimaryFlightDisplay::drawVelocityMeter(
         QPainter& painter,
-        QRectF area
+        QRectF area,
+        float speed,
+        float secondarySpeed
         ) {
 
     painter.resetTransform();
@@ -969,10 +1019,9 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     float markerTip = (tickmarkLeftMajor+tickmarkRight*2)/3;
 
     // Select between air and ground speed:
-    float primarySpeed = airspeed;
 
     float centerScaleSpeed =
-            primarySpeed == UNKNOWN_SPEED ? 0 : primarySpeed;
+            speed == UNKNOWN_SPEED ? 0 : speed;
 
     float start = centerScaleSpeed - AIRSPEED_LINEAR_SPAN/2;
     float end = centerScaleSpeed + AIRSPEED_LINEAR_SPAN/2;
@@ -1020,10 +1069,10 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     pen.setColor(Qt::white);
     painter.setPen(pen);
     QString s_alt;
-    if (primarySpeed == UNKNOWN_SPEED)
+    if (speed == UNKNOWN_SPEED)
         s_alt.sprintf("---");
     else
-        s_alt.sprintf("%3.1f", primarySpeed);
+        s_alt.sprintf("%3.1f", speed);
     float xCenter = (markerTip+leftEdge)/2;
     drawTextCenter(painter, s_alt, /* TAPES_TEXT_SIZE*width()*/ mediumTextSize, xCenter, 0);
 }
@@ -1360,11 +1409,9 @@ void PrimaryFlightDisplay::doPaint() {
 
     painter.setClipping(hadClip);
 
-    // X: To the right of AI and with single margin again. That is, 3 single margins plus width of AI.
-    // Y: 1 single margin below above gadget.
+    drawAltimeter(painter, altimeterArea, primaryAltitude, GPSAltitude, verticalVelocity);
 
-    drawAltimeter(painter, altimeterArea, aboveASLAltitude, 1000, 3);
-    drawVelocityMeter(painter, velocityMeterArea);
+    drawVelocityMeter(painter, velocityMeterArea, primarySpeed, groundspeed);
 
     /*
     drawSensorsStatsPanel(painter, sensorsStatsArea);

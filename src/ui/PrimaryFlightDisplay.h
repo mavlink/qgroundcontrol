@@ -106,8 +106,12 @@ public slots:
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
-//    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
-    void updateSpeed(UASInterface*,double,double,double,quint64);
+
+    void updateSpeed(UASInterface* uas, SpeedMeasurementSource source, double speed, quint64 timstamp);
+    void updateClimbRate(UASInterface* uas, AltitudeMeasurementSource source, double altitude, quint64 timestamp);
+    void updateAltitude(UASInterface* uas, AltitudeMeasurementSource source, double altitude, quint64 timestamp);
+    /** @brief Set the currently monitored UAS */
+    virtual void setActiveUAS(UASInterface* uas);
 
 protected:
     enum Layout {
@@ -136,23 +140,34 @@ protected:
     // dongfang: We have no context menu. Viewonly.
     // void contextMenuEvent (QContextMenuEvent* event);
 
-protected:
     // dongfang: What is that?
     // dongfang: OK it's for UI interaction. Presently, there is none.
     void createActions();
-
-public slots:
-    /** @brief Set the currently monitored UAS */
-    virtual void setActiveUAS(UASInterface* uas);
-
-protected slots:
 
 signals:
     void visibilityChanged(bool visible);
 
 private:
-    //void prepareTransform(QPainter& painter, qreal width, qreal height);
-    //void transformToGlobalSystem(QPainter& painter, qreal width, qreal height, float roll, float pitch);
+    enum AltimeterMode {
+        PRIMARY_MAIN_GPS_SUB,   // Show the primary alt. on tape and GPS as extra info
+        GPS_MAIN                // Show GPS on tape and no extra info
+    };
+
+    enum AltimeterFrame {
+        ASL,                    // Show ASL altitudes (plane pilots' normal preference)
+        RELATIVE_TO_HOME        // Show relative-to-home altitude (copter pilots)
+    };
+
+    enum SpeedMode {
+        PRIMARY_MAIN_GROUND_SUB,// Show primary speed (often airspeed) on tape and groundspeed as extra
+        GROUND_MAIN             // Show groundspeed on tape and no extra info
+    };
+
+    /*
+     * There are at least these differences between airplane and copter PDF view:
+     * - Airplane show absolute altutude in altimeter, copter shows relative to home
+     */
+    bool isAirplane();
 
     void drawTextCenter(QPainter& painter, QString text, float fontSize, float x, float y);
     void drawTextLeftCenter(QPainter& painter, QString text, float fontSize, float x, float y);
@@ -167,8 +182,8 @@ private:
     void drawAICompassDisk(QPainter& painter, QRectF area, float halfspan);
     void drawSeparateCompassDisk(QPainter& painter, QRectF area);
 
-    void drawAltimeter(QPainter& painter, QRectF area, float altitude, float maxAltitude, float vv);
-    void drawVelocityMeter(QPainter& painter, QRectF area);
+    void drawAltimeter(QPainter& painter, QRectF area, float altitude, float secondaryAltitude, float vv);
+    void drawVelocityMeter(QPainter& painter, QRectF area, float speed, float secondarySpeed);
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
     void fillInstrumentOpagueBackground(QPainter& painter, QRectF edge);
     void drawInstrumentBackground(QPainter& painter, QRectF edge);
@@ -184,21 +199,27 @@ private:
 
     UASInterface* uas;          ///< The uas currently monitored
 
+    AltimeterMode altimeterMode;
+    AltimeterFrame altimeterFrame;
+    SpeedMode speedMode;
+
+    bool didReceivePrimaryAltitude;
+    bool didReceivePrimarySpeed;
+
     float roll;
     float pitch;
     float heading;
 
-    // APM: GPS and baro mix. From the GLOBAL_POSITION_INT or VFR_HUD messages.
-    float aboveASLAltitude;
+    float primaryAltitude;
     float GPSAltitude;
 
     // APM: GPS and baro mix above home (GPS) altitude. This value comes from the GLOBAL_POSITION_INT message.
     // Do !!!NOT!!! ever do altitude calculations at the ground station. There are enough pitfalls already.
-    // The MP "set home altitude" button will not be repeated here if it did that.
+    // If the MP "set home altitude" button is migrated to here, it must set the UAS home altitude, not a GS-local one.
     float aboveHomeAltitude;
 
+    float primarySpeed;
     float groundspeed;
-    float airspeed;
     float verticalVelocity;
 
     Layout layout;      // The display layout.

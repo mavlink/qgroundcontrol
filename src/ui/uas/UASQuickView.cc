@@ -73,6 +73,18 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         uasPropertyToLabelMap["distToWaypoint"] = item;
     }
 
+    {
+        QAction *action = new QAction("bearingToWaypoint",this);
+        action->setCheckable(true);
+        action->setChecked(true);
+        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
+        this->addAction(action);
+        UASQuickViewItem *item = new UASQuickViewItem(this);
+        item->setTitle("bearingToWaypoint");
+        ui.verticalLayout->addWidget(item);
+        uasPropertyToLabelMap["bearingToWaypoint"] = item;
+    }
+
     updateTimer = new QTimer(this);
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
     updateTimer->start(1000);
