@@ -96,6 +96,8 @@ public slots:
     /** @brief A new special symbol is selected */
     void specialSymbolSelected(const QString& text);
 
+    void linkStatusUpdate(const QString& name,const QString& text);
+
 protected slots:
     /** @brief Draw information overlay */
     void paintEvent(QPaintEvent *event);
