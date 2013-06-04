@@ -1,0 +1,87 @@
+#include "QGCRadioChannelDisplay.h"
+#include <QPainter>
+QGCRadioChannelDisplay::QGCRadioChannelDisplay(QWidget *parent) : QWidget(parent)
+{
+    m_showMinMax = true;
+    m_min = 500;
+    m_max = 1600;
+    m_value = 1500;
+    m_orientation = Qt::Vertical;
+    m_name = "Yaw";
+}
+
+void QGCRadioChannelDisplay::setOrientation(Qt::Orientation orient)
+{
+    m_orientation = orient;
+    update();
+}
+void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
+{
+    //Values range from 0-3000.
+    //1500 is the middle, static servo value.
+    QPainter painter(this);
+
+    if (m_orientation == Qt::Vertical)
+    {
+        painter.drawRect(0,0,width()-1,(height()-1) - (painter.fontMetrics().height() * 2));
+        painter.setBrush(Qt::SolidPattern);
+        painter.setPen(QColor::fromRgb(50,255,50));
+        int newval = (height()-2) * ((float)m_value / 3000.0);
+        painter.drawRect(1,newval,width()-3,((height()-2) - newval)  - (painter.fontMetrics().height() * 2));
+    }
+    else
+    {
+        painter.drawRect(0,0,width()-1,(height()-1) - (painter.fontMetrics().height() * 2));
+        painter.setBrush(Qt::SolidPattern);
+        painter.setPen(QColor::fromRgb(50,255,50));
+        painter.drawRect(1,1,(width()-1) * ((float)m_value / 3000.0),(height()-3) - (painter.fontMetrics().height() * 2));
+        painter.setPen(QColor::fromRgb(255,255,255));
+        QString valstr = QString::number(m_value);
+        painter.drawText((width()/2.0) - (painter.fontMetrics().width(m_name)/2.0),((height()-3) - (painter.fontMetrics().height()*1)),m_name);
+        painter.drawText((width()/2.0) - (painter.fontMetrics().width(valstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),valstr);
+        if (m_showMinMax)
+        {
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(QColor::fromRgb(255,0,0));
+            painter.drawRect(width() * ((float)m_min / 3000.0),2,((width()-1) * ((float)m_max / 3000.0)) - (width() * ((float)m_min / 3000.0)),(height()-5) - (painter.fontMetrics().height() * 2));
+
+            QString minstr = QString::number(m_min);
+            painter.drawText((width() * ((float)m_min / 3000.0)) - (painter.fontMetrics().width("min")/2.0),((height()-3) - (painter.fontMetrics().height()*1)),"min");
+            painter.drawText((width() * ((float)m_min / 3000.0)) - (painter.fontMetrics().width(minstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),minstr);
+
+            QString maxstr = QString::number(m_max);
+            painter.drawText((width() * ((float)m_max / 3000.0)) - (painter.fontMetrics().width("max")/2.0),((height()-3) - (painter.fontMetrics().height()*1)),"max");
+            painter.drawText((width() * ((float)m_max / 3000.0)) - (painter.fontMetrics().width(maxstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),maxstr);
+        }
+    }
+}
+
+void QGCRadioChannelDisplay::setValue(int value)
+{
+    m_value = value;
+    update();
+}
+
+void QGCRadioChannelDisplay::showMinMax()
+{
+    m_showMinMax = true;
+    update();
+}
+
+void QGCRadioChannelDisplay::hideMinMax()
+{
+    m_showMinMax = false;
+    update();
+}
+
+void QGCRadioChannelDisplay::setMin(int value)
+{
+    m_min = value;
+    update();
+}
+
+void QGCRadioChannelDisplay::setMax(int value)
+{
+    m_max = value;
+    update();
+}
