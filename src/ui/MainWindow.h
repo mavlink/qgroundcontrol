@@ -115,13 +115,13 @@ public:
         return currentStyle;
     }
 
-    /** @brief Get current light visual style */
+    /** @brief Get current light visual stylesheet */
     QString getLightStyleSheet()
     {
         return lightStyleFileName;
     }
 
-    /** @brief Get current dark visual style */
+    /** @brief Get current dark visual stylesheet */
     QString getDarkStyleSheet()
     {
         return darkStyleFileName;

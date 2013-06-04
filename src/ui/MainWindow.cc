@@ -540,27 +540,6 @@ void MainWindow::buildCommonWidgets()
     }
     createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
 
-
-
-    //FIXME: memory of acceptList will never be freed again
-    QStringList* acceptList = new QStringList();
-    acceptList->append("-3.3,ATTITUDE.roll,rad,+3.3,s");
-    acceptList->append("-3.3,ATTITUDE.pitch,deg,+3.3,s");
-    acceptList->append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
-
-    //FIXME: memory of acceptList2 will never be freed again
-    QStringList* acceptList2 = new QStringList();
-    acceptList2->append("0,RAW_PRESSURE.pres_abs,hPa,65500");
-
-
-    //HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
-    //hdDisplay->addSource(mavlinkDecoder);
-    //createDockWidget(pilotView,hdDisplay,tr("Flight Display"),"HEAD_DOWN_DISPLAY_1_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-
-    //HDDisplay* hdDisplay2 = new HDDisplay(acceptList2, "Actuator Status", this);
-    //hdDisplay2->addSource(mavlinkDecoder);
-    //createDockWidget(pilotView,hdDisplay2,tr("Actuator Status"),"HEAD_DOWN_DISPLAY_2_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-
     {
         QAction* tempAction = ui.menuTools->addAction(tr("Flight Display"));
         tempAction->setCheckable(true);
