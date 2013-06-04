@@ -9,6 +9,8 @@ public:
     UASQuickViewTextItem(QWidget *parent=0);
     void setValue(double value);
     void setTitle(QString title);
+protected:
+    void resizeEvent(QResizeEvent *event);
 private:
     QLabel *titleLabel;
     QLabel *valueLabel;

@@ -210,32 +210,6 @@ void UASQuickView::setActiveUAS(UASInterface* uas)
     }
     this->uas = uas;
     connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
-    qDebug() << "UASInfoWidget property count:" << uas->metaObject()->propertyCount();
-    for (int i=0;i<uas->metaObject()->propertyCount();i++)
-    {
-        if (uas->metaObject()->property(i).hasNotifySignal())
-        {
-            qDebug() << "Property:" << i << uas->metaObject()->property(i).name();
-            uasPropertyValueMap[uas->metaObject()->property(i).name()] = 0;
-            if (!uasPropertyToLabelMap.contains(uas->metaObject()->property(i).name()))
-            {
-                QAction *action = new QAction(QString(uas->metaObject()->property(i).name()),this);
-                action->setCheckable(true);
-                connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-                this->addAction(action);
-            }
-            qDebug() << "Signature:" << uas->metaObject()->property(i).notifySignal().signature();
-            int val = this->metaObject()->indexOfMethod("valChanged(double,QString)");
-            if (val != -1)
-            {
-
-                if (!connect(uas,uas->metaObject()->property(i).notifySignal(),this,this->metaObject()->method(val)))
-                {
-                    qDebug() << "Error connecting signal";
-                }
-            }
-        }
-    }
     //connect(uas,SIGNAL())
 }
 void UASQuickView::addSource(MAVLinkDecoder *decoder)
