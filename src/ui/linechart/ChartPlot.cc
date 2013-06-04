@@ -110,8 +110,8 @@ void ChartPlot::applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style)
     if (style == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         // Set the coloring of the area selector for zooming.
-        zoomer->setRubberBandPen(QPen(Qt::darkRed, zoomerWidth, Qt::DotLine));
-        zoomer->setTrackerPen(QPen(Qt::darkRed));
+        zoomer->setRubberBandPen(QPen(QColor(0x37, 0x9A, 0xC3), zoomerWidth, Qt::DotLine));
+        zoomer->setTrackerPen(QPen(QColor(0x37, 0x9A, 0xC3)));
 
         // Set canvas background
         setCanvasBackground(QColor(0xFF, 0xFF, 0xFF));
@@ -123,8 +123,8 @@ void ChartPlot::applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style)
     else
     {
         // Set the coloring of the area selector for zooming.
-        zoomer->setRubberBandPen(QPen(Qt::red, zoomerWidth, Qt::DotLine));
-        zoomer->setTrackerPen(QPen(Qt::red));
+        zoomer->setRubberBandPen(QPen(QColor(0xB8, 0xD3, 0xE6), zoomerWidth, Qt::DotLine));
+        zoomer->setTrackerPen(QPen(QColor(0xB8, 0xD3, 0xE6)));
 
         // Set canvas background
         setCanvasBackground(QColor(0, 0, 0));

@@ -102,7 +102,7 @@ void QGCToolBar::createUI()
     toolBarTimeoutLabel->setObjectName("toolBarTimeoutLabel");
     addWidget(toolBarTimeoutLabel);
 
-    toolBarSafetyLabel = new QLabel("SAFE", this);
+    toolBarSafetyLabel = new QLabel("----", this);
     toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
     toolBarSafetyLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarSafetyLabel);
@@ -364,7 +364,14 @@ void QGCToolBar::updateView()
     }
     else
     {
-        toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814;}");
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            toolBarSafetyLabel->setStyleSheet("QLabel {color: #0D820D;}");
+        }
+        else
+        {
+            toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814;}");
+        }
         toolBarSafetyLabel->setText(tr("SAFE"));
     }
 
