@@ -59,6 +59,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFirmwareUpdate.h"
 #include "QGCStatusBar.h"
 #include "UASQuickView.h"
+#include "QGCDataPlot2D.h"
+#include "Linecharts.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"

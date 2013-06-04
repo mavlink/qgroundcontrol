@@ -22,6 +22,7 @@
 #include <LinechartPlot.h>
 #include <MG.h>
 #include <QPaintEngine>
+#include "ChartPlot.h"
 
 #include "QGC.h"
 
@@ -31,7 +32,8 @@
  * @param parent The parent widget
  * @param interval The maximum interval for which data is stored (default: 30 minutes) in milliseconds
  **/
-LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): QwtPlot(parent),
+LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
+    ChartPlot(parent),
     minTime(0),
     lastTime(0),
     maxTime(100),
@@ -58,33 +60,6 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
 
     yScaleEngine = new QwtLinearScaleEngine();
     setAxisScaleEngine(QwtPlot::yLeft, yScaleEngine);
-
-    /* Create color map */
-    colors = QList<QColor>();
-    nextColor = 0;
-
-    ///> Color map for plots, includes 20 colors
-    ///> Map will start from beginning when the first 20 colors are exceeded
-    colors.append(QColor(242,255,128));
-    colors.append(QColor(70,80,242));
-    colors.append(QColor(232,33,47));
-    colors.append(QColor(116,251,110));
-    colors.append(QColor(81,183,244));
-    colors.append(QColor(234,38,107));
-    colors.append(QColor(92,247,217));
-    colors.append(QColor(151,59,239));
-    colors.append(QColor(231,72,28));
-    colors.append(QColor(236,48,221));
-    colors.append(QColor(75,133,243));
-    colors.append(QColor(203,254,121));
-    colors.append(QColor(104,64,240));
-    colors.append(QColor(200,54,238));
-    colors.append(QColor(104,250,138));
-    colors.append(QColor(235,43,165));
-    colors.append(QColor(98,248,176));
-    colors.append(QColor(161,252,116));
-    colors.append(QColor(87,231,246));
-    colors.append(QColor(230,126,23));
 
     setAutoReplot(false);
 
@@ -395,19 +370,6 @@ void LinechartPlot::addCurve(QString id)
 
     // Notify connected components about new curve
     emit curveAdded(id);
-}
-
-QColor LinechartPlot::getNextColor()
-{
-    /* Return current color and increment counter for next round */
-    nextColor++;
-    if(nextColor >= colors.count()) nextColor = 0;
-    return colors[nextColor++];
-}
-
-QColor LinechartPlot::getColorForCurve(QString id)
-{
-    return curves.value(id)->pen().color();
 }
 
 /**
