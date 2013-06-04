@@ -97,11 +97,11 @@ void ChartPlot::applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style)
     for (int i = 0; i < numColors; ++i)
     {
         if (style == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT) {
-            colors[i] = baseColors[i].lighter(150);
+            colors[i] = baseColors[i].darker(150);
         }
         else
         {
-            colors[i] = baseColors[i].darker(150);
+            colors[i] = baseColors[i].lighter(150);
         }
     }
     shuffleColors();
