@@ -97,8 +97,29 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    /**
+     * A static function for obtaining the sole instance of the MainWindow. The screen
+     * argument is only important on the FIRST call to this function. The provided splash
+     * screen is updated with some status messages that are emitted during init(). This
+     * function cannot be used within the MainWindow constructor!
+     */
     static MainWindow* instance(QSplashScreen* screen = 0);
+
+    /**
+     * Initializes the MainWindow. Some variables are initialized and the widget is hidden.
+     * Initialization of the MainWindow class really occurs in init(), which loads the UI
+     * and does everything important. The constructor is split in two like this so that
+     * the instance() is available for all classes.
+     */
+    MainWindow(QWidget *parent = NULL);
     ~MainWindow();
+
+    /**
+     * This function actually performs the non-trivial initialization of the MainWindow
+     * class. This is separate from the constructor because instance() won't work within
+     * code executed in the MainWindow constructor.
+     */
+    void init();
 
     enum QGC_MAINWINDOW_STYLE
     {
@@ -106,6 +127,8 @@ public:
         QGC_MAINWINDOW_STYLE_LIGHT
     };
 
+    // Declare default dark and light stylesheets. These should be file-resource
+    // paths.
     static const QString defaultDarkStyle;
     static const QString defaultLightStyle;
 
@@ -257,7 +280,7 @@ public slots:
 
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
-    void initStatusChanged(const QString& message);
+    void initStatusChanged(const QString& message, int alignment, const QColor &color);
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
@@ -275,8 +298,6 @@ public:
     }
 
 protected:
-
-    MainWindow(QWidget *parent = 0);
 
     typedef enum _VIEW_SECTIONS
     {
