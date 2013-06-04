@@ -20,7 +20,6 @@
 #ifdef _WIN32
 #include "windows.h"
 #endif
-
 #ifdef _WIN32
 #include <qextserialenumerator.h>
 #endif
@@ -397,6 +396,8 @@ void SerialLink::run()
     if (!hardwareConnect())
     {
         //Need to error out here.
+        emit communicationError(getName(),"Error connecting: " + port->errorString());
+        return;
 
     }
 
@@ -406,7 +407,7 @@ void SerialLink::run()
     quint64 bytes = 0;
     bool triedreset = false;
     bool triedDTR = false;
-    int timeout = 2500;
+    int timeout = 5000;
     forever
     {
         {
@@ -442,6 +443,7 @@ void SerialLink::run()
                 if (!triedDTR && triedreset)
                 {
                     triedDTR = true;
+                    communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
                     qDebug() << "No data!!! Attempting reset via DTR.";
                     port->setDtr(true);
                     this->msleep(250);
@@ -450,11 +452,13 @@ void SerialLink::run()
                 else if (!triedreset)
                 {
                     qDebug() << "No data!!! Attempting reset via reboot command.";
+                    communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
                     port->write("reboot\r\n",8);
                     triedreset = true;
                 }
                 else
                 {
+                    communicationUpdate(getName(),"No data to receive on COM port....");
                     qDebug() << "No data!!!";
                 }
             }
@@ -665,7 +669,14 @@ bool SerialLink::hardwareConnect()
     port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
     connectionStartTime = MG::TIME::getGroundTimeNow();
 
-    port->open();
+    if (!port->open())
+    {
+        emit communicationUpdate(getName(),"Error opening port: " + port->errorString());
+    }
+    else
+    {
+        emit communicationUpdate(getName(),"Opened port!");
+    }
 
     bool connectionUp = isConnected();
     if(connectionUp) {
