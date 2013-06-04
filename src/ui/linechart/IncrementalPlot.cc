@@ -173,17 +173,17 @@ void IncrementalPlot::setStyleText(QString style)
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
         }
 
-        curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth));
         // Style of lines
         if (style.toLower().contains("dotted")) {
-            curve->setStyle(QwtPlotCurve::Dots);
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DotLine));
+        } else if (style.toLower().contains("dashed")) {
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DashLine));
         } else if (style.toLower().contains("line") || style.toLower().contains("solid")) {
-            curve->setStyle(QwtPlotCurve::Lines);
-        } else if (style.toLower().contains("dashed") || style.toLower().contains("solid")) {
-            curve->setStyle(QwtPlotCurve::Steps);
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::SolidLine));
         } else {
-            curve->setStyle(QwtPlotCurve::NoCurve);
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::NoPen));
         }
+        curve->setStyle(QwtPlotCurve::Lines);
 
     }
     replot();
