@@ -652,34 +652,26 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     int labelRow = curvesWidgetLayout->rowCount();
 
+    // Checkbox
     checkBox = new QCheckBox(this);
     checkBox->setCheckable(true);
     checkBox->setObjectName(curve+unit);
     checkBox->setToolTip(tr("Enable the curve in the graph window"));
     checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
-
     curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
+    // Icon
     QWidget* colorIcon = new QWidget(this);
     colorIcons.insert(curve+unit, colorIcon);
     colorIcon->setMinimumSize(QSize(5, 14));
     colorIcon->setMaximumSize(4, 14);
-
     curvesWidgetLayout->addWidget(colorIcon, labelRow, 1);
 
-    label = new QLabel(this);
-    curvesWidgetLayout->addWidget(label, labelRow, 2);
-
-    //checkBox->setText(QString());
-    label->setText(getCurveName(curve+unit, ui.shortNameCheckBox->isChecked()));
-    QColor color(Qt::gray);// = plot->getColorForCurve(curve+unit);
-    QString colorstyle;
-    colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
-    colorIcon->setStyleSheet(colorstyle);
-    colorIcon->setAutoFillBackground(true);
-
     // Label
+    label = new QLabel(this);
+    label->setText(getCurveName(curve+unit, ui.shortNameCheckBox->isChecked()));
     curveNameLabels.insert(curve+unit, label);
+    curvesWidgetLayout->addWidget(label, labelRow, 2);
 
     // Value
     value = new QLabel(this);
@@ -693,8 +685,6 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Unit
     unitLabel = new QLabel(this);
     unitLabel->setText(unit);
-    unitLabel->setStyleSheet(QString("QLabel {color: %1;}").arg("#AAAAAA"));
-    //qDebug() << "UNIT" << unit;
     unitLabel->setToolTip(tr("Unit of ") + curve);
     unitLabel->setWhatsThis(tr("Unit of ") + curve);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
