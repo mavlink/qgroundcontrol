@@ -200,7 +200,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
 
     // Add field tree widget item
     uint8_t msgid = msg->msgid;
-    if (messageFilter.contains(msgid)) return;
+    //if (messageFilter.contains(msgid)) return;
     QString fieldName(messageInfo[msgid].fields[fieldid].name);
     QString fieldType;
     uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
