@@ -175,7 +175,6 @@ public:
     quint64 getPlotInterval();
     quint64 getDataInterval();
     quint64 getWindowPosition();
-    QList<QColor> getColorMap();
 
     /** @brief Get the short-term mean of a curve */
     double getMean(QString id);
@@ -215,7 +214,13 @@ public slots:
 
     // Functions referring to the currently active plot
     void setVisible(QString id, bool visible);
-    //void showCurve(QString id, int position);
+
+    /**
+     * @brief Set the color of a curve
+     *
+     * @param id The id-string of the curve
+     * @param color The newly assigned color
+     **/
     void setCurveColor(QString id, QColor color);
 
     /** @brief Enforce the use of the receive timestamp */
@@ -291,13 +296,6 @@ signals:
          * @param color The curve color in the diagram
          **/
     void curveAdded(QString idstring);
-    /**
-         * @brief This signal is emitted when a curve gets assigned a color
-         *
-         * @param idstring The id-string of the curve
-         * @param color The curve color in the diagram
-         **/
-    void colorSet(QString idstring, QColor color);
     /**
          * @brief This signal is emitted when a curve is removed
          *

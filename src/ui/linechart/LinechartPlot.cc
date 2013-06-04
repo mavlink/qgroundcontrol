@@ -54,7 +54,6 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
 
     //lastMaxTimeAdded = QTime();
 
-    curves = QMap<QString, QwtPlotCurve*>();
     data = QMap<QString, TimeSeriesData*>();
     scaleMaps = QMap<QString, QwtScaleMap*>();
 
@@ -62,14 +61,6 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
     setAxisScaleEngine(QwtPlot::yLeft, yScaleEngine);
 
     setAutoReplot(false);
-
-    // Set grid
-    QwtPlotGrid *grid = new QwtPlotGrid;
-    grid->setMinPen(QPen(Qt::darkGray, 0, Qt::DotLine));
-    grid->setMajPen(QPen(Qt::gray, 0, Qt::DotLine));
-    grid->enableXMin(true);
-    // TODO xmin?
-    grid->attach(this);
 
     // Set left scale
     //setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
@@ -86,15 +77,6 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
     bottomScaleWidget->setMinBorderDist(fontMetricsX * 2, fontMetricsX / 2);
 
     plotLayout()->setAlignCanvasToScales(true);
-
-    // Set canvas background
-    setCanvasBackground(QColor(40, 40, 40));
-
-    // Enable zooming
-    //zoomer = new Zoomer(canvas());
-    zoomer = new ScrollZoomer(canvas());
-    zoomer->setRubberBandPen(QPen(Qt::blue, 1.2, Qt::DotLine));
-    zoomer->setTrackerPen(QPen(Qt::blue));
 
     // Start QTimer for plot update
     updateTimer = new QTimer(this);
@@ -401,22 +383,6 @@ quint64 LinechartPlot::getWindowPosition()
 }
 
 /**
- * @brief Set the color of a curve
- *
- * This method emits the colorSet(id, color) signal.
- *
- * @param id The id-string of the curve
- * @param color The newly assigned color
- **/
-void LinechartPlot::setCurveColor(QString id, QColor color)
-{
-    QwtPlotCurve* curve = curves.value(id);
-    curve->setPen(color);
-
-    emit colorSet(id, color);
-}
-
-/**
  * @brief Set the scaling of the (vertical) y axis
  * The mapping of the variable values on the drawing pane can be
  * adjusted with this method. The default is that the y axis will the chosen
@@ -494,6 +460,20 @@ void LinechartPlot::showCurve(QString id)
 //    //@TODO Implement this position-dependent
 //    curves.value(id)->show();
 //}
+
+/**
+ * @brief Set the color of a curve
+ *
+ * This method emits the colorSet(id, color) signal.
+ *
+ * @param id The id-string of the curve
+ * @param color The newly assigned color
+ **/
+void LinechartPlot::setCurveColor(QString id, QColor color)
+{
+    QwtPlotCurve* curve = curves.value(id);
+    curve->setPen(color);
+}
 
 /**
  * @brief Check the visibility of a curve

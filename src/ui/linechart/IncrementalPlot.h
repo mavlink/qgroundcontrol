@@ -86,11 +86,6 @@ public:
     /** @brief Read out data from a curve */
     int data(QString key, double* r_x, double* r_y, int maxSize);
 
-    float symbolWidth;
-    float curveWidth;
-    float gridWidth;
-    float scaleWidth;
-
 public slots:
     /** @brief Append one data point */
     void appendData(QString key, double x, double y);

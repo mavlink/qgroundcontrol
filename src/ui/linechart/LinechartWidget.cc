@@ -61,7 +61,6 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     plotWindowLock(),
     curveListIndex(0),
     curveListCounter(0),
-    listedCurves(new QList<QString>()),
     curveLabels(new QMap<QString, QLabel*>()),
     curveMeans(new QMap<QString, QLabel*>()),
     curveMedians(new QMap<QString, QLabel*>()),
@@ -154,8 +153,6 @@ LinechartWidget::~LinechartWidget()
     stopLogging();
     if (activePlot) delete activePlot;
     activePlot = NULL;
-    delete listedCurves;
-    listedCurves = NULL;
 }
 
 void LinechartWidget::selectActiveSystem(int mav)

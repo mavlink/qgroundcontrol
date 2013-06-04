@@ -26,12 +26,15 @@ const QColor ChartPlot::baseColors[numColors] = {
 
 ChartPlot::ChartPlot(QWidget *parent):
     QwtPlot(parent),
-    nextColorIndex(0)/*,
+    nextColorIndex(0),
     symbolWidth(1.2f),
-    curveWidth(1.0f),
+    curveWidth(2.0f),
     gridWidth(0.8f),
-    scaleWidth(1.0f)*/
+    zoomerWidth(3.0f)
 {
+    // Initialize the list of curves.
+    curves = QMap<QString, QwtPlotCurve*>();
+
     // Set the grid. The colorscheme was already set in generateColorScheme().
     grid = new QwtPlotGrid;
     grid->enableXMin(true);
@@ -80,52 +83,55 @@ void ChartPlot::shuffleColors()
 {
     foreach (QwtPlotCurve* curve, curves)
     {
-        QPen pen(curve->pen());
-        pen.setColor(getNextColor());
-        curve->setPen(pen);
+        if (curve->isVisible()) {
+            QPen pen(curve->pen());
+            pen.setColor(getNextColor());
+            curve->setPen(pen);
+        }
     }
 }
 
 void ChartPlot::applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style)
 {
-    // Generate the color list for curves
+    // Generate a new color list for curves and recolor them.
     for (int i = 0; i < numColors; ++i)
     {
         if (style == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT) {
-//            colors[i] = baseColors[i].lighter(150);
+            colors[i] = baseColors[i].lighter(150);
         }
         else
         {
-//            colors[i] = baseColors[i].darker(150);
+            colors[i] = baseColors[i].darker(150);
         }
     }
+    shuffleColors();
 
     // Configure the rest of the UI colors based on the current theme.
     if (style == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
     {
         // Set the coloring of the area selector for zooming.
-        zoomer->setRubberBandPen(QPen(Qt::darkRed, 3.0f, Qt::DotLine));
+        zoomer->setRubberBandPen(QPen(Qt::darkRed, zoomerWidth, Qt::DotLine));
         zoomer->setTrackerPen(QPen(Qt::darkRed));
 
         // Set canvas background
         setCanvasBackground(QColor(0xFF, 0xFF, 0xFF));
 
         // Configure the plot grid.
-        grid->setMinPen(QPen(QColor(0x55, 0x55, 0x55), 0.8f, Qt::DotLine));
-        grid->setMajPen(QPen(QColor(0x22, 0x22, 0x22), 0.8f, Qt::DotLine));
+        grid->setMinPen(QPen(QColor(0x55, 0x55, 0x55), gridWidth, Qt::DotLine));
+        grid->setMajPen(QPen(QColor(0x22, 0x22, 0x22), gridWidth, Qt::DotLine));
     }
     else
     {
         // Set the coloring of the area selector for zooming.
-        zoomer->setRubberBandPen(QPen(Qt::red, 3.0f, Qt::DotLine));
+        zoomer->setRubberBandPen(QPen(Qt::red, zoomerWidth, Qt::DotLine));
         zoomer->setTrackerPen(QPen(Qt::red));
 
         // Set canvas background
         setCanvasBackground(QColor(0, 0, 0));
 
         // Configure the plot grid.
-        grid->setMinPen(QPen(QColor(0xAA, 0xAA, 0xAA), 0.8f, Qt::DotLine));
-        grid->setMajPen(QPen(QColor(0xDD, 0xDD, 0xDD), 0.8f, Qt::DotLine));
+        grid->setMinPen(QPen(QColor(0xAA, 0xAA, 0xAA), gridWidth, Qt::DotLine));
+        grid->setMajPen(QPen(QColor(0xDD, 0xDD, 0xDD), gridWidth, Qt::DotLine));
     }
 
     // And finally refresh the widget to make sure all color changes are redrawn.
