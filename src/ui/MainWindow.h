@@ -43,7 +43,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "UASControlWidget.h"
-#include "Linecharts.h"
 #include "UASInfoWidget.h"
 #include "WaypointList.h"
 #include "CameraView.h"
@@ -63,7 +62,6 @@ This file is part of the QGROUNDCONTROL project
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
-#include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
 #if (defined Q_OS_MAC) | (defined _MSC_VER)
@@ -87,6 +85,8 @@ class QGCMAVLinkMessageSender;
 class QGCFirmwareUpdate;
 class QSplashScreen;
 class QGCStatusBar;
+class Linecharts;
+class QGCDataPlot2D;
 
 /**
  * @brief Main Application Window
