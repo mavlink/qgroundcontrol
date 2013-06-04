@@ -106,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent):
     autoReconnect(false),
     lowPowerMode(false)
 {
+    this->setAttribute(Qt::WA_DeleteOnClose);
     hide();
     dockWidgetTitleBarEnabled = true;
     isAdvancedMode = false;
@@ -323,6 +324,16 @@ MainWindow::~MainWindow()
         }
     }
     // Delete all UAS objects
+
+
+    if (debugConsole)
+    {
+        delete debugConsole;
+    }
+    for (int i=0;i<commsWidgetList.size();i++)
+    {
+        commsWidgetList[i]->deleteLater();
+    }
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)
@@ -523,10 +534,17 @@ void MainWindow::buildCommonWidgets()
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
     {
-        QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
-        menuToDockNameMap[tempAction] = "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET";
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        if (!debugConsole)
+        {
+            debugConsole = new DebugConsole();
+            debugConsole->setWindowTitle("Communications Console");
+            debugConsole->show();
+            QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
+            //menuToDockNameMap[tempAction] = "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET";
+            tempAction->setCheckable(true);
+            connect(tempAction,SIGNAL(triggered(bool)),debugConsole,SLOT(setShown(bool)));
+
+        }
     }
     createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
 
@@ -772,7 +790,9 @@ void MainWindow::loadDockWidget(QString name)
     }
     else if (name == "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new DebugConsole(this),tr("Communication Console"),"COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET",currentView,Qt::BottomDockWidgetArea);
+        //This is now a permanently detached window.
+        //centralWidgetToDockWidgetsMap[currentView][name] = console;
+        //createDockWidget(centerStack->currentWidget(),new DebugConsole(this),tr("Communication Console"),"COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET",currentView,Qt::BottomDockWidgetArea);
     }
     else if (name == "HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET")
     {
@@ -1614,6 +1634,8 @@ void MainWindow::addLink(LinkInterface *link)
     if (!found)
     {  //  || udp
         CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+        commsWidgetList.append(commWidget);
+        connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();
         ui.menuNetwork->addAction(action);
 
@@ -1625,6 +1647,13 @@ void MainWindow::addLink(LinkInterface *link)
         {
             connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
         }
+    }
+}
+void MainWindow::commsWidgetDestroyed(QObject *obj)
+{
+    if (commsWidgetList.contains(obj))
+    {
+        commsWidgetList.removeOne(obj);
     }
 }
 
