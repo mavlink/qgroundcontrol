@@ -775,17 +775,13 @@ void LinechartWidget::recolor()
 
     foreach (QString key, colorIcons.keys())
     {
-
-        // FIXME
-//        if (activePlot)
-        QString colorstyle;
-        QColor color = activePlot->getColorForCurve(key);
-        colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
         QWidget* colorIcon = colorIcons.value(key, 0);
-        if (colorIcon)
+        if (colorIcon && !colorIcon->styleSheet().isEmpty())
         {
+            QString colorstyle;
+            QColor color = activePlot->getColorForCurve(key);
+            colorstyle = colorstyle.sprintf("QWidget { background-color: #%02X%02X%02X; }", color.red(), color.green(), color.blue());
             colorIcon->setStyleSheet(colorstyle);
-            colorIcon->setAutoFillBackground(true);
         }
     }
 }
@@ -975,8 +971,9 @@ void LinechartWidget::setPlotInterval(quint64 interval)
 
 /**
  * @brief Take the click of a curve activation / deactivation button.
- * This method allows to map a button to a plot curve.The text of the
- * button must equal the curve name to activate / deactivate.
+ * This method allows to map a button to a plot curve. The text of the
+ * button must equal the curve name to activate / deactivate. If the checkbox
+ * was clicked, show the curve color, otherwise clear the coloring.
  *
  * @param checked The visibility of the curve: true to display the curve, false otherwise
  **/
@@ -988,17 +985,22 @@ void LinechartWidget::takeButtonClick(bool checked)
     if(button != NULL)
     {
         activePlot->setVisible(button->objectName(), checked);
-
-        QColor color = activePlot->getColorForCurve(button->objectName());
-        if(color.isValid())
+        QWidget* colorIcon = colorIcons.value(button->objectName(), 0);
+        if (colorIcon)
         {
-            QString colorstyle;
-            colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
-            QWidget* colorIcon = colorIcons.value(button->objectName(), 0);
-            if (colorIcon)
+            if (checked)
             {
-                colorIcon->setStyleSheet(colorstyle);
-                colorIcon->setAutoFillBackground(true);
+                QColor color = activePlot->getColorForCurve(button->objectName());
+                if (color.isValid())
+                {
+                    QString colorstyle;
+                    colorstyle = colorstyle.sprintf("QWidget { background-color: #%02X%02X%02X; }", color.red(), color.green(), color.blue());
+                    colorIcon->setStyleSheet(colorstyle);
+                }
+            }
+            else
+            {
+                colorIcon->setStyleSheet("");
             }
         }
     }
