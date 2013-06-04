@@ -173,7 +173,7 @@ void IncrementalPlot::setStyleText(QString style)
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
         }
 
-        curve->setPen(QPen(QBrush(curve->symbol().pen().color().darker()), curveWidth));
+        curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth));
         // Style of lines
         if (style.toLower().contains("dotted")) {
             curve->setStyle(QwtPlotCurve::Dots);
