@@ -609,11 +609,6 @@ quint64 LinechartPlot::getDataInterval()
     return storageInterval;
 }
 
-QList<QColor> LinechartPlot::getColorMap()
-{
-    return colors;
-}
-
 /**
  * @brief Set logarithmic scaling for the curve
  **/
