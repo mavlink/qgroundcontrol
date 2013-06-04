@@ -394,7 +394,11 @@ void SerialLink::writeSettings()
 void SerialLink::run()
 {
     // Initialize the connection
-    hardwareConnect();
+    if (!hardwareConnect())
+    {
+        //Need to error out here.
+
+    }
 
     // Qt way to make clear what a while(1) loop does
     quint64 msecs = QDateTime::currentMSecsSinceEpoch();
