@@ -85,20 +85,12 @@ const double* CurveData::y() const
 
 IncrementalPlot::IncrementalPlot(QWidget *parent):
     ChartPlot(parent),
-    symbolWidth(1.2f),
-    curveWidth(1.0f),
-    gridWidth(0.8f),
-    scaleWidth(1.0f),
     symmetric(false)
 {
     setAutoReplot(false);
     setStyleText("solid crosses");
 
     plotLayout()->setAlignCanvasToScales(true);
-
-    grid = new QwtPlotGrid;
-    grid->setMajPen(QPen(Qt::gray, 0.8f, Qt::DotLine));
-    grid->attach(this);
 
     QwtLinearScaleEngine* yScaleEngine = new QwtLinearScaleEngine();
     setAxisScaleEngine(QwtPlot::yLeft, yScaleEngine);
@@ -280,7 +272,7 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 
         const QColor &c = getNextColor();
         curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
-                                   QBrush(c), QPen(c, 1.2f), QSize(5, 5)) );
+                                   QBrush(c), QPen(c, symbolWidth), QSize(5, 5)) );
 
         curve->attach(this);
     } else {

@@ -31,6 +31,11 @@ protected:
     ScrollZoomer* zoomer;  ///< Zoomer class for widget
     QwtPlotGrid* grid;     ///< Plot grid
 
+    float symbolWidth; ///< Width of curve symbols in pixels
+    float curveWidth; ///< Width of curve lines in pixels
+    float gridWidth; ///< Width of gridlines in pixels
+    float zoomerWidth; ///< Width of zoomer selection box
+
 protected slots:
 
     /** @brief Generate coloring for this plot canvas based on current window theme */
