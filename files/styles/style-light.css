@@ -92,6 +92,7 @@ QGCMAVLinkLogPlayer QLabel:disabled {
 
 QGCToolBar QLabel {
     font-size: 10pt;
+    font-weight: bold;
     margin: 3px 2px;
 }
 
@@ -196,11 +197,13 @@ QMenu {
 }
 
 QMenu::item:selected, QMenu::item:checked:selected {
-    background-color: #CCC;
+    background-color: #555;
+    color: #FFF;
 }
 
 QMenu::item:checked {
-    background-color: #B8D3E6;
+    background-color: #379AC3;
+    color: #FFF;
 }
 
 QMenu::separator {
@@ -210,7 +213,8 @@ QMenu::separator {
 }
 
 QMenuBar::item:selected {
-    background-color: #CCC;
+    background-color: #555;
+    color: #FFF;
 }
 
 QMenuBar::item:disabled {

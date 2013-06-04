@@ -29,7 +29,7 @@ QCheckBox::indicator:pressed, QCheckBox::indicator:checked:pressed {
 }
 
 QCheckBox::indicator:checked {
-    background-color: #379AC3;
+    background-color: #B8D3E6;
 }
 
 QCheckBox::indicator:disabled {
@@ -92,6 +92,7 @@ QGCMAVLinkLogPlayer QLabel:disabled {
 
 QGCToolBar QLabel {
     font-size: 10pt;
+    font-weight: bold;
     margin: 3px 2px;
 }
 
@@ -193,26 +194,28 @@ QMainWindow::separator:hover {
 }
 
 QMenu {
-    border: 1px solid #379AC3;
+    border: 1px solid #B8D3E6;
 }
 
 QMenu::item:selected, QMenu::item:checked:selected {
-    background-color: #666;
+    background-color: #CCC;
+    color: #000;
 }
 
 QMenu::item:checked {
     background-color: #B8D3E6;
-	color: #000;
+    color: #000;
 }
 
 QMenu::separator {
     height: 1px;
-    background: #379AC3;
+    background: #B8D3E6;
     margin: 8px 5px 4px 5px;
 }
 
 QMenuBar::item:selected {
-    background-color: #666;
+    background-color: #CCC;
+    color: #000;
 }
 
 QMenuBar::item:disabled {
@@ -364,7 +367,7 @@ QSlider::groove:vertical {
 
 QSlider::handle:horizontal {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
-    border: 2px solid #379AC3;
+    border: 2px solid #B8D3E6;
     width: 18px;
     margin: -5px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
     border-radius: 3px;
@@ -380,7 +383,7 @@ QSlider::handle:horizontal:disabled {
 
 QSlider::handle:vertical {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #232228, stop: 1 #020208);
-    border: 2px solid #379AC3;
+    border: 2px solid #B8D3E6;
     height: 18px;
     margin: 0 -5px; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
     border-radius: 3px;
@@ -427,11 +430,11 @@ QTabBar::tab {
 }
 
 QTabBar::tab:hover {
-    border: 2px solid #379AC3;
+    border: 2px solid #B8D3E6;
 }
 
 QTabBar::tab:selected {
-    border: 2px solid #379AC3;
+    border: 2px solid #B8D3E6;
     background: #555;
 }
 
@@ -464,7 +467,7 @@ QToolButton {
 
 QToolTip {
     background-color: #3D5368;
-    border:0 solid #379AC3;
+    border:0 solid #B8D3E6;
     margin: 3px;
     border-radius: 3px;
     color: #DDD;
