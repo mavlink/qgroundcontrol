@@ -23,9 +23,10 @@ public:
     void shuffleColors();
 
 protected:
-    const static int numBaseColors;
+    const static int numColors = 20;
+    const static QColor baseColors[numColors];
     QList<QColor> colors;  ///< Colormap for curves
-    int nextColor;         ///< Next index in color map
+    int nextColorIndex;         ///< Next index in color map
     QMap<QString, QwtPlotCurve* > curves;  ///< Plot curves
     ScrollZoomer* zoomer;  ///< Zoomer class for widget
     QwtPlotGrid* grid;     ///< Plot grid

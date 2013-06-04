@@ -1,55 +1,53 @@
 #include "ChartPlot.h"
 #include "MainWindow.h"
 
-const int ChartPlot::numBaseColors = 20;
+const QColor ChartPlot::baseColors[numColors] = {
+    QColor(242,255,128),
+    QColor(70,80,242),
+    QColor(232,33,47),
+    QColor(116,251,110),
+    QColor(81,183,244),
+    QColor(234,38,107),
+    QColor(92,247,217),
+    QColor(151,59,239),
+    QColor(231,72,28),
+    QColor(236,48,221),
+    QColor(75,133,243),
+    QColor(203,254,121),
+    QColor(104,64,240),
+    QColor(200,54,238),
+    QColor(104,250,138),
+    QColor(235,43,165),
+    QColor(98,248,176),
+    QColor(161,252,116),
+    QColor(87,231,246),
+    QColor(230,126,23)
+};
 
 ChartPlot::ChartPlot(QWidget *parent):
-    QwtPlot(parent)/*,
+    QwtPlot(parent),
+    nextColorIndex(0)/*,
     symbolWidth(1.2f),
     curveWidth(1.0f),
     gridWidth(0.8f),
     scaleWidth(1.0f)*/
 {
-//    for (int i = 0; i < numBaseColors; ++i)
-//    {
-//        colors[i] = baseColors[i];
-//    }
-    // Set up the colorscheme used by this plotter.
-//    nextColor = 0;
-
     // Set the grid. The colorscheme was already set in generateColorScheme().
     grid = new QwtPlotGrid;
     grid->enableXMin(true);
     grid->attach(this);
 
-//    // Enable zooming
+    // Enable zooming
     zoomer = new ScrollZoomer(canvas());
 
     colors = QList<QColor>();
-    nextColor = 0;
 
     ///> Color map for plots, includes 20 colors
     ///> Map will start from beginning when the first 20 colors are exceeded
-    colors.append(QColor(242,255,128));
-    colors.append(QColor(70,80,242));
-    colors.append(QColor(232,33,47));
-    colors.append(QColor(116,251,110));
-    colors.append(QColor(81,183,244));
-    colors.append(QColor(234,38,107));
-    colors.append(QColor(92,247,217));
-    colors.append(QColor(151,59,239));
-    colors.append(QColor(231,72,28));
-    colors.append(QColor(236,48,221));
-    colors.append(QColor(75,133,243));
-    colors.append(QColor(203,254,121));
-    colors.append(QColor(104,64,240));
-    colors.append(QColor(200,54,238));
-    colors.append(QColor(104,250,138));
-    colors.append(QColor(235,43,165));
-    colors.append(QColor(98,248,176));
-    colors.append(QColor(161,252,116));
-    colors.append(QColor(87,231,246));
-    colors.append(QColor(230,126,23));
+    for (int i = 0; i < numColors; ++i)
+    {
+        colors.append(baseColors[i]);
+    }
 
     // Now that all objects have been initialized, color everything.
     applyColorScheme(((MainWindow*)parent)->getStyle());
@@ -66,10 +64,11 @@ ChartPlot::~ChartPlot()
 
 QColor ChartPlot::getNextColor()
 {
-    /* Return current color and increment counter for next round */
-    nextColor++;
-    if(nextColor >= colors.count()) nextColor = 0;
-    return colors[nextColor++];
+    if(nextColorIndex >= colors.count())
+    {
+        nextColorIndex = 0;
+    }
+    return colors[nextColorIndex++];
 }
 
 QColor ChartPlot::getColorForCurve(QString id)
@@ -90,7 +89,7 @@ void ChartPlot::shuffleColors()
 void ChartPlot::applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style)
 {
     // Generate the color list for curves
-    for (int i = 0; i < numBaseColors; ++i)
+    for (int i = 0; i < numColors; ++i)
     {
         if (style == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT) {
 //            colors[i] = baseColors[i].lighter(150);
