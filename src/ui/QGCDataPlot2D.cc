@@ -70,6 +70,10 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     connect(ui->gridCheckBox, SIGNAL(clicked(bool)), plot, SLOT(showGrid(bool)));
     connect(ui->regressionButton, SIGNAL(clicked()), this, SLOT(calculateRegression()));
     connect(ui->style, SIGNAL(currentIndexChanged(QString)), plot, SLOT(setStyleText(QString)));
+
+    // Allow style changes to propagate through this widget
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+            plot, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 }
 
 void QGCDataPlot2D::reloadFile()

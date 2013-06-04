@@ -60,8 +60,6 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval):
     yScaleEngine = new QwtLinearScaleEngine();
     setAxisScaleEngine(QwtPlot::yLeft, yScaleEngine);
 
-    setAutoReplot(false);
-
     // Set left scale
     //setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 
@@ -462,9 +460,7 @@ void LinechartPlot::showCurve(QString id)
 //}
 
 /**
- * @brief Set the color of a curve
- *
- * This method emits the colorSet(id, color) signal.
+ * @brief Set the color of a curve and its symbols.
  *
  * @param id The id-string of the curve
  * @param color The newly assigned color
@@ -472,7 +468,10 @@ void LinechartPlot::showCurve(QString id)
 void LinechartPlot::setCurveColor(QString id, QColor color)
 {
     QwtPlotCurve* curve = curves.value(id);
-    curve->setPen(color);
+    curve->setPen(QPen(QBrush(color), curveWidth));
+    QwtSymbol x = curve->symbol();
+    x.setPen(QPen(QBrush(color), symbolWidth));
+    curve->setSymbol(x);
 }
 
 /**

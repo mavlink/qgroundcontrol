@@ -87,7 +87,6 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
     ChartPlot(parent),
     symmetric(false)
 {
-    setAutoReplot(false);
     setStyleText("solid crosses");
 
     plotLayout()->setAlignCanvasToScales(true);

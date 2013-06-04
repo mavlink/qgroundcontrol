@@ -27,10 +27,10 @@ const QColor ChartPlot::baseColors[numColors] = {
 ChartPlot::ChartPlot(QWidget *parent):
     QwtPlot(parent),
     nextColorIndex(0),
-    symbolWidth(1.2f),
+    symbolWidth(2.0f),
     curveWidth(2.0f),
     gridWidth(0.8f),
-    zoomerWidth(3.0f)
+    zoomerWidth(2.0f)
 {
     // Initialize the list of curves.
     curves = QMap<QString, QwtPlotCurve*>();
@@ -54,10 +54,6 @@ ChartPlot::ChartPlot(QWidget *parent):
 
     // Now that all objects have been initialized, color everything.
     applyColorScheme(MainWindow::instance()->getStyle());
-
-    // And make sure we're listening for future style changes
-    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
-            this, SLOT(applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE)));
 }
 
 ChartPlot::~ChartPlot()

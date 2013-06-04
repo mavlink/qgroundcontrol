@@ -216,7 +216,7 @@ public slots:
     void setVisible(QString id, bool visible);
 
     /**
-     * @brief Set the color of a curve
+     * @brief Set the color of a curve and its symbols.
      *
      * @param id The id-string of the curve
      * @param color The newly assigned color
