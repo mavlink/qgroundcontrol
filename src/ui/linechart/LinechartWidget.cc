@@ -141,6 +141,12 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     //connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
     //connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
 
+
+    // And make sure we're listening for future style changes
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+            this, SLOT(applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE)));
+    connect(MainWindow::instance(), SIGNAL(styleChanged()), this, SLOT(recolor()));
+
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
     connect(ui.uasSelectionBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectActiveSystem(int)));
@@ -771,8 +777,7 @@ void LinechartWidget::removeCurve(QString curve)
 
 void LinechartWidget::recolor()
 {
-    activePlot->shuffleColors();
-
+    activePlot->applyColorScheme(MainWindow::instance()->getStyle());
     foreach (QString key, colorIcons.keys())
     {
         QWidget* colorIcon = colorIcons.value(key, 0);

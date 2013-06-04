@@ -22,6 +22,11 @@ public:
     /** @brief Reset color map */
     void shuffleColors();
 
+public slots:
+
+    /** @brief Generate coloring for this plot canvas based on current window theme */
+    void applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style);
+
 protected:
     const static int numColors = 20;
     const static QColor baseColors[numColors];
@@ -35,11 +40,6 @@ protected:
     float curveWidth; ///< Width of curve lines in pixels
     float gridWidth; ///< Width of gridlines in pixels
     float zoomerWidth; ///< Width of zoomer selection box
-
-protected slots:
-
-    /** @brief Generate coloring for this plot canvas based on current window theme */
-    void applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style);
 };
 
 #endif // CHARTPLOT_H
