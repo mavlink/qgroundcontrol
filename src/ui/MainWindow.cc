@@ -79,14 +79,15 @@ const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 MainWindow* MainWindow::instance(QSplashScreen* screen)
 {
     static MainWindow* _instance = 0;
-    if(_instance == 0)
+    if (_instance == 0)
     {
         _instance = new MainWindow();
-        if (screen) connect(_instance, SIGNAL(initStatusChanged(QString)), screen, SLOT(showMessage(QString)));
-
-        /* Set the application as parent to ensure that this object
-                 * will be destroyed when the main application exits */
-        //_instance->setParent(qApp);
+        if (screen)
+        {
+            connect(_instance, SIGNAL(initStatusChanged(QString,int,QColor)),
+                    screen, SLOT(showMessage(QString,int,QColor)));
+        }
+        _instance->init();
     }
     return _instance;
 }
@@ -108,15 +109,19 @@ MainWindow::MainWindow(QWidget *parent):
     darkStyleFileName(defaultDarkStyle),
     lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
-    lowPowerMode(false)
+    lowPowerMode(false),
+    dockWidgetTitleBarEnabled(true),
+    isAdvancedMode(false)
 {
     hide();
-    dockWidgetTitleBarEnabled = true;
-    isAdvancedMode = false;
-    emit initStatusChanged("Loading UI Settings..");
+}
+
+void MainWindow::init()
+{
+    emit initStatusChanged(tr("Loading settings"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     loadSettings();
 
-    emit initStatusChanged("Loading Style.");
+    emit initStatusChanged(tr("Loading style"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     qApp->setStyle("plastique");
     if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
     {
@@ -151,8 +156,7 @@ MainWindow::MainWindow(QWidget *parent):
     }
 
     settings.sync();
-
-    emit initStatusChanged("Setting up user interface.");
+    emit initStatusChanged(tr("Setting up user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Setup user interface
     ui.setupUi(this);
@@ -196,18 +200,18 @@ MainWindow::MainWindow(QWidget *parent):
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
 
-    emit initStatusChanged("Building common widgets.");
+    emit initStatusChanged(tr("Building common widgets"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     buildCommonWidgets();
     connectCommonWidgets();
 
-    emit initStatusChanged("Building common actions.");
+    emit initStatusChanged(tr("Building common actions"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Create actions
     connectCommonActions();
 
     // Populate link menu
-    emit initStatusChanged("Populating link menu");
+    emit initStatusChanged(tr("Populating link menu"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     QList<LinkInterface*> links = LinkManager::instance()->getLinks();
     foreach(LinkInterface* link, links)
     {
@@ -217,19 +221,19 @@ MainWindow::MainWindow(QWidget *parent):
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
     // Connect user interface devices
-    emit initStatusChanged("Initializing joystick interface.");
+    emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     joystickWidget = 0;
     joystick = new JoystickInput();
 
 #ifdef MOUSE_ENABLED_WIN
-    emit initStatusChanged("Initializing 3D mouse interface.");
+    emit initStatusChanged(tr("Initializing 3D mouse interface", Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouseInput = new Mouse3DInput(this);
     mouse = new Mouse6dofInput(mouseInput);
 #endif //MOUSE_ENABLED_WIN
 
 #if MOUSE_ENABLED_LINUX
-    emit initStatusChanged("Initializing 3D mouse interface.");
+    emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
@@ -251,12 +255,12 @@ MainWindow::MainWindow(QWidget *parent):
     // Initialize window state
     windowStateVal = windowState();
 
-    emit initStatusChanged("Restoring last view state.");
+    emit initStatusChanged(tr("Restoring last view state"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Restore the window setup
     loadViewState();
 
-    emit initStatusChanged("Restoring last window size.");
+    emit initStatusChanged(tr("Restoring last window size"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Restore the window position and size
     if (settings.contains(getWindowGeometryKey()))
     {
@@ -285,7 +289,7 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
-    emit initStatusChanged("Done.");
+    emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     show();
 }
 

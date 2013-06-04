@@ -53,10 +53,10 @@ ChartPlot::ChartPlot(QWidget *parent):
     }
 
     // Now that all objects have been initialized, color everything.
-    applyColorScheme(((MainWindow*)parent)->getStyle());
+    applyColorScheme(MainWindow::instance()->getStyle());
 
     // And make sure we're listening for future style changes
-    connect(parent, SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
             this, SLOT(applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE)));
 }
 
