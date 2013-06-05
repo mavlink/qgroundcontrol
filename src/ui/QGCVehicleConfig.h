@@ -26,7 +26,8 @@ public:
         RC_MODE_1 = 1,
         RC_MODE_2 = 2,
         RC_MODE_3 = 3,
-        RC_MODE_4 = 4
+        RC_MODE_4 = 4,
+        RC_MODE_NONE = 5
     };
 
 public slots:
