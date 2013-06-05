@@ -538,7 +538,7 @@ void MainWindow::buildCommonWidgets()
         {
             debugConsole = new DebugConsole();
             debugConsole->setWindowTitle("Communications Console");
-            debugConsole->show();
+            debugConsole->hide();
             QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
             //menuToDockNameMap[tempAction] = "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET";
             tempAction->setCheckable(true);
