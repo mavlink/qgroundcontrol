@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>413</width>
-    <height>304</height>
+    <width>321</width>
+    <height>363</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
    <property name="title">
     <string>Mission Controls</string>
    </property>
-   <widget class="QPushButton" name="pushButton_9">
+   <widget class="QPushButton" name="goToWaypointButton">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -38,7 +38,7 @@
      <string>Go To Waypoint</string>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox_2">
+   <widget class="QComboBox" name="waypointComboBox">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -46,19 +46,6 @@
       <width>131</width>
       <height>22</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_6">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>50</y>
-      <width>81</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Restart Mission</string>
     </property>
    </widget>
    <widget class="QWidget" name="horizontalLayoutWidget">
@@ -72,10 +59,10 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QSpinBox" name="spinBox_2"/>
+      <widget class="QSpinBox" name="speedSpinBox"/>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_12">
+      <widget class="QPushButton" name="changeSpeedButton">
        <property name="text">
         <string>Change Speed</string>
        </property>
@@ -94,10 +81,10 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QSpinBox" name="spinBox"/>
+      <widget class="QSpinBox" name="altitudeSpinBox"/>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_11">
+      <widget class="QPushButton" name="changeAltitudeButton">
        <property name="text">
         <string>Change Altitude</string>
        </property>
@@ -105,14 +92,40 @@
      </item>
     </layout>
    </widget>
+   <widget class="QLabel" name="currentWaypointLabel">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>20</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Current:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_6">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>50</y>
+      <width>81</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Restart Mission</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>180</y>
-     <width>401</width>
-     <height>111</height>
+     <width>311</width>
+     <height>161</height>
     </rect>
    </property>
    <property name="title">
@@ -203,17 +216,17 @@
      <string>RTL</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_10">
+   <widget class="QPushButton" name="armDisarmButton">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>20</y>
-      <width>81</width>
-      <height>51</height>
+      <x>10</x>
+      <y>110</y>
+      <width>291</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Arm/Disarm</string>
+     <string>ARM</string>
     </property>
    </widget>
   </widget>
