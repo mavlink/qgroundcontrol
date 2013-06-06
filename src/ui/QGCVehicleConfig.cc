@@ -134,25 +134,6 @@ void QGCVehicleConfig::advancedMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-1);
 }
-void QGCVehicleConfig::rcMenuButtonClicked()
-{
-    ui->stackedWidget->setCurrentIndex(0);
-}
-
-void QGCVehicleConfig::sensorMenuButtonClicked()
-{
-    ui->stackedWidget->setCurrentIndex(1);
-}
-
-void QGCVehicleConfig::generalMenuButtonClicked()
-{
-    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-2);
-}
-
-void QGCVehicleConfig::advancedMenuButtonClicked()
-{
-    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-1);
-}
 
 QGCVehicleConfig::~QGCVehicleConfig()
 {
@@ -161,9 +142,9 @@ QGCVehicleConfig::~QGCVehicleConfig()
 
 void QGCVehicleConfig::setRCModeIndex(int newRcMode)
 {
-    if (newRcMode > 0 && newRcMode < 5)
+    if (newRcMode > 0 && newRcMode < 6)
     {
-        rc_mode = (enum RC_MODE) (newRcMode+1);
+        //rc_mode = (enum RC_MODE) (newRcMode+1);
         changed = true;
     }
 }
