@@ -386,7 +386,8 @@ HEADERS += src/MG.h \
     src/ui/uas/UASActionsWidget.h \
     src/ui/designer/QGCRadioChannelDisplay.h \
     src/ui/QGCTabbedInfoView.h \
-    src/ui/UASRawStatusView.h
+    src/ui/UASRawStatusView.h \
+    src/ui/PrimaryFlightDisplay.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -560,7 +561,8 @@ SOURCES += src/main.cc \
     src/ui/uas/UASActionsWidget.cpp \
     src/ui/designer/QGCRadioChannelDisplay.cpp \
     src/ui/QGCTabbedInfoView.cpp \
-    src/ui/UASRawStatusView.cpp
+    src/ui/UASRawStatusView.cpp \
+    src/ui/PrimaryFlightDisplay.cpp
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -693,3 +695,7 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 }
 
 unix:!macx:!symbian: LIBS += -losg
+
+OTHER_FILES += \
+    dongfang_notes.txt \
+    src/ui/dongfang-scrapyard.txt
