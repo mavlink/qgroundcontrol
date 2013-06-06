@@ -56,16 +56,6 @@ public:
     UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
-    enum BatteryType
-    {
-        NICD = 0,
-        NIMH = 1,
-        LIION = 2,
-        LIPOLY = 3,
-        LIFE = 4,
-        AGZN = 5
-    }; ///< The type of battery used
-
     static const int lipoFull = 4.2f;  ///< 100% charged voltage
     static const int lipoEmpty = 3.5f; ///< Discharged voltage
 
@@ -105,7 +95,6 @@ public:
     Q_PROPERTY(double localZ READ getLocalZ WRITE setLocalZ NOTIFY localZChanged)
     Q_PROPERTY(double latitude READ getLatitude WRITE setLatitude NOTIFY latitudeChanged)
     Q_PROPERTY(double longitude READ getLongitude WRITE setLongitude NOTIFY longitudeChanged)
-    Q_PROPERTY(double altitude READ getAltitude WRITE setAltitude NOTIFY altitudeChanged)
     Q_PROPERTY(double satelliteCount READ getSatelliteCount WRITE setSatelliteCount NOTIFY satelliteCountChanged)
     Q_PROPERTY(bool isLocalPositionKnown READ localPositionKnown)
     Q_PROPERTY(bool isGlobalPositionKnown READ globalPositionKnown)
@@ -113,6 +102,11 @@ public:
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
     Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
     Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
+    Q_PROPERTY(double bearingToWaypoint READ getBearingToWaypoint WRITE setBearingToWaypoint NOTIFY bearingToWaypointChanged)
+
+    // dongfang: There is not only one altitude; there are at least (APM) GPS altitude, mix altitude and mix-altitude relative to home.
+    // I have made this property refer to the mix-altitude ASL as this is the one actually used in navigation by APM.
+    Q_PROPERTY(double altitude READ getAltitude WRITE setAltitude NOTIFY altitudeChanged)
 
     void setLocalX(double val)
     {
@@ -120,6 +114,7 @@ public:
         emit localXChanged(val,"localX");
         emit valueChanged(this->uasId,"localX","M",QVariant(val),getUnixTime());
     }
+
     double getLocalX() const
     {
         return localX;
@@ -153,6 +148,7 @@ public:
         emit latitudeChanged(val,"latitude");
         emit valueChanged(this->uasId,"latitude","deg",QVariant(val),getUnixTime());
     }
+
     double getLatitude() const
     {
         return latitude;
@@ -164,6 +160,7 @@ public:
         emit longitudeChanged(val,"longitude");
         emit valueChanged(this->uasId,"longitude","deg",QVariant(val),getUnixTime());
     }
+
     double getLongitude() const
     {
         return longitude;
@@ -172,7 +169,7 @@ public:
     void setAltitude(double val)
     {
         altitude = val;
-        emit altitudeChanged(val,"altitude");
+        emit altitudeChanged(val, "altitude");
         emit valueChanged(this->uasId,"altitude","M",QVariant(val),getUnixTime());
     }
 
@@ -197,6 +194,7 @@ public:
     {
         return isLocalPositionKnown;
     }
+
     virtual bool globalPositionKnown() const
     {
         return isGlobalPositionKnown;
@@ -213,6 +211,19 @@ public:
     {
         return distToWaypoint;
     }
+
+    void setBearingToWaypoint(double val)
+    {
+        bearingToWaypoint = val;
+        emit bearingToWaypointChanged(val,"bearingToWaypoint");
+        emit valueChanged(this->uasId,"bearingToWaypoint","M",QVariant(val),getUnixTime());
+    }
+
+    double getBearingToWaypoint() const
+    {
+        return bearingToWaypoint;
+    }
+
 
     void setRoll(double val)
     {
@@ -246,6 +257,7 @@ public:
     {
         return yaw;
     }
+
     bool getSelected() const;
     QVector3D getNedPosGlobalOffset() const
     {
@@ -319,31 +331,43 @@ public:
     friend class UASWaypointManager;
 
 protected: //COMMENTS FOR TEST UNIT
+    /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
-    unsigned char type;           ///< UAS type (from type enum)
-    quint64 startTime;            ///< The time the UAS was switched on
-    CommStatus commStatus;        ///< Communication status
-    QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
-    int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+    QMap<int, QString> components;///< IDs and names of all detected onboard components
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
-    BatteryType batteryType;      ///< The battery type
-    int cells;                    ///< Number of cells
+    CommStatus commStatus;        ///< Communication status
+    float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
+    float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
+    quint64 lastHeartbeat;        ///< Time of the last heartbeat message
+    QTimer* statusTimeout;        ///< Timer for various status timeouts
 
-    UASWaypointManager waypointManager;
+    /// BASIC UAS TYPE, NAME AND STATE
+    QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
+    unsigned char type;           ///< UAS type (from type enum)
+    int airframe;                 ///< The airframe type
+    int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+    bool systemIsArmed;           ///< If the system is armed
+    uint8_t mode;                 ///< The current mode of the MAV
+    uint32_t custom_mode;         ///< The current mode of the MAV
+    uint32_t navMode;             ///< The current navigation mode of the MAV
+    int status;                   ///< The current status of the MAV
+    QString shortModeText;        ///< Short textual mode description
+    QString shortStateText;       ///< Short textual state description
 
+    /// OUTPUT
     QList<double> actuatorValues;
     QList<QString> actuatorNames;
-
     QList<double> motorValues;
     QList<QString> motorNames;
-    QMap<int, QString> components;  ///< IDs and names of all detected onboard components
-
     double thrustSum;           ///< Sum of forward/up thrust of all thrust actuators, in Newtons
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
 
-    // Battery stats
+    // dongfang: This looks like a candidate for being moved off to a separate class.
+    /// BATTERY / ENERGY
+    BatteryType batteryType;    ///< The battery type
+    int cells;                  ///< Number of cells
     float fullVoltage;          ///< Voltage of the fully charged battery (100%)
     float emptyVoltage;         ///< Voltage of the empty battery (0%)
     float startVoltage;         ///< Voltage at system start
@@ -354,15 +378,18 @@ protected: //COMMENTS FOR TEST UNIT
     float warnLevelPercent;     ///< Warning level, in percent
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
+    double currentCurrent;      ///< Battery current currently measured
     bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
     float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    uint8_t mode;              ///< The current mode of the MAV
-    uint32_t custom_mode;       ///< The current mode of the MAV
-    int status;                 ///< The current status of the MAV
-    uint32_t navMode;                ///< The current navigation mode of the MAV
+    bool lowBattAlarm;          ///< Switch if battery is low
+
+
+    /// TIMEKEEPING
+    quint64 startTime;            ///< The time the UAS was switched on
     quint64 onboardTimeOffset;
 
+    /// MANUAL CONTROL
     bool controlRollManual;     ///< status flag, true if roll is controlled manually
     bool controlPitchManual;    ///< status flag, true if pitch is controlled manually
     bool controlYawManual;      ///< status flag, true if yaw is controlled manually
@@ -372,16 +399,20 @@ protected: //COMMENTS FOR TEST UNIT
     double manualPitchAngle;    ///< Pitch angle set by human pilot (radians)
     double manualYawAngle;      ///< Yaw angle set by human pilot (radians)
     double manualThrust;        ///< Thrust set by human pilot (radians)
-    float receiveDropRate;      ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
-    float sendDropRate;         ///< Percentage of packets that were not received from the MAV by the GCS
-    bool lowBattAlarm;          ///< Switch if battery is low
+
+    /// POSITION
     bool positionLock;          ///< Status if position information is available or not
+    bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
+    bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
+
     double localX;
     double localY;
     double localZ;
+
     double latitude;            ///< Global latitude as estimated by position estimator
     double longitude;           ///< Global longitude as estimated by position estimator
     double altitude;            ///< Global altitude as estimated by position estimator
+
     double satelliteCount;      ///< Number of satellites visible to raw GPS
     bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
     double latitude_gps;        ///< Global latitude as estimated by raw GPS
@@ -390,13 +421,25 @@ protected: //COMMENTS FOR TEST UNIT
     double speedX;              ///< True speed in X axis
     double speedY;              ///< True speed in Y axis
     double speedZ;              ///< True speed in Z axis
+
+    QVector3D nedPosGlobalOffset;   ///< Offset between the system's NED position measurements and the swarm / global 0/0/0 origin
+    QVector3D nedAttGlobalOffset;   ///< Offset between the system's NED position measurements and the swarm / global 0/0/0 origin
+
+    /// WAYPOINT NAVIGATION
     double distToWaypoint;       ///< Distance to next waypoint
+    double bearingToWaypoint;    ///< Bearing to next waypoint
+    UASWaypointManager waypointManager;
+
+    /// ATTITUDE
+    bool attitudeKnown;             ///< True if attitude was received, false else
+    bool attitudeStamped;           ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
+    quint64 lastAttitude;           ///< Timestamp of last attitude measurement
     double roll;
     double pitch;
     double yaw;
-    quint64 lastHeartbeat;      ///< Time of the last heartbeat message
-    QTimer* statusTimeout;      ///< Timer for various status timeouts
 
+    // dongfang: This looks like a candidate for being moved off to a separate class.
+    /// IMAGING
     int imageSize;              ///< Image size being transmitted (bytes)
     int imagePackets;           ///< Number of data packets being sent for this image
     int imagePacketsArrived;    ///< Number of data packets recieved
@@ -431,21 +474,13 @@ protected: //COMMENTS FOR TEST UNIT
     qreal receivedRGBDImageTimestamp;
 #endif
 
+    /// PARAMETERS
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    int airframe;                   ///< The airframe type
-    bool attitudeKnown;             ///< True if attitude was received, false else
     QGCUASParamManager* paramManager; ///< Parameter manager class
-    QString shortStateText;         ///< Short textual state description
-    QString shortModeText;          ///< Short textual mode description
-    bool attitudeStamped;           ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
-    quint64 lastAttitude;           ///< Timestamp of last attitude measurement
+
+    /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
-    bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
-    bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
-    bool systemIsArmed;             ///< If the system is armed
-    QVector3D nedPosGlobalOffset;   ///< Offset between the system's NED position measurements and the swarm / global 0/0/0 origin
-    QVector3D nedAttGlobalOffset;   ///< Offset between the system's NED position measurements and the swarm / global 0/0/0 origin
 
 public:
     /** @brief Set the current battery type */
@@ -646,12 +681,12 @@ public slots:
     void enableHilXPlane(bool enable);
 
     /** @brief Send the full HIL state to the MAV */
-    void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
+    void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
+                        float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
                         float vx, float vy, float vz, float xacc, float yacc, float zacc);
 
     /** @brief RAW sensors for sensor HIL */
-    void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
+    void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollRotationRate, float pitchRotationRate, float yawRotationRate,
                                         float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed);
 
     /**
@@ -810,15 +845,16 @@ signals:
     void longitudeChanged(double val,QString name);
     void latitudeChanged(double val,QString name);
     void altitudeChanged(double val,QString name);
-    void altitudeChanged(int uasid, double altitude);
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
     void distToWaypointChanged(double val,QString name);
+    void bearingToWaypointChanged(double val,QString name);
 
-
-
+    //void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    //void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    //void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);
@@ -826,6 +862,7 @@ protected:
     quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
+
     int componentID[256];
     bool componentMulti[256];
     bool connectionLost; ///< Flag indicates a timed out connection

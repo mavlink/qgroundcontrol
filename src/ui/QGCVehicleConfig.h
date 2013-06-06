@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QList>
 #include <QGroupBox>
+#include <QPushButton>
 
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
@@ -29,6 +30,11 @@ public:
     };
 
 public slots:
+    void rcMenuButtonClicked();
+    void sensorMenuButtonClicked();
+    void generalMenuButtonClicked();
+    void advancedMenuButtonClicked();
+
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
     /** Fallback function, automatically called by loadConfig() upon failure to find and xml file*/
@@ -125,6 +131,7 @@ public slots:
     }
 
 protected slots:
+    void menuButtonClicked();
     /** Reset the RC calibration */
     void resetCalibrationRC();
     /** Write the RC calibration */
@@ -183,7 +190,7 @@ protected:
     
 private:
     Ui::QGCVehicleConfig *ui;
-
+    QMap<QPushButton*,QWidget*> buttonToWidgetMap;
 signals:
     void visibilityChanged(bool visible);
 };

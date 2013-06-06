@@ -45,6 +45,12 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
 
+    connect(ui->rcMenuButton,SIGNAL(clicked()),this,SLOT(rcMenuButtonClicked()));
+    connect(ui->sensorMenuButton,SIGNAL(clicked()),this,SLOT(sensorMenuButtonClicked()));
+    connect(ui->generalMenuButton,SIGNAL(clicked()),this,SLOT(generalMenuButtonClicked()));
+    connect(ui->advancedMenuButton,SIGNAL(clicked()),this,SLOT(advancedMenuButtonClicked()));
+
+
     requestCalibrationRC();
     if (mav) mav->requestParameter(0, "RC_TYPE");
 
@@ -89,6 +95,25 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     updateTimer.setInterval(150);
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateTimer.start();
+}
+void QGCVehicleConfig::rcMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void QGCVehicleConfig::sensorMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void QGCVehicleConfig::generalMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-2);
+}
+
+void QGCVehicleConfig::advancedMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-1);
 }
 
 QGCVehicleConfig::~QGCVehicleConfig()
@@ -249,8 +274,18 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     //Load tabs for general configuration
     foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        QWidget *tab = new QWidget(ui->tabWidget);
-        ui->tabWidget->insertTab(2,tab,dir);
+        QPushButton *button = new QPushButton(ui->scrollAreaWidgetContents_3);
+        connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
+        ui->navBarLayout->insertWidget(2,button);
+        button->setMinimumHeight(75);
+        button->setMinimumWidth(100);
+        button->show();
+        button->setText(dir);
+        //QWidget *tab = new QWidget(ui->tabWidget);
+        //ui->tabWidget->insertTab(2,tab,dir);
+        QWidget *tab = new QWidget(ui->stackedWidget);
+        ui->stackedWidget->insertWidget(2,tab);
+        buttonToWidgetMap[button] = tab;
         tab->setLayout(new QVBoxLayout());
         tab->show();
         QScrollArea *area = new QScrollArea();
@@ -285,8 +320,20 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     //Load tabs for vehicle specific configuration
     foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        QWidget *tab = new QWidget(ui->tabWidget);
-        ui->tabWidget->insertTab(2,tab,dir);
+        //QWidget *tab = new QWidget(ui->tabWidget);
+        //ui->tabWidget->insertTab(2,tab,dir);
+        QPushButton *button = new QPushButton(ui->scrollAreaWidgetContents_3);
+        connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
+        ui->navBarLayout->insertWidget(2,button);
+
+        QWidget *tab = new QWidget(ui->stackedWidget);
+        ui->stackedWidget->insertWidget(2,tab);
+        buttonToWidgetMap[button] = tab;
+
+        button->setMinimumHeight(75);
+        button->setMinimumWidth(100);
+        button->show();
+        button->setText(dir);
         tab->setLayout(new QVBoxLayout());
         tab->show();
         QScrollArea *area = new QScrollArea();
@@ -357,6 +404,19 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     sensortipsfile.open(QIODevice::ReadOnly);
     ui->sensorTips->setHtml(sensortipsfile.readAll());
     sensortipsfile.close();
+}
+void QGCVehicleConfig::menuButtonClicked()
+{
+    QPushButton *button = qobject_cast<QPushButton*>(sender());
+    if (!button)
+    {
+        return;
+    }
+    if (buttonToWidgetMap.contains(button))
+    {
+        ui->stackedWidget->setCurrentWidget(buttonToWidgetMap[button]);
+    }
+
 }
 
 void QGCVehicleConfig::loadConfig()

@@ -289,7 +289,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
         disconnect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
         disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
-        disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+        disconnect(mav, SIGNAL(batteryChanged(UASInterface*, double, double, double,int)), this, SLOT(updateBatteryRemaining(UASInterface*, double, double, double, int)));
         disconnect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         disconnect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
         disconnect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -307,7 +307,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
     connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
-    connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+    connect(active, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBatteryRemaining(UASInterface*, double, double, double, int)));
     connect(active, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
     connect(active, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
     connect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -395,7 +395,7 @@ void QGCToolBar::updateCurrentWaypoint(quint16 id)
     wpId = id;
 }
 
-void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds)
+void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);

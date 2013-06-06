@@ -55,7 +55,7 @@ public slots:
 
     void setActiveUAS(UASInterface* uas);
 
-    void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
+    void updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void updateCPULoad(UASInterface* uas, double load);
     /** 
 	 * @brief Set the loss rate of packets received by the MAV.

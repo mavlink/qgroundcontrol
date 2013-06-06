@@ -59,6 +59,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFirmwareUpdate.h"
 #include "QGCStatusBar.h"
 #include "UASQuickView.h"
+#include "PrimaryFlightDisplay.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -344,7 +345,6 @@ QString MainWindow::getWindowStateKey()
         return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
     }
     else
-
         return QString::number(currentView)+"_windowstate";
 }
 
@@ -569,11 +569,14 @@ void MainWindow::buildCommonWidgets()
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
 
-
-    createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
+    // createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
+    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
 
     createDockWidget(pilotView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-    createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+
+    //createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+    createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+
     createDockWidget(pilotView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
     createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
     pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);
@@ -726,7 +729,12 @@ void MainWindow::loadDockWidget(QString name)
     {
         return;
     }
-    if (name == "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET")
+    if (name.startsWith("HIL_CONFIG"))
+    {
+        //It's a HIL widget.
+        showHILConfigurationWidget(UASManager::instance()->getActiveUAS());
+    }
+    else if (name == "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",currentView,Qt::LeftDockWidgetArea);
     }
@@ -783,9 +791,10 @@ void MainWindow::loadDockWidget(QString name)
         qDebug() << "Error loading window:" << name << "Unknown window type";
         //createDockWidget(centerStack->currentWidget(),hddisplay,tr("Actuator Status"),"HEADS_DOWN_DISPLAY_2_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
-    else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
+    else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        // createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
@@ -881,8 +890,11 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
     if (mav && !hilDocks.contains(mav->getUASID()))
     {
+        //QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
+        //createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
+
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
-        QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
+       QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
         QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockName.toUpper().replace(" ", "_"),VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
 
@@ -896,8 +908,8 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (isVisible()) storeViewState();
-    storeSettings();
     aboutToCloseFlag = true;
+    storeSettings();
     mavlink->storeSettings();
     UASManager::instance()->storeSettings();
     QMainWindow::closeEvent(event);

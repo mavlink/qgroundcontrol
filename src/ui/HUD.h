@@ -69,7 +69,7 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 //    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
-    void updateBattery(UASInterface*, double, double, int);
+    void updateBattery(UASInterface*, double, double, double, int);
     void receiveHeartbeat(UASInterface*);
     void updateThrust(UASInterface*, double);
     void updateLocalPosition(UASInterface*,double,double,double,quint64);
@@ -184,7 +184,7 @@ protected:
     int warningBlinkRate;      ///< Blink rate of warning messages, will be rounded to the refresh rate
 
     QTimer* refreshTimer;      ///< The main timer, controls the update rate
-    QPainter* hudPainter;
+    QPainter* HUDPainter;
     QFont font;                ///< The HUD font, per default the free Bitstream Vera SANS, which is very close to actual HUD fonts
     QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD font is directly loaded from file rather than from the system)
     bool noCamera;             ///< No camera images available, draw the ground/sky box to indicate the horizon
@@ -218,7 +218,7 @@ protected:
     float load;
     QString offlineDirectory;
     QString nextOfflineImage;
-    bool hudInstrumentsEnabled;
+    bool HUDInstrumentsEnabled;
     bool videoEnabled;
     bool dataStreamEnabled;
     bool imageLoggingEnabled;
