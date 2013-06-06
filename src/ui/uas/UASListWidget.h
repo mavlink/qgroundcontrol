@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QWidget>
 #include <QMap>
 #include <QVBoxLayout>
+#include <QGroupBox>
 #include "UASInterface.h"
 #include "UASView.h"
 #include "QGCUnconnectedInfoWidget.h"
@@ -50,9 +51,12 @@ public:
 public slots:
     void addUAS(UASInterface* uas);
     void activeUAS(UASInterface* uas);
-    void removeUAS(UASInterface* uas);
+    void removeUASView(QObject* widget);
 
 protected:
+    // Keep a mapping from Links to GroupBoxes for adding new links.
+    QMap<LinkInterface*, QGroupBox*> linkToBoxMapping;
+    // Tie each view to their UAS object.
     QMap<UASInterface*, UASView*> uasViews;
     QGCUnconnectedInfoWidget* uWidget;
     void changeEvent(QEvent *e);
