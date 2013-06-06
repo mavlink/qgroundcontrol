@@ -1182,6 +1182,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         if (ok && index < chanMax)
         {
             rcMin[index] = value.toInt();
+            updateMinMax();
         }
     }
 
@@ -1191,6 +1192,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         if (ok && index < chanMax)
         {
             rcMax[index] = value.toInt();
+            updateMinMax();
         }
     }
 
@@ -1322,6 +1324,26 @@ void QGCVehicleConfig::updateError(const QString& str)
 {
     ui->statusLabel->setText(str);
     ui->statusLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+}
+void QGCVehicleConfig::updateMinMax()
+{
+    // Order is: roll, pitch, yaw, throttle, mode sw, aux 1-3
+    /*ui->rollWidget->setMin(rcMin[0]);
+    ui->rollWidget->setMax(rcMax[0]);
+    ui->pitchWidget->setMin(rcMin[1]);
+    ui->pitchWidget->setMax(rcMax[1]);
+    ui->yawWidget->setMin(rcMin[2]);
+    ui->yawWidget->setMax(rcMax[2]);
+    ui->throttleWidget->setMin(rcMin[3]);
+    ui->throttleWidget->setMax(rcMax[3]);
+    ui->radio5Widget->setMin(rcMin[4]);
+    ui->radio5Widget->setMax(rcMax[4]);
+    ui->radio6Widget->setMin(rcMin[5]);
+    ui->radio6Widget->setMax(rcMax[5]);
+    ui->radio7Widget->setMin(rcMin[6]);
+    ui->radio7Widget->setMax(rcMax[6]);
+    ui->radio8Widget->setMin(rcMin[7]);
+    ui->radio8Widget->setMax(rcMax[7]);*/
 }
 
 void QGCVehicleConfig::setRCType(int type)
@@ -1466,7 +1488,7 @@ void QGCVehicleConfig::updateView()
 
         if (rcValue[rcMapping[5]] != UINT16_MAX) {
             //ui->aux1Slider->setValue(rcAux1 * 50 + 50);
-            ui->radio5Widget->setValue(rcValue[5]);
+            ui->radio6Widget->setValue(rcValue[5]);
             ui->chanLabel_6->setText(QString("%1/%2").arg(rcValue[rcMapping[5]]).arg(rcAux1, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_6->setText(tr("---"));
@@ -1474,7 +1496,7 @@ void QGCVehicleConfig::updateView()
 
         if (rcValue[rcMapping[6]] != UINT16_MAX) {
             //ui->aux2Slider->setValue(rcAux2 * 50 + 50);
-            ui->radio6Widget->setValue(rcValue[6]);
+            ui->radio7Widget->setValue(rcValue[6]);
             ui->chanLabel_7->setText(QString("%1/%2").arg(rcValue[rcMapping[6]]).arg(rcAux2, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_7->setText(tr("---"));
@@ -1482,7 +1504,7 @@ void QGCVehicleConfig::updateView()
 
         if (rcValue[rcMapping[7]] != UINT16_MAX) {
             //ui->aux3Slider->setValue(rcAux3 * 50 + 50);
-            ui->radio7Widget->setValue(rcValue[7]);
+            ui->radio8Widget->setValue(rcValue[7]);
             ui->chanLabel_8->setText(QString("%1/%2").arg(rcValue[rcMapping[7]]).arg(rcAux3, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_8->setText(tr("---"));
