@@ -852,10 +852,9 @@ signals:
     void distToWaypointChanged(double val,QString name);
     void bearingToWaypointChanged(double val,QString name);
 
-    void altitudeChanged(UASInterface*, AltitudeMeasurementSource source, double altitude, quint64 usec);
-    //void speedChanged(UASInterface*, SpeedMeasurementSource source, double speed,  quint64 usec);
-    //void climbRateChanged(UASInterface*, AltitudeMeasurementSource source, double speed,  quint64 usec);
-    void velocityChanged(UASInterface*, MAV_FRAME, double vx, double vy, double vz, quint64 usec);
+    //void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    //void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    //void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);
