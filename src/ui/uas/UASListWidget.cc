@@ -45,7 +45,8 @@ This file is part of the PIXHAWK project
 #include "MAVLinkSimulationLink.h"
 #include "LinkManager.h"
 
-UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UASList)
+UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
+    m_ui(new Ui::UASList)
 {
     m_ui->setupUi(this);
     m_ui->verticalLayout->setAlignment(Qt::AlignTop);
@@ -54,11 +55,13 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     uWidget = new QGCUnconnectedInfoWidget(this);
     m_ui->verticalLayout->addWidget(uWidget);
 
+    linkToBoxMapping = QMap<LinkInterface*, QGroupBox*>();
     uasViews = QMap<UASInterface*, UASView*>();
 
     this->setVisible(false);
 
-    connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+            this, SLOT(addUAS(UASInterface*)));
 
     // Get a list of all existing UAS
     foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
@@ -96,8 +99,38 @@ void UASListWidget::addUAS(UASInterface* uas)
 
     if (!uasViews.contains(uas))
     {
-        uasViews.insert(uas, new UASView(uas, this));
-        m_ui->verticalLayout->addWidget(uasViews.value(uas));
+        // Only display the UAS in a single link.
+        QList<LinkInterface*>* x = uas->getLinks();
+        if (x->size())
+        {
+            LinkInterface* li = x->at(0);
+
+            // Find an existing QGroupBox for this LinkInterface or create a
+            // new one.
+            QGroupBox* newBox;
+            if (linkToBoxMapping.contains(li))
+            {
+                newBox = linkToBoxMapping[li];
+            }
+            else
+            {
+                newBox = new QGroupBox(li->getName(), this);
+                QVBoxLayout* boxLayout = new QVBoxLayout(newBox);
+                newBox->setLayout(boxLayout);
+                m_ui->verticalLayout->addWidget(newBox);
+                linkToBoxMapping[li] = newBox;
+            }
+
+            // And add the new UAS to the UASList
+            UASView* newView = new UASView(uas, newBox);
+            uasViews.insert(uas, newView);
+            newBox->layout()->addWidget(newView);
+
+            // Watch for when this widget is destroyed so that we can clean up the
+            // groupbox if necessary.
+            connect(newView, SIGNAL(destroyed(QObject*)),
+                    this, SLOT(removeUASView(QObject*)));
+        }
     }
 }
 
@@ -109,9 +142,36 @@ void UASListWidget::activeUAS(UASInterface* uas)
     }
 }
 
-void UASListWidget::removeUAS(UASInterface* uas)
+/**
+ * If the UAS was removed, check to see if it was the last one in the QGroupBox and delete
+ * the QGroupBox if so.
+ */
+void UASListWidget::removeUASView(QObject* widget)
 {
-    m_ui->verticalLayout->removeWidget(uasViews.value(uas));
-    uasViews.value(uas)->deleteLater();
-    uasViews.remove(uas);
+    UASView* view = (UASView*)widget;
+    if (view) {
+        int views = view->parentWidget()->findChildren<UASView*>().size();
+        if (views == 0) {
+            // Delete the groupbox
+            view->parentWidget()->deleteLater();
+
+            // Remove the associated UAS from our list.
+            UASInterface* uas = uasViews.key(view, NULL);
+            if (uas)
+            {
+                uasViews.remove(uas);
+            }
+
+            // And remove this GroupBox from our mapping.
+            LinkInterface* link = linkToBoxMapping.key((QGroupBox*)view->parentWidget(), NULL);
+            if (link)
+            {
+                linkToBoxMapping.remove(link);
+            }
+
+            // And put the initial widget back.
+            uWidget = new QGCUnconnectedInfoWidget(this);
+            m_ui->verticalLayout->addWidget(uWidget);
+        }
+    }
 }
