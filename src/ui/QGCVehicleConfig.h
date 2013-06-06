@@ -57,6 +57,8 @@ public slots:
     /** Render the data updated */
     void updateView();
 
+    void updateMinMax();
+
     /** Set the RC channel */
     void setRollChan(int channel) {
         rcMapping[0] = channel - 1;
