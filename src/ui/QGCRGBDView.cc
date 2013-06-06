@@ -85,7 +85,7 @@ void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
 {
     QMenu menu(this);
     // Update actions
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     //enableVideoAction->setChecked(videoEnabled);
     enableRGBAction->setChecked(rgbEnabled);
     enableDepthAction->setChecked(depthEnabled);

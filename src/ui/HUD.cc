@@ -119,7 +119,7 @@ HUD::HUD(int width, int height, QWidget* parent)
       load(0.0f),
       offlineDirectory(""),
       nextOfflineImage(""),
-      hudInstrumentsEnabled(true),
+      HUDInstrumentsEnabled(true),
       videoEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
@@ -218,7 +218,7 @@ void HUD::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
     // Update actions
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     enableVideoAction->setChecked(videoEnabled);
 
     menu.addAction(enableHUDAction);
@@ -234,7 +234,7 @@ void HUD::createActions()
     enableHUDAction = new QAction(tr("Enable HUD"), this);
     enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
     enableHUDAction->setCheckable(true);
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
 
     enableVideoAction = new QAction(tr("Enable Video Live feed"), this);
@@ -261,16 +261,16 @@ void HUD::setActiveUAS(UASInterface* uas)
 {
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*, double, double, double, quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int, double, double, double, quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(velocityChanged_NEDspeedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
         // Try to disconnect the image link
@@ -286,14 +286,14 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(velocityChanged_NED(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
         // Try to connect the image link
@@ -338,10 +338,11 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
     }
 }
 
-void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
+void HUD::updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
+    Q_UNUSED(current);
     fuelStatus = tr("BAT [%1% | %2V]").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0'));
     if (percent < 20.0f) {
         fuelColor = warningColor;
@@ -711,7 +712,7 @@ void HUD::paintHUD()
 
         // END OF OPENGL PAINTING
 
-        if (hudInstrumentsEnabled) {
+        if (HUDInstrumentsEnabled) {
 
             //glEnable(GL_MULTISAMPLE);
 
@@ -1459,7 +1460,7 @@ void HUD::selectOfflineDirectory()
 
 void HUD::enableHUDInstruments(bool enabled)
 {
-    hudInstrumentsEnabled = enabled;
+    HUDInstrumentsEnabled = enabled;
 }
 
 void HUD::enableVideo(bool enabled)
@@ -1509,7 +1510,7 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
 void HUD::copyImage()
 {
-    if (isVisible() && hudInstrumentsEnabled)
+    if (isVisible() && HUDInstrumentsEnabled)
     {
         //qDebug() << "HUD::copyImage()";
         UAS* u = dynamic_cast<UAS*>(this->uas);

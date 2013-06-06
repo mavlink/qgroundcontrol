@@ -134,6 +134,25 @@ void QGCVehicleConfig::advancedMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-1);
 }
+void QGCVehicleConfig::rcMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void QGCVehicleConfig::sensorMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void QGCVehicleConfig::generalMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-2);
+}
+
+void QGCVehicleConfig::advancedMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-1);
+}
 
 QGCVehicleConfig::~QGCVehicleConfig()
 {
