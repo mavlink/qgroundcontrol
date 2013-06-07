@@ -65,6 +65,8 @@ public slots:
     void updateLoad(UASInterface* uas, double load);
     //void receiveValue(int uasid, QString id, double value, quint64 time);
     void showHILUi();
+    /** @brief Disables the widget from accessing the UAS object in preparation for being deleted */
+    void prepareForDeletion();
     void refresh();
     /** @brief Receive new waypoint information */
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);

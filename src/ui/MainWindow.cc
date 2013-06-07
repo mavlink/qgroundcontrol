@@ -1676,7 +1676,6 @@ void MainWindow::UASCreated(UASInterface* uas)
     // this code piece might be removed later if this is the final
     // conclusion (May 2013)
     //        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
-    //        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
     //        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     //        ui.menuConnected_Systems->addAction(uasAction);
 
