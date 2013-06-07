@@ -18,9 +18,6 @@ typedef struct __mavlink_battery_status_t
 #define MAVLINK_MSG_ID_BATTERY_STATUS_LEN 16
 #define MAVLINK_MSG_ID_147_LEN 16
 
-#define MAVLINK_MSG_ID_BATTERY_STATUS_CRC 42
-#define MAVLINK_MSG_ID_147_CRC 42
-
 
 
 #define MAVLINK_MESSAGE_INFO_BATTERY_STATUS { \
@@ -60,7 +57,7 @@ static inline uint16_t mavlink_msg_battery_status_pack(uint8_t system_id, uint8_
 						       uint8_t accu_id, uint16_t voltage_cell_1, uint16_t voltage_cell_2, uint16_t voltage_cell_3, uint16_t voltage_cell_4, uint16_t voltage_cell_5, uint16_t voltage_cell_6, int16_t current_battery, int8_t battery_remaining)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_BATTERY_STATUS_LEN];
+	char buf[16];
 	_mav_put_uint16_t(buf, 0, voltage_cell_1);
 	_mav_put_uint16_t(buf, 2, voltage_cell_2);
 	_mav_put_uint16_t(buf, 4, voltage_cell_3);
@@ -71,7 +68,7 @@ static inline uint16_t mavlink_msg_battery_status_pack(uint8_t system_id, uint8_
 	_mav_put_uint8_t(buf, 14, accu_id);
 	_mav_put_int8_t(buf, 15, battery_remaining);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 16);
 #else
 	mavlink_battery_status_t packet;
 	packet.voltage_cell_1 = voltage_cell_1;
@@ -84,15 +81,11 @@ static inline uint16_t mavlink_msg_battery_status_pack(uint8_t system_id, uint8_
 	packet.accu_id = accu_id;
 	packet.battery_remaining = battery_remaining;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 16);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_BATTERY_STATUS;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_BATTERY_STATUS_LEN, MAVLINK_MSG_ID_BATTERY_STATUS_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 16, 42);
 }
 
 /**
@@ -117,7 +110,7 @@ static inline uint16_t mavlink_msg_battery_status_pack_chan(uint8_t system_id, u
 						           uint8_t accu_id,uint16_t voltage_cell_1,uint16_t voltage_cell_2,uint16_t voltage_cell_3,uint16_t voltage_cell_4,uint16_t voltage_cell_5,uint16_t voltage_cell_6,int16_t current_battery,int8_t battery_remaining)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_BATTERY_STATUS_LEN];
+	char buf[16];
 	_mav_put_uint16_t(buf, 0, voltage_cell_1);
 	_mav_put_uint16_t(buf, 2, voltage_cell_2);
 	_mav_put_uint16_t(buf, 4, voltage_cell_3);
@@ -128,7 +121,7 @@ static inline uint16_t mavlink_msg_battery_status_pack_chan(uint8_t system_id, u
 	_mav_put_uint8_t(buf, 14, accu_id);
 	_mav_put_int8_t(buf, 15, battery_remaining);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 16);
 #else
 	mavlink_battery_status_t packet;
 	packet.voltage_cell_1 = voltage_cell_1;
@@ -141,15 +134,11 @@ static inline uint16_t mavlink_msg_battery_status_pack_chan(uint8_t system_id, u
 	packet.accu_id = accu_id;
 	packet.battery_remaining = battery_remaining;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 16);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_BATTERY_STATUS;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_BATTERY_STATUS_LEN, MAVLINK_MSG_ID_BATTERY_STATUS_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 16, 42);
 }
 
 /**
@@ -184,7 +173,7 @@ static inline uint16_t mavlink_msg_battery_status_encode(uint8_t system_id, uint
 static inline void mavlink_msg_battery_status_send(mavlink_channel_t chan, uint8_t accu_id, uint16_t voltage_cell_1, uint16_t voltage_cell_2, uint16_t voltage_cell_3, uint16_t voltage_cell_4, uint16_t voltage_cell_5, uint16_t voltage_cell_6, int16_t current_battery, int8_t battery_remaining)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_BATTERY_STATUS_LEN];
+	char buf[16];
 	_mav_put_uint16_t(buf, 0, voltage_cell_1);
 	_mav_put_uint16_t(buf, 2, voltage_cell_2);
 	_mav_put_uint16_t(buf, 4, voltage_cell_3);
@@ -195,11 +184,7 @@ static inline void mavlink_msg_battery_status_send(mavlink_channel_t chan, uint8
 	_mav_put_uint8_t(buf, 14, accu_id);
 	_mav_put_int8_t(buf, 15, battery_remaining);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BATTERY_STATUS, buf, MAVLINK_MSG_ID_BATTERY_STATUS_LEN, MAVLINK_MSG_ID_BATTERY_STATUS_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BATTERY_STATUS, buf, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BATTERY_STATUS, buf, 16, 42);
 #else
 	mavlink_battery_status_t packet;
 	packet.voltage_cell_1 = voltage_cell_1;
@@ -212,11 +197,7 @@ static inline void mavlink_msg_battery_status_send(mavlink_channel_t chan, uint8
 	packet.accu_id = accu_id;
 	packet.battery_remaining = battery_remaining;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BATTERY_STATUS, (const char *)&packet, MAVLINK_MSG_ID_BATTERY_STATUS_LEN, MAVLINK_MSG_ID_BATTERY_STATUS_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BATTERY_STATUS, (const char *)&packet, MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BATTERY_STATUS, (const char *)&packet, 16, 42);
 #endif
 }
 
@@ -334,6 +315,6 @@ static inline void mavlink_msg_battery_status_decode(const mavlink_message_t* ms
 	battery_status->accu_id = mavlink_msg_battery_status_get_accu_id(msg);
 	battery_status->battery_remaining = mavlink_msg_battery_status_get_battery_remaining(msg);
 #else
-	memcpy(battery_status, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_BATTERY_STATUS_LEN);
+	memcpy(battery_status, _MAV_PAYLOAD(msg), 16);
 #endif
 }

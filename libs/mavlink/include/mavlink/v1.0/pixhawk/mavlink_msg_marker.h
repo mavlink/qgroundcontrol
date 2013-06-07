@@ -16,9 +16,6 @@ typedef struct __mavlink_marker_t
 #define MAVLINK_MSG_ID_MARKER_LEN 26
 #define MAVLINK_MSG_ID_171_LEN 26
 
-#define MAVLINK_MSG_ID_MARKER_CRC 249
-#define MAVLINK_MSG_ID_171_CRC 249
-
 
 
 #define MAVLINK_MESSAGE_INFO_MARKER { \
@@ -54,7 +51,7 @@ static inline uint16_t mavlink_msg_marker_pack(uint8_t system_id, uint8_t compon
 						       uint16_t id, float x, float y, float z, float roll, float pitch, float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_MARKER_LEN];
+	char buf[26];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
@@ -63,7 +60,7 @@ static inline uint16_t mavlink_msg_marker_pack(uint8_t system_id, uint8_t compon
 	_mav_put_float(buf, 20, yaw);
 	_mav_put_uint16_t(buf, 24, id);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MARKER_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_marker_t packet;
 	packet.x = x;
@@ -74,15 +71,11 @@ static inline uint16_t mavlink_msg_marker_pack(uint8_t system_id, uint8_t compon
 	packet.yaw = yaw;
 	packet.id = id;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_MARKER_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MARKER;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_MARKER_LEN, MAVLINK_MSG_ID_MARKER_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_MARKER_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 26, 249);
 }
 
 /**
@@ -105,7 +98,7 @@ static inline uint16_t mavlink_msg_marker_pack_chan(uint8_t system_id, uint8_t c
 						           uint16_t id,float x,float y,float z,float roll,float pitch,float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_MARKER_LEN];
+	char buf[26];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
@@ -114,7 +107,7 @@ static inline uint16_t mavlink_msg_marker_pack_chan(uint8_t system_id, uint8_t c
 	_mav_put_float(buf, 20, yaw);
 	_mav_put_uint16_t(buf, 24, id);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_MARKER_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_marker_t packet;
 	packet.x = x;
@@ -125,15 +118,11 @@ static inline uint16_t mavlink_msg_marker_pack_chan(uint8_t system_id, uint8_t c
 	packet.yaw = yaw;
 	packet.id = id;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_MARKER_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_MARKER;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_MARKER_LEN, MAVLINK_MSG_ID_MARKER_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_MARKER_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 249);
 }
 
 /**
@@ -166,7 +155,7 @@ static inline uint16_t mavlink_msg_marker_encode(uint8_t system_id, uint8_t comp
 static inline void mavlink_msg_marker_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float roll, float pitch, float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_MARKER_LEN];
+	char buf[26];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
@@ -175,11 +164,7 @@ static inline void mavlink_msg_marker_send(mavlink_channel_t chan, uint16_t id, 
 	_mav_put_float(buf, 20, yaw);
 	_mav_put_uint16_t(buf, 24, id);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MARKER, buf, MAVLINK_MSG_ID_MARKER_LEN, MAVLINK_MSG_ID_MARKER_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MARKER, buf, MAVLINK_MSG_ID_MARKER_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MARKER, buf, 26, 249);
 #else
 	mavlink_marker_t packet;
 	packet.x = x;
@@ -190,11 +175,7 @@ static inline void mavlink_msg_marker_send(mavlink_channel_t chan, uint16_t id, 
 	packet.yaw = yaw;
 	packet.id = id;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MARKER, (const char *)&packet, MAVLINK_MSG_ID_MARKER_LEN, MAVLINK_MSG_ID_MARKER_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MARKER, (const char *)&packet, MAVLINK_MSG_ID_MARKER_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_MARKER, (const char *)&packet, 26, 249);
 #endif
 }
 
@@ -290,6 +271,6 @@ static inline void mavlink_msg_marker_decode(const mavlink_message_t* msg, mavli
 	marker->yaw = mavlink_msg_marker_get_yaw(msg);
 	marker->id = mavlink_msg_marker_get_id(msg);
 #else
-	memcpy(marker, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_MARKER_LEN);
+	memcpy(marker, _MAV_PAYLOAD(msg), 26);
 #endif
 }

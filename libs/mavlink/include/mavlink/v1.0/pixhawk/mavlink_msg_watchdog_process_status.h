@@ -15,9 +15,6 @@ typedef struct __mavlink_watchdog_process_status_t
 #define MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN 12
 #define MAVLINK_MSG_ID_182_LEN 12
 
-#define MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_CRC 29
-#define MAVLINK_MSG_ID_182_CRC 29
-
 
 
 #define MAVLINK_MESSAGE_INFO_WATCHDOG_PROCESS_STATUS { \
@@ -51,7 +48,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack(uint8_t system_i
 						       uint16_t watchdog_id, uint16_t process_id, uint8_t state, uint8_t muted, int32_t pid, uint16_t crashes)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN];
+	char buf[12];
 	_mav_put_int32_t(buf, 0, pid);
 	_mav_put_uint16_t(buf, 4, watchdog_id);
 	_mav_put_uint16_t(buf, 6, process_id);
@@ -59,7 +56,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack(uint8_t system_i
 	_mav_put_uint8_t(buf, 10, state);
 	_mav_put_uint8_t(buf, 11, muted);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_watchdog_process_status_t packet;
 	packet.pid = pid;
@@ -69,15 +66,11 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack(uint8_t system_i
 	packet.state = state;
 	packet.muted = muted;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 12, 29);
 }
 
 /**
@@ -99,7 +92,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 						           uint16_t watchdog_id,uint16_t process_id,uint8_t state,uint8_t muted,int32_t pid,uint16_t crashes)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN];
+	char buf[12];
 	_mav_put_int32_t(buf, 0, pid);
 	_mav_put_uint16_t(buf, 4, watchdog_id);
 	_mav_put_uint16_t(buf, 6, process_id);
@@ -107,7 +100,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 	_mav_put_uint8_t(buf, 10, state);
 	_mav_put_uint8_t(buf, 11, muted);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_watchdog_process_status_t packet;
 	packet.pid = pid;
@@ -117,15 +110,11 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 	packet.state = state;
 	packet.muted = muted;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 29);
 }
 
 /**
@@ -157,7 +146,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_encode(uint8_t system
 static inline void mavlink_msg_watchdog_process_status_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_id, uint8_t state, uint8_t muted, int32_t pid, uint16_t crashes)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN];
+	char buf[12];
 	_mav_put_int32_t(buf, 0, pid);
 	_mav_put_uint16_t(buf, 4, watchdog_id);
 	_mav_put_uint16_t(buf, 6, process_id);
@@ -165,11 +154,7 @@ static inline void mavlink_msg_watchdog_process_status_send(mavlink_channel_t ch
 	_mav_put_uint8_t(buf, 10, state);
 	_mav_put_uint8_t(buf, 11, muted);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, buf, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, buf, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, buf, 12, 29);
 #else
 	mavlink_watchdog_process_status_t packet;
 	packet.pid = pid;
@@ -179,11 +164,7 @@ static inline void mavlink_msg_watchdog_process_status_send(mavlink_channel_t ch
 	packet.state = state;
 	packet.muted = muted;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, (const char *)&packet, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, (const char *)&packet, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, (const char *)&packet, 12, 29);
 #endif
 }
 
@@ -268,6 +249,6 @@ static inline void mavlink_msg_watchdog_process_status_decode(const mavlink_mess
 	watchdog_process_status->state = mavlink_msg_watchdog_process_status_get_state(msg);
 	watchdog_process_status->muted = mavlink_msg_watchdog_process_status_get_muted(msg);
 #else
-	memcpy(watchdog_process_status, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS_LEN);
+	memcpy(watchdog_process_status, _MAV_PAYLOAD(msg), 12);
 #endif
 }

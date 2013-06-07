@@ -37,9 +37,6 @@ typedef struct __mavlink_serial_udb_extra_f2_a_t
 #define MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN 63
 #define MAVLINK_MSG_ID_170_LEN 63
 
-#define MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_CRC 150
-#define MAVLINK_MSG_ID_170_CRC 150
-
 
 
 #define MAVLINK_MESSAGE_INFO_SERIAL_UDB_EXTRA_F2_A { \
@@ -117,7 +114,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_pack(uint8_t system_id,
 						       uint32_t sue_time, uint8_t sue_status, int32_t sue_latitude, int32_t sue_longitude, int32_t sue_altitude, uint16_t sue_waypoint_index, int16_t sue_rmat0, int16_t sue_rmat1, int16_t sue_rmat2, int16_t sue_rmat3, int16_t sue_rmat4, int16_t sue_rmat5, int16_t sue_rmat6, int16_t sue_rmat7, int16_t sue_rmat8, uint16_t sue_cog, int16_t sue_sog, uint16_t sue_cpu_load, int16_t sue_voltage_milis, uint16_t sue_air_speed_3DIMU, int16_t sue_estimated_wind_0, int16_t sue_estimated_wind_1, int16_t sue_estimated_wind_2, int16_t sue_magFieldEarth0, int16_t sue_magFieldEarth1, int16_t sue_magFieldEarth2, int16_t sue_svs, int16_t sue_hdop)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN];
+	char buf[63];
 	_mav_put_uint32_t(buf, 0, sue_time);
 	_mav_put_int32_t(buf, 4, sue_latitude);
 	_mav_put_int32_t(buf, 8, sue_longitude);
@@ -147,7 +144,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_pack(uint8_t system_id,
 	_mav_put_int16_t(buf, 60, sue_hdop);
 	_mav_put_uint8_t(buf, 62, sue_status);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 63);
 #else
 	mavlink_serial_udb_extra_f2_a_t packet;
 	packet.sue_time = sue_time;
@@ -179,15 +176,11 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_pack(uint8_t system_id,
 	packet.sue_hdop = sue_hdop;
 	packet.sue_status = sue_status;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 63);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 63, 150);
 }
 
 /**
@@ -231,7 +224,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_pack_chan(uint8_t syste
 						           uint32_t sue_time,uint8_t sue_status,int32_t sue_latitude,int32_t sue_longitude,int32_t sue_altitude,uint16_t sue_waypoint_index,int16_t sue_rmat0,int16_t sue_rmat1,int16_t sue_rmat2,int16_t sue_rmat3,int16_t sue_rmat4,int16_t sue_rmat5,int16_t sue_rmat6,int16_t sue_rmat7,int16_t sue_rmat8,uint16_t sue_cog,int16_t sue_sog,uint16_t sue_cpu_load,int16_t sue_voltage_milis,uint16_t sue_air_speed_3DIMU,int16_t sue_estimated_wind_0,int16_t sue_estimated_wind_1,int16_t sue_estimated_wind_2,int16_t sue_magFieldEarth0,int16_t sue_magFieldEarth1,int16_t sue_magFieldEarth2,int16_t sue_svs,int16_t sue_hdop)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN];
+	char buf[63];
 	_mav_put_uint32_t(buf, 0, sue_time);
 	_mav_put_int32_t(buf, 4, sue_latitude);
 	_mav_put_int32_t(buf, 8, sue_longitude);
@@ -261,7 +254,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_pack_chan(uint8_t syste
 	_mav_put_int16_t(buf, 60, sue_hdop);
 	_mav_put_uint8_t(buf, 62, sue_status);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 63);
 #else
 	mavlink_serial_udb_extra_f2_a_t packet;
 	packet.sue_time = sue_time;
@@ -293,15 +286,11 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_pack_chan(uint8_t syste
 	packet.sue_hdop = sue_hdop;
 	packet.sue_status = sue_status;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 63);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 63, 150);
 }
 
 /**
@@ -355,7 +344,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f2_a_encode(uint8_t system_i
 static inline void mavlink_msg_serial_udb_extra_f2_a_send(mavlink_channel_t chan, uint32_t sue_time, uint8_t sue_status, int32_t sue_latitude, int32_t sue_longitude, int32_t sue_altitude, uint16_t sue_waypoint_index, int16_t sue_rmat0, int16_t sue_rmat1, int16_t sue_rmat2, int16_t sue_rmat3, int16_t sue_rmat4, int16_t sue_rmat5, int16_t sue_rmat6, int16_t sue_rmat7, int16_t sue_rmat8, uint16_t sue_cog, int16_t sue_sog, uint16_t sue_cpu_load, int16_t sue_voltage_milis, uint16_t sue_air_speed_3DIMU, int16_t sue_estimated_wind_0, int16_t sue_estimated_wind_1, int16_t sue_estimated_wind_2, int16_t sue_magFieldEarth0, int16_t sue_magFieldEarth1, int16_t sue_magFieldEarth2, int16_t sue_svs, int16_t sue_hdop)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN];
+	char buf[63];
 	_mav_put_uint32_t(buf, 0, sue_time);
 	_mav_put_int32_t(buf, 4, sue_latitude);
 	_mav_put_int32_t(buf, 8, sue_longitude);
@@ -385,11 +374,7 @@ static inline void mavlink_msg_serial_udb_extra_f2_a_send(mavlink_channel_t chan
 	_mav_put_int16_t(buf, 60, sue_hdop);
 	_mav_put_uint8_t(buf, 62, sue_status);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A, buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A, buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A, buf, 63, 150);
 #else
 	mavlink_serial_udb_extra_f2_a_t packet;
 	packet.sue_time = sue_time;
@@ -421,11 +406,7 @@ static inline void mavlink_msg_serial_udb_extra_f2_a_send(mavlink_channel_t chan
 	packet.sue_hdop = sue_hdop;
 	packet.sue_status = sue_status;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A, (const char *)&packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A, (const char *)&packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A, (const char *)&packet, 63, 150);
 #endif
 }
 
@@ -752,6 +733,6 @@ static inline void mavlink_msg_serial_udb_extra_f2_a_decode(const mavlink_messag
 	serial_udb_extra_f2_a->sue_hdop = mavlink_msg_serial_udb_extra_f2_a_get_sue_hdop(msg);
 	serial_udb_extra_f2_a->sue_status = mavlink_msg_serial_udb_extra_f2_a_get_sue_status(msg);
 #else
-	memcpy(serial_udb_extra_f2_a, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F2_A_LEN);
+	memcpy(serial_udb_extra_f2_a, _MAV_PAYLOAD(msg), 63);
 #endif
 }

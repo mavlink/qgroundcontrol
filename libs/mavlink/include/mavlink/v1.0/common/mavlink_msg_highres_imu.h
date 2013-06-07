@@ -24,9 +24,6 @@ typedef struct __mavlink_highres_imu_t
 #define MAVLINK_MSG_ID_HIGHRES_IMU_LEN 62
 #define MAVLINK_MSG_ID_105_LEN 62
 
-#define MAVLINK_MSG_ID_HIGHRES_IMU_CRC 93
-#define MAVLINK_MSG_ID_105_CRC 93
-
 
 
 #define MAVLINK_MESSAGE_INFO_HIGHRES_IMU { \
@@ -78,7 +75,7 @@ static inline uint16_t mavlink_msg_highres_imu_pack(uint8_t system_id, uint8_t c
 						       uint64_t time_usec, float xacc, float yacc, float zacc, float xgyro, float ygyro, float zgyro, float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, uint16_t fields_updated)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_HIGHRES_IMU_LEN];
+	char buf[62];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, xacc);
 	_mav_put_float(buf, 12, yacc);
@@ -95,7 +92,7 @@ static inline uint16_t mavlink_msg_highres_imu_pack(uint8_t system_id, uint8_t c
 	_mav_put_float(buf, 56, temperature);
 	_mav_put_uint16_t(buf, 60, fields_updated);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 62);
 #else
 	mavlink_highres_imu_t packet;
 	packet.time_usec = time_usec;
@@ -114,15 +111,11 @@ static inline uint16_t mavlink_msg_highres_imu_pack(uint8_t system_id, uint8_t c
 	packet.temperature = temperature;
 	packet.fields_updated = fields_updated;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 62);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIGHRES_IMU;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_HIGHRES_IMU_LEN, MAVLINK_MSG_ID_HIGHRES_IMU_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 62, 93);
 }
 
 /**
@@ -153,7 +146,7 @@ static inline uint16_t mavlink_msg_highres_imu_pack_chan(uint8_t system_id, uint
 						           uint64_t time_usec,float xacc,float yacc,float zacc,float xgyro,float ygyro,float zgyro,float xmag,float ymag,float zmag,float abs_pressure,float diff_pressure,float pressure_alt,float temperature,uint16_t fields_updated)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_HIGHRES_IMU_LEN];
+	char buf[62];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, xacc);
 	_mav_put_float(buf, 12, yacc);
@@ -170,7 +163,7 @@ static inline uint16_t mavlink_msg_highres_imu_pack_chan(uint8_t system_id, uint
 	_mav_put_float(buf, 56, temperature);
 	_mav_put_uint16_t(buf, 60, fields_updated);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 62);
 #else
 	mavlink_highres_imu_t packet;
 	packet.time_usec = time_usec;
@@ -189,15 +182,11 @@ static inline uint16_t mavlink_msg_highres_imu_pack_chan(uint8_t system_id, uint
 	packet.temperature = temperature;
 	packet.fields_updated = fields_updated;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 62);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_HIGHRES_IMU;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_HIGHRES_IMU_LEN, MAVLINK_MSG_ID_HIGHRES_IMU_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 62, 93);
 }
 
 /**
@@ -238,7 +227,7 @@ static inline uint16_t mavlink_msg_highres_imu_encode(uint8_t system_id, uint8_t
 static inline void mavlink_msg_highres_imu_send(mavlink_channel_t chan, uint64_t time_usec, float xacc, float yacc, float zacc, float xgyro, float ygyro, float zgyro, float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, uint16_t fields_updated)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_HIGHRES_IMU_LEN];
+	char buf[62];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, xacc);
 	_mav_put_float(buf, 12, yacc);
@@ -255,11 +244,7 @@ static inline void mavlink_msg_highres_imu_send(mavlink_channel_t chan, uint64_t
 	_mav_put_float(buf, 56, temperature);
 	_mav_put_uint16_t(buf, 60, fields_updated);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HIGHRES_IMU, buf, MAVLINK_MSG_ID_HIGHRES_IMU_LEN, MAVLINK_MSG_ID_HIGHRES_IMU_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HIGHRES_IMU, buf, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HIGHRES_IMU, buf, 62, 93);
 #else
 	mavlink_highres_imu_t packet;
 	packet.time_usec = time_usec;
@@ -278,11 +263,7 @@ static inline void mavlink_msg_highres_imu_send(mavlink_channel_t chan, uint64_t
 	packet.temperature = temperature;
 	packet.fields_updated = fields_updated;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HIGHRES_IMU, (const char *)&packet, MAVLINK_MSG_ID_HIGHRES_IMU_LEN, MAVLINK_MSG_ID_HIGHRES_IMU_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HIGHRES_IMU, (const char *)&packet, MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HIGHRES_IMU, (const char *)&packet, 62, 93);
 #endif
 }
 
@@ -466,6 +447,6 @@ static inline void mavlink_msg_highres_imu_decode(const mavlink_message_t* msg, 
 	highres_imu->temperature = mavlink_msg_highres_imu_get_temperature(msg);
 	highres_imu->fields_updated = mavlink_msg_highres_imu_get_fields_updated(msg);
 #else
-	memcpy(highres_imu, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_HIGHRES_IMU_LEN);
+	memcpy(highres_imu, _MAV_PAYLOAD(msg), 62);
 #endif
 }

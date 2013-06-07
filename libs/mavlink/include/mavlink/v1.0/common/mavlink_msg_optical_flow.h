@@ -17,9 +17,6 @@ typedef struct __mavlink_optical_flow_t
 #define MAVLINK_MSG_ID_OPTICAL_FLOW_LEN 26
 #define MAVLINK_MSG_ID_100_LEN 26
 
-#define MAVLINK_MSG_ID_OPTICAL_FLOW_CRC 175
-#define MAVLINK_MSG_ID_100_CRC 175
-
 
 
 #define MAVLINK_MESSAGE_INFO_OPTICAL_FLOW { \
@@ -57,7 +54,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack(uint8_t system_id, uint8_t 
 						       uint64_t time_usec, uint8_t sensor_id, int16_t flow_x, int16_t flow_y, float flow_comp_m_x, float flow_comp_m_y, uint8_t quality, float ground_distance)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OPTICAL_FLOW_LEN];
+	char buf[26];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, flow_comp_m_x);
 	_mav_put_float(buf, 12, flow_comp_m_y);
@@ -67,7 +64,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack(uint8_t system_id, uint8_t 
 	_mav_put_uint8_t(buf, 24, sensor_id);
 	_mav_put_uint8_t(buf, 25, quality);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_optical_flow_t packet;
 	packet.time_usec = time_usec;
@@ -79,15 +76,11 @@ static inline uint16_t mavlink_msg_optical_flow_pack(uint8_t system_id, uint8_t 
 	packet.sensor_id = sensor_id;
 	packet.quality = quality;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OPTICAL_FLOW;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN, MAVLINK_MSG_ID_OPTICAL_FLOW_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 26, 175);
 }
 
 /**
@@ -111,7 +104,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack_chan(uint8_t system_id, uin
 						           uint64_t time_usec,uint8_t sensor_id,int16_t flow_x,int16_t flow_y,float flow_comp_m_x,float flow_comp_m_y,uint8_t quality,float ground_distance)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OPTICAL_FLOW_LEN];
+	char buf[26];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, flow_comp_m_x);
 	_mav_put_float(buf, 12, flow_comp_m_y);
@@ -121,7 +114,7 @@ static inline uint16_t mavlink_msg_optical_flow_pack_chan(uint8_t system_id, uin
 	_mav_put_uint8_t(buf, 24, sensor_id);
 	_mav_put_uint8_t(buf, 25, quality);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 26);
 #else
 	mavlink_optical_flow_t packet;
 	packet.time_usec = time_usec;
@@ -133,15 +126,11 @@ static inline uint16_t mavlink_msg_optical_flow_pack_chan(uint8_t system_id, uin
 	packet.sensor_id = sensor_id;
 	packet.quality = quality;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 26);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OPTICAL_FLOW;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN, MAVLINK_MSG_ID_OPTICAL_FLOW_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 175);
 }
 
 /**
@@ -175,7 +164,7 @@ static inline uint16_t mavlink_msg_optical_flow_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_optical_flow_send(mavlink_channel_t chan, uint64_t time_usec, uint8_t sensor_id, int16_t flow_x, int16_t flow_y, float flow_comp_m_x, float flow_comp_m_y, uint8_t quality, float ground_distance)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OPTICAL_FLOW_LEN];
+	char buf[26];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, flow_comp_m_x);
 	_mav_put_float(buf, 12, flow_comp_m_y);
@@ -185,11 +174,7 @@ static inline void mavlink_msg_optical_flow_send(mavlink_channel_t chan, uint64_
 	_mav_put_uint8_t(buf, 24, sensor_id);
 	_mav_put_uint8_t(buf, 25, quality);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPTICAL_FLOW, buf, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN, MAVLINK_MSG_ID_OPTICAL_FLOW_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPTICAL_FLOW, buf, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPTICAL_FLOW, buf, 26, 175);
 #else
 	mavlink_optical_flow_t packet;
 	packet.time_usec = time_usec;
@@ -201,11 +186,7 @@ static inline void mavlink_msg_optical_flow_send(mavlink_channel_t chan, uint64_
 	packet.sensor_id = sensor_id;
 	packet.quality = quality;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPTICAL_FLOW, (const char *)&packet, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN, MAVLINK_MSG_ID_OPTICAL_FLOW_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPTICAL_FLOW, (const char *)&packet, MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OPTICAL_FLOW, (const char *)&packet, 26, 175);
 #endif
 }
 
@@ -312,6 +293,6 @@ static inline void mavlink_msg_optical_flow_decode(const mavlink_message_t* msg,
 	optical_flow->sensor_id = mavlink_msg_optical_flow_get_sensor_id(msg);
 	optical_flow->quality = mavlink_msg_optical_flow_get_quality(msg);
 #else
-	memcpy(optical_flow, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_OPTICAL_FLOW_LEN);
+	memcpy(optical_flow, _MAV_PAYLOAD(msg), 26);
 #endif
 }

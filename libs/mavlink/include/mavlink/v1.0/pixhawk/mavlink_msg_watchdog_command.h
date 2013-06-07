@@ -13,9 +13,6 @@ typedef struct __mavlink_watchdog_command_t
 #define MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN 6
 #define MAVLINK_MSG_ID_183_LEN 6
 
-#define MAVLINK_MSG_ID_WATCHDOG_COMMAND_CRC 162
-#define MAVLINK_MSG_ID_183_CRC 162
-
 
 
 #define MAVLINK_MESSAGE_INFO_WATCHDOG_COMMAND { \
@@ -45,13 +42,13 @@ static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint
 						       uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN];
+	char buf[6];
 	_mav_put_uint16_t(buf, 0, watchdog_id);
 	_mav_put_uint16_t(buf, 2, process_id);
 	_mav_put_uint8_t(buf, 4, target_system_id);
 	_mav_put_uint8_t(buf, 5, command_id);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 6);
 #else
 	mavlink_watchdog_command_t packet;
 	packet.watchdog_id = watchdog_id;
@@ -59,15 +56,11 @@ static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint
 	packet.target_system_id = target_system_id;
 	packet.command_id = command_id;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 6);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN, MAVLINK_MSG_ID_WATCHDOG_COMMAND_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 6, 162);
 }
 
 /**
@@ -87,13 +80,13 @@ static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id,
 						           uint8_t target_system_id,uint16_t watchdog_id,uint16_t process_id,uint8_t command_id)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN];
+	char buf[6];
 	_mav_put_uint16_t(buf, 0, watchdog_id);
 	_mav_put_uint16_t(buf, 2, process_id);
 	_mav_put_uint8_t(buf, 4, target_system_id);
 	_mav_put_uint8_t(buf, 5, command_id);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 6);
 #else
 	mavlink_watchdog_command_t packet;
 	packet.watchdog_id = watchdog_id;
@@ -101,15 +94,11 @@ static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id,
 	packet.target_system_id = target_system_id;
 	packet.command_id = command_id;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 6);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN, MAVLINK_MSG_ID_WATCHDOG_COMMAND_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 6, 162);
 }
 
 /**
@@ -139,17 +128,13 @@ static inline uint16_t mavlink_msg_watchdog_command_encode(uint8_t system_id, ui
 static inline void mavlink_msg_watchdog_command_send(mavlink_channel_t chan, uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN];
+	char buf[6];
 	_mav_put_uint16_t(buf, 0, watchdog_id);
 	_mav_put_uint16_t(buf, 2, process_id);
 	_mav_put_uint8_t(buf, 4, target_system_id);
 	_mav_put_uint8_t(buf, 5, command_id);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND, buf, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN, MAVLINK_MSG_ID_WATCHDOG_COMMAND_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND, buf, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND, buf, 6, 162);
 #else
 	mavlink_watchdog_command_t packet;
 	packet.watchdog_id = watchdog_id;
@@ -157,11 +142,7 @@ static inline void mavlink_msg_watchdog_command_send(mavlink_channel_t chan, uin
 	packet.target_system_id = target_system_id;
 	packet.command_id = command_id;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND, (const char *)&packet, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN, MAVLINK_MSG_ID_WATCHDOG_COMMAND_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND, (const char *)&packet, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND, (const char *)&packet, 6, 162);
 #endif
 }
 
@@ -224,6 +205,6 @@ static inline void mavlink_msg_watchdog_command_decode(const mavlink_message_t* 
 	watchdog_command->target_system_id = mavlink_msg_watchdog_command_get_target_system_id(msg);
 	watchdog_command->command_id = mavlink_msg_watchdog_command_get_command_id(msg);
 #else
-	memcpy(watchdog_command, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+	memcpy(watchdog_command, _MAV_PAYLOAD(msg), 6);
 #endif
 }

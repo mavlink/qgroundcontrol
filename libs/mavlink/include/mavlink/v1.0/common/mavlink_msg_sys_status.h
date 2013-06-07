@@ -22,9 +22,6 @@ typedef struct __mavlink_sys_status_t
 #define MAVLINK_MSG_ID_SYS_STATUS_LEN 31
 #define MAVLINK_MSG_ID_1_LEN 31
 
-#define MAVLINK_MSG_ID_SYS_STATUS_CRC 124
-#define MAVLINK_MSG_ID_1_CRC 124
-
 
 
 #define MAVLINK_MESSAGE_INFO_SYS_STATUS { \
@@ -72,7 +69,7 @@ static inline uint16_t mavlink_msg_sys_status_pack(uint8_t system_id, uint8_t co
 						       uint32_t onboard_control_sensors_present, uint32_t onboard_control_sensors_enabled, uint32_t onboard_control_sensors_health, uint16_t load, uint16_t voltage_battery, int16_t current_battery, int8_t battery_remaining, uint16_t drop_rate_comm, uint16_t errors_comm, uint16_t errors_count1, uint16_t errors_count2, uint16_t errors_count3, uint16_t errors_count4)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SYS_STATUS_LEN];
+	char buf[31];
 	_mav_put_uint32_t(buf, 0, onboard_control_sensors_present);
 	_mav_put_uint32_t(buf, 4, onboard_control_sensors_enabled);
 	_mav_put_uint32_t(buf, 8, onboard_control_sensors_health);
@@ -87,7 +84,7 @@ static inline uint16_t mavlink_msg_sys_status_pack(uint8_t system_id, uint8_t co
 	_mav_put_uint16_t(buf, 28, errors_count4);
 	_mav_put_int8_t(buf, 30, battery_remaining);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SYS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 31);
 #else
 	mavlink_sys_status_t packet;
 	packet.onboard_control_sensors_present = onboard_control_sensors_present;
@@ -104,15 +101,11 @@ static inline uint16_t mavlink_msg_sys_status_pack(uint8_t system_id, uint8_t co
 	packet.errors_count4 = errors_count4;
 	packet.battery_remaining = battery_remaining;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SYS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 31);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SYS_STATUS_LEN, MAVLINK_MSG_ID_SYS_STATUS_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SYS_STATUS_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 31, 124);
 }
 
 /**
@@ -141,7 +134,7 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 						           uint32_t onboard_control_sensors_present,uint32_t onboard_control_sensors_enabled,uint32_t onboard_control_sensors_health,uint16_t load,uint16_t voltage_battery,int16_t current_battery,int8_t battery_remaining,uint16_t drop_rate_comm,uint16_t errors_comm,uint16_t errors_count1,uint16_t errors_count2,uint16_t errors_count3,uint16_t errors_count4)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SYS_STATUS_LEN];
+	char buf[31];
 	_mav_put_uint32_t(buf, 0, onboard_control_sensors_present);
 	_mav_put_uint32_t(buf, 4, onboard_control_sensors_enabled);
 	_mav_put_uint32_t(buf, 8, onboard_control_sensors_health);
@@ -156,7 +149,7 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 	_mav_put_uint16_t(buf, 28, errors_count4);
 	_mav_put_int8_t(buf, 30, battery_remaining);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SYS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 31);
 #else
 	mavlink_sys_status_t packet;
 	packet.onboard_control_sensors_present = onboard_control_sensors_present;
@@ -173,15 +166,11 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 	packet.errors_count4 = errors_count4;
 	packet.battery_remaining = battery_remaining;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SYS_STATUS_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 31);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SYS_STATUS_LEN, MAVLINK_MSG_ID_SYS_STATUS_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SYS_STATUS_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 31, 124);
 }
 
 /**
@@ -220,7 +209,7 @@ static inline uint16_t mavlink_msg_sys_status_encode(uint8_t system_id, uint8_t 
 static inline void mavlink_msg_sys_status_send(mavlink_channel_t chan, uint32_t onboard_control_sensors_present, uint32_t onboard_control_sensors_enabled, uint32_t onboard_control_sensors_health, uint16_t load, uint16_t voltage_battery, int16_t current_battery, int8_t battery_remaining, uint16_t drop_rate_comm, uint16_t errors_comm, uint16_t errors_count1, uint16_t errors_count2, uint16_t errors_count3, uint16_t errors_count4)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SYS_STATUS_LEN];
+	char buf[31];
 	_mav_put_uint32_t(buf, 0, onboard_control_sensors_present);
 	_mav_put_uint32_t(buf, 4, onboard_control_sensors_enabled);
 	_mav_put_uint32_t(buf, 8, onboard_control_sensors_health);
@@ -235,11 +224,7 @@ static inline void mavlink_msg_sys_status_send(mavlink_channel_t chan, uint32_t 
 	_mav_put_uint16_t(buf, 28, errors_count4);
 	_mav_put_int8_t(buf, 30, battery_remaining);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SYS_STATUS, buf, MAVLINK_MSG_ID_SYS_STATUS_LEN, MAVLINK_MSG_ID_SYS_STATUS_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SYS_STATUS, buf, MAVLINK_MSG_ID_SYS_STATUS_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SYS_STATUS, buf, 31, 124);
 #else
 	mavlink_sys_status_t packet;
 	packet.onboard_control_sensors_present = onboard_control_sensors_present;
@@ -256,11 +241,7 @@ static inline void mavlink_msg_sys_status_send(mavlink_channel_t chan, uint32_t 
 	packet.errors_count4 = errors_count4;
 	packet.battery_remaining = battery_remaining;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SYS_STATUS, (const char *)&packet, MAVLINK_MSG_ID_SYS_STATUS_LEN, MAVLINK_MSG_ID_SYS_STATUS_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SYS_STATUS, (const char *)&packet, MAVLINK_MSG_ID_SYS_STATUS_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SYS_STATUS, (const char *)&packet, 31, 124);
 #endif
 }
 
@@ -422,6 +403,6 @@ static inline void mavlink_msg_sys_status_decode(const mavlink_message_t* msg, m
 	sys_status->errors_count4 = mavlink_msg_sys_status_get_errors_count4(msg);
 	sys_status->battery_remaining = mavlink_msg_sys_status_get_battery_remaining(msg);
 #else
-	memcpy(sys_status, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SYS_STATUS_LEN);
+	memcpy(sys_status, _MAV_PAYLOAD(msg), 31);
 #endif
 }

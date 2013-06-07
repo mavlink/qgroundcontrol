@@ -15,9 +15,6 @@ typedef struct __mavlink_serial_udb_extra_f5_t
 #define MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN 24
 #define MAVLINK_MSG_ID_173_LEN 24
 
-#define MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_CRC 121
-#define MAVLINK_MSG_ID_173_CRC 121
-
 
 
 #define MAVLINK_MESSAGE_INFO_SERIAL_UDB_EXTRA_F5 { \
@@ -51,7 +48,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_pack(uint8_t system_id, u
 						       float sue_YAWKP_AILERON, float sue_YAWKD_AILERON, float sue_ROLLKP, float sue_ROLLKD, float sue_YAW_STABILIZATION_AILERON, float sue_AILERON_BOOST)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN];
+	char buf[24];
 	_mav_put_float(buf, 0, sue_YAWKP_AILERON);
 	_mav_put_float(buf, 4, sue_YAWKD_AILERON);
 	_mav_put_float(buf, 8, sue_ROLLKP);
@@ -59,7 +56,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_pack(uint8_t system_id, u
 	_mav_put_float(buf, 16, sue_YAW_STABILIZATION_AILERON);
 	_mav_put_float(buf, 20, sue_AILERON_BOOST);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
 #else
 	mavlink_serial_udb_extra_f5_t packet;
 	packet.sue_YAWKP_AILERON = sue_YAWKP_AILERON;
@@ -69,15 +66,11 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_pack(uint8_t system_id, u
 	packet.sue_YAW_STABILIZATION_AILERON = sue_YAW_STABILIZATION_AILERON;
 	packet.sue_AILERON_BOOST = sue_AILERON_BOOST;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 24, 121);
 }
 
 /**
@@ -99,7 +92,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_pack_chan(uint8_t system_
 						           float sue_YAWKP_AILERON,float sue_YAWKD_AILERON,float sue_ROLLKP,float sue_ROLLKD,float sue_YAW_STABILIZATION_AILERON,float sue_AILERON_BOOST)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN];
+	char buf[24];
 	_mav_put_float(buf, 0, sue_YAWKP_AILERON);
 	_mav_put_float(buf, 4, sue_YAWKD_AILERON);
 	_mav_put_float(buf, 8, sue_ROLLKP);
@@ -107,7 +100,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_pack_chan(uint8_t system_
 	_mav_put_float(buf, 16, sue_YAW_STABILIZATION_AILERON);
 	_mav_put_float(buf, 20, sue_AILERON_BOOST);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
 #else
 	mavlink_serial_udb_extra_f5_t packet;
 	packet.sue_YAWKP_AILERON = sue_YAWKP_AILERON;
@@ -117,15 +110,11 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_pack_chan(uint8_t system_
 	packet.sue_YAW_STABILIZATION_AILERON = sue_YAW_STABILIZATION_AILERON;
 	packet.sue_AILERON_BOOST = sue_AILERON_BOOST;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 121);
 }
 
 /**
@@ -157,7 +146,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f5_encode(uint8_t system_id,
 static inline void mavlink_msg_serial_udb_extra_f5_send(mavlink_channel_t chan, float sue_YAWKP_AILERON, float sue_YAWKD_AILERON, float sue_ROLLKP, float sue_ROLLKD, float sue_YAW_STABILIZATION_AILERON, float sue_AILERON_BOOST)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN];
+	char buf[24];
 	_mav_put_float(buf, 0, sue_YAWKP_AILERON);
 	_mav_put_float(buf, 4, sue_YAWKD_AILERON);
 	_mav_put_float(buf, 8, sue_ROLLKP);
@@ -165,11 +154,7 @@ static inline void mavlink_msg_serial_udb_extra_f5_send(mavlink_channel_t chan, 
 	_mav_put_float(buf, 16, sue_YAW_STABILIZATION_AILERON);
 	_mav_put_float(buf, 20, sue_AILERON_BOOST);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5, buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5, buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5, buf, 24, 121);
 #else
 	mavlink_serial_udb_extra_f5_t packet;
 	packet.sue_YAWKP_AILERON = sue_YAWKP_AILERON;
@@ -179,11 +164,7 @@ static inline void mavlink_msg_serial_udb_extra_f5_send(mavlink_channel_t chan, 
 	packet.sue_YAW_STABILIZATION_AILERON = sue_YAW_STABILIZATION_AILERON;
 	packet.sue_AILERON_BOOST = sue_AILERON_BOOST;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5, (const char *)&packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5, (const char *)&packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5, (const char *)&packet, 24, 121);
 #endif
 }
 
@@ -268,6 +249,6 @@ static inline void mavlink_msg_serial_udb_extra_f5_decode(const mavlink_message_
 	serial_udb_extra_f5->sue_YAW_STABILIZATION_AILERON = mavlink_msg_serial_udb_extra_f5_get_sue_YAW_STABILIZATION_AILERON(msg);
 	serial_udb_extra_f5->sue_AILERON_BOOST = mavlink_msg_serial_udb_extra_f5_get_sue_AILERON_BOOST(msg);
 #else
-	memcpy(serial_udb_extra_f5, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F5_LEN);
+	memcpy(serial_udb_extra_f5, _MAV_PAYLOAD(msg), 24);
 #endif
 }
