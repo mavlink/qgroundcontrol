@@ -151,7 +151,11 @@ void UASQuickView::setActiveUAS(UASInterface* uas)
 {
     if (this->uas)
     {
+        uasPropertyList.clear();
+        uasPropertyValueMap.clear();
+        uasPropertyToLabelMap.clear();
         updateTimer->stop();
+        this->actions().clear();
     }
 
     this->uas = uas;
@@ -292,6 +296,9 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
         {
             quickViewSelectDialog->addItem(name);
         }
+
+        // And periodically update the view.
+        updateTimer->start(1000);
     }
     uasPropertyValueMap[name] = value;
 }
@@ -340,6 +347,14 @@ void UASQuickView::actionTriggered(bool checked)
         uasPropertyToLabelMap.remove(senderlabel->text());
 
     }
+}
+
+void UASQuickView::valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs)
+{
+    Q_UNUSED(uasid);
+    Q_UNUSED(unit);
+    Q_UNUSED(msecs);
+    uasPropertyValueMap[name] = value.toDouble();
 }
 
 void UASQuickView::valChanged(double val,QString type)
