@@ -151,12 +151,12 @@ public slots:
      **/
     void addUAS(UASInterface* UAS);
 
-    /** @brief Remove a system from the list. Also triggers the UAS to kill itself. */
+    /** @brief Remove a system from the list. If this is the active UAS, it switches to another one calling setActiveUAS. Also triggers the UAS to kill itself. */
     void removeUAS(UASInterface* uas);
 
 
     /**
-      * @brief Set a UAS as currently selected
+      * @brief Set a UAS as currently selected. NULL is a valid value for when no other valid UAS's are available.
       *
       * @param UAS Unmanned Air System to set
       **/

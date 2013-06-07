@@ -17,7 +17,7 @@ class QGCVehicleConfig;
 class QGCVehicleConfig : public QWidget
 {
     Q_OBJECT
-    
+
 public:
     explicit QGCVehicleConfig(QWidget *parent = 0);
     ~QGCVehicleConfig();
@@ -185,12 +185,13 @@ protected:
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     bool calibrationEnabled;            ///< calibration mode on / off
 
-    QMap<QString,QGCToolWidget*> *paramToWidgetMap;                     ///< Holds the current active MAV's parameter widgets.
-    QMap<QString,QGCToolWidget*> *libParamToWidgetMap;                  ///< Holds the library parameter widgets
-    QMap<QString,QMap<QString,QGCToolWidget*>*> systemTypeToParamMap;   ///< Holds all loaded MAV specific parameter widgets, for every MAV.
+    QMap<QString,QGCToolWidget*> paramToWidgetMap;                     ///< Holds the current active MAV's parameter widgets.
+    QList<QWidget*> additionalTabs;                                   ///< Stores additional tabs loaded for this vehicle/autopilot configuration. Used for cleaning up.
+    QMap<QString,QGCToolWidget*> libParamToWidgetMap;                  ///< Holds the library parameter widgets
+    QMap<QString,QMap<QString,QGCToolWidget*> > systemTypeToParamMap;   ///< Holds all loaded MAV specific parameter widgets, for every MAV.
     QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;                       ///< Easy method of figuring out which QGroupBox is tied to which ToolWidget.
     QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
-    
+
 private:
     Ui::QGCVehicleConfig *ui;
     QMap<QPushButton*,QWidget*> buttonToWidgetMap;

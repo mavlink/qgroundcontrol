@@ -43,47 +43,47 @@ This file is part of the PIXHAWK project
 #include <QGCHilFlightGearConfiguration.h>
 
 UASView::UASView(UASInterface* uas, QWidget *parent) :
-        QWidget(parent),
-        startTime(0),
-        timeout(false),
-        iconIsRed(true),
-        disconnected(false),
-        timeRemaining(0),
-        chargeLevel(0),
-        uas(uas),
-        load(0),
-        state("UNKNOWN"),
-        stateDesc(tr("Unknown state")),
-        mode("MAV_MODE_UNKNOWN"),
-        thrust(0),
-        isActive(false),
-        x(0),
-        y(0),
-        z(0),
-        totalSpeed(0),
-        lat(0),
-        lon(0),
-        alt(0),
-        groundDistance(0),
-        localFrame(false),
-        globalFrameKnown(false),
-        removeAction(new QAction("Delete this system", this)),
-        renameAction(new QAction("Rename..", this)),
-        selectAction(new QAction("Control this system", this )),
-        hilAction(new QAction("HIL - Hardware in the Loop", this )),
-        selectAirframeAction(new QAction("Choose Airframe", this)),
-        setBatterySpecsAction(new QAction("Set Battery Options", this)),
-        lowPowerModeEnabled(true),
-        generalUpdateCount(0),
-        filterTime(0),
-        m_ui(new Ui::UASView)
+    QWidget(parent),
+    uas(uas),
+    startTime(0),
+    timeout(false),
+    iconIsRed(true),
+    disconnected(false),
+    timeRemaining(0),
+    chargeLevel(0),
+    load(0),
+    state("UNKNOWN"),
+    stateDesc(tr("Unknown state")),
+    mode("MAV_MODE_UNKNOWN"),
+    thrust(0),
+    isActive(false),
+    x(0),
+    y(0),
+    z(0),
+    totalSpeed(0),
+    lat(0),
+    lon(0),
+    alt(0),
+    groundDistance(0),
+    localFrame(false),
+    globalFrameKnown(false),
+    removeAction(new QAction(tr("Delete this system"), this)),
+    renameAction(new QAction(tr("Rename.."), this)),
+    selectAction(new QAction(tr("Control this system"), this)),
+    hilAction(new QAction(tr("HIL - Hardware in the Loop"), this)),
+    selectAirframeAction(new QAction(tr("Choose Airframe"), this)),
+    setBatterySpecsAction(new QAction(tr("Set Battery Options"), this)),
+    lowPowerModeEnabled(true),
+    generalUpdateCount(0),
+    filterTime(0),
+    m_ui(new Ui::UASView)
 {
+    m_ui->setupUi(this);
+
     // FIXME XXX
     lowPowerModeEnabled = MainWindow::instance()->lowPowerModeEnabled();
 
     hilAction->setCheckable(true);
-
-    m_ui->setupUi(this);
 
     // Setup communication
     //connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(receiveValue(int,QString,double,quint64)));
@@ -116,8 +116,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->killButton, SIGNAL(clicked()), uas, SLOT(emergencyKILL()));
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
 
-    // Allow to delete this widget
-    connect(removeAction, SIGNAL(triggered()), this, SLOT(prepareForDeletion()));
+    // Allow deleting this widget
+    connect(removeAction, SIGNAL(triggered()), this, SLOT(triggerUASDeletion()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(hilAction, SIGNAL(triggered(bool)), this, SLOT(showHILUi()));
@@ -170,9 +170,6 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 UASView::~UASView()
 {
     delete m_ui;
-    delete removeAction;
-    delete renameAction;
-    delete selectAction;
 }
 
 void UASView::heartbeatTimeout(bool timeout, unsigned int ms)
@@ -562,23 +559,14 @@ void UASView::showHILUi()
      MainWindow::instance()->showHILConfigurationWidget(uas);
 }
 
-/**
- * @brief Stop updating this UASView, queue it for deletion, and also tell the UASManager to delete the UAS.
- */
-void UASView::prepareForDeletion()
+void UASView::triggerUASDeletion()
 {
     refreshTimer->stop();
     UASManager::instance()->removeUAS(uas);
-    deleteLater();
 }
 
 void UASView::refresh()
 {
-    //setUpdatesEnabled(false);
-    //setUpdatesEnabled(true);
-    //repaint();
-    //qDebug() << "UPDATING UAS WIDGET!" << uas->getUASName();
-
     if (generalUpdateCount == 4)
     {
 #if (QGC_EVENTLOOP_DEBUG)
