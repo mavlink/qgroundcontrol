@@ -130,7 +130,7 @@ void MAVLinkSimulationMAV::mainloop()
                 y = nextSPY;
                 z = nextSPZ;
                 firstWP = false;
-                qDebug() << "INIT STEP";
+//                qDebug() << "INIT STEP";
             }
         }
         else
@@ -138,7 +138,6 @@ void MAVLinkSimulationMAV::mainloop()
             // FIXME Implement heading and altitude controller
 
         }
-
 
         // GLOBAL POSITION
         mavlink_message_t msg;
@@ -395,7 +394,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
     if (msg.sysid != systemid)
     {
         print_message(&msg);
-        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
+//        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
     }
 
     switch(msg.msgid) {
