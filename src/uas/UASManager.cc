@@ -310,37 +310,22 @@ void UASManager::removeUAS(UASInterface* uas)
     {
         int listindex = systems.indexOf(uas);
 
-        // If this is the active UAS, select a new one.
+        // Remove this system from local data store.
+        systems.removeAt(listindex);
+
+        // If this is the active UAS, select a new one if one exists otherwise
+        // indicate that there are no active UASes.
         if (uas == activeUAS)
         {
-            if (systems.count() > 1)
+            if (systems.count())
             {
-                // We only set a new UAS if more than one is present
-                if (listindex != 0)
-                {
-                    // The system to be removed is not at position 1
-                    // set position one as new active system
-                    setActiveUAS(systems.first());
-                }
-                else
-                {
-                    // The system to be removed is at position 1,
-                    // select the next system
-                    setActiveUAS(systems.at(1));
-                }
+                setActiveUAS(systems.first());
             }
             else
             {
-                // TODO send a null pointer if no UAS is present any more
-                // This has to be properly tested however, since it might
-                // crash code parts not handling null pointers correctly.
-                activeUAS = NULL;
-                // XXX Not emitting the null pointer yet
+                setActiveUAS(NULL);
             }
         }
-
-        // Finally delete a local reference to this UAS
-        systems.removeAt(listindex);
 
         // Notify other UI elements that a UAS is being deleted before finally deleting it.
         qDebug() << "Deleting UAS object: " << uas->getUASName();
@@ -449,21 +434,24 @@ UASInterface* UASManager::getUASForId(int id)
 
 void UASManager::setActiveUAS(UASInterface* uas)
 {
-    if (uas != NULL) {
-        activeUASMutex.lock();
-        if (activeUAS != NULL) {
-            emit activeUASStatusChanged(activeUAS, false);
-            emit activeUASStatusChanged(activeUAS->getUASID(), false);
-        }
-        activeUAS = uas;
-        activeUASMutex.unlock();
+    // Signal components that the last UAS is no longer active.
+    activeUASMutex.lock();
+    if (activeUAS != NULL) {
+        emit activeUASStatusChanged(activeUAS, false);
+        emit activeUASStatusChanged(activeUAS->getUASID(), false);
+    }
+    activeUAS = uas;
+    activeUASMutex.unlock();
 
+    // And signal that a new UAS is.
+    emit activeUASSet(activeUAS);
+    if (activeUAS)
+    {
         activeUAS->setSelected();
-        emit activeUASSet(uas);
-        emit activeUASSet(uas->getUASID());
-        emit activeUASSetListIndex(systems.indexOf(uas));
-        emit activeUASStatusChanged(uas, true);
-        emit activeUASStatusChanged(uas->getUASID(), true);
+        emit activeUASSet(activeUAS->getUASID());
+        emit activeUASSetListIndex(systems.indexOf(activeUAS));
+        emit activeUASStatusChanged(activeUAS, true);
+        emit activeUASStatusChanged(activeUAS->getUASID(), true);
     }
 }
 

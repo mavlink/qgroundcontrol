@@ -36,11 +36,6 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     ui(new Ui::QGCVehicleConfig)
 {
     doneLoadingConfig = false;
-    systemTypeToParamMap["FIXED_WING"] = new QMap<QString,QGCToolWidget*>();
-    systemTypeToParamMap["QUADROTOR"] = new QMap<QString,QGCToolWidget*>();
-    systemTypeToParamMap["GROUND_ROVER"] = new QMap<QString,QGCToolWidget*>();
-    systemTypeToParamMap["BOAT"] = new QMap<QString,QGCToolWidget*>();
-    libParamToWidgetMap = new QMap<QString,QGCToolWidget*>();
 
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
@@ -188,19 +183,21 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         //TODO: Throw an error here too, no autopilot specific configuration
         qWarning() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
     }
+
+    // Generate widgets for the General tab.
     QGCToolWidget *tool;
     bool left = true;
     foreach (QString file,generaldir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
-            tool = new QGCToolWidget("", this);
+            QWidget* parent = left?ui->generalLeftContents:ui->generalRightContents;
+            tool = new QGCToolWidget("", parent);
             if (tool->loadSettings(generaldir.absoluteFilePath(file), false))
             {
                 toolWidgets.append(tool);
-                //ui->sensorLayout->addWidget(tool);
-                QGroupBox *box = new QGroupBox(this);
+                QGroupBox *box = new QGroupBox(parent);
                 box->setTitle(tool->objectName());
-                box->setLayout(new QVBoxLayout());
+                box->setLayout(new QVBoxLayout(box));
                 box->layout()->addWidget(tool);
                 if (left)
                 {
@@ -217,18 +214,20 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
             }
         }
     }
+
+    // Generate widgets for the Advanced tab.
     left = true;
     foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
-            tool = new QGCToolWidget("", this);
+            QWidget* parent = left?ui->advancedLeftContents:ui->advancedRightContents;
+            tool = new QGCToolWidget("", parent);
             if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
             {
                 toolWidgets.append(tool);
-                //ui->sensorLayout->addWidget(tool);
-                QGroupBox *box = new QGroupBox(this);
+                QGroupBox *box = new QGroupBox(parent);
                 box->setTitle(tool->objectName());
-                box->setLayout(new QVBoxLayout());
+                box->setLayout(new QVBoxLayout(box));
                 box->layout()->addWidget(tool);
                 if (left)
                 {
@@ -246,17 +245,18 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
-    //Load tabs for general configuration
+    // Load tabs for general configuration
     foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
         QWidget *tab = new QWidget(ui->tabWidget);
+        additionalTabs.append(tab);
         ui->tabWidget->insertTab(2,tab,dir);
-        tab->setLayout(new QVBoxLayout());
+        tab->setLayout(new QVBoxLayout(tab));
         tab->show();
-        QScrollArea *area = new QScrollArea();
+        QScrollArea *area = new QScrollArea(tab);
         tab->layout()->addWidget(area);
-        QWidget *scrollArea = new QWidget();
-        scrollArea->setLayout(new QVBoxLayout());
+        QWidget *scrollArea = new QWidget(tab);
+        scrollArea->setLayout(new QVBoxLayout(tab));
         area->setWidget(scrollArea);
         area->setWidgetResizable(true);
         area->show();
@@ -265,14 +265,14 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
             if (file.toLower().endsWith(".qgw")) {
-                tool = new QGCToolWidget("", this);
+                tool = new QGCToolWidget("", tab);
                 if (tool->loadSettings(newdir.absoluteFilePath(file), false))
                 {
                     toolWidgets.append(tool);
                     //ui->sensorLayout->addWidget(tool);
-                    QGroupBox *box = new QGroupBox(this);
+                    QGroupBox *box = new QGroupBox(tab);
                     box->setTitle(tool->objectName());
-                    box->setLayout(new QVBoxLayout());
+                    box->setLayout(new QVBoxLayout(tab));
                     box->layout()->addWidget(tool);
                     scrollArea->layout()->addWidget(box);
                 } else {
@@ -282,17 +282,18 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
-    //Load tabs for vehicle specific configuration
+    // Load additional tabs for vehicle specific configuration
     foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
         QWidget *tab = new QWidget(ui->tabWidget);
+        additionalTabs.append(tab);
         ui->tabWidget->insertTab(2,tab,dir);
-        tab->setLayout(new QVBoxLayout());
+        tab->setLayout(new QVBoxLayout(tab));
         tab->show();
-        QScrollArea *area = new QScrollArea();
+        QScrollArea *area = new QScrollArea(tab);
         tab->layout()->addWidget(area);
-        QWidget *scrollArea = new QWidget();
-        scrollArea->setLayout(new QVBoxLayout());
+        QWidget *scrollArea = new QWidget(tab);
+        scrollArea->setLayout(new QVBoxLayout(tab));
         area->setWidget(scrollArea);
         area->setWidgetResizable(true);
         area->show();
@@ -302,15 +303,15 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
             if (file.toLower().endsWith(".qgw")) {
-                tool = new QGCToolWidget("", this);
+                tool = new QGCToolWidget("", tab);
                 tool->addUAS(mav);
                 if (tool->loadSettings(newdir.absoluteFilePath(file), false))
                 {
                     toolWidgets.append(tool);
                     //ui->sensorLayout->addWidget(tool);
-                    QGroupBox *box = new QGroupBox();
+                    QGroupBox *box = new QGroupBox(tab);
                     box->setTitle(tool->objectName());
-                    box->setLayout(new QVBoxLayout());
+                    box->setLayout(new QVBoxLayout(box));
                     box->layout()->addWidget(tool);
                     scrollArea->layout()->addWidget(box);
                     box->show();
@@ -322,30 +323,31 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
-    // Load calibration
+    // Load general calibration for autopilot
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
-    tool = new QGCToolWidget("", this);
+    tool = new QGCToolWidget("", ui->sensorContents);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
     {
         toolWidgets.append(tool);
-        QGroupBox *box = new QGroupBox(this);
+        QGroupBox *box = new QGroupBox(ui->sensorContents);
         box->setTitle(tool->objectName());
-        box->setLayout(new QVBoxLayout());
+        box->setLayout(new QVBoxLayout(box));
         box->layout()->addWidget(tool);
         ui->sensorLayout->addWidget(box);
     } else {
         delete tool;
     }
 
-    tool = new QGCToolWidget("", this);
+    // Load vehicle-specific autopilot configuration
+    tool = new QGCToolWidget("", ui->sensorContents);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
     {
         toolWidgets.append(tool);
-        QGroupBox *box = new QGroupBox(this);
+        QGroupBox *box = new QGroupBox(ui->sensorContents);
         box->setTitle(tool->objectName());
-        box->setLayout(new QVBoxLayout());
+        box->setLayout(new QVBoxLayout(box));
         box->layout()->addWidget(tool);
         ui->sensorLayout->addWidget(box);
     } else {
@@ -391,7 +393,7 @@ void QGCVehicleConfig::loadConfig()
     QXmlStreamReader xml(xmlfile.readAll());
     xmlfile.close();
 
-    //TODO: Testing to ensure that incorrectly formated XML won't break this.
+    //TODO: Testing to ensure that incorrectly formatted XML won't break this.
     while (!xml.atEnd())
     {
         if (xml.isStartElement() && xml.name() == "paramfile")
@@ -571,7 +573,16 @@ void QGCVehicleConfig::loadConfig()
                             }
                             if (genarraycount > 0)
                             {
-                                tool = new QGCToolWidget("", this);
+                                QWidget* parent = this;
+                                if (valuetype == "vehicles")
+                                {
+                                    parent = ui->generalLeftContents;
+                                }
+                                else if (valuetype == "libraries")
+                                {
+                                    parent = ui->generalRightContents;
+                                }
+                                tool = new QGCToolWidget("", parent);
                                 tool->addUAS(mav);
                                 tool->setTitle(parametersname);
                                 tool->setObjectName(parametersname);
@@ -582,26 +593,26 @@ void QGCVehicleConfig::loadConfig()
                                     //Based on the airframe, we add the parameter to different categories.
                                     if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
                                     {
-                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["FIXED_WING"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
                                     {
-                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["QUADROTOR"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
                                     {
-                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["GROUND_ROVER"].insert(paramlist[i],tool);
                                     }
                                     else
                                     {
-                                        libParamToWidgetMap->insert(paramlist[i],tool);
+                                        libParamToWidgetMap.insert(paramlist[i],tool);
                                     }
                                 }
 
                                 toolWidgets.append(tool);
-                                QGroupBox *box = new QGroupBox(this);
+                                QGroupBox *box = new QGroupBox(parent);
                                 box->setTitle(tool->objectName());
-                                box->setLayout(new QVBoxLayout());
+                                box->setLayout(new QVBoxLayout(box));
                                 box->layout()->addWidget(tool);
                                 if (valuetype == "vehicles")
                                 {
@@ -616,7 +627,16 @@ void QGCVehicleConfig::loadConfig()
                             }
                             if (advarraycount > 0)
                             {
-                                tool = new QGCToolWidget("", this);
+                                QWidget* parent = this;
+                                if (valuetype == "vehicles")
+                                {
+                                    parent = ui->generalLeftContents;
+                                }
+                                else if (valuetype == "libraries")
+                                {
+                                    parent = ui->generalRightContents;
+                                }
+                                tool = new QGCToolWidget("", parent);
                                 tool->addUAS(mav);
                                 tool->setTitle(parametersname);
                                 tool->setObjectName(parametersname);
@@ -627,48 +647,42 @@ void QGCVehicleConfig::loadConfig()
                                     //Based on the airframe, we add the parameter to different categories.
                                     if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
                                     {
-                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["FIXED_WING"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
                                     {
-                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["QUADROTOR"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
                                     {
-                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["GROUND_ROVER"].insert(paramlist[i],tool);
                                     }
                                     else
                                     {
-                                        libParamToWidgetMap->insert(paramlist[i],tool);
+                                        libParamToWidgetMap.insert(paramlist[i],tool);
                                     }
                                 }
 
                                 toolWidgets.append(tool);
-                                QGroupBox *box = new QGroupBox(this);
+                                QGroupBox *box = new QGroupBox(parent);
                                 box->setTitle(tool->objectName());
-                                box->setLayout(new QVBoxLayout());
+                                box->setLayout(new QVBoxLayout(box));
                                 box->layout()->addWidget(tool);
                                 if (valuetype == "vehicles")
                                 {
-                                    ui->leftAdvancedLayout->addWidget(box);
+                                    ui->leftGeneralLayout->addWidget(box);
                                 }
                                 else if (valuetype == "libraries")
                                 {
-                                    ui->rightAdvancedLayout->addWidget(box);
+                                    ui->rightGeneralLayout->addWidget(box);
                                 }
                                 box->hide();
                                 toolToBoxMap[tool] = box;
                             }
-
-
-
-
                         }
                         xml.readNext();
                     }
-
                 }
-
                 xml.readNext();
             }
         }
@@ -682,8 +696,8 @@ void QGCVehicleConfig::loadConfig()
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 {
-    // Do nothing if system is the same or NULL
-    if ((active == NULL) || mav == active) return;
+    // Do nothing if system is the same
+    if (mav == active) return;
 
     if (mav)
     {
@@ -693,11 +707,41 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
 
-        foreach (QGCToolWidget* tool, toolWidgets)
+        // Delete all children from all fixed tabs.
+        foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>())
         {
-            delete tool;
+            child->deleteLater();
         }
+        foreach(QWidget* child, ui->generalRightContents->findChildren<QWidget*>())
+        {
+            child->deleteLater();
+        }
+        foreach(QWidget* child, ui->advancedLeftContents->findChildren<QWidget*>())
+        {
+            child->deleteLater();
+        }
+        foreach(QWidget* child, ui->advancedRightContents->findChildren<QWidget*>())
+        {
+            child->deleteLater();
+        }
+        foreach(QWidget* child, ui->sensorContents->findChildren<QWidget*>())
+        {
+            child->deleteLater();
+        }
+
+        // And then delete any custom tabs
+        foreach(QWidget* child, additionalTabs)
+        {
+            child->deleteLater();
+        }
+        additionalTabs.clear();
+
         toolWidgets.clear();
+        paramToWidgetMap = NULL;
+        libParamToWidgetMap.clear();
+        systemTypeToParamMap.clear();
+        toolToBoxMap.clear();
+        paramTooltips.clear();
     }
 
     // Reset current state
@@ -707,44 +751,57 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
-    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
-               SLOT(remoteControlChannelRawChanged(int,float)));
-    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
-               SLOT(parameterChanged(int,int,QString,QVariant)));
-
-    if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
+    if (mav)
     {
-        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
+        connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+                   SLOT(remoteControlChannelRawChanged(int,float)));
+        connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+                   SLOT(parameterChanged(int,int,QString,QVariant)));
+
+        if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
+        {
+            paramToWidgetMap = &systemTypeToParamMap[mav->getSystemTypeName()];
+        }
+        else
+        {
+            //Indication that we have no meta data for this system type.
+            qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
+            paramToWidgetMap = &systemTypeToParamMap[mav->getSystemTypeName()];
+        }
+
+        if (!paramTooltips.isEmpty())
+        {
+               mav->getParamManager()->setParamInfo(paramTooltips);
+        }
+
+        qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
+
+        //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
+        //amount of time it actually takes to load the configuration windows.
+        QTimer::singleShot(1,this,SLOT(loadConfig()));
+
+        updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
+
+        // Since a system is now connected, enable the VehicleConfig UI.
+        ui->tabWidget->setEnabled(true);
+        ui->setButton->setEnabled(true);
+        ui->refreshButton->setEnabled(true);
+        ui->readButton->setEnabled(true);
+        ui->writeButton->setEnabled(true);
+        ui->loadFileButton->setEnabled(true);
+        ui->saveFileButton->setEnabled(true);
     }
     else
     {
-        //Indication that we have no meta data for this system type.
-        qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
-        systemTypeToParamMap[mav->getSystemTypeName()] = new QMap<QString,QGCToolWidget*>();
-        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
+        // Disable the vehicle config widget if no new UAS has been enabled.
+        ui->tabWidget->setEnabled(false);
+        ui->setButton->setEnabled(false);
+        ui->refreshButton->setEnabled(false);
+        ui->readButton->setEnabled(false);
+        ui->writeButton->setEnabled(false);
+        ui->loadFileButton->setEnabled(false);
+        ui->saveFileButton->setEnabled(false);
     }
-
-    if (!paramTooltips.isEmpty())
-    {
-           mav->getParamManager()->setParamInfo(paramTooltips);
-    }
-
-    qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
-
-    //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
-    //amount of time it actually takes to load the configuration windows.
-    QTimer::singleShot(1,this,SLOT(loadConfig()));
-
-    updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
-
-    // Since a system is now connected, enable the VehicleConfig UI.
-    ui->tabWidget->setEnabled(true);
-    ui->setButton->setEnabled(true);
-    ui->refreshButton->setEnabled(true);
-    ui->readButton->setEnabled(true);
-    ui->writeButton->setEnabled(true);
-    ui->loadFileButton->setEnabled(true);
-    ui->saveFileButton->setEnabled(true);
 }
 
 void QGCVehicleConfig::resetCalibrationRC()
@@ -986,13 +1043,13 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             qCritical() << "Widget with no box, possible memory corruption for param:" << parameterName;
         }
     }
-    else if (libParamToWidgetMap->contains(parameterName))
+    else if (libParamToWidgetMap.contains(parameterName))
     {
         //All the library parameters
-        libParamToWidgetMap->value(parameterName)->setParameterValue(uas,component,parameterName,value);
-        if (toolToBoxMap.contains(libParamToWidgetMap->value(parameterName)))
+        libParamToWidgetMap.value(parameterName)->setParameterValue(uas,component,parameterName,value);
+        if (toolToBoxMap.contains(libParamToWidgetMap.value(parameterName)))
         {
-            toolToBoxMap[libParamToWidgetMap->value(parameterName)]->show();
+            toolToBoxMap[libParamToWidgetMap.value(parameterName)]->show();
         }
         else
         {
@@ -1010,7 +1067,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             {
                 //It should be grouped with this one, add it.
                 toolWidgets[i]->addParam(uas,component,parameterName,value);
-                libParamToWidgetMap->insert(parameterName,toolWidgets[i]);
+                libParamToWidgetMap.insert(parameterName,toolWidgets[i]);
                 found  = true;
                 break;
             }
@@ -1018,7 +1075,18 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         if (!found)
         {
             //New param type, create a QGroupBox for it.
-            QGCToolWidget *tool = new QGCToolWidget("", this);
+            QWidget* parent;
+            if (ui->leftAdvancedLayout->count() > ui->rightAdvancedLayout->count())
+            {
+                parent = ui->advancedRightContents;
+            }
+            else
+            {
+                parent = ui->advancedLeftContents;
+            }
+
+            // Create the tool, attaching it to the QGroupBox
+            QGCToolWidget *tool = new QGCToolWidget("", parent);
             QString tooltitle = parameterName;
             if (parameterName.split("_").size() > 1)
             {
@@ -1026,14 +1094,14 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             }
             tool->setTitle(tooltitle);
             tool->setObjectName(tooltitle);
-            //tool->setSettings(set);
-            tool->addParam(uas,component,parameterName,value);
-            libParamToWidgetMap->insert(parameterName,tool);
-            toolWidgets.append(tool);
-            QGroupBox *box = new QGroupBox(this);
+            tool->addParam(uas, component, parameterName, value);
+            QGroupBox *box = new QGroupBox(parent);
             box->setTitle(tool->objectName());
-            box->setLayout(new QVBoxLayout());
+            box->setLayout(new QVBoxLayout(box));
             box->layout()->addWidget(tool);
+
+            libParamToWidgetMap.insert(parameterName,tool);
+            toolWidgets.append(tool);
 
 
             //Make sure we have similar number of widgets on each side.

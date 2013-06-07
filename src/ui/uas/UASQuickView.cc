@@ -17,61 +17,61 @@ UASQuickView::UASQuickView(QWidget *parent) :
 
 
     {
-        QAction *action = new QAction("latitude",this);
+        QAction *action = new QAction(tr("latitude"),this);
         action->setCheckable(true);
         action->setChecked(true);
         connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("latitude");
+        item->setTitle(tr("latitude"));
         this->layout()->addWidget(item);
         uasPropertyToLabelMap["latitude"] = item;
     }
 
     {
-        QAction *action = new QAction("longitude",this);
+        QAction *action = new QAction(tr("longitude"),this);
         action->setCheckable(true);
         action->setChecked(true);
         connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("longitude");
+        item->setTitle(tr("longitude"));
         this->layout()->addWidget(item);
         uasPropertyToLabelMap["longitude"] = item;
     }
 
     {
-        QAction *action = new QAction("altitude",this);
+        QAction *action = new QAction(tr("altitude"),this);
         action->setCheckable(true);
         action->setChecked(true);
         connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("altitude");
+        item->setTitle(tr("altitude"));
         this->layout()->addWidget(item);
         uasPropertyToLabelMap["altitude"] = item;
     }
 
     {
-        QAction *action = new QAction("satelliteCount",this);
+        QAction *action = new QAction(tr("satelliteCount"),this);
         action->setCheckable(true);
         action->setChecked(true);
         connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("satelliteCount");
+        item->setTitle(tr("satelliteCount"));
         this->layout()->addWidget(item);
         uasPropertyToLabelMap["satelliteCount"] = item;
     }
 
     {
-        QAction *action = new QAction("distToWaypoint",this);
+        QAction *action = new QAction(tr("distToWaypoint"),this);
         action->setCheckable(true);
         action->setChecked(true);
         connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
         this->addAction(action);
         UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("distToWaypoint");
+        item->setTitle(tr("distToWaypoint"));
         this->layout()->addWidget(item);
         uasPropertyToLabelMap["distToWaypoint"] = item;
     }
