@@ -31,7 +31,6 @@ This file is part of the QGROUNDCONTROL project
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
     mav(NULL),
-    player(NULL),
     changed(true),
     batteryPercent(0),
     batteryVoltage(0),
@@ -91,28 +90,28 @@ void QGCToolBar::createUI()
     symbolLabel = new QLabel(this);
     addWidget(symbolLabel);
 
-    toolBarNameLabel = new QLabel("------", this);
+    toolBarNameLabel = new QLabel(this);
     toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
     toolBarNameLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarNameLabel);
 
-    toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
+    toolBarTimeoutLabel = new QLabel(this);
     toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
     toolBarTimeoutLabel->setAlignment(Qt::AlignCenter);
     toolBarTimeoutLabel->setObjectName("toolBarTimeoutLabel");
     addWidget(toolBarTimeoutLabel);
 
-    toolBarSafetyLabel = new QLabel("----", this);
+    toolBarSafetyLabel = new QLabel(this);
     toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
     toolBarSafetyLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarSafetyLabel);
 
-    toolBarModeLabel = new QLabel("------", this);
+    toolBarModeLabel = new QLabel(this);
     toolBarModeLabel->setToolTip(tr("Vehicle mode"));
     toolBarModeLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarModeLabel);
 
-    toolBarStateLabel = new QLabel("------", this);
+    toolBarStateLabel = new QLabel(this);
     toolBarStateLabel->setToolTip(tr("Vehicle state"));
     toolBarStateLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarStateLabel);
@@ -122,28 +121,27 @@ void QGCToolBar::createUI()
     toolBarBatteryBar->setMaximum(100);
     toolBarBatteryBar->setMinimumWidth(20);
     toolBarBatteryBar->setMaximumWidth(100);
-    toolBarBatteryBar->setValue(0);
     toolBarBatteryBar->setToolTip(tr("Battery charge level"));
     toolBarBatteryBar->setObjectName("toolBarBatteryBar");
     addWidget(toolBarBatteryBar);
 
-    toolBarBatteryVoltageLabel = new QLabel("xx.x V");
+    toolBarBatteryVoltageLabel = new QLabel(this);
     toolBarBatteryVoltageLabel->setObjectName("toolBarBatteryVoltageLabel");
     toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
     toolBarBatteryVoltageLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarBatteryVoltageLabel);
 
-    toolBarWpLabel = new QLabel("WP--", this);
+    toolBarWpLabel = new QLabel(this);
     toolBarWpLabel->setToolTip(tr("Current waypoint"));
     toolBarWpLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarWpLabel);
 
-    toolBarDistLabel = new QLabel("--- ---- m", this);
+    toolBarDistLabel = new QLabel(this);
     toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
     toolBarDistLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarDistLabel);
 
-    toolBarMessageLabel = new QLabel("", this);
+    toolBarMessageLabel = new QLabel(this);
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
 
@@ -158,11 +156,17 @@ void QGCToolBar::createUI()
     addWidget(connectButton);
     connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
 
+    resetToolbarUI();
+
     // DONE INITIALIZING BUTTONS
+
+    // Set the toolbar to be updated every 2s
+    connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
 
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(removeUAS(UASInterface*)));
 
     if (LinkManager::instance()->getLinks().count() > 2)
         addLink(LinkManager::instance()->getLinks().last());
@@ -175,13 +179,31 @@ void QGCToolBar::createUI()
         connectButton->setText(tr("New Link"));
     }
 
-    // Set the toolbar to be updated every 2s
-    connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
-    updateViewTimer.start(2000);
-
     loadSettings();
 
     changed = false;
+}
+
+/**
+ * Reset all the labels and stuff for the toolbar to a pristine state. Done at startup after
+ * all UI has been created and also when the last UAS has been deleted.
+ **/
+void QGCToolBar::resetToolbarUI()
+{
+    toolBarNameLabel->setText("------");
+    toolBarNameLabel->setStyleSheet("");
+    toolBarTimeoutLabel->setText(tr("UNCONNECTED"));
+    toolBarSafetyLabel->setText("----");
+    toolBarModeLabel->setText("------");
+    toolBarStateLabel->setText("------");
+    toolBarBatteryBar->setValue(0);
+    toolBarBatteryBar->setDisabled(true);
+    toolBarBatteryVoltageLabel->setText("xx.x V");
+    toolBarWpLabel->setText("WP--");
+    toolBarDistLabel->setText("--- ---- m");
+    toolBarMessageLabel->clear();
+    symbolLabel->setStyleSheet("");
+    symbolLabel->clear();
 }
 
 void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
@@ -269,9 +291,9 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     // Do nothing if system is the same or NULL
     if ((active == NULL) || mav == active) return;
 
+    // If switching UASes, disconnect the only one.
     if (mav)
     {
-        // Disconnect old system
         disconnect(mav, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString,QString)));
         disconnect(mav, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
@@ -286,6 +308,11 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
             disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
             disconnect(mav->getWaypointManager(), SIGNAL(waypointDistanceChanged(double)), this, SLOT(updateWaypointDistance(double)));
         }
+    }
+    else
+    {
+        // Only update the UI once a UAS has been selected.
+        updateViewTimer.start(2000);
     }
 
     // Connect new system
@@ -315,7 +342,22 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     toolBarStateLabel->setText(mav->getShortState());
     toolBarTimeoutLabel->setText("");
     toolBarDistLabel->setText("");
+    toolBarBatteryBar->setEnabled(true);
     setSystemType(mav, mav->getSystemType());
+}
+
+/**
+ * @brief Handle removal of the UAS that is currently being displayed.
+ * Stop updating the UI periodically, reset the UI, and reset our stored UAS.
+ * @param uas The UAS to remove.
+ */
+void QGCToolBar::removeUAS(UASInterface* uas)
+{
+    if (mav == uas) {
+        updateViewTimer.stop();
+        resetToolbarUI();
+        mav = NULL;
+    }
 }
 
 void QGCToolBar::createCustomWidgets()

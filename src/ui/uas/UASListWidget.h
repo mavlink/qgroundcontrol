@@ -51,7 +51,7 @@ public:
 public slots:
     void addUAS(UASInterface* uas);
     void activeUAS(UASInterface* uas);
-    void removeUASView(QObject* widget);
+    void removeUAS(UASInterface* uas);
 
 protected:
     // Keep a mapping from Links to GroupBoxes for adding new links.

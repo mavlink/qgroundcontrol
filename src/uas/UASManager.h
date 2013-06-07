@@ -151,8 +151,8 @@ public slots:
      **/
     void addUAS(UASInterface* UAS);
 
-    /** @brief Remove a system from the list */
-    void removeUAS(QObject* uas);
+    /** @brief Remove a system from the list. Also triggers the UAS to kill itself. */
+    void removeUAS(UASInterface* uas);
 
 
     /**

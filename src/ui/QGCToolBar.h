@@ -46,6 +46,8 @@ public:
 public slots:
     /** @brief Set the system that is currently displayed by this widget */
     void setActiveUAS(UASInterface* active);
+    /** @brief Remove the provided UAS if it's currently active from the toolbar */
+    void removeUAS(UASInterface* uas);
     /** @brief Set the link which is currently handled with connecting / disconnecting */
     void addLink(LinkInterface* link);
     /** @brief Remove link which is currently handled */
@@ -88,6 +90,7 @@ protected:
     void storeSettings();
     void loadSettings();
     void createUI();
+    void resetToolbarUI();
 
     UASInterface* mav;
     QLabel* symbolLabel;
@@ -102,7 +105,6 @@ protected:
     QPushButton* connectButton;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
-    QGCMAVLinkLogPlayer* player;
     bool changed;
     float batteryPercent;
     float batteryVoltage;
