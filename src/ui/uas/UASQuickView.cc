@@ -78,7 +78,6 @@ UASQuickView::UASQuickView(QWidget *parent) :
 
     updateTimer = new QTimer(this);
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
-    updateTimer->start(1000);
 }
 void UASQuickView::updateTimerTick()
 {
@@ -104,38 +103,54 @@ void UASQuickView::addUAS(UASInterface* uas)
 
 void UASQuickView::setActiveUAS(UASInterface* uas)
 {
-    if (!uas)
+    // Clean up from the old UAS
+    if (this->uas)
     {
-        return;
+        uasPropertyList.clear();
+        uasPropertyValueMap.clear();
+        uasPropertyToLabelMap.clear();
+        updateTimer->stop();
+        this->actions().clear();
     }
-    this->uas = uas;
-    connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
-    uasPropertyList.clear();
-    qDebug() << "UASInfoWidget property count:" << uas->metaObject()->propertyCount();
-    for (int i=0;i<uas->metaObject()->propertyCount();i++)
-    {
-        if (uas->metaObject()->property(i).hasNotifySignal())
-        {
-            qDebug() << "Property:" << i << uas->metaObject()->property(i).name();
-            uasPropertyList.append(uas->metaObject()->property(i).name());
-            if (!uasPropertyToLabelMap.contains(uas->metaObject()->property(i).name()))
-            {
-                QAction *action = new QAction(QString(uas->metaObject()->property(i).name()),this);
-                action->setCheckable(true);
-                connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-                this->addAction(action);
-            }
-            qDebug() << "Signature:" << uas->metaObject()->property(i).notifySignal().signature();
-            int val = this->metaObject()->indexOfMethod("valChanged(double,QString)");
-            if (val != -1)
-            {
 
-                if (!connect(uas,uas->metaObject()->property(i).notifySignal(),this,this->metaObject()->method(val)))
+    this->uas = uas;
+
+    // And connect the new one if it exists.
+    if (this->uas)
+    {
+        // Monitor new UAS for changes
+        connect(this->uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
+
+        // Populate a right-click menu for selecting which properties to display
+        qDebug() << "UASInfoWidget property count:" << uas->metaObject()->propertyCount();
+        for (int i=0;i<this->uas->metaObject()->propertyCount();i++)
+        {
+            if (this->uas->metaObject()->property(i).hasNotifySignal())
+            {
+                qDebug() << "Property:" << i << this->uas->metaObject()->property(i).name();
+                uasPropertyList.append(this->uas->metaObject()->property(i).name());
+                if (!uasPropertyToLabelMap.contains(this->uas->metaObject()->property(i).name()))
                 {
-                    qDebug() << "Error connecting signal";
+                    QAction *action = new QAction(QString(this->uas->metaObject()->property(i).name()),this);
+                    action->setCheckable(true);
+                    connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
+                    this->addAction(action);
+                }
+                qDebug() << "Signature:" << uas->metaObject()->property(i).notifySignal().signature();
+                int val = this->metaObject()->indexOfMethod("valChanged(double,QString)");
+                if (val != -1)
+                {
+
+                    if (!connect(uas,uas->metaObject()->property(i).notifySignal(),this,this->metaObject()->method(val)))
+                    {
+                        qDebug() << "Error connecting signal";
+                    }
                 }
             }
         }
+
+        // And periodically update the view.
+        updateTimer->start(1000);
     }
 }
 void UASQuickView::actionTriggered(bool checked)
@@ -162,11 +177,16 @@ void UASQuickView::actionTriggered(bool checked)
 }
 void UASQuickView::valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs)
 {
+    Q_UNUSED(uasid);
+    Q_UNUSED(unit);
+    Q_UNUSED(msecs);
     uasPropertyValueMap[name] = value.toDouble();
 }
 
 void UASQuickView::valChanged(double val,QString type)
 {
+    Q_UNUSED(val);
+    Q_UNUSED(type);
     //qDebug() << "Value changed:" << type << val;
    // uasPropertyValueMap[type] = val;
 }
