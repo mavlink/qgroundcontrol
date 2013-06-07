@@ -18,9 +18,6 @@ typedef struct __mavlink_safety_set_allowed_area_t
 #define MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN 27
 #define MAVLINK_MSG_ID_54_LEN 27
 
-#define MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_CRC 15
-#define MAVLINK_MSG_ID_54_CRC 15
-
 
 
 #define MAVLINK_MESSAGE_INFO_SAFETY_SET_ALLOWED_AREA { \
@@ -60,7 +57,7 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack(uint8_t system_i
 						       uint8_t target_system, uint8_t target_component, uint8_t frame, float p1x, float p1y, float p1z, float p2x, float p2y, float p2z)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN];
+	char buf[27];
 	_mav_put_float(buf, 0, p1x);
 	_mav_put_float(buf, 4, p1y);
 	_mav_put_float(buf, 8, p1z);
@@ -71,7 +68,7 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack(uint8_t system_i
 	_mav_put_uint8_t(buf, 25, target_component);
 	_mav_put_uint8_t(buf, 26, frame);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 27);
 #else
 	mavlink_safety_set_allowed_area_t packet;
 	packet.p1x = p1x;
@@ -84,15 +81,11 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack(uint8_t system_i
 	packet.target_component = target_component;
 	packet.frame = frame;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 27);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 27, 15);
 }
 
 /**
@@ -117,7 +110,7 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack_chan(uint8_t sys
 						           uint8_t target_system,uint8_t target_component,uint8_t frame,float p1x,float p1y,float p1z,float p2x,float p2y,float p2z)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN];
+	char buf[27];
 	_mav_put_float(buf, 0, p1x);
 	_mav_put_float(buf, 4, p1y);
 	_mav_put_float(buf, 8, p1z);
@@ -128,7 +121,7 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack_chan(uint8_t sys
 	_mav_put_uint8_t(buf, 25, target_component);
 	_mav_put_uint8_t(buf, 26, frame);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 27);
 #else
 	mavlink_safety_set_allowed_area_t packet;
 	packet.p1x = p1x;
@@ -141,15 +134,11 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack_chan(uint8_t sys
 	packet.target_component = target_component;
 	packet.frame = frame;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 27);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 27, 15);
 }
 
 /**
@@ -184,7 +173,7 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_encode(uint8_t system
 static inline void mavlink_msg_safety_set_allowed_area_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t frame, float p1x, float p1y, float p1z, float p2x, float p2y, float p2z)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN];
+	char buf[27];
 	_mav_put_float(buf, 0, p1x);
 	_mav_put_float(buf, 4, p1y);
 	_mav_put_float(buf, 8, p1z);
@@ -195,11 +184,7 @@ static inline void mavlink_msg_safety_set_allowed_area_send(mavlink_channel_t ch
 	_mav_put_uint8_t(buf, 25, target_component);
 	_mav_put_uint8_t(buf, 26, frame);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA, buf, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA, buf, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA, buf, 27, 15);
 #else
 	mavlink_safety_set_allowed_area_t packet;
 	packet.p1x = p1x;
@@ -212,11 +197,7 @@ static inline void mavlink_msg_safety_set_allowed_area_send(mavlink_channel_t ch
 	packet.target_component = target_component;
 	packet.frame = frame;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA, (const char *)&packet, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA, (const char *)&packet, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA, (const char *)&packet, 27, 15);
 #endif
 }
 
@@ -334,6 +315,6 @@ static inline void mavlink_msg_safety_set_allowed_area_decode(const mavlink_mess
 	safety_set_allowed_area->target_component = mavlink_msg_safety_set_allowed_area_get_target_component(msg);
 	safety_set_allowed_area->frame = mavlink_msg_safety_set_allowed_area_get_frame(msg);
 #else
-	memcpy(safety_set_allowed_area, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN);
+	memcpy(safety_set_allowed_area, _MAV_PAYLOAD(msg), 27);
 #endif
 }

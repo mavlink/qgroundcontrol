@@ -15,9 +15,6 @@ typedef struct __mavlink_set_position_control_offset_t
 #define MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN 18
 #define MAVLINK_MSG_ID_160_LEN 18
 
-#define MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_CRC 22
-#define MAVLINK_MSG_ID_160_CRC 22
-
 
 
 #define MAVLINK_MESSAGE_INFO_SET_POSITION_CONTROL_OFFSET { \
@@ -51,7 +48,7 @@ static inline uint16_t mavlink_msg_set_position_control_offset_pack(uint8_t syst
 						       uint8_t target_system, uint8_t target_component, float x, float y, float z, float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN];
+	char buf[18];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
@@ -59,7 +56,7 @@ static inline uint16_t mavlink_msg_set_position_control_offset_pack(uint8_t syst
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_set_position_control_offset_t packet;
 	packet.x = x;
@@ -69,15 +66,11 @@ static inline uint16_t mavlink_msg_set_position_control_offset_pack(uint8_t syst
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 18, 22);
 }
 
 /**
@@ -99,7 +92,7 @@ static inline uint16_t mavlink_msg_set_position_control_offset_pack_chan(uint8_t
 						           uint8_t target_system,uint8_t target_component,float x,float y,float z,float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN];
+	char buf[18];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
@@ -107,7 +100,7 @@ static inline uint16_t mavlink_msg_set_position_control_offset_pack_chan(uint8_t
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 18);
 #else
 	mavlink_set_position_control_offset_t packet;
 	packet.x = x;
@@ -117,15 +110,11 @@ static inline uint16_t mavlink_msg_set_position_control_offset_pack_chan(uint8_t
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 18);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 18, 22);
 }
 
 /**
@@ -157,7 +146,7 @@ static inline uint16_t mavlink_msg_set_position_control_offset_encode(uint8_t sy
 static inline void mavlink_msg_set_position_control_offset_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, float x, float y, float z, float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN];
+	char buf[18];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
@@ -165,11 +154,7 @@ static inline void mavlink_msg_set_position_control_offset_send(mavlink_channel_
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET, buf, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET, buf, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET, buf, 18, 22);
 #else
 	mavlink_set_position_control_offset_t packet;
 	packet.x = x;
@@ -179,11 +164,7 @@ static inline void mavlink_msg_set_position_control_offset_send(mavlink_channel_
 	packet.target_system = target_system;
 	packet.target_component = target_component;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET, (const char *)&packet, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET, (const char *)&packet, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET, (const char *)&packet, 18, 22);
 #endif
 }
 
@@ -268,6 +249,6 @@ static inline void mavlink_msg_set_position_control_offset_decode(const mavlink_
 	set_position_control_offset->target_system = mavlink_msg_set_position_control_offset_get_target_system(msg);
 	set_position_control_offset->target_component = mavlink_msg_set_position_control_offset_get_target_component(msg);
 #else
-	memcpy(set_position_control_offset, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SET_POSITION_CONTROL_OFFSET_LEN);
+	memcpy(set_position_control_offset, _MAV_PAYLOAD(msg), 18);
 #endif
 }

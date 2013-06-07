@@ -12,9 +12,6 @@ typedef struct __mavlink_obs_air_temp_t
 #define MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN 4
 #define MAVLINK_MSG_ID_183_LEN 4
 
-#define MAVLINK_MSG_ID_OBS_AIR_TEMP_CRC 248
-#define MAVLINK_MSG_ID_183_CRC 248
-
 
 
 #define MAVLINK_MESSAGE_INFO_OBS_AIR_TEMP { \
@@ -40,23 +37,19 @@ static inline uint16_t mavlink_msg_obs_air_temp_pack(uint8_t system_id, uint8_t 
 						       float airT)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN];
+	char buf[4];
 	_mav_put_float(buf, 0, airT);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_obs_air_temp_t packet;
 	packet.airT = airT;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OBS_AIR_TEMP;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN, MAVLINK_MSG_ID_OBS_AIR_TEMP_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 4, 248);
 }
 
 /**
@@ -75,23 +68,19 @@ static inline uint16_t mavlink_msg_obs_air_temp_pack_chan(uint8_t system_id, uin
 						           float airT)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN];
+	char buf[4];
 	_mav_put_float(buf, 0, airT);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 4);
 #else
 	mavlink_obs_air_temp_t packet;
 	packet.airT = airT;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 4);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OBS_AIR_TEMP;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN, MAVLINK_MSG_ID_OBS_AIR_TEMP_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 248);
 }
 
 /**
@@ -120,23 +109,15 @@ static inline uint16_t mavlink_msg_obs_air_temp_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_obs_air_temp_send(mavlink_channel_t chan, float airT)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN];
+	char buf[4];
 	_mav_put_float(buf, 0, airT);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, buf, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN, MAVLINK_MSG_ID_OBS_AIR_TEMP_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, buf, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, buf, 4, 248);
 #else
 	mavlink_obs_air_temp_t packet;
 	packet.airT = airT;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, (const char *)&packet, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN, MAVLINK_MSG_ID_OBS_AIR_TEMP_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, (const char *)&packet, MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_AIR_TEMP, (const char *)&packet, 4, 248);
 #endif
 }
 
@@ -168,6 +149,6 @@ static inline void mavlink_msg_obs_air_temp_decode(const mavlink_message_t* msg,
 #if MAVLINK_NEED_BYTE_SWAP
 	obs_air_temp->airT = mavlink_msg_obs_air_temp_get_airT(msg);
 #else
-	memcpy(obs_air_temp, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_OBS_AIR_TEMP_LEN);
+	memcpy(obs_air_temp, _MAV_PAYLOAD(msg), 4);
 #endif
 }

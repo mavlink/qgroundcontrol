@@ -18,9 +18,6 @@ typedef struct __mavlink_setpoint_8dof_t
 #define MAVLINK_MSG_ID_SETPOINT_8DOF_LEN 33
 #define MAVLINK_MSG_ID_148_LEN 33
 
-#define MAVLINK_MSG_ID_SETPOINT_8DOF_CRC 241
-#define MAVLINK_MSG_ID_148_CRC 241
-
 
 
 #define MAVLINK_MESSAGE_INFO_SETPOINT_8DOF { \
@@ -60,7 +57,7 @@ static inline uint16_t mavlink_msg_setpoint_8dof_pack(uint8_t system_id, uint8_t
 						       uint8_t target_system, float val1, float val2, float val3, float val4, float val5, float val6, float val7, float val8)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SETPOINT_8DOF_LEN];
+	char buf[33];
 	_mav_put_float(buf, 0, val1);
 	_mav_put_float(buf, 4, val2);
 	_mav_put_float(buf, 8, val3);
@@ -71,7 +68,7 @@ static inline uint16_t mavlink_msg_setpoint_8dof_pack(uint8_t system_id, uint8_t
 	_mav_put_float(buf, 28, val8);
 	_mav_put_uint8_t(buf, 32, target_system);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 33);
 #else
 	mavlink_setpoint_8dof_t packet;
 	packet.val1 = val1;
@@ -84,15 +81,11 @@ static inline uint16_t mavlink_msg_setpoint_8dof_pack(uint8_t system_id, uint8_t
 	packet.val8 = val8;
 	packet.target_system = target_system;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 33);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SETPOINT_8DOF;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN, MAVLINK_MSG_ID_SETPOINT_8DOF_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 33, 241);
 }
 
 /**
@@ -117,7 +110,7 @@ static inline uint16_t mavlink_msg_setpoint_8dof_pack_chan(uint8_t system_id, ui
 						           uint8_t target_system,float val1,float val2,float val3,float val4,float val5,float val6,float val7,float val8)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SETPOINT_8DOF_LEN];
+	char buf[33];
 	_mav_put_float(buf, 0, val1);
 	_mav_put_float(buf, 4, val2);
 	_mav_put_float(buf, 8, val3);
@@ -128,7 +121,7 @@ static inline uint16_t mavlink_msg_setpoint_8dof_pack_chan(uint8_t system_id, ui
 	_mav_put_float(buf, 28, val8);
 	_mav_put_uint8_t(buf, 32, target_system);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 33);
 #else
 	mavlink_setpoint_8dof_t packet;
 	packet.val1 = val1;
@@ -141,15 +134,11 @@ static inline uint16_t mavlink_msg_setpoint_8dof_pack_chan(uint8_t system_id, ui
 	packet.val8 = val8;
 	packet.target_system = target_system;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 33);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SETPOINT_8DOF;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN, MAVLINK_MSG_ID_SETPOINT_8DOF_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 33, 241);
 }
 
 /**
@@ -184,7 +173,7 @@ static inline uint16_t mavlink_msg_setpoint_8dof_encode(uint8_t system_id, uint8
 static inline void mavlink_msg_setpoint_8dof_send(mavlink_channel_t chan, uint8_t target_system, float val1, float val2, float val3, float val4, float val5, float val6, float val7, float val8)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SETPOINT_8DOF_LEN];
+	char buf[33];
 	_mav_put_float(buf, 0, val1);
 	_mav_put_float(buf, 4, val2);
 	_mav_put_float(buf, 8, val3);
@@ -195,11 +184,7 @@ static inline void mavlink_msg_setpoint_8dof_send(mavlink_channel_t chan, uint8_
 	_mav_put_float(buf, 28, val8);
 	_mav_put_uint8_t(buf, 32, target_system);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SETPOINT_8DOF, buf, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN, MAVLINK_MSG_ID_SETPOINT_8DOF_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SETPOINT_8DOF, buf, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SETPOINT_8DOF, buf, 33, 241);
 #else
 	mavlink_setpoint_8dof_t packet;
 	packet.val1 = val1;
@@ -212,11 +197,7 @@ static inline void mavlink_msg_setpoint_8dof_send(mavlink_channel_t chan, uint8_
 	packet.val8 = val8;
 	packet.target_system = target_system;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SETPOINT_8DOF, (const char *)&packet, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN, MAVLINK_MSG_ID_SETPOINT_8DOF_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SETPOINT_8DOF, (const char *)&packet, MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SETPOINT_8DOF, (const char *)&packet, 33, 241);
 #endif
 }
 
@@ -334,6 +315,6 @@ static inline void mavlink_msg_setpoint_8dof_decode(const mavlink_message_t* msg
 	setpoint_8dof->val8 = mavlink_msg_setpoint_8dof_get_val8(msg);
 	setpoint_8dof->target_system = mavlink_msg_setpoint_8dof_get_target_system(msg);
 #else
-	memcpy(setpoint_8dof, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SETPOINT_8DOF_LEN);
+	memcpy(setpoint_8dof, _MAV_PAYLOAD(msg), 33);
 #endif
 }

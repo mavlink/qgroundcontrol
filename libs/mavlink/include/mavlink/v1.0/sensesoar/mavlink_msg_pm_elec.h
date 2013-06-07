@@ -18,9 +18,6 @@ typedef struct __mavlink_pm_elec_t
 #define MAVLINK_MSG_ID_PM_ELEC_LEN 20
 #define MAVLINK_MSG_ID_188_LEN 20
 
-#define MAVLINK_MSG_ID_PM_ELEC_CRC 170
-#define MAVLINK_MSG_ID_188_CRC 170
-
 #define MAVLINK_MSG_PM_ELEC_FIELD_PWGEN_LEN 3
 
 #define MAVLINK_MESSAGE_INFO_PM_ELEC { \
@@ -54,25 +51,21 @@ static inline uint16_t mavlink_msg_pm_elec_pack(uint8_t system_id, uint8_t compo
 						       float PwCons, float BatStat, const float *PwGen)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_PM_ELEC_LEN];
+	char buf[20];
 	_mav_put_float(buf, 0, PwCons);
 	_mav_put_float(buf, 4, BatStat);
 	_mav_put_float_array(buf, 8, PwGen, 3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_PM_ELEC_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_pm_elec_t packet;
 	packet.PwCons = PwCons;
 	packet.BatStat = BatStat;
 	mav_array_memcpy(packet.PwGen, PwGen, sizeof(float)*3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_PM_ELEC_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PM_ELEC;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_PM_ELEC_LEN, MAVLINK_MSG_ID_PM_ELEC_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_PM_ELEC_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 20, 170);
 }
 
 /**
@@ -97,25 +90,21 @@ static inline uint16_t mavlink_msg_pm_elec_pack_chan(uint8_t system_id, uint8_t 
 						           float PwCons,float BatStat,const float *PwGen)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_PM_ELEC_LEN];
+	char buf[20];
 	_mav_put_float(buf, 0, PwCons);
 	_mav_put_float(buf, 4, BatStat);
 	_mav_put_float_array(buf, 8, PwGen, 3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_PM_ELEC_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_pm_elec_t packet;
 	packet.PwCons = PwCons;
 	packet.BatStat = BatStat;
 	mav_array_memcpy(packet.PwGen, PwGen, sizeof(float)*3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_PM_ELEC_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_PM_ELEC;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_PM_ELEC_LEN, MAVLINK_MSG_ID_PM_ELEC_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_PM_ELEC_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 20, 170);
 }
 
 /**
@@ -150,25 +139,17 @@ static inline uint16_t mavlink_msg_pm_elec_encode(uint8_t system_id, uint8_t com
 static inline void mavlink_msg_pm_elec_send(mavlink_channel_t chan, float PwCons, float BatStat, const float *PwGen)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_PM_ELEC_LEN];
+	char buf[20];
 	_mav_put_float(buf, 0, PwCons);
 	_mav_put_float(buf, 4, BatStat);
 	_mav_put_float_array(buf, 8, PwGen, 3);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PM_ELEC, buf, MAVLINK_MSG_ID_PM_ELEC_LEN, MAVLINK_MSG_ID_PM_ELEC_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PM_ELEC, buf, MAVLINK_MSG_ID_PM_ELEC_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PM_ELEC, buf, 20, 170);
 #else
 	mavlink_pm_elec_t packet;
 	packet.PwCons = PwCons;
 	packet.BatStat = BatStat;
 	mav_array_memcpy(packet.PwGen, PwGen, sizeof(float)*3);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PM_ELEC, (const char *)&packet, MAVLINK_MSG_ID_PM_ELEC_LEN, MAVLINK_MSG_ID_PM_ELEC_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PM_ELEC, (const char *)&packet, MAVLINK_MSG_ID_PM_ELEC_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PM_ELEC, (const char *)&packet, 20, 170);
 #endif
 }
 
@@ -226,6 +207,6 @@ static inline void mavlink_msg_pm_elec_decode(const mavlink_message_t* msg, mavl
 	pm_elec->BatStat = mavlink_msg_pm_elec_get_BatStat(msg);
 	mavlink_msg_pm_elec_get_PwGen(msg, pm_elec->PwGen);
 #else
-	memcpy(pm_elec, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_PM_ELEC_LEN);
+	memcpy(pm_elec, _MAV_PAYLOAD(msg), 20);
 #endif
 }

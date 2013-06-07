@@ -15,9 +15,6 @@ typedef struct __mavlink_flexifunction_directory_ack_t
 #define MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN 7
 #define MAVLINK_MSG_ID_156_LEN 7
 
-#define MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_CRC 218
-#define MAVLINK_MSG_ID_156_CRC 218
-
 
 
 #define MAVLINK_MESSAGE_INFO_FLEXIFUNCTION_DIRECTORY_ACK { \
@@ -51,7 +48,7 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_pack(uint8_t syst
 						       uint8_t target_system, uint8_t target_component, uint8_t directory_type, uint8_t start_index, uint8_t count, uint16_t result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN];
+	char buf[7];
 	_mav_put_uint16_t(buf, 0, result);
 	_mav_put_uint8_t(buf, 2, target_system);
 	_mav_put_uint8_t(buf, 3, target_component);
@@ -59,7 +56,7 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_pack(uint8_t syst
 	_mav_put_uint8_t(buf, 5, start_index);
 	_mav_put_uint8_t(buf, 6, count);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 7);
 #else
 	mavlink_flexifunction_directory_ack_t packet;
 	packet.result = result;
@@ -69,15 +66,11 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_pack(uint8_t syst
 	packet.start_index = start_index;
 	packet.count = count;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 7);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 7, 218);
 }
 
 /**
@@ -99,7 +92,7 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_pack_chan(uint8_t
 						           uint8_t target_system,uint8_t target_component,uint8_t directory_type,uint8_t start_index,uint8_t count,uint16_t result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN];
+	char buf[7];
 	_mav_put_uint16_t(buf, 0, result);
 	_mav_put_uint8_t(buf, 2, target_system);
 	_mav_put_uint8_t(buf, 3, target_component);
@@ -107,7 +100,7 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_pack_chan(uint8_t
 	_mav_put_uint8_t(buf, 5, start_index);
 	_mav_put_uint8_t(buf, 6, count);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 7);
 #else
 	mavlink_flexifunction_directory_ack_t packet;
 	packet.result = result;
@@ -117,15 +110,11 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_pack_chan(uint8_t
 	packet.start_index = start_index;
 	packet.count = count;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 7);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 7, 218);
 }
 
 /**
@@ -157,7 +146,7 @@ static inline uint16_t mavlink_msg_flexifunction_directory_ack_encode(uint8_t sy
 static inline void mavlink_msg_flexifunction_directory_ack_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t directory_type, uint8_t start_index, uint8_t count, uint16_t result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN];
+	char buf[7];
 	_mav_put_uint16_t(buf, 0, result);
 	_mav_put_uint8_t(buf, 2, target_system);
 	_mav_put_uint8_t(buf, 3, target_component);
@@ -165,11 +154,7 @@ static inline void mavlink_msg_flexifunction_directory_ack_send(mavlink_channel_
 	_mav_put_uint8_t(buf, 5, start_index);
 	_mav_put_uint8_t(buf, 6, count);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK, buf, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK, buf, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK, buf, 7, 218);
 #else
 	mavlink_flexifunction_directory_ack_t packet;
 	packet.result = result;
@@ -179,11 +164,7 @@ static inline void mavlink_msg_flexifunction_directory_ack_send(mavlink_channel_
 	packet.start_index = start_index;
 	packet.count = count;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK, (const char *)&packet, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK, (const char *)&packet, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK, (const char *)&packet, 7, 218);
 #endif
 }
 
@@ -268,6 +249,6 @@ static inline void mavlink_msg_flexifunction_directory_ack_decode(const mavlink_
 	flexifunction_directory_ack->start_index = mavlink_msg_flexifunction_directory_ack_get_start_index(msg);
 	flexifunction_directory_ack->count = mavlink_msg_flexifunction_directory_ack_get_count(msg);
 #else
-	memcpy(flexifunction_directory_ack, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_FLEXIFUNCTION_DIRECTORY_ACK_LEN);
+	memcpy(flexifunction_directory_ack, _MAV_PAYLOAD(msg), 7);
 #endif
 }

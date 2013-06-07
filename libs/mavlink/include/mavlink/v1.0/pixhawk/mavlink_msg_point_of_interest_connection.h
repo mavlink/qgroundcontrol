@@ -20,9 +20,6 @@ typedef struct __mavlink_point_of_interest_connection_t
 #define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN 55
 #define MAVLINK_MSG_ID_192_LEN 55
 
-#define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_CRC 36
-#define MAVLINK_MSG_ID_192_CRC 36
-
 #define MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN 26
 
 #define MAVLINK_MESSAGE_INFO_POINT_OF_INTEREST_CONNECTION { \
@@ -66,7 +63,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
 						       uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char *name)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN];
+	char buf[55];
 	_mav_put_float(buf, 0, xp1);
 	_mav_put_float(buf, 4, yp1);
 	_mav_put_float(buf, 8, zp1);
@@ -78,7 +75,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
 	_mav_put_uint8_t(buf, 27, color);
 	_mav_put_uint8_t(buf, 28, coordinate_system);
 	_mav_put_char_array(buf, 29, name, 26);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 55);
 #else
 	mavlink_point_of_interest_connection_t packet;
 	packet.xp1 = xp1;
@@ -92,15 +89,11 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
 	mav_array_memcpy(packet.name, name, sizeof(char)*26);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 55);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 55, 36);
 }
 
 /**
@@ -127,7 +120,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_
 						           uint8_t type,uint8_t color,uint8_t coordinate_system,uint16_t timeout,float xp1,float yp1,float zp1,float xp2,float yp2,float zp2,const char *name)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN];
+	char buf[55];
 	_mav_put_float(buf, 0, xp1);
 	_mav_put_float(buf, 4, yp1);
 	_mav_put_float(buf, 8, zp1);
@@ -139,7 +132,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_
 	_mav_put_uint8_t(buf, 27, color);
 	_mav_put_uint8_t(buf, 28, coordinate_system);
 	_mav_put_char_array(buf, 29, name, 26);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 55);
 #else
 	mavlink_point_of_interest_connection_t packet;
 	packet.xp1 = xp1;
@@ -153,15 +146,11 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
 	mav_array_memcpy(packet.name, name, sizeof(char)*26);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 55);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 55, 36);
 }
 
 /**
@@ -198,7 +187,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_encode(uint8_t s
 static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char *name)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN];
+	char buf[55];
 	_mav_put_float(buf, 0, xp1);
 	_mav_put_float(buf, 4, yp1);
 	_mav_put_float(buf, 8, zp1);
@@ -210,11 +199,7 @@ static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel
 	_mav_put_uint8_t(buf, 27, color);
 	_mav_put_uint8_t(buf, 28, coordinate_system);
 	_mav_put_char_array(buf, 29, name, 26);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, buf, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, buf, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, buf, 55, 36);
 #else
 	mavlink_point_of_interest_connection_t packet;
 	packet.xp1 = xp1;
@@ -228,11 +213,7 @@ static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel
 	packet.color = color;
 	packet.coordinate_system = coordinate_system;
 	mav_array_memcpy(packet.name, name, sizeof(char)*26);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, (const char *)&packet, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, (const char *)&packet, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION, (const char *)&packet, 55, 36);
 #endif
 }
 
@@ -372,6 +353,6 @@ static inline void mavlink_msg_point_of_interest_connection_decode(const mavlink
 	point_of_interest_connection->coordinate_system = mavlink_msg_point_of_interest_connection_get_coordinate_system(msg);
 	mavlink_msg_point_of_interest_connection_get_name(msg, point_of_interest_connection->name);
 #else
-	memcpy(point_of_interest_connection, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+	memcpy(point_of_interest_connection, _MAV_PAYLOAD(msg), 55);
 #endif
 }

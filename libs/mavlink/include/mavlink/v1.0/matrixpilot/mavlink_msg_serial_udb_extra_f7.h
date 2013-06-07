@@ -15,9 +15,6 @@ typedef struct __mavlink_serial_udb_extra_f7_t
 #define MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN 24
 #define MAVLINK_MSG_ID_175_LEN 24
 
-#define MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_CRC 171
-#define MAVLINK_MSG_ID_175_CRC 171
-
 
 
 #define MAVLINK_MESSAGE_INFO_SERIAL_UDB_EXTRA_F7 { \
@@ -51,7 +48,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_pack(uint8_t system_id, u
 						       float sue_YAWKP_RUDDER, float sue_YAWKD_RUDDER, float sue_ROLLKP_RUDDER, float sue_ROLLKD_RUDDER, float sue_RUDDER_BOOST, float sue_RTL_PITCH_DOWN)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN];
+	char buf[24];
 	_mav_put_float(buf, 0, sue_YAWKP_RUDDER);
 	_mav_put_float(buf, 4, sue_YAWKD_RUDDER);
 	_mav_put_float(buf, 8, sue_ROLLKP_RUDDER);
@@ -59,7 +56,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_pack(uint8_t system_id, u
 	_mav_put_float(buf, 16, sue_RUDDER_BOOST);
 	_mav_put_float(buf, 20, sue_RTL_PITCH_DOWN);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
 #else
 	mavlink_serial_udb_extra_f7_t packet;
 	packet.sue_YAWKP_RUDDER = sue_YAWKP_RUDDER;
@@ -69,15 +66,11 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_pack(uint8_t system_id, u
 	packet.sue_RUDDER_BOOST = sue_RUDDER_BOOST;
 	packet.sue_RTL_PITCH_DOWN = sue_RTL_PITCH_DOWN;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 24, 171);
 }
 
 /**
@@ -99,7 +92,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_pack_chan(uint8_t system_
 						           float sue_YAWKP_RUDDER,float sue_YAWKD_RUDDER,float sue_ROLLKP_RUDDER,float sue_ROLLKD_RUDDER,float sue_RUDDER_BOOST,float sue_RTL_PITCH_DOWN)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN];
+	char buf[24];
 	_mav_put_float(buf, 0, sue_YAWKP_RUDDER);
 	_mav_put_float(buf, 4, sue_YAWKD_RUDDER);
 	_mav_put_float(buf, 8, sue_ROLLKP_RUDDER);
@@ -107,7 +100,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_pack_chan(uint8_t system_
 	_mav_put_float(buf, 16, sue_RUDDER_BOOST);
 	_mav_put_float(buf, 20, sue_RTL_PITCH_DOWN);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 24);
 #else
 	mavlink_serial_udb_extra_f7_t packet;
 	packet.sue_YAWKP_RUDDER = sue_YAWKP_RUDDER;
@@ -117,15 +110,11 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_pack_chan(uint8_t system_
 	packet.sue_RUDDER_BOOST = sue_RUDDER_BOOST;
 	packet.sue_RTL_PITCH_DOWN = sue_RTL_PITCH_DOWN;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 24);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 171);
 }
 
 /**
@@ -157,7 +146,7 @@ static inline uint16_t mavlink_msg_serial_udb_extra_f7_encode(uint8_t system_id,
 static inline void mavlink_msg_serial_udb_extra_f7_send(mavlink_channel_t chan, float sue_YAWKP_RUDDER, float sue_YAWKD_RUDDER, float sue_ROLLKP_RUDDER, float sue_ROLLKD_RUDDER, float sue_RUDDER_BOOST, float sue_RTL_PITCH_DOWN)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN];
+	char buf[24];
 	_mav_put_float(buf, 0, sue_YAWKP_RUDDER);
 	_mav_put_float(buf, 4, sue_YAWKD_RUDDER);
 	_mav_put_float(buf, 8, sue_ROLLKP_RUDDER);
@@ -165,11 +154,7 @@ static inline void mavlink_msg_serial_udb_extra_f7_send(mavlink_channel_t chan, 
 	_mav_put_float(buf, 16, sue_RUDDER_BOOST);
 	_mav_put_float(buf, 20, sue_RTL_PITCH_DOWN);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7, buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7, buf, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7, buf, 24, 171);
 #else
 	mavlink_serial_udb_extra_f7_t packet;
 	packet.sue_YAWKP_RUDDER = sue_YAWKP_RUDDER;
@@ -179,11 +164,7 @@ static inline void mavlink_msg_serial_udb_extra_f7_send(mavlink_channel_t chan, 
 	packet.sue_RUDDER_BOOST = sue_RUDDER_BOOST;
 	packet.sue_RTL_PITCH_DOWN = sue_RTL_PITCH_DOWN;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7, (const char *)&packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7, (const char *)&packet, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7, (const char *)&packet, 24, 171);
 #endif
 }
 
@@ -268,6 +249,6 @@ static inline void mavlink_msg_serial_udb_extra_f7_decode(const mavlink_message_
 	serial_udb_extra_f7->sue_RUDDER_BOOST = mavlink_msg_serial_udb_extra_f7_get_sue_RUDDER_BOOST(msg);
 	serial_udb_extra_f7->sue_RTL_PITCH_DOWN = mavlink_msg_serial_udb_extra_f7_get_sue_RTL_PITCH_DOWN(msg);
 #else
-	memcpy(serial_udb_extra_f7, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_SERIAL_UDB_EXTRA_F7_LEN);
+	memcpy(serial_udb_extra_f7, _MAV_PAYLOAD(msg), 24);
 #endif
 }

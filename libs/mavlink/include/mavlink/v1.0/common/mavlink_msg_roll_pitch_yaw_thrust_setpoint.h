@@ -14,9 +14,6 @@ typedef struct __mavlink_roll_pitch_yaw_thrust_setpoint_t
 #define MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN 20
 #define MAVLINK_MSG_ID_58_LEN 20
 
-#define MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_CRC 239
-#define MAVLINK_MSG_ID_58_CRC 239
-
 
 
 #define MAVLINK_MESSAGE_INFO_ROLL_PITCH_YAW_THRUST_SETPOINT { \
@@ -48,14 +45,14 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack(uint8_t s
 						       uint32_t time_boot_ms, float roll, float pitch, float yaw, float thrust)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN];
+	char buf[20];
 	_mav_put_uint32_t(buf, 0, time_boot_ms);
 	_mav_put_float(buf, 4, roll);
 	_mav_put_float(buf, 8, pitch);
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_float(buf, 16, thrust);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_roll_pitch_yaw_thrust_setpoint_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -64,15 +61,11 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack(uint8_t s
 	packet.yaw = yaw;
 	packet.thrust = thrust;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 20, 239);
 }
 
 /**
@@ -93,14 +86,14 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack_chan(uint
 						           uint32_t time_boot_ms,float roll,float pitch,float yaw,float thrust)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN];
+	char buf[20];
 	_mav_put_uint32_t(buf, 0, time_boot_ms);
 	_mav_put_float(buf, 4, roll);
 	_mav_put_float(buf, 8, pitch);
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_float(buf, 16, thrust);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 20);
 #else
 	mavlink_roll_pitch_yaw_thrust_setpoint_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -109,15 +102,11 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack_chan(uint
 	packet.yaw = yaw;
 	packet.thrust = thrust;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 20);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 20, 239);
 }
 
 /**
@@ -148,18 +137,14 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_encode(uint8_t
 static inline void mavlink_msg_roll_pitch_yaw_thrust_setpoint_send(mavlink_channel_t chan, uint32_t time_boot_ms, float roll, float pitch, float yaw, float thrust)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN];
+	char buf[20];
 	_mav_put_uint32_t(buf, 0, time_boot_ms);
 	_mav_put_float(buf, 4, roll);
 	_mav_put_float(buf, 8, pitch);
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_float(buf, 16, thrust);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT, buf, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT, buf, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT, buf, 20, 239);
 #else
 	mavlink_roll_pitch_yaw_thrust_setpoint_t packet;
 	packet.time_boot_ms = time_boot_ms;
@@ -168,11 +153,7 @@ static inline void mavlink_msg_roll_pitch_yaw_thrust_setpoint_send(mavlink_chann
 	packet.yaw = yaw;
 	packet.thrust = thrust;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT, (const char *)&packet, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT, (const char *)&packet, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT, (const char *)&packet, 20, 239);
 #endif
 }
 
@@ -246,6 +227,6 @@ static inline void mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(const mavli
 	roll_pitch_yaw_thrust_setpoint->yaw = mavlink_msg_roll_pitch_yaw_thrust_setpoint_get_yaw(msg);
 	roll_pitch_yaw_thrust_setpoint->thrust = mavlink_msg_roll_pitch_yaw_thrust_setpoint_get_thrust(msg);
 #else
-	memcpy(roll_pitch_yaw_thrust_setpoint, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT_LEN);
+	memcpy(roll_pitch_yaw_thrust_setpoint, _MAV_PAYLOAD(msg), 20);
 #endif
 }

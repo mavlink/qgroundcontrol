@@ -12,9 +12,6 @@ typedef struct __mavlink_obs_velocity_t
 #define MAVLINK_MSG_ID_OBS_VELOCITY_LEN 12
 #define MAVLINK_MSG_ID_172_LEN 12
 
-#define MAVLINK_MSG_ID_OBS_VELOCITY_CRC 108
-#define MAVLINK_MSG_ID_172_CRC 108
-
 #define MAVLINK_MSG_OBS_VELOCITY_FIELD_VEL_LEN 3
 
 #define MAVLINK_MESSAGE_INFO_OBS_VELOCITY { \
@@ -40,23 +37,19 @@ static inline uint16_t mavlink_msg_obs_velocity_pack(uint8_t system_id, uint8_t 
 						       const float *vel)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OBS_VELOCITY_LEN];
+	char buf[12];
 
 	_mav_put_float_array(buf, 0, vel, 3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_obs_velocity_t packet;
 
 	mav_array_memcpy(packet.vel, vel, sizeof(float)*3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OBS_VELOCITY;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OBS_VELOCITY_LEN, MAVLINK_MSG_ID_OBS_VELOCITY_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 12, 108);
 }
 
 /**
@@ -75,23 +68,19 @@ static inline uint16_t mavlink_msg_obs_velocity_pack_chan(uint8_t system_id, uin
 						           const float *vel)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OBS_VELOCITY_LEN];
+	char buf[12];
 
 	_mav_put_float_array(buf, 0, vel, 3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 12);
 #else
 	mavlink_obs_velocity_t packet;
 
 	mav_array_memcpy(packet.vel, vel, sizeof(float)*3);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 12);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OBS_VELOCITY;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OBS_VELOCITY_LEN, MAVLINK_MSG_ID_OBS_VELOCITY_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 108);
 }
 
 /**
@@ -120,23 +109,15 @@ static inline uint16_t mavlink_msg_obs_velocity_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_obs_velocity_send(mavlink_channel_t chan, const float *vel)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OBS_VELOCITY_LEN];
+	char buf[12];
 
 	_mav_put_float_array(buf, 0, vel, 3);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_VELOCITY, buf, MAVLINK_MSG_ID_OBS_VELOCITY_LEN, MAVLINK_MSG_ID_OBS_VELOCITY_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_VELOCITY, buf, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_VELOCITY, buf, 12, 108);
 #else
 	mavlink_obs_velocity_t packet;
 
 	mav_array_memcpy(packet.vel, vel, sizeof(float)*3);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_VELOCITY, (const char *)&packet, MAVLINK_MSG_ID_OBS_VELOCITY_LEN, MAVLINK_MSG_ID_OBS_VELOCITY_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_VELOCITY, (const char *)&packet, MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OBS_VELOCITY, (const char *)&packet, 12, 108);
 #endif
 }
 
@@ -168,6 +149,6 @@ static inline void mavlink_msg_obs_velocity_decode(const mavlink_message_t* msg,
 #if MAVLINK_NEED_BYTE_SWAP
 	mavlink_msg_obs_velocity_get_vel(msg, obs_velocity->vel);
 #else
-	memcpy(obs_velocity, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_OBS_VELOCITY_LEN);
+	memcpy(obs_velocity, _MAV_PAYLOAD(msg), 12);
 #endif
 }

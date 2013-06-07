@@ -15,9 +15,6 @@ typedef struct __mavlink_omnidirectional_flow_t
 #define MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN 54
 #define MAVLINK_MSG_ID_106_LEN 54
 
-#define MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_CRC 211
-#define MAVLINK_MSG_ID_106_CRC 211
-
 #define MAVLINK_MSG_OMNIDIRECTIONAL_FLOW_FIELD_LEFT_LEN 10
 #define MAVLINK_MSG_OMNIDIRECTIONAL_FLOW_FIELD_RIGHT_LEN 10
 
@@ -52,14 +49,14 @@ static inline uint16_t mavlink_msg_omnidirectional_flow_pack(uint8_t system_id, 
 						       uint64_t time_usec, uint8_t sensor_id, const int16_t *left, const int16_t *right, uint8_t quality, float front_distance_m)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN];
+	char buf[54];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, front_distance_m);
 	_mav_put_uint8_t(buf, 52, sensor_id);
 	_mav_put_uint8_t(buf, 53, quality);
 	_mav_put_int16_t_array(buf, 12, left, 10);
 	_mav_put_int16_t_array(buf, 32, right, 10);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 54);
 #else
 	mavlink_omnidirectional_flow_t packet;
 	packet.time_usec = time_usec;
@@ -68,15 +65,11 @@ static inline uint16_t mavlink_msg_omnidirectional_flow_pack(uint8_t system_id, 
 	packet.quality = quality;
 	mav_array_memcpy(packet.left, left, sizeof(int16_t)*10);
 	mav_array_memcpy(packet.right, right, sizeof(int16_t)*10);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 54);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 54, 211);
 }
 
 /**
@@ -98,14 +91,14 @@ static inline uint16_t mavlink_msg_omnidirectional_flow_pack_chan(uint8_t system
 						           uint64_t time_usec,uint8_t sensor_id,const int16_t *left,const int16_t *right,uint8_t quality,float front_distance_m)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN];
+	char buf[54];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, front_distance_m);
 	_mav_put_uint8_t(buf, 52, sensor_id);
 	_mav_put_uint8_t(buf, 53, quality);
 	_mav_put_int16_t_array(buf, 12, left, 10);
 	_mav_put_int16_t_array(buf, 32, right, 10);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 54);
 #else
 	mavlink_omnidirectional_flow_t packet;
 	packet.time_usec = time_usec;
@@ -114,15 +107,11 @@ static inline uint16_t mavlink_msg_omnidirectional_flow_pack_chan(uint8_t system
 	packet.quality = quality;
 	mav_array_memcpy(packet.left, left, sizeof(int16_t)*10);
 	mav_array_memcpy(packet.right, right, sizeof(int16_t)*10);
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 54);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 54, 211);
 }
 
 /**
@@ -154,18 +143,14 @@ static inline uint16_t mavlink_msg_omnidirectional_flow_encode(uint8_t system_id
 static inline void mavlink_msg_omnidirectional_flow_send(mavlink_channel_t chan, uint64_t time_usec, uint8_t sensor_id, const int16_t *left, const int16_t *right, uint8_t quality, float front_distance_m)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN];
+	char buf[54];
 	_mav_put_uint64_t(buf, 0, time_usec);
 	_mav_put_float(buf, 8, front_distance_m);
 	_mav_put_uint8_t(buf, 52, sensor_id);
 	_mav_put_uint8_t(buf, 53, quality);
 	_mav_put_int16_t_array(buf, 12, left, 10);
 	_mav_put_int16_t_array(buf, 32, right, 10);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW, buf, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW, buf, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW, buf, 54, 211);
 #else
 	mavlink_omnidirectional_flow_t packet;
 	packet.time_usec = time_usec;
@@ -174,11 +159,7 @@ static inline void mavlink_msg_omnidirectional_flow_send(mavlink_channel_t chan,
 	packet.quality = quality;
 	mav_array_memcpy(packet.left, left, sizeof(int16_t)*10);
 	mav_array_memcpy(packet.right, right, sizeof(int16_t)*10);
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW, (const char *)&packet, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW, (const char *)&packet, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW, (const char *)&packet, 54, 211);
 #endif
 }
 
@@ -263,6 +244,6 @@ static inline void mavlink_msg_omnidirectional_flow_decode(const mavlink_message
 	omnidirectional_flow->sensor_id = mavlink_msg_omnidirectional_flow_get_sensor_id(msg);
 	omnidirectional_flow->quality = mavlink_msg_omnidirectional_flow_get_quality(msg);
 #else
-	memcpy(omnidirectional_flow, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_OMNIDIRECTIONAL_FLOW_LEN);
+	memcpy(omnidirectional_flow, _MAV_PAYLOAD(msg), 54);
 #endif
 }

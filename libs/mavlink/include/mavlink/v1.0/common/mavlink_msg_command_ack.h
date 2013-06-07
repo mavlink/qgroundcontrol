@@ -11,9 +11,6 @@ typedef struct __mavlink_command_ack_t
 #define MAVLINK_MSG_ID_COMMAND_ACK_LEN 3
 #define MAVLINK_MSG_ID_77_LEN 3
 
-#define MAVLINK_MSG_ID_COMMAND_ACK_CRC 143
-#define MAVLINK_MSG_ID_77_CRC 143
-
 
 
 #define MAVLINK_MESSAGE_INFO_COMMAND_ACK { \
@@ -39,25 +36,21 @@ static inline uint16_t mavlink_msg_command_ack_pack(uint8_t system_id, uint8_t c
 						       uint16_t command, uint8_t result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_COMMAND_ACK_LEN];
+	char buf[3];
 	_mav_put_uint16_t(buf, 0, command);
 	_mav_put_uint8_t(buf, 2, result);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 3);
 #else
 	mavlink_command_ack_t packet;
 	packet.command = command;
 	packet.result = result;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 3);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_COMMAND_ACK_LEN, MAVLINK_MSG_ID_COMMAND_ACK_CRC);
-#else
-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
-#endif
+	return mavlink_finalize_message(msg, system_id, component_id, 3, 143);
 }
 
 /**
@@ -75,25 +68,21 @@ static inline uint16_t mavlink_msg_command_ack_pack_chan(uint8_t system_id, uint
 						           uint16_t command,uint8_t result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_COMMAND_ACK_LEN];
+	char buf[3];
 	_mav_put_uint16_t(buf, 0, command);
 	_mav_put_uint8_t(buf, 2, result);
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), buf, 3);
 #else
 	mavlink_command_ack_t packet;
 	packet.command = command;
 	packet.result = result;
 
-        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
+        memcpy(_MAV_PAYLOAD_NON_CONST(msg), &packet, 3);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
-#if MAVLINK_CRC_EXTRA
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_COMMAND_ACK_LEN, MAVLINK_MSG_ID_COMMAND_ACK_CRC);
-#else
-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
-#endif
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 143);
 }
 
 /**
@@ -121,25 +110,17 @@ static inline uint16_t mavlink_msg_command_ack_encode(uint8_t system_id, uint8_t
 static inline void mavlink_msg_command_ack_send(mavlink_channel_t chan, uint16_t command, uint8_t result)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[MAVLINK_MSG_ID_COMMAND_ACK_LEN];
+	char buf[3];
 	_mav_put_uint16_t(buf, 0, command);
 	_mav_put_uint8_t(buf, 2, result);
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, buf, MAVLINK_MSG_ID_COMMAND_ACK_LEN, MAVLINK_MSG_ID_COMMAND_ACK_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, buf, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, buf, 3, 143);
 #else
 	mavlink_command_ack_t packet;
 	packet.command = command;
 	packet.result = result;
 
-#if MAVLINK_CRC_EXTRA
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, (const char *)&packet, MAVLINK_MSG_ID_COMMAND_ACK_LEN, MAVLINK_MSG_ID_COMMAND_ACK_CRC);
-#else
-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, (const char *)&packet, MAVLINK_MSG_ID_COMMAND_ACK_LEN);
-#endif
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, (const char *)&packet, 3, 143);
 #endif
 }
 
@@ -180,6 +161,6 @@ static inline void mavlink_msg_command_ack_decode(const mavlink_message_t* msg, 
 	command_ack->command = mavlink_msg_command_ack_get_command(msg);
 	command_ack->result = mavlink_msg_command_ack_get_result(msg);
 #else
-	memcpy(command_ack, _MAV_PAYLOAD(msg), MAVLINK_MSG_ID_COMMAND_ACK_LEN);
+	memcpy(command_ack, _MAV_PAYLOAD(msg), 3);
 #endif
 }
