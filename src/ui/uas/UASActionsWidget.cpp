@@ -19,10 +19,13 @@ UASActionsWidget::UASActionsWidget(QWidget *parent) : QWidget(parent)
 void UASActionsWidget::activeUASSet(UASInterface *uas)
 {
     m_uas = uas;
-    connect(m_uas->getWaypointManager(),SIGNAL(waypointEditableListChanged()),this,SLOT(updateWaypointList()));
-    connect(m_uas->getWaypointManager(),SIGNAL(currentWaypointChanged(quint16)),this,SLOT(currentWaypointChanged(quint16)));
-    connect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
-    armingChanged(m_uas->isArmed());
+    if (uas)
+    {
+        connect(m_uas->getWaypointManager(),SIGNAL(waypointEditableListChanged()),this,SLOT(updateWaypointList()));
+        connect(m_uas->getWaypointManager(),SIGNAL(currentWaypointChanged(quint16)),this,SLOT(currentWaypointChanged(quint16)));
+        connect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+        armingChanged(m_uas->isArmed());
+    }
     updateWaypointList();
 }
 void UASActionsWidget::armButtonClicked()
@@ -63,9 +66,12 @@ void UASActionsWidget::currentWaypointChanged(quint16 wpid)
 void UASActionsWidget::updateWaypointList()
 {
     ui.waypointComboBox->clear();
-    for (int i=0;i<m_uas->getWaypointManager()->getWaypointEditableList().size();i++)
+    if (m_uas)
     {
-        ui.waypointComboBox->addItem(QString::number(i));
+        for (int i=0;i<m_uas->getWaypointManager()->getWaypointEditableList().size();i++)
+        {
+            ui.waypointComboBox->addItem(QString::number(i));
+        }
     }
 }
 

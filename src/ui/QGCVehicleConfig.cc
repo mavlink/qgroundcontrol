@@ -36,11 +36,6 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     ui(new Ui::QGCVehicleConfig)
 {
     doneLoadingConfig = false;
-    systemTypeToParamMap["FIXED_WING"] = new QMap<QString,QGCToolWidget*>();
-    systemTypeToParamMap["QUADROTOR"] = new QMap<QString,QGCToolWidget*>();
-    systemTypeToParamMap["GROUND_ROVER"] = new QMap<QString,QGCToolWidget*>();
-    systemTypeToParamMap["BOAT"] = new QMap<QString,QGCToolWidget*>();
-    libParamToWidgetMap = new QMap<QString,QGCToolWidget*>();
 
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
@@ -690,19 +685,19 @@ void QGCVehicleConfig::loadConfig()
                                     //Based on the airframe, we add the parameter to different categories.
                                     if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
                                     {
-                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["FIXED_WING"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
                                     {
-                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["QUADROTOR"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
                                     {
-                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["GROUND_ROVER"].insert(paramlist[i],tool);
                                     }
                                     else
                                     {
-                                        libParamToWidgetMap->insert(paramlist[i],tool);
+                                        libParamToWidgetMap.insert(paramlist[i],tool);
                                     }
                                 }
 
@@ -735,19 +730,19 @@ void QGCVehicleConfig::loadConfig()
                                     //Based on the airframe, we add the parameter to different categories.
                                     if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
                                     {
-                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["FIXED_WING"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
                                     {
-                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["QUADROTOR"].insert(paramlist[i],tool);
                                     }
                                     else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
                                     {
-                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
+                                        systemTypeToParamMap["GROUND_ROVER"].insert(paramlist[i],tool);
                                     }
                                     else
                                     {
-                                        libParamToWidgetMap->insert(paramlist[i],tool);
+                                        libParamToWidgetMap.insert(paramlist[i],tool);
                                     }
                                 }
 
@@ -791,7 +786,7 @@ void QGCVehicleConfig::loadConfig()
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 {
     // Do nothing if system is the same or NULL
-    if ((active == NULL) || mav == active) return;
+    if (mav == active) return;
 
     if (mav)
     {
@@ -815,48 +810,61 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
-    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
-               SLOT(remoteControlChannelRawChanged(int,float)));
-    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
-               SLOT(parameterChanged(int,int,QString,QVariant)));
+    if (mav)
+        {
+        connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+                   SLOT(remoteControlChannelRawChanged(int,float)));
+        connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+                   SLOT(parameterChanged(int,int,QString,QVariant)));
 
-    if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
-    {
-        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
+        if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
+        {
+            paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
+        }
+        else
+        {
+            //Indication that we have no meta data for this system type.
+            qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
+            paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
+        }
+
+        if (!paramTooltips.isEmpty())
+        {
+               mav->getParamManager()->setParamInfo(paramTooltips);
+        }
+
+        qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
+
+        //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
+        //amount of time it actually takes to load the configuration windows.
+        QTimer::singleShot(1,this,SLOT(loadConfig()));
+
+        updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
+
+        // Since a system is now connected, enable the VehicleConfig UI.
+        //ui->tabWidget->setEnabled(true);
+        ui->setButton->setEnabled(true);
+        ui->refreshButton->setEnabled(true);
+        ui->readButton->setEnabled(true);
+        ui->writeButton->setEnabled(true);
+        ui->loadFileButton->setEnabled(true);
+        ui->saveFileButton->setEnabled(true);
+        if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA")
+        {
+            ui->readButton->hide();
+            ui->writeButton->hide();
+        }
     }
     else
     {
-        //Indication that we have no meta data for this system type.
-        qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
-        systemTypeToParamMap[mav->getSystemTypeName()] = new QMap<QString,QGCToolWidget*>();
-        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
-    }
-
-    if (!paramTooltips.isEmpty())
-    {
-           mav->getParamManager()->setParamInfo(paramTooltips);
-    }
-
-    qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
-
-    //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
-    //amount of time it actually takes to load the configuration windows.
-    QTimer::singleShot(1,this,SLOT(loadConfig()));
-
-    updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
-
-    // Since a system is now connected, enable the VehicleConfig UI.
-    //ui->tabWidget->setEnabled(true);
-    ui->setButton->setEnabled(true);
-    ui->refreshButton->setEnabled(true);
-    ui->readButton->setEnabled(true);
-    ui->writeButton->setEnabled(true);
-    ui->loadFileButton->setEnabled(true);
-    ui->saveFileButton->setEnabled(true);
-    if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA")
-    {
-        ui->readButton->hide();
-        ui->writeButton->hide();
+        ui->setButton->setEnabled(false);
+        ui->refreshButton->setEnabled(false);
+        ui->readButton->show();
+        ui->readButton->setEnabled(false);
+        ui->writeButton->show();
+        ui->writeButton->setEnabled(false);
+        ui->loadFileButton->setEnabled(false);
+        ui->saveFileButton->setEnabled(false);
     }
 }
 
@@ -1086,26 +1094,26 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         return;
     }
 
-    if (paramToWidgetMap->contains(parameterName))
+    if (paramToWidgetMap.contains(parameterName))
     {
         //Main group of parameters of the selected airframe
-        paramToWidgetMap->value(parameterName)->setParameterValue(uas,component,parameterName,value);
-        if (toolToBoxMap.contains(paramToWidgetMap->value(parameterName)))
+        paramToWidgetMap.value(parameterName)->setParameterValue(uas,component,parameterName,value);
+        if (toolToBoxMap.contains(paramToWidgetMap.value(parameterName)))
         {
-            toolToBoxMap[paramToWidgetMap->value(parameterName)]->show();
+            toolToBoxMap[paramToWidgetMap.value(parameterName)]->show();
         }
         else
         {
             qCritical() << "Widget with no box, possible memory corruption for param:" << parameterName;
         }
     }
-    else if (libParamToWidgetMap->contains(parameterName))
+    else if (libParamToWidgetMap.contains(parameterName))
     {
         //All the library parameters
-        libParamToWidgetMap->value(parameterName)->setParameterValue(uas,component,parameterName,value);
-        if (toolToBoxMap.contains(libParamToWidgetMap->value(parameterName)))
+        libParamToWidgetMap.value(parameterName)->setParameterValue(uas,component,parameterName,value);
+        if (toolToBoxMap.contains(libParamToWidgetMap.value(parameterName)))
         {
-            toolToBoxMap[libParamToWidgetMap->value(parameterName)]->show();
+            toolToBoxMap[libParamToWidgetMap.value(parameterName)]->show();
         }
         else
         {
@@ -1123,7 +1131,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             {
                 //It should be grouped with this one, add it.
                 toolWidgets[i]->addParam(uas,component,parameterName,value);
-                libParamToWidgetMap->insert(parameterName,toolWidgets[i]);
+                libParamToWidgetMap.insert(parameterName,toolWidgets[i]);
                 found  = true;
                 break;
             }
@@ -1141,7 +1149,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             tool->setObjectName(tooltitle);
             //tool->setSettings(set);
             tool->addParam(uas,component,parameterName,value);
-            libParamToWidgetMap->insert(parameterName,tool);
+            libParamToWidgetMap.insert(parameterName,tool);
             toolWidgets.append(tool);
             QGroupBox *box = new QGroupBox(this);
             box->setTitle(tool->objectName());
