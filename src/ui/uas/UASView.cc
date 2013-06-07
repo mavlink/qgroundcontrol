@@ -117,13 +117,12 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
 
     // Allow to delete this widget
-    connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
+    connect(removeAction, SIGNAL(triggered()), this, SLOT(prepareForDeletion()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(hilAction, SIGNAL(triggered(bool)), this, SLOT(showHILUi()));
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
     connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
-    connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
 
     // Name changes
     connect(uas, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
@@ -563,13 +562,22 @@ void UASView::showHILUi()
      MainWindow::instance()->showHILConfigurationWidget(uas);
 }
 
+/**
+ * @brief Stop updating this UASView, queue it for deletion, and also tell the UASManager to delete the UAS.
+ */
+void UASView::prepareForDeletion()
+{
+    refreshTimer->stop();
+    UASManager::instance()->removeUAS(uas);
+    deleteLater();
+}
+
 void UASView::refresh()
 {
     //setUpdatesEnabled(false);
     //setUpdatesEnabled(true);
     //repaint();
     //qDebug() << "UPDATING UAS WIDGET!" << uas->getUASName();
-
 
     if (generalUpdateCount == 4)
     {

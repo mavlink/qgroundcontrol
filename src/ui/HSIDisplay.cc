@@ -184,6 +184,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         setActiveUAS(UASManager::instance()->getActiveUAS());
     }
 
+    // Listen for the removal of the active UAS.
+    setActiveUAS(UASManager::instance()->getActiveUAS());
+
     setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -978,6 +981,12 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
 
     this->uas = uas;
 
+    resetMAVState();
+}
+
+void HSIDisplay::removeUAS(UASInterface* uas)
+{
+    this->uas = NULL;
     resetMAVState();
 }
 

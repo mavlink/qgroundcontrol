@@ -269,7 +269,6 @@ void UASManager::addUAS(UASInterface* uas)
     if (!systems.contains(uas))
     {
         systems.append(uas);
-        connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
         // Set home position on UAV if set in UI
         // - this is done on a per-UAV basis
         // Set home position in UI if UAV chooses a new one (caution! if multiple UAVs are connected, take care!)
@@ -300,14 +299,19 @@ void UASManager::addUAS(UASInterface* uas)
     }
 }
 
-void UASManager::removeUAS(QObject* uas)
+/**
+ * @brief The function that should be used when removing UASes from QGC. emits UASDeletect(UASInterface*) when triggered
+ *        so that UI elements can update accordingly.
+ * @param uas The UAS to remove
+ */
+void UASManager::removeUAS(UASInterface* uas)
 {
-    UASInterface* mav = qobject_cast<UASInterface*>(uas);
+    if (uas)
+    {
+        int listindex = systems.indexOf(uas);
 
-    if (mav) {
-        int listindex = systems.indexOf(mav);
-
-        if (mav == activeUAS)
+        // If this is the active UAS, select a new one.
+        if (uas == activeUAS)
         {
             if (systems.count() > 1)
             {
@@ -334,8 +338,14 @@ void UASManager::removeUAS(QObject* uas)
                 // XXX Not emitting the null pointer yet
             }
         }
+
+        // Finally delete a local reference to this UAS
         systems.removeAt(listindex);
-        emit UASDeleted(mav);
+
+        // Notify other UI elements that a UAS is being deleted before finally deleting it.
+        qDebug() << "Deleting UAS object: " << uas->getUASName();
+        emit UASDeleted(uas);
+        uas->deleteLater();
     }
 }
 
