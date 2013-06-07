@@ -49,6 +49,7 @@ class UASView : public QWidget
 public:
     UASView(UASInterface* uas, QWidget *parent = 0);
     ~UASView();
+    UASInterface* uas;
 
 public slots:
     /** @brief Update the name of the system */
@@ -65,8 +66,11 @@ public slots:
     void updateLoad(UASInterface* uas, double load);
     //void receiveValue(int uasid, QString id, double value, quint64 time);
     void showHILUi();
-    /** @brief Disables the widget from accessing the UAS object in preparation for being deleted */
-    void prepareForDeletion();
+    /**
+     * Request that the UASManager deletes this UAS. This doesn't delete this widget
+     * yet, it waits for the approprait uasDeleted signal.
+     */
+    void triggerUASDeletion();
     void refresh();
     /** @brief Receive new waypoint information */
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);
@@ -103,7 +107,6 @@ protected:
     bool disconnected;
     int timeRemaining;
     float chargeLevel;
-    UASInterface* uas;
     float load;
     QString state;
     QString stateDesc;

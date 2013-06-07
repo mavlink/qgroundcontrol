@@ -52,7 +52,6 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
-    void removeUAS(UASInterface* uas);
     /** @brief Set the width in meters this widget shows from top */
     void setMetricWidth(double width);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);

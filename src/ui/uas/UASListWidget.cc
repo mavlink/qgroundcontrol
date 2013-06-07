@@ -56,15 +56,21 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
     m_ui->verticalLayout->addWidget(uWidget);
 
     linkToBoxMapping = QMap<LinkInterface*, QGroupBox*>();
+    uasToBoxMapping = QMap<UASInterface*, QGroupBox*>();
     uasViews = QMap<UASInterface*, UASView*>();
 
     this->setVisible(false);
 
+    // Listen for when UASes are added or removed. This does not manage the UASView
+    // widgets that are displayed within this widget.
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(addUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)),
+            this, SLOT(removeUAS(UASInterface*)));
 
     // Get a list of all existing UAS
-    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
+    foreach (UASInterface* uas, UASManager::instance()->getUASList())
+    {
         addUAS(uas);
     }
 }
@@ -94,7 +100,7 @@ void UASListWidget::addUAS(UASInterface* uas)
     if (uasViews.isEmpty())
     {
         m_ui->verticalLayout->removeWidget(uWidget);
-        delete uWidget;
+        uWidget->deleteLater();
         uWidget = NULL;
     }
 
@@ -125,6 +131,7 @@ void UASListWidget::addUAS(UASInterface* uas)
             // And add the new UAS to the UASList
             UASView* newView = new UASView(uas, newBox);
             uasViews.insert(uas, newView);
+            uasToBoxMapping[uas] = newBox;
             newBox->layout()->addWidget(newView);
 
             // Watch for when this widget is destroyed so that we can clean up the
@@ -149,30 +156,49 @@ void UASListWidget::activeUAS(UASInterface* uas)
  */
 void UASListWidget::removeUAS(UASInterface* uas)
 {
-    // Remove the UAS from our data structures and
-    // the global listing.
+    // Remove the UASView and check if its parent GroupBox has any other children,
+    // delete it if it doesn't.
+    QGroupBox* box = uasToBoxMapping[uas];
+    uasToBoxMapping.remove(uas);
     uasViews.remove(uas);
-
-    // Check all groupboxes for all links this uas had and check if they're empty.
-    // Delete them if they are.
-    QListIterator<LinkInterface*> i = *uas->getLinks();
-    while (i.hasNext())
+    int otherViews = 0;
+    foreach (UASView* view, box->findChildren<UASView*>())
     {
-        LinkInterface* link = i.next();
-
-        QGroupBox* box = linkToBoxMapping[link];
-        if (box)
+        if (view->uas == uas)
         {
-            // If this was the last UAS in the GroupBox, remove it and its corresponding link.
-            int views = box->findChildren<UASView*>().size();
-            if (views == 0) {
-                box->deleteLater();
-                linkToBoxMapping.remove(link);
-            }
+            view->deleteLater();
+        }
+        else
+        {
+            ++otherViews;
         }
     }
+    if (otherViews == 0)
+    {
+        // Delete the groupbox.
+        QMap<LinkInterface*, QGroupBox*>::const_iterator i = linkToBoxMapping.constBegin();
+        while (i != linkToBoxMapping.constEnd()) {
+            if (i.value() == box)
+            {
+                linkToBoxMapping.remove(i.key());
+            }
+            ++i;
+        }
+        box->deleteLater();
 
-    // And if no QGroupBoxes are left, put the initial widget back.
-    uWidget = new QGCUnconnectedInfoWidget(this);
-    m_ui->verticalLayout->addWidget(uWidget);
+        // And if no other QGroupBoxes are left, put the initial widget back.
+        int otherBoxes = 0;
+        foreach (const QGroupBox* otherBox, findChildren<QGroupBox*>())
+        {
+            if (otherBox != box)
+            {
+                ++otherBoxes;
+            }
+        }
+        if (otherBoxes == 0)
+        {
+            uWidget = new QGCUnconnectedInfoWidget(this);
+            m_ui->verticalLayout->addWidget(uWidget);
+        }
+    }
 }

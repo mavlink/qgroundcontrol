@@ -166,7 +166,6 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(removeUAS(UASInterface*)));
 
     if (LinkManager::instance()->getLinks().count() > 2)
         addLink(LinkManager::instance()->getLinks().last());
@@ -288,8 +287,8 @@ void QGCToolBar::advancedActivityTriggered(QAction* action)
 
 void QGCToolBar::setActiveUAS(UASInterface* active)
 {
-    // Do nothing if system is the same or NULL
-    if ((active == NULL) || mav == active) return;
+    // Do nothing if system is the same
+    if (mav == active) return;
 
     // If switching UASes, disconnect the only one.
     if (mav)
@@ -317,52 +316,41 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
-    connect(active, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*, QString,QString)));
-    connect(active, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-    connect(active, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
-    connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
-    connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
-    connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
-    connect(active, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
-    connect(active, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
-    connect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
-    if (active->getWaypointManager())
+    if (mav)
     {
-        connect(active->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
-        connect(active->getWaypointManager(), SIGNAL(waypointDistanceChanged(double)), this, SLOT(updateWaypointDistance(double)));
+        connect(mav, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*, QString,QString)));
+        connect(mav, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        connect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
+        connect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
+        connect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
+        connect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+        connect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
+        connect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
+        connect(mav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
+        if (mav->getWaypointManager())
+        {
+            connect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
+            connect(mav->getWaypointManager(), SIGNAL(waypointDistanceChanged(double)), this, SLOT(updateWaypointDistance(double)));
+        }
+
+        // Update all values once
+        systemName = mav->getUASName();
+        systemArmed = mav->isArmed();
+        toolBarNameLabel->setText(mav->getUASName());
+        toolBarNameLabel->setStyleSheet(QString("QLabel {color: %1;}").arg(mav->getColor().name()));
+        symbolLabel->setStyleSheet(QString("QWidget {background-color: %1;}").arg(mav->getColor().name()));
+        toolBarModeLabel->setText(mav->getShortMode());
+        toolBarStateLabel->setText(mav->getShortState());
+        toolBarTimeoutLabel->setText("");
+        toolBarDistLabel->setText("");
+        toolBarBatteryBar->setEnabled(true);
+        setSystemType(mav, mav->getSystemType());
     }
-
-    // Update all values once
-    systemName = mav->getUASName();
-    systemArmed = mav->isArmed();
-    toolBarNameLabel->setText(mav->getUASName());
-    toolBarNameLabel->setStyleSheet(QString("QLabel {color: %1;}").arg(mav->getColor().name()));
-    symbolLabel->setStyleSheet(QString("QWidget {background-color: %1;}").arg(mav->getColor().name()));
-    toolBarModeLabel->setText(mav->getShortMode());
-    toolBarStateLabel->setText(mav->getShortState());
-    toolBarTimeoutLabel->setText("");
-    toolBarDistLabel->setText("");
-    toolBarBatteryBar->setEnabled(true);
-    setSystemType(mav, mav->getSystemType());
-}
-
-/**
- * @brief Handle removal of the UAS that is currently being displayed.
- * Stop updating the UI periodically, reset the UI, and reset our stored UAS.
- * @param uas The UAS to remove.
- */
-void QGCToolBar::removeUAS(UASInterface* uas)
-{
-    if (mav == uas) {
+    else
+    {
         updateViewTimer.stop();
         resetToolbarUI();
-        mav = NULL;
     }
-}
-
-void QGCToolBar::createCustomWidgets()
-{
-
 }
 
 void QGCToolBar::updateArmingState(bool armed)

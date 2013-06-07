@@ -319,10 +319,10 @@ void HUD::setActiveUAS(UASInterface* uas)
             connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
             connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
         }
-
-        // Set new UAS
-        this->uas = uas;
     }
+
+    // Set new UAS
+    this->uas = uas;
 }
 
 //void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)

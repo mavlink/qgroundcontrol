@@ -35,7 +35,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="rcTab">
       <property name="sizePolicy">
@@ -765,7 +765,7 @@ p, li { white-space: pre-wrap; }
              <property name="widgetResizable">
               <bool>true</bool>
              </property>
-             <widget class="QWidget" name="scrollAreaWidgetContents_7">
+             <widget class="QWidget" name="sensorContents">
               <property name="geometry">
                <rect>
                 <x>0</x>
@@ -849,7 +849,7 @@ p, li { white-space: pre-wrap; }
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents">
+              <widget class="QWidget" name="generalLeftContents">
                <property name="geometry">
                 <rect>
                  <x>0</x>
@@ -886,7 +886,7 @@ p, li { white-space: pre-wrap; }
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents_2">
+              <widget class="QWidget" name="generalRightContents">
                <property name="geometry">
                 <rect>
                  <x>0</x>
@@ -983,7 +983,7 @@ p, li { white-space: pre-wrap; }
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents_4">
+              <widget class="QWidget" name="advancedLeftContents">
                <property name="geometry">
                 <rect>
                  <x>0</x>
@@ -1036,7 +1036,7 @@ p, li { white-space: pre-wrap; }
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
-              <widget class="QWidget" name="scrollAreaWidgetContents_5">
+              <widget class="QWidget" name="advancedRightContents">
                <property name="geometry">
                 <rect>
                  <x>0</x>
