@@ -1,13 +1,20 @@
 #include "JoystickWidget.h"
 #include "ui_JoystickWidget.h"
 #include <QDebug>
+#include <QDesktopWidget>
 
 JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     QDialog(parent),
     m_ui(new Ui::JoystickWidget)
 {
     m_ui->setupUi(this);
-	clearKeys();
+
+    // Center the window on the screen.
+    QRect position = frameGeometry();
+    position.moveCenter(QDesktopWidget().availableGeometry().center());
+    move(position.topLeft());
+
+    clearKeys();
     this->joystick = joystick;
 
     m_ui->rollMapSpinBox->setValue(joystick->getMappingXAxis());

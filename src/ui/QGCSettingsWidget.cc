@@ -18,6 +18,11 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
 {
     ui->setupUi(this);
 
+    // Center the window on the screen.
+    QRect position = frameGeometry();
+    position.moveCenter(QDesktopWidget().availableGeometry().center());
+    move(position.topLeft());
+
     // Add all protocols
     QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
     foreach (ProtocolInterface* protocol, protocols) {
