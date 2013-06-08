@@ -14,6 +14,10 @@ class UASQuickView : public QWidget
 public:
     UASQuickView(QWidget *parent = 0);
 private:
+    /**
+     * Adds a default set of actions to the widget's menu.
+     */
+    void addDefaultActions();
     UASInterface *uas;
     QList<QString> uasPropertyList;
     QMap<QString,double> uasPropertyValueMap;

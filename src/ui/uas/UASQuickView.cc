@@ -15,7 +15,14 @@ UASQuickView::UASQuickView(QWidget *parent) :
     }
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
+    addDefaultActions();
 
+    updateTimer = new QTimer(this);
+    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
+}
+
+void UASQuickView::addDefaultActions()
+{
     {
         QAction *action = new QAction(tr("latitude"),this);
         action->setCheckable(true);
@@ -75,10 +82,8 @@ UASQuickView::UASQuickView(QWidget *parent) :
         this->layout()->addWidget(item);
         uasPropertyToLabelMap["distToWaypoint"] = item;
     }
-
-    updateTimer = new QTimer(this);
-    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
 }
+
 void UASQuickView::updateTimerTick()
 {
     for (int i=0;i<uasPropertyList.size();i++)
@@ -108,12 +113,24 @@ void UASQuickView::setActiveUAS(UASInterface* uas)
     {
         uasPropertyList.clear();
         uasPropertyValueMap.clear();
+        foreach (UASQuickViewItem* i, uasPropertyToLabelMap.values())
+        {
+            i->deleteLater();
+        }
         uasPropertyToLabelMap.clear();
+
         updateTimer->stop();
-        this->actions().clear();
+        foreach (QAction* i, this->actions())
+        {
+            i->deleteLater();
+        }
     }
 
+    // Update the UAS to point to the new one.
     this->uas = uas;
+
+    // And re-add the default actions.
+    addDefaultActions();
 
     // And connect the new one if it exists.
     if (this->uas)
