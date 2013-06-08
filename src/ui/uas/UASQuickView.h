@@ -17,6 +17,10 @@ public:
     UASQuickView(QWidget *parent = 0);
     void addSource(MAVLinkDecoder *decoder);
 private:
+    /**
+     * Adds a default set of actions to the widget's menu.
+     */
+    void addDefaultActions();
     UASInterface *uas;
 
     /** List of enabled properties */
