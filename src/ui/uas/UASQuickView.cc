@@ -153,11 +153,20 @@ void UASQuickView::setActiveUAS(UASInterface* uas)
     {
         uasPropertyList.clear();
         uasPropertyValueMap.clear();
+        foreach (UASQuickViewItem* i, uasPropertyToLabelMap.values())
+        {
+            i->deleteLater();
+        }
         uasPropertyToLabelMap.clear();
+
         updateTimer->stop();
-        this->actions().clear();
+        foreach (QAction* i, this->actions())
+        {
+            i->deleteLater();
+        }
     }
 
+    // Update the UAS to point to the new one.
     this->uas = uas;
 
     if (this->uas)
