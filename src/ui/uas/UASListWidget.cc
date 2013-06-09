@@ -73,6 +73,10 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
     {
         addUAS(uas);
     }
+
+    // Use a timer to update the link health display.
+    updateTimer = new QTimer(this);
+    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateStatus()));
 }
 
 UASListWidget::~UASListWidget()
@@ -93,15 +97,48 @@ void UASListWidget::changeEvent(QEvent *e)
     }
 }
 
+void UASListWidget::updateStatus()
+{
+    QMapIterator<LinkInterface*, QGroupBox*> i(linkToBoxMapping);
+    while (i.hasNext()) {
+        i.next();
+        LinkInterface* link = i.key();
+        ProtocolInterface* p = LinkManager::instance()->getProtocolForLink(link);
 
+        // Build the tooltip out of the protocol parsing data: received, dropped, and parsing errors.
+        QString displayString("");
+        int c;
+        if ((c = p->getReceivedPacketCount(link)) != -1)
+        {
+            displayString += QString(tr("<br/>Received: %2")).arg(QString::number(c));
+        }
+        if ((c = p->getDroppedPacketCount(link)) != -1)
+        {
+            displayString += QString(tr("<br/>Dropped: %2")).arg(QString::number(c));
+        }
+        if ((c = p->getParsingErrorCount(link)) != -1)
+        {
+            displayString += QString(tr("<br/>Errors: %2")).arg(QString::number(c));
+        }
+        if (!displayString.isEmpty())
+        {
+            displayString = QString("<b>%1</b>").arg(i.key()->getName()) + displayString;
+        }
+        qDebug() << p << ": " + displayString;
+        i.value()->setToolTip(displayString);
+    }
+}
 
 void UASListWidget::addUAS(UASInterface* uas)
 {
+    // If the list was empty, remove the unconnected widget and start the update timer.
     if (uasViews.isEmpty())
     {
         m_ui->verticalLayout->removeWidget(uWidget);
         uWidget->deleteLater();
         uWidget = NULL;
+
+        updateTimer->start(5000);
     }
 
     if (!uasViews.contains(uas))
@@ -126,6 +163,7 @@ void UASListWidget::addUAS(UASInterface* uas)
                 newBox->setLayout(boxLayout);
                 m_ui->verticalLayout->addWidget(newBox);
                 linkToBoxMapping[li] = newBox;
+                updateStatus(); // Update the link status for this GroupBox.
             }
 
             // And add the new UAS to the UASList
@@ -187,6 +225,7 @@ void UASListWidget::removeUAS(UASInterface* uas)
         box->deleteLater();
 
         // And if no other QGroupBoxes are left, put the initial widget back.
+        // We also stop the update timer as there's nothing to update at this point.
         int otherBoxes = 0;
         foreach (const QGroupBox* otherBox, findChildren<QGroupBox*>())
         {
@@ -199,6 +238,7 @@ void UASListWidget::removeUAS(UASInterface* uas)
         {
             uWidget = new QGCUnconnectedInfoWidget(this);
             m_ui->verticalLayout->addWidget(uWidget);
+            updateTimer->stop();
         }
     }
 }
