@@ -150,7 +150,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     font("Bitstream Vera Sans"),
     refreshTimer(new QTimer(this)),
 
-    navigationCrosstrackError(INFINITY),
+    navigationCrosstrackError(0),
     navigationTargetBearing(UNKNOWN_ATTITUDE),
 
     layout(COMPASS_INTEGRATED),
@@ -673,7 +673,7 @@ void PrimaryFlightDisplay::drawPitchScale(
     QTransform savedTransform = painter.transform();
 
     // find the mark nearest center
-    int snap = round(pitch/PITCH_SCALE_RESOLUTION)*PITCH_SCALE_RESOLUTION;
+    int snap = qRound((double)(pitch/PITCH_SCALE_RESOLUTION))*PITCH_SCALE_RESOLUTION;
     int _min = snap-PITCH_SCALE_HALFRANGE;
     int _max = snap+PITCH_SCALE_HALFRANGE;
     for (int degrees=_min; degrees<=_max; degrees+=PITCH_SCALE_RESOLUTION) {
@@ -876,7 +876,7 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area, flo
     painter.drawRoundedRect(digitalCompassRect, instrumentEdgePen.widthF()*2/3, instrumentEdgePen.widthF()*2/3);
 
     /* final safeguard for really stupid systems */
-    int digitalCompassValue = static_cast<int>(round(heading)) % 360;
+    int digitalCompassValue = static_cast<int>(qRound((double)heading)) % 360;
 
     QString s_digitalCompass;
     s_digitalCompass.sprintf("%03d", digitalCompassValue);

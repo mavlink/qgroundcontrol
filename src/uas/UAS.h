@@ -102,6 +102,18 @@ public:
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
     Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
     Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
+    Q_PROPERTY(double groundSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY groundSpeedChanged)
+
+    void setGroundSpeed(double val)
+    {
+        groundSpeed = val;
+        emit groundSpeedChanged(val,"groundSpeed");
+        emit valueChanged(this->uasId,"groundSpeed","m/s",QVariant(val),getUnixTime());
+    }
+    double getGroundSpeed() const
+    {
+        return groundSpeed;
+    }
     Q_PROPERTY(double bearingToWaypoint READ getBearingToWaypoint WRITE setBearingToWaypoint NOTIFY bearingToWaypointChanged)
 
     // dongfang: There is not only one altitude; there are at least (APM) GPS altitude, mix altitude and mix-altitude relative to home.
@@ -427,6 +439,7 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// WAYPOINT NAVIGATION
     double distToWaypoint;       ///< Distance to next waypoint
+    double groundSpeed;         ///< GPS Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
     UASWaypointManager waypointManager;
 
@@ -850,6 +863,7 @@ signals:
     void yawChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
     void distToWaypointChanged(double val,QString name);
+    void groundSpeedChanged(double val, QString name);
     void bearingToWaypointChanged(double val,QString name);
 
     //void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);

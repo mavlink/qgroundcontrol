@@ -232,6 +232,8 @@ signals:
     /** @brief Communication error occured */
     void communicationError(const QString& linkname, const QString& error);
 
+    void communicationUpdate(const QString& linkname, const QString& text);
+
 	/** @brief destroying element */
 	void deleteLink(LinkInterface* const link);
 
