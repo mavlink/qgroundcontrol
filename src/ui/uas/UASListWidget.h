@@ -62,10 +62,14 @@ protected:
     // Tie each view to their UAS object so they can be removed easily.
     QMap<UASInterface*, UASView*> uasViews;
     QGCUnconnectedInfoWidget* uWidget;
+    QTimer* updateTimer;
     void changeEvent(QEvent *e);
 
 private:
     Ui::UASList* m_ui;
+
+private slots:
+    void updateStatus();
 };
 
 #endif // _UASLISTWIDGET_H_

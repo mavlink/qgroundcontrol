@@ -79,6 +79,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
+    setToolTip(""); // Make sure the QGroupBox's tooltip doesn't seep through.
 
     // FIXME XXX
     lowPowerModeEnabled = MainWindow::instance()->lowPowerModeEnabled();
