@@ -50,8 +50,26 @@ class ProtocolInterface : public QObject
 {
     Q_OBJECT
 public:
-    //virtual ~ProtocolInterface() {};
+    virtual ~ProtocolInterface () {}
     virtual QString getName() = 0;
+    /**
+     * Retrieve a total of all successfully parsed packets for the specified link.
+     * @param link The link to return metadata about.
+     * @returns -1 if this is not available for this protocol, # of packets otherwise.
+     */
+    virtual qint32 getReceivedPacketCount(LinkInterface *link) const = 0;
+    /**
+     * Retrieve a total of all parsing errors for the specified link.
+     * @param link The link to return metadata about.
+     * @returns -1 if this is not available for this protocol, # of errors otherwise.
+     */
+    virtual qint32 getParsingErrorCount(LinkInterface *link) const = 0;
+    /**
+     * Retrieve a total of all dropped packets for the specified link.
+     * @param link The link to return metadata about.
+     * @returns -1 if this is not available for this protocol, # of packets otherwise.
+     */
+    virtual qint32 getDroppedPacketCount(LinkInterface *link) const = 0;
 
 public slots:
     virtual void receiveBytes(LinkInterface *link, QByteArray b) = 0;

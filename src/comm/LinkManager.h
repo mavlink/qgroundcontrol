@@ -56,6 +56,8 @@ public:
 
     QList<LinkInterface*> getLinksForProtocol(ProtocolInterface* protocol);
 
+    ProtocolInterface* getProtocolForLink(LinkInterface* link);
+
     /** @brief Get the link for this id */
     LinkInterface* getLinkForId(int id);
 
