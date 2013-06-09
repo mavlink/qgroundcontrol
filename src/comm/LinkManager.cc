@@ -107,6 +107,10 @@ QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protoc
     return protocolLinks.values(protocol);
 }
 
+ProtocolInterface* LinkManager::getProtocolForLink(LinkInterface* link)
+{
+    return protocolLinks.key(link);
+}
 
 bool LinkManager::connectAll()
 {
