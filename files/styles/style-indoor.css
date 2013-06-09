@@ -178,7 +178,7 @@ QDoubleSpinBox::down-button {
 }
 
 QPushButton {
-    min-height: 20px;
+    min-height: 16px;
     max-height: 20px;
 	border: 1px solid #465158;
     margin: 1px;
@@ -202,7 +202,7 @@ QPushButton:pressed {
 
 QToolButton {
 	font-weight: bold;
-	min-height: 20px;
+	min-height: 16px;
 	/*min-width: 24px;*/
 	max-height: 20px;
 	border: 1px solid #4A4A4F;
