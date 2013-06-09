@@ -12,6 +12,98 @@
 #include <QtCore/qmath.h>
 //#include <cmath>
 
+#define SEPARATE_COMPASS_ASPECTRATIO (3.0f/4.0f)
+
+#define LINEWIDTH 0.0036f
+
+//#define TAPES_TEXT_SIZE 0.028
+//#define AI_TEXT_SIZE 0.040
+//#define AI_TEXT_MIN_PIXELS 12
+//#define AI_TEXT_MAX_PIXELS 36
+//#define PANELS_TEXT_SIZE 0.030
+//#define COMPASS_SCALE_TEXT_SIZE 0.16
+
+#define SMALL_TEXT_SIZE 0.03f
+#define MEDIUM_TEXT_SIZE (SMALL_TEXT_SIZE*1.2f)
+#define LARGE_TEXT_SIZE (MEDIUM_TEXT_SIZE*1.2f)
+
+#define SHOW_ZERO_ON_SCALES true
+
+// all in units of display height
+#define ROLL_SCALE_RADIUS 0.42f
+#define ROLL_SCALE_TICKMARKLENGTH 0.04f
+#define ROLL_SCALE_MARKERWIDTH 0.06f
+#define ROLL_SCALE_MARKERHEIGHT 0.04f
+// scale max. degrees
+#define ROLL_SCALE_RANGE 60
+
+// fraction of height to translate for each degree of pitch.
+#define PITCHTRANSLATION 65.0
+// 10 degrees for each line
+#define PITCH_SCALE_RESOLUTION 5
+#define PITCH_SCALE_MAJORWIDTH 0.1
+#define PITCH_SCALE_MINORWIDTH 0.066
+
+// Beginning from PITCH_SCALE_WIDTHREDUCTION_FROM degrees of +/- pitch, the
+// width of the lines is reduced, down to PITCH_SCALE_WIDTHREDUCTION times
+// the normal width. This helps keep orientation in extreme attitudes.
+#define PITCH_SCALE_WIDTHREDUCTION_FROM 30
+#define PITCH_SCALE_WIDTHREDUCTION 0.3
+
+#define PITCH_SCALE_HALFRANGE 15
+
+// The number of degrees to either side of the heading to draw the compass disk.
+// 180 is valid, this will draw a complete disk. If the disk is partly clipped
+// away, less will do.
+
+#define COMPASS_DISK_MAJORTICK 10
+#define COMPASS_DISK_ARROWTICK 45
+#define COMPASS_DISK_MAJORLINEWIDTH 0.006
+#define COMPASS_DISK_MINORLINEWIDTH 0.004
+#define COMPASS_DISK_RESOLUTION 10
+#define COMPASS_SEPARATE_DISK_RESOLUTION 5
+#define COMPASS_DISK_MARKERWIDTH 0.2
+#define COMPASS_DISK_MARKERHEIGHT 0.133
+
+#define CROSSTRACK_MAX 1000
+#define CROSSTRACK_RADIUS 0.6
+
+#define TAPE_GAUGES_TICKWIDTH_MAJOR 0.25
+#define TAPE_GAUGES_TICKWIDTH_MINOR 0.15
+
+// The altitude difference between top and bottom of scale
+#define ALTIMETER_LINEAR_SPAN 50
+// every 5 meters there is a tick mark
+#define ALTIMETER_LINEAR_RESOLUTION 5
+// every 10 meters there is a number
+#define ALTIMETER_LINEAR_MAJOR_RESOLUTION 10
+
+// Projected: An experiment. Make tape appear projected from a cylinder, like a French "drum" style gauge.
+// The altitude difference between top and bottom of scale
+#define ALTIMETER_PROJECTED_SPAN 50
+// every 5 meters there is a tick mark
+#define ALTIMETER_PROJECTED_RESOLUTION 5
+// every 10 meters there is a number
+#define ALTIMETER_PROJECTED_MAJOR_RESOLUTION 10
+// min. and max. vertical velocity
+//#define ALTIMETER_PROJECTED
+
+// min. and max. vertical velocity
+#define ALTIMETER_VVI_SPAN 5
+#define ALTIMETER_VVI_WIDTH 0.2
+
+// Now the same thing for airspeed!
+#define AIRSPEED_LINEAR_SPAN 15
+#define AIRSPEED_LINEAR_RESOLUTION 1
+#define AIRSPEED_LINEAR_MAJOR_RESOLUTION 5
+
+#define UNKNOWN_BATTERY -1
+#define UNKNOWN_ATTITUDE 0
+#define UNKNOWN_ALTITUDE -1000
+#define UNKNOWN_SPEED -1
+#define UNKNOWN_COUNT -1
+#define UNKNOWN_GPSFIXTYPE -1
+
 /*
  *@TODO:
  * global fixed pens (and painters too?)
