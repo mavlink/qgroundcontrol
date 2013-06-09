@@ -13,7 +13,10 @@ UASRawStatusView::UASRawStatusView(QWidget *parent) : QWidget(parent)
     ui.tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     QTimer *timer = new QTimer(this);
     connect(timer,SIGNAL(timeout()),this,SLOT(updateTableTimerTick()));
-    timer->start(2000);
+
+    // FIXME reinstate once fixed.
+
+    //timer->start(2000);
 }
 void UASRawStatusView::addSource(MAVLinkDecoder *decoder)
 {

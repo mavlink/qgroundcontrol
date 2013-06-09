@@ -60,7 +60,7 @@ This file is part of the QGROUNDCONTROL project
  * @param parent
  */
 HUD::HUD(int width, int height, QWidget* parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+    : QWidget(parent),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -120,7 +120,7 @@ HUD::HUD(int width, int height, QWidget* parent)
       offlineDirectory(""),
       nextOfflineImage(""),
       HUDInstrumentsEnabled(true),
-      videoEnabled(false),
+      videoEnabled(true),
       xImageFactor(1.0),
       yImageFactor(1.0),
       imageRequested(false),
@@ -147,14 +147,14 @@ HUD::HUD(int width, int height, QWidget* parent)
     //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
     //fill = QImage(imagePath);
 
-    glImage = QGLWidget::convertToGLFormat(fill);
+    glImage = fill;
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
-    resize(this->width(), this->height());
+    QWidget::resize(this->width(), this->height());
     //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 
     // Set size once
@@ -200,7 +200,7 @@ void HUD::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    QGLWidget::showEvent(event);
+    QWidget::showEvent(event);
     refreshTimer->start(updateInterval);
     emit visibilityChanged(true);
 }
@@ -210,7 +210,7 @@ void HUD::hideEvent(QHideEvent* event)
     // React only to internal (pre-display)
     // events
     refreshTimer->stop();
-    QGLWidget::hideEvent(event);
+    QWidget::hideEvent(event);
     emit visibilityChanged(false);
 }
 
@@ -448,73 +448,6 @@ float HUD::refToScreenY(float y)
 }
 
 /**
- * This functions works in the OpenGL view, which is already translated by
- * the x and y center offsets.
- *
- */
-void HUD::paintCenterBackground(float roll, float pitch, float yaw)
-{
-    Q_UNUSED(yaw);
-
-    // Center indicator is 100 mm wide
-    float referenceWidth = 70.0;
-    float referenceHeight = 70.0;
-
-    // HUD is assumed to be 200 x 150 mm
-    // so that positions can be hardcoded
-    // but can of course be scaled.
-
-    double referencePositionX = vwidth / 2.0 - referenceWidth/2.0;
-    double referencePositionY = vheight / 2.0 - referenceHeight/2.0;
-
-    //this->width()/2.0+(xCenterOffset*scalingFactor), this->height()/2.0+(yCenterOffset*scalingFactor);
-
-    setupGLView(referencePositionX, referencePositionY, referenceWidth, referenceHeight);
-
-    // Store current position in the model view
-    // the position will be restored after drawing
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    // Move to the center of the window
-    glTranslatef(referenceWidth/2.0f,referenceHeight/2.0f,0);
-
-    // Move based on the yaw difference
-    //glTranslatef(yaw, 0.0f, 0.0f);
-
-    // Rotate based on the bank
-    glRotatef((roll/M_PI)*180.0f, 0.0f, 0.0f, 1.0f);
-
-    // Translate in the direction of the rotation based
-    // on the pitch. On the 777, a pitch of 1 degree = 2 mm
-    //glTranslatef(0, ((-pitch/M_PI)*180.0f * vPitchPerDeg), 0);
-    glTranslatef(0.0f, (-pitch * vPitchPerDeg * 16.5f), 0.0f);
-
-    // Ground
-    glColor3ub(179,102,0);
-
-    glBegin(GL_POLYGON);
-    glVertex2f(-300,-900);
-    glVertex2f(-300,0);
-    glVertex2f(300,0);
-    glVertex2f(300,-900);
-    glVertex2f(-300,-900);
-    glEnd();
-
-    // Sky
-    glColor3ub(0,153,204);
-
-    glBegin(GL_POLYGON);
-    glVertex2f(-300,0);
-    glVertex2f(-300,900);
-    glVertex2f(300,900);
-    glVertex2f(300,0);
-    glVertex2f(-300,0);
-
-    glEnd();
-}
-
-/**
  * Paint text on top of the image and OpenGL drawings
  *
  * @param text chars to write
@@ -547,29 +480,6 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
     painter->setPen(prevPen);
 }
 
-void HUD::initializeGL()
-{
-    bool antialiasing = true;
-
-    // Antialiasing setup
-    if(antialiasing) {
-        glEnable(GL_MULTISAMPLE);
-        glEnable(GL_BLEND);
-
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-        glEnable(GL_POINT_SMOOTH);
-        glEnable(GL_LINE_SMOOTH);
-
-        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    } else {
-        glDisable(GL_BLEND);
-        glDisable(GL_POINT_SMOOTH);
-        glDisable(GL_LINE_SMOOTH);
-    }
-}
-
 /**
  * @param referencePositionX horizontal position in the reference mm-unit space
  * @param referencePositionY horizontal position in the reference mm-unit space
@@ -583,23 +493,6 @@ void HUD::setupGLView(float referencePositionX, float referencePositionY, float 
     // Translate and scale the GL view in the virtual reference coordinate units on the screen
     int pixelPositionX = (int)((referencePositionX * scalingFactor) + xCenterOffset);
     int pixelPositionY = this->height() - (referencePositionY * scalingFactor) + yCenterOffset - pixelHeight;
-
-    //qDebug() << "Pixel x" << pixelPositionX << "pixelY" << pixelPositionY;
-    //qDebug() << "xCenterOffset:" << xCenterOffset << "yCenterOffest" << yCenterOffset
-
-
-    //The viewport is established at the correct pixel position and clips everything
-    // out of the desired instrument location
-    glViewport(pixelPositionX, pixelPositionY, pixelWidth, pixelHeight);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    // The ortho projection is setup in a way that so that the drawing is done in the
-    // reference coordinate space
-    glOrtho(0, referenceWidth, 0, referenceHeight, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    //glScalef(scaleX, scaleY, 1.0f);
 }
 
 void HUD::paintRollPitchStrips()
@@ -668,22 +561,13 @@ void HUD::paintHUD()
         double scalingFactorH = this->height()/vheight;
         if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
-
-
-        // OPEN GL PAINTING
-        // Store model view matrix to be able to reset it to the previous state
-        makeCurrent();
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         // Fill with black background
         if (videoEnabled) {
             if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
                 qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
                 QImage fill = QImage(nextOfflineImage);
 
-                glImage = QGLWidget::convertToGLFormat(fill);
+                glImage = fill;
 
                 // Reset to save load efforts
                 nextOfflineImage = "";
@@ -693,22 +577,14 @@ void HUD::paintHUD()
 
         if (dataStreamEnabled || videoEnabled)
         {
-            glRasterPos2i(0, 0);
 
             xImageFactor = width() / (float)glImage.width();
             yImageFactor = height() / (float)glImage.height();
             float imageFactor = qMin(xImageFactor, yImageFactor);
-            glPixelZoom(imageFactor, imageFactor);
             // Resize to correct size and fill with image
-            glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-            //qDebug() << "DRAWING GL IMAGE";
-        } else {
-            // Blue / brown background
-            paintCenterBackground(roll, pitch, yawTrans);
-        }
+            // FIXME
 
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        }
 
         // END OF OPENGL PAINTING
 
@@ -889,11 +765,6 @@ void HUD::paintHUD()
             painter.begin(this);
             painter.end();
         }
-        //glDisable(GL_MULTISAMPLE);
-
-
-
-        //glFlush();
     }
 }
 
@@ -1303,20 +1174,6 @@ void HUD::drawCircle(float refX, float refY, float radius, float startDeg, float
     drawEllipse(refX, refY, radius, radius, startDeg, endDeg, lineWidth, color, painter);
 }
 
-void HUD::resizeGL(int w, int h)
-{
-    if (isVisible()) {
-        glViewport(0, 0, w, h);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, w, 0, h, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glPolygonMode(GL_FRONT, GL_FILL);
-        //FIXME
-        paintHUD();
-    }
-}
-
 void HUD::selectWaypoint(int uasId, int id)
 {
     Q_UNUSED(uasId);
@@ -1364,7 +1221,7 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
 
         // Fill first channel of image with black pixels
         image->fill(0);
-        glImage = QGLWidget::convertToGLFormat(*image);
+        glImage = *image;
 
         qDebug() << __FILE__ << __LINE__ << "Setting up image";
 
@@ -1415,7 +1272,7 @@ void HUD::commitRawDataToGL()
             }
         }
 
-        glImage = QGLWidget::convertToGLFormat(*newImage);
+        glImage = *newImage;
         delete image;
         image = newImage;
         // Switch buffers
@@ -1516,7 +1373,7 @@ void HUD::copyImage()
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u)
         {
-            this->glImage = QGLWidget::convertToGLFormat(u->getImage());
+            this->glImage = u->getImage();
 
             // Save to directory if logging is enabled
             if (imageLoggingEnabled)

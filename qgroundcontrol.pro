@@ -383,6 +383,7 @@ HEADERS += src/MG.h \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
+    src/ui/uas/UASQuickViewGaugeItem.h \
     src/ui/uas/UASActionsWidget.h \
     src/ui/designer/QGCRadioChannelDisplay.h \
     src/ui/QGCTabbedInfoView.h \
@@ -557,6 +558,7 @@ SOURCES += src/main.cc \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
+    src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASActionsWidget.cpp \
     src/ui/designer/QGCRadioChannelDisplay.cpp \
