@@ -31,7 +31,7 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     rcAux2(0.0f),
     rcAux3(0.0f),
     changed(true),
-    rc_mode(RC_MODE_2),
+    rc_mode(RC_MODE_NONE),
     calibrationEnabled(false),
     ui(new Ui::QGCVehicleConfig)
 {
@@ -44,6 +44,21 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
 
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
+
+    ui->rollWidget->setOrientation(Qt::Horizontal);
+    ui->rollWidget->setName("Roll");
+    ui->yawWidget->setOrientation(Qt::Horizontal);
+    ui->yawWidget->setName("Yaw");
+    ui->pitchWidget->setName("Pitch");
+    ui->throttleWidget->setName("Throttle");
+    ui->radio5Widget->setOrientation(Qt::Horizontal);
+    ui->radio5Widget->setName("Radio 5");
+    ui->radio6Widget->setOrientation(Qt::Horizontal);
+    ui->radio6Widget->setName("Radio 6");
+    ui->radio7Widget->setOrientation(Qt::Horizontal);
+    ui->radio7Widget->setName("Radio 7");
+    ui->radio8Widget->setOrientation(Qt::Horizontal);
+    ui->radio8Widget->setName("Radio 8");
 
     connect(ui->rcMenuButton,SIGNAL(clicked()),this,SLOT(rcMenuButtonClicked()));
     connect(ui->sensorMenuButton,SIGNAL(clicked()),this,SLOT(sensorMenuButtonClicked()));
@@ -59,8 +74,9 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
     connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->refreshButton,SIGNAL(clicked()),mav,SLOT(requestParameters()));
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
-    connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
+    //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
     /* Connect RC mapping assignments */
     connect(ui->rollSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setRollChan(int)));
@@ -95,6 +111,9 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     updateTimer.setInterval(150);
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateTimer.start();
+
+    ui->advancedGroupBox->hide();
+    connect(ui->advancedCheckBox,SIGNAL(toggled(bool)),ui->advancedGroupBox,SLOT(setShown(bool)));
 }
 void QGCVehicleConfig::rcMenuButtonClicked()
 {
@@ -123,9 +142,9 @@ QGCVehicleConfig::~QGCVehicleConfig()
 
 void QGCVehicleConfig::setRCModeIndex(int newRcMode)
 {
-    if (newRcMode > 0 && newRcMode < 5)
+    if (newRcMode > 0 && newRcMode < 6)
     {
-        rc_mode = (enum RC_MODE) (newRcMode+1);
+        //rc_mode = (enum RC_MODE) (newRcMode+1);
         changed = true;
     }
 }
@@ -184,17 +203,46 @@ void QGCVehicleConfig::detectChannelInversion()
 
 void QGCVehicleConfig::startCalibrationRC()
 {
+    QMessageBox::information(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and reciever are powered and connected\n\nClick OK to confirm");
+    QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
     ui->rcTypeComboBox->setEnabled(false);
     ui->rcCalibrationButton->setText(tr("Stop RC Calibration"));
     resetCalibrationRC();
     calibrationEnabled = true;
+    ui->rollWidget->showMinMax();
+    ui->pitchWidget->showMinMax();
+    ui->yawWidget->showMinMax();
+    ui->throttleWidget->showMinMax();
+    ui->radio5Widget->showMinMax();
+    ui->radio6Widget->showMinMax();
+    ui->radio7Widget->showMinMax();
+    ui->radio8Widget->showMinMax();
 }
 
 void QGCVehicleConfig::stopCalibrationRC()
 {
+    QMessageBox::information(0,"Trims","Ensure all sticks are centeres and throttle is in the downmost position, click OK to continue");
     calibrationEnabled = false;
     ui->rcTypeComboBox->setEnabled(true);
     ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
+    ui->rollWidget->hideMinMax();
+    ui->pitchWidget->hideMinMax();
+    ui->yawWidget->hideMinMax();
+    ui->throttleWidget->hideMinMax();
+    ui->radio5Widget->hideMinMax();
+    ui->radio6Widget->hideMinMax();
+    ui->radio7Widget->hideMinMax();
+    ui->radio8Widget->hideMinMax();
+    QString statusstr;
+    statusstr = "Below you will find the detected radio calibration information that will be sent to the autopilot\n";
+    statusstr += "Normal values are around 1100 to 1900, with disconnected channels reading very close to 1500\n\n";
+    statusstr += "Channel\tMin\tCenter\tMax\n";
+    statusstr += "--------------------\n";
+    for (int i=0;i<8;i++)
+    {
+        statusstr += QString::number(i) + "\t" + QString::number(rcMin[i]) + "\t" + QString::number(rcValue[i]) + "\t" + QString::number(rcMax[i]) + "\n";
+    }
+    QMessageBox::information(0,"Status",statusstr);
 }
 
 void QGCVehicleConfig::loadQgcConfig(bool primary)
@@ -798,21 +846,26 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
     // Since a system is now connected, enable the VehicleConfig UI.
-    ui->tabWidget->setEnabled(true);
+    //ui->tabWidget->setEnabled(true);
     ui->setButton->setEnabled(true);
     ui->refreshButton->setEnabled(true);
     ui->readButton->setEnabled(true);
     ui->writeButton->setEnabled(true);
     ui->loadFileButton->setEnabled(true);
     ui->saveFileButton->setEnabled(true);
+    if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA")
+    {
+        ui->readButton->hide();
+        ui->writeButton->hide();
+    }
 }
 
 void QGCVehicleConfig::resetCalibrationRC()
 {
     for (unsigned int i = 0; i < chanMax; ++i)
     {
-        rcMin[i] = 1200;
-        rcMax[i] = 1800;
+        rcMin[i] = 1500;
+        rcMax[i] = 1500;
     }
 }
 
@@ -1129,6 +1182,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         if (ok && index < chanMax)
         {
             rcMin[index] = value.toInt();
+            updateMinMax();
         }
     }
 
@@ -1138,6 +1192,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         if (ok && index < chanMax)
         {
             rcMax[index] = value.toInt();
+            updateMinMax();
         }
     }
 
@@ -1179,41 +1234,49 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
     if (parameterName.contains("RC_MAP_ROLL")) {
         rcMapping[0] = value.toInt() - 1;
         ui->rollSpinBox->setValue(rcMapping[0]+1);
+        ui->rollSpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_PITCH")) {
         rcMapping[1] = value.toInt() - 1;
         ui->pitchSpinBox->setValue(rcMapping[1]+1);
+        ui->pitchSpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_YAW")) {
         rcMapping[2] = value.toInt() - 1;
         ui->yawSpinBox->setValue(rcMapping[2]+1);
+        ui->yawSpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_THROTTLE")) {
         rcMapping[3] = value.toInt() - 1;
         ui->throttleSpinBox->setValue(rcMapping[3]+1);
+        ui->throttleSpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_MODE_SW")) {
         rcMapping[4] = value.toInt() - 1;
         ui->modeSpinBox->setValue(rcMapping[4]+1);
+        ui->modeSpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_AUX1")) {
         rcMapping[5] = value.toInt() - 1;
         ui->aux1SpinBox->setValue(rcMapping[5]+1);
+        ui->aux1SpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_AUX2")) {
         rcMapping[6] = value.toInt() - 1;
         ui->aux2SpinBox->setValue(rcMapping[6]+1);
+        ui->aux2SpinBox->setEnabled(true);
     }
 
     if (parameterName.contains("RC_MAP_AUX3")) {
         rcMapping[7] = value.toInt() - 1;
         ui->aux3SpinBox->setValue(rcMapping[7]+1);
+        ui->aux3SpinBox->setEnabled(true);
     }
 
     // Scaling
@@ -1262,6 +1325,26 @@ void QGCVehicleConfig::updateError(const QString& str)
     ui->statusLabel->setText(str);
     ui->statusLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
 }
+void QGCVehicleConfig::updateMinMax()
+{
+    // Order is: roll, pitch, yaw, throttle, mode sw, aux 1-3
+    /*ui->rollWidget->setMin(rcMin[0]);
+    ui->rollWidget->setMax(rcMax[0]);
+    ui->pitchWidget->setMin(rcMin[1]);
+    ui->pitchWidget->setMax(rcMax[1]);
+    ui->yawWidget->setMin(rcMin[2]);
+    ui->yawWidget->setMax(rcMax[2]);
+    ui->throttleWidget->setMin(rcMin[3]);
+    ui->throttleWidget->setMax(rcMax[3]);
+    ui->radio5Widget->setMin(rcMin[4]);
+    ui->radio5Widget->setMax(rcMax[4]);
+    ui->radio6Widget->setMin(rcMin[5]);
+    ui->radio6Widget->setMax(rcMax[5]);
+    ui->radio7Widget->setMin(rcMin[6]);
+    ui->radio7Widget->setMax(rcMax[6]);
+    ui->radio8Widget->setMin(rcMin[7]);
+    ui->radio8Widget->setMax(rcMax[7]);*/
+}
 
 void QGCVehicleConfig::setRCType(int type)
 {
@@ -1291,31 +1374,99 @@ void QGCVehicleConfig::updateView()
     {
         if (rc_mode == RC_MODE_1)
         {
-            ui->rollSlider->setValue(rcRoll * 50 + 50);
-            ui->pitchSlider->setValue(rcThrottle * 100);
-            ui->yawSlider->setValue(rcYaw * 50 + 50);
-            ui->throttleSlider->setValue(rcPitch * 50 + 50);
+            //ui->rollSlider->setValue(rcRoll * 50 + 50);
+            //ui->pitchSlider->setValue(rcThrottle * 100);
+            //ui->yawSlider->setValue(rcYaw * 50 + 50);
+            //ui->throttleSlider->setValue(rcPitch * 50 + 50);
+            ui->rollWidget->setValue(rcValue[0]);
+            ui->throttleWidget->setValue(rcValue[1]);
+            ui->yawWidget->setValue(rcValue[2]);
+            ui->pitchWidget->setValue(rcValue[3]);
+
+            ui->rollWidget->setMin(rcMin[0]);
+            ui->rollWidget->setMax(rcMax[0]);
+            ui->throttleWidget->setMin(rcMin[1]);
+            ui->throttleWidget->setMax(rcMax[1]);
+            ui->yawWidget->setMin(rcMin[2]);
+            ui->yawWidget->setMax(rcMax[2]);
+            ui->pitchWidget->setMin(rcMin[3]);
+            ui->pitchWidget->setMax(rcMax[3]);
         }
         else if (rc_mode == RC_MODE_2)
         {
-            ui->rollSlider->setValue(rcRoll * 50 + 50);
-            ui->pitchSlider->setValue(rcPitch * 50 + 50);
-            ui->yawSlider->setValue(rcYaw * 50 + 50);
-            ui->throttleSlider->setValue(rcThrottle * 100);
+            //ui->rollSlider->setValue(rcRoll * 50 + 50);
+            //ui->pitchSlider->setValue(rcPitch * 50 + 50);
+            //ui->yawSlider->setValue(rcYaw * 50 + 50);
+            //ui->throttleSlider->setValue(rcThrottle * 100);
+            ui->rollWidget->setValue(rcValue[0]);
+            ui->pitchWidget->setValue(rcValue[1]);
+            ui->yawWidget->setValue(rcValue[2]);
+            ui->throttleWidget->setValue(rcValue[3]);
+
+            ui->rollWidget->setMin(rcMin[0]);
+            ui->rollWidget->setMax(rcMax[0]);
+            ui->pitchWidget->setMin(rcMin[1]);
+            ui->pitchWidget->setMax(rcMax[1]);
+            ui->yawWidget->setMin(rcMin[2]);
+            ui->yawWidget->setMax(rcMax[2]);
+            ui->throttleWidget->setMin(rcMin[3]);
+            ui->throttleWidget->setMax(rcMax[3]);
         }
         else if (rc_mode == RC_MODE_3)
         {
-            ui->rollSlider->setValue(rcYaw * 50 + 50);
-            ui->pitchSlider->setValue(rcThrottle * 100);
-            ui->yawSlider->setValue(rcRoll * 50 + 50);
-            ui->throttleSlider->setValue(rcPitch * 50 + 50);
+            //ui->rollSlider->setValue(rcYaw * 50 + 50);
+            //ui->pitchSlider->setValue(rcThrottle * 100);
+            //ui->yawSlider->setValue(rcRoll * 50 + 50);
+            //ui->throttleSlider->setValue(rcPitch * 50 + 50);
+            ui->yawWidget->setValue(rcValue[0]);
+            ui->throttleWidget->setValue(rcValue[1]);
+            ui->rollWidget->setValue(rcValue[2]);
+            ui->pitchWidget->setValue(rcValue[3]);
+
+            ui->yawWidget->setMin(rcMin[0]);
+            ui->yawWidget->setMax(rcMax[0]);
+            ui->throttleWidget->setMin(rcMin[1]);
+            ui->throttleWidget->setMax(rcMax[1]);
+            ui->rollWidget->setMin(rcMin[2]);
+            ui->rollWidget->setMax(rcMax[2]);
+            ui->pitchWidget->setMin(rcMin[3]);
+            ui->pitchWidget->setMax(rcMax[3]);
         }
         else if (rc_mode == RC_MODE_4)
         {
-            ui->rollSlider->setValue(rcYaw * 50 + 50);
-            ui->pitchSlider->setValue(rcPitch * 50 + 50);
-            ui->yawSlider->setValue(rcRoll * 50 + 50);
-            ui->throttleSlider->setValue(rcThrottle * 100);
+            //ui->rollSlider->setValue(rcYaw * 50 + 50);
+            //ui->pitchSlider->setValue(rcPitch * 50 + 50);
+            //ui->yawSlider->setValue(rcRoll * 50 + 50);
+            //ui->throttleSlider->setValue(rcThrottle * 100);
+            ui->yawWidget->setValue(rcValue[0]);
+            ui->pitchWidget->setValue(rcValue[1]);
+            ui->rollWidget->setValue(rcValue[2]);
+            ui->throttleWidget->setValue(rcValue[3]);
+
+            ui->yawWidget->setMin(rcMin[0]);
+            ui->yawWidget->setMax(rcMax[0]);
+            ui->pitchWidget->setMin(rcMin[1]);
+            ui->pitchWidget->setMax(rcMax[1]);
+            ui->rollWidget->setMin(rcMin[2]);
+            ui->rollWidget->setMax(rcMax[2]);
+            ui->throttleWidget->setMin(rcMin[3]);
+            ui->throttleWidget->setMax(rcMax[3]);
+        }
+        else if (rc_mode == RC_MODE_NONE)
+        {
+            ui->rollWidget->setValue(rcValue[0]);
+            ui->pitchWidget->setValue(rcValue[1]);
+            ui->throttleWidget->setValue(rcValue[2]);
+            ui->yawWidget->setValue(rcValue[3]);
+
+            ui->rollWidget->setMin(rcMin[0]);
+            ui->rollWidget->setMax(rcMax[0]);
+            ui->pitchWidget->setMin(rcMin[1]);
+            ui->pitchWidget->setMax(rcMax[1]);
+            ui->throttleWidget->setMin(rcMin[2]);
+            ui->throttleWidget->setMax(rcMax[2]);
+            ui->yawWidget->setMin(rcMin[3]);
+            ui->yawWidget->setMax(rcMax[3]);
         }
 
         ui->chanLabel->setText(QString("%1/%2").arg(rcValue[rcMapping[0]]).arg(rcRoll, 5, 'f', 2, QChar(' ')));
@@ -1323,25 +1474,37 @@ void QGCVehicleConfig::updateView()
         ui->chanLabel_3->setText(QString("%1/%2").arg(rcValue[rcMapping[2]]).arg(rcYaw, 5, 'f', 2, QChar(' ')));
         ui->chanLabel_4->setText(QString("%1/%2").arg(rcValue[rcMapping[3]]).arg(rcThrottle, 5, 'f', 2, QChar(' ')));
 
-        ui->modeSwitchSlider->setValue(rcMode * 50 + 50);
+
+
+        //ui->modeSwitchSlider->setValue(rcMode * 50 + 50);
         ui->chanLabel_5->setText(QString("%1/%2").arg(rcValue[rcMapping[4]]).arg(rcMode, 5, 'f', 2, QChar(' ')));
 
+        if (rcValue[rcMapping[4] != UINT16_MAX]) {
+            ui->radio5Widget->setValue(rcValue[4]);
+            ui->chanLabel_5->setText(QString("%1/%2").arg(rcValue[rcMapping[5]]).arg(rcAux1, 5, 'f', 2, QChar(' ')));
+        } else {
+            ui->chanLabel_5->setText(tr("---"));
+        }
+
         if (rcValue[rcMapping[5]] != UINT16_MAX) {
-            ui->aux1Slider->setValue(rcAux1 * 50 + 50);
+            //ui->aux1Slider->setValue(rcAux1 * 50 + 50);
+            ui->radio6Widget->setValue(rcValue[5]);
             ui->chanLabel_6->setText(QString("%1/%2").arg(rcValue[rcMapping[5]]).arg(rcAux1, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_6->setText(tr("---"));
         }
 
         if (rcValue[rcMapping[6]] != UINT16_MAX) {
-            ui->aux2Slider->setValue(rcAux2 * 50 + 50);
+            //ui->aux2Slider->setValue(rcAux2 * 50 + 50);
+            ui->radio7Widget->setValue(rcValue[6]);
             ui->chanLabel_7->setText(QString("%1/%2").arg(rcValue[rcMapping[6]]).arg(rcAux2, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_7->setText(tr("---"));
         }
 
         if (rcValue[rcMapping[7]] != UINT16_MAX) {
-            ui->aux3Slider->setValue(rcAux3 * 50 + 50);
+            //ui->aux3Slider->setValue(rcAux3 * 50 + 50);
+            ui->radio8Widget->setValue(rcValue[7]);
             ui->chanLabel_8->setText(QString("%1/%2").arg(rcValue[rcMapping[7]]).arg(rcAux3, 5, 'f', 2, QChar(' ')));
         } else {
             ui->chanLabel_8->setText(tr("---"));
