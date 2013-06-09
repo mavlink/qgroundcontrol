@@ -128,23 +128,27 @@ public:
      * Retrieve a total of all successfully parsed packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
-    qint32 getReceivedPacketCount(LinkInterface *link) const {
+    qint32 getReceivedPacketCount(const LinkInterface *link) const {
         return totalReceiveCounter[link->getId()];
     }
     /**
      * Retrieve a total of all parsing errors for the specified link.
      * @returns -1 if this is not available for this protocol, # of errors otherwise.
      */
-    qint32 getParsingErrorCount(LinkInterface *link) const {
+    qint32 getParsingErrorCount(const LinkInterface *link) const {
         return totalErrorCounter[link->getId()];
     }
     /**
      * Retrieve a total of all dropped packets for the specified link.
      * @returns -1 if this is not available for this protocol, # of packets otherwise.
      */
-    qint32 getDroppedPacketCount(LinkInterface *link) const {
+    qint32 getDroppedPacketCount(const LinkInterface *link) const {
         return totalLossCounter[link->getId()];
     }
+    /**
+     * Reset the counters for all metadata for this link.
+     */
+    virtual void resetMetadataForLink(const LinkInterface *link);
 
 public slots:
     /** @brief Receive bytes from a communication interface */

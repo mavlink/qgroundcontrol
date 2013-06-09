@@ -63,14 +63,11 @@ MAVLinkProtocol::MAVLinkProtocol() :
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer->start(1000/heartbeatRate);
-    for (int i = 0; i < MAVLINK_COMM_NUM_BUFFERS; i++)
-    {
-        totalReceiveCounter[i] = 0;
-        totalLossCounter[i] = 0;
-        totalErrorCounter[i] = 0;
-        currReceiveCounter[i] = 0;
-        currLossCounter[i] = 0;
-    }
+
+    // All the *Counter variables are not initialized here, as they should be initialized
+    // on a per-link basis before those links are used. @see resetMetadataForLink().
+
+    // Initialize the list for tracking dropped messages to invalid.
     for (int i = 0; i < 256; i++)
     {
         for (int j = 0; j < 256; j++)
@@ -178,6 +175,16 @@ QString MAVLinkProtocol::getLogfileName()
     }
 }
 
+void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
+{
+    int linkId = link->getId();
+    totalReceiveCounter[linkId] = 0;
+    totalLossCounter[linkId] = 0;
+    totalErrorCounter[linkId] = 0;
+    currReceiveCounter[linkId] = 0;
+    currLossCounter[linkId] = 0;
+}
+
 void MAVLinkProtocol::linkStatusChanged(bool connected)
 {
     LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
@@ -205,7 +212,6 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
 }
 
 /**
- * The bytes are copied by calling the LinkInterface::readBytes() method.
  * This method parses all incoming bytes and constructs a MAVLink packet.
  * It can handle multiple links in parallel, as each link has it's own buffer/
  * parsing state machine.
