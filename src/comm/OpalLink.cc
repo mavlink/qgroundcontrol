@@ -411,12 +411,12 @@ void OpalLink::run()
 //    qDebug() << "OpalLink::run():: Starting the thread";
 }
 
-int OpalLink::getId()
+int OpalLink::getId() const
 {
     return id;
 }
 
-QString OpalLink::getName()
+QString OpalLink::getName() const
 {
     return name;
 }
@@ -427,7 +427,7 @@ void OpalLink::setName(QString name)
     emit nameChanged(this->name);
 }
 
-bool OpalLink::isConnected()
+bool OpalLink::isConnected() const
 {
     return connectState;
 }
@@ -505,12 +505,12 @@ bool OpalLink::disconnect()
  *
  */
 
-qint64 OpalLink::getNominalDataRate()
+qint64 OpalLink::getNominalDataRate() const
 {
     return 0; //unknown
 }
 
-int OpalLink::getLinkQuality()
+int OpalLink::getLinkQuality() const
 {
     return -1; //not supported
 }
@@ -541,18 +541,18 @@ qint64 OpalLink::getMaxUpstream()
     return 0; //unknown
 }
 
-qint64 OpalLink::getBitsSent()
+qint64 OpalLink::getBitsSent() const
 {
     return bitsSentTotal;
 }
 
-qint64 OpalLink::getBitsReceived()
+qint64 OpalLink::getBitsReceived() const
 {
     return bitsReceivedTotal;
 }
 
 
-bool OpalLink::isFullDuplex()
+bool OpalLink::isFullDuplex() const
 {
     return false;
 }
