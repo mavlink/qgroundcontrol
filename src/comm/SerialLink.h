@@ -71,47 +71,47 @@ public:
     /** @brief Get a list of the currently available ports */
     QVector<QString>* getCurrentPorts();
 
-    bool isConnected();
+    bool isConnected() const;
     qint64 bytesAvailable();
 
     /**
      * @brief The port handle
      */
-    QString getPortName();
+    QString getPortName() const;
     /**
      * @brief The human readable port name
      */
-    QString getName();
-    int getBaudRate();
-    int getDataBits();
-    int getStopBits();
+    QString getName() const;
+    int getBaudRate() const;
+    int getDataBits() const;
+    int getStopBits() const;
 
     // ENUM values
-    int getBaudRateType();
-    int getFlowType();
-    int getParityType();
-    int getDataBitsType();
-    int getStopBitsType();
+    int getBaudRateType() const;
+    int getFlowType() const;
+    int getParityType() const;
+    int getDataBitsType() const;
+    int getStopBitsType() const;
 
     /* Extensive statistics for scientific purposes */
-    qint64 getNominalDataRate();
+    qint64 getNominalDataRate() const;
     qint64 getTotalUpstream();
     qint64 getCurrentUpstream();
     qint64 getMaxUpstream();
     qint64 getTotalDownstream();
     qint64 getCurrentDownstream();
     qint64 getMaxDownstream();
-    qint64 getBitsSent();
-    qint64 getBitsReceived();
+    qint64 getBitsSent() const;
+    qint64 getBitsReceived() const;
 
     void loadSettings();
     void writeSettings();
 
     void run();
 
-    int getLinkQuality();
-    bool isFullDuplex();
-    int getId();
+    int getLinkQuality() const;
+    bool isFullDuplex() const;
+    int getId() const;
 
 public slots:
     bool setPortName(QString portName);
