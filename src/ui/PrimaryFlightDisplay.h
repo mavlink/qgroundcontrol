@@ -58,6 +58,9 @@
 #define COMPASS_DISK_MARKERWIDTH 0.2
 #define COMPASS_DISK_MARKERHEIGHT 0.133
 
+#define CROSSTRACK_MAX 1000
+#define CROSSTRACK_RADIUS 0.6
+
 #define TAPE_GAUGES_TICKWIDTH_MAJOR 0.25
 #define TAPE_GAUGES_TICKWIDTH_MINOR 0.15
 
@@ -107,9 +110,13 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 
-    void updateSpeed(UASInterface* uas, SpeedMeasurementSource source, double speed, quint64 timstamp);
-    void updateClimbRate(UASInterface* uas, AltitudeMeasurementSource source, double altitude, quint64 timestamp);
-    void updateAltitude(UASInterface* uas, AltitudeMeasurementSource source, double altitude, quint64 timestamp);
+    void updatePrimarySpeed(UASInterface* uas, double speed, quint64 timstamp);
+    void updateGPSSpeed(UASInterface* uas, double speed, quint64 timstamp);
+    void updateClimbRate(UASInterface* uas, double altitude, quint64 timestamp);
+    void updatePrimaryAltitude(UASInterface* uas, double altitude, quint64 timestamp);
+    void updateGPSAltitude(UASInterface* uas, double altitude, quint64 timestamp);
+    void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
+
     /** @brief Set the currently monitored UAS */
     virtual void setActiveUAS(UASInterface* uas);
 
@@ -168,6 +175,7 @@ private:
      * - Airplane show absolute altutude in altimeter, copter shows relative to home
      */
     bool isAirplane();
+    bool shouldDisplayNavigationData();
 
     void drawTextCenter(QPainter& painter, QString text, float fontSize, float x, float y);
     void drawTextLeftCenter(QPainter& painter, QString text, float fontSize, float x, float y);
@@ -221,6 +229,11 @@ private:
     float primarySpeed;
     float groundspeed;
     float verticalVelocity;
+
+    float navigationAltitudeError;
+    float navigationSpeedError;
+    float navigationCrosstrackError;
+    float navigationTargetBearing;
 
     Layout layout;      // The display layout.
     Style style;        // The AI style (tapes translusent or opague)
