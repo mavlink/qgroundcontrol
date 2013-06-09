@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #define HUD_H
 
 #include <QImage>
-#include <QGLWidget>
+#include <QWidget>
 #include <QPainter>
 #include <QFontDatabase>
 #include <QTimer>
@@ -47,7 +47,7 @@ This file is part of the QGROUNDCONTROL project
  * It can superimpose the HUD over the current live image stream (any arriving image stream will be auto-
  * matically used as background), or it draws the classic blue-brown background known from instruments.
  */
-class HUD : public QGLWidget
+class HUD : public QWidget
 {
     Q_OBJECT
 public:
@@ -55,10 +55,10 @@ public:
     ~HUD();
 
     void setImageSize(int width, int height, int depth, int channels);
-    void resizeGL(int w, int h);
+    void resize(int w, int h);
 
 public slots:
-    void initializeGL();
+//    void initializeGL();
     //void paintGL();
 
     /** @brief Set the currently monitored UAS */
@@ -98,7 +98,6 @@ public slots:
 
 
 protected slots:
-    void paintCenterBackground(float roll, float pitch, float yaw);
     void paintRollPitchStrips();
     void paintPitchLines(float pitch, QPainter* painter);
     /** @brief Paint text on top of the image and OpenGL drawings */
