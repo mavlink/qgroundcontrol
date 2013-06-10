@@ -97,7 +97,7 @@ void UASInfoWidget::hideEvent(QHideEvent* event)
 void UASInfoWidget::addUAS(UASInterface* uas)
 {
     if (uas != NULL) {
-        connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         connect(uas, SIGNAL(dropRateChanged(int,float)), this, SLOT(updateReceiveLoss(int,float)));
         connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
         connect(uas, SIGNAL(errCountChanged(int,QString,QString,int)), this, SLOT(updateErrorCount(int,QString,QString,int)));
@@ -113,8 +113,9 @@ void UASInfoWidget::setActiveUAS(UASInterface* uas)
         activeUAS = uas;
 }
 
-void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
+void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
+    Q_UNUSED(current)
     setVoltage(uas, voltage);
     setChargeLevel(uas, percent);
     setTimeRemaining(uas, seconds);

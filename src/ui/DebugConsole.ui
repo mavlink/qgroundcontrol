@@ -110,6 +110,9 @@
        <height>50</height>
       </size>
      </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
      <property name="tabStopWidth">
       <number>60</number>
      </property>

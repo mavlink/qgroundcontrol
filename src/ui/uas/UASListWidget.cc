@@ -85,7 +85,6 @@ void UASListWidget::changeEvent(QEvent *e)
 }
 
 
-
 void UASListWidget::addUAS(UASInterface* uas)
 {
     if (uasViews.isEmpty())
@@ -99,7 +98,6 @@ void UASListWidget::addUAS(UASInterface* uas)
     {
         uasViews.insert(uas, new UASView(uas, this));
         m_ui->verticalLayout->addWidget(uasViews.value(uas));
-        //connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
     }
 }
 
@@ -113,8 +111,7 @@ void UASListWidget::activeUAS(UASInterface* uas)
 
 void UASListWidget::removeUAS(UASInterface* uas)
 {
-    Q_UNUSED(uas);
-//    uasViews.remove(uas);
-//    listLayout->removeWidget(uasViews.value(uas));
-//    uasViews.value(uas)->deleteLater();
+    m_ui->verticalLayout->removeWidget(uasViews.value(uas));
+    uasViews.value(uas)->deleteLater();
+    uasViews.remove(uas);
 }

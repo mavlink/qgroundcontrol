@@ -59,7 +59,6 @@ protected:
 
 private:
     Ui::UASList* m_ui;
-
 };
 
 #endif // _UASLISTWIDGET_H_

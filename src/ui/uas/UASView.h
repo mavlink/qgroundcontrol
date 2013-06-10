@@ -55,7 +55,7 @@ public slots:
     void updateName(const QString& name);
     void receiveHeartbeat(UASInterface* uas);
     void updateThrust(UASInterface* uas, double thrust);
-    void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
+    void updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateGlobalPosition(UASInterface*, double lon, double lat, double alt, quint64 usec);
     void updateSpeed(UASInterface*, double x, double y, double z, quint64 usec);
