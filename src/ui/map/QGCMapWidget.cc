@@ -302,7 +302,6 @@ void QGCMapWidget::addUAS(UASInterface* uas)
 void QGCMapWidget::activeUASSet(UASInterface* uas)
 {
     // Only execute if proper UAS is set
-    if (!uas) return;
     this->uas = uas;
 
     // Disconnect old MAV manager
@@ -315,17 +314,26 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         disconnect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
     }
 
-    currWPManager = uas->getWaypointManager();
+    // Attach the new waypoint manager if a new UAS was selected. Otherwise, indicate
+    // that no such manager exists.
+    if (uas)
+    {
+        currWPManager = uas->getWaypointManager();
 
-    updateSelectedSystem(uas->getUASID());
-    followUAVID = uas->getUASID();
-    updateWaypointList(uas->getUASID());
+        updateSelectedSystem(uas->getUASID());
+        followUAVID = uas->getUASID();
+        updateWaypointList(uas->getUASID());
 
-    // Connect the waypoint manager / data storage to the UI
-    connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
-    connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
-    connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
-    connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+        // Connect the waypoint manager / data storage to the UI
+        connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
+        connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+        connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
+        connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+    }
+    else
+    {
+        currWPManager = NULL;
+    }
 }
 
 /**

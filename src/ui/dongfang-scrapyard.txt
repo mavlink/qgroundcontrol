@@ -1,0 +1,243 @@
+
+    /* This information is at least for the time not shown here but rather in some always visible bar.
+    void updateBattery(UASInterface*, double, double, double, int);
+    void receiveHeartbeat(UASInterface*);
+    void updateMode(int id,QString mode, QString description);
+    void updateLoad(UASInterface*, double);
+    void updateState(UASInterface*,QString);
+    void updateGPSFixType(UASInterface*,int);
+    void updateSatelliteCount(double count,QString sth);
+    void updateThrust(UASInterface*, double);
+    void updateLocalPosition(UASInterface*,double,double,double,quint64);
+    void updateGlobalPosition(UASInterface*,double,double,double,quint64);
+    void selectWaypoint(int uasId, int id);
+    */
+
+    /*
+    bool uavIsArmed;
+    QString mode;
+    QString state;
+    float load;
+
+    double batteryVoltage;
+    double batteryCurrent;
+    double batteryCharge;
+
+    int GPSFixType;
+    int satelliteCount;
+    */
+
+
+
+
+    batteryVoltage(UNKNOWN_BATTERY),
+    batteryCurrent(UNKNOWN_BATTERY),
+    batteryCharge(UNKNOWN_BATTERY),
+
+    GPSFixType(UNKNOWN_GPSFIXTYPE),
+    satelliteCount(UNKNOWN_COUNT),
+
+
+    uavIsArmed(false),      // TODO: This is an assumption. We have no idea!
+    mode("-"),
+    state("-"),
+    load(0),
+
+void PrimaryFlightDisplay::updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(seconds);
+
+    batteryVoltage = voltage;
+    batteryCurrent = current;
+    batteryCharge = percent;
+}
+
+void PrimaryFlightDisplay::updateGPSFixType(UASInterface* uas, int fixType) {
+    Q_UNUSED(uas);
+    this->GPSFixType = fixType;
+}
+
+void PrimaryFlightDisplay::updateSatelliteCount(double count, QString name) {
+    Q_UNUSED(uas)
+    this->satelliteCount = (int)count;
+}
+
+void PrimaryFlightDisplay::receiveHeartbeat(UASInterface*)
+{
+}
+
+void PrimaryFlightDisplay::updateThrust(UASInterface* uas, double thrust)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(thrust);
+}
+
+/*
+ * TODO! Implementation or removal of this.
+ * Currently a dummy.
+ */
+void PrimaryFlightDisplay::updateLocalPosition(UASInterface* uas,double x,double y,double z,quint64 timestamp)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(z);
+    Q_UNUSED(timestamp);
+}
+
+void PrimaryFlightDisplay::updateGlobalPosition(UASInterface* uas,double lat, double lon, double altitude, quint64 timestamp)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(lat);
+    Q_UNUSED(lon);
+    Q_UNUSED(timestamp);
+
+    // TODO: Examine whether this is really the GPS alt or the mix-alt coming in.
+    GPSAltitude = altitude;
+}
+
+
+void PrimaryFlightDisplay::updateState(UASInterface* uas,QString state)
+{
+    // Only one UAS is connected at a time
+    Q_UNUSED(uas);
+    this->state = state;
+}
+
+void PrimaryFlightDisplay::updateMode(int id, QString mode, QString description)
+{
+    // Only one UAS is connected at a time
+    Q_UNUSED(id);
+    Q_UNUSED(description);
+    this->mode = mode;
+}
+
+void PrimaryFlightDisplay::updateLoad(UASInterface* uas, double load)
+{
+    Q_UNUSED(uas);
+    this->load = load;
+    //updateValue(uas, "load", load, MG::TIME::getGroundTimeNow());
+}
+
+void PrimaryFlightDisplay::selectWaypoint(int uasId, int id) {
+}
+
+void PrimaryFlightDisplay::drawLinkStatsPanel (
+        QPainter& painter,
+        QRectF area) {
+    // UAV Id
+    // Droprates up, down
+    QString s_linkStat("100%");
+    QString s_upTime("01:23:34");
+
+    painter.resetTransform();
+
+    if (style == NO_OVERLAYS)
+        drawInstrumentBackground(painter, area);
+
+    painter.translate(area.center());
+
+    QPen pen;
+    pen.setWidthF(lineWidth);
+    pen.setColor(amberColor);
+    painter.setPen(pen);
+
+    drawTextCenter(painter, s_linkStat, mediumTextSize, 0, -area.height()/6);
+    drawTextCenter(painter, s_upTime, mediumTextSize, 0, area.height()/6);
+}
+
+void PrimaryFlightDisplay::drawMissionStatsPanel (
+        QPainter& painter,
+        QRectF area) {
+    // Flight mode
+    // next WP
+    // next WP dist
+    QString s_flightMode("Auto");
+    QString s_nextWP("1234m\u21924");
+
+    painter.resetTransform();
+
+    if (style == NO_OVERLAYS)
+        drawInstrumentBackground(painter, area);
+
+    painter.translate(area.center());
+
+    QPen pen;
+    pen.setWidthF(lineWidth);
+    pen.setColor(amberColor);
+    painter.setPen(pen);
+    drawTextCenter(painter, s_flightMode, mediumTextSize, 0, -area.height()/6);
+    drawTextCenter(painter, s_nextWP, mediumTextSize, 0, area.height()/6);
+}
+
+void PrimaryFlightDisplay::drawSensorsStatsPanel (
+        QPainter& painter,
+        QRectF area) {
+    // GPS fixmode and #sats
+    // Home alt.?
+    // Groundspeed?
+    QString s_GPS("GPS 3D(8)");
+    QString s_homealt("H.alt 472m");
+
+    painter.resetTransform();
+
+    if (style == NO_OVERLAYS)
+        drawInstrumentBackground(painter, area);
+
+    painter.translate(area.center());
+
+    QPen pen;
+    pen.setWidthF(lineWidth);
+    pen.setColor(amberColor);
+    painter.setPen(pen);
+
+    drawTextCenter(painter, s_GPS, mediumTextSize, 0, -area.height()/6);
+    drawTextCenter(painter, s_homealt, mediumTextSize, 0, area.height()/6);
+}
+void PrimaryFlightDisplay::drawSysStatsPanel (
+        QPainter& painter,
+        QRectF area) {
+    // Timer
+    // Battery
+    // Armed/not
+
+    /*
+    energyStatus = tr("BAT [%1V | %2V%]").arg(voltage, 4, 'f', 1, QChar('0')).arg(percent, 2, 'f', 0, QChar('0'));
+    if (percent < 20.0f) {
+        fuelColor = warningColor;
+    } else if (percent < 10.0f) {
+        fuelColor = criticalColor;
+    } else {
+        fuelColor = infoColor;
+    }
+    */
+
+    QString voltageStatus = batteryVoltage == UNKNOWN_BATTERY ? "-V" :
+            tr("%1V").arg(batteryVoltage, 4, 'f', 1, QChar('0'));
+    QString chargeStatus = batteryCharge == UNKNOWN_BATTERY ? "-%" :
+            tr("%2%").arg(batteryCharge, 2, 'f', 0, QChar('0'));
+    // We ignore current right now.
+
+    QString batteryStatus = voltageStatus.append(" ").append(chargeStatus);
+
+    QString s_arm = uavIsArmed ? "Armed" : "Disarmed";
+
+    painter.resetTransform();
+
+    if (style == NO_OVERLAYS)
+        drawInstrumentBackground(painter, area);
+
+    painter.translate(area.center());
+
+    QPen pen;
+    pen.setWidthF(lineWidth);
+    pen.setColor(amberColor);
+    painter.setPen(pen);
+
+    drawTextCenter(painter, batteryStatus, mediumTextSize, 0, -area.height()/6);
+    pen.setColor(redColor);
+    drawTextCenter(painter, s_arm, mediumTextSize, 0, area.height()/6);
+}
+
+

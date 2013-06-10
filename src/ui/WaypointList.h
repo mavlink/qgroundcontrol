@@ -42,9 +42,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "WaypointEditableView.h"
 #include "WaypointViewOnlyView.h"
-#include "UnconnectedUASInfoWidget.h"
-//#include "PopupMessage.h"
-
 
 namespace Ui
 {

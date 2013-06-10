@@ -124,6 +124,31 @@ public:
     int getActionRetransmissionTimeout() {
         return m_actionRetransmissionTimeout;
     }
+    /**
+     * Retrieve a total of all successfully parsed packets for the specified link.
+     * @returns -1 if this is not available for this protocol, # of packets otherwise.
+     */
+    qint32 getReceivedPacketCount(const LinkInterface *link) const {
+        return totalReceiveCounter[link->getId()];
+    }
+    /**
+     * Retrieve a total of all parsing errors for the specified link.
+     * @returns -1 if this is not available for this protocol, # of errors otherwise.
+     */
+    qint32 getParsingErrorCount(const LinkInterface *link) const {
+        return totalErrorCounter[link->getId()];
+    }
+    /**
+     * Retrieve a total of all dropped packets for the specified link.
+     * @returns -1 if this is not available for this protocol, # of packets otherwise.
+     */
+    qint32 getDroppedPacketCount(const LinkInterface *link) const {
+        return totalLossCounter[link->getId()];
+    }
+    /**
+     * Reset the counters for all metadata for this link.
+     */
+    virtual void resetMetadataForLink(const LinkInterface *link);
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -201,12 +226,13 @@ protected:
     bool m_paramGuardEnabled;       ///< Parameter retransmission/rewrite enabled
     bool m_actionGuardEnabled;       ///< Action request retransmission enabled
     int m_actionRetransmissionTimeout; ///< Timeout for parameter retransmission
-    QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
-    int lastIndex[256][256];	///< Store the last received sequence ID for each system/componenet pair
-    int totalReceiveCounter;
-    int totalLossCounter;
-    int currReceiveCounter;
-    int currLossCounter;
+    QMutex receiveMutex;        ///< Mutex to protect receiveBytes function
+    int lastIndex[256][256];    ///< Store the last received sequence ID for each system/componenet pair
+    int totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];    ///< The total number of successfully received messages
+    int totalLossCounter[MAVLINK_COMM_NUM_BUFFERS];       ///< Total messages lost during transmission.
+    int totalErrorCounter[MAVLINK_COMM_NUM_BUFFERS];      ///< Total count of all parsing errors. Generally <= totalLossCounter.
+    int currReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];     ///< Received messages during this sample time window. Used for calculating loss %.
+    int currLossCounter[MAVLINK_COMM_NUM_BUFFERS];        ///< Lost messages during this sample time window. Used for calculating loss %.
     bool versionMismatchIgnore;
     int systemId;
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)

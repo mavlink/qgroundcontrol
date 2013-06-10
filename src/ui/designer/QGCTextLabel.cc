@@ -24,9 +24,6 @@ QGCTextLabel::QGCTextLabel(QWidget *parent) :
     ui->editLine1->hide();
     ui->editLine2->hide();
 
-    ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-    ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-
     // Add commands to combo box
 
 }
@@ -35,8 +32,6 @@ QGCTextLabel::~QGCTextLabel()
 {
     delete ui;
 }
-
-
 
 void QGCTextLabel::startEditMode()
 {
@@ -49,7 +44,6 @@ void QGCTextLabel::startEditMode()
     ui->editComponentSpinBox->show();
     ui->editLine1->show();
     ui->editLine2->show();
-    //setStyleSheet("QGroupBox { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
 
     // Attempt to undock the dock widget
     QWidget* p = this;
@@ -82,7 +76,6 @@ void QGCTextLabel::endEditMode()
 
     // Write to settings
     emit editingFinished();
-    //setStyleSheet("");
 
     // Attempt to dock the dock widget
     QWidget* p = this;
@@ -127,14 +120,14 @@ void QGCTextLabel::readSettings(const QString& pre,const QVariantMap& settings)
 
     //int commandId = settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt();
 
-
-
-
     //ui->editNameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     //ui->nameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
 }
 void QGCTextLabel::textMessageReceived(int uasid, int component, int severity, QString message)
 {
+    Q_UNUSED(uasid);
+    Q_UNUSED(component);
+    Q_UNUSED(severity);
     if (enabledNum != -1)
     {
         //SUCCESS: Executed CMD: 241
@@ -171,10 +164,6 @@ void QGCTextLabel::readSettings(const QSettings& settings)
         ui->nameLabel->setText(ui->editNameLabel->text());
         ui->textLabel->setText("");
         connect(uas,SIGNAL(textMessageReceived(int,int,int,QString)),this,SLOT(textMessageReceived(int,int,int,QString)));
-    }
-    else
-    {
-
     }
 }
 void QGCTextLabel::enableText(int num)

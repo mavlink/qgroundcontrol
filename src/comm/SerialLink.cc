@@ -20,7 +20,6 @@
 #ifdef _WIN32
 #include "windows.h"
 #endif
-
 #ifdef _WIN32
 #include <qextserialenumerator.h>
 #endif
@@ -394,7 +393,13 @@ void SerialLink::writeSettings()
 void SerialLink::run()
 {
     // Initialize the connection
-    hardwareConnect();
+    if (!hardwareConnect())
+    {
+        //Need to error out here.
+        emit communicationError(getName(),"Error connecting: " + port->errorString());
+        return;
+
+    }
 
     // Qt way to make clear what a while(1) loop does
     quint64 msecs = QDateTime::currentMSecsSinceEpoch();
@@ -402,7 +407,7 @@ void SerialLink::run()
     quint64 bytes = 0;
     bool triedreset = false;
     bool triedDTR = false;
-    int timeout = 2500;
+    int timeout = 5000;
     forever
     {
         {
@@ -438,6 +443,7 @@ void SerialLink::run()
                 if (!triedDTR && triedreset)
                 {
                     triedDTR = true;
+                    communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
                     qDebug() << "No data!!! Attempting reset via DTR.";
                     port->setDtr(true);
                     this->msleep(250);
@@ -446,11 +452,13 @@ void SerialLink::run()
                 else if (!triedreset)
                 {
                     qDebug() << "No data!!! Attempting reset via reboot command.";
+                    communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
                     port->write("reboot\r\n",8);
                     triedreset = true;
                 }
                 else
                 {
+                    communicationUpdate(getName(),"No data to receive on COM port....");
                     qDebug() << "No data!!!";
                 }
             }
@@ -661,7 +669,14 @@ bool SerialLink::hardwareConnect()
     port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
     connectionStartTime = MG::TIME::getGroundTimeNow();
 
-    port->open();
+    if (!port->open())
+    {
+        emit communicationUpdate(getName(),"Error opening port: " + port->errorString());
+    }
+    else
+    {
+        emit communicationUpdate(getName(),"Opened port!");
+    }
 
     bool connectionUp = isConnected();
     if(connectionUp) {
@@ -683,7 +698,7 @@ bool SerialLink::hardwareConnect()
  *
  * @return True if link is connected, false otherwise.
  **/
-bool SerialLink::isConnected()
+bool SerialLink::isConnected() const
 {
     if (port) {
         return port->isOpen();
@@ -692,12 +707,12 @@ bool SerialLink::isConnected()
     }
 }
 
-int SerialLink::getId()
+int SerialLink::getId() const
 {
     return id;
 }
 
-QString SerialLink::getName()
+QString SerialLink::getName() const
 {
     return name;
 }
@@ -713,7 +728,7 @@ void SerialLink::setName(QString name)
   * This function maps baud rate constants to numerical equivalents.
   * It relies on the mapping given in qportsettings.h from the QSerialPort library.
   */
-qint64 SerialLink::getNominalDataRate()
+qint64 SerialLink::getNominalDataRate() const
 {
     qint64 dataRate = 0;
     switch (portSettings.baudRate()) {
@@ -829,12 +844,12 @@ qint64 SerialLink::getMaxUpstream()
     return 0; // TODO
 }
 
-qint64 SerialLink::getBitsSent()
+qint64 SerialLink::getBitsSent() const
 {
     return bitsSentTotal;
 }
 
-qint64 SerialLink::getBitsReceived()
+qint64 SerialLink::getBitsReceived() const
 {
     return bitsReceivedTotal;
 }
@@ -856,54 +871,54 @@ qint64 SerialLink::getMaxDownstream()
     return 0; // TODO
 }
 
-bool SerialLink::isFullDuplex()
+bool SerialLink::isFullDuplex() const
 {
     /* Serial connections are always half duplex */
     return false;
 }
 
-int SerialLink::getLinkQuality()
+int SerialLink::getLinkQuality() const
 {
     /* This feature is not supported with this interface */
     return -1;
 }
 
-QString SerialLink::getPortName()
+QString SerialLink::getPortName() const
 {
     return porthandle;
 }
 
-int SerialLink::getBaudRate()
+int SerialLink::getBaudRate() const
 {
     return getNominalDataRate();
 }
 
-int SerialLink::getBaudRateType()
+int SerialLink::getBaudRateType() const
 {
     return portSettings.baudRate();
 }
 
-int SerialLink::getFlowType()
+int SerialLink::getFlowType() const
 {
     return portSettings.flowControl();
 }
 
-int SerialLink::getParityType()
+int SerialLink::getParityType() const
 {
     return portSettings.parity();
 }
 
-int SerialLink::getDataBitsType()
+int SerialLink::getDataBitsType() const
 {
     return portSettings.dataBits();
 }
 
-int SerialLink::getStopBitsType()
+int SerialLink::getStopBitsType() const
 {
     return portSettings.stopBits();
 }
 
-int SerialLink::getDataBits()
+int SerialLink::getDataBits() const
 {
     int ret = -1;
     switch (portSettings.dataBits()) {
@@ -926,7 +941,7 @@ int SerialLink::getDataBits()
     return ret;
 }
 
-int SerialLink::getStopBits()
+int SerialLink::getStopBits() const
 {
     int ret = -1;
     switch (portSettings.stopBits()) {

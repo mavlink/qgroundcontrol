@@ -63,7 +63,7 @@ public slots:
     /** @brief Received system text message */
     void receiveTextMessage(int uasid, int componentid, int severity, QString text);
     /** @brief Update battery charge state */
-    void updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds);
+    void updateBatteryRemaining(UASInterface* uas, double voltage, double current, double percent, int seconds);
     /** @brief Update current waypoint */
     void updateCurrentWaypoint(quint16 id);
     /** @brief Update distance to current waypoint */
@@ -84,13 +84,13 @@ public slots:
     void advancedActivityTriggered(QAction* action);
 
 protected:
-    void createCustomWidgets();
     void storeSettings();
     void loadSettings();
     void createUI();
+    void resetToolbarUI();
 
     UASInterface* mav;
-    QToolButton* symbolButton;
+    QLabel* symbolLabel;
     QLabel* toolBarNameLabel;
     QLabel* toolBarTimeoutLabel;
     QLabel* toolBarSafetyLabel;
@@ -102,7 +102,6 @@ protected:
     QPushButton* connectButton;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
-    QGCMAVLinkLogPlayer* player;
     bool changed;
     float batteryPercent;
     float batteryVoltage;
@@ -119,7 +118,7 @@ protected:
     bool systemArmed;
     LinkInterface* currentLink;
     QAction* firstAction;
-    QPushButton *advancedButton;
+    QToolButton *advancedButton;
     QButtonGroup *group;
 };
 

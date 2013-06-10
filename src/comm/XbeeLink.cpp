@@ -32,7 +32,7 @@ XbeeLink::~XbeeLink()
 	this->disconnect();
 }
 
-QString XbeeLink::getPortName()
+QString XbeeLink::getPortName() const
 {
 	QString portName;
 	for(unsigned int i = 0;i<this->m_portNameLength;i++)
@@ -42,7 +42,7 @@ QString XbeeLink::getPortName()
 	return portName;
 }
 
-int XbeeLink::getBaudRate()
+int XbeeLink::getBaudRate() const
 {
 	return this->m_baudRate;
 }
@@ -104,32 +104,32 @@ bool XbeeLink::setBaudRate(int rate)
 	return retVal;
 }
 
-int XbeeLink::getId()
+int XbeeLink::getId() const
 {
 	return this->m_id;
 }
 
-QString XbeeLink::getName()
+QString XbeeLink::getName() const
 {
 	return this->m_name;
 }
 
-bool XbeeLink::isConnected()
+bool XbeeLink::isConnected() const
 {
 	return this->m_connected;
 }
 
-qint64 XbeeLink::getNominalDataRate()
+qint64 XbeeLink::getNominalDataRate() const
 {
 	return this->m_baudRate;
 }
 
-bool XbeeLink::isFullDuplex()
+bool XbeeLink::isFullDuplex() const
 {
 	return false;
 }
 
-int XbeeLink::getLinkQuality()
+int XbeeLink::getLinkQuality() const
 {
 	return -1; // TO DO:
 }
@@ -149,12 +149,12 @@ qint64 XbeeLink::getMaxUpstream()
 	return 0; // TO DO:
 }
 
-qint64 XbeeLink::getBitsSent()
+qint64 XbeeLink::getBitsSent() const
 {
 	return 0; // TO DO:
 }
 
-qint64 XbeeLink::getBitsReceived()
+qint64 XbeeLink::getBitsReceived() const
 {
 	return 0; // TO DO:
 }

@@ -2,21 +2,13 @@
 #define UASQUICKVIEWITEM_H
 
 #include <QWidget>
-#include <QLabel>
 class UASQuickViewItem : public QWidget
 {
     Q_OBJECT
 public:
     explicit UASQuickViewItem(QWidget *parent = 0);
-    void setValue(double value);
-    void setTitle(QString title);
-private:
-    QLabel *titleLabel;
-    QLabel *valueLabel;
-signals:
-    
-public slots:
-    
+    virtual void setValue(double value)=0;
+    virtual void setTitle(QString title)=0;
 };
 
 #endif // UASQUICKVIEWITEM_H

@@ -59,6 +59,12 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFirmwareUpdate.h"
 #include "QGCStatusBar.h"
 #include "UASQuickView.h"
+#include "QGCDataPlot2D.h"
+#include "Linecharts.h"
+#include "UASActionsWidget.h"
+#include "QGCTabbedInfoView.h"
+#include "UASRawStatusView.h"
+#include "PrimaryFlightDisplay.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -68,20 +74,24 @@ This file is part of the QGROUNDCONTROL project
 #include "PxQuadMAV.h"
 #include "SlugsMAV.h"
 
-
 #include "LogCompressor.h"
+
+// Set up some constants
+const QString MainWindow::defaultDarkStyle = ":files/styles/style-dark.css";
+const QString MainWindow::defaultLightStyle = ":files/styles/style-light.css";
 
 MainWindow* MainWindow::instance(QSplashScreen* screen)
 {
     static MainWindow* _instance = 0;
-    if(_instance == 0)
+    if (_instance == 0)
     {
         _instance = new MainWindow();
-        if (screen) connect(_instance, SIGNAL(initStatusChanged(QString)), screen, SLOT(showMessage(QString)));
-
-        /* Set the application as parent to ensure that this object
-                 * will be destroyed when the main application exits */
-        //_instance->setParent(qApp);
+        if (screen)
+        {
+            connect(_instance, SIGNAL(initStatusChanged(QString,int,QColor)),
+                    screen, SLOT(showMessage(QString,int,QColor)));
+        }
+        _instance->init();
     }
     return _instance;
 }
@@ -96,22 +106,36 @@ MainWindow* MainWindow::instance(QSplashScreen* screen)
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
     currentView(VIEW_FLIGHT),
-    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
+    currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
     centerStackActionGroup(new QActionGroup(this)),
-    styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
+    darkStyleFileName(defaultDarkStyle),
+    lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
-    lowPowerMode(false)
+    lowPowerMode(false),
+    dockWidgetTitleBarEnabled(true),
+    isAdvancedMode(false)
 {
+    this->setAttribute(Qt::WA_DeleteOnClose);
     hide();
-    dockWidgetTitleBarEnabled = true;
-    isAdvancedMode = false;
-    emit initStatusChanged("Loading UI Settings..");
+}
+
+void MainWindow::init()
+{
+    emit initStatusChanged(tr("Loading settings"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     loadSettings();
 
-    emit initStatusChanged("Loading Style.");
-    loadStyle(currentStyle);
+    emit initStatusChanged(tr("Loading style"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+    qApp->setStyle("plastique");
+    if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        loadStyle(currentStyle, lightStyleFileName);
+    }
+    else
+    {
+        loadStyle(currentStyle, darkStyleFileName);
+    }
 
     if (settings.contains("ADVANCED_MODE"))
     {
@@ -137,8 +161,7 @@ MainWindow::MainWindow(QWidget *parent):
     }
 
     settings.sync();
-
-    emit initStatusChanged("Setting up user interface.");
+    emit initStatusChanged(tr("Setting up user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Setup user interface
     ui.setupUi(this);
@@ -182,20 +205,18 @@ MainWindow::MainWindow(QWidget *parent):
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
 
-
-
-    emit initStatusChanged("Building common widgets.");
+    emit initStatusChanged(tr("Building common widgets"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     buildCommonWidgets();
     connectCommonWidgets();
 
-    emit initStatusChanged("Building common actions.");
+    emit initStatusChanged(tr("Building common actions"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Create actions
     connectCommonActions();
 
     // Populate link menu
-    emit initStatusChanged("Populating link menu");
+    emit initStatusChanged(tr("Populating link menu"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     QList<LinkInterface*> links = LinkManager::instance()->getLinks();
     foreach(LinkInterface* link, links)
     {
@@ -205,19 +226,19 @@ MainWindow::MainWindow(QWidget *parent):
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
     // Connect user interface devices
-    emit initStatusChanged("Initializing joystick interface.");
+    emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     joystickWidget = 0;
     joystick = new JoystickInput();
 
 #ifdef MOUSE_ENABLED_WIN
-    emit initStatusChanged("Initializing 3D mouse interface.");
+    emit initStatusChanged(tr("Initializing 3D mouse interface", Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouseInput = new Mouse3DInput(this);
     mouse = new Mouse6dofInput(mouseInput);
 #endif //MOUSE_ENABLED_WIN
 
 #if MOUSE_ENABLED_LINUX
-    emit initStatusChanged("Initializing 3D mouse interface.");
+    emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
@@ -239,12 +260,12 @@ MainWindow::MainWindow(QWidget *parent):
     // Initialize window state
     windowStateVal = windowState();
 
-    emit initStatusChanged("Restoring last view state.");
+    emit initStatusChanged(tr("Restoring last view state"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Restore the window setup
     loadViewState();
 
-    emit initStatusChanged("Restoring last window size.");
+    emit initStatusChanged(tr("Restoring last window size"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Restore the window position and size
     if (settings.contains(getWindowGeometryKey()))
     {
@@ -273,7 +294,7 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
-    emit initStatusChanged("Done.");
+    emit initStatusChanged(tr("Done"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     show();
 }
 
@@ -321,6 +342,16 @@ MainWindow::~MainWindow()
         }
     }
     // Delete all UAS objects
+
+
+    if (debugConsole)
+    {
+        delete debugConsole;
+    }
+    for (int i=0;i<commsWidgetList.size();i++)
+    {
+        commsWidgetList[i]->deleteLater();
+    }
 }
 
 void MainWindow::resizeEvent(QResizeEvent * event)
@@ -344,7 +375,6 @@ QString MainWindow::getWindowStateKey()
         return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
     }
     else
-
         return QString::number(currentView)+"_windowstate";
 }
 
@@ -498,6 +528,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(simView,new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",VIEW_SIMULATION,Qt::LeftDockWidgetArea);
 
     createDockWidget(plannerView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
+    createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
 
     {
         //createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
@@ -521,33 +552,19 @@ void MainWindow::buildCommonWidgets()
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
     {
-        QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
-        menuToDockNameMap[tempAction] = "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET";
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+        if (!debugConsole)
+        {
+            debugConsole = new DebugConsole();
+            debugConsole->setWindowTitle("Communications Console");
+            debugConsole->hide();
+            QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
+            //menuToDockNameMap[tempAction] = "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET";
+            tempAction->setCheckable(true);
+            connect(tempAction,SIGNAL(triggered(bool)),debugConsole,SLOT(setShown(bool)));
+
+        }
     }
     createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
-
-
-
-    //FIXME: memory of acceptList will never be freed again
-    QStringList* acceptList = new QStringList();
-    acceptList->append("-3.3,ATTITUDE.roll,rad,+3.3,s");
-    acceptList->append("-3.3,ATTITUDE.pitch,deg,+3.3,s");
-    acceptList->append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
-
-    //FIXME: memory of acceptList2 will never be freed again
-    QStringList* acceptList2 = new QStringList();
-    acceptList2->append("0,RAW_PRESSURE.pres_abs,hPa,65500");
-
-
-    //HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
-    //hdDisplay->addSource(mavlinkDecoder);
-    //createDockWidget(pilotView,hdDisplay,tr("Flight Display"),"HEAD_DOWN_DISPLAY_1_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-
-    //HDDisplay* hdDisplay2 = new HDDisplay(acceptList2, "Actuator Status", this);
-    //hdDisplay2->addSource(mavlinkDecoder);
-    //createDockWidget(pilotView,hdDisplay2,tr("Actuator Status"),"HEAD_DOWN_DISPLAY_2_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
     {
         QAction* tempAction = ui.menuTools->addAction(tr("Flight Display"));
@@ -569,16 +586,42 @@ void MainWindow::buildCommonWidgets()
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
     }
 
+    // createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
+    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
 
-    createDockWidget(simView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
+    //createDockWidget(pilotView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
+//    createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+    //createDockWidget(pilotView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
-    createDockWidget(pilotView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-    createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
-    createDockWidget(pilotView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
-    createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
-    pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);
-    pilotView->tabifyDockWidget((QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET"],(QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["UAS_INFO_QUICKVIEW_DOCKWIDGET"]);
+    //UASQuickView *quickview = new UASQuickView(this);
+    //quickview->addSource(mavlinkDecoder);
 
+
+    //createDockWidget(pilotView,quickview,tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+    createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+
+    QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
+    infoview->addSource(mavlinkDecoder);
+    createDockWidget(pilotView,infoview,tr("Info View"),"UAS_INFO_INFOVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+
+
+    //createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+
+//    createDockWidget(pilotView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+//    createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+//    pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);
+//    pilotView->tabifyDockWidget((QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET"],(QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["UAS_INFO_QUICKVIEW_DOCKWIDGET"]);
+
+    //UASRawStatusView *view = new UASRawStatusView();
+    //view->setDecoder(mavlinkDecoder);
+    //view->show();
+    //hddisplay->addSource(mavlinkDecoder);
+    //createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+    //pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);
+    //pilotView->tabifyDockWidget((QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET"],(QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["UAS_INFO_QUICKVIEW_DOCKWIDGET"]);
+
+
+    //createDockWidget(pilotView,new UASActionsWidget(this),tr("Actions"),"UNMANNED_SYSTEM_ACTION_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
     // Custom widgets, added last to all menus and layouts
     buildCustomWidget();
@@ -726,7 +769,12 @@ void MainWindow::loadDockWidget(QString name)
     {
         return;
     }
-    if (name == "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET")
+    if (name.startsWith("HIL_CONFIG"))
+    {
+        //It's a HIL widget.
+        showHILConfigurationWidget(UASManager::instance()->getActiveUAS());
+    }
+    else if (name == "UNMANNED_SYSTEM_CONTROL_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",currentView,Qt::LeftDockWidgetArea);
     }
@@ -752,7 +800,9 @@ void MainWindow::loadDockWidget(QString name)
     }
     else if (name == "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new DebugConsole(this),tr("Communication Console"),"COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET",currentView,Qt::BottomDockWidgetArea);
+        //This is now a permanently detached window.
+        //centralWidgetToDockWidgetsMap[currentView][name] = console;
+        //createDockWidget(centerStack->currentWidget(),new DebugConsole(this),tr("Communication Console"),"COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET",currentView,Qt::BottomDockWidgetArea);
     }
     else if (name == "HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET")
     {
@@ -783,9 +833,10 @@ void MainWindow::loadDockWidget(QString name)
         qDebug() << "Error loading window:" << name << "Unknown window type";
         //createDockWidget(centerStack->currentWidget(),hddisplay,tr("Actuator Status"),"HEADS_DOWN_DISPLAY_2_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
-    else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
+    else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        // createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
@@ -848,6 +899,7 @@ void MainWindow::showTool(bool show)
 }*/
 void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
 {
+    Q_UNUSED(title);
     // Check if this widget already has been added
     if (centerStack->indexOf(widget) == -1)
     {
@@ -881,8 +933,11 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
     if (mav && !hilDocks.contains(mav->getUASID()))
     {
+        //QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
+        //createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
+
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
-        QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
+       QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
         QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockName.toUpper().replace(" ", "_"),VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
 
@@ -896,8 +951,8 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (isVisible()) storeViewState();
-    storeSettings();
     aboutToCloseFlag = true;
+    storeSettings();
     mavlink->storeSettings();
     UASManager::instance()->storeSettings();
     QMainWindow::closeEvent(event);
@@ -1093,6 +1148,8 @@ void MainWindow::loadSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
+    darkStyleFileName = settings.value("DARK_STYLE_FILENAME", darkStyleFileName).toString();
+    lightStyleFileName = settings.value("LIGHT_STYLE_FILENAME", lightStyleFileName).toString();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled).toBool();
     settings.endGroup();
@@ -1105,6 +1162,8 @@ void MainWindow::storeSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue("AUTO_RECONNECT", autoReconnect);
     settings.setValue("CURRENT_STYLE", currentStyle);
+    settings.setValue("DARK_STYLE_FILENAME", darkStyleFileName);
+    settings.setValue("LIGHT_STYLE_FILENAME", lightStyleFileName);
     settings.endGroup();
     if (!aboutToCloseFlag && isVisible())
     {
@@ -1219,95 +1278,43 @@ void MainWindow::enableAutoReconnect(bool enabled)
     autoReconnect = enabled;
 }
 
-void MainWindow::loadNativeStyle()
+bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
 {
-    loadStyle(QGC_MAINWINDOW_STYLE_NATIVE);
-}
-
-void MainWindow::loadIndoorStyle()
-{
-    loadStyle(QGC_MAINWINDOW_STYLE_INDOOR);
-}
-
-void MainWindow::loadOutdoorStyle()
-{
-    loadStyle(QGC_MAINWINDOW_STYLE_OUTDOOR);
-}
-
-void MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
-{
-    switch (style) {
-    case QGC_MAINWINDOW_STYLE_NATIVE: {
-        // Native mode means setting no style
-        // so if we were already in native mode
-        // take no action
-        // Only if a style was set, remove it.
-        if (style != currentStyle) {
-            qApp->setStyleSheet("");
-            showInfoMessage(tr("Please restart QGroundControl"), tr("Please restart QGroundControl to switch to fully native look and feel. Currently you have loaded Qt's plastique style."));
-        }
-    }
-        break;
-    case QGC_MAINWINDOW_STYLE_INDOOR:
-        qApp->setStyle("plastique");
-        styleFileName = ":files/styles/style-indoor.css";
-        reloadStylesheet();
-        break;
-    case QGC_MAINWINDOW_STYLE_OUTDOOR:
-        qApp->setStyle("plastique");
-        styleFileName = ":files/styles/style-outdoor.css";
-        reloadStylesheet();
-        break;
-    }
+    // Store the new style classification.
     currentStyle = style;
-}
 
-void MainWindow::selectStylesheet()
-{
-    // Let user select style sheet
-    styleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), styleFileName, tr("CSS Stylesheet (*.css);;"));
+    // Load the new stylesheet.
+    QFile styleSheet(cssFile);
 
-    if (!styleFileName.endsWith(".css"))
+    // Attempt to open the stylesheet.
+    if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("QGroundControl did lot load a new style"));
-        msgBox.setInformativeText(tr("No suitable .css file selected. Please select a valid .css file."));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-        return;
+        // Signal to the user that the app will pause to apply a new stylesheet
+        qApp->setOverrideCursor(Qt::WaitCursor);
+
+        qApp->setStyleSheet(styleSheet.readAll());
+
+        // And save the new stylesheet path.
+        if (currentStyle == QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            lightStyleFileName = cssFile;
+        }
+        else
+        {
+            darkStyleFileName = cssFile;
+        }
+
+        // And trigger any changes to other UI elements that are watching for
+        // theme changes.
+        emit styleChanged(style);
+
+        // Finally restore the cursor before returning.
+        qApp->restoreOverrideCursor();
+        return true;
     }
 
-    // Load style sheet
-    reloadStylesheet();
-}
-
-void MainWindow::reloadStylesheet()
-{
-    // Load style sheet
-    QFile* styleSheet = new QFile(styleFileName);
-    if (!styleSheet->exists())
-    {
-        styleSheet = new QFile(":files/styles/style-indoor.css");
-    }
-    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QString style = QString(styleSheet->readAll());
-        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "files/styles/");
-        qApp->setStyleSheet(style);
-    }
-    else
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText(tr("QGroundControl did lot load a new style"));
-        msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(styleFileName));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
-    }
-    delete styleSheet;
+    // Otherwise alert return a failure code.
+    return false;
 }
 
 /**
@@ -1447,9 +1454,6 @@ void MainWindow::connectCommonActions()
 
     connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
-
-    connect(ui.actionReloadStylesheet, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
-    connect(ui.actionSelectStylesheet, SIGNAL(triggered()), this, SLOT(selectStylesheet()));
 
     // Help Actions
     connect(ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
@@ -1594,6 +1598,8 @@ void MainWindow::addLink(LinkInterface *link)
     if (!found)
     {  //  || udp
         CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+        commsWidgetList.append(commWidget);
+        connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();
         ui.menuNetwork->addAction(action);
 
@@ -1607,9 +1613,17 @@ void MainWindow::addLink(LinkInterface *link)
         }
     }
 }
+void MainWindow::commsWidgetDestroyed(QObject *obj)
+{
+    if (commsWidgetList.contains(obj))
+    {
+        commsWidgetList.removeOne(obj);
+    }
+}
 
 void MainWindow::setActiveUAS(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     // Enable and rename menu
     //    ui.menuUnmanned_System->setTitle(uas->getUASName());
     //    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
@@ -1653,84 +1667,83 @@ void MainWindow::UASCreated(UASInterface* uas)
         //{
         // The pilot, operator and engineer views were not available on startup, enable them now
         ui.actionFlightView->setEnabled(true);
-    ui.actionMissionView->setEnabled(true);
-    ui.actionEngineersView->setEnabled(true);
-    // The UAS actions are not enabled without connection to system
-    ui.actionLiftoff->setEnabled(true);
-    ui.actionLand->setEnabled(true);
-    ui.actionEmergency_Kill->setEnabled(true);
-    ui.actionEmergency_Land->setEnabled(true);
-    ui.actionShutdownMAV->setEnabled(true);
+        ui.actionMissionView->setEnabled(true);
+        ui.actionEngineersView->setEnabled(true);
+        // The UAS actions are not enabled without connection to system
+        ui.actionLiftoff->setEnabled(true);
+        ui.actionLand->setEnabled(true);
+        ui.actionEmergency_Kill->setEnabled(true);
+        ui.actionEmergency_Land->setEnabled(true);
+        ui.actionShutdownMAV->setEnabled(true);
 
-    QIcon icon;
-    // Set matching icon
-    switch (uas->getSystemType())
-    {
-    case MAV_TYPE_GENERIC:
-        icon = QIcon(":files/images/mavs/generic.svg");
-        break;
-    case MAV_TYPE_FIXED_WING:
-        icon = QIcon(":files/images/mavs/fixed-wing.svg");
-        break;
-    case MAV_TYPE_QUADROTOR:
-        icon = QIcon(":files/images/mavs/quadrotor.svg");
-        break;
-    case MAV_TYPE_COAXIAL:
-        icon = QIcon(":files/images/mavs/coaxial.svg");
-        break;
-    case MAV_TYPE_HELICOPTER:
-        icon = QIcon(":files/images/mavs/helicopter.svg");
-        break;
-    case MAV_TYPE_ANTENNA_TRACKER:
-        icon = QIcon(":files/images/mavs/antenna-tracker.svg");
-        break;
-    case MAV_TYPE_GCS:
-        icon = QIcon(":files/images/mavs/groundstation.svg");
-        break;
-    case MAV_TYPE_AIRSHIP:
-        icon = QIcon(":files/images/mavs/airship.svg");
-        break;
-    case MAV_TYPE_FREE_BALLOON:
-        icon = QIcon(":files/images/mavs/free-balloon.svg");
-        break;
-    case MAV_TYPE_ROCKET:
-        icon = QIcon(":files/images/mavs/rocket.svg");
-        break;
-    case MAV_TYPE_GROUND_ROVER:
-        icon = QIcon(":files/images/mavs/ground-rover.svg");
-        break;
-    case MAV_TYPE_SURFACE_BOAT:
-        icon = QIcon(":files/images/mavs/surface-boat.svg");
-        break;
-    case MAV_TYPE_SUBMARINE:
-        icon = QIcon(":files/images/mavs/submarine.svg");
-        break;
-    case MAV_TYPE_HEXAROTOR:
-        icon = QIcon(":files/images/mavs/hexarotor.svg");
-        break;
-    case MAV_TYPE_OCTOROTOR:
-        icon = QIcon(":files/images/mavs/octorotor.svg");
-        break;
-    case MAV_TYPE_TRICOPTER:
-        icon = QIcon(":files/images/mavs/tricopter.svg");
-        break;
-    case MAV_TYPE_FLAPPING_WING:
-        icon = QIcon(":files/images/mavs/flapping-wing.svg");
-        break;
-    case MAV_TYPE_KITE:
-        icon = QIcon(":files/images/mavs/kite.svg");
-        break;
-    default:
-        icon = QIcon(":files/images/mavs/unknown.svg");
-        break;
-    }
+        QIcon icon;
+        // Set matching icon
+        switch (uas->getSystemType())
+        {
+        case MAV_TYPE_GENERIC:
+            icon = QIcon(":files/images/mavs/generic.svg");
+            break;
+        case MAV_TYPE_FIXED_WING:
+            icon = QIcon(":files/images/mavs/fixed-wing.svg");
+            break;
+        case MAV_TYPE_QUADROTOR:
+            icon = QIcon(":files/images/mavs/quadrotor.svg");
+            break;
+        case MAV_TYPE_COAXIAL:
+            icon = QIcon(":files/images/mavs/coaxial.svg");
+            break;
+        case MAV_TYPE_HELICOPTER:
+            icon = QIcon(":files/images/mavs/helicopter.svg");
+            break;
+        case MAV_TYPE_ANTENNA_TRACKER:
+            icon = QIcon(":files/images/mavs/antenna-tracker.svg");
+            break;
+        case MAV_TYPE_GCS:
+            icon = QIcon(":files/images/mavs/groundstation.svg");
+            break;
+        case MAV_TYPE_AIRSHIP:
+            icon = QIcon(":files/images/mavs/airship.svg");
+            break;
+        case MAV_TYPE_FREE_BALLOON:
+            icon = QIcon(":files/images/mavs/free-balloon.svg");
+            break;
+        case MAV_TYPE_ROCKET:
+            icon = QIcon(":files/images/mavs/rocket.svg");
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            icon = QIcon(":files/images/mavs/ground-rover.svg");
+            break;
+        case MAV_TYPE_SURFACE_BOAT:
+            icon = QIcon(":files/images/mavs/surface-boat.svg");
+            break;
+        case MAV_TYPE_SUBMARINE:
+            icon = QIcon(":files/images/mavs/submarine.svg");
+            break;
+        case MAV_TYPE_HEXAROTOR:
+            icon = QIcon(":files/images/mavs/hexarotor.svg");
+            break;
+        case MAV_TYPE_OCTOROTOR:
+            icon = QIcon(":files/images/mavs/octorotor.svg");
+            break;
+        case MAV_TYPE_TRICOPTER:
+            icon = QIcon(":files/images/mavs/tricopter.svg");
+            break;
+        case MAV_TYPE_FLAPPING_WING:
+            icon = QIcon(":files/images/mavs/flapping-wing.svg");
+            break;
+        case MAV_TYPE_KITE:
+            icon = QIcon(":files/images/mavs/kite.svg");
+            break;
+        default:
+            icon = QIcon(":files/images/mavs/unknown.svg");
+            break;
+        }
 
     // XXX The multi-UAS selection menu has been disabled for now,
     // its redundant with right-clicking the UAS in the list.
     // this code piece might be removed later if this is the final
     // conclusion (May 2013)
     //        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
-    //        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
     //        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     //        ui.menuConnected_Systems->addAction(uasAction);
 
@@ -1831,6 +1844,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
 void MainWindow::UASDeleted(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     if (UASManager::instance()->getUASList().count() == 0)
     {
         // Last system deleted

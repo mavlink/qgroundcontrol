@@ -84,25 +84,12 @@ const double* CurveData::y() const
 }
 
 IncrementalPlot::IncrementalPlot(QWidget *parent):
-    QwtPlot(parent),
-    symbolWidth(1.2f),
-    curveWidth(1.0f),
-    gridWidth(0.8f),
-    scaleWidth(1.0f),
+    ChartPlot(parent),
     symmetric(false)
 {
-    setAutoReplot(false);
-
-    setFrameStyle(QFrame::NoFrame);
-    setLineWidth(0);
     setStyleText("solid crosses");
-    setCanvasLineWidth(2);
 
     plotLayout()->setAlignCanvasToScales(true);
-
-    grid = new QwtPlotGrid;
-    grid->setMajPen(QPen(Qt::gray, 0.8f, Qt::DotLine));
-    grid->attach(this);
 
     QwtLinearScaleEngine* yScaleEngine = new QwtLinearScaleEngine();
     setAxisScaleEngine(QwtPlot::yLeft, yScaleEngine);
@@ -112,39 +99,7 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
 
     resetScaling();
 
-    // enable zooming
-
-    zoomer = new ScrollZoomer(canvas());
-    zoomer->setRubberBandPen(QPen(Qt::red, 1.5f, Qt::DotLine));
-    zoomer->setTrackerPen(QPen(Qt::red));
-    //zoomer->setZoomBase(QwtDoubleRect());
     legend = NULL;
-
-    colors = QList<QColor>();
-    nextColor = 0;
-
-    ///> Color map for plots, includes 20 colors
-    ///> Map will start from beginning when the first 20 colors are exceeded
-    colors.append(QColor(242,255,128));
-    colors.append(QColor(70,80,242));
-    colors.append(QColor(232,33,47));
-    colors.append(QColor(116,251,110));
-    colors.append(QColor(81,183,244));
-    colors.append(QColor(234,38,107));
-    colors.append(QColor(92,247,217));
-    colors.append(QColor(151,59,239));
-    colors.append(QColor(231,72,28));
-    colors.append(QColor(236,48,221));
-    colors.append(QColor(75,133,243));
-    colors.append(QColor(203,254,121));
-    colors.append(QColor(104,64,240));
-    colors.append(QColor(200,54,238));
-    colors.append(QColor(104,250,138));
-    colors.append(QColor(235,43,165));
-    colors.append(QColor(98,248,176));
-    colors.append(QColor(161,252,116));
-    colors.append(QColor(87,231,246));
-    colors.append(QColor(230,126,23));
 
     connect(this, SIGNAL(legendChecked(QwtPlotItem*,bool)), this, SLOT(handleLegendClick(QwtPlotItem*,bool)));
 }
@@ -202,7 +157,7 @@ void IncrementalPlot::showLegend(bool show)
  */
 void IncrementalPlot::setStyleText(QString style)
 {
-    foreach (QwtPlotCurve* curve, d_curve) {
+    foreach (QwtPlotCurve* curve, curves) {
         // Style of datapoints
         if (style.toLower().contains("circles")) {
             curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse,
@@ -218,17 +173,17 @@ void IncrementalPlot::setStyleText(QString style)
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
         }
 
-        curve->setPen(QPen(QBrush(curve->symbol().pen().color().darker()), curveWidth));
         // Style of lines
         if (style.toLower().contains("dotted")) {
-            curve->setStyle(QwtPlotCurve::Dots);
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DotLine));
+        } else if (style.toLower().contains("dashed")) {
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DashLine));
         } else if (style.toLower().contains("line") || style.toLower().contains("solid")) {
-            curve->setStyle(QwtPlotCurve::Lines);
-        } else if (style.toLower().contains("dashed") || style.toLower().contains("solid")) {
-            curve->setStyle(QwtPlotCurve::Steps);
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::SolidLine));
         } else {
-            curve->setStyle(QwtPlotCurve::NoCurve);
+            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::NoPen));
         }
+        curve->setStyle(QwtPlotCurve::Lines);
 
     }
     replot();
@@ -308,19 +263,19 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
         data = d_data.value(key);
     }
 
-    if (!d_curve.contains(key)) {
+    if (!curves.contains(key)) {
         curve = new QwtPlotCurve(key);
-        d_curve.insert(key, curve);
+        curves.insert(key, curve);
         curve->setStyle(QwtPlotCurve::NoCurve);
         curve->setPaintAttribute(QwtPlotCurve::PaintFiltered);
 
         const QColor &c = getNextColor();
         curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
-                                   QBrush(c), QPen(c, 1.2f), QSize(5, 5)) );
+                                   QBrush(c), QPen(c, symbolWidth), QSize(5, 5)) );
 
         curve->attach(this);
     } else {
-        curve = d_curve.value(key);
+        curve = curves.value(key);
     }
 
     data->append(x, y, size);
@@ -374,7 +329,7 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
         canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, false);
         // FIXME Check if here all curves should be drawn
         //        QwtPlotCurve* plotCurve;
-        //        foreach(plotCurve, d_curve)
+        //        foreach(plotCurve, curves)
         //        {
         //            plotCurve->draw(0, curve->dataSize()-1);
         //        }
@@ -421,30 +376,12 @@ bool IncrementalPlot::gridEnabled()
     return grid->isVisible();
 }
 
-QList<QColor> IncrementalPlot::getColorMap()
-{
-    return colors;
-}
-
-QColor IncrementalPlot::getNextColor()
-{
-    /* Return current color and increment counter for next round */
-    nextColor++;
-    if(nextColor >= colors.count()) nextColor = 0;
-    return colors[nextColor++];
-}
-
-QColor IncrementalPlot::getColorForCurve(QString id)
-{
-    return d_curve.value(id)->pen().color();
-}
-
 void IncrementalPlot::removeData()
 {
-    foreach (QwtPlotCurve* curve, d_curve) {
+    foreach (QwtPlotCurve* curve, curves) {
         delete curve;
     }
-    d_curve.clear();
+    curves.clear();
 
     foreach (CurveData* data, d_data) {
         delete data;

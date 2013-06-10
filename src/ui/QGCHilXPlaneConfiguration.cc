@@ -44,7 +44,7 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
 
 void QGCHilXPlaneConfiguration::setVersion(int version)
 {
-
+    Q_UNUSED(version);
 }
 
 void QGCHilXPlaneConfiguration::toggleSimulation(bool connect)

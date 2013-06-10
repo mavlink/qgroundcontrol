@@ -10,8 +10,8 @@ class XbeeLinkInterface : public LinkInterface
     Q_OBJECT
 
 public:
-    virtual QString getPortName() = 0;
-    virtual int getBaudRate() = 0;
+    virtual QString getPortName() const = 0;
+    virtual int getBaudRate() const = 0;
 
 public slots:
     virtual bool setPortName(QString portName) = 0;

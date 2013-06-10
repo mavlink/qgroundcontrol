@@ -215,6 +215,12 @@ void DebugConsole::removeLink(LinkInterface* const linkInterface)
     }
     if (linkInterface == currLink) currLink = NULL;
 }
+void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
+{
+    m_ui->receiveText->appendPlainText(text);
+    // Ensure text area scrolls correctly
+    m_ui->receiveText->ensureCursorVisible();
+}
 
 void DebugConsole::linkSelected(int linkId)
 {
@@ -222,6 +228,7 @@ void DebugConsole::linkSelected(int linkId)
     if (currLink) {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
         disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+        disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
     }
     // Clear data
     m_ui->receiveText->clear();
@@ -230,6 +237,7 @@ void DebugConsole::linkSelected(int linkId)
     currLink = links[linkId];
     connect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
     connect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+    connect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
     setConnectionState(currLink->isConnected());
 }
 

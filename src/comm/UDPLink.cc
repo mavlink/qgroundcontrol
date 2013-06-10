@@ -354,17 +354,17 @@ bool UDPLink::hardwareConnect(void)
  *
  * @return True if link is connected, false otherwise.
  **/
-bool UDPLink::isConnected()
+bool UDPLink::isConnected() const
 {
     return connectState;
 }
 
-int UDPLink::getId()
+int UDPLink::getId() const
 {
     return id;
 }
 
-QString UDPLink::getName()
+QString UDPLink::getName() const
 {
     return name;
 }
@@ -376,7 +376,7 @@ void UDPLink::setName(QString name)
 }
 
 
-qint64 UDPLink::getNominalDataRate()
+qint64 UDPLink::getNominalDataRate() const
 {
     return 54000000; // 54 Mbit
 }
@@ -399,12 +399,12 @@ qint64 UDPLink::getMaxUpstream()
     return 0; // TODO
 }
 
-qint64 UDPLink::getBitsSent()
+qint64 UDPLink::getBitsSent() const
 {
     return bitsSentTotal;
 }
 
-qint64 UDPLink::getBitsReceived()
+qint64 UDPLink::getBitsReceived() const
 {
     return bitsReceivedTotal;
 }
@@ -427,12 +427,12 @@ qint64 UDPLink::getMaxDownstream()
     return 0; // TODO
 }
 
-bool UDPLink::isFullDuplex()
+bool UDPLink::isFullDuplex() const
 {
     return true;
 }
 
-int UDPLink::getLinkQuality()
+int UDPLink::getLinkQuality() const
 {
     /* This feature is not supported with this interface */
     return -1;

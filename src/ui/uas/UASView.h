@@ -49,13 +49,14 @@ class UASView : public QWidget
 public:
     UASView(UASInterface* uas, QWidget *parent = 0);
     ~UASView();
+    UASInterface* uas;
 
 public slots:
     /** @brief Update the name of the system */
     void updateName(const QString& name);
     void receiveHeartbeat(UASInterface* uas);
     void updateThrust(UASInterface* uas, double thrust);
-    void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
+    void updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateGlobalPosition(UASInterface*, double lon, double lat, double alt, quint64 usec);
     void updateSpeed(UASInterface*, double x, double y, double z, quint64 usec);
@@ -65,6 +66,11 @@ public slots:
     void updateLoad(UASInterface* uas, double load);
     //void receiveValue(int uasid, QString id, double value, quint64 time);
     void showHILUi();
+    /**
+     * Request that the UASManager deletes this UAS. This doesn't delete this widget
+     * yet, it waits for the approprait uasDeleted signal.
+     */
+    void triggerUASDeletion();
     void refresh();
     /** @brief Receive new waypoint information */
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);
@@ -80,8 +86,6 @@ public slots:
     void updateActiveUAS(UASInterface* uas, bool active);
     /** @brief Set the widget into critical mode */
     void heartbeatTimeout(bool timeout, unsigned int ms);
-    /** @brief Set the background color for the widget */
-    void setBackgroundColor();
     /** @brief Bring up the dialog to rename the system */
     void rename();
     /** @brief Select airframe for this vehicle */
@@ -100,9 +104,9 @@ protected:
     quint64 startTime;
     bool timeout;
     bool iconIsRed;
+    bool disconnected;
     int timeRemaining;
     float chargeLevel;
-    UASInterface* uas;
     float load;
     QString state;
     QString stateDesc;
@@ -146,6 +150,7 @@ protected:
 
 private:
     Ui::UASView *m_ui;
+    virtual void paintEvent(QPaintEvent *);
 
 signals:
     void uasInFocus(UASInterface* uas);

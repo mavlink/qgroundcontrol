@@ -51,6 +51,42 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #endif
 
+enum BatteryType
+{
+    NICD = 0,
+    NIMH = 1,
+    LIION = 2,
+    LIPOLY = 3,
+    LIFE = 4,
+    AGZN = 5
+}; ///< The type of battery used
+
+/*
+enum SpeedMeasurementSource
+{
+    PRIMARY_SPEED = 0,          // ArduPlane: Measured airspeed or estimated airspeed. ArduCopter: Ground (XY) speed.
+    GROUNDSPEED_BY_UAV = 1,     // Ground speed as reported by UAS
+    GROUNDSPEED_BY_GPS = 2,     // Ground speed as calculated from received GPS velocity data
+    LOCAL_SPEED = 3
+}; ///< For velocity data, the data source
+
+enum AltitudeMeasurementSource
+{
+    PRIMARY_ALTITUDE = 0,                  // ArduPlane: air and ground speed mix. This is the altitude used for navigastion.
+    BAROMETRIC_ALTITUDE = 1,               // Altitude is pressure altitude. Ardupilot reports no altitude purely by barometer,
+                                           // however when ALT_MIX==1, mix-altitude is purely barometric.
+    GPS_ALTITUDE = 2                       // GPS ASL altitude
+}; ///< For altitude data, the data source
+
+// TODO!!! The different frames are probably represented elsewhere. There should really only
+// be one set of frames. We also need to keep track of the home alt. somehow.
+enum AltitudeMeasurementFrame
+{
+    ABSOLUTE = 0,               // Altitude is pressure altitude
+    ABOVE_HOME_POSITION = 1
+}; ///< For altitude data, a reference frame
+*/
+
 /**
  * @brief Interface for all robots.
  *
@@ -358,9 +394,6 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
-    /** @brief System has been removed / disconnected / shutdown cleanly, remove */
-    void systemRemoved(UASInterface* uas);
-    void systemRemoved();
     /**
      * @brief Received a plain text message from the robot
      * This signal should NOT be used for standard communication, but rather for VERY IMPORTANT
@@ -470,14 +503,14 @@ signals:
      * @param percent remaining capacity in percent
      * @param seconds estimated remaining flight time in seconds
      */
-    void batteryChanged(UASInterface* uas, double voltage, double percent, int seconds);
+    void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void statusChanged(UASInterface* uas, QString status);
     void actuatorChanged(UASInterface*, int actId, double value);
     void thrustChanged(UASInterface*, double thrust);
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
     void attitudeChanged(UASInterface*, int component, double roll, double pitch, double yaw, quint64 usec);
-    void attitudeSpeedChanged(int uas, double rollspeed, double pitchspeed, double yawspeed, quint64 usec);
+    void attitudeRotationRatesChanged(int uas, double rollrate, double pitchrate, double yawrate, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     /** @brief The MAV set a new setpoint in the local (not body) NED X, Y, Z frame */
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
@@ -486,10 +519,21 @@ signals:
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void localPositionChanged(UASInterface*, int component, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
-    void altitudeChanged(int uasid, double altitude);
+    void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
     /** @brief Update the status of one satellite used for localization */
     void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
-    void speedChanged(UASInterface*, double x, double y, double z, quint64 usec);
+
+    // The horizontal speed (a scalar)
+    void primarySpeedChanged(UASInterface*, double speed, quint64 usec);
+    void gpsSpeedChanged(UASInterface*, double speed, quint64 usec);
+    // The vertical speed (a scalar)
+    void climbRateChanged(UASInterface*, double climb, quint64 usec);
+    // Consider adding a MAV_FRAME parameter to this; could help specifying what the 3 scalars are.
+    void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
+
+    void navigationControllerErrorsChanged(UASInterface*, double altitudeError, double speedError, double xtrackError);
+
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
     /** @brief Emit the new system type */

@@ -63,10 +63,11 @@ MAVLinkProtocol::MAVLinkProtocol() :
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer->start(1000/heartbeatRate);
-    totalReceiveCounter = 0;
-    totalLossCounter = 0;
-    currReceiveCounter = 0;
-    currLossCounter = 0;
+
+    // All the *Counter variables are not initialized here, as they should be initialized
+    // on a per-link basis before those links are used. @see resetMetadataForLink().
+
+    // Initialize the list for tracking dropped messages to invalid.
     for (int i = 0; i < 256; i++)
     {
         for (int j = 0; j < 256; j++)
@@ -174,6 +175,16 @@ QString MAVLinkProtocol::getLogfileName()
     }
 }
 
+void MAVLinkProtocol::resetMetadataForLink(const LinkInterface *link)
+{
+    int linkId = link->getId();
+    totalReceiveCounter[linkId] = 0;
+    totalLossCounter[linkId] = 0;
+    totalErrorCounter[linkId] = 0;
+    currReceiveCounter[linkId] = 0;
+    currLossCounter[linkId] = 0;
+}
+
 void MAVLinkProtocol::linkStatusChanged(bool connected)
 {
     LinkInterface* link = qobject_cast<LinkInterface*>(QObject::sender());
@@ -201,7 +212,6 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
 }
 
 /**
- * The bytes are copied by calling the LinkInterface::readBytes() method.
  * This method parses all incoming bytes and constructs a MAVLink packet.
  * It can handle multiple links in parallel, as each link has it's own buffer/
  * parsing state machine.
@@ -214,12 +224,16 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     mavlink_message_t message;
     mavlink_status_t status;
 
+    // Cache the link ID for common use.
+    int linkId = link->getId();
+
     static int mavlink09Count = 0;
     static bool decodedFirstPacket = false;
     static bool warnedUser = false;
 
+    // FIXME: Add check for if link->getId() >= MAVLINK_COMM_NUM_BUFFERS
     for (int position = 0; position < b.size(); position++) {
-        unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b[position]), &message, &status);
+        unsigned int decodeState = mavlink_parse_char(linkId, (uint8_t)(b[position]), &message, &status);
 
         if ((uint8_t)b[position] == 0x55) mavlink09Count++;
         if ((mavlink09Count > 100) && !decodedFirstPacket && !warnedUser)
@@ -229,6 +243,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // with QGroundControl built for version 1.0
             emit protocolStatusMessage("MAVLink Version or Baud Rate Mismatch", "Your MAVLink device seems to use the deprecated version 0.9, while QGroundControl only supports version 1.0+. Please upgrade the MAVLink version of your autopilot. If your autopilot is using version 1.0, check if the baud rates of QGroundControl and your autopilot are the same.");
         }
+
+        // Count parser errors as well.
+        totalErrorCounter[linkId] += status.packet_rx_drop_count;
 
         if (decodeState == 1)
         {
@@ -391,8 +408,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             {
 
                 // Increase receive counter
-                totalReceiveCounter++;
-                currReceiveCounter++;
+                totalReceiveCounter[linkId]++;
+                currReceiveCounter[linkId]++;
 
                 // Update last message sequence ID
                 uint8_t expectedIndex;
@@ -412,7 +429,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 if (message.seq != expectedIndex)
                 {
                     // Determine how many messages were skipped accounting for 0-wraparound
-                    int16_t lostMessages = message.seq - expectedIndex; 
+                    int16_t lostMessages = message.seq - expectedIndex;
                     if (lostMessages < 0)
                     {
                         // Usually, this happens in the case of an out-of order packet
@@ -423,22 +440,22 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                         // Console generates excessive load at high loss rates, needs better GUI visualization
                         //qDebug() << QString("Lost %1 messages for comp %4: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq).arg(message.compid);
                     }
-                    totalLossCounter += lostMessages;
-                    currLossCounter += lostMessages;
+                    totalLossCounter[linkId] += lostMessages;
+                    currLossCounter[linkId] += lostMessages;
                 }
 
                 // Update the last sequence ID
                 lastIndex[message.sysid][message.compid] = message.seq;
 
                 // Update on every 32th packet
-                if (totalReceiveCounter % 32 == 0)
+                if (totalReceiveCounter[linkId] % 32 == 0)
                 {
                     // Calculate new loss ratio
                     // Receive loss
-                    float receiveLoss = (double)currLossCounter/(double)(currReceiveCounter+currLossCounter);
+                    float receiveLoss = (double)currLossCounter[linkId]/(double)(currReceiveCounter[linkId]+currLossCounter[linkId]);
                     receiveLoss *= 100.0f;
-                    currLossCounter = 0;
-                    currReceiveCounter = 0;
+                    currLossCounter[linkId] = 0;
+                    currReceiveCounter[linkId] = 0;
                     emit receiveLossChanged(message.sysid, receiveLoss);
                 }
 

@@ -41,7 +41,7 @@ void senseSoarMAV::receiveMessage(LinkInterface *link, mavlink_message_t message
 				emit valueChanged(uasId, "rollspeed", "rad/s", this->m_rotVel[0], time);
                 emit valueChanged(uasId, "pitchspeed", "rad/s", this->m_rotVel[1], time);
                 emit valueChanged(uasId, "yawspeed", "rad/s", this->m_rotVel[2], time);
-				emit attitudeSpeedChanged(uasId, this->m_rotVel[0], this->m_rotVel[1], this->m_rotVel[2], time);
+                emit attitudeRotationRatesChanged(uasId, this->m_rotVel[0], this->m_rotVel[1], this->m_rotVel[2], time);
 				break;
 			}
 		case MAVLINK_MSG_ID_LLC_OUT: // low level controller output
@@ -62,7 +62,7 @@ void senseSoarMAV::receiveMessage(LinkInterface *link, mavlink_message_t message
 				mavlink_obs_air_temp_t airTMsg;
 				mavlink_msg_obs_air_temp_decode(&message,&airTMsg);
 				quint64 time = getUnixTime();
-				emit valueChanged(uasId, "Air Temp", "°", airTMsg.airT, time);
+				emit valueChanged(uasId, "Air Temp", "Â°", airTMsg.airT, time);
 				break;
 			}
 		case MAVLINK_MSG_ID_OBS_AIR_VELOCITY:

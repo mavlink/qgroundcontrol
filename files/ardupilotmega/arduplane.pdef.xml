@@ -220,6 +220,12 @@
 <value code="1">ReturnToLaunch</value>
 </values>
 </param>
+<param humanName="Failsafe battery voltage" name="ArduPlane:FS_BATT_VOLTAGE" documentation="Battery voltage to trigger failsafe. Set to 0 to disable battery voltage failsafe. If the battery voltage drops below this voltage then the plane will RTL" user="Standard">
+<field name="Units">Volts</field>
+</param>
+<param humanName="Failsafe battery milliAmpHours" name="ArduPlane:FS_BATT_MAH" documentation="Battery capacity remaining to trigger failsafe. Set to 0 to disable battery remaining failsafe. If the battery remaining drops below this level then the plane will RTL" user="Standard">
+<field name="Units">mAh</field>
+</param>
 <param humanName="GCS failsafe enable" name="ArduPlane:FS_GCS_ENABL" documentation="Enable ground control station telemetry failsafe. Failsafe will trigger after 20 seconds of no MAVLink heartbeat messages. WARNING: Enabling this option opens up the possibility of your plane going into failsafe mode and running the motor on the ground it it loses contact with your ground station. If this option is enabled on an electric plane then either use a separate motor arming switch or remove the propeller in any ground testing." user="Standard">
 <values>
 <value code="0">Disabled</value>
@@ -377,7 +383,12 @@
 </param>
 <param humanName="Num Resets" name="ArduPlane:SYS_NUM_RESETS" documentation="Number of APM board resets" user="Advanced">
 </param>
-<param humanName="Log bitmask" name="ArduPlane:LOG_BITMASK" documentation="bitmap of log fields to enable" user="Advanced">
+<param humanName="Log bitmask" name="ArduPlane:LOG_BITMASK" documentation="Two byte bitmap of log types to enable in dataflash" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1902">Default</value>
+<value code="2030">Default+IMU</value>
+</values>
 </param>
 <param humanName="Reset Switch Channel" name="ArduPlane:RST_SWITCH_CH" documentation="RC channel to use to reset to last flight mode&#9;after geofence takeover." user="Advanced">
 </param>
@@ -488,7 +499,7 @@
 <field name="Units">seconds</field>
 </param>
 <param humanName="RTL Altitude" name="ArduCopter:RTL_ALT" documentation="The minimum altitude the model will move to before Returning to Launch.  Set to zero to return at current altitude." user="Standard">
-<field name="Range">0 4000</field>
+<field name="Range">0 8000</field>
 <field name="Increment">1</field>
 <field name="Units">Centimeters</field>
 </param>
@@ -500,7 +511,7 @@
 </param>
 <param humanName="Sonar type" name="ArduCopter:SONAR_TYPE" documentation="Used to adjust scaling to match the sonar used (only Maxbotix sonars are supported at this time)" user="Standard">
 <values>
-<value code="0">XL-EZ0</value>
+<value code="0">XL-EZ0 / XL-EZ4</value>
 <value code="1">LV-EZ0</value>
 <value code="2">XLL-EZ0</value>
 <value code="3">HRLV</value>
@@ -540,7 +551,7 @@
 </param>
 <param humanName="Current Amps per volt" name="ArduCopter:AMP_PER_VOLT" documentation="Used to convert the voltage on the current sensing pin (BATT_CURR_PIN) to the actual current being consumed in amps (curr pin voltage * INPUT_VOLTS/1024 * AMP_PER_VOLT )" user="Advanced">
 </param>
-<param humanName="Battery Capacity" name="ArduCopter:BATT_CAPACITY" documentation="Battery capacity in milliamp-hours (mAh)">
+<param humanName="Battery Capacity" name="ArduCopter:BATT_CAPACITY" documentation="Battery capacity in milliamp-hours (mAh)" user="Standard">
 <field name="Units">mAh</field>
 </param>
 <param humanName="Enable Compass" name="ArduCopter:MAG_ENABLE" documentation="Setting this to Enabled(1) will enable the compass. Setting this to Disabled(0) will disable the compass" user="Standard">
@@ -557,7 +568,7 @@
 </param>
 <param humanName="Low Voltage" name="ArduCopter:LOW_VOLT" documentation="Set this to the voltage you want to represent low voltage" user="Standard">
 <field name="Range">0 20</field>
-<field name="Increment">.1</field>
+<field name="Increment">0.1</field>
 </param>
 <param humanName="Enable Super Simple Mode" name="ArduCopter:SUPER_SIMPLE" documentation="Setting this to Enabled(1) will enable Super Simple Mode. Setting this to Disabled(0) will disable Super Simple Mode" user="Standard">
 <values>
@@ -628,7 +639,7 @@
 <field name="Units">ms</field>
 </param>
 <param humanName="Land speed" name="ArduCopter:LAND_SPEED" documentation="The descent speed for the final stage of landing in cm/s" user="Standard">
-<field name="Range">10 200</field>
+<field name="Range">20 200</field>
 <field name="Increment">10</field>
 <field name="Units">Centimeters/Second</field>
 </param>
@@ -769,6 +780,13 @@
 <param humanName="Simple mode bitmask" name="ArduCopter:SIMPLE" documentation="Bitmask which holds which flight modes use simple heading mode (eg bit 0 = 1 means Flight Mode 0 uses simple mode)" user="Advanced">
 </param>
 <param humanName="Log bitmask" name="ArduCopter:LOG_BITMASK" documentation="2 byte bitmap of log types to enable" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="830">Default</value>
+<value code="958">Default+IMU</value>
+<value code="1854">Default+Motors</value>
+<value code="17214">Default+INav</value>
+</values>
 </param>
 <param humanName="Toy Yaw Rate" name="ArduCopter:TOY_RATE" documentation="Controls yaw rate in Toy mode.  Higher values will cause a slower yaw rate.  Do not set to zero!" user="Advanced">
 <field name="Range">1 10</field>
@@ -824,7 +842,6 @@
 <field name="Range">0 32767</field>
 </param>
 <param humanName="Frame Orientation (+, X or V)" name="ArduCopter:FRAME" documentation="Controls motor mixing for multicopters.  Not used for Tri or Traditional Helicopters." user="Standard">
-<field name="Range">0 32767</field>
 <values>
 <value code="0">Plus</value>
 <value code=" 1">X</value>
@@ -840,18 +857,47 @@
 <value code=" 4">RTL</value>
 <value code=" 5">Save Trim</value>
 <value code=" 7">Save WP</value>
+<value code=" 8">Multi Mode</value>
 <value code=" 9">Camera Trigger</value>
 <value code=" 10">Sonar</value>
+<value code=" 11">Fence</value>
+<value code=" 12">ResetToArmedYaw</value>
 </values>
 </param>
-<param humanName="Auto Slew Rate" name="ArduCopter:AUTO_SLEW" documentation="This restricts the rate of change of the roll and pitch attitude commanded by the auto pilot" user="Advanced">
-<field name="Range">1 90</field>
-<field name="Increment">1</field>
-<field name="Units">Degrees/Second</field>
+<param humanName="Channel 8 option" name="ArduCopter:CH8_OPT" documentation="Select which function if performed when CH8 is above 1800 pwm" user="Standard">
+<values>
+<value code="0">Do Nothing</value>
+<value code=" 2">Flip</value>
+<value code=" 3">Simple Mode</value>
+<value code=" 4">RTL</value>
+<value code=" 5">Save Trim</value>
+<value code=" 7">Save WP</value>
+<value code=" 8">Multi Mode</value>
+<value code=" 9">Camera Trigger</value>
+<value code=" 10">Sonar</value>
+<value code=" 11">Fence</value>
+<value code=" 12">ResetToArmedYaw</value>
+</values>
+</param>
+<param humanName="Arming check" name="ArduCopter:ARMING_CHECK" documentation="Allows enabling or disabling of pre-arming checks of receiver, accelerometer, barometer and compass" user="Standard">
+<values>
+<value code="0">Disabled</value>
+<value code=" 1">Enabled</value>
+</values>
+</param>
+<param humanName="Rate Pitch Feed Forward" name="ArduCopter:RATE_PIT_FF" documentation="Rate Pitch Feed Forward (for TradHeli Only)" user="Standard">
+<field name="Range">0 10</field>
+</param>
+<param humanName="Rate Roll Feed Forward" name="ArduCopter:RATE_RLL_FF" documentation="Rate Roll Feed Forward (for TradHeli Only)" user="Standard">
+<field name="Range">0 10</field>
+</param>
+<param humanName="Rate Yaw Feed Forward" name="ArduCopter:RATE_YAW_FF" documentation="Rate Yaw Feed Forward (for TradHeli Only)" user="Standard">
+<field name="Range">0 10</field>
 </param>
 <param humanName="ESC Update Speed" name="ArduCopter:RC_SPEED" documentation="This is the speed in Hertz that your ESCs will receive updates" user="Advanced">
-<field name="Values">125,400,490</field>
-<field name="Units">Hertz (Hz)</field>
+<field name="Range">50 490</field>
+<field name="Increment">1</field>
+<field name="Units">Hz</field>
 </param>
 <param humanName="Acro P gain" name="ArduCopter:ACRO_P" documentation="Used to convert pilot roll, pitch and yaw input into a dssired rate of rotation in ACRO mode.  Higher values mean faster rate of rotation." user="Standard">
 <field name="Range">1 10</field>
@@ -888,53 +934,192 @@
 <value code="64">GPS Nav Blink</value>
 </values>
 </param>
-<param humanName="Roll axis rate controller D gain" name="ArduCopter:RATE_RLL_P" documentation="Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual roll rate" user="Standard">
+<param humanName="Roll axis rate controller P gain" name="ArduCopter:RATE_RLL_P" documentation="Roll axis rate controller P gain.  Converts the difference between desired roll rate and actual roll rate into a motor speed output" user="Standard">
+<field name="Range">0.08 0.20</field>
+</param>
+<param humanName="Roll axis rate controller I gain" name="ArduCopter:RATE_RLL_I" documentation="Roll axis rate controller I gain.  Corrects long-term difference in desired roll rate vs actual roll rate" user="Standard">
+<field name="Range">0.01 0.5</field>
+</param>
+<param humanName="Roll axis rate controller I gain maximum" name="ArduCopter:RATE_RLL_IMAX" documentation="Roll axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output" user="Standard">
+<field name="Range">0 500</field>
+<field name="Units">PWM</field>
+</param>
+<param humanName="Roll axis rate controller D gain" name="ArduCopter:RATE_RLL_D" documentation="Roll axis rate controller D gain.  Compensates for short-term change in desired roll rate vs actual roll rate" user="Standard">
 <field name="Range">0.001 0.008</field>
 </param>
-<param humanName="Pitch axis rate controller D gain" name="ArduCopter:RATE_PIT_P" documentation="Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs actual pitch rate" user="Standard">
+<param humanName="Pitch axis rate controller P gain" name="ArduCopter:RATE_PIT_P" documentation="Pitch axis rate controller P gain.  Converts the difference between desired pitch rate and actual pitch rate into a motor speed output" user="Standard">
+<field name="Range">0.08 0.20</field>
+</param>
+<param humanName="Pitch axis rate controller I gain" name="ArduCopter:RATE_PIT_I" documentation="Pitch axis rate controller I gain.  Corrects long-term difference in desired pitch rate vs actual pitch rate" user="Standard">
+<field name="Range">0.01 0.5</field>
+</param>
+<param humanName="Pitch axis rate controller I gain maximum" name="ArduCopter:RATE_PIT_IMAX" documentation="Pitch axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output" user="Standard">
+<field name="Range">0 500</field>
+<field name="Units">PWM</field>
+</param>
+<param humanName="Pitch axis rate controller D gain" name="ArduCopter:RATE_PIT_D" documentation="Pitch axis rate controller D gain.  Compensates for short-term change in desired pitch rate vs actual pitch rate" user="Standard">
 <field name="Range">0.001 0.008</field>
 </param>
-<param humanName="Yaw axis rate controller D gain" name="ArduCopter:RATE_YAW_P" documentation="Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw rate" user="Standard">
+<param humanName="Yaw axis rate controller P gain" name="ArduCopter:RATE_YAW_P" documentation="Yaw axis rate controller P gain.  Converts the difference between desired yaw rate and actual yaw rate into a motor speed output" user="Standard">
+<field name="Range">0.150 0.250</field>
+</param>
+<param humanName="Yaw axis rate controller I gain" name="ArduCopter:RATE_YAW_I" documentation="Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw rate" user="Standard">
+<field name="Range">0.010 0.020</field>
+</param>
+<param humanName="Yaw axis rate controller I gain maximum" name="ArduCopter:RATE_YAW_IMAX" documentation="Yaw axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output" user="Standard">
+<field name="Range">0 500</field>
+<field name="Units">PWM</field>
+</param>
+<param humanName="Yaw axis rate controller D gain" name="ArduCopter:RATE_YAW_D" documentation="Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw rate" user="Standard">
 <field name="Range">0.000 0.001</field>
 </param>
-<param humanName="Loiter latitude rate controller D gain" name="ArduCopter:LOITER_LAT_P" documentation="Loiter latitude rate controller D gain.  Compensates for short-term change in desired speed vs actual speed" user="Standard">
+<param humanName="Loiter latitude rate controller P gain" name="ArduCopter:LOITER_LAT_P" documentation="Loiter latitude rate controller P gain.  Converts the difference between desired speed and actual speed into a lean angle in the latitude direction" user="Standard">
+<field name="Range">2.000 6.000</field>
+</param>
+<param humanName="Loiter latitude rate controller I gain" name="ArduCopter:LOITER_LAT_I" documentation="Loiter latitude rate controller I gain.  Corrects long-term difference in desired speed and actual speed in the latitude direction" user="Standard">
+<field name="Range">0.020 0.060</field>
+</param>
+<param humanName="Loiter rate controller I gain maximum" name="ArduCopter:LOITER_LAT_IMAX" documentation="Loiter rate controller I gain maximum.  Constrains the lean angle that the I gain will output" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Loiter latitude rate controller D gain" name="ArduCopter:LOITER_LAT_D" documentation="Loiter latitude rate controller D gain.  Compensates for short-term change in desired speed vs actual speed" user="Standard">
 <field name="Range">0.200 0.600</field>
 </param>
-<param humanName="Loiter longituderate controller D gain" name="ArduCopter:LOITER_LON_P" documentation="Loiter longitude rate controller D gain.  Compensates for short-term change in desired speed vs actual speed" user="Standard">
+<param humanName="Loiter longitude rate controller P gain" name="ArduCopter:LOITER_LON_P" documentation="Loiter longitude rate controller P gain.  Converts the difference between desired speed and actual speed into a lean angle in the longitude direction" user="Standard">
+<field name="Range">2.000 6.000</field>
+</param>
+<param humanName="Loiter longitude rate controller I gain" name="ArduCopter:LOITER_LON_I" documentation="Loiter longitude rate controller I gain.  Corrects long-term difference in desired speed and actual speed in the longitude direction" user="Standard">
+<field name="Range">0.020 0.060</field>
+</param>
+<param humanName="Loiter longitude rate controller I gain maximum" name="ArduCopter:LOITER_LON_IMAX" documentation="Loiter longitude rate controller I gain maximum.  Constrains the lean angle that the I gain will output" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Loiter longituderate controller D gain" name="ArduCopter:LOITER_LON_D" documentation="Loiter longitude rate controller D gain.  Compensates for short-term change in desired speed vs actual speed" user="Standard">
 <field name="Range">0.200 0.600</field>
 </param>
-<param humanName="Throttle rate controller D gain" name="ArduCopter:THR_RATE_P" documentation="Throttle rate controller D gain.  Compensates for short-term change in desired vertical speed vs actual speed" user="Standard">
-<field name="Range">0.000 0.400</field>
+<param humanName="Throttle rate controller P gain" name="ArduCopter:THR_RATE_P" documentation="Throttle rate controller P gain.  Converts the difference between desired vertical speed and actual speed into a desired acceleration that is passed to the throttle acceleration controller" user="Standard">
+<field name="Range">1.000 8.000</field>
 </param>
-<param humanName="Throttle acceleration controller D gain" name="ArduCopter:THR_ACCEL_P" documentation="Throttle acceleration controller D gain.  Compensates for short-term change in desired vertical acceleration vs actual acceleration" user="Standard">
-<field name="Range">0.000 0.400</field>
+<param humanName="Throttle rate controller I gain" name="ArduCopter:THR_RATE_I" documentation="Throttle rate controller I gain.  Corrects long-term difference in desired vertical speed and actual speed" user="Standard">
+<field name="Range">0.000 0.100</field>
 </param>
-<param humanName="Optical Flow based loiter controller roll axis D gain" name="ArduCopter:OF_RLL_P" documentation="Optical Flow based loiter controller roll axis D gain.  Compensates for short-term change in speed in the roll direction" user="Standard">
-<field name="Range">0.100 0.140</field>
-</param>
-<param humanName="Optical Flow based loiter controller pitch axis D gain" name="ArduCopter:OF_PIT_P" documentation="Optical Flow based loiter controller pitch axis D gain.  Compensates for short-term change in speed in the pitch direction" user="Standard">
-<field name="Range">0.100 0.140</field>
-</param>
-<param humanName="Roll axis stabilize controller I gain maximum" name="ArduCopter:STB_RLL_P" documentation="Roll axis stabilize (i.e. angle) controller I gain maximum.  Constrains the maximum roll rate that the I term will generate" user="Standard">
-<field name="Range">0 4500</field>
-</param>
-<param humanName="Pitch axis stabilize controller I gain maximum" name="ArduCopter:STB_PIT_P" documentation="Pitch axis stabilize (i.e. angle) controller I gain maximum.  Constrains the maximum pitch rate that the I term will generate" user="Standard">
-<field name="Range">0 4500</field>
-</param>
-<param humanName="Yaw axis stabilize controller I gain maximum" name="ArduCopter:STB_YAW_P" documentation="Yaw axis stabilize (i.e. angle) controller I gain maximum.  Constrains the maximum yaw rate that the I term will generate" user="Standard">
-<field name="Range">0 4500</field>
-</param>
-<param humanName="Altitude controller I gain maximum" name="ArduCopter:THR_ALT_P" documentation="Altitude controller I gain maximum.  Constrains the maximum climb rate rate that the I term will generate" user="Standard">
+<param humanName="Throttle rate controller I gain maximum" name="ArduCopter:THR_RATE_IMAX" documentation="Throttle rate controller I gain maximum.  Constrains the desired acceleration that the I gain will generate" user="Standard">
 <field name="Range">0 500</field>
+<field name="Units">cm/s/s</field>
 </param>
-<param humanName="Loiter latitude position controller I gain maximum" name="ArduCopter:HLD_LAT_P" documentation="Loiter latitude position controller I gain maximum.  Constrains the maximum desired speed that the I term will generate" user="Standard">
-<field name="Range">0 3000</field>
+<param humanName="Throttle rate controller D gain" name="ArduCopter:THR_RATE_D" documentation="Throttle rate controller D gain.  Compensates for short-term change in desired vertical speed vs actual speed" user="Standard">
+<field name="Range">0.000 0.400</field>
 </param>
-<param humanName="Loiter longitudeposition controller I gain maximum" name="ArduCopter:HLD_LON_P" documentation="Loiter  longitudeposition controller I gain maximum.  Constrains the maximum desired speed that the I term will generate" user="Standard">
+<param humanName="Throttle acceleration controller P gain" name="ArduCopter:THR_ACCEL_P" documentation="Throttle acceleration controller P gain.  Converts the difference between desired vertical acceleration and actual acceleration into a motor output" user="Standard">
+<field name="Range">0.500 1.500</field>
+</param>
+<param humanName="Throttle acceleration controller I gain" name="ArduCopter:THR_ACCEL_I" documentation="Throttle acceleration controller I gain.  Corrects long-term difference in desired vertical acceleration and actual acceleration" user="Standard">
+<field name="Range">0.000 3.000</field>
+</param>
+<param humanName="Throttle acceleration controller I gain maximum" name="ArduCopter:THR_ACCEL_IMAX" documentation="Throttle acceleration controller I gain maximum.  Constrains the maximum pwm that the I term will generate" user="Standard">
+<field name="Range">0 500</field>
+<field name="Units">PWM</field>
+</param>
+<param humanName="Throttle acceleration controller D gain" name="ArduCopter:THR_ACCEL_D" documentation="Throttle acceleration controller D gain.  Compensates for short-term change in desired vertical acceleration vs actual acceleration" user="Standard">
+<field name="Range">0.000 0.400</field>
+</param>
+<param humanName="Optical Flow based loiter controller roll axis P gain" name="ArduCopter:OF_RLL_P" documentation="Optical Flow based loiter controller roll axis P gain.  Converts the position error from the target point to a roll angle" user="Standard">
+<field name="Range">2.000 3.000</field>
+</param>
+<param humanName="Optical Flow based loiter controller roll axis I gain" name="ArduCopter:OF_RLL_I" documentation="Optical Flow based loiter controller roll axis I gain.  Corrects long-term position error by more persistently rolling left or right" user="Standard">
+<field name="Range">0.250 0.750</field>
+</param>
+<param humanName="Optical Flow based loiter controller roll axis I gain maximum" name="ArduCopter:OF_RLL_IMAX" documentation="Optical Flow based loiter controller roll axis I gain maximum.  Constrains the maximum roll angle that the I term will generate" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Optical Flow based loiter controller roll axis D gain" name="ArduCopter:OF_RLL_D" documentation="Optical Flow based loiter controller roll axis D gain.  Compensates for short-term change in speed in the roll direction" user="Standard">
+<field name="Range">0.100 0.140</field>
+</param>
+<param humanName="Optical Flow based loiter controller pitch axis P gain" name="ArduCopter:OF_PIT_P" documentation="Optical Flow based loiter controller pitch axis P gain.  Converts the position error from the target point to a pitch angle" user="Standard">
+<field name="Range">2.000 3.000</field>
+</param>
+<param humanName="Optical Flow based loiter controller pitch axis I gain" name="ArduCopter:OF_PIT_I" documentation="Optical Flow based loiter controller pitch axis I gain.  Corrects long-term position error by more persistently pitching left or right" user="Standard">
+<field name="Range">0.250 0.750</field>
+</param>
+<param humanName="Optical Flow based loiter controller pitch axis I gain maximum" name="ArduCopter:OF_PIT_IMAX" documentation="Optical Flow based loiter controller pitch axis I gain maximum.  Constrains the maximum pitch angle that the I term will generate" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Optical Flow based loiter controller pitch axis D gain" name="ArduCopter:OF_PIT_D" documentation="Optical Flow based loiter controller pitch axis D gain.  Compensates for short-term change in speed in the pitch direction" user="Standard">
+<field name="Range">0.100 0.140</field>
+</param>
+<param humanName="Roll axis stabilize controller P gain" name="ArduCopter:STB_RLL_P" documentation="Roll axis stabilize (i.e. angle) controller P gain.  Converts the error between the desired roll angle and actual angle to a desired roll rate" user="Standard">
+<field name="Range">3.000 6.000</field>
+</param>
+<param humanName="Roll axis stabilize controller I gain" name="ArduCopter:STB_RLL_I" documentation="Roll axis stabilize (i.e. angle) controller I gain.  Corrects for longer-term difference in desired roll angle and actual angle" user="Standard">
+<field name="Range">0.000 0.100</field>
+</param>
+<param humanName="Roll axis stabilize controller I gain maximum" name="ArduCopter:STB_RLL_IMAX" documentation="Roll axis stabilize (i.e. angle) controller I gain maximum.  Constrains the maximum roll rate that the I term will generate" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees/Sec</field>
+</param>
+<param humanName="Pitch axis stabilize controller P gain" name="ArduCopter:STB_PIT_P" documentation="Pitch axis stabilize (i.e. angle) controller P gain.  Converts the error between the desired pitch angle and actual angle to a desired pitch rate" user="Standard">
+<field name="Range">3.000 6.000</field>
+</param>
+<param humanName="Pitch axis stabilize controller I gain" name="ArduCopter:STB_PIT_I" documentation="Pitch axis stabilize (i.e. angle) controller I gain.  Corrects for longer-term difference in desired pitch angle and actual angle" user="Standard">
+<field name="Range">0.000 0.100</field>
+</param>
+<param humanName="Pitch axis stabilize controller I gain maximum" name="ArduCopter:STB_PIT_IMAX" documentation="Pitch axis stabilize (i.e. angle) controller I gain maximum.  Constrains the maximum pitch rate that the I term will generate" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees/Sec</field>
+</param>
+<param humanName="Yaw axis stabilize controller P gain" name="ArduCopter:STB_YAW_P" documentation="Yaw axis stabilize (i.e. angle) controller P gain.  Converts the error between the desired yaw angle and actual angle to a desired yaw rate" user="Standard">
+<field name="Range">3.000 6.000</field>
+</param>
+<param humanName="Yaw axis stabilize controller I gain" name="ArduCopter:STB_YAW_I" documentation="Yaw axis stabilize (i.e. angle) controller I gain.  Corrects for longer-term difference in desired yaw angle and actual angle" user="Standard">
+<field name="Range">0.000 0.100</field>
+</param>
+<param humanName="Yaw axis stabilize controller I gain maximum" name="ArduCopter:STB_YAW_IMAX" documentation="Yaw axis stabilize (i.e. angle) controller I gain maximum.  Constrains the maximum yaw rate that the I term will generate" user="Standard">
+<field name="Range">0 4500</field>
+<field name="Units">Centi-Degrees/Sec</field>
+</param>
+<param humanName="Altitude controller P gain" name="ArduCopter:THR_ALT_P" documentation="Altitude controller P gain.  Converts the difference between the desired altitude and actual altitude into a climb or descent rate which is passed to the throttle rate controller" user="Standard">
+<field name="Range">1.000 3.000</field>
+</param>
+<param humanName="Altitude controller I gain" name="ArduCopter:THR_ALT_I" documentation="Altitude controller I gain.  Corrects for longer-term difference in desired altitude and actual altitude" user="Standard">
+<field name="Range">0.000 0.100</field>
+</param>
+<param humanName="Altitude controller I gain maximum" name="ArduCopter:THR_ALT_IMAX" documentation="Altitude controller I gain maximum.  Constrains the maximum climb rate rate that the I term will generate" user="Standard">
+<field name="Range">0 500</field>
+<field name="Units">cm/s</field>
+</param>
+<param humanName="Loiter latitude position controller P gain" name="ArduCopter:HLD_LAT_P" documentation="Loiter latitude position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller" user="Standard">
+<field name="Range">0.100 0.300</field>
+</param>
+<param humanName="Loiter latitude position controller I gain" name="ArduCopter:HLD_LAT_I" documentation="Loiter latitude position controller I gain.  Corrects for longer-term distance (in latitude) to the target location" user="Standard">
+<field name="Range">0.000 0.100</field>
+</param>
+<param humanName="Loiter latitude position controller I gain maximum" name="ArduCopter:HLD_LAT_IMAX" documentation="Loiter latitude position controller I gain maximum.  Constrains the maximum desired speed that the I term will generate" user="Standard">
 <field name="Range">0 3000</field>
+<field name="Units">cm/s</field>
+</param>
+<param humanName="Loiter longitude position controller P gain" name="ArduCopter:HLD_LON_P" documentation="Loiter longitude position controller P gain.  Converts the distance (in the longitude direction) to the target location into a desired speed which is then passed to the loiter longitude rate controller" user="Standard">
+<field name="Range">0.100 0.300</field>
+</param>
+<param humanName="Loiter longitude position controller I gain" name="ArduCopter:HLD_LON_I" documentation="Loiter longitude position controller I gain.  Corrects for longer-term distance (in longitude direction) to the target location" user="Standard">
+<field name="Range">0.000 0.100</field>
+</param>
+<param humanName="Loiter longitudeposition controller I gain maximum" name="ArduCopter:HLD_LON_IMAX" documentation="Loiter  longitudeposition controller I gain maximum.  Constrains the maximum desired speed that the I term will generate" user="Standard">
+<field name="Range">0 3000</field>
+<field name="Units">cm/s</field>
 </param>
 </parameters>
 <parameters name="APMrover2">
+<param humanName="Log bitmask" name="APMrover2:LOG_BITMASK" documentation="Two byte bitmap of log types to enable in dataflash" user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="3950">Default</value>
+<value code="4078">Default+IMU</value>
+</values>
+</param>
 <param humanName="Initial driving mode" name="APMrover2:INITIAL_MODE" documentation="This selects the mode to start in on boot. This is useful for when you want to start in AUTO mode on boot without a receiver. Usuallly used in combination with when AUTO_TRIGGER_PIN or AUTO_KICKSTART." user="Advanced">
 <values>
 <value code="0">MANUAL</value>
@@ -1022,7 +1207,7 @@
 </param>
 <param humanName="Current Amps per volt" name="APMrover2:AMP_PER_VOLT" documentation="Used to convert the voltage on the current sensing pin (BATT_CURR_PIN) to the actual current being consumed in amps (curr pin voltage * INPUT_VOLTS/1024 * AMP_PER_VOLT )" user="Advanced">
 </param>
-<param humanName="Battery Capacity" name="APMrover2:BATT_CAPACITY" documentation="Battery capacity in milliamp-hours (mAh)">
+<param humanName="Battery Capacity" name="APMrover2:BATT_CAPACITY" documentation="Battery capacity in milliamp-hours (mAh)" user="Standard">
 <field name="Units">mAh</field>
 </param>
 <param humanName="Crosstrack Gain" name="APMrover2:XTRK_GAIN_SC" documentation="This controls how hard the Rover tries to follow the lines between waypoints, as opposed to driving directly to the next waypoint. The value is the scale between distance off the line and angle to meet the line (in Degrees * 100)" user="Standard">
@@ -1215,7 +1400,15 @@
 <field name="Units">meters</field>
 </param>
 </parameters>
-</vehicles><libraries><parameters name="CAM_">
+</vehicles><libraries><parameters name="GND_">
+<param humanName="Absolute Pressure" name="GND_ABS_PRESS" documentation="calibrated ground pressure">
+<field name="Increment">1</field>
+</param>
+<param humanName="ground temperature" name="GND_ABS_PRESS" documentation="calibrated ground temperature">
+<field name="Increment">1</field>
+</param>
+</parameters>
+<parameters name="CAM_">
 <param humanName="Camera shutter (trigger) type" name="CAM_TRIGG_TYPE" documentation="how to trigger the camera to take a picture" user="Standard">
 <values>
 <value code="0">Servo</value>
@@ -1361,28 +1554,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC5_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC5_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC5_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC5_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC5_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC5_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC6_">
@@ -1411,28 +1606,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC6_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC6_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC6_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC6_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC6_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC6_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC7_">
@@ -1461,28 +1658,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC7_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC7_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC7_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC7_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC7_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC7_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC8_">
@@ -1511,28 +1710,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC8_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC8_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC8_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC8_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC8_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC8_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC9_">
@@ -1561,28 +1762,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC9_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC9_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC9_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC9_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC9_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC9_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC10_">
@@ -1611,28 +1814,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC10_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC10_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC10_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC10_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC10_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC10_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC11_">
@@ -1661,28 +1866,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC11_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC11_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC11_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC11_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC11_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC11_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC12_">
@@ -1711,28 +1918,30 @@
 <value code="20">ElevatorWithInput</value>
 </values>
 </param>
-<param humanName="RC min PWM" name="RC12_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC trim PWM" name="RC12_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC max PWM" name="RC12_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
-<field name="Range">800 2200</field>
-<field name="Increment">1</field>
-<field name="Units">ms</field>
-</param>
-<param humanName="RC reverse" name="RC12_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<param humanName="Servo out function" name="RC12_FUNCTION" documentation="Setting this to Disabled(0) will disable this output, any other value will enable the corresponding function" user="Standard">
 <values>
-<value code="-1">Reversed</value>
-<value code="1">Normal</value>
+<value code="0">Disabled</value>
+<value code="1">Manual</value>
+<value code="2">Flap</value>
+<value code="3">Flap_auto</value>
+<value code="4">Aileron</value>
+<value code="5">flaperon</value>
+<value code="6">mount_pan</value>
+<value code="7">mount_tilt</value>
+<value code="8">mount_roll</value>
+<value code="9">mount_open</value>
+<value code="10">camera_trigger</value>
+<value code="11">release</value>
+<value code="12">mount2_pan</value>
+<value code="13">mount2_tilt</value>
+<value code="14">mount2_roll</value>
+<value code="15">mount2_open</value>
+<value code="16">DifferentialSpoiler1</value>
+<value code="17">DifferentialSpoiler2</value>
+<value code="18">AileronWithInput</value>
+<value code="19">Elevator</value>
+<value code="20">ElevatorWithInput</value>
 </values>
-</param>
-<param humanName="RC dead-zone" name="RC12_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="CTL_RLL_">
@@ -1809,7 +2018,15 @@
 </param>
 </parameters>
 <parameters name="COMPASS_">
-<param humanName="Compass offsets on the Z axis" name="COMPASS_OFS_X" documentation="Offset to be added to the compass z-axis values to compensate for metal in the frame">
+<param humanName="Compass offsets on the X axis" name="COMPASS_OFS_X" documentation="Offset to be added to the compass x-axis values to compensate for metal in the frame">
+<field name="Range">-400 400</field>
+<field name="Increment">1</field>
+</param>
+<param humanName="Compass offsets on the Y axis" name="COMPASS_OFS_Y" documentation="Offset to be added to the compass y-axis values to compensate for metal in the frame">
+<field name="Range">-400 400</field>
+<field name="Increment">1</field>
+</param>
+<param humanName="Compass offsets on the Z axis" name="COMPASS_OFS_Z" documentation="Offset to be added to the compass z-axis values to compensate for metal in the frame">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 </param>
@@ -1844,7 +2061,17 @@
 </values>
 <field name="Increment">1</field>
 </param>
-<param humanName="Motor interference compensation for body frame Z axis" name="COMPASS_MOT_X" documentation="Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation for body frame X axis" name="COMPASS_MOT_X" documentation="Multiplied by the current throttle and added to the compass's x-axis values to compensate for motor interference">
+<field name="Range">-1000 1000</field>
+<field name="Increment">1</field>
+<field name="Units">Offset per Amp or at Full Throttle</field>
+</param>
+<param humanName="Motor interference compensation for body frame Y axis" name="COMPASS_MOT_Y" documentation="Multiplied by the current throttle and added to the compass's y-axis values to compensate for motor interference">
+<field name="Range">-1000 1000</field>
+<field name="Increment">1</field>
+<field name="Units">Offset per Amp or at Full Throttle</field>
+</param>
+<param humanName="Motor interference compensation for body frame Z axis" name="COMPASS_MOT_Z" documentation="Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor interference">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
@@ -1882,11 +2109,34 @@
 <parameters name="INS_">
 <param humanName="IMU Product ID" name="INS_PRODUCT_ID" documentation="Which type of IMU is installed (read-only)" user="Standard">
 </param>
-<param humanName="Accelerometer offsets of Z axis" name="INS_ACCOFFS_X" documentation="Accelerometer offsets of Z axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<param humanName="Accelerometer scaling of X axis" name="INS_ACCSCAL_X" documentation="Accelerometer scaling of X axis.  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer scaling of Y axis" name="INS_ACCSCAL_Y" documentation="Accelerometer scaling of Y axis  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer scaling of Z axis" name="INS_ACCSCAL_Z" documentation="Accelerometer scaling of Z axis  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer offsets of X axis" name="INS_ACCOFFS_X" documentation="Accelerometer offsets of X axis. This is setup using the acceleration calibration or level operations" user="Advanced">
 <field name="Range">-300 300</field>
 <field name="Units">m/s/s</field>
 </param>
-<param humanName="Gyro offsets of Z axis" name="INS_GYROFFS_X" documentation="Gyro sensor offsets of Z axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<param humanName="Accelerometer offsets of Y axis" name="INS_ACCOFFS_Y" documentation="Accelerometer offsets of Y axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Accelerometer offsets of Z axis" name="INS_ACCOFFS_Z" documentation="Accelerometer offsets of Z axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Gyro offsets of X axis" name="INS_GYROFFS_X" documentation="Gyro sensor offsets of X axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="Gyro offsets of Y axis" name="INS_GYROFFS_Y" documentation="Gyro sensor offsets of Y axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="Gyro offsets of Z axis" name="INS_GYROFFS_Z" documentation="Gyro sensor offsets of Z axis. This is setup on each boot during gyro calibrations" user="Advanced">
 <field name="Units">rad/s</field>
 </param>
 <param humanName="MPU6000 filter frequency" name="INS_MPU6K_FILTER" documentation="Filter frequency to ask the MPU6000 to apply to samples. This can be set to a lower value to try to cope with very high vibration levels in aircraft. The default value on ArduPlane, APMrover2 and ArduCopter is 20Hz. This option takes effect on the next reboot or gyro initialisation" user="Advanced">
@@ -1907,6 +2157,10 @@
 <field name="Increment">.01</field>
 </param>
 <param humanName="AHRS use GPS for navigation" name="AHRS_GPS_USE" documentation="This controls whether to use dead-reckoning or GPS based navigation. If set to 0 then the GPS won't be used for navigation, and only dead reckoning will be used. A value of zero should never be used for normal flight." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
 </param>
 <param humanName="Yaw P" name="AHRS_YAW_P" documentation="This controls the weight the compass or GPS has on the heading. A higher value means the heading will track the yaw source (GPS or compass) more rapidly.">
 <field name="Range">0.1 0.4</field>
@@ -1921,7 +2175,16 @@
 <field name="Increment">1</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="AHRS Trim Yaw" name="AHRS_TRIM_X" documentation="Not Used" user="Advanced">
+<param humanName="AHRS Trim Roll" name="AHRS_TRIM_X" documentation="Compensates for the roll angle difference between the control board and the frame" user="Advanced">
+<field name="Range">-10 10</field>
+<field name="Units">Radians</field>
+</param>
+<param humanName="AHRS Trim Pitch" name="AHRS_TRIM_Y" documentation="Compensates for the pitch angle difference between the control board and the frame" user="Advanced">
+<field name="Range">-10 10</field>
+<field name="Units">Radians</field>
+</param>
+<param humanName="AHRS Trim Yaw" name="AHRS_TRIM_Z" documentation="Not Used" user="Advanced">
+<field name="Range">-10 10</field>
 <field name="Units">Radians</field>
 </param>
 <param humanName="Board Orientation" name="AHRS_ORIENTATION" documentation="Overall board orientation relative to the standard orientation for the board type. This rotates the IMU and compass readings to allow the board to be oriented in your vehicle at any 90 or 45 degree angle. This option takes affect on next boot. After changing you will need to re-level your vehicle." user="Advanced">
@@ -1953,12 +2216,13 @@
 <value code="24">Pitch270</value>
 </values>
 </param>
-<param humanName="AHRS Velocity Complmentary Filter Beta Coefficient" name="AHRS_COMP_BETA" documentation="This controls the time constant for the cross-over frequency used to fuse AHRS (airspeed and heading) and GPS data to estimate ground velocity. Time constant is 0.1/beta. A larger time constant will use GPS data less and a small time constant will use air data less.">
+<param humanName="AHRS Velocity Complmentary Filter Beta Coefficient" name="AHRS_COMP_BETA" documentation="This controls the time constant for the cross-over frequency used to fuse AHRS (airspeed and heading) and GPS data to estimate ground velocity. Time constant is 0.1/beta. A larger time constant will use GPS data less and a small time constant will use air data less." user="Advanced">
 <field name="Range">0.001 0.5</field>
 <field name="Increment">.01</field>
 </param>
 <param humanName="AHRS GPS Minimum satellites" name="AHRS_GPS_MINSATS" documentation="Minimum number of satellites visible to use GPS for velocity based corrections attitude correction. This defaults to 6, which is about the point at which the velocity numbers from a GPS become too unreliable for accurate correction of the accelerometers." user="Advanced">
 <field name="Range">0 10</field>
+<field name="Increment">1</field>
 </param>
 </parameters>
 <parameters name="ARSPD_">
@@ -2002,17 +2266,47 @@
 <value code="4">GPS_point</value>
 </values>
 </param>
-<param humanName="Mount yaw/pan angle when in retracted position" name="MNT_RETRACT_X" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<param humanName="Mount roll angle when in retracted position" name="MNT_RETRACT_X" documentation="Mount roll angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle when in neutral position" name="MNT_NEUTRAL_X" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<param humanName="Mount tilt/pitch angle when in retracted position" name="MNT_RETRACT_Y" documentation="Mount tilt/pitch angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle command from groundstation" name="MNT_CONTROL_X" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
+<param humanName="Mount yaw/pan angle when in retracted position" name="MNT_RETRACT_Z" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle when in neutral position" name="MNT_NEUTRAL_X" documentation="Mount roll angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle when in neutral position" name="MNT_NEUTRAL_Y" documentation="Mount tilt/pitch angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle when in neutral position" name="MNT_NEUTRAL_Z" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle command from groundstation" name="MNT_CONTROL_X" documentation="Mount roll angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle command from groundstation" name="MNT_CONTROL_Y" documentation="Mount tilt/pitch angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle command from groundstation" name="MNT_CONTROL_Z" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
@@ -2101,17 +2395,47 @@
 <value code="4">GPS_point</value>
 </values>
 </param>
-<param humanName="Mount yaw/pan angle when in retracted position" name="MNT2_RETRACT_X" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<param humanName="Mount roll angle when in retracted position" name="MNT2_RETRACT_X" documentation="Mount roll angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle when in neutral position" name="MNT2_NEUTRAL_X" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<param humanName="Mount tilt/pitch angle when in retracted position" name="MNT2_RETRACT_Y" documentation="Mount tilt/pitch angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle command from groundstation" name="MNT2_CONTROL_X" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
+<param humanName="Mount yaw/pan angle when in retracted position" name="MNT2_RETRACT_Z" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle when in neutral position" name="MNT2_NEUTRAL_X" documentation="Mount roll angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle when in neutral position" name="MNT2_NEUTRAL_Y" documentation="Mount tilt/pitch angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle when in neutral position" name="MNT2_NEUTRAL_Z" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle command from groundstation" name="MNT2_CONTROL_X" documentation="Mount roll angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle command from groundstation" name="MNT2_CONTROL_Y" documentation="Mount tilt/pitch angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle command from groundstation" name="MNT2_CONTROL_Z" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
@@ -2188,6 +2512,106 @@
 <param humanName="mount joystick speed" name="MNT2_JSTICK_SPD" documentation="0 for position control, small for low speeds, 100 for max speed. A good general value is 10 which gives a movement speed of 3 degrees per second." user="Standard">
 <field name="Range">0 100</field>
 <field name="Increment">1</field>
+</param>
+</parameters>
+<parameters name="HS1_">
+<param humanName="RC min PWM" name="HS1_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC trim PWM" name="HS1_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC max PWM" name="HS1_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC reverse" name="HS1_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<values>
+<value code="-1">Reversed</value>
+<value code="1">Normal</value>
+</values>
+</param>
+<param humanName="RC dead-zone" name="HS1_DZ" documentation="dead zone around trim." user="Advanced">
+</param>
+</parameters>
+<parameters name="HS2_">
+<param humanName="RC min PWM" name="HS2_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC trim PWM" name="HS2_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC max PWM" name="HS2_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC reverse" name="HS2_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<values>
+<value code="-1">Reversed</value>
+<value code="1">Normal</value>
+</values>
+</param>
+<param humanName="RC dead-zone" name="HS2_DZ" documentation="dead zone around trim." user="Advanced">
+</param>
+</parameters>
+<parameters name="HS3_">
+<param humanName="RC min PWM" name="HS3_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC trim PWM" name="HS3_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC max PWM" name="HS3_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC reverse" name="HS3_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<values>
+<value code="-1">Reversed</value>
+<value code="1">Normal</value>
+</values>
+</param>
+<param humanName="RC dead-zone" name="HS3_DZ" documentation="dead zone around trim." user="Advanced">
+</param>
+</parameters>
+<parameters name="HS4_">
+<param humanName="RC min PWM" name="HS4_MIN" documentation="RC minimum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC trim PWM" name="HS4_TRIM" documentation="RC trim (neutral) PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC max PWM" name="HS4_MAX" documentation="RC maximum PWM pulse width. Typically 1000 is lower limit, 1500 is neutral and 2000 is upper limit." user="Advanced">
+<field name="Range">800 2200</field>
+<field name="Increment">1</field>
+<field name="Units">ms</field>
+</param>
+<param humanName="RC reverse" name="HS4_REV" documentation="Reverse servo operation. Ignored on APM1 unless dip-switches are disabled." user="Advanced">
+<values>
+<value code="-1">Reversed</value>
+<value code="1">Normal</value>
+</values>
+</param>
+<param humanName="RC dead-zone" name="HS4_DZ" documentation="dead zone around trim." user="Advanced">
 </param>
 </parameters>
 <parameters name="RC1_">
@@ -2711,7 +3135,15 @@
 </param>
 </parameters>
 <parameters name="COMPASS_">
-<param humanName="Compass offsets on the Z axis" name="COMPASS_OFS_X" documentation="Offset to be added to the compass z-axis values to compensate for metal in the frame">
+<param humanName="Compass offsets on the X axis" name="COMPASS_OFS_X" documentation="Offset to be added to the compass x-axis values to compensate for metal in the frame">
+<field name="Range">-400 400</field>
+<field name="Increment">1</field>
+</param>
+<param humanName="Compass offsets on the Y axis" name="COMPASS_OFS_Y" documentation="Offset to be added to the compass y-axis values to compensate for metal in the frame">
+<field name="Range">-400 400</field>
+<field name="Increment">1</field>
+</param>
+<param humanName="Compass offsets on the Z axis" name="COMPASS_OFS_Z" documentation="Offset to be added to the compass z-axis values to compensate for metal in the frame">
 <field name="Range">-400 400</field>
 <field name="Increment">1</field>
 </param>
@@ -2746,7 +3178,17 @@
 </values>
 <field name="Increment">1</field>
 </param>
-<param humanName="Motor interference compensation for body frame Z axis" name="COMPASS_MOT_X" documentation="Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor interference">
+<param humanName="Motor interference compensation for body frame X axis" name="COMPASS_MOT_X" documentation="Multiplied by the current throttle and added to the compass's x-axis values to compensate for motor interference">
+<field name="Range">-1000 1000</field>
+<field name="Increment">1</field>
+<field name="Units">Offset per Amp or at Full Throttle</field>
+</param>
+<param humanName="Motor interference compensation for body frame Y axis" name="COMPASS_MOT_Y" documentation="Multiplied by the current throttle and added to the compass's y-axis values to compensate for motor interference">
+<field name="Range">-1000 1000</field>
+<field name="Increment">1</field>
+<field name="Units">Offset per Amp or at Full Throttle</field>
+</param>
+<param humanName="Motor interference compensation for body frame Z axis" name="COMPASS_MOT_Z" documentation="Multiplied by the current throttle and added to the compass's z-axis values to compensate for motor interference">
 <field name="Range">-1000 1000</field>
 <field name="Increment">1</field>
 <field name="Units">Offset per Amp or at Full Throttle</field>
@@ -2781,6 +3223,51 @@
 </values>
 </param>
 </parameters>
+<parameters name="INS_">
+<param humanName="IMU Product ID" name="INS_PRODUCT_ID" documentation="Which type of IMU is installed (read-only)" user="Standard">
+</param>
+<param humanName="Accelerometer scaling of X axis" name="INS_ACCSCAL_X" documentation="Accelerometer scaling of X axis.  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer scaling of Y axis" name="INS_ACCSCAL_Y" documentation="Accelerometer scaling of Y axis  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer scaling of Z axis" name="INS_ACCSCAL_Z" documentation="Accelerometer scaling of Z axis  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer offsets of X axis" name="INS_ACCOFFS_X" documentation="Accelerometer offsets of X axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Accelerometer offsets of Y axis" name="INS_ACCOFFS_Y" documentation="Accelerometer offsets of Y axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Accelerometer offsets of Z axis" name="INS_ACCOFFS_Z" documentation="Accelerometer offsets of Z axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Gyro offsets of X axis" name="INS_GYROFFS_X" documentation="Gyro sensor offsets of X axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="Gyro offsets of Y axis" name="INS_GYROFFS_Y" documentation="Gyro sensor offsets of Y axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="Gyro offsets of Z axis" name="INS_GYROFFS_Z" documentation="Gyro sensor offsets of Z axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="MPU6000 filter frequency" name="INS_MPU6K_FILTER" documentation="Filter frequency to ask the MPU6000 to apply to samples. This can be set to a lower value to try to cope with very high vibration levels in aircraft. The default value on ArduPlane, APMrover2 and ArduCopter is 20Hz. This option takes effect on the next reboot or gyro initialisation" user="Advanced">
+<values>
+<value code="0">Default</value>
+<value code="5">5Hz</value>
+<value code="10">10Hz</value>
+<value code="20">20Hz</value>
+<value code="42">42Hz</value>
+<value code="98">98Hz</value>
+</values>
+<field name="Units">Hz</field>
+</param>
+</parameters>
 <parameters name="INAV_">
 <param humanName="Horizontal Time Constant" name="INAV_TC_XY" documentation="Time constant for GPS and accel mixing. Higher TC decreases GPS impact on position estimate">
 <field name="Range">0 10</field>
@@ -2791,85 +3278,24 @@
 <field name="Increment">0.1</field>
 </param>
 </parameters>
-<parameters name="WPNAV_">
-<param humanName="Waypoint Horizontal Speed Target" name="WPNAV_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally during a WP mission" user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Waypoint Radius" name="WPNAV_RADIUS" documentation="Defines the distance from a waypoint, that when crossed indicates the wp has been hit." user="Standard">
-<field name="Range">100 1000</field>
-<field name="Increment">1</field>
-<field name="Units">Centimeters</field>
-</param>
-<param humanName="Waypoint Climb Speed Target" name="WPNAV_SPEED_UP" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while climbing during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Waypoint Descent Speed Target" name="WPNAV_SPEED_DN" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while descending during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Loiter Horizontal Maximum Speed" name="WPNAV_LOIT_SPEED" documentation="Defines the maximum speed in cm/s which the aircraft will travel horizontally while in loiter mode" user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-</parameters>
 <parameters name="SR0_">
-<param humanName="Waypoint Horizontal Speed Target" name="SR0_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally during a WP mission" user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
+<param humanName="Horizontal Time Constant" name="SR0_TC_XY" documentation="Time constant for GPS and accel mixing. Higher TC decreases GPS impact on position estimate">
+<field name="Range">0 10</field>
+<field name="Increment">0.1</field>
 </param>
-<param humanName="Waypoint Radius" name="SR0_RADIUS" documentation="Defines the distance from a waypoint, that when crossed indicates the wp has been hit." user="Standard">
-<field name="Range">100 1000</field>
-<field name="Increment">1</field>
-<field name="Units">Centimeters</field>
-</param>
-<param humanName="Waypoint Climb Speed Target" name="SR0_SPEED_UP" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while climbing during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Waypoint Descent Speed Target" name="SR0_SPEED_DN" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while descending during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Loiter Horizontal Maximum Speed" name="SR0_LOIT_SPEED" documentation="Defines the maximum speed in cm/s which the aircraft will travel horizontally while in loiter mode" user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
+<param humanName="Vertical Time Constant" name="SR0_TC_Z" documentation="Time constant for baro and accel mixing. Higher TC decreases barometers impact on altitude estimate">
+<field name="Range">0 10</field>
+<field name="Increment">0.1</field>
 </param>
 </parameters>
 <parameters name="SR3_">
-<param humanName="Waypoint Horizontal Speed Target" name="SR3_SPEED" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain horizontally during a WP mission" user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
+<param humanName="Horizontal Time Constant" name="SR3_TC_XY" documentation="Time constant for GPS and accel mixing. Higher TC decreases GPS impact on position estimate">
+<field name="Range">0 10</field>
+<field name="Increment">0.1</field>
 </param>
-<param humanName="Waypoint Radius" name="SR3_RADIUS" documentation="Defines the distance from a waypoint, that when crossed indicates the wp has been hit." user="Standard">
-<field name="Range">100 1000</field>
-<field name="Increment">1</field>
-<field name="Units">Centimeters</field>
-</param>
-<param humanName="Waypoint Climb Speed Target" name="SR3_SPEED_UP" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while climbing during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Waypoint Descent Speed Target" name="SR3_SPEED_DN" documentation="Defines the speed in cm/s which the aircraft will attempt to maintain while descending during a WP mission" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
-</param>
-<param humanName="Loiter Horizontal Maximum Speed" name="SR3_LOIT_SPEED" documentation="Defines the maximum speed in cm/s which the aircraft will travel horizontally while in loiter mode" user="Standard">
-<field name="Range">0 2000</field>
-<field name="Increment">50</field>
-<field name="Units">Centimeters/Second</field>
+<param humanName="Vertical Time Constant" name="SR3_TC_Z" documentation="Time constant for baro and accel mixing. Higher TC decreases barometers impact on altitude estimate">
+<field name="Range">0 10</field>
+<field name="Increment">0.1</field>
 </param>
 </parameters>
 <parameters name="AHRS_">
@@ -2878,6 +3304,10 @@
 <field name="Increment">.01</field>
 </param>
 <param humanName="AHRS use GPS for navigation" name="AHRS_GPS_USE" documentation="This controls whether to use dead-reckoning or GPS based navigation. If set to 0 then the GPS won't be used for navigation, and only dead reckoning will be used. A value of zero should never be used for normal flight." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
 </param>
 <param humanName="Yaw P" name="AHRS_YAW_P" documentation="This controls the weight the compass or GPS has on the heading. A higher value means the heading will track the yaw source (GPS or compass) more rapidly.">
 <field name="Range">0.1 0.4</field>
@@ -2892,7 +3322,16 @@
 <field name="Increment">1</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="AHRS Trim Yaw" name="AHRS_TRIM_X" documentation="Not Used" user="Advanced">
+<param humanName="AHRS Trim Roll" name="AHRS_TRIM_X" documentation="Compensates for the roll angle difference between the control board and the frame" user="Advanced">
+<field name="Range">-10 10</field>
+<field name="Units">Radians</field>
+</param>
+<param humanName="AHRS Trim Pitch" name="AHRS_TRIM_Y" documentation="Compensates for the pitch angle difference between the control board and the frame" user="Advanced">
+<field name="Range">-10 10</field>
+<field name="Units">Radians</field>
+</param>
+<param humanName="AHRS Trim Yaw" name="AHRS_TRIM_Z" documentation="Not Used" user="Advanced">
+<field name="Range">-10 10</field>
 <field name="Units">Radians</field>
 </param>
 <param humanName="Board Orientation" name="AHRS_ORIENTATION" documentation="Overall board orientation relative to the standard orientation for the board type. This rotates the IMU and compass readings to allow the board to be oriented in your vehicle at any 90 or 45 degree angle. This option takes affect on next boot. After changing you will need to re-level your vehicle." user="Advanced">
@@ -2924,12 +3363,13 @@
 <value code="24">Pitch270</value>
 </values>
 </param>
-<param humanName="AHRS Velocity Complmentary Filter Beta Coefficient" name="AHRS_COMP_BETA" documentation="This controls the time constant for the cross-over frequency used to fuse AHRS (airspeed and heading) and GPS data to estimate ground velocity. Time constant is 0.1/beta. A larger time constant will use GPS data less and a small time constant will use air data less.">
+<param humanName="AHRS Velocity Complmentary Filter Beta Coefficient" name="AHRS_COMP_BETA" documentation="This controls the time constant for the cross-over frequency used to fuse AHRS (airspeed and heading) and GPS data to estimate ground velocity. Time constant is 0.1/beta. A larger time constant will use GPS data less and a small time constant will use air data less." user="Advanced">
 <field name="Range">0.001 0.5</field>
 <field name="Increment">.01</field>
 </param>
 <param humanName="AHRS GPS Minimum satellites" name="AHRS_GPS_MINSATS" documentation="Minimum number of satellites visible to use GPS for velocity based corrections attitude correction. This defaults to 6, which is about the point at which the velocity numbers from a GPS become too unreliable for accurate correction of the accelerometers." user="Advanced">
 <field name="Range">0 10</field>
+<field name="Increment">1</field>
 </param>
 </parameters>
 <parameters name="MNT_">
@@ -2942,17 +3382,47 @@
 <value code="4">GPS_point</value>
 </values>
 </param>
-<param humanName="Mount yaw/pan angle when in retracted position" name="MNT_RETRACT_X" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<param humanName="Mount roll angle when in retracted position" name="MNT_RETRACT_X" documentation="Mount roll angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle when in neutral position" name="MNT_NEUTRAL_X" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<param humanName="Mount tilt/pitch angle when in retracted position" name="MNT_RETRACT_Y" documentation="Mount tilt/pitch angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle command from groundstation" name="MNT_CONTROL_X" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
+<param humanName="Mount yaw/pan angle when in retracted position" name="MNT_RETRACT_Z" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle when in neutral position" name="MNT_NEUTRAL_X" documentation="Mount roll angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle when in neutral position" name="MNT_NEUTRAL_Y" documentation="Mount tilt/pitch angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle when in neutral position" name="MNT_NEUTRAL_Z" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle command from groundstation" name="MNT_CONTROL_X" documentation="Mount roll angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle command from groundstation" name="MNT_CONTROL_Y" documentation="Mount tilt/pitch angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle command from groundstation" name="MNT_CONTROL_Z" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
@@ -3041,17 +3511,47 @@
 <value code="4">GPS_point</value>
 </values>
 </param>
-<param humanName="Mount yaw/pan angle when in retracted position" name="MNT2_RETRACT_X" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<param humanName="Mount roll angle when in retracted position" name="MNT2_RETRACT_X" documentation="Mount roll angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle when in neutral position" name="MNT2_NEUTRAL_X" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<param humanName="Mount tilt/pitch angle when in retracted position" name="MNT2_RETRACT_Y" documentation="Mount tilt/pitch angle when in retracted position" user="Standard">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
 </param>
-<param humanName="Mount pan/yaw angle command from groundstation" name="MNT2_CONTROL_X" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
+<param humanName="Mount yaw/pan angle when in retracted position" name="MNT2_RETRACT_Z" documentation="Mount yaw/pan angle when in retracted position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle when in neutral position" name="MNT2_NEUTRAL_X" documentation="Mount roll angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle when in neutral position" name="MNT2_NEUTRAL_Y" documentation="Mount tilt/pitch angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle when in neutral position" name="MNT2_NEUTRAL_Z" documentation="Mount pan/yaw angle when in neutral position" user="Standard">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount roll angle command from groundstation" name="MNT2_CONTROL_X" documentation="Mount roll angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount tilt/pitch angle command from groundstation" name="MNT2_CONTROL_Y" documentation="Mount tilt/pitch angle when in MavLink or RC control operation mode">
+<field name="Range">-18000 17999</field>
+<field name="Increment">1</field>
+<field name="Units">Centi-Degrees</field>
+</param>
+<param humanName="Mount pan/yaw angle command from groundstation" name="MNT2_CONTROL_Z" documentation="Mount pan/yaw angle when in MavLink or RC control operation mode">
 <field name="Range">-18000 17999</field>
 <field name="Increment">1</field>
 <field name="Units">Centi-Degrees</field>
@@ -3130,35 +3630,21 @@
 <field name="Increment">1</field>
 </param>
 </parameters>
-<parameters name="FENCE_">
-<param humanName="Fence enable/disable" name="FENCE_ENABLE" documentation="Allows you to enable (1) or disable (0) the fence functionality" user="Standard">
+<parameters name="GND_">
+<param humanName="Absolute Pressure" name="GND_ABS_PRESS" documentation="calibrated ground pressure">
+<field name="Increment">1</field>
+</param>
+<param humanName="ground temperature" name="GND_ABS_PRESS" documentation="calibrated ground temperature">
+<field name="Increment">1</field>
+</param>
+</parameters>
+<parameters name="SCHED_">
+<param humanName="Scheduler debug level" name="SCHED_DEBUG" documentation="Set to non-zero to enable scheduler debug messages" user="Advanced">
 <values>
 <value code="0">Disabled</value>
-<value code="1">Enabled</value>
+<value code="1">ShowSlipe</value>
+<value code="2">ShowOverruns</value>
 </values>
-</param>
-<param humanName="Fence Type" name="FENCE_TYPE" documentation="Enabled fence types held as bitmask" user="Standard">
-<values>
-<value code="0">None</value>
-<value code="1">Altitude</value>
-<value code="2">Circle</value>
-<value code="3">Altitude and Circle</value>
-</values>
-</param>
-<param humanName="Action to perform when the limit is breached" name="FENCE_ACTION" documentation="What to do on fence breach" user="Standard">
-<values>
-<value code="0">Report Only</value>
-<value code="1">RTL or Land</value>
-</values>
-</param>
-<param humanName="Fence Maximum Altitude" name="FENCE_ALT_MAX" documentation="Maximum altitude allowed before geofence triggers" user="Standard">
-<field name="Range">10 1000</field>
-<field name="Increment">1</field>
-<field name="Units">Meters</field>
-</param>
-<param humanName="Circular Fence Radius" name="FENCE_RADIUS" documentation="Circle fence radius which when breached will cause an RTL" user="Standard">
-<field name="Range">0 10000</field>
-<field name="Units">Meters</field>
 </param>
 </parameters>
 <parameters name="H_">
@@ -3308,14 +3794,76 @@
 <field name="Increment">1</field>
 </param>
 </parameters>
+<parameters name="SONAR2_">
+<param humanName="Sonar pin" name="SONAR2_PIN" documentation="Analog pin that sonar is connected to. ">
+</param>
+<param humanName="Sonar scaling" name="SONAR2_SCALING" documentation="Scaling factor between sonar reading and distance. For the linear and inverted functions this is in meters per volt. For the hyperbolic function the units are meterVolts.">
+<field name="Units">meters/Volt</field>
+<field name="Increment">0.001</field>
+</param>
+<param humanName="Sonar offset" name="SONAR2_OFFSET" documentation="Offset in volts for zero distance">
+<field name="Units">Volts</field>
+<field name="Increment">0.001</field>
+</param>
+<param humanName="Sonar function" name="SONAR2_FUNCTION" documentation="Control over what function is used to calculate distance. For a linear function, the distance is (voltage-offset)*scaling. For a inverted function the distance is (offset-voltage)*scaling. For a hyperbolic function the distance is scaling/(voltage-offset). The functions return the distance in meters.">
+<values>
+<value code="0">Linear</value>
+<value code="1">Inverted</value>
+<value code="2">Hyperbolic</value>
+</values>
+</param>
+<param humanName="Sonar minimum distance" name="SONAR2_MIN_CM" documentation="minimum distance in centimeters that sonar can reliably read">
+<field name="Units">centimeters</field>
+<field name="Increment">1</field>
+</param>
+<param humanName="Sonar maximum distance" name="SONAR2_MAX_CM" documentation="maximum distance in centimeters that sonar can reliably read">
+<field name="Units">centimeters</field>
+<field name="Increment">1</field>
+</param>
+<param humanName="Sonar enabled" name="SONAR2_ENABLE" documentation="set to 1 to enable this sonar">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="Sonar stop pin" name="SONAR2_STOP_PIN" documentation="Digital pin that enables/disables sonar measurement. A value of -1 means no pin. If this is set, then the pin is set to 1 to enable the sonar and set to 0 to disable it. This can be used to ensure that multiple sonars don't interfere with each other.">
+</param>
+<param humanName="Sonar settle time" name="SONAR2_SETTLE_MS" documentation="The time in milliseconds that the sonar reading takes to settle. This is only used when a STOP_PIN is specified. It determines how long we have to wait for the sonar to give a reading after we set the STOP_PIN high. For a sonar with a range of around 7m this would need to be around 50 milliseconds to allow for the sonar pulse to travel to the target and back again.">
+<field name="Units">milliseconds</field>
+<field name="Increment">1</field>
+</param>
+</parameters>
 <parameters name="INS_">
 <param humanName="IMU Product ID" name="INS_PRODUCT_ID" documentation="Which type of IMU is installed (read-only)" user="Standard">
 </param>
-<param humanName="Accelerometer offsets of Z axis" name="INS_ACCOFFS_X" documentation="Accelerometer offsets of Z axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<param humanName="Accelerometer scaling of X axis" name="INS_ACCSCAL_X" documentation="Accelerometer scaling of X axis.  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer scaling of Y axis" name="INS_ACCSCAL_Y" documentation="Accelerometer scaling of Y axis  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer scaling of Z axis" name="INS_ACCSCAL_Z" documentation="Accelerometer scaling of Z axis  Calculated during acceleration calibration routine" user="Advanced">
+<field name="Range">0.8 1.2</field>
+</param>
+<param humanName="Accelerometer offsets of X axis" name="INS_ACCOFFS_X" documentation="Accelerometer offsets of X axis. This is setup using the acceleration calibration or level operations" user="Advanced">
 <field name="Range">-300 300</field>
 <field name="Units">m/s/s</field>
 </param>
-<param humanName="Gyro offsets of Z axis" name="INS_GYROFFS_X" documentation="Gyro sensor offsets of Z axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<param humanName="Accelerometer offsets of Y axis" name="INS_ACCOFFS_Y" documentation="Accelerometer offsets of Y axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Accelerometer offsets of Z axis" name="INS_ACCOFFS_Z" documentation="Accelerometer offsets of Z axis. This is setup using the acceleration calibration or level operations" user="Advanced">
+<field name="Range">-300 300</field>
+<field name="Units">m/s/s</field>
+</param>
+<param humanName="Gyro offsets of X axis" name="INS_GYROFFS_X" documentation="Gyro sensor offsets of X axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="Gyro offsets of Y axis" name="INS_GYROFFS_Y" documentation="Gyro sensor offsets of Y axis. This is setup on each boot during gyro calibrations" user="Advanced">
+<field name="Units">rad/s</field>
+</param>
+<param humanName="Gyro offsets of Z axis" name="INS_GYROFFS_Z" documentation="Gyro sensor offsets of Z axis. This is setup on each boot during gyro calibrations" user="Advanced">
 <field name="Units">rad/s</field>
 </param>
 <param humanName="MPU6000 filter frequency" name="INS_MPU6K_FILTER" documentation="Filter frequency to ask the MPU6000 to apply to samples. This can be set to a lower value to try to cope with very high vibration levels in aircraft. The default value on ArduPlane, APMrover2 and ArduCopter is 20Hz. This option takes effect on the next reboot or gyro initialisation" user="Advanced">
@@ -3336,6 +3884,10 @@
 <field name="Increment">.01</field>
 </param>
 <param humanName="AHRS use GPS for navigation" name="AHRS_GPS_USE" documentation="This controls whether to use dead-reckoning or GPS based navigation. If set to 0 then the GPS won't be used for navigation, and only dead reckoning will be used. A value of zero should never be used for normal flight." user="Advanced">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
 </param>
 <param humanName="Yaw P" name="AHRS_YAW_P" documentation="This controls the weight the compass or GPS has on the heading. A higher value means the heading will track the yaw source (GPS or compass) more rapidly.">
 <field name="Range">0.1 0.4</field>
@@ -3350,7 +3902,16 @@
 <field name="Increment">1</field>
 <field name="Units">m/s</field>
 </param>
-<param humanName="AHRS Trim Yaw" name="AHRS_TRIM_X" documentation="Not Used" user="Advanced">
+<param humanName="AHRS Trim Roll" name="AHRS_TRIM_X" documentation="Compensates for the roll angle difference between the control board and the frame" user="Advanced">
+<field name="Range">-10 10</field>
+<field name="Units">Radians</field>
+</param>
+<param humanName="AHRS Trim Pitch" name="AHRS_TRIM_Y" documentation="Compensates for the pitch angle difference between the control board and the frame" user="Advanced">
+<field name="Range">-10 10</field>
+<field name="Units">Radians</field>
+</param>
+<param humanName="AHRS Trim Yaw" name="AHRS_TRIM_Z" documentation="Not Used" user="Advanced">
+<field name="Range">-10 10</field>
 <field name="Units">Radians</field>
 </param>
 <param humanName="Board Orientation" name="AHRS_ORIENTATION" documentation="Overall board orientation relative to the standard orientation for the board type. This rotates the IMU and compass readings to allow the board to be oriented in your vehicle at any 90 or 45 degree angle. This option takes affect on next boot. After changing you will need to re-level your vehicle." user="Advanced">
@@ -3382,12 +3943,13 @@
 <value code="24">Pitch270</value>
 </values>
 </param>
-<param humanName="AHRS Velocity Complmentary Filter Beta Coefficient" name="AHRS_COMP_BETA" documentation="This controls the time constant for the cross-over frequency used to fuse AHRS (airspeed and heading) and GPS data to estimate ground velocity. Time constant is 0.1/beta. A larger time constant will use GPS data less and a small time constant will use air data less.">
+<param humanName="AHRS Velocity Complmentary Filter Beta Coefficient" name="AHRS_COMP_BETA" documentation="This controls the time constant for the cross-over frequency used to fuse AHRS (airspeed and heading) and GPS data to estimate ground velocity. Time constant is 0.1/beta. A larger time constant will use GPS data less and a small time constant will use air data less." user="Advanced">
 <field name="Range">0.001 0.5</field>
 <field name="Increment">.01</field>
 </param>
 <param humanName="AHRS GPS Minimum satellites" name="AHRS_GPS_MINSATS" documentation="Minimum number of satellites visible to use GPS for velocity based corrections attitude correction. This defaults to 6, which is about the point at which the velocity numbers from a GPS become too unreliable for accurate correction of the accelerometers." user="Advanced">
 <field name="Range">0 10</field>
+<field name="Increment">1</field>
 </param>
 </parameters>
 </libraries></paramfile>

@@ -110,6 +110,9 @@
        <height>50</height>
       </size>
      </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
      <property name="tabStopWidth">
       <number>60</number>
      </property>
@@ -200,7 +203,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../../mavground.qrc">
+        <iconset resource="../../qgroundcontrol.qrc">
          <normaloff>:/files/images/actions/list-add.svg</normaloff>:/files/images/actions/list-add.svg</iconset>
        </property>
       </widget>
@@ -224,7 +227,7 @@
         <string>Send</string>
        </property>
        <property name="icon">
-        <iconset resource="../../mavground.qrc">
+        <iconset resource="../../qgroundcontrol.qrc">
          <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
        </property>
       </widget>
@@ -287,7 +290,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../../qgroundcontrol.qrc"/>
  </resources>
  <connections>
   <connection>

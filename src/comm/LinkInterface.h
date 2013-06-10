@@ -54,19 +54,19 @@ public:
      * The ID is an unsigned integer, starting at 0
      * @return ID of this link
      **/
-    virtual int getId() = 0;
+    virtual int getId() const = 0;
 
     /**
      * @brief Get the human readable name of this link
      */
-    virtual QString getName() = 0;
+    virtual QString getName() const = 0;
 
     /**
      * @brief Determine the connection status
      *
      * @return True if the connection is established, false otherwise
      **/
-    virtual bool isConnected() = 0;
+    virtual bool isConnected() const = 0;
 
     /* Connection characteristics */
 
@@ -83,7 +83,7 @@ public:
      * @see getCurrentDataRate() For the data rate of the last transferred chunk
      * @see getMaxDataRate() For the maximum data rate
      **/
-    virtual qint64 getNominalDataRate() = 0;
+    virtual qint64 getNominalDataRate() const = 0;
 
     /**
      * @brief Full duplex support of this interface.
@@ -93,7 +93,7 @@ public:
      *
      * @return True if the interface supports full duplex, false otherwise
      **/
-    virtual bool isFullDuplex() = 0;
+    virtual bool isFullDuplex() const = 0;
 
     /**
      * @brief Get the link quality.
@@ -103,7 +103,7 @@ public:
      *
      * @return The link quality in integer percent or -1 if not supported
      **/
-    virtual int getLinkQuality() = 0;
+    virtual int getLinkQuality() const = 0;
 
     /**
      * @Brief Get the long term (complete) mean of the data rate
@@ -150,7 +150,7 @@ public:
      *
      * @return The number of sent bits
      **/
-    virtual qint64 getBitsSent() = 0;
+    virtual qint64 getBitsSent() const = 0;
 
     /**
      * @Brief Get the total number of bits received
@@ -158,7 +158,7 @@ public:
      * @return The number of received bits
      * @bug Decide if the bits should be counted fromt the instantiation of the interface or if the counter should reset on disconnect.
      **/
-    virtual qint64 getBitsReceived() = 0;
+    virtual qint64 getBitsReceived() const = 0;
 
     /**
      * @brief Connect this interface logically
@@ -231,6 +231,8 @@ signals:
 
     /** @brief Communication error occured */
     void communicationError(const QString& linkname, const QString& error);
+
+    void communicationUpdate(const QString& linkname, const QString& text);
 
 	/** @brief destroying element */
 	void deleteLink(LinkInterface* const link);
