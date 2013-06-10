@@ -38,7 +38,9 @@ JoystickInput::JoystickInput() :
         autoButtonMapping(-1),
         manualButtonMapping(-1),
         stabilizeButtonMapping(-1),
-        joystickName(tr("Unitinialized"))
+        joystickName(tr("Unitinialized")),
+        joystickButtons(0),
+        joystickID(0)
 {
     loadSettings();
 
@@ -47,10 +49,11 @@ JoystickInput::JoystickInput() :
         calibrationNegative[i] = sdlJoystickMin;
     }
 
+    // Listen for when the active UAS changes so we can change who we're sending data to.
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    // Enter main loop
-    //start();
+    // Start this thread. This allows the Joystick Settings window to work correctly even w/o any UASes connected.
+    start();
 }
 
 JoystickInput::~JoystickInput()
@@ -108,14 +111,13 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 
     this->uas = uas;
 
-    tmp = dynamic_cast<UAS*>(this->uas);
-    if(tmp) {
-        connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
-        connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
-    }
-    if (!isRunning())
+    if (this->uas)
     {
-        start();
+        tmp = dynamic_cast<UAS*>(this->uas);
+        if(tmp) {
+            connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
+            connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
+        }
     }
 }
 
@@ -127,10 +129,10 @@ void JoystickInput::init()
     }
 
     // Enumerate joysticks and select one
-    int numJoysticks = SDL_NumJoysticks();
+    joysticksFound = SDL_NumJoysticks();
 
-    // Wait for joysticks if none is connected
-    while (numJoysticks == 0 && !done)
+    // Wait for joysticks if none are connected
+    while (joysticksFound == 0 && !done)
     {
         QGC::SLEEP::msleep(400);
         // INITIALIZE SDL Joystick support
@@ -138,29 +140,33 @@ void JoystickInput::init()
         {
             printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
         }
-        numJoysticks = SDL_NumJoysticks();
+        joysticksFound = SDL_NumJoysticks();
     }
     if (done)
     {
         return;
     }
 
-    printf("%d Input devices found:\n", numJoysticks);
-    for(int i=0; i < SDL_NumJoysticks(); i++ )
+    qDebug() << QString("%1 Input devices found:").arg(joysticksFound);
+    for(int i=0; i < joysticksFound; i++ )
     {
-        printf("\t- %s\n", SDL_JoystickName(i));
-        joystickName = QString(SDL_JoystickName(i));
+        qDebug() << QString("\t- %1").arg(SDL_JoystickName(i));
+        SDL_Joystick* x = SDL_JoystickOpen(i);
+        qDebug() << QString("Number of Axes: %1").arg(QString::number(SDL_JoystickNumAxes(x)));
+        qDebug() << QString("Number of Buttons: %1").arg(QString::number(SDL_JoystickNumButtons(x)));
+        qDebug() << QString("Number of Balls: %1").arg(QString::number(SDL_JoystickNumBalls(x)));
+        SDL_JoystickClose(x);
     }
-
-    printf("\nOpened %s\n", SDL_JoystickName(defaultIndex));
 
     SDL_JoystickEventState(SDL_ENABLE);
 
-    joystick = SDL_JoystickOpen(defaultIndex);
+    // And attach to the default joystick.
+    setActiveJoystick(defaultIndex);
 
     // Make sure active UAS is set
     setActiveUAS(UASManager::instance()->getActiveUAS());
 }
+
 void JoystickInput::shutdown()
 {
     done = true;
@@ -322,6 +328,18 @@ void JoystickInput::run()
 
     }
 
+}
+
+void JoystickInput::setActiveJoystick(int id)
+{
+    joystickID = id;
+    joystick = SDL_JoystickOpen(joystickID);
+    if (joystick)
+    {
+        joystickName = QString(SDL_JoystickName(joystickID));
+        joystickButtons = SDL_JoystickNumButtons(joystick);
+        qDebug() << QString("Switching to joystick '%1' with %2 buttons").arg(joystickName, QString::number(joystickButtons));
+    }
 }
 
 const QString& JoystickInput::getName()
