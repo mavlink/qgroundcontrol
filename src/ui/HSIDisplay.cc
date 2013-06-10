@@ -186,6 +186,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+            this, SLOT(setActiveUAS(UASInterface*)));
+
     setFocusPolicy(Qt::StrongFocus);
 }
 
