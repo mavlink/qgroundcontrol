@@ -228,9 +228,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/designer/QGCComboBox.ui \
     src/ui/designer/QGCTextLabel.ui \
     src/ui/uas/UASQuickView.ui \
-    src/ui/hud2/HUD2FormRibbon.ui \
     src/ui/hud2/HUD2FormHorizon.ui \
     src/ui/hud2/HUD2FormFps.ui \
+    src/ui/hud2/HUD2FormRibbon.ui \
     src/ui/hud2/HUD2DialogRender.ui \
     src/ui/hud2/HUD2DialogInstruments.ui \
     src/ui/hud2/HUD2DialogColor.ui
@@ -383,31 +383,31 @@ HEADERS += src/MG.h \
     src/ui/dockwidgettitlebareventfilter.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewItem.h \
-    src/ui/hud2/HUD2Ribbon.h \
+    src/ui/hud2/HUD2.h \
+    src/ui/hud2/HUD2Data.h \
+    src/ui/hud2/HUD2Math.h \
     src/ui/hud2/HUD2RenderNative.h \
     src/ui/hud2/HUD2RenderGL.h \
-    src/ui/hud2/HUD2Math.h \
-    src/ui/hud2/HUD2IndicatorSpeedometer.h \
+    src/ui/hud2/HUD2Drawer.h \
     src/ui/hud2/HUD2IndicatorRoll.h \
-    src/ui/hud2/HUD2IndicatorMessage.h \
+    src/ui/hud2/HUD2IndicatorFps.h \
+    src/ui/hud2/HUD2IndicatorHorizon.h \
     src/ui/hud2/HUD2IndicatorHorizonPitchline.h \
     src/ui/hud2/HUD2IndicatorHorizonCrosshair.h \
-    src/ui/hud2/HUD2IndicatorHorizon.h \
-    src/ui/hud2/HUD2IndicatorFps.h \
-    src/ui/hud2/HUD2IndicatorCompass.h \
-    src/ui/hud2/HUD2IndicatorAltimeter.h \
-    src/ui/hud2/HUD2FormSpeedometer.h \
+    src/ui/hud2/HUD2Ribbon.h \
     src/ui/hud2/HUD2FormRibbon.h \
-    src/ui/hud2/HUD2FormHorizon.h \
     src/ui/hud2/HUD2FormFps.h \
-    src/ui/hud2/HUD2FormCompass.h \
-    src/ui/hud2/HUD2FormAltimeter.h \
-    src/ui/hud2/HUD2Drawer.h \
+    src/ui/hud2/HUD2FormHorizon.h \
     src/ui/hud2/HUD2DialogRender.h \
-    src/ui/hud2/HUD2DialogInstruments.h \
     src/ui/hud2/HUD2DialogColor.h \
-    src/ui/hud2/HUD2Data.h \
-    src/ui/hud2/HUD2.h
+    src/ui/hud2/HUD2DialogInstruments.h \
+    src/ui/hud2/HUD2IndicatorSpeedometer.h \
+    src/ui/hud2/HUD2IndicatorAltimeter.h \
+    src/ui/hud2/HUD2IndicatorCompass.h \
+    src/ui/hud2/HUD2IndicatorMessage.h \
+    src/ui/hud2/HUD2FormAltimeter.h \
+    src/ui/hud2/HUD2FormSpeedometer.h \
+    src/ui/hud2/HUD2FormCompass.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -576,31 +576,31 @@ SOURCES += src/main.cc \
     src/ui/dockwidgettitlebareventfilter.cpp \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickView.cc \
-    src/ui/hud2/HUD2Ribbon.cc \
+    src/ui/hud2/HUD2.cc \
+    src/ui/hud2/HUD2Data.cc \
+    src/ui/hud2/HUD2Math.cc \
     src/ui/hud2/HUD2RenderNative.cc \
     src/ui/hud2/HUD2RenderGL.cc \
-    src/ui/hud2/HUD2Math.cc \
-    src/ui/hud2/HUD2IndicatorSpeedometer.cc \
+    src/ui/hud2/HUD2Drawer.cc \
     src/ui/hud2/HUD2IndicatorRoll.cc \
-    src/ui/hud2/HUD2IndicatorMessage.cc \
+    src/ui/hud2/HUD2IndicatorFps.cc \
+    src/ui/hud2/HUD2IndicatorHorizon.cc \
     src/ui/hud2/HUD2IndicatorHorizonPitchline.cc \
     src/ui/hud2/HUD2IndicatorHorizonCrosshair.cc \
-    src/ui/hud2/HUD2IndicatorHorizon.cc \
-    src/ui/hud2/HUD2IndicatorFps.cc \
-    src/ui/hud2/HUD2IndicatorCompass.cc \
-    src/ui/hud2/HUD2IndicatorAltimeter.cc \
-    src/ui/hud2/HUD2FormSpeedometer.cc \
+    src/ui/hud2/HUD2Ribbon.cc \
     src/ui/hud2/HUD2FormRibbon.cc \
-    src/ui/hud2/HUD2FormHorizon.cc \
     src/ui/hud2/HUD2FormFps.cc \
-    src/ui/hud2/HUD2FormCompass.cc \
-    src/ui/hud2/HUD2FormAltimeter.cc \
-    src/ui/hud2/HUD2Drawer.cc \
+    src/ui/hud2/HUD2FormHorizon.cc \
     src/ui/hud2/HUD2DialogRender.cc \
     src/ui/hud2/HUD2DialogInstruments.cc \
     src/ui/hud2/HUD2DialogColor.cc \
-    src/ui/hud2/HUD2Data.cc \
-    src/ui/hud2/HUD2.cc
+    src/ui/hud2/HUD2IndicatorAltimeter.cc \
+    src/ui/hud2/HUD2IndicatorCompass.cc \
+    src/ui/hud2/HUD2IndicatorSpeedometer.cc \
+    src/ui/hud2/HUD2IndicatorMessage.cc \
+    src/ui/hud2/HUD2FormAltimeter.cc \
+    src/ui/hud2/HUD2FormSpeedometer.cc \
+    src/ui/hud2/HUD2FormCompass.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

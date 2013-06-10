@@ -4,7 +4,6 @@ TODO:
 - numer label in roll indicator
 - ivert angles for horizon
 - battery indicator
-- message widget
 */
 
 #include <QtGui>
@@ -38,10 +37,13 @@ HUD2::HUD2(QWidget *parent)
     // Load settings
     QSettings settings;
     settings.beginGroup("QGC_HUD2");
+
     renderType = settings.value("RENDER_TYPE", 0).toInt();
-    hud2_clamp(renderType, 0, (RENDER_TYPE_ENUM_END - 1));
+    renderType = qBound(0, renderType, (RENDER_TYPE_ENUM_END - 1));
+
     fpsLimit = settings.value("FPS_LIMIT", HUD2_FPS_DEFAULT).toInt();
-    hud2_clamp(fpsLimit, HUD2_FPS_MIN, HUD2_FPS_MAX);
+    fpsLimit = qBound(HUD2_FPS_MIN, fpsLimit, HUD2_FPS_MAX);
+
     antiAliasing = settings.value("ANTIALIASING", true).toBool();
     settings.endGroup();
 
@@ -314,7 +316,7 @@ void HUD2::setFpsLimit(int limit){
 
     // Save settings
     QSettings settings;
-    hud2_clamp(fpsLimit, HUD2_FPS_MIN, HUD2_FPS_MAX);
+    fpsLimit = qBound(HUD2_FPS_MIN, fpsLimit, HUD2_FPS_MAX);
     settings.setValue("QGC_HUD2/FPS_LIMIT", fpsLimit);
 }
 

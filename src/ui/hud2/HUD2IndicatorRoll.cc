@@ -24,21 +24,21 @@ void HUD2IndicatorRoll::updateGeometry(const QSize &size){
 
     // update pen widths
     tmp = percent2pix_h(size, 0.6);
-    hud2_clamp(tmp, 2, 10);
+    tmp = qBound(2, tmp, 10);
     this->thickPen.setWidth(tmp);
 
     this->arrowPen.setWidth(tmp);
 
     tmp = percent2pix_h(size, 0.3);
-    hud2_clamp(tmp, 1, 5);
+    tmp = qBound(1, tmp, 5);
     this->thinPen.setWidth(tmp);
 
     // update line lengths
     int thick_scratch_len = percent2pix_h(size, 2.5);
-    hud2_clamp(thick_scratch_len, 4, 20);
+    thick_scratch_len = qBound(4, thick_scratch_len, 20);
 
     int thin_scratch_len = thick_scratch_len / 3;
-    hud2_clamp(thin_scratch_len, 1, 10);
+    thin_scratch_len = qBound(1, thin_scratch_len, 10);
 
     int big_r = size.height() / 2;
     int small_r = big_r - thick_scratch_len;

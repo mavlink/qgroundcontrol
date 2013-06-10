@@ -5,13 +5,6 @@
 #include <QSize>
 #include <QLine>
 
-#define hud2_clamp(v, vmin, vmax){                                            \
-  if (v <= vmin)                                                              \
-    v = vmin;                                                                 \
-  else if (v >= vmax)                                                         \
-    v = vmax;                                                                 \
-}
-
 int percent2pix_h(QSize size, qreal percent);
 int percent2pix_w(QSize size, qreal percent);
 int percent2pix_d(QSize size, qreal percent);

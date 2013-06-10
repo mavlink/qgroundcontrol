@@ -103,15 +103,15 @@ void HUD2IndicatorHorizonPitchline::updateGeometry(const QSize &size){
 
     int tmp;
     tmp = percent2pix_d(size, 0.3);
-    hud2_clamp(tmp, 1, 10);
+    tmp = qBound(1, tmp, 10);
     pen.setWidth(tmp);
 
     int text_size = percent2pix_h(size, 4);
     int w = percent2pix_w(size, size_w);
     int h = percent2pix_h(size, size_h);
 
-    hud2_clamp(h, SIZE_H_MIN, 50);
-    hud2_clamp(text_size, SIZE_TEXT_MIN, 50);
+    h = qBound(SIZE_H_MIN, h, 50);
+    text_size = qBound(SIZE_TEXT_MIN, text_size, 50);
 
     int _gap = percent2pix_w(size, *gap);
     textRectPos = update_geometry_lines_pos(_gap, w, h);
