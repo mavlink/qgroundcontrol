@@ -105,6 +105,8 @@ exists(user_config.pri) {
     message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
+} else {
+    MAVLINK_CONF += ardupilotmega
 }
 INCLUDEPATH += $$MAVLINKPATH
 isEmpty(MAVLINK_CONF) {
@@ -230,7 +232,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
     src/ui/uas/UASActionsWidget.ui \
     src/ui/QGCTabbedInfoView.ui \
-    src/ui/UASRawStatusView.ui
+    src/ui/UASRawStatusView.ui \
+    src/ui/uas/QGCMessageView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -387,7 +390,8 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCRadioChannelDisplay.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
-    src/ui/PrimaryFlightDisplay.h
+    src/ui/PrimaryFlightDisplay.h \
+    src/ui/uas/QGCMessageView.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -563,7 +567,8 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCRadioChannelDisplay.cpp \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
-    src/ui/PrimaryFlightDisplay.cpp
+    src/ui/PrimaryFlightDisplay.cpp \
+    src/ui/uas/QGCMessageView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

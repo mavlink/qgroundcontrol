@@ -25,7 +25,6 @@ This file is part of the QGROUNDCONTROL project
 #define ARDUPILOTMEGAMAV_H
 
 #include "UAS.h"
-
 class ArduPilotMegaMAV : public UAS
 {
     Q_OBJECT
