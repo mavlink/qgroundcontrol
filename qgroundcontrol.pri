@@ -173,13 +173,17 @@ linux-g++|linux-g++-64{
 	CONFIG -= console
 	DEFINES += __STDC_LIMIT_MACROS
 
-	release {
-		DEFINES += QT_NO_DEBUG
-	}
-
 	INCLUDEPATH += /usr/include \
         /usr/local/include \
         /usr/include/qt4/phonon
+
+        CONFIG(release) {
+                DEFINES += QT_NO_DEBUG
+        }
+
+        CONFIG(debug) {
+                DEFINES -= QT_NO_DEBUG
+        }
 
 	LIBS += \
 		-L/usr/lib \

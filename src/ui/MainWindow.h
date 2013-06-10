@@ -52,6 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
+#include "hud2/HUD2.h"
 #include "submainwindow.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
