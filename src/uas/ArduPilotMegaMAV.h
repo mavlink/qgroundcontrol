@@ -25,9 +25,6 @@ This file is part of the QGROUNDCONTROL project
 #define ARDUPILOTMEGAMAV_H
 
 #include "UAS.h"
-#include "ardupilotmega/mavlink_msg_mount_configure.h"
-#include "ardupilotmega/mavlink_msg_mount_control.h"
-#include "ardupilotmega/mavlink_msg_mount_status.h"
 class ArduPilotMegaMAV : public UAS
 {
     Q_OBJECT
