@@ -46,14 +46,13 @@ This file is part of the PIXHAWK project
 #include "LinkManager.h"
 
 UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
+    uWidget(NULL),
     m_ui(new Ui::UASList)
 {
     m_ui->setupUi(this);
     m_ui->verticalLayout->setAlignment(Qt::AlignTop);
 
-    // Construct initial widget
-    uWidget = new QGCUnconnectedInfoWidget(this);
-    m_ui->verticalLayout->addWidget(uWidget);
+    this->setMinimumWidth(262);
 
     linkToBoxMapping = QMap<LinkInterface*, QGroupBox*>();
     uasToBoxMapping = QMap<UASInterface*, QGroupBox*>();
@@ -134,11 +133,13 @@ void UASListWidget::addUAS(UASInterface* uas)
     // If the list was empty, remove the unconnected widget and start the update timer.
     if (uasViews.isEmpty())
     {
-        m_ui->verticalLayout->removeWidget(uWidget);
-        uWidget->deleteLater();
-        uWidget = NULL;
-
         updateTimer->start(5000);
+        if (uWidget)
+        {
+            listLayout->removeWidget(uWidget);
+            delete uWidget;
+            uWidget = NULL;
+        }
     }
 
     if (!uasViews.contains(uas))
