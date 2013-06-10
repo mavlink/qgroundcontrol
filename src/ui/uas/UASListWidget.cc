@@ -45,14 +45,14 @@ This file is part of the PIXHAWK project
 #include "MAVLinkSimulationLink.h"
 #include "LinkManager.h"
 
-UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UASList)
+UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
+    uWidget(NULL),
+    m_ui(new Ui::UASList)
 {
     m_ui->setupUi(this);
     m_ui->verticalLayout->setAlignment(Qt::AlignTop);
 
-    // Construct initial widget
-    uWidget = new QGCUnconnectedInfoWidget(this);
-    m_ui->verticalLayout->addWidget(uWidget);
+    this->setMinimumWidth(262);
 
     uasViews = QMap<UASInterface*, UASView*>();
 
@@ -84,14 +84,16 @@ void UASListWidget::changeEvent(QEvent *e)
     }
 }
 
-
 void UASListWidget::addUAS(UASInterface* uas)
 {
     if (uasViews.isEmpty())
     {
-        m_ui->verticalLayout->removeWidget(uWidget);
-        delete uWidget;
-        uWidget = NULL;
+        if (uWidget)
+        {
+            m_ui->verticalLayout->removeWidget(uWidget);
+            delete uWidget;
+            uWidget = NULL;
+        }
     }
 
     if (!uasViews.contains(uas))
