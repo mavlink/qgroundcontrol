@@ -69,20 +69,26 @@ public slots:
     void setZ(float z);
     /** @brief Hat switch position */
     void setHat(float x, float y);
-    /** @brief Clear keys */
-    void clearKeys();
     /** @brief Joystick keys, as labeled on the joystick */
     void pressKey(int key);
     /** @brief Update status string */
     void updateStatus(const QString& status);
 
 protected:
+    /** @brief Update the proper number of buttons for the current joystick. */
+    void updateButtons();
     /** @brief UI change event */
     virtual void changeEvent(QEvent *e);
     JoystickInput* joystick;  ///< Reference to the joystick
 
+protected slots:
+    /** @brief Update the UI for a new joystick based on SDL ID. */
+    void updateUIForJoystick(int id);
+
 private:
     Ui::JoystickWidget *m_ui;
+    /** @brief Initialize all dynamic UI elements (button list, joystick names, etc.) */
+    void initUI();
 };
 
 #endif // JOYSTICKWIDGET_H

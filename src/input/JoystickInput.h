@@ -69,39 +69,59 @@ public:
      */
     void storeSettings();
 
-    int getMappingThrustAxis()
+    int getMappingThrustAxis() const
     {
         return thrustAxis;
     }
 
-    int getMappingXAxis()
+    int getMappingXAxis() const
     {
         return xAxis;
     }
 
-    int getMappingYAxis()
+    int getMappingYAxis() const
     {
         return yAxis;
     }
 
-    int getMappingYawAxis()
+    int getMappingYawAxis() const
     {
         return yawAxis;
     }
 
-    int getMappingAutoButton()
+    int getMappingAutoButton() const
     {
         return autoButtonMapping;
     }
 
-    int getMappingManualButton()
+    int getMappingManualButton() const
     {
         return manualButtonMapping;
     }
 
-    int getMappingStabilizeButton()
+    int getMappingStabilizeButton() const
     {
         return stabilizeButtonMapping;
+    }
+
+    int getJoystickNumButtons() const
+    {
+        return joystickButtons;
+    }
+
+    int getJoystickID() const
+    {
+        return joystickID;
+    }
+
+    int getNumJoysticks() const
+    {
+        return joysticksFound;
+    }
+
+    QString getJoystickNameById(int id) const
+    {
+        return QString(SDL_JoystickName(id));
     }
 
     const double sdlJoystickMin;
@@ -127,6 +147,9 @@ protected:
     int stabilizeButtonMapping;
     SDL_Event event;
     QString joystickName;
+    int joystickButtons;
+    int joystickID;
+    int joysticksFound;
 
     void init();
 
@@ -198,6 +221,8 @@ signals:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    /** @brief Switch to a new joystick by ID number. */
+    void setActiveJoystick(int id);
     void setMappingThrustAxis(int mapping)
     {
         thrustAxis = mapping;
