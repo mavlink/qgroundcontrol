@@ -250,6 +250,8 @@ public slots:
     /** @brief Update the window name */
     void configureWindowName();
 
+    void commsWidgetDestroyed(QObject *obj);
+
 signals:
     void initStatusChanged(const QString& message);
 #ifdef MOUSE_ENABLED_LINUX
@@ -397,6 +399,8 @@ protected:
     QPointer<QGCToolBar> toolBar;
     QPointer<QGCStatusBar> customStatusBar;
 
+    QPointer<DebugConsole> debugConsole;
+
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
     QPointer<QDockWidget> mavlinkSenderWidget;
@@ -441,6 +445,7 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private:
+    QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
     QMap<QAction*,QString > menuToDockNameMap;
     QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
