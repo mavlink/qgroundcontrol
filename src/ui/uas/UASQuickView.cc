@@ -69,6 +69,17 @@ void UASQuickView::saveSettings()
         settings.setArrayIndex(count++);
         settings.setValue("name",i.key());
         settings.setValue("type","text");
+=======
+        QAction *action = new QAction(tr("longitude"),this);
+        action->setCheckable(true);
+        action->setChecked(true);
+        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
+        this->addAction(action);
+        UASQuickViewItem *item = new UASQuickViewItem(this);
+        item->setTitle(tr("longitude"));
+        this->layout()->addWidget(item);
+        uasPropertyToLabelMap["longitude"] = item;
+>>>>>>> 975f41067229245752f23de45b80ca4a7e28642d
     }
     settings.endArray();
     settings.sync();
@@ -80,6 +91,7 @@ void UASQuickView::loadSettings()
     int size = settings.beginReadArray("UAS_QUICK_VIEW_ITEMS");
     for (int i=0;i<size;i++)
     {
+<<<<<<< HEAD
         settings.setArrayIndex(i);
         QString nameval = settings.value("name").toString();
         QString typeval = settings.value("type").toString();
@@ -149,6 +161,7 @@ void UASQuickView::addUAS(UASInterface* uas)
 
 void UASQuickView::setActiveUAS(UASInterface* uas)
 {
+    // Clean up from the old UAS
     if (this->uas)
     {
         uasPropertyValueMap.clear();
@@ -259,6 +272,9 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
         {
             quickViewSelectDialog->addItem(name);
         }
+
+        // And periodically update the view.
+        updateTimer->start(1000);
     }
     uasPropertyValueMap[name] = value;
 }
