@@ -45,20 +45,12 @@ This file is part of the PIXHAWK project
 #include "MAVLinkSimulationLink.h"
 #include "LinkManager.h"
 
-UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UASList)
+UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
+    uWidget(NULL),
+    m_ui(new Ui::UASList)
 {
     m_ui->setupUi(this);
-
-    listLayout = new QVBoxLayout(this);
-    listLayout->setMargin(0);
-    listLayout->setSpacing(3);
-    listLayout->setAlignment(Qt::AlignTop);
-    this->setLayout(listLayout);
-    setObjectName("UNMANNED_SYSTEMS_LIST");
-
-    // Construct initial widget
-    uWidget = new QGCUnconnectedInfoWidget(this);
-    listLayout->addWidget(uWidget);
+    m_ui->verticalLayout->setAlignment(Qt::AlignTop);
 
     this->setMinimumWidth(262);
 
@@ -92,22 +84,22 @@ void UASListWidget::changeEvent(QEvent *e)
     }
 }
 
-
-
 void UASListWidget::addUAS(UASInterface* uas)
 {
     if (uasViews.isEmpty())
     {
-        listLayout->removeWidget(uWidget);
-        delete uWidget;
-        uWidget = NULL;
+        if (uWidget)
+        {
+            m_ui->verticalLayout->removeWidget(uWidget);
+            delete uWidget;
+            uWidget = NULL;
+        }
     }
 
     if (!uasViews.contains(uas))
     {
         uasViews.insert(uas, new UASView(uas, this));
-        listLayout->addWidget(uasViews.value(uas));
-        //connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
+        m_ui->verticalLayout->addWidget(uasViews.value(uas));
     }
 }
 
@@ -121,9 +113,7 @@ void UASListWidget::activeUAS(UASInterface* uas)
 
 void UASListWidget::removeUAS(UASInterface* uas)
 {
-	Q_UNUSED(uas);
-//    uasViews.remove(uas);
-//    listLayout->removeWidget(uasViews.value(uas));
-//    uasViews.value(uas)->deleteLater();
+    m_ui->verticalLayout->removeWidget(uasViews.value(uas));
+    uasViews.value(uas)->deleteLater();
+    uasViews.remove(uas);
 }
-

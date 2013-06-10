@@ -34,8 +34,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QDesktopServices>
 #include <QFileDialog>
-
 #include <QDebug>
+
 #include <cmath>
 #include <qmath.h>
 #include <limits>
@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "MG.h"
 #include "QGC.h"
+#include "MainWindow.h"
 
 // Fix for some platforms, e.g. windows
 #ifndef GL_MULTISAMPLE
@@ -60,7 +61,7 @@ This file is part of the QGROUNDCONTROL project
  * @param parent
  */
 HUD::HUD(int width, int height, QWidget* parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+    : QWidget(parent),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -83,12 +84,6 @@ HUD::HUD(int width, int height, QWidget* parent)
       receivedChannels(1),
       receivedWidth(640),
       receivedHeight(480),
-      defaultColor(QColor(70, 200, 70)),
-      setPointColor(QColor(200, 20, 200)),
-      warningColor(Qt::yellow),
-      criticalColor(Qt::red),
-      infoColor(QColor(20, 200, 20)),
-      fuelColor(criticalColor),
       warningBlinkRate(5),
       refreshTimer(new QTimer(this)),
       noCamera(true),
@@ -119,12 +114,12 @@ HUD::HUD(int width, int height, QWidget* parent)
       load(0.0f),
       offlineDirectory(""),
       nextOfflineImage(""),
-      hudInstrumentsEnabled(true),
-      videoEnabled(false),
+      HUDInstrumentsEnabled(true),
+      videoEnabled(true),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageRequested(false),
-      imageLoggingEnabled(false)
+      imageLoggingEnabled(false),
+      imageRequested(false)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -135,26 +130,16 @@ HUD::HUD(int width, int height, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scalingFactor = this->width()/vwidth;
 
-    // Fill with black background
-    QImage fill = QImage(width, height, QImage::Format_Indexed8);
-    fill.setNumColors(3);
-    fill.setColor(0, qRgb(0, 0, 0));
-    fill.setColor(1, qRgb(0, 0, 0));
-    fill.setColor(2, qRgb(0, 0, 0));
-    fill.fill(0);
-
-    //QString imagePath = "/Users/user/Desktop/frame0000.png";
-    //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
-    //fill = QImage(imagePath);
-
-    glImage = QGLWidget::convertToGLFormat(fill);
+    // Set up the initial color theme. This can be updated by a styleChanged
+    // signal from MainWindow.
+    styleChanged(((MainWindow*)parent)->getStyle());
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
-    resize(this->width(), this->height());
+    QWidget::resize(this->width(), this->height());
     //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 
     // Set size once
@@ -178,6 +163,11 @@ HUD::HUD(int width, int height, QWidget* parent)
         if (font.family() != fontFamilyName) qDebug() << "ERROR! WRONG FONT LOADED: " << fontFamilyName;
     }
 
+    // Connect the themeChanged signal from the MainWindow to this widget, so it
+    // can change it's styling accordingly.
+    connect((MainWindow*)parent, SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+            this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
@@ -196,11 +186,46 @@ QSize HUD::sizeHint() const
     return QSize(width(), (width()*3.0f)/4);
 }
 
+void HUD::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme)
+{
+    // Generate a background image that's dependent on the current color scheme.
+    QImage fill = QImage(width(), height(), QImage::Format_Indexed8);
+    if (newTheme == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        fill.fill(255);
+    }
+    else
+    {
+        fill.fill(0);
+    }
+    glImage = QGLWidget::convertToGLFormat(fill);
+
+    // Now set the other default colors based on the current color scheme.
+    if (newTheme == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        defaultColor = QColor(0x01, 0x47, 0x01);
+        setPointColor = QColor(0x82, 0x17, 0x82);
+        warningColor = Qt::darkYellow;
+        criticalColor = Qt::darkRed;
+        infoColor = QColor(0x07, 0x82, 0x07);
+        fuelColor = criticalColor;
+    }
+    else
+    {
+        defaultColor = QColor(70, 200, 70);
+        setPointColor = QColor(200, 20, 200);
+        warningColor = Qt::yellow;
+        criticalColor = Qt::red;
+        infoColor = QColor(20, 200, 20);
+        fuelColor = criticalColor;
+    }
+}
+
 void HUD::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    QGLWidget::showEvent(event);
+    QWidget::showEvent(event);
     refreshTimer->start(updateInterval);
     emit visibilityChanged(true);
 }
@@ -210,7 +235,7 @@ void HUD::hideEvent(QHideEvent* event)
     // React only to internal (pre-display)
     // events
     refreshTimer->stop();
-    QGLWidget::hideEvent(event);
+    QWidget::hideEvent(event);
     emit visibilityChanged(false);
 }
 
@@ -218,7 +243,7 @@ void HUD::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
     // Update actions
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     enableVideoAction->setChecked(videoEnabled);
 
     menu.addAction(enableHUDAction);
@@ -234,7 +259,7 @@ void HUD::createActions()
     enableHUDAction = new QAction(tr("Enable HUD"), this);
     enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
     enableHUDAction->setCheckable(true);
-    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableHUDAction->setChecked(HUDInstrumentsEnabled);
     connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
 
     enableVideoAction = new QAction(tr("Enable Video Live feed"), this);
@@ -261,16 +286,16 @@ void HUD::setActiveUAS(UASInterface* uas)
 {
     if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*, double, double, double, quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int, double, double, double, quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(velocityChanged_NEDspeedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
         // Try to disconnect the image link
@@ -286,14 +311,14 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(velocityChanged_NED(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
         // Try to connect the image link
@@ -338,10 +363,11 @@ void HUD::updateAttitude(UASInterface* uas, int component, double roll, double p
     }
 }
 
-void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
+void HUD::updateBattery(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
+    Q_UNUSED(current);
     fuelStatus = tr("BAT [%1% | %2V]").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0'));
     if (percent < 20.0f) {
         fuelColor = warningColor;
@@ -447,73 +473,6 @@ float HUD::refToScreenY(float y)
 }
 
 /**
- * This functions works in the OpenGL view, which is already translated by
- * the x and y center offsets.
- *
- */
-void HUD::paintCenterBackground(float roll, float pitch, float yaw)
-{
-    Q_UNUSED(yaw);
-
-    // Center indicator is 100 mm wide
-    float referenceWidth = 70.0;
-    float referenceHeight = 70.0;
-
-    // HUD is assumed to be 200 x 150 mm
-    // so that positions can be hardcoded
-    // but can of course be scaled.
-
-    double referencePositionX = vwidth / 2.0 - referenceWidth/2.0;
-    double referencePositionY = vheight / 2.0 - referenceHeight/2.0;
-
-    //this->width()/2.0+(xCenterOffset*scalingFactor), this->height()/2.0+(yCenterOffset*scalingFactor);
-
-    setupGLView(referencePositionX, referencePositionY, referenceWidth, referenceHeight);
-
-    // Store current position in the model view
-    // the position will be restored after drawing
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    // Move to the center of the window
-    glTranslatef(referenceWidth/2.0f,referenceHeight/2.0f,0);
-
-    // Move based on the yaw difference
-    //glTranslatef(yaw, 0.0f, 0.0f);
-
-    // Rotate based on the bank
-    glRotatef((roll/M_PI)*180.0f, 0.0f, 0.0f, 1.0f);
-
-    // Translate in the direction of the rotation based
-    // on the pitch. On the 777, a pitch of 1 degree = 2 mm
-    //glTranslatef(0, ((-pitch/M_PI)*180.0f * vPitchPerDeg), 0);
-    glTranslatef(0.0f, (-pitch * vPitchPerDeg * 16.5f), 0.0f);
-
-    // Ground
-    glColor3ub(179,102,0);
-
-    glBegin(GL_POLYGON);
-    glVertex2f(-300,-900);
-    glVertex2f(-300,0);
-    glVertex2f(300,0);
-    glVertex2f(300,-900);
-    glVertex2f(-300,-900);
-    glEnd();
-
-    // Sky
-    glColor3ub(0,153,204);
-
-    glBegin(GL_POLYGON);
-    glVertex2f(-300,0);
-    glVertex2f(-300,900);
-    glVertex2f(300,900);
-    glVertex2f(300,0);
-    glVertex2f(-300,0);
-
-    glEnd();
-}
-
-/**
  * Paint text on top of the image and OpenGL drawings
  *
  * @param text chars to write
@@ -546,29 +505,6 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
     painter->setPen(prevPen);
 }
 
-void HUD::initializeGL()
-{
-    bool antialiasing = true;
-
-    // Antialiasing setup
-    if(antialiasing) {
-        glEnable(GL_MULTISAMPLE);
-        glEnable(GL_BLEND);
-
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-        glEnable(GL_POINT_SMOOTH);
-        glEnable(GL_LINE_SMOOTH);
-
-        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    } else {
-        glDisable(GL_BLEND);
-        glDisable(GL_POINT_SMOOTH);
-        glDisable(GL_LINE_SMOOTH);
-    }
-}
-
 /**
  * @param referencePositionX horizontal position in the reference mm-unit space
  * @param referencePositionY horizontal position in the reference mm-unit space
@@ -582,23 +518,6 @@ void HUD::setupGLView(float referencePositionX, float referencePositionY, float 
     // Translate and scale the GL view in the virtual reference coordinate units on the screen
     int pixelPositionX = (int)((referencePositionX * scalingFactor) + xCenterOffset);
     int pixelPositionY = this->height() - (referencePositionY * scalingFactor) + yCenterOffset - pixelHeight;
-
-    //qDebug() << "Pixel x" << pixelPositionX << "pixelY" << pixelPositionY;
-    //qDebug() << "xCenterOffset:" << xCenterOffset << "yCenterOffest" << yCenterOffset
-
-
-    //The viewport is established at the correct pixel position and clips everything
-    // out of the desired instrument location
-    glViewport(pixelPositionX, pixelPositionY, pixelWidth, pixelHeight);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    // The ortho projection is setup in a way that so that the drawing is done in the
-    // reference coordinate space
-    glOrtho(0, referenceWidth, 0, referenceHeight, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    //glScalef(scaleX, scaleY, 1.0f);
 }
 
 void HUD::paintRollPitchStrips()
@@ -666,23 +585,13 @@ void HUD::paintHUD()
         scalingFactor = this->width()/vwidth;
         double scalingFactorH = this->height()/vheight;
         if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
-
-
-
-        // OPEN GL PAINTING
-        // Store model view matrix to be able to reset it to the previous state
-        makeCurrent();
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         // Fill with black background
         if (videoEnabled) {
             if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
                 qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
                 QImage fill = QImage(nextOfflineImage);
 
-                glImage = QGLWidget::convertToGLFormat(fill);
+                glImage = fill;
 
                 // Reset to save load efforts
                 nextOfflineImage = "";
@@ -690,28 +599,22 @@ void HUD::paintHUD()
 
         }
 
+        // And if either video or the data stream is enabled, draw the next frame.
         if (dataStreamEnabled || videoEnabled)
         {
-            glRasterPos2i(0, 0);
 
             xImageFactor = width() / (float)glImage.width();
             yImageFactor = height() / (float)glImage.height();
             float imageFactor = qMin(xImageFactor, yImageFactor);
-            glPixelZoom(imageFactor, imageFactor);
             // Resize to correct size and fill with image
-            glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-            //qDebug() << "DRAWING GL IMAGE";
-        } else {
-            // Blue / brown background
-            paintCenterBackground(roll, pitch, yawTrans);
-        }
+            // FIXME
 
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        }
 
         // END OF OPENGL PAINTING
 
-        if (hudInstrumentsEnabled) {
+        if (HUDInstrumentsEnabled)
+        {
 
             //glEnable(GL_MULTISAMPLE);
 
@@ -724,7 +627,6 @@ void HUD::paintHUD()
             painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
             // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
-
 
             // Draw all fixed indicators
             // BATTERY
@@ -888,11 +790,6 @@ void HUD::paintHUD()
             painter.begin(this);
             painter.end();
         }
-        //glDisable(GL_MULTISAMPLE);
-
-
-
-        //glFlush();
     }
 }
 
@@ -1302,20 +1199,6 @@ void HUD::drawCircle(float refX, float refY, float radius, float startDeg, float
     drawEllipse(refX, refY, radius, radius, startDeg, endDeg, lineWidth, color, painter);
 }
 
-void HUD::resizeGL(int w, int h)
-{
-    if (isVisible()) {
-        glViewport(0, 0, w, h);
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0, w, 0, h, -1, 1);
-        glMatrixMode(GL_MODELVIEW);
-        glPolygonMode(GL_FRONT, GL_FILL);
-        //FIXME
-        paintHUD();
-    }
-}
-
 void HUD::selectWaypoint(int uasId, int id)
 {
     Q_UNUSED(uasId);
@@ -1362,8 +1245,15 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
         }
 
         // Fill first channel of image with black pixels
-        image->fill(0);
-        glImage = QGLWidget::convertToGLFormat(*image);
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            image->fill(255);
+        }
+        else
+        {
+            image->fill(0);
+        }
+        glImage = *image;
 
         qDebug() << __FILE__ << __LINE__ << "Setting up image";
 
@@ -1414,7 +1304,7 @@ void HUD::commitRawDataToGL()
             }
         }
 
-        glImage = QGLWidget::convertToGLFormat(*newImage);
+        glImage = *newImage;
         delete image;
         image = newImage;
         // Switch buffers
@@ -1459,7 +1349,7 @@ void HUD::selectOfflineDirectory()
 
 void HUD::enableHUDInstruments(bool enabled)
 {
-    hudInstrumentsEnabled = enabled;
+    HUDInstrumentsEnabled = enabled;
 }
 
 void HUD::enableVideo(bool enabled)
@@ -1509,13 +1399,13 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
 void HUD::copyImage()
 {
-    if (isVisible() && hudInstrumentsEnabled)
+    if (isVisible() && HUDInstrumentsEnabled)
     {
         //qDebug() << "HUD::copyImage()";
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u)
         {
-            this->glImage = QGLWidget::convertToGLFormat(u->getImage());
+            this->glImage = u->getImage();
 
             // Save to directory if logging is enabled
             if (imageLoggingEnabled)

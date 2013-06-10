@@ -41,7 +41,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     currentLink(NULL),
     firstAction(NULL)
 {
-    setObjectName("QGC_TOOLBAR");
+    setObjectName("QGCToolBar");
 
     // Do not load UI, wait for actions
 }
@@ -64,11 +64,11 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         // Alternate colors to increase visibility
         if ((ms / 1000) % 2 == 0)
         {
-            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+            toolBarTimeoutLabel->setStyleSheet(QString("QLabel {color: #000; background-color: #FF0037;}"));
         }
         else
         {
-            toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.dark(250).name()));
+            toolBarTimeoutLabel->setStyleSheet(QString("QLabel {color: #FFF; background-color: #6B0017;}"));
         }
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
     }
@@ -85,14 +85,11 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
 
 void QGCToolBar::createUI()
 {
-    setStyleSheet("QToolBar {margin: 0px; border-bottom: 1px solid #484848; border-top: 1px solid #969696; background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #8B8B8B, stop:0.3 #808080, stop:0.34 #747474, stop:1 #484848);}");
-
     // CREATE TOOLBAR ITEMS
     // Add internal actions
     // Add MAV widget
-    symbolButton = new QToolButton(this);
-    symbolButton->setStyleSheet("QWidget { margin-left: 10px; background-color: #050508; color: #DDDDDF; background-clip: border; }");
-    addWidget(symbolButton);
+    symbolLabel = new QLabel(this);
+    addWidget(symbolLabel);
 
     toolBarNameLabel = new QLabel("------", this);
     toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
@@ -101,46 +98,42 @@ void QGCToolBar::createUI()
 
     toolBarTimeoutLabel = new QLabel("UNCONNECTED", this);
     toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
-    toolBarTimeoutLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
     toolBarTimeoutLabel->setAlignment(Qt::AlignCenter);
+    toolBarTimeoutLabel->setObjectName("toolBarTimeoutLabel");
     addWidget(toolBarTimeoutLabel);
 
-    toolBarSafetyLabel = new QLabel("SAFE", this);
-    toolBarSafetyLabel->setStyleSheet("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: #14C814; }");
+    toolBarSafetyLabel = new QLabel("----", this);
     toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
     toolBarSafetyLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarSafetyLabel);
 
     toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }");
     toolBarModeLabel->setToolTip(tr("Vehicle mode"));
     toolBarModeLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarModeLabel);
 
     toolBarStateLabel = new QLabel("------", this);
-    toolBarStateLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #FEC654; }");
     toolBarStateLabel->setToolTip(tr("Vehicle state"));
     toolBarStateLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarStateLabel);
 
     toolBarBatteryBar = new QProgressBar(this);
-    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
     toolBarBatteryBar->setMinimumWidth(20);
     toolBarBatteryBar->setMaximumWidth(100);
     toolBarBatteryBar->setValue(0);
     toolBarBatteryBar->setToolTip(tr("Battery charge level"));
+    toolBarBatteryBar->setObjectName("toolBarBatteryBar");
     addWidget(toolBarBatteryBar);
 
     toolBarBatteryVoltageLabel = new QLabel("xx.x V");
-    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
+    toolBarBatteryVoltageLabel->setObjectName("toolBarBatteryVoltageLabel");
     toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
     toolBarBatteryVoltageLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarBatteryVoltageLabel);
 
     toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 18px; color: #ACEBFE; }");
     toolBarWpLabel->setToolTip(tr("Current waypoint"));
     toolBarWpLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarWpLabel);
@@ -151,19 +144,17 @@ void QGCToolBar::createUI()
     addWidget(toolBarDistLabel);
 
     toolBarMessageLabel = new QLabel("", this);
-    toolBarMessageLabel->setStyleSheet("QLabel { margin: 3px 2px; font: 14px; color: #ACEBFE; }");
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     addWidget(toolBarMessageLabel);
 
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    spacer->setStyleSheet("* { margin: 0px; background-color: transparent; min-height: 24px}");
     addWidget(spacer);
 
     connectButton = new QPushButton(tr("Connect"), this);
+    connectButton->setObjectName("connectButton");
     connectButton->setToolTip(tr("Connect wireless link to MAV"));
     connectButton->setCheckable(true);
-    connectButton->setStyleSheet("QPushButton {min-height: 20px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5AAA49, stop: 1 #106B38);  margin-left: 4px; margin-right: 4px; border-radius: 4px; border: 1px solid #085B35; } QPushButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #FF9000, stop: 1 #FFD450); color: #222222; border-color: #D1892A}");
     addWidget(connectButton);
     connect(connectButton, SIGNAL(clicked(bool)), this, SLOT(connectLink(bool)));
 
@@ -200,8 +191,8 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         group = new QButtonGroup(this);
         group->setExclusive(true);
 
+        // Add the first button.
         QToolButton *first = new QToolButton(this);
-        // Add first button
         first->setIcon(actions.first()->icon());
         first->setText(actions.first()->text());
         first->setToolTip(actions.first()->toolTip());
@@ -209,15 +200,14 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         first->setCheckable(true);
         connect(first, SIGNAL(clicked(bool)), actions.first(), SIGNAL(triggered(bool)));
         connect(actions.first(),SIGNAL(triggered(bool)),first,SLOT(setChecked(bool)));
-        first->setStyleSheet("QToolButton { min-width: 60px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
+        first->setObjectName("firstAction");
         addWidget(first);
         group->addButton(first);
 
+        // Add all the middle buttons.
         for (int i = 1; i < actions.count(); i++)
         {
-            // Add last button
             QToolButton *btn = new QToolButton(this);
-            // Add first button
             btn->setIcon(actions.at(i)->icon());
             btn->setText(actions.at(i)->text());
             btn->setToolTip(actions.at(i)->toolTip());
@@ -225,19 +215,19 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
             btn->setCheckable(true);
             connect(btn, SIGNAL(clicked(bool)), actions.at(i), SIGNAL(triggered(bool)));
             connect(actions.at(i),SIGNAL(triggered(bool)),btn,SLOT(setChecked(bool)));
-            btn->setStyleSheet("QToolButton { min-width: 60px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: -2px; margin-right: -2px; padding-left: 0px; padding-right: 0px; border-radius: 0px; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
             addWidget(btn);
             group->addButton(btn);
         }
 
         // Add last button
-        advancedButton = new QPushButton(this);
-        // Add first button
+        advancedButton = new QToolButton(this);
         advancedButton->setIcon(QIcon(":/files/images/apps/utilities-system-monitor.svg"));
         advancedButton->setText(tr("Pro"));
         advancedButton->setToolTip(tr("Options for advanced users"));
         advancedButton->setCheckable(true);
-        advancedButton->setStyleSheet("QPushButton { min-height: 20px; max-height: 20px; min-width: 60px; font-weight: bold; text-align: left; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8);  margin-left: 0px; margin-right: 13px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-right-radius: 6px; border-top-right-radius: 6px; border-right: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QPushButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
+        advancedButton->setObjectName("advancedButton");
+        advancedButton->setPopupMode(QToolButton::InstantPopup);
+        advancedButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         addWidget(advancedButton);
         group->addButton(advancedButton);
     } else {
@@ -259,8 +249,6 @@ void QGCToolBar::setPerspectiveChangeAdvancedActions(const QList<QAction*> &acti
 
             menu->addAction(actions.at(i));
         }
-
-        menu->setStyleSheet("QMenu { font-weight: bold; min-width: 70px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); border: 1px solid #484848; } QMenu::item:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
 
         advancedButton->setMenu(menu);
         connect(menu, SIGNAL(triggered(QAction*)), this, SLOT(advancedActivityTriggered(QAction*)));
@@ -289,7 +277,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
         disconnect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
         disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
-        disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+        disconnect(mav, SIGNAL(batteryChanged(UASInterface*, double, double, double,int)), this, SLOT(updateBatteryRemaining(UASInterface*, double, double, double, int)));
         disconnect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         disconnect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
         disconnect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -307,7 +295,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
     connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
-    connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+    connect(active, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBatteryRemaining(UASInterface*, double, double, double, int)));
     connect(active, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
     connect(active, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
     connect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -321,11 +309,10 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     systemName = mav->getUASName();
     systemArmed = mav->isArmed();
     toolBarNameLabel->setText(mav->getUASName());
-    toolBarNameLabel->setStyleSheet(QString("QLabel { font: bold 16px; color: %1; }").arg(mav->getColor().name()));
-    symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 14px; border: 0px solid #484848; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
+    toolBarNameLabel->setStyleSheet(QString("QLabel {color: %1;}").arg(mav->getColor().name()));
+    symbolLabel->setStyleSheet(QString("QWidget {background-color: %1;}").arg(mav->getColor().name()));
     toolBarModeLabel->setText(mav->getShortMode());
     toolBarStateLabel->setText(mav->getShortState());
-    toolBarTimeoutLabel->setStyleSheet(QString(""));
     toolBarTimeoutLabel->setText("");
     toolBarDistLabel->setText("");
     setSystemType(mav, mav->getSystemType());
@@ -353,9 +340,9 @@ void QGCToolBar::updateView()
     toolBarWpLabel->setText(tr("WP%1").arg(wpId));
     toolBarBatteryBar->setValue(batteryPercent);
     if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
-        toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: yellow; }");
+        toolBarBatteryBar->setStyleSheet("QProgressBar::chunk { background-color: green}");
     } else if (batteryPercent >= 30 && toolBarBatteryBar->value() < 30){
-        toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 14px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+        toolBarBatteryBar->setStyleSheet("QProgressBar::chunk { background-color: yellow}");
     }
 
     toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
@@ -369,14 +356,22 @@ void QGCToolBar::updateView()
         toolBarMessageLabel->setText(tr("%1").arg(""));
     }
 
+    // Display the system armed state with a red-on-yellow background if armed or green text if safe.
     if (systemArmed)
     {
-        toolBarSafetyLabel->setStyleSheet(QString("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: %1; background-color: %2; border-radius: 4px;}").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
+        toolBarSafetyLabel->setStyleSheet(QString("QLabel {color: %1; background-color: %2;}").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
         toolBarSafetyLabel->setText(tr("ARMED"));
     }
     else
     {
-        toolBarSafetyLabel->setStyleSheet("QLabel { margin: 3px 2px; padding: 2px; padding-left: 4px; padding-right: 4px; font: 14px; color: #14C814; }");
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            toolBarSafetyLabel->setStyleSheet("QLabel {color: #0D820D;}");
+        }
+        else
+        {
+            toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814;}");
+        }
         toolBarSafetyLabel->setText(tr("SAFE"));
     }
 
@@ -395,7 +390,7 @@ void QGCToolBar::updateCurrentWaypoint(quint16 id)
     wpId = id;
 }
 
-void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds)
+void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
@@ -443,66 +438,67 @@ void QGCToolBar::updateName(const QString& name)
 void QGCToolBar::setSystemType(UASInterface* uas, unsigned int systemType)
 {
     Q_UNUSED(uas);
-        // Set matching icon
-        switch (systemType) {
-        case MAV_TYPE_GENERIC:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/generic.svg"));
-            break;
-        case MAV_TYPE_FIXED_WING:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/fixed-wing.svg"));
-            break;
-        case MAV_TYPE_QUADROTOR:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/quadrotor.svg"));
-            break;
-        case MAV_TYPE_COAXIAL:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/coaxial.svg"));
-            break;
-        case MAV_TYPE_HELICOPTER:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/helicopter.svg"));
-            break;
-        case MAV_TYPE_ANTENNA_TRACKER:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/antenna-tracker.svg"));
-            break;
-        case MAV_TYPE_GCS:
-            symbolButton->setIcon(QIcon(":files/images/mavs/groundstation.svg"));
-            break;
-        case MAV_TYPE_AIRSHIP:
-            symbolButton->setIcon(QIcon(":files/images/mavs/airship.svg"));
-            break;
-        case MAV_TYPE_FREE_BALLOON:
-            symbolButton->setIcon(QIcon(":files/images/mavs/free-balloon.svg"));
-            break;
-        case MAV_TYPE_ROCKET:
-            symbolButton->setIcon(QIcon(":files/images/mavs/rocket.svg"));
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-            symbolButton->setIcon(QIcon(":files/images/mavs/ground-rover.svg"));
-            break;
-        case MAV_TYPE_SURFACE_BOAT:
-            symbolButton->setIcon(QIcon(":files/images/mavs/surface-boat.svg"));
-            break;
-        case MAV_TYPE_SUBMARINE:
-            symbolButton->setIcon(QIcon(":files/images/mavs/submarine.svg"));
-            break;
-        case MAV_TYPE_HEXAROTOR:
-            symbolButton->setIcon(QIcon(":files/images/mavs/hexarotor.svg"));
-            break;
-        case MAV_TYPE_OCTOROTOR:
-            symbolButton->setIcon(QIcon(":files/images/mavs/octorotor.svg"));
-            break;
-        case MAV_TYPE_TRICOPTER:
-            symbolButton->setIcon(QIcon(":files/images/mavs/tricopter.svg"));
-            break;
-        case MAV_TYPE_FLAPPING_WING:
-            symbolButton->setIcon(QIcon(":files/images/mavs/flapping-wing.svg"));
-            break;
-        case MAV_TYPE_KITE:
-            symbolButton->setIcon(QIcon(":files/images/mavs/kite.svg"));
-            break;
-        default:
-            symbolButton->setIcon(QIcon(":/files/images/mavs/unknown.svg"));
-            break;
-        }
+    QPixmap newPixmap;
+    switch (systemType) {
+    case MAV_TYPE_GENERIC:
+        newPixmap = QPixmap(":/files/images/mavs/generic.svg");
+        break;
+    case MAV_TYPE_FIXED_WING:
+        newPixmap = QPixmap(":/files/images/mavs/fixed-wing.svg");
+        break;
+    case MAV_TYPE_QUADROTOR:
+        newPixmap = QPixmap(":/files/images/mavs/quadrotor.svg");
+        break;
+    case MAV_TYPE_COAXIAL:
+        newPixmap = QPixmap(":/files/images/mavs/coaxial.svg");
+        break;
+    case MAV_TYPE_HELICOPTER:
+        newPixmap = QPixmap(":/files/images/mavs/helicopter.svg");
+        break;
+    case MAV_TYPE_ANTENNA_TRACKER:
+        newPixmap = QPixmap(":/files/images/mavs/antenna-tracker.svg");
+        break;
+    case MAV_TYPE_GCS:
+        newPixmap = QPixmap(":files/images/mavs/groundstation.svg");
+        break;
+    case MAV_TYPE_AIRSHIP:
+        newPixmap = QPixmap(":files/images/mavs/airship.svg");
+        break;
+    case MAV_TYPE_FREE_BALLOON:
+        newPixmap = QPixmap(":files/images/mavs/free-balloon.svg");
+        break;
+    case MAV_TYPE_ROCKET:
+        newPixmap = QPixmap(":files/images/mavs/rocket.svg");
+        break;
+    case MAV_TYPE_GROUND_ROVER:
+        newPixmap = QPixmap(":files/images/mavs/ground-rover.svg");
+        break;
+    case MAV_TYPE_SURFACE_BOAT:
+        newPixmap = QPixmap(":files/images/mavs/surface-boat.svg");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        newPixmap = QPixmap(":files/images/mavs/submarine.svg");
+        break;
+    case MAV_TYPE_HEXAROTOR:
+        newPixmap = QPixmap(":files/images/mavs/hexarotor.svg");
+        break;
+    case MAV_TYPE_OCTOROTOR:
+        newPixmap = QPixmap(":files/images/mavs/octorotor.svg");
+        break;
+    case MAV_TYPE_TRICOPTER:
+        newPixmap = QPixmap(":files/images/mavs/tricopter.svg");
+        break;
+    case MAV_TYPE_FLAPPING_WING:
+        newPixmap = QPixmap(":files/images/mavs/flapping-wing.svg");
+        break;
+    case MAV_TYPE_KITE:
+        newPixmap = QPixmap(":files/images/mavs/kite.svg");
+        break;
+    default:
+        newPixmap = QPixmap(":/files/images/mavs/unknown.svg");
+        break;
+    }
+    symbolLabel->setPixmap(newPixmap.scaledToHeight(24));
 }
 
 void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QString text)

@@ -54,13 +54,11 @@ public slots:
 
 protected:
     QMap<UASInterface*, UASView*> uasViews;
-    QVBoxLayout* listLayout;
     QGCUnconnectedInfoWidget* uWidget;
     void changeEvent(QEvent *e);
 
 private:
     Ui::UASList* m_ui;
-
 };
 
 #endif // _UASLISTWIDGET_H_

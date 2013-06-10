@@ -129,25 +129,24 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
 
     // Start the comm link manager
-    splashScreen->showMessage(tr("Starting Communication Links"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+    splashScreen->showMessage(tr("Starting communication links"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startLinkManager();
 
     // Start the UAS Manager
-    splashScreen->showMessage(tr("Starting UAS Manager"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+    splashScreen->showMessage(tr("Starting UAS manager"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startUASManager();
 
     // Start the user interface
-    splashScreen->showMessage(tr("Starting User Interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    // Start UI
+    splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+
+    // The first call to instance() creates the MainWindow, so make sure it's passed the splashScreen.
+    mainWindow = MainWindow::instance(splashScreen);
 
     // Connect links
     // to make sure that all components are initialized when the
     // first messages arrive
     UDPLink* udpLink = new UDPLink(QHostAddress::Any, 14550);
     MainWindow::instance()->addLink(udpLink);
-    // Listen on Multicast-Address 239.255.77.77, Port 14550
-    //QHostAddress * multicast_udp = new QHostAddress("239.255.77.77");
-    //UDPLink* udpLink = new UDPLink(*multicast_udp, 14550);
 
 #ifdef OPAL_RT
     // Add OpalRT Link, but do not connect
@@ -156,8 +155,6 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 #endif
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     simulationLink->disconnect();
-
-    mainWindow = MainWindow::instance(splashScreen);
 
     // Remove splash screen
     splashScreen->finish(mainWindow);
@@ -203,7 +200,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 QGCCore::~QGCCore()
 {
     //mainWindow->storeSettings();
-    mainWindow->close();
+    //mainWindow->close();
     //mainWindow->deleteLater();
     // Delete singletons
     // First systems
@@ -211,7 +208,8 @@ QGCCore::~QGCCore()
     // then links
     delete LinkManager::instance();
     // Finally the main window
-	delete MainWindow::instance();
+    //delete MainWindow::instance();
+    //The main window now autodeletes on close.
 }
 
 /**

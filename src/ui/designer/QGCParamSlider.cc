@@ -44,9 +44,6 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     ui->editLine2->hide();
     ui->infoLabel->hide();
 
-    //ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-    //ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
-
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 
     // Sending actions

@@ -95,7 +95,7 @@ public slots:
     void appendData(int uasId, const QString& curve, const QString& unit, quint64 value, quint64 usec);
     /** @brief Append double data to the given curve. */
     void appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec);
-	
+
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
@@ -138,7 +138,6 @@ protected:
 
     int curveListIndex;
     int curveListCounter;                 ///< Counter of curves in curve list
-    QList<QString>* listedCurves;         ///< Curves listed
     QMap<QString, QLabel*>* curveLabels;  ///< References to the curve labels
     QMap<QString, QLabel*> curveNameLabels;  ///< References to the curve labels
     QMap<QString, QString> curveNames;    ///< Full curve names

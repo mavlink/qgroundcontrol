@@ -35,9 +35,8 @@ This file is part of the QGROUNDCONTROL project
 #include <qwt_array.h>
 #include <qwt_plot.h>
 #include <qwt_legend.h>
-#include <qwt_plot_grid.h>
 #include <QMap>
-#include "ScrollZoomer.h"
+#include "ChartPlot.h"
 
 class QwtPlotCurve;
 
@@ -73,7 +72,7 @@ private:
  * It will only repaint the minimum screen content necessary to avoid
  * a too high CPU consumption. It auto-scales the plot to new data.
  */
-class IncrementalPlot : public QwtPlot
+class IncrementalPlot : public ChartPlot
 {
     Q_OBJECT
 public:
@@ -81,25 +80,11 @@ public:
     IncrementalPlot(QWidget *parent = NULL);
     virtual ~IncrementalPlot();
 
-    /** @brief Get color map of this plot */
-    QList<QColor> getColorMap();
-
-    /** @brief Get next color of color map */
-    QColor getNextColor();
-
-    /** @brief Get color for curve id */
-    QColor getColorForCurve(QString id);
-
     /** @brief Get the state of the grid */
     bool gridEnabled();
 
     /** @brief Read out data from a curve */
     int data(QString key, double* r_x, double* r_y, int maxSize);
-
-    float symbolWidth;
-    float curveWidth;
-    float gridWidth;
-    float scaleWidth;
 
 public slots:
     /** @brief Append one data point */
@@ -135,11 +120,7 @@ protected slots:
 
 protected:
     bool symmetric;        ///< Enable symmetric plotting
-    QList<QColor> colors;  ///< Colormap for curves
-    int nextColor;         ///< Next index in color map
-    ScrollZoomer* zoomer;  ///< Zoomer class for widget
     QwtLegend* legend;     ///< Plot legend
-    QwtPlotGrid* grid;     ///< Plot grid
     double xmin;           ///< Minimum x value seen
     double xmax;           ///< Maximum x value seen
     double ymin;           ///< Minimum y value seen
@@ -148,7 +129,6 @@ protected:
 
 private:
     QMap<QString, CurveData* > d_data;      ///< Data points
-    QMap<QString, QwtPlotCurve* > d_curve;  ///< Plot curves
 };
 
 #endif /* INCREMENTALPLOT_H */
