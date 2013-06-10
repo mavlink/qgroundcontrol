@@ -34,13 +34,8 @@
        <height>16777215</height>
       </size>
      </property>
-<<<<<<< HEAD
      <property name="widgetResizable">
       <bool>true</bool>
-=======
-     <property name="currentIndex">
-      <number>0</number>
->>>>>>> 975f41067229245752f23de45b80ca4a7e28642d
      </property>
      <widget class="QWidget" name="scrollAreaWidgetContents_3">
       <property name="geometry">
@@ -118,6 +113,19 @@ Config</string>
 Config</string>
            </property>
           </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
@@ -898,8 +906,8 @@ p, li { white-space: pre-wrap; }
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
+                  <width>33</width>
+                  <height>20</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -973,8 +981,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>27</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -1010,8 +1018,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>27</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1075,20 +1083,9 @@ p, li { white-space: pre-wrap; }
              <property name="title">
               <string>Configuration</string>
              </property>
-<<<<<<< HEAD
              <layout class="QVBoxLayout" name="verticalLayout_2">
               <property name="margin">
                <number>0</number>
-=======
-             <widget class="QWidget" name="sensorContents">
-              <property name="geometry">
-               <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>362</width>
-                <height>489</height>
-               </rect>
->>>>>>> 975f41067229245752f23de45b80ca4a7e28642d
               </property>
               <item>
                <widget class="QScrollArea" name="scrollArea_4">
@@ -1100,8 +1097,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>27</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1137,8 +1134,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>27</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -1169,6 +1166,19 @@ p, li { white-space: pre-wrap; }
           <string>No pending changes</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout">
@@ -1209,104 +1219,11 @@ p, li { white-space: pre-wrap; }
            <property name="enabled">
             <bool>false</bool>
            </property>
-<<<<<<< HEAD
            <property name="toolTip">
             <string>Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them.</string>
            </property>
            <property name="statusTip">
             <string/>
-=======
-           <layout class="QVBoxLayout" name="verticalLayout_3">
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QScrollArea" name="scrollArea">
-              <property name="widgetResizable">
-               <bool>true</bool>
-              </property>
-              <widget class="QWidget" name="generalLeftContents">
-               <property name="geometry">
-                <rect>
-                 <x>0</x>
-                 <y>0</y>
-                 <width>356</width>
-                 <height>438</height>
-                </rect>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_4">
-                <property name="margin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <layout class="QVBoxLayout" name="leftGeneralLayout"/>
-                </item>
-               </layout>
-              </widget>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="generalRightGroupBox">
-           <property name="title">
-            <string>Configuration</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QScrollArea" name="scrollArea_2">
-              <property name="widgetResizable">
-               <bool>true</bool>
-              </property>
-              <widget class="QWidget" name="generalRightContents">
-               <property name="geometry">
-                <rect>
-                 <x>0</x>
-                 <y>0</y>
-                 <width>356</width>
-                 <height>438</height>
-                </rect>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_5">
-                <property name="margin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <layout class="QVBoxLayout" name="rightGeneralLayout"/>
-                </item>
-               </layout>
-              </widget>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="advancedTab">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <attribute name="title">
-       <string>Advanced Config</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <spacer name="horizontalSpacer_9">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
->>>>>>> 975f41067229245752f23de45b80ca4a7e28642d
            </property>
            <property name="whatsThis">
             <string/>
@@ -1356,122 +1273,15 @@ p, li { white-space: pre-wrap; }
            <property name="toolTip">
             <string>Save parameters in this view to a file on this computer.</string>
            </property>
-<<<<<<< HEAD
            <property name="statusTip">
             <string/>
-=======
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <property name="sizeConstraint">
-             <enum>QLayout::SetNoConstraint</enum>
-            </property>
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QScrollArea" name="scrollArea_4">
-              <property name="widgetResizable">
-               <bool>true</bool>
-              </property>
-              <widget class="QWidget" name="advancedLeftContents">
-               <property name="geometry">
-                <rect>
-                 <x>0</x>
-                 <y>0</y>
-                 <width>356</width>
-                 <height>438</height>
-                </rect>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <layout class="QVBoxLayout" name="verticalLayout_7">
-                <property name="margin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <layout class="QVBoxLayout" name="leftAdvancedLayout">
-                  <property name="spacing">
-                   <number>0</number>
-                  </property>
-                 </layout>
-                </item>
-               </layout>
-              </widget>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="advancedRightGroupBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
->>>>>>> 975f41067229245752f23de45b80ca4a7e28642d
            </property>
            <property name="text">
             <string>Save (File)</string>
            </property>
-<<<<<<< HEAD
-=======
-           <layout class="QVBoxLayout" name="verticalLayout_4">
-            <property name="margin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QScrollArea" name="scrollArea_5">
-              <property name="widgetResizable">
-               <bool>true</bool>
-              </property>
-              <widget class="QWidget" name="advancedRightContents">
-               <property name="geometry">
-                <rect>
-                 <x>0</x>
-                 <y>0</y>
-                 <width>356</width>
-                 <height>438</height>
-                </rect>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <layout class="QVBoxLayout" name="verticalLayout_8">
-                <property name="margin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <layout class="QVBoxLayout" name="rightAdvancedLayout"/>
-                </item>
-               </layout>
-              </widget>
-             </widget>
-            </item>
-           </layout>
->>>>>>> 975f41067229245752f23de45b80ca4a7e28642d
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </item>
