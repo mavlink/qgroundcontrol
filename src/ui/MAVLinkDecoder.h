@@ -21,6 +21,7 @@ signals:
     void valueChanged(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+    //void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant value, const quint64 msec);
 	
 
 public slots:

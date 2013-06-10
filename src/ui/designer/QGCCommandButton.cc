@@ -229,7 +229,6 @@ void QGCCommandButton::endEditMode()
 
     // Write to settings
     emit editingFinished();
-    //setStyleSheet("");
 
     // Attempt to dock the dock widget
     QWidget* p = this;

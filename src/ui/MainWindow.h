@@ -278,6 +278,8 @@ public slots:
     /** @brief Update the window name */
     void configureWindowName();
 
+    void commsWidgetDestroyed(QObject *obj);
+
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
@@ -424,6 +426,8 @@ protected:
     QPointer<QGCToolBar> toolBar;
     QPointer<QGCStatusBar> customStatusBar;
 
+    QPointer<DebugConsole> debugConsole;
+
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
     QPointer<QDockWidget> mavlinkSenderWidget;
@@ -469,6 +473,7 @@ protected:
     QTimer windowNameUpdateTimer;
 
 private:
+    QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
     QMap<QAction*,QString > menuToDockNameMap;
     QMap<QDockWidget*,QWidget*> dockToTitleBarMap;

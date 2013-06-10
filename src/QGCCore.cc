@@ -200,7 +200,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 QGCCore::~QGCCore()
 {
     //mainWindow->storeSettings();
-    mainWindow->close();
+    //mainWindow->close();
     //mainWindow->deleteLater();
     // Delete singletons
     // First systems
@@ -208,7 +208,8 @@ QGCCore::~QGCCore()
     // then links
     delete LinkManager::instance();
     // Finally the main window
-    delete MainWindow::instance();
+    //delete MainWindow::instance();
+    //The main window now autodeletes on close.
 }
 
 /**
