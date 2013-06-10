@@ -105,6 +105,8 @@ exists(user_config.pri) {
     message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
+} else {
+    MAVLINK_CONF += ardupilotmega
 }
 INCLUDEPATH += $$MAVLINKPATH
 isEmpty(MAVLINK_CONF) { 
