@@ -452,8 +452,8 @@ void MainWindow::buildCommonWidgets()
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
-        //pilotView->setCentralWidget(new HUD(320,240,this));
-        pilotView->setCentralWidget(new QGCMapTool(this));
+        pilotView->setCentralWidget(new HUD2(this));
+        //pilotView->setCentralWidget(new QGCMapTool(this));
         //hudWidget         = new HUD(320, 240, this);
         //addCentralWidget(hudWidget, tr("Head Up Display"));
         //mapWidget = new QGCMapTool(this);
