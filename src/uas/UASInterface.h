@@ -61,6 +61,7 @@ enum BatteryType
     AGZN = 5
 }; ///< The type of battery used
 
+/*
 enum SpeedMeasurementSource
 {
     PRIMARY_SPEED = 0,          // ArduPlane: Measured airspeed or estimated airspeed. ArduCopter: Ground (XY) speed.
@@ -84,6 +85,7 @@ enum AltitudeMeasurementFrame
     ABSOLUTE = 0,               // Altitude is pressure altitude
     ABOVE_HOME_POSITION = 1
 }; ///< For altitude data, a reference frame
+*/
 
 /**
  * @brief Interface for all robots.
@@ -520,16 +522,18 @@ signals:
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void localPositionChanged(UASInterface*, int component, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
-    void altitudeChanged(UASInterface*, AltitudeMeasurementSource source, double altitude, quint64 usec);
+    void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
     /** @brief Update the status of one satellite used for localization */
     void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
 
     // The horizontal speed (a scalar)
-    void speedChanged(UASInterface*, SpeedMeasurementSource source, double speed, quint64 usec);
+    void primarySpeedChanged(UASInterface*, double speed, quint64 usec);
+    void gpsSpeedChanged(UASInterface*, double speed, quint64 usec);
     // The vertical speed (a scalar)
-    void climbRateChanged(UASInterface*, AltitudeMeasurementSource source, double speed, quint64 usec);
+    void climbRateChanged(UASInterface*, double climb, quint64 usec);
     // Consider adding a MAV_FRAME parameter to this; could help specifying what the 3 scalars are.
-    void velocityChanged(UASInterface*, MAV_FRAME frame, double vx, double vy, double vz, quint64 usec);
+    void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 
     void navigationControllerErrorsChanged(UASInterface*, double altitudeError, double speedError, double xtrackError);
 

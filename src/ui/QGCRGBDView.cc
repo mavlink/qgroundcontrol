@@ -78,7 +78,7 @@ void QGCRGBDView::clearData(void)
     QImage offlineImg;
     qDebug() << offlineImg.load(":/files/images/status/colorbars.png");
 
-    glImage = QGLWidget::convertToGLFormat(offlineImg);
+    glImage = offlineImg;
 }
 
 void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
@@ -104,14 +104,14 @@ void QGCRGBDView::enableRGB(bool enabled)
 {
     rgbEnabled = enabled;
     dataStreamEnabled = rgbEnabled | depthEnabled;
-    resize(size());
+    QWidget::resize(size().width(), size().height());
 }
 
 void QGCRGBDView::enableDepth(bool enabled)
 {
     depthEnabled = enabled;
     dataStreamEnabled = rgbEnabled | depthEnabled;
-    resize(size());
+    QWidget::resize(size().width(), size().height());
 }
 
 float colormapJet[128][3] = {

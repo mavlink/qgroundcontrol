@@ -711,14 +711,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
             }
 
-            // dongfang: For APM, this altitude is the mix altitude[m]
-            emit altitudeChanged(this, PRIMARY_ALTITUDE, hud.alt, time);
+            // The primary altitude is the one that the UAV uses for navigation.
+            // We assume! that the HUD message reports that as altitude.
+            emit primaryAltitudeChanged(this, hud.alt, time);
 
-            // This makes the lateral velocity zero when it might really not be, problematic.
-            // emit speedChanged(this, PRIMARY_SPEED, hud.airspeed, 0.0f, hud.climb, time);
-            emit speedChanged(this, PRIMARY_SPEED, hud.airspeed, time);
-            emit speedChanged(this, GROUNDSPEED_BY_UAV, hud.groundspeed, time);
-            emit climbRateChanged(this, BAROMETRIC_ALTITUDE, hud.groundspeed, time);
+            emit primarySpeedChanged(this, hud.airspeed, time);
+            emit gpsSpeedChanged(this, hud.groundspeed, time);
+            emit climbRateChanged(this, hud.climb, time);
         }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
@@ -739,9 +738,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 localZ = pos.z;
 
                 // Emit
-
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                emit velocityChanged(this, MAV_FRAME_LOCAL_NED, pos.vx, pos.vy, pos.vz, time);
+                emit velocityChanged_NED(this, pos.vx, pos.vy, pos.vz, time);
 
                 // Set internal state
                 if (!positionLock) {
@@ -786,12 +784,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
             // dongfang: The altitude is GPS altitude. Bugger. It needs to be changed to primary.
-            emit altitudeChanged(this, GPS_ALTITUDE, getAltitude(), time);
+            emit gpsAltitudeChanged(this, getAltitude(), time);
             // We had some frame mess here, global and local axes were mixed.
-            emit velocityChanged(this, MAV_FRAME_GLOBAL, speedX, speedY, speedZ, time);
+            emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
 
             double groundspeed = qSqrt(speedX*speedX+speedY*speedY);
-            emit speedChanged(this, GROUNDSPEED_BY_GPS, groundspeed, time);
+            emit gpsSpeedChanged(this, groundspeed, time);
 
             // Set internal state
             if (!positionLock)
@@ -838,7 +836,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     setLongitude(longitude_gps);
                     setAltitude(altitude_gps);
                     emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
-                    emit altitudeChanged(this, GPS_ALTITUDE, getAltitude(), time);
+                    emit gpsAltitudeChanged(this, getAltitude(), time);
                 }
 
                 positionLock = true;
@@ -852,8 +850,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (!globalEstimatorActive) {
                     if ((vel < 1000000) && !isnan(vel) && !isinf(vel))
                     {
+                        //emit speedChanged(this, vel, 0.0, 0.0, time);
+                        setGroundSpeed(vel);
                         // TODO: Other sources also? Actually this condition does not quite belong here.
-                        emit speedChanged(this, GROUNDSPEED_BY_GPS, vel, time);
+                        emit gpsSpeedChanged(this, vel, time);
                     }
                     else
                     {
