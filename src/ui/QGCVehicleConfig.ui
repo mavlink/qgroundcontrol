@@ -138,9 +138,9 @@ Config</string>
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
-       <widget class="QWidget" name="page">
+       <widget class="QWidget" name="rcTab">
         <layout class="QVBoxLayout" name="verticalLayout_17">
          <item>
           <widget class="QLabel" name="label_4">
@@ -872,7 +872,7 @@ Config</string>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_2">
+       <widget class="QWidget" name="sensorTab">
         <layout class="QVBoxLayout" name="verticalLayout_14">
          <item>
           <widget class="QLabel" name="label_3">
@@ -901,13 +901,13 @@ p, li { white-space: pre-wrap; }
                <property name="widgetResizable">
                 <bool>true</bool>
                </property>
-               <widget class="QWidget" name="scrollAreaWidgetContents_7">
+               <widget class="QWidget" name="sensorContents">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>33</width>
-                  <height>20</height>
+                  <width>530</width>
+                  <height>574</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -924,7 +924,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_3">
+       <widget class="QWidget" name="generalTab">
         <layout class="QVBoxLayout" name="verticalLayout_11">
          <item>
           <widget class="QLabel" name="label_2">
@@ -976,13 +976,13 @@ p, li { white-space: pre-wrap; }
                 <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
-                <widget class="QWidget" name="scrollAreaWidgetContents">
+                <widget class="QWidget" name="generalLeftContents">
                  <property name="geometry">
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>27</width>
-                   <height>16</height>
+                   <width>525</width>
+                   <height>523</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -990,7 +990,7 @@ p, li { white-space: pre-wrap; }
                    <number>0</number>
                   </property>
                   <item>
-                   <layout class="QVBoxLayout" name="leftGeneralLayout"/>
+                   <layout class="QVBoxLayout" name="generalLeftLayout"/>
                   </item>
                  </layout>
                 </widget>
@@ -1013,13 +1013,13 @@ p, li { white-space: pre-wrap; }
                 <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
-                <widget class="QWidget" name="scrollAreaWidgetContents_2">
+                <widget class="QWidget" name="generalRightContents">
                  <property name="geometry">
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>27</width>
-                   <height>16</height>
+                   <width>524</width>
+                   <height>523</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1027,7 +1027,7 @@ p, li { white-space: pre-wrap; }
                    <number>0</number>
                   </property>
                   <item>
-                   <layout class="QVBoxLayout" name="rightGeneralLayout"/>
+                   <layout class="QVBoxLayout" name="generalRightLayout"/>
                   </item>
                  </layout>
                 </widget>
@@ -1040,7 +1040,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_4">
+       <widget class="QWidget" name="advancedTab">
         <layout class="QVBoxLayout" name="verticalLayout_13">
          <item>
           <widget class="QLabel" name="label">
@@ -1092,13 +1092,13 @@ p, li { white-space: pre-wrap; }
                 <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
-                <widget class="QWidget" name="scrollAreaWidgetContents_4">
+                <widget class="QWidget" name="advancedLeftContents">
                  <property name="geometry">
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>27</width>
-                   <height>16</height>
+                   <width>525</width>
+                   <height>523</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1106,7 +1106,7 @@ p, li { white-space: pre-wrap; }
                    <number>0</number>
                   </property>
                   <item>
-                   <layout class="QVBoxLayout" name="leftAdvancedLayout"/>
+                   <layout class="QVBoxLayout" name="advancedLeftLayout"/>
                   </item>
                  </layout>
                 </widget>
@@ -1129,13 +1129,13 @@ p, li { white-space: pre-wrap; }
                 <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
-                <widget class="QWidget" name="scrollAreaWidgetContents_5">
+                <widget class="QWidget" name="advancedRightContents">
                  <property name="geometry">
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>27</width>
-                   <height>16</height>
+                   <width>524</width>
+                   <height>523</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_8">
@@ -1143,7 +1143,7 @@ p, li { white-space: pre-wrap; }
                    <number>0</number>
                   </property>
                   <item>
-                   <layout class="QVBoxLayout" name="rightAdvancedLayout"/>
+                   <layout class="QVBoxLayout" name="advancedRightLayout"/>
                   </item>
                  </layout>
                 </widget>

@@ -275,12 +275,12 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
                 if (left)
                 {
                     left = false;
-                    ui->leftGeneralLayout->addWidget(box);
+                    ui->generalLeftLayout->addWidget(box);
                 }
                 else
                 {
                     left = true;
-                    ui->rightGeneralLayout->addWidget(box);
+                    ui->generalRightLayout->addWidget(box);
                 }
             } else {
                 delete tool;
@@ -305,12 +305,12 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
                 if (left)
                 {
                     left = false;
-                    ui->leftAdvancedLayout->addWidget(box);
+                    ui->advancedLeftLayout->addWidget(box);
                 }
                 else
                 {
                     left = true;
-                    ui->rightAdvancedLayout->addWidget(box);
+                    ui->advancedRightLayout->addWidget(box);
                 }
             } else {
                 delete tool;
@@ -328,8 +328,6 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         button->setMinimumWidth(100);
         button->show();
         button->setText(dir);
-        //QWidget *tab = new QWidget(ui->tabWidget);
-        //ui->tabWidget->insertTab(2,tab,dir);
         QWidget *tab = new QWidget(ui->stackedWidget);
         ui->stackedWidget->insertWidget(2,tab);
         buttonToWidgetMap[button] = tab;
@@ -367,8 +365,6 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     // Load additional tabs for vehicle specific configuration
     foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        //QWidget *tab = new QWidget(ui->tabWidget);
-        //ui->tabWidget->insertTab(2,tab,dir);
         QPushButton *button = new QPushButton(ui->scrollAreaWidgetContents_3);
         connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
         ui->navBarLayout->insertWidget(2,button);
@@ -722,11 +718,11 @@ void QGCVehicleConfig::loadConfig()
                                 box->layout()->addWidget(tool);
                                 if (valuetype == "vehicles")
                                 {
-                                    ui->leftGeneralLayout->addWidget(box);
+                                    ui->generalLeftLayout->addWidget(box);
                                 }
                                 else if (valuetype == "libraries")
                                 {
-                                    ui->rightGeneralLayout->addWidget(box);
+                                    ui->generalRightLayout->addWidget(box);
                                 }
                                 box->hide();
                                 toolToBoxMap[tool] = box;
@@ -776,11 +772,11 @@ void QGCVehicleConfig::loadConfig()
                                 box->layout()->addWidget(tool);
                                 if (valuetype == "vehicles")
                                 {
-                                    ui->leftGeneralLayout->addWidget(box);
+                                    ui->generalLeftLayout->addWidget(box);
                                 }
                                 else if (valuetype == "libraries")
                                 {
-                                    ui->rightGeneralLayout->addWidget(box);
+                                    ui->generalRightLayout->addWidget(box);
                                 }
                                 box->hide();
                                 toolToBoxMap[tool] = box;
@@ -843,7 +839,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         additionalTabs.clear();
 
         toolWidgets.clear();
-        paramToWidgetMap = NULL;
+        paramToWidgetMap.clear();
         libParamToWidgetMap.clear();
         systemTypeToParamMap.clear();
         toolToBoxMap.clear();
@@ -866,13 +862,13 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
         if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
         {
-            paramToWidgetMap = &systemTypeToParamMap[mav->getSystemTypeName()];
+            paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
         }
         else
         {
             //Indication that we have no meta data for this system type.
             qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
-            paramToWidgetMap = &systemTypeToParamMap[mav->getSystemTypeName()];
+            paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
         }
 
         if (!paramTooltips.isEmpty())
@@ -889,7 +885,6 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
         // Since a system is now connected, enable the VehicleConfig UI.
-        ui->tabWidget->setEnabled(true);
         ui->setButton->setEnabled(true);
         ui->refreshButton->setEnabled(true);
         ui->readButton->setEnabled(true);
@@ -1187,7 +1182,7 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
         {
             //New param type, create a QGroupBox for it.
             QWidget* parent;
-            if (ui->leftAdvancedLayout->count() > ui->rightAdvancedLayout->count())
+            if (ui->advancedLeftLayout->count() > ui->advancedRightLayout->count())
             {
                 parent = ui->advancedRightContents;
             }
@@ -1217,15 +1212,14 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             libParamToWidgetMap.insert(parameterName,tool);
             toolWidgets.append(tool);
 
-
-            //Make sure we have similar number of widgets on each side.
-            if (ui->leftAdvancedLayout->count() > ui->rightAdvancedLayout->count())
+            // Make sure we have similar number of widgets on each side.
+            if (ui->advancedLeftLayout->count() > ui->advancedRightLayout->count())
             {
-                ui->rightAdvancedLayout->addWidget(box);
+                ui->advancedRightLayout->addWidget(box);
             }
             else
             {
-                ui->leftAdvancedLayout->addWidget(box);
+                ui->advancedLeftLayout->addWidget(box);
             }
             toolToBoxMap[tool] = box;
         }
