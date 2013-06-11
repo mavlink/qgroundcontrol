@@ -35,6 +35,8 @@ This file is part of the PIXHAWK project
 #include <QLabel>
 #include "JoystickInput.h"
 #include "MainWindow.h"
+#include "JoystickAxis.h"
+#include "JoystickButton.h"
 
 namespace Ui
 {
@@ -61,14 +63,14 @@ public slots:
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
      */
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
-    /** @brief Throttle lever */
-    void setThrottle(float thrust);
     /** @brief Back/forth movement */
     void setX(float x);
     /** @brief Left/right movement */
     void setY(float y);
     /** @brief Wrist rotation */
     void setZ(float z);
+    /** @brief Throttle lever */
+    void setThrottle(float thrust);
     /** @brief Hat switch position */
     void setHat(float x, float y);
     /** @brief Trigger a UI change based on a button being pressed */
@@ -87,7 +89,9 @@ protected:
     virtual void changeEvent(QEvent *e);
     JoystickInput* joystick;  ///< Reference to the joystick
     /** @brief a list of all button labels generated for this joystick. */
-    QList<QLabel*> buttonLabels;
+    QList<JoystickButton*> buttons;
+    /** @brief a lit of all joystick axes generated for this joystick. */
+    QList<JoystickAxis*> axes;
     /** @brief The color to use for button labels when their corresponding button is pressed */
     QColor buttonLabelColor;
 
