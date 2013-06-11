@@ -91,7 +91,7 @@ QGCMAVLinkLogPlayer QLabel:disabled {
 }
 
 QGCToolBar QLabel {
-    font-size: 10pt;
+    font-size: 12pt;
     font-weight: bold;
     margin: 3px 2px;
 }
@@ -111,6 +111,11 @@ QGCToolBar QLabel#toolBarTimeoutLabel {
     background-color: #FF0037;
 }
 
+QGCToolBar QProgressBar {
+    height: 26px;
+    max-height: 16px;
+}
+
 QGCToolBar QToolButton {
     margin: 0;
     padding-left: 0;
@@ -118,7 +123,6 @@ QGCToolBar QToolButton {
     border-radius: 0;
     text-align: left;
 }
-/*    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFb917, stop:1 #B37300);*/
 
 QGCToolBar QToolButton#advancedButton {
     margin-left: 0;
