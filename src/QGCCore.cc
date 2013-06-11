@@ -52,6 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "UDPLink.h"
 #include "MAVLinkSimulationLink.h"
+#include "SerialLink.h"
 
 
 /**
@@ -156,6 +157,11 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 #endif
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     simulationLink->disconnect();
+
+
+    //We want to have a default serial link available for "quick" connecting.
+    SerialLink *slink = new SerialLink();
+    MainWindow::instance()->addLink(slink);
 
     mainWindow = MainWindow::instance(splashScreen);
 

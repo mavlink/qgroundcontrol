@@ -24,6 +24,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolButton>
 #include <QLabel>
 #include <QSpacerItem>
+#include "SerialLink.h"
 #include "QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
@@ -160,6 +161,11 @@ void QGCToolBar::createUI()
     spacer->setStyleSheet("* { margin: 0px; background-color: transparent; min-height: 24px}");
     addWidget(spacer);
 
+    portComboBox = new QComboBox(this);
+    portComboBox->setToolTip(tr("Choose the COM port to use"));
+    portComboBox->setEnabled(true);
+    portComboBox->setMinimumWidth(200);
+    addWidget(portComboBox);
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setToolTip(tr("Connect wireless link to MAV"));
     connectButton->setCheckable(true);
@@ -523,18 +529,47 @@ void QGCToolBar::addLink(LinkInterface* link)
         connect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
         updateLinkState(link->isConnected());
     }
+    updateComboBox();
 }
 
 void QGCToolBar::removeLink(LinkInterface* link)
 {
     if (link == currentLink) {
         currentLink = NULL;
+        //portComboBox->setEnabled(false);
+        //portComboBox->clear();
         // XXX magic number
         if (LinkManager::instance()->getLinks().count() > 2) {
             currentLink = LinkManager::instance()->getLinks().last();
             updateLinkState(currentLink->isConnected());
         } else {
             connectButton->setText(tr("New Link"));
+        }
+    }
+    updateComboBox();
+}
+void QGCToolBar::updateComboBox()
+{
+    portComboBox->clear();
+    for (int i=0;i<LinkManager::instance()->getLinks().count();i++)
+    {
+        SerialLink *slink = qobject_cast<SerialLink*>(LinkManager::instance()->getLinks()[i]);
+        if (slink)
+        {
+            //It's a serial link
+            QVector<QString> *portlist = slink->getCurrentPorts();
+            //if (!slink->isConnected())
+            //{
+                for (int j=0;j<portlist->size();j++)
+                {
+                    portComboBox->addItem("Serial port:" + QString::number(i) + ":" + portlist->at(j));
+                }
+            //}
+            //We only really want to display from unconnected sources.
+        }
+        else
+        {
+            portComboBox->addItem(LinkManager::instance()->getLinks()[i]->getName());
         }
     }
 }
@@ -566,7 +601,25 @@ void QGCToolBar::connectLink(bool connect)
     {
         MainWindow::instance()->addLink();
     } else if (connect) {
-        LinkManager::instance()->getLinks().last()->connect();
+        if (portComboBox->currentText().split(":").count()>2)
+        {
+            int linknum = portComboBox->currentText().split(":")[1].toInt();
+            SerialLink *link = qobject_cast<SerialLink*>(LinkManager::instance()->getLinks().at(linknum));
+            if (link)
+            {
+                QString portname = portComboBox->currentText().split(":")[2];
+                if (portname.indexOf('-') != -1)
+                {
+                    portname = portname.split("-")[0];
+                }
+                link->setPortName(portname.trimmed());
+            }
+            link->connect();
+        }
+        else
+        {
+            LinkManager::instance()->getLinks().last()->connect();
+        }
     } else if (!connect && LinkManager::instance()->getLinks().count() > 2) {
         LinkManager::instance()->getLinks().last()->disconnect();
     }
