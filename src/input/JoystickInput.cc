@@ -332,7 +332,8 @@ void JoystickInput::setActiveJoystick(int id)
     {
         joystickName = QString(SDL_JoystickName(joystickID));
         joystickButtons = SDL_JoystickNumButtons(joystick);
-        qDebug() << QString("Switching to joystick '%1' with %2 buttons").arg(joystickName, QString::number(joystickButtons));
+        joystickAxes = SDL_JoystickNumAxes(joystick);
+        qDebug() << QString("Switching to joystick '%1' with %2 buttons/%3 axes").arg(joystickName, QString::number(joystickButtons), QString::number(joystickAxes));
     }
     buttonState = 0;
 }
