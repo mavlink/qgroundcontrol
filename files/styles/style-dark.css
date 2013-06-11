@@ -90,6 +90,12 @@ QGCMAVLinkLogPlayer QLabel:disabled {
 	color: #AAA;
 }
 
+QGCToolBar {
+    border-top-color: #969696;
+    border-bottom-color: #484848;
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop: 0.34 #383838, stop:1 #181818);
+}
+
 QGCToolBar QLabel {
     font-size: 12pt;
     font-weight: bold;
@@ -120,8 +126,22 @@ QGCToolBar QToolButton {
     margin: 0;
     padding-left: 0;
     padding-right: 0;
+    border: none;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
     border-radius: 0;
     text-align: left;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #BBB);
+    color: #000;
+}
+
+QGCToolBar QToolButton:checked, QGCToolBar QToolButton:pressed, QGCToolBar QToolButton:checked:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555, stop: 1 #777);
+    color: #FFF;
+}
+
+QGCToolBar QToolButton:hover {
+    color: #FFF;
 }
 
 QGCToolBar QToolButton#advancedButton {
@@ -317,7 +337,7 @@ QPushButton:disabled, QToolButton:disabled {
 }
 
 QPushButton:hover, QToolButton:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666f, stop: 1 #414B52);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #59666F, stop: 1 #414B52);
 }
 
 QPushButton:hover#connectButton, QPushButton:hover#controlButton {
@@ -460,12 +480,6 @@ QTabWidget::pane {
 QTextEdit {
     border: 1px solid #777;
     border-radius: 2px;
-}
-
-QToolBar {
-    border-top-color: #969696;
-    border-bottom-color: #484848;
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop: 0.34 #383838, stop:1 #181818);
 }
 
 QToolButton {

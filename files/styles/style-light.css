@@ -90,6 +90,12 @@ QGCMAVLinkLogPlayer QLabel:disabled {
 	color: #666;
 }
 
+QGCToolBar {
+    border-top-color: #969696;
+    border-bottom-color: #484848;
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #DDD, stop: 1 #999);
+}
+
 QGCToolBar QLabel {
     font-size: 12pt;
     font-weight: bold;
@@ -120,8 +126,22 @@ QGCToolBar QToolButton {
     margin: 0;
     padding-left: 0;
     padding-right: 0;
+    border: none;
+    border-top: 1px solid #DDD;
+    border-bottom: 1px solid #DDD;
     border-radius: 0;
     text-align: left;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333, stop: 1 #444);
+    color: #FFF;
+}
+
+QGCToolBar QToolButton:checked, QGCToolBar QToolButton:pressed, QGCToolBar QToolButton:checked:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #999);
+    color: #FFF;
+}
+
+QGCToolBar QToolButton:hover {
+    color: #000;
 }
 
 QGCToolBar QToolButton#advancedButton {
@@ -285,7 +305,6 @@ QPushButton, QToolButton {
 
 QPushButton#connectButton, QPushButton#controlButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
-    padding: 0;
 }
 
 QPushButton#controlButton {
@@ -430,7 +449,7 @@ QSpinBox::up-button, QDoubleSpinBox::up-button {
 }
 
 QStatusBar {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #CCC, stop: 1 #888);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #DDD, stop: 1 #999);
 }
 
 QTabBar::tab {
@@ -463,12 +482,6 @@ QTabWidget::pane {
 QTextEdit {
     border: 1px solid #222;
     border-radius: 2px;
-}
-
-QToolBar {
-    border-top-color: #969696;
-    border-bottom-color: #484848;
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #CCC, stop: 1 #888);
 }
 
 QToolButton {
