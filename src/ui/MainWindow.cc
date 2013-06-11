@@ -1533,7 +1533,7 @@ void MainWindow::configure()
         {
             joystick->start();
         }
-        joystickWidget = new JoystickWidget(joystick);
+        joystickWidget = new JoystickWidget(joystick, this);
     }
     joystickWidget->show();
 }
