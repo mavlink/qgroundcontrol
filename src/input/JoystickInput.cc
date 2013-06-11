@@ -299,35 +299,29 @@ void JoystickInput::run()
         // Send new values to rest of groundstation
         emit hatDirectionChanged(xHat, yHat);
 
-        // Display all buttons
-        int buttons = 0;
-        for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
+        // Emit signals for each button individually
+        for (int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
         {
-            //qDebug() << "BUTTON" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
-            if(SDL_JoystickGetButton(joystick, i))
+            // If the button was down, but now it's up, trigger a buttonPressed event
+            quint16 lastButtonState = buttonState & (1 << i);
+            if (SDL_JoystickGetButton(joystick, i) && !lastButtonState)
             {
                 emit buttonPressed(i);
-                buttons |= 1 << i;
-                // Check if button is a UAS select button
-
-                if (uasButtonList.contains(i))
-                {
-                    UASInterface* uas = UASManager::instance()->getUASForId(i);
-                    if (uas)
-                    {
-                        UASManager::instance()->setActiveUAS(uas);
-                    }
-                }
+                buttonState |= 1 << i;
             }
-
+            else if (!SDL_JoystickGetButton(joystick, i) && lastButtonState)
+            {
+                emit buttonReleased(i);
+                buttonState &= ~(1 << i);
+            }
         }
-        emit joystickChanged(y, x, yaw, thrust, xHat, yHat, buttons);
+
+        // Now signal an update for all UI together.
+        emit joystickChanged(y, x, yaw, thrust, xHat, yHat, buttonState);
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
         QGC::SLEEP::msleep(20);
-
     }
-
 }
 
 void JoystickInput::setActiveJoystick(int id)
@@ -340,6 +334,7 @@ void JoystickInput::setActiveJoystick(int id)
         joystickButtons = SDL_JoystickNumButtons(joystick);
         qDebug() << QString("Switching to joystick '%1' with %2 buttons").arg(joystickName, QString::number(joystickButtons));
     }
+    buttonState = 0;
 }
 
 const QString& JoystickInput::getName()
