@@ -27,6 +27,15 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include "ArduPilotMegaMAV.h"
+
+#ifndef mavlink_mount_configure_t
+#include "ardupilotmega/mavlink_msg_mount_configure.h"
+#endif
+
+#ifndef mavlink_mount_control_t
+#include "ardupilotmega/mavlink_msg_mount_control.h";
+#endif
+
 ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
     UAS(mavlink, id)//,
     // place other initializers here
