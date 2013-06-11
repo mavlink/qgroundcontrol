@@ -109,6 +109,11 @@ public:
         return joystickButtons;
     }
 
+    int getJoystickNumAxes() const
+    {
+        return joystickAxes;
+    }
+
     int getJoystickID() const
     {
         return joystickID;
@@ -147,6 +152,7 @@ protected:
     int stabilizeButtonMapping;
     SDL_Event event;
     QString joystickName;
+    int joystickAxes;
     int joystickButtons;
     int joystickID;
     int joysticksFound;
