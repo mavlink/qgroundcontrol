@@ -4,10 +4,14 @@
 #include "UASQuickViewItemSelect.h"
 #include "UASQuickViewTextItem.h"
 #include <QSettings>
-UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
+
+UASQuickView::UASQuickView(QWidget *parent) :
+    QWidget(parent),
+    m_ui(new Ui::UASQuickView)
 {
+    m_ui->setupUi(this);
     quickViewSelectDialog=0;
-    ui.setupUi(this);
+
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
     connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
     if (UASManager::instance()->getActiveUAS())
@@ -15,67 +19,6 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         addUAS(UASManager::instance()->getActiveUAS());
     }
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
-
-
-    /*{
-        QAction *action = new QAction("latitude",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("latitude");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["latitude"] = item;
-    }
-
-    {
-        QAction *action = new QAction("longitude",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("longitude");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["longitude"] = item;
-    }
-
-    {
-        QAction *action = new QAction("altitude",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("altitude");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["altitude"] = item;
-    }
-
-    {
-        QAction *action = new QAction("satelliteCount",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("satelliteCount");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["satelliteCount"] = item;
-    }
-
-    {
-        QAction *action = new QAction("distToWaypoint",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("distToWaypoint");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["distToWaypoint"] = item;
-    }*/
 
     loadSettings();
     //If we don't have any predefined settings, set some defaults.
@@ -95,8 +38,8 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
 
     updateTimer = new QTimer(this);
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
-    updateTimer->start(1000);
 }
+
 void UASQuickView::actionTriggered()
 {
     if (quickViewSelectDialog)
@@ -115,6 +58,7 @@ void UASQuickView::actionTriggered()
     }
     quickViewSelectDialog->show();
 }
+
 void UASQuickView::saveSettings()
 {
     QSettings settings;
@@ -129,6 +73,7 @@ void UASQuickView::saveSettings()
     settings.endArray();
     settings.sync();
 }
+
 void UASQuickView::loadSettings()
 {
     QSettings settings;
@@ -149,7 +94,7 @@ void UASQuickView::valueEnabled(QString value)
 {
     UASQuickViewItem *item = new UASQuickViewTextItem(this);
     item->setTitle(value);
-    ui.verticalLayout->addWidget(item);
+    m_ui->verticalLayout->addWidget(item);
     uasPropertyToLabelMap[value] = item;
     uasEnabledPropertyList.append(value);
     if (!uasPropertyValueMap.contains(value))
@@ -167,7 +112,7 @@ void UASQuickView::valueDisabled(QString value)
         UASQuickViewItem *item = uasPropertyToLabelMap[value];
         uasPropertyToLabelMap.remove(value);
         item->hide();
-        ui.verticalLayout->removeWidget(item);
+        m_ui->verticalLayout->removeWidget(item);
         item->deleteLater();
         uasEnabledPropertyList.removeOne(value);
         saveSettings();
@@ -204,14 +149,33 @@ void UASQuickView::addUAS(UASInterface* uas)
 
 void UASQuickView::setActiveUAS(UASInterface* uas)
 {
-    if (!uas)
+    // Clean up from the old UAS
+    if (this->uas)
     {
-        return;
+        uasPropertyValueMap.clear();
+        foreach (UASQuickViewItem* i, uasPropertyToLabelMap.values())
+        {
+            i->deleteLater();
+        }
+        uasPropertyToLabelMap.clear();
+
+        updateTimer->stop();
+        foreach (QAction* i, this->actions())
+        {
+            i->deleteLater();
+        }
     }
+
+    // Update the UAS to point to the new one.
     this->uas = uas;
-    connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
-    //connect(uas,SIGNAL())
+
+    if (this->uas)
+    {
+        connect(uas,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
+        updateTimer->start(1000);
+    }
 }
+
 void UASQuickView::addSource(MAVLinkDecoder *decoder)
 {
     connect(decoder,SIGNAL(valueChanged(int,QString,QString,double,quint64)),this,SLOT(valueChanged(int,QString,QString,double,quint64)));
@@ -224,8 +188,12 @@ void UASQuickView::addSource(MAVLinkDecoder *decoder)
     connect(decoder,SIGNAL(valueChanged(int,QString,QString,quint32,quint64)),this,SLOT(valueChanged(int,QString,QString,quint32,quint64)));
     connect(decoder,SIGNAL(valueChanged(int,QString,QString,quint64,quint64)),this,SLOT(valueChanged(int,QString,QString,quint64,quint64)));
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -238,6 +206,9 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
 
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -247,8 +218,12 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     }
     uasPropertyValueMap[name] = value;
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint16 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -258,8 +233,12 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     }
     uasPropertyValueMap[name] = value;
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint16 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -269,19 +248,30 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     }
     uasPropertyValueMap[name] = value;
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint32 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
         {
             quickViewSelectDialog->addItem(name);
         }
+
+        // And periodically update the view.
+        updateTimer->start(1000);
     }
     uasPropertyValueMap[name] = value;
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint32 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -291,8 +281,12 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     }
     uasPropertyValueMap[name] = value;
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -302,8 +296,30 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     }
     uasPropertyValueMap[name] = value;
 }
+
 void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
+    if (!uasPropertyValueMap.contains(name))
+    {
+        if (quickViewSelectDialog)
+        {
+            quickViewSelectDialog->addItem(name);
+        }
+
+        // And periodically update the view.
+        updateTimer->start(1000);
+    }
+    uasPropertyValueMap[name] = value;
+}
+
+void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
+{
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -313,8 +329,12 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     }
     uasPropertyValueMap[name] = value;
 }
-void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
+
+void UASQuickView::valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant value,const quint64 msec)
 {
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
     if (!uasPropertyValueMap.contains(name))
     {
         if (quickViewSelectDialog)
@@ -322,7 +342,7 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
             quickViewSelectDialog->addItem(name);
         }
     }
-    uasPropertyValueMap[name] = value;
+    uasPropertyValueMap[name] = value.toDouble();
 }
 
 void UASQuickView::actionTriggered(bool checked)
@@ -336,24 +356,20 @@ void UASQuickView::actionTriggered(bool checked)
     {
         UASQuickViewItem *item = new UASQuickViewTextItem(this);
         item->setTitle(senderlabel->text());
-        ui.verticalLayout->addWidget(item);
+        this->layout()->addWidget(item);
         uasPropertyToLabelMap[senderlabel->text()] = item;
     }
     else
     {
-        ui.verticalLayout->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
+        this->layout()->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
         uasPropertyToLabelMap[senderlabel->text()]->deleteLater();
         uasPropertyToLabelMap.remove(senderlabel->text());
 
     }
 }
-void UASQuickView::valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs)
-{
-    uasPropertyValueMap[name] = value.toDouble();
-}
 
 void UASQuickView::valChanged(double val,QString type)
 {
-    //qDebug() << "Value changed:" << type << val;
-   // uasPropertyValueMap[type] = val;
+    Q_UNUSED(val);
+    Q_UNUSED(type);
 }

@@ -34,8 +34,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QDesktopServices>
 #include <QFileDialog>
-
 #include <QDebug>
+
 #include <cmath>
 #include <qmath.h>
 #include <limits>
@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HUD.h"
 #include "MG.h"
 #include "QGC.h"
+#include "MainWindow.h"
 
 // Fix for some platforms, e.g. windows
 #ifndef GL_MULTISAMPLE
@@ -83,12 +84,6 @@ HUD::HUD(int width, int height, QWidget* parent)
       receivedChannels(1),
       receivedWidth(640),
       receivedHeight(480),
-      defaultColor(QColor(70, 200, 70)),
-      setPointColor(QColor(200, 20, 200)),
-      warningColor(Qt::yellow),
-      criticalColor(Qt::red),
-      infoColor(QColor(20, 200, 20)),
-      fuelColor(criticalColor),
       warningBlinkRate(5),
       refreshTimer(new QTimer(this)),
       noCamera(true),
@@ -123,8 +118,8 @@ HUD::HUD(int width, int height, QWidget* parent)
       videoEnabled(true),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageRequested(false),
-      imageLoggingEnabled(false)
+      imageLoggingEnabled(false),
+      imageRequested(false)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -135,19 +130,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scalingFactor = this->width()/vwidth;
 
-    // Fill with black background
-    QImage fill = QImage(width, height, QImage::Format_Indexed8);
-    fill.setNumColors(3);
-    fill.setColor(0, qRgb(0, 0, 0));
-    fill.setColor(1, qRgb(0, 0, 0));
-    fill.setColor(2, qRgb(0, 0, 0));
-    fill.fill(0);
-
-    //QString imagePath = "/Users/user/Desktop/frame0000.png";
-    //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
-    //fill = QImage(imagePath);
-
-    glImage = fill;
+    // Set up the initial color theme. This can be updated by a styleChanged
+    // signal from MainWindow.
+    styleChanged(((MainWindow*)parent)->getStyle());
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
@@ -178,6 +163,11 @@ HUD::HUD(int width, int height, QWidget* parent)
         if (font.family() != fontFamilyName) qDebug() << "ERROR! WRONG FONT LOADED: " << fontFamilyName;
     }
 
+    // Connect the themeChanged signal from the MainWindow to this widget, so it
+    // can change it's styling accordingly.
+    connect((MainWindow*)parent, SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
+            this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
@@ -194,6 +184,41 @@ HUD::~HUD()
 QSize HUD::sizeHint() const
 {
     return QSize(width(), (width()*3.0f)/4);
+}
+
+void HUD::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme)
+{
+    // Generate a background image that's dependent on the current color scheme.
+    QImage fill = QImage(width(), height(), QImage::Format_Indexed8);
+    if (newTheme == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        fill.fill(255);
+    }
+    else
+    {
+        fill.fill(0);
+    }
+    glImage = QGLWidget::convertToGLFormat(fill);
+
+    // Now set the other default colors based on the current color scheme.
+    if (newTheme == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        defaultColor = QColor(0x01, 0x47, 0x01);
+        setPointColor = QColor(0x82, 0x17, 0x82);
+        warningColor = Qt::darkYellow;
+        criticalColor = Qt::darkRed;
+        infoColor = QColor(0x07, 0x82, 0x07);
+        fuelColor = criticalColor;
+    }
+    else
+    {
+        defaultColor = QColor(70, 200, 70);
+        setPointColor = QColor(200, 20, 200);
+        warningColor = Qt::yellow;
+        criticalColor = Qt::red;
+        infoColor = QColor(20, 200, 20);
+        fuelColor = criticalColor;
+    }
 }
 
 void HUD::showEvent(QShowEvent* event)
@@ -302,10 +327,10 @@ void HUD::setActiveUAS(UASInterface* uas)
             connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
             connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
         }
-
-        // Set new UAS
-        this->uas = uas;
     }
+
+    // Set new UAS
+    this->uas = uas;
 }
 
 //void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
@@ -560,7 +585,6 @@ void HUD::paintHUD()
         scalingFactor = this->width()/vwidth;
         double scalingFactorH = this->height()/vheight;
         if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
-
         // Fill with black background
         if (videoEnabled) {
             if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
@@ -575,6 +599,7 @@ void HUD::paintHUD()
 
         }
 
+        // And if either video or the data stream is enabled, draw the next frame.
         if (dataStreamEnabled || videoEnabled)
         {
 
@@ -588,7 +613,8 @@ void HUD::paintHUD()
 
         // END OF OPENGL PAINTING
 
-        if (HUDInstrumentsEnabled) {
+        if (HUDInstrumentsEnabled)
+        {
 
             //glEnable(GL_MULTISAMPLE);
 
@@ -601,7 +627,6 @@ void HUD::paintHUD()
             painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
             // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
-
 
             // Draw all fixed indicators
             // BATTERY
@@ -1220,7 +1245,14 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
         }
 
         // Fill first channel of image with black pixels
-        image->fill(0);
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            image->fill(255);
+        }
+        else
+        {
+            image->fill(0);
+        }
         glImage = *image;
 
         qDebug() << __FILE__ << __LINE__ << "Setting up image";

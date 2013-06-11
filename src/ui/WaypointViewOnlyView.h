@@ -18,20 +18,21 @@ public:
     ~WaypointViewOnlyView();
 
 public slots:
-void changedCurrent(int state);
-void changedAutoContinue(int state);
-void updateValues(void);
-void setCurrent(bool state);
+    void changedCurrent(int state);
+    void changedAutoContinue(int state);
+    void updateValues(void);
+    void setCurrent(bool state);
 
 signals:
     void changeCurrentWaypoint(quint16);
     void changeAutoContinue(quint16, bool);
 
 protected:
-Waypoint* wp;
+    Waypoint* wp;
+    virtual void changeEvent(QEvent *e);
+    virtual void paintEvent(QPaintEvent *);
 
 private:
-    void hightlightDesiredCurrent(bool hightlight_on);
     Ui::WaypointViewOnlyView *m_ui;
 };
 

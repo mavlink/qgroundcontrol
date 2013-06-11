@@ -38,7 +38,9 @@ JoystickInput::JoystickInput() :
         autoButtonMapping(-1),
         manualButtonMapping(-1),
         stabilizeButtonMapping(-1),
-        joystickName(tr("Unitinialized"))
+        joystickName(tr("Unitinialized")),
+        joystickButtons(0),
+        joystickID(0)
 {
     loadSettings();
 
@@ -47,10 +49,11 @@ JoystickInput::JoystickInput() :
         calibrationNegative[i] = sdlJoystickMin;
     }
 
+    // Listen for when the active UAS changes so we can change who we're sending data to.
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    // Enter main loop
-    //start();
+    // Start this thread. This allows the Joystick Settings window to work correctly even w/o any UASes connected.
+    start();
 }
 
 JoystickInput::~JoystickInput()
@@ -108,14 +111,13 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 
     this->uas = uas;
 
-    tmp = dynamic_cast<UAS*>(this->uas);
-    if(tmp) {
-        connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
-        connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
-    }
-    if (!isRunning())
+    if (this->uas)
     {
-        start();
+        tmp = dynamic_cast<UAS*>(this->uas);
+        if(tmp) {
+            connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
+            connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
+        }
     }
 }
 
@@ -127,10 +129,10 @@ void JoystickInput::init()
     }
 
     // Enumerate joysticks and select one
-    int numJoysticks = SDL_NumJoysticks();
+    joysticksFound = SDL_NumJoysticks();
 
-    // Wait for joysticks if none is connected
-    while (numJoysticks == 0 && !done)
+    // Wait for joysticks if none are connected
+    while (joysticksFound == 0 && !done)
     {
         QGC::SLEEP::msleep(400);
         // INITIALIZE SDL Joystick support
@@ -138,29 +140,33 @@ void JoystickInput::init()
         {
             printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
         }
-        numJoysticks = SDL_NumJoysticks();
+        joysticksFound = SDL_NumJoysticks();
     }
     if (done)
     {
         return;
     }
 
-    printf("%d Input devices found:\n", numJoysticks);
-    for(int i=0; i < SDL_NumJoysticks(); i++ )
+    qDebug() << QString("%1 Input devices found:").arg(joysticksFound);
+    for(int i=0; i < joysticksFound; i++ )
     {
-        printf("\t- %s\n", SDL_JoystickName(i));
-        joystickName = QString(SDL_JoystickName(i));
+        qDebug() << QString("\t- %1").arg(SDL_JoystickName(i));
+        SDL_Joystick* x = SDL_JoystickOpen(i);
+        qDebug() << QString("Number of Axes: %1").arg(QString::number(SDL_JoystickNumAxes(x)));
+        qDebug() << QString("Number of Buttons: %1").arg(QString::number(SDL_JoystickNumButtons(x)));
+        qDebug() << QString("Number of Balls: %1").arg(QString::number(SDL_JoystickNumBalls(x)));
+        SDL_JoystickClose(x);
     }
-
-    printf("\nOpened %s\n", SDL_JoystickName(defaultIndex));
 
     SDL_JoystickEventState(SDL_ENABLE);
 
-    joystick = SDL_JoystickOpen(defaultIndex);
+    // And attach to the default joystick.
+    setActiveJoystick(defaultIndex);
 
     // Make sure active UAS is set
     setActiveUAS(UASManager::instance()->getActiveUAS());
 }
+
 void JoystickInput::shutdown()
 {
     done = true;
@@ -293,35 +299,42 @@ void JoystickInput::run()
         // Send new values to rest of groundstation
         emit hatDirectionChanged(xHat, yHat);
 
-        // Display all buttons
-        int buttons = 0;
-        for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
+        // Emit signals for each button individually
+        for (int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
         {
-            //qDebug() << "BUTTON" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
-            if(SDL_JoystickGetButton(joystick, i))
+            // If the button was down, but now it's up, trigger a buttonPressed event
+            quint16 lastButtonState = buttonState & (1 << i);
+            if (SDL_JoystickGetButton(joystick, i) && !lastButtonState)
             {
                 emit buttonPressed(i);
-                buttons |= 1 << i;
-                // Check if button is a UAS select button
-
-                if (uasButtonList.contains(i))
-                {
-                    UASInterface* uas = UASManager::instance()->getUASForId(i);
-                    if (uas)
-                    {
-                        UASManager::instance()->setActiveUAS(uas);
-                    }
-                }
+                buttonState |= 1 << i;
             }
-
+            else if (!SDL_JoystickGetButton(joystick, i) && lastButtonState)
+            {
+                emit buttonReleased(i);
+                buttonState &= ~(1 << i);
+            }
         }
-        emit joystickChanged(y, x, yaw, thrust, xHat, yHat, buttons);
+
+        // Now signal an update for all UI together.
+        emit joystickChanged(y, x, yaw, thrust, xHat, yHat, buttonState);
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
         QGC::SLEEP::msleep(20);
-
     }
+}
 
+void JoystickInput::setActiveJoystick(int id)
+{
+    joystickID = id;
+    joystick = SDL_JoystickOpen(joystickID);
+    if (joystick)
+    {
+        joystickName = QString(SDL_JoystickName(joystickID));
+        joystickButtons = SDL_JoystickNumButtons(joystick);
+        qDebug() << QString("Switching to joystick '%1' with %2 buttons").arg(joystickName, QString::number(joystickButtons));
+    }
+    buttonState = 0;
 }
 
 const QString& JoystickInput::getName()

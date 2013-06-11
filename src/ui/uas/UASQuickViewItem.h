@@ -2,7 +2,6 @@
 #define UASQUICKVIEWITEM_H
 
 #include <QWidget>
-#include <QLabel>
 class UASQuickViewItem : public QWidget
 {
     Q_OBJECT

@@ -69,39 +69,59 @@ public:
      */
     void storeSettings();
 
-    int getMappingThrustAxis()
+    int getMappingThrustAxis() const
     {
         return thrustAxis;
     }
 
-    int getMappingXAxis()
+    int getMappingXAxis() const
     {
         return xAxis;
     }
 
-    int getMappingYAxis()
+    int getMappingYAxis() const
     {
         return yAxis;
     }
 
-    int getMappingYawAxis()
+    int getMappingYawAxis() const
     {
         return yawAxis;
     }
 
-    int getMappingAutoButton()
+    int getMappingAutoButton() const
     {
         return autoButtonMapping;
     }
 
-    int getMappingManualButton()
+    int getMappingManualButton() const
     {
         return manualButtonMapping;
     }
 
-    int getMappingStabilizeButton()
+    int getMappingStabilizeButton() const
     {
         return stabilizeButtonMapping;
+    }
+
+    int getJoystickNumButtons() const
+    {
+        return joystickButtons;
+    }
+
+    int getJoystickID() const
+    {
+        return joystickID;
+    }
+
+    int getNumJoysticks() const
+    {
+        return joysticksFound;
+    }
+
+    QString getJoystickNameById(int id) const
+    {
+        return QString(SDL_JoystickName(id));
     }
 
     const double sdlJoystickMin;
@@ -127,6 +147,10 @@ protected:
     int stabilizeButtonMapping;
     SDL_Event event;
     QString joystickName;
+    int joystickButtons;
+    int joystickID;
+    int joysticksFound;
+    quint16 buttonState; ///< Track the state of the buttons so we can trigger on Up and Down events
 
     void init();
 
@@ -173,11 +197,17 @@ signals:
     void yawChanged(int yaw);
 
     /**
-      * @brief Joystick button has been pressed
-      *
+      * @brief Joystick button has changed state from unpressed to pressed.
       * @param key index of the pressed key
       */
     void buttonPressed(int key);
+
+    /**
+      * @brief Joystick button has changed state from pressed to unpressed.
+      *
+      * @param key index of the released key
+      */
+    void buttonReleased(int key);
 
     /**
       * @brief Hat (8-way switch on the top) has changed position
@@ -198,6 +228,8 @@ signals:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    /** @brief Switch to a new joystick by ID number. */
+    void setActiveJoystick(int id);
     void setMappingThrustAxis(int mapping)
     {
         thrustAxis = mapping;

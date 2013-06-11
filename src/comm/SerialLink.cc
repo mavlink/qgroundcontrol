@@ -698,7 +698,7 @@ bool SerialLink::hardwareConnect()
  *
  * @return True if link is connected, false otherwise.
  **/
-bool SerialLink::isConnected()
+bool SerialLink::isConnected() const
 {
     if (port) {
         return port->isOpen();
@@ -707,12 +707,12 @@ bool SerialLink::isConnected()
     }
 }
 
-int SerialLink::getId()
+int SerialLink::getId() const
 {
     return id;
 }
 
-QString SerialLink::getName()
+QString SerialLink::getName() const
 {
     return name;
 }
@@ -728,7 +728,7 @@ void SerialLink::setName(QString name)
   * This function maps baud rate constants to numerical equivalents.
   * It relies on the mapping given in qportsettings.h from the QSerialPort library.
   */
-qint64 SerialLink::getNominalDataRate()
+qint64 SerialLink::getNominalDataRate() const
 {
     qint64 dataRate = 0;
     switch (portSettings.baudRate()) {
@@ -844,12 +844,12 @@ qint64 SerialLink::getMaxUpstream()
     return 0; // TODO
 }
 
-qint64 SerialLink::getBitsSent()
+qint64 SerialLink::getBitsSent() const
 {
     return bitsSentTotal;
 }
 
-qint64 SerialLink::getBitsReceived()
+qint64 SerialLink::getBitsReceived() const
 {
     return bitsReceivedTotal;
 }
@@ -871,54 +871,54 @@ qint64 SerialLink::getMaxDownstream()
     return 0; // TODO
 }
 
-bool SerialLink::isFullDuplex()
+bool SerialLink::isFullDuplex() const
 {
     /* Serial connections are always half duplex */
     return false;
 }
 
-int SerialLink::getLinkQuality()
+int SerialLink::getLinkQuality() const
 {
     /* This feature is not supported with this interface */
     return -1;
 }
 
-QString SerialLink::getPortName()
+QString SerialLink::getPortName() const
 {
     return porthandle;
 }
 
-int SerialLink::getBaudRate()
+int SerialLink::getBaudRate() const
 {
     return getNominalDataRate();
 }
 
-int SerialLink::getBaudRateType()
+int SerialLink::getBaudRateType() const
 {
     return portSettings.baudRate();
 }
 
-int SerialLink::getFlowType()
+int SerialLink::getFlowType() const
 {
     return portSettings.flowControl();
 }
 
-int SerialLink::getParityType()
+int SerialLink::getParityType() const
 {
     return portSettings.parity();
 }
 
-int SerialLink::getDataBitsType()
+int SerialLink::getDataBitsType() const
 {
     return portSettings.dataBits();
 }
 
-int SerialLink::getStopBitsType()
+int SerialLink::getStopBitsType() const
 {
     return portSettings.stopBits();
 }
 
-int SerialLink::getDataBits()
+int SerialLink::getDataBits() const
 {
     int ret = -1;
     switch (portSettings.dataBits()) {
@@ -941,7 +941,7 @@ int SerialLink::getDataBits()
     return ret;
 }
 
-int SerialLink::getStopBits()
+int SerialLink::getStopBits() const
 {
     int ret = -1;
     switch (portSettings.stopBits()) {

@@ -61,14 +61,14 @@ win32 {
     QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
     QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
     QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
-	
-	# Build QAX for GoogleEarth API access
-	!exists( $(QTDIR)/src/activeqt/Makefile ) {
-		message( Making QAx (ONE TIME) )
-		system( cd $$(QTDIR)\\src\\activeqt && $$(QTDIR)\\bin\\qmake.exe )
-		system( cd $$(QTDIR)\\src\\activeqt\\container && $$(QTDIR)\\bin\\qmake.exe )
-		system( cd $$(QTDIR)\\src\\activeqt\\control && $$(QTDIR)\\bin\\qmake.exe )
-	}
+
+        # Build QAX for GoogleEarth API access
+        !exists( $(QTDIR)/src/activeqt/Makefile ) {
+                message( Making QAx (ONE TIME) )
+                system( cd $$(QTDIR)\\src\\activeqt && $$(QTDIR)\\bin\\qmake.exe )
+                system( cd $$(QTDIR)\\src\\activeqt\\container && $$(QTDIR)\\bin\\qmake.exe )
+                system( cd $$(QTDIR)\\src\\activeqt\\control && $$(QTDIR)\\bin\\qmake.exe )
+        }
 }
 
 
@@ -100,7 +100,7 @@ INCLUDEPATH += \
 # of custom MAVLink messages of this project. It will also
 # create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use
 # within the actual code.
-exists(user_config.pri) { 
+exists(user_config.pri) {
     include(user_config.pri)
     message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
@@ -109,7 +109,7 @@ exists(user_config.pri) {
     MAVLINK_CONF += ardupilotmega
 }
 INCLUDEPATH += $$MAVLINKPATH
-isEmpty(MAVLINK_CONF) { 
+isEmpty(MAVLINK_CONF) {
     INCLUDEPATH += $$MAVLINKPATH/common
 } else {
     INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
@@ -168,7 +168,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/Linechart.ui \
     src/ui/UASView.ui \
     src/ui/ParameterInterface.ui \
-    src/ui/WaypointList.ui \    
+    src/ui/WaypointList.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
@@ -202,9 +202,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
-    src/ui/WaypointViewOnlyView.ui \    
-    src/ui/WaypointEditableView.ui \    
-    src/ui/UnconnectedUASInfoWidget.ui \
+    src/ui/WaypointViewOnlyView.ui \
+    src/ui/WaypointEditableView.ui \
     src/ui/mavlink/QGCMAVLinkMessageSender.ui \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.ui \
     src/ui/QGCPluginHost.ui \
@@ -283,7 +282,7 @@ HEADERS += src/MG.h \
     src/comm/UDPLink.h \
     src/ui/ParameterInterface.h \
     src/ui/WaypointList.h \
-    src/Waypoint.h \   
+    src/Waypoint.h \
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
@@ -352,8 +351,7 @@ HEADERS += src/MG.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointEditableView.h \    
-    src/ui/UnconnectedUASInfoWidget.h \
+    src/ui/WaypointEditableView.h \
     src/ui/QGCRGBDView.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
@@ -384,6 +382,7 @@ HEADERS += src/MG.h \
     src/ui/dockwidgettitlebareventfilter.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewItem.h \
+    src/ui/linechart/ChartPlot.h \
     src/ui/uas/UASQuickViewItemSelect.h \
     src/ui/uas/UASQuickViewTextItem.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
@@ -396,9 +395,9 @@ HEADERS += src/MG.h \
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-contains(DEPENDENCIES_PRESENT, osg) { 
+contains(DEPENDENCIES_PRESENT, osg) {
     message("Including headers for OpenSceneGraph")
-    
+
     # Enable only if OpenSceneGraph is available
     HEADERS += src/ui/map3D/gpl.h \
         src/ui/map3D/CameraParams.h \
@@ -431,9 +430,9 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
         src/ui/map3D/ObstacleGroupNode.h \
         src/ui/map3D/GLOverlayGeode.h
 }
-contains(DEPENDENCIES_PRESENT, libfreenect) { 
+contains(DEPENDENCIES_PRESENT, libfreenect) {
     message("Including headers for libfreenect")
-    
+
     # Enable only if libfreenect is available
     HEADERS += src/input/Freenect.h
 }
@@ -442,7 +441,6 @@ SOURCES += src/main.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
-    src/comm/LinkInterface.cpp \
     src/comm/SerialLink.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/QGCFlightGearLink.cc \
@@ -531,7 +529,6 @@ SOURCES += src/main.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/WaypointViewOnlyView.cc \
     src/ui/WaypointEditableView.cc \
-    src/ui/UnconnectedUASInfoWidget.cc \
     src/ui/QGCRGBDView.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
@@ -561,6 +558,7 @@ SOURCES += src/main.cc \
     src/ui/dockwidgettitlebareventfilter.cpp \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickView.cc \
+    src/ui/linechart/ChartPlot.cc \
     src/ui/uas/UASQuickViewTextItem.cc \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
@@ -575,9 +573,9 @@ SOURCES += src/main.cc \
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 
 # Enable OSG only if it has been found
-contains(DEPENDENCIES_PRESENT, osg) { 
+contains(DEPENDENCIES_PRESENT, osg) {
     message("Including sources for OpenSceneGraph")
-    
+
     # Enable only if OpenSceneGraph is available
     SOURCES += src/ui/map3D/gpl.cc \
         src/ui/map3D/CameraParams.cc \
@@ -602,9 +600,9 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/TerrainParamDialog.cc \
         src/ui/map3D/ImageryParamDialog.cc
 
-    contains(DEPENDENCIES_PRESENT, osgearth) { 
+    contains(DEPENDENCIES_PRESENT, osgearth) {
         message("Including sources for osgEarth")
-        
+
         # Enable only if OpenSceneGraph is available
         SOURCES +=
     }
@@ -617,9 +615,9 @@ contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
         src/ui/map3D/ObstacleGroupNode.cc \
         src/ui/map3D/GLOverlayGeode.cc
 }
-contains(DEPENDENCIES_PRESENT, libfreenect) { 
+contains(DEPENDENCIES_PRESENT, libfreenect) {
     message("Including sources for libfreenect")
-    
+
     # Enable only if libfreenect is available
     SOURCES += src/input/Freenect.cc
 }
@@ -628,7 +626,7 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
 RESOURCES += qgroundcontrol.qrc
 
 # Include RT-LAB Library
-win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) { 
+win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
     message("Building support for Opal-RT")
     LIBS += -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
         -lOpalApi

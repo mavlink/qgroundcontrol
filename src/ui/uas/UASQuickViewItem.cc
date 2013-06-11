@@ -1,7 +1,6 @@
 #include "UASQuickViewItem.h"
-#include <QVBoxLayout>
 
-UASQuickViewItem::UASQuickViewItem(QWidget *parent) : QWidget(parent)
+UASQuickViewItem::UASQuickViewItem(QWidget *parent) :
+    QWidget(parent)
 {
-
 }

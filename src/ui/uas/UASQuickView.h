@@ -17,6 +17,10 @@ public:
     UASQuickView(QWidget *parent = 0);
     void addSource(MAVLinkDecoder *decoder);
 private:
+    /**
+     * Adds a default set of actions to the widget's menu.
+     */
+    void addDefaultActions();
     UASInterface *uas;
 
     /** List of enabled properties */
@@ -30,6 +34,7 @@ private:
 
     /** Timer for updating the UI */
     QTimer *updateTimer;
+    Ui::UASQuickView* m_ui;
 
     /** Selection dialog for selectin/deselecting gauge items */
     UASQuickViewItemSelect *quickViewSelectDialog;
@@ -40,9 +45,8 @@ private:
     /** Loads gauge layout from settings file */
     void loadSettings();
 protected:
-    Ui::Form ui;
 signals:
-    
+
 public slots:
     void valueChanged(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec);
@@ -53,8 +57,8 @@ public slots:
     void valueChanged(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec);
     void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant value, const quint64 msec);
 
-    void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs);
     void actionTriggered(bool checked);
     void actionTriggered();
     void updateTimerTick();

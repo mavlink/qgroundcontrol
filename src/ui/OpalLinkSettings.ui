@@ -74,7 +74,7 @@
       <string>Change</string>
      </property>
      <property name="icon">
-      <iconset resource="../../mavground.qrc">
+      <iconset resource="../../qgroundcontrol.qrc">
        <normaloff>:/files/images/status/folder-open.svg</normaloff>:/files/images/status/folder-open.svg</iconset>
      </property>
     </widget>
@@ -88,7 +88,7 @@
       <string>Change</string>
      </property>
      <property name="icon">
-      <iconset resource="../../mavground.qrc">
+      <iconset resource="../../qgroundcontrol.qrc">
        <normaloff>:/files/images/status/folder-open.svg</normaloff>:/files/images/status/folder-open.svg</iconset>
      </property>
     </widget>
@@ -150,7 +150,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../../qgroundcontrol.qrc"/>
  </resources>
  <connections>
   <connection>
