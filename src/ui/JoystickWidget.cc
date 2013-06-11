@@ -1,4 +1,5 @@
 #include "JoystickWidget.h"
+#include "MainWindow.h"
 #include "ui_JoystickWidget.h"
 #include <QDebug>
 #include <QDesktopWidget>
@@ -20,7 +21,8 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
 
     // Watch for input events from the joystick
     connect(this->joystick, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), this, SLOT(updateJoystick(double,double,double,double,int,int)));
-    connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(pressKey(int)));
+    connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(joystickButtonPressed(int)));
+    connect(this->joystick, SIGNAL(buttonReleased(int)), this, SLOT(joystickButtonReleased(int)));
 
     // Watch for changes to the button/axis mappings
     connect(m_ui->rollMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingXAxis(int)));
@@ -31,6 +33,10 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
 
     // Update the UI if the joystick changes.
     connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateUIForJoystick(int)));
+
+    // Update the button label colors based on the current theme and watch for future theme changes.
+    styleChanged(MainWindow::instance()->getStyle());
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 
     // Display the widget above all other windows.
     this->raise();
@@ -57,6 +63,18 @@ void JoystickWidget::initUI()
 
     // Add any missing buttons
     updateUIForJoystick(joystick->getJoystickID());
+}
+
+void JoystickWidget::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newStyle)
+{
+    if (newStyle == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        buttonLabelColor = QColor(0x73, 0xD9, 0x5D);
+    }
+    else
+    {
+        buttonLabelColor = QColor(0x14, 0xC6, 0x14);
+    }
 }
 
 JoystickWidget::~JoystickWidget()
@@ -87,10 +105,11 @@ void JoystickWidget::changeEvent(QEvent *e)
 void JoystickWidget::updateUIForJoystick(int id)
 {
     // Delete all the old buttonlabels
-    foreach (QLabel* l, m_ui->buttonLabelBox->findChildren<QLabel*>())
+    foreach (QLabel* l, buttonLabels)
     {
         delete l;
     }
+    buttonLabels.clear();
 
     // Set the JoystickInput to listen to the new joystick instead.
     joystick->setActiveJoystick(id);
@@ -104,6 +123,7 @@ void JoystickWidget::updateUIForJoystick(int id)
         buttonLabel->setAlignment(Qt::AlignCenter);
         // And make sure we insert BEFORE the vertical spacer.
         m_ui->buttonLabelLayout->insertWidget(i, buttonLabel);
+        buttonLabels.append(buttonLabel);
     }
 
     // Update the mapping UI
@@ -141,47 +161,15 @@ void JoystickWidget::setHat(float x, float y)
     updateStatus(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
 }
 
-void JoystickWidget::pressKey(int key)
+void JoystickWidget::joystickButtonPressed(int key)
 {
-//    QString colorstyle;
-//    QColor buttonStyleColor = QColor(20, 200, 20);
-//    colorstyle = QString("QLabel { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: %1;}").arg(buttonStyleColor.name());
-//    switch(key) {
-//    case 0:
-//        m_ui->button0->setStyleSheet(colorstyle);
-//        break;
-//    case 1:
-//        m_ui->button1->setStyleSheet(colorstyle);
-//        break;
-//    case 2:
-//        m_ui->button2->setStyleSheet(colorstyle);
-//        break;
-//    case 3:
-//        m_ui->button3->setStyleSheet(colorstyle);
-//        break;
-//    case 4:
-//        m_ui->button4->setStyleSheet(colorstyle);
-//        break;
-//    case 5:
-//        m_ui->button5->setStyleSheet(colorstyle);
-//        break;
-//    case 6:
-//        m_ui->button6->setStyleSheet(colorstyle);
-//        break;
-//    case 7:
-//        m_ui->button7->setStyleSheet(colorstyle);
-//        break;
-//    case 8:
-//        m_ui->button8->setStyleSheet(colorstyle);
-//        break;
-//    case 9:
-//        m_ui->button9->setStyleSheet(colorstyle);
-//        break;
-//    case 10:
-//        m_ui->button10->setStyleSheet(colorstyle);
-//        break;
-//    }
-    updateStatus(tr("Key %1 pressed").arg(key));
+    QString colorStyle = QString("QLabel { background-color: %1;}").arg(buttonLabelColor.name());
+    buttonLabels.at(key)->setStyleSheet(colorStyle);
+}
+
+void JoystickWidget::joystickButtonReleased(int key)
+{
+    buttonLabels.at(key)->setStyleSheet("");
 }
 
 void JoystickWidget::updateStatus(const QString& status)
