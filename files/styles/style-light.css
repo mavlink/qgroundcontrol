@@ -9,6 +9,12 @@
     color: #AAA;
 }
 
+JoystickWidget QLabel {
+    border: 1px solid #777;
+    border-radius: 4px;
+    height: 16px;
+}
+
 QCheckBox {
     color: #222;
 }
