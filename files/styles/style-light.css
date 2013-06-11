@@ -154,6 +154,10 @@ QGCToolWidgetItem {
     margin-top: 1ex; /* leave space at the top for the title */
 }
 
+QGCUnconnectedInfoWidget QPushButton {
+    border-radius: 18px;
+}
+
 QGroupBox {
     border: 1px solid #666;
     border-radius: 3px;
@@ -281,6 +285,7 @@ QPushButton, QToolButton {
 
 QPushButton#connectButton, QPushButton#controlButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
+    padding: 0;
 }
 
 QPushButton#controlButton {

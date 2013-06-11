@@ -154,6 +154,10 @@ QGCToolWidgetItem {
     margin-top: 1ex; /* leave space at the top for the title */
 }
 
+QGCUnconnectedInfoWidget QPushButton {
+    border-radius: 18px;
+}
+
 QGroupBox {
     border: 1px solid #666;
     border-radius: 3px;
