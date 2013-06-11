@@ -65,16 +65,11 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     connect(ui->generalMenuButton,SIGNAL(clicked()),this,SLOT(generalMenuButtonClicked()));
     connect(ui->advancedMenuButton,SIGNAL(clicked()),this,SLOT(advancedMenuButtonClicked()));
 
-
-    requestCalibrationRC();
-    if (mav) mav->requestParameter(0, "RC_TYPE");
-
     ui->rcModeComboBox->setCurrentIndex((int)rc_mode - 1);
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
     connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
-    connect(ui->refreshButton,SIGNAL(clicked()),mav,SLOT(requestParameters()));
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
@@ -800,6 +795,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
                    SLOT(remoteControlChannelRawChanged(int,float)));
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
+        disconnect(ui->refreshButton,SIGNAL(clicked()),mav,SLOT(requestParameters()));
 
         foreach (QGCToolWidget* tool, toolWidgets)
         {
@@ -808,17 +804,22 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         toolWidgets.clear();
     }
 
+    // Connect new system
+    mav = active;
+
     // Reset current state
     resetCalibrationRC();
 
+    requestCalibrationRC();
+    mav->requestParameter(0, "RC_TYPE");
+
     chanCount = 0;
 
-    // Connect new system
-    mav = active;
     connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                SLOT(remoteControlChannelRawChanged(int,float)));
     connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                SLOT(parameterChanged(int,int,QString,QVariant)));
+    connect(ui->refreshButton, SIGNAL(clicked()), active, SLOT(requestParameters()));
 
     if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
     {
