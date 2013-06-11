@@ -32,7 +32,9 @@ This file is part of the PIXHAWK project
 #define JOYSTICKWIDGET_H
 
 #include <QtGui/QDialog>
+#include <QLabel>
 #include "JoystickInput.h"
+#include "MainWindow.h"
 
 namespace Ui
 {
@@ -69,10 +71,14 @@ public slots:
     void setZ(float z);
     /** @brief Hat switch position */
     void setHat(float x, float y);
-    /** @brief Joystick keys, as labeled on the joystick */
-    void pressKey(int key);
+    /** @brief Trigger a UI change based on a button being pressed */
+    void joystickButtonPressed(int key);
+    /** @brief Trigger a UI change based on a button being released */
+    void joystickButtonReleased(int key);
     /** @brief Update status string */
     void updateStatus(const QString& status);
+    /** @brief Update the UI color scheme when the MainWindow theme changes. */
+    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE);
 
 protected:
     /** @brief Update the proper number of buttons for the current joystick. */
@@ -80,6 +86,10 @@ protected:
     /** @brief UI change event */
     virtual void changeEvent(QEvent *e);
     JoystickInput* joystick;  ///< Reference to the joystick
+    /** @brief a list of all button labels generated for this joystick. */
+    QList<QLabel*> buttonLabels;
+    /** @brief The color to use for button labels when their corresponding button is pressed */
+    QColor buttonLabelColor;
 
 protected slots:
     /** @brief Update the UI for a new joystick based on SDL ID. */
