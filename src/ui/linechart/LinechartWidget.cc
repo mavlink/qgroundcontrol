@@ -144,7 +144,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     // And make sure we're listening for future style changes
     connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)),
-            this, SLOT(applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE)));
+            this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
     connect(MainWindow::instance(), SIGNAL(styleChanged()), this, SLOT(recolor()));
 
     updateTimer->setInterval(updateInterval);
@@ -777,7 +777,7 @@ void LinechartWidget::removeCurve(QString curve)
 
 void LinechartWidget::recolor()
 {
-    activePlot->applyColorScheme(MainWindow::instance()->getStyle());
+    activePlot->styleChanged(MainWindow::instance()->getStyle());
     foreach (QString key, colorIcons.keys())
     {
         QWidget* colorIcon = colorIcons.value(key, 0);
