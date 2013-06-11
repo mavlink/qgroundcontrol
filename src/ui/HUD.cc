@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMenu>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QPaintEvent>
 
 #include <QDebug>
 #include <cmath>
@@ -43,13 +44,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASManager.h"
 #include "UAS.h"
 #include "HUD.h"
-#include "MG.h"
 #include "QGC.h"
-
-// Fix for some platforms, e.g. windows
-#ifndef GL_MULTISAMPLE
-#define GL_MULTISAMPLE  0x809D
-#endif
 
 /**
  * @warning The HUD widget will not start painting its content automatically
@@ -60,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
  * @param parent
  */
 HUD::HUD(int width, int height, QWidget* parent)
-    : QWidget(parent),
+    : QLabel(parent),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -119,13 +114,23 @@ HUD::HUD(int width, int height, QWidget* parent)
       load(0.0f),
       offlineDirectory(""),
       nextOfflineImage(""),
-      HUDInstrumentsEnabled(true),
+      HUDInstrumentsEnabled(false),
       videoEnabled(true),
       xImageFactor(1.0),
       yImageFactor(1.0),
       imageRequested(false),
-      imageLoggingEnabled(false)
+      imageLoggingEnabled(false),
+    image(NULL)
 {
+    // Fill with black background
+    QImage fill = QImage(width, height, QImage::Format_Indexed8);
+    fill.setNumColors(3);
+    fill.setColor(0, qRgb(0, 0, 0));
+    fill.setColor(1, qRgb(0, 0, 0));
+    fill.setColor(2, qRgb(0, 0, 0));
+    fill.fill(0);
+    glImage = fill;
+
     // Set auto fill to false
     setAutoFillBackground(false);
 
@@ -135,34 +140,12 @@ HUD::HUD(int width, int height, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scalingFactor = this->width()/vwidth;
 
-    // Fill with black background
-    QImage fill = QImage(width, height, QImage::Format_Indexed8);
-    fill.setNumColors(3);
-    fill.setColor(0, qRgb(0, 0, 0));
-    fill.setColor(1, qRgb(0, 0, 0));
-    fill.setColor(2, qRgb(0, 0, 0));
-    fill.fill(0);
-
-    //QString imagePath = "/Users/user/Desktop/frame0000.png";
-    //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
-    //fill = QImage(imagePath);
-
-    glImage = fill;
-
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(repaint()));
 
     // Resize to correct size and fill with image
     QWidget::resize(this->width(), this->height());
-    //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-
-    // Set size once
-    //setFixedSize(fill.size());
-    //setMinimumSize(fill.size());
-    //setMaximumSize(fill.size());
-    // Lock down the size
-    //setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 
     fontDatabase = QFontDatabase();
     const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
@@ -502,10 +485,8 @@ void HUD::paintRollPitchStrips()
 
 void HUD::paintEvent(QPaintEvent *event)
 {
-    // Event is not needed
-    // the event is ignored as this widget
-    // is refreshed automatically
-    Q_UNUSED(event);
+
+    paintHUD();
 }
 
 void HUD::paintHUD()
@@ -586,6 +567,13 @@ void HUD::paintHUD()
 
         }
 
+        QPainter painter;
+        painter.begin(this);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+        QPixmap pmap = QPixmap::fromImage(glImage).scaledToWidth(width());
+        painter.drawPixmap(0, (height() - pmap.height()) / 2, pmap);
+
         // END OF OPENGL PAINTING
 
         if (HUDInstrumentsEnabled) {
@@ -594,10 +582,7 @@ void HUD::paintHUD()
 
             // QT PAINTING
             //makeCurrent();
-            QPainter painter;
-            painter.begin(this);
-            painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
             painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
             // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
@@ -759,13 +744,12 @@ void HUD::paintHUD()
                 painter.rotate(-(att.x()/M_PI)* -180.0f);
             }
 
-            painter.end();
-        } else {
-            QPainter painter;
-            painter.begin(this);
-            painter.end();
+
         }
+
+        painter.end();
     }
+
 }
 
 
@@ -1200,7 +1184,8 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
         rawBuffer1 = (unsigned char*)malloc(rawExpectedBytes);
         rawBuffer2 = (unsigned char*)malloc(rawExpectedBytes);
         rawImage = rawBuffer1;
-        // TODO check if old image should be deleted
+        if (image)
+            delete image;
 
         // Set image format
         // 8 BIT GREYSCALE IMAGE
@@ -1367,20 +1352,16 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
 void HUD::copyImage()
 {
-    if (isVisible() && HUDInstrumentsEnabled)
+    UAS* u = dynamic_cast<UAS*>(this->uas);
+    if (u)
     {
-        //qDebug() << "HUD::copyImage()";
-        UAS* u = dynamic_cast<UAS*>(this->uas);
-        if (u)
-        {
-            this->glImage = u->getImage();
+        this->glImage = u->getImage();
 
-            // Save to directory if logging is enabled
-            if (imageLoggingEnabled)
-            {
-                u->getImage().save(QString("%1/%2.png").arg(imageLogDirectory).arg(imageLogCounter));
-                imageLogCounter++;
-            }
+        // Save to directory if logging is enabled
+        if (imageLoggingEnabled)
+        {
+            u->getImage().save(QString("%1/%2.png").arg(imageLogDirectory).arg(imageLogCounter));
+            imageLogCounter++;
         }
     }
 }
