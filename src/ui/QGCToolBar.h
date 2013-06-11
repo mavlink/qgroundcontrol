@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <QLabel>
 #include <QProgressBar>
+#include <QComboBox>
 #include "UASInterface.h"
 #include "QGCMAVLinkLogPlayer.h"
 
@@ -88,7 +89,7 @@ protected:
     void storeSettings();
     void loadSettings();
     void createUI();
-
+    void updateComboBox();
     UASInterface* mav;
     QToolButton* symbolButton;
     QLabel* toolBarNameLabel;
@@ -103,6 +104,7 @@ protected:
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
     QGCMAVLinkLogPlayer* player;
+    QComboBox *portComboBox;
     bool changed;
     float batteryPercent;
     float batteryVoltage;
