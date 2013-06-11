@@ -150,6 +150,7 @@ protected:
     int joystickButtons;
     int joystickID;
     int joysticksFound;
+    quint16 buttonState; ///< Track the state of the buttons so we can trigger on Up and Down events
 
     void init();
 
@@ -196,11 +197,17 @@ signals:
     void yawChanged(int yaw);
 
     /**
-      * @brief Joystick button has been pressed
-      *
+      * @brief Joystick button has changed state from unpressed to pressed.
       * @param key index of the pressed key
       */
     void buttonPressed(int key);
+
+    /**
+      * @brief Joystick button has changed state from pressed to unpressed.
+      *
+      * @param key index of the released key
+      */
+    void buttonReleased(int key);
 
     /**
       * @brief Hat (8-way switch on the top) has changed position
