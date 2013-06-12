@@ -134,6 +134,7 @@ void UASListWidget::addUAS(UASInterface* uas)
     if (uasViews.isEmpty())
     {
         updateTimer->start(5000);
+
         if (uWidget)
         {
             m_ui->verticalLayout->removeWidget(uWidget);
