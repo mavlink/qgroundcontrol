@@ -71,6 +71,8 @@ public:
     /** @brief Get a list of the currently available ports */
     QVector<QString>* getCurrentPorts();
 
+    void requestReset();
+
     bool isConnected();
     qint64 bytesAvailable();
 
@@ -170,7 +172,8 @@ protected:
     QVector<QString>* ports;
 
 private:
-	volatile bool m_stopp;
+    volatile bool m_stopp;
+    volatile bool m_reqReset;
 	QMutex m_stoppMutex;
 
     void setName(QString name);
