@@ -215,8 +215,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     mavlink_status_t status;
 
     static int mavlink09Count = 0;
+    static int nonmavlinkCount = 0;
     static bool decodedFirstPacket = false;
     static bool warnedUser = false;
+    static bool checkedUserNonMavlink = false;
+    static bool warnedUserNonMavlink = false;
 
     for (int position = 0; position < b.size(); position++) {
         unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b[position]), &message, &status);
@@ -230,6 +233,24 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             emit protocolStatusMessage("MAVLink Version or Baud Rate Mismatch", "Your MAVLink device seems to use the deprecated version 0.9, while QGroundControl only supports version 1.0+. Please upgrade the MAVLink version of your autopilot. If your autopilot is using version 1.0, check if the baud rates of QGroundControl and your autopilot are the same.");
         }
 
+        if (decodeState == 0 && !decodedFirstPacket)
+        {
+            nonmavlinkCount++;
+            if (nonmavlinkCount > 500 && !warnedUserNonMavlink)
+            {
+                //500 bytes with no mavlink message. Are we connected to a mavlink capable device?
+                if (!checkedUserNonMavlink)
+                {
+                    link->requestReset();
+                    checkedUserNonMavlink = true;
+                }
+                else
+                {
+                    warnedUserNonMavlink = true;
+                    emit protocolStatusMessage("MAVLink Baud Rate Mismatch", "Please check if the baud rates of QGroundControl and your autopilot are the same.");
+                }
+            }
+        }
         if (decodeState == 1)
         {
             decodedFirstPacket = true;

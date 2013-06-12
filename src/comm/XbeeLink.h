@@ -21,6 +21,7 @@ public:
 	
 public: // virtual functions from XbeeLinkInterface
 	QString getPortName();
+    void requestReset() { }
 	int getBaudRate();
 
 public slots: // virtual functions from XbeeLinkInterface

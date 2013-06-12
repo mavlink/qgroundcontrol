@@ -54,7 +54,7 @@ public:
     qint64 bytesAvailable();
 
     void run();
-
+    void requestReset() { }
     bool connect();
     bool disconnect();
 

@@ -213,7 +213,8 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     port(NULL),
     ports(new QVector<QString>()),
     m_stopp(false),
-    bytesRead(0)
+    bytesRead(0),
+    m_reqReset(false)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
@@ -264,6 +265,11 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
         name = portname.trimmed();
     }
     loadSettings();
+}
+void SerialLink::requestReset()
+{
+    QMutexLocker locker(&this->m_stoppMutex);
+    m_reqReset = true;
 }
 
 SerialLink::~SerialLink()
@@ -416,6 +422,14 @@ void SerialLink::run()
             {
                 this->m_stopp = false;
                 break;
+            }
+            if (m_reqReset)
+            {
+                this->m_reqReset = false;
+                communicationUpdate(getName(),"Reset requested via DTR signal");
+                port->setDtr(true);
+                this->msleep(250);
+                port->setDtr(false);
             }
         }
         // Check if new bytes have arrived, if yes, emit the notification signal
