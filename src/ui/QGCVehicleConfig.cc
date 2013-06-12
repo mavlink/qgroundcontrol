@@ -60,16 +60,11 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     connect(ui->generalMenuButton,SIGNAL(clicked()),this,SLOT(generalMenuButtonClicked()));
     connect(ui->advancedMenuButton,SIGNAL(clicked()),this,SLOT(advancedMenuButtonClicked()));
 
-
-    requestCalibrationRC();
-    if (mav) mav->requestParameter(0, "RC_TYPE");
-
     ui->rcModeComboBox->setCurrentIndex((int)rc_mode - 1);
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
     connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
-    connect(ui->refreshButton,SIGNAL(clicked()),mav,SLOT(requestParameters()));
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
@@ -798,6 +793,21 @@ void QGCVehicleConfig::loadConfig()
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 {
+    // Hide items if NULL and abort
+    if (!active) {
+        ui->setButton->setEnabled(false);
+        ui->refreshButton->setEnabled(false);
+        ui->readButton->show();
+        ui->readButton->setEnabled(false);
+        ui->writeButton->show();
+        ui->writeButton->setEnabled(false);
+        ui->loadFileButton->setEnabled(false);
+        ui->saveFileButton->setEnabled(false);
+
+        return;
+    }
+
+
     // Do nothing if system is the same
     if (mav == active) return;
 
@@ -808,6 +818,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
                    SLOT(remoteControlChannelRawChanged(int,float)));
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
+        disconnect(ui->refreshButton,SIGNAL(clicked()),mav,SLOT(requestParameters()));
 
         // Delete all children from all fixed tabs.
         foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>())
@@ -846,67 +857,59 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
         paramTooltips.clear();
     }
 
+    // Connect new system
+    mav = active;
+
     // Reset current state
     resetCalibrationRC();
+
+    requestCalibrationRC();
+    mav->requestParameter(0, "RC_TYPE");
 
     chanCount = 0;
 
     // Connect new system
-    mav = active;
-    if (mav)
+    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+               SLOT(remoteControlChannelRawChanged(int,float)));
+    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+               SLOT(parameterChanged(int,int,QString,QVariant)));
+    connect(ui->refreshButton, SIGNAL(clicked()), active, SLOT(requestParameters()));
+
+    if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
     {
-        connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
-                   SLOT(remoteControlChannelRawChanged(int,float)));
-        connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
-                   SLOT(parameterChanged(int,int,QString,QVariant)));
-
-        if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
-        {
-            paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
-        }
-        else
-        {
-            //Indication that we have no meta data for this system type.
-            qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
-            paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
-        }
-
-        if (!paramTooltips.isEmpty())
-        {
-               mav->getParamManager()->setParamInfo(paramTooltips);
-        }
-
-        qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
-
-        //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
-        //amount of time it actually takes to load the configuration windows.
-        QTimer::singleShot(1,this,SLOT(loadConfig()));
-
-        updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
-
-        // Since a system is now connected, enable the VehicleConfig UI.
-        ui->setButton->setEnabled(true);
-        ui->refreshButton->setEnabled(true);
-        ui->readButton->setEnabled(true);
-        ui->writeButton->setEnabled(true);
-        ui->loadFileButton->setEnabled(true);
-        ui->saveFileButton->setEnabled(true);
-        if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA")
-        {
-            ui->readButton->hide();
-            ui->writeButton->hide();
-        }
+        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
     }
     else
     {
-        ui->setButton->setEnabled(false);
-        ui->refreshButton->setEnabled(false);
-        ui->readButton->show();
-        ui->readButton->setEnabled(false);
-        ui->writeButton->show();
-        ui->writeButton->setEnabled(false);
-        ui->loadFileButton->setEnabled(false);
-        ui->saveFileButton->setEnabled(false);
+        //Indication that we have no meta data for this system type.
+        qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
+        paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
+    }
+
+    if (!paramTooltips.isEmpty())
+    {
+           mav->getParamManager()->setParamInfo(paramTooltips);
+    }
+
+    qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
+
+    //Load configuration after 1ms. This allows it to go into the event loop, and prevents application hangups due to the
+    //amount of time it actually takes to load the configuration windows.
+    QTimer::singleShot(1,this,SLOT(loadConfig()));
+
+    updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
+
+    // Since a system is now connected, enable the VehicleConfig UI.
+    ui->setButton->setEnabled(true);
+    ui->refreshButton->setEnabled(true);
+    ui->readButton->setEnabled(true);
+    ui->writeButton->setEnabled(true);
+    ui->loadFileButton->setEnabled(true);
+    ui->saveFileButton->setEnabled(true);
+    if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA")
+    {
+        ui->readButton->hide();
+        ui->writeButton->hide();
     }
 }
 

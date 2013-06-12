@@ -2026,15 +2026,13 @@ QImage UAS::getImage()
     // RAW greyscale
     if (imageType == MAVLINK_DATA_STREAM_IMG_RAW8U)
     {
-        // TODO FIXME
-        int imgColors = 255;//imageSize/(imageWidth*imageHeight);
-        //const int headerSize = 15;
+        int imgColors = 255;
 
         // Construct PGM header
         QString header("P5\n%1 %2\n%3\n");
         header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
-        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
+        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size() - 1);
         tmpImage.append(imageRecBuffer);
 
         //qDebug() << "IMAGE SIZE:" << tmpImage.size() << "HEADER SIZE: (15):" << header.size() << "HEADER: " << header;
@@ -2047,7 +2045,7 @@ QImage UAS::getImage()
 
         if (!image.loadFromData(tmpImage, "PGM"))
         {
-            qDebug()<< "could not create extracted image";
+            qDebug()<< __FILE__ << __LINE__ << "could not create extracted image";
             return QImage();
         }
 
@@ -2060,7 +2058,7 @@ QImage UAS::getImage()
     {
         if (!image.loadFromData(imageRecBuffer))
         {
-            qDebug() << "Loading data from image buffer failed!";
+            qDebug() << __FILE__ << __LINE__ << "Loading data from image buffer failed!";
         }
     }
     // Restart statemachine

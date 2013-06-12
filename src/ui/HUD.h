@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QImage>
 #include <QWidget>
+#include <QLabel>
 #include <QPainter>
 #include <QFontDatabase>
 #include <QTimer>
@@ -48,7 +49,7 @@ This file is part of the QGROUNDCONTROL project
  * It can superimpose the HUD over the current live image stream (any arriving image stream will be auto-
  * matically used as background), or it draws the classic blue-brown background known from instruments.
  */
-class HUD : public QWidget
+class HUD : public QLabel
 {
     Q_OBJECT
 public:
@@ -139,7 +140,7 @@ protected:
     void contextMenuEvent (QContextMenuEvent* event);
     void createActions();
 
-    static const int updateInterval = 40;
+    static const int updateInterval = 100;
 
     QImage* image; ///< Double buffer image
     QImage glImage; ///< The background / camera image
