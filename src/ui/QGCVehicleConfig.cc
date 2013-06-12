@@ -1460,14 +1460,14 @@ void QGCVehicleConfig::updateView()
             ui->throttleWidget->setValue(rcValue[2]);
             ui->yawWidget->setValue(rcValue[3]);
 
-            ui->rollWidget->setMin(rcMin[0]);
-            ui->rollWidget->setMax(rcMax[0]);
-            ui->pitchWidget->setMin(rcMin[1]);
-            ui->pitchWidget->setMax(rcMax[1]);
-            ui->throttleWidget->setMin(rcMin[2]);
-            ui->throttleWidget->setMax(rcMax[2]);
-            ui->yawWidget->setMin(rcMin[3]);
-            ui->yawWidget->setMax(rcMax[3]);
+            ui->rollWidget->setMin(800);
+            ui->rollWidget->setMax(2200);
+            ui->pitchWidget->setMin(800);
+            ui->pitchWidget->setMax(2200);
+            ui->throttleWidget->setMin(800);
+            ui->throttleWidget->setMax(2200);
+            ui->yawWidget->setMin(800);
+            ui->yawWidget->setMax(2200);
         }
 
         ui->chanLabel->setText(QString("%1/%2").arg(rcValue[rcMapping[0]]).arg(rcRoll, 5, 'f', 2, QChar(' ')));
