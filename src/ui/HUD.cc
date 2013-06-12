@@ -114,8 +114,8 @@ HUD::HUD(int width, int height, QWidget* parent)
       xImageFactor(1.0),
       yImageFactor(1.0),
       imageLoggingEnabled(false),
-      imageRequested(false)
-    image(NULL)
+      imageRequested(false),
+      image(NULL)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
