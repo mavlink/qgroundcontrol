@@ -77,6 +77,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         uasPropertyToLabelMap["distToWaypoint"] = item;
     }*/
 
+    //this->setSizePolicy();
     loadSettings();
     //If we don't have any predefined settings, set some defaults.
     if (uasPropertyValueMap.size() == 0)

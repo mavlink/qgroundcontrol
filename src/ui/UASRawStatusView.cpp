@@ -16,7 +16,7 @@ UASRawStatusView::UASRawStatusView(QWidget *parent) : QWidget(parent)
 
     // FIXME reinstate once fixed.
 
-    //timer->start(2000);
+    timer->start(2000);
 }
 void UASRawStatusView::addSource(MAVLinkDecoder *decoder)
 {
