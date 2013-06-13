@@ -21,17 +21,10 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     // Initialize the UI based on the current joystick
     initUI();
 
-    // Watch for input events from the joystick
-    connect(this->joystick, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), this, SLOT(updateJoystick(double,double,double,double,int,int)));
+    // Watch for button and hat input events from the joystick.
     connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(joystickButtonPressed(int)));
     connect(this->joystick, SIGNAL(buttonReleased(int)), this, SLOT(joystickButtonReleased(int)));
-
-    // Watch for changes to the button/axis mappings
-//    connect(m_ui->rollMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingXAxis(int)));
-//    connect(m_ui->pitchMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingYAxis(int)));
-//    connect(m_ui->yawMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingYawAxis(int)));
-//    connect(m_ui->throttleMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingThrustAxis(int)));
-//    connect(m_ui->autoMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingAutoButton(int)));
+    connect(this->joystick, SIGNAL(axisValueChanged(int,float)), this, SLOT(updateAxisValue(int,float)));
 
     // Update the UI if the joystick changes.
     connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateUIForJoystick(int)));
@@ -92,15 +85,6 @@ JoystickWidget::~JoystickWidget()
     delete m_ui;
 }
 
-void JoystickWidget::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
-{
-    setX(roll);
-    setY(pitch);
-    setZ(yaw);
-    setThrottle(thrust);
-    setHat(xHat, yHat);
-}
-
 void JoystickWidget::changeEvent(QEvent *e)
 {
     switch (e->type()) {
@@ -143,47 +127,44 @@ void JoystickWidget::updateUIForJoystick(int id)
     for (int i = 0; i < joystick->getJoystickNumAxes(); i++)
     {
         JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
+        axis->setValue(joystick->getCurrentValueForAxis(i));
+        connect(axis, SIGNAL(mappingChanged(int,int)), this, SLOT(setMappingAxis(int,int)));
         // And make sure we insert BEFORE the vertical spacer.
         m_ui->axesLayout->insertWidget(i, axis);
         axes.append(axis);
     }
 }
 
-void JoystickWidget::setX(float x)
+void JoystickWidget::updateAxisValue(int axis, float value)
 {
-    if (axes.size() > 0)
+    if (axis < axes.size())
     {
-        axes.at(0)->setValue(x * 100);
-    }
-}
-
-void JoystickWidget::setY(float y)
-{
-    if (axes.size() > 1)
-    {
-        axes.at(1)->setValue(y * 100);
-    }
-}
-
-void JoystickWidget::setZ(float z)
-{
-    if (axes.size() > 2)
-    {
-        axes.at(2)->setValue(z * 100);
-    }
-}
-
-void JoystickWidget::setThrottle(float t)
-{
-    if (axes.size() > 3)
-    {
-        axes.at(3)->setValue(t * 100);
+        axes.at(axis)->setValue(value);
     }
 }
 
 void JoystickWidget::setHat(float x, float y)
 {
     updateStatus(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
+}
+
+void JoystickWidget::setMappingAxis(int axisID, int newMapping)
+{
+    switch (newMapping)
+    {
+        case JoystickAxis::JOYSTICK_AXIS_MAPPING_ROLL:
+            joystick->setMappingRollAxis(axisID);
+            break;
+        case JoystickAxis::JOYSTICK_AXIS_MAPPING_PITCH:
+            joystick->setMappingPitchAxis(axisID);
+            break;
+        case JoystickAxis::JOYSTICK_AXIS_MAPPING_YAW:
+            joystick->setMappingYawAxis(axisID);
+            break;
+        case JoystickAxis::JOYSTICK_AXIS_MAPPING_THROTTLE:
+            joystick->setMappingThrottleAxis(axisID);
+            break;
+    }
 }
 
 void JoystickWidget::joystickButtonPressed(int key)
@@ -199,4 +180,5 @@ void JoystickWidget::joystickButtonReleased(int key)
 
 void JoystickWidget::updateStatus(const QString& status)
 {
+    m_ui->statusLabel->setText(status);
 }

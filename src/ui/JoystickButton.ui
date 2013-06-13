@@ -48,26 +48,6 @@
        <string>--</string>
       </property>
      </item>
-     <item>
-      <property name="text">
-       <string>Yaw</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Pitch</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Roll</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Throttle</string>
-      </property>
-     </item>
     </widget>
    </item>
    <item>

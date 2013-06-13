@@ -57,8 +57,6 @@ public:
     void run();
     void shutdown();
 
-    const QString& getName();
-
     /**
      * @brief Load joystick settings
      */
@@ -69,39 +67,24 @@ public:
      */
     void storeSettings();
 
-    int getMappingThrustAxis() const
+    int getMappingThrottleAxis() const
     {
-        return thrustAxis;
+        return throttleAxis;
     }
 
-    int getMappingXAxis() const
+    int getMappingRollAxis() const
     {
-        return xAxis;
+        return rollAxis;
     }
 
-    int getMappingYAxis() const
+    int getMappingPitchAxis() const
     {
-        return yAxis;
+        return pitchAxis;
     }
 
     int getMappingYawAxis() const
     {
         return yawAxis;
-    }
-
-    int getMappingAutoButton() const
-    {
-        return autoButtonMapping;
-    }
-
-    int getMappingManualButton() const
-    {
-        return manualButtonMapping;
-    }
-
-    int getMappingStabilizeButton() const
-    {
-        return stabilizeButtonMapping;
     }
 
     int getJoystickNumButtons() const
@@ -119,6 +102,11 @@ public:
         return joystickID;
     }
 
+    const QString& getName() const
+    {
+        return joystickName;
+    }
+
     int getNumJoysticks() const
     {
         return joysticksFound;
@@ -129,33 +117,31 @@ public:
         return QString(SDL_JoystickName(id));
     }
 
+    float getCurrentValueForAxis(int axisID);
+
     const double sdlJoystickMin;
     const double sdlJoystickMax;
 
 protected:
-    int defaultIndex;
     double calibrationPositive[10];
     double calibrationNegative[10];
     SDL_Joystick* joystick;
     UASInterface* uas;
-    QList<int> uasButtonList;
     bool done;
-	QMutex m_doneMutex;
 
-    // Axis 3 is thrust (CALIBRATION!)
-    int thrustAxis;
-    int xAxis;
-    int yAxis;
+    // Store the mapping between axis numbers and the roll/pitch/yaw/throttle configuration.
+    int rollAxis;
+    int pitchAxis;
     int yawAxis;
-    int autoButtonMapping;
-    int manualButtonMapping;
-    int stabilizeButtonMapping;
-    SDL_Event event;
+    int throttleAxis;
+
+    // Cache information on the joystick instead of polling the SDL everytime.
     QString joystickName;
     int joystickAxes;
     int joystickButtons;
     int joystickID;
     int joysticksFound;
+
     quint16 buttonState; ///< Track the state of the buttons so we can trigger on Up and Down events
 
     void init();
@@ -175,32 +161,11 @@ signals:
     void joystickChanged(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
 
     /**
-     * @brief Thrust lever of the joystick has changed
-     *
-     * @param thrust Thrust, 0%: 0, 100%: 1.0
-     */
-    void thrustChanged(int thrust);
-
-    /**
-      * @brief X-Axis / forward-backward axis has changed
+      * @brief Emit a new value for an axis
       *
-      * @param x forward / pitch / x axis, front: +1.0, center: 0.0, back: -1.0
+      * @param value Value of the axis, between -1.0 and 1.0.
       */
-    void xChanged(int x);
-
-    /**
-      * @brief Y-Axis / left-right axis has changed
-      *
-      * @param y left / roll / y axis, left: -1.0, middle: 0.0, right: +1.0
-      */
-    void yChanged(int y);
-
-    /**
-      * @brief Yaw / left-right turn has changed
-      *
-      * @param yaw turn axis, left-turn: -1.0, middle: 0.0, right-turn: +1.0
-      */
-    void yawChanged(int yaw);
+    void axisValueChanged(int axis, float value);
 
     /**
       * @brief Joystick button has changed state from unpressed to pressed.
@@ -236,19 +201,15 @@ public slots:
     void setActiveUAS(UASInterface* uas);
     /** @brief Switch to a new joystick by ID number. */
     void setActiveJoystick(int id);
-    void setMappingThrustAxis(int mapping)
+
+    void setMappingRollAxis(int mapping)
     {
-        thrustAxis = mapping;
+        rollAxis = mapping;
     }
 
-    void setMappingXAxis(int mapping)
+    void setMappingPitchAxis(int mapping)
     {
-        xAxis = mapping;
-    }
-
-    void setMappingYAxis(int mapping)
-    {
-        yAxis = mapping;
+        pitchAxis = mapping;
     }
 
     void setMappingYawAxis(int mapping)
@@ -256,19 +217,9 @@ public slots:
         yawAxis = mapping;
     }
 
-    void setMappingAutoButton(int mapping)
+    void setMappingThrottleAxis(int mapping)
     {
-        autoButtonMapping = mapping;
-    }
-
-    void setMappingManualButton(int mapping)
-    {
-        manualButtonMapping = mapping;
-    }
-
-    void setMappingStabilizeButton(int mapping)
-    {
-        stabilizeButtonMapping = mapping;
+        throttleAxis = mapping;
     }
 };
 
