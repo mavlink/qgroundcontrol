@@ -78,86 +78,97 @@
      <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
       <property name="sizeConstraint">
        <enum>QLayout::SetMinimumSize</enum>
       </property>
       <item>
-       <widget class="QGroupBox" name="buttonBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="title">
-         <string>Buttons</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <property name="flat">
-         <bool>false</bool>
-        </property>
-        <layout class="QVBoxLayout" name="buttonLayout" stretch="">
-         <property name="spacing">
-          <number>1</number>
-         </property>
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
-         </property>
-         <property name="leftMargin">
-          <number>3</number>
-         </property>
-         <property name="topMargin">
-          <number>3</number>
-         </property>
-         <property name="rightMargin">
-          <number>3</number>
-         </property>
-         <property name="bottomMargin">
-          <number>3</number>
-         </property>
-        </layout>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QGroupBox" name="buttonBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Buttons</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+          <layout class="QVBoxLayout" name="buttonLayout">
+           <property name="spacing">
+            <number>1</number>
+           </property>
+           <property name="sizeConstraint">
+            <enum>QLayout::SetMinimumSize</enum>
+           </property>
+           <property name="leftMargin">
+            <number>3</number>
+           </property>
+           <property name="topMargin">
+            <number>3</number>
+           </property>
+           <property name="rightMargin">
+            <number>3</number>
+           </property>
+           <property name="bottomMargin">
+            <number>3</number>
+           </property>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="axesBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Axes</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <layout class="QHBoxLayout" name="axesLayout">
+           <property name="sizeConstraint">
+            <enum>QLayout::SetMinimumSize</enum>
+           </property>
+          </layout>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QGroupBox" name="axesBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QLabel" name="statusLabel">
+        <property name="text">
+         <string/>
         </property>
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="title">
-         <string>Axes</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-        <layout class="QHBoxLayout" name="axesLayout" stretch="">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
-         </property>
-        </layout>
        </widget>
       </item>
      </layout>
