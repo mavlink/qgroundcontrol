@@ -68,6 +68,7 @@ win32 {
 		system( cd $$(QTDIR)\\src\\activeqt && $$(QTDIR)\\bin\\qmake.exe )
 		system( cd $$(QTDIR)\\src\\activeqt\\container && $$(QTDIR)\\bin\\qmake.exe )
 		system( cd $$(QTDIR)\\src\\activeqt\\control && $$(QTDIR)\\bin\\qmake.exe )
+                system( cd $$(QTDIR)\\src\\activeqt && nmake )
 	}
 }
 
