@@ -11,6 +11,7 @@ JoystickAxis::JoystickAxis(int id, QWidget *parent) :
     ui->setupUi(this);
     ui->label->setText(QString::number(id));
     connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(mappingComboBoxChanged(int)));
+    connect(ui->checkBox, SIGNAL(clicked(bool)), this, SLOT(inversionCheckBoxChanged(bool)));
 }
 
 JoystickAxis::~JoystickAxis()
@@ -26,4 +27,9 @@ void JoystickAxis::setValue(float value)
 void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
     emit mappingChanged(id, (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping);
+}
+
+void JoystickAxis::inversionCheckBoxChanged(bool inverted)
+{
+    emit inversionChanged(id, inverted);
 }
