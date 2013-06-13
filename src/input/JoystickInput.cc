@@ -45,9 +45,6 @@ JoystickInput::JoystickInput() :
         calibrationNegative[i] = sdlJoystickMin;
     }
 
-    // Listen for when the active UAS changes so we can change who we're sending data to.
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
     // Start this thread. This allows the Joystick Settings window to work correctly even w/o any UASes connected.
     start();
 }
@@ -191,7 +188,15 @@ void JoystickInput::run()
         {
             // First emit the uncalibrated values for each axis based on their ID.
             // This is generally not used for controlling a vehicle, but a UI representation, so it being slightly off is fine.
-            float axisValue = (SDL_JoystickGetAxis(joystick, i) - calibrationNegative[i]) / (calibrationPositive[i] - calibrationNegative[i]);
+            float axisValue = SDL_JoystickGetAxis(joystick, i);
+            if (joystickAxesInverted[i])
+            {
+                axisValue = (axisValue - calibrationNegative[i]) / (calibrationPositive[i] - calibrationNegative[i]);
+            }
+            else
+            {
+                axisValue = (axisValue - calibrationPositive[i]) / (calibrationNegative[i] - calibrationPositive[i]);
+            }
             axisValue = 1.0f - axisValue;
             axisValue = axisValue * 2.0f - 1.0f;
 
@@ -270,11 +275,14 @@ void JoystickInput::setActiveJoystick(int id)
 
         // Update cached joystick values
         joystickAxes.clear();
+        joystickAxesInverted.clear();
         for (int i = 0; i < joystickNumAxes; i++)
         {
             int axisValue = SDL_JoystickGetAxis(joystick, i);
             joystickAxes.append(axisValue);
             emit axisValueChanged(i, axisValue);
+
+            joystickAxesInverted.append(false);
         }
         joystickButtons = 0;
         for (int i = 0; i < joystickNumButtons; i++)
@@ -294,11 +302,57 @@ void JoystickInput::setActiveJoystick(int id)
     }
 }
 
-float JoystickInput::getCurrentValueForAxis(int axisID)
+void JoystickInput::setAxisMapping(int axis, JOYSTICK_INPUT_MAPPING newMapping)
 {
-    if (axisID < joystickAxes.size())
+    switch (newMapping)
     {
-        return joystickAxes[axisID];
+        case JOYSTICK_INPUT_MAPPING_ROLL:
+            rollAxis = axis;
+            break;
+        case JOYSTICK_INPUT_MAPPING_PITCH:
+            pitchAxis = axis;
+            break;
+        case JOYSTICK_INPUT_MAPPING_YAW:
+            yawAxis = axis;
+            break;
+        case JOYSTICK_INPUT_MAPPING_THROTTLE:
+            throttleAxis = axis;
+            break;
+        case JOYSTICK_INPUT_MAPPING_NONE:
+        default:
+            if (rollAxis == axis)
+            {
+                rollAxis = -1;
+            }
+            if (pitchAxis == axis)
+            {
+                pitchAxis = -1;
+            }
+            if (yawAxis == axis)
+            {
+                yawAxis = -1;
+            }
+            if (throttleAxis == axis)
+            {
+                throttleAxis = -1;
+            }
+            break;
+    }
+}
+
+void JoystickInput::setAxisInversion(int axis, bool inverted)
+{
+    if (axis < joystickAxesInverted.size())
+    {
+        joystickAxesInverted[axis] = inverted;
+    }
+}
+
+float JoystickInput::getCurrentValueForAxis(int axis)
+{
+    if (axis < joystickAxes.size())
+    {
+        return joystickAxes[axis];
     }
     return 0.0f;
 }
