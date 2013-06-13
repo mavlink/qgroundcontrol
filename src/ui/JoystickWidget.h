@@ -53,14 +53,25 @@ public:
     virtual ~JoystickWidget();
 
 public slots:
+    /** @brief Update the UI for a new joystick based on SDL ID. */
+    void updateUIForJoystick(int id);
+    /** @brief Change the stored mapping for a given axis. */
+    void setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
+    /**
+     * @brief Update a given axis with a new value
+     * @param axis The index of the axis to update.
+     * @param value The new value for the axis, [-1.0:1.0].
+     * @see JoystickInput:axisValueChanged
+     */
     void updateAxisValue(int axis, float value);
-    void setHat(float x, float y);
+    /** @brief Update the UI with new values for the hat.
+     *  @see JoystickInput::hatDirectionChanged
+     */
+    void setHat(int x, int y);
     /** @brief Trigger a UI change based on a button being pressed */
     void joystickButtonPressed(int key);
     /** @brief Trigger a UI change based on a button being released */
     void joystickButtonReleased(int key);
-    /** @brief Update status string */
-    void updateStatus(const QString& status);
     /** @brief Update the UI color scheme when the MainWindow theme changes. */
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE);
 
@@ -76,12 +87,6 @@ protected:
     QList<JoystickAxis*> axes;
     /** @brief The color to use for button labels when their corresponding button is pressed */
     QColor buttonLabelColor;
-
-protected slots:
-    /** @brief Update the UI for a new joystick based on SDL ID. */
-    void updateUIForJoystick(int id);
-    /** @brief Change the stored mapping for a given axis. */
-    void setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
 
 private:
     Ui::JoystickWidget *m_ui;
