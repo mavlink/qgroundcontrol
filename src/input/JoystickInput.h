@@ -58,6 +58,19 @@ public:
     void shutdown();
 
     /**
+     * @brief The JOYSTICK_INPUT_MAPPING enum storing the values for each item in the mapping combobox.
+     * This should match the order of items in the mapping combobox in JoystickAxis.ui.
+     */
+    enum JOYSTICK_INPUT_MAPPING
+    {
+        JOYSTICK_INPUT_MAPPING_NONE     = 0,
+        JOYSTICK_INPUT_MAPPING_YAW      = 1,
+        JOYSTICK_INPUT_MAPPING_PITCH    = 2,
+        JOYSTICK_INPUT_MAPPING_ROLL     = 3,
+        JOYSTICK_INPUT_MAPPING_THROTTLE = 4
+    };
+
+    /**
      * @brief Load joystick settings
      */
     void loadSettings();
@@ -130,7 +143,7 @@ protected:
     bool done;
 
     // Store the mapping between axis numbers and the roll/pitch/yaw/throttle configuration.
-    // Value is one of JoystickAxis::JOYSTICK_AXIS_MAPPING.
+    // Value is one of JoystickAxis::JOYSTICK_INPUT_MAPPING.
     int rollAxis;
     int pitchAxis;
     int yawAxis;
@@ -205,24 +218,24 @@ public slots:
     /** @brief Switch to a new joystick by ID number. */
     void setActiveJoystick(int id);
 
-    void setMappingRollAxis(int mapping)
+    void setMappingRollAxis(int axis)
     {
-        rollAxis = mapping;
+        rollAxis = axis;
     }
 
-    void setMappingPitchAxis(int mapping)
+    void setMappingPitchAxis(int axis)
     {
-        pitchAxis = mapping;
+        pitchAxis = axis;
     }
 
-    void setMappingYawAxis(int mapping)
+    void setMappingYawAxis(int axis)
     {
-        yawAxis = mapping;
+        yawAxis = axis;
     }
 
-    void setMappingThrottleAxis(int mapping)
+    void setMappingThrottleAxis(int axis)
     {
-        throttleAxis = mapping;
+        throttleAxis = axis;
     }
 };
 
