@@ -26,17 +26,17 @@
  * @image html http://pixhawk.ethz.ch/wiki/_media/standards/body-frame.png Aeronautical frame
  */
 JoystickInput::JoystickInput() :
-        sdlJoystickMin(-32768.0f),
-        sdlJoystickMax(32767.0f),
-        uas(NULL),
-        done(false),
-        rollAxis(-1),
-        pitchAxis(-1),
-        yawAxis(-1),
-        throttleAxis(-1),
-        joystickName(""),
-        joystickNumButtons(0),
-        joystickID(-1)
+    sdlJoystickMin(-32768.0f),
+    sdlJoystickMax(32767.0f),
+    uas(NULL),
+    done(false),
+    rollAxis(-1),
+    pitchAxis(-1),
+    yawAxis(-1),
+    throttleAxis(-1),
+    joystickName(""),
+    joystickID(-1),
+    joystickNumButtons(0)
 {
     loadSettings();
 
@@ -150,7 +150,6 @@ void JoystickInput::init()
         SDL_Joystick* x = SDL_JoystickOpen(i);
         qDebug() << QString("Number of Axes: %1").arg(QString::number(SDL_JoystickNumAxes(x)));
         qDebug() << QString("Number of Buttons: %1").arg(QString::number(SDL_JoystickNumButtons(x)));
-        qDebug() << QString("Number of Balls: %1").arg(QString::number(SDL_JoystickNumBalls(x)));
         SDL_JoystickClose(x);
     }
 
@@ -199,8 +198,11 @@ void JoystickInput::run()
             // Bound rounding errors
             if (axisValue > 1.0f) axisValue = 1.0f;
             if (axisValue < -1.0f) axisValue = -1.0f;
-            joystickAxes[i] = axisValue;
-            emit axisValueChanged(i, axisValue);
+            if (joystickAxes[i] != axisValue)
+            {
+                joystickAxes[i] = axisValue;
+                emit axisValueChanged(i, axisValue);
+            }
         }
 
         // Build up vectors describing the hat position
@@ -215,8 +217,8 @@ void JoystickInput::run()
         {
             xHat = newXHat;
             yHat = newYHat;
+            emit hatDirectionChanged(newXHat, newYHat);
         }
-        emit hatDirectionChanged(newXHat, newYHat);
 
         // Emit signals for each button individually
         for (int i = 0; i < joystickNumButtons; i++)
@@ -258,20 +260,31 @@ void JoystickInput::setActiveJoystick(int id)
 
     joystickID = id;
     joystick = SDL_JoystickOpen(joystickID);
-    if (joystick)
+    if (joystick && SDL_JoystickOpened(joystickID))
     {
+        SDL_JoystickUpdate();
         // Update joystick configuration.
         joystickName = QString(SDL_JoystickName(joystickID));
         joystickNumButtons = SDL_JoystickNumButtons(joystick);
         joystickNumAxes = SDL_JoystickNumAxes(joystick);
 
-        // Reset cached joystick values
+        // Update cached joystick values
         joystickAxes.clear();
-        while (joystickAxes.size() < joystickNumAxes)
+        for (int i = 0; i < joystickNumAxes; i++)
         {
-            joystickAxes.append(0);
+            int axisValue = SDL_JoystickGetAxis(joystick, i);
+            joystickAxes.append(axisValue);
+            emit axisValueChanged(i, axisValue);
         }
         joystickButtons = 0;
+        for (int i = 0; i < joystickNumButtons; i++)
+        {
+            if (SDL_JoystickGetButton(joystick, i))
+            {
+                emit buttonPressed(i);
+                joystickButtons |= 1 << i;
+            }
+        }
         qDebug() << QString("Switching to joystick '%1' with %2 buttons/%3 axes").arg(joystickName, QString::number(joystickNumButtons), QString::number(joystickNumAxes));
     }
     else
@@ -283,9 +296,9 @@ void JoystickInput::setActiveJoystick(int id)
 
 float JoystickInput::getCurrentValueForAxis(int axisID)
 {
-    if (joystick && axisID < joystickNumAxes)
+    if (axisID < joystickAxes.size())
     {
-        return SDL_JoystickGetAxis(joystick, axisID);
+        return joystickAxes[axisID];
     }
     return 0.0f;
 }

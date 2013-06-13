@@ -215,7 +215,7 @@ signals:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
-    /** @brief Switch to a new joystick by ID number. */
+    /** @brief Switch to a new joystick by ID number. Both buttons and axes are updated with the proper signals emitted. */
     void setActiveJoystick(int id);
 
     void setMappingRollAxis(int axis)
