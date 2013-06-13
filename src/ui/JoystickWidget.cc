@@ -151,20 +151,20 @@ void JoystickWidget::setHat(float x, float y)
     updateStatus(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
 }
 
-void JoystickWidget::setMappingAxis(int axisID, int newMapping)
+void JoystickWidget::setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping)
 {
     switch (newMapping)
     {
-        case JoystickAxis::JOYSTICK_AXIS_MAPPING_ROLL:
+        case JoystickInput::JOYSTICK_INPUT_MAPPING_ROLL:
             joystick->setMappingRollAxis(axisID);
             break;
-        case JoystickAxis::JOYSTICK_AXIS_MAPPING_PITCH:
+        case JoystickInput::JOYSTICK_INPUT_MAPPING_PITCH:
             joystick->setMappingPitchAxis(axisID);
             break;
-        case JoystickAxis::JOYSTICK_AXIS_MAPPING_YAW:
+        case JoystickInput::JOYSTICK_INPUT_MAPPING_YAW:
             joystick->setMappingYawAxis(axisID);
             break;
-        case JoystickAxis::JOYSTICK_AXIS_MAPPING_THROTTLE:
+        case JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE:
             joystick->setMappingThrottleAxis(axisID);
             break;
     }
