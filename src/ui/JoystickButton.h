@@ -11,9 +11,11 @@ class JoystickButton;
 class JoystickButton : public QWidget
 {
     Q_OBJECT
+
 public:
     explicit JoystickButton(int id, QWidget *parent = 0);
     virtual ~JoystickButton();
+
 private:
     int id;
     Ui::JoystickButton *m_ui;

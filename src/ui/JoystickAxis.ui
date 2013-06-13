@@ -61,6 +61,26 @@
        <string>--</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Yaw</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Pitch</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Roll</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Throttle</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item>
@@ -79,6 +99,9 @@
        <width>0</width>
        <height>100</height>
       </size>
+     </property>
+     <property name="minimum">
+      <number>-100</number>
      </property>
      <property name="value">
       <number>0</number>
