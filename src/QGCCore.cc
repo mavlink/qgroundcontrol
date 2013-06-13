@@ -71,8 +71,8 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("QGroundControl"));
-    this->setOrganizationDomain("org.qgroundcontrol");
+    this->setOrganizationName(QLatin1String("3DRobotics"));
+    this->setOrganizationDomain("org.3drobotics");
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -108,7 +108,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     settings.sync();
 
     // Show splash screen
-    QPixmap splashImage(":/files/images/splash.png");
+    QPixmap splashImage(":/files/images/apm_planner_logo_splash.png");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
@@ -168,7 +168,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Remove splash screen
     splashScreen->finish(mainWindow);
 
-    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("QGroundControl has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
+    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("APM Planner has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
 
     // Check if link could be connected
     if (!udpLink->connect())

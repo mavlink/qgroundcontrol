@@ -102,6 +102,8 @@
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
+        <file>files/images/apm_planner_logo.png</file>
+        <file>files/images/apm_planner_logo_splash.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>

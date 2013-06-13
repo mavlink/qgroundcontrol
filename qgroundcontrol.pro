@@ -30,7 +30,7 @@ QT += network \
     sql
 
 TEMPLATE = app
-TARGET = qgroundcontrol
+TARGET = apmplanner2
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
     debug {
