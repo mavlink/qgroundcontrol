@@ -19,6 +19,7 @@
 #include "QGC.h"
 #include <QMutexLocker>
 #include <QSettings>
+#include <math.h>
 
 /**
  * The coordinate frame of the joystick axis is the aeronautical frame like shown on this image:
@@ -34,7 +35,7 @@ JoystickInput::JoystickInput() :
         yawAxis(-1),
         throttleAxis(-1),
         joystickName(""),
-        joystickButtons(0),
+        joystickNumButtons(0),
         joystickID(-1)
 {
     loadSettings();
@@ -124,10 +125,10 @@ void JoystickInput::init()
     }
 
     // Enumerate joysticks and select one
-    joysticksFound = SDL_NumJoysticks();
+    numJoysticks = SDL_NumJoysticks();
 
     // Wait for joysticks if none are connected
-    while (joysticksFound == 0 && !done)
+    while (numJoysticks == 0 && !done)
     {
         QGC::SLEEP::msleep(400);
         // INITIALIZE SDL Joystick support
@@ -135,15 +136,15 @@ void JoystickInput::init()
         {
             printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
         }
-        joysticksFound = SDL_NumJoysticks();
+        numJoysticks = SDL_NumJoysticks();
     }
     if (done)
     {
         return;
     }
 
-    qDebug() << QString("%1 Input devices found:").arg(joysticksFound);
-    for(int i=0; i < joysticksFound; i++ )
+    qDebug() << QString("%1 Input devices found:").arg(numJoysticks);
+    for(int i=0; i < numJoysticks; i++ )
     {
         qDebug() << QString("\t- %1").arg(SDL_JoystickName(i));
         SDL_Joystick* x = SDL_JoystickOpen(i);
@@ -187,8 +188,7 @@ void JoystickInput::run()
         SDL_JoystickUpdate();
 
         // Emit all necessary signals for all axes.
-        float axesValues[joystickAxes];
-        for (int i = 0; i < joystickAxes; i++)
+        for (int i = 0; i < joystickNumAxes; i++)
         {
             // First emit the uncalibrated values for each axis based on their ID.
             // This is generally not used for controlling a vehicle, but a UI representation, so it being slightly off is fine.
@@ -199,22 +199,12 @@ void JoystickInput::run()
             // Bound rounding errors
             if (axisValue > 1.0f) axisValue = 1.0f;
             if (axisValue < -1.0f) axisValue = -1.0f;
-            axesValues[i] = axisValue;
+            joystickAxes[i] = axisValue;
             emit axisValueChanged(i, axisValue);
         }
 
         // Build up vectors describing the hat position
-        //
-        // Coordinate frame for joystick hat:
-        //
-        //    y
-        //    ^
-        //    |
-        //    |
-        //    0 ----> x
-        //
         int hatPosition = SDL_JoystickGetHat(joystick, 0);
-        int xHat = 0, yHat = 0;
         if ((SDL_HAT_UP & hatPosition) > 0) yHat = 1;
         if ((SDL_HAT_DOWN & hatPosition) > 0) yHat = -1;
         if ((SDL_HAT_LEFT & hatPosition) > 0) xHat = -1;
@@ -222,28 +212,28 @@ void JoystickInput::run()
         emit hatDirectionChanged(xHat, yHat);
 
         // Emit signals for each button individually
-        for (int i = 0; i < joystickButtons; i++)
+        for (int i = 0; i < joystickNumButtons; i++)
         {
             // If the button was down, but now it's up, trigger a buttonPressed event
-            quint16 lastButtonState = buttonState & (1 << i);
+            quint16 lastButtonState = joystickButtons & (1 << i);
             if (SDL_JoystickGetButton(joystick, i) && !lastButtonState)
             {
                 emit buttonPressed(i);
-                buttonState |= 1 << i;
+                joystickButtons |= 1 << i;
             }
             else if (!SDL_JoystickGetButton(joystick, i) && lastButtonState)
             {
                 emit buttonReleased(i);
-                buttonState &= ~(1 << i);
+                joystickButtons &= ~(1 << i);
             }
         }
 
         // Now signal an update for all UI together.
-        float roll = rollAxis > -1?axesValues[rollAxis]:0.0f;
-        float pitch = pitchAxis > -1?axesValues[pitchAxis]:0.0f;
-        float yaw = yawAxis > -1?axesValues[yawAxis]:0.0f;
-        float throttle = throttleAxis > -1?axesValues[throttleAxis]:0.0f;
-        emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, buttonState);
+        float roll = rollAxis > -1?joystickAxes[rollAxis]:NAN;
+        float pitch = pitchAxis > -1?joystickAxes[pitchAxis]:NAN;
+        float yaw = yawAxis > -1?joystickAxes[yawAxis]:NAN;
+        float throttle = throttleAxis > -1?joystickAxes[throttleAxis]:NAN;
+        emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, joystickButtons);
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
         QGC::SLEEP::msleep(20);
@@ -263,17 +253,30 @@ void JoystickInput::setActiveJoystick(int id)
     joystick = SDL_JoystickOpen(joystickID);
     if (joystick)
     {
+        // Update joystick configuration.
         joystickName = QString(SDL_JoystickName(joystickID));
-        joystickButtons = SDL_JoystickNumButtons(joystick);
-        joystickAxes = SDL_JoystickNumAxes(joystick);
-        qDebug() << QString("Switching to joystick '%1' with %2 buttons/%3 axes").arg(joystickName, QString::number(joystickButtons), QString::number(joystickAxes));
+        joystickNumButtons = SDL_JoystickNumButtons(joystick);
+        joystickNumAxes = SDL_JoystickNumAxes(joystick);
+
+        // Reset cached joystick values
+        joystickAxes.clear();
+        while (joystickAxes.size() < joystickNumAxes)
+        {
+            joystickAxes.append(0);
+        }
+        joystickButtons = 0;
+        qDebug() << QString("Switching to joystick '%1' with %2 buttons/%3 axes").arg(joystickName, QString::number(joystickNumButtons), QString::number(joystickNumAxes));
     }
-    buttonState = 0;
+    else
+    {
+        joystickNumButtons = 0;
+        joystickNumAxes = 0;
+    }
 }
 
 float JoystickInput::getCurrentValueForAxis(int axisID)
 {
-    if (joystick && axisID < joystickAxes)
+    if (joystick && axisID < joystickNumAxes)
     {
         return SDL_JoystickGetAxis(joystick, axisID);
     }
