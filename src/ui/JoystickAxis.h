@@ -19,6 +19,8 @@ public:
 signals:
     /** @brief Signal a change in this axis' yaw/pitch/roll mapping */
     void mappingChanged(int id, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
+    /** @brief Signal a change in this axis' inversion status */
+    void inversionChanged(int id, bool);
 
 public slots:
     /** @brief Update the displayed value of the included progressbar.
@@ -33,6 +35,8 @@ private:
 private slots:
     /** @brief Handle changes to the mapping dropdown bar. */
     void mappingComboBoxChanged(int newMapping);
+    /** @brief Handle changes to the inversion checkbox. */
+    void inversionCheckBoxChanged(bool inverted);
 };
 
 #endif // JOYSTICKAXIS_H

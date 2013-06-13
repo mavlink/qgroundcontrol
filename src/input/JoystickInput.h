@@ -130,7 +130,7 @@ public:
         return QString(SDL_JoystickName(id));
     }
 
-    float getCurrentValueForAxis(int axisID);
+    float getCurrentValueForAxis(int axis);
 
     const double sdlJoystickMin;
     const double sdlJoystickMax;
@@ -157,6 +157,7 @@ protected:
     int joystickNumButtons;
 
     QList<float> joystickAxes; ///< The values of every axes during the last sample
+    QList<bool> joystickAxesInverted; ///< Whether each axis should be used inverted from what was reported
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
     int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
@@ -214,29 +215,23 @@ signals:
     void hatDirectionChanged(int x, int y);
 
 public slots:
+    /** @brief Specify the UAS that this input should forward joystickChanged signals and buttonPresses to. */
     void setActiveUAS(UASInterface* uas);
     /** @brief Switch to a new joystick by ID number. Both buttons and axes are updated with the proper signals emitted. */
     void setActiveJoystick(int id);
-
-    void setMappingRollAxis(int axis)
-    {
-        rollAxis = axis;
-    }
-
-    void setMappingPitchAxis(int axis)
-    {
-        pitchAxis = axis;
-    }
-
-    void setMappingYawAxis(int axis)
-    {
-        yawAxis = axis;
-    }
-
-    void setMappingThrottleAxis(int axis)
-    {
-        throttleAxis = axis;
-    }
+    /**
+     * @brief Change the control mapping for a given joystick axis.
+     * @param axisID The axis to modify (0-indexed)
+     * @param newMapping The mapping to use.
+     * @see JOYSTICK_INPUT_MAPPING
+     */
+    void setAxisMapping(int axis, JOYSTICK_INPUT_MAPPING newMapping);
+    /**
+     * @brief Specify if an axis should be inverted.
+     * @param axis The ID of the axis.
+     * @param inverted True indicates inverted from normal. Varies by controller.
+     */
+    void setAxisInversion(int axis, bool inverted);
 };
 
 #endif // _JOYSTICKINPUT_H_
