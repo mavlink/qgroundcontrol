@@ -1,4 +1,5 @@
 #include "JoystickAxis.h"
+#include "JoystickInput.h"
 #include "ui_JoystickAxis.h"
 #include <QString>
 
@@ -24,5 +25,5 @@ void JoystickAxis::setValue(float value)
 
 void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
-    emit mappingChanged(id, newMapping);
+    emit mappingChanged(id, (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping);
 }
