@@ -27,20 +27,15 @@
 JoystickInput::JoystickInput() :
         sdlJoystickMin(-32768.0f),
         sdlJoystickMax(32767.0f),
-        defaultIndex(0),
         uas(NULL),
-        uasButtonList(QList<int>()),
         done(false),
-        thrustAxis(2),
-        xAxis(0),
-        yAxis(1),
-        yawAxis(3),
-        autoButtonMapping(-1),
-        manualButtonMapping(-1),
-        stabilizeButtonMapping(-1),
-        joystickName(tr("Unitinialized")),
+        rollAxis(-1),
+        pitchAxis(-1),
+        yawAxis(-1),
+        throttleAxis(-1),
+        joystickName(""),
         joystickButtons(0),
-        joystickID(0)
+        joystickID(-1)
 {
     loadSettings();
 
@@ -64,34 +59,34 @@ JoystickInput::~JoystickInput()
 
 void JoystickInput::loadSettings()
 {
-    // Load defaults from settings
-    QSettings settings;
-    settings.sync();
-    settings.beginGroup("QGC_JOYSTICK_INPUT");
-    xAxis = (settings.value("X_AXIS_MAPPING", xAxis).toInt());
-    yAxis = (settings.value("Y_AXIS_MAPPING", yAxis).toInt());
-    thrustAxis = (settings.value("THRUST_AXIS_MAPPING", thrustAxis).toInt());
-    yawAxis = (settings.value("YAW_AXIS_MAPPING", yawAxis).toInt());
-    autoButtonMapping = (settings.value("AUTO_BUTTON_MAPPING", autoButtonMapping).toInt());
-    stabilizeButtonMapping = (settings.value("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping).toInt());
-    manualButtonMapping = (settings.value("MANUAL_BUTTON_MAPPING", manualButtonMapping).toInt());
-    settings.endGroup();
+//    // Load defaults from settings
+//    QSettings settings;
+//    settings.sync();
+//    settings.beginGroup("QGC_JOYSTICK_INPUT");
+//    xAxis = (settings.value("X_AXIS_MAPPING", xAxis).toInt());
+//    yAxis = (settings.value("Y_AXIS_MAPPING", yAxis).toInt());
+//    thrustAxis = (settings.value("THRUST_AXIS_MAPPING", thrustAxis).toInt());
+//    yawAxis = (settings.value("YAW_AXIS_MAPPING", yawAxis).toInt());
+//    autoButtonMapping = (settings.value("AUTO_BUTTON_MAPPING", autoButtonMapping).toInt());
+//    stabilizeButtonMapping = (settings.value("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping).toInt());
+//    manualButtonMapping = (settings.value("MANUAL_BUTTON_MAPPING", manualButtonMapping).toInt());
+//    settings.endGroup();
 }
 
 void JoystickInput::storeSettings()
 {
-    // Store settings
-    QSettings settings;
-    settings.beginGroup("QGC_JOYSTICK_INPUT");
-    settings.setValue("X_AXIS_MAPPING", xAxis);
-    settings.setValue("Y_AXIS_MAPPING", yAxis);
-    settings.setValue("THRUST_AXIS_MAPPING", thrustAxis);
-    settings.setValue("YAW_AXIS_MAPPING", yawAxis);
-    settings.setValue("AUTO_BUTTON_MAPPING", autoButtonMapping);
-    settings.setValue("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping);
-    settings.setValue("MANUAL_BUTTON_MAPPING", manualButtonMapping);
-    settings.endGroup();
-    settings.sync();
+//    // Store settings
+//    QSettings settings;
+//    settings.beginGroup("QGC_JOYSTICK_INPUT");
+//    settings.setValue("X_AXIS_MAPPING", xAxis);
+//    settings.setValue("Y_AXIS_MAPPING", yAxis);
+//    settings.setValue("THRUST_AXIS_MAPPING", thrustAxis);
+//    settings.setValue("YAW_AXIS_MAPPING", yawAxis);
+//    settings.setValue("AUTO_BUTTON_MAPPING", autoButtonMapping);
+//    settings.setValue("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping);
+//    settings.setValue("MANUAL_BUTTON_MAPPING", manualButtonMapping);
+//    settings.endGroup();
+//    settings.sync();
 }
 
 
@@ -158,10 +153,8 @@ void JoystickInput::init()
         SDL_JoystickClose(x);
     }
 
-    SDL_JoystickEventState(SDL_ENABLE);
-
-    // And attach to the default joystick.
-    setActiveJoystick(defaultIndex);
+    // And attach to the first joystick found to start.
+    setActiveJoystick(0);
 
     // Make sure active UAS is set
     setActiveUAS(UASManager::instance()->getActiveUAS());
@@ -174,6 +167,8 @@ void JoystickInput::shutdown()
 
 /**
  * @brief Execute the Joystick process
+ * Note that the SDL procedure is polled. This is because connecting and disconnecting while the event checker is running
+ * fails as of SDL 1.2. It is therefore much easier to just poll for the joystick we want to sample.
  */
 void JoystickInput::run()
 {
@@ -187,97 +182,26 @@ void JoystickInput::run()
             exit();
             return;
         }
-        while(SDL_PollEvent(&event))
+
+        // Poll the joystick for new values.
+        SDL_JoystickUpdate();
+
+        // Emit all necessary signals for all axes.
+        float axesValues[joystickAxes];
+        for (int i = 0; i < joystickAxes; i++)
         {
+            // First emit the uncalibrated values for each axis based on their ID.
+            // This is generally not used for controlling a vehicle, but a UI representation, so it being slightly off is fine.
+            float axisValue = (SDL_JoystickGetAxis(joystick, i) - calibrationNegative[i]) / (calibrationPositive[i] - calibrationNegative[i]);
+            axisValue = 1.0f - axisValue;
+            axisValue = axisValue * 2.0f - 1.0f;
 
-            SDL_JoystickUpdate();
-
-            // Todo check if it would be more beneficial to use the event structure
-            switch(event.type) {
-            case SDL_KEYDOWN:
-                /* handle keyboard stuff here */
-                //qDebug() << "KEY PRESSED!";
-                break;
-
-            case SDL_QUIT:
-                /* Set whatever flags are necessary to */
-                /* end the main loop here */
-                break;
-
-            case SDL_JOYBUTTONDOWN:  /* Handle Joystick Button Presses */
-                if ( event.jbutton.button == 0 ) {
-                    //qDebug() << "BUTTON PRESSED!";
-                }
-                break;
-
-            case SDL_JOYAXISMOTION:  /* Handle Joystick Motion */
-                if ( ( event.jaxis.value < -3200 ) || (event.jaxis.value > 3200 ) ) {
-                    if( event.jaxis.axis == 0) {
-                        /* Left-right movement code goes here */
-                    }
-
-                    if( event.jaxis.axis == 1) {
-                        /* Up-Down movement code goes here */
-                    }
-                }
-                break;
-
-            default:
-                //qDebug() << "SDL event occured";
-                break;
-            }
+            // Bound rounding errors
+            if (axisValue > 1.0f) axisValue = 1.0f;
+            if (axisValue < -1.0f) axisValue = -1.0f;
+            axesValues[i] = axisValue;
+            emit axisValueChanged(i, axisValue);
         }
-
-//        // Display all axes
-//        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++)
-//        {
-//            qDebug() << "\rAXIS" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
-//        }
-
-        // THRUST
-        double thrust = ((double)SDL_JoystickGetAxis(joystick, thrustAxis) - calibrationNegative[thrustAxis]) / (calibrationPositive[thrustAxis] - calibrationNegative[thrustAxis]);
-        // Has to be inverted for Logitech Wingman
-        thrust = 1.0f - thrust;
-        thrust = thrust * 2.0f - 1.0f;
-        // Bound rounding errors
-        if (thrust > 1.0f) thrust = 1.0f;
-        if (thrust < -1.0f) thrust = -1.0f;
-        emit thrustChanged((float)thrust);
-
-        // X Axis
-        double x = ((double)SDL_JoystickGetAxis(joystick, xAxis) - calibrationNegative[xAxis]) / (calibrationPositive[xAxis] - calibrationNegative[xAxis]);
-        x = 1.0f - x;
-        x = x * 2.0f - 1.0f;
-        // Bound rounding errors
-        if (x > 1.0f) x = 1.0f;
-        if (x < -1.0f) x = -1.0f;
-        emit xChanged((float)x);
-
-        // Y Axis
-        double y = ((double)SDL_JoystickGetAxis(joystick, yAxis) - calibrationNegative[yAxis]) / (calibrationPositive[yAxis] - calibrationNegative[yAxis]);
-        y = 1.0f - y;
-        y = y * 2.0f - 1.0f;
-        // Bound rounding errors
-        if (y > 1.0f) y = 1.0f;
-        if (y < -1.0f) y = -1.0f;
-        emit yChanged((float)y);
-
-        // Yaw Axis
-
-        double yaw = ((double)SDL_JoystickGetAxis(joystick, yawAxis) - calibrationNegative[yawAxis]) / (calibrationPositive[yawAxis] - calibrationNegative[yawAxis]);
-        yaw = 1.0f - yaw;
-        yaw = yaw * 2.0f - 1.0f;
-        // Bound rounding errors
-        if (yaw > 1.0f) yaw = 1.0f;
-        if (yaw < -1.0f) yaw = -1.0f;
-        emit yawChanged((float)yaw);
-
-        // Get joystick hat position, convert it to vector
-        int hatPosition = SDL_JoystickGetHat(joystick, 0);
-
-        int xHat,yHat;
-        xHat = 0;
-        yHat = 0;
 
         // Build up vectors describing the hat position
         //
@@ -289,18 +213,16 @@ void JoystickInput::run()
         //    |
         //    0 ----> x
         //
-
+        int hatPosition = SDL_JoystickGetHat(joystick, 0);
+        int xHat = 0, yHat = 0;
         if ((SDL_HAT_UP & hatPosition) > 0) yHat = 1;
         if ((SDL_HAT_DOWN & hatPosition) > 0) yHat = -1;
-
         if ((SDL_HAT_LEFT & hatPosition) > 0) xHat = -1;
         if ((SDL_HAT_RIGHT & hatPosition) > 0) xHat = 1;
-
-        // Send new values to rest of groundstation
         emit hatDirectionChanged(xHat, yHat);
 
         // Emit signals for each button individually
-        for (int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
+        for (int i = 0; i < joystickButtons; i++)
         {
             // If the button was down, but now it's up, trigger a buttonPressed event
             quint16 lastButtonState = buttonState & (1 << i);
@@ -317,7 +239,11 @@ void JoystickInput::run()
         }
 
         // Now signal an update for all UI together.
-        emit joystickChanged(y, x, yaw, thrust, xHat, yHat, buttonState);
+        float roll = rollAxis > -1?axesValues[rollAxis]:0.0f;
+        float pitch = pitchAxis > -1?axesValues[pitchAxis]:0.0f;
+        float yaw = yawAxis > -1?axesValues[yawAxis]:0.0f;
+        float throttle = throttleAxis > -1?axesValues[throttleAxis]:0.0f;
+        emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, buttonState);
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
         QGC::SLEEP::msleep(20);
@@ -326,6 +252,13 @@ void JoystickInput::run()
 
 void JoystickInput::setActiveJoystick(int id)
 {
+    if (joystick && SDL_JoystickOpened(joystickID))
+    {
+        SDL_JoystickClose(joystick);
+        joystick = NULL;
+        joystickID = -1;
+    }
+
     joystickID = id;
     joystick = SDL_JoystickOpen(joystickID);
     if (joystick)
@@ -338,7 +271,11 @@ void JoystickInput::setActiveJoystick(int id)
     buttonState = 0;
 }
 
-const QString& JoystickInput::getName()
+float JoystickInput::getCurrentValueForAxis(int axisID)
 {
-    return joystickName;
+    if (joystick && axisID < joystickAxes)
+    {
+        return SDL_JoystickGetAxis(joystick, axisID);
+    }
+    return 0.0f;
 }
