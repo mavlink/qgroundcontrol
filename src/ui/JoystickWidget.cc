@@ -21,10 +21,11 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     // Initialize the UI based on the current joystick
     initUI();
 
-    // Watch for button and hat input events from the joystick.
+    // Watch for button, axis, and hat input events from the joystick.
     connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(joystickButtonPressed(int)));
     connect(this->joystick, SIGNAL(buttonReleased(int)), this, SLOT(joystickButtonReleased(int)));
     connect(this->joystick, SIGNAL(axisValueChanged(int,float)), this, SLOT(updateAxisValue(int,float)));
+    connect(this->joystick, SIGNAL(hatDirectionChanged(int,int)), this, SLOT(setHat(int,int)));
 
     // Update the UI if the joystick changes.
     connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateUIForJoystick(int)));
@@ -131,7 +132,7 @@ void JoystickWidget::updateUIForJoystick(int id)
     {
         JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
         axis->setValue(joystick->getCurrentValueForAxis(i));
-        connect(axis, SIGNAL(mappingChanged(int,int)), this, SLOT(setMappingAxis(int,int)));
+        connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this, SLOT(setMappingAxis(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
         // And make sure we insert BEFORE the vertical spacer.
         m_ui->axesLayout->insertWidget(i, axis);
         axes.append(axis);
@@ -146,9 +147,9 @@ void JoystickWidget::updateAxisValue(int axis, float value)
     }
 }
 
-void JoystickWidget::setHat(float x, float y)
+void JoystickWidget::setHat(int x, int y)
 {
-    updateStatus(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
+    m_ui->statusLabel->setText(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
 }
 
 void JoystickWidget::setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping)
@@ -167,6 +168,9 @@ void JoystickWidget::setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MA
         case JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE:
             joystick->setMappingThrottleAxis(axisID);
             break;
+        case JoystickInput::JOYSTICK_INPUT_MAPPING_NONE:
+        default:
+            break;
     }
 }
 
@@ -179,9 +183,4 @@ void JoystickWidget::joystickButtonPressed(int key)
 void JoystickWidget::joystickButtonReleased(int key)
 {
     buttons.at(key)->setStyleSheet("");
-}
-
-void JoystickWidget::updateStatus(const QString& status)
-{
-    m_ui->statusLabel->setText(status);
 }

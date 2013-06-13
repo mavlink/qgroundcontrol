@@ -2,6 +2,7 @@
 #define JOYSTICKAXIS_H
 
 #include <QWidget>
+#include "JoystickInput.h"
 
 namespace Ui {
 class JoystickAxis;
@@ -17,7 +18,7 @@ public:
 
 signals:
     /** @brief Signal a change in this axis' yaw/pitch/roll mapping */
-    void mappingChanged(int id, int newMapping);
+    void mappingChanged(int id, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
 
 public slots:
     /** @brief Update the displayed value of the included progressbar.
