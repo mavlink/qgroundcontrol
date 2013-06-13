@@ -112,7 +112,7 @@
  */
 double PrimaryFlightDisplay_round(double value, int digits=0)
 {
-    return floor(value * pow(10, digits) + 0.5) / pow(10, digits);
+    return floor(value * pow(10.0f, digits) + 0.5f) / pow(10.0f, digits);
 }
 
 const int PrimaryFlightDisplay::tickValues[] = {10, 20, 30, 45, 60};
@@ -546,17 +546,17 @@ void PrimaryFlightDisplay::drawAIAirframeFixedFeatures(QPainter& painter, QRectF
     qreal h = area.height();
 
     QPen pen;
-    pen.setWidthF(lineWidth * 1.5);
+    pen.setWidthF(lineWidth * 1.5f);
     pen.setColor(redColor);
     painter.setPen(pen);
 
-    float length = 0.15;
-    float side = 0.5;
+    float length = 0.15f;
+    float side = 0.5f;
     // The 2 lines at sides.
     painter.drawLine(QPointF(-side*w, 0), QPointF(-(side-length)*w, 0));
     painter.drawLine(QPointF(side*w, 0), QPointF((side-length)*w, 0));
 
-    float rel = length/qSqrt(2);
+    float rel = length/qSqrt(2.0f);
     // The gull
     painter.drawLine(QPointF(rel*w, rel*w/2), QPoint(0, 0));
     painter.drawLine(QPointF(-rel*w, rel*w/2), QPoint(0, 0));
