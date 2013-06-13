@@ -89,12 +89,12 @@ public:
 
     int getJoystickNumButtons() const
     {
-        return joystickButtons;
+        return joystickNumButtons;
     }
 
     int getJoystickNumAxes() const
     {
-        return joystickAxes;
+        return joystickNumAxes;
     }
 
     int getJoystickID() const
@@ -109,7 +109,7 @@ public:
 
     int getNumJoysticks() const
     {
-        return joysticksFound;
+        return numJoysticks;
     }
 
     QString getJoystickNameById(int id) const
@@ -130,19 +130,22 @@ protected:
     bool done;
 
     // Store the mapping between axis numbers and the roll/pitch/yaw/throttle configuration.
+    // Value is one of JoystickAxis::JOYSTICK_AXIS_MAPPING.
     int rollAxis;
     int pitchAxis;
     int yawAxis;
     int throttleAxis;
 
     // Cache information on the joystick instead of polling the SDL everytime.
+    int numJoysticks; ///< Total number of joysticks detected by the SDL.
     QString joystickName;
-    int joystickAxes;
-    int joystickButtons;
     int joystickID;
-    int joysticksFound;
+    int joystickNumAxes;
+    int joystickNumButtons;
 
-    quint16 buttonState; ///< Track the state of the buttons so we can trigger on Up and Down events
+    QList<float> joystickAxes; ///< The values of every axes during the last sample
+    quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
+    int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
     void init();
 
@@ -151,14 +154,14 @@ signals:
     /**
      * @brief Signal containing all joystick raw positions
      *
-     * @param roll forward / pitch / x axis, front: 1, center: 0, back: -1
-     * @param pitch left / roll / y axis, left: -1, middle: 0, right: 1
-     * @param yaw turn axis, left-turn: -1, centered: 0, right-turn: 1
-     * @param thrust Thrust, 0%: 0, 100%: 1
+     * @param roll forward / pitch / x axis, front: 1, center: 0, back: -1. If the roll axis isn't defined, NaN is transmit instead.
+     * @param pitch left / roll / y axis, left: -1, middle: 0, right: 1. If the roll axis isn't defined, NaN is transmit instead.
+     * @param yaw turn axis, left-turn: -1, centered: 0, right-turn: 1. If the roll axis isn't defined, NaN is transmit instead.
+     * @param throttle Throttle, -100%:-1.0, 0%: 0.0, 100%: 1.0. If the roll axis isn't defined, NaN is transmit instead.
      * @param xHat hat vector in forward-backward direction, +1 forward, 0 center, -1 backward
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
      */
-    void joystickChanged(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
+    void joystickChanged(double roll, double pitch, double yaw, double throttle, int xHat, int yHat, int buttons);
 
     /**
       * @brief Emit a new value for an axis
