@@ -205,11 +205,18 @@ void JoystickInput::run()
 
         // Build up vectors describing the hat position
         int hatPosition = SDL_JoystickGetHat(joystick, 0);
-        if ((SDL_HAT_UP & hatPosition) > 0) yHat = 1;
-        if ((SDL_HAT_DOWN & hatPosition) > 0) yHat = -1;
-        if ((SDL_HAT_LEFT & hatPosition) > 0) xHat = -1;
-        if ((SDL_HAT_RIGHT & hatPosition) > 0) xHat = 1;
-        emit hatDirectionChanged(xHat, yHat);
+        int newYHat = 0;
+        if ((SDL_HAT_UP & hatPosition) > 0) newYHat = 1;
+        if ((SDL_HAT_DOWN & hatPosition) > 0) newYHat = -1;
+        int newXHat = 0;
+        if ((SDL_HAT_LEFT & hatPosition) > 0) newXHat = -1;
+        if ((SDL_HAT_RIGHT & hatPosition) > 0) newXHat = 1;
+        if (newYHat != yHat || newXHat != xHat)
+        {
+            xHat = newXHat;
+            yHat = newYHat;
+        }
+        emit hatDirectionChanged(newXHat, newYHat);
 
         // Emit signals for each button individually
         for (int i = 0; i < joystickNumButtons; i++)
