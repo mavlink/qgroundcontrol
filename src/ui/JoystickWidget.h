@@ -81,7 +81,7 @@ protected slots:
     /** @brief Update the UI for a new joystick based on SDL ID. */
     void updateUIForJoystick(int id);
     /** @brief Change the stored mapping for a given axis. */
-    void setMappingAxis(int axisID, int newMapping);
+    void setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
 
 private:
     Ui::JoystickWidget *m_ui;

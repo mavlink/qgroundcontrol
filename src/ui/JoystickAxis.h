@@ -15,19 +15,6 @@ public:
     explicit JoystickAxis(int id, QWidget *parent = 0);
     ~JoystickAxis();
 
-    /**
-     * @brief The JOYSTICK_MAPPING enum storing the values for each item in the mapping combobox.
-     * This should match the order of items in the mapping combobox in JoystickAxis.ui.
-     */
-    enum JOYSTICK_AXIS_MAPPING
-    {
-        JOYSTICK_AXIS_MAPPING_NONE     = 0,
-        JOYSTICK_AXIS_MAPPING_YAW      = 1,
-        JOYSTICK_AXIS_MAPPING_PITCH    = 2,
-        JOYSTICK_AXIS_MAPPING_ROLL     = 3,
-        JOYSTICK_AXIS_MAPPING_THROTTLE = 4
-    };
-
 signals:
     /** @brief Signal a change in this axis' yaw/pitch/roll mapping */
     void mappingChanged(int id, int newMapping);
