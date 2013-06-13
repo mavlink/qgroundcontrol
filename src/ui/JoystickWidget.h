@@ -55,8 +55,6 @@ public:
 public slots:
     /** @brief Update the UI for a new joystick based on SDL ID. */
     void updateUIForJoystick(int id);
-    /** @brief Change the stored mapping for a given axis. */
-    void setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
     /**
      * @brief Update a given axis with a new value
      * @param axis The index of the axis to update.

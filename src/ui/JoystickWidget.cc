@@ -132,7 +132,8 @@ void JoystickWidget::updateUIForJoystick(int id)
     {
         JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
         axis->setValue(joystick->getCurrentValueForAxis(i));
-        connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this, SLOT(setMappingAxis(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
+        connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
+        connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
         // And make sure we insert BEFORE the vertical spacer.
         m_ui->axesLayout->insertWidget(i, axis);
         axes.append(axis);
@@ -150,28 +151,6 @@ void JoystickWidget::updateAxisValue(int axis, float value)
 void JoystickWidget::setHat(int x, int y)
 {
     m_ui->statusLabel->setText(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
-}
-
-void JoystickWidget::setMappingAxis(int axisID, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping)
-{
-    switch (newMapping)
-    {
-        case JoystickInput::JOYSTICK_INPUT_MAPPING_ROLL:
-            joystick->setMappingRollAxis(axisID);
-            break;
-        case JoystickInput::JOYSTICK_INPUT_MAPPING_PITCH:
-            joystick->setMappingPitchAxis(axisID);
-            break;
-        case JoystickInput::JOYSTICK_INPUT_MAPPING_YAW:
-            joystick->setMappingYawAxis(axisID);
-            break;
-        case JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE:
-            joystick->setMappingThrottleAxis(axisID);
-            break;
-        case JoystickInput::JOYSTICK_INPUT_MAPPING_NONE:
-        default:
-            break;
-    }
 }
 
 void JoystickWidget::joystickButtonPressed(int key)
