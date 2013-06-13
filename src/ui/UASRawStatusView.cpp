@@ -122,6 +122,7 @@ void UASRawStatusView::updateTableTimerTick()
                         //We're over what we can do. Add a column and continue.
                         columncount+=2;
                         broke = true;
+                        i = valueMap.constEnd(); // Ensure loop breakout.
                         break;
                     }
                 }
