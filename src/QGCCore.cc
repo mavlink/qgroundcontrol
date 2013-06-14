@@ -71,8 +71,8 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("3DRobotics"));
-    this->setOrganizationDomain("org.3drobotics");
+    this->setOrganizationName(QLatin1String("diydrones"));
+    this->setOrganizationDomain("org.diydrones");
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -108,7 +108,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     settings.sync();
 
     // Show splash screen
-    QPixmap splashImage(":/files/images/apm_planner_logo_splash.png");
+    QPixmap splashImage(":/files/images/apm_planner_2_0-07.png");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
