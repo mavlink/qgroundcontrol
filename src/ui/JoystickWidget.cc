@@ -119,24 +119,40 @@ void JoystickWidget::updateUIForJoystick(int id)
 
     // And add the necessary button displays for this joystick.
     int newButtons = joystick->getJoystickNumButtons();
-    for (int i = 0; i < newButtons; i++)
+    if (newButtons)
     {
-        JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
-        // And make sure we insert BEFORE the vertical spacer.
-        m_ui->buttonLayout->insertWidget(i, button);
-        buttons.append(button);
+        m_ui->buttonBox->show();
+        for (int i = 0; i < newButtons; i++)
+        {
+            JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
+            // And make sure we insert BEFORE the vertical spacer.
+            m_ui->buttonLayout->insertWidget(i, button);
+            buttons.append(button);
+        }
+    }
+    else
+    {
+        m_ui->buttonBox->hide();
     }
 
     // Do the same for the axes supported by this joystick.
-    for (int i = 0; i < joystick->getJoystickNumAxes(); i++)
+    int newAxes = joystick->getJoystickNumAxes();
+    if (newAxes)
     {
-        JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
-        axis->setValue(joystick->getCurrentValueForAxis(i));
-        connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
-        connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
-        // And make sure we insert BEFORE the vertical spacer.
-        m_ui->axesLayout->insertWidget(i, axis);
-        axes.append(axis);
+        for (int i = 0; i < newAxes; i++)
+        {
+            JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
+            axis->setValue(joystick->getCurrentValueForAxis(i));
+            connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
+            connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
+            // And make sure we insert BEFORE the vertical spacer.
+            m_ui->axesLayout->insertWidget(i, axis);
+            axes.append(axis);
+        }
+    }
+    else
+    {
+        m_ui->buttonBox->hide();
     }
 }
 
