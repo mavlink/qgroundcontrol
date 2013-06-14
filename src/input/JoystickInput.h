@@ -225,7 +225,7 @@ public slots:
      * @param newMapping The mapping to use.
      * @see JOYSTICK_INPUT_MAPPING
      */
-    void setAxisMapping(int axis, JOYSTICK_INPUT_MAPPING newMapping);
+    void setAxisMapping(int axis, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
     /**
      * @brief Specify if an axis should be inverted.
      * @param axis The ID of the axis.
