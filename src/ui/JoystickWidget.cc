@@ -126,7 +126,7 @@ void JoystickWidget::updateUIForJoystick(int id)
         {
             JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
             // And make sure we insert BEFORE the vertical spacer.
-            m_ui->buttonLayout->insertWidget(i, button);
+            m_ui->buttonLayout->addWidget(button);
             buttons.append(button);
         }
     }
@@ -145,8 +145,8 @@ void JoystickWidget::updateUIForJoystick(int id)
             axis->setValue(joystick->getCurrentValueForAxis(i));
             connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
             connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
-            // And make sure we insert BEFORE the vertical spacer.
-            m_ui->axesLayout->insertWidget(i, axis);
+            connect(axis, SIGNAL(rangeLimitChanged(int,bool)), this->joystick, SLOT(setAxisRangeLimit(int,bool)));
+            m_ui->axesLayout->addWidget(axis);
             axes.append(axis);
         }
     }
