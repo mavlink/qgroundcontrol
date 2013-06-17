@@ -37,7 +37,8 @@ JoystickInput::JoystickInput() :
     throttleAxis(-1),
     joystickName(""),
     joystickID(-1),
-    joystickNumButtons(0)
+    joystickNumButtons(0),
+    throttleAxisLimited(false)
 {
     loadSettings();
 
@@ -191,6 +192,7 @@ void JoystickInput::run()
         {
             // First emit the uncalibrated values for each axis based on their ID.
             // This is generally not used for controlling a vehicle, but a UI representation, so it being slightly off is fine.
+            // Here we map the joystick axis value into the initial range of [0:1].
             float axisValue = SDL_JoystickGetAxis(joystick, i);
             if (joystickAxesInverted[i])
             {
@@ -202,12 +204,20 @@ void JoystickInput::run()
             }
             axisValue = 1.0f - axisValue;
 
-            // Only map the throttle into [0:1] if the UAS can reverse.
+            // For non-throttle axes or if the UAS can reverse, go ahead and convert this into the range [-1:1].
             if (uasCanReverse || throttleAxis != i)
             {
                 axisValue = axisValue * 2.0f - 1.0f;
-            } else {
-                int a = 8;
+            }
+            // Otherwise if this vehicle can only go forward, but the axis is limited to only the positive range,
+            // scale this so the negative values are ignored for this axis and it's clamped to [0:1].
+            else if (throttleAxis == i && joystickAxesLimited[i])
+            {
+                axisValue = axisValue * 2.0f - 1.0f;
+                if (axisValue < 0.0f)
+                {
+                    axisValue = 0.0f;
+                }
             }
 
             // Bound rounding errors
@@ -217,6 +227,7 @@ void JoystickInput::run()
             {
                 joystickAxes[i] = axisValue;
                 emit axisValueChanged(i, axisValue);
+                qDebug() << "Axis " << i << ": " << axisValue;
             }
         }
 
@@ -272,8 +283,8 @@ void JoystickInput::setActiveJoystick(int id)
         joystick = NULL;
         joystickID = -1;
     }
-}
 
+    joystickID = id;
     joystick = SDL_JoystickOpen(joystickID);
     if (joystick && SDL_JoystickOpened(joystickID))
     {
@@ -286,6 +297,7 @@ void JoystickInput::setActiveJoystick(int id)
         // Update cached joystick values
         joystickAxes.clear();
         joystickAxesInverted.clear();
+        joystickAxesLimited.clear();
         for (int i = 0; i < joystickNumAxes; i++)
         {
             int axisValue = SDL_JoystickGetAxis(joystick, i);
@@ -293,6 +305,7 @@ void JoystickInput::setActiveJoystick(int id)
             emit axisValueChanged(i, axisValue);
 
             joystickAxesInverted.append(false);
+            joystickAxesLimited.append(false);
         }
         joystickButtons = 0;
         for (int i = 0; i < joystickNumButtons; i++)
@@ -345,6 +358,7 @@ void JoystickInput::setAxisMapping(int axis, JOYSTICK_INPUT_MAPPING newMapping)
             if (throttleAxis == axis)
             {
                 throttleAxis = -1;
+                joystickAxesLimited[axis] = false;
             }
             break;
     }
@@ -355,6 +369,14 @@ void JoystickInput::setAxisInversion(int axis, bool inverted)
     if (axis < joystickAxesInverted.size())
     {
         joystickAxesInverted[axis] = inverted;
+    }
+}
+
+void JoystickInput::setAxisRangeLimit(int axis, bool limitRange)
+{
+    if (axis < joystickAxesLimited.size())
+    {
+        joystickAxesLimited[axis] = limitRange;
     }
 }
 

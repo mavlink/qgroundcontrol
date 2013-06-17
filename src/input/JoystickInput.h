@@ -159,6 +159,8 @@ protected:
 
     QList<float> joystickAxes; ///< The values of every axes during the last sample.
     QList<bool> joystickAxesInverted; ///< Whether each axis should be used inverted from what was reported.
+    QList<bool> joystickAxesLimited; ///< Whether each axis should be limited to only the positive range.
+    bool throttleAxisLimited; ///< Indicates if the throttle channel should be limited to mapping from a 0:1 range instead of -1:1. Useful for controlling throttle with an axis that autocenters.
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
     int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
@@ -233,6 +235,12 @@ public slots:
      * @param inverted True indicates inverted from normal. Varies by controller.
      */
     void setAxisInversion(int axis, bool inverted);
+    /**
+     * @brief Specify that an axis should only transmit the positive values. Useful for controlling throttle from auto-centering axes.
+     * @param axis Which axis has its range limited.
+     * @param limitRange If true only the positive half of this axis will be read.
+     */
+    void setAxisRangeLimit(int axis, bool limitRange);
 };
 
 #endif // _JOYSTICKINPUT_H_
