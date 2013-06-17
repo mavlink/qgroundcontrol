@@ -2695,6 +2695,41 @@ int UAS::getSystemType()
 }
 
 /**
+ * @brief Returns true for systems that can reverse. If the system has no control over position, it returns false as well.
+ * @return If the specified vehicle type can
+ */
+//bool UAS::systemCanReverse() const
+//{
+//    switch(type)
+//    {
+//    case MAV_TYPE_GENERIC:
+//    case MAV_TYPE_FIXED_WING:
+//    case MAV_TYPE_ROCKET:
+//    case MAV_TYPE_FLAPPING_WING:
+
+//    // System types that don't have movement
+//    case MAV_TYPE_ANTENNA_TRACKER:
+//    case MAV_TYPE_GCS:
+//    case MAV_TYPE_FREE_BALLOON:
+//    default:
+//        return false;
+//        break;
+//    case MAV_TYPE_QUADROTOR:
+//    case MAV_TYPE_COAXIAL:
+//    case MAV_TYPE_HELICOPTER:
+//    case MAV_TYPE_AIRSHIP:
+//    case MAV_TYPE_GROUND_ROVER:
+//    case MAV_TYPE_SURFACE_BOAT:
+//    case MAV_TYPE_SUBMARINE:
+//    case MAV_TYPE_HEXAROTOR:
+//    case MAV_TYPE_OCTOROTOR:
+//    case MAV_TYPE_TRICOPTER:
+//        return true;
+//        break;
+//    }
+//}
+
+/**
 * @param buttonIndex
 */
 void UAS::receiveButton(int buttonIndex)

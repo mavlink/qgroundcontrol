@@ -139,7 +139,8 @@ protected:
     double calibrationPositive[10];
     double calibrationNegative[10];
     SDL_Joystick* joystick;
-    UASInterface* uas;
+    UASInterface* uas; ///< Track the current UAS.
+    bool uasCanReverse; ///< Track whether the connect UAS can drive a reverse speed.
     bool done;
 
     // Store the mapping between axis numbers and the roll/pitch/yaw/throttle configuration.

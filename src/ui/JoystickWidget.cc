@@ -144,6 +144,7 @@ void JoystickWidget::updateUIForJoystick(int id)
             axis->setValue(joystick->getCurrentValueForAxis(i));
             connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
             connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
+            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), axis, SLOT(setActiveUAS(UASInterface*)));
             m_ui->axesLayout->addWidget(axis);
             axes.append(axis);
         }

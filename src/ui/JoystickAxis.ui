@@ -121,6 +121,9 @@
      <property name="textDirection">
       <enum>QProgressBar::TopToBottom</enum>
      </property>
+     <property name="format">
+      <string>%v</string>
+     </property>
     </widget>
    </item>
    <item>
