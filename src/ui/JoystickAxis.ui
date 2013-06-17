@@ -59,6 +59,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="toolTip">
+      <string>Specify what property of the UAS this axis should command</string>
+     </property>
      <item>
       <property name="text">
        <string>--</string>
@@ -87,6 +90,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="rangeCheckBox">
+     <property name="text">
+      <string>Half range</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QProgressBar" name="progressBar">
      <property name="enabled">
       <bool>true</bool>
@@ -102,6 +112,9 @@
        <width>0</width>
        <height>100</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Only use the positive values from this axis for control</string>
      </property>
      <property name="minimum">
       <number>-100</number>
@@ -139,6 +152,9 @@
        <width>0</width>
        <height>25</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Reverse the values for this axis</string>
      </property>
      <property name="text">
       <string>Inverted</string>
