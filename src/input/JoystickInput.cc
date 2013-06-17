@@ -113,7 +113,6 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
             connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
             connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
             uasCanReverse = tmp->systemCanReverse();
-            qDebug() << "Current system can reverse: " << uasCanReverse;
         }
     }
 }
@@ -157,7 +156,6 @@ void JoystickInput::init()
     // And attach to the first joystick found to start.
     setActiveJoystick(0);
 
-    // Make sure the active UAS is set and that we're tracking UAS changes.
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
@@ -274,8 +272,8 @@ void JoystickInput::setActiveJoystick(int id)
         joystick = NULL;
         joystickID = -1;
     }
+}
 
-    joystickID = id;
     joystick = SDL_JoystickOpen(joystickID);
     if (joystick && SDL_JoystickOpened(joystickID))
     {

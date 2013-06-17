@@ -1,7 +1,10 @@
 #include "JoystickAxis.h"
 #include "JoystickInput.h"
 #include "ui_JoystickAxis.h"
+<<<<<<< HEAD
 #include "UASManager.h"
+=======
+>>>>>>> 64d0741ee82db3d5dac2108f3f6d03c6fa66e5c6
 #include <QString>
 
 JoystickAxis::JoystickAxis(int id, QWidget *parent) :
