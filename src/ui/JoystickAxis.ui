@@ -87,13 +87,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="limitRangeCheckBox">
-     <property name="text">
-      <string>Limit range</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QProgressBar" name="progressBar">
      <property name="enabled">
       <bool>true</bool>

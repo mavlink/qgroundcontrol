@@ -198,12 +198,7 @@ void JoystickInput::run()
                 axisValue = (axisValue - calibrationPositive[i]) / (calibrationNegative[i] - calibrationPositive[i]);
             }
             axisValue = 1.0f - axisValue;
-
-            // If the joystick isn't limited to [0:1.0], map it into [-1.0:1.0].
-            if (!joystickAxesRangeLimited[i])
-            {
-                axisValue = axisValue * 2.0f - 1.0f;
-            }
+            axisValue = axisValue * 2.0f - 1.0f;
 
             // Bound rounding errors
             if (axisValue > 1.0f) axisValue = 1.0f;
@@ -281,7 +276,6 @@ void JoystickInput::setActiveJoystick(int id)
         // Update cached joystick values
         joystickAxes.clear();
         joystickAxesInverted.clear();
-        joystickAxesRangeLimited.clear();
         for (int i = 0; i < joystickNumAxes; i++)
         {
             int axisValue = SDL_JoystickGetAxis(joystick, i);
@@ -289,7 +283,6 @@ void JoystickInput::setActiveJoystick(int id)
             emit axisValueChanged(i, axisValue);
 
             joystickAxesInverted.append(false);
-            joystickAxesRangeLimited.append(false);
         }
         joystickButtons = 0;
         for (int i = 0; i < joystickNumButtons; i++)
@@ -352,14 +345,6 @@ void JoystickInput::setAxisInversion(int axis, bool inverted)
     if (axis < joystickAxesInverted.size())
     {
         joystickAxesInverted[axis] = inverted;
-    }
-}
-
-void JoystickInput::setAxisRangeLimit(int axis, bool rangeLimited)
-{
-    if (axis < joystickAxesRangeLimited.size())
-    {
-        joystickAxesRangeLimited[axis] = rangeLimited;
     }
 }
 
