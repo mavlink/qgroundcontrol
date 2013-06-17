@@ -3,6 +3,7 @@
 
 #include "UASQuickViewItem.h"
 #include <QLabel>
+#include <QSpacerItem>
 class UASQuickViewTextItem : public UASQuickViewItem
 {
 public:
@@ -14,6 +15,7 @@ protected:
 private:
     QLabel *titleLabel;
     QLabel *valueLabel;
+    QSpacerItem *spacerItem;
 };
 
 #endif // UASQUICKVIEWTEXTITEM_H

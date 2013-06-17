@@ -6,6 +6,8 @@ UASQuickViewItemSelect::UASQuickViewItemSelect(QWidget *parent) : QWidget(parent
     ui.setupUi(this);
     currcol = 0;
     currrow = 0;
+    ui.gridLayout->setSpacing(0);
+    ui.gridLayout->setMargin(0);
 }
 void UASQuickViewItemSelect::addItem(QString item,bool enabled)
 {
