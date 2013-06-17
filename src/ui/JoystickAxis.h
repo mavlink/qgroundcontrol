@@ -21,8 +21,6 @@ signals:
     void mappingChanged(int id, JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
     /** @brief Signal a change in this axis' inversion status */
     void inversionChanged(int id, bool);
-    /** @brief Signal a change in this axis' range limit */
-    void rangeLimitChanged(int id, bool);
 
 public slots:
     /** @brief Update the displayed value of the included progressbar.
@@ -39,8 +37,6 @@ private slots:
     void mappingComboBoxChanged(int newMapping);
     /** @brief Emit signal when the inversion checkbox is changed. */
     void inversionCheckBoxChanged(bool inverted);
-    /** @brief Emit signal when the limit range checkbox is changed. */
-    void limitRangeCheckBoxChanged(bool limited);
 };
 
 #endif // JOYSTICKAXIS_H

@@ -158,7 +158,6 @@ protected:
 
     QList<float> joystickAxes; ///< The values of every axes during the last sample.
     QList<bool> joystickAxesInverted; ///< Whether each axis should be used inverted from what was reported.
-    QList<bool> joystickAxesRangeLimited; ///< Whether each axis should be scaled into [0:1.0] instead of [-1.0:1.0].
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
     int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
@@ -233,12 +232,6 @@ public slots:
      * @param inverted True indicates inverted from normal. Varies by controller.
      */
     void setAxisInversion(int axis, bool inverted);
-    /**
-     * @brief Specifies whether an axis should have its range limited to only positive values.
-     * @param axis The index of the axis to limit
-     * @param rangeLimited True if the axis should be limited, false otherwise.
-     */
-    void setAxisRangeLimit(int axis, bool rangeLimited);
 };
 
 #endif // _JOYSTICKINPUT_H_
