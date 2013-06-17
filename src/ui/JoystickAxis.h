@@ -27,6 +27,8 @@ public slots:
      * @param value A value between -1.0 and 1.0.
      */
     void setValue(float value);
+    /** @brief Specify the UAS that this axis should track for displaying throttle properly. */
+    void setActiveUAS(UASInterface* uas);
     
 private:
     int id; ///< The ID for this axis. Corresponds to the IDs used by JoystickInput.

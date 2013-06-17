@@ -1,6 +1,7 @@
 #include "JoystickAxis.h"
 #include "JoystickInput.h"
 #include "ui_JoystickAxis.h"
+#include "UASManager.h"
 #include <QString>
 
 JoystickAxis::JoystickAxis(int id, QWidget *parent) :
@@ -27,9 +28,22 @@ void JoystickAxis::setValue(float value)
 void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
     emit mappingChanged(id, (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping);
+    this->setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 void JoystickAxis::inversionCheckBoxChanged(bool inverted)
 {
     emit inversionChanged(id, inverted);
+}
+
+void JoystickAxis::setActiveUAS(UASInterface* uas)
+{
+    if (uas && !uas->systemCanReverse() && ui->comboBox->currentIndex() == JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE)
+    {
+        ui->progressBar->setRange(0, 100);
+    }
+    else
+    {
+        ui->progressBar->setRange(-100, 100);
+    }
 }
