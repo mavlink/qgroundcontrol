@@ -9,14 +9,15 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
     layout->setMargin(0);
     titleLabel = new QLabel(this);
     titleLabel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
-    titleLabel->setAlignment(Qt::AlignHCenter);
+    titleLabel->setAlignment(Qt::AlignHCenter | Qt::AlignBottom);
     this->layout()->addWidget(titleLabel);
     valueLabel = new QLabel(this);
     valueLabel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
-    valueLabel->setAlignment(Qt::AlignHCenter);
+    valueLabel->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
     valueLabel->setText("0.00");
     this->layout()->addWidget(valueLabel);
-    layout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Ignored));
+    //spacerItem = new QSpacerItem(20,40,QSizePolicy::Minimum,QSizePolicy::Ignored);
+    //layout->addSpacerItem(spacerItem);
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height() / 2.0);
@@ -39,6 +40,7 @@ void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height());
     titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+    //spacerItem->setGeometry(QRect(0,0,20,this->height()/10.0));
 
     QFontMetrics metrics(valuefont);
     //valuefont.setPixelSize(this->height() / 2.0);
