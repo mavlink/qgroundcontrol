@@ -19,6 +19,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 private:
     QMap<QString,int> m_categoryToIndexMap;
+    QMap<QCheckBox*,QString> m_checkboxToValueMap;
     QList<QCheckBox*> m_checkBoxList;
     Ui::UASQuickViewItemSelect ui;
 private slots:
