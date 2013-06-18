@@ -15,6 +15,7 @@ class UASQuickView : public QWidget
     Q_OBJECT
 public:
     UASQuickView(QWidget *parent = 0);
+    ~UASQuickView();
     void addSource(MAVLinkDecoder *decoder);
 private:
     UASInterface *uas;
