@@ -15,6 +15,9 @@ class JoystickAxis : public QWidget
 public:
     explicit JoystickAxis(int id, QWidget *parent = 0);
     ~JoystickAxis();
+    void setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING newMapping);
+    void setInverted(bool newValue);
+    void setRangeLimit(bool newValue);
 
 signals:
     /** @brief Signal a change in this axis' yaw/pitch/roll mapping */

@@ -37,15 +37,14 @@ JoystickInput::JoystickInput() :
     throttleAxis(-1),
     joystickName(""),
     joystickID(-1),
-    joystickNumButtons(0),
-    throttleAxisLimited(false)
+    joystickNumButtons(0)
 {
-    loadSettings();
-
     for (int i = 0; i < 10; i++) {
         calibrationPositive[i] = sdlJoystickMax;
         calibrationNegative[i] = sdlJoystickMin;
     }
+
+    loadSettings();
 
     // Start this thread. This allows the Joystick Settings window to work correctly even w/o any UASes connected.
     start();
@@ -57,36 +56,90 @@ JoystickInput::~JoystickInput()
     done = true;
 }
 
+/**
+ * @brief Restores settings for the current joystick from saved settings file.
+ * Assumes that both joystickName & joystickNumAxes are correct.
+ */
 void JoystickInput::loadSettings()
 {
-//    // Load defaults from settings
-//    QSettings settings;
-//    settings.sync();
-//    settings.beginGroup("QGC_JOYSTICK_INPUT");
-//    xAxis = (settings.value("X_AXIS_MAPPING", xAxis).toInt());
-//    yAxis = (settings.value("Y_AXIS_MAPPING", yAxis).toInt());
-//    thrustAxis = (settings.value("THRUST_AXIS_MAPPING", thrustAxis).toInt());
-//    yawAxis = (settings.value("YAW_AXIS_MAPPING", yawAxis).toInt());
-//    autoButtonMapping = (settings.value("AUTO_BUTTON_MAPPING", autoButtonMapping).toInt());
-//    stabilizeButtonMapping = (settings.value("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping).toInt());
-//    manualButtonMapping = (settings.value("MANUAL_BUTTON_MAPPING", manualButtonMapping).toInt());
-//    settings.endGroup();
+    // Load defaults from settings
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup(joystickName);
+    rollAxis = (settings.value("ROLL_AXIS_MAPPING", -1).toInt());
+    pitchAxis = (settings.value("PITCH_AXIS_MAPPING", -1).toInt());
+    yawAxis = (settings.value("YAW_AXIS_MAPPING", -1).toInt());
+    throttleAxis = (settings.value("THROTTLE_AXIS_MAPPING", -1).toInt());
+
+    // Read back the joystickAxesInverted QList one element at a time.
+    // Also, error check.
+    int axesStored = settings.beginReadArray("AXES_INVERTED");
+    if (axesStored != joystickNumAxes)
+    {
+        qDebug() << "Invalid number of axes for joystickAxesInverted in settings. Ignoring.";
+        for (int i = 0; i < joystickNumAxes; i++)
+        {
+            joystickAxesInverted.append(false);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < joystickNumAxes; i++)
+        {
+            settings.setArrayIndex(i);
+            joystickAxesInverted.append(settings.value("INVERTED", false).toBool());
+        }
+    }
+    settings.endArray();
+
+    // Read back the joystickAxesLimited QList one element at a time.
+    // Also, error check.
+    axesStored = settings.beginReadArray("AXES_LIMITED");
+    if (axesStored != joystickNumAxes)
+    {
+        qDebug() << "Invalid number of axes for joystickAxesLimited in settings. Ignoring.";
+        for (int i = 0; i < joystickNumAxes; i++)
+        {
+            joystickAxesLimited.append(false);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < joystickNumAxes; i++)
+        {
+            settings.setArrayIndex(i);
+            joystickAxesLimited.append(settings.value("LIMITED", false).toBool());
+        }
+    }
+    settings.endArray();
+    settings.endGroup();
 }
 
 void JoystickInput::storeSettings()
 {
-//    // Store settings
-//    QSettings settings;
-//    settings.beginGroup("QGC_JOYSTICK_INPUT");
-//    settings.setValue("X_AXIS_MAPPING", xAxis);
-//    settings.setValue("Y_AXIS_MAPPING", yAxis);
-//    settings.setValue("THRUST_AXIS_MAPPING", thrustAxis);
-//    settings.setValue("YAW_AXIS_MAPPING", yawAxis);
-//    settings.setValue("AUTO_BUTTON_MAPPING", autoButtonMapping);
-//    settings.setValue("STABILIZE_BUTTON_MAPPING", stabilizeButtonMapping);
-//    settings.setValue("MANUAL_BUTTON_MAPPING", manualButtonMapping);
-//    settings.endGroup();
-//    settings.sync();
+    // Store settings
+    QSettings settings;
+    settings.beginGroup(joystickName);
+    settings.setValue("ROLL_AXIS_MAPPING", rollAxis);
+    settings.setValue("PITCH_AXIS_MAPPING", pitchAxis);
+    settings.setValue("YAW_AXIS_MAPPING", yawAxis);
+    settings.setValue("THROTTLE_AXIS_MAPPING", throttleAxis);
+    settings.beginWriteArray("AXES_INVERTED");
+    for (int i = 0; i < joystickNumAxes; i++)
+    {
+        settings.setArrayIndex(i);
+        settings.setValue("INVERTED", joystickAxesInverted.at(i));
+    }
+    settings.endArray();
+    settings.beginWriteArray("AXES_LIMITED");
+    for (int i = 0; i < joystickNumAxes; i++)
+    {
+        settings.setArrayIndex(i);
+        settings.setValue("LIMITED", joystickAxesLimited.at(i));
+    }
+    settings.endArray();
+    settings.endGroup();
+    settings.sync();
 }
 
 
@@ -227,7 +280,6 @@ void JoystickInput::run()
             {
                 joystickAxes[i] = axisValue;
                 emit axisValueChanged(i, axisValue);
-                qDebug() << "Axis " << i << ": " << axisValue;
             }
         }
 
@@ -277,8 +329,10 @@ void JoystickInput::run()
 
 void JoystickInput::setActiveJoystick(int id)
 {
+    // If we already had a joystick, close that one before opening a new one.
     if (joystick && SDL_JoystickOpened(joystickID))
     {
+        storeSettings();
         SDL_JoystickClose(joystick);
         joystick = NULL;
         joystickID = -1;
@@ -294,6 +348,10 @@ void JoystickInput::setActiveJoystick(int id)
         joystickNumButtons = SDL_JoystickNumButtons(joystick);
         joystickNumAxes = SDL_JoystickNumAxes(joystick);
 
+        // Restore saved settings for this joystick.
+        loadSettings();
+        qDebug() << "Roll: " << rollAxis << ", Pitch: " << pitchAxis << ", Yaw: " << yawAxis << ", Throttle: " << throttleAxis;
+
         // Update cached joystick values
         joystickAxes.clear();
         joystickAxesInverted.clear();
@@ -303,9 +361,6 @@ void JoystickInput::setActiveJoystick(int id)
             int axisValue = SDL_JoystickGetAxis(joystick, i);
             joystickAxes.append(axisValue);
             emit axisValueChanged(i, axisValue);
-
-            joystickAxesInverted.append(false);
-            joystickAxesLimited.append(false);
         }
         joystickButtons = 0;
         for (int i = 0; i < joystickNumButtons; i++)
@@ -387,4 +442,22 @@ float JoystickInput::getCurrentValueForAxis(int axis)
         return joystickAxes[axis];
     }
     return 0.0f;
+}
+
+bool JoystickInput::getInvertedForAxis(int axis)
+{
+    if (axis < joystickAxes.size())
+    {
+        return joystickAxesInverted[axis];
+    }
+    return false;
+}
+
+bool JoystickInput::getRangeLimitForAxis(int axis)
+{
+    if (axis < joystickAxes.size())
+    {
+        return joystickAxesLimited[axis];
+    }
+    return false;
 }
