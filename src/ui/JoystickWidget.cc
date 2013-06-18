@@ -125,6 +125,7 @@ void JoystickWidget::updateUIForJoystick(int id)
         for (int i = 0; i < newButtons; i++)
         {
             JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
+            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), button, SLOT(setActiveUAS(UASInterface*)));
             m_ui->buttonLayout->addWidget(button);
             buttons.append(button);
         }

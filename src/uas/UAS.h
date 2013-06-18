@@ -676,6 +676,11 @@ public:
             break;
         }
     }
+    /** From UASInterface */
+    QList<QAction*> getActions() const
+    {
+        return actions;
+    }
 
 public slots:
     /** @brief Set the autopilot type */
@@ -777,6 +782,18 @@ public slots:
     void armSystem();
     /** @brief Disable the motors */
     void disarmSystem();
+    /**
+     * @brief Tell the UAS to switch into a completely-autonomous mode, so disable manual input.
+     */
+    void goAutonomous();
+    /**
+     * @brief Tell the UAS to switch to manual control. Stabilized attitude may simultaneously be engaged.
+     */
+    void goManual();
+    /**
+     * @brief Tell the UAS to switch between manual and autonomous control.
+     */
+    void toggleAutonomy();
 
     /** @brief Set the values for the manual control of the vehicle */
     void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
@@ -922,6 +939,7 @@ protected:
     bool sensorHil;             ///< True if sensor HIL is enabled
     quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
     quint64 lastSendTimeSensors;
+    QList<QAction*> actions; ///< A list of actions that this UAS can perform.
 
 protected slots:
     /** @brief Write settings to disk */
