@@ -135,6 +135,10 @@ void JoystickWidget::updateUIForJoystick(int id)
     }
 
     // Do the same for the axes supported by this joystick.
+    int rollAxis = joystick->getMappingRollAxis();
+    int pitchAxis = joystick->getMappingPitchAxis();
+    int yawAxis = joystick->getMappingYawAxis();
+    int throttleAxis = joystick->getMappingThrottleAxis();
     int newAxes = joystick->getJoystickNumAxes();
     if (newAxes)
     {
@@ -142,6 +146,24 @@ void JoystickWidget::updateUIForJoystick(int id)
         {
             JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
             axis->setValue(joystick->getCurrentValueForAxis(i));
+            if (i == rollAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_ROLL);
+            }
+            else if (i == pitchAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_PITCH);
+            }
+            else if (i == yawAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_YAW);
+            }
+            else if (i == throttleAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE);
+            }
+            axis->setInverted(joystick->getInvertedForAxis(i));
+            axis->setRangeLimit(joystick->getRangeLimitForAxis(i));
             connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
             connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
             connect(axis, SIGNAL(rangeChanged(int,bool)), this->joystick, SLOT(setAxisRangeLimit(int,bool)));

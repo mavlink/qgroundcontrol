@@ -131,6 +131,8 @@ public:
     }
 
     float getCurrentValueForAxis(int axis);
+    bool getInvertedForAxis(int axis);
+    bool getRangeLimitForAxis(int axis);
 
     const double sdlJoystickMin;
     const double sdlJoystickMax;
@@ -160,7 +162,6 @@ protected:
     QList<float> joystickAxes; ///< The values of every axes during the last sample.
     QList<bool> joystickAxesInverted; ///< Whether each axis should be used inverted from what was reported.
     QList<bool> joystickAxesLimited; ///< Whether each axis should be limited to only the positive range.
-    bool throttleAxisLimited; ///< Indicates if the throttle channel should be limited to mapping from a 0:1 range instead of -1:1. Useful for controlling throttle with an axis that autocenters.
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
     int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 

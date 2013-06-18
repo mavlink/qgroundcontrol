@@ -27,6 +27,30 @@ void JoystickAxis::setValue(float value)
     ui->progressBar->setValue(100.0f * value);
 }
 
+void JoystickAxis::setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING newMapping)
+{
+    ui->comboBox->setCurrentIndex(newMapping);
+    if (newMapping == JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE)
+    {
+        ui->rangeCheckBox->show();
+    }
+    else
+    {
+        ui->rangeCheckBox->hide();
+    }
+    this->setActiveUAS(UASManager::instance()->getActiveUAS());
+}
+
+void JoystickAxis::setInverted(bool newValue)
+{
+    ui->invertedCheckBox->setChecked(newValue);
+}
+
+void JoystickAxis::setRangeLimit(bool newValue)
+{
+    ui->rangeCheckBox->setChecked(newValue);
+}
+
 void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
     if (newMapping == JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE)
