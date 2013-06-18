@@ -35,6 +35,7 @@ void UASQuickViewItemSelect::addItem(QString item,bool enabled)
         ui.gridLayout->addWidget(titlelabel,0,col);
     }
     QCheckBox *label = new QCheckBox(this);
+    m_checkboxToValueMap[label] = item;
     m_checkBoxList.append(label);
     if (enabled)
     {
@@ -82,13 +83,19 @@ void UASQuickViewItemSelect::checkBoxClicked(bool checked)
     {
         return;
     }
+    QString checkval = check->text();
+    if (m_checkboxToValueMap.contains(check))
+    {
+        checkval = m_checkboxToValueMap[check];
+    }
     if (checked)
     {
-        emit valueEnabled(check->text());
+
+        emit valueEnabled(checkval);
     }
     else
     {
-        emit valueDisabled(check->text());
+        emit valueDisabled(checkval);
     }
 }
 

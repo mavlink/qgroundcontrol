@@ -32,7 +32,14 @@ void UASQuickViewTextItem::setValue(double value)
 
 void UASQuickViewTextItem::setTitle(QString title)
 {
-    titleLabel->setText(title);
+    if (title.indexOf(".") != -1 && title.indexOf(":") != -1)
+    {
+        titleLabel->setText(title.mid(title.indexOf(".")+1));
+    }
+    else
+    {
+        titleLabel->setText(title);
+    }
 }
 void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
 {
