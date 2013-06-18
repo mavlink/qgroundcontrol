@@ -260,6 +260,11 @@ public:
         return color;
     }
 
+    /** @brief Returns a list of actions/commands that this vehicle can perform.
+     *  Used for creating UI elements for built-in functionality for this vehicle.
+     */
+    virtual QList<QAction*> getActions() const = 0;
+
 public slots:
 
     /** @brief Set a new name for the system */

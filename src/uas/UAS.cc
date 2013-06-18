@@ -145,7 +145,60 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentID[i] = -1;
         componentMulti[i] = false;
     }
-    
+
+    // Store a list of available actions for this UAS.
+    // Basically everything exposted as a SLOT with no return value or arguments.
+
+    QAction* newAction = new QAction(tr("Arm"), this);
+    newAction->setToolTip(tr("Enable the UAS so that all actuators are online"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(armSystem()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Disarm"), this);
+    newAction->setToolTip(tr("Disable the UAS so that all actuators are offline"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(disarmSystem()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Go home"), this);
+    newAction->setToolTip(tr("Command the UAS to return to its home position"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(home()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Land"), this);
+    newAction->setToolTip(tr("Command the UAS to land"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(land()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Launch"), this);
+    newAction->setToolTip(tr("Command the UAS to launch itself and begin its mission"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(launch()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Resume"), this);
+    newAction->setToolTip(tr("Command the UAS to continue its mission"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(go()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Stop"), this);
+    newAction->setToolTip(tr("Command the UAS to halt and hold position"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(halt()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Go autonomous"), this);
+    newAction->setToolTip(tr("Set the UAS into an autonomous control mode"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(goAutonomous()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Go manual"), this);
+    newAction->setToolTip(tr("Set the UAS into a manual control mode"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(goManual()));
+    actions.append(newAction);
+
+    newAction = new QAction(tr("Toggle autonomy"), this);
+    newAction->setToolTip(tr("Toggle between manual and full-autonomy"));
+    connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
+    actions.append(newAction);
+
     color = UASInterface::getNextColor();
     setBatterySpecs(QString("9V,9.5V,12.6V"));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
@@ -2633,6 +2686,27 @@ void UAS::disarmSystem()
     sendMessage(msg);
 }
 
+void UAS::goAutonomous()
+{
+    mavlink_message_t msg;
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & MAV_MODE_FLAG_AUTO_ENABLED & ~MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, navMode);
+    sendMessage(msg);
+}
+
+void UAS::goManual()
+{
+    mavlink_message_t msg;
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & ~MAV_MODE_FLAG_AUTO_ENABLED & MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, navMode);
+    sendMessage(msg);
+}
+
+void UAS::toggleAutonomy()
+{
+    mavlink_message_t msg;
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, navMode);
+    sendMessage(msg);
+}
+
 /** 
 * Set the manual control commands. 
 * This can only be done if the system has manual inputs enabled and is armed.
@@ -2693,41 +2767,6 @@ int UAS::getSystemType()
 {
     return this->type;
 }
-
-/**
- * @brief Returns true for systems that can reverse. If the system has no control over position, it returns false as well.
- * @return If the specified vehicle type can
- */
-//bool UAS::systemCanReverse() const
-//{
-//    switch(type)
-//    {
-//    case MAV_TYPE_GENERIC:
-//    case MAV_TYPE_FIXED_WING:
-//    case MAV_TYPE_ROCKET:
-//    case MAV_TYPE_FLAPPING_WING:
-
-//    // System types that don't have movement
-//    case MAV_TYPE_ANTENNA_TRACKER:
-//    case MAV_TYPE_GCS:
-//    case MAV_TYPE_FREE_BALLOON:
-//    default:
-//        return false;
-//        break;
-//    case MAV_TYPE_QUADROTOR:
-//    case MAV_TYPE_COAXIAL:
-//    case MAV_TYPE_HELICOPTER:
-//    case MAV_TYPE_AIRSHIP:
-//    case MAV_TYPE_GROUND_ROVER:
-//    case MAV_TYPE_SURFACE_BOAT:
-//    case MAV_TYPE_SUBMARINE:
-//    case MAV_TYPE_HEXAROTOR:
-//    case MAV_TYPE_OCTOROTOR:
-//    case MAV_TYPE_TRICOPTER:
-//        return true;
-//        break;
-//    }
-//}
 
 /**
 * @param buttonIndex

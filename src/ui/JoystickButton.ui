@@ -65,6 +65,9 @@
    </item>
    <item>
     <widget class="QComboBox" name="joystickAction">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -73,15 +76,13 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>30</width>
+       <width>60</width>
        <height>0</height>
       </size>
      </property>
-     <item>
-      <property name="text">
-       <string>--</string>
-      </property>
-     </item>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToContents</enum>
+     </property>
     </widget>
    </item>
   </layout>
