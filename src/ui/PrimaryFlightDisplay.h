@@ -63,6 +63,7 @@ signals:
     void visibilityChanged(bool visible);
 
 private:
+    /*
     enum AltimeterMode {
         PRIMARY_MAIN_GPS_SUB,   // Show the primary alt. on tape and GPS as extra info
         GPS_MAIN                // Show GPS on tape and no extra info
@@ -77,6 +78,7 @@ private:
         PRIMARY_MAIN_GROUND_SUB,// Show primary speed (often airspeed) on tape and groundspeed as extra
         GROUND_MAIN             // Show groundspeed on tape and no extra info
     };
+    */
 
     /*
      * There are at least these differences between airplane and copter PDF view:
@@ -115,9 +117,11 @@ private:
 
     UASInterface* uas;          ///< The uas currently monitored
 
+    /*
     AltimeterMode altimeterMode;
     AltimeterFrame altimeterFrame;
     SpeedMode speedMode;
+    */
 
     bool didReceivePrimaryAltitude;
     bool didReceivePrimarySpeed;
@@ -144,9 +148,9 @@ private:
     float navigationTargetBearing;
 
     Layout layout;      // The display layout.
-    Style style;        // The AI style (tapes translusent or opague)
+    Style style;        // The AI style (tapes translucent or opague)
 
-
+    // TODO: Use stylesheet colors?
     QColor redColor;
     QColor amberColor;
     QColor greenColor;
@@ -154,7 +158,7 @@ private:
     qreal lineWidth;
     qreal fineLineWidth;
 
-    qreal smallTestSize;
+    qreal smallTextSize;
     qreal mediumTextSize;
     qreal largeTextSize;
 
@@ -170,13 +174,7 @@ private:
     static const int tickValues[];
     static const QString compassWindNames[];
 
-    static const int updateInterval = 40;
-
-
-signals:
-    
-public slots:
-    
+    static const int updateInterval = 40;   
 };
 
 #endif // PRIMARYFLIGHTDISPLAY_H
