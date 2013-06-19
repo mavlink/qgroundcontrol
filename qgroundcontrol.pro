@@ -235,7 +235,22 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/uas/UASActionsWidget.ui \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/UASRawStatusView.ui \
-    src/ui/uas/QGCMessageView.ui
+    src/ui/uas/QGCMessageView.ui \
+    src/ui/configuration/ApmHardwareConfig.ui \
+    src/ui/configuration/ApmSoftwareConfig.ui \
+    src/ui/configuration/FrameTypeConfig.ui \
+    src/ui/configuration/CompassConfig.ui \
+    src/ui/configuration/AccelCalibrationConfig.ui \
+    src/ui/configuration/RadioCalibrationConfig.ui \
+    src/ui/configuration/FlightModeConfig.ui \
+    src/ui/configuration/Radio3DRConfig.ui \
+    src/ui/configuration/BatteryMonitorConfig.ui \
+    src/ui/configuration/SonarConfig.ui \
+    src/ui/configuration/AirspeedConfig.ui \
+    src/ui/configuration/OpticalFlowConfig.ui \
+    src/ui/configuration/OsdConfig.ui \
+    src/ui/configuration/AntennaTrackerConfig.ui \
+    src/ui/configuration/CameraGimbalConfig.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -251,7 +266,8 @@ INCLUDEPATH += src \
     src/ui/watchdog \
     src/ui/map3D \
     src/ui/mission \
-    src/ui/designer
+    src/ui/designer \
+    src/ui/configuration
 HEADERS += src/MG.h \
     src/QGCCore.h \
     src/uas/UASInterface.h \
@@ -393,7 +409,22 @@ HEADERS += src/MG.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
     src/ui/PrimaryFlightDisplay.h \
-    src/ui/uas/QGCMessageView.h
+    src/ui/uas/QGCMessageView.h \
+    src/ui/configuration/ApmHardwareConfig.h \
+    src/ui/configuration/ApmSoftwareConfig.h \
+    src/ui/configuration/FrameTypeConfig.h \
+    src/ui/configuration/CompassConfig.h \
+    src/ui/configuration/AccelCalibrationConfig.h \
+    src/ui/configuration/RadioCalibrationConfig.h \
+    src/ui/configuration/FlightModeConfig.h \
+    src/ui/configuration/Radio3DRConfig.h \
+    src/ui/configuration/BatteryMonitorConfig.h \
+    src/ui/configuration/SonarConfig.h \
+    src/ui/configuration/AirspeedConfig.h \
+    src/ui/configuration/OpticalFlowConfig.h \
+    src/ui/configuration/OsdConfig.h \
+    src/ui/configuration/AntennaTrackerConfig.h \
+    src/ui/configuration/CameraGimbalConfig.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -570,7 +601,22 @@ SOURCES += src/main.cc \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
     src/ui/PrimaryFlightDisplay.cpp \
-    src/ui/uas/QGCMessageView.cc
+    src/ui/uas/QGCMessageView.cc \
+    src/ui/configuration/ApmHardwareConfig.cc \
+    src/ui/configuration/ApmSoftwareConfig.cc \
+    src/ui/configuration/FrameTypeConfig.cc \
+    src/ui/configuration/CompassConfig.cc \
+    src/ui/configuration/AccelCalibrationConfig.cc \
+    src/ui/configuration/RadioCalibrationConfig.cc \
+    src/ui/configuration/FlightModeConfig.cc \
+    src/ui/configuration/Radio3DRConfig.cc \
+    src/ui/configuration/BatteryMonitorConfig.cc \
+    src/ui/configuration/SonarConfig.cc \
+    src/ui/configuration/AirspeedConfig.cc \
+    src/ui/configuration/OpticalFlowConfig.cc \
+    src/ui/configuration/OsdConfig.cc \
+    src/ui/configuration/AntennaTrackerConfig.cc \
+    src/ui/configuration/CameraGimbalConfig.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
