@@ -16,69 +16,8 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
     }
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
-
-    /*{
-        QAction *action = new QAction("latitude",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("latitude");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["latitude"] = item;
-    }
-
-    {
-        QAction *action = new QAction("longitude",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("longitude");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["longitude"] = item;
-    }
-
-    {
-        QAction *action = new QAction("altitude",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("altitude");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["altitude"] = item;
-    }
-
-    {
-        QAction *action = new QAction("satelliteCount",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("satelliteCount");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["satelliteCount"] = item;
-    }
-
-    {
-        QAction *action = new QAction("distToWaypoint",this);
-        action->setCheckable(true);
-        action->setChecked(true);
-        connect(action,SIGNAL(toggled(bool)),this,SLOT(actionTriggered(bool)));
-        this->addAction(action);
-        UASQuickViewItem *item = new UASQuickViewItem(this);
-        item->setTitle("distToWaypoint");
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap["distToWaypoint"] = item;
-    }*/
-
-    //this->setSizePolicy();
     loadSettings();
+
     //If we don't have any predefined settings, set some defaults.
     if (uasPropertyValueMap.size() == 0)
     {
@@ -98,6 +37,14 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
     updateTimer->start(1000);
 }
+UASQuickView::~UASQuickView()
+{
+    if (quickViewSelectDialog)
+    {
+        delete quickViewSelectDialog;
+    }
+}
+
 void UASQuickView::actionTriggered()
 {
     if (quickViewSelectDialog)
