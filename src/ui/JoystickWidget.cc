@@ -27,11 +27,18 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     connect(this->joystick, SIGNAL(axisValueChanged(int,float)), this, SLOT(updateAxisValue(int,float)));
     connect(this->joystick, SIGNAL(hatDirectionChanged(int,int)), this, SLOT(setHat(int,int)));
 
-    // Update the UI if the joystick changes.
-    connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateUIForJoystick(int)));
+    // Also watch for when new settings were loaded for the current joystick to do a mass UI refresh.
+    connect(this->joystick, SIGNAL(joystickSettingsChanged()), this, SLOT(updateUI()));
 
-    // Enable/disable the UI based on the enable checkbox
+    // If the selected joystick is changed, update the joystick and the UI.
+    connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this->joystick, SLOT(setActiveJoystick(int)));
+    connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(createUIForJoystick()));
+
+    // Initialize the UI to the current JoystickInput state. Also make sure to listen for future changes
+    // so that the UI can be updated.
     connect(m_ui->enableCheckBox, SIGNAL(toggled(bool)), m_ui->joystickFrame, SLOT(setEnabled(bool)));
+    m_ui->enableCheckBox->setChecked(this->joystick->enabled()); // Needs to be after connecting to the joystick frame and before watching for enabled events from JoystickInput.
+    connect(m_ui->enableCheckBox, SIGNAL(toggled(bool)), this->joystick, SLOT(setEnabled(bool)));
 
     // Update the button label colors based on the current theme and watch for future theme changes.
     styleChanged(MainWindow::instance()->getStyle());
@@ -69,7 +76,7 @@ void JoystickWidget::initUI()
     }
 
     // Add any missing buttons
-    updateUIForJoystick(joystick->getJoystickID());
+    createUIForJoystick();
 }
 
 void JoystickWidget::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newStyle)
@@ -100,7 +107,51 @@ void JoystickWidget::changeEvent(QEvent *e)
     }
 }
 
-void JoystickWidget::updateUIForJoystick(int id)
+void JoystickWidget::updateUI()
+{
+    for (int i = 0; i < buttons.size(); i++)
+    {
+        JoystickButton* button = buttons[i];
+        int action = joystick->getActionForButton(i);
+        button->setAction(action + 1);
+        qDebug() << "JoystickWidget: Updating button " << i << " to action " << action + 1;
+    }
+    int rollAxis = joystick->getMappingRollAxis();
+    int pitchAxis = joystick->getMappingPitchAxis();
+    int yawAxis = joystick->getMappingYawAxis();
+    int throttleAxis = joystick->getMappingThrottleAxis();
+    for (int i = 0; i < axes.size(); i++)
+    {
+        JoystickAxis* axis = axes[i];
+        float value = joystick->getCurrentValueForAxis(i);
+        axis->setValue(value);
+        JoystickInput::JOYSTICK_INPUT_MAPPING mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_NONE;
+        if (i == rollAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_ROLL;
+        }
+        else if (i == pitchAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_PITCH;
+        }
+        else if (i == yawAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_YAW;
+        }
+        else if (i == throttleAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE;
+        }
+        axis->setMapping(mapping);
+        bool inverted = joystick->getInvertedForAxis(i);
+        axis->setInverted(inverted);
+        bool limited = joystick->getRangeLimitForAxis(i);
+        axis->setRangeLimit(limited);
+        qDebug() << "JoystickWidget: Updating axis " << i << " to value:" << value << ", mapping:" << mapping << ", inverted:" << inverted << ", limited:" << limited;
+    }
+}
+
+void JoystickWidget::createUIForJoystick()
 {
     // Delete all the old UI elements
     foreach (JoystickButton* b, buttons)
@@ -114,9 +165,6 @@ void JoystickWidget::updateUIForJoystick(int id)
     }
     axes.clear();
 
-    // Set the JoystickInput to listen to the new joystick instead.
-    joystick->setActiveJoystick(id);
-
     // And add the necessary button displays for this joystick.
     int newButtons = joystick->getJoystickNumButtons();
     if (newButtons)
@@ -125,6 +173,8 @@ void JoystickWidget::updateUIForJoystick(int id)
         for (int i = 0; i < newButtons; i++)
         {
             JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
+            button->setAction(joystick->getActionForButton(i));
+            connect(button, SIGNAL(actionChanged(int,int)), this->joystick, SLOT(setButtonAction(int,int)));
             connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), button, SLOT(setActiveUAS(UASInterface*)));
             m_ui->buttonLayout->addWidget(button);
             buttons.append(button);

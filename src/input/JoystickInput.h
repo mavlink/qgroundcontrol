@@ -44,6 +44,13 @@ This file is part of the PIXHAWK project
 
 #include "UASInterface.h"
 
+struct JoystickSettings {
+    QMap<int, bool> axesInverted; ///< Whether each axis should be used inverted from what was reported.
+    QMap<int, bool> axesLimited; ///< Whether each axis should be limited to only the positive range. Currently this only applies to the throttle axis, but is kept generic here to possibly support other axes.
+    QMap<int, int> buttonActions; ///< The index of the action associated with every button.
+};
+Q_DECLARE_METATYPE(JoystickSettings);
+
 /**
  * @brief Joystick input
  */
@@ -53,7 +60,7 @@ class JoystickInput : public QThread
 
 public:
     JoystickInput();
-	~JoystickInput();
+    ~JoystickInput();
     void run();
     void shutdown();
 
@@ -71,14 +78,27 @@ public:
     };
 
     /**
-     * @brief Load joystick settings
+     * @brief Load joystick-specific settings.
      */
-    void loadSettings();
+    void loadJoystickSettings();
+    /**
+     * @brief Load joystick-independent settings.
+     */
+    void loadGeneralSettings();
 
     /**
-     * @brief Store joystick settings
+     * @brief Store joystick-specific settings.
      */
-    void storeSettings();
+    void storeJoystickSettings() const;
+    /**
+     * @brief Store joystick-independent settings.
+     */
+    void storeGeneralSettings() const;
+
+    bool enabled() const
+    {
+        return isEnabled;
+    }
 
     int getMappingThrottleAxis() const
     {
@@ -130,9 +150,10 @@ public:
         return QString(SDL_JoystickName(id));
     }
 
-    float getCurrentValueForAxis(int axis);
-    bool getInvertedForAxis(int axis);
-    bool getRangeLimitForAxis(int axis);
+    float getCurrentValueForAxis(int axis) const;
+    bool getInvertedForAxis(int axis) const;
+    bool getRangeLimitForAxis(int axis) const;
+    int getActionForButton(int button) const;
 
     const double sdlJoystickMin;
     const double sdlJoystickMax;
@@ -140,10 +161,15 @@ public:
 protected:
     double calibrationPositive[10];
     double calibrationNegative[10];
+
+    bool isEnabled; ///< Track whether the system should emit the higher-level signals: joystickChanged & actionTriggered.
+    bool done;
+
     SDL_Joystick* joystick;
     UASInterface* uas; ///< Track the current UAS.
+    int autopilotType; ///< Cache the autopilotType
+    int systemType; ///< Cache the systemType
     bool uasCanReverse; ///< Track whether the connect UAS can drive a reverse speed.
-    bool done;
 
     // Store the mapping between axis numbers and the roll/pitch/yaw/throttle configuration.
     // Value is one of JoystickAxis::JOYSTICK_INPUT_MAPPING.
@@ -159,9 +185,16 @@ protected:
     int joystickNumAxes;
     int joystickNumButtons;
 
+    // Track axis/button settings based on a Joystick/AutopilotType/SystemType triplet.
+    // This is only a double-map, because settings are stored/loaded based on joystick
+    // name first, so only the settings for the current joystick need to be stored at any given time.
+    // Pointers are kept to the various settings field to reduce lookup times.
+    // Note that the mapping (0,0) corresponds to when no UAS is connected. Since this corresponds
+    // to a generic vehicle type and a generic autopilot, this is a pretty safe default.
+    QMap<int, QMap<int, JoystickSettings> > joystickSettings;
+
+    // Track the last state of the axes, buttons, and hats for only emitting change signals.
     QList<float> joystickAxes; ///< The values of every axes during the last sample.
-    QList<bool> joystickAxesInverted; ///< Whether each axis should be used inverted from what was reported.
-    QList<bool> joystickAxesLimited; ///< Whether each axis should be limited to only the positive range.
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
     int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
@@ -202,6 +235,12 @@ signals:
     void buttonReleased(int key);
 
     /**
+      * @brief A joystick button was pressed that had a corresponding action.
+      * @param action The index of the action to trigger. Dependent on UAS.
+      */
+    void actionTriggered(int action);
+
+    /**
       * @brief Hat (8-way switch on the top) has changed position
       *
       * Coordinate frame for joystick hat:
@@ -218,7 +257,12 @@ signals:
       */
     void hatDirectionChanged(int x, int y);
 
+    /** @brief Signals that new joystick-specific settings were changed. Useful for triggering updates that at dependent on the current joystick. */
+    void joystickSettingsChanged();
+
 public slots:
+    /** @brief Enable or disable emitting the high-level control signals from the joystick. */
+    void setEnabled(bool enable);
     /** @brief Specify the UAS that this input should forward joystickChanged signals and buttonPresses to. */
     void setActiveUAS(UASInterface* uas);
     /** @brief Switch to a new joystick by ID number. Both buttons and axes are updated with the proper signals emitted. */
@@ -242,6 +286,14 @@ public slots:
      * @param limitRange If true only the positive half of this axis will be read.
      */
     void setAxisRangeLimit(int axis, bool limitRange);
+    /**
+     * @brief Specify a button->action mapping for the given uas.
+     * This mapping is applied based on UAS autopilot type and UAS system type.
+     * Connects the buttonEmitted signal for the corresponding button to the corresponding action for the current UAS.
+     * @param button The numeric ID for the button
+     * @param action The numeric ID of the action for this UAS to map to.
+     */
+    void setButtonAction(int button, int action);
 };
 
 #endif // _JOYSTICKINPUT_H_
