@@ -1,5 +1,6 @@
 #include "JoystickButton.h"
 #include "ui_JoystickButton.h"
+#include "UASManager.h"
 
 JoystickButton::JoystickButton(int id, QWidget *parent) :
     QWidget(parent),
@@ -8,6 +9,7 @@ JoystickButton::JoystickButton(int id, QWidget *parent) :
 {
     m_ui->setupUi(this);
     m_ui->joystickButtonLabel->setText(QString::number(id));
+    this->setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(m_ui->joystickAction, SIGNAL(currentIndexChanged(int)), this, SLOT(actionComboBoxChanged(int)));
 }
 
@@ -18,6 +20,8 @@ JoystickButton::~JoystickButton()
 
 void JoystickButton::setActiveUAS(UASInterface* uas)
 {
+    // Disable signals so that changes to joystickAction don't trigger JoystickInput updates.
+    blockSignals(true);
     if (uas)
     {
         m_ui->joystickAction->setEnabled(true);
@@ -33,9 +37,20 @@ void JoystickButton::setActiveUAS(UASInterface* uas)
         m_ui->joystickAction->clear();
         m_ui->joystickAction->addItem("--");
     }
+    blockSignals(false);
+}
+
+void JoystickButton::setAction(int index)
+{
+    // Disable signals so that changes to joystickAction don't trigger JoystickInput updates.
+    //blockSignals(true);
+    // Add one because the default no-action takes the 0-spot.
+    m_ui->joystickAction->setCurrentIndex(index + 1);
+    //blockSignals(false);
 }
 
 void JoystickButton::actionComboBoxChanged(int index)
 {
-    emit actionChanged(id, index);
+    // Subtract one because the default no-action takes the 0-spot.
+    emit actionChanged(id, index - 1);
 }

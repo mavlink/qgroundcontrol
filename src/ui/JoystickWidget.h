@@ -54,7 +54,7 @@ public:
 
 public slots:
     /** @brief Update the UI for a new joystick based on SDL ID. */
-    void updateUIForJoystick(int id);
+    void createUIForJoystick();
     /**
      * @brief Update a given axis with a new value
      * @param axis The index of the axis to update.
@@ -72,6 +72,8 @@ public slots:
     void joystickButtonReleased(int key);
     /** @brief Update the UI color scheme when the MainWindow theme changes. */
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE);
+    /** Update the UI assuming the joystick has stayed the same. */
+    void updateUI();
 
 protected:
     /** @brief Update the proper number of buttons for the current joystick. */

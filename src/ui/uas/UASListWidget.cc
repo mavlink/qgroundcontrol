@@ -123,7 +123,7 @@ void UASListWidget::updateStatus()
         {
             displayString = QString("<b>%1</b>").arg(i.key()->getName()) + displayString;
         }
-        qDebug() << p << ": " + displayString;
+//        qDebug() << p << ": " + displayString;
         i.value()->setToolTip(displayString);
     }
 }

@@ -699,7 +699,7 @@ public slots:
           this->airframe = airframe;
           emit systemSpecsChanged(uasId);
         }
-        
+
     }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
@@ -782,6 +782,8 @@ public slots:
     void armSystem();
     /** @brief Disable the motors */
     void disarmSystem();
+    /** @brief Toggle the armed state of the system. */
+    void toggleArmedState();
     /**
      * @brief Tell the UAS to switch into a completely-autonomous mode, so disable manual input.
      */
@@ -883,6 +885,9 @@ public slots:
     void startDataRecording();
     void stopDataRecording();
     void deleteSettings();
+
+    /** @brief Triggers the action associated with the given ID. */
+    void triggerAction(int action);
 signals:
     /** @brief The main/battery voltage has changed/was updated */
     //void voltageChanged(int uasId, double voltage); // Defined in UASInterface already
