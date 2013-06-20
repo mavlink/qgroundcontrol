@@ -71,7 +71,9 @@ void JoystickInput::loadGeneralSettings()
     // Deal with settings specific to the JoystickInput
     settings.beginGroup("JOYSTICK_INPUT");
     isEnabled = settings.value("ENABLED", false).toBool();
-    QString joystickName = settings.value("JOYSTICK", "").toString();
+    qDebug() << "JoystickInput: Loading enabled setting (" << isEnabled << ")";
+    joystickName = settings.value("JOYSTICK_NAME", "").toString();
+    qDebug() << "JoystickInput: Loading last joystick setting (" << joystickName << ")";
     settings.endGroup();
 }
 
@@ -342,21 +344,33 @@ void JoystickInput::init()
         return;
     }
 
+    // Now that we've detected a joystick, load in the joystick-agnostic settings.
+    loadGeneralSettings();
+
+    // Enumerate all found devices
     qDebug() << QString("%1 Input devices found:").arg(numJoysticks);
+    int activeJoystick = 0;
     for(int i=0; i < numJoysticks; i++ )
     {
-        qDebug() << QString("\t- %1").arg(SDL_JoystickName(i));
+        QString name = SDL_JoystickName(i);
+        qDebug() << QString("\t- %1").arg(name);
+
+        // If we've matched this joystick to what was last opened, note it.
+        // Note: The way this is implemented the LAST joystick of a given name will be opened.
+        if (name == joystickName)
+        {
+            activeJoystick = i;
+        }
+
         SDL_Joystick* x = SDL_JoystickOpen(i);
         qDebug() << QString("Number of Axes: %1").arg(QString::number(SDL_JoystickNumAxes(x)));
         qDebug() << QString("Number of Buttons: %1").arg(QString::number(SDL_JoystickNumButtons(x)));
         SDL_JoystickClose(x);
     }
 
-    // Now that we've detected a joystick, load in the joystick-agnostic settings.
-    loadGeneralSettings();
-
-    // And attach to the first joystick found to start, which also loads in joystick-specific settings.
-    setActiveJoystick(0);
+    // Set the active joystick based on name, if a joystick was found in the saved settings, otherwise
+    // default to the first one.
+    setActiveJoystick(activeJoystick);
 
     // Now make sure we know what the current UAS is and track changes to it.
     setActiveUAS(UASManager::instance()->getActiveUAS());
