@@ -284,7 +284,7 @@ int UAS::getUASID() const
 
 void UAS::triggerAction(int action)
 {
-    if (action > 0 && action < actions.size())
+    if (action >= 0 && action < actions.size())
     {
         qDebug() << "Triggering action: '" << actions[action]->text() << "'";
         actions[action]->trigger();
@@ -2787,27 +2787,6 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
 int UAS::getSystemType()
 {
     return this->type;
-}
-
-/**
-* @param buttonIndex
-*/
-void UAS::receiveButton(int buttonIndex)
-{
-    switch (buttonIndex)
-    {
-    case 0:
-
-        break;
-    case 1:
-
-        break;
-    default:
-
-        break;
-    }
-    //    qDebug() << __FILE__ << __LINE__ << ": Received button clicked signal (button # is: " << buttonIndex << "), UNIMPLEMENTED IN MAVLINK!";
-
 }
 
 /**

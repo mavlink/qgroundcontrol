@@ -505,7 +505,6 @@ void JoystickInput::setActiveJoystick(int id)
     joystick = SDL_JoystickOpen(joystickID);
     if (joystick && SDL_JoystickOpened(joystickID))
     {
-        SDL_JoystickUpdate();
         // Update joystick configuration.
         joystickName = QString(SDL_JoystickName(joystickID));
         joystickNumButtons = SDL_JoystickNumButtons(joystick);
@@ -532,6 +531,9 @@ void JoystickInput::setActiveJoystick(int id)
         joystickNumAxes = 0;
     }
 
+    // Specify that a new joystick has been selected, so that any UI elements can update.
+    emit newJoystickSelected();
+    // And then trigger an update of this new UI.
     emit joystickSettingsChanged();
 }
 
