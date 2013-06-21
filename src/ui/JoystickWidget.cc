@@ -3,7 +3,7 @@
 #include "ui_JoystickWidget.h"
 #include "JoystickButton.h"
 #include "JoystickAxis.h"
-#include <QDebug>
+
 #include <QDesktopWidget>
 
 JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
@@ -30,9 +30,8 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     // Also watch for when new settings were loaded for the current joystick to do a mass UI refresh.
     connect(this->joystick, SIGNAL(joystickSettingsChanged()), this, SLOT(updateUI()));
 
-    // If the selected joystick is changed, update the joystick and the UI.
+    // If the selected joystick is changed, update the joystick.
     connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this->joystick, SLOT(setActiveJoystick(int)));
-    connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(createUIForJoystick()));
 
     // Initialize the UI to the current JoystickInput state. Also make sure to listen for future changes
     // so that the UI can be updated.
@@ -109,13 +108,15 @@ void JoystickWidget::changeEvent(QEvent *e)
 
 void JoystickWidget::updateUI()
 {
+    // Update the actions for all of the buttons
     for (int i = 0; i < buttons.size(); i++)
     {
         JoystickButton* button = buttons[i];
         int action = joystick->getActionForButton(i);
-        button->setAction(action + 1);
-        qDebug() << "JoystickWidget: Updating button " << i << " to action " << action + 1;
+        button->setAction(action);
     }
+
+    // Update the axis mappings
     int rollAxis = joystick->getMappingRollAxis();
     int pitchAxis = joystick->getMappingPitchAxis();
     int yawAxis = joystick->getMappingYawAxis();
@@ -147,7 +148,6 @@ void JoystickWidget::updateUI()
         axis->setInverted(inverted);
         bool limited = joystick->getRangeLimitForAxis(i);
         axis->setRangeLimit(limited);
-        qDebug() << "JoystickWidget: Updating axis " << i << " to value:" << value << ", mapping:" << mapping << ", inverted:" << inverted << ", limited:" << limited;
     }
 }
 
@@ -175,7 +175,7 @@ void JoystickWidget::createUIForJoystick()
             JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
             button->setAction(joystick->getActionForButton(i));
             connect(button, SIGNAL(actionChanged(int,int)), this->joystick, SLOT(setButtonAction(int,int)));
-            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), button, SLOT(setActiveUAS(UASInterface*)));
+            connect(this->joystick, SIGNAL(activeUASSet(UASInterface*)), button, SLOT(setActiveUAS(UASInterface*)));
             m_ui->buttonLayout->addWidget(button);
             buttons.append(button);
         }
@@ -218,7 +218,7 @@ void JoystickWidget::createUIForJoystick()
             connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
             connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
             connect(axis, SIGNAL(rangeChanged(int,bool)), this->joystick, SLOT(setAxisRangeLimit(int,bool)));
-            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), axis, SLOT(setActiveUAS(UASInterface*)));
+            connect(this->joystick, SIGNAL(activeUASSet(UASInterface*)), axis, SLOT(setActiveUAS(UASInterface*)));
             m_ui->axesLayout->addWidget(axis);
             axes.append(axis);
         }

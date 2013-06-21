@@ -53,16 +53,9 @@ void JoystickAxis::setRangeLimit(bool newValue)
 
 void JoystickAxis::mappingComboBoxChanged(int newMapping)
 {
-    if (newMapping == JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE)
-    {
-        ui->rangeCheckBox->show();
-    }
-    else
-    {
-        ui->rangeCheckBox->hide();
-    }
-    emit mappingChanged(id, (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping);
-    this->setActiveUAS(UASManager::instance()->getActiveUAS());
+    JoystickInput::JOYSTICK_INPUT_MAPPING mapping = (JoystickInput::JOYSTICK_INPUT_MAPPING)newMapping;
+    emit mappingChanged(id, mapping);
+    updateUIBasedOnUAS(UASManager::instance()->getActiveUAS(), mapping);
 }
 
 void JoystickAxis::inversionCheckBoxChanged(bool inverted)
@@ -77,10 +70,16 @@ void JoystickAxis::rangeCheckBoxChanged(bool limited)
 
 void JoystickAxis::setActiveUAS(UASInterface* uas)
 {
+    updateUIBasedOnUAS(uas, (JoystickInput::JOYSTICK_INPUT_MAPPING)ui->comboBox->currentIndex());
+}
+
+void JoystickAxis::updateUIBasedOnUAS(UASInterface* uas, JoystickInput::JOYSTICK_INPUT_MAPPING axisMapping)
+{
     // Set the throttle display to only positive if:
     // * This is the throttle axis AND
     // * The current UAS can't reverse OR there is no current UAS
-    if (((uas && !uas->systemCanReverse()) || !uas) && ui->comboBox->currentIndex() == JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE)
+    // This causes us to default to systems with no negative throttle.
+    if (((uas && !uas->systemCanReverse()) || !uas) && axisMapping == JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE)
     {
         ui->progressBar->setRange(0, 100);
         ui->rangeCheckBox->show();
