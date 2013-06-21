@@ -71,9 +71,7 @@ void JoystickInput::loadGeneralSettings()
     // Deal with settings specific to the JoystickInput
     settings.beginGroup("JOYSTICK_INPUT");
     isEnabled = settings.value("ENABLED", false).toBool();
-    qDebug() << "JoystickInput: Loading enabled setting (" << isEnabled << ")";
     joystickName = settings.value("JOYSTICK_NAME", "").toString();
-    qDebug() << "JoystickInput: Loading last joystick setting (" << joystickName << ")";
     settings.endGroup();
 }
 
@@ -106,7 +104,6 @@ void JoystickInput::loadJoystickSettings()
         {
             settings.setArrayIndex(j);
             int systemType = settings.value("SYSTEM_TYPE", 0).toInt();
-            qDebug() << "Loading joystick settings for (" << autopilotType << "," << systemType << ")";
 
             // Now that both the autopilot and system type are available, update some references.
             QMap<int, bool>* joystickAxesInverted = &joystickSettings[autopilotType][systemType].axesInverted;
@@ -121,7 +118,6 @@ void JoystickInput::loadJoystickSettings()
                 int index = settings.value("INDEX", 0).toInt();
                 bool inverted = settings.value("INVERTED", false).toBool();
                 joystickAxesInverted->insert(index, inverted);
-                qDebug() << "Loading inversion status (" << inverted << ") for axis " << index;
             }
             settings.endArray();
 
@@ -133,7 +129,6 @@ void JoystickInput::loadJoystickSettings()
                 int index = settings.value("INDEX", 0).toInt();
                 bool limited = settings.value("LIMITED", false).toBool();
                 joystickAxesLimited->insert(index, limited);
-                qDebug() << "Loading limited status (" << limited << ") for axis " << index;
             }
             settings.endArray();
 
@@ -145,7 +140,6 @@ void JoystickInput::loadJoystickSettings()
                 int index = settings.value("INDEX", 0).toInt();
                 int action = settings.value("ACTION", 0).toInt();
                 joystickButtonActions->insert(index, action);
-                qDebug() << "Loading action (" << action << ") for button " << index;
             }
             settings.endArray();
         }
@@ -198,7 +192,6 @@ void JoystickInput::storeJoystickSettings() const
 
             int systemType = j.key();
             settings.setValue("SYSTEM_TYPE", systemType);
-            qDebug() << "Saving joystick settings for (" << autopilotType << "," << systemType << ")";
 
             // Now that both the autopilot and system type are available, update some references.
             QMapIterator<int, bool> joystickAxesInverted(joystickSettings[autopilotType][systemType].axesInverted);
@@ -218,7 +211,6 @@ void JoystickInput::storeJoystickSettings() const
                     int index = joystickAxesInverted.key();
                     settings.setValue("INDEX", index);
                     settings.setValue("INVERTED", inverted);
-                    qDebug() << "Saving inversion status (" << inverted << ") for axis " << index;
                 }
             }
             settings.endArray();
@@ -235,7 +227,6 @@ void JoystickInput::storeJoystickSettings() const
                     int index = joystickAxesLimited.key();
                     settings.setValue("INDEX", index);
                     settings.setValue("LIMITED", limited);
-                    qDebug() << "Saving limited status (" << limited << ") for axis " << index;
                 }
             }
             settings.endArray();
@@ -252,7 +243,6 @@ void JoystickInput::storeJoystickSettings() const
                     int index = joystickButtonActions.key();
                     settings.setValue("INDEX", index);
                     settings.setValue("ACTION", action);
-                    qDebug() << "Saving action (" << action << ") for button " << index;
                 }
             }
             settings.endArray();
@@ -302,8 +292,11 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         // Update the joystick settings for a new UAS.
         autopilotType = uas->getAutopilotType();
         systemType = uas->getSystemType();
-        qDebug() << "Switching to UAS with autopilot: " << autopilotType << " and system: " << systemType;
     }
+
+    // Make sure any UI elements know we've updated the UAS. The UASManager signal is re-emitted here so that UI elements know to
+    // update their UAS-specific UI.
+    emit activeUASSet(uas);
 
     // Load any joystick-specific settings now that the UAS has changed.
     if (joystickID > -1)
@@ -353,7 +346,7 @@ void JoystickInput::init()
     for(int i=0; i < numJoysticks; i++ )
     {
         QString name = SDL_JoystickName(i);
-        qDebug() << QString("\t- %1").arg(name);
+        qDebug() << QString("\t%1").arg(name);
 
         // If we've matched this joystick to what was last opened, note it.
         // Note: The way this is implemented the LAST joystick of a given name will be opened.
@@ -363,8 +356,8 @@ void JoystickInput::init()
         }
 
         SDL_Joystick* x = SDL_JoystickOpen(i);
-        qDebug() << QString("Number of Axes: %1").arg(QString::number(SDL_JoystickNumAxes(x)));
-        qDebug() << QString("Number of Buttons: %1").arg(QString::number(SDL_JoystickNumButtons(x)));
+        qDebug() << QString("\tNumber of Axes: %1").arg(QString::number(SDL_JoystickNumAxes(x)));
+        qDebug() << QString("\tNumber of Buttons: %1").arg(QString::number(SDL_JoystickNumButtons(x)));
         SDL_JoystickClose(x);
     }
 
@@ -410,7 +403,7 @@ void JoystickInput::run()
             // This is generally not used for controlling a vehicle, but a UI representation, so it being slightly off is fine.
             // Here we map the joystick axis value into the initial range of [0:1].
             float axisValue = SDL_JoystickGetAxis(joystick, i);
-            if (joystickSettings[autopilotType][systemType].axesLimited[i])
+            if (joystickSettings[autopilotType][systemType].axesInverted[i])
             {
                 axisValue = (axisValue - calibrationNegative[i]) / (calibrationPositive[i] - calibrationNegative[i]);
             }
@@ -520,36 +513,26 @@ void JoystickInput::setActiveJoystick(int id)
 
         // Restore saved settings for this joystick.
         loadJoystickSettings();
-        qDebug() << "Roll: " << rollAxis << ", Pitch: " << pitchAxis << ", Yaw: " << yawAxis << ", Throttle: " << throttleAxis;
 
         // Update cached joystick axes values.
         // Also emit any signals for currently-triggering events
         joystickAxes.clear();
         for (int i = 0; i < joystickNumAxes; i++)
         {
-            int axisValue = SDL_JoystickGetAxis(joystick, i);
-            joystickAxes.append(axisValue);
-            emit axisValueChanged(i, axisValue);
+            joystickAxes.append(NAN);
         }
 
         // Update cached joystick button values.
         // Emit signals for any button events.
         joystickButtons = 0;
-        for (int i = 0; i < joystickNumButtons; i++)
-        {
-            if (SDL_JoystickGetButton(joystick, i))
-            {
-                emit buttonPressed(i);
-                joystickButtons |= 1 << i;
-            }
-        }
-        qDebug() << QString("Switching to joystick '%1' with %2 buttons/%3 axes").arg(joystickName, QString::number(joystickNumButtons), QString::number(joystickNumAxes));
     }
     else
     {
         joystickNumButtons = 0;
         joystickNumAxes = 0;
     }
+
+    emit joystickSettingsChanged();
 }
 
 void JoystickInput::setAxisMapping(int axis, JOYSTICK_INPUT_MAPPING newMapping)

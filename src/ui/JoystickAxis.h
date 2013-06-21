@@ -38,6 +38,12 @@ public slots:
 private:
     int id; ///< The ID for this axis. Corresponds to the IDs used by JoystickInput.
     Ui::JoystickAxis *ui;
+    /**
+     * @brief Update the UI based on both the current UAS and the current axis mapping.
+     * @param uas The currently-active UAS.
+     * @param axisMapping The new mapping for this axis.
+     */
+    void updateUIBasedOnUAS(UASInterface* uas, JoystickInput::JOYSTICK_INPUT_MAPPING axisMapping);
 
 private slots:
     /** @brief Handle changes to the mapping dropdown bar. */

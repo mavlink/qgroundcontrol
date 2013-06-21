@@ -21,7 +21,8 @@ public:
 public slots:
     /** @brief Specify the UAS that this axis should track for displaying throttle properly. */
     void setActiveUAS(UASInterface* uas);
-    /** @brieft Specify which action this button should correspond to. */
+    /** @brieft Specify which action this button should correspond to.
+     * Values 0 and higher indicate a specific action, while -1 indicates no action. */
     void setAction(int index);
 
 signals:

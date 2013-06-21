@@ -49,7 +49,7 @@ struct JoystickSettings {
     QMap<int, bool> axesLimited; ///< Whether each axis should be limited to only the positive range. Currently this only applies to the throttle axis, but is kept generic here to possibly support other axes.
     QMap<int, int> buttonActions; ///< The index of the action associated with every button.
 };
-Q_DECLARE_METATYPE(JoystickSettings);
+Q_DECLARE_METATYPE(JoystickSettings)
 
 /**
  * @brief Joystick input
@@ -256,6 +256,11 @@ signals:
       * @param y vector in forward-backward direction
       */
     void hatDirectionChanged(int x, int y);
+
+    /** @brief Signal that the UAS has been updated for this JoystickInput
+     * Note that any UI updates should NOT query this object for joystick details. That should be done in response to the joystickSettingsChanged signal.
+     */
+    void activeUASSet(UASInterface*);
 
     /** @brief Signals that new joystick-specific settings were changed. Useful for triggering updates that at dependent on the current joystick. */
     void joystickSettingsChanged();
