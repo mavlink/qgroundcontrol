@@ -34,27 +34,76 @@ This file is part of the QGROUNDCONTROL project
 
 FrameTypeConfig::FrameTypeConfig(QWidget *parent) : QWidget(parent)
 {
+    m_uas=0;
     ui.setupUi(this);
+
+    //Disable until we get a FRAME parameter.
+    ui.xRadioButton->setEnabled(false);
+    ui.vRadioButton->setEnabled(false);
+    ui.plusRadioButton->setEnabled(false);
+
     connect(ui.plusRadioButton,SIGNAL(clicked()),this,SLOT(plusFrameSelected()));
     connect(ui.xRadioButton,SIGNAL(clicked()),this,SLOT(xFrameSelected()));
     connect(ui.vRadioButton,SIGNAL(clicked()),this,SLOT(vFrameSelected()));
-    //connect(UASManager::instance()->getActiveUAS()->getParamManager(),SIGNAL(parameterListUpToDate(int))
+    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
+    activeUASSet(UASManager::instance()->getActiveUAS());
 }
 
 FrameTypeConfig::~FrameTypeConfig()
 {
 }
+void FrameTypeConfig::activeUASSet(UASInterface *uas)
+{
+    if (!uas) return;
+    if (!m_uas)
+    {
+        disconnect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
+    }
+    m_uas = uas;
+    connect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
+}
+void FrameTypeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
+{
+    if (parameterName == "FRAME")
+    {
+        ui.xRadioButton->setEnabled(true);
+        ui.vRadioButton->setEnabled(true);
+        ui.plusRadioButton->setEnabled(true);
+        if (value.toInt() == 0)
+        {
+            ui.plusRadioButton->setChecked(true);
+        }
+        else if (value.toInt() == 1)
+        {
+            ui.xRadioButton->setChecked(true);
+        }
+        else if (value.toInt() == 2)
+        {
+            ui.vRadioButton->setChecked(true);
+        }
+    }
+}
+
 void FrameTypeConfig::xFrameSelected()
 {
-
+    if (m_uas)
+    {
+        m_uas->setParameter(0,"FRAME",QVariant(1));
+    }
 }
 
 void FrameTypeConfig::plusFrameSelected()
 {
-
+    if (m_uas)
+    {
+        m_uas->setParameter(0,"FRAME",QVariant(0));
+    }
 }
 
 void FrameTypeConfig::vFrameSelected()
 {
-
+    if (m_uas)
+    {
+        m_uas->setParameter(0,"FRAME",QVariant(2));
+    }
 }

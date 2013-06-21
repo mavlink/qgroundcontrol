@@ -45,11 +45,14 @@ public:
     explicit FrameTypeConfig(QWidget *parent = 0);
     ~FrameTypeConfig();
 private slots:
+    void activeUASSet(UASInterface *uas);
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void xFrameSelected();
     void plusFrameSelected();
     void vFrameSelected();
 private:
     Ui::FrameTypeConfig ui;
+    UASInterface *m_uas;
 };
 
 #endif // FRAMETYPECONFIG_H
