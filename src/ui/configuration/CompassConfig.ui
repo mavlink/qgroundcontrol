@@ -42,7 +42,7 @@
     <string>&lt;a href=&quot;http://magnetic-declination.com/&quot;&gt;Declination Website&lt;/a&gt;</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox">
+  <widget class="QComboBox" name="orientationComboBox">
    <property name="geometry">
     <rect>
      <x>280</x>
@@ -102,7 +102,7 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
-     <widget class="QLineEdit" name="lineEdit"/>
+     <widget class="QLineEdit" name="declinationLineEdit"/>
     </item>
     <item>
      <widget class="QLabel" name="label_3">
