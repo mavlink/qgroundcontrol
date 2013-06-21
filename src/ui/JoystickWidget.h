@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Definition of joystick widget
+ *   @brief Definition of joystick widget. Provides a UI for configuring the joystick settings.
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -76,8 +76,6 @@ public slots:
     void updateUI();
 
 protected:
-    /** @brief Update the proper number of buttons for the current joystick. */
-    void updateButtons();
     /** @brief UI change event */
     virtual void changeEvent(QEvent *e);
     JoystickInput* joystick;  ///< Reference to the joystick
@@ -90,7 +88,9 @@ protected:
 
 private:
     Ui::JoystickWidget *m_ui;
-    /** @brief Initialize all dynamic UI elements (button list, joystick names, etc.) */
+    /** @brief Initialize all dynamic UI elements (button list, joystick names, etc.).
+     * Only done once at startup.
+     */
     void initUI();
 };
 

@@ -23,11 +23,20 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Definition of joystick interface
+ * @brief Definition of joystick interface
  *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *   @author Andreas Romer <mavteam@student.ethz.ch>
+ * This class defines a new thread to operate the reading of any joystick/controllers
+ * via the Simple Directmedia Library (libsdl.org). This relies on polling of the SDL,
+ * which is not their recommended method, instead they suggest use event checking. That
+ * does not seem to support switching joysticks after their internal event loop has started,
+ * so it was abandoned.
  *
+ * All joystick-related functionality is done in this class, though the JoystickWidget provides
+ * a UI around modifying its settings. Additionally controller buttons can be mapped to
+ * actions defined by any UASInterface object through the `UASInterface::getActions()` function.
+ *
+ * @author Lorenz Meier <mavteam@student.ethz.ch>
+ * @author Andreas Romer <mavteam@student.ethz.ch>
  */
 
 #ifndef _JOYSTICKINPUT_H_
@@ -198,6 +207,9 @@ protected:
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
     int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
+    /**
+     * @brief Called before main run() event loop starts. Waits for joysticks to be connected.
+     */
     void init();
 
 signals:
@@ -264,6 +276,9 @@ signals:
 
     /** @brief Signals that new joystick-specific settings were changed. Useful for triggering updates that at dependent on the current joystick. */
     void joystickSettingsChanged();
+
+    /** @brief The JoystickInput has switched to a different joystick. UI should be adjusted accordingly. */
+    void newJoystickSelected();
 
 public slots:
     /** @brief Enable or disable emitting the high-level control signals from the joystick. */

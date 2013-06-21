@@ -30,8 +30,10 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     // Also watch for when new settings were loaded for the current joystick to do a mass UI refresh.
     connect(this->joystick, SIGNAL(joystickSettingsChanged()), this, SLOT(updateUI()));
 
-    // If the selected joystick is changed, update the joystick.
+    // If the selected joystick is changed, update the JoystickInput.
     connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this->joystick, SLOT(setActiveJoystick(int)));
+    // Also wait for the JoystickInput to switch, then update our UI.
+    connect(this->joystick, SIGNAL(newJoystickSelected()), this, SLOT(createUIForJoystick()));
 
     // Initialize the UI to the current JoystickInput state. Also make sure to listen for future changes
     // so that the UI can be updated.
@@ -124,8 +126,6 @@ void JoystickWidget::updateUI()
     for (int i = 0; i < axes.size(); i++)
     {
         JoystickAxis* axis = axes[i];
-        float value = joystick->getCurrentValueForAxis(i);
-        axis->setValue(value);
         JoystickInput::JOYSTICK_INPUT_MAPPING mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_NONE;
         if (i == rollAxis)
         {

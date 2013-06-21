@@ -261,7 +261,9 @@ public:
     }
 
     /** @brief Returns a list of actions/commands that this vehicle can perform.
-     *  Used for creating UI elements for built-in functionality for this vehicle.
+     * Used for creating UI elements for built-in functionality for this vehicle.
+     * Actions should be mappings to `void f(void);` functions that simply issue
+     * a command to the vehicle.
      */
     virtual QList<QAction*> getActions() const = 0;
 

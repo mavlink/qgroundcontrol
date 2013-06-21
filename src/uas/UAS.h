@@ -799,8 +799,6 @@ public slots:
 
     /** @brief Set the values for the manual control of the vehicle */
     void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
-    /** @brief Receive a button pressed event from an input device, e.g. joystick */
-    void receiveButton(int buttonIndex);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
