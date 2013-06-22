@@ -41,6 +41,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     firstAction(NULL)
 {
     setObjectName("QGCToolBar");
+    setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
     // Do not load UI, wait for actions
 }
@@ -70,14 +71,14 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
             toolBarTimeoutLabel->setStyleSheet(QString("QLabel {color: #FFF; background-color: #6B0017;}"));
         }
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
+        toolBarTimeoutAction->setVisible(true);
     }
     else
     {
         // Check if loss text is present, reset once
-        if (toolBarTimeoutLabel->text() != "")
+        if (toolBarTimeoutAction->isVisible())
         {
-            toolBarTimeoutLabel->setText("");
-            toolBarTimeoutLabel->setStyleSheet(QString(""));
+            toolBarTimeoutAction->setVisible(false);
         }
     }
 }
@@ -93,13 +94,15 @@ void QGCToolBar::createUI()
     toolBarNameLabel = new QLabel(this);
     toolBarNameLabel->setToolTip(tr("Currently controlled vehicle"));
     toolBarNameLabel->setAlignment(Qt::AlignCenter);
+    toolBarNameLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     addWidget(toolBarNameLabel);
 
     toolBarTimeoutLabel = new QLabel(this);
     toolBarTimeoutLabel->setToolTip(tr("System timed out, interval since last message"));
     toolBarTimeoutLabel->setAlignment(Qt::AlignCenter);
     toolBarTimeoutLabel->setObjectName("toolBarTimeoutLabel");
-    addWidget(toolBarTimeoutLabel);
+    toolBarTimeoutLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    toolBarTimeoutAction = addWidget(toolBarTimeoutLabel);
 
     toolBarSafetyLabel = new QLabel(this);
     toolBarSafetyLabel->setToolTip(tr("Vehicle safety state"));
@@ -108,11 +111,13 @@ void QGCToolBar::createUI()
 
     toolBarModeLabel = new QLabel(this);
     toolBarModeLabel->setToolTip(tr("Vehicle mode"));
+    toolBarModeLabel->setObjectName("toolBarModeLabel");
     toolBarModeLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarModeLabel);
 
     toolBarStateLabel = new QLabel(this);
     toolBarStateLabel->setToolTip(tr("Vehicle state"));
+    toolBarStateLabel->setObjectName("toolBarStateLabel");
     toolBarStateLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarStateLabel);
 
@@ -123,16 +128,18 @@ void QGCToolBar::createUI()
     toolBarBatteryBar->setMaximumWidth(100);
     toolBarBatteryBar->setToolTip(tr("Battery charge level"));
     toolBarBatteryBar->setObjectName("toolBarBatteryBar");
+    toolBarBatteryBar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
     addWidget(toolBarBatteryBar);
 
     toolBarBatteryVoltageLabel = new QLabel(this);
-    toolBarBatteryVoltageLabel->setObjectName("toolBarBatteryVoltageLabel");
     toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
+    toolBarBatteryVoltageLabel->setObjectName("toolBarBatteryVoltageLabel");
     toolBarBatteryVoltageLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarBatteryVoltageLabel);
 
     toolBarWpLabel = new QLabel(this);
     toolBarWpLabel->setToolTip(tr("Current waypoint"));
+    toolBarWpLabel->setObjectName("toolBarWpLabel");
     toolBarWpLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarWpLabel);
 
@@ -143,6 +150,7 @@ void QGCToolBar::createUI()
 
     toolBarMessageLabel = new QLabel(this);
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
+    toolBarMessageLabel->setObjectName("toolBarMessageLabel");
     addWidget(toolBarMessageLabel);
 
     QWidget* spacer = new QWidget();
@@ -192,6 +200,7 @@ void QGCToolBar::resetToolbarUI()
     toolBarNameLabel->setText("------");
     toolBarNameLabel->setStyleSheet("");
     toolBarTimeoutLabel->setText(tr("UNCONNECTED"));
+    //toolBarTimeoutLabel->show();
     toolBarSafetyLabel->setText("----");
     toolBarModeLabel->setText("------");
     toolBarStateLabel->setText("------");
@@ -201,6 +210,8 @@ void QGCToolBar::resetToolbarUI()
     toolBarWpLabel->setText("WP--");
     toolBarDistLabel->setText("--- ---- m");
     toolBarMessageLabel->clear();
+    lastSystemMessage = "";
+    lastSystemMessageTimeMs = 0;
     symbolLabel->setStyleSheet("");
     symbolLabel->clear();
 }
@@ -341,8 +352,10 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         symbolLabel->setStyleSheet(QString("QWidget {background-color: %1;}").arg(mav->getColor().name()));
         toolBarModeLabel->setText(mav->getShortMode());
         toolBarStateLabel->setText(mav->getShortState());
-        toolBarTimeoutLabel->setText("");
-        toolBarDistLabel->setText("");
+        toolBarTimeoutAction->setVisible(false);
+        toolBarMessageLabel->clear();
+        lastSystemMessageTimeMs = 0;
+        toolBarDistLabel->clear();
         toolBarBatteryBar->setEnabled(true);
         setSystemType(mav, mav->getSystemType());
     }
@@ -370,20 +383,34 @@ void QGCToolBar::updateView()
     toolBarWpLabel->setText(tr("WP%1").arg(wpId));
     toolBarBatteryBar->setValue(batteryPercent);
     if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
-        toolBarBatteryBar->setStyleSheet("QProgressBar::chunk { background-color: green}");
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            toolBarBatteryBar->setStyleSheet("QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #008000}");
+        }
+        else
+        {
+            toolBarBatteryBar->setStyleSheet("QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #0F0}");
+        }
     } else if (batteryPercent >= 30 && toolBarBatteryBar->value() < 30){
-        toolBarBatteryBar->setStyleSheet("QProgressBar::chunk { background-color: yellow}");
+        if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+        {
+            toolBarBatteryBar->setStyleSheet("QProgressBar {color: #FFF} QProgressBar::chunk { background-color: #808000}");
+        }
+        else
+        {
+            toolBarBatteryBar->setStyleSheet("QProgressBar {color: #000} QProgressBar QProgressBar::chunk { background-color: #FF0}");
+        }
     }
 
     toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
-    toolBarStateLabel->setText(tr("%1").arg(state));
-    toolBarModeLabel->setText(tr("%1").arg(mode));
+    toolBarStateLabel->setText(QString("%1").arg(state));
+    toolBarModeLabel->setText(QString("%1").arg(mode));
     toolBarNameLabel->setText(systemName);
     // expire after 15 seconds
     if (QGC::groundTimeMilliseconds() - lastSystemMessageTimeMs < 15000) {
-        toolBarMessageLabel->setText(tr("%1").arg(lastSystemMessage));
+        toolBarMessageLabel->setText(QString("%1").arg(lastSystemMessage));
     } else {
-        toolBarMessageLabel->setText(tr("%1").arg(""));
+        toolBarMessageLabel->clear();
     }
 
     // Display the system armed state with a red-on-yellow background if armed or green text if safe.
