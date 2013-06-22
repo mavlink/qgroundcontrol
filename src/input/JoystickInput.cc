@@ -313,7 +313,7 @@ void JoystickInput::setEnabled(bool enabled)
 
 void JoystickInput::init()
 {
-    // INITIALIZE SDL Joystick support
+    // Initialize SDL Joystick support and detect number of joysticks.
     if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
         printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
     }
@@ -321,16 +321,11 @@ void JoystickInput::init()
     // Enumerate joysticks and select one
     numJoysticks = SDL_NumJoysticks();
 
-    // Wait for joysticks if none are connected
-    while (numJoysticks == 0 && !done)
+    // If no joysticks are connected, there's nothing we can do, so just keep
+    // going back to sleep every second unless the program quits.
+    while (!numJoysticks && !done)
     {
-        QGC::SLEEP::msleep(400);
-        // INITIALIZE SDL Joystick support
-        if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
-        {
-            printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
-        }
-        numJoysticks = SDL_NumJoysticks();
+        QGC::SLEEP::sleep(1);
     }
     if (done)
     {

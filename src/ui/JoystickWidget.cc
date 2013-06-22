@@ -67,17 +67,18 @@ void JoystickWidget::initUI()
         {
             m_ui->joystickFrame->setEnabled(true);
         }
+
+        // Create the initial UI.
+        createUIForJoystick();
     }
-    // But if there're no joysticks, just disable everything.
+    // But if there're no joysticks, disable everything and hide empty UI.
     else
     {
         m_ui->enableCheckBox->setEnabled(false);
         m_ui->joystickNameComboBox->addItem(tr("No joysticks found. Connect and restart QGC to add one."));
         m_ui->joystickNameComboBox->setEnabled(false);
+        m_ui->joystickFrame->hide();
     }
-
-    // Add any missing buttons
-    createUIForJoystick();
 }
 
 void JoystickWidget::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newStyle)
@@ -225,7 +226,7 @@ void JoystickWidget::createUIForJoystick()
     }
     else
     {
-        m_ui->buttonBox->hide();
+        m_ui->axesBox->hide();
     }
 }
 
