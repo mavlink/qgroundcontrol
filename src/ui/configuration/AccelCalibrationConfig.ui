@@ -32,8 +32,8 @@
   <widget class="QPushButton" name="calibrateAccelButton">
    <property name="geometry">
     <rect>
-     <x>60</x>
-     <y>60</y>
+     <x>70</x>
+     <y>160</y>
      <width>81</width>
      <height>31</height>
     </rect>
@@ -43,13 +43,13 @@
 Accelerometer</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="outputLabel">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>120</y>
-     <width>161</width>
-     <height>51</height>
+     <x>20</x>
+     <y>50</y>
+     <width>211</width>
+     <height>91</height>
     </rect>
    </property>
    <property name="text">
