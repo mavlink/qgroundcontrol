@@ -47,6 +47,21 @@ RadioCalibrationConfig::RadioCalibrationConfig(QWidget *parent) : QWidget(parent
     ui.throttleWidget->setMax(2200);
     ui.yawWidget->setMin(800);
     ui.yawWidget->setMax(2200);
+    ui.rollWidget->setOrientation(Qt::Horizontal);
+    ui.rollWidget->setName("Roll");
+    ui.yawWidget->setOrientation(Qt::Horizontal);
+    ui.yawWidget->setName("Yaw");
+    ui.pitchWidget->setName("Pitch");
+    ui.throttleWidget->setName("Throttle");
+    ui.radio5Widget->setOrientation(Qt::Horizontal);
+    ui.radio5Widget->setName("Radio 5");
+    ui.radio6Widget->setOrientation(Qt::Horizontal);
+    ui.radio6Widget->setName("Radio 6");
+    ui.radio7Widget->setOrientation(Qt::Horizontal);
+    ui.radio7Widget->setName("Radio 7");
+    ui.radio8Widget->setOrientation(Qt::Horizontal);
+    ui.radio8Widget->setName("Radio 8");
+
     guiUpdateTimer = new QTimer(this);
     connect(guiUpdateTimer,SIGNAL(timeout()),this,SLOT(guiUpdateTimerTick()));
 }
