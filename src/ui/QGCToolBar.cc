@@ -608,12 +608,6 @@ void QGCToolBar::connectLink(bool connect)
             if (link)
             {
                 QString portname = portComboBox->currentText().split(":")[2];
-                if (portname.indexOf('-') >= 0)
-                {
-                    //Take everything before the last -, this ensures if the com port has a - in it, it will be included,
-                    //since the last - is inserted by me.
-                    portname = portname.mid(0,portname.lastIndexOf("-")-1);
-                }
                 link->setPortName(portname.trimmed());
             }
             link->connect();
