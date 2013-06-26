@@ -4,9 +4,8 @@
 FlightModeConfig::FlightModeConfig(QWidget *parent) : QWidget(parent)
 {
     ui.setupUi(this);
+    connect(ui.savePushButton,SIGNAL(clicked()),this,SLOT(saveButtonClicked()));
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
-
-
 }
 
 FlightModeConfig::~FlightModeConfig()
@@ -37,15 +36,35 @@ void FlightModeConfig::setActiveUAS(UASInterface *uas)
         itemlist << "Guided";
 
         planeModeIndexToUiIndex[0] = 0;
+        planeModeUiIndexToIndex[0] = 0;
+
         planeModeIndexToUiIndex[1] = 1;
+        planeModeUiIndexToIndex[1] = 1;
+
         planeModeIndexToUiIndex[2] = 2;
+        planeModeUiIndexToIndex[2] = 2;
+
         planeModeIndexToUiIndex[3] = 3;
+        planeModeUiIndexToIndex[3] = 3;
+
         planeModeIndexToUiIndex[5] = 4;
+        planeModeUiIndexToIndex[4] = 5;
+
         planeModeIndexToUiIndex[6] = 5;
+        planeModeUiIndexToIndex[5] = 6;
+
         planeModeIndexToUiIndex[10] = 6;
+        planeModeUiIndexToIndex[6] = 10;
+
         planeModeIndexToUiIndex[11] = 7;
+        planeModeUiIndexToIndex[7] = 11;
+
         planeModeIndexToUiIndex[12] = 8;
+        planeModeUiIndexToIndex[8] = 12;
+
         planeModeIndexToUiIndex[15] = 9;
+        planeModeUiIndexToIndex[9] = 15;
+
         ui.mode6ComboBox->setEnabled(true);
     }
     else if (m_uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
@@ -60,13 +79,29 @@ void FlightModeConfig::setActiveUAS(UASInterface *uas)
         itemlist << "Initialising";
         ui.mode6ComboBox->setEnabled(false);
         roverModeIndexToUiIndex[0] = 0;
+        roverModeUiIndexToIndex[0] = 0;
+
         roverModeIndexToUiIndex[2] = 1;
+        roverModeUiIndexToIndex[1] = 2;
+
         roverModeIndexToUiIndex[3] = 2;
+        roverModeUiIndexToIndex[2] = 3;
+
         roverModeIndexToUiIndex[4] = 3;
+        roverModeUiIndexToIndex[3] = 4;
+
         roverModeIndexToUiIndex[10] = 5;
+        roverModeUiIndexToIndex[5] = 10;
+
         roverModeIndexToUiIndex[11] = 6;
+        roverModeUiIndexToIndex[6] = 11;
+
         roverModeIndexToUiIndex[15] = 7;
+        roverModeUiIndexToIndex[7] = 15;
+
         roverModeIndexToUiIndex[16] = 8;
+        roverModeUiIndexToIndex[8] = 16;
+
 
     }
     else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
@@ -96,65 +131,95 @@ void FlightModeConfig::modeChanged(int sysId, QString status, QString descriptio
 {
     //Unused?
 }
+void FlightModeConfig::saveButtonClicked()
+{
+    if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
+    {
+        m_uas->setParameter(0,"FLTMODE1",(char)planeModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"FLTMODE2",(char)planeModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"FLTMODE3",(char)planeModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"FLTMODE4",(char)planeModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"FLTMODE5",(char)planeModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"FLTMODE6",(char)planeModeUiIndexToIndex[ui.mode6ComboBox->currentIndex()]);
+    }
+    else if (m_uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
+    {
+        m_uas->setParameter(0,"MODE1",(char)roverModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"MODE2",(char)roverModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"MODE3",(char)roverModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"MODE4",(char)roverModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
+        m_uas->setParameter(0,"MODE5",(char)roverModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
+    }
+    else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        m_uas->setParameter(0,"FLTMODE1",(char)ui.mode1ComboBox->currentIndex()+1);
+        m_uas->setParameter(0,"FLTMODE2",(char)ui.mode2ComboBox->currentIndex()+1);
+        m_uas->setParameter(0,"FLTMODE3",(char)ui.mode3ComboBox->currentIndex()+1);
+        m_uas->setParameter(0,"FLTMODE4",(char)ui.mode4ComboBox->currentIndex()+1);
+        m_uas->setParameter(0,"FLTMODE5",(char)ui.mode5ComboBox->currentIndex()+1);
+        m_uas->setParameter(0,"FLTMODE6",(char)ui.mode6ComboBox->currentIndex()+1);
+    }
+}
+
 void FlightModeConfig::remoteControlChannelRawChanged(int chan,float val)
 {
-    if (chan == 5)
+    if (chan == 4)
     {
-        //Channel 5 is the mode switch.
+        //Channel 5 (0 array) is the mode switch.
         ///TODO: Make this configurable
         if (val <= 1230)
         {
-            ui.mode1ComboBox->setBackgroundRole(QPalette::Highlight);
-            ui.mode2ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode3ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode4ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode5ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode6ComboBox->setBackgroundRole(QPalette::Background);
+            ui.mode1Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
+            ui.mode2Label->setStyleSheet("");
+            ui.mode3Label->setStyleSheet("");
+            ui.mode4Label->setStyleSheet("");
+            ui.mode5Label->setStyleSheet("");
+            ui.mode6Label->setStyleSheet("");
         }
         else if (val <= 1360)
         {
-            ui.mode1ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode2ComboBox->setBackgroundRole(QPalette::Highlight);
-            ui.mode3ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode4ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode5ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode6ComboBox->setBackgroundRole(QPalette::Background);
+            ui.mode1Label->setStyleSheet("");
+            ui.mode2Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
+            ui.mode3Label->setStyleSheet("");
+            ui.mode4Label->setStyleSheet("");
+            ui.mode5Label->setStyleSheet("");
+            ui.mode6Label->setStyleSheet("");
         }
         else if (val <= 1490)
         {
-            ui.mode1ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode2ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode3ComboBox->setBackgroundRole(QPalette::Highlight);
-            ui.mode4ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode5ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode6ComboBox->setBackgroundRole(QPalette::Background);
+            ui.mode1Label->setStyleSheet("");
+            ui.mode2Label->setStyleSheet("");
+            ui.mode3Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
+            ui.mode4Label->setStyleSheet("");
+            ui.mode5Label->setStyleSheet("");
+            ui.mode6Label->setStyleSheet("");
         }
         else if (val <=1620)
         {
-            ui.mode1ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode2ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode3ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode4ComboBox->setBackgroundRole(QPalette::Highlight);
-            ui.mode5ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode6ComboBox->setBackgroundRole(QPalette::Background);
+            ui.mode1Label->setStyleSheet("");
+            ui.mode2Label->setStyleSheet("");
+            ui.mode3Label->setStyleSheet("");
+            ui.mode4Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
+            ui.mode5Label->setStyleSheet("");
+            ui.mode6Label->setStyleSheet("");
         }
         else if (val <=1749)
         {
-            ui.mode1ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode2ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode3ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode4ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode5ComboBox->setBackgroundRole(QPalette::Highlight);
-            ui.mode6ComboBox->setBackgroundRole(QPalette::Background);
+            ui.mode1Label->setStyleSheet("");
+            ui.mode2Label->setStyleSheet("");
+            ui.mode3Label->setStyleSheet("");
+            ui.mode4Label->setStyleSheet("");
+            ui.mode5Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
+            ui.mode6Label->setStyleSheet("");
         }
         else
         {
-            ui.mode1ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode2ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode3ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode4ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode5ComboBox->setBackgroundRole(QPalette::Background);
-            ui.mode6ComboBox->setBackgroundRole(QPalette::Highlight);
+            ui.mode1Label->setStyleSheet("");
+            ui.mode2Label->setStyleSheet("");
+            ui.mode3Label->setStyleSheet("");
+            ui.mode4Label->setStyleSheet("");
+            ui.mode5Label->setStyleSheet("");
+            ui.mode6Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
         }
     }
 }
