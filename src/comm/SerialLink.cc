@@ -348,7 +348,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
     for (int i = ports.size() - 1; i >= 0; i--)
     {
         QextPortInfo portInfo = ports.at(i);
-        QString portString = QString(portInfo.portName.toLocal8Bit().constData()) + " - " + QString(ports.at(i).friendName.toLocal8Bit().constData()).split("(").first();
+        QString portString = QString(portInfo.portName.toLocal8Bit().constData());// + " - " + QString(ports.at(i).friendName.toLocal8Bit().constData()).split("(").first();
         // Prepend newly found port to the list
         this->ports->append(portString);
     }
