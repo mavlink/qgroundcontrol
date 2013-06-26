@@ -54,9 +54,11 @@ private slots:
     void remoteControlChannelRawChanged(int chan,float val);
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void guiUpdateTimerTick();
+    void calibrateButtonClicked();
 private:
     double rcMin[8];
     double rcMax[8];
+    double rcTrim[8];
     double rcValue[8];
     QTimer *guiUpdateTimer;
     bool m_calibrationEnabled;
