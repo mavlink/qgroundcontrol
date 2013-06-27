@@ -424,7 +424,8 @@ HEADERS += src/MG.h \
     src/ui/configuration/OpticalFlowConfig.h \
     src/ui/configuration/OsdConfig.h \
     src/ui/configuration/AntennaTrackerConfig.h \
-    src/ui/configuration/CameraGimbalConfig.h
+    src/ui/configuration/CameraGimbalConfig.h \
+    src/ui/configuration/AP2ConfigWidget.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -616,7 +617,8 @@ SOURCES += src/main.cc \
     src/ui/configuration/OpticalFlowConfig.cc \
     src/ui/configuration/OsdConfig.cc \
     src/ui/configuration/AntennaTrackerConfig.cc \
-    src/ui/configuration/CameraGimbalConfig.cc
+    src/ui/configuration/CameraGimbalConfig.cc \
+    src/ui/configuration/AP2ConfigWidget.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
