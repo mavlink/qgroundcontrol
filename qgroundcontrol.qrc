@@ -110,6 +110,7 @@
         <file>files/images/mavs/frames_x.png</file>
         <file>files/images/mavs/frames-05.png</file>
         <file>files/images/devices/BR-HMC5883-01-2.jpg</file>
+        <file>files/images/devices/BR-APMPWRDEAN-2.jpg</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
