@@ -32,6 +32,11 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
 }
 void BatteryMonitorConfig::calcDividerSet()
 {
+    if (!m_uas)
+    {
+        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        return;
+    }
     bool ok = false;
     float newval = ui.calcDividerLineEdit->text().toFloat(&ok);
     if (!ok)
@@ -44,6 +49,11 @@ void BatteryMonitorConfig::calcDividerSet()
 }
 void BatteryMonitorConfig::ampsPerVoltSet()
 {
+    if (!m_uas)
+    {
+        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        return;
+    }
     bool ok = false;
     float newval = ui.ampsPerVoltsLineEdit->text().toFloat(&ok);
     if (!ok)
@@ -56,6 +66,11 @@ void BatteryMonitorConfig::ampsPerVoltSet()
 }
 void BatteryMonitorConfig::batteryCapacitySet()
 {
+    if (!m_uas)
+    {
+        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        return;
+    }
     bool ok = false;
     float newval = ui.battCapacityLineEdit->text().toFloat(&ok);
     if (!ok)
@@ -173,7 +188,33 @@ void BatteryMonitorConfig::sensorCurrentIndexChanged(int index)
 
 void BatteryMonitorConfig::apmVerCurrentIndexChanged(int index)
 {
-
+    if (!m_uas)
+    {
+        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        return;
+    }
+    if (index == 0) //APM1
+    {
+        m_uas->setParameter(0,"BATT_VOLT_PIN",0);
+        m_uas->setParameter(0,"BATT_CURR_PIN",1);
+    }
+    else if (index == 1) //APM2
+    {
+        m_uas->setParameter(0,"BATT_VOLT_PIN",1);
+        m_uas->setParameter(0,"BATT_CURR_PIN",2);
+    }
+    else if (index == 2) //APM2.5
+    {
+        m_uas->setParameter(0,"BATT_VOLT_PIN",13);
+        m_uas->setParameter(0,"BATT_CURR_PIN",12);
+    }
+    else if (index == 3) //PX4
+    {
+        m_uas->setParameter(0,"BATT_VOLT_PIN",100);
+        m_uas->setParameter(0,"BATT_CURR_PIN",101);
+        m_uas->setParameter(0,"VOLT_DIVIDER",1);
+        ui.calcDividerLineEdit->setText("1");
+    }
 }
 
 BatteryMonitorConfig::~BatteryMonitorConfig()
