@@ -18,6 +18,8 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
     ui.apmVerComboBox->addItem("1: APM2 - 2.5 non 3DR");
     ui.apmVerComboBox->addItem("2: APM2.5 - 3DR Power Module");
     ui.apmVerComboBox->addItem("3: PX4");
+    ui.alertOnLowCheckBox->setVisible(false);
+
 
     connect(ui.monitorComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(monitorCurrentIndexChanged(int)));
     connect(ui.sensorComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(sensorCurrentIndexChanged(int)));
@@ -27,7 +29,7 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
     connect(ui.ampsPerVoltsLineEdit,SIGNAL(editingFinished()),this,SLOT(ampsPerVoltSet()));
     connect(ui.battCapacityLineEdit,SIGNAL(editingFinished()),this,SLOT(batteryCapacitySet()));
 
-    ui.alertOnLowCheckBox->setVisible(false);
+
 
 }
 void BatteryMonitorConfig::calcDividerSet()
