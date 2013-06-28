@@ -20,7 +20,8 @@
 
 # Qt configuration
 CONFIG += qt \
-    thread
+    thread \
+
 QT += network \
     opengl \
     svg \
@@ -93,7 +94,7 @@ DEPENDPATH += \
 INCLUDEPATH += \
     libs/utils \
     libs \
-    libs/opmapcontrol
+    libs/opmapcontrol \
 
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
@@ -135,30 +136,22 @@ INCLUDEPATH += \
 
 include(src/apps/mavlinkgen/mavlinkgen.pri)
 
-
-
 # Include QWT plotting library
 include(libs/qwt/qwt.pri)
+
 DEPENDPATH += . \
-    plugins \
-    libs/thirdParty/qserialport/include \
-    libs/thirdParty/qserialport/include/QtSerialPort \
-    libs/thirdParty/qserialport \
-    libs/qextserialport
+    plugins
 
-INCLUDEPATH += . \
-    libs/thirdParty/qserialport/include \
-    libs/thirdParty/qserialport/include/QtSerialPort \
-    libs/thirdParty/qserialport/src \
-    libs/qextserialport
-# Include serial port library (QSerial)
-include(qserialport.pri)
+INCLUDEPATH += .
 
-# Serial port detection (ripped-off from qextserialport library)
-macx|macx-g++|macx-g++42::SOURCES += libs/qextserialport/qextserialenumerator_osx.cpp
-linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
+# Include serial port library (QSerialPort)
+include(libs/serialport/apmserial.pri)
+
+## Serial port detection (ripped-off from qextserialport library)
+#macx|macx-g++|macx-g++42::SOURCES += libs/qextserialport/qextserialenumerator_osx.cpp
+#linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
+#linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
+#win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
 # Input
 FORMS += src/ui/MainWindow.ui \
     src/ui/CommSettings.ui \
@@ -345,7 +338,7 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/QGCMapTool.h \
     src/ui/map/QGCMapToolBar.h \
-    libs/qextserialport/qextserialenumerator.h \
+#    libs/qextserialport/qextserialenumerator.h \
     src/QGCGeo.h \
     src/ui/QGCToolBar.h \
     src/ui/QGCStatusBar.h \

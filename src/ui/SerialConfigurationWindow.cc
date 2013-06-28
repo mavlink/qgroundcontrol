@@ -259,7 +259,7 @@ void SerialConfigurationWindow::setParityNone(bool accept)
 
 void SerialConfigurationWindow::setParityOdd(bool accept)
 {
-    if (accept) link->setParityType(1);
+    if (accept) link->setParityType(1); // [TODO] This needs to be Fixed [BB]
 }
 
 void SerialConfigurationWindow::setParityEven(bool accept)
