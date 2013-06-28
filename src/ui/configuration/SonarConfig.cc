@@ -4,13 +4,12 @@
 SonarConfig::SonarConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
-    connect(ui.enableCheckBox,SIGNAL(toggled(bool)),this,SLOT(checkBoxToggled(bool)));
-    connect(ui.sonarTypeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(sonarTypeChanged(int)));
-
     ui.sonarTypeComboBox->addItem("XL-EZ0 / XL-EZ4");
     ui.sonarTypeComboBox->addItem("LV-EZ0");
     ui.sonarTypeComboBox->addItem("XL-EZL0");
     ui.sonarTypeComboBox->addItem("HRLV");
+    connect(ui.enableCheckBox,SIGNAL(toggled(bool)),this,SLOT(checkBoxToggled(bool)));
+    connect(ui.sonarTypeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(sonarTypeChanged(int)));
 }
 
 SonarConfig::~SonarConfig()
