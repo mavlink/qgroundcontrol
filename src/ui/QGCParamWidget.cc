@@ -1017,6 +1017,11 @@ void QGCParamWidget::setParameter(int component, QString parameterName, QVariant
         statusLabel->setText(tr("REJ. %1 > max").arg(value.toDouble()));
         return;
     }
+    if (parameters.value(component)->value(parameterName) == value)
+    {
+        qDebug() << "Value not changed, not sending:" << parameterName << value;
+        return;
+    }
 
     switch (parameters.value(component)->value(parameterName).type())
     {
