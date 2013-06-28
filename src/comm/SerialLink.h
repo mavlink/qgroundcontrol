@@ -36,13 +36,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QThread>
 #include <QMutex>
 #include <QString>
-#include "qserialport.h"
+#include <qserialport.h>
 #include <configuration.h>
 #include "SerialLinkInterface.h"
-#ifdef _WIN32
-#include "windows.h"
-#endif
-
 
 /**
  * @brief The SerialLink class provides cross-platform access to serial links.
@@ -146,37 +142,36 @@ protected slots:
     void checkForBytes();
 
 protected:
-    quint64 bytesRead;
-    TNX::QSerialPort * port;
-    TNX::QPortSettings portSettings;
-#ifdef _WIN32
-    HANDLE winPort;
-    DCB winPortSettings;
-#endif
-    QString porthandle;
-    QString name;
-    int timeout;
-    int id;
+    quint64 m_bytesRead;
+    QSerialPort* m_port;
+    int m_baud;
+    int m_dataBits;
+    int m_flowControl;
+    int m_stopBits;
+    int m_parity;
+    QString m_portName;
+    QString m_name;
+    int m_timeout;
+    int m_id;
 
-    quint64 bitsSentTotal;
-    quint64 bitsSentShortTerm;
-    quint64 bitsSentCurrent;
-    quint64 bitsSentMax;
-    quint64 bitsReceivedTotal;
-    quint64 bitsReceivedShortTerm;
-    quint64 bitsReceivedCurrent;
-    quint64 bitsReceivedMax;
-    quint64 connectionStartTime;
-    QMutex statisticsMutex;
-    QMutex dataMutex;
-    QVector<QString>* ports;
+    quint64 m_bitsSentTotal;
+    quint64 m_bitsSentShortTerm;
+    quint64 m_bitsSentCurrent;
+    quint64 m_bitsSentMax;
+    quint64 m_bitsReceivedTotal;
+    quint64 m_bitsReceivedShortTerm;
+    quint64 m_bitsReceivedCurrent;
+    quint64 m_bitsReceivedMax;
+    quint64 m_connectionStartTime;
+    QMutex m_statisticsMutex;
+    QMutex m_dataMutex;
+    QVector<QString>* m_ports;
 
 private:
     volatile bool m_stopp;
     volatile bool m_reqReset;
 	QMutex m_stoppMutex;
 
-    void setName(QString name);
     bool hardwareConnect();
 
 signals:

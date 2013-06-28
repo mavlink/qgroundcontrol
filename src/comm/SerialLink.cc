@@ -12,257 +12,62 @@
 #include <QDebug>
 #include <QSettings>
 #include <QMutexLocker>
+#include <qserialport.h>
+#include <qserialportinfo.h>
 #include "SerialLink.h"
 #include "LinkManager.h"
 #include "QGC.h"
 #include <MG.h>
-#include <iostream>
-#ifdef _WIN32
-#include "windows.h"
-#endif
-#ifdef _WIN32
-#include <qextserialenumerator.h>
-#endif
-#if defined (__APPLE__) && defined (__MACH__)
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <paths.h>
-#include <termios.h>
-#include <sysexits.h>
-#include <sys/param.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <time.h>
-#include <AvailabilityMacros.h>
-
-#ifdef __MWERKS__
-#define __CF_USE_FRAMEWORK_INCLUDES__
-#endif
-
-
-#include <CoreFoundation/CoreFoundation.h>
-
-#include <IOKit/IOKitLib.h>
-#include <IOKit/serial/IOSerialKeys.h>
-#if defined(MAC_OS_X_VERSION_10_3) && (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_3)
-#include <IOKit/serial/ioss.h>
-#endif
-#include <IOKit/IOBSD.h>
-
-// Apple internal modems default to local echo being on. If your modem has local echo disabled,
-// undefine the following macro.
-#define LOCAL_ECHO
-
-#define kATCommandString  "AT\r"
-
-#ifdef LOCAL_ECHO
-#define kOKResponseString  "AT\r\r\nOK\r\n"
-#else
-#define kOKResponseString  "\r\nOK\r\n"
-#endif
-#endif
-
-
-// Some helper functions for serial port enumeration
-#if defined (__APPLE__) && defined (__MACH__)
-
-enum {
-    kNumRetries = 3
-};
-
-// Function prototypes
-static kern_return_t FindModems(io_iterator_t *matchingServices);
-static kern_return_t GetModemPath(io_iterator_t serialPortIterator, char *bsdPath, CFIndex maxPathSize);
-
-// Returns an iterator across all known modems. Caller is responsible for
-// releasing the iterator when iteration is complete.
-static kern_return_t FindModems(io_iterator_t *matchingServices)
-{
-    kern_return_t      kernResult;
-    CFMutableDictionaryRef  classesToMatch;
-
-    /*! @function IOServiceMatching
-    @abstract Create a matching dictionary that specifies an IOService class match.
-    @discussion A very common matching criteria for IOService is based on its class. IOServiceMatching will create a matching dictionary that specifies any IOService of a class, or its subclasses. The class is specified by C-string name.
-    @param name The class name, as a const C-string. Class matching is successful on IOService's of this class or any subclass.
-    @result The matching dictionary created, is returned on success, or zero on failure. The dictionary is commonly passed to IOServiceGetMatchingServices or IOServiceAddNotification which will consume a reference, otherwise it should be released with CFRelease by the caller. */
-
-    // Serial devices are instances of class IOSerialBSDClient
-    classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
-    if (classesToMatch == NULL) {
-        printf("IOServiceMatching returned a NULL dictionary.\n");
-    } else {
-        /*!
-          @function CFDictionarySetValue
-          Sets the value of the key in the dictionary.
-          @param theDict The dictionary to which the value is to be set. If this
-            parameter is not a valid mutable CFDictionary, the behavior is
-            undefined. If the dictionary is a fixed-capacity dictionary and
-            it is full before this operation, and the key does not exist in
-            the dictionary, the behavior is undefined.
-          @param key The key of the value to set into the dictionary. If a key
-            which matches this key is already present in the dictionary, only
-            the value is changed ("add if absent, replace if present"). If
-            no key matches the given key, the key-value pair is added to the
-            dictionary. If added, the key is retained by the dictionary,
-            using the retain callback provided
-            when the dictionary was created. If the key is not of the sort
-            expected by the key retain callback, the behavior is undefined.
-          @param value The value to add to or replace into the dictionary. The value
-            is retained by the dictionary using the retain callback provided
-            when the dictionary was created, and the previous value if any is
-            released. If the value is not of the sort expected by the
-            retain or release callbacks, the behavior is undefined.
-        */
-        CFDictionarySetValue(classesToMatch,
-                             CFSTR(kIOSerialBSDTypeKey),
-                             CFSTR(kIOSerialBSDModemType));
-
-        // Each serial device object has a property with key
-        // kIOSerialBSDTypeKey and a value that is one of kIOSerialBSDAllTypes,
-        // kIOSerialBSDModemType, or kIOSerialBSDRS232Type. You can experiment with the
-        // matching by changing the last parameter in the above call to CFDictionarySetValue.
-
-        // As shipped, this sample is only interested in modems,
-        // so add this property to the CFDictionary we're matching on.
-        // This will find devices that advertise themselves as modems,
-        // such as built-in and USB modems. However, this match won't find serial modems.
-    }
-
-    /*! @function IOServiceGetMatchingServices
-        @abstract Look up registered IOService objects that match a matching dictionary.
-        @discussion This is the preferred method of finding IOService objects currently registered by IOKit. IOServiceAddNotification can also supply this information and install a notification of new IOServices. The matching information used in the matching dictionary may vary depending on the class of service being looked up.
-        @param masterPort The master port obtained from IOMasterPort().
-        @param matching A CF dictionary containing matching information, of which one reference is consumed by this function. IOKitLib can contruct matching dictionaries for common criteria with helper functions such as IOServiceMatching, IOOpenFirmwarePathMatching.
-        @param existing An iterator handle is returned on success, and should be released by the caller when the iteration is finished.
-        @result A kern_return_t error code. */
-
-    kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, classesToMatch, matchingServices);
-    if (KERN_SUCCESS != kernResult) {
-        printf("IOServiceGetMatchingServices returned %d\n", kernResult);
-        goto exit;
-    }
-
-exit:
-    return kernResult;
-}
-
-/** Given an iterator across a set of modems, return the BSD path to the first one.
- *  If no modems are found the path name is set to an empty string.
- */
-static kern_return_t GetModemPath(io_iterator_t serialPortIterator, char *bsdPath, CFIndex maxPathSize)
-{
-    io_object_t    modemService;
-    kern_return_t  kernResult = KERN_FAILURE;
-    Boolean      modemFound = false;
-
-    // Initialize the returned path
-    *bsdPath = '\0';
-
-    // Iterate across all modems found. In this example, we bail after finding the first modem.
-
-    while ((modemService = IOIteratorNext(serialPortIterator)) && !modemFound) {
-        CFTypeRef  bsdPathAsCFString;
-
-        // Get the callout device's path (/dev/cu.xxxxx). The callout device should almost always be
-        // used: the dialin device (/dev/tty.xxxxx) would be used when monitoring a serial port for
-        // incoming calls, e.g. a fax listener.
-
-        bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
-                                                            CFSTR(kIOCalloutDeviceKey),
-                                                            kCFAllocatorDefault,
-                                                            0);
-        if (bsdPathAsCFString) {
-            Boolean result;
-
-            // Convert the path from a CFString to a C (NUL-terminated) string for use
-            // with the POSIX open() call.
-
-            result = CFStringGetCString((CFStringRef)bsdPathAsCFString,
-                                        bsdPath,
-                                        maxPathSize,
-                                        kCFStringEncodingUTF8);
-            CFRelease(bsdPathAsCFString);
-
-            if (result) {
-                //printf("Modem found with BSD path: %s", bsdPath);
-                modemFound = true;
-                kernResult = KERN_SUCCESS;
-            }
-        }
-
-        printf("\n");
-
-        // Release the io_service_t now that we are done with it.
-
-        (void) IOObjectRelease(modemService);
-    }
-
-    return kernResult;
-}
-#endif
-
-using namespace TNX;
 
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
-    port(NULL),
-    ports(new QVector<QString>()),
+    m_bytesRead(0),
+    m_port(NULL),
+    m_ports(new QVector<QString>()),
     m_stopp(false),
-    bytesRead(0),
     m_reqReset(false)
 {
     // Setup settings
-    this->porthandle = portname.trimmed();
+    m_portName = portname.trimmed();
 
-    if (this->porthandle == "" && getCurrentPorts()->size() > 0)
+    if (m_portName == "" && getCurrentPorts()->size() > 0)
     {
-        this->porthandle = getCurrentPorts()->first().trimmed();
+        m_portName = m_ports->first().trimmed();
     }
 
-#ifdef _WIN32
-    // Port names above 20 need the network path format - if the port name is not already in this format
-    // catch this special case
-    if (this->porthandle.size() > 0 && !this->porthandle.startsWith("\\")) {
-        // Append \\.\ before the port handle. Additional backslashes are used for escaping.
-        this->porthandle = "\\\\.\\" + this->porthandle;
-    }
-#endif
     // Set unique ID and add link to the list of links
-    this->id = getNextLinkId();
+    m_id = getNextLinkId();
 
-    setBaudRate(baudRate);
+    m_baud = baudRate;
+
     if (hardwareFlowControl)
     {
-        portSettings.setFlowControl(QPortSettings::FLOW_HARDWARE);
+        m_flowControl = QSerialPort::HardwareControl;
     }
     else
     {
-        portSettings.setFlowControl(QPortSettings::FLOW_OFF);
+        m_flowControl = QSerialPort::NoFlowControl;
     }
     if (parity)
     {
-        portSettings.setParity(QPortSettings::PAR_EVEN);
+        m_parity = QSerialPort::EvenParity;
     }
     else
     {
-        portSettings.setParity(QPortSettings::PAR_NONE);
+        m_parity = QSerialPort::NoParity;
     }
-    setDataBits(dataBits);
-    setStopBits(stopBits);
+
+    m_dataBits = dataBits;
+    m_stopBits = stopBits;
 
     // Set the port name
-    if (porthandle == "")
+    if (m_portName == "")
     {
-        name = tr("Serial Link ") + QString::number(getId());
+        m_name = tr("Serial Link ") + QString::number(getId());
     }
     else
     {
-        name = portname.trimmed();
+        m_name = portname.trimmed();
     }
     loadSettings();
 }
@@ -275,91 +80,26 @@ void SerialLink::requestReset()
 SerialLink::~SerialLink()
 {
     disconnect();
-    if(port) delete port;
-    port = NULL;
-    if (ports) delete ports;
-    ports = NULL;
+    if(m_port) delete m_port;
+    m_port = NULL;
+    if (m_ports) delete m_ports;
+    m_ports = NULL;
 }
 
 QVector<QString>* SerialLink::getCurrentPorts()
 {
-    ports->clear();
-#ifdef __linux
-
-    // TODO Linux has no standard way of enumerating serial ports
-    // However the device files are only present when the physical
-    // device is connected, therefore listing the files should be
-    // sufficient.
-
-    QString devdir = "/dev";
-    QDir dir(devdir);
-    dir.setFilter(QDir::System);
-
-    QFileInfoList list = dir.entryInfoList();
-    for (int i = 0; i < list.size(); ++i) {
-        QFileInfo fileInfo = list.at(i);
-        if (fileInfo.fileName().contains(QString("ttyUSB")) || fileInfo.fileName().contains(QString("ttyS")) || fileInfo.fileName().contains(QString("ttyACM")))
-        {
-            ports->append(fileInfo.canonicalFilePath());
-        }
-    }
-#endif
-
-#if defined (__APPLE__) && defined (__MACH__)
-
-    // Enumerate serial ports
-    kern_return_t    kernResult; // on PowerPC this is an int (4 bytes)
-    io_iterator_t    serialPortIterator;
-    char        bsdPath[MAXPATHLEN];
-    kernResult = FindModems(&serialPortIterator);
-    kernResult = GetModemPath(serialPortIterator, bsdPath, sizeof(bsdPath));
-    IOObjectRelease(serialPortIterator);    // Release the iterator.
-
-    // Add found modems
-    if (bsdPath[0])
+    Q_ASSERT_X(m_ports != NULL, "getCurrentPorts", "m_ports is NULL");
+    m_ports->clear();
+    // Example use QSerialPortInfo
+    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
-        ports->append(QString(bsdPath));
+//        qDebug() << "PortName    : " << info.portName()
+//                 << "Description : " << info.description();
+//        qDebug() << "Manufacturer: " << info.manufacturer();
+
+        m_ports->append(info.portName());
     }
-
-    // Add USB serial port adapters
-    // TODO Strangely usb serial port adapters are not enumerated, even when connected
-    QString devdir = "/dev";
-    QDir dir(devdir);
-    dir.setFilter(QDir::System);
-
-    QFileInfoList list = dir.entryInfoList();
-    for (int i = list.size() - 1; i >= 0; i--) {
-        QFileInfo fileInfo = list.at(i);
-        if (fileInfo.fileName().contains(QString("ttyUSB")) ||
-                fileInfo.fileName().contains(QString("tty.")) ||
-                fileInfo.fileName().contains(QString("ttyS")) ||
-                fileInfo.fileName().contains(QString("ttyACM")))
-        {
-            ports->append(fileInfo.canonicalFilePath());
-        }
-    }
-#endif
-
-#ifdef _WIN32
-    // Get the ports available on this system
-    QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
-
-    // Add the ports in reverse order, because we prepend them to the list
-    for (int i = ports.size() - 1; i >= 0; i--)
-    {
-        QextPortInfo portInfo = ports.at(i);
-        QString portString = QString(portInfo.portName.toLocal8Bit().constData());// + " - " + QString(ports.at(i).friendName.toLocal8Bit().constData()).split("(").first();
-        // Prepend newly found port to the list
-        this->ports->append(portString);
-    }
-
-    //printf("port name: %s\n", ports.at(i).portName.toLocal8Bit().constData());
-    //printf("friendly name: %s\n", ports.at(i).friendName.toLocal8Bit().constData());
-    //printf("physical name: %s\n", ports.at(i).physName.toLocal8Bit().constData());
-    //printf("enumerator name: %s\n", ports.at(i).enumName.toLocal8Bit().constData());
-    //printf("===================================\n\n");
-#endif
-    return this->ports;
+    return m_ports;
 }
 
 void SerialLink::loadSettings()
@@ -369,12 +109,12 @@ void SerialLink::loadSettings()
     settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
-        setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
-        setBaudRateType(settings.value("SERIALLINK_COMM_BAUD").toInt());
-        setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
-        setStopBits(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
-        setDataBits(settings.value("SERIALLINK_COMM_DATABITS").toInt());
-        setFlowType(settings.value("SERIALLINK_COMM_FLOW_CONTROL").toInt());
+        m_portName = settings.value("SERIALLINK_COMM_PORT").toString();
+        m_baud = settings.value("SERIALLINK_COMM_BAUD").toInt();
+        m_parity = settings.value("SERIALLINK_COMM_PARITY").toInt();
+        m_stopBits = settings.value("SERIALLINK_COMM_STOPBITS").toInt();
+        m_dataBits = settings.value("SERIALLINK_COMM_DATABITS").toInt();
+        m_flowControl = settings.value("SERIALLINK_COMM_FLOW_CONTROL").toInt();
     }
 }
 
@@ -402,18 +142,19 @@ void SerialLink::run()
     if (!hardwareConnect())
     {
         //Need to error out here.
-        emit communicationError(getName(),"Error connecting: " + port->errorString());
+        emit communicationError(getName(),"Error connecting: " + m_port->errorString());
         return;
 
     }
 
     // Qt way to make clear what a while(1) loop does
-    quint64 msecs = QDateTime::currentMSecsSinceEpoch();
-    quint64 initialmsecs = QDateTime::currentMSecsSinceEpoch();
+    qint64 msecs = QDateTime::currentMSecsSinceEpoch();
+    qint64 initialmsecs = QDateTime::currentMSecsSinceEpoch();
     quint64 bytes = 0;
     bool triedreset = false;
     bool triedDTR = false;
-    int timeout = 5000;
+    qint64 timeout = 5000;
+
     forever
     {
         {
@@ -427,16 +168,16 @@ void SerialLink::run()
             {
                 this->m_reqReset = false;
                 communicationUpdate(getName(),"Reset requested via DTR signal");
-                port->setDtr(true);
+                m_port->setDataTerminalReady(true);
                 this->msleep(250);
-                port->setDtr(false);
+                m_port->setDataTerminalReady(false);
             }
         }
         // Check if new bytes have arrived, if yes, emit the notification signal
         checkForBytes();
-        if (bytes != bytesRead)
+        if (bytes != m_bytesRead)
         {
-            bytes = bytesRead;
+            bytes = m_bytesRead;
             msecs = QDateTime::currentMSecsSinceEpoch();
         }
         else
@@ -459,15 +200,15 @@ void SerialLink::run()
                     triedDTR = true;
                     communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
                     qDebug() << "No data!!! Attempting reset via DTR.";
-                    port->setDtr(true);
+                    m_port->setDataTerminalReady(true);
                     this->msleep(250);
-                    port->setDtr(false);
+                    m_port->setDataTerminalReady(false);
                 }
                 else if (!triedreset)
                 {
                     qDebug() << "No data!!! Attempting reset via reboot command.";
                     communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
-                    port->write("reboot\r\n",8);
+                    m_port->write("reboot\r\n",8);
                     triedreset = true;
                 }
                 else
@@ -481,13 +222,12 @@ void SerialLink::run()
                  * from consuming too much processing time
                  */
         MG::SLEEP::msleep(SerialLink::poll_interval);
-    }
-    if (port) {
-        port->flushInBuffer();
-        port->flushOutBuffer();
-        port->close();
-        delete port;
-        port = NULL;
+    } // end forever loop
+
+    if (m_port) {
+        m_port->close();
+        delete m_port;
+        m_port = NULL;
     }
 }
 
@@ -495,23 +235,23 @@ void SerialLink::run()
 void SerialLink::checkForBytes()
 {
     /* Check if bytes are available */
-    if(port && port->isOpen() && port->isWritable())
+    if(m_port && m_port->isOpen() && m_port->isWritable())
     {
-        dataMutex.lock();
-        qint64 available = port->bytesAvailable();
-        dataMutex.unlock();
+        m_dataMutex.lock();
+        qint64 available = m_port->bytesAvailable();
+        m_dataMutex.unlock();
 
         if(available > 0)
         {
             readBytes();
-            bytesRead += available;
+            m_bytesRead += available;
         }
         else if (available < 0) {
             /* Error, close port */
-            port->close();
+            m_port->close();
             emit disconnected();
             emit connected(false);
-            emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
+            emit communicationError(this->getName(), tr("Could not read data - link %1 is disconnected!").arg(this->getName()));
         }
     }
 //    else
@@ -524,27 +264,26 @@ void SerialLink::checkForBytes()
 
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
-    if(port && port->isOpen()) {
-        int b = port->write(data, size);
+    if(m_port && m_port->isOpen()) {
+        qDebug() << "writeBytes" << m_portName << "attempting to tx " << size << "bytes.";
+        int b = m_port->write(data, size);
 
         if (b > 0) {
+            Q_ASSERT_X(b = size, "writeBytes", "failed to write all bytes");
 
-            //            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
+            qDebug() << "writeBytes " << m_portName << "tx'd" << b << "bytes:";
 
             // Increase write counter
-            bitsSentTotal += size * 8;
+            m_bitsSentTotal += size * 8;
+            QByteArray* byteArray = new QByteArray(data,size);
 
-            //            int i;
-            //            for (i=0; i<size; i++)
-            //            {
-            //                unsigned char v =data[i];
-            //                qDebug("%02x ", v);
-            //            }
-            //            qDebug("\n");
+            qDebug() << byteArray->toHex();
+            delete byteArray;
+
         } else {
             disconnect();
             // Error occured
-            emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
+            emit communicationError(getName(), tr("Could not send data - link %1 is disconnected!").arg(getName()));
         }
     }
 }
@@ -557,18 +296,18 @@ void SerialLink::writeBytes(const char* data, qint64 size)
  **/
 void SerialLink::readBytes()
 {
-    dataMutex.lock();
-    if(port && port->isOpen()) {
+    m_dataMutex.lock();
+    if(m_port && m_port->isOpen()) {
         const qint64 maxLength = 2048;
         char data[maxLength];
-        qint64 numBytes = port->bytesAvailable();
+        qint64 numBytes = m_port->bytesAvailable();
         //qDebug() << "numBytes: " << numBytes;
 
         if(numBytes > 0) {
             /* Read as much data in buffer as possible without overflow */
             if(maxLength < numBytes) numBytes = maxLength;
 
-            port->read(data, numBytes);
+            m_port->read(data, numBytes);
             QByteArray b(data, numBytes);
             emit bytesReceived(this, b);
 
@@ -580,10 +319,10 @@ void SerialLink::readBytes()
             //                fprintf(stderr,"%02x ", v);
             //            }
             //            fprintf(stderr,"\n");
-            bitsReceivedTotal += numBytes * 8;
+            m_bitsReceivedTotal += numBytes * 8;
         }
     }
-    dataMutex.unlock();
+    m_dataMutex.unlock();
 }
 
 
@@ -594,8 +333,8 @@ void SerialLink::readBytes()
  **/
 qint64 SerialLink::bytesAvailable()
 {
-    if (port) {
-        return port->bytesAvailable();
+    if (m_port) {
+        return m_port->bytesAvailable();
     } else {
         return 0;
     }
@@ -608,44 +347,24 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    if(this->isRunning())
+    qDebug() << "disconnect" << m_port->portName();
+    Q_ASSERT_X(m_port != NULL, "disconnect", "m_port is NULL");
+
+    if (isRunning())
     {
         {
-            QMutexLocker locker(&this->m_stoppMutex);
-            this->m_stopp = true;
+            QMutexLocker locker(&m_stoppMutex);
+            m_stopp = true;
         }
-        this->wait();
+        wait(); // This will terminate the thread and close the serial port
 
-        //    if (port) {
-        //#if !defined _WIN32 || !defined _WIN64
-        /* Block the thread until it returns from run() */
-        //#endif
-        //        port->flushInBuffer();
-        //        port->flushOutBuffer();
-        //        port->close();
-        //        delete port;
-        //        port = NULL;
-
-        //        if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
-
-        bool closed = true;
-        //port->isOpen();
-
-        emit disconnected();
+        emit disconnected(); // [TODO] There are signals from QSerialPort we should use
         emit connected(false);
-        if (port) {
-            port->close();
-        }
-        return closed;
-    }
-    else {
-        // not running
-        if (port) {
-            port->close();
-        }
+        return true;
+    } else {
+        m_port->close();
         return true;
     }
-
 }
 
 /**
@@ -655,12 +374,14 @@ bool SerialLink::disconnect()
  **/
 bool SerialLink::connect()
 {
-    if (this->isRunning()) this->disconnect();
+    if (isRunning())
+        disconnect();
     {
         QMutexLocker locker(&this->m_stoppMutex);
-        this->m_stopp = false;
+        m_stopp = false;
     }
-    this->start(LowPriority);
+
+    start(LowPriority);
     return true;
 }
 
@@ -674,36 +395,52 @@ bool SerialLink::connect()
  **/
 bool SerialLink::hardwareConnect()
 {
-    if(port) {
-        port->close();
-        delete port;
-    }
-    port = new QSerialPort(porthandle, portSettings);
-    QObject::connect(port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
-    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
-    connectionStartTime = MG::TIME::getGroundTimeNow();
-
-    if (!port->open())
+    if(m_port)
     {
-        emit communicationUpdate(getName(),"Error opening port: " + port->errorString());
+        qDebug() << "SerialLink:" << QString::number((long)this, 16) << "closing port";
+        m_port->close();
+        delete m_port;
+        m_port = NULL;
     }
-    else
+    qDebug() << "SerialLink: hardwareConnect to " << m_portName;
+    m_port = new QSerialPort(m_portName);
+
+    if (m_port == NULL)
     {
-        emit communicationUpdate(getName(),"Opened port!");
+        emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
+        return false; // couldn't create serial port.
     }
 
-    bool connectionUp = isConnected();
-    if(connectionUp) {
-        emit connected();
-        emit connected(true);
+    QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
+
+//    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
+    m_connectionStartTime = MG::TIME::getGroundTimeNow();
+
+    if (!m_port->open(QIODevice::ReadWrite))
+    {
+        emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
+        m_port->close();
+        return false; // couldn't open serial port
     }
 
-    //qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << port->portName() << getBaudRate() << getDataBits() << getParityType() << getStopBits();
+    emit communicationUpdate(getName(),"Opened port!");
 
+    // Need to configure the port
+    m_port->setBaudRate(m_baud);
+    m_port->setDataBits(static_cast<QSerialPort::DataBits>(m_dataBits));
+    m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(m_flowControl));
+    m_port->setStopBits(static_cast<QSerialPort::StopBits>(m_stopBits));
+    m_port->setParity(static_cast<QSerialPort::Parity>(m_parity));
+
+    emit connected();
+    emit connected(true);
+
+    qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << m_port->portName()
+             << getBaudRate() << getDataBits() << getParityType() << getStopBits();
 
     writeSettings();
 
-    return connectionUp;
+    return true; // successful connection
 }
 
 
@@ -714,29 +451,28 @@ bool SerialLink::hardwareConnect()
  **/
 bool SerialLink::isConnected()
 {
-    if (port) {
-        return port->isOpen();
+
+    if (m_port) {
+        bool isConnected = m_port->isOpen();
+        qDebug() << "SerialLink #" << __LINE__ << ":"<<  m_port->portName()
+                 << " isConnected =" << QString::number(isConnected);
+        return isConnected;
     } else {
+        qDebug() << "SerialLink #" << __LINE__ << ":" <<  m_portName
+                 << " isConnected = NULL";
         return false;
     }
 }
 
 int SerialLink::getId()
 {
-    return id;
+    return m_id;
 }
 
 QString SerialLink::getName()
 {
-    return name;
+    return m_name;
 }
-
-void SerialLink::setName(QString name)
-{
-    this->name = name;
-    emit nameChanged(this->name);
-}
-
 
 /**
   * This function maps baud rate constants to numerical equivalents.
@@ -744,108 +480,53 @@ void SerialLink::setName(QString name)
   */
 qint64 SerialLink::getNominalDataRate()
 {
-    qint64 dataRate = 0;
-    switch (portSettings.baudRate()) {
-
-    // Baud rates supported only by POSIX systems
-#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-    case QPortSettings::BAUDR_50:
-        dataRate = 50;
-        break;
-    case QPortSettings::BAUDR_75:
-        dataRate = 75;
-        break;
-    case QPortSettings::BAUDR_134:
-        dataRate = 134;
-        break;
-    case QPortSettings::BAUDR_150:
-        dataRate = 150;
-        break;
-    case QPortSettings::BAUDR_200:
-        dataRate = 200;
-        break;
-    case QPortSettings::BAUDR_1800:
-        dataRate = 1800;
-        break;
-#endif
-
-        // Baud rates supported only by Windows
-#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
-    case QPortSettings::BAUDR_14400:
-        dataRate = 14400;
-        break;
-    case QPortSettings::BAUDR_56000:
-        dataRate = 56000;
-        break;
-    case QPortSettings::BAUDR_128000:
-        dataRate = 128000;
-        break;
-    case QPortSettings::BAUDR_256000:
-        dataRate = 256000;
-#endif
-
-    case QPortSettings::BAUDR_110:
-        dataRate = 110;
-        break;
-    case QPortSettings::BAUDR_300:
-        dataRate = 300;
-        break;
-    case QPortSettings::BAUDR_600:
-        dataRate = 600;
-        break;
-    case QPortSettings::BAUDR_1200:
-        dataRate = 1200;
-        break;
-    case QPortSettings::BAUDR_2400:
-        dataRate = 2400;
-        break;
-    case QPortSettings::BAUDR_4800:
-        dataRate = 4800;
-        break;
-    case QPortSettings::BAUDR_9600:
-        dataRate = 9600;
-        break;
-    case QPortSettings::BAUDR_19200:
-        dataRate = 19200;
-        break;
-    case QPortSettings::BAUDR_38400:
-        dataRate = 38400;
-        break;
-    case QPortSettings::BAUDR_57600:
-        dataRate = 57600;
-        break;
-    case QPortSettings::BAUDR_115200:
-        dataRate = 115200;
-        break;
-    case QPortSettings::BAUDR_230400:
-        dataRate = 230400;
-        break;
-    case QPortSettings::BAUDR_460800:
-        dataRate = 460800;
-        break;
-    case QPortSettings::BAUDR_500000:
-        dataRate = 500000;
-        break;
-    case QPortSettings::BAUDR_576000:
-        dataRate = 576000;
-        break;
-    case QPortSettings::BAUDR_921600:
-        dataRate = 921600;
-        break;
-
-        // Otherwise do nothing.
-    case QPortSettings::BAUDR_UNKNOWN:
-    default:
-        break;
+    int baudRate;
+    if (m_port) {
+        baudRate = m_port->baudRate();
+    } else {
+        baudRate = m_baud;
+    }
+    qint64 dataRate;
+    switch (baudRate)
+    {
+        case QSerialPort::Baud1200:
+            dataRate = 1200;
+            break;
+        case QSerialPort::Baud2400:
+            dataRate = 2400;
+            break;
+        case QSerialPort::Baud4800:
+            dataRate = 4800;
+            break;
+        case QSerialPort::Baud9600:
+            dataRate = 9600;
+            break;
+        case QSerialPort::Baud19200:
+            dataRate = 19200;
+            break;
+        case QSerialPort::Baud38400:
+            dataRate = 38400;
+            break;
+        case QSerialPort::Baud57600:
+            dataRate = 57600;
+            break;
+        case QSerialPort::Baud115200:
+            dataRate = 115200;
+            break;
+            // Otherwise do nothing.
+        case QSerialPort::UnknownBaud:
+        default:
+            dataRate = -1;
+            break;
     }
     return dataRate;
 }
 
 qint64 SerialLink::getTotalUpstream()
 {
-    statisticsMutex.lock();
-    return bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
+    m_statisticsMutex.lock();
+    return m_bitsSentTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
+    m_statisticsMutex.unlock();
 }
 
 qint64 SerialLink::getCurrentUpstream()
@@ -860,19 +541,19 @@ qint64 SerialLink::getMaxUpstream()
 
 qint64 SerialLink::getBitsSent()
 {
-    return bitsSentTotal;
+    return m_bitsSentTotal;
 }
 
 qint64 SerialLink::getBitsReceived()
 {
-    return bitsReceivedTotal;
+    return m_bitsReceivedTotal;
 }
 
 qint64 SerialLink::getTotalDownstream()
 {
-    statisticsMutex.lock();
-    return bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
+    m_statisticsMutex.lock();
+    return m_bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
+    m_statisticsMutex.unlock();
 }
 
 qint64 SerialLink::getCurrentDownstream()
@@ -899,8 +580,10 @@ int SerialLink::getLinkQuality()
 
 QString SerialLink::getPortName()
 {
-    return porthandle;
+    return m_portName;
 }
+
+// We should replace the accessors below with one to get the QSerialPort
 
 int SerialLink::getBaudRate()
 {
@@ -909,43 +592,80 @@ int SerialLink::getBaudRate()
 
 int SerialLink::getBaudRateType()
 {
-    return portSettings.baudRate();
+    int baudRate;
+    if (m_port) {
+        baudRate = m_port->baudRate();
+    } else {
+        baudRate = m_baud;
+    }
+    return baudRate;
 }
 
 int SerialLink::getFlowType()
 {
-    return portSettings.flowControl();
+    int flowControl;
+    if (m_port) {
+        flowControl = m_port->flowControl();
+    } else {
+        flowControl = m_flowControl;
+    }
+    return flowControl;
 }
 
 int SerialLink::getParityType()
 {
-    return portSettings.parity();
+    int parity;
+    if (m_port) {
+        parity = m_port->parity();
+    } else {
+        parity = m_parity;
+    }
+    return parity;
 }
 
 int SerialLink::getDataBitsType()
 {
-    return portSettings.dataBits();
+    int dataBits;
+    if (m_port) {
+        dataBits = m_port->dataBits();
+    } else {
+        dataBits = m_dataBits;
+    }
+    return dataBits;
 }
 
 int SerialLink::getStopBitsType()
 {
-    return portSettings.stopBits();
+    int stopBits;
+    if (m_port) {
+        stopBits = m_port->stopBits();
+    } else {
+        stopBits = m_stopBits;
+    }
+    return stopBits;
 }
 
 int SerialLink::getDataBits()
 {
-    int ret = -1;
-    switch (portSettings.dataBits()) {
-    case QPortSettings::DB_5:
+    int ret;
+    int dataBits;
+    if (m_port) {
+        dataBits = m_port->dataBits();
+    } else {
+        dataBits = m_dataBits;
+    }
+
+    switch (dataBits) {
+    case QSerialPort::Data5:
         ret = 5;
         break;
-    case QPortSettings::DB_6:
+    case QSerialPort::Data6:
         ret = 6;
         break;
-    case QPortSettings::DB_7:
+    case QSerialPort::Data7:
         ret = 7;
         break;
-    case QPortSettings::DB_8:
+    case QSerialPort::Data8:
         ret = 8;
         break;
     default:
@@ -957,12 +677,18 @@ int SerialLink::getDataBits()
 
 int SerialLink::getStopBits()
 {
+    int stopBits;
+    if (m_port) {
+        stopBits = m_port->stopBits();
+    } else {
+        stopBits = m_stopBits;
+    }
     int ret = -1;
-    switch (portSettings.stopBits()) {
-    case QPortSettings::STOP_1:
+    switch (stopBits) {
+    case QSerialPort::OneStop:
         ret = 1;
         break;
-    case QPortSettings::STOP_2:
+    case QSerialPort::TwoStop:
         ret = 2;
         break;
     default:
@@ -974,56 +700,36 @@ int SerialLink::getStopBits()
 
 bool SerialLink::setPortName(QString portName)
 {
-    if(portName.trimmed().length() > 0) {
-        bool reconnect = false;
-        if (isConnected()) reconnect = true;
-        disconnect();
+    qDebug() << "current portName " << m_portName;
+    qDebug() << "setPortName to " << portName;
+    bool accepted = false;
+    if ((portName != m_portName)
+            && (portName.trimmed().length() > 0)) {
+        m_portName = portName.trimmed();
+        m_name = tr("serial port ") + portName.trimmed(); // [TODO] Do we need this?
+        if(m_port)
+            m_port->setPortName(portName);
 
-        this->porthandle = portName.trimmed();
-        setName(tr("serial port ") + portName.trimmed());
-#ifdef _WIN32
-        // Port names above 20 need the network path format - if the port name is not already in this format
-        // catch this special case
-        if (!this->porthandle.startsWith("\\")) {
-            // Append \\.\ before the port handle. Additional backslashes are used for escaping.
-            this->porthandle = "\\\\.\\" + this->porthandle;
-        }
-#endif
-
-        if(reconnect) connect();
-        return true;
-    } else {
-        return false;
+        emit nameChanged(m_name); // [TODO] maybe we can eliminate this
+        return accepted;
     }
+    return false;
 }
 
 
 bool SerialLink::setBaudRateType(int rateIndex)
 {
-    bool reconnect = false;
-    bool accepted = true; // This is changed if none of the data rates matches
-    if(isConnected()) reconnect = true;
-    disconnect();
+    Q_ASSERT_X(m_port != NULL, "setBaudRateType", "m_port is NULL");
+    // These minimum and maximum baud rates were based on those enumerated in qserialport.h
+    const int minBaud = (int)QSerialPort::Baud1200;
+    const int maxBaud = (int)QSerialPort::Baud115200;
 
-    // These minimum and maximum baud rates were based on those enumerated in qportsettings.h.
-#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
-    const int minBaud = (int)QPortSettings::BAUDR_110;
-    const int maxBaud = (int)QPortSettings::BAUDR_921600;
-#elif defined(Q_OS_LINUX)
-    const int minBaud = (int)QPortSettings::BAUDR_50;
-    const int maxBaud = (int)QPortSettings::BAUDR_921600;
-#elif defined(Q_OS_UNIX) || defined(Q_OS_DARWIN)
-    const int minBaud = (int)QPortSettings::BAUDR_50;
-    const int maxBaud = (int)QPortSettings::BAUDR_921600;
-#endif
-
-    if (rateIndex >= minBaud && rateIndex <= maxBaud)
+    if (m_port && (rateIndex >= minBaud && rateIndex <= maxBaud))
     {
-        portSettings.setBaudRate((QPortSettings::BaudRate)rateIndex);
+        return m_port->setBaudRate(static_cast<QSerialPort::BaudRate>(rateIndex));
     }
 
-    if(reconnect) connect();
-    return accepted;
+    return false;
 }
 
 bool SerialLink::setBaudRateString(const QString& rate)
@@ -1036,260 +742,104 @@ bool SerialLink::setBaudRateString(const QString& rate)
 
 bool SerialLink::setBaudRate(int rate)
 {
-    bool reconnect = false;
-    bool accepted = true; // This is changed if none of the data rates matches
-    if(isConnected()) {
-        reconnect = true;
+    bool accepted = false;
+    if (rate != m_baud) {
+        m_baud = rate;
+        accepted = true;
+        if (m_port)
+            accepted = m_port->setBaudRate(rate);
     }
-    disconnect();
-
-    // This switch-statment relies on the mapping given in qportsettings.h from the QSerialPort library.
-    switch (rate) {
-
-    // Baud rates supported only by non-Windows systems
-#if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-    case 50:
-        portSettings.setBaudRate(QPortSettings::BAUDR_50);
-        break;
-    case 75:
-        portSettings.setBaudRate(QPortSettings::BAUDR_75);
-        break;
-    case 134:
-        portSettings.setBaudRate(QPortSettings::BAUDR_134);
-        break;
-    case 150:
-        portSettings.setBaudRate(QPortSettings::BAUDR_150);
-        break;
-    case 200:
-        portSettings.setBaudRate(QPortSettings::BAUDR_200);
-        break;
-    case 1800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_1800);
-        break;
-#endif
-
-        // Baud rates supported only by windows
-#if defined(Q_OS_WIN32) || defined(Q_OS_WINCE)
-    case 14400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_14400);
-        break;
-    case 56000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_56000);
-        break;
-    case 128000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_128000);
-        break;
-    case 256000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_256000);
-        break;
-#endif
-
-        // Supported by all OSes:
-    case 110:
-        portSettings.setBaudRate(QPortSettings::BAUDR_110);
-        break;
-    case 300:
-        portSettings.setBaudRate(QPortSettings::BAUDR_300);
-        break;
-    case 600:
-        portSettings.setBaudRate(QPortSettings::BAUDR_600);
-        break;
-    case 1200:
-        portSettings.setBaudRate(QPortSettings::BAUDR_1200);
-        break;
-    case 2400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_2400);
-        break;
-    case 4800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_4800);
-        break;
-    case 9600:
-        portSettings.setBaudRate(QPortSettings::BAUDR_9600);
-        break;
-    case 19200:
-        portSettings.setBaudRate(QPortSettings::BAUDR_19200);
-        break;
-    case 38400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_38400);
-        break;
-    case 57600:
-        portSettings.setBaudRate(QPortSettings::BAUDR_57600);
-        break;
-    case 115200:
-        portSettings.setBaudRate(QPortSettings::BAUDR_115200);
-        break;
-    case 230400:
-        portSettings.setBaudRate(QPortSettings::BAUDR_230400);
-        break;
-    case 460800:
-        portSettings.setBaudRate(QPortSettings::BAUDR_460800);
-        break;
-    case 500000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_500000);
-        break;
-    case 576000:
-        portSettings.setBaudRate(QPortSettings::BAUDR_576000);
-        break;
-    case 921600:
-        portSettings.setBaudRate(QPortSettings::BAUDR_921600);
-        break;
-    default:
-        // If none of the above cases matches, there must be an error
-        accepted = false;
-        break;
-    }
-
-    if(reconnect) connect();
     return accepted;
-
 }
 
 bool SerialLink::setFlowType(int flow)
 {
-    bool reconnect = false;
-    bool accepted = true;
-    if(isConnected()) reconnect = true;
-    disconnect();
-
-    switch (flow) {
-    case (int)QPortSettings::FLOW_OFF:
-        portSettings.setFlowControl(QPortSettings::FLOW_OFF);
-        break;
-    case (int)QPortSettings::FLOW_HARDWARE:
-        portSettings.setFlowControl(QPortSettings::FLOW_HARDWARE);
-        break;
-    case (int)QPortSettings::FLOW_XONXOFF:
-        portSettings.setFlowControl(QPortSettings::FLOW_XONXOFF);
-        break;
-    default:
-        // If none of the above cases matches, there must be an error
-        accepted = false;
-        break;
+    bool accepted = false;
+    if (flow != m_flowControl) {
+        m_flowControl = static_cast<QSerialPort::FlowControl>(flow);
+        accepted = true;
+        if (m_port)
+            accepted = m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(flow));
     }
-
-    if(reconnect) connect();
     return accepted;
 }
 
 bool SerialLink::setParityType(int parity)
 {
-    bool reconnect = false;
-    bool accepted = true;
-    if (isConnected()) reconnect = true;
-    disconnect();
-
-    switch (parity) {
-    case (int)QPortSettings::PAR_NONE:
-        portSettings.setParity(QPortSettings::PAR_NONE);
-        break;
-    case (int)QPortSettings::PAR_ODD:
-        portSettings.setParity(QPortSettings::PAR_ODD);
-        break;
-    case (int)QPortSettings::PAR_EVEN:
-        portSettings.setParity(QPortSettings::PAR_EVEN);
-        break;
-    case (int)QPortSettings::PAR_SPACE:
-        portSettings.setParity(QPortSettings::PAR_SPACE);
-        break;
-    default:
-        // If none of the above cases matches, there must be an error
-        accepted = false;
-        break;
+    bool accepted = false;
+    if (parity != m_parity) {
+        m_parity = static_cast<QSerialPort::Parity>(parity);
+        accepted = true;
+        if (m_port) {
+            switch (parity) {
+                case QSerialPort::NoParity:
+                accepted = m_port->setParity(QSerialPort::NoParity);
+                break;
+                case 1: // Odd Parity setting for backwards compatibilty
+                    accepted = m_port->setParity(QSerialPort::OddParity);
+                    break;
+                case QSerialPort::EvenParity:
+                    accepted = m_port->setParity(QSerialPort::EvenParity);
+                    break;
+                case QSerialPort::OddParity:
+                    accepted = m_port->setParity(QSerialPort::OddParity);
+                    break;
+                default:
+                    // If none of the above cases matches, there must be an error
+                    accepted = false;
+                    break;
+                }
+        }
     }
-
-    if (reconnect) connect();
     return accepted;
 }
 
 
 bool SerialLink::setDataBits(int dataBits)
 {
-    //qDebug() << "Setting" << dataBits << "data bits";
-    bool reconnect = false;
-    if (isConnected()) reconnect = true;
-    bool accepted = true;
-    disconnect();
-
-    switch (dataBits) {
-    case 5:
-        portSettings.setDataBits(QPortSettings::DB_5);
-        break;
-    case 6:
-        portSettings.setDataBits(QPortSettings::DB_6);
-        break;
-    case 7:
-        portSettings.setDataBits(QPortSettings::DB_7);
-        break;
-    case 8:
-        portSettings.setDataBits(QPortSettings::DB_8);
-        break;
-    default:
-        // If none of the above cases matches, there must be an error
-        accepted = false;
-        break;
+    bool accepted = false;
+    if (dataBits != m_dataBits) {
+        m_dataBits = static_cast<QSerialPort::DataBits>(dataBits);
+        accepted = true;
+        if (m_port)
+            accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
     }
-
-    if(reconnect) connect();
-
     return accepted;
 }
 
 bool SerialLink::setStopBits(int stopBits)
 {
-    bool reconnect = false;
-    bool accepted = true;
-    if(isConnected()) reconnect = true;
-    disconnect();
-
-    switch (stopBits) {
-    case 1:
-        portSettings.setStopBits(QPortSettings::STOP_1);
-        break;
-    case 2:
-        portSettings.setStopBits(QPortSettings::STOP_2);
-        break;
-    default:
-        // If none of the above cases matches, there must be an error
-        accepted = false;
-        break;
+    // Note 3 is OneAndAHalf stopbits.
+    bool accepted = false;
+    if (stopBits != m_stopBits) {
+        m_stopBits = static_cast<QSerialPort::StopBits>(stopBits);
+        accepted = true;
+        if (m_port)
+            accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
     }
-
-    if(reconnect) connect();
     return accepted;
 }
 
 bool SerialLink::setDataBitsType(int dataBits)
 {
-    bool reconnect = false;
     bool accepted = false;
-
-    if (isConnected()) reconnect = true;
-    disconnect();
-
-    if (dataBits >= (int)QPortSettings::DB_5 && dataBits <= (int)QPortSettings::DB_8) {
-        portSettings.setDataBits((QPortSettings::DataBits) dataBits);
-
-        if(reconnect) connect();
+    if (dataBits != m_dataBits) {
+        m_dataBits = static_cast<QSerialPort::DataBits>(dataBits);
         accepted = true;
+        if (m_port)
+            accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
     }
-
     return accepted;
 }
 
 bool SerialLink::setStopBitsType(int stopBits)
 {
-    bool reconnect = false;
     bool accepted = false;
-    if(isConnected()) reconnect = true;
-    disconnect();
-
-    if (stopBits >= (int)QPortSettings::STOP_1 && stopBits <= (int)QPortSettings::STOP_2) {
-        portSettings.setStopBits((QPortSettings::StopBits) stopBits);
-
-        if(reconnect) connect();
+    if (stopBits != m_stopBits) {
+        m_stopBits = static_cast<QSerialPort::StopBits>(stopBits);
         accepted = true;
+        if (m_port)
+            accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
     }
-
-    if(reconnect) connect();
     return accepted;
 }
