@@ -71,7 +71,7 @@ void CompassConfig::enableClicked(bool enabled)
     {
         if (enabled)
         {
-            m_uas->setParameter(0,"MAG_ENABLE",QVariant(1));
+            m_uas->getParamManager()->setParameter(1,"MAG_ENABLE",QVariant(1));
             ui.autoDecCheckBox->setEnabled(true);
             if (!ui.autoDecCheckBox->isChecked())
             {
@@ -80,7 +80,7 @@ void CompassConfig::enableClicked(bool enabled)
         }
         else
         {
-            m_uas->setParameter(0,"MAG_ENABLE",QVariant(0));
+            m_uas->getParamManager()->setParameter(1,"MAG_ENABLE",QVariant(0));
             ui.autoDecCheckBox->setEnabled(false);
             ui.declinationLineEdit->setEnabled(false);
         }
@@ -93,11 +93,11 @@ void CompassConfig::autoDecClicked(bool enabled)
     {
         if (enabled)
         {
-            m_uas->setParameter(0,"COMPASS_AUTODEC",QVariant(1));
+            m_uas->getParamManager()->setParameter(1,"COMPASS_AUTODEC",QVariant(1));
         }
         else
         {
-            m_uas->setParameter(0,"COMPASS_AUTODEC",QVariant(0));
+            m_uas->getParamManager()->setParameter(1,"COMPASS_AUTODEC",QVariant(0));
         }
     }
 }

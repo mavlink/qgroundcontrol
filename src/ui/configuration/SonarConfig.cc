@@ -26,7 +26,7 @@ void SonarConfig::checkBoxToggled(bool enabled)
         QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
         return;
     }
-    m_uas->setParameter(0,"SONAR_ENABLE",ui.enableCheckBox->isChecked() ? 1 : 0);
+    m_uas->getParamManager()->setParameter(1,"SONAR_ENABLE",ui.enableCheckBox->isChecked() ? 1 : 0);
 }
 void SonarConfig::sonarTypeChanged(int index)
 {
@@ -35,7 +35,7 @@ void SonarConfig::sonarTypeChanged(int index)
         QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
         return;
     }
-    m_uas->setParameter(0,"SONAR_TYPE",ui.sonarTypeComboBox->currentIndex());
+    m_uas->getParamManager()->setParameter(1,"SONAR_TYPE",ui.sonarTypeComboBox->currentIndex());
 }
 
 void SonarConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
