@@ -115,6 +115,10 @@
         <file>files/images/devices/BR-0004-03-2.jpg</file>
         <file>files/images/devices/BR-0016-01-3T.jpg</file>
         <file>files/images/devices/MinimOSD.jpg</file>
+        <file>files/images/devices/cameraGimalPitch1.png</file>
+        <file>files/images/devices/cameraGimalRoll1.png</file>
+        <file>files/images/devices/cameraGimalYaw.png</file>
+        <file>files/images/devices/Shutter.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
