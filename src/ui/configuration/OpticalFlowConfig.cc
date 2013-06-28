@@ -32,5 +32,5 @@ void OpticalFlowConfig::enableCheckBoxClicked(bool checked)
         QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
         return;
     }
-    m_uas->setParameter(0,"FLOW_ENABLE",checked ? 1 : 0);
+    m_uas->getParamManager()->setParameter(1,"FLOW_ENABLE",checked ? 1 : 0);
 }

@@ -135,29 +135,29 @@ void FlightModeConfig::saveButtonClicked()
 {
     if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
     {
-        m_uas->setParameter(0,"FLTMODE1",(char)planeModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"FLTMODE2",(char)planeModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"FLTMODE3",(char)planeModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"FLTMODE4",(char)planeModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"FLTMODE5",(char)planeModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"FLTMODE6",(char)planeModeUiIndexToIndex[ui.mode6ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE1",(char)planeModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE2",(char)planeModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE3",(char)planeModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE4",(char)planeModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE5",(char)planeModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE6",(char)planeModeUiIndexToIndex[ui.mode6ComboBox->currentIndex()]);
     }
     else if (m_uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
     {
-        m_uas->setParameter(0,"MODE1",(char)roverModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"MODE2",(char)roverModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"MODE3",(char)roverModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"MODE4",(char)roverModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
-        m_uas->setParameter(0,"MODE5",(char)roverModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"MODE1",(char)roverModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"MODE2",(char)roverModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"MODE3",(char)roverModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"MODE4",(char)roverModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
+        m_uas->getParamManager()->setParameter(1,"MODE5",(char)roverModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
     }
     else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
     {
-        m_uas->setParameter(0,"FLTMODE1",(char)ui.mode1ComboBox->currentIndex()+1);
-        m_uas->setParameter(0,"FLTMODE2",(char)ui.mode2ComboBox->currentIndex()+1);
-        m_uas->setParameter(0,"FLTMODE3",(char)ui.mode3ComboBox->currentIndex()+1);
-        m_uas->setParameter(0,"FLTMODE4",(char)ui.mode4ComboBox->currentIndex()+1);
-        m_uas->setParameter(0,"FLTMODE5",(char)ui.mode5ComboBox->currentIndex()+1);
-        m_uas->setParameter(0,"FLTMODE6",(char)ui.mode6ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE1",(char)ui.mode1ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE2",(char)ui.mode2ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE3",(char)ui.mode3ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE4",(char)ui.mode4ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE5",(char)ui.mode5ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE6",(char)ui.mode6ComboBox->currentIndex()+1);
     }
 }
 

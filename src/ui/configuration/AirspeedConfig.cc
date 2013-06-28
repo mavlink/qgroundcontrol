@@ -56,11 +56,11 @@ void AirspeedConfig::useCheckBoxClicked(bool checked)
     }
     if (checked)
     {
-        m_uas->setParameter(0,"ARSPD_USE",1);
+        m_uas->getParamManager()->setParameter(1,"ARSPD_USE",1);
     }
     else
     {
-        m_uas->setParameter(0,"ARSPD_USE",0);
+        m_uas->getParamManager()->setParameter(1,"ARSPD_USE",0);
     }
 }
 
@@ -73,10 +73,10 @@ void AirspeedConfig::enableCheckBoxClicked(bool checked)
     }
     if (checked)
     {
-        m_uas->setParameter(0,"ARSPD_ENABLE",1);
+        m_uas->getParamManager()->setParameter(1,"ARSPD_ENABLE",1);
     }
     else
     {
-        m_uas->setParameter(0,"ARSPD_ENABLE",0);
+        m_uas->getParamManager()->setParameter(1,"ARSPD_ENABLE",0);
     }
 }

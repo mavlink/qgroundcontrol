@@ -47,7 +47,7 @@ void BatteryMonitorConfig::calcDividerSet()
         QMessageBox::information(0,"Error","Invalid number entered for voltage divider. Please try again");
         return;
     }
-    m_uas->setParameter(0,"VOLT_DIVIDER",newval);
+    m_uas->getParamManager()->setParameter(1,"VOLT_DIVIDER",newval);
 }
 void BatteryMonitorConfig::ampsPerVoltSet()
 {
@@ -64,7 +64,7 @@ void BatteryMonitorConfig::ampsPerVoltSet()
         QMessageBox::information(0,"Error","Invalid number entered for amps per volts. Please try again");
         return;
     }
-    m_uas->setParameter(0,"AMPS_PER_VOLT",newval);
+    m_uas->getParamManager()->setParameter(1,"AMPS_PER_VOLT",newval);
 }
 void BatteryMonitorConfig::batteryCapacitySet()
 {
@@ -81,7 +81,7 @@ void BatteryMonitorConfig::batteryCapacitySet()
         QMessageBox::information(0,"Error","Invalid number entered for amps per volts. Please try again");
         return;
     }
-    m_uas->setParameter(0,"BATT_CAPACITY",newval);
+    m_uas->getParamManager()->setParameter(1,"BATT_CAPACITY",newval);
 }
 
 void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
@@ -93,9 +93,9 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
     }
     if (index == 0)
     {
-        m_uas->setParameter(0,"BATT_VOLT_PIN",-1);
-        m_uas->setParameter(0,"BATT_CURR_PIN",-1);
-        m_uas->setParameter(0,"BATT_MONITOR",0);
+        m_uas->getParamManager()->setParameter(1,"BATT_VOLT_PIN",-1);
+        m_uas->getParamManager()->setParameter(1,"BATT_CURR_PIN",-1);
+        m_uas->getParamManager()->setParameter(1,"BATT_MONITOR",0);
         ui.sensorComboBox->setEnabled(false);
         ui.apmVerComboBox->setEnabled(false);
         ui.measuredVoltsLineEdit->setEnabled(false);
@@ -106,7 +106,7 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
     }
     else if (index == 1)
     {
-        m_uas->setParameter(0,"BATT_MONITOR",3);
+        m_uas->getParamManager()->setParameter(1,"BATT_MONITOR",3);
         ui.sensorComboBox->setEnabled(false);
         ui.apmVerComboBox->setEnabled(true);
         ui.measuredVoltsLineEdit->setEnabled(true);
@@ -116,7 +116,7 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
     }
     else if (index == 2)
     {
-        m_uas->setParameter(0,"BATT_MONITOR",4);
+        m_uas->getParamManager()->setParameter(1,"BATT_MONITOR",4);
         ui.sensorComboBox->setEnabled(true);
         ui.apmVerComboBox->setEnabled(true);
         ui.measuredVoltsLineEdit->setEnabled(true);
@@ -197,24 +197,24 @@ void BatteryMonitorConfig::apmVerCurrentIndexChanged(int index)
     }
     if (index == 0) //APM1
     {
-        m_uas->setParameter(0,"BATT_VOLT_PIN",0);
-        m_uas->setParameter(0,"BATT_CURR_PIN",1);
+        m_uas->getParamManager()->setParameter(1,"BATT_VOLT_PIN",0);
+        m_uas->getParamManager()->setParameter(1,"BATT_CURR_PIN",1);
     }
     else if (index == 1) //APM2
     {
-        m_uas->setParameter(0,"BATT_VOLT_PIN",1);
-        m_uas->setParameter(0,"BATT_CURR_PIN",2);
+        m_uas->getParamManager()->setParameter(1,"BATT_VOLT_PIN",1);
+        m_uas->getParamManager()->setParameter(1,"BATT_CURR_PIN",2);
     }
     else if (index == 2) //APM2.5
     {
-        m_uas->setParameter(0,"BATT_VOLT_PIN",13);
-        m_uas->setParameter(0,"BATT_CURR_PIN",12);
+        m_uas->getParamManager()->setParameter(1,"BATT_VOLT_PIN",13);
+        m_uas->getParamManager()->setParameter(1,"BATT_CURR_PIN",12);
     }
     else if (index == 3) //PX4
     {
-        m_uas->setParameter(0,"BATT_VOLT_PIN",100);
-        m_uas->setParameter(0,"BATT_CURR_PIN",101);
-        m_uas->setParameter(0,"VOLT_DIVIDER",1);
+        m_uas->getParamManager()->setParameter(1,"BATT_VOLT_PIN",100);
+        m_uas->getParamManager()->setParameter(1,"BATT_CURR_PIN",101);
+        m_uas->getParamManager()->setParameter(1,"VOLT_DIVIDER",1);
         ui.calcDividerLineEdit->setText("1");
     }
 }

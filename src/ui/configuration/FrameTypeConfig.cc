@@ -88,7 +88,7 @@ void FrameTypeConfig::xFrameSelected()
 {
     if (m_uas)
     {
-        m_uas->setParameter(0,"FRAME",QVariant(1));
+        m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(1));
     }
 }
 
@@ -96,7 +96,7 @@ void FrameTypeConfig::plusFrameSelected()
 {
     if (m_uas)
     {
-        m_uas->setParameter(0,"FRAME",QVariant(0));
+        m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(0));
     }
 }
 
@@ -104,6 +104,6 @@ void FrameTypeConfig::vFrameSelected()
 {
     if (m_uas)
     {
-        m_uas->setParameter(0,"FRAME",QVariant(2));
+        m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(2));
     }
 }
