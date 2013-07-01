@@ -139,9 +139,6 @@ public slots:
     bool connect();
     bool disconnect();
 
-protected slots:
-    void checkForBytes();
-
 protected:
     quint64 m_bytesRead;
     QSerialPort* m_port;
