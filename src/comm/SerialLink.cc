@@ -156,19 +156,22 @@ void SerialLink::run()
 
     forever
     {
-        if(m_stopp)
         {
-            m_stopp = false;
-            break; // exit the thread
-        }
+            QMutexLocker locker(&this->m_stoppMutex);
+            if(m_stopp)
+            {
+                m_stopp = false;
+                break; // exit the thread
+            }
 
-        if (m_reqReset)
-        {
-            m_reqReset = false;
-            communicationUpdate(getName(),"Reset requested via DTR signal");
-            m_port->setDataTerminalReady(true);
-            msleep(250);
-            m_port->setDataTerminalReady(false);
+            if (m_reqReset)
+            {
+                m_reqReset = false;
+                communicationUpdate(getName(),"Reset requested via DTR signal");
+                m_port->setDataTerminalReady(true);
+                msleep(250);
+                m_port->setDataTerminalReady(false);
+            }
         }
         bool error = m_port->waitForReadyRead(500);
 
@@ -440,12 +443,12 @@ bool SerialLink::isConnected()
 
     if (m_port) {
         bool isConnected = m_port->isOpen();
-        qDebug() << "SerialLink #" << __LINE__ << ":"<<  m_port->portName()
-                 << " isConnected =" << QString::number(isConnected);
+//        qDebug() << "SerialLink #" << __LINE__ << ":"<<  m_port->portName()
+//                 << " isConnected =" << QString::number(isConnected);
         return isConnected;
     } else {
-        qDebug() << "SerialLink #" << __LINE__ << ":" <<  m_portName
-                 << " isConnected = NULL";
+//        qDebug() << "SerialLink #" << __LINE__ << ":" <<  m_portName
+//                 << " isConnected = NULL";
         return false;
     }
 }
