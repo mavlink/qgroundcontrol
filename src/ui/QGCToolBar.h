@@ -105,6 +105,7 @@ protected:
     QLabel* toolBarBatteryVoltageLabel;
     QGCMAVLinkLogPlayer* player;
     QComboBox *portComboBox;
+    QComboBox *baudcomboBox;
     bool changed;
     float batteryPercent;
     float batteryVoltage;

@@ -166,6 +166,22 @@ void QGCToolBar::createUI()
     portComboBox->setEnabled(true);
     portComboBox->setMinimumWidth(200);
     addWidget(portComboBox);
+
+    baudcomboBox = new QComboBox(this);
+    baudcomboBox->setToolTip(tr("Choose what baud rate to use"));
+    baudcomboBox->setEnabled(true);
+    baudcomboBox->setMinimumWidth(80);
+    baudcomboBox->addItem("9600");
+    baudcomboBox->addItem("14400");
+    baudcomboBox->addItem("19200");
+    baudcomboBox->addItem("38400");
+    baudcomboBox->addItem("57600");
+    baudcomboBox->addItem("115200");
+    baudcomboBox->setCurrentIndex(5);
+    addWidget(baudcomboBox);
+
+
+
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setToolTip(tr("Connect wireless link to MAV"));
     connectButton->setCheckable(true);
@@ -610,6 +626,8 @@ void QGCToolBar::connectLink(bool connect)
                 QString portname = portComboBox->currentText().split(":")[2];
                 link->setPortName(portname.trimmed());
             }
+            int baud = baudcomboBox->currentText().toInt();
+            link->setBaudRate(baud);
             link->connect();
         }
         else
