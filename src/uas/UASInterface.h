@@ -369,14 +369,14 @@ public slots:
     /** @brief Send the full HIL state to the MAV */
     virtual void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                         float pitchspeed, float yawspeed, double lat, double lon, double alt,
-                        float vx, float vy, float vz, float xacc, float yacc, float zacc) = 0;
+                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc) = 0;
 
     /** @brief RAW sensors for sensor HIL */
     virtual void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
-                                        float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed) = 0;
+                                float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed) = 0;
 
     /** @brief Send raw GPS for sensor HIL */
-    virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites) = 0;
+    virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites) = 0;
 
 
 protected:

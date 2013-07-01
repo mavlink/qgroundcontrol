@@ -54,7 +54,7 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLast(QGC::groundTimeMilliseconds()),
     simUpdateLastText(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    _sensorHilEnabled(false)
+    _sensorHilEnabled(true)
 {
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
@@ -468,7 +468,8 @@ void QGCXPlaneLink::readBytes()
 
             if (p.index == 3)
             {
-                airspeed = p.f[6] * 0.44704f;
+                ind_airspeed = p.f[5] * 0.44704f;
+                true_airspeed = p.f[6] * 0.44704f;
                 groundspeed = p.f[7] * 0.44704;
 
                 //qDebug() << "SPEEDS:" << "airspeed" << airspeed << "m/s, groundspeed" << groundspeed << "m/s";
@@ -634,19 +635,25 @@ void QGCXPlaneLink::readBytes()
 
             emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
                                         xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
+
+            // XXX make these GUI-configurable and add randomness
+            int gps_fix_type = 3;
+            float eph = 0.3;
+            float epv = 0.6;
+            float vel = sqrt(vx*vx + vy*vy + vz*vz);
+            float cog = atan2(vy, vx);
+            int satellites = 8;
+
+            emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, vx, vy, vz, cog, satellites);
+        } else {
+            emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
+                     pitchspeed, yawspeed, lat, lon, alt,
+                     vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
         }
 
-        int gps_fix_type = 3;
-        float eph = 0.3;
-        float epv = 0.6;
-        float vel = sqrt(vx*vx + vy*vy + vz*vz);
-        float cog = atan2(vy, vx);
-        int satellites = 8;
-
-        emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, cog, satellites);
-        emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
-                     pitchspeed, yawspeed, lat, lon, alt,
-                     vx, vy, vz, xacc, yacc, zacc);
+        emit hilGroundTruthChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
+                 pitchspeed, yawspeed, lat, lon, alt,
+                 vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
     }
 
     if (!oldConnectionState && xPlaneConnected)
@@ -694,9 +701,10 @@ bool QGCXPlaneLink::disconnectSimulation()
         disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
         disconnect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
 
-        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, int)));
-        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)));
+        disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
+        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
 
         UAS* uas = dynamic_cast<UAS*>(mav);
         if (uas)
@@ -878,9 +886,10 @@ bool QGCXPlaneLink::connectSimulation()
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
 
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint16)));
+    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
+    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
 
     UAS* uas = dynamic_cast<UAS*>(mav);
     if (uas)
