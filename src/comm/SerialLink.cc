@@ -244,178 +244,6 @@ void SerialLink::run()
         emit connected(false);
     }
 }
-void SerialLink::run2()
-{
-    // Initialize the connection
-    if (!hardwareConnect())
-    {
-        //Need to error out here.
-        emit communicationError(getName(),"Error connecting: " + m_port->errorString());
-        return;
-
-    }
-
-    // Qt way to make clear what a while(1) loop does
-    qint64 msecs = QDateTime::currentMSecsSinceEpoch();
-    qint64 initialmsecs = QDateTime::currentMSecsSinceEpoch();
-    quint64 bytes = 0;
-    bool triedreset = false;
-    bool triedDTR = false;
-    qint64 timeout = 5000;
-
-    forever
-    {
-        {
-            QMutexLocker locker(&this->m_stoppMutex);
-            if(this->m_stopp)
-            {
-                this->m_stopp = false;
-                break;
-            }
-            if (m_reqReset)
-            {
-                this->m_reqReset = false;
-                communicationUpdate(getName(),"Reset requested via DTR signal");
-                m_port->setDataTerminalReady(true);
-                this->msleep(250);
-                m_port->setDataTerminalReady(false);
-            }
-        }
-        // Check if new bytes have arrived, if yes, emit the notification signal
-        /* Check if bytes are available */
-//        checkForBytes();
-        {
-            if(m_port && m_port->isOpen() && m_port->isWritable())
-            {
-                m_dataMutex.lock();
-                qint64 available = m_port->bytesAvailable();
-                m_dataMutex.unlock();
-
-                if(available > 0)
-                {
-                    //readBytes();
-                    {
-                        m_dataMutex.lock();
-                        if(m_port && m_port->isOpen()) {
-                            const qint64 maxLength = 2048;
-                            char data[maxLength];
-                            qint64 numBytes = m_port->bytesAvailable();
-                            //qDebug() << "numBytes: " << numBytes;
-
-                            if(numBytes > 0) {
-                                /* Read as much data in buffer as possible without overflow */
-                                if(maxLength < numBytes) numBytes = maxLength;
-
-                                m_port->read(data, numBytes);
-                                QByteArray b(data, numBytes);
-                                emit bytesReceived(this, b);
-
-                                //qDebug() << "SerialLink::readBytes()" << std::hex << data;
-                                //            int i;
-                                //            for (i=0; i<numBytes; i++){
-                                //                unsigned int v=data[i];
-                                //
-                                //                fprintf(stderr,"%02x ", v);
-                                //            }
-                                //            fprintf(stderr,"\n");
-                                m_bitsReceivedTotal += numBytes * 8;
-                            }
-                        }
-                        m_dataMutex.unlock();
-                    }
-
-                    m_bytesRead += available;
-                }
-                else if (available < 0) {
-                    /* Error, close port */
-                    m_port->close();
-                    emit disconnected();
-                    emit connected(false);
-                    emit communicationError(this->getName(), tr("Could not read data - link %1 is disconnected!").arg(this->getName()));
-                }
-            };
-        }
-
-        if (bytes != m_bytesRead)
-        {
-            bytes = m_bytesRead;
-            msecs = QDateTime::currentMSecsSinceEpoch();
-        }
-        else
-        {
-            if (QDateTime::currentMSecsSinceEpoch() - msecs > timeout)
-            {
-                //It's been 10 seconds since the last data came in. Reset and try again
-                msecs = QDateTime::currentMSecsSinceEpoch();
-                if (msecs - initialmsecs > 25000)
-                {
-                    //After initial 25 seconds, timeouts are increased to 30 seconds.
-                    //This prevents temporary silences from things like calibration commands
-                    //from screwing things up. In all reality, timeouts should be enabled/disabled
-                    //for events like that on a case by case basis.
-                    //TODO ^^
-                    timeout = 30000;
-                }
-                if (!triedDTR && triedreset)
-                {
-                    triedDTR = true;
-                    communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
-                    qDebug() << "No data!!! Attempting reset via DTR.";
-                    m_port->setDataTerminalReady(true);
-                    this->msleep(250);
-                    m_port->setDataTerminalReady(false);
-                }
-                else if (!triedreset)
-                {
-                    qDebug() << "No data!!! Attempting reset via reboot command.";
-                    communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
-                    m_port->write("reboot\r\n",8);
-                    triedreset = true;
-                }
-                else
-                {
-                    communicationUpdate(getName(),"No data to receive on COM port....");
-                    qDebug() << "No data!!!";
-                }
-            }
-        }
-        /* Serial data isn't arriving that fast normally, this saves the thread
-                 * from consuming too much processing time
-                 */
-        MG::SLEEP::msleep(SerialLink::poll_interval);
-    } // end forever loop
-
-    if (m_port) {
-        m_port->close();
-        delete m_port;
-        m_port = NULL;
-    }
-}
-
-
-void SerialLink::checkForBytes()
-{
-    /* Check if bytes are available */
-    if(m_port && m_port->isOpen() && m_port->isWritable())
-    {
-        m_dataMutex.lock();
-        qint64 available = m_port->bytesAvailable();
-        m_dataMutex.unlock();
-
-        if(available > 0)
-        {
-            readBytes();
-            m_bytesRead += available;
-        }
-        else if (available < 0) {
-            /* Error, close port */
-            m_port->close();
-            emit disconnected();
-            emit connected(false);
-            emit communicationError(this->getName(), tr("Could not read data - link %1 is disconnected!").arg(this->getName()));
-        }
-    }
-}
 
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
@@ -503,11 +331,13 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    qDebug() << "disconnect" << m_port->portName();
-    Q_ASSERT_X(m_port != NULL, "disconnect", "m_port is NULL");
+    qDebug() << "disconnect";
+    if (m_port)
+        qDebug() << m_port->portName();
 
     if (isRunning())
     {
+        qDebug() << "running so disconnect" << m_port->portName();
         {
             QMutexLocker locker(&m_stoppMutex);
             m_stopp = true;
@@ -517,10 +347,10 @@ bool SerialLink::disconnect()
         emit disconnected(); // [TODO] There are signals from QSerialPort we should use
         emit connected(false);
         return true;
-    } else {
-        m_port->close();
-        return true;
     }
+
+    qDebug() << "already disconnected";
+    return true;
 }
 
 /**
