@@ -106,6 +106,7 @@ public:
     void writeSettings();
 
     void run();
+    void run2();
 
     int getLinkQuality();
     bool isFullDuplex();

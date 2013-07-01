@@ -1,4 +1,3 @@
-
 INCLUDEPATH += $$PWD
 
 unix {
