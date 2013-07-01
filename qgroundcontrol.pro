@@ -20,7 +20,8 @@
 
 # Qt configuration
 CONFIG += qt \
-    thread \
+    thread
+#    serialport
 
 QT += network \
     opengl \
