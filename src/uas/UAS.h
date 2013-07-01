@@ -696,11 +696,15 @@ public slots:
     /** @brief Send the full HIL state to the MAV */
     void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
                         float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
-                        float vx, float vy, float vz, float xacc, float yacc, float zacc);
+                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
+
+    void sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
+                        float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
+                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
 
     /** @brief RAW sensors for sensor HIL */
-    void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollRotationRate, float pitchRotationRate, float yawRotationRate,
-                                        float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed);
+    void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
+                        float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed);
 
     /**
      * @param time_us
@@ -714,7 +718,7 @@ public slots:
      * @param cog course over ground, in radians, -pi..pi
      * @param satellites
      */
-    void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites);
+    void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd,  float cog, int satellites);
 
 
     /** @brief Places the UAV in Hardware-in-the-Loop simulation status **/

@@ -77,7 +77,6 @@ void WaypointViewOnlyView::setCurrent(bool state)
 
 void WaypointViewOnlyView::updateValues()
 {
-    qDebug() << "Trof: WaypointViewOnlyView::updateValues() ID:" << wp->getId();
     // Check if we just lost the wp, delete the widget
     // accordingly
     if (!wp)
