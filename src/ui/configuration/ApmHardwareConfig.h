@@ -40,7 +40,6 @@ This file is part of the QGROUNDCONTROL project
 #include "CompassConfig.h"
 #include "AccelCalibrationConfig.h"
 #include "RadioCalibrationConfig.h"
-#include "FlightModeConfig.h"
 #include "Radio3DRConfig.h"
 #include "BatteryMonitorConfig.h"
 #include "SonarConfig.h"
@@ -62,7 +61,6 @@ private:
     CompassConfig *compassConfig;
     AccelCalibrationConfig *accelConfig;
     RadioCalibrationConfig *radioConfig;
-    FlightModeConfig *flightConfig;
 
     Radio3DRConfig *radio3drConfig;
     BatteryMonitorConfig *batteryConfig;

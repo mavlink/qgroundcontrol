@@ -43,7 +43,7 @@
       <x>0</x>
       <y>0</y>
       <width>156</width>
-      <height>676</height>
+      <height>635</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -150,22 +150,6 @@
           <bool>false</bool>
          </property>
          <property name="checked">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="flightModesButton">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>35</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>        Flight Modes</string>
-         </property>
-         <property name="checkable">
           <bool>false</bool>
          </property>
         </widget>

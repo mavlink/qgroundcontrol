@@ -40,7 +40,6 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     ui.compassButton->setVisible(false);
     ui.accelCalibrateButton->setVisible(false);
     ui.radioCalibrateButton->setVisible(false);
-    ui.flightModesButton->setVisible(false);
     ui.optionalHardwareButton->setVisible(false);
     //ui.radio3DRButton->setVisible(false);
     ui.batteryMonitorButton->setVisible(false);
@@ -55,7 +54,6 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.compassButton,SLOT(setShown(bool)));
     connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.accelCalibrateButton,SLOT(setShown(bool)));
     connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.radioCalibrateButton,SLOT(setShown(bool)));
-    connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.flightModesButton,SLOT(setShown(bool)));
 
     connect(ui.optionalHardwareButton,SIGNAL(toggled(bool)),ui.radio3DRButton,SLOT(setShown(bool)));
     connect(ui.optionalHardwareButton,SIGNAL(toggled(bool)),ui.batteryMonitorButton,SLOT(setShown(bool)));
@@ -94,10 +92,6 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     buttonToConfigWidgetMap[ui.radioCalibrateButton] = radioConfig;
     connect(ui.radioCalibrateButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    flightConfig = new FlightModeConfig(this);
-    ui.stackedWidget->addWidget(flightConfig);
-    buttonToConfigWidgetMap[ui.flightModesButton] = flightConfig;
-    connect(ui.flightModesButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
     radio3drConfig = new Radio3DRConfig(this);
     ui.stackedWidget->addWidget(radio3drConfig);
