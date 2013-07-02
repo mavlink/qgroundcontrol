@@ -67,23 +67,23 @@ CameraGimbalConfig::CameraGimbalConfig(QWidget *parent) : AP2ConfigWidget(parent
     connect(ui.tiltReverseCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateTilt()));
     connect(ui.tiltStabilizeCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateTilt()));
 
-    connect(ui.rollServoMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.rollServoMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.rollAngleMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.rollAngleMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    connect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    connect(ui.rollReverseCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateTilt()));
-    connect(ui.rollStabilizeCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateTilt()));
+    connect(ui.rollServoMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRoll()));
+    connect(ui.rollServoMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRoll()));
+    connect(ui.rollAngleMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRoll()));
+    connect(ui.rollAngleMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRoll()));
+    connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+    connect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+    connect(ui.rollReverseCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateRoll()));
+    connect(ui.rollStabilizeCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateRoll()));
 
-    connect(ui.panServoMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.panServoMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.panAngleMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.panAngleMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updateTilt()));
-    connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    connect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    connect(ui.panReverseCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateTilt()));
-    connect(ui.panStabilizeCheckBox,SIGNAL(clicked(bool)),this,SLOT(updateTilt()));
+    connect(ui.panServoMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updatePan()));
+    connect(ui.panServoMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updatePan()));
+    connect(ui.panAngleMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updatePan()));
+    connect(ui.panAngleMaxSpinBox,SIGNAL(editingFinished()),this,SLOT(updatePan()));
+    connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+    connect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+    connect(ui.panReverseCheckBox,SIGNAL(clicked(bool)),this,SLOT(updatePan()));
+    connect(ui.panStabilizeCheckBox,SIGNAL(clicked(bool)),this,SLOT(updatePan()));
 
 
     connect(ui.shutterServoMinSpinBox,SIGNAL(editingFinished()),this,SLOT(updateShutter()));
@@ -103,20 +103,22 @@ void CameraGimbalConfig::updateTilt()
         QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
         return;
     }
+    if (!tiltPrefix.isEmpty())
+    {
+        //We need to set this to 0 for disabled.
+        m_uas->getParamManager()->setParameter(1,tiltPrefix + "FUNCTION",0);
+    }
     if (ui.tiltChannelComboBox->currentIndex() == 0)
     {
         //Disabled
         return;
     }
-    for (QMap<int,QString>::const_iterator i = m_uas->getComponents().constBegin(); i != m_uas->getComponents().constEnd();i++)
-    {
-        qDebug() << "Component:" << i.key() << "Name:" << i.value();
-    }
+
     m_uas->getParamManager()->setParameter(1,ui.tiltChannelComboBox->currentText() + "_FUNCTION",7);
     m_uas->getParamManager()->setParameter(1,ui.tiltChannelComboBox->currentText() + "_MIN",ui.tiltServoMinSpinBox->value());
     m_uas->getParamManager()->setParameter(1,ui.tiltChannelComboBox->currentText() + "_MAX",ui.tiltServoMaxSpinBox->value());
-    m_uas->getParamManager()->setParameter(1,"MNT_ANGMIN_TIL",ui.tiltAngleMinSpinBox->value());
-    m_uas->getParamManager()->setParameter(1,"MNT_ANGMAX_TIL",ui.tiltAngleMaxSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_ANGMIN_TIL",ui.tiltAngleMinSpinBox->value() * 100);
+    m_uas->getParamManager()->setParameter(1,"MNT_ANGMAX_TIL",ui.tiltAngleMaxSpinBox->value() * 100);
     m_uas->getParamManager()->setParameter(1,ui.tiltChannelComboBox->currentText() + "_REV",(ui.tiltReverseCheckBox->isChecked() ? 1 : 0));
     if (ui.tiltInputChannelComboBox->currentIndex() == 0)
     {
@@ -138,8 +140,8 @@ void CameraGimbalConfig::updateRoll()
     m_uas->getParamManager()->setParameter(1,ui.rollChannelComboBox->currentText() + "_FUNCTION",8);
     m_uas->getParamManager()->setParameter(1,ui.rollChannelComboBox->currentText() + "_MIN",ui.rollServoMinSpinBox->value());
     m_uas->getParamManager()->setParameter(1,ui.rollChannelComboBox->currentText() + "_MAX",ui.rollServoMaxSpinBox->value());
-    m_uas->getParamManager()->setParameter(1,"MNT_ANGMIN_ROL",ui.rollAngleMinSpinBox->value());
-    m_uas->getParamManager()->setParameter(1,"MNT_ANGMAX_ROL",ui.rollAngleMaxSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_ANGMIN_ROL",ui.rollAngleMinSpinBox->value() * 100);
+    m_uas->getParamManager()->setParameter(1,"MNT_ANGMAX_ROL",ui.rollAngleMaxSpinBox->value() * 100);
     m_uas->getParamManager()->setParameter(1,ui.rollChannelComboBox->currentText() + "_REV",(ui.rollReverseCheckBox->isChecked() ? 1 : 0));
     if (ui.rollInputChannelComboBox->currentIndex() == 0)
     {
@@ -161,8 +163,8 @@ void CameraGimbalConfig::updatePan()
     m_uas->getParamManager()->setParameter(1,ui.panChannelComboBox->currentText() + "_FUNCTION",6);
     m_uas->getParamManager()->setParameter(1,ui.panChannelComboBox->currentText() + "_MIN",ui.panServoMinSpinBox->value());
     m_uas->getParamManager()->setParameter(1,ui.panChannelComboBox->currentText() + "_MAX",ui.panServoMaxSpinBox->value());
-    m_uas->getParamManager()->setParameter(1,"MNT_ANGMIN_PAN",ui.panAngleMinSpinBox->value());
-    m_uas->getParamManager()->setParameter(1,"MNT_ANGMAX_PAN",ui.panAngleMaxSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_ANGMIN_PAN",ui.panAngleMinSpinBox->value() * 100);
+    m_uas->getParamManager()->setParameter(1,"MNT_ANGMAX_PAN",ui.panAngleMaxSpinBox->value() * 100);
     m_uas->getParamManager()->setParameter(1,ui.panChannelComboBox->currentText() + "_REV",(ui.panReverseCheckBox->isChecked() ? 1 : 0));
     if (ui.panInputChannelComboBox->currentIndex() == 0)
     {
@@ -214,5 +216,420 @@ CameraGimbalConfig::~CameraGimbalConfig()
 
 void CameraGimbalConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+    disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+    connect(ui.tiltInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+    disconnect(ui.tiltInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
 
+    connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+    disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+    connect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+    disconnect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+
+    connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+    disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+    connect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+    disconnect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+
+    connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+    disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+
+    if (parameterName == "MNT_ANGMIN_TIL") //TILT
+    {
+        ui.tiltAngleMinSpinBox->setValue(value.toInt() / 100.0);
+    }
+    else if (parameterName == "MNT_ANGMAX_TIL")
+    {
+        ui.tiltAngleMaxSpinBox->setValue(value.toInt() / 100.0);
+    }
+    else if (parameterName == "MNT_RC_IN_TILT")
+    {
+        disconnect(ui.tiltInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+        if (value.toInt() == 0)
+        {
+            ui.tiltInputChannelComboBox->setCurrentIndex(0);
+        }
+        else
+        {
+            ui.tiltInputChannelComboBox->setCurrentIndex(value.toInt()-4);
+        }
+        connect(ui.tiltInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+    }
+    else if (parameterName == "MNT_ANGMIN_ROL") //ROLL
+    {
+        ui.rollAngleMinSpinBox->setValue(value.toInt() / 100.0);
+    }
+    else if (parameterName == "MNT_ANGMAX_ROL")
+    {
+        ui.rollAngleMaxSpinBox->setValue(value.toInt() / 100.0);
+    }
+    else if (parameterName == "MNT_RC_IN_ROLL")
+    {
+        disconnect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+        if (value.toInt() == 0)
+        {
+            ui.rollInputChannelComboBox->setCurrentIndex(0);
+        }
+        else
+        {
+            ui.rollInputChannelComboBox->setCurrentIndex(value.toInt()-4);
+        }
+        connect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+    }
+    else if (parameterName == "MNT_ANGMIN_PAN") //PAN
+    {
+        ui.panAngleMinSpinBox->setValue(value.toInt() / 100.0);
+    }
+    else if (parameterName == "MNT_ANGMAX_PAN")
+    {
+        ui.panAngleMaxSpinBox->setValue(value.toInt() / 100.0);
+    }
+    else if (parameterName == "MNT_RC_IN_PAN")
+    {
+        disconnect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+        if (value.toInt() == 0)
+        {
+            ui.panInputChannelComboBox->setCurrentIndex(0);
+        }
+        else
+        {
+            ui.panInputChannelComboBox->setCurrentIndex(value.toInt()-4);
+        }
+        connect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+    }
+    if (parameterName == "CAM_DURATION")
+    {
+        ui.shutterDurationSpinBox->setValue(value.toInt());
+    }
+    else if (parameterName == "CAM_SERVO_OFF")
+    {
+        ui.shutterNotPushedSpinBox->setValue(value.toInt());
+    }
+    else if (parameterName == "CAM_SERVO_ON")
+    {
+        ui.shutterPushedSpinBox->setValue(value.toInt());
+    }
+    else if (parameterName == "CAM_TRIGG_TYPE")
+    {
+        disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+        if (value.toInt() == 0) //Disabled
+        {
+            ui.shutterChannelComboBox->setCurrentIndex(0);
+            ///TODO: Request all _FUNCTIONs here to find out if shutter is actually disabled.
+        }
+        else if (value.toInt() == 1) // Relay
+        {
+            ui.shutterChannelComboBox->setCurrentIndex(1);
+        }
+        else if (value.toInt() == 4) //Transistor
+        {
+            ui.shutterChannelComboBox->setCurrentIndex(2);
+        }
+        connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+    }
+    if (parameterName.startsWith(shutterPrefix) && !shutterPrefix.isEmpty())
+    {
+        if (parameterName.endsWith("MIN"))
+        {
+            ui.shutterServoMinSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("MAX"))
+        {
+            ui.shutterServoMaxSpinBox->setValue(value.toInt());
+        }
+    }
+    else if (parameterName.startsWith(tiltPrefix) && !tiltPrefix.isEmpty())
+    {
+        if (parameterName.endsWith("MIN"))
+        {
+            ui.tiltServoMinSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("MAX"))
+        {
+            ui.tiltServoMaxSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("REV"))
+        {
+            if (value.toInt() == 0)
+            {
+                ui.tiltReverseCheckBox->setChecked(false);
+            }
+            else
+            {
+                ui.tiltReverseCheckBox->setChecked(true);
+            }
+        }
+    }
+    else if (parameterName.startsWith(rollPrefix) && !rollPrefix.isEmpty())
+    {
+        if (parameterName.endsWith("MIN"))
+        {
+            ui.rollServoMinSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("MAX"))
+        {
+            ui.rollServoMaxSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("REV"))
+        {
+            if (value.toInt() == 0)
+            {
+                ui.rollReverseCheckBox->setChecked(false);
+            }
+            else
+            {
+                ui.rollReverseCheckBox->setChecked(true);
+            }
+        }
+    }
+    else if (parameterName.startsWith(panPrefix) && !panPrefix.isEmpty())
+    {
+        if (parameterName.endsWith("MIN"))
+        {
+            ui.panServoMinSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("MAX"))
+        {
+            ui.panServoMaxSpinBox->setValue(value.toInt());
+        }
+        else if (parameterName.endsWith("REV"))
+        {
+            if (value.toInt() == 0)
+            {
+                ui.panReverseCheckBox->setChecked(false);
+            }
+            else
+            {
+                ui.panReverseCheckBox->setChecked(true);
+            }
+        }
+    }
+    else if (parameterName == "RC5_FUNCTION")
+    {
+        if (value.toInt() == 10)
+        {
+            //RC5 is shutter.
+            disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            ui.shutterChannelComboBox->setCurrentIndex(3);
+            connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            shutterPrefix = "RC5_";
+        }
+        else if (value.toInt() == 8)
+        {
+            //RC5 is roll
+            disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            ui.rollChannelComboBox->setCurrentIndex(1);
+            connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            rollPrefix = "RC5_";
+        }
+        else if (value.toInt() == 7)
+        {
+            //RC5 is tilt
+            disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            ui.tiltChannelComboBox->setCurrentIndex(1);
+            connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            tiltPrefix = "RC5_";
+        }
+        else if (value.toInt() == 6)
+        {
+            //RC5 is pan
+            disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            ui.panChannelComboBox->setCurrentIndex(1);
+            connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            panPrefix = "RC5_";
+        }
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC5_MIN");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC5_MAX");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC5_REV");
+    }
+    else if (parameterName == "RC6_FUNCTION")
+    {
+        if (value.toInt() == 10)
+        {
+            //RC6 is shutter.
+            disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            ui.shutterChannelComboBox->setCurrentIndex(4);
+            connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            shutterPrefix = "RC6_";
+        }
+        else if (value.toInt() == 8)
+        {
+            //RC6 is roll
+            disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            ui.rollChannelComboBox->setCurrentIndex(2);
+            connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            rollPrefix = "RC6_";
+        }
+        else if (value.toInt() == 7)
+        {
+            //RC6 is tilt
+            disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            ui.tiltChannelComboBox->setCurrentIndex(2);
+            connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            tiltPrefix = "RC6_";
+        }
+        else if (value.toInt() == 6)
+        {
+            //RC6 is pan
+            disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            ui.panChannelComboBox->setCurrentIndex(2);
+            connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            panPrefix = "RC6_";
+        }
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC6_MIN");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC6_MAX");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC6_REV");
+    }
+    else if (parameterName == "RC7_FUNCTION")
+    {
+        if (value.toInt() == 10)
+        {
+            //RC7 is shutter.
+            disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            ui.shutterChannelComboBox->setCurrentIndex(5);
+            connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            shutterPrefix = "RC7_";
+        }
+        else if (value.toInt() == 8)
+        {
+            //RC7 is roll
+            disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            ui.rollChannelComboBox->setCurrentIndex(3);
+            connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            rollPrefix = "RC7_";
+        }
+        else if (value.toInt() == 7)
+        {
+            //RC7 is tilt
+            disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            ui.tiltChannelComboBox->setCurrentIndex(3);
+            connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            tiltPrefix = "RC7_";
+        }
+        else if (value.toInt() == 6)
+        {
+            //RC7 is pan
+            disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            ui.panChannelComboBox->setCurrentIndex(3);
+            connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            panPrefix = "RC7_";
+        }
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC7_MIN");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC7_MAX");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC7_REV");
+    }
+    else if (parameterName == "RC8_FUNCTION")
+    {
+        if (value.toInt() == 10)
+        {
+            //RC8 is shutter.
+            disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            ui.shutterChannelComboBox->setCurrentIndex(6);
+            connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            shutterPrefix = "RC8_";
+        }
+        else if (value.toInt() == 8)
+        {
+            //RC8 is roll
+            disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            ui.rollChannelComboBox->setCurrentIndex(4);
+            connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            rollPrefix = "RC8_";
+        }
+        else if (value.toInt() == 7)
+        {
+            //RC8 is tilt
+            disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            ui.tiltChannelComboBox->setCurrentIndex(4);
+            connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            tiltPrefix = "RC8_";
+        }
+        else if (value.toInt() == 6)
+        {
+            //RC8 is pan
+            disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            ui.panChannelComboBox->setCurrentIndex(4);
+            connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            panPrefix = "RC8_";
+        }
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC8_MIN");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC8_MAX");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC8_REV");
+    }
+    else if (parameterName == "RC10_FUNCTION")
+    {
+        if (value.toInt() == 10)
+        {
+            //RC10 is shutter.
+            disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            ui.shutterChannelComboBox->setCurrentIndex(7);
+            connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            shutterPrefix = "RC10_";
+        }
+        else if (value.toInt() == 8)
+        {
+            //RC10 is roll
+            disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            ui.rollChannelComboBox->setCurrentIndex(5);
+            connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            rollPrefix = "RC10_";
+        }
+        else if (value.toInt() == 7)
+        {
+            //RC10 is tilt
+            disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            ui.tiltChannelComboBox->setCurrentIndex(5);
+            connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            tiltPrefix = "RC10_";
+        }
+        else if (value.toInt() == 6)
+        {
+            //RC10 is pan
+            disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            ui.panChannelComboBox->setCurrentIndex(5);
+            connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            panPrefix = "RC10_";
+        }
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC10_MIN");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC10_MAX");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC10_REV");
+    }
+    else if (parameterName == "RC11_FUNCTION")
+    {
+        if (value.toInt() == 10)
+        {
+            //RC11 is shutter.
+            disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            ui.shutterChannelComboBox->setCurrentIndex(8);
+            connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
+            shutterPrefix = "RC11_";
+        }
+        else if (value.toInt() == 8)
+        {
+            //RC11 is roll
+            disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            ui.rollChannelComboBox->setCurrentIndex(6);
+            connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
+            rollPrefix = "RC11_";
+        }
+        else if (value.toInt() == 7)
+        {
+            //RC11 is tilt
+            disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            ui.tiltChannelComboBox->setCurrentIndex(6);
+            connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
+            tiltPrefix = "RC11_";
+        }
+        else if (value.toInt() == 6)
+        {
+            //RC11 is pan
+            disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            ui.panChannelComboBox->setCurrentIndex(6);
+            connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
+            panPrefix = "RC11_";
+        }
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC11_MIN");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC11_MAX");
+        m_uas->getParamManager()->requestParameterUpdate(1,"RC11_REV");
+    }
 }

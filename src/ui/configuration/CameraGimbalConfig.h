@@ -21,6 +21,10 @@ private slots:
 
 private:
     Ui::CameraGimbalConfig ui;
+    QString shutterPrefix;
+    QString rollPrefix;
+    QString tiltPrefix;
+    QString panPrefix;
 };
 
 #endif // CAMERAGIMBALCONFIG_H
