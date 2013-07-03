@@ -1417,6 +1417,7 @@ void MainWindow::connectCommonActions()
 
     // Connect actions from ui
     connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
+    ui.actionAdvanced_Mode->setChecked(isAdvancedMode);
     connect(ui.actionAdvanced_Mode,SIGNAL(triggered()),this,SLOT(setAdvancedMode()));
 
     // Connect internal actions
