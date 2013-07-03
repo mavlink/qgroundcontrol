@@ -476,11 +476,16 @@ private:
     QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
     QMap<QAction*,QString > menuToDockNameMap;
-    QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
+    QList<QDockWidget*> dockWidgets;
     QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
-    bool isAdvancedMode;
-    bool dockWidgetTitleBarEnabled;
+    bool isAdvancedMode; ///< If enabled dock widgets can be moved and floated.
+    bool dockWidgetTitleBarEnabled; ///< If enabled, dock widget titlebars are displayed when NOT in advanced mode.
     Ui::MainWindow ui;
+
+    /** @brief Set the appropriate titlebar for a given dock widget.
+      * Relies on the isAdvancedMode and dockWidgetTitleBarEnabled member variables.
+      */
+    void setDockWidgetTitleBar(QDockWidget* widget);
 
     QString getWindowStateKey();
     QString getWindowGeometryKey();
