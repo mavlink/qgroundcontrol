@@ -710,35 +710,10 @@ void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* w
 
 QDockWidget* MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
 {
-    //if (child->objectName() == "")
-    //{
     child->setObjectName(objectname);
-    //}
     QDockWidget *widget = new QDockWidget(title,this);
-    if (!isAdvancedMode)
-    {
-        if (dockWidgetTitleBarEnabled)
-        {
-            dockToTitleBarMap[widget] = widget->titleBarWidget();
-            QLabel *label = new QLabel(this);
-            label->setText(title);
-            widget->setTitleBarWidget(label);
-            label->installEventFilter(new DockWidgetTitleBarEventFilter());
-        }
-        else
-        {
-            dockToTitleBarMap[widget] = widget->titleBarWidget();
-            widget->setTitleBarWidget(new QWidget(this));
-        }
-    }
-    else
-    {
-        QLabel *label = new QLabel(this);
-        label->setText(title);
-        dockToTitleBarMap[widget] = label;
-        label->installEventFilter(new DockWidgetTitleBarEventFilter());
-        label->hide();
-    }
+    dockWidgets.append(widget);
+    setDockWidgetTitleBar(widget);
     widget->setObjectName(child->objectName());
     widget->setWidget(child);
     if (minheight != 0 || minwidth != 0)
@@ -840,6 +815,38 @@ void MainWindow::loadDockWidget(QString name)
         {
             qDebug() << "Error loading window:" << name;
         }
+    }
+}
+
+void MainWindow::setDockWidgetTitleBar(QDockWidget* widget)
+{
+    QWidget* oldTitleBar = widget->titleBarWidget();
+
+    // In advanced mode, we use the default titlebar provided by Qt.
+    if (isAdvancedMode)
+    {
+        widget->setTitleBarWidget(0);
+    }
+    // Otherwise, if just a textlabel should be shown, make that the titlebar.
+    else if (dockWidgetTitleBarEnabled)
+    {
+        QLabel* label = new QLabel(this);
+        label->setText(widget->windowTitle());
+        label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        widget->setTitleBarWidget(label);
+    }
+    // And if nothing should be shown, use an empty widget.
+    else
+    {
+        QWidget* newTitleBar = new QWidget(this);
+        widget->setTitleBarWidget(newTitleBar);
+    }
+
+    // Be sure to clean up the old titlebar. When using QDockWidget::setTitleBarWidget(),
+    // it doesn't delete the old titlebar object.
+    if (oldTitleBar)
+    {
+        delete oldTitleBar;
     }
 }
 
@@ -1237,26 +1244,10 @@ void MainWindow::enableDockWidgetTitleBars(bool enabled)
     settings.setValue("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled);
     settings.endGroup();
     settings.sync();
-    if (!isAdvancedMode)
+
+    for (int i = 0; i < dockWidgets.size(); i++)
     {
-        if (enabled)
-        {
-            for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
-            {
-                QLabel *label = new QLabel(this);
-                label->setText(i.key()->windowTitle());
-                i.key()->setTitleBarWidget(label);
-                //label->setEnabled(false);
-                label->installEventFilter(new DockWidgetTitleBarEventFilter());
-            }
-        }
-        else
-        {
-            for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
-            {
-                i.key()->setTitleBarWidget(new QWidget(this));
-            }
-        }
+        setDockWidgetTitleBar(dockWidgets[i]);
     }
 }
 
@@ -1964,32 +1955,13 @@ void MainWindow::loadViewState()
 }
 void MainWindow::setAdvancedMode()
 {
-    if (!isAdvancedMode)
-    {
-        ui.actionAdvanced_Mode->setChecked(true);
-        isAdvancedMode = true;
-        settings.setValue("ADVANCED_MODE",true);
-        for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
-        {
-            //QWidget *widget = i.value();
-            QWidget *widget = i.key()->titleBarWidget();
-            i.key()->setTitleBarWidget(i.value());
-            dockToTitleBarMap[i.key()] = widget;
+    isAdvancedMode = !isAdvancedMode;
+    ui.actionAdvanced_Mode->setChecked(isAdvancedMode);
+    settings.setValue("ADVANCED_MODE",isAdvancedMode);
 
-        }
-    }
-    else
+    for (int i = 0; i < dockWidgets.size(); i++)
     {
-        ui.actionAdvanced_Mode->setChecked(false);
-        isAdvancedMode = false;
-        settings.setValue("ADVANCED_MODE",false);
-        for (QMap<QDockWidget*,QWidget*>::const_iterator i=dockToTitleBarMap.constBegin();i!=dockToTitleBarMap.constEnd();i++)
-        {
-            //QWidget *widget = i.value();
-            QWidget *widget = i.key()->titleBarWidget();
-            i.key()->setTitleBarWidget(i.value());
-            dockToTitleBarMap[i.key()] = widget;
-        }
+        setDockWidgetTitleBar(dockWidgets[i]);
     }
 }
 
