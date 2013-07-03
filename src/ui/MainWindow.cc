@@ -114,8 +114,8 @@ MainWindow::MainWindow(QWidget *parent):
     lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
     lowPowerMode(false),
-    dockWidgetTitleBarEnabled(true),
-    isAdvancedMode(false)
+    isAdvancedMode(false),
+    dockWidgetTitleBarEnabled(true)
 {
     this->setAttribute(Qt::WA_DeleteOnClose);
     hide();
