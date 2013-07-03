@@ -20,6 +20,9 @@
 #include <QMutexLocker>
 #include <QSettings>
 #include <math.h>
+#include <limits>
+
+using namespace std;
 
 /**
  * The coordinate frame of the joystick axis is the aeronautical frame like shown on this image:
@@ -473,10 +476,10 @@ void JoystickInput::run()
         // Now signal an update for all UI together.
         if (isEnabled)
         {
-            float roll = rollAxis > -1?joystickAxes[rollAxis]:NAN;
-            float pitch = pitchAxis > -1?joystickAxes[pitchAxis]:NAN;
-            float yaw = yawAxis > -1?joystickAxes[yawAxis]:NAN;
-            float throttle = throttleAxis > -1?joystickAxes[throttleAxis]:NAN;
+            float roll = rollAxis > -1?joystickAxes[rollAxis]:numeric_limits<float>::quiet_NaN();
+            float pitch = pitchAxis > -1?joystickAxes[pitchAxis]:numeric_limits<float>::quiet_NaN();
+            float yaw = yawAxis > -1?joystickAxes[yawAxis]:numeric_limits<float>::quiet_NaN();
+            float throttle = throttleAxis > -1?joystickAxes[throttleAxis]:numeric_limits<float>::quiet_NaN();
             emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, joystickButtons);
         }
 
@@ -513,7 +516,7 @@ void JoystickInput::setActiveJoystick(int id)
         joystickAxes.clear();
         for (int i = 0; i < joystickNumAxes; i++)
         {
-            joystickAxes.append(NAN);
+            joystickAxes.append(numeric_limits<float>::quiet_NaN());
         }
 
         // Update cached joystick button values.
