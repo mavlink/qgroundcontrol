@@ -112,7 +112,7 @@
  */
 double PrimaryFlightDisplay_round(double value, int digits=0)
 {
-    return floor(value * pow(10, digits) + 0.5) / pow(10, digits);
+    return floor(value * pow(10.0, digits) + 0.5) / pow(10.0, digits);
 }
 
 const int PrimaryFlightDisplay::tickValues[] = {10, 20, 30, 45, 60};

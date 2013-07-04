@@ -93,6 +93,7 @@ protected:
     QLabel* symbolLabel;
     QLabel* toolBarNameLabel;
     QLabel* toolBarTimeoutLabel;
+    QAction* toolBarTimeoutAction; ///< Needed to set label (in)visible.
     QLabel* toolBarSafetyLabel;
     QLabel* toolBarModeLabel;
     QLabel* toolBarStateLabel;
