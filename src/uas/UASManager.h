@@ -231,8 +231,11 @@ public slots:
     /** @brief Shut down the onboard operating system down */
     bool shutdownActiveUAS();
 
-    /** @brief Set the current home position on all UAVs*/
+    /** @brief Set the current home position, but do not change it on the UAVs */
     bool setHomePosition(double lat, double lon, double alt);
+
+    /** @brief Set the current home position on all UAVs*/
+    bool setHomePositionAndNotify(double lat, double lon, double alt);
 
     /** @brief Set the safety limits in local position frame */
     void setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2);
