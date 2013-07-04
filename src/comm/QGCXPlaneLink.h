@@ -193,7 +193,8 @@ protected:
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
     float vx, vy, vz, xacc, yacc, zacc;
-    float airspeed;
+    float ind_airspeed;
+    float true_airspeed;
     float groundspeed;
     float xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature;
 

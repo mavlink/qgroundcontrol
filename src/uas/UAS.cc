@@ -26,6 +26,7 @@
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 #include "SerialLink.h"
+#include <Eigen/Geometry>
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <google/protobuf/descriptor.h>
@@ -647,29 +648,70 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (!wrongComponent)
             {
                 lastAttitude = time;
-                //roll = QGC::limitAngleToPMPIf(attitude.roll);
                 setRoll(QGC::limitAngleToPMPIf(attitude.roll));
-                //pitch = QGC::limitAngleToPMPIf(attitude.pitch);
                 setPitch(QGC::limitAngleToPMPIf(attitude.pitch));
-                //yaw = QGC::limitAngleToPMPIf(attitude.yaw);
                 setYaw(QGC::limitAngleToPMPIf(attitude.yaw));
 
-                //                // Emit in angles
+                attitudeKnown = true;
+                emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
+                emit attitudeRotationRatesChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
+            }
+        }
+            break;
+        case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+        {
+            mavlink_attitude_quaternion_t attitude;
+            mavlink_msg_attitude_quaternion_decode(&message, &attitude);
+            quint64 time = getUnixReferenceTime(attitude.time_boot_ms);
 
-                //                // Convert yaw angle to compass value
-                //                // in 0 - 360 deg range
-                //                float compass = (yaw/M_PI)*180.0+360.0f;
-                //                if (compass > -10000 && compass < 10000)
-                //                {
-                //                    while (compass > 360.0f) {
-                //                        compass -= 360.0f;
-                //                    }
-                //                }
-                //                else
-                //                {
-                //                    // Set to 0, since it is an invalid value
-                //                    compass = 0.0f;
-                //                }
+            double a = attitude.q1;
+            double b = attitude.q2;
+            double c = attitude.q3;
+            double d = attitude.q4;
+
+            double aSq = a * a;
+            double bSq = b * b;
+            double cSq = c * c;
+            double dSq = d * d;
+            float dcm[3][3];
+            dcm[0][0] = aSq + bSq - cSq - dSq;
+            dcm[0][1] = 2.0 * (b * c - a * d);
+            dcm[0][2] = 2.0 * (a * c + b * d);
+            dcm[1][0] = 2.0 * (b * c + a * d);
+            dcm[1][1] = aSq - bSq + cSq - dSq;
+            dcm[1][2] = 2.0 * (c * d - a * b);
+            dcm[2][0] = 2.0 * (b * d - a * c);
+            dcm[2][1] = 2.0 * (a * b + c * d);
+            dcm[2][2] = aSq - bSq - cSq + dSq;
+
+            float phi, theta, psi;
+            theta = asin(-dcm[2][0]);
+
+            if (fabs(theta - M_PI_2) < 1.0e-3f) {
+                phi = 0.0f;
+                psi = (atan2(dcm[1][2] - dcm[0][1],
+                        dcm[0][2] + dcm[1][1]) + phi);
+
+            } else if (fabs(theta + M_PI_2) < 1.0e-3f) {
+                phi = 0.0f;
+                psi = atan2f(dcm[1][2] - dcm[0][1],
+                          dcm[0][2] + dcm[1][1] - phi);
+
+            } else {
+                phi = atan2f(dcm[2][1], dcm[2][2]);
+                psi = atan2f(dcm[1][0], dcm[0][0]);
+            }
+
+            emit attitudeChanged(this, message.compid, QGC::limitAngleToPMPIf(phi),
+                                 QGC::limitAngleToPMPIf(theta),
+                                 QGC::limitAngleToPMPIf(psi), time);
+
+            if (!wrongComponent)
+            {
+                lastAttitude = time;
+                setRoll(QGC::limitAngleToPMPIf(phi));
+                setPitch(QGC::limitAngleToPMPIf(theta));
+                setYaw(QGC::limitAngleToPMPIf(psi));
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
@@ -2907,33 +2949,94 @@ void UAS::enableHilXPlane(bool enable)
 * @param yacc Y acceleration (mg)
 * @param zacc Z acceleration (mg)
 */
+void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
+                       float pitchspeed, float yawspeed, double lat, double lon, double alt,
+                       float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
+{
+        float q[4];
+
+        double cosPhi_2 = cos(double(roll) / 2.0);
+        double sinPhi_2 = sin(double(roll) / 2.0);
+        double cosTheta_2 = cos(double(pitch) / 2.0);
+        double sinTheta_2 = sin(double(pitch) / 2.0);
+        double cosPsi_2 = cos(double(yaw) / 2.0);
+        double sinPsi_2 = sin(double(yaw) / 2.0);
+        q[0] = (cosPhi_2 * cosTheta_2 * cosPsi_2 +
+                sinPhi_2 * sinTheta_2 * sinPsi_2);
+        q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 -
+                cosPhi_2 * sinTheta_2 * sinPsi_2);
+        q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 +
+                sinPhi_2 * cosTheta_2 * sinPsi_2);
+        q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 -
+                sinPhi_2 * sinTheta_2 * cosPsi_2);
+
+        // Emit attitude for cross-check
+        emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
+        emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
+        emit valueChanged(uasId, "yaw sim", "rad", yaw, getUnixTime());
+
+        emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, getUnixTime());
+        emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, getUnixTime());
+        emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, getUnixTime());
+
+        emit valueChanged(uasId, "lat sim", "deg", lat*1e7, getUnixTime());
+        emit valueChanged(uasId, "lon sim", "deg", lon*1e7, getUnixTime());
+        emit valueChanged(uasId, "alt sim", "deg", alt*1e3, getUnixTime());
+
+        emit valueChanged(uasId, "vx sim", "m/s", vx*1e2, getUnixTime());
+        emit valueChanged(uasId, "vy sim", "m/s", vy*1e2, getUnixTime());
+        emit valueChanged(uasId, "vz sim", "m/s", vz*1e2, getUnixTime());
+
+        emit valueChanged(uasId, "IAS sim", "m/s", ind_airspeed, getUnixTime());
+        emit valueChanged(uasId, "TAS sim", "m/s", true_airspeed, getUnixTime());
+}
+
+/**
+* @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+* @param roll Roll angle (rad)
+* @param pitch Pitch angle (rad)
+* @param yaw Yaw angle (rad)
+* @param rollspeed Roll angular speed (rad/s)
+* @param pitchspeed Pitch angular speed (rad/s)
+* @param yawspeed Yaw angular speed (rad/s)
+* @param lat Latitude, expressed as * 1E7
+* @param lon Longitude, expressed as * 1E7
+* @param alt Altitude in meters, expressed as * 1000 (millimeters)
+* @param vx Ground X Speed (Latitude), expressed as m/s * 100
+* @param vy Ground Y Speed (Longitude), expressed as m/s * 100
+* @param vz Ground Z Speed (Altitude), expressed as m/s * 100
+* @param xacc X acceleration (mg)
+* @param yacc Y acceleration (mg)
+* @param zacc Z acceleration (mg)
+*/
 void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
-                       float vx, float vy, float vz, float xacc, float yacc, float zacc)
+                       float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
-        if (QGC::groundTimeMilliseconds() - lastSendTimeSensors < 100) {
-            // Emit attitude for cross-check
-            emit attitudeChanged(this, 201, roll, pitch, yaw, getUnixTime());
-            emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
-            emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
-            emit valueChanged(uasId, "yaw sim", "rad", yaw, getUnixTime());
+        float q[4];
 
-            emit valueChanged(uasId, "roll rate sim", "rad/s", rollspeed, getUnixTime());
-            emit valueChanged(uasId, "pitch rate sim", "rad/s", pitchspeed, getUnixTime());
-            emit valueChanged(uasId, "yaw rate sim", "rad/s", yawspeed, getUnixTime());
+        double cosPhi_2 = cos(double(roll) / 2.0);
+        double sinPhi_2 = sin(double(roll) / 2.0);
+        double cosTheta_2 = cos(double(pitch) / 2.0);
+        double sinTheta_2 = sin(double(pitch) / 2.0);
+        double cosPsi_2 = cos(double(yaw) / 2.0);
+        double sinPsi_2 = sin(double(yaw) / 2.0);
+        q[0] = (cosPhi_2 * cosTheta_2 * cosPsi_2 +
+                sinPhi_2 * sinTheta_2 * sinPsi_2);
+        q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 -
+                cosPhi_2 * sinTheta_2 * sinPsi_2);
+        q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 +
+                sinPhi_2 * cosTheta_2 * sinPsi_2);
+        q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 -
+                sinPhi_2 * sinTheta_2 * cosPsi_2);
 
-            emit valueChanged(uasId, "vx sim", "rad", vx*100, getUnixTime());
-            emit valueChanged(uasId, "vy sim", "rad", vy*100, getUnixTime());
-            emit valueChanged(uasId, "vz sim", "rad", vz*100, getUnixTime());
-        } else {
-            mavlink_message_t msg;
-            mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
-                                       time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed,
-                                       lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, xacc*1000/9.81, yacc*1000/9.81, zacc*1000/9.81);
-            sendMessage(msg);
-        }
+        mavlink_message_t msg;
+        mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                   time_us, q, rollspeed, pitchspeed, yawspeed,
+                                   lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, ind_airspeed*100, true_airspeed*100, xacc*1000/9.81, yacc*1000/9.81, zacc*1000/9.81);
+        sendMessage(msg);
     }
     else
     {
@@ -2946,17 +3049,16 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
 }
 
 void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
-                                    float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed)
+                                    float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed)
 {
     if (this->mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
         mavlink_message_t msg;
-        mavlink_msg_highres_imu_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+        mavlink_msg_hil_sensor_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
                                      xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature,
                                      fields_changed);
         sendMessage(msg);
-        sensorHil = true;
         lastSendTimeSensors = QGC::groundTimeMilliseconds();
     }
     else
@@ -2969,7 +3071,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
     }
 }
 
-void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites)
+void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites)
 {
     // Only send at 10 Hz max rate
     if (QGC::groundTimeMilliseconds() - lastSendTimeGPS < 100)
@@ -2985,8 +3087,8 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
         course = (course / M_PI) * 180.0f;
 
         mavlink_message_t msg;
-        mavlink_msg_gps_raw_int_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
-                                   time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, course*1e2, satellites);
+        mavlink_msg_hil_gps_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                   time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, vn*1e2, ve*1e2, vd*1e2, course*1e2, satellites);
         lastSendTimeGPS = QGC::groundTimeMilliseconds();
         sendMessage(msg);
     }

@@ -655,7 +655,7 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
+#if (defined _MSC_VER) /*| (defined Q_OS_MAC) mac os doesn't support gearth right now */
     if (!gEarthWidget)
     {
         gEarthWidget = new QGCGoogleEarthView(this);
