@@ -49,6 +49,10 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
     uWidget(NULL),
     m_ui(new Ui::UASList)
 {
+    // Use a timer to update the link health display.
+    updateTimer = new QTimer(this);
+    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateStatus()));
+
     m_ui->setupUi(this);
     m_ui->verticalLayout->setAlignment(Qt::AlignTop);
 
@@ -72,10 +76,6 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
     {
         addUAS(uas);
     }
-
-    // Use a timer to update the link health display.
-    updateTimer = new QTimer(this);
-    connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateStatus()));
 }
 
 UASListWidget::~UASListWidget()
