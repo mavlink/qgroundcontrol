@@ -53,7 +53,7 @@ ChartPlot::ChartPlot(QWidget *parent):
     }
 
     // Now that all objects have been initialized, color everything.
-    applyColorScheme(MainWindow::instance()->getStyle());
+    styleChanged(MainWindow::instance()->getStyle());
 }
 
 ChartPlot::~ChartPlot()
@@ -87,7 +87,7 @@ void ChartPlot::shuffleColors()
     }
 }
 
-void ChartPlot::applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style)
+void ChartPlot::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style)
 {
     // Generate a new color list for curves and recolor them.
     for (int i = 0; i < numColors; ++i)
