@@ -231,7 +231,7 @@ void MainWindow::init()
     joystick = new JoystickInput();
 
 #ifdef MOUSE_ENABLED_WIN
-    emit initStatusChanged(tr("Initializing 3D mouse interface", Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+    emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouseInput = new Mouse3DInput(this);
     mouse = new Mouse6dofInput(mouseInput);
