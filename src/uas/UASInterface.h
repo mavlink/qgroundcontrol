@@ -242,6 +242,11 @@ public:
 
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
+    /** @brief Indicates whether this system is capable of controlling a reverse velocity.
+     * Used for, among other things, altering joystick input to either -1:1 or 0:1 range.
+     */
+    virtual bool systemCanReverse() const = 0;
+
     virtual QString getSystemTypeName() = 0;
     /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
     virtual int getAutopilotType() = 0;
@@ -254,6 +259,13 @@ public:
     {
         return color;
     }
+
+    /** @brief Returns a list of actions/commands that this vehicle can perform.
+     * Used for creating UI elements for built-in functionality for this vehicle.
+     * Actions should be mappings to `void f(void);` functions that simply issue
+     * a command to the vehicle.
+     */
+    virtual QList<QAction*> getActions() const = 0;
 
 public slots:
 

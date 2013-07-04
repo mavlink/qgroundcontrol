@@ -55,7 +55,9 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     loadSettings();
 
     // Load default values and tooltips
-    loadParameterInfoCSV(uas->getAutopilotTypeName(), uas->getSystemTypeName());
+    QString hey(uas->getAutopilotTypeName());
+    QString hey2(uas->getSystemTypeName());
+    loadParameterInfoCSV(hey, hey2);
 
     // Create tree widget
     tree = new QTreeWidget(this);

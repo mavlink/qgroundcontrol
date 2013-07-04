@@ -382,11 +382,11 @@ static void print_message(const mavlink_message_t *msg)
     const mavlink_message_info_t *m = &message_info[msg->msgid];
     const mavlink_field_info_t *f = m->fields;
     unsigned i;
-    qDebug("%s { ", m->name);
-    for (i=0; i<m->num_fields; i++) {
-        print_field(msg, &f[i]);
-    }
-    qDebug("}\n");
+//    qDebug("%s { ", m->name);
+//    for (i=0; i<m->num_fields; i++) {
+//        print_field(msg, &f[i]);
+//    }
+//    qDebug("}\n");
 }
 
 void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
