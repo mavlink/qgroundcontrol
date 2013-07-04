@@ -83,54 +83,73 @@ QGCMAVLinkLogPlayer {
 }
 
 QGCMAVLinkLogPlayer QLabel {
-	color: #FFF;
+    color: #FFF;
 }
 
 QGCMAVLinkLogPlayer QLabel:disabled {
-	color: #AAA;
+    color: #AAA;
 }
 
 QGCToolBar {
     border-top-color: #969696;
     border-bottom-color: #484848;
     background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop: 0.34 #383838, stop:1 #181818);
+    padding: 0;
+    margin: 0;
 }
 
 QGCToolBar QLabel {
     font-size: 12pt;
     font-weight: bold;
-    margin: 3px 2px;
-}
-
-QGCToolBar QLabel#symbolLabel {
-    background-clip: content;
+    margin: 4px 2px;
+    padding: 0 2px;
+    border-radius: 4px;
 }
 
 QGCToolBar QLabel#toolBarBatteryBar {
-    color: #008000;
+    color: #0F0;
 }
 
 QGCToolBar QLabel#toolBarTimeoutLabel {
-    border-radius: 4px;
-    padding: 0;
     color: #000;
     background-color: #FF0037;
 }
 
+QGCToolBar QLabel#toolBarModeLabel {
+    color: #ACEBFE;
+}
+
+QGCToolBar QLabel#toolBarStateLabel {
+    color: #FEC654;
+}
+
+QGCToolBar QLabel#toolBarBatteryVoltageLabel {
+    color: #0F0;
+}
+
+QGCToolBar QLabel#toolBarWpLabel {
+    color: #ACEBFE;
+}
+
+QGCToolBar QLabel#toolBarMessageLabel {
+    color: #ACEBFE;
+}
+
 QGCToolBar QProgressBar {
-    height: 26px;
-    max-height: 16px;
+    margin: 4px 2px;
 }
 
 QGCToolBar QToolButton {
     margin: 0;
-    padding-left: 0;
-    padding-right: 0;
+    padding: 0;
     border: none;
     border-top: 1px solid #333;
     border-bottom: 1px solid #333;
     border-radius: 0;
+    height: 24px;
+    margin-bottom: 4px;
     text-align: left;
+    font-weight: bold;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #AAA, stop: 1 #BBB);
     color: #000;
 }
@@ -147,7 +166,7 @@ QGCToolBar QToolButton:hover {
 QGCToolBar QToolButton#advancedButton {
     margin-left: 0;
     margin-right: 13px;
-    padding-left: 4px;
+    padding: 0 12px 0 4px;
     padding-right: 8px;
     border-radius: 0;
     border-bottom-right-radius: 6px;
