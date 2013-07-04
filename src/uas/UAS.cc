@@ -139,7 +139,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0)
+    lastSendTimeSensors(0),
+    blockHomePositionChanges(false)
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -1646,9 +1647,12 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
 */
 void UAS::setHomePosition(double lat, double lon, double alt)
 {
+    if (blockHomePositionChanges)
+        return;
+
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Setting new World Coordinate Frame Origin");
+    msgBox.setText(tr("Set a new home position for vehicle %s").arg(getUASName()));
     msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
@@ -1674,6 +1678,8 @@ void UAS::setHomePosition(double lat, double lon, double alt)
         qDebug() << "lat:" << home.latitude << " lon:" << home.longitude;
         mavlink_msg_set_gps_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
         sendMessage(msg);
+    } else {
+        blockHomePositionChanges = true;
     }
 }
 
@@ -1684,7 +1690,7 @@ void UAS::setLocalOriginAtCurrentGPSPosition()
 {
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Setting new World Coordinate Frame Origin");
+    msgBox.setText("Set the home position at the current GPS position?");
     msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);

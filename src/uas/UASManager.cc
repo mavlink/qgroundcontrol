@@ -75,9 +75,9 @@ bool UASManager::setHomePosition(double lat, double lon, double alt)
         && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0)
         {
 
-        if (homeLat != lat) changed = true;
-        if (homeLon != lon) changed = true;
-        if (homeAlt != alt) changed = true;
+        if (fabs(homeLat - lat) > 1e-7) changed = true;
+        if (fabs(homeLon - lon) > 1e-7) changed = true;
+        if (fabs(homeAlt - alt) > 0.5f) changed = true;
 
         // Initialize conversion reference in any case
         initReference(lat, lon, alt);
@@ -89,15 +89,25 @@ bool UASManager::setHomePosition(double lat, double lon, double alt)
             homeAlt = alt;
 
             emit homePositionChanged(homeLat, homeLon, homeAlt);
-
-            // Update all UAVs
-            foreach (UASInterface* mav, systems)
-            {
-                mav->setHomePosition(homeLat, homeLon, homeAlt);
-            }
         }
     }
     return changed;
+}
+
+bool UASManager::setHomePositionAndNotify(double lat, double lon, double alt)
+{
+    // Checking for NaN and infitiny
+    // and checking for borders
+    bool changed = setHomePosition(lat, lon, alt);
+
+    if (changed)
+    {
+        // Update all UAVs
+        foreach (UASInterface* mav, systems)
+        {
+            mav->setHomePosition(homeLat, homeLon, homeAlt);
+        }
+    }
 }
 
 /**

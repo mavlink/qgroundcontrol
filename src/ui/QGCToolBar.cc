@@ -36,6 +36,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     batteryVoltage(0),
     wpId(0),
     wpDistance(0),
+    altitudeMSL(0),
+    altitudeRel(0),
     systemArmed(false),
     currentLink(NULL),
     firstAction(NULL)
@@ -334,7 +336,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         connect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
         connect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
         connect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
-        connect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+        connect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,double,int)));
         connect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         connect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
         connect(mav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -451,6 +453,7 @@ void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, doubl
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
+    Q_UNUSED(current);
     if (batteryPercent != percent || batteryVoltage != voltage) changed = true;
     batteryPercent = percent;
     batteryVoltage = voltage;

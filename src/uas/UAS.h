@@ -464,6 +464,7 @@ protected: //COMMENTS FOR TEST UNIT
     QByteArray imageRecBuffer;  ///< Buffer for the incoming bytestream
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
+    bool blockHomePositionChanges;   ///< Block changes to the home position
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay overlay;
