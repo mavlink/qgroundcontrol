@@ -528,6 +528,40 @@ public:
         paramManager = manager;
     }
     int getSystemType();
+
+    /**
+     * @brief Returns true for systems that can reverse. If the system has no control over position, it returns false as
+     * @return If the specified vehicle type can
+     */
+    bool systemCanReverse() const
+    {
+        switch(type)
+        {
+        case MAV_TYPE_GENERIC:
+        case MAV_TYPE_FIXED_WING:
+        case MAV_TYPE_ROCKET:
+        case MAV_TYPE_FLAPPING_WING:
+
+        // System types that don't have movement
+        case MAV_TYPE_ANTENNA_TRACKER:
+        case MAV_TYPE_GCS:
+        case MAV_TYPE_FREE_BALLOON:
+        default:
+            return false;
+        case MAV_TYPE_QUADROTOR:
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+        case MAV_TYPE_AIRSHIP:
+        case MAV_TYPE_GROUND_ROVER:
+        case MAV_TYPE_SURFACE_BOAT:
+        case MAV_TYPE_SUBMARINE:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+            return true;
+        }
+    }
+
     QString getSystemTypeName()
     {
         switch(type)
@@ -642,6 +676,11 @@ public:
             break;
         }
     }
+    /** From UASInterface */
+    QList<QAction*> getActions() const
+    {
+        return actions;
+    }
 
 public slots:
     /** @brief Set the autopilot type */
@@ -660,7 +699,7 @@ public slots:
           this->airframe = airframe;
           emit systemSpecsChanged(uasId);
         }
-        
+
     }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
@@ -747,11 +786,23 @@ public slots:
     void armSystem();
     /** @brief Disable the motors */
     void disarmSystem();
+    /** @brief Toggle the armed state of the system. */
+    void toggleArmedState();
+    /**
+     * @brief Tell the UAS to switch into a completely-autonomous mode, so disable manual input.
+     */
+    void goAutonomous();
+    /**
+     * @brief Tell the UAS to switch to manual control. Stabilized attitude may simultaneously be engaged.
+     */
+    void goManual();
+    /**
+     * @brief Tell the UAS to switch between manual and autonomous control.
+     */
+    void toggleAutonomy();
 
     /** @brief Set the values for the manual control of the vehicle */
     void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
-    /** @brief Receive a button pressed event from an input device, e.g. joystick */
-    void receiveButton(int buttonIndex);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
@@ -836,6 +887,9 @@ public slots:
     void startDataRecording();
     void stopDataRecording();
     void deleteSettings();
+
+    /** @brief Triggers the action associated with the given ID. */
+    void triggerAction(int action);
 signals:
     /** @brief The main/battery voltage has changed/was updated */
     //void voltageChanged(int uasId, double voltage); // Defined in UASInterface already
@@ -892,6 +946,7 @@ protected:
     bool sensorHil;             ///< True if sensor HIL is enabled
     quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
     quint64 lastSendTimeSensors;
+    QList<QAction*> actions; ///< A list of actions that this UAS can perform.
 
 protected slots:
     /** @brief Write settings to disk */
