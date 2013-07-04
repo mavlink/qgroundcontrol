@@ -111,24 +111,34 @@ QGCToolBar QLabel#toolBarBatteryBar {
 }
 
 QGCToolBar QLabel#toolBarTimeoutLabel {
-    color: #000;
+    color: #FFFFFF;
     background-color: #FF0037;
+    font-size: 15pt;
+}
+
+QGCToolBar QLabel#toolBarSafetyLabel {
+    /* color is for this label defined within the code */
+    font-size: 15pt;
 }
 
 QGCToolBar QLabel#toolBarModeLabel {
     color: #ACEBFE;
+    font-size: 15pt;
 }
 
 QGCToolBar QLabel#toolBarStateLabel {
     color: #FEC654;
+    font-size: 15pt;
 }
 
 QGCToolBar QLabel#toolBarBatteryVoltageLabel {
     color: #0F0;
+    font-size: 15pt;
 }
 
 QGCToolBar QLabel#toolBarWpLabel {
     color: #ACEBFE;
+    font-size: 15pt;
 }
 
 QGCToolBar QLabel#toolBarMessageLabel {
