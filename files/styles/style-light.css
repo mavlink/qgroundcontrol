@@ -9,6 +9,13 @@
     color: #AAA;
 }
 
+JoystickButton QLabel {
+    border: 1px solid #777;
+    border-radius: 4px;
+    height: 16px;
+    padding: 0 3px;
+}
+
 QCheckBox {
     color: #222;
 }
@@ -218,7 +225,8 @@ QLabel {
 }
 
 QLabel:disabled {
-    color: #AAA;
+    color: #999;
+    border-color: #999;
 }
 
 QLabel#noUas {

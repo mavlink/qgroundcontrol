@@ -25,7 +25,7 @@ public:
 public slots:
 
     /** @brief Generate coloring for this plot canvas based on current window theme */
-    void applyColorScheme(MainWindow::QGC_MAINWINDOW_STYLE style);
+    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style);
 
 protected:
     const static int numColors = 20;

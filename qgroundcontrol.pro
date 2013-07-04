@@ -233,7 +233,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/uas/UASActionsWidget.ui \
     src/ui/QGCTabbedInfoView.ui \
     src/ui/UASRawStatusView.ui \
-    src/ui/uas/QGCMessageView.ui
+    src/ui/uas/QGCMessageView.ui \
+    src/ui/JoystickButton.ui \
+    src/ui/JoystickAxis.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -391,7 +393,9 @@ HEADERS += src/MG.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
     src/ui/PrimaryFlightDisplay.h \
-    src/ui/uas/QGCMessageView.h
+    src/ui/uas/QGCMessageView.h \
+    src/ui/JoystickButton.h \
+    src/ui/JoystickAxis.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -567,7 +571,9 @@ SOURCES += src/main.cc \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
     src/ui/PrimaryFlightDisplay.cpp \
-    src/ui/uas/QGCMessageView.cc
+    src/ui/uas/QGCMessageView.cc \
+    src/ui/JoystickButton.cc \
+    src/ui/JoystickAxis.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -200,7 +200,7 @@
      <normaloff>:/files/images/devices/input-gaming.svg</normaloff>:/files/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
-    <string>Joystick Test</string>
+    <string>Joystick Configuration</string>
    </property>
    <property name="visible">
     <bool>true</bool>
