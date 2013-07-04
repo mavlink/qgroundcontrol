@@ -301,7 +301,8 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 
 	INCLUDEPATH += $$BASEDIR/libs/lib/sdl/msvc/include \
         $$BASEDIR/libs/lib/opal/include \
-        $$BASEDIR/libs/lib/msinttypes
+        $$BASEDIR/libs/lib/msinttypes \
+        $$(QTDIR)/src/activeqt/shared
 
 	LIBS += -L$$BASEDIR/libs/lib/sdl/msvc/lib \
         -lSDLmain -lSDL \
