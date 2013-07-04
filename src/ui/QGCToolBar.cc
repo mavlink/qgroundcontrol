@@ -416,18 +416,18 @@ void QGCToolBar::updateView()
     // Display the system armed state with a red-on-yellow background if armed or green text if safe.
     if (systemArmed)
     {
-        toolBarSafetyLabel->setStyleSheet(QString("QLabel {color: %1; background-color: %2;}").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
+        toolBarSafetyLabel->setStyleSheet(QString("QLabel {color: %1; background-color: %2; font-size: 15pt;}").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
         toolBarSafetyLabel->setText(tr("ARMED"));
     }
     else
     {
         if (MainWindow::instance()->getStyle() == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
         {
-            toolBarSafetyLabel->setStyleSheet("QLabel {color: #0D820D;}");
+            toolBarSafetyLabel->setStyleSheet("QLabel {color: #0D820D; font-size: 15pt;}");
         }
         else
         {
-            toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814;}");
+            toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814; font-size: 15pt;}");
         }
         toolBarSafetyLabel->setText(tr("SAFE"));
     }

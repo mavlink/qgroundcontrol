@@ -406,10 +406,10 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
         if (systemid == mode.target_system) sys_mode = mode.base_mode;
     }
     break;
-    case MAVLINK_MSG_ID_HIL_STATE:
+    case MAVLINK_MSG_ID_HIL_STATE_QUATERNION:
     {
-        mavlink_hil_state_t state;
-        mavlink_msg_hil_state_decode(&msg, &state);
+        mavlink_hil_state_quaternion_t state;
+        mavlink_msg_hil_state_quaternion_decode(&msg, &state);
 
         double a = state.attitude_quaternion[0];
         double b = state.attitude_quaternion[1];

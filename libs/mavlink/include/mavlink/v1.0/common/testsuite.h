@@ -3346,25 +3346,28 @@ static void mavlink_test_hil_state(uint8_t system_id, uint8_t component_id, mavl
         uint16_t i;
 	mavlink_hil_state_t packet_in = {
 		93372036854775807ULL,
-	{ 73.0, 74.0, 75.0, 76.0 },
+	73.0,
+	101.0,
+	129.0,
+	157.0,
 	185.0,
 	213.0,
-	241.0,
+	963499128,
 	963499336,
 	963499544,
-	963499752,
+	19523,
+	19627,
 	19731,
 	19835,
 	19939,
 	20043,
-	20147,
-	20251,
-	20355,
-	20459,
 	};
 	mavlink_hil_state_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
         	packet1.time_usec = packet_in.time_usec;
+        	packet1.roll = packet_in.roll;
+        	packet1.pitch = packet_in.pitch;
+        	packet1.yaw = packet_in.yaw;
         	packet1.rollspeed = packet_in.rollspeed;
         	packet1.pitchspeed = packet_in.pitchspeed;
         	packet1.yawspeed = packet_in.yawspeed;
@@ -3374,13 +3377,10 @@ static void mavlink_test_hil_state(uint8_t system_id, uint8_t component_id, mavl
         	packet1.vx = packet_in.vx;
         	packet1.vy = packet_in.vy;
         	packet1.vz = packet_in.vz;
-        	packet1.ind_airspeed = packet_in.ind_airspeed;
-        	packet1.true_airspeed = packet_in.true_airspeed;
         	packet1.xacc = packet_in.xacc;
         	packet1.yacc = packet_in.yacc;
         	packet1.zacc = packet_in.zacc;
         
-        	mav_array_memcpy(packet1.attitude_quaternion, packet_in.attitude_quaternion, sizeof(float)*4);
         
 
         memset(&packet2, 0, sizeof(packet2));
@@ -3389,12 +3389,12 @@ static void mavlink_test_hil_state(uint8_t system_id, uint8_t component_id, mavl
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_hil_state_pack(system_id, component_id, &msg , packet1.time_usec , packet1.attitude_quaternion , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.ind_airspeed , packet1.true_airspeed , packet1.xacc , packet1.yacc , packet1.zacc );
+	mavlink_msg_hil_state_pack(system_id, component_id, &msg , packet1.time_usec , packet1.roll , packet1.pitch , packet1.yaw , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.xacc , packet1.yacc , packet1.zacc );
 	mavlink_msg_hil_state_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_hil_state_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.time_usec , packet1.attitude_quaternion , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.ind_airspeed , packet1.true_airspeed , packet1.xacc , packet1.yacc , packet1.zacc );
+	mavlink_msg_hil_state_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.time_usec , packet1.roll , packet1.pitch , packet1.yaw , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.xacc , packet1.yacc , packet1.zacc );
 	mavlink_msg_hil_state_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -3407,7 +3407,7 @@ static void mavlink_test_hil_state(uint8_t system_id, uint8_t component_id, mavl
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_hil_state_send(MAVLINK_COMM_1 , packet1.time_usec , packet1.attitude_quaternion , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.ind_airspeed , packet1.true_airspeed , packet1.xacc , packet1.yacc , packet1.zacc );
+	mavlink_msg_hil_state_send(MAVLINK_COMM_1 , packet1.time_usec , packet1.roll , packet1.pitch , packet1.yaw , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.xacc , packet1.yacc , packet1.zacc );
 	mavlink_msg_hil_state_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
@@ -4415,6 +4415,79 @@ static void mavlink_test_hil_optical_flow(uint8_t system_id, uint8_t component_i
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }
 
+static void mavlink_test_hil_state_quaternion(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
+{
+	mavlink_message_t msg;
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        uint16_t i;
+	mavlink_hil_state_quaternion_t packet_in = {
+		93372036854775807ULL,
+	{ 73.0, 74.0, 75.0, 76.0 },
+	185.0,
+	213.0,
+	241.0,
+	963499336,
+	963499544,
+	963499752,
+	19731,
+	19835,
+	19939,
+	20043,
+	20147,
+	20251,
+	20355,
+	20459,
+	};
+	mavlink_hil_state_quaternion_t packet1, packet2;
+        memset(&packet1, 0, sizeof(packet1));
+        	packet1.time_usec = packet_in.time_usec;
+        	packet1.rollspeed = packet_in.rollspeed;
+        	packet1.pitchspeed = packet_in.pitchspeed;
+        	packet1.yawspeed = packet_in.yawspeed;
+        	packet1.lat = packet_in.lat;
+        	packet1.lon = packet_in.lon;
+        	packet1.alt = packet_in.alt;
+        	packet1.vx = packet_in.vx;
+        	packet1.vy = packet_in.vy;
+        	packet1.vz = packet_in.vz;
+        	packet1.ind_airspeed = packet_in.ind_airspeed;
+        	packet1.true_airspeed = packet_in.true_airspeed;
+        	packet1.xacc = packet_in.xacc;
+        	packet1.yacc = packet_in.yacc;
+        	packet1.zacc = packet_in.zacc;
+        
+        	mav_array_memcpy(packet1.attitude_quaternion, packet_in.attitude_quaternion, sizeof(float)*4);
+        
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_hil_state_quaternion_encode(system_id, component_id, &msg, &packet1);
+	mavlink_msg_hil_state_quaternion_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_hil_state_quaternion_pack(system_id, component_id, &msg , packet1.time_usec , packet1.attitude_quaternion , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.ind_airspeed , packet1.true_airspeed , packet1.xacc , packet1.yacc , packet1.zacc );
+	mavlink_msg_hil_state_quaternion_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_hil_state_quaternion_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.time_usec , packet1.attitude_quaternion , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.ind_airspeed , packet1.true_airspeed , packet1.xacc , packet1.yacc , packet1.zacc );
+	mavlink_msg_hil_state_quaternion_decode(&msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+
+        memset(&packet2, 0, sizeof(packet2));
+        mavlink_msg_to_send_buffer(buffer, &msg);
+        for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
+        	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
+        }
+	mavlink_msg_hil_state_quaternion_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+        
+        memset(&packet2, 0, sizeof(packet2));
+	mavlink_msg_hil_state_quaternion_send(MAVLINK_COMM_1 , packet1.time_usec , packet1.attitude_quaternion , packet1.rollspeed , packet1.pitchspeed , packet1.yawspeed , packet1.lat , packet1.lon , packet1.alt , packet1.vx , packet1.vy , packet1.vz , packet1.ind_airspeed , packet1.true_airspeed , packet1.xacc , packet1.yacc , packet1.zacc );
+	mavlink_msg_hil_state_quaternion_decode(last_msg, &packet2);
+        MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
+}
+
 static void mavlink_test_battery_status(uint8_t system_id, uint8_t component_id, mavlink_message_t *last_msg)
 {
 	mavlink_message_t msg;
@@ -4957,6 +5030,7 @@ static void mavlink_test_common(uint8_t system_id, uint8_t component_id, mavlink
 	mavlink_test_file_transfer_res(system_id, component_id, last_msg);
 	mavlink_test_hil_gps(system_id, component_id, last_msg);
 	mavlink_test_hil_optical_flow(system_id, component_id, last_msg);
+	mavlink_test_hil_state_quaternion(system_id, component_id, last_msg);
 	mavlink_test_battery_status(system_id, component_id, last_msg);
 	mavlink_test_setpoint_8dof(system_id, component_id, last_msg);
 	mavlink_test_setpoint_6dof(system_id, component_id, last_msg);
