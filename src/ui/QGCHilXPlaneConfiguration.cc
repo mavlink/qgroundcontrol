@@ -29,9 +29,9 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
         ui->airframeComboBox->setCurrentIndex(link->getAirFrameIndex());
         // XXX not implemented yet
         ui->airframeComboBox->hide();
-        ui->sensorHilCheckBox->setChecked(link->sensorHilEnabled());
-        connect(link, SIGNAL(sensorHilChanged(bool)), ui->sensorHilCheckBox, SLOT(setChecked(bool)));
-        connect(ui->sensorHilCheckBox, SIGNAL(clicked(bool)), link, SLOT(enableSensorHIL(bool)));
+        ui->sensorHilCheckBox->setChecked(xplane->sensorHilEnabled());
+        connect(xplane, SIGNAL(sensorHilChanged(bool)), ui->sensorHilCheckBox, SLOT(setChecked(bool)));
+        connect(ui->sensorHilCheckBox, SIGNAL(clicked(bool)), xplane, SLOT(enableSensorHIL(bool)));
 
         connect(link, SIGNAL(versionChanged(int)), this, SLOT(setVersion(int)));
     }
@@ -44,7 +44,7 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
 
 void QGCHilXPlaneConfiguration::setVersion(int version)
 {
-
+    Q_UNUSED(version);
 }
 
 void QGCHilXPlaneConfiguration::toggleSimulation(bool connect)

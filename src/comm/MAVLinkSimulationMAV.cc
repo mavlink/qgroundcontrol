@@ -130,7 +130,7 @@ void MAVLinkSimulationMAV::mainloop()
                 y = nextSPY;
                 z = nextSPZ;
                 firstWP = false;
-                qDebug() << "INIT STEP";
+//                qDebug() << "INIT STEP";
             }
         }
         else
@@ -138,7 +138,6 @@ void MAVLinkSimulationMAV::mainloop()
             // FIXME Implement heading and altitude controller
 
         }
-
 
         // GLOBAL POSITION
         mavlink_message_t msg;
@@ -383,11 +382,11 @@ static void print_message(const mavlink_message_t *msg)
     const mavlink_message_info_t *m = &message_info[msg->msgid];
     const mavlink_field_info_t *f = m->fields;
     unsigned i;
-    qDebug("%s { ", m->name);
-    for (i=0; i<m->num_fields; i++) {
-        print_field(msg, &f[i]);
-    }
-    qDebug("}\n");
+//    qDebug("%s { ", m->name);
+//    for (i=0; i<m->num_fields; i++) {
+//        print_field(msg, &f[i]);
+//    }
+//    qDebug("}\n");
 }
 
 void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
@@ -395,7 +394,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
     if (msg.sysid != systemid)
     {
         print_message(&msg);
-        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
+//        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
     }
 
     switch(msg.msgid) {
@@ -407,13 +406,51 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
         if (systemid == mode.target_system) sys_mode = mode.base_mode;
     }
     break;
-    case MAVLINK_MSG_ID_HIL_STATE:
+    case MAVLINK_MSG_ID_HIL_STATE_QUATERNION:
     {
-        mavlink_hil_state_t state;
-        mavlink_msg_hil_state_decode(&msg, &state);
-        roll = state.roll;
-        pitch = state.pitch;
-        yaw = state.yaw;
+        mavlink_hil_state_quaternion_t state;
+        mavlink_msg_hil_state_quaternion_decode(&msg, &state);
+
+        double a = state.attitude_quaternion[0];
+        double b = state.attitude_quaternion[1];
+        double c = state.attitude_quaternion[2];
+        double d = state.attitude_quaternion[3];
+        double aSq = a * a;
+        double bSq = b * b;
+        double cSq = c * c;
+        double dSq = d * d;
+        float dcm[3][3];
+        dcm[0][0] = aSq + bSq - cSq - dSq;
+        dcm[0][1] = 2.0 * (b * c - a * d);
+        dcm[0][2] = 2.0 * (a * c + b * d);
+        dcm[1][0] = 2.0 * (b * c + a * d);
+        dcm[1][1] = aSq - bSq + cSq - dSq;
+        dcm[1][2] = 2.0 * (c * d - a * b);
+        dcm[2][0] = 2.0 * (b * d - a * c);
+        dcm[2][1] = 2.0 * (a * b + c * d);
+        dcm[2][2] = aSq - bSq - cSq + dSq;
+
+        float phi, theta, psi;
+        theta = asin(-dcm[2][0]);
+
+        if (fabs(theta - M_PI_2) < 1.0e-3f) {
+            phi = 0.0f;
+            psi = (atan2(dcm[1][2] - dcm[0][1],
+                    dcm[0][2] + dcm[1][1]) + phi);
+
+        } else if (fabs(theta + M_PI_2) < 1.0e-3f) {
+            phi = 0.0f;
+            psi = atan2f(dcm[1][2] - dcm[0][1],
+                      dcm[0][2] + dcm[1][1] - phi);
+
+        } else {
+            phi = atan2f(dcm[2][1], dcm[2][2]);
+            psi = atan2f(dcm[1][0], dcm[0][0]);
+        }
+
+        roll = phi;
+        pitch = theta;
+        yaw = psi;
         rollspeed = state.rollspeed;
         pitchspeed = state.pitchspeed;
         yawspeed = state.yawspeed;

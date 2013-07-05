@@ -6,20 +6,38 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>372</width>
-    <height>309</height>
+    <width>174</width>
+    <height>174</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="90,30">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="0">
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <item row="0" column="0">
-    <widget class="QToolButton" name="connectButton">
+    <widget class="QPushButton" name="connectButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
-       <width>150</width>
-       <height>150</height>
+       <width>174</width>
+       <height>174</height>
       </size>
      </property>
      <property name="sizeIncrement">
@@ -35,28 +53,7 @@
       </size>
      </property>
      <property name="styleSheet">
-      <string notr="true">
-QToolButton {
-color: #222222;
-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #80B81D, stop: 1 #306807);
-margin: 15px;
-padding: 20px;
-border-radius: 18px;
-min-height: 100px;
-border: 2px solid #085B35;
-}
-
-QToolButton:pressed {
-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #306807, stop: 1 #80B81D);
-color: #222222;
-border-color: #D1892A;
-}
-
-QToolButton:checked {
-background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #306807, stop: 1 #80B81D);
-color: #222222;
-border-color: #D1892A;
-}</string>
+      <string notr="true"/>
      </property>
      <property name="text">
       <string/>
@@ -71,23 +68,7 @@ border-color: #D1892A;
        <height>140</height>
       </size>
      </property>
-     <property name="toolButtonStyle">
-      <enum>Qt::ToolButtonIconOnly</enum>
-     </property>
     </widget>
-   </item>
-   <item row="1" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>

@@ -1,48 +1,101 @@
 #include "JoystickWidget.h"
+#include "MainWindow.h"
 #include "ui_JoystickWidget.h"
-#include <QDebug>
+#include "JoystickButton.h"
+#include "JoystickAxis.h"
+
+#include <QDesktopWidget>
 
 JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     QDialog(parent),
+    joystick(joystick),
     m_ui(new Ui::JoystickWidget)
 {
     m_ui->setupUi(this);
-	clearKeys();
-    this->joystick = joystick;
 
-    m_ui->rollMapSpinBox->setValue(joystick->getMappingXAxis());
-    m_ui->pitchMapSpinBox->setValue(joystick->getMappingYAxis());
-    m_ui->yawMapSpinBox->setValue(joystick->getMappingYawAxis());
-    m_ui->throttleMapSpinBox->setValue(joystick->getMappingThrustAxis());
-    m_ui->autoMapSpinBox->setValue(joystick->getMappingAutoButton());
+    // Center the window on the screen.
+    QRect position = frameGeometry();
+    position.moveCenter(QDesktopWidget().availableGeometry().center());
+    move(position.topLeft());
 
-    connect(this->joystick, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), this, SLOT(updateJoystick(double,double,double,double,int,int)));
-    connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(pressKey(int)));
-    connect(m_ui->rollMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingXAxis(int)));
-    connect(m_ui->pitchMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingYAxis(int)));
-    connect(m_ui->yawMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingYawAxis(int)));
-    connect(m_ui->throttleMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingThrustAxis(int)));
-    connect(m_ui->autoMapSpinBox, SIGNAL(valueChanged(int)), this->joystick, SLOT(setMappingAutoButton(int)));
+    // Initialize the UI based on the current joystick
+    initUI();
 
-    // Display the widget
-    this->window()->setWindowTitle(tr("Joystick Settings"));
-    if (joystick) updateStatus(tr("Found joystick: %1").arg(joystick->getName()));
+    // Watch for button, axis, and hat input events from the joystick.
+    connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(joystickButtonPressed(int)));
+    connect(this->joystick, SIGNAL(buttonReleased(int)), this, SLOT(joystickButtonReleased(int)));
+    connect(this->joystick, SIGNAL(axisValueChanged(int,float)), this, SLOT(updateAxisValue(int,float)));
+    connect(this->joystick, SIGNAL(hatDirectionChanged(int,int)), this, SLOT(setHat(int,int)));
 
+    // Also watch for when new settings were loaded for the current joystick to do a mass UI refresh.
+    connect(this->joystick, SIGNAL(joystickSettingsChanged()), this, SLOT(updateUI()));
+
+    // If the selected joystick is changed, update the JoystickInput.
+    connect(m_ui->joystickNameComboBox, SIGNAL(currentIndexChanged(int)), this->joystick, SLOT(setActiveJoystick(int)));
+    // Also wait for the JoystickInput to switch, then update our UI.
+    connect(this->joystick, SIGNAL(newJoystickSelected()), this, SLOT(createUIForJoystick()));
+
+    // Initialize the UI to the current JoystickInput state. Also make sure to listen for future changes
+    // so that the UI can be updated.
+    connect(m_ui->enableCheckBox, SIGNAL(toggled(bool)), m_ui->joystickFrame, SLOT(setEnabled(bool)));
+    m_ui->enableCheckBox->setChecked(this->joystick->enabled()); // Needs to be after connecting to the joystick frame and before watching for enabled events from JoystickInput.
+    connect(m_ui->enableCheckBox, SIGNAL(toggled(bool)), this->joystick, SLOT(setEnabled(bool)));
+
+    // Update the button label colors based on the current theme and watch for future theme changes.
+    styleChanged(MainWindow::instance()->getStyle());
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
+
+    // Display the widget above all other windows.
+    this->raise();
     this->show();
+}
+
+void JoystickWidget::initUI()
+{
+    // Add the joysticks to the top combobox. They're indexed by their item number.
+    // And set the currently-selected combobox item to the current joystick.
+    int joysticks = joystick->getNumJoysticks();
+    if (joysticks)
+    {
+        for (int i = 0; i < joysticks; i++)
+        {
+            m_ui->joystickNameComboBox->addItem(joystick->getJoystickNameById(i));
+        }
+        m_ui->joystickNameComboBox->setCurrentIndex(joystick->getJoystickID());
+        // And if joystick support is enabled, show the UI.
+        if (m_ui->enableCheckBox->isChecked())
+        {
+            m_ui->joystickFrame->setEnabled(true);
+        }
+
+        // Create the initial UI.
+        createUIForJoystick();
+    }
+    // But if there're no joysticks, disable everything and hide empty UI.
+    else
+    {
+        m_ui->enableCheckBox->setEnabled(false);
+        m_ui->joystickNameComboBox->addItem(tr("No joysticks found. Connect and restart QGC to add one."));
+        m_ui->joystickNameComboBox->setEnabled(false);
+        m_ui->joystickFrame->hide();
+    }
+}
+
+void JoystickWidget::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newStyle)
+{
+    if (newStyle == MainWindow::QGC_MAINWINDOW_STYLE_LIGHT)
+    {
+        buttonLabelColor = QColor(0x73, 0xD9, 0x5D);
+    }
+    else
+    {
+        buttonLabelColor = QColor(0x14, 0xC6, 0x14);
+    }
 }
 
 JoystickWidget::~JoystickWidget()
 {
     delete m_ui;
-}
-
-void JoystickWidget::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
-{
-    setX(roll);
-    setY(pitch);
-    setZ(yaw);
-    setThrottle(thrust);
-    setHat(xHat, yHat);
 }
 
 void JoystickWidget::changeEvent(QEvent *e)
@@ -56,98 +109,147 @@ void JoystickWidget::changeEvent(QEvent *e)
     }
 }
 
-
-void JoystickWidget::setThrottle(float thrust)
+void JoystickWidget::updateUI()
 {
-    m_ui->thrust->setValue(thrust*100);
-}
-
-void JoystickWidget::setX(float x)
-{
-    m_ui->xSlider->setValue(x*100);
-    m_ui->xValue->display(x*100);
-}
-
-void JoystickWidget::setY(float y)
-{
-    m_ui->ySlider->setValue(y*100);
-    m_ui->yValue->display(y*100);
-}
-
-void JoystickWidget::setZ(float z)
-{
-    m_ui->dial->setValue(z*100);
-}
-
-void JoystickWidget::setHat(float x, float y)
-{
-    updateStatus(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
-}
-
-void JoystickWidget::clearKeys()
-{
-    QString colorstyle;
-    QColor buttonStyleColor = QColor(200, 20, 20);
-    colorstyle = QString("QLabel { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: %1;}").arg(buttonStyleColor.name());
-
-    m_ui->button0->setStyleSheet(colorstyle);
-    m_ui->button1->setStyleSheet(colorstyle);
-    m_ui->button2->setStyleSheet(colorstyle);
-    m_ui->button3->setStyleSheet(colorstyle);
-    m_ui->button4->setStyleSheet(colorstyle);
-    m_ui->button5->setStyleSheet(colorstyle);
-    m_ui->button6->setStyleSheet(colorstyle);
-    m_ui->button7->setStyleSheet(colorstyle);
-    m_ui->button8->setStyleSheet(colorstyle);
-    m_ui->button9->setStyleSheet(colorstyle);
-    m_ui->button10->setStyleSheet(colorstyle);
-}
-
-void JoystickWidget::pressKey(int key)
-{
-    QString colorstyle;
-    QColor buttonStyleColor = QColor(20, 200, 20);
-    colorstyle = QString("QLabel { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: %1;}").arg(buttonStyleColor.name());
-    switch(key) {
-    case 0:
-        m_ui->button0->setStyleSheet(colorstyle);
-        break;
-    case 1:
-        m_ui->button1->setStyleSheet(colorstyle);
-        break;
-    case 2:
-        m_ui->button2->setStyleSheet(colorstyle);
-        break;
-    case 3:
-        m_ui->button3->setStyleSheet(colorstyle);
-        break;
-    case 4:
-        m_ui->button4->setStyleSheet(colorstyle);
-        break;
-    case 5:
-        m_ui->button5->setStyleSheet(colorstyle);
-        break;
-    case 6:
-        m_ui->button6->setStyleSheet(colorstyle);
-        break;
-    case 7:
-        m_ui->button7->setStyleSheet(colorstyle);
-        break;
-    case 8:
-        m_ui->button8->setStyleSheet(colorstyle);
-        break;
-    case 9:
-        m_ui->button9->setStyleSheet(colorstyle);
-        break;
-    case 10:
-        m_ui->button10->setStyleSheet(colorstyle);
-        break;
+    // Update the actions for all of the buttons
+    for (int i = 0; i < buttons.size(); i++)
+    {
+        JoystickButton* button = buttons[i];
+        int action = joystick->getActionForButton(i);
+        button->setAction(action);
     }
-    QTimer::singleShot(20, this, SLOT(clearKeys()));
-    updateStatus(tr("Key %1 pressed").arg(key));
+
+    // Update the axis mappings
+    int rollAxis = joystick->getMappingRollAxis();
+    int pitchAxis = joystick->getMappingPitchAxis();
+    int yawAxis = joystick->getMappingYawAxis();
+    int throttleAxis = joystick->getMappingThrottleAxis();
+    for (int i = 0; i < axes.size(); i++)
+    {
+        JoystickAxis* axis = axes[i];
+        JoystickInput::JOYSTICK_INPUT_MAPPING mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_NONE;
+        if (i == rollAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_ROLL;
+        }
+        else if (i == pitchAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_PITCH;
+        }
+        else if (i == yawAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_YAW;
+        }
+        else if (i == throttleAxis)
+        {
+            mapping = JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE;
+        }
+        axis->setMapping(mapping);
+        bool inverted = joystick->getInvertedForAxis(i);
+        axis->setInverted(inverted);
+        bool limited = joystick->getRangeLimitForAxis(i);
+        axis->setRangeLimit(limited);
+    }
 }
 
-void JoystickWidget::updateStatus(const QString& status)
+void JoystickWidget::createUIForJoystick()
 {
-    m_ui->statusLabel->setText(status);
+    // Delete all the old UI elements
+    foreach (JoystickButton* b, buttons)
+    {
+        delete b;
+    }
+    buttons.clear();
+    foreach (JoystickAxis* a, axes)
+    {
+        delete a;
+    }
+    axes.clear();
+
+    // And add the necessary button displays for this joystick.
+    int newButtons = joystick->getJoystickNumButtons();
+    if (newButtons)
+    {
+        m_ui->buttonBox->show();
+        for (int i = 0; i < newButtons; i++)
+        {
+            JoystickButton* button = new JoystickButton(i, m_ui->buttonBox);
+            button->setAction(joystick->getActionForButton(i));
+            connect(button, SIGNAL(actionChanged(int,int)), this->joystick, SLOT(setButtonAction(int,int)));
+            connect(this->joystick, SIGNAL(activeUASSet(UASInterface*)), button, SLOT(setActiveUAS(UASInterface*)));
+            m_ui->buttonLayout->addWidget(button);
+            buttons.append(button);
+        }
+    }
+    else
+    {
+        m_ui->buttonBox->hide();
+    }
+
+    // Do the same for the axes supported by this joystick.
+    int rollAxis = joystick->getMappingRollAxis();
+    int pitchAxis = joystick->getMappingPitchAxis();
+    int yawAxis = joystick->getMappingYawAxis();
+    int throttleAxis = joystick->getMappingThrottleAxis();
+    int newAxes = joystick->getJoystickNumAxes();
+    if (newAxes)
+    {
+        for (int i = 0; i < newAxes; i++)
+        {
+            JoystickAxis* axis = new JoystickAxis(i, m_ui->axesBox);
+            axis->setValue(joystick->getCurrentValueForAxis(i));
+            if (i == rollAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_ROLL);
+            }
+            else if (i == pitchAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_PITCH);
+            }
+            else if (i == yawAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_YAW);
+            }
+            else if (i == throttleAxis)
+            {
+                axis->setMapping(JoystickInput::JOYSTICK_INPUT_MAPPING_THROTTLE);
+            }
+            axis->setInverted(joystick->getInvertedForAxis(i));
+            axis->setRangeLimit(joystick->getRangeLimitForAxis(i));
+            connect(axis, SIGNAL(mappingChanged(int,JoystickInput::JOYSTICK_INPUT_MAPPING)), this->joystick, SLOT(setAxisMapping(int,JoystickInput::JOYSTICK_INPUT_MAPPING)));
+            connect(axis, SIGNAL(inversionChanged(int,bool)), this->joystick, SLOT(setAxisInversion(int,bool)));
+            connect(axis, SIGNAL(rangeChanged(int,bool)), this->joystick, SLOT(setAxisRangeLimit(int,bool)));
+            connect(this->joystick, SIGNAL(activeUASSet(UASInterface*)), axis, SLOT(setActiveUAS(UASInterface*)));
+            m_ui->axesLayout->addWidget(axis);
+            axes.append(axis);
+        }
+    }
+    else
+    {
+        m_ui->axesBox->hide();
+    }
+}
+
+void JoystickWidget::updateAxisValue(int axis, float value)
+{
+    if (axis < axes.size())
+    {
+        axes.at(axis)->setValue(value);
+    }
+}
+
+void JoystickWidget::setHat(int x, int y)
+{
+    m_ui->statusLabel->setText(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
+}
+
+void JoystickWidget::joystickButtonPressed(int key)
+{
+    QString colorStyle = QString("QLabel { background-color: %1;}").arg(buttonLabelColor.name());
+    buttons.at(key)->setStyleSheet(colorStyle);
+}
+
+void JoystickWidget::joystickButtonReleased(int key)
+{
+    buttons.at(key)->setStyleSheet("");
 }

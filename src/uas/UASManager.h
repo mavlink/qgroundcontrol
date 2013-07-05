@@ -151,12 +151,12 @@ public slots:
      **/
     void addUAS(UASInterface* UAS);
 
-    /** @brief Remove a system from the list */
-    void removeUAS(QObject* uas);
+    /** @brief Remove a system from the list. If this is the active UAS, it switches to another one calling setActiveUAS. Also triggers the UAS to kill itself. */
+    void removeUAS(UASInterface* uas);
 
 
     /**
-      * @brief Set a UAS as currently selected
+      * @brief Set a UAS as currently selected. NULL is a valid value for when no other valid UAS's are available.
       *
       * @param UAS Unmanned Air System to set
       **/
@@ -231,8 +231,11 @@ public slots:
     /** @brief Shut down the onboard operating system down */
     bool shutdownActiveUAS();
 
-    /** @brief Set the current home position on all UAVs*/
+    /** @brief Set the current home position, but do not change it on the UAVs */
     bool setHomePosition(double lat, double lon, double alt);
+
+    /** @brief Set the current home position on all UAVs*/
+    bool setHomePositionAndNotify(double lat, double lon, double alt);
 
     /** @brief Set the safety limits in local position frame */
     void setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2);

@@ -113,7 +113,10 @@ Pixhawk3DWidget::~Pixhawk3DWidget()
 void
 Pixhawk3DWidget::activeSystemChanged(UASInterface* uas)
 {
-    mActiveSystemId = uas->getUASID();
+    if (uas)
+    {
+        mActiveSystemId = uas->getUASID();
+    }
 
     mActiveUAS = uas;
 

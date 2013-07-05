@@ -99,6 +99,7 @@ protected:
 
 private:
     Ui::QGCMAVLinkLogPlayer *ui;
+	virtual void paintEvent(QPaintEvent *);
 };
 
 #endif // QGCMAVLINKLOGPLAYER_H

@@ -242,6 +242,10 @@ void QGCFlightGearLink::readBytes()
     // Parse string
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
     double lat, lon, alt;
+
+    // XXX add
+    float ind_airspeed = 0.0f;
+    float true_airspeed = 0.0f;
     double vx, vy, vz, xacc, yacc, zacc;
 
     lat = values.at(1).toDouble();
@@ -265,7 +269,7 @@ void QGCFlightGearLink::readBytes()
     // Send updated state
     emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                          pitchspeed, yawspeed, lat, lon, alt,
-                         vx, vy, vz, xacc, yacc, zacc);
+                         vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
 
     //    // Echo data for debugging purposes
     //    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
@@ -299,7 +303,7 @@ bool QGCFlightGearLink::disconnectSimulation()
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
     disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)));
+    disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
 
     if (process)
     {
@@ -346,7 +350,7 @@ bool QGCFlightGearLink::connectSimulation()
     terraSync = new QProcess(this);
 
     connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float)));
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
 
 
     UAS* uas = dynamic_cast<UAS*>(mav);

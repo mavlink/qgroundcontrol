@@ -52,8 +52,8 @@ macx|macx-g++42|macx-g++|macx-llvm: {
 	# Copy google earth starter file
 	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
 	# Copy CSS stylesheets
-	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-indoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-indoor.css
-	QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-dark.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-dark.css
+        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-light.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-light.css
         # Copy support files
 	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
         # Copy MAVLink
@@ -301,7 +301,8 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 
 	INCLUDEPATH += $$BASEDIR/libs/lib/sdl/msvc/include \
         $$BASEDIR/libs/lib/opal/include \
-        $$BASEDIR/libs/lib/msinttypes
+        $$BASEDIR/libs/lib/msinttypes \
+        $$(QTDIR)/src/activeqt/shared
 
 	LIBS += -L$$BASEDIR/libs/lib/sdl/msvc/lib \
         -lSDLmain -lSDL \
