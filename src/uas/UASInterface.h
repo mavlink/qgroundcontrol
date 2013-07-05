@@ -242,6 +242,11 @@ public:
 
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
+    /** @brief Indicates whether this system is capable of controlling a reverse velocity.
+     * Used for, among other things, altering joystick input to either -1:1 or 0:1 range.
+     */
+    virtual bool systemCanReverse() const = 0;
+
     virtual QString getSystemTypeName() = 0;
     /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
     virtual int getAutopilotType() = 0;
@@ -254,6 +259,13 @@ public:
     {
         return color;
     }
+
+    /** @brief Returns a list of actions/commands that this vehicle can perform.
+     * Used for creating UI elements for built-in functionality for this vehicle.
+     * Actions should be mappings to `void f(void);` functions that simply issue
+     * a command to the vehicle.
+     */
+    virtual QList<QAction*> getActions() const = 0;
 
 public slots:
 
@@ -369,14 +381,14 @@ public slots:
     /** @brief Send the full HIL state to the MAV */
     virtual void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
                         float pitchspeed, float yawspeed, double lat, double lon, double alt,
-                        float vx, float vy, float vz, float xacc, float yacc, float zacc) = 0;
+                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc) = 0;
 
     /** @brief RAW sensors for sensor HIL */
     virtual void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
-                                        float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint16 fields_changed) = 0;
+                                float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed) = 0;
 
     /** @brief Send raw GPS for sensor HIL */
-    virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float cog, int satellites) = 0;
+    virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites) = 0;
 
 
 protected:
@@ -394,9 +406,6 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
-    /** @brief System has been removed / disconnected / shutdown cleanly, remove */
-    void systemRemoved(UASInterface* uas);
-    void systemRemoved();
     /**
      * @brief Received a plain text message from the robot
      * This signal should NOT be used for standard communication, but rather for VERY IMPORTANT

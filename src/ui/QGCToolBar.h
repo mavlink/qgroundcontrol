@@ -84,15 +84,16 @@ public slots:
     void advancedActivityTriggered(QAction* action);
 
 protected:
-    void createCustomWidgets();
     void storeSettings();
     void loadSettings();
     void createUI();
+    void resetToolbarUI();
 
     UASInterface* mav;
-    QToolButton* symbolButton;
+    QLabel* symbolLabel;
     QLabel* toolBarNameLabel;
     QLabel* toolBarTimeoutLabel;
+    QAction* toolBarTimeoutAction; ///< Needed to set label (in)visible.
     QLabel* toolBarSafetyLabel;
     QLabel* toolBarModeLabel;
     QLabel* toolBarStateLabel;
@@ -102,7 +103,6 @@ protected:
     QPushButton* connectButton;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
-    QGCMAVLinkLogPlayer* player;
     bool changed;
     float batteryPercent;
     float batteryVoltage;
@@ -119,7 +119,7 @@ protected:
     bool systemArmed;
     LinkInterface* currentLink;
     QAction* firstAction;
-    QPushButton *advancedButton;
+    QToolButton *advancedButton;
     QButtonGroup *group;
 };
 

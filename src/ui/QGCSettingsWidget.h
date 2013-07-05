@@ -2,6 +2,7 @@
 #define QGCSETTINGSWIDGET_H
 
 #include <QDialog>
+#include "MainWindow.h"
 
 namespace Ui
 {
@@ -17,9 +18,15 @@ public:
     ~QGCSettingsWidget();
 
 public slots:
+    void styleChanged(int index);
+    void lineEditFinished();
+    void setDefaultStyle();
+    void selectStylesheet();
 
 private:
-    Ui::QGCSettingsWidget *ui;
+    MainWindow* mainWindow;
+    Ui::QGCSettingsWidget* ui;
+    bool updateStyle(QString style);
 };
 
 #endif // QGCSETTINGSWIDGET_H

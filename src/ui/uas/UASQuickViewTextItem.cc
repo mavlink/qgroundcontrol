@@ -2,24 +2,35 @@
 #include <QVBoxLayout>
 UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout();
-    this->setLayout(layout);
-    layout->setSpacing(0);
+    // Set a standard vertical layout.
+    QVBoxLayout* layout = new QVBoxLayout();
     layout->setMargin(0);
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
+
+    // Create the title label. Scale the font based on available size.
     titleLabel = new QLabel(this);
     titleLabel->setAlignment(Qt::AlignHCenter);
-    this->layout()->addWidget(titleLabel);
+    titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
+    titleLabel->setObjectName(QString::fromUtf8("title"));
+    QFont titlefont = titleLabel->font();
+    titlefont.setPixelSize(this->height() / 4.0);
+    titleLabel->setFont(titlefont);
+    layout->addWidget(titleLabel);
+
+    // Create the value label. Scale the font based on available size.
     valueLabel = new QLabel(this);
     valueLabel->setAlignment(Qt::AlignHCenter);
+    valueLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
+    valueLabel->setObjectName(QString::fromUtf8("value"));
     valueLabel->setText("0.00");
-    this->layout()->addWidget(valueLabel);
-    layout->addSpacerItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
     QFont valuefont = valueLabel->font();
-    QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height() / 2.0);
-    titlefont.setPixelSize(this->height() / 4.0);
     valueLabel->setFont(valuefont);
-    titleLabel->setFont(titlefont);
+    layout->addWidget(valueLabel);
+
+    // And make sure the items are evenly spaced in the UASQuickView.
+    layout->addSpacerItem(new QSpacerItem(20, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    this->setLayout(layout);
 }
 void UASQuickViewTextItem::setValue(double value)
 {

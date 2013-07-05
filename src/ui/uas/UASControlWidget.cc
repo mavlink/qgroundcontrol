@@ -70,7 +70,7 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::setUAS(UASInterface* uas)
 {
-    if (this->uas != 0)
+    if (this->uas)
     {
         UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uas);
         disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
@@ -83,18 +83,25 @@ void UASControlWidget::setUAS(UASInterface* uas)
     }
 
     // Connect user interface controls
-    connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
-    connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
-    connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-    connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-    //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
-    connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-    connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+    if (uas)
+    {
+        connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
+        connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
+        connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
+        connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
+        //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
+        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
 
-    ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
+        ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
 
-    this->uas = uas->getUASID();
-    setBackgroundColor(uas->getColor());
+        this->uas = uas->getUASID();
+        setBackgroundColor(uas->getColor());
+    }
+    else
+    {
+        this->uas = -1;
+    }
 }
 
 UASControlWidget::~UASControlWidget()

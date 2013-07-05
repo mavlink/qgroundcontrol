@@ -43,7 +43,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "UASControlWidget.h"
-#include "Linecharts.h"
 #include "UASInfoWidget.h"
 #include "WaypointList.h"
 #include "CameraView.h"
@@ -51,9 +50,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 #include "ObjectDetectionView.h"
-#include "HUD.h"
 #include "submainwindow.h"
-#include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
@@ -64,7 +61,6 @@ This file is part of the QGROUNDCONTROL project
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
-#include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
 #if (defined Q_OS_MAC) | (defined _MSC_VER)
@@ -88,6 +84,9 @@ class QGCMAVLinkMessageSender;
 class QGCFirmwareUpdate;
 class QSplashScreen;
 class QGCStatusBar;
+class Linecharts;
+class QGCDataPlot2D;
+class JoystickWidget;
 
 /**
  * @brief Main Application Window
@@ -98,20 +97,57 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    /**
+     * A static function for obtaining the sole instance of the MainWindow. The screen
+     * argument is only important on the FIRST call to this function. The provided splash
+     * screen is updated with some status messages that are emitted during init(). This
+     * function cannot be used within the MainWindow constructor!
+     */
     static MainWindow* instance(QSplashScreen* screen = 0);
+
+    /**
+     * Initializes the MainWindow. Some variables are initialized and the widget is hidden.
+     * Initialization of the MainWindow class really occurs in init(), which loads the UI
+     * and does everything important. The constructor is split in two like this so that
+     * the instance() is available for all classes.
+     */
+    MainWindow(QWidget *parent = NULL);
     ~MainWindow();
+
+    /**
+     * This function actually performs the non-trivial initialization of the MainWindow
+     * class. This is separate from the constructor because instance() won't work within
+     * code executed in the MainWindow constructor.
+     */
+    void init();
 
     enum QGC_MAINWINDOW_STYLE
     {
-        QGC_MAINWINDOW_STYLE_NATIVE,
-        QGC_MAINWINDOW_STYLE_INDOOR,
-        QGC_MAINWINDOW_STYLE_OUTDOOR
+        QGC_MAINWINDOW_STYLE_DARK,
+        QGC_MAINWINDOW_STYLE_LIGHT
     };
 
+    // Declare default dark and light stylesheets. These should be file-resource
+    // paths.
+    static const QString defaultDarkStyle;
+    static const QString defaultLightStyle;
+
     /** @brief Get current visual style */
-    int getStyle()
+    QGC_MAINWINDOW_STYLE getStyle()
     {
         return currentStyle;
+    }
+
+    /** @brief Get current light visual stylesheet */
+    QString getLightStyleSheet()
+    {
+        return lightStyleFileName;
+    }
+
+    /** @brief Get current dark visual stylesheet */
+    QString getDarkStyleSheet()
+    {
+        return darkStyleFileName;
     }
     /** @brief Get auto link reconnect setting */
     bool autoReconnectEnabled()
@@ -188,24 +224,16 @@ public slots:
     /** @brief Show the project roadmap */
     void showRoadMap();
 
-    /** @brief Reload the CSS style sheet */
-    void reloadStylesheet();
-    /** @brief Let the user select the CSS style sheet */
-    void selectStylesheet();
     /** @breif Enable title bars on dock widgets when no in advanced mode */
     void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
-    /** @brief Switch to native application style */
-    void loadNativeStyle();
-    /** @brief Switch to indoor mission style */
-    void loadIndoorStyle();
-    /** @brief Switch to outdoor mission style */
-    void loadOutdoorStyle();
-    /** @brief Load a specific style */
-    void loadStyle(QGC_MAINWINDOW_STYLE style);
+    /** @brief Load a specific style.
+      * If it's a custom style, load the file indicated by the cssFile path.
+      */
+    bool loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile);
 
     /** @brief Add a custom tool widget */
     void createCustomWidget();
@@ -253,7 +281,8 @@ public slots:
     void commsWidgetDestroyed(QObject *obj);
 
 signals:
-    void initStatusChanged(const QString& message);
+    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
+    void initStatusChanged(const QString& message, int alignment, const QColor &color);
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
@@ -271,8 +300,6 @@ public:
     }
 
 protected:
-
-    MainWindow(QWidget *parent = 0);
 
     typedef enum _VIEW_SECTIONS
     {
@@ -330,7 +357,7 @@ protected:
     void buildCommonWidgets();
     void connectCommonWidgets();
     void connectCommonActions();
-	void connectSenseSoarActions();
+    void connectSenseSoarActions();
 
     void loadSettings();
     void storeSettings();
@@ -437,7 +464,8 @@ protected:
     LogCompressor* comp;
     QString screenFileName;
     QTimer* videoTimer;
-    QString styleFileName;
+    QString darkStyleFileName;
+    QString lightStyleFileName;
     bool autoReconnect;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
@@ -448,11 +476,16 @@ private:
     QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
     QMap<QAction*,QString > menuToDockNameMap;
-    QMap<QDockWidget*,QWidget*> dockToTitleBarMap;
+    QList<QDockWidget*> dockWidgets;
     QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
-    bool isAdvancedMode;
-    bool dockWidgetTitleBarEnabled;
+    bool isAdvancedMode; ///< If enabled dock widgets can be moved and floated.
+    bool dockWidgetTitleBarEnabled; ///< If enabled, dock widget titlebars are displayed when NOT in advanced mode.
     Ui::MainWindow ui;
+
+    /** @brief Set the appropriate titlebar for a given dock widget.
+      * Relies on the isAdvancedMode and dockWidgetTitleBarEnabled member variables.
+      */
+    void setDockWidgetTitleBar(QDockWidget* widget);
 
     QString getWindowStateKey();
     QString getWindowGeometryKey();

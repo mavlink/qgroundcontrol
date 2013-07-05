@@ -1,4 +1,6 @@
 #include <QDebug>
+
+#include "MainWindow.h"
 #include "WaypointViewOnlyView.h"
 #include "ui_WaypointViewOnlyView.h"
 
@@ -15,13 +17,13 @@ WaypointViewOnlyView::WaypointViewOnlyView(Waypoint* wp, QWidget *parent) :
 }
 
 void WaypointViewOnlyView::changedAutoContinue(int state)
-{    
+{
     bool new_value = false;
     if (state != 0)
     {
         new_value = true;
     }
-    wp->setAutocontinue(new_value);    
+    wp->setAutocontinue(new_value);
     emit changeAutoContinue(wp->getId(),new_value);
 }
 
@@ -30,7 +32,7 @@ void WaypointViewOnlyView::changedCurrent(int state)
 {
     Q_UNUSED(state);
     //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
-    m_ui->current->blockSignals(true);    
+    m_ui->current->blockSignals(true);
 
     if (m_ui->current->isChecked() == false)
     {
@@ -47,7 +49,6 @@ void WaypointViewOnlyView::changedCurrent(int state)
     }
     else
     {
-        hightlightDesiredCurrent(true);
         m_ui->current->setCheckState(Qt::Unchecked);
         //qDebug() << "Trof: WaypointViewOnlyView::changedCurrent. Checked new. Sending set_current request to Manager " << m_ui->current->isChecked();
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
@@ -59,17 +60,15 @@ void WaypointViewOnlyView::changedCurrent(int state)
 void WaypointViewOnlyView::setCurrent(bool state)
 //This is a slot receiving signals from UASWaypointManager. The state given here is the true representation of what the "current" waypoint on UAV is.
 {
-    m_ui->current->blockSignals(true);    
+    m_ui->current->blockSignals(true);
     if (state == true)
     {
         wp->setCurrent(true);
-        hightlightDesiredCurrent(true);
         m_ui->current->setCheckState(Qt::Checked);
     }
     else
     {
         wp->setCurrent(false);
-        hightlightDesiredCurrent(false);
         m_ui->current->setCheckState(Qt::Unchecked);
     }
     m_ui->current->blockSignals(false);
@@ -77,7 +76,6 @@ void WaypointViewOnlyView::setCurrent(bool state)
 
 void WaypointViewOnlyView::updateValues()
 {
-    qDebug() << "Trof: WaypointViewOnlyView::updateValues() ID:" << wp->getId();
     // Check if we just lost the wp, delete the widget
     // accordingly
     if (!wp)
@@ -86,37 +84,20 @@ void WaypointViewOnlyView::updateValues()
         return;
     }
 
-    // Update style
-
-    QColor backGroundColor = QGC::colorBackground;
-
+    // Style alternating rows of Missions as lighter/darker.
     static int lastId = -1;
     int currId = wp->getId() % 2;
-
     if (currId != lastId)
     {
-
-        // qDebug() << "COLOR ID: " << currId;
         if (currId == 1)
         {
-            backGroundColor = QColor("#252528").lighter(150);
+            this->setProperty("RowColoring", "odd");
         }
         else
         {
-            backGroundColor = QColor("#252528").lighter(250);
+            this->setProperty("RowColoring", "even");
         }
 
-        // Update color based on id
-        QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; min-height: 12px; }").arg(backGroundColor.name());
-        QString labelStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; }").arg(backGroundColor.name());
-        QString displayBarStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border: none; }").arg(backGroundColor.name());
-        QString checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; }").arg(backGroundColor.name());
-
-        m_ui->autoContinue->setStyleSheet(checkBoxStyle);
-        m_ui->current->setStyleSheet(checkBoxStyle);
-        m_ui->idLabel->setStyleSheet(labelStyle);
-        m_ui->displayBar->setStyleSheet(displayBarStyle);
-        m_ui->groupBox->setStyleSheet(groupBoxStyle);
         lastId = currId;
     }
 
@@ -157,11 +138,10 @@ void WaypointViewOnlyView::updateValues()
     }
     }
 
-    hightlightDesiredCurrent(wp->getCurrent());
     if (m_ui->current->isChecked() != wp->getCurrent())
     {
         m_ui->current->blockSignals(true);
-        m_ui->current->setChecked(wp->getCurrent());        
+        m_ui->current->setChecked(wp->getCurrent());
         m_ui->current->blockSignals(false);
     }
     if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
@@ -311,7 +291,7 @@ void WaypointViewOnlyView::updateValues()
         break;
     }
     case MAV_CMD_NAV_LAND:
-    {        
+    {
         switch (wp->getFrame())
         {
         case MAV_FRAME_GLOBAL_RELATIVE_ALT:
@@ -330,7 +310,7 @@ void WaypointViewOnlyView::updateValues()
         break;
     }
     case MAV_CMD_NAV_TAKEOFF:
-    {        
+    {
         switch (wp->getFrame())
         {
         case MAV_FRAME_GLOBAL_RELATIVE_ALT:
@@ -405,31 +385,29 @@ void WaypointViewOnlyView::updateValues()
     }
 }
 
-void WaypointViewOnlyView::hightlightDesiredCurrent(bool hightlight_on)
-{
-    QColor backGroundColor = QGC::colorBackground;
-    QString checkBoxStyle;
-    if (wp->getId() % 2 == 1)
-    {
-        backGroundColor = QColor("#252528").lighter(150);
-    }
-    else
-    {
-        backGroundColor = QColor("#252528").lighter(250);
-    }
-
-    if (hightlight_on)
-    {
-        checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; } QCheckBox::indicator { border-color: #FFFFFF}").arg(backGroundColor.name());
-    }
-    else
-    {
-        checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; } QCheckBox::indicator { border-color: QGC::colorBackground}").arg(backGroundColor.name());
-    }
-    m_ui->current->setStyleSheet(checkBoxStyle);
-}
-
 WaypointViewOnlyView::~WaypointViewOnlyView()
 {
     delete m_ui;
 }
+
+void WaypointViewOnlyView::changeEvent(QEvent *e)
+{
+    switch (e->type()) {
+    case QEvent::LanguageChange:
+        m_ui->retranslateUi(this);
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * Implement paintEvent() so that stylesheets work for our custom widget.
+ */
+void WaypointViewOnlyView::paintEvent(QPaintEvent *)
+ {
+     QStyleOption opt;
+     opt.init(this);
+     QPainter p(this);
+     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+ }

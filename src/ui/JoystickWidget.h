@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Definition of joystick widget
+ *   @brief Definition of joystick widget. Provides a UI for configuring the joystick settings.
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -32,7 +32,12 @@ This file is part of the PIXHAWK project
 #define JOYSTICKWIDGET_H
 
 #include <QtGui/QDialog>
+#include <QLabel>
+#include <QMap>
 #include "JoystickInput.h"
+#include "MainWindow.h"
+#include "JoystickAxis.h"
+#include "JoystickButton.h"
 
 namespace Ui
 {
@@ -48,41 +53,45 @@ public:
     virtual ~JoystickWidget();
 
 public slots:
+    /** @brief Update the UI for a new joystick based on SDL ID. */
+    void createUIForJoystick();
     /**
-     * @brief Receive raw joystick values
-     *
-     * @param roll forward / pitch / x axis, front: 32'767, center: 0, back: -32'768
-     * @param pitch left / roll / y axis, left: -32'768, middle: 0, right: 32'767
-     * @param yaw turn axis, left-turn: -32'768, centered: 0, right-turn: 32'767
-     * @param thrust Thrust, 0%: 0, 100%: 65535
-     * @param xHat hat vector in forward-backward direction, +1 forward, 0 center, -1 backward
-     * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
+     * @brief Update a given axis with a new value
+     * @param axis The index of the axis to update.
+     * @param value The new value for the axis, [-1.0:1.0].
+     * @see JoystickInput:axisValueChanged
      */
-    void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
-    /** @brief Throttle lever */
-    void setThrottle(float thrust);
-    /** @brief Back/forth movement */
-    void setX(float x);
-    /** @brief Left/right movement */
-    void setY(float y);
-    /** @brief Wrist rotation */
-    void setZ(float z);
-    /** @brief Hat switch position */
-    void setHat(float x, float y);
-    /** @brief Clear keys */
-    void clearKeys();
-    /** @brief Joystick keys, as labeled on the joystick */
-    void pressKey(int key);
-    /** @brief Update status string */
-    void updateStatus(const QString& status);
+    void updateAxisValue(int axis, float value);
+    /** @brief Update the UI with new values for the hat.
+     *  @see JoystickInput::hatDirectionChanged
+     */
+    void setHat(int x, int y);
+    /** @brief Trigger a UI change based on a button being pressed */
+    void joystickButtonPressed(int key);
+    /** @brief Trigger a UI change based on a button being released */
+    void joystickButtonReleased(int key);
+    /** @brief Update the UI color scheme when the MainWindow theme changes. */
+    void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE);
+    /** Update the UI assuming the joystick has stayed the same. */
+    void updateUI();
 
 protected:
     /** @brief UI change event */
     virtual void changeEvent(QEvent *e);
     JoystickInput* joystick;  ///< Reference to the joystick
+    /** @brief a list of all button labels generated for this joystick. */
+    QList<JoystickButton*> buttons;
+    /** @brief a lit of all joystick axes generated for this joystick. */
+    QList<JoystickAxis*> axes;
+    /** @brief The color to use for button labels when their corresponding button is pressed */
+    QColor buttonLabelColor;
 
 private:
     Ui::JoystickWidget *m_ui;
+    /** @brief Initialize all dynamic UI elements (button list, joystick names, etc.).
+     * Only done once at startup.
+     */
+    void initUI();
 };
 
 #endif // JOYSTICKWIDGET_H

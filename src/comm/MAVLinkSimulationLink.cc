@@ -684,7 +684,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
         if (mavlink_parse_char(this->id, data[i], &msg, &comm))
         {
             // MESSAGE RECEIVED!
-            qDebug() << "SIMULATION LINK RECEIVED MESSAGE!";
+//            qDebug() << "SIMULATION LINK RECEIVED MESSAGE!";
             emit messageReceived(msg);
 
             switch (msg.msgid)
@@ -722,7 +722,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                 mavlink_command_long_t action;
                 mavlink_msg_command_long_decode(&msg, &action);
 
-                qDebug() << "SIM" << "received action" << action.command << "for system" << action.target_system;
+//                qDebug() << "SIM" << "received action" << action.command << "for system" << action.target_system;
 
                 // FIXME MAVLINKV10PORTINGNEEDED
 //                switch (action.action) {
@@ -756,13 +756,13 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
             case MAVLINK_MSG_ID_MANUAL_CONTROL: {
                 mavlink_manual_control_t control;
                 mavlink_msg_manual_control_decode(&msg, &control);
-                qDebug() << "\n" << "ROLL:" << control.x << "PITCH:" << control.y;
+//                qDebug() << "\n" << "ROLL:" << control.x << "PITCH:" << control.y;
             }
             break;
 #endif
             case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
             {
-                qDebug() << "GCS REQUESTED PARAM LIST FROM SIMULATION";
+//                qDebug() << "GCS REQUESTED PARAM LIST FROM SIMULATION";
                 mavlink_param_request_list_t read;
                 mavlink_msg_param_request_list_decode(&msg, &read);
                 if (read.target_system == systemId)
@@ -785,7 +785,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         j++;
                     }
 
-                    qDebug() << "SIMULATION SENT PARAMETERS TO GCS";
+//                    qDebug() << "SIMULATION SENT PARAMETERS TO GCS";
                 }
             }
                 break;
@@ -794,7 +794,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                 // Drop on even milliseconds
                 if (QGC::groundTimeMilliseconds() % 2 == 0)
                 {
-                    qDebug() << "SIMULATION RECEIVED COMMAND TO SET PARAMETER";
+//                    qDebug() << "SIMULATION RECEIVED COMMAND TO SET PARAMETER";
                     mavlink_param_set_t set;
                     mavlink_msg_param_set_decode(&msg, &set);
                     //                    if (set.target_system == systemId)
@@ -819,7 +819,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
             break;
             case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
             {
-                qDebug() << "SIMULATION RECEIVED COMMAND TO SEND PARAMETER";
+//                qDebug() << "SIMULATION RECEIVED COMMAND TO SEND PARAMETER";
                 mavlink_param_request_read_t read;
                 mavlink_msg_param_request_read_decode(&msg, &read);
                 QByteArray bytes((char*)read.param_id, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN);
@@ -855,10 +855,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
             break;
             }
         }
-        unsigned char v=data[i];
-        fprintf(stderr,"%02x ", v);
     }
-    fprintf(stderr,"\n");
 
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)
@@ -988,22 +985,22 @@ bool MAVLinkSimulationLink::connectLink(bool connect)
  *
  * @return True if link is connected, false otherwise.
  **/
-bool MAVLinkSimulationLink::isConnected()
+bool MAVLinkSimulationLink::isConnected() const
 {
     return _isConnected;
 }
 
-int MAVLinkSimulationLink::getId()
+int MAVLinkSimulationLink::getId() const
 {
     return id;
 }
 
-QString MAVLinkSimulationLink::getName()
+QString MAVLinkSimulationLink::getName() const
 {
     return name;
 }
 
-qint64 MAVLinkSimulationLink::getNominalDataRate()
+qint64 MAVLinkSimulationLink::getNominalDataRate() const
 {
     /* 100 Mbit is reasonable fast and sufficient for all embedded applications */
     return 100000000;
@@ -1031,12 +1028,12 @@ qint64 MAVLinkSimulationLink::getMaxUpstream()
     return 0;
 }
 
-qint64 MAVLinkSimulationLink::getBitsSent()
+qint64 MAVLinkSimulationLink::getBitsSent() const
 {
     return 0;
 }
 
-qint64 MAVLinkSimulationLink::getBitsReceived()
+qint64 MAVLinkSimulationLink::getBitsReceived() const
 {
     return 0;
 }
@@ -1061,13 +1058,13 @@ qint64 MAVLinkSimulationLink::getMaxDownstream()
     return 0;
 }
 
-bool MAVLinkSimulationLink::isFullDuplex()
+bool MAVLinkSimulationLink::isFullDuplex() const
 {
     /* Full duplex is no problem when running in pure software, but this is a serial simulation */
     return false;
 }
 
-int MAVLinkSimulationLink::getLinkQuality()
+int MAVLinkSimulationLink::getLinkQuality() const
 {
     /* The Link quality is always perfect when running in software */
     return 100;
