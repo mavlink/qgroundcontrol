@@ -163,14 +163,23 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     font("Bitstream Vera Sans"),
     refreshTimer(new QTimer(this))
 {
-    Q_UNUSED(width)
-    Q_UNUSED(height)
+    Q_UNUSED(width);
+    Q_UNUSED(height);
 
     setMinimumSize(120, 80);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    // Connect with UAS
+    // Connect with UAS signal
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    // connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
+
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    // Get a list of all existing UAS and - well attach to one of them. The first one.
+    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
+        addUAS(uas);
+    }
+
     if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
 
     // Refresh timer
@@ -244,6 +253,17 @@ void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
 /*
  * Interface towards qgroundcontrol
  */
+void PrimaryFlightDisplay::addUAS(UASInterface* uas)
+{
+    if (uas)
+    {
+        if (!this->uas)
+        {
+            setActiveUAS(uas);
+        }
+    }
+}
+
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
