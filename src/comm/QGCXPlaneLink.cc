@@ -577,8 +577,8 @@ void QGCXPlaneLink::readBytes()
 
                 Eigen::Vector3f magbody = m * mag;
 
-                qDebug() << "yaw mag:" << p.f[2] << "x" << xmag << "y" << ymag;
-                qDebug() << "yaw mag in body:" << magbody(0) << magbody(1) << magbody(2);
+//                qDebug() << "yaw mag:" << p.f[2] << "x" << xmag << "y" << ymag;
+//                qDebug() << "yaw mag in body:" << magbody(0) << magbody(1) << magbody(2);
 
                 xmag = magbody(0);
                 ymag = magbody(1);
@@ -664,8 +664,31 @@ void QGCXPlaneLink::readBytes()
 
         if (_sensorHilEnabled)
         {
-            diff_pressure = 0.0f;
-            pressure_alt = alt;
+            diff_pressure = (ind_airspeed * ind_airspeed * 1.225f) / 2.0f;
+
+            /* tropospheric properties (0-11km) for standard atmosphere */
+            const double T1 = 15.0 + 273.15;	/* temperature at base height in Kelvin */
+            const double a  = -6.5 / 1000;	/* temperature gradient in degrees per metre */
+            const double g  = 9.80665;	/* gravity constant in m/s/s */
+            const double R  = 287.05;	/* ideal gas constant in J/kg/K */
+
+            /* current pressure at MSL in kPa */
+            double p1 = 1013.25 / 10.0;
+
+            /* measured pressure in hPa */
+            double p = abs_pressure / 10.0;
+
+            /*
+             * Solve:
+             *
+             *     /        -(aR / g)     \
+             *    | (p / p1)          . T1 | - T1
+             *     \                      /
+             * h = -------------------------------  + h1
+             *                   a
+             */
+            pressure_alt = (((pow((p / p1), (-(a * R) / g))) * T1) - T1) / a;
+
             // set pressure alt to changed
             fields_changed |= (1 << 11);
 
