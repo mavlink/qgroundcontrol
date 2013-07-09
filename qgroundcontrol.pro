@@ -29,7 +29,8 @@ QT += network \
     xml \
     phonon \
     webkit \
-    sql
+    sql \
+    declarative
 
 TEMPLATE = app
 TARGET = apmplanner2
@@ -47,6 +48,9 @@ linux-g++|linux-g++-64{
     TARGETDIR = $${OUT_PWD}
     BUILDDIR = $${OUT_PWD}/build
 }
+
+DESTDIR = $${TARGETDIR}
+
 LANGUAGE = C++
 OBJECTS_DIR = $${BUILDDIR}/obj
 MOC_DIR = $${BUILDDIR}/moc
@@ -153,6 +157,7 @@ include(libs/serialport/apmserial.pri)
 #linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
 #linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
 #win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
+
 # Input
 FORMS += src/ui/MainWindow.ui \
     src/ui/CommSettings.ui \
@@ -431,7 +436,8 @@ HEADERS += src/MG.h \
     src/ui/configuration/GeoFenceConfig.h \
     src/ui/configuration/FailSafeConfig.h \
     src/ui/configuration/AdvancedParamConfig.h \
-    src/ui/configuration/ArduCopterPidConfig.h
+    src/ui/configuration/ArduCopterPidConfig.h \
+    src/ui/apmtoolbar.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -630,7 +636,8 @@ SOURCES += src/main.cc \
     src/ui/configuration/GeoFenceConfig.cc \
     src/ui/configuration/FailSafeConfig.cc \
     src/ui/configuration/AdvancedParamConfig.cc \
-    src/ui/configuration/ArduCopterPidConfig.cc
+    src/ui/configuration/ArduCopterPidConfig.cc \
+    src/ui/apmtoolbar.cpp
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -767,3 +774,28 @@ unix:!macx:!symbian: LIBS += -losg
 OTHER_FILES += \
     dongfang_notes.txt \
     src/ui/dongfang-scrapyard.txt
+
+OTHER_FILES += \
+    qml/ApmToolBar.qml \
+    qml/components/Button.qml \
+    qml/resources/apmplanner/toolbar/connect.png \
+    qml/resources/apmplanner/toolbar/flightplanner.png \
+    qml/resources/apmplanner/toolbar/helpwizard.png \
+    qml/resources/apmplanner/toolbar/softwareconfig.png \
+    qml/resources/apmplanner/toolbar/terminal.png \
+    qml/resources/apmplanner/toolbar/simulation.png \
+    qml/resources/apmplanner/toolbar/hardwareconfig.png \
+    qml/resources/apmplanner/toolbar/flightdata.png \
+    qml/resources/apmplanner/toolbar/disconnect.png \
+    qml/resources/apmplanner/toolbar/donate.png \
+
+
+#qmlcomponents.path    += $${DESTDIR}$${TARGET}/components
+#qmlcomponents.files   += ./components/Button.qml
+
+#sources.files       += ApmToolBar.qml
+#sources.path        += $$DESTDIR/qml
+#target.path         += apmplanner2
+#INSTALLS            += sources target
+
+message( BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET TARGETDIR $$TARGETDIR)

@@ -84,6 +84,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 #include "ApmHardwareConfig.h"
 #include "ApmSoftwareConfig.h"
+#include "apmtoolbar.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -403,6 +404,7 @@ protected:
 
     QPointer<QGCToolBar> toolBar;
     QPointer<QGCStatusBar> customStatusBar;
+    QPointer<APMToolBar> apmToolBar;
 
     QPointer<DebugConsole> debugConsole;
 
