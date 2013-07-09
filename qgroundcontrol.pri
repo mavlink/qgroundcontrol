@@ -65,6 +65,19 @@ macx|macx-g++42|macx-g++|macx-llvm: {
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/apmplanner2.app/Contents/Frameworks
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/Frameworks/* $$TARGETDIR/apmplanner2.app/Contents/Frameworks
 
+#       # Copy QML stuff
+message(BASEDIR $$BASEDIR)
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/*.qml $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml
+
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml/components/
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/components/*.qml $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml/components
+
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml/resources
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml/resources/apmplanner
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml/resources/apmplanner/toolbar
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/resources/apmplanner/toolbar/*.png $$TARGETDIR/apmplanner2.app/Contents/MacOS/qml/resources/apmplanner/toolbar
+
 
 	# Fix library paths inside executable
         QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/apmplanner2.app/Contents/MacOS/apmplanner2

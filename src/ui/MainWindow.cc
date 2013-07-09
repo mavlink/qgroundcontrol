@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilLink.h>
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
+#include <QDeclarativeView>
 #include "dockwidgettitlebareventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
@@ -63,6 +64,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCTabbedInfoView.h"
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
+#include "apmtoolbar.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -178,6 +180,15 @@ MainWindow::MainWindow(QWidget *parent):
     actions << ui.actionHardwareConfig;
     actions << ui.actionSoftwareConfig;
     toolBar->setPerspectiveChangeActions(actions);
+
+    // We only want one of these.
+    apmToolBar = new APMToolBar(this);
+    apmToolBar->setFlightViewAction(ui.actionFlightView);
+    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
+    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
+    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
+    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
 
     // Add actions for advanced users (displayed in dropdown under "advanced")
     QList<QAction*> advancedActions;
@@ -598,9 +609,15 @@ void MainWindow::buildCommonWidgets()
     }
 
     createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,this->width()/1.5);
-    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
 
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,this->width()/1.5);
+
+    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
     createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+
+    // Add Our new 'toolbar'
+    qDebug() << "width" << this->width();
+    createDockWidget(pilotView,apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",VIEW_FLIGHT,Qt::TopDockWidgetArea,this->width(), 70);
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
@@ -843,6 +860,11 @@ void MainWindow::loadDockWidget(QString name)
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",currentView,Qt::LeftDockWidgetArea);
+    }
+    else if (name == "APM_TOOLBAR_DOCKWIDGET")
+    {
+        // Add Our new 'toolbar'
+        createDockWidget(centerStack->currentWidget(),apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",VIEW_FLIGHT,Qt::TopDockWidgetArea,this->width(), 70);
     }
     else
     {

@@ -229,8 +229,10 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         first->setToolTip(actions.first()->toolTip());
         first->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         first->setCheckable(true);
+
         connect(first, SIGNAL(clicked(bool)), actions.first(), SIGNAL(triggered(bool)));
         connect(actions.first(),SIGNAL(triggered(bool)),first,SLOT(setChecked(bool)));
+
         first->setStyleSheet("QToolButton { min-height: 24px; max-height: 24px; min-width: 60px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
         addWidget(first);
         group->addButton(first);
