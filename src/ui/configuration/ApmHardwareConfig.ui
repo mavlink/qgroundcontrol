@@ -43,7 +43,7 @@
       <x>0</x>
       <y>0</y>
       <width>156</width>
-      <height>635</height>
+      <height>676</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -126,6 +126,25 @@
          </property>
          <property name="text">
           <string>              Accel Calibration</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="arduPlaneLevelButton">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>             ArduPlane Level</string>
          </property>
         </widget>
        </item>

@@ -48,6 +48,7 @@ This file is part of the QGROUNDCONTROL project
 #include "OsdConfig.h"
 #include "CameraGimbalConfig.h"
 #include "AntennaTrackerConfig.h"
+#include "ApmPlaneLevel.h"
 
 class ApmHardwareConfig : public QWidget
 {
@@ -70,6 +71,7 @@ private:
     OsdConfig *osdConfig;
     CameraGimbalConfig *cameraGimbalConfig;
     AntennaTrackerConfig *antennaTrackerConfig;
+    ApmPlaneLevel *planeLevel;
 private slots:
     void activeUASSet(UASInterface *uas);
     void activateStackedWidget();
