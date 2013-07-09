@@ -108,6 +108,8 @@ bool UASManager::setHomePositionAndNotify(double lat, double lon, double alt)
             mav->setHomePosition(homeLat, homeLon, homeAlt);
         }
     }
+
+	return changed;
 }
 
 /**
