@@ -39,6 +39,7 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     ui.frameTypeButton->setVisible(false);
     ui.compassButton->setVisible(false);
     ui.accelCalibrateButton->setVisible(false);
+    ui.arduPlaneLevelButton->setVisible(false);
     ui.radioCalibrateButton->setVisible(false);
     ui.optionalHardwareButton->setVisible(false);
     //ui.radio3DRButton->setVisible(false);
@@ -50,10 +51,6 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     ui.cameraGimbalButton->setVisible(false);
     //ui.antennaTrackerButton->setVisible(false);
 
-    connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.frameTypeButton,SLOT(setShown(bool)));
-    connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.compassButton,SLOT(setShown(bool)));
-    connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.accelCalibrateButton,SLOT(setShown(bool)));
-    connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.radioCalibrateButton,SLOT(setShown(bool)));
 
     connect(ui.optionalHardwareButton,SIGNAL(toggled(bool)),ui.radio3DRButton,SLOT(setShown(bool)));
     connect(ui.optionalHardwareButton,SIGNAL(toggled(bool)),ui.batteryMonitorButton,SLOT(setShown(bool)));
@@ -86,6 +83,11 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     ui.stackedWidget->addWidget(accelConfig);
     buttonToConfigWidgetMap[ui.accelCalibrateButton] = accelConfig;
     connect(ui.accelCalibrateButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+
+    planeLevel = new ApmPlaneLevel(this);
+    ui.stackedWidget->addWidget(planeLevel);
+    buttonToConfigWidgetMap[ui.arduPlaneLevelButton] = planeLevel;
+    connect(ui.arduPlaneLevelButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
     radioConfig = new RadioCalibrationConfig(this);
     ui.stackedWidget->addWidget(radioConfig);
@@ -158,6 +160,29 @@ void ApmHardwareConfig::activeUASSet(UASInterface *uas)
     if (!uas)
     {
         return;
+    }
+    if (uas->getSystemType() == MAV_TYPE_FIXED_WING)
+    {
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.compassButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.arduPlaneLevelButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.radioCalibrateButton,SLOT(setShown(bool)));
+    }
+    else if (uas->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.frameTypeButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.compassButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.accelCalibrateButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.radioCalibrateButton,SLOT(setShown(bool)));
+    }
+    else if (uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
+    {
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.compassButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.radioCalibrateButton,SLOT(setShown(bool)));
+    }
+    else
+    {
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.compassButton,SLOT(setShown(bool)));
+        connect(ui.manditoryHardware,SIGNAL(toggled(bool)),ui.radioCalibrateButton,SLOT(setShown(bool)));
     }
     ui.firmwareButton->setVisible(true);
     ui.manditoryHardware->setVisible(true);
