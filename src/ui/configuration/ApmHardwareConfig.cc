@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
  */
 #include "ApmHardwareConfig.h"
 
-
 ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
 {
     ui.setupUi(this);
@@ -191,4 +190,10 @@ void ApmHardwareConfig::activeUASSet(UASInterface *uas)
     ui.optionalHardwareButton->setChecked(false);
     ui.radio3DRButton->setVisible(false);
     ui.antennaTrackerButton->setVisible(false);
+
+
+
+
+
+
 }
