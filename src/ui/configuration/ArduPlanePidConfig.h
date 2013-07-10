@@ -14,7 +14,10 @@ public:
     ~ArduPlanePidConfig();
 private slots:
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    void writeButtonClicked();
+    void refreshButtonClicked();
 private:
+    QMap<QString,QDoubleSpinBox*> nameToBoxMap;
     Ui::ArduPlanePidConfig ui;
 };
 

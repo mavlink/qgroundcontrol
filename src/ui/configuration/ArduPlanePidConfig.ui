@@ -164,9 +164,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="servoIMAXSpinBox">
+            <widget class="QDoubleSpinBox" name="servoRollIMAXSpinBox">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -252,7 +252,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="navAltIMAXSpinBox">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -338,7 +338,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="navASIMAXSpinBox">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -424,7 +424,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="servoYawIMAXSpinBox">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -510,7 +510,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="throttleFSSpinBox">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -596,7 +596,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="servoPitchIMAXSpinBox">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -815,8 +815,11 @@
              <property name="decimals">
               <number>3</number>
              </property>
+             <property name="minimum">
+              <double>-10000.000000000000000</double>
+             </property>
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -826,7 +829,10 @@
               <number>3</number>
              </property>
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>10000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.000000000000000</double>
              </property>
             </widget>
            </item>
