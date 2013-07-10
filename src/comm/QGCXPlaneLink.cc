@@ -554,8 +554,8 @@ void QGCXPlaneLink::readBytes()
                 double sinPhi = sin(roll);
                 double cosThe = cos(pitch);
                 double sinThe = sin(pitch);
-                double cosPsi = cos(0);
-                double sinPsi = sin(0);
+                double cosPsi = cos(0.0);
+                double sinPsi = sin(0.0);
 
                 float dcm[3][3];
 
