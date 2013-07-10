@@ -172,7 +172,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="arduCoperPidButton">
+          <widget class="QPushButton" name="arduCopterPidButton">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -180,10 +180,23 @@
             </size>
            </property>
            <property name="text">
-            <string>ArduCoper Pids</string>
+            <string>ArduCopter Pids</string>
            </property>
            <property name="checkable">
             <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="arduPlanePidButton">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>ArduPlane Pids</string>
            </property>
           </widget>
          </item>

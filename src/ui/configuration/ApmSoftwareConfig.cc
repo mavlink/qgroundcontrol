@@ -15,7 +15,7 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     ui.failSafeButton->setVisible(false);
     ui.advancedParamButton->setVisible(false);
     ui.advParamListButton->setVisible(false);
-    ui.arduCoperPidButton->setVisible(false);
+    ui.arduCopterPidButton->setVisible(false);
 
     /*basicPidConfig = new BasicPidConfig(this);
     ui.stackedWidget->addWidget(basicPidConfig);
@@ -47,10 +47,18 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     buttonToConfigWidgetMap[ui.advancedParamButton] = advancedParamConfig;
     connect(ui.advancedParamButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    arduCoperPidConfig = new ArduCopterPidConfig(this);
-    ui.stackedWidget->addWidget(arduCoperPidConfig);
-    buttonToConfigWidgetMap[ui.arduCoperPidButton] = arduCoperPidConfig;
-    connect(ui.arduCoperPidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+    arduCopterPidConfig = new ArduCopterPidConfig(this);
+    ui.stackedWidget->addWidget(arduCopterPidConfig);
+    buttonToConfigWidgetMap[ui.arduCopterPidButton] = arduCopterPidConfig;
+    connect(ui.arduCopterPidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+
+
+    arduPlanePidConfig = new ArduPlanePidConfig(this);
+    ui.stackedWidget->addWidget(arduPlanePidConfig);
+    buttonToConfigWidgetMap[ui.arduPlanePidButton] = arduPlanePidConfig;
+    connect(ui.arduPlanePidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+
+
 
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
     if (UASManager::instance()->getActiveUAS())
@@ -84,7 +92,16 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
     ui.advancedParamButton->setVisible(true);
     ui.advParamListButton->setVisible(true);
 
-    ui.arduCoperPidButton->setVisible(true);
+    if (uas->getSystemType() == MAV_TYPE_FIXED_WING)
+    {
+        ui.arduPlanePidButton->setVisible(true);
+        ui.arduCopterPidButton->setVisible(false);
+    }
+    else if (uas->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        ui.arduCopterPidButton->setVisible(true);
+        ui.arduPlanePidButton->setVisible(false);
+    }
 
 
     QDir autopilotdir(qApp->applicationDirPath() + "/files/" + uas->getAutopilotTypeName().toLower());
