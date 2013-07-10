@@ -73,6 +73,128 @@ FailSafeConfig::FailSafeConfig(QWidget *parent) : AP2ConfigWidget(parent)
     ui.throttleFailSafeComboBox->addItem("Disable");
     ui.throttleFailSafeComboBox->addItem("Enabled - Always TRL");
     ui.throttleFailSafeComboBox->addItem("Enabled - Continue in auto");
+
+    connect(ui.batteryFailCheckBox,SIGNAL(clicked(bool)),this,SLOT(batteryFailChecked(bool)));
+    connect(ui.fsLongCheckBox,SIGNAL(clicked(bool)),this,SLOT(fsLongClicked(bool)));
+    connect(ui.fsShortCheckBox,SIGNAL(clicked(bool)),this,SLOT(fsShortClicked(bool)));
+    connect(ui.gcsCheckBox,SIGNAL(clicked(bool)),this,SLOT(gcsChecked(bool)));
+    connect(ui.throttleActionCheckBox,SIGNAL(clicked(bool)),this,SLOT(throttleActionChecked(bool)));
+    connect(ui.throttleCheckBox,SIGNAL(clicked(bool)),this,SLOT(throttleChecked(bool)));
+    connect(ui.throttlePwmSpinBox,SIGNAL(editingFinished()),this,SLOT(throttlePwmChanged()));
+    connect(ui.throttleFailSafeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(throttleFailSafeChanged(int)));
+}
+void FailSafeConfig::gcsChecked(bool checked)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    if (checked)
+    {
+        m_uas->setParameter(1,"FS_GCS_ENABL",1);
+    }
+    else
+    {
+        m_uas->setParameter(1,"FS_GCS_ENABL",0);
+    }
+}
+
+void FailSafeConfig::throttleActionChecked(bool checked)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    if (checked)
+    {
+        m_uas->setParameter(1,"THR_FS_ACTION",1);
+    }
+    else
+    {
+        m_uas->setParameter(1,"THR_FS_ACTION",0);
+    }
+}
+
+void FailSafeConfig::throttleChecked(bool checked)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    if (checked)
+    {
+        m_uas->setParameter(1,"THR_FAILSAFE",1);
+    }
+    else
+    {
+        m_uas->setParameter(1,"THR_FAILSAFE",0);
+    }
+}
+
+void FailSafeConfig::throttlePwmChanged()
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    m_uas->setParameter(1,"THR_FS_VALUE",ui.throttlePwmSpinBox->value());
+}
+
+void FailSafeConfig::throttleFailSafeChanged(int index)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    m_uas->setParameter(1,"FS_THR_ENABLE",index);
+}
+
+void FailSafeConfig::fsLongClicked(bool checked)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    if (checked)
+    {
+        m_uas->setParameter(1,"FS_LONG_ACTN",1);
+    }
+    else
+    {
+        m_uas->setParameter(1,"FS_LONG_ACTN",0);
+    }
+}
+
+void FailSafeConfig::fsShortClicked(bool checked)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    if (checked)
+    {
+        m_uas->setParameter(1,"FS_SHORT_ACTN",1);
+    }
+    else
+    {
+        m_uas->setParameter(1,"FS_SHORT_ACTN",0);
+    }
+}
+
+void FailSafeConfig::batteryFailChecked(bool checked)
+{
+    if (!m_uas)
+    {
+        return;
+    }
+    if (checked)
+    {
+        m_uas->setParameter(1,"FS_BATT_ENABLE",1);
+    }
+    else
+    {
+        m_uas->setParameter(1,"FS_BATT_ENABLE",0);
+    }
 }
 
 FailSafeConfig::~FailSafeConfig()
@@ -84,6 +206,50 @@ void FailSafeConfig::activeUASSet(UASInterface *uas)
     connect(uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanges(int,float)));
     connect(uas,SIGNAL(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)),this,SLOT(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)));
     connect(uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+    if (uas->getSystemType() == MAV_TYPE_FIXED_WING)
+    {
+        ui.batteryFailCheckBox->setVisible(false);
+        ui.throttleFailSafeComboBox->setVisible(false);
+        ui.batteryVoltSpinBox->setVisible(false);
+        ui.label_6->setVisible(false);
+
+        ui.throttlePwmSpinBox->setVisible(true); //Both
+
+        ui.throttleCheckBox->setVisible(true);
+        ui.throttleActionCheckBox->setVisible(true);
+        ui.gcsCheckBox->setVisible(true);
+        ui.fsLongCheckBox->setVisible(true);
+        ui.fsShortCheckBox->setVisible(true);
+    }
+    else if (uas->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        ui.batteryFailCheckBox->setVisible(true);
+        ui.throttleFailSafeComboBox->setVisible(true);
+        ui.batteryVoltSpinBox->setVisible(true);
+        ui.label_6->setVisible(true);
+
+        ui.throttlePwmSpinBox->setVisible(true); //Both
+
+        ui.throttleCheckBox->setVisible(false);
+        ui.throttleActionCheckBox->setVisible(false);
+        ui.gcsCheckBox->setVisible(false);
+        ui.fsLongCheckBox->setVisible(false);
+        ui.fsShortCheckBox->setVisible(false);
+    }
+    else
+    {
+        //Show all, just in case
+        ui.batteryFailCheckBox->setVisible(true);
+        ui.throttleFailSafeComboBox->setVisible(true);
+        ui.batteryVoltSpinBox->setVisible(true);
+        ui.throttlePwmSpinBox->setVisible(true); //Both
+        ui.throttleCheckBox->setVisible(true);
+        ui.throttleActionCheckBox->setVisible(true);
+        ui.gcsCheckBox->setVisible(true);
+        ui.fsLongCheckBox->setVisible(true);
+        ui.fsShortCheckBox->setVisible(true);
+    }
+
 }
 void FailSafeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
