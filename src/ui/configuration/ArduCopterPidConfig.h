@@ -13,8 +13,12 @@ class ArduCopterPidConfig : public AP2ConfigWidget
 public:
     explicit ArduCopterPidConfig(QWidget *parent = 0);
     ~ArduCopterPidConfig();
-    
+private slots:
+    void writeButtonClicked();
+    void refreshButtonClicked();
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
 private:
+    QMap<QString,QDoubleSpinBox*> nameToBoxMap;
     Ui::ArduCopterPidConfig ui;
 };
 
