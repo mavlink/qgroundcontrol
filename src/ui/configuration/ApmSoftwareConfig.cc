@@ -47,6 +47,11 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     buttonToConfigWidgetMap[ui.advancedParamButton] = advancedParamConfig;
     connect(ui.advancedParamButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
+    advParameterList = new AdvParameterList(this);
+    ui.stackedWidget->addWidget(advParameterList);
+    buttonToConfigWidgetMap[ui.advParamListButton] = advParameterList;
+    connect(ui.advParamListButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+
     arduCopterPidConfig = new ArduCopterPidConfig(this);
     ui.stackedWidget->addWidget(arduCopterPidConfig);
     buttonToConfigWidgetMap[ui.arduCopterPidButton] = arduCopterPidConfig;
@@ -312,6 +317,7 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                         {
                                             advancedParamConfig->addCombo(humanname,docs,name,valuelist);
                                         }
+                                        advParameterList->setParameterMetaData(name,humanname,docs);
                                     }
                                     else if (fieldmap.size() > 0)
                                     {
@@ -341,6 +347,7 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                         {
                                             advancedParamConfig->addRange(humanname,docs,name,max,min);
                                         }
+                                        advParameterList->setParameterMetaData(name,humanname,docs);
                                     }
 
                                 }
