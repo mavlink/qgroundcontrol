@@ -2,12 +2,11 @@
 #define ARDUCOPTERPIDCONFIG_H
 
 #include <QWidget>
+#include "ui_ArduCopterPidConfig.h"
 
-namespace Ui {
-class ArduCopterPidConfig;
-}
+#include "AP2ConfigWidget.h"
 
-class ArduCopterPidConfig : public QWidget
+class ArduCopterPidConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
@@ -16,7 +15,7 @@ public:
     ~ArduCopterPidConfig();
     
 private:
-    Ui::ArduCopterPidConfig *ui;
+    Ui::ArduCopterPidConfig ui;
 };
 
 #endif // ARDUCOPTERPIDCONFIG_H
