@@ -11,7 +11,7 @@
 #include "AdvancedParamConfig.h"
 #include "ArduCopterPidConfig.h"
 #include "ArduPlanePidConfig.h"
-
+#include "AdvParameterList.h"
 #include "UASInterface.h"
 #include "UASManager.h"
 
@@ -35,6 +35,7 @@ private:
     AdvancedParamConfig *advancedParamConfig;
     ArduCopterPidConfig *arduCopterPidConfig;
     ArduPlanePidConfig *arduPlanePidConfig;
+    AdvParameterList *advParameterList;
     QMap<QObject*,QWidget*> buttonToConfigWidgetMap;
 };
 
