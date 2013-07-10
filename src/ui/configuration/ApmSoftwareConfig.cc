@@ -17,10 +17,10 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     ui.advParamListButton->setVisible(false);
     ui.arduCoperPidButton->setVisible(false);
 
-    basicPidConfig = new BasicPidConfig(this);
+    /*basicPidConfig = new BasicPidConfig(this);
     ui.stackedWidget->addWidget(basicPidConfig);
     buttonToConfigWidgetMap[ui.basicPidsButton] = basicPidConfig;
-    connect(ui.basicPidsButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+    connect(ui.basicPidsButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));*/
 
     flightConfig = new FlightModeConfig(this);
     ui.stackedWidget->addWidget(flightConfig);
@@ -32,10 +32,10 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     buttonToConfigWidgetMap[ui.standardParamButton] = standardParamConfig;
     connect(ui.standardParamButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    geoFenceConfig = new GeoFenceConfig(this);
+    /*geoFenceConfig = new GeoFenceConfig(this);
     ui.stackedWidget->addWidget(geoFenceConfig);
     buttonToConfigWidgetMap[ui.geoFenceButton] = geoFenceConfig;
-    connect(ui.geoFenceButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+    connect(ui.geoFenceButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));*/
 
     failSafeConfig = new FailSafeConfig(this);
     ui.stackedWidget->addWidget(failSafeConfig);

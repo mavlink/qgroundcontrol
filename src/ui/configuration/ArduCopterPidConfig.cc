@@ -1,14 +1,10 @@
 #include "ArduCopterPidConfig.h"
-#include "ui_ArduCopterPidConfig.h"
 
-ArduCopterPidConfig::ArduCopterPidConfig(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::ArduCopterPidConfig)
+ArduCopterPidConfig::ArduCopterPidConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
-    ui->setupUi(this);
+    ui.setupUi(this);
 }
 
 ArduCopterPidConfig::~ArduCopterPidConfig()
 {
-    delete ui;
 }
