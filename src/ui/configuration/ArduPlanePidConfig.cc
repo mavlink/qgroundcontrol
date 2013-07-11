@@ -56,6 +56,9 @@ ArduPlanePidConfig::ArduPlanePidConfig(QWidget *parent) : AP2ConfigWidget(parent
     nameToBoxMap["LIM_PITCH_MAX"] = ui.navPitchMaxSpinBox;
     nameToBoxMap["LIM_PITCH_MIN"] = ui.navPitchMinSpinBox;
 
+    connect(ui.writePushButton,SIGNAL(clicked()),this,SLOT(writeButtonClicked()));
+    connect(ui.refreshPushButton,SIGNAL(clicked()),this,SLOT(refreshButtonClicked()));
+
 }
 
 ArduPlanePidConfig::~ArduPlanePidConfig()

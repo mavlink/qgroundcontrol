@@ -37,6 +37,9 @@ ArduRoverPidConfig::ArduRoverPidConfig(QWidget *parent) : AP2ConfigWidget(parent
     nameToBoxMap["SONAR_TURN_TIME"] = ui.sonarTurnTimeSpinBox;
     nameToBoxMap["SONAR_DEBOUNCE"] = ui.sonaeDebounceSpinBox;
 
+    connect(ui.writePushButton,SIGNAL(clicked()),this,SLOT(writeButtonClicked()));
+    connect(ui.refreshPushButton,SIGNAL(clicked()),this,SLOT(refreshButtonClicked()));
+
 }
 
 ArduRoverPidConfig::~ArduRoverPidConfig()
