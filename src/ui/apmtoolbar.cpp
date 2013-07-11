@@ -14,9 +14,12 @@ APMToolBar::APMToolBar(QWidget *parent):
     setSource(QUrl::fromLocalFile("qml/ApmToolBar.qml"));
     setResizeMode(QDeclarativeView::SizeRootObjectToView);
 
-    QObject *root = rootObject();
     connect(LinkManager::instance(),SIGNAL(newLink(LinkInterface*)),
             this, SLOT(updateLinkDisplay(LinkInterface*)));
+
+    if (LinkManager::instance()->getLinks().count()>=3) {
+        updateLinkDisplay(LinkManager::instance()->getLinks().last());
+    }
 }
 
 void APMToolBar::setFlightViewAction(QAction *action)
