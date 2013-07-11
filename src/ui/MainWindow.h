@@ -151,6 +151,7 @@ public slots:
     /** @brief Add a communication link */
     void addLink();
     void addLink(LinkInterface* link);
+    bool configLink(LinkInterface *link);
     void configure();
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
@@ -404,7 +405,6 @@ protected:
 
     QPointer<QGCToolBar> toolBar;
     QPointer<QGCStatusBar> customStatusBar;
-    QPointer<APMToolBar> apmToolBar;
 
     QPointer<DebugConsole> debugConsole;
 
