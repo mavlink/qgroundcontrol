@@ -4,21 +4,46 @@ import "./components"
 
 Rectangle {
     id: toolbar
-    width: parent.width
+
+    property alias backgroundColor : toolbar.color
+    property alias linkNameLabel: linkDevice.label
+    property alias baudrateLabel: baudrate.label
+
+    width: 1024 < parent.width ? 1024 : parent.width
     height: 72
     color: "black"
     border.color: "black"
 
+    Connections {
+            target: globalObj
+            onMAVConnected: {
+                console.log("Change Connection " + connected)
+                if (connect){
+                    console.log("connected")
+                   // connectButton.image = "./resources/apmplanner/toolbar/disconnect.png"
+                } else {
+                    console.log("disconnected")
+                   // connectButton.image = "./resources/apmplanner/toolbar/connect.png"
+                }
+            }
+    }
+
     Row {
         anchors.left: parent.left
         spacing: 2
+
+        Rectangle {
+            width: 5
+            height: parent.height
+            color: "black"
+        }
 
         Button {
             id: flightDataView
             label: "FLIGHT DATA"
             image: "./resources/apmplanner/toolbar/flightdata.png"
             onClicked: {
-                globalObj.selectFlightView()
+                globalObj.triggerFlightView()
             }
         }
 
@@ -26,7 +51,7 @@ Rectangle {
             id: flightPlanView
             label: "FLIGHT PLAN"
             image: "./resources/apmplanner/toolbar/flightplanner.png"
-            onClicked: globalObj.selectFlightPlanView()
+            onClicked: globalObj.triggerFlightPlanView()
         }
 
         Button {
@@ -34,7 +59,7 @@ Rectangle {
             label: "HARDWARE"
             image: "./resources/apmplanner/toolbar/hardwareconfig.png"
             margins: 8
-            onClicked: globalObj.selectHardwareView()
+            onClicked: globalObj.triggerHardwareView()
         }
 
         Button {
@@ -42,34 +67,62 @@ Rectangle {
             label: "SOFTWARE"
             image: "./resources/apmplanner/toolbar/softwareconfig.png"
             margins: 8
-            onClicked: globalObj.selectSoftwareView()
+            onClicked: globalObj.triggerSoftwareView()
         }
 
         Button {
             id: simualtionView
             label: "SIMULATION"
             image: "./resources/apmplanner/toolbar/simulation.png"
-            onClicked: globalObj.selectSimulationView()
+            onClicked: globalObj.triggerSimulationView()
         }
 
         Button {
             id: terminalView
             label: "TERMINAL"
             image: "./resources/apmplanner/toolbar/terminal.png"
-            onClicked: globalObj.selectTerminalView()
+            onClicked: globalObj.triggerTerminalView()
         }
     }
 
     Row {
-        anchors.left: parent.right
+        anchors.right: parent.right
         spacing: 2
+
+        TextButton {
+            id: linkDevice
+            label: "none"
+            minWidth: 100
+
+            onClicked: globalObj.showConnectionDialog()
+        }
+
+        TextButton {
+            id: baudrate
+            label: "none"
+            minWidth: 100
+
+            onClicked: globalObj.showConnectionDialog()
+        }
+
+        Rectangle {
+            width: 5
+            height: parent.height
+            color: "black"
+        }
 
         Button {
             id: connectButton
             label: "CONNECT"
             image: "./resources/apmplanner/toolbar/connect.png"
-            onClicked: globalObj.connect()
+            onClicked: globalObj.connectMAV()
+        }
+
+        Rectangle {
+            anchors.right: parent.right
+            width: 5
+            height: parent.height
+            color: "black"
         }
     }
 }
-

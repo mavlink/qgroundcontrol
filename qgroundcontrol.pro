@@ -778,6 +778,7 @@ OTHER_FILES += \
 OTHER_FILES += \
     qml/ApmToolBar.qml \
     qml/components/Button.qml \
+    qml/components/TextButton.qml \
     qml/resources/apmplanner/toolbar/connect.png \
     qml/resources/apmplanner/toolbar/flightplanner.png \
     qml/resources/apmplanner/toolbar/helpwizard.png \

@@ -148,7 +148,7 @@ protected:
     int m_stopBits;
     int m_parity;
     QString m_portName;
-    QString m_name;
+//    QString m_name;
     int m_timeout;
     int m_id;
 

@@ -27,13 +27,17 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
+    qDebug() << "create SerialLink " << portname << baudRate << hardwareFlowControl
+             << parity << dataBits << stopBits;
     // Setup settings
     m_portName = portname.trimmed();
 
     if (m_portName == "" && getCurrentPorts()->size() > 0)
     {
-        m_portName = m_ports->first().trimmed();
+        m_portName = m_ports->first().trimmed();   
     }
+
+    qDebug() << "m_portName " << m_portName;
 
     // Set unique ID and add link to the list of links
     m_id = getNextLinkId();
@@ -61,14 +65,15 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopBits = stopBits;
 
     // Set the port name
-    if (m_portName == "")
-    {
-        m_name = tr("Serial Link ") + QString::number(getId());
-    }
-    else
-    {
-        m_name = portname.trimmed();
-    }
+//    if (m_portName == "")
+//    {
+//        m_name = tr("Serial Link ") + QString::number(getId());
+//    }
+//    else
+//    {
+//        m_name = portname.trimmed();
+//    }
+
     loadSettings();
 }
 void SerialLink::requestReset()
@@ -187,7 +192,7 @@ void SerialLink::run()
                 m_bitsReceivedTotal += readData.length() * 8;
             }
         } else {
-            qDebug() << "readyReadTime #"<< __LINE__;
+//            qDebug() << "readyReadTime #"<< __LINE__;
 
         }
 
@@ -460,7 +465,7 @@ int SerialLink::getId()
 
 QString SerialLink::getName()
 {
-    return m_name;
+    return m_portName;
 }
 
 /**
@@ -695,11 +700,11 @@ bool SerialLink::setPortName(QString portName)
     if ((portName != m_portName)
             && (portName.trimmed().length() > 0)) {
         m_portName = portName.trimmed();
-        m_name = tr("serial port ") + portName.trimmed(); // [TODO] Do we need this?
+//        m_name = tr("serial port ") + portName.trimmed(); // [TODO] Do we need this?
         if(m_port)
             m_port->setPortName(portName);
 
-        emit nameChanged(m_name); // [TODO] maybe we can eliminate this
+        emit nameChanged(m_portName); // [TODO] maybe we can eliminate this
         return accepted;
     }
     return false;

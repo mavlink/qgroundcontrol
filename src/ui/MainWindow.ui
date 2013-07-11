@@ -284,7 +284,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/status/weather-overcast.svg</normaloff>:/files/images/status/weather-overcast.svg</iconset>
+     <normaloff>:/files/images/categories/applications-internet.svg</normaloff>:/files/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
     <string>Mission</string>
@@ -496,6 +496,10 @@
    </property>
   </action>
   <action name="actionSoftwareConfig">
+   <property name="icon">
+    <iconset resource="../../qgroundcontrol.qrc">
+     <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
+   </property>
    <property name="text">
     <string>Software</string>
    </property>

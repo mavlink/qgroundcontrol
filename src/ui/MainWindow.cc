@@ -181,15 +181,6 @@ MainWindow::MainWindow(QWidget *parent):
     actions << ui.actionSoftwareConfig;
     toolBar->setPerspectiveChangeActions(actions);
 
-    // We only want one of these.
-    apmToolBar = new APMToolBar(this);
-    apmToolBar->setFlightViewAction(ui.actionFlightView);
-    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
-    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
-    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
-    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
-    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
-
     // Add actions for advanced users (displayed in dropdown under "advanced")
     QList<QAction*> advancedActions;
     advancedActions << ui.actionSimulation_View;
@@ -199,8 +190,6 @@ MainWindow::MainWindow(QWidget *parent):
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
-
-
 
     emit initStatusChanged("Building common widgets.");
 
@@ -616,8 +605,16 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
 
     // Add Our new 'toolbar'
-    qDebug() << "width" << this->width();
+    // Create the APM Toolbar
+    APMToolBar *apmToolBar = new APMToolBar(this);
+    apmToolBar->setFlightViewAction(ui.actionFlightView);
+    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
+    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
+    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
+    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
     createDockWidget(pilotView,apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",VIEW_FLIGHT,Qt::TopDockWidgetArea,this->width(), 70);
+
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
@@ -864,7 +861,15 @@ void MainWindow::loadDockWidget(QString name)
     else if (name == "APM_TOOLBAR_DOCKWIDGET")
     {
         // Add Our new 'toolbar'
-        createDockWidget(centerStack->currentWidget(),apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",VIEW_FLIGHT,Qt::TopDockWidgetArea,this->width(), 70);
+        // Create the APM Toolbar
+        APMToolBar *apmToolBar = new APMToolBar(this);
+        apmToolBar->setFlightViewAction(ui.actionFlightView);
+        apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
+        apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
+        apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
+        apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+        apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
+        createDockWidget(centerStack->currentWidget(),apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",currentView,Qt::TopDockWidgetArea,this->width(), 70);
     }
     else
     {
@@ -1651,6 +1656,29 @@ void MainWindow::addLink()
     }
 }
 
+
+bool MainWindow::configLink(LinkInterface *link)
+{
+    // Go searching for this link's configuration window
+    QList<QAction*> actions = ui.menuNetwork->actions();
+
+    bool found(false);
+
+    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+    const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+
+    foreach (QAction* action, actions)
+    {
+        if (action->data().toInt() == linkID)
+        { // LinkManager::instance()->getLinks().indexOf(link)
+            found = true;
+            action->trigger(); // Show the Link Config Dialog
+        }
+    }
+
+    return found;
+}
+
 void MainWindow::addLink(LinkInterface *link)
 {
     // IMPORTANT! KEEP THESE TWO LINES
@@ -1680,7 +1708,7 @@ void MainWindow::addLink(LinkInterface *link)
 
     if (!found)
     {  //  || udp
-        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, NULL);
         commsWidgetList.append(commWidget);
         connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();
@@ -1696,6 +1724,11 @@ void MainWindow::addLink(LinkInterface *link)
         }
     }
 }
+
+//void MainWindow::configLink(LinkInterface *link)
+//{
+
+//}
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
     if (commsWidgetList.contains(obj))
