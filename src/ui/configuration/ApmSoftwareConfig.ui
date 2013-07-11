@@ -201,6 +201,19 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="arduRoverPidButton">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>ArduRover Pids</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>

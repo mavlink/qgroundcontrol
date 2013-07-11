@@ -260,7 +260,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/configuration/ApmPlaneLevel.ui \
     src/ui/configuration/ParamWidget.ui \
     src/ui/configuration/ArduPlanePidConfig.ui \
-    src/ui/configuration/AdvParameterList.ui
+    src/ui/configuration/AdvParameterList.ui \
+    src/ui/configuration/ArduRoverPidConfig.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -445,7 +446,8 @@ HEADERS += src/MG.h \
     src/ui/configuration/ApmPlaneLevel.h \
     src/ui/configuration/ParamWidget.h \
     src/ui/configuration/ArduPlanePidConfig.h \
-    src/ui/configuration/AdvParameterList.h
+    src/ui/configuration/AdvParameterList.h \
+    src/ui/configuration/ArduRoverPidConfig.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -648,7 +650,8 @@ SOURCES += src/main.cc \
     src/ui/configuration/ApmPlaneLevel.cc \
     src/ui/configuration/ParamWidget.cc \
     src/ui/configuration/ArduPlanePidConfig.cc \
-    src/ui/configuration/AdvParameterList.cc
+    src/ui/configuration/AdvParameterList.cc \
+    src/ui/configuration/ArduRoverPidConfig.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

@@ -16,6 +16,8 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     ui.advancedParamButton->setVisible(false);
     ui.advParamListButton->setVisible(false);
     ui.arduCopterPidButton->setVisible(false);
+    ui.arduRoverPidButton->setVisible(false);
+    ui.arduPlanePidButton->setVisible(false);
 
     /*basicPidConfig = new BasicPidConfig(this);
     ui.stackedWidget->addWidget(basicPidConfig);
@@ -57,11 +59,17 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     buttonToConfigWidgetMap[ui.arduCopterPidButton] = arduCopterPidConfig;
     connect(ui.arduCopterPidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-
     arduPlanePidConfig = new ArduPlanePidConfig(this);
     ui.stackedWidget->addWidget(arduPlanePidConfig);
     buttonToConfigWidgetMap[ui.arduPlanePidButton] = arduPlanePidConfig;
     connect(ui.arduPlanePidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+
+    arduRoverPidConfig = new ArduRoverPidConfig(this);
+    ui.stackedWidget->addWidget(arduRoverPidConfig);
+    buttonToConfigWidgetMap[ui.arduRoverPidButton] = arduRoverPidConfig;
+    connect(ui.arduRoverPidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
+
+
 
 
 
@@ -101,10 +109,18 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
     {
         ui.arduPlanePidButton->setVisible(true);
         ui.arduCopterPidButton->setVisible(false);
+        ui.arduRoverPidButton->setVisible(false);
     }
     else if (uas->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         ui.arduCopterPidButton->setVisible(true);
+        ui.arduPlanePidButton->setVisible(false);
+        ui.arduRoverPidButton->setVisible(false);
+    }
+    else if (uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
+    {
+        ui.arduRoverPidButton->setVisible(true);
+        ui.arduCopterPidButton->setVisible(false);
         ui.arduPlanePidButton->setVisible(false);
     }
 
