@@ -33,7 +33,8 @@ This file is part of the QGROUNDCONTROL project
 ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
 {
     ui.setupUi(this);
-    //ui.firmwareButton->setVisible(valse);
+
+
     ui.manditoryHardware->setVisible(false);
     ui.frameTypeButton->setVisible(false);
     ui.compassButton->setVisible(false);
@@ -41,15 +42,12 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     ui.arduPlaneLevelButton->setVisible(false);
     ui.radioCalibrateButton->setVisible(false);
     ui.optionalHardwareButton->setVisible(false);
-    //ui.radio3DRButton->setVisible(false);
     ui.batteryMonitorButton->setVisible(false);
     ui.sonarButton->setVisible(false);
     ui.airspeedButton->setVisible(false);
     ui.opticalFlowButton->setVisible(false);
     ui.osdButton->setVisible(false);
     ui.cameraGimbalButton->setVisible(false);
-    //ui.antennaTrackerButton->setVisible(false);
-
 
     connect(ui.optionalHardwareButton,SIGNAL(toggled(bool)),ui.radio3DRButton,SLOT(setShown(bool)));
     connect(ui.optionalHardwareButton,SIGNAL(toggled(bool)),ui.batteryMonitorButton,SLOT(setShown(bool)));
@@ -134,8 +132,6 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     buttonToConfigWidgetMap[ui.antennaTrackerButton] = antennaTrackerConfig;
     connect(ui.antennaTrackerButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-
-
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
     if (UASManager::instance()->getActiveUAS())
     {
@@ -185,15 +181,7 @@ void ApmHardwareConfig::activeUASSet(UASInterface *uas)
     }
     ui.firmwareButton->setVisible(true);
     ui.manditoryHardware->setVisible(true);
-    ui.manditoryHardware->setChecked(false);
+    ui.manditoryHardware->setChecked(true);
     ui.optionalHardwareButton->setVisible(true);
-    ui.optionalHardwareButton->setChecked(false);
-    ui.radio3DRButton->setVisible(false);
-    ui.antennaTrackerButton->setVisible(false);
-
-
-
-
-
-
+    ui.optionalHardwareButton->setChecked(true);
 }
