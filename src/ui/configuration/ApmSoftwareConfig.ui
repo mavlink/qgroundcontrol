@@ -60,22 +60,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="basicPidsButton">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>35</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Basic Pids</string>
-           </property>
-           <property name="checkable">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="flightModesButton">
            <property name="minimumSize">
             <size>
@@ -101,22 +85,6 @@
            </property>
            <property name="text">
             <string>Standard Params</string>
-           </property>
-           <property name="checkable">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="geoFenceButton">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>35</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>GeoFence</string>
            </property>
            <property name="checkable">
             <bool>false</bool>
