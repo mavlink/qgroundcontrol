@@ -16,6 +16,33 @@ CompassConfig::CompassConfig(QWidget *parent) : QWidget(parent)
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
     activeUASSet(UASManager::instance()->getActiveUAS());
 
+    ui.orientationComboBox->addItem("ROTATION_NONE");
+    ui.orientationComboBox->addItem("ROTATION_YAW_45");
+    ui.orientationComboBox->addItem("ROTATION_YAW_90");
+    ui.orientationComboBox->addItem("ROTATION_YAW_135");
+    ui.orientationComboBox->addItem("ROTATION_YAW_180");
+    ui.orientationComboBox->addItem("ROTATION_YAW_225");
+    ui.orientationComboBox->addItem("ROTATION_YAW_270");
+    ui.orientationComboBox->addItem("ROTATION_YAW_315");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180_YAW_45");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180_YAW_90");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180_YAW_135");
+    ui.orientationComboBox->addItem("ROTATION_PITCH_180");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180_YAW_225");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180_YAW_270");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_180_YAW_315");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_90");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_90_YAW_45");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_90_YAW_90");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_90_YAW_135");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_270");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_270_YAW_45");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_270_YAW_90");
+    ui.orientationComboBox->addItem("ROTATION_ROLL_270_YAW_135");
+    ui.orientationComboBox->addItem("ROTATION_PITCH_90");
+    ui.orientationComboBox->addItem("ROTATION_PITCH_270");
+    ui.orientationComboBox->addItem("ROTATION_MAX");
 }
 CompassConfig::~CompassConfig()
 {
@@ -39,12 +66,14 @@ void CompassConfig::parameterChanged(int uas, int component, QString parameterNa
             ui.enableCheckBox->setChecked(false);
             ui.autoDecCheckBox->setEnabled(false);
             ui.declinationLineEdit->setEnabled(false);
+            ui.orientationComboBox->setEnabled(false);
         }
         else
         {
             ui.enableCheckBox->setChecked(true);
             ui.autoDecCheckBox->setEnabled(true);
             ui.declinationLineEdit->setEnabled(true);
+            ui.orientationComboBox->setEnabled(true);
         }
         ui.enableCheckBox->setEnabled(true);
     }
@@ -62,6 +91,12 @@ void CompassConfig::parameterChanged(int uas, int component, QString parameterNa
     else if (parameterName == "COMPASS_DEC")
     {
         ui.declinationLineEdit->setText(QString::number(value.toDouble()));
+    }
+    else if (parameterName == "COMPASS_ORIENT")
+    {
+        disconnect(ui.orientationComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(orientationComboChanged(int)));
+        ui.orientationComboBox->setCurrentIndex(value.toInt());
+        connect(ui.orientationComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(orientationComboChanged(int)));
     }
 }
 
@@ -104,5 +139,11 @@ void CompassConfig::autoDecClicked(bool enabled)
 
 void CompassConfig::orientationComboChanged(int index)
 {
+    //COMPASS_ORIENT
+    if (!m_uas)
+    {
+        return;
+    }
+    m_uas->getParamManager()->setParameter(1,"COMPASS_ORIENT",index);
 
 }
