@@ -168,7 +168,9 @@ MainWindow::MainWindow(QWidget *parent):
     centerStack = new QStackedWidget(this);
     setCentralWidget(centerStack);
 
+
     // Load Toolbar
+#ifdef QGC_TOOLBAR_ENABLED
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);
 
@@ -187,6 +189,28 @@ MainWindow::MainWindow(QWidget *parent):
     advancedActions << ui.actionEngineersView;
 
     toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
+#else
+    // Add the APM 'toolbar'
+
+    APMToolBar *apmToolBar = new APMToolBar(this);
+    apmToolBar->setFlightViewAction(ui.actionFlightView);
+    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
+    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
+    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
+    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
+
+    QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
+    widget->setWidget(apmToolBar);
+    widget->setMinimumHeight(72);
+    widget->setMaximumHeight(72);
+    widget->setMinimumWidth(1024);
+    widget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    widget->setTitleBarWidget(new QWidget(this)); // Disables the title bar
+//    /*widget*/->setStyleSheet("QDockWidget { border: 0px solid #FFFFFF; border-radius: 0px; border-bottom: 0px;}");
+    this->addDockWidget(Qt::TopDockWidgetArea, widget);
+#endif
+
     customStatusBar = new QGCStatusBar(this);
     setStatusBar(customStatusBar);
     statusBar()->setSizeGripEnabled(true);
@@ -342,15 +366,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent * event)
 {
-    if (width() > 1200)
-    {
-        toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    }
-    else
-    {
-        toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
-    }
-
     QMainWindow::resizeEvent(event);
 }
 
@@ -604,18 +619,6 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
     createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
 
-    // Add Our new 'toolbar'
-    // Create the APM Toolbar
-    APMToolBar *apmToolBar = new APMToolBar(this);
-    apmToolBar->setFlightViewAction(ui.actionFlightView);
-    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
-    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
-    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
-    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
-    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
-    createDockWidget(pilotView,apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",VIEW_FLIGHT,Qt::TopDockWidgetArea,this->width(), 70);
-
-
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
     createDockWidget(pilotView,infoview,tr("Info View"),"UAS_INFO_INFOVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
@@ -858,19 +861,6 @@ void MainWindow::loadDockWidget(QString name)
     {
         createDockWidget(centerStack->currentWidget(),new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",currentView,Qt::LeftDockWidgetArea);
     }
-    else if (name == "APM_TOOLBAR_DOCKWIDGET")
-    {
-        // Add Our new 'toolbar'
-        // Create the APM Toolbar
-        APMToolBar *apmToolBar = new APMToolBar(this);
-        apmToolBar->setFlightViewAction(ui.actionFlightView);
-        apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
-        apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
-        apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
-        apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
-        apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
-        createDockWidget(centerStack->currentWidget(),apmToolBar,tr("APM Tool Bar"),"APM_TOOLBAR_DOCKWIDGET",currentView,Qt::TopDockWidgetArea,this->width(), 70);
-    }
     else
     {
         if (customWidgetNameToFilenameMap.contains(name))
@@ -965,7 +955,7 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
         //createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
 
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
-       QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
+        QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
         QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockName.toUpper().replace(" ", "_"),VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
 

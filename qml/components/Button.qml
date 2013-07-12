@@ -18,7 +18,7 @@ Rectangle {
         id: buttonLabel
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.margins: 2
+        anchors.margins: 5
         text: label
         color: "white"
         font.pointSize: 10
