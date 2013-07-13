@@ -10,16 +10,18 @@ APMToolBar::APMToolBar(QWidget *parent):
     QDeclarativeView(parent)
 {
     // Configure our QML object
-    this->rootContext()->setContextProperty("globalObj", this);
     setSource(QUrl::fromLocalFile("qml/ApmToolBar.qml"));
     setResizeMode(QDeclarativeView::SizeRootObjectToView);
-
+    this->rootContext()->setContextProperty("globalObj", this);
     connect(LinkManager::instance(),SIGNAL(newLink(LinkInterface*)),
             this, SLOT(updateLinkDisplay(LinkInterface*)));
 
     if (LinkManager::instance()->getLinks().count()>=3) {
         updateLinkDisplay(LinkManager::instance()->getLinks().last());
     }
+
+    QObject *object = rootObject();
+    object->setProperty("connected", false);
 }
 
 void APMToolBar::setFlightViewAction(QAction *action)
@@ -111,6 +113,11 @@ void APMToolBar::connectMAV()
         result = !LinkManager::instance()->getLinks().last()->disconnect();
     }
     qDebug() << "result = " << result;
+
+    // Change the image to represent the state
+    QObject *object = rootObject();
+    object->setProperty("connected", result);
+
     emit MAVConnected(result);
 }
 
@@ -147,7 +154,7 @@ void APMToolBar::updateLinkDisplay(LinkInterface* newLink)
     qDebug() << "APMToolBar: updateLinkDisplay";
     QObject *object = rootObject();
 
-    if (newLink){
+    if (newLink && object){
         qint64 baudrate = newLink->getNominalDataRate();
         object->setProperty("baudrateLabel", QString::number(baudrate));
 
