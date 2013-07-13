@@ -8,25 +8,36 @@ Rectangle {
     property alias backgroundColor : toolbar.color
     property alias linkNameLabel: linkDevice.label
     property alias baudrateLabel: baudrate.label
+    property bool connected: false
 
     width: 1024 < parent.width ? 1024 : parent.width
     height: 72
     color: "black"
     border.color: "black"
 
-    Connections {
-            target: globalObj
-            onMAVConnected: {
-                console.log("Change Connection " + connected)
-                if (connect){
-                    console.log("connected")
-                   // connectButton.image = "./resources/apmplanner/toolbar/disconnect.png"
-                } else {
-                    console.log("disconnected")
-                   // connectButton.image = "./resources/apmplanner/toolbar/connect.png"
-                }
-            }
+    onConnectedChanged: {
+        if (connected){
+            console.log("APM Tool BAR QML: connected")
+            connectButton.image = "./resources/apmplanner/toolbar/disconnect.png"
+        } else {
+            console.log("APM Tool BAR QML: disconnected")
+            connectButton.image = "./resources/apmplanner/toolbar/connect.png"
+        }
     }
+
+//    Connections {
+//            target: globalObj
+//            onMAVConnected: {
+//                console.log("QML Change Connection " + connected)
+//                if (connected){
+//                    console.log("connected")
+//                    connectButton.image = "./resources/apmplanner/toolbar/disconnect.png"
+//                } else {
+//                    console.log("disconnected")
+//                    connectButton.image = "./resources/apmplanner/toolbar/connect.png"
+//                }
+//            }
+//    }
 
     Row {
         anchors.left: parent.left
