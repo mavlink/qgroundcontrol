@@ -571,7 +571,7 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCRadioChannelDisplay.cpp \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
-    src/ui/PrimaryFlightDisplay.cpp \
+    src/ui/PrimaryFlightDisplay.cc \
     src/ui/uas/QGCMessageView.cc \
     src/ui/JoystickButton.cc \
     src/ui/JoystickAxis.cc
