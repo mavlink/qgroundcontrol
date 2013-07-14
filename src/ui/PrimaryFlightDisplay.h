@@ -26,8 +26,8 @@ public slots:
     void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
 
     /** @brief Set the currently monitored UAS */
-    void addUAS(UASInterface* uas);
-    //void forgetUAS(UASInterface* uas);
+    //void addUAS(UASInterface* uas);
+    void forgetUAS(UASInterface* uas);
     void setActiveUAS(UASInterface* uas);
 
 protected:

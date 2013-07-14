@@ -170,17 +170,16 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // Connect with UAS signal
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
-    // connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
-
+    //connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    // Get a list of all existing UAS and - well attach to one of them. The first one.
-    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
-        addUAS(uas);
-    }
+//    // Get a list of all existing UAS and - well attach to one of them. The first one.
+//    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
+//        addUAS(uas);
+//    }
 
-    if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
+    setActiveUAS(UASManager::instance()->getActiveUAS());
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
@@ -250,27 +249,23 @@ void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
     doPaint();
 }
 
-/*
- * Interface towards qgroundcontrol
- */
-void PrimaryFlightDisplay::addUAS(UASInterface* uas)
-{
-    if (uas)
-    {
-        if (!this->uas)
-        {
-            setActiveUAS(uas);
-        }
-    }
-}
+///*
+// * Interface towards qgroundcontrol
+// */
+//void PrimaryFlightDisplay::addUAS(UASInterface* uas)
+//{
+//    if (uas)
+//    {
+//        if (!this->uas)
+//        {
+//            setActiveUAS(uas);
+//        }
+//    }
+//}
 
-/**
- *
- * @param uas the UAS/MAV to monitor/display with the HUD
- */
-void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
+void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
 {
-    if (this->uas != NULL) {
+    if (this->uas != NULL && this->uas == uas) {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
@@ -290,6 +285,16 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         //disconnect(this->uas, SIGNAL(satelliteCountChanged(double, QString)), this, SLOT(updateSatelliteCount(double, QString)));
         //disconnect(this->uas, SIGNAL(localizationChanged(UASInterface* uas, int fix)), this, SLOT(updateGPSFixType(UASInterface*,int)));
     }
+}
+
+/**
+ *
+ * @param uas the UAS/MAV to monitor/display with the HUD
+ */
+void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
+{
+    // Disconnect the previous one (if any)
+    forgetUAS(this->uas);
 
     if (uas) {
         // Now connect the new UAS
