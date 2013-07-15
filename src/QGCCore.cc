@@ -72,7 +72,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
     this->setOrganizationName(QLatin1String("diydrones"));
-    this->setOrganizationDomain("org.diydrones");
+    this->setOrganizationDomain("com.diydrones");
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
