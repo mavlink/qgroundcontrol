@@ -34,8 +34,8 @@
     <rect>
      <x>70</x>
      <y>160</y>
-     <width>81</width>
-     <height>31</height>
+     <width>111</width>
+     <height>41</height>
     </rect>
    </property>
    <property name="text">
@@ -48,8 +48,8 @@ Accelerometer</string>
     <rect>
      <x>20</x>
      <y>50</y>
-     <width>211</width>
-     <height>91</height>
+     <width>311</width>
+     <height>101</height>
     </rect>
    </property>
    <property name="text">
