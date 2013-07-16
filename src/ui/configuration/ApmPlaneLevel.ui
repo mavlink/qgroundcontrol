@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ApmPlaneLevel</class>
+ <widget class="QWidget" name="ApmPlaneLevel">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;h2&gt;ArduPlane Level&lt;/h2&gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>70</y>
+     <width>271</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>By Default your plane will autolevel on every boot.
+To disable this action you need to turn on manual
+level and perform a level to calibrate the accel offsets.</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>150</y>
+     <width>291</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Level your plane and click Level to set default accel offsets</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="levelPushButton">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>180</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Level</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>230</y>
+     <width>151</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>For advanced users ONLY</string>
+   </property>
+   <widget class="QCheckBox" name="manualLevelCheckBox">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>20</y>
+      <width>91</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Manual Level</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

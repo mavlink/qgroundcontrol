@@ -82,6 +82,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGCVehicleConfig.h"
 #include "MAVLinkDecoder.h"
+#include "ApmHardwareConfig.h"
+#include "ApmSoftwareConfig.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -164,8 +166,9 @@ public slots:
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
     void setAdvancedMode();
-    /** @brief Load configuration view */
-    void loadConfigurationView();
+    /** @brief Load configuration views */
+    void loadHardwareConfigView();
+    void loadSoftwareConfigView();
     /** @brief Load default view when no MAV is connected */
     void loadUnconnectedView();
     /** @brief Load view for pilot */
@@ -282,7 +285,8 @@ protected:
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
-        VIEW_CONFIGURATION,
+        VIEW_HARDWARE_CONFIG,
+        VIEW_SOFTWARE_CONFIG,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
@@ -349,6 +353,7 @@ protected:
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
     QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;

@@ -174,7 +174,9 @@ MainWindow::MainWindow(QWidget *parent):
     QList<QAction*> actions;
     actions << ui.actionFlightView;
     actions << ui.actionMissionView;
-    actions << ui.actionConfiguration_2;
+    //actions << ui.actionConfiguration_2;
+    actions << ui.actionHardwareConfig;
+    actions << ui.actionSoftwareConfig;
     toolBar->setPerspectiveChangeActions(actions);
 
     // Add actions for advanced users (displayed in dropdown under "advanced")
@@ -472,11 +474,19 @@ void MainWindow::buildCommonWidgets()
     if (!configView)
     {
         configView = new SubMainWindow(this);
-        configView->setObjectName("VIEW_CONFIGURATION");
-        configView->setCentralWidget(new QGCVehicleConfig(this));
-        addCentralWidget(configView,"Config");
-        centralWidgetToDockWidgetsMap[VIEW_CONFIGURATION] = QMap<QString,QWidget*>();
+        configView->setObjectName("VIEW_HARDWARE_CONFIG");
+        configView->setCentralWidget(new ApmHardwareConfig(this));
+        addCentralWidget(configView,"Hardware");
+        centralWidgetToDockWidgetsMap[VIEW_HARDWARE_CONFIG] = QMap<QString,QWidget*>();
 
+    }
+    if (!softwareConfigView)
+    {
+        softwareConfigView = new SubMainWindow(this);
+        softwareConfigView->setObjectName("VIEW_SOFTWARE_CONFIG");
+        softwareConfigView->setCentralWidget(new ApmSoftwareConfig(this));
+        addCentralWidget(softwareConfigView,"Software");
+        centralWidgetToDockWidgetsMap[VIEW_SOFTWARE_CONFIG] = QMap<QString,QWidget*>();
     }
     if (!engineeringView)
     {
@@ -1413,7 +1423,9 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionFlightView);
     perspectives->addAction(ui.actionSimulation_View);
     perspectives->addAction(ui.actionMissionView);
-    perspectives->addAction(ui.actionConfiguration_2);
+    //perspectives->addAction(ui.actionConfiguration_2);
+    perspectives->addAction(ui.actionHardwareConfig);
+    perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionFirmwareUpdateView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->setExclusive(true);
@@ -1444,10 +1456,15 @@ void MainWindow::connectCommonActions()
         ui.actionMissionView->setChecked(true);
         ui.actionMissionView->activate(QAction::Trigger);
     }
-    if (currentView == VIEW_CONFIGURATION)
+    if (currentView == VIEW_HARDWARE_CONFIG)
     {
-        ui.actionConfiguration_2->setChecked(true);
-        ui.actionConfiguration_2->activate(QAction::Trigger);
+        ui.actionHardwareConfig->setChecked(true);
+        ui.actionHardwareConfig->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_SOFTWARE_CONFIG)
+    {
+        ui.actionSoftwareConfig->setChecked(true);
+        ui.actionSoftwareConfig->activate(QAction::Trigger);
     }
     if (currentView == VIEW_FIRMWAREUPDATE)
     {
@@ -1489,7 +1506,9 @@ void MainWindow::connectCommonActions()
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
-    connect(ui.actionConfiguration_2,SIGNAL(triggered()),this,SLOT(loadConfigurationView()));
+    //connect(ui.actionConfiguration_2,SIGNAL(triggered()),this,SLOT(loadConfigurationView()));
+    connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
+    connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
 
     connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
@@ -1955,8 +1974,11 @@ void MainWindow::loadViewState()
         // Load defaults
         switch (currentView)
         {
-        case VIEW_CONFIGURATION:
+        case VIEW_HARDWARE_CONFIG:
             centerStack->setCurrentWidget(configView);
+            break;
+        case VIEW_SOFTWARE_CONFIG:
+            centerStack->setCurrentWidget(softwareConfigView);
             break;
         case VIEW_ENGINEER:
             centerStack->setCurrentWidget(engineeringView);
@@ -2067,13 +2089,24 @@ void MainWindow::loadOperatorView()
         loadViewState();
     }
 }
-void MainWindow::loadConfigurationView()
+void MainWindow::loadHardwareConfigView()
 {
-    if (currentView != VIEW_CONFIGURATION)
+    if (currentView != VIEW_HARDWARE_CONFIG)
     {
         storeViewState();
-        currentView = VIEW_CONFIGURATION;
-        ui.actionConfiguration_2->setChecked(true);
+        currentView = VIEW_HARDWARE_CONFIG;
+        ui.actionHardwareConfig->setChecked(true);
+        loadViewState();
+    }
+}
+
+void MainWindow::loadSoftwareConfigView()
+{
+    if (currentView != VIEW_SOFTWARE_CONFIG)
+    {
+        storeViewState();
+        currentView = VIEW_SOFTWARE_CONFIG;
+        ui.actionSoftwareConfig->setChecked(true);
         loadViewState();
     }
 }
