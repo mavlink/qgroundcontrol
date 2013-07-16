@@ -21,7 +21,8 @@ APMToolBar::APMToolBar(QWidget *parent):
     }
 
     QObject *object = rootObject();
-    object->setProperty("connected", false);
+    if (object)
+        object->setProperty("connected", false);
 }
 
 void APMToolBar::setFlightViewAction(QAction *action)

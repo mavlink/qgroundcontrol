@@ -96,6 +96,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
     Q_ASSERT_X(m_ports != NULL, "getCurrentPorts", "m_ports is NULL");
     m_ports->clear();
     // Example use QSerialPortInfo
+    // [TODO] make this thread safe
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
 //        qDebug() << "PortName    : " << info.portName()
