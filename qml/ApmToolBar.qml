@@ -25,6 +25,7 @@ Rectangle {
         }
     }
 
+// [BB] The code below should work, not sure why. replaced with code above
 //    Connections {
 //            target: globalObj
 //            onMAVConnected: {
@@ -43,7 +44,7 @@ Rectangle {
         anchors.left: parent.left
         spacing: 2
 
-        Rectangle {
+        Rectangle { // Spacer
             width: 5
             height: parent.height
             color: "black"
@@ -94,6 +95,44 @@ Rectangle {
             image: "./resources/apmplanner/toolbar/terminal.png"
             onClicked: globalObj.triggerTerminalView()
         }
+
+        Rectangle { // Spacer
+            width: 5
+            height: parent.height
+            color: "black"
+        }
+
+//            DigitalDisplay { // Information Pane
+//                title:"Mode"
+//                textValue: "Stabilize"
+//                color: "black"
+//            }
+//            DigitalDisplay { // Information Pane
+//                title: "Speed"
+//                textValue: "11.0m/s"
+//                color: "black"
+//            }
+//            DigitalDisplay { // Information Pane
+//                title: "Alt"
+//                textValue: "20.0m"
+//                color: "black"
+//            }
+//            DigitalDisplay { // Information Pane
+//                title: "Volts"
+//                textValue: "14.8V"
+//                color: "black"
+//            }
+//            DigitalDisplay { // Information Pane
+//                title: "Current"
+//                textValue: "12.0A"
+//                color: "black"
+//            }
+//            DigitalDisplay { // Information Pane
+//                title: "Level"
+//                textValue: "77%"
+//                color: "black"
+//            }
+
     }
 
     Row {
@@ -129,7 +168,7 @@ Rectangle {
             onClicked: globalObj.connectMAV()
         }
 
-        Rectangle {
+        Rectangle { // Spacer
             anchors.right: parent.right
             width: 5
             height: parent.height
