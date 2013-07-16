@@ -152,12 +152,12 @@ void FlightModeConfig::saveButtonClicked()
     }
     else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
     {
-        m_uas->getParamManager()->setParameter(1,"FLTMODE1",(char)ui.mode1ComboBox->currentIndex()+1);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE2",(char)ui.mode2ComboBox->currentIndex()+1);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE3",(char)ui.mode3ComboBox->currentIndex()+1);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE4",(char)ui.mode4ComboBox->currentIndex()+1);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE5",(char)ui.mode5ComboBox->currentIndex()+1);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE6",(char)ui.mode6ComboBox->currentIndex()+1);
+        m_uas->getParamManager()->setParameter(1,"FLTMODE1",(char)ui.mode1ComboBox->currentIndex());
+        m_uas->getParamManager()->setParameter(1,"FLTMODE2",(char)ui.mode2ComboBox->currentIndex());
+        m_uas->getParamManager()->setParameter(1,"FLTMODE3",(char)ui.mode3ComboBox->currentIndex());
+        m_uas->getParamManager()->setParameter(1,"FLTMODE4",(char)ui.mode4ComboBox->currentIndex());
+        m_uas->getParamManager()->setParameter(1,"FLTMODE5",(char)ui.mode5ComboBox->currentIndex());
+        m_uas->getParamManager()->setParameter(1,"FLTMODE6",(char)ui.mode6ComboBox->currentIndex());
     }
 }
 
@@ -280,27 +280,27 @@ void FlightModeConfig::parameterChanged(int uas, int component, QString paramete
     {
         if (parameterName == "FLTMODE1")
         {
-            ui.mode1ComboBox->setCurrentIndex(value.toInt()-1);
+            ui.mode1ComboBox->setCurrentIndex(value.toInt());
         }
         else if (parameterName == "FLTMODE2")
         {
-            ui.mode2ComboBox->setCurrentIndex(value.toInt()-1);
+            ui.mode2ComboBox->setCurrentIndex(value.toInt());
         }
         else if (parameterName == "FLTMODE3")
         {
-            ui.mode3ComboBox->setCurrentIndex(value.toInt()-1);
+            ui.mode3ComboBox->setCurrentIndex(value.toInt());
         }
         else if (parameterName == "FLTMODE4")
         {
-            ui.mode4ComboBox->setCurrentIndex(value.toInt()-1);
+            ui.mode4ComboBox->setCurrentIndex(value.toInt());
         }
         else if (parameterName == "FLTMODE5")
         {
-            ui.mode5ComboBox->setCurrentIndex(value.toInt()-1);
+            ui.mode5ComboBox->setCurrentIndex(value.toInt());
         }
         else if (parameterName == "FLTMODE6")
         {
-            ui.mode6ComboBox->setCurrentIndex(value.toInt()-1);
+            ui.mode6ComboBox->setCurrentIndex(value.toInt());
         }
     }
 }
