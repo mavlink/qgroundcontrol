@@ -58,7 +58,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>CheckBox</string>
+    <string>Enable</string>
    </property>
   </widget>
   <widget class="QComboBox" name="sonarTypeComboBox">
