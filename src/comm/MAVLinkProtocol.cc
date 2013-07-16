@@ -187,7 +187,7 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
             link->writeBytes(init, sizeof(init));
 
             // Stop any running mavlink instance
-            char* cmd = "mavlink stop\n";
+            const char* cmd = "mavlink stop\n";
             link->writeBytes(cmd, strlen(cmd));
             link->writeBytes(init, 2);
             cmd = "uorb start";
