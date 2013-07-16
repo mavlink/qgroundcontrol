@@ -20,9 +20,7 @@ APMToolBar::APMToolBar(QWidget *parent):
         updateLinkDisplay(LinkManager::instance()->getLinks().last());
     }
 
-    QObject *object = rootObject();
-    if (object)
-        object->setProperty("connected", false);
+    setConnection(false);
 }
 
 void APMToolBar::setFlightViewAction(QAction *action)
@@ -116,10 +114,16 @@ void APMToolBar::connectMAV()
     qDebug() << "result = " << result;
 
     // Change the image to represent the state
-    QObject *object = rootObject();
-    object->setProperty("connected", result);
+    setConnection(result);
 
     emit MAVConnected(result);
+}
+
+void APMToolBar::setConnection(bool connection)
+{
+    // Change the image to represent the state
+    QObject *object = rootObject();
+    object->setProperty("connected", connection);
 }
 
 APMToolBar::~APMToolBar()
@@ -161,5 +165,10 @@ void APMToolBar::updateLinkDisplay(LinkInterface* newLink)
 
         QString linkName = newLink->getName();
         object->setProperty("linkNameLabel", linkName);
+
+        connect(newLink, SIGNAL(connected(bool)),
+                this, SLOT(setConnection(bool)));
+
+        setConnection(newLink->isConnected());
     }
 }
