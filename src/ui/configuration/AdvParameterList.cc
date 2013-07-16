@@ -39,7 +39,7 @@ void AdvParameterList::parameterChanged(int uas, int component, QString paramete
         {
             ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,0,new QTableWidgetItem("Unknown"));
         }
-        ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,1,new QTableWidgetItem(QString::number(value.toFloat(),'g',2)));
+        ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,1,new QTableWidgetItem(QString::number(value.toFloat(),'f',2)));
         ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(parameterName));
         if (paramToDescriptionMap.contains(parameterName))
         {
@@ -51,5 +51,5 @@ void AdvParameterList::parameterChanged(int uas, int component, QString paramete
         }
         paramValueMap[parameterName] = ui.tableWidget->item(ui.tableWidget->rowCount()-1,1);
     }
-    paramValueMap[parameterName]->setText(QString::number(value.toFloat(),'g',2));
+    paramValueMap[parameterName]->setText(QString::number(value.toFloat(),'f',2));
 }

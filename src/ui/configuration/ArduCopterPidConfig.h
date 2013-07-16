@@ -18,6 +18,9 @@ private slots:
     void refreshButtonClicked();
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
 private:
+    QList<QPair<int,QString> > ch6ValueToTextList;
+    QList<QPair<int,QString> > ch7ValueToTextList;
+    QList<QPair<int,QString> > ch8ValueToTextList;
     QMap<QString,QDoubleSpinBox*> nameToBoxMap;
     Ui::ArduCopterPidConfig ui;
 };
