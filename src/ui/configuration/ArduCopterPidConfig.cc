@@ -161,6 +161,7 @@ void ArduCopterPidConfig::parameterChanged(int uas, int component, QString param
             if (ch8ValueToTextList[i].first == value.toInt())
             {
                 ui.ch8OptComboBox->setCurrentIndex(i);
+            }
         }
     }
 }
