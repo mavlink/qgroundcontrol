@@ -10,7 +10,9 @@
 #include "FailSafeConfig.h"
 #include "AdvancedParamConfig.h"
 #include "ArduCopterPidConfig.h"
-
+#include "ArduPlanePidConfig.h"
+#include "ArduRoverPidConfig.h"
+#include "AdvParameterList.h"
 #include "UASInterface.h"
 #include "UASManager.h"
 
@@ -32,7 +34,10 @@ private:
     GeoFenceConfig *geoFenceConfig;
     FailSafeConfig *failSafeConfig;
     AdvancedParamConfig *advancedParamConfig;
-    ArduCopterPidConfig *arduCoperPidConfig;
+    ArduCopterPidConfig *arduCopterPidConfig;
+    ArduPlanePidConfig *arduPlanePidConfig;
+    ArduRoverPidConfig *arduRoverPidConfig;
+    AdvParameterList *advParameterList;
     QMap<QObject*,QWidget*> buttonToConfigWidgetMap;
 };
 

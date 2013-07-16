@@ -32,6 +32,16 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
 
 
 }
+void BatteryMonitorConfig::activeUASSet(UASInterface *uas)
+{
+    if (!uas)
+    {
+        return;
+    }
+    connect(uas,SIGNAL(batteryChanged(UASInterface*,double,double,double,int)),this,SLOT(batteryChanged(UASInterface*,double,double,double,int)));
+    AP2ConfigWidget::activeUASSet(uas);
+}
+
 void BatteryMonitorConfig::calcDividerSet()
 {
     if (!m_uas)
@@ -221,6 +231,14 @@ void BatteryMonitorConfig::apmVerCurrentIndexChanged(int index)
 
 BatteryMonitorConfig::~BatteryMonitorConfig()
 {
+}
+void BatteryMonitorConfig::batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds)
+{
+    ui.calcVoltsLineEdit->setText(QString::number(voltage,'f',2));
+    if (ui.measuredVoltsLineEdit->text() == "")
+    {
+        ui.measuredVoltsLineEdit->setText(ui.calcVoltsLineEdit->text());
+    }
 }
 
 void BatteryMonitorConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
