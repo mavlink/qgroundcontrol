@@ -423,6 +423,8 @@ void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, doubl
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
+    Q_UNUSED(current);
+
     if (batteryPercent != percent || batteryVoltage != voltage) changed = true;
     batteryPercent = percent;
     batteryVoltage = voltage;

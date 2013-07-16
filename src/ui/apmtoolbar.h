@@ -41,6 +41,7 @@ public slots:
 
     void connectMAV();
     void showConnectionDialog();
+    void setConnection(bool connection);
 
     void updateLinkDisplay(LinkInterface *newLink);
 };

@@ -49,16 +49,11 @@ QGCStatusBar::QGCStatusBar(QWidget *parent) :
 
 void QGCStatusBar::paintEvent(QPaintEvent * event)
 {
+    Q_UNUSED(event);
     QPainter p(this);
     QStyleOption opt;
     opt.initFrom(this);
     style()->drawPrimitive(QStyle::PE_PanelStatusBar, &opt, &p, this);
-    //QStatusBar::paintEvent(event);
-//    if (currentMessage().length() == 0) {
-//        QStatusBar::paintEvent(event);
-//    } else {
-
-//    }
 }
 
 void QGCStatusBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
@@ -66,12 +61,6 @@ void QGCStatusBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
     this->player = player;
     addPermanentWidget(player);
     connect(toggleLoggingButton, SIGNAL(clicked(bool)), this, SLOT(logging(bool)));
-    //connect(MainWindow::instance()->getMAVLink(), SIGNAL(loggingChanged(bool)), toggleLoggingButton, SLOT(setChecked(bool)));
-
-    // XXX Mutex issue if called like this
-//    toggleLoggingButton->blockSignals(true);
-//    toggleLoggingButton->setChecked(MainWindow::instance()->getMAVLink()->loggingEnabled());
-//    toggleLoggingButton->blockSignals(false);
 }
 
 void QGCStatusBar::logging(bool checked)

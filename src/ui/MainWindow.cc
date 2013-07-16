@@ -189,26 +189,6 @@ MainWindow::MainWindow(QWidget *parent):
     advancedActions << ui.actionEngineersView;
 
     toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
-#else
-    // Add the APM 'toolbar'
-
-    APMToolBar *apmToolBar = new APMToolBar(this);
-    apmToolBar->setFlightViewAction(ui.actionFlightView);
-    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
-    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
-    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
-    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
-    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
-
-    QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
-    widget->setWidget(apmToolBar);
-    widget->setMinimumHeight(72);
-    widget->setMaximumHeight(72);
-    widget->setMinimumWidth(1024);
-    widget->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    widget->setTitleBarWidget(new QWidget(this)); // Disables the title bar
-//    /*widget*/->setStyleSheet("QDockWidget { border: 0px solid #FFFFFF; border-radius: 0px; border-bottom: 0px;}");
-    this->addDockWidget(Qt::TopDockWidgetArea, widget);
 #endif
 
     customStatusBar = new QGCStatusBar(this);
@@ -234,6 +214,28 @@ MainWindow::MainWindow(QWidget *parent):
     }
 
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+
+#ifndef QGC_TOOLBAR_ENABLED
+    // Add the APM 'toolbar'
+
+    APMToolBar *apmToolBar = new APMToolBar(this);
+    apmToolBar->setFlightViewAction(ui.actionFlightView);
+    apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
+    apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
+    apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
+    apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
+
+    QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
+    widget->setWidget(apmToolBar);
+    widget->setMinimumHeight(72);
+    widget->setMaximumHeight(72);
+    widget->setMinimumWidth(1024);
+    widget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    widget->setTitleBarWidget(new QWidget(this)); // Disables the title bar
+//    /*widget*/->setStyleSheet("QDockWidget { border: 0px solid #FFFFFF; border-radius: 0px; border-bottom: 0px;}");
+    this->addDockWidget(Qt::TopDockWidgetArea, widget);
+#endif
 
     // Connect user interface devices
     emit initStatusChanged("Initializing joystick interface.");
@@ -918,6 +920,8 @@ void MainWindow::showTool(bool show)
 }*/
 void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
 {
+    Q_UNUSED(title);
+
     // Check if this widget already has been added
     if (centerStack->indexOf(widget) == -1)
     {
@@ -1729,6 +1733,7 @@ void MainWindow::commsWidgetDestroyed(QObject *obj)
 
 void MainWindow::setActiveUAS(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     // Enable and rename menu
     //    ui.menuUnmanned_System->setTitle(uas->getUASName());
     //    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
@@ -1950,6 +1955,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
 void MainWindow::UASDeleted(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     if (UASManager::instance()->getUASList().count() == 0)
     {
         // Last system deleted
