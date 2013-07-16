@@ -51,12 +51,12 @@ QT_BEGIN_NAMESPACE
 #  if defined(QT_BUILD_SERIALPORT_LIB)
 #    define Q_SERIALPORT_EXPORT Q_DECL_EXPORT
 #  else
-#    define Q_SERIALPORT_EXPORT Q_DECL_IMPORT
+//#    define Q_SERIALPORT_EXPORT Q_DECL_IMPORT
 #  endif
 #else
 #  define Q_SERIALPORT_EXPORT
 #endif
-
+#  define Q_SERIALPORT_EXPORT
 // The macro has been available only since Qt 5.0
 #ifndef Q_DECL_OVERRIDE
 #define Q_DECL_OVERRIDE
