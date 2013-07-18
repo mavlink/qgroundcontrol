@@ -143,6 +143,8 @@ void APMToolBar::showConnectionDialog()
     if (link && LinkManager::instance()->getLinks().count() >= 3)
     {
         // Serial Link so prompt to config it
+        connect(link, SIGNAL(updateLink(LinkInterface*)),
+                             this, SLOT(updateLinkDisplay(LinkInterface*)));
         result = MainWindow::instance()->configLink(link);
 
         if (!result)

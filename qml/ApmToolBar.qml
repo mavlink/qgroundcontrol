@@ -10,7 +10,7 @@ Rectangle {
     property alias baudrateLabel: baudrate.label
     property bool connected: false
 
-    width: 1024 < parent.width ? 1024 : parent.width
+    width: toolbar.width
     height: 72
     color: "black"
     border.color: "black"
@@ -19,9 +19,11 @@ Rectangle {
         if (connected){
             console.log("APM Tool BAR QML: connected")
             connectButton.image = "./resources/apmplanner/toolbar/disconnect.png"
+            connectButton.label = "CONNECT"
         } else {
             console.log("APM Tool BAR QML: disconnected")
             connectButton.image = "./resources/apmplanner/toolbar/connect.png"
+            connectButton.label = "DISCONNECT"
         }
     }
 
@@ -83,7 +85,7 @@ Rectangle {
         }
 
         Button {
-            id: simualtionView
+            id: simulationView
             label: "SIMULATION"
             image: "./resources/apmplanner/toolbar/simulation.png"
             onClicked: globalObj.triggerSimulationView()
@@ -102,6 +104,8 @@ Rectangle {
             color: "black"
         }
 
+// [BB] Commented out ToolBar Status info work.
+//      WIP: To be fixed later
 //            DigitalDisplay { // Information Pane
 //                title:"Mode"
 //                textValue: "Stabilize"
@@ -169,7 +173,6 @@ Rectangle {
         }
 
         Rectangle { // Spacer
-            anchors.right: parent.right
             width: 5
             height: parent.height
             color: "black"
