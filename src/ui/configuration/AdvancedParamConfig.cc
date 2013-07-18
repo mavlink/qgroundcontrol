@@ -12,7 +12,7 @@ AdvancedParamConfig::~AdvancedParamConfig()
 void AdvancedParamConfig::addRange(QString title,QString description,QString param,double min,double max)
 {
     ParamWidget *widget = new ParamWidget(ui.scrollAreaWidgetContents);
-    paramToWidgetMap[param] = widget;
+    m_paramToWidgetMap[param] = widget;
     widget->setupDouble(title + "(" + param + ")",description,0,min,max);
     ui.verticalLayout->addWidget(widget);
     widget->show();
@@ -21,15 +21,15 @@ void AdvancedParamConfig::addRange(QString title,QString description,QString par
 void AdvancedParamConfig::addCombo(QString title,QString description,QString param,QList<QPair<int,QString> > valuelist)
 {
     ParamWidget *widget = new ParamWidget(ui.scrollAreaWidgetContents);
-    paramToWidgetMap[param] = widget;
+    m_paramToWidgetMap[param] = widget;
     widget->setupCombo(title + "(" + param + ")",description,valuelist);
     ui.verticalLayout->addWidget(widget);
     widget->show();
 }
 void AdvancedParamConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-    if (paramToWidgetMap.contains(parameterName))
+    if (m_paramToWidgetMap.contains(parameterName))
     {
-        paramToWidgetMap[parameterName]->setValue(value.toDouble());
+        m_paramToWidgetMap[parameterName]->setValue(value.toDouble());
     }
 }

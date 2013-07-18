@@ -17,7 +17,7 @@ private slots:
     void writeButtonClicked();
     void refreshButtonClicked();
 private:
-    QMap<QString,QDoubleSpinBox*> nameToBoxMap;
+    QMap<QString,QDoubleSpinBox*> m_nameToBoxMap;
     Ui::ArduPlanePidConfig ui;
 };
 

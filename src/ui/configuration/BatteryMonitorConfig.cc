@@ -4,11 +4,11 @@
 BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
-    ui.monitorComboBox->addItem("0: Disabled");
-    ui.monitorComboBox->addItem("3: Battery Volts");
-    ui.monitorComboBox->addItem("4: Voltage and Current");
+    ui.monitorComboBox->addItem(tr("0: Disabled"));
+    ui.monitorComboBox->addItem(tr("3: Battery Volts"));
+    ui.monitorComboBox->addItem(tr("4: Voltage and Current"));
 
-    ui.sensorComboBox->addItem("0: Other");
+    ui.sensorComboBox->addItem(tr("0: Other"));
     ui.sensorComboBox->addItem("1: AttoPilot 45A");
     ui.sensorComboBox->addItem("2: AttoPilot 90A");
     ui.sensorComboBox->addItem("3: AttoPilot 180A");
@@ -34,19 +34,24 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
 }
 void BatteryMonitorConfig::activeUASSet(UASInterface *uas)
 {
+    if (m_uas)
+    {
+        disconnect(m_uas,SIGNAL(batteryChanged(UASInterface*,double,double,double,int)),this,SLOT(batteryChanged(UASInterface*,double,double,double,int)));
+    }
+    AP2ConfigWidget::activeUASSet(uas);
     if (!uas)
     {
         return;
     }
     connect(uas,SIGNAL(batteryChanged(UASInterface*,double,double,double,int)),this,SLOT(batteryChanged(UASInterface*,double,double,double,int)));
-    AP2ConfigWidget::activeUASSet(uas);
+
 }
 
 void BatteryMonitorConfig::calcDividerSet()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     bool ok = false;
@@ -63,7 +68,7 @@ void BatteryMonitorConfig::ampsPerVoltSet()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     bool ok = false;
@@ -80,7 +85,7 @@ void BatteryMonitorConfig::batteryCapacitySet()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     bool ok = false;
@@ -98,10 +103,10 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
-    if (index == 0)
+    if (index == 0) //Battery Monitor Disabled
     {
         m_uas->getParamManager()->setParameter(1,"BATT_VOLT_PIN",-1);
         m_uas->getParamManager()->setParameter(1,"BATT_CURR_PIN",-1);
@@ -114,7 +119,7 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
         ui.calcVoltsLineEdit->setEnabled(false);
         ui.ampsPerVoltsLineEdit->setEnabled(false);
     }
-    else if (index == 1)
+    else if (index == 1) //Monitor voltage only
     {
         m_uas->getParamManager()->setParameter(1,"BATT_MONITOR",3);
         ui.sensorComboBox->setEnabled(false);
@@ -124,7 +129,7 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
         ui.calcVoltsLineEdit->setEnabled(false);
         ui.ampsPerVoltsLineEdit->setEnabled(false);
     }
-    else if (index == 2)
+    else if (index == 2) //Monitor voltage and current
     {
         m_uas->getParamManager()->setParameter(1,"BATT_MONITOR",4);
         ui.sensorComboBox->setEnabled(true);
@@ -139,45 +144,39 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
 }
 void BatteryMonitorConfig::sensorCurrentIndexChanged(int index)
 {
-    float maxvolt = 0;
-    float maxamps = 0;
-    float mvpervolt = 0;
-    float mvperamp = 0;
-    float topvolt = 0;
-    float topamps = 0;
+    float maxvolt = 0.0;
+    float maxamps = 0.0;
+    float mvpervolt = 0.0;
+    float mvperamp = 0.0;
+    float topvolt = 0.0;
+    float topamps = 0.0;
 
     if (index == 1)
     {
-        //atto 45
+        //atto 45 see https://www.sparkfun.com/products/10643
         maxvolt = 13.6;
         maxamps = 44.7;
-        mvpervolt = 242.3;
-        mvperamp = 73.20;
     }
     else if (index == 2)
     {
-        //atto 90
-        maxvolt = 50;
+        //atto 90 see https://www.sparkfun.com/products/9028
+        maxvolt = 51.8;
         maxamps = 89.4;
-        mvpervolt = 63.69;
-        mvperamp = 36.60;
     }
     else if (index == 3)
     {
-        //atto 180
-        maxvolt = 50;
+        //atto 180 see https://www.sparkfun.com/products/10644
+        maxvolt = 51.8;
         maxamps = 178.8;
-        mvpervolt = 63.69;
-        mvperamp = 18.30;
     }
     else if (index == 4)
     {
         //3dr
-        maxvolt = 50;
-        maxamps = 90;
-        mvpervolt = 100;
-        mvperamp = 55.55;
+        maxvolt = 50.0;
+        maxamps = 90.0;
     }
+    mvpervolt = calculatemVPerVolt(3.3,maxvolt);
+    mvperamp = calculatemVPerAmp(3.3,maxamps);
     if (index == 0)
     {
         //Other
@@ -197,12 +196,21 @@ void BatteryMonitorConfig::sensorCurrentIndexChanged(int index)
         ui.measuredVoltsLineEdit->setEnabled(false);
     }
 }
+float BatteryMonitorConfig::calculatemVPerAmp(float maxvoltsout,float maxamps)
+{
+    return (1000.0 * (maxvoltsout/maxamps));
+}
+
+float BatteryMonitorConfig::calculatemVPerVolt(float maxvoltsout,float maxvolts)
+{
+    return (1000.0 * (maxvoltsout/maxvolts));
+}
 
 void BatteryMonitorConfig::apmVerCurrentIndexChanged(int index)
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     if (index == 0) //APM1

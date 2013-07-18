@@ -32,9 +32,8 @@ This file is part of the QGROUNDCONTROL project
 #include "FrameTypeConfig.h"
 
 
-FrameTypeConfig::FrameTypeConfig(QWidget *parent) : QWidget(parent)
+FrameTypeConfig::FrameTypeConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
-    m_uas=0;
     ui.setupUi(this);
 
     //Disable until we get a FRAME parameter.
@@ -45,22 +44,10 @@ FrameTypeConfig::FrameTypeConfig(QWidget *parent) : QWidget(parent)
     connect(ui.plusRadioButton,SIGNAL(clicked()),this,SLOT(plusFrameSelected()));
     connect(ui.xRadioButton,SIGNAL(clicked()),this,SLOT(xFrameSelected()));
     connect(ui.vRadioButton,SIGNAL(clicked()),this,SLOT(vFrameSelected()));
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    activeUASSet(UASManager::instance()->getActiveUAS());
 }
 
 FrameTypeConfig::~FrameTypeConfig()
 {
-}
-void FrameTypeConfig::activeUASSet(UASInterface *uas)
-{
-    if (!uas) return;
-    if (!m_uas)
-    {
-        disconnect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
-    }
-    m_uas = uas;
-    connect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
 }
 void FrameTypeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {

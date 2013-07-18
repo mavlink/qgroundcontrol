@@ -1,10 +1,12 @@
-#include "CameraGimbalConfig.h"
 #include <QMessageBox>
 #include <QDebug>
+
+#include "CameraGimbalConfig.h"
+
 CameraGimbalConfig::CameraGimbalConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
-    ui.tiltChannelComboBox->addItem("Disable");
+    ui.tiltChannelComboBox->addItem(tr("Disable"));
     ui.tiltChannelComboBox->addItem("RC5");
     ui.tiltChannelComboBox->addItem("RC6");
     ui.tiltChannelComboBox->addItem("RC7");
@@ -12,13 +14,13 @@ CameraGimbalConfig::CameraGimbalConfig(QWidget *parent) : AP2ConfigWidget(parent
     ui.tiltChannelComboBox->addItem("RC10");
     ui.tiltChannelComboBox->addItem("RC11");
 
-    ui.tiltInputChannelComboBox->addItem("Disable");
+    ui.tiltInputChannelComboBox->addItem(tr("Disable"));
     ui.tiltInputChannelComboBox->addItem("RC5");
     ui.tiltInputChannelComboBox->addItem("RC6");
     ui.tiltInputChannelComboBox->addItem("RC7");
     ui.tiltInputChannelComboBox->addItem("RC8");
 
-    ui.rollChannelComboBox->addItem("Disable");
+    ui.rollChannelComboBox->addItem(tr("Disable"));
     ui.rollChannelComboBox->addItem("RC5");
     ui.rollChannelComboBox->addItem("RC6");
     ui.rollChannelComboBox->addItem("RC7");
@@ -26,14 +28,14 @@ CameraGimbalConfig::CameraGimbalConfig(QWidget *parent) : AP2ConfigWidget(parent
     ui.rollChannelComboBox->addItem("RC10");
     ui.rollChannelComboBox->addItem("RC11");
 
-    ui.rollInputChannelComboBox->addItem("Disable");
+    ui.rollInputChannelComboBox->addItem(tr("Disable"));
     ui.rollInputChannelComboBox->addItem("RC5");
     ui.rollInputChannelComboBox->addItem("RC6");
     ui.rollInputChannelComboBox->addItem("RC7");
     ui.rollInputChannelComboBox->addItem("RC8");
 
 
-    ui.panChannelComboBox->addItem("Disable");
+    ui.panChannelComboBox->addItem(tr("Disable"));
     ui.panChannelComboBox->addItem("RC5");
     ui.panChannelComboBox->addItem("RC6");
     ui.panChannelComboBox->addItem("RC7");
@@ -41,16 +43,16 @@ CameraGimbalConfig::CameraGimbalConfig(QWidget *parent) : AP2ConfigWidget(parent
     ui.panChannelComboBox->addItem("RC10");
     ui.panChannelComboBox->addItem("RC11");
 
-    ui.panInputChannelComboBox->addItem("Disable");
+    ui.panInputChannelComboBox->addItem(tr("Disable"));
     ui.panInputChannelComboBox->addItem("RC5");
     ui.panInputChannelComboBox->addItem("RC6");
     ui.panInputChannelComboBox->addItem("RC7");
     ui.panInputChannelComboBox->addItem("RC8");
 
 
-    ui.shutterChannelComboBox->addItem("Disable");
-    ui.shutterChannelComboBox->addItem("Relay");
-    ui.shutterChannelComboBox->addItem("Transistor");
+    ui.shutterChannelComboBox->addItem(tr("Disable"));
+    ui.shutterChannelComboBox->addItem(tr("Relay"));
+    ui.shutterChannelComboBox->addItem(tr("Transistor"));
     ui.shutterChannelComboBox->addItem("RC5");
     ui.shutterChannelComboBox->addItem("RC6");
     ui.shutterChannelComboBox->addItem("RC7");
@@ -100,13 +102,13 @@ void CameraGimbalConfig::updateTilt()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
-    if (!tiltPrefix.isEmpty())
+    if (!m_tiltPrefix.isEmpty())
     {
         //We need to set this to 0 for disabled.
-        m_uas->getParamManager()->setParameter(1,tiltPrefix + "FUNCTION",0);
+        m_uas->getParamManager()->setParameter(1,m_tiltPrefix + "FUNCTION",0);
     }
     if (ui.tiltChannelComboBox->currentIndex() == 0)
     {
@@ -134,7 +136,7 @@ void CameraGimbalConfig::updateRoll()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     m_uas->getParamManager()->setParameter(1,ui.rollChannelComboBox->currentText() + "_FUNCTION",8);
@@ -157,7 +159,7 @@ void CameraGimbalConfig::updatePan()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     m_uas->getParamManager()->setParameter(1,ui.panChannelComboBox->currentText() + "_FUNCTION",6);
@@ -180,7 +182,7 @@ void CameraGimbalConfig::updateShutter()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     if (ui.shutterChannelComboBox->currentIndex() == 0) //Disabled
@@ -216,24 +218,6 @@ CameraGimbalConfig::~CameraGimbalConfig()
 
 void CameraGimbalConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-    connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    connect(ui.tiltInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-    disconnect(ui.tiltInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-
-    connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-    disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-    connect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-    disconnect(ui.panInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-
-    connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-    disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-    connect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-    disconnect(ui.rollInputChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-
-    connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-    disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-
     if (parameterName == "MNT_ANGMIN_TIL") //TILT
     {
         ui.tiltAngleMinSpinBox->setValue(value.toInt() / 100.0);
@@ -327,7 +311,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
         }
         connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
     }
-    if (parameterName.startsWith(shutterPrefix) && !shutterPrefix.isEmpty())
+    if (parameterName.startsWith(m_shutterPrefix) && !m_shutterPrefix.isEmpty())
     {
         if (parameterName.endsWith("MIN"))
         {
@@ -338,7 +322,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             ui.shutterServoMaxSpinBox->setValue(value.toInt());
         }
     }
-    else if (parameterName.startsWith(tiltPrefix) && !tiltPrefix.isEmpty())
+    else if (parameterName.startsWith(m_tiltPrefix) && !m_tiltPrefix.isEmpty())
     {
         if (parameterName.endsWith("MIN"))
         {
@@ -360,7 +344,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             }
         }
     }
-    else if (parameterName.startsWith(rollPrefix) && !rollPrefix.isEmpty())
+    else if (parameterName.startsWith(m_rollPrefix) && !m_rollPrefix.isEmpty())
     {
         if (parameterName.endsWith("MIN"))
         {
@@ -382,7 +366,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             }
         }
     }
-    else if (parameterName.startsWith(panPrefix) && !panPrefix.isEmpty())
+    else if (parameterName.startsWith(m_panPrefix) && !m_panPrefix.isEmpty())
     {
         if (parameterName.endsWith("MIN"))
         {
@@ -412,7 +396,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
             ui.shutterChannelComboBox->setCurrentIndex(3);
             connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-            shutterPrefix = "RC5_";
+            m_shutterPrefix = "RC5_";
         }
         else if (value.toInt() == 8)
         {
@@ -420,7 +404,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
             ui.rollChannelComboBox->setCurrentIndex(1);
             connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-            rollPrefix = "RC5_";
+            m_rollPrefix = "RC5_";
         }
         else if (value.toInt() == 7)
         {
@@ -428,7 +412,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
             ui.tiltChannelComboBox->setCurrentIndex(1);
             connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-            tiltPrefix = "RC5_";
+            m_tiltPrefix = "RC5_";
         }
         else if (value.toInt() == 6)
         {
@@ -436,7 +420,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
             ui.panChannelComboBox->setCurrentIndex(1);
             connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-            panPrefix = "RC5_";
+            m_panPrefix = "RC5_";
         }
         m_uas->getParamManager()->requestParameterUpdate(1,"RC5_MIN");
         m_uas->getParamManager()->requestParameterUpdate(1,"RC5_MAX");
@@ -450,7 +434,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
             ui.shutterChannelComboBox->setCurrentIndex(4);
             connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-            shutterPrefix = "RC6_";
+            m_shutterPrefix = "RC6_";
         }
         else if (value.toInt() == 8)
         {
@@ -458,7 +442,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
             ui.rollChannelComboBox->setCurrentIndex(2);
             connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-            rollPrefix = "RC6_";
+            m_rollPrefix = "RC6_";
         }
         else if (value.toInt() == 7)
         {
@@ -466,7 +450,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
             ui.tiltChannelComboBox->setCurrentIndex(2);
             connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-            tiltPrefix = "RC6_";
+            m_tiltPrefix = "RC6_";
         }
         else if (value.toInt() == 6)
         {
@@ -474,7 +458,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
             ui.panChannelComboBox->setCurrentIndex(2);
             connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-            panPrefix = "RC6_";
+            m_panPrefix = "RC6_";
         }
         m_uas->getParamManager()->requestParameterUpdate(1,"RC6_MIN");
         m_uas->getParamManager()->requestParameterUpdate(1,"RC6_MAX");
@@ -488,7 +472,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
             ui.shutterChannelComboBox->setCurrentIndex(5);
             connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-            shutterPrefix = "RC7_";
+            m_shutterPrefix = "RC7_";
         }
         else if (value.toInt() == 8)
         {
@@ -496,7 +480,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
             ui.rollChannelComboBox->setCurrentIndex(3);
             connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-            rollPrefix = "RC7_";
+            m_rollPrefix = "RC7_";
         }
         else if (value.toInt() == 7)
         {
@@ -504,7 +488,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
             ui.tiltChannelComboBox->setCurrentIndex(3);
             connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-            tiltPrefix = "RC7_";
+            m_tiltPrefix = "RC7_";
         }
         else if (value.toInt() == 6)
         {
@@ -512,7 +496,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
             ui.panChannelComboBox->setCurrentIndex(3);
             connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-            panPrefix = "RC7_";
+            m_panPrefix = "RC7_";
         }
         m_uas->getParamManager()->requestParameterUpdate(1,"RC7_MIN");
         m_uas->getParamManager()->requestParameterUpdate(1,"RC7_MAX");
@@ -526,7 +510,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
             ui.shutterChannelComboBox->setCurrentIndex(6);
             connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-            shutterPrefix = "RC8_";
+            m_shutterPrefix = "RC8_";
         }
         else if (value.toInt() == 8)
         {
@@ -534,7 +518,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
             ui.rollChannelComboBox->setCurrentIndex(4);
             connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-            rollPrefix = "RC8_";
+            m_rollPrefix = "RC8_";
         }
         else if (value.toInt() == 7)
         {
@@ -542,7 +526,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
             ui.tiltChannelComboBox->setCurrentIndex(4);
             connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-            tiltPrefix = "RC8_";
+            m_tiltPrefix = "RC8_";
         }
         else if (value.toInt() == 6)
         {
@@ -550,7 +534,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
             ui.panChannelComboBox->setCurrentIndex(4);
             connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-            panPrefix = "RC8_";
+            m_panPrefix = "RC8_";
         }
         m_uas->getParamManager()->requestParameterUpdate(1,"RC8_MIN");
         m_uas->getParamManager()->requestParameterUpdate(1,"RC8_MAX");
@@ -564,7 +548,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
             ui.shutterChannelComboBox->setCurrentIndex(7);
             connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-            shutterPrefix = "RC10_";
+            m_shutterPrefix = "RC10_";
         }
         else if (value.toInt() == 8)
         {
@@ -572,7 +556,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
             ui.rollChannelComboBox->setCurrentIndex(5);
             connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-            rollPrefix = "RC10_";
+            m_rollPrefix = "RC10_";
         }
         else if (value.toInt() == 7)
         {
@@ -580,7 +564,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
             ui.tiltChannelComboBox->setCurrentIndex(5);
             connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-            tiltPrefix = "RC10_";
+            m_tiltPrefix = "RC10_";
         }
         else if (value.toInt() == 6)
         {
@@ -588,7 +572,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
             ui.panChannelComboBox->setCurrentIndex(5);
             connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-            panPrefix = "RC10_";
+            m_panPrefix = "RC10_";
         }
         m_uas->getParamManager()->requestParameterUpdate(1,"RC10_MIN");
         m_uas->getParamManager()->requestParameterUpdate(1,"RC10_MAX");
@@ -602,7 +586,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
             ui.shutterChannelComboBox->setCurrentIndex(8);
             connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
-            shutterPrefix = "RC11_";
+            m_shutterPrefix = "RC11_";
         }
         else if (value.toInt() == 8)
         {
@@ -610,7 +594,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
             ui.rollChannelComboBox->setCurrentIndex(6);
             connect(ui.rollChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateRoll()));
-            rollPrefix = "RC11_";
+            m_rollPrefix = "RC11_";
         }
         else if (value.toInt() == 7)
         {
@@ -618,7 +602,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
             ui.tiltChannelComboBox->setCurrentIndex(6);
             connect(ui.tiltChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTilt()));
-            tiltPrefix = "RC11_";
+            m_tiltPrefix = "RC11_";
         }
         else if (value.toInt() == 6)
         {
@@ -626,7 +610,7 @@ void CameraGimbalConfig::parameterChanged(int uas, int component, QString parame
             disconnect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
             ui.panChannelComboBox->setCurrentIndex(6);
             connect(ui.panChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updatePan()));
-            panPrefix = "RC11_";
+            m_panPrefix = "RC11_";
         }
         m_uas->getParamManager()->requestParameterUpdate(1,"RC11_MIN");
         m_uas->getParamManager()->requestParameterUpdate(1,"RC11_MAX");

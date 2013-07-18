@@ -1,7 +1,8 @@
-#include "ApmSoftwareConfig.h"
 #include <QXmlStreamReader>
 #include <QDir>
 #include <QFile>
+
+#include "ApmSoftwareConfig.h"
 
 
 ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
@@ -17,51 +18,48 @@ ApmSoftwareConfig::ApmSoftwareConfig(QWidget *parent) : QWidget(parent)
     ui.arduRoverPidButton->setVisible(false);
     ui.arduPlanePidButton->setVisible(false);
 
-    flightConfig = new FlightModeConfig(this);
-    ui.stackedWidget->addWidget(flightConfig);
-    buttonToConfigWidgetMap[ui.flightModesButton] = flightConfig;
+    m_flightConfig = new FlightModeConfig(this);
+    ui.stackedWidget->addWidget(m_flightConfig);
+    m_buttonToConfigWidgetMap[ui.flightModesButton] = m_flightConfig;
     connect(ui.flightModesButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    standardParamConfig = new StandardParamConfig(this);
-    ui.stackedWidget->addWidget(standardParamConfig);
-    buttonToConfigWidgetMap[ui.standardParamButton] = standardParamConfig;
+    m_standardParamConfig = new StandardParamConfig(this);
+    ui.stackedWidget->addWidget(m_standardParamConfig);
+    m_buttonToConfigWidgetMap[ui.standardParamButton] = m_standardParamConfig;
     connect(ui.standardParamButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    failSafeConfig = new FailSafeConfig(this);
-    ui.stackedWidget->addWidget(failSafeConfig);
-    buttonToConfigWidgetMap[ui.failSafeButton] = failSafeConfig;
+    m_failSafeConfig = new FailSafeConfig(this);
+    ui.stackedWidget->addWidget(m_failSafeConfig);
+    m_buttonToConfigWidgetMap[ui.failSafeButton] = m_failSafeConfig;
     connect(ui.failSafeButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    advancedParamConfig = new AdvancedParamConfig(this);
-    ui.stackedWidget->addWidget(advancedParamConfig);
-    buttonToConfigWidgetMap[ui.advancedParamButton] = advancedParamConfig;
+    m_advancedParamConfig = new AdvancedParamConfig(this);
+    ui.stackedWidget->addWidget(m_advancedParamConfig);
+    m_buttonToConfigWidgetMap[ui.advancedParamButton] = m_advancedParamConfig;
     connect(ui.advancedParamButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    advParameterList = new AdvParameterList(this);
-    ui.stackedWidget->addWidget(advParameterList);
-    buttonToConfigWidgetMap[ui.advParamListButton] = advParameterList;
+    m_advParameterList = new AdvParameterList(this);
+    ui.stackedWidget->addWidget(m_advParameterList);
+    m_buttonToConfigWidgetMap[ui.advParamListButton] = m_advParameterList;
     connect(ui.advParamListButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    arduCopterPidConfig = new ArduCopterPidConfig(this);
-    ui.stackedWidget->addWidget(arduCopterPidConfig);
-    buttonToConfigWidgetMap[ui.arduCopterPidButton] = arduCopterPidConfig;
+    m_arduCopterPidConfig = new ArduCopterPidConfig(this);
+    ui.stackedWidget->addWidget(m_arduCopterPidConfig);
+    m_buttonToConfigWidgetMap[ui.arduCopterPidButton] = m_arduCopterPidConfig;
     connect(ui.arduCopterPidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    arduPlanePidConfig = new ArduPlanePidConfig(this);
-    ui.stackedWidget->addWidget(arduPlanePidConfig);
-    buttonToConfigWidgetMap[ui.arduPlanePidButton] = arduPlanePidConfig;
+    m_arduPlanePidConfig = new ArduPlanePidConfig(this);
+    ui.stackedWidget->addWidget(m_arduPlanePidConfig);
+    m_buttonToConfigWidgetMap[ui.arduPlanePidButton] = m_arduPlanePidConfig;
     connect(ui.arduPlanePidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    arduRoverPidConfig = new ArduRoverPidConfig(this);
-    ui.stackedWidget->addWidget(arduRoverPidConfig);
-    buttonToConfigWidgetMap[ui.arduRoverPidButton] = arduRoverPidConfig;
+    m_arduRoverPidConfig = new ArduRoverPidConfig(this);
+    ui.stackedWidget->addWidget(m_arduRoverPidConfig);
+    m_buttonToConfigWidgetMap[ui.arduRoverPidButton] = m_arduRoverPidConfig;
     connect(ui.arduRoverPidButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    if (UASManager::instance()->getActiveUAS())
-    {
-        activeUASSet(UASManager::instance()->getActiveUAS());
-    }
+    activeUASSet(UASManager::instance()->getActiveUAS());
 }
 
 ApmSoftwareConfig::~ApmSoftwareConfig()
@@ -69,9 +67,9 @@ ApmSoftwareConfig::~ApmSoftwareConfig()
 }
 void ApmSoftwareConfig::activateStackedWidget()
 {
-    if (buttonToConfigWidgetMap.contains(sender()))
+    if (m_buttonToConfigWidgetMap.contains(sender()))
     {
-        ui.stackedWidget->setCurrentWidget(buttonToConfigWidgetMap[sender()]);
+        ui.stackedWidget->setCurrentWidget(m_buttonToConfigWidgetMap[sender()]);
     }
 }
 void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
@@ -296,11 +294,6 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                         genset["count"] = genarraycount;
                                     }
                                     //Right here we have a single param in memory
-                                    name;
-                                    docs;
-                                    valuemap;
-                                    fieldmap;
-                                    //standardParamConfig
                                     if (valuemap.size() > 0)
                                     {
                                         QList<QPair<int,QString> > valuelist;
@@ -310,13 +303,13 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                         }
                                         if (tab == "Standard")
                                         {
-                                            standardParamConfig->addCombo(humanname,docs,name,valuelist);
+                                            m_standardParamConfig->addCombo(humanname,docs,name,valuelist);
                                         }
                                         else if (tab == "Advanced")
                                         {
-                                            advancedParamConfig->addCombo(humanname,docs,name,valuelist);
+                                            m_advancedParamConfig->addCombo(humanname,docs,name,valuelist);
                                         }
-                                        advParameterList->setParameterMetaData(name,humanname,docs);
+                                        m_advParameterList->setParameterMetaData(name,humanname,docs);
                                     }
                                     else if (fieldmap.size() > 0)
                                     {
@@ -340,120 +333,23 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                         }
                                         if (tab == "Standard")
                                         {
-                                            standardParamConfig->addRange(humanname,docs,name,min,max);
+                                            m_standardParamConfig->addRange(humanname,docs,name,min,max);
                                         }
                                         else if (tab == "Advanced")
                                         {
-                                            advancedParamConfig->addRange(humanname,docs,name,max,min);
+                                            m_advancedParamConfig->addRange(humanname,docs,name,max,min);
                                         }
-                                        advParameterList->setParameterMetaData(name,humanname,docs);
+                                        m_advParameterList->setParameterMetaData(name,humanname,docs);
                                     }
 
                                 }
                                 xml.readNext();
                             }
-                            if (genarraycount > 0)
-                            {
-                                /*
-                                tool = new QGCToolWidget("", this);
-                                tool->addUAS(mav);
-                                tool->setTitle(parametersname);
-                                tool->setObjectName(parametersname);
-                                tool->setSettings(genset);
-                                QList<QString> paramlist = tool->getParamList();
-                                for (int i=0;i<paramlist.size();i++)
-                                {
-                                    //Based on the airframe, we add the parameter to different categories.
-                                    if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
-                                    {
-                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
-                                    }
-                                    else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
-                                    {
-                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
-                                    }
-                                    else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
-                                    {
-                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
-                                    }
-                                    else
-                                    {
-                                        libParamToWidgetMap->insert(paramlist[i],tool);
-                                    }
-                                }
-
-                                toolWidgets.append(tool);
-                                QGroupBox *box = new QGroupBox(this);
-                                box->setTitle(tool->objectName());
-                                box->setLayout(new QVBoxLayout());
-                                box->layout()->addWidget(tool);
-                                if (valuetype == "vehicles")
-                                {
-                                    ui->leftGeneralLayout->addWidget(box);
-                                }
-                                else if (valuetype == "libraries")
-                                {
-                                    ui->rightGeneralLayout->addWidget(box);
-                                }
-                                box->hide();
-                                toolToBoxMap[tool] = box;*/
-                            }
-                            if (advarraycount > 0)
-                            {
-                                /*
-                                tool = new QGCToolWidget("", this);
-                                tool->addUAS(mav);
-                                tool->setTitle(parametersname);
-                                tool->setObjectName(parametersname);
-                                tool->setSettings(advset);
-                                QList<QString> paramlist = tool->getParamList();
-                                for (int i=0;i<paramlist.size();i++)
-                                {
-                                    //Based on the airframe, we add the parameter to different categories.
-                                    if (parametersname == "ArduPlane") //MAV_TYPE_FIXED_WING FIXED_WING
-                                    {
-                                        systemTypeToParamMap["FIXED_WING"]->insert(paramlist[i],tool);
-                                    }
-                                    else if (parametersname == "ArduCopter") //MAV_TYPE_QUADROTOR "QUADROTOR
-                                    {
-                                        systemTypeToParamMap["QUADROTOR"]->insert(paramlist[i],tool);
-                                    }
-                                    else if (parametersname == "APMrover2") //MAV_TYPE_GROUND_ROVER GROUND_ROVER
-                                    {
-                                        systemTypeToParamMap["GROUND_ROVER"]->insert(paramlist[i],tool);
-                                    }
-                                    else
-                                    {
-                                        libParamToWidgetMap->insert(paramlist[i],tool);
-                                    }
-                                }
-
-                                toolWidgets.append(tool);
-                                QGroupBox *box = new QGroupBox(this);
-                                box->setTitle(tool->objectName());
-                                box->setLayout(new QVBoxLayout());
-                                box->layout()->addWidget(tool);
-                                if (valuetype == "vehicles")
-                                {
-                                    ui->leftAdvancedLayout->addWidget(box);
-                                }
-                                else if (valuetype == "libraries")
-                                {
-                                    ui->rightAdvancedLayout->addWidget(box);
-                                }
-                                box->hide();
-                                toolToBoxMap[tool] = box;*/
-                            }
-
-
-
-
                         }
                         xml.readNext();
                     }
 
                 }
-
                 xml.readNext();
             }
         }

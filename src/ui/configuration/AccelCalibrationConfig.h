@@ -5,7 +5,9 @@
 #include "ui_AccelCalibrationConfig.h"
 #include "UASManager.h"
 #include "UASInterface.h"
-class AccelCalibrationConfig : public QWidget
+#include "AP2ConfigWidget.h"
+
+class AccelCalibrationConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
@@ -17,7 +19,7 @@ private slots:
     void calibrateButtonClicked();
     void uasTextMessageReceived(int uasid, int componentid, int severity, QString text);
 private:
-    int accelAckCount;
+    int m_accelAckCount;
     Ui::AccelCalibrationConfig ui;
     UASInterface *m_uas;
 };

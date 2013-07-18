@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
-
 #include <QtGui/QMainWindow>
 #include <QStatusBar>
 #include <QStackedWidget>

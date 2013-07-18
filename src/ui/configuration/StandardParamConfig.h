@@ -18,7 +18,6 @@ private slots:
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
 private:
     QMap<QString,ParamWidget*> paramToWidgetMap;
-    void activeUASSet(UASInterface *uas);
     Ui::StandardParamConfig ui;
 };
 
