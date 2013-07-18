@@ -49,7 +49,7 @@ linux-g++|linux-g++-64{
     BUILDDIR = $${OUT_PWD}/build
 }
 
-DESTDIR = $${TARGETDIR}
+
 
 LANGUAGE = C++
 OBJECTS_DIR = $${BUILDDIR}/obj
