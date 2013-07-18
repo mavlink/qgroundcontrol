@@ -97,7 +97,14 @@ QVector<QString>* SerialLink::getCurrentPorts()
     m_ports->clear();
     // Example use QSerialPortInfo
     // [TODO] make this thread safe
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+
+    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
+
+    if( portList.count() == 0){
+        qDebug() << "No Ports Found" << m_ports;
+    }
+
+    foreach (const QSerialPortInfo &info, portList)
     {
 //        qDebug() << "PortName    : " << info.portName()
 //                 << "Description : " << info.description();
@@ -706,6 +713,7 @@ bool SerialLink::setPortName(QString portName)
             m_port->setPortName(portName);
 
         emit nameChanged(m_portName); // [TODO] maybe we can eliminate this
+        emit updateLink(this);
         return accepted;
     }
     return false;
@@ -716,12 +724,15 @@ bool SerialLink::setBaudRateType(int rateIndex)
 {
     Q_ASSERT_X(m_port != NULL, "setBaudRateType", "m_port is NULL");
     // These minimum and maximum baud rates were based on those enumerated in qserialport.h
+    bool result;
     const int minBaud = (int)QSerialPort::Baud1200;
     const int maxBaud = (int)QSerialPort::Baud115200;
 
     if (m_port && (rateIndex >= minBaud && rateIndex <= maxBaud))
     {
-        return m_port->setBaudRate(static_cast<QSerialPort::BaudRate>(rateIndex));
+        result = m_port->setBaudRate(static_cast<QSerialPort::BaudRate>(rateIndex));
+        emit updateLink(this);
+        return result;
     }
 
     return false;
@@ -743,6 +754,7 @@ bool SerialLink::setBaudRate(int rate)
         accepted = true;
         if (m_port)
             accepted = m_port->setBaudRate(rate);
+        emit updateLink(this);
     }
     return accepted;
 }
@@ -755,6 +767,7 @@ bool SerialLink::setFlowType(int flow)
         accepted = true;
         if (m_port)
             accepted = m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(flow));
+        emit updateLink(this);
     }
     return accepted;
 }
@@ -784,6 +797,7 @@ bool SerialLink::setParityType(int parity)
                     accepted = false;
                     break;
                 }
+            emit updateLink(this);
         }
     }
     return accepted;
@@ -798,6 +812,7 @@ bool SerialLink::setDataBits(int dataBits)
         accepted = true;
         if (m_port)
             accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
+        emit updateLink(this);
     }
     return accepted;
 }
@@ -811,6 +826,7 @@ bool SerialLink::setStopBits(int stopBits)
         accepted = true;
         if (m_port)
             accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
+        emit updateLink(this);
     }
     return accepted;
 }
@@ -823,6 +839,7 @@ bool SerialLink::setDataBitsType(int dataBits)
         accepted = true;
         if (m_port)
             accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
+        emit updateLink(this);
     }
     return accepted;
 }
@@ -835,6 +852,7 @@ bool SerialLink::setStopBitsType(int stopBits)
         accepted = true;
         if (m_port)
             accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
+        emit updateLink(this);
     }
     return accepted;
 }

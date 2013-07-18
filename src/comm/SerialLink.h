@@ -112,6 +112,9 @@ public:
     bool isFullDuplex();
     int getId();
 
+signals: //[TODO] Refactor to Linkinterface
+    void updateLink(LinkInterface*);
+
 public slots:
     bool setPortName(QString portName);
     bool setBaudRate(int rate);
