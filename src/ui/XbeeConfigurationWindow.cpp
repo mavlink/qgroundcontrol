@@ -374,7 +374,7 @@ void XbeeConfigurationWindow::setupPortList()
 
     // Add the ports in reverse order, because we prepend them to the list
     for (int i = ports.size() - 1; i >= 0; i--) {
-        QString portString = QString(ports.at(i).portName.toLocal8Bit().constData());
+        QString portString = QString(ports.at(i).portName().toLocal8Bit().constData());
         // Prepend newly found port to the list
         if (portBox->findText(portString) == -1) {
             portBox->insertItem(0, portString);
