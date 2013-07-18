@@ -20,7 +20,6 @@ private slots:
     void orientationComboChanged(int index);
 private:
     Ui::CompassConfig ui;
-    UASInterface *m_uas;
 };
 
 #endif // COMPASSCONFIG_H

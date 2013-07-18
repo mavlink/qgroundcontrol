@@ -3,7 +3,6 @@
 
 CompassConfig::CompassConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
-    m_uas=0;
     ui.setupUi(this);
     ui.autoDecCheckBox->setEnabled(false);
     ui.enableCheckBox->setEnabled(false);

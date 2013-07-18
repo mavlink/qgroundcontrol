@@ -63,7 +63,6 @@ private:
     double rcValue[8];
     QTimer *guiUpdateTimer;
     bool m_calibrationEnabled;
-    UASInterface *m_uas;
     Ui::RadioCalibrationConfig ui;
 };
 
