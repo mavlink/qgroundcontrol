@@ -1,7 +1,7 @@
 #include "CompassConfig.h"
 
 
-CompassConfig::CompassConfig(QWidget *parent) : QWidget(parent)
+CompassConfig::CompassConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     m_uas=0;
     ui.setupUi(this);
@@ -12,9 +12,6 @@ CompassConfig::CompassConfig(QWidget *parent) : QWidget(parent)
     connect(ui.enableCheckBox,SIGNAL(clicked(bool)),this,SLOT(enableClicked(bool)));
     connect(ui.autoDecCheckBox,SIGNAL(clicked(bool)),this,SLOT(autoDecClicked(bool)));
     connect(ui.orientationComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(orientationComboChanged(int)));
-
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    activeUASSet(UASManager::instance()->getActiveUAS());
 
     ui.orientationComboBox->addItem("ROTATION_NONE");
     ui.orientationComboBox->addItem("ROTATION_YAW_45");
@@ -46,16 +43,6 @@ CompassConfig::CompassConfig(QWidget *parent) : QWidget(parent)
 }
 CompassConfig::~CompassConfig()
 {
-}
-void CompassConfig::activeUASSet(UASInterface *uas)
-{
-    if (!uas) return;
-    if (!m_uas)
-    {
-        disconnect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
-    }
-    m_uas = uas;
-    connect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
 }
 void CompassConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {

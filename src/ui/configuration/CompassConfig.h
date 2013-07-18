@@ -5,7 +5,8 @@
 #include "ui_CompassConfig.h"
 #include "UASManager.h"
 #include "UASInterface.h"
-class CompassConfig : public QWidget
+#include "AP2ConfigWidget.h"
+class CompassConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
@@ -13,7 +14,6 @@ public:
     explicit CompassConfig(QWidget *parent = 0);
     ~CompassConfig();
 private slots:
-    void activeUASSet(UASInterface *uas);
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void enableClicked(bool enabled);
     void autoDecClicked(bool enabled);

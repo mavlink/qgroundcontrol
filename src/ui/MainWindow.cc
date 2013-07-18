@@ -1527,7 +1527,6 @@ void MainWindow::connectCommonActions()
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
-    //connect(ui.actionConfiguration_2,SIGNAL(triggered()),this,SLOT(loadConfigurationView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
     connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
 

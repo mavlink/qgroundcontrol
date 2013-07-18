@@ -24,6 +24,8 @@ private slots:
     void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
 private:
     Ui::BatteryMonitorConfig ui;
+    inline float calculatemVPerAmp(float maxvoltsout,float maxamps);
+    inline float calculatemVPerVolt(float maxvoltsout,float maxvolts);
 };
 
 #endif // BATTERYMONITORCONFIG_H

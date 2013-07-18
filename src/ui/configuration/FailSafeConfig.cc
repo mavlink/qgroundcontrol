@@ -87,6 +87,7 @@ void FailSafeConfig::gcsChecked(bool checked)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     if (checked)
@@ -103,6 +104,7 @@ void FailSafeConfig::throttleActionChecked(bool checked)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     if (checked)
@@ -119,6 +121,7 @@ void FailSafeConfig::throttleChecked(bool checked)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     if (checked)
@@ -135,6 +138,7 @@ void FailSafeConfig::throttlePwmChanged()
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     m_uas->setParameter(1,"THR_FS_VALUE",ui.throttlePwmSpinBox->value());
@@ -144,6 +148,7 @@ void FailSafeConfig::throttleFailSafeChanged(int index)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     m_uas->setParameter(1,"FS_THR_ENABLE",index);
@@ -153,6 +158,7 @@ void FailSafeConfig::fsLongClicked(bool checked)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     if (checked)
@@ -169,6 +175,7 @@ void FailSafeConfig::fsShortClicked(bool checked)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     if (checked)
@@ -185,6 +192,7 @@ void FailSafeConfig::batteryFailChecked(bool checked)
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     if (checked)
@@ -202,11 +210,21 @@ FailSafeConfig::~FailSafeConfig()
 }
 void FailSafeConfig::activeUASSet(UASInterface *uas)
 {
+    if (m_uas)
+    {
+        disconnect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanges(int,float)));
+        disconnect(m_uas,SIGNAL(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)),this,SLOT(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)));
+        disconnect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+    }
     AP2ConfigWidget::activeUASSet(uas);
-    connect(uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanges(int,float)));
-    connect(uas,SIGNAL(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)),this,SLOT(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)));
-    connect(uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
-    if (uas->getSystemType() == MAV_TYPE_FIXED_WING)
+    if (!uas)
+    {
+        return;
+    }
+    connect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanges(int,float)));
+    connect(m_uas,SIGNAL(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)),this,SLOT(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)));
+    connect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+    if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
     {
         ui.batteryFailCheckBox->setVisible(false);
         ui.throttleFailSafeComboBox->setVisible(false);
@@ -221,7 +239,7 @@ void FailSafeConfig::activeUASSet(UASInterface *uas)
         ui.fsLongCheckBox->setVisible(true);
         ui.fsShortCheckBox->setVisible(true);
     }
-    else if (uas->getSystemType() == MAV_TYPE_QUADROTOR)
+    else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         ui.batteryFailCheckBox->setVisible(true);
         ui.throttleFailSafeComboBox->setVisible(true);

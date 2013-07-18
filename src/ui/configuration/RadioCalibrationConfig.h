@@ -39,7 +39,8 @@ This file is part of the QGROUNDCONTROL project
 #include "ui_RadioCalibrationConfig.h"
 #include "UASManager.h"
 #include "UASInterface.h"
-class RadioCalibrationConfig : public QWidget
+#include "AP2ConfigWidget.h"
+class RadioCalibrationConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
@@ -50,7 +51,7 @@ protected:
     void showEvent(QShowEvent *event);
     void hideEvent(QHideEvent *event);
 private slots:
-    void setActiveUAS(UASInterface *uas);
+    void activeUASSet(UASInterface *uas);
     void remoteControlChannelRawChanged(int chan,float val);
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void guiUpdateTimerTick();

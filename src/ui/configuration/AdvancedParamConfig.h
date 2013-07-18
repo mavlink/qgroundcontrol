@@ -17,7 +17,7 @@ public:
 private slots:
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
 private:
-    QMap<QString,ParamWidget*> paramToWidgetMap;
+    QMap<QString,ParamWidget*> m_paramToWidgetMap;
     Ui::AdvancedParamConfig ui;
 };
 

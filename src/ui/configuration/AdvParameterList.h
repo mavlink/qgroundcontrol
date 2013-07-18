@@ -16,9 +16,9 @@ public:
 private slots:
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
 private:
-    QMap<QString,QTableWidgetItem*> paramValueMap;
-    QMap<QString,QString> paramToNameMap;
-    QMap<QString,QString> paramToDescriptionMap;
+    QMap<QString,QTableWidgetItem*> m_paramValueMap;
+    QMap<QString,QString> m_paramToNameMap;
+    QMap<QString,QString> m_paramToDescriptionMap;
     Ui::AdvParameterList ui;
 };
 

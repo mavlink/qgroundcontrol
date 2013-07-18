@@ -1,25 +1,25 @@
 #include "FlightModeConfig.h"
 
 
-FlightModeConfig::FlightModeConfig(QWidget *parent) : QWidget(parent)
+FlightModeConfig::FlightModeConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
     connect(ui.savePushButton,SIGNAL(clicked()),this,SLOT(saveButtonClicked()));
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
 }
 
 FlightModeConfig::~FlightModeConfig()
 {
 }
-void FlightModeConfig::setActiveUAS(UASInterface *uas)
+void FlightModeConfig::activeUASSet(UASInterface *uas)
 {
-    if (!uas) return;
     if (m_uas)
     {
+        disconnect(m_uas,SIGNAL(modeChanged(int,QString,QString)),this,SLOT(modeChanged(int,QString,QString)));
+        disconnect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanged(int,float)));
     }
-    m_uas = uas;
+    AP2ConfigWidget::activeUASSet(uas);
+    if (!uas) return;
     connect(m_uas,SIGNAL(modeChanged(int,QString,QString)),this,SLOT(modeChanged(int,QString,QString)));
-    connect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
     connect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanged(int,float)));
     QStringList itemlist;
     if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)

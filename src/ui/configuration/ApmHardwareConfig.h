@@ -58,20 +58,20 @@ public:
     explicit ApmHardwareConfig(QWidget *parent = 0);
     ~ApmHardwareConfig();
 private:
-    FrameTypeConfig *frameConfig;
-    CompassConfig *compassConfig;
-    AccelCalibrationConfig *accelConfig;
-    RadioCalibrationConfig *radioConfig;
+    FrameTypeConfig *m_frameConfig;
+    CompassConfig *m_compassConfig;
+    AccelCalibrationConfig *m_accelConfig;
+    RadioCalibrationConfig *m_radioConfig;
 
-    Radio3DRConfig *radio3drConfig;
-    BatteryMonitorConfig *batteryConfig;
-    SonarConfig *sonarConfig;
-    AirspeedConfig *airspeedConfig;
-    OpticalFlowConfig *opticalFlowConfig;
-    OsdConfig *osdConfig;
-    CameraGimbalConfig *cameraGimbalConfig;
-    AntennaTrackerConfig *antennaTrackerConfig;
-    ApmPlaneLevel *planeLevel;
+    Radio3DRConfig *m_radio3drConfig;
+    BatteryMonitorConfig *m_batteryConfig;
+    SonarConfig *m_sonarConfig;
+    AirspeedConfig *m_airspeedConfig;
+    OpticalFlowConfig *m_opticalFlowConfig;
+    OsdConfig *m_osdConfig;
+    CameraGimbalConfig *m_cameraGimbalConfig;
+    AntennaTrackerConfig *m_antennaTrackerConfig;
+    ApmPlaneLevel *m_planeLevel;
 private slots:
     void activeUASSet(UASInterface *uas);
     void activateStackedWidget();
@@ -79,7 +79,7 @@ private:
     Ui::ApmHardwareConfig ui;
 
     //This is a map between the buttons, and the widgets they should be displying
-    QMap<QObject*,QWidget*> buttonToConfigWidgetMap;
+    QMap<QObject*,QWidget*> m_buttonToConfigWidgetMap;
 };
 
 #endif // APMHARDWARECONFIG_H

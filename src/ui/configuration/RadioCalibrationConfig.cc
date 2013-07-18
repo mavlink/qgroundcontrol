@@ -32,15 +32,12 @@ This file is part of the QGROUNDCONTROL project
 #include "RadioCalibrationConfig.h"
 #include <QMessageBox>
 
-RadioCalibrationConfig::RadioCalibrationConfig(QWidget *parent) : QWidget(parent)
+RadioCalibrationConfig::RadioCalibrationConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
 
     connect(ui.calibrateButton,SIGNAL(clicked()),this,SLOT(calibrateButtonClicked()));
-    m_uas = 0;
     m_calibrationEnabled = false;
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    setActiveUAS(UASManager::instance()->getActiveUAS());
     ui.rollWidget->setMin(800);
     ui.rollWidget->setMax(2200);
     ui.pitchWidget->setMin(800);
@@ -79,20 +76,18 @@ RadioCalibrationConfig::RadioCalibrationConfig(QWidget *parent) : QWidget(parent
 RadioCalibrationConfig::~RadioCalibrationConfig()
 {
 }
-void RadioCalibrationConfig::setActiveUAS(UASInterface *uas)
+void RadioCalibrationConfig::activeUASSet(UASInterface *uas)
 {
-    if (uas==NULL) return;
-
     if (m_uas)
     {
-        // Disconnect old system
         disconnect(m_uas, SIGNAL(remoteControlChannelRawChanged(int,float)), this,SLOT(remoteControlChannelRawChanged(int,float)));
-        disconnect(m_uas, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,SLOT(parameterChanged(int,int,QString,QVariant)));
     }
-    m_uas = uas;
+    AP2ConfigWidget::activeUASSet(uas);
+    if (!uas)
+    {
+        return;
+    }
     connect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanged(int,float)));
-    connect(m_uas,SIGNAL(parameterChanged(int,int,QString,QVariant)),this,SLOT(parameterChanged(int,int,QString,QVariant)));
-
 }
 void RadioCalibrationConfig::remoteControlChannelRawChanged(int chan,float val)
 {

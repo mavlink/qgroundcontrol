@@ -49,6 +49,7 @@ void ArduRoverPidConfig::writeButtonClicked()
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     for (QMap<QString,QDoubleSpinBox*>::const_iterator i=nameToBoxMap.constBegin();i!=nameToBoxMap.constEnd();i++)
@@ -61,6 +62,7 @@ void ArduRoverPidConfig::refreshButtonClicked()
 {
     if (!m_uas)
     {
+        showNullMAVErrorMessageBox();
         return;
     }
     for (QMap<QString,QDoubleSpinBox*>::const_iterator i=nameToBoxMap.constBegin();i!=nameToBoxMap.constEnd();i++)

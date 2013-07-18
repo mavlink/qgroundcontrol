@@ -7,13 +7,6 @@ StandardParamConfig::StandardParamConfig(QWidget *parent) : AP2ConfigWidget(pare
 StandardParamConfig::~StandardParamConfig()
 {
 }
-
-
-void StandardParamConfig::activeUASSet(UASInterface *uas)
-{
-
-    AP2ConfigWidget::activeUASSet(uas);
-}
 void StandardParamConfig::addRange(QString title,QString description,QString param,double min,double max)
 {
     ParamWidget *widget = new ParamWidget(ui.scrollAreaWidgetContents);

@@ -14,7 +14,7 @@ void OsdConfig::enableButtonClicked()
 {
     if (!m_uas)
     {
-        QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
+        showNullMAVErrorMessageBox();
         return;
     }
     m_uas->getParamManager()->setParameter(1,"SR0_EXT_STAT",2);

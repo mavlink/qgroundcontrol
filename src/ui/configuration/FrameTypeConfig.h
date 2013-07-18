@@ -37,7 +37,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "QGCUASParamManager.h"
-class FrameTypeConfig : public QWidget
+#include "AP2ConfigWidget.h"
+class FrameTypeConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
@@ -45,7 +46,6 @@ public:
     explicit FrameTypeConfig(QWidget *parent = 0);
     ~FrameTypeConfig();
 private slots:
-    void activeUASSet(UASInterface *uas);
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void xFrameSelected();
     void plusFrameSelected();

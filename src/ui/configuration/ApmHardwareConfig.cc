@@ -62,73 +62,73 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
 
     QWidget *widget = new QWidget(this);
     ui.stackedWidget->addWidget(widget); //Firmware placeholder.
-    buttonToConfigWidgetMap[ui.firmwareButton] = widget;
+    m_buttonToConfigWidgetMap[ui.firmwareButton] = widget;
     connect(ui.firmwareButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    frameConfig = new FrameTypeConfig(this);
-    ui.stackedWidget->addWidget(frameConfig);
-    buttonToConfigWidgetMap[ui.frameTypeButton] = frameConfig;
+    m_frameConfig = new FrameTypeConfig(this);
+    ui.stackedWidget->addWidget(m_frameConfig);
+    m_buttonToConfigWidgetMap[ui.frameTypeButton] = m_frameConfig;
     connect(ui.frameTypeButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    compassConfig = new CompassConfig(this);
-    ui.stackedWidget->addWidget(compassConfig);
-    buttonToConfigWidgetMap[ui.compassButton] = compassConfig;
+    m_compassConfig = new CompassConfig(this);
+    ui.stackedWidget->addWidget(m_compassConfig);
+    m_buttonToConfigWidgetMap[ui.compassButton] = m_compassConfig;
     connect(ui.compassButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    accelConfig = new AccelCalibrationConfig(this);
-    ui.stackedWidget->addWidget(accelConfig);
-    buttonToConfigWidgetMap[ui.accelCalibrateButton] = accelConfig;
+    m_accelConfig = new AccelCalibrationConfig(this);
+    ui.stackedWidget->addWidget(m_accelConfig);
+    m_buttonToConfigWidgetMap[ui.accelCalibrateButton] = m_accelConfig;
     connect(ui.accelCalibrateButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    planeLevel = new ApmPlaneLevel(this);
-    ui.stackedWidget->addWidget(planeLevel);
-    buttonToConfigWidgetMap[ui.arduPlaneLevelButton] = planeLevel;
+    m_planeLevel = new ApmPlaneLevel(this);
+    ui.stackedWidget->addWidget(m_planeLevel);
+    m_buttonToConfigWidgetMap[ui.arduPlaneLevelButton] = m_planeLevel;
     connect(ui.arduPlaneLevelButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    radioConfig = new RadioCalibrationConfig(this);
-    ui.stackedWidget->addWidget(radioConfig);
-    buttonToConfigWidgetMap[ui.radioCalibrateButton] = radioConfig;
+    m_radioConfig = new RadioCalibrationConfig(this);
+    ui.stackedWidget->addWidget(m_radioConfig);
+    m_buttonToConfigWidgetMap[ui.radioCalibrateButton] = m_radioConfig;
     connect(ui.radioCalibrateButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
 
-    radio3drConfig = new Radio3DRConfig(this);
-    ui.stackedWidget->addWidget(radio3drConfig);
-    buttonToConfigWidgetMap[ui.radio3DRButton] = radio3drConfig;
+    m_radio3drConfig = new Radio3DRConfig(this);
+    ui.stackedWidget->addWidget(m_radio3drConfig);
+    m_buttonToConfigWidgetMap[ui.radio3DRButton] = m_radio3drConfig;
     connect(ui.radio3DRButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    batteryConfig = new BatteryMonitorConfig(this);
-    ui.stackedWidget->addWidget(batteryConfig);
-    buttonToConfigWidgetMap[ui.batteryMonitorButton] = batteryConfig;
+    m_batteryConfig = new BatteryMonitorConfig(this);
+    ui.stackedWidget->addWidget(m_batteryConfig);
+    m_buttonToConfigWidgetMap[ui.batteryMonitorButton] = m_batteryConfig;
     connect(ui.batteryMonitorButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    sonarConfig = new SonarConfig(this);
-    ui.stackedWidget->addWidget(sonarConfig);
-    buttonToConfigWidgetMap[ui.sonarButton] = sonarConfig;
+    m_sonarConfig = new SonarConfig(this);
+    ui.stackedWidget->addWidget(m_sonarConfig);
+    m_buttonToConfigWidgetMap[ui.sonarButton] = m_sonarConfig;
     connect(ui.sonarButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    airspeedConfig = new AirspeedConfig(this);
-    ui.stackedWidget->addWidget(airspeedConfig);
-    buttonToConfigWidgetMap[ui.airspeedButton] = airspeedConfig;
+    m_airspeedConfig = new AirspeedConfig(this);
+    ui.stackedWidget->addWidget(m_airspeedConfig);
+    m_buttonToConfigWidgetMap[ui.airspeedButton] = m_airspeedConfig;
     connect(ui.airspeedButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    opticalFlowConfig = new OpticalFlowConfig(this);
-    ui.stackedWidget->addWidget(opticalFlowConfig);
-    buttonToConfigWidgetMap[ui.opticalFlowButton] = opticalFlowConfig;
+    m_opticalFlowConfig = new OpticalFlowConfig(this);
+    ui.stackedWidget->addWidget(m_opticalFlowConfig);
+    m_buttonToConfigWidgetMap[ui.opticalFlowButton] = m_opticalFlowConfig;
     connect(ui.opticalFlowButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    osdConfig = new OsdConfig(this);
-    ui.stackedWidget->addWidget(osdConfig);
-    buttonToConfigWidgetMap[ui.osdButton] = osdConfig;
+    m_osdConfig = new OsdConfig(this);
+    ui.stackedWidget->addWidget(m_osdConfig);
+    m_buttonToConfigWidgetMap[ui.osdButton] = m_osdConfig;
     connect(ui.osdButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    cameraGimbalConfig = new CameraGimbalConfig(this);
-    ui.stackedWidget->addWidget(cameraGimbalConfig);
-    buttonToConfigWidgetMap[ui.cameraGimbalButton] = cameraGimbalConfig;
+    m_cameraGimbalConfig = new CameraGimbalConfig(this);
+    ui.stackedWidget->addWidget(m_cameraGimbalConfig);
+    m_buttonToConfigWidgetMap[ui.cameraGimbalButton] = m_cameraGimbalConfig;
     connect(ui.cameraGimbalButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
-    antennaTrackerConfig = new AntennaTrackerConfig(this);
-    ui.stackedWidget->addWidget(antennaTrackerConfig);
-    buttonToConfigWidgetMap[ui.antennaTrackerButton] = antennaTrackerConfig;
+    m_antennaTrackerConfig = new AntennaTrackerConfig(this);
+    ui.stackedWidget->addWidget(m_antennaTrackerConfig);
+    m_buttonToConfigWidgetMap[ui.antennaTrackerButton] = m_antennaTrackerConfig;
     connect(ui.antennaTrackerButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
@@ -139,9 +139,9 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
 }
 void ApmHardwareConfig::activateStackedWidget()
 {
-    if (buttonToConfigWidgetMap.contains(sender()))
+    if (m_buttonToConfigWidgetMap.contains(sender()))
     {
-        ui.stackedWidget->setCurrentWidget(buttonToConfigWidgetMap[sender()]);
+        ui.stackedWidget->setCurrentWidget(m_buttonToConfigWidgetMap[sender()]);
     }
 }
 

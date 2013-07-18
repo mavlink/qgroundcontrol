@@ -5,8 +5,9 @@
 #include "ui_FlightModeConfig.h"
 #include "UASInterface.h"
 #include "UASManager.h"
+#include "AP2ConfigWidget.h"
 
-class FlightModeConfig : public QWidget
+class FlightModeConfig : public AP2ConfigWidget
 {
     Q_OBJECT
     
@@ -14,7 +15,7 @@ public:
     explicit FlightModeConfig(QWidget *parent = 0);
     ~FlightModeConfig();
 private slots:
-    void setActiveUAS(UASInterface *uas);
+    void activeUASSet(UASInterface *uas);
     void saveButtonClicked();
     void modeChanged(int sysId, QString status, QString description);
     void remoteControlChannelRawChanged(int chan,float val);

@@ -28,17 +28,17 @@ private slots:
     void activeUASSet(UASInterface *uas);
 private:
     Ui::ApmSoftwareConfig ui;
-    BasicPidConfig *basicPidConfig;
-    FlightModeConfig *flightConfig;
-    StandardParamConfig *standardParamConfig;
-    GeoFenceConfig *geoFenceConfig;
-    FailSafeConfig *failSafeConfig;
-    AdvancedParamConfig *advancedParamConfig;
-    ArduCopterPidConfig *arduCopterPidConfig;
-    ArduPlanePidConfig *arduPlanePidConfig;
-    ArduRoverPidConfig *arduRoverPidConfig;
-    AdvParameterList *advParameterList;
-    QMap<QObject*,QWidget*> buttonToConfigWidgetMap;
+    BasicPidConfig *m_basicPidConfig;
+    FlightModeConfig *m_flightConfig;
+    StandardParamConfig *m_standardParamConfig;
+    GeoFenceConfig *m_geoFenceConfig;
+    FailSafeConfig *m_failSafeConfig;
+    AdvancedParamConfig *m_advancedParamConfig;
+    ArduCopterPidConfig *m_arduCopterPidConfig;
+    ArduPlanePidConfig *m_arduPlanePidConfig;
+    ArduRoverPidConfig *m_arduRoverPidConfig;
+    AdvParameterList *m_advParameterList;
+    QMap<QObject*,QWidget*> m_buttonToConfigWidgetMap;
 };
 
 #endif // APMSOFTWARECONFIG_H
