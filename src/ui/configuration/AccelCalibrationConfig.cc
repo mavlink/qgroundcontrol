@@ -3,7 +3,6 @@
 
 AccelCalibrationConfig::AccelCalibrationConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
-    m_uas=0;
     ui.setupUi(this);
     connect(ui.calibrateAccelButton,SIGNAL(clicked()),this,SLOT(calibrateButtonClicked()));
 

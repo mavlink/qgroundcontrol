@@ -26,7 +26,6 @@ private:
     QMap<int,int> roverModeUiIndexToIndex;
     QMap<int,int> planeModeUiIndexToIndex;
     Ui::FlightModeConfig ui;
-    UASInterface *m_uas;
 };
 
 #endif // FLIGHTMODECONFIG_H

@@ -21,7 +21,6 @@ private slots:
 private:
     int m_accelAckCount;
     Ui::AccelCalibrationConfig ui;
-    UASInterface *m_uas;
 };
 
 #endif // ACCELCALIBRATIONCONFIG_H

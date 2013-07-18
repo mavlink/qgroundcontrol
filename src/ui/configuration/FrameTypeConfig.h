@@ -52,7 +52,6 @@ private slots:
     void vFrameSelected();
 private:
     Ui::FrameTypeConfig ui;
-    UASInterface *m_uas;
 };
 
 #endif // FRAMETYPECONFIG_H
