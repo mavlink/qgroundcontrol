@@ -53,12 +53,12 @@
     <rect>
      <x>480</x>
      <y>120</y>
-     <width>70</width>
+     <width>91</width>
      <height>17</height>
     </rect>
    </property>
    <property name="text">
-    <string>CheckBox</string>
+    <string>Alert On Low</string>
    </property>
   </widget>
   <widget class="QGroupBox" name="groupBox">

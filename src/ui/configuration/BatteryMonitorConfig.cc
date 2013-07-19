@@ -18,7 +18,8 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
     ui.apmVerComboBox->addItem("1: APM2 - 2.5 non 3DR");
     ui.apmVerComboBox->addItem("2: APM2.5 - 3DR Power Module");
     ui.apmVerComboBox->addItem("3: PX4");
-    ui.alertOnLowCheckBox->setVisible(false);
+
+    ui.alertOnLowCheckBox->setVisible(false); //Unimpelemented, but TODO.
 
 
     connect(ui.monitorComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(monitorCurrentIndexChanged(int)));
@@ -45,6 +46,9 @@ void BatteryMonitorConfig::activeUASSet(UASInterface *uas)
     }
     connect(uas,SIGNAL(batteryChanged(UASInterface*,double,double,double,int)),this,SLOT(batteryChanged(UASInterface*,double,double,double,int)));
 
+}
+void BatteryMonitorConfig::alertOnLowClicked(bool checked)
+{
 }
 
 void BatteryMonitorConfig::calcDividerSet()

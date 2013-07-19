@@ -57,10 +57,14 @@ private slots:
     void guiUpdateTimerTick();
     void calibrateButtonClicked();
 private:
-    double rcMin[8];
-    double rcMax[8];
-    double rcTrim[8];
-    double rcValue[8];
+    QList<double> rcMin;
+    QList<double> rcMax;
+    QList<double> rcTrim;
+    QList<double> rcValue;
+    //double rcMin[8];
+    //double rcMax[8];
+    //double rcTrim[8];
+    //double rcValue[8];
     QTimer *guiUpdateTimer;
     bool m_calibrationEnabled;
     Ui::RadioCalibrationConfig ui;
