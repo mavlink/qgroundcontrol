@@ -95,7 +95,54 @@ CameraGimbalConfig::CameraGimbalConfig(QWidget *parent) : AP2ConfigWidget(parent
     connect(ui.shutterDurationSpinBox,SIGNAL(editingFinished()),this,SLOT(updateShutter()));
     connect(ui.shutterChannelComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(updateShutter()));
 
+    connect(ui.retractXSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRetractAngles()));
+    connect(ui.retractYSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRetractAngles()));
+    connect(ui.retractZSpinBox,SIGNAL(editingFinished()),this,SLOT(updateRetractAngles()));
 
+    connect(ui.controlXSpinBox,SIGNAL(editingFinished()),this,SLOT(updateControlAngles()));
+    connect(ui.controlYSpinBox,SIGNAL(editingFinished()),this,SLOT(updateControlAngles()));
+    connect(ui.controlZSpinBox,SIGNAL(editingFinished()),this,SLOT(updateControlAngles()));
+
+    connect(ui.neutralXSpinBox,SIGNAL(editingFinished()),this,SLOT(updateNeutralAngles()));
+    connect(ui.neutralYSpinBox,SIGNAL(editingFinished()),this,SLOT(updateNeutralAngles()));
+    connect(ui.neutralZSpinBox,SIGNAL(editingFinished()),this,SLOT(updateNeutralAngles()));
+
+
+}
+void CameraGimbalConfig::updateRetractAngles()
+{
+    if (!m_uas)
+    {
+        showNullMAVErrorMessageBox();
+        return;
+    }
+    m_uas->getParamManager()->setParameter(1,"MNT_RETRACT_X",ui.retractXSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_RETRACT_Y",ui.retractYSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_RETRACT_Z",ui.retractZSpinBox->value());
+}
+
+void CameraGimbalConfig::updateNeutralAngles()
+{
+    if (!m_uas)
+    {
+        showNullMAVErrorMessageBox();
+        return;
+    }
+    m_uas->getParamManager()->setParameter(1,"MNT_NEUTRAL_X",ui.neutralXSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_NEUTRAL_Y",ui.neutralYSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_NEUTRAL_Z",ui.neutralZSpinBox->value());
+}
+
+void CameraGimbalConfig::updateControlAngles()
+{
+    if (!m_uas)
+    {
+        showNullMAVErrorMessageBox();
+        return;
+    }
+    m_uas->getParamManager()->setParameter(1,"MNT_CONTROL_X",ui.controlXSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_CONTROL_Y",ui.controlYSpinBox->value());
+    m_uas->getParamManager()->setParameter(1,"MNT_CONTROL_Z",ui.controlZSpinBox->value());
 }
 
 void CameraGimbalConfig::updateTilt()

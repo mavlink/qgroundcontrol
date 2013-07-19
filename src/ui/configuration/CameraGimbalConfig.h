@@ -18,7 +18,9 @@ private slots:
     void updateRoll();
     void updatePan();
     void updateShutter();
-
+    void updateRetractAngles();
+    void updateNeutralAngles();
+    void updateControlAngles();
 private:
     Ui::CameraGimbalConfig ui;
     QString m_shutterPrefix;
