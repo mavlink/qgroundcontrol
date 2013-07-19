@@ -65,6 +65,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
 #include "apmtoolbar.h"
+#include "SerialSettingsDialog.h"
+#include "terminalconsole.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -224,7 +226,7 @@ MainWindow::MainWindow(QWidget *parent):
     apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
     apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
     apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
-    apmToolBar->setTerminalViewAction(ui.actionSimulation_View);
+    apmToolBar->setTerminalViewAction(ui.actionTerminalView);
 
     QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
     widget->setWidget(apmToolBar);
@@ -475,56 +477,67 @@ void MainWindow::buildCommonWidgets()
     if (!plannerView)
     {
         plannerView = new SubMainWindow(this);
+        plannerView->setObjectName("VIEW_MISSION");
         plannerView->setCentralWidget(new QGCMapTool(this));
-        //mapWidget = new QGCMapTool(this);
-        addCentralWidget(plannerView, "Maps");
+        addToCentralStackedWidget(plannerView, VIEW_MISSION, "Maps");
     }
 
-    //pilotView
+    //pilotView (aka Flight or Mission View)
     if (!pilotView)
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
         pilotView->setCentralWidget(new QGCMapTool(this));
-        addCentralWidget(pilotView, "Pilot");
+        addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
     }
+
     if (!configView)
     {
         configView = new SubMainWindow(this);
         configView->setObjectName("VIEW_HARDWARE_CONFIG");
         configView->setCentralWidget(new ApmHardwareConfig(this));
-        addCentralWidget(configView,"Hardware");
-        centralWidgetToDockWidgetsMap[VIEW_HARDWARE_CONFIG] = QMap<QString,QWidget*>();
-
+        addToCentralStackedWidget(configView,VIEW_HARDWARE_CONFIG, tr("Hardware"));
     }
+
     if (!softwareConfigView)
     {
         softwareConfigView = new SubMainWindow(this);
         softwareConfigView->setObjectName("VIEW_SOFTWARE_CONFIG");
         softwareConfigView->setCentralWidget(new ApmSoftwareConfig(this));
-        addCentralWidget(softwareConfigView,"Software");
-        centralWidgetToDockWidgetsMap[VIEW_SOFTWARE_CONFIG] = QMap<QString,QWidget*>();
+        addToCentralStackedWidget(softwareConfigView, VIEW_SOFTWARE_CONFIG, tr("Software"));
     }
+
     if (!engineeringView)
     {
         engineeringView = new SubMainWindow(this);
         engineeringView->setObjectName("VIEW_ENGINEER");
         engineeringView->setCentralWidget(new QGCDataPlot2D(this));
-        addCentralWidget(engineeringView,tr("Logfile Plot"));
+        addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
+
     if (!mavlinkView)
     {
         mavlinkView = new SubMainWindow(this);
         mavlinkView->setObjectName("VIEW_MAVLINK");
         mavlinkView->setCentralWidget(new XMLCommProtocolWidget(this));
-        addCentralWidget(mavlinkView,tr("Mavlink Generator"));
+        addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
     }
+
     if (!simView)
     {
         simView = new SubMainWindow(this);
         simView->setObjectName("VIEW_SIMULATOR");
         simView->setCentralWidget(new QGCMapTool(this));
-        addCentralWidget(simView,tr("Simulation View"));
+        addToCentralStackedWidget(simView, VIEW_SIMULATION, tr("Simulation View"));
+    }
+
+    if (!terminalView)
+    {
+        terminalView = new SubMainWindow(this);
+        terminalView->setObjectName("VIEW_TERMINAL");
+        TerminalConsole *terminalConsole = new TerminalConsole(this);
+        terminalView->setCentralWidget(terminalConsole);
+        addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
     }
 
     // Dock widgets
@@ -682,18 +695,20 @@ void MainWindow::buildCommonWidgets()
     }*/
 
 #ifdef QGC_OSG_ENABLED
-    if (!_3DWidget)
+    if (q3DWidget)
     {
-        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK", this);
-        addCentralWidget(_3DWidget, tr("Local 3D"));
+        q3DWidget = Q3DWidgetFactory::get("PIXHAWK", this);
+        q3DWidget->setObjectName("VIEW_3DWIDGET");
+
+        addToCentralStackedWidget(q3DWidget, VIEW_3DWIDGET, tr("Local 3D"));
     }
 #endif
 
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
-    if (!gEarthWidget)
+#if (defined _MSC_VER) /*| (defined Q_OS_MAC_OFF)*/
+    if (!earthWidget)
     {
-        gEarthWidget = new QGCGoogleEarthView(this);
-        addCentralWidget(gEarthWidget, tr("Google Earth"));
+        earthWidget = new QGCGoogleEarthView(this);
+        addToCentralStackedWidget(earthWidget,VIEW_GOOGLEEARTH, tr("Google Earth"));
     }
 #endif
 }
@@ -918,25 +933,16 @@ void MainWindow::showTool(bool show)
         addTool(parent,VIEW_SIMULATION,widget,tr("Control"),area);
     }
 }*/
-void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
+void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title)
 {
     Q_UNUSED(title);
+    Q_ASSERT(widget->objectName().length() != 0);
 
     // Check if this widget already has been added
     if (centerStack->indexOf(widget) == -1)
     {
         centerStack->addWidget(widget);
-
-        //        QAction* tempAction = ui.menuMain->addAction(title);
-
-        //        tempAction->setCheckable(true);
-        //        QVariant var;
-        //        var.setValue((QWidget*)widget);
-        //        tempAction->setData(var);
-        //        centerStackActionGroup->addAction(tempAction);
-        //        connect(tempAction,SIGNAL(triggered()),this, SLOT(showCentralWidget()));
-        //connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
-        //        tempAction->setChecked(widget->isVisible());
+        centralWidgetToDockWidgetsMap[viewSection] = QMap<QString,QWidget*>();
     }
 }
 
@@ -1448,6 +1454,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionHardwareConfig);
     perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionFirmwareUpdateView);
+    perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->setExclusive(true);
 
@@ -1492,6 +1499,11 @@ void MainWindow::connectCommonActions()
         ui.actionFirmwareUpdateView->setChecked(true);
         ui.actionFirmwareUpdateView->activate(QAction::Trigger);
     }
+    if (currentView == VIEW_TERMINAL)
+    {
+        ui.actionTerminalView->setChecked(true);
+        ui.actionTerminalView->activate(QAction::Trigger);
+    }
     if (currentView == VIEW_UNCONNECTED)
     {
         ui.actionUnconnectedView->setChecked(true);
@@ -1529,6 +1541,7 @@ void MainWindow::connectCommonActions()
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
     connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
+    connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
 
     connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
@@ -1625,7 +1638,7 @@ void MainWindow::showSettings()
     settings->show();
 }
 
-void MainWindow::addLink()
+LinkInterface* MainWindow::addLink()
 {
     SerialLink* link = new SerialLink();
     // TODO This should be only done in the dialog itself
@@ -1647,6 +1660,8 @@ void MainWindow::addLink()
             break;
         }
     }
+
+    return link;
 }
 
 
@@ -2050,6 +2065,10 @@ void MainWindow::loadViewState()
             centerStack->setCurrentWidget(simView);
             break;
 
+        case VIEW_TERMINAL:
+            centerStack->setCurrentWidget(terminalView);
+            break;
+
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
@@ -2160,6 +2179,18 @@ void MainWindow::loadSoftwareConfigView()
         loadViewState();
     }
 }
+
+void MainWindow::loadTerminalView()
+{
+    if (currentView != VIEW_TERMINAL)
+    {
+        storeViewState();
+        currentView = VIEW_TERMINAL;
+        ui.actionTerminalView->setChecked(true);
+        loadViewState();
+    }
+}
+
 
 void MainWindow::loadUnconnectedView()
 {
