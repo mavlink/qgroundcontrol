@@ -23,7 +23,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
                        int dataBits, int stopBits) :
     m_bytesRead(0),
     m_port(NULL),
-    m_ports(new QVector<QString>()),
     m_stopp(false),
     m_reqReset(false)
 {
@@ -32,9 +31,9 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     // Setup settings
     m_portName = portname.trimmed();
 
-    if (m_portName == "" && getCurrentPorts()->size() > 0)
+    if (m_portName == "" && getCurrentPorts().size() > 0)
     {
-        m_portName = m_ports->first().trimmed();   
+        m_portName = m_ports.first().trimmed();
     }
 
     qDebug() << "m_portName " << m_portName;
@@ -87,14 +86,11 @@ SerialLink::~SerialLink()
     disconnect();
     if(m_port) delete m_port;
     m_port = NULL;
-    if (m_ports) delete m_ports;
-    m_ports = NULL;
 }
 
-QVector<QString>* SerialLink::getCurrentPorts()
+QList<QString> SerialLink::getCurrentPorts()
 {
-    Q_ASSERT_X(m_ports != NULL, "getCurrentPorts", "m_ports is NULL");
-    m_ports->clear();
+    m_ports.clear();
     // Example use QSerialPortInfo
     // [TODO] make this thread safe
 
@@ -110,7 +106,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
 //                 << "Description : " << info.description();
 //        qDebug() << "Manufacturer: " << info.manufacturer();
 
-        m_ports->append(info.portName());
+        m_ports.append(info.portName());
     }
     return m_ports;
 }
@@ -186,6 +182,18 @@ void SerialLink::run()
                 m_port->setDataTerminalReady(false);
             }
         }
+
+        if (m_transmitBuffer.size() > 0) {
+            // send the data
+            QMutexLocker lockWrite(&m_writeMutex);
+            int num_written = m_port->write(m_transmitBuffer.constData());
+            if (num_written > 0){
+                m_transmitBuffer = m_transmitBuffer.remove(0,num_written);
+            }
+
+        }
+
+
         bool error = m_port->waitForReadyRead(500);
 
         if(error) { // Waits for 1/2 second [TODO][BB] lower to SerialLink::poll_interval?
@@ -203,7 +211,6 @@ void SerialLink::run()
 //            qDebug() << "readyReadTime #"<< __LINE__;
 
         }
-
         if (bytes != m_bytesRead) // i.e things are good and data is being read.
         {
             bytes = m_bytesRead;
@@ -265,26 +272,25 @@ void SerialLink::writeBytes(const char* data, qint64 size)
 {
     if(m_port && m_port->isOpen()) {
 //        qDebug() << "writeBytes" << m_portName << "attempting to tx " << size << "bytes.";
-        int b = m_port->write(data, size);
 
-        if (b > 0) {
-            Q_ASSERT_X(b = size, "writeBytes", "failed to write all bytes");
+        QByteArray byteArray(data,size);
+        {
+            QMutexLocker writeLocker(&m_writeMutex);
+            m_transmitBuffer.append(byteArray);
+        }
 
-//            qDebug() << "writeBytes " << m_portName << "tx'd" << b << "bytes:";
+//        qDebug() << "writeBytes " << m_portName << "tx'd" << b << "bytes:";
 
-            // Increase write counter
-            m_bitsSentTotal += size * 8;
+        // Increase write counter
+        m_bitsSentTotal += size * 8;
 
-            // Extra debug logging
-//            QByteArray* byteArray = new QByteArray(data,size);
+        // Extra debug logging
 //            qDebug() << byteArray->toHex();
 //            delete byteArray;
-
-        } else {
-            disconnect();
-            // Error occured
-            emit communicationError(getName(), tr("Could not send data - link %1 is disconnected!").arg(getName()));
-        }
+    } else {
+        disconnect();
+        // Error occured
+        emit communicationError(getName(), tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
 }
 

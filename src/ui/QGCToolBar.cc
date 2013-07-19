@@ -577,12 +577,12 @@ void QGCToolBar::updateComboBox()
         if (slink)
         {
             //It's a serial link
-            QVector<QString> *portlist = slink->getCurrentPorts();
+            QList<QString> portlist = slink->getCurrentPorts();
             //if (!slink->isConnected())
             //{
-                for (int j=0;j<portlist->size();j++)
+                for (int j=0;j<portlist.count();j++)
                 {
-                    portComboBox->addItem("Serial port:" + QString::number(i) + ":" + portlist->at(j));
+                    portComboBox->addItem("Serial port:" + QString::number(i) + ":" + portlist[j]);
                 }
             //}
             //We only really want to display from unconnected sources.
