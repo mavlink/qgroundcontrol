@@ -19,11 +19,11 @@ Rectangle {
         if (connected){
             console.log("APM Tool BAR QML: connected")
             connectButton.image = "./resources/apmplanner/toolbar/disconnect.png"
-            connectButton.label = "CONNECT"
+            connectButton.label = "DISCONNECT"
         } else {
             console.log("APM Tool BAR QML: disconnected")
             connectButton.image = "./resources/apmplanner/toolbar/connect.png"
-            connectButton.label = "DISCONNECT"
+            connectButton.label = "CONNECT"
         }
     }
 
