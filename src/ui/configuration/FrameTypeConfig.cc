@@ -73,24 +73,30 @@ void FrameTypeConfig::parameterChanged(int uas, int component, QString parameter
 
 void FrameTypeConfig::xFrameSelected()
 {
-    if (m_uas)
+    if (!m_uas)
     {
-        m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(1));
+        showNullMAVErrorMessageBox();
+        return;
     }
+    m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(1));
 }
 
 void FrameTypeConfig::plusFrameSelected()
 {
-    if (m_uas)
+    if (!m_uas)
     {
-        m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(0));
+        showNullMAVErrorMessageBox();
+        return;
     }
+    m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(0));
 }
 
 void FrameTypeConfig::vFrameSelected()
 {
-    if (m_uas)
+    if (!m_uas)
     {
-        m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(2));
+        showNullMAVErrorMessageBox();
+        return;
     }
+    m_uas->getParamManager()->setParameter(1,"FRAME",QVariant(2));
 }

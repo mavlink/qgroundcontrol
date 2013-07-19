@@ -20,6 +20,7 @@ private slots:
     void calcDividerSet();
     void ampsPerVoltSet();
     void batteryCapacitySet();
+    void alertOnLowClicked(bool checked);
     void activeUASSet(UASInterface *uas);
     void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
 private:
