@@ -42,7 +42,7 @@ class SerialLinkInterface : public LinkInterface
     Q_OBJECT
 
 public:
-    virtual QVector<QString>* getCurrentPorts() = 0;
+    virtual QList<QString> getCurrentPorts() = 0;
     virtual QString getPortName() = 0;
     virtual int getBaudRate() = 0;
     virtual int getDataBits() = 0;
