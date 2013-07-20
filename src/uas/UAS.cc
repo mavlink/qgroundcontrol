@@ -2758,14 +2758,14 @@ void UAS::toggleArmedState()
 void UAS::goAutonomous()
 {
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & MAV_MODE_FLAG_AUTO_ENABLED & ~MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, navMode);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), (mode & ~MAV_MODE_FLAG_MANUAL_INPUT_ENABLED) | MAV_MODE_FLAG_AUTO_ENABLED, navMode);
     sendMessage(msg);
 }
 
 void UAS::goManual()
 {
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & ~MAV_MODE_FLAG_AUTO_ENABLED & MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, navMode);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), (mode & ~MAV_MODE_FLAG_AUTO_ENABLED) | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, navMode);
     sendMessage(msg);
 }
 
