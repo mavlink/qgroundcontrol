@@ -203,8 +203,8 @@ void MainWindow::init()
         QList<QAction*> actions;
         actions << ui.actionFlightView;
         actions << ui.actionMissionView;
-        //actions << ui.actionConfiguration_2;
         actions << ui.actionHardwareConfig;
+        actions << ui.actionSoftwareConfig;
         toolBar->setPerspectiveChangeActions(actions);
 
         // Add actions for advanced users (displayed in dropdown under "advanced")
