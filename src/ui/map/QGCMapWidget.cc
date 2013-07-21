@@ -30,6 +30,12 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     defaultGuidedAlt = -1;
     loadSettings(false);
 
+    //handy for debugging:
+    //this->SetShowTileGridLines(true);
+
+    //default appears to be Google Hybrid, and is broken currently
+    this->SetMapType(MapType::BingHybrid);
+
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     QAction *guidedaction = new QAction(this);
@@ -511,6 +517,7 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
 void QGCMapWidget::goHome()
 {
     SetCurrentPosition(Home->Coord());
+    SetZoom(18); //zoom to "large RC park" size
 }
 
 /**
