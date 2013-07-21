@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>500</height>
+    <width>1024</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>800</width>
-    <height>500</height>
+    <width>1024</width>
+    <height>600</height>
    </size>
   </property>
   <property name="baseSize">
@@ -50,8 +50,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
-     <height>25</height>
+     <width>1024</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -97,7 +97,8 @@
     </property>
     <addaction name="actionMissionView"/>
     <addaction name="actionFlightView"/>
-    <addaction name="actionConfiguration_2"/>
+    <addaction name="actionHardwareConfig"/>
+    <addaction name="actionSoftwareConfig"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionSimulationView"/>
     <addaction name="separator"/>
@@ -275,7 +276,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/status/weather-overcast.svg</normaloff>:/files/images/status/weather-overcast.svg</iconset>
+     <normaloff>:/files/images/categories/applications-internet.svg</normaloff>:/files/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
     <string>Mission</string>
@@ -441,7 +442,7 @@
     <string>Open the simulation view</string>
    </property>
   </action>
-  <action name="actionConfiguration_2">
+  <action name="actionHardwareConfig">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -450,7 +451,7 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Config</string>
+    <string>Hardware</string>
    </property>
    <property name="toolTip">
     <string>Configuration options of the vehicle.</string>
@@ -467,6 +468,15 @@
   <action name="actionSimulationView">
    <property name="text">
     <string>Simulation</string>
+   </property>
+  </action>
+  <action name="actionSoftwareConfig">
+   <property name="icon">
+    <iconset resource="../../qgroundcontrol.qrc">
+     <normaloff>:/files/images/categories/applications-system.svg</normaloff>:/files/images/categories/applications-system.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Software</string>
    </property>
   </action>
  </widget>

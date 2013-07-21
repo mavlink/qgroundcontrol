@@ -52,6 +52,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "UDPLink.h"
 #include "MAVLinkSimulationLink.h"
+#include "SerialLink.h"
 
 
 /**
@@ -70,8 +71,8 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("QGroundControl"));
-    this->setOrganizationDomain("org.qgroundcontrol");
+    this->setOrganizationName(QLatin1String("diydrones"));
+    this->setOrganizationDomain("com.diydrones");
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -156,41 +157,18 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     simulationLink->disconnect();
 
+    //We want to have a default serial link available for "quick" connecting.
+    SerialLink *slink = new SerialLink();
+    MainWindow::instance()->addLink(slink);
+
+    mainWindow = MainWindow::instance(splashScreen);
+
     // Remove splash screen
     splashScreen->finish(mainWindow);
 
-    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("QGroundControl has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
+    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"),
+                                              tr("qgroundcontrol has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
 
-    // Check if link could be connected
-    if (!udpLink->connect())
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
-        msgBox.setInformativeText("You will not be able to receive data via UDP. Please check that you're running the right executable and then re-start " + qAppName() + ". Do you want to close the application?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        msgBox.setDefaultButton(QMessageBox::No);
-        int ret = msgBox.exec();
-
-        // Close the message box shortly after the click to prevent accidental clicks
-        QTimer::singleShot(15000, &msgBox, SLOT(reject()));
-
-        // Exit application
-        if (ret == QMessageBox::Yes)
-        {
-            //mainWindow->close();
-            QTimer::singleShot(200, mainWindow, SLOT(close()));
-        }
-    }
-
-//    forever
-//    {
-//        QGC::SLEEP::msleep(5000);
-//    }
-
-//    mainWindow->close();
-//    mainWindow->deleteLater();
-//    QGC::SLEEP::msleep(200);
 }
 
 /**

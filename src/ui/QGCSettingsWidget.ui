@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>528</width>
-    <height>321</height>
+    <height>347</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -69,6 +69,13 @@
          </property>
          <property name="checked">
           <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="apmToolBarCheckBox">
+         <property name="text">
+          <string>Show ArduPilot specific toolbar (restart QGC after change)</string>
          </property>
         </widget>
        </item>
