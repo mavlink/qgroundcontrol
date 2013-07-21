@@ -16,7 +16,7 @@ UASRawStatusView::UASRawStatusView(QWidget *parent) : QWidget(parent)
 
     // FIXME reinstate once fixed.
 
-    //timer->start(2000);
+    timer->start(2000);
 }
 void UASRawStatusView::addSource(MAVLinkDecoder *decoder)
 {
@@ -122,6 +122,7 @@ void UASRawStatusView::updateTableTimerTick()
                         //We're over what we can do. Add a column and continue.
                         columncount+=2;
                         broke = true;
+                        i = valueMap.constEnd(); // Ensure loop breakout.
                         break;
                     }
                 }

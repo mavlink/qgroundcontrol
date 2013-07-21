@@ -21,6 +21,7 @@ UASQuickView::UASQuickView(QWidget *parent) :
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     loadSettings();
+
     //If we don't have any predefined settings, set some defaults.
     if (uasPropertyValueMap.size() == 0)
     {
@@ -38,6 +39,14 @@ UASQuickView::UASQuickView(QWidget *parent) :
 
     updateTimer = new QTimer(this);
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
+}
+
+UASQuickView::~UASQuickView()
+{
+    if (quickViewSelectDialog)
+    {
+        delete quickViewSelectDialog;
+    }
 }
 
 void UASQuickView::actionTriggered()

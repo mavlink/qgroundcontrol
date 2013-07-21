@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
-
 #include <QtGui/QMainWindow>
 #include <QStatusBar>
 #include <QStackedWidget>
@@ -155,6 +154,12 @@ public:
         return autoReconnect;
     }
 
+    /** @brief Get custom toolbar setting */
+    bool isApmToolBarEnabled()
+    {
+        return apmToolBarEnabled;
+    }
+
     /** @brief Get title bar mode setting */
     bool dockWidgetTitleBarsEnabled()
     {
@@ -184,6 +189,7 @@ public slots:
     /** @brief Add a communication link */
     void addLink();
     void addLink(LinkInterface* link);
+    bool configLink(LinkInterface *link);
     void configure();
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
@@ -200,8 +206,9 @@ public slots:
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
     void setAdvancedMode();
-    /** @brief Load configuration view */
-    void loadConfigurationView();
+    /** @brief Load configuration views */
+    void loadHardwareConfigView();
+    void loadSoftwareConfigView();
     /** @brief Load default view when no MAV is connected */
     void loadUnconnectedView();
     /** @brief Load view for pilot */
@@ -228,6 +235,11 @@ public slots:
     void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
+    /** @brief Enable APM specific toolbar */
+    void enableApmToolbar(bool enabled) {
+        apmToolBarEnabled = enabled;
+    }
+
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
     /** @brief Load a specific style.
@@ -309,7 +321,8 @@ protected:
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
-        VIEW_CONFIGURATION,
+        VIEW_HARDWARE_CONFIG,
+        VIEW_SOFTWARE_CONFIG,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
@@ -376,6 +389,7 @@ protected:
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
     QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
@@ -467,6 +481,7 @@ protected:
     QString darkStyleFileName;
     QString lightStyleFileName;
     bool autoReconnect;
+    bool apmToolBarEnabled;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;

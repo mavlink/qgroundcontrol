@@ -102,6 +102,23 @@
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
+        <file>files/images/apm_planner_logo.png</file>
+        <file>files/images/apm_planner_logo_splash.png</file>
+        <file>files/images/apm_planner_2_0-07.png</file>
+        <file>files/images/apm_planner_2_0-08.png</file>
+        <file>files/images/mavs/frames_plus.png</file>
+        <file>files/images/mavs/frames_x.png</file>
+        <file>files/images/mavs/frames-05.png</file>
+        <file>files/images/devices/BR-HMC5883-01-2.jpg</file>
+        <file>files/images/devices/BR-APMPWRDEAN-2.jpg</file>
+        <file>files/images/devices/AC-0004-11-2.jpg</file>
+        <file>files/images/devices/BR-0004-03-2.jpg</file>
+        <file>files/images/devices/BR-0016-01-3T.jpg</file>
+        <file>files/images/devices/MinimOSD.jpg</file>
+        <file>files/images/devices/cameraGimalPitch1.png</file>
+        <file>files/images/devices/cameraGimalRoll1.png</file>
+        <file>files/images/devices/cameraGimalYaw.png</file>
+        <file>files/images/devices/Shutter.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>

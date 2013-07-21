@@ -52,6 +52,10 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     ui->titleBarCheckBox->setChecked(mainWindow->dockWidgetTitleBarsEnabled());
     connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),mainWindow,SLOT(enableDockWidgetTitleBars(bool)));
 
+    // APM toolbar
+    ui->apmToolBarCheckBox->setChecked(mainWindow->isApmToolBarEnabled());
+    connect(ui->apmToolBarCheckBox, SIGNAL(clicked(bool)), mainWindow, SLOT(enableApmToolbar(bool)));
+
     // Intialize the style UI to the proper values obtained from the MainWindow.
     MainWindow::QGC_MAINWINDOW_STYLE style = mainWindow->getStyle();
     ui->styleChooser->setCurrentIndex(style);
