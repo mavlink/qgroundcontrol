@@ -3345,7 +3345,7 @@ QString UAS::getShortModeTextFor(int id)
     {
         mode += "|VECTOR";
     }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
+    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
     {
         mode += "|STABILIZED";
     }
