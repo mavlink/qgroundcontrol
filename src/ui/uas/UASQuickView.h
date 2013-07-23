@@ -10,6 +10,7 @@
 #include "UASQuickViewItem.h"
 #include "MAVLinkDecoder.h"
 #include "UASQuickViewItemSelect.h"
+#include "FlowLayout.h"
 class UASQuickView : public QWidget
 {
     Q_OBJECT
@@ -40,6 +41,17 @@ private:
 
     /** Loads gauge layout from settings file */
     void loadSettings();
+
+    /** Column Count */
+    int m_columnCount;
+
+    QList<QVBoxLayout*> m_verticalLayoutList;
+    void sortItems(int columncount);
+    QList<int> m_verticalLayoutItemCount;
+    int m_currentColumn;
+    QMap<QString,int> m_PropertyToLayoutIndexMap;
+
+    //FlowLayout *layout;
 protected:
     Ui::Form ui;
 signals:
@@ -65,6 +77,7 @@ public slots:
     void selectDialogClosed();
     void valueEnabled(QString value);
     void valueDisabled(QString value);
+    void columnActionTriggered();
 };
 
 #endif // UASQUICKVIEW_H

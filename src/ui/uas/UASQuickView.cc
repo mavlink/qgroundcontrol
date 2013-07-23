@@ -4,10 +4,17 @@
 #include "UASQuickViewItemSelect.h"
 #include "UASQuickViewTextItem.h"
 #include <QSettings>
+#include <QInputDialog>
 UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
 {
     quickViewSelectDialog=0;
+    m_columnCount=2;
+    m_currentColumn=0;
     ui.setupUi(this);
+
+    m_verticalLayoutList.append(new QVBoxLayout());
+    ui.horizontalLayout->addItem(m_verticalLayoutList[0]);
+
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(setActiveUAS(UASInterface*)));
     connect(UASManager::instance(),SIGNAL(UASCreated(UASInterface*)),this,SLOT(addUAS(UASInterface*)));
     if (UASManager::instance()->getActiveUAS())
@@ -23,7 +30,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
     {
         valueEnabled("altitude");
         valueEnabled("groundSpeed");
-        valueEnabled("distToWaypoint");
+        valueEnabled("distToWP");
         valueEnabled("yaw");
         valueEnabled("roll");
     }
@@ -33,9 +40,15 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
     connect(action,SIGNAL(triggered()),this,SLOT(actionTriggered()));
     this->addAction(action);
 
+    QAction *columnaction = new QAction("Set Column Count",this);
+    columnaction->setCheckable(false);
+    connect(columnaction,SIGNAL(triggered()),this,SLOT(columnActionTriggered()));
+    this->addAction(columnaction);
+
     updateTimer = new QTimer(this);
     connect(updateTimer,SIGNAL(timeout()),this,SLOT(updateTimerTick()));
     updateTimer->start(1000);
+
 }
 UASQuickView::~UASQuickView()
 {
@@ -43,6 +56,18 @@ UASQuickView::~UASQuickView()
     {
         delete quickViewSelectDialog;
     }
+}
+void UASQuickView::columnActionTriggered()
+{
+    bool ok = false;
+    int newcolumns = QInputDialog::getInt(this,"Columns","Enter number of columns",1,0,100,1,&ok);
+    if (!ok)
+    {
+        return;
+    }
+    m_columnCount = newcolumns;
+    sortItems(newcolumns);
+    saveSettings();
 }
 
 void UASQuickView::actionTriggered()
@@ -75,6 +100,7 @@ void UASQuickView::saveSettings()
         settings.setValue("type","text");
     }
     settings.endArray();
+    settings.setValue("UAS_QUICK_VIEW_COLUMNS",m_columnCount);
     settings.sync();
 }
 void UASQuickView::loadSettings()
@@ -91,21 +117,71 @@ void UASQuickView::loadSettings()
             valueEnabled(nameval);
         }
     }
+    settings.endArray();
+    m_columnCount = settings.value("UAS_QUICK_VIEW_COLUMNS",1).toInt();
+    sortItems(m_columnCount);
 }
 
 void UASQuickView::valueEnabled(QString value)
 {
     UASQuickViewItem *item = new UASQuickViewTextItem(this);
     item->setTitle(value);
-    ui.verticalLayout->addWidget(item);
+    //ui.verticalLayout->addWidget(item);
+    //m_currentColumn
+    m_verticalLayoutList[m_currentColumn]->addWidget(item);
+    m_PropertyToLayoutIndexMap[value] = m_currentColumn;
+    m_currentColumn++;
+    if (m_currentColumn >= m_columnCount-1)
+    {
+        m_currentColumn = 0;
+    }
     uasPropertyToLabelMap[value] = item;
     uasEnabledPropertyList.append(value);
+
     if (!uasPropertyValueMap.contains(value))
     {
         uasPropertyValueMap[value] = 0;
     }
     saveSettings();
 
+}
+void UASQuickView::sortItems(int columncount)
+{
+    QList<QWidget*> itemlist;
+    for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
+    {
+        m_verticalLayoutList[m_PropertyToLayoutIndexMap[i.key()]]->removeWidget(i.value());
+        m_PropertyToLayoutIndexMap.remove(i.key());
+        itemlist.append(i.value());
+    }
+    //Item list has all the widgets availble, now re-add them to the layouts.
+    for (int i=0;i<m_verticalLayoutList.size();i++)
+    {
+        ui.horizontalLayout->removeItem(m_verticalLayoutList[i]);
+        m_verticalLayoutList[i]->deleteLater(); //removeItem de-parents the item.
+    }
+    m_verticalLayoutList.clear();
+
+    //Create a vertical layout for every intended column
+    for (int i=0;i<columncount;i++)
+    {
+        QVBoxLayout *layout = new QVBoxLayout(this);
+        ui.horizontalLayout->addItem(layout);
+        m_verticalLayoutList.append(layout);
+    }
+
+    //Cycle through all items and add them to the layout
+    int currcol = 0;
+    for (int i=0;i<itemlist.size();i++)
+    {
+        m_verticalLayoutList[currcol]->addWidget(itemlist[i]);
+        currcol++;
+        if (currcol >= columncount)
+        {
+            currcol = 0;
+        }
+    }
+    m_currentColumn = currcol;
 }
 
 void UASQuickView::valueDisabled(QString value)
@@ -115,7 +191,10 @@ void UASQuickView::valueDisabled(QString value)
         UASQuickViewItem *item = uasPropertyToLabelMap[value];
         uasPropertyToLabelMap.remove(value);
         item->hide();
-        ui.verticalLayout->removeWidget(item);
+        //ui.verticalLayout->removeWidget(item);
+        //layout->removeWidget(item);
+        m_verticalLayoutList[m_PropertyToLayoutIndexMap[value]]->removeWidget(item);
+        sortItems(m_columnCount);
         item->deleteLater();
         uasEnabledPropertyList.removeOne(value);
         saveSettings();
@@ -282,16 +361,26 @@ void UASQuickView::actionTriggered(bool checked)
     }
     if (checked)
     {
-        UASQuickViewItem *item = new UASQuickViewTextItem(this);
+        valueEnabled(senderlabel->text());
+        /*UASQuickViewItem *item = new UASQuickViewTextItem(this);
         item->setTitle(senderlabel->text());
-        ui.verticalLayout->addWidget(item);
-        uasPropertyToLabelMap[senderlabel->text()] = item;
+        layout->addWidget(item);
+        //ui.verticalLayout->addWidget(item);
+        m_currentColumn++;
+        if (m_currentColumn >= m_verticalLayoutList.size())
+        {
+            m_currentColumn = 0;
+        }
+        uasPropertyToLabelMap[senderlabel->text()] = item;*/
+
+
     }
     else
     {
-        ui.verticalLayout->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
+        valueDisabled(senderlabel->text());
+        /*layout->removeWidget(uasPropertyToLabelMap[senderlabel->text()]);
         uasPropertyToLabelMap[senderlabel->text()]->deleteLater();
-        uasPropertyToLabelMap.remove(senderlabel->text());
+        uasPropertyToLabelMap.remove(senderlabel->text());*/
 
     }
 }
