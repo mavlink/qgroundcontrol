@@ -39,11 +39,9 @@
 * creating the UAS.
 */
 
-const float UAS::lipoFull = 4.2f;  ///< 100% charged voltage
-const float UAS::lipoEmpty = 3.5f; ///< Discharged voltage
-
-
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
+    lipoFull(4.2f),
+    lipoEmpty(3.5f),
     uasId(id),
     links(new QList<LinkInterface*>()),
     unknownPackets(),
@@ -3462,8 +3460,8 @@ void UAS::setBattery(BatteryType type, int cells)
     case LIION:
         break;
     case LIPOLY:
-        fullVoltage = this->cells * UAS::lipoFull;
-        emptyVoltage = this->cells * UAS::lipoEmpty;
+        fullVoltage = this->cells * lipoFull;
+        emptyVoltage = this->cells * lipoEmpty;
         break;
     case LIFE:
         break;
