@@ -56,8 +56,8 @@ public:
     UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
-    static const float lipoFull;  ///< 100% charged voltage
-    static const float lipoEmpty; ///< Discharged voltage
+    float lipoFull;  ///< 100% charged voltage
+    float lipoEmpty; ///< Discharged voltage
 
     /* MANAGEMENT */
 
