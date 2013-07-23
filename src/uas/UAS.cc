@@ -3329,41 +3329,51 @@ QString UAS::getAudioModeTextFor(int id)
 * The mode returned can be auto, stabilized, test, manual, preflight or unknown.
 * @return the short text of the mode for the id given.
 */
+/**
+* The mode returned can be auto, stabilized, test, manual, preflight or unknown.
+* @return the short text of the mode for the id given.
+*/
 QString UAS::getShortModeTextFor(int id)
 {
-    QString mode;
+    QString mode = "";
     uint8_t modeid = id;
 
-    qDebug() << "MODE:" << modeid;
 
     // BASE MODE DECODING
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO)
-    {
-        mode += "|AUTO";
-    }
-    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
-    {
-        mode += "|VECTOR";
-    }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
-    {
-        mode += "|STABILIZED";
-    }
-    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST)
-    {
-        mode += "|TEST";
-    }
-    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
-    {
-        mode += "|MANUAL";
-    }
-    else if (modeid == 0)
+
+    if (modeid == 0)
     {
         mode = "|PREFLIGHT";
     }
-    else
+    else {
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO){
+            mode += "|AUTO";
+        }
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL){
+            mode += "|MANUAL";
+        }
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED){
+            mode += "|VECTOR";
+        }
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE){
+            mode += "|STABILIZED";
+        }
+
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST){
+            mode += "|TEST";
+        }
+
+
+    }
+
+    if (mode.length() == 0)
     {
         mode = "|UNKNOWN";
+        qDebug() << __FILE__ << __LINE__ << " Unknown modeid: " << modeid;
     }
 
     // ARMED STATE DECODING
@@ -3381,6 +3391,8 @@ QString UAS::getShortModeTextFor(int id)
     {
         mode.prepend("HIL:");
     }
+
+    qDebug() << "MODE: " << modeid << " " << mode;
 
     return mode;
 }
