@@ -38,6 +38,11 @@
 * as the previous one created unless one calls deleteSettings in the code after
 * creating the UAS.
 */
+
+const float UAS::lipoFull = 4.2f;  ///< 100% charged voltage
+const float UAS::lipoEmpty = 3.5f; ///< Discharged voltage
+
+
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     uasId(id),
     links(new QList<LinkInterface*>()),
