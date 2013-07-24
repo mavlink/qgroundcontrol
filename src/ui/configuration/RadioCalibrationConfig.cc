@@ -71,6 +71,11 @@ RadioCalibrationConfig::RadioCalibrationConfig(QWidget *parent) : AP2ConfigWidge
 
     guiUpdateTimer = new QTimer(this);
     connect(guiUpdateTimer,SIGNAL(timeout()),this,SLOT(guiUpdateTimerTick()));
+
+    rcMin << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0;
+    rcMax << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0;
+    rcTrim << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0;
+    rcValue << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0;
 }
 
 RadioCalibrationConfig::~RadioCalibrationConfig()
