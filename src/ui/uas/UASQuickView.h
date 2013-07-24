@@ -10,7 +10,6 @@
 #include "UASQuickViewItem.h"
 #include "MAVLinkDecoder.h"
 #include "UASQuickViewItemSelect.h"
-#include "FlowLayout.h"
 class UASQuickView : public QWidget
 {
     Q_OBJECT
