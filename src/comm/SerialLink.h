@@ -142,6 +142,8 @@ public slots:
     bool connect();
     bool disconnect();
 
+    void linkError(QSerialPort::SerialPortError error);
+
 protected:
     quint64 m_bytesRead;
     QSerialPort* m_port;
@@ -166,13 +168,13 @@ protected:
     quint64 m_connectionStartTime;
     QMutex m_statisticsMutex;
     QMutex m_dataMutex;
+    QMutex m_writeMutex;
     QList<QString> m_ports;
 
 private:
     volatile bool m_stopp;
     volatile bool m_reqReset;
 	QMutex m_stoppMutex;
-    QMutex m_writeMutex;
     QByteArray m_transmitBuffer;
 
     bool hardwareConnect();

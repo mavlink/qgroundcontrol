@@ -63,16 +63,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_dataBits = dataBits;
     m_stopBits = stopBits;
 
-    // Set the port name
-//    if (m_portName == "")
-//    {
-//        m_name = tr("Serial Link ") + QString::number(getId());
-//    }
-//    else
-//    {
-//        m_name = portname.trimmed();
-//    }
-
     loadSettings();
 }
 void SerialLink::requestReset()
@@ -91,8 +81,6 @@ SerialLink::~SerialLink()
 QList<QString> SerialLink::getCurrentPorts()
 {
     m_ports.clear();
-    // Example use QSerialPortInfo
-    // [TODO] make this thread safe
 
     QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
 
@@ -152,6 +140,7 @@ void SerialLink::run()
     {
         //Need to error out here.
         emit communicationError(getName(),"Error connecting: " + m_port->errorString());
+        disconnect(); // This tidies up and sends the necessary signals
         return;
     }
 
@@ -183,18 +172,18 @@ void SerialLink::run()
             }
         }
 
-        if (m_transmitBuffer.size() > 0) {
-            // send the data
-            QMutexLocker lockWrite(&m_writeMutex);
-            int num_written = m_port->write(m_transmitBuffer.constData());
-            if (num_written > 0){
-                m_transmitBuffer = m_transmitBuffer.remove(0,num_written);
-            }
-
+        if (m_transmitBuffer.length() > 0) {
+            QMutexLocker writeLocker(&m_writeMutex);
+            int numWritten = m_port->write(m_transmitBuffer);
+            bool txError = m_port->waitForBytesWritten(-1);
+//            if ((txError) || (numWritten == -1))
+//                qDebug() << "TX Error!";
+            m_transmitBuffer =  m_transmitBuffer.remove(0, numWritten);
+        } else {
+//            qDebug() << "Wait write response timeout %1" << QTime::currentTime().toString();
         }
 
-
-        bool error = m_port->waitForReadyRead(500);
+        bool error = m_port->waitForReadyRead(10);
 
         if(error) { // Waits for 1/2 second [TODO][BB] lower to SerialLink::poll_interval?
             QByteArray readData = m_port->readAll();
@@ -208,9 +197,9 @@ void SerialLink::run()
                 m_bitsReceivedTotal += readData.length() * 8;
             }
         } else {
-//            qDebug() << "readyReadTime #"<< __LINE__;
-
+//            qDebug() << "Wait write response timeout %1" << QTime::currentTime().toString();
         }
+
         if (bytes != m_bytesRead) // i.e things are good and data is being read.
         {
             bytes = m_bytesRead;
@@ -273,20 +262,17 @@ void SerialLink::writeBytes(const char* data, qint64 size)
     if(m_port && m_port->isOpen()) {
 //        qDebug() << "writeBytes" << m_portName << "attempting to tx " << size << "bytes.";
 
-        QByteArray byteArray(data,size);
+        QByteArray byteArray(data, size);
         {
             QMutexLocker writeLocker(&m_writeMutex);
             m_transmitBuffer.append(byteArray);
         }
-
-//        qDebug() << "writeBytes " << m_portName << "tx'd" << b << "bytes:";
 
         // Increase write counter
         m_bitsSentTotal += size * 8;
 
         // Extra debug logging
 //            qDebug() << byteArray->toHex();
-//            delete byteArray;
     } else {
         disconnect();
         // Error occured
@@ -420,6 +406,8 @@ bool SerialLink::hardwareConnect()
     }
 
     QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
+    QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)),
+                     this, SLOT(linkError(QSerialPort::SerialPortError)));
 
 //    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
     m_connectionStartTime = MG::TIME::getGroundTimeNow();
@@ -449,6 +437,11 @@ bool SerialLink::hardwareConnect()
     writeSettings();
 
     return true; // successful connection
+}
+
+void SerialLink::linkError(QSerialPort::SerialPortError error)
+{
+    qDebug() << error;
 }
 
 
