@@ -69,6 +69,7 @@ This file is part of the QGROUNDCONTROL project
 #include <apmtoolbar.h>
 #include <ApmHardwareConfig.h>
 #include <ApmSoftwareConfig.h>
+#include <QGCConfigView.h>
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -199,12 +200,13 @@ void MainWindow::init()
         toolBar = new QGCToolBar(this);
         this->addToolBar(toolBar);
 
+        ui.actionHardwareConfig->setText(tr("Config"));
+
         // Add actions for average users (displayed next to each other)
         QList<QAction*> actions;
         actions << ui.actionFlightView;
         actions << ui.actionMissionView;
         actions << ui.actionHardwareConfig;
-        actions << ui.actionSoftwareConfig;
         toolBar->setPerspectiveChangeActions(actions);
 
         // Add actions for advanced users (displayed in dropdown under "advanced")
@@ -512,22 +514,33 @@ void MainWindow::buildCommonWidgets()
         pilotView->setCentralWidget(new QGCMapTool(this));
         addCentralWidget(pilotView, "Pilot");
     }
-    if (!configView)
-    {
-        configView = new SubMainWindow(this);
-        configView->setObjectName("VIEW_HARDWARE_CONFIG");
-        configView->setCentralWidget(new ApmHardwareConfig(this));
-        addCentralWidget(configView,"Hardware");
-        centralWidgetToDockWidgetsMap[VIEW_HARDWARE_CONFIG] = QMap<QString,QWidget*>();
+    if (apmToolBarEnabled) {
+        if (!configView)
+        {
+            configView = new SubMainWindow(this);
+            configView->setObjectName("VIEW_HARDWARE_CONFIG");
+            configView->setCentralWidget(new ApmHardwareConfig(this));
+            addCentralWidget(configView,"Hardware");
+            centralWidgetToDockWidgetsMap[VIEW_HARDWARE_CONFIG] = QMap<QString,QWidget*>();
 
-    }
-    if (!softwareConfigView)
-    {
-        softwareConfigView = new SubMainWindow(this);
-        softwareConfigView->setObjectName("VIEW_SOFTWARE_CONFIG");
-        softwareConfigView->setCentralWidget(new ApmSoftwareConfig(this));
-        addCentralWidget(softwareConfigView,"Software");
-        centralWidgetToDockWidgetsMap[VIEW_SOFTWARE_CONFIG] = QMap<QString,QWidget*>();
+        }
+        if (!softwareConfigView)
+        {
+            softwareConfigView = new SubMainWindow(this);
+            softwareConfigView->setObjectName("VIEW_SOFTWARE_CONFIG");
+            softwareConfigView->setCentralWidget(new ApmSoftwareConfig(this));
+            addCentralWidget(softwareConfigView,"Software");
+            centralWidgetToDockWidgetsMap[VIEW_SOFTWARE_CONFIG] = QMap<QString,QWidget*>();
+        }
+    } else {
+        if (!configView)
+        {
+            configView = new SubMainWindow(this);
+            configView->setObjectName("VIEW_HARDWARE_CONFIG");
+            configView->setCentralWidget(new QGCConfigView(this));
+            addCentralWidget(configView,"Config");
+            centralWidgetToDockWidgetsMap[VIEW_HARDWARE_CONFIG] = QMap<QString,QWidget*>();
+        }
     }
     if (!engineeringView)
     {
@@ -1477,7 +1490,9 @@ void MainWindow::connectCommonActions()
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
-    connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
+    if (apmToolBarEnabled) {
+        connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
+    }
 
     connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
@@ -1973,7 +1988,8 @@ void MainWindow::loadViewState()
             centerStack->setCurrentWidget(configView);
             break;
         case VIEW_SOFTWARE_CONFIG:
-            centerStack->setCurrentWidget(softwareConfigView);
+            if (softwareConfigView)
+                centerStack->setCurrentWidget(softwareConfigView);
             break;
         case VIEW_ENGINEER:
             centerStack->setCurrentWidget(engineeringView);

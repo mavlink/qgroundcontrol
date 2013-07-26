@@ -222,6 +222,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCMissionDoStartSearch.ui \
     src/ui/mission/QGCMissionDoFinishSearch.ui \
     src/ui/QGCVehicleConfig.ui \
+    src/ui/QGCPX4VehicleConfig.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -261,7 +262,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/configuration/ParamWidget.ui \
     src/ui/configuration/ArduPlanePidConfig.ui \
     src/ui/configuration/AdvParameterList.ui \
-    src/ui/configuration/ArduRoverPidConfig.ui
+    src/ui/configuration/ArduRoverPidConfig.ui \
+    src/ui/QGCConfigView.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -401,6 +403,7 @@ HEADERS += src/MG.h \
     src/ui/mission/QGCMissionDoStartSearch.h \
     src/ui/mission/QGCMissionDoFinishSearch.h \
     src/ui/QGCVehicleConfig.h \
+    src/ui/QGCPX4VehicleConfig.h \
     src/comm/QGCHilLink.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
@@ -451,7 +454,8 @@ HEADERS += src/MG.h \
     src/ui/configuration/ParamWidget.h \
     src/ui/configuration/ArduPlanePidConfig.h \
     src/ui/configuration/AdvParameterList.h \
-    src/ui/configuration/ArduRoverPidConfig.h
+    src/ui/configuration/ArduRoverPidConfig.h \
+    src/ui/QGCConfigView.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -608,6 +612,7 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
     src/ui/mission/QGCMissionDoFinishSearch.cc \
     src/ui/QGCVehicleConfig.cc \
+    src/ui/QGCPX4VehicleConfig.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
@@ -657,7 +662,8 @@ SOURCES += src/main.cc \
     src/ui/configuration/ParamWidget.cc \
     src/ui/configuration/ArduPlanePidConfig.cc \
     src/ui/configuration/AdvParameterList.cc \
-    src/ui/configuration/ArduRoverPidConfig.cc
+    src/ui/configuration/ArduRoverPidConfig.cc \
+    src/ui/QGCConfigView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
