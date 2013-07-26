@@ -49,6 +49,7 @@ This file is part of the QGROUNDCONTROL project
 #include "CameraGimbalConfig.h"
 #include "AntennaTrackerConfig.h"
 #include "ApmPlaneLevel.h"
+#include "ApmFirmwareConfig.h"
 
 class ApmHardwareConfig : public QWidget
 {
@@ -63,6 +64,7 @@ private:
     AccelCalibrationConfig *m_accelConfig;
     RadioCalibrationConfig *m_radioConfig;
 
+    ApmFirmwareConfig *m_apmFirmwareConfig;
     Radio3DRConfig *m_radio3drConfig;
     BatteryMonitorConfig *m_batteryConfig;
     SonarConfig *m_sonarConfig;
