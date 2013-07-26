@@ -215,7 +215,8 @@ linux-g++|linux-g++-64{
 		DEFINES += QGC_OSG_QT_ENABLED
 	}
 
-	exists(/usr/local/include/google/protobuf) {
+	exists(/usr/local/include/google/protobuf) |
+	exists(/usr/include/google/protobuf) {
 		message("Building support for Protocol Buffers")
 		DEPENDENCIES_PRESENT += protobuf
 		# Include Protocol Buffers libraries
