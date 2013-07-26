@@ -179,7 +179,8 @@ linux-g++|linux-g++-64{
 
 	INCLUDEPATH += /usr/include \
         /usr/local/include \
-        /usr/include/qt4/phonon
+        /usr/include/qt4/phonon \
+	/usr/include/phonon
 
 	LIBS += \
 		-L/usr/lib \
@@ -227,7 +228,8 @@ linux-g++|linux-g++-64{
 		DEFINES += QGC_PROTOBUF_ENABLED
 	}
 
-	exists(/usr/local/include/libfreenect/libfreenect.h) {
+	exists(/usr/local/include/libfreenect/libfreenect.h) |
+	exists(/usr/include/libfreenect/libfreenect.h) {
 		message("Building support for libfreenect")
 		DEPENDENCIES_PRESENT += libfreenect
 		INCLUDEPATH += /usr/include/libusb-1.0
@@ -257,7 +259,7 @@ linux-g++ {
 linux-g++-64 {
 	message("Building for GNU/Linux 64bit/x64 (g++-64)")
 	exists(/usr/local/lib64) {
-		LIBS += -L/usr/local/lib64
+		LIBS += -L/usr/local/lib64 -L/usr/lib64
 	}
 }
 
