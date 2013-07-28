@@ -102,10 +102,6 @@
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
-        <file>files/images/apm_planner_logo.png</file>
-        <file>files/images/apm_planner_logo_splash.png</file>
-        <file>files/images/apm_planner_2_0-07.png</file>
-        <file>files/images/apm_planner_2_0-08.png</file>
         <file>files/images/mavs/frames_plus.png</file>
         <file>files/images/mavs/frames_x.png</file>
         <file>files/images/mavs/frames-05.png</file>
