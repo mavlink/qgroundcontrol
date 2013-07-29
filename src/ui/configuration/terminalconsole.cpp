@@ -145,6 +145,7 @@ void TerminalConsole::openSerialPort(const SerialSettings &settings)
             m_statusBar->showMessage(tr("Connected to %1 : baud %2z")
                                        .arg(settings.name).arg(QString::number(settings.baudRate)));
             qDebug() << "Open Terminal Console Serial Port";
+            writeSettings(); // Save last successful connection
 
         } else {
             m_serial->close();
