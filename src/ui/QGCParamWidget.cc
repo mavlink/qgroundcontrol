@@ -705,7 +705,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
                 current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
             }
 
-            switch (parameters.value(key)->value(str).type())
+            switch ((int)parameters.value(key)->value(str).type())
             {
             case QVariant::Int:
             {
@@ -766,7 +766,7 @@ void QGCParamWidget::saveParameters()
             {
                 QString paramValue("%1");
                 QString paramType("%1");
-                switch (j.value().type())
+                switch ((int)j.value().type())
                 {
                 case QVariant::Int:
                     paramValue = paramValue.arg(j.value().toInt());
@@ -777,7 +777,9 @@ void QGCParamWidget::saveParameters()
                     paramType = paramType.arg(MAV_PARAM_TYPE_UINT32);
                     break;
                 case QMetaType::Float:
-                    paramValue = paramValue.arg(j.value().toDouble(), 25, 'g', 12);
+                    // We store parameters as floats, with only 6 digits of precision guaranteed for decimal string conversion
+                    // (see IEEE 754, 32 bit single-precision)
+                    paramValue = paramValue.arg((double)j.value().toFloat(), 25, 'g', 6);
                     paramType = paramType.arg(MAV_PARAM_TYPE_REAL32);
                     break;
                 default:
@@ -955,7 +957,7 @@ void QGCParamWidget::retransmissionGuardTick()
                 if (count < retransmissionBurstRequestSize) {
                     // Re-request write operation
                     QVariant value = missingParams->value(key);
-                    switch (parameters.value(component)->value(key).type())
+                    switch ((int)parameters.value(component)->value(key).type())
                     {
                     case QVariant::Int:
                     {
@@ -1025,7 +1027,7 @@ void QGCParamWidget::setParameter(int component, QString parameterName, QVariant
         return;
     }
 
-    switch (parameters.value(component)->value(parameterName).type())
+    switch ((int)parameters.value(component)->value(parameterName).type())
     {
     case QVariant::Char:
     {

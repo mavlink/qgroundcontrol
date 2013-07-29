@@ -148,6 +148,9 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // first messages arrive
     UDPLink* udpLink = new UDPLink(QHostAddress::Any, 14550);
     MainWindow::instance()->addLink(udpLink);
+    // Listen on Multicast-Address 239.255.77.77, Port 14550
+    //QHostAddress * multicast_udp = new QHostAddress("239.255.77.77");
+    //UDPLink* udpLink = new UDPLink(*multicast_udp, 14550);
 
 #ifdef OPAL_RT
     // Add OpalRT Link, but do not connect
@@ -168,7 +171,27 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 
     if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"),
                                               tr("qgroundcontrol has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
+    // Check if link could be connected
+    if (!udpLink->connect())
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
+        msgBox.setInformativeText("It is recommended to close the application and stop all instances. Click Yes to close.");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        int ret = msgBox.exec();
 
+        // Close the message box shortly after the click to prevent accidental clicks
+        QTimer::singleShot(15000, &msgBox, SLOT(reject()));
+
+        // Exit application
+        if (ret == QMessageBox::Yes)
+        {
+            //mainWindow->close();
+            QTimer::singleShot(200, mainWindow, SLOT(close()));
+        }
+    }
 }
 
 /**
