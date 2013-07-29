@@ -65,8 +65,8 @@ macx|macx-g++42|macx-g++|macx-llvm: {
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/Frameworks/* $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
 
-#       # Copy QML stuff
-message(BASEDIR $$BASEDIR)
+        # Copy QML stuff
+        message(BASEDIR $$BASEDIR)
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/*.qml $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml
 
