@@ -11,9 +11,10 @@
 #include <QXmlStreamReader>
 #include <QMessageBox>
 #include <QProcess>
+#include <QScrollBar>
+
 #include "qserialport.h"
 #include "ui_ApmFirmwareConfig.h"
-#include "ApmFirmwareStatus.h"
 
 class ApmFirmwareConfig : public QWidget
 {
