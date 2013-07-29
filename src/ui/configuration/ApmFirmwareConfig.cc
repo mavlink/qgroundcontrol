@@ -269,11 +269,26 @@ void ApmFirmwareConfig::downloadFinished()
     port.close();
 
     ui.statusLabel->setText("Burning");
+    QString avrdudeExecutable;
+    QStringList stringList;
+
 #ifdef Q_OS_WIN
-    process->start("avrdude/avrdude.exe",QStringList() << "-Cavrdude/avrdude.conf" << "-pm2560" << "-cstk500" << QString("-P").append(m_detectedComPort) << QString("-Uflash:w:").append(m_tempFirmwareFile->fileName()).append(":i"));
-#else
-    process->start("avrdude",QStringList() << "-Cavrdude/avrdude.conf" << "-pm2560" << "-cstk500" << QString("-P").append(m_detectedComPort) << QString("-Uflash:w:").append(m_tempFirmwareFile->fileName()).append(":i"));
+    stringList = QStringList() << "-Cavrdude/avrdude.conf" << "-pm2560"
+                               << "-cstk500" << QString("-P").append(m_detectedComPort)
+                               << QString("-Uflash:w:").append(m_tempFirmwareFile->fileName()).append(":i");
+
+    avrdudeExecutable = "avrdude/avrdude.exe";
 #endif
+#ifdef Q_OS_MAC
+    stringList = QStringList() << "-v" << "-pm2560"
+                                           << "-cstk500" << QString("-P/dev/cu.").append(m_detectedComPort)
+                                           << QString("-Uflash:w:").append(m_tempFirmwareFile->fileName()).append(":i");
+    avrdudeExecutable = "/usr/local/CrossPack-AVR/bin/avrdude";
+#endif
+
+    // Start the Flashing
+    qDebug() << avrdudeExecutable << stringList;
+    process->start(avrdudeExecutable,stringList);
 }
 void ApmFirmwareConfig::firmwareProcessError(QProcess::ProcessError error)
 {
