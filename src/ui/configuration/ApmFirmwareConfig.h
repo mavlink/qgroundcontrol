@@ -8,6 +8,9 @@
 #include <QDebug>
 #include <QTemporaryFile>
 #include <QProcess>
+#include <QXmlStreamReader>
+#include <QMessageBox>
+#include <QProcess>
 #include "qserialport.h"
 #include "ui_ApmFirmwareConfig.h"
 #include "ApmFirmwareStatus.h"
@@ -23,16 +26,19 @@ private slots:
     void firmwareListFinished();
     void firmwareListError(QNetworkReply::NetworkError error);
     void burnButtonClicked();
-    void betaFirmwareButtonClicked();
+    void betaFirmwareButtonClicked(bool betafirmwareenabled);
     void downloadFinished();
     void firmwareProcessFinished(int status);
     void firmwareProcessReadyRead();
     void firmwareProcessError(QProcess::ProcessError error);
+    void firmwareDownloadProgress(qint64 received,qint64 total);
 private:
-    ApmFirmwareStatus *firmwareStatus;
+    //ApmFirmwareStatus *firmwareStatus;
+    QString m_detectedComPort;
     QTemporaryFile *m_tempFirmwareFile;
     QNetworkAccessManager *m_networkManager;
-    void requestFirmwares(bool beta);
+    void requestFirmwares();
+    void requestBetaFirmwares();
     bool stripVersionFromGitReply(QString url,QString reply,QString type,QString stable,QString *out);
     bool m_betaFirmwareChecked;
     QMap<QPushButton*,QString> m_buttonToUrlMap;
