@@ -380,7 +380,6 @@ HEADERS += src/MG.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointEditableView.h \    
     src/ui/UnconnectedUASInfoWidget.h \
     src/ui/QGCRGBDView.h \
