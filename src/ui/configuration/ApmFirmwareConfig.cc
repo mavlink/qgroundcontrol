@@ -31,7 +31,7 @@ ApmFirmwareConfig::ApmFirmwareConfig(QWidget *parent) : QWidget(parent)
     connect(ui.quadPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
     connect(ui.triPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
     connect(ui.y6PushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
-    QTimer::singleShot(500,this,SLOT(requestFirmwares()));
+    QTimer::singleShot(10000,this,SLOT(requestFirmwares()));
     connect(ui.betaFirmwareButton,SIGNAL(clicked(bool)),this,SLOT(betaFirmwareButtonClicked(bool)));
 
     ui.progressBar->setMaximum(100);
