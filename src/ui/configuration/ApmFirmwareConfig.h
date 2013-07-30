@@ -33,13 +33,18 @@ private slots:
     void firmwareProcessReadyRead();
     void firmwareProcessError(QProcess::ProcessError error);
     void firmwareDownloadProgress(qint64 received,qint64 total);
+    void requestFirmwares();
+    void requestBetaFirmwares();
+
 private:
+    void addBetaLabel(QWidget *parent);
+    void hideBetaLabels();
+    void showBetaLabels();
     //ApmFirmwareStatus *firmwareStatus;
     QString m_detectedComPort;
     QTemporaryFile *m_tempFirmwareFile;
     QNetworkAccessManager *m_networkManager;
-    void requestFirmwares();
-    void requestBetaFirmwares();
+    QList<QLabel*> m_betaButtonLabelList;
     bool stripVersionFromGitReply(QString url,QString reply,QString type,QString stable,QString *out);
     bool m_betaFirmwareChecked;
     QMap<QPushButton*,QString> m_buttonToUrlMap;
