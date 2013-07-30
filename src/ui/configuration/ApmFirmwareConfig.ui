@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>868</width>
-    <height>661</height>
+    <height>684</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -448,7 +448,7 @@
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>470</y>
+     <y>490</y>
      <width>791</width>
      <height>23</height>
     </rect>
@@ -461,7 +461,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>500</y>
+     <y>520</y>
      <width>741</width>
      <height>151</height>
     </rect>
@@ -470,8 +470,8 @@
   <widget class="QCheckBox" name="showOutputCheckBox">
    <property name="geometry">
     <rect>
-     <x>600</x>
-     <y>440</y>
+     <x>710</x>
+     <y>470</y>
      <width>101</width>
      <height>17</height>
     </rect>
@@ -483,7 +483,7 @@
   <widget class="QLabel" name="statusLabel">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>30</x>
      <y>440</y>
      <width>141</width>
      <height>21</height>
@@ -491,6 +491,19 @@
    </property>
    <property name="text">
     <string>Status</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="warningLabel">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>440</y>
+     <width>491</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;h3&gt;&lt;font color=#FFAA00&gt;WARNING: Only install BETA firmware if you are an experienced tester.&lt;/font&gt;&lt;/h3&gt;</string>
    </property>
   </widget>
  </widget>

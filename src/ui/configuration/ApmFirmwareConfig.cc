@@ -1,3 +1,5 @@
+#include <QTimer>
+
 #include "LinkManager.h"
 #include "LinkInterface.h"
 #include "qserialport.h"
@@ -29,21 +31,60 @@ ApmFirmwareConfig::ApmFirmwareConfig(QWidget *parent) : QWidget(parent)
     connect(ui.quadPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
     connect(ui.triPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
     connect(ui.y6PushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    requestFirmwares();
+    QTimer::singleShot(500,this,SLOT(requestFirmwares()));
     connect(ui.betaFirmwareButton,SIGNAL(clicked(bool)),this,SLOT(betaFirmwareButtonClicked(bool)));
 
     ui.progressBar->setMaximum(100);
     ui.progressBar->setValue(0);
-    ui.progressBar->setVisible(false);
 
     ui.textBrowser->setVisible(false);
     connect(ui.showOutputCheckBox,SIGNAL(clicked(bool)),ui.textBrowser,SLOT(setShown(bool)));
+
+    addBetaLabel(ui.roverPushButton);
+    addBetaLabel(ui.planePushButton);
+    addBetaLabel(ui.copterPushButton);
+    addBetaLabel(ui.quadPushButton);
+    addBetaLabel(ui.hexaPushButton);
+    addBetaLabel(ui.octaQuadPushButton);
+    addBetaLabel(ui.octaPushButton);
+    addBetaLabel(ui.triPushButton);
+    addBetaLabel(ui.y6PushButton);
+
+}
+void ApmFirmwareConfig::hideBetaLabels()
+{
+    for (int i=0;i<m_betaButtonLabelList.size();i++)
+    {
+        m_betaButtonLabelList[i]->hide();
+    }
+    ui.warningLabel->hide();
 }
 
+void ApmFirmwareConfig::showBetaLabels()
+{
+    for (int i=0;i<m_betaButtonLabelList.size();i++)
+    {
+        m_betaButtonLabelList[i]->show();
+    }
+    ui.warningLabel->show();
+}
+
+void ApmFirmwareConfig::addBetaLabel(QWidget *parent)
+{
+
+    QLabel *label = new QLabel(parent);
+    QVBoxLayout *layout = new QVBoxLayout();
+    parent->setLayout(layout);
+    label->setAlignment(Qt::AlignRight | Qt::AlignBottom);
+    label->setText("<h1><font color=#FFAA00>BETA</font></h1>");
+    layout->addWidget(label);
+    m_betaButtonLabelList.append(label);
+}
 
 void ApmFirmwareConfig::requestBetaFirmwares()
 {
     m_betaFirmwareChecked = true;
+    showBetaLabels();
     QNetworkReply *reply1 = m_networkManager->get(QNetworkRequest(QUrl("http://firmware.diydrones.com/Copter/beta/apm2-heli/git-version.txt")));
     QNetworkReply *reply2 = m_networkManager->get(QNetworkRequest(QUrl("http://firmware.diydrones.com/Copter/beta/apm2-quad/git-version.txt")));
     QNetworkReply *reply3 = m_networkManager->get(QNetworkRequest(QUrl("http://firmware.diydrones.com/Copter/beta/apm2-hexa/git-version.txt")));
@@ -89,6 +130,7 @@ void ApmFirmwareConfig::requestBetaFirmwares()
 void ApmFirmwareConfig::requestFirmwares()
 {
     m_betaFirmwareChecked = false;
+    hideBetaLabels();
     QNetworkReply *reply1 = m_networkManager->get(QNetworkRequest(QUrl("http://firmware.diydrones.com/Copter/stable/apm2-heli/git-version.txt")));
     QNetworkReply *reply2 = m_networkManager->get(QNetworkRequest(QUrl("http://firmware.diydrones.com/Copter/stable/apm2-quad/git-version.txt")));
     QNetworkReply *reply3 = m_networkManager->get(QNetworkRequest(QUrl("http://firmware.diydrones.com/Copter/stable/apm2-hexa/git-version.txt")));
@@ -135,15 +177,14 @@ void ApmFirmwareConfig::betaFirmwareButtonClicked(bool betafirmwareenabled)
 {
     if (betafirmwareenabled)
     {
-        QMessageBox::information(0,"Warning","Beta firmwares are from the latest trunk. Use at your own risk!!");
-        ui.label->setText("<h2>Beta Firmware</h2>");
-        ui.betaFirmwareButton->setText("Stable Firmware");
+        ui.label->setText(tr("<h2>Beta Firmware</h2>"));
+        ui.betaFirmwareButton->setText(tr("Stable Firmware"));
         requestBetaFirmwares();
     }
     else
     {
-        ui.label->setText("<h2>Firmware</h2>");
-        ui.betaFirmwareButton->setText("Beta Firmware");
+        ui.label->setText(tr("<h2>Firmware</h2>"));
+        ui.betaFirmwareButton->setText(tr("Beta Firmware"));
         requestFirmwares();
     }
 }
@@ -157,7 +198,7 @@ void ApmFirmwareConfig::firmwareProcessFinished(int status)
     if (status != 0)
     {
         //Error of some kind
-        QMessageBox::information(0,"Error","An error has occured during the upload process. See window for details");
+        QMessageBox::information(0,tr("Error"),tr("An error has occured during the upload process. See window for details"));
         ui.textBrowser->setVisible(true);
         ui.showOutputCheckBox->setChecked(true);
         ui.textBrowser->setPlainText(ui.textBrowser->toPlainText().append("\n\nERROR!!\n" + proc->errorString()));
@@ -166,13 +207,13 @@ void ApmFirmwareConfig::firmwareProcessFinished(int status)
         {
             sb->setValue(sb->maximum());
         }
-        ui.statusLabel->setText("Error during upload");
+        ui.statusLabel->setText(tr("Error during upload"));
     }
     else
     {
         //Ensure we're reading 100%
         ui.progressBar->setValue(100);
-        ui.statusLabel->setText("Upload complete");
+        ui.statusLabel->setText(tr("Upload complete"));
     }
     //qDebug() << "Upload finished!" << QString::number(status);
     m_tempFirmwareFile->deleteLater(); //This will remove the temporary file.
@@ -268,10 +309,10 @@ void ApmFirmwareConfig::downloadFinished()
     port.setDataTerminalReady(false);
     port.close();
 
-    ui.statusLabel->setText("Burning");
     QString avrdudeExecutable;
     QStringList stringList;
 
+    ui.statusLabel->setText(tr("Flashing"));
 #ifdef Q_OS_WIN
     stringList = QStringList() << "-Cavrdude/avrdude.conf" << "-pm2560"
                                << "-cstk500" << QString("-P").append(m_detectedComPort)
@@ -316,7 +357,7 @@ void ApmFirmwareConfig::burnButtonClicked()
                     qDebug() << "Eror, trying to program over a non serial link. This should not happen";
                     return;
                 }
-                if (!(QMessageBox::question(this,"WARNING","You are about to upload new firmware to your board. This will disconnect you if you are currently connected. Be sure the MAV is on the ground, and connected over USB/Serial link.\n\nDo you wish to proceed?",QMessageBox::Yes,QMessageBox::No) == QMessageBox::Yes))
+                if (!(QMessageBox::question(this,tr("WARNING"),tr("You are about to upload new firmware to your board. This will disconnect you if you are currently connected. Be sure the MAV is on the ground, and connected over USB/Serial link.\n\nDo you wish to proceed?"),QMessageBox::Yes,QMessageBox::No) == QMessageBox::Yes))
                 {
                     return;
                 }
@@ -330,7 +371,7 @@ void ApmFirmwareConfig::burnButtonClicked()
         }
         if (!foundconnected)
         {
-            QMessageBox::information(0,"Error","You must be connected to a MAV over serial link to flash firmware. Please connect to a MAV then try again");
+            QMessageBox::information(0,tr("Error"),tr("You must be connected to a MAV over serial link to flash firmware. Please connect to a MAV then try again"));
             return;
         }
 
@@ -342,7 +383,6 @@ void ApmFirmwareConfig::burnButtonClicked()
         connect(reply,SIGNAL(error(QNetworkReply::NetworkError)),this,SLOT(firmwareListError(QNetworkReply::NetworkError)));
         connect(reply,SIGNAL(downloadProgress(qint64,qint64)),this,SLOT(firmwareDownloadProgress(qint64,qint64)));
         ui.statusLabel->setText("Downloading");
-        ui.progressBar->setVisible(true);
     }
 }
 
