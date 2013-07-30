@@ -22,15 +22,15 @@ ApmFirmwareConfig::ApmFirmwareConfig(QWidget *parent) : QWidget(parent)
 
     m_networkManager = new QNetworkAccessManager(this);
 
-    connect(ui.roverPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.planePushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.copterPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.hexaPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.octaQuadPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.octaPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.quadPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.triPushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
-    connect(ui.y6PushButton,SIGNAL(clicked()),this,SLOT(burnButtonClicked()));
+    connect(ui.roverPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.planePushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.copterPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.hexaPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.octaQuadPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.octaPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.quadPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.triPushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
+    connect(ui.y6PushButton,SIGNAL(clicked()),this,SLOT(flashButtonClicked()));
     QTimer::singleShot(500,this,SLOT(requestFirmwares()));
     connect(ui.betaFirmwareButton,SIGNAL(clicked(bool)),this,SLOT(betaFirmwareButtonClicked(bool)));
 
@@ -265,7 +265,7 @@ void ApmFirmwareConfig::firmwareProcessReadyRead()
 
 void ApmFirmwareConfig::downloadFinished()
 {
-    qDebug() << "Download finished, burning firmware";
+    qDebug() << "Download finished, flashing firmware";
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if (!reply)
     {
@@ -340,7 +340,7 @@ void ApmFirmwareConfig::firmwareDownloadProgress(qint64 received,qint64 total)
     ui.progressBar->setValue( 100.0 * ((double)received/(double)total));
 }
 
-void ApmFirmwareConfig::burnButtonClicked()
+void ApmFirmwareConfig::flashButtonClicked()
 {
     QPushButton *senderbtn = qobject_cast<QPushButton*>(sender());
     if (m_buttonToUrlMap.contains(senderbtn))
