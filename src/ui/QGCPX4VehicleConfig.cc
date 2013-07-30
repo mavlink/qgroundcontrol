@@ -315,7 +315,7 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     // Load tabs for general configuration
     foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        QPushButton *button = new QPushButton(ui->scrollAreaWidgetContents_3);
+        QPushButton *button = new QPushButton(ui->leftNavScrollAreaWidgetContents);
         connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
         ui->navBarLayout->insertWidget(2,button);
         button->setMinimumHeight(75);
@@ -359,7 +359,7 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     // Load additional tabs for vehicle specific configuration
     foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        QPushButton *button = new QPushButton(ui->scrollAreaWidgetContents_3);
+        QPushButton *button = new QPushButton(ui->leftNavScrollAreaWidgetContents);
         connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
         ui->navBarLayout->insertWidget(2,button);
 
@@ -1362,14 +1362,14 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
 
 void QGCPX4VehicleConfig::updateStatus(const QString& str)
 {
-    ui->statusLabel->setText(str);
-    ui->statusLabel->setStyleSheet("");
+    ui->advancedStatusLabel->setText(str);
+    ui->advancedStatusLabel->setStyleSheet("");
 }
 
 void QGCPX4VehicleConfig::updateError(const QString& str)
 {
-    ui->statusLabel->setText(str);
-    ui->statusLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
+    ui->advancedStatusLabel->setText(str);
+    ui->advancedStatusLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
 }
 void QGCPX4VehicleConfig::updateMinMax()
 {
