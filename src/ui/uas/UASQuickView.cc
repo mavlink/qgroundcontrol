@@ -143,6 +143,8 @@ void UASQuickView::valueEnabled(QString value)
         uasPropertyValueMap[value] = 0;
     }
     saveSettings();
+    item->show();
+    sortItems(m_columnCount);
 
 }
 void UASQuickView::sortItems(int columncount)
@@ -165,7 +167,7 @@ void UASQuickView::sortItems(int columncount)
     //Create a vertical layout for every intended column
     for (int i=0;i<columncount;i++)
     {
-        QVBoxLayout *layout = new QVBoxLayout(this);
+        QVBoxLayout *layout = new QVBoxLayout();
         ui.horizontalLayout->addItem(layout);
         m_verticalLayoutList.append(layout);
     }
