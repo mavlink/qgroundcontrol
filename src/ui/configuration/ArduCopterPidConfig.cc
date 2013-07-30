@@ -107,6 +107,7 @@ ArduCopterPidConfig::ArduCopterPidConfig(QWidget *parent) : AP2ConfigWidget(pare
         ui.ch7OptComboBox->addItem(m_ch78ValueToTextList[i].second);
         ui.ch8OptComboBox->addItem(m_ch78ValueToTextList[i].second);
     }
+    initConnections();
 }
 
 ArduCopterPidConfig::~ArduCopterPidConfig()

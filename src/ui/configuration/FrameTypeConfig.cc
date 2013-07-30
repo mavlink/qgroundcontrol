@@ -44,6 +44,7 @@ FrameTypeConfig::FrameTypeConfig(QWidget *parent) : AP2ConfigWidget(parent)
     connect(ui.plusRadioButton,SIGNAL(clicked()),this,SLOT(plusFrameSelected()));
     connect(ui.xRadioButton,SIGNAL(clicked()),this,SLOT(xFrameSelected()));
     connect(ui.vRadioButton,SIGNAL(clicked()),this,SLOT(vFrameSelected()));
+    initConnections();
 }
 
 FrameTypeConfig::~FrameTypeConfig()

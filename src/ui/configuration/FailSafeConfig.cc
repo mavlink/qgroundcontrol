@@ -82,6 +82,7 @@ FailSafeConfig::FailSafeConfig(QWidget *parent) : AP2ConfigWidget(parent)
     connect(ui.throttleCheckBox,SIGNAL(clicked(bool)),this,SLOT(throttleChecked(bool)));
     connect(ui.throttlePwmSpinBox,SIGNAL(editingFinished()),this,SLOT(throttlePwmChanged()));
     connect(ui.throttleFailSafeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(throttleFailSafeChanged(int)));
+    initConnections();
 }
 void FailSafeConfig::gcsChecked(bool checked)
 {

@@ -31,7 +31,7 @@ BatteryMonitorConfig::BatteryMonitorConfig(QWidget *parent) : AP2ConfigWidget(pa
     connect(ui.battCapacityLineEdit,SIGNAL(editingFinished()),this,SLOT(batteryCapacitySet()));
 
 
-
+    initConnections();
 }
 void BatteryMonitorConfig::activeUASSet(UASInterface *uas)
 {

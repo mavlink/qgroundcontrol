@@ -6,6 +6,7 @@ ApmPlaneLevel::ApmPlaneLevel(QWidget *parent) : AP2ConfigWidget(parent)
     ui.setupUi(this);
     connect(ui.levelPushButton,SIGNAL(clicked()),this,SLOT(levelClicked()));
     connect(ui.manualLevelCheckBox,SIGNAL(toggled(bool)),this,SLOT(manualCheckBoxToggled(bool)));
+    initConnections();
 }
 
 ApmPlaneLevel::~ApmPlaneLevel()
