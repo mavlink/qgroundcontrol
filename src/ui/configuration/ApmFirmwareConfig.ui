@@ -447,9 +447,9 @@
   <widget class="QProgressBar" name="progressBar">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>30</x>
      <y>490</y>
-     <width>791</width>
+     <width>801</width>
      <height>23</height>
     </rect>
    </property>
@@ -460,9 +460,9 @@
   <widget class="QTextBrowser" name="textBrowser">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>30</x>
      <y>520</y>
-     <width>741</width>
+     <width>801</width>
      <height>151</height>
     </rect>
    </property>
@@ -503,7 +503,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;h3&gt;&lt;font color=#FFAA00&gt;WARNING: Only install BETA firmware if you are an experienced tester.&lt;/font&gt;&lt;/h3&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600; color:#e90000;&quot;&gt;WARNING:&lt;/span&gt;&lt;span style=&quot; font-size:large; font-weight:600; color:#ffaa00;&quot;&gt; Only install BETA firmware if you are an experienced tester.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
  </widget>

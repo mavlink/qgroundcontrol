@@ -410,110 +410,47 @@ void ApmFirmwareConfig::firmwareListFinished()
     QString outstr = "";
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-heli",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.copterLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.copterLabel->setText(outstr);
-        }
+        ui.copterLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-quad",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.quadLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.quadLabel->setText(outstr);
-        }
+        ui.quadLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-hexa",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.hexaLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.hexaLabel->setText(outstr);
-        }
+        ui.hexaLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-octa-quad",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.octaQuadLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.octaQuadLabel->setText(outstr);
-        }
+        ui.octaQuadLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-octa",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.octaLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.octaLabel->setText(outstr);
-        }
+        ui.octaLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-tri",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.triLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.triLabel->setText(outstr);
-        }
+        ui.triLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"apm2-y6",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.y6Label->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.y6Label->setText(outstr);
-        }
+        ui.y6Label->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"Plane",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.planeLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.planeLabel->setText(outstr);
-        }
+        ui.planeLabel->setText(outstr);
         return;
     }
     if (stripVersionFromGitReply(reply->url().toString(),replystr,"Rover",(m_betaFirmwareChecked ? "beta" : "stable"),&outstr))
     {
-        if (m_betaFirmwareChecked)
-        {
-            ui.roverLabel->setText("BETA " + outstr);
-        }
-        else
-        {
-            ui.roverLabel->setText(outstr);
-        }
+        ui.roverLabel->setText(outstr);
         return;
     }
     qDebug() << "Match not found for:" << reply->url();
