@@ -18,6 +18,12 @@
 #include "QGCToolWidget.h"
 #include "ui_QGCPX4VehicleConfig.h"
 
+
+#define WIDGET_INDEX_RC 0
+#define WIDGET_INDEX_SENSOR_CAL 1
+#define WIDGET_INDEX_GENERAL_CONFIG 2
+#define WIDGET_INDEX_ADV_CONFIG 3
+
 QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     QWidget(parent),
     mav(NULL),
@@ -107,22 +113,23 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 }
 void QGCPX4VehicleConfig::rcMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(0);
+    //TODO eg ui->stackedWidget->findChild("rcConfig");
+    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_RC);
 }
 
 void QGCPX4VehicleConfig::sensorMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_SENSOR_CAL);
 }
 
 void QGCPX4VehicleConfig::generalMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-2);
+    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_GENERAL_CONFIG);
 }
 
 void QGCPX4VehicleConfig::advancedMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(ui->stackedWidget->count()-1);
+    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_ADV_CONFIG);
 }
 
 QGCPX4VehicleConfig::~QGCPX4VehicleConfig()
@@ -288,7 +295,7 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
-            QWidget* parent = left?ui->advancedLeftContents:ui->advancedRightContents;
+            QWidget* parent = ui->advanceColumnContents;
             tool = new QGCToolWidget("", parent);
             if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
             {
@@ -297,16 +304,8 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
                 box->setTitle(tool->objectName());
                 box->setLayout(new QVBoxLayout(box));
                 box->layout()->addWidget(tool);
-                if (left)
-                {
-                    left = false;
-                    ui->advancedLeftLayout->addWidget(box);
-                }
-                else
-                {
-                    left = true;
-                    ui->advancedRightLayout->addWidget(box);
-                }
+                ui->advancedColumnLayout->addWidget(box);
+
             } else {
                 delete tool;
             }
@@ -808,8 +807,9 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     }
 
 
-    // Do nothing if system is the same
-    if (mav == active) return;
+    // Do nothing if UAS is already visible
+    if (mav == active)
+        return;
 
     if (mav)
     {
@@ -829,11 +829,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
         {
             child->deleteLater();
         }
-        foreach(QWidget* child, ui->advancedLeftContents->findChildren<QWidget*>())
-        {
-            child->deleteLater();
-        }
-        foreach(QWidget* child, ui->advancedRightContents->findChildren<QWidget*>())
+        foreach(QWidget* child, ui->advanceColumnContents->findChildren<QWidget*>())
         {
             child->deleteLater();
         }
@@ -1184,15 +1180,7 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
         if (!found)
         {
             //New param type, create a QGroupBox for it.
-            QWidget* parent;
-            if (ui->advancedLeftLayout->count() > ui->advancedRightLayout->count())
-            {
-                parent = ui->advancedRightContents;
-            }
-            else
-            {
-                parent = ui->advancedLeftContents;
-            }
+            QWidget* parent = ui->advanceColumnContents;
 
             // Create the tool, attaching it to the QGroupBox
             QGCToolWidget *tool = new QGCToolWidget("", parent);
@@ -1214,16 +1202,8 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
 
             libParamToWidgetMap.insert(parameterName,tool);
             toolWidgets.append(tool);
+            ui->advancedColumnLayout->addWidget(box);
 
-            // Make sure we have similar number of widgets on each side.
-            if (ui->advancedLeftLayout->count() > ui->advancedRightLayout->count())
-            {
-                ui->advancedRightLayout->addWidget(box);
-            }
-            else
-            {
-                ui->advancedLeftLayout->addWidget(box);
-            }
             toolToBoxMap[tool] = box;
         }
     }

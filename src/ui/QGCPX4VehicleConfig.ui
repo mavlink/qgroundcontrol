@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1256</width>
-    <height>711</height>
+    <height>783</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -43,7 +43,7 @@
         <x>0</x>
         <y>0</y>
         <width>133</width>
-        <height>691</height>
+        <height>757</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -889,7 +889,7 @@ Config</string>
               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Lucida Grande'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
@@ -906,8 +906,8 @@ p, li { white-space: pre-wrap; }
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>530</width>
-                  <height>574</height>
+                  <width>26</width>
+                  <height>26</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -981,8 +981,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>525</width>
-                   <height>523</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -1018,8 +1018,8 @@ p, li { white-space: pre-wrap; }
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>524</width>
-                   <height>523</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1065,10 +1065,10 @@ p, li { white-space: pre-wrap; }
             </spacer>
            </item>
            <item>
-            <widget class="QComboBox" name="fixedWingComboBox"/>
+            <widget class="QComboBox" name="platformSelectorComboBox"/>
            </item>
            <item>
-            <widget class="QPushButton" name="loadFixedWingDefaultsButton">
+            <widget class="QPushButton" name="loadPlatformDefaultsButton">
              <property name="text">
               <string>Load Platform Defaults</string>
              </property>
@@ -1092,13 +1092,13 @@ p, li { white-space: pre-wrap; }
                 <property name="widgetResizable">
                  <bool>true</bool>
                 </property>
-                <widget class="QWidget" name="advancedLeftContents">
+                <widget class="QWidget" name="advanceColumnContents">
                  <property name="geometry">
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>525</width>
-                   <height>523</height>
+                   <width>928</width>
+                   <height>562</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1106,7 +1106,7 @@ p, li { white-space: pre-wrap; }
                    <number>0</number>
                   </property>
                   <item>
-                   <layout class="QVBoxLayout" name="advancedLeftLayout"/>
+                   <layout class="QVBoxLayout" name="advancedColumnLayout"/>
                   </item>
                  </layout>
                 </widget>
@@ -1124,31 +1124,6 @@ p, li { white-space: pre-wrap; }
               <property name="margin">
                <number>0</number>
               </property>
-              <item>
-               <widget class="QScrollArea" name="scrollArea_5">
-                <property name="widgetResizable">
-                 <bool>true</bool>
-                </property>
-                <widget class="QWidget" name="advancedRightContents">
-                 <property name="geometry">
-                  <rect>
-                   <x>0</x>
-                   <y>0</y>
-                   <width>524</width>
-                   <height>523</height>
-                  </rect>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_8">
-                  <property name="margin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <layout class="QVBoxLayout" name="advancedRightLayout"/>
-                  </item>
-                 </layout>
-                </widget>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
