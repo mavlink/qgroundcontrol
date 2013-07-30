@@ -55,6 +55,8 @@ class TerminalConsole : public QWidget
     Q_OBJECT
     
 public:
+    enum ConsoleMode { APM, PX4 };
+public:
     explicit TerminalConsole(QWidget *parent = 0);
     ~TerminalConsole();
 
@@ -64,6 +66,7 @@ private slots:
     void closeSerialPort();
     void writeData(const QByteArray &data);
     void readData();
+    void sendResetCommand();
 
     void handleError(QSerialPort::SerialPortError error);
 
@@ -75,6 +78,7 @@ private:
     void initConnections();
     void addBaudComboBoxConfig();
     void fillPortsInfo(QComboBox &comboxBox);
+    void addConsoleModesComboBoxConfig();
     void writeSettings();
     void loadSettings();
 
@@ -87,6 +91,7 @@ private:
     SettingsDialog *m_settingsDialog;
     QSerialPort *m_serial;
     SerialSettings m_settings;
+    ConsoleMode m_consoleMode;
 };
 
 #endif // TERMINALCONSOLE_H
