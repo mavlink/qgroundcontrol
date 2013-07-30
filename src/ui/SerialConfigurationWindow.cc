@@ -129,6 +129,9 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven(bool)));
         connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBits(int)));
         connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBits(int)));
+        connect(ui.advCheckBox,SIGNAL(clicked(bool)),ui.advGroupBox,SLOT(setShown(bool)));
+        ui.advCheckBox->setChecked(false);
+        ui.advGroupBox->setVisible(false);
 
         //connect(this->link, SIGNAL(connected(bool)), this, SLOT());
         ui.portName->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
