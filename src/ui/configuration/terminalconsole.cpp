@@ -50,7 +50,8 @@ This file is part of the APM_PLANNER project
 
 TerminalConsole::TerminalConsole(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::TerminalConsole)
+    ui(new Ui::TerminalConsole),
+    m_consoleMode(APM)
 {
     ui->setupUi(this);
 
@@ -71,6 +72,7 @@ TerminalConsole::TerminalConsole(QWidget *parent) :
     ui->disconnectButton->setEnabled(false);
     ui->settingsButton->setEnabled(true);
 
+
     addBaudComboBoxConfig();
     fillPortsInfo(*ui->linkComboBox);
 
@@ -82,12 +84,18 @@ TerminalConsole::TerminalConsole(QWidget *parent) :
         ui->linkComboBox->setCurrentIndex(0);
     }
 
-    //setUiControls(m_settingsDialog);
+    addConsoleModesComboBoxConfig();
 
     initConnections();
 }
 
 void TerminalConsole::addBaudComboBoxConfig()
+{
+    ui->consoleModeBox->addItem(QLatin1String("APM"), APM);
+    ui->consoleModeBox->addItem(QLatin1String("PX4"), PX4);
+}
+
+void TerminalConsole::addConsoleModesComboBoxConfig()
 {
     ui->baudComboBox->addItem(QLatin1String("115200"), QSerialPort::Baud115200);
     ui->baudComboBox->addItem(QLatin1String("57600"), QSerialPort::Baud57600);
@@ -147,6 +155,8 @@ void TerminalConsole::openSerialPort(const SerialSettings &settings)
             qDebug() << "Open Terminal Console Serial Port";
             writeSettings(); // Save last successful connection
 
+            sendResetCommand();
+
         } else {
             m_serial->close();
             QMessageBox::critical(this, tr("Error"), m_serial->errorString());
@@ -170,6 +180,15 @@ void TerminalConsole::closeSerialPort()
     m_statusBar->showMessage(tr("Disconnected"));
 }
 
+void TerminalConsole::sendResetCommand()
+{
+    if (m_serial->isOpen()) {
+        m_serial->setDataTerminalReady(true);
+        m_serial->waitForBytesWritten(250);
+        m_serial->setDataTerminalReady(false);
+    }
+}
+
 void TerminalConsole::writeData(const QByteArray &data)
 {
 //    qDebug() << "writeData:" << data;
@@ -181,6 +200,23 @@ void TerminalConsole::readData()
     QByteArray data = m_serial->readAll();
 //    qDebug() << "readData:" << data;
     m_console->putData(data);
+
+    switch(m_consoleMode)
+    {
+    case APM: // APM
+        // On reset, send the break sequence and display help
+        if (data.contains("ENTER 3")) {
+            m_serial->write("\r\r\r");
+            m_serial->waitForBytesWritten(10);
+            m_serial->write("HELP\r");
+        }
+        break;
+    case PX4:
+        // Do nothing
+    default:
+        qDebug() << "Mode not yet implemented";
+    }
+
 }
 
 void TerminalConsole::handleError(QSerialPort::SerialPortError error)

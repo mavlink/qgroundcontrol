@@ -126,7 +126,7 @@
       </widget>
      </item>
      <item alignment="Qt::AlignRight">
-      <widget class="QComboBox" name="fmuComboBox">
+      <widget class="QComboBox" name="consoleModeBox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -139,16 +139,6 @@
          <height>0</height>
         </size>
        </property>
-       <item>
-        <property name="text">
-         <string>APM</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>PX4</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item>
