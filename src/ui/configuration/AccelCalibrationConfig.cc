@@ -6,9 +6,8 @@ AccelCalibrationConfig::AccelCalibrationConfig(QWidget *parent) : AP2ConfigWidge
     ui.setupUi(this);
     connect(ui.calibrateAccelButton,SIGNAL(clicked()),this,SLOT(calibrateButtonClicked()));
 
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    activeUASSet(UASManager::instance()->getActiveUAS());
     m_accelAckCount=0;
+    initConnections();
 }
 
 AccelCalibrationConfig::~AccelCalibrationConfig()

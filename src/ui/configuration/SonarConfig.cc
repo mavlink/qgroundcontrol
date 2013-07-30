@@ -10,6 +10,8 @@ SonarConfig::SonarConfig(QWidget *parent) : AP2ConfigWidget(parent)
     ui.sonarTypeComboBox->addItem("HRLV");
     connect(ui.enableCheckBox,SIGNAL(toggled(bool)),this,SLOT(checkBoxToggled(bool)));
     connect(ui.sonarTypeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(sonarTypeChanged(int)));
+
+    initConnections();
 }
 
 SonarConfig::~SonarConfig()

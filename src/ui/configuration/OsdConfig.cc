@@ -5,6 +5,8 @@ OsdConfig::OsdConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
     connect(ui.enablePushButton,SIGNAL(clicked()),this,SLOT(enableButtonClicked()));
+    initConnections();
+
 }
 
 OsdConfig::~OsdConfig()

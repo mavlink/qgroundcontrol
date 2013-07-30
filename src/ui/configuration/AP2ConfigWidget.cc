@@ -4,9 +4,13 @@
 AP2ConfigWidget::AP2ConfigWidget(QWidget *parent) : QWidget(parent)
 {
     m_uas = 0;
+}
+void AP2ConfigWidget::initConnections()
+{
     connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
     activeUASSet(UASManager::instance()->getActiveUAS());
 }
+
 void AP2ConfigWidget::activeUASSet(UASInterface *uas)
 {
     if (m_uas)

@@ -4,6 +4,7 @@
 AdvancedParamConfig::AdvancedParamConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
+    initConnections();
 }
 
 AdvancedParamConfig::~AdvancedParamConfig()
