@@ -106,6 +106,7 @@ void UASQuickView::saveSettings()
 void UASQuickView::loadSettings()
 {
     QSettings settings;
+    m_columnCount = settings.value("UAS_QUICK_VIEW_COLUMNS",1).toInt();
     int size = settings.beginReadArray("UAS_QUICK_VIEW_ITEMS");
     for (int i=0;i<size;i++)
     {
@@ -118,7 +119,6 @@ void UASQuickView::loadSettings()
         }
     }
     settings.endArray();
-    m_columnCount = settings.value("UAS_QUICK_VIEW_COLUMNS",1).toInt();
     sortItems(m_columnCount);
 }
 
