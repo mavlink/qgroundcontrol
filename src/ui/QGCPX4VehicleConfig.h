@@ -56,6 +56,7 @@ public slots:
     void setRCModeIndex(int newRcMode);
     /** Render the data updated */
     void updateView();
+    void updateRcWidgetValues();
 
     void updateMinMax();
 
@@ -176,8 +177,8 @@ protected:
     float rcThrottle;                   ///< PPM input channel used as throttle control input
     float rcMode;                       ///< PPM input channel used as mode switch control input
     float rcAux1;                       ///< PPM input channel used as aux 1 input
-    float rcAux2;                       ///< PPM input channel used as aux 1 input
-    float rcAux3;                       ///< PPM input channel used as aux 1 input
+    float rcAux2;                       ///< PPM input channel used as aux 2 input
+    float rcAux3;                       ///< PPM input channel used as aux 3 input
     bool rcCalChanged;                  ///< Set if the calibration changes (and needs to be written)
     bool changed;                       ///< Set if any of the input data changed
     QTimer updateTimer;                 ///< Controls update intervals
