@@ -132,7 +132,7 @@
             </size>
            </property>
            <property name="text">
-            <string>Adv Parameter List</string>
+            <string>Full Parameter List</string>
            </property>
            <property name="checkable">
             <bool>false</bool>
