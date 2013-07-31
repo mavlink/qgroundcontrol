@@ -25,6 +25,7 @@ private slots:
     void throttleChecked(bool checked);
     void throttlePwmChanged();
     void throttleFailSafeChanged(int index);
+    void gpsStatusChanged(UASInterface* uas,int fixtype);
 private:
     Ui::FailSafeConfig ui;
 };
