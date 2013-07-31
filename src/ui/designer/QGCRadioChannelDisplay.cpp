@@ -1,5 +1,10 @@
 #include "QGCRadioChannelDisplay.h"
 #include <QPainter>
+
+#define DIMMEST_COLOR   QColor::fromRgb(0,100,0)
+#define MIDBRIGHT_COLOR   QColor::fromRgb(0,180,0)
+#define BRIGHTEST_COLOR   QColor::fromRgb(64,255,0)
+
 QGCRadioChannelDisplay::QGCRadioChannelDisplay(QWidget *parent) : QWidget(parent)
 {
     m_showMinMax = false;
@@ -53,9 +58,9 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
     if (m_orientation == Qt::Vertical)
     {
         QLinearGradient gradientBrush(0, 0, this->width(), this->height());
-        gradientBrush.setColorAt(1.0,QColor::fromRgb(0,128,0));
-        gradientBrush.setColorAt(0.5,QColor::fromRgb(0,200,0));
-        gradientBrush.setColorAt(0.0, QColor::fromRgb(64,255,0));
+        gradientBrush.setColorAt(1.0,DIMMEST_COLOR);
+        gradientBrush.setColorAt(0.5,MIDBRIGHT_COLOR);
+        gradientBrush.setColorAt(0.0, BRIGHTEST_COLOR);
 
         //draw border
         painter.drawRect(0,0,width()-1,(height()-1) - twiceFontHeight);
@@ -105,9 +110,9 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
     else //horizontal orientation
     {
         QLinearGradient hGradientBrush(0, 0, this->width(), this->height());
-        hGradientBrush.setColorAt(0.0,QColor::fromRgb(0,128,0));
-        hGradientBrush.setColorAt(0.5,QColor::fromRgb(0,200,0));
-        hGradientBrush.setColorAt(1.0, QColor::fromRgb(64,255,0));
+        hGradientBrush.setColorAt(0.0,DIMMEST_COLOR);
+        hGradientBrush.setColorAt(0.5,MIDBRIGHT_COLOR);
+        hGradientBrush.setColorAt(1.0, BRIGHTEST_COLOR);
 
         //draw the value
         painter.drawRect(0,0,width()-1,(height()-1) - twiceFontHeight);
@@ -176,6 +181,19 @@ void QGCRadioChannelDisplay::hideMinMax()
 {
     m_showMinMax = false;
     update();
+}
+
+
+void QGCRadioChannelDisplay::setValueAndRange(int val, int min, int max)
+{
+    setValue(val);
+    setMinMax(min,max);
+}
+
+void QGCRadioChannelDisplay::setMinMax(int min, int max)
+{
+    setMin(min);
+    setMax(max);
 }
 
 void QGCRadioChannelDisplay::setMin(int value)

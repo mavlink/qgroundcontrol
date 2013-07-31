@@ -338,24 +338,25 @@ Config</string>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
-               <widget class="QComboBox" name="rcTypeComboBox">
-                <property name="enabled">
-                 <bool>false</bool>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>RC Transmitter Mode</string>
                 </property>
-                <property name="editable">
-                 <bool>false</bool>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
-                <item>
-                 <property name="text">
-                  <string>Select transmitter model</string>
-                 </property>
-                </item>
                </widget>
               </item>
               <item>
                <widget class="QComboBox" name="rcModeComboBox">
                 <property name="enabled">
                  <bool>true</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>320</width>
+                  <height>16777215</height>
+                 </size>
                 </property>
                 <item>
                  <property name="text">
@@ -383,13 +384,80 @@ Config</string>
             </item>
             <item>
              <layout class="QGridLayout" name="gridLayout_2">
-              <item row="2" column="1">
-               <widget class="QLabel" name="chanLabel_3">
+              <item row="1" column="6">
+               <widget class="QLabel" name="aux1ChanLabel">
                 <property name="text">
                  <string>0000</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="5">
+               <widget class="QLabel" name="chanName_8">
+                <property name="text">
+                 <string>Aux 3</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="8">
+               <widget class="QSpinBox" name="modeSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>8</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="7">
+               <widget class="QCheckBox" name="invertCheckBox_6">
+                <property name="text">
+                 <string>Invert</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="chanName">
+                <property name="text">
+                 <string>Roll / Ailerons</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="5">
+               <widget class="QLabel" name="chanName_6">
+                <property name="text">
+                 <string>Aux 1</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_2">
+                <property name="text">
+                 <string>Invert</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="5">
+               <widget class="QLabel" name="chanName_5">
+                <property name="text">
+                 <string>Mode Switch</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
@@ -400,235 +468,15 @@ Config</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="4">
-               <spacer name="horizontalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="chanName_3">
-                <property name="text">
-                 <string>Yaw / Rudder</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="6">
-               <widget class="QLabel" name="chanLabel_5">
-                <property name="text">
-                 <string>0000</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="4">
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="0" column="7">
-               <widget class="QCheckBox" name="invertCheckBox_5">
+              <item row="3" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_4">
                 <property name="text">
                  <string>Invert</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="2">
-               <widget class="QCheckBox" name="invertCheckBox">
-                <property name="text">
-                 <string>Invert</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="8">
-               <widget class="QSpinBox" name="aux2SpinBox">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>8</number>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="6">
-               <widget class="QLabel" name="chanLabel_7">
-                <property name="text">
-                 <string>0000</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QLabel" name="chanLabel_2">
-                <property name="text">
-                 <string>0000</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="chanName_2">
-                <property name="text">
-                 <string>Pitch / Elevator</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QLabel" name="chanLabel">
-                <property name="text">
-                 <string>0000</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="5">
-               <widget class="QLabel" name="chanName_7">
-                <property name="text">
-                 <string>Aux 2</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="4">
-               <spacer name="horizontalSpacer_3">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="3" column="6">
-               <widget class="QLabel" name="chanLabel_8">
-                <property name="text">
-                 <string>0000</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="2">
-               <widget class="QCheckBox" name="invertCheckBox_3">
-                <property name="text">
-                 <string>Invert</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="8">
-               <widget class="QSpinBox" name="aux3SpinBox">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>8</number>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="4">
-               <spacer name="horizontalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="3" column="0">
-               <widget class="QLabel" name="chanName_4">
-                <property name="text">
-                 <string>Throttle</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="7">
-               <widget class="QCheckBox" name="invertCheckBox_7">
-                <property name="text">
-                 <string>Invert</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="3">
-               <widget class="QSpinBox" name="yawSpinBox">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>8</number>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="3">
-               <widget class="QSpinBox" name="throttleSpinBox">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>8</number>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="5">
-               <widget class="QLabel" name="chanName_5">
-                <property name="text">
-                 <string>Mode Switch</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QLabel" name="chanLabel_4">
-                <property name="text">
-                 <string>0000</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QSpinBox" name="pitchSpinBox">
+              <item row="0" column="3">
+               <widget class="QSpinBox" name="rollSpinBox">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -653,28 +501,8 @@ Config</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="5">
-               <widget class="QLabel" name="chanName_6">
-                <property name="text">
-                 <string>Aux 1</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3">
-               <widget class="QSpinBox" name="rollSpinBox">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>8</number>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="6">
-               <widget class="QLabel" name="chanLabel_6">
+              <item row="2" column="6">
+               <widget class="QLabel" name="aux2ChanLabel">
                 <property name="text">
                  <string>0000</string>
                 </property>
@@ -683,22 +511,8 @@ Config</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="5">
-               <widget class="QLabel" name="chanName_8">
-                <property name="text">
-                 <string>Aux 3</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="7">
-               <widget class="QCheckBox" name="invertCheckBox_6">
-                <property name="text">
-                 <string>Invert</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="8">
-               <widget class="QSpinBox" name="modeSpinBox">
+              <item row="3" column="3">
+               <widget class="QSpinBox" name="throttleSpinBox">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -710,26 +524,237 @@ Config</string>
                 </property>
                </widget>
               </item>
-              <item row="3" column="2">
-               <widget class="QCheckBox" name="invertCheckBox_4">
+              <item row="2" column="0">
+               <widget class="QLabel" name="chanName_3">
+                <property name="text">
+                 <string>Yaw / Rudder</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="7">
+               <widget class="QCheckBox" name="invertCheckBox_7">
                 <property name="text">
                  <string>Invert</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
-               <widget class="QCheckBox" name="invertCheckBox_2">
+              <item row="3" column="0">
+               <widget class="QLabel" name="chanName_4">
+                <property name="text">
+                 <string>Throttle</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="6">
+               <widget class="QLabel" name="aux3ChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QSpinBox" name="yawSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>8</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="chanName_2">
+                <property name="text">
+                 <string>Pitch / Elevator</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="rollChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="5">
+               <widget class="QLabel" name="chanName_7">
+                <property name="text">
+                 <string>Aux 2</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="6">
+               <widget class="QLabel" name="modeChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QSpinBox" name="pitchSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>8</number>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLabel" name="throttleChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="8">
+               <widget class="QSpinBox" name="aux3SpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>8</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="yawChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="7">
+               <widget class="QCheckBox" name="invertCheckBox_5">
                 <property name="text">
                  <string>Invert</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="chanName">
-                <property name="text">
-                 <string>Roll / Ailerons</string>
+              <item row="2" column="8">
+               <widget class="QSpinBox" name="aux2SpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>8</number>
                 </property>
                </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="pitchChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QCheckBox" name="invertCheckBox">
+                <property name="text">
+                 <string>Invert</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_3">
+                <property name="text">
+                 <string>Invert</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="4">
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="2" column="4">
+               <spacer name="horizontalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="4">
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="0" column="4">
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
