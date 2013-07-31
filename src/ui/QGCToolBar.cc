@@ -321,7 +321,8 @@ void QGCToolBar::advancedActivityTriggered(QAction* action)
 void QGCToolBar::setActiveUAS(UASInterface* active)
 {
     // Do nothing if system is the same
-    if (mav == active) return;
+    if (mav == active || active == NULL)
+        return;
 
     // If switching UASes, disconnect the only one.
     if (mav)

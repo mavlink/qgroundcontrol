@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>528</width>
-    <height>347</height>
+    <height>455</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -73,11 +73,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="apmToolBarCheckBox">
-         <property name="text">
-          <string>Show ArduPilot specific toolbar (restart QGC after change)</string>
-         </property>
-        </widget>
+        <widget class="QComboBox" name="customModeComboBox"/>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">

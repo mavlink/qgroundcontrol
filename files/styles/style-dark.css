@@ -5,6 +5,11 @@
     font-size: 11px;
 }
 
+QWidget#viewModeWidget {
+    border-radius: 12px;
+    border: 3px solid #465158;
+}
+
 *::disabled {
     color: #777;
 }
@@ -338,6 +343,16 @@ QPushButton, QToolButton {
     padding-left: 8px;
     padding-right: 8px;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
+}
+
+QPushButton#viewModeGeneric, QPushButton#viewModePX4, QPushButton#viewModeAPM, QPushButton#viewModeAR {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
+    border-radius: 12px;
+    min-height: 120px;
+    max-height: 140px;
+    min-width: 120px;
+    max-width: 140px;
+    border: 3px solid #465158;
 }
 
 QPushButton#connectButton, QPushButton#controlButton {

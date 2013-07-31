@@ -263,7 +263,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/configuration/ArduPlanePidConfig.ui \
     src/ui/configuration/AdvParameterList.ui \
     src/ui/configuration/ArduRoverPidConfig.ui \
-    src/ui/QGCConfigView.ui
+    src/ui/QGCConfigView.ui \
+    src/ui/main/QGCViewModeSelection.ui \
+    src/ui/main/QGCWelcomeMainWindow.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -281,7 +283,8 @@ INCLUDEPATH += src \
     src/ui/map3D \
     src/ui/mission \
     src/ui/designer \
-    src/ui/configuration
+    src/ui/configuration \
+    src/ui/main
 HEADERS += src/MG.h \
     src/QGCCore.h \
     src/uas/UASInterface.h \
@@ -454,7 +457,9 @@ HEADERS += src/MG.h \
     src/ui/configuration/ArduPlanePidConfig.h \
     src/ui/configuration/AdvParameterList.h \
     src/ui/configuration/ArduRoverPidConfig.h \
-    src/ui/QGCConfigView.h
+    src/ui/QGCConfigView.h \
+    src/ui/main/QGCViewModeSelection.h \
+    src/ui/main/QGCWelcomeMainWindow.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -662,7 +667,9 @@ SOURCES += src/main.cc \
     src/ui/configuration/ArduPlanePidConfig.cc \
     src/ui/configuration/AdvParameterList.cc \
     src/ui/configuration/ArduRoverPidConfig.cc \
-    src/ui/QGCConfigView.cc
+    src/ui/QGCConfigView.cc \
+    src/ui/main/QGCViewModeSelection.cc \
+    src/ui/main/QGCWelcomeMainWindow.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
