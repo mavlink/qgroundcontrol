@@ -57,8 +57,8 @@ public slots:
     /** Render the data updated */
     void updateView();
     void updateRcWidgetValues();
+    void handleRcParameterChange(QString parameterName, QVariant value);
 
-    void updateMinMax();
 
     /** Set the RC channel */
     void setRollChan(int channel) {
@@ -180,7 +180,7 @@ protected:
     float rcAux2;                       ///< PPM input channel used as aux 2 input
     float rcAux3;                       ///< PPM input channel used as aux 3 input
     bool rcCalChanged;                  ///< Set if the calibration changes (and needs to be written)
-    bool changed;                       ///< Set if any of the input data changed
+    bool dataModelChanged;              ///< Set if any of the input data changed
     QTimer updateTimer;                 ///< Controls update intervals
     enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
