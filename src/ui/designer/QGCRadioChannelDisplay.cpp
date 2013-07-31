@@ -39,7 +39,7 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
     if (m_orientation == Qt::Vertical)
     {
         painter.drawRect(0,0,width()-1,(height()-1) - (painter.fontMetrics().height() * 2));
-        painter.setBrush(Qt::SolidPattern);
+        painter.setBrush(QBrush(QColor::fromRgb(50,255,50),Qt::SolidPattern));
         painter.setPen(QColor::fromRgb(50,255,50));
         //m_value - m_min / m_max - m_min
 
@@ -81,7 +81,7 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
     else
     {
         painter.drawRect(0,0,width()-1,(height()-1) - (painter.fontMetrics().height() * 2));
-        painter.setBrush(Qt::SolidPattern);
+        painter.setBrush(QBrush(QColor::fromRgb(50,255,50),Qt::SolidPattern));
         painter.setPen(QColor::fromRgb(50,255,50));
         //if (!m_showMinMax)
         //{
