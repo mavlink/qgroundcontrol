@@ -1,7 +1,6 @@
 #include "QGCRadioChannelDisplay.h"
 #include <QPainter>
 QGCRadioChannelDisplay::QGCRadioChannelDisplay(QWidget *parent) : QWidget(parent)
-
 {
     m_showMinMax = false;
     m_min = 0;
@@ -11,6 +10,8 @@ QGCRadioChannelDisplay::QGCRadioChannelDisplay(QWidget *parent) : QWidget(parent
     m_name = "Yaw";
 
     m_fillBrush = QBrush(Qt::green, Qt::SolidPattern);
+
+
 
 
 }
@@ -25,11 +26,15 @@ void QGCRadioChannelDisplay::setOrientation(Qt::Orientation orient)
     m_orientation = orient;
     update();
 }
+
 void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
 {
     //Values range from 0-3000.
     //1500 is the middle, static servo value.
     QPainter painter(this);
+
+
+
 
     int fontHeight = painter.fontMetrics().height();
     int twiceFontHeight = fontHeight * 2;
@@ -47,6 +52,11 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
 
     if (m_orientation == Qt::Vertical)
     {
+        QLinearGradient gradientBrush(0, 0, this->width(), this->height());
+        gradientBrush.setColorAt(1.0,QColor::fromRgb(0,128,0));
+        gradientBrush.setColorAt(0.5,QColor::fromRgb(0,200,0));
+        gradientBrush.setColorAt(0.0, QColor::fromRgb(64,255,0));
+
         //draw border
         painter.drawRect(0,0,width()-1,(height()-1) - twiceFontHeight);
         painter.setPen(QColor::fromRgb(50,255,50));
@@ -58,9 +68,8 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
         painter.drawText((width()/2.0) - (painter.fontMetrics().width(m_name)/2.0),((height()-3) - (fontHeight*1)),m_name);
         painter.drawText((width()/2.0) - (painter.fontMetrics().width(valStr)/2.0),((height()-3) - (fontHeight * 0)),valStr);
 
-
         painter.setPen(QColor::fromRgb(128,128,64));
-        painter.setBrush(m_fillBrush);
+        painter.setBrush(gradientBrush);
 
         if (!m_showMinMax) {
             //draw just the value
@@ -95,10 +104,15 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
     }
     else //horizontal orientation
     {
+        QLinearGradient hGradientBrush(0, 0, this->width(), this->height());
+        hGradientBrush.setColorAt(0.0,QColor::fromRgb(0,128,0));
+        hGradientBrush.setColorAt(0.5,QColor::fromRgb(0,200,0));
+        hGradientBrush.setColorAt(1.0, QColor::fromRgb(64,255,0));
+
         //draw the value
         painter.drawRect(0,0,width()-1,(height()-1) - twiceFontHeight);
         painter.setPen(QColor::fromRgb(50,255,50));
-        painter.setBrush(m_fillBrush);
+        painter.setBrush(hGradientBrush);
 
         //draw the value string
         painter.setPen(QColor::fromRgb(255,255,255));
@@ -108,7 +122,7 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
 
 
         painter.setPen(QColor::fromRgb(0,128,0));
-        painter.setBrush(m_fillBrush);
+        painter.setBrush(hGradientBrush);
 
         if (!m_showMinMax) {
             //draw just the value
