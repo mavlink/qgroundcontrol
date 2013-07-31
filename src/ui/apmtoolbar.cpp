@@ -33,13 +33,25 @@ void APMToolBar::activeUasSet(UASInterface *uas)
     }
     if (m_uas)
     {
-        disconnect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+        disconnect(m_uas,SIGNAL(armingChanged(bool)),
+                   this,SLOT(armingChanged(bool)));
+        disconnect(uas,SIGNAL(armingChanged(int, QString)),
+                this,SLOT(armingChanged(int, QString)));
     }
-    connect(uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+    connect(uas,SIGNAL(armingChanged(bool)),
+            this,SLOT(armingChanged(bool)));
+    connect(uas,SIGNAL(armingChanged(int, QString)),
+            this,SLOT(armingChanged(int, QString)));
+
 }
 void APMToolBar::armingChanged(bool armed)
 {
     this->rootObject()->setProperty("armed",armed);
+}
+
+void APMToolBar::armingChanged(int sysId, QString armingState)
+{
+    qDebug() << "APMToolBar: sysid " << sysId << " armState" << armingState;
 }
 
 void APMToolBar::setFlightViewAction(QAction *action)

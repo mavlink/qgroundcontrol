@@ -33,8 +33,6 @@ signals:
     void MAVConnected(bool connected);
 
 public slots:
-    void armingChanged(bool armed);
-    void activeUasSet(UASInterface *uas);
     void selectFlightView();
     void selectFlightPlanView();
     void selectHardwareView();
@@ -45,6 +43,10 @@ public slots:
     void connectMAV();
     void showConnectionDialog();
     void setConnection(bool connection);
+
+    void activeUasSet(UASInterface *uas);
+    void armingChanged(int sysId, QString armingState);
+    void armingChanged(bool armed);
 
     void updateLinkDisplay(LinkInterface *newLink);
 

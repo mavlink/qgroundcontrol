@@ -801,7 +801,8 @@ unix:!macx:!symbian: LIBS += -losg
 OTHER_FILES += \
     dongfang_notes.txt \
     src/ui/dongfang-scrapyard.txt \
-    qml/components/DigitalDisplay.qml
+    qml/components/DigitalDisplay.qml \
+    qml/components/StatusDisplay.qml
 
 OTHER_FILES += \
     qml/ApmToolBar.qml \

@@ -10,7 +10,7 @@ Rectangle {
     property alias baudrateLabel: baudrate.label
     property bool connected: false
     property bool armed: false
-    property string armedstr: "Disarmed"
+    property string armedstr: "DISARMED"
 
     width: toolbar.width
     height: 72
@@ -19,12 +19,14 @@ Rectangle {
 
     onArmedChanged: {
         if (armed) {
-            armedText.text = "Armed"
-            armedText.color = "Red"
+            statusDisplay.statusText = "ARMED"
+            statusDisplay.statusTextColor = "red"
+            statusDisplay.statusBackgroundColor = "#FF880000"
         }
         else {
-            armedText.text = "Disarmed"
-            armedText.color = "Green"
+            statusDisplay.statusText = "DISARMED"
+            statusDisplay.statusTextColor = "yellow"
+            statusDisplay.statusBackgroundColor = "black"
         }
     }
 
@@ -110,19 +112,19 @@ Rectangle {
             image: "./resources/apmplanner/toolbar/terminal.png"
             onClicked: globalObj.triggerTerminalView()
         }
-        Rectangle {
-            width:150
+
+        Rectangle { // Spacer
+            width: 5
             height: parent.height
-            Text {
-                id: armedText;
-                anchors.fill: parent
-                verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: Text.AlignHCenter
-                font.pixelSize: 20
-                color: "green"
-                text: "Disarmed"
-            }
-            color:"black"
+            color: "black"
+        }
+
+        StatusDisplay {
+            id: statusDisplay
+            width: 110
+            statusText: "DISARMED"
+            statusTextColor: "yellow"
+            statusBackgroundColor: "black"
         }
 
         Rectangle { // Spacer
