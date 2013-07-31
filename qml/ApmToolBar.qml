@@ -44,7 +44,7 @@ Rectangle {
 
     Row {
         anchors.left: parent.left
-        spacing: 2
+        spacing: 10
 
         Rectangle { // Spacer
             width: 5
