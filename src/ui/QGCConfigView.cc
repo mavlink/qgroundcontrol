@@ -34,14 +34,16 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
     foreach (QObject* obj, ui->gridLayout->children()) {
         QWidget* w = dynamic_cast<QWidget*>(obj);
         if (w) {
-            ui->gridLayout->removeWidget(w);
-            if (obj != ui->waitingLabel)
+            if (obj != ui->waitingLabel) {
+                ui->gridLayout->removeWidget(w);
                 delete obj;
+            }
         }
     }
 
     if (NULL != uas) {
         ui->gridLayout->removeWidget(ui->waitingLabel);
+        ui->waitingLabel->setVisible(false);
 
         switch (uas->getAutopilotType()) {
         case MAV_AUTOPILOT_PX4:
@@ -49,11 +51,13 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
             break;
         default:
             ui->gridLayout->addWidget(new QGCVehicleConfig());
+            break;
         }
     }
     else {
         //restore waiting label if we no longer have a connection
         ui->gridLayout->addWidget(ui->waitingLabel);
+        ui->waitingLabel->setVisible(true);
     }
 
 }
