@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>&lt;h2&gt;Advanced Parameter List&lt;/h2&gt;</string>
+      <string>&lt;h2&gt;Full Parameter List&lt;/h2&gt;</string>
      </property>
     </widget>
    </item>
