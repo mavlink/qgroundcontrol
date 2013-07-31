@@ -35,7 +35,6 @@ private slots:
     void firmwareDownloadProgress(qint64 received,qint64 total);
     void requestFirmwares();
     void requestBetaFirmwares();
-
 private:
     void addBetaLabel(QWidget *parent);
     void hideBetaLabels();
