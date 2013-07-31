@@ -22,6 +22,7 @@ public slots:
     void lineEditFinished();
     void setDefaultStyle();
     void selectStylesheet();
+    void selectCustomMode(int mode);
 
 private:
     MainWindow* mainWindow;

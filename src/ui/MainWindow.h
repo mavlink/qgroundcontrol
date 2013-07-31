@@ -96,6 +96,14 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+
+    enum CUSTOM_MODE {
+        CUSTOM_MODE_NONE = 0,
+        CUSTOM_MODE_PX4,
+        CUSTOM_MODE_APM,
+        CUSTOM_MODE_WIFI
+    };
+
     /**
      * A static function for obtaining the sole instance of the MainWindow. The screen
      * argument is only important on the FIRST call to this function. The provided splash
@@ -103,6 +111,7 @@ public:
      * function cannot be used within the MainWindow constructor!
      */
     static MainWindow* instance(QSplashScreen* screen = 0);
+    static MainWindow* instance_mode(QSplashScreen* screen = 0, enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_NONE);
 
     /**
      * Initializes the MainWindow. Some variables are initialized and the widget is hidden.
@@ -154,12 +163,6 @@ public:
         return autoReconnect;
     }
 
-    /** @brief Get custom toolbar setting */
-    bool isApmToolBarEnabled()
-    {
-        return apmToolBarEnabled;
-    }
-
     /** @brief Get title bar mode setting */
     bool dockWidgetTitleBarsEnabled()
     {
@@ -170,6 +173,16 @@ public:
     bool lowPowerModeEnabled()
     {
         return lowPowerMode;
+    }
+
+    void setCustomMode(enum MainWindow::CUSTOM_MODE mode)
+    {
+        customMode = mode;
+    }
+
+    enum MainWindow::CUSTOM_MODE getCustomMode()
+    {
+        return customMode;
     }
 
     QList<QAction*> listLinkMenuActions(void);
@@ -235,10 +248,6 @@ public slots:
     void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
-    /** @brief Enable APM specific toolbar */
-    void enableApmToolbar(bool enabled) {
-        apmToolBarEnabled = enabled;
-    }
 
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
@@ -481,7 +490,6 @@ protected:
     QString darkStyleFileName;
     QString lightStyleFileName;
     bool autoReconnect;
-    bool apmToolBarEnabled;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
@@ -495,6 +503,7 @@ private:
     QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
     bool isAdvancedMode; ///< If enabled dock widgets can be moved and floated.
     bool dockWidgetTitleBarEnabled; ///< If enabled, dock widget titlebars are displayed when NOT in advanced mode.
+    CUSTOM_MODE customMode;
     Ui::MainWindow ui;
 
     /** @brief Set the appropriate titlebar for a given dock widget.
