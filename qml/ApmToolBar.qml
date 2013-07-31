@@ -9,11 +9,24 @@ Rectangle {
     property alias linkNameLabel: linkDevice.label
     property alias baudrateLabel: baudrate.label
     property bool connected: false
+    property bool armed: false
+    property string armedstr: "Disarmed"
 
     width: toolbar.width
     height: 72
     color: "black"
     border.color: "black"
+
+    onArmedChanged: {
+        if (armed) {
+            armedText.text = "Armed"
+            armedText.color = "Red"
+        }
+        else {
+            armedText.text = "Disarmed"
+            armedText.color = "Green"
+        }
+    }
 
     onConnectedChanged: {
         if (connected){
@@ -96,6 +109,20 @@ Rectangle {
             label: "TERMINAL"
             image: "./resources/apmplanner/toolbar/terminal.png"
             onClicked: globalObj.triggerTerminalView()
+        }
+        Rectangle {
+            width:150
+            height: parent.height
+            Text {
+                id: armedText;
+                anchors.fill: parent
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: 20
+                color: "green"
+                text: "Disarmed"
+            }
+            color:"black"
         }
 
         Rectangle { // Spacer

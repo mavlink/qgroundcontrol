@@ -7,7 +7,7 @@
 #include "apmtoolbar.h"
 
 APMToolBar::APMToolBar(QWidget *parent):
-    QDeclarativeView(parent)
+    QDeclarativeView(parent), m_uas(0)
 {
     // Configure our QML object
     setSource(QUrl::fromLocalFile("qml/ApmToolBar.qml"));
@@ -21,6 +21,25 @@ APMToolBar::APMToolBar(QWidget *parent):
     }
 
     setConnection(false);
+
+    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUasSet(UASInterface*)));
+    activeUasSet(UASManager::instance()->getActiveUAS());
+}
+void APMToolBar::activeUasSet(UASInterface *uas)
+{
+    if (!uas)
+    {
+        return;
+    }
+    if (m_uas)
+    {
+        disconnect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+    }
+    connect(uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+}
+void APMToolBar::armingChanged(bool armed)
+{
+    this->rootObject()->setProperty("armed",armed);
 }
 
 void APMToolBar::setFlightViewAction(QAction *action)
