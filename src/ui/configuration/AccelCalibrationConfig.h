@@ -14,6 +14,8 @@ class AccelCalibrationConfig : public AP2ConfigWidget
 public:
     explicit AccelCalibrationConfig(QWidget *parent = 0);
     ~AccelCalibrationConfig();
+protected:
+    void hideEvent(QHideEvent *evt);
 private slots:
     void activeUASSet(UASInterface *uas);
     void calibrateButtonClicked();
