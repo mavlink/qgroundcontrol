@@ -14,12 +14,9 @@ QGCConfigView::QGCConfigView(QWidget *parent) :
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASChanged(UASInterface*)));
 
-    if (ui->waitingLabel) {
-        ui->gridLayout->removeWidget(ui->waitingLabel);
-        delete ui->waitingLabel;
-        ui->waitingLabel = NULL;
-    }
-    ui->gridLayout->addWidget(new QGCPX4VehicleConfig());
+    //don't show a configuration widget if no vehicle is connected
+    //show a placeholder informational widget instead
+
 }
 
 QGCConfigView::~QGCConfigView()
@@ -32,26 +29,35 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
     if (currUAS == uas)
         return;
 
-    if (ui->waitingLabel) {
-        ui->gridLayout->removeWidget(ui->waitingLabel);
-        delete ui->waitingLabel;
-        ui->waitingLabel = NULL;
-    }
-
-    if (currUAS && currUAS->getAutopilotType() != uas->getAutopilotType()) {
-        foreach (QObject* obj, ui->gridLayout->children()) {
-            QWidget* w = dynamic_cast<QWidget*>(obj);
-            if (w) {
+    //remove all child widgets since they could contain stale data
+    //for example, when we switch from one PX4 UAS to another UAS
+    foreach (QObject* obj, ui->gridLayout->children()) {
+        QWidget* w = dynamic_cast<QWidget*>(obj);
+        if (w) {
+            if (obj != ui->waitingLabel) {
                 ui->gridLayout->removeWidget(w);
                 delete obj;
             }
         }
     }
 
-    switch (uas->getAutopilotType()) {
-    case MAV_AUTOPILOT_PX4:
-        ui->gridLayout->addWidget(new QGCPX4VehicleConfig());
-    default:
-        ui->gridLayout->addWidget(new QGCVehicleConfig());
+    if (NULL != uas) {
+        ui->gridLayout->removeWidget(ui->waitingLabel);
+        ui->waitingLabel->setVisible(false);
+
+        switch (uas->getAutopilotType()) {
+        case MAV_AUTOPILOT_PX4:
+            ui->gridLayout->addWidget(new QGCPX4VehicleConfig());
+            break;
+        default:
+            ui->gridLayout->addWidget(new QGCVehicleConfig());
+            break;
+        }
     }
+    else {
+        //restore waiting label if we no longer have a connection
+        ui->gridLayout->addWidget(ui->waitingLabel);
+        ui->waitingLabel->setVisible(true);
+    }
+
 }
