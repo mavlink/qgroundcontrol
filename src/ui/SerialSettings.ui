@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>546</width>
-    <height>457</height>
+    <width>234</width>
+    <height>354</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,1,5">
+    <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,0">
      <item>
       <widget class="QLabel" name="portlabel">
        <property name="text">
@@ -25,6 +25,12 @@
      </item>
      <item>
       <widget class="QComboBox" name="portName">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="toolTip">
         <string>The serial port to which the system is connected. All ports listed here should work.</string>
        </property>
@@ -47,23 +53,10 @@
        </item>
       </widget>
      </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,5">
+    <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0">
      <item>
       <widget class="QLabel" name="portlabel_2">
        <property name="text">
@@ -73,6 +66,12 @@
      </item>
      <item>
       <widget class="QComboBox" name="baudRate">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="toolTip">
         <string>The data transmission rate. If unsure 57600 and 115200 are very common rates.</string>
        </property>
@@ -214,19 +213,6 @@
         </property>
        </item>
       </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
@@ -429,11 +415,6 @@
          </layout>
         </item>
        </layout>
-       <zorder>horizontalLayoutWidget</zorder>
-       <zorder>horizontalLayoutWidget_2</zorder>
-       <zorder>horizontalLayoutWidget_4</zorder>
-       <zorder>portlabel_5</zorder>
-       <zorder>horizontalLayoutWidget_3</zorder>
       </widget>
      </item>
      <item>

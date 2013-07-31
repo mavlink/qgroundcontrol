@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>770</width>
-    <height>563</height>
+    <width>324</width>
+    <height>415</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,8 +36,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>748</width>
-           <height>97</height>
+           <width>302</width>
+           <height>69</height>
           </rect>
          </property>
         </widget>
@@ -126,8 +126,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>748</width>
-           <height>96</height>
+           <width>302</width>
+           <height>69</height>
           </rect>
          </property>
         </widget>
@@ -230,7 +230,6 @@
   <zorder>connectionStatusLabel</zorder>
   <zorder>advCheckBox</zorder>
   <zorder>protocolTypeGroupBox</zorder>
-  <zorder>label_5</zorder>
   <zorder>verticalSpacer</zorder>
  </widget>
  <resources/>

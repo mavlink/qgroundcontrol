@@ -134,8 +134,8 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         ui.advGroupBox->setVisible(false);
 
         //connect(this->link, SIGNAL(connected(bool)), this, SLOT());
-        ui.portName->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
-        ui.baudRate->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
+        //ui.portName->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
+        //ui.baudRate->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
 
         switch(this->link->getParityType()) {
         case 0:
