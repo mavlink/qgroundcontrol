@@ -50,6 +50,7 @@ UDPLink::UDPLink(QHostAddress host, quint16 port)
 	this->name = tr("UDP Link (port:%1)").arg(this->port);
 	emit nameChanged(this->name);
     // LinkManager::instance()->add(this);
+    qDebug() << "UDP Created " << name;
 }
 
 UDPLink::~UDPLink()
@@ -104,7 +105,7 @@ void UDPLink::setPort(int port)
  */
 void UDPLink::addHost(const QString& host)
 {
-    //qDebug() << "UDP:" << "ADDING HOST:" << host;
+    qDebug() << "UDP:" << "ADDING HOST:" << host;
     if (host.contains(":"))
     {
         //qDebug() << "HOST: " << host.split(":").first();
