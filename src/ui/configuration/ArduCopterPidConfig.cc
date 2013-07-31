@@ -3,6 +3,11 @@
 ArduCopterPidConfig::ArduCopterPidConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
+    m_pitchRollLocked = false;
+    connect(ui.checkBox,SIGNAL(clicked(bool)),this,SLOT(lockCheckBoxClicked(bool)));
+    connect(ui.stabilPitchPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+    connect(ui.stabilRollPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+    connect(ui.stabilYawPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
     m_nameToBoxMap["STB_RLL_P"] = ui.stabilPitchPSpinBox;
     m_nameToBoxMap["STB_PIT_P"] = ui.stabilRollPSpinBox;
     m_nameToBoxMap["STB_YAW_P"] = ui.stabilYawPSpinBox;
@@ -108,6 +113,25 @@ ArduCopterPidConfig::ArduCopterPidConfig(QWidget *parent) : AP2ConfigWidget(pare
         ui.ch8OptComboBox->addItem(m_ch78ValueToTextList[i].second);
     }
     initConnections();
+}
+void ArduCopterPidConfig::lockCheckBoxClicked(bool checked)
+{
+    m_pitchRollLocked = checked;
+}
+void ArduCopterPidConfig::stabilLockedChanged(double value)
+{
+    if (m_pitchRollLocked)
+    {
+        disconnect(ui.stabilPitchPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+        disconnect(ui.stabilRollPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+        disconnect(ui.stabilYawPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+        ui.stabilPitchPSpinBox->setValue(value);
+        ui.stabilRollPSpinBox->setValue(value);
+        ui.stabilYawPSpinBox->setValue(value);
+        connect(ui.stabilPitchPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+        connect(ui.stabilRollPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+        connect(ui.stabilYawPSpinBox,SIGNAL(valueChanged(double)),this,SLOT(stabilLockedChanged(double)));
+    }
 }
 
 ArduCopterPidConfig::~ArduCopterPidConfig()
