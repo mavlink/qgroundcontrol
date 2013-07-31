@@ -91,7 +91,7 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     bool upgraded = false;
     enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_NONE;
     QString lastApplicationVersion("");
-    if (settings.contains("QGC_APPLICATION_VERSION") && firstStart)
+    if (settings.contains("QGC_APPLICATION_VERSION"))
     {
         QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
         if (qgcVersion != QGC_APPLICATION_VERSION)
@@ -161,8 +161,7 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
 
     UDPLink* udpLink = NULL;
 
-    //if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
-    if (settings.value("QGC_CUSTOM_MODE", (unsigned int)MainWindow::CUSTOM_MODE_NONE) == MainWindow::CUSTOM_MODE_WIFI)
+    if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
     {
         // Connect links
         // to make sure that all components are initialized when the
@@ -216,7 +215,6 @@ QGCCore::~QGCCore()
 
     if (welcome)
     {
-        welcome->close();
         delete welcome;
     } else {
         //mainWindow->storeSettings();
@@ -287,7 +285,6 @@ void QGCCore::startUASManager()
 
 void QGCCore::customViewModeSelected(enum MainWindow::CUSTOM_MODE mode)
 {
-    qDebug() << "SET MODE =" << (unsigned int)mode;
     QSettings settings;
     settings.setValue("QGC_CUSTOM_MODE", (unsigned int)mode);
     // Store settings only if requested by user
