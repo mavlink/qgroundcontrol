@@ -3,6 +3,7 @@
 
 #include <QAction>
 #include <QDeclarativeView>
+#include "UASInterface.h"
 
 class LinkInterface;
 
@@ -32,6 +33,8 @@ signals:
     void MAVConnected(bool connected);
 
 public slots:
+    void armingChanged(bool armed);
+    void activeUasSet(UASInterface *uas);
     void selectFlightView();
     void selectFlightPlanView();
     void selectHardwareView();
@@ -44,6 +47,9 @@ public slots:
     void setConnection(bool connection);
 
     void updateLinkDisplay(LinkInterface *newLink);
+
+private:
+    UASInterface *m_uas;
 };
 
 #endif // APMTOOLBAR_H
