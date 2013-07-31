@@ -69,6 +69,18 @@ int main(int argc, char *argv[])
     qInstallMsgHandler( msgHandler );
 #endif
 
-    QGCCore core(argc, argv);
-    return core.exec();
+    QGCCore* core = NULL;
+    int val;
+    bool firstStart = true;
+
+    do {
+        if (core) {
+            delete core;
+            firstStart = false;
+        }
+        core = new QGCCore(firstStart, argc, argv);
+        val = core->exec();
+    } while (core->getRestartRequested());
+
+    return val;
 }
