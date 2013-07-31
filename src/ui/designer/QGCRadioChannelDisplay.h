@@ -27,6 +27,8 @@ private:
     int m_max;
     bool m_showMinMax;
     QString m_name;
+    QBrush m_fillBrush;
+
 signals:
     
 public slots:
