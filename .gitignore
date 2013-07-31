@@ -50,3 +50,4 @@ user_config.pri
 *.uhf.txt
 *.opensdf
 apmplanner2.xcodeproj/
+GeneratedFiles/
