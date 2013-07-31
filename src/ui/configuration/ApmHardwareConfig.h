@@ -59,21 +59,22 @@ public:
     explicit ApmHardwareConfig(QWidget *parent = 0);
     ~ApmHardwareConfig();
 private:
-    FrameTypeConfig *m_frameConfig;
-    CompassConfig *m_compassConfig;
-    AccelCalibrationConfig *m_accelConfig;
-    RadioCalibrationConfig *m_radioConfig;
+    QPointer<FrameTypeConfig> m_frameConfig;
+    QPointer<CompassConfig> m_compassConfig;
+    QPointer<AccelCalibrationConfig> m_accelConfig;
+    QPointer<RadioCalibrationConfig> m_radioConfig;
 
-    ApmFirmwareConfig *m_apmFirmwareConfig;
-    Radio3DRConfig *m_radio3drConfig;
-    BatteryMonitorConfig *m_batteryConfig;
-    SonarConfig *m_sonarConfig;
-    AirspeedConfig *m_airspeedConfig;
-    OpticalFlowConfig *m_opticalFlowConfig;
-    OsdConfig *m_osdConfig;
-    CameraGimbalConfig *m_cameraGimbalConfig;
-    AntennaTrackerConfig *m_antennaTrackerConfig;
-    ApmPlaneLevel *m_planeLevel;
+    QPointer<ApmFirmwareConfig> m_apmFirmwareConfig;
+    QPointer<Radio3DRConfig> m_radio3drConfig;
+    QPointer<BatteryMonitorConfig> m_batteryConfig;
+    QPointer<SonarConfig> m_sonarConfig;
+    QPointer<AirspeedConfig> m_airspeedConfig;
+    QPointer<OpticalFlowConfig> m_opticalFlowConfig;
+    QPointer<OsdConfig> m_osdConfig;
+    QPointer<CameraGimbalConfig> m_cameraGimbalConfig;
+    QPointer<AntennaTrackerConfig> m_antennaTrackerConfig;
+    QPointer<ApmPlaneLevel> m_planeLevel;
+
 private slots:
     void activeUASSet(UASInterface *uas);
     void activateStackedWidget();
