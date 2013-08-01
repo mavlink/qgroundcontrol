@@ -124,6 +124,7 @@ MainWindow::MainWindow(QWidget *parent):
     darkStyleFileName(defaultDarkStyle),
     lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
+    simulationLink(NULL),
     lowPowerMode(false),
     isAdvancedMode(false),
     dockWidgetTitleBarEnabled(true),
@@ -343,11 +344,11 @@ MainWindow::~MainWindow()
         delete mavlink;
         mavlink = NULL;
     }
-    //    if (simulationLink)
-    //    {
-    //        simulationLink->deleteLater();
-    //        simulationLink = NULL;
-    //    }
+    if (simulationLink)
+    {
+        delete simulationLink;
+        simulationLink = NULL;
+    }
     if (joystick)
     {
         joystick->shutdown();
@@ -1525,6 +1526,8 @@ void MainWindow::connectCommonActions()
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
     // Application Settings
     connect(ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
+
+    connect(ui.actionSimulate, SIGNAL(triggered(bool)), this, SLOT(simulateLink(bool)));
 }
 
 void MainWindow::showHelp()
@@ -1672,13 +1675,13 @@ void MainWindow::addLink(LinkInterface *link)
 
         // Error handling
         connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
-        // Special case for simulationlink
-        MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
-        if (sim)
-        {
-            connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
-        }
     }
+}
+
+void MainWindow::simulateLink(bool simulate) {
+    if (!simulationLink)
+        simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
+    simulationLink->connectLink(simulate);
 }
 
 //void MainWindow::configLink(LinkInterface *link)

@@ -204,6 +204,8 @@ public slots:
     void addLink(LinkInterface* link);
     bool configLink(LinkInterface *link);
     void configure();
+    /** @brief Simulate a link */
+    void simulateLink(bool simulate);
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
 
@@ -387,7 +389,6 @@ protected:
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
 
-    MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
 
     QSettings settings;
@@ -490,6 +491,7 @@ protected:
     QString darkStyleFileName;
     QString lightStyleFileName;
     bool autoReconnect;
+    MAVLinkSimulationLink* simulationLink;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
