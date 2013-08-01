@@ -12,6 +12,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
     m_currentColumn=0;
     ui.setupUi(this);
 
+    ui.horizontalLayout->setMargin(0);
     m_verticalLayoutList.append(new QVBoxLayout());
     ui.horizontalLayout->addItem(m_verticalLayoutList[0]);
 
@@ -35,7 +36,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         valueEnabled("roll");
     }
 
-    QAction *action = new QAction("Add Item",this);
+    QAction *action = new QAction("Add/Remove Items",this);
     action->setCheckable(false);
     connect(action,SIGNAL(triggered()),this,SLOT(actionTriggered()));
     this->addAction(action);
@@ -170,6 +171,7 @@ void UASQuickView::sortItems(int columncount)
         QVBoxLayout *layout = new QVBoxLayout();
         ui.horizontalLayout->addItem(layout);
         m_verticalLayoutList.append(layout);
+        layout->setMargin(0);
     }
 
     //Cycle through all items and add them to the layout
@@ -184,6 +186,28 @@ void UASQuickView::sortItems(int columncount)
         }
     }
     m_currentColumn = currcol;
+    QApplication::processEvents();
+    recalculateItemTextSizing();
+}
+void UASQuickView::resizeEvent(QResizeEvent *evt)
+{
+    recalculateItemTextSizing();
+}
+void UASQuickView::recalculateItemTextSizing()
+{
+    int minpixelsize = 65535;
+    for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
+    {
+        int tempmin = i.value()->minValuePixelSize();
+        if (tempmin < minpixelsize)
+        {
+            minpixelsize = tempmin;
+        }
+    }
+    for (QMap<QString,UASQuickViewItem*>::const_iterator i = uasPropertyToLabelMap.constBegin();i!=uasPropertyToLabelMap.constEnd();i++)
+    {
+        i.value()->setValuePixelSize(minpixelsize);
+    }
 }
 
 void UASQuickView::valueDisabled(QString value)
