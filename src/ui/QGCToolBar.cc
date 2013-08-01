@@ -158,20 +158,23 @@ void QGCToolBar::createUI()
     portComboBox = new QComboBox(this);
     portComboBox->setToolTip(tr("Choose the COM port to use"));
     portComboBox->setEnabled(true);
-    portComboBox->setMinimumWidth(200);
+    portComboBox->setMinimumWidth(100);
     addWidget(portComboBox);
 
     baudcomboBox = new QComboBox(this);
     baudcomboBox->setToolTip(tr("Choose what baud rate to use"));
     baudcomboBox->setEnabled(true);
-    baudcomboBox->setMinimumWidth(80);
-    baudcomboBox->addItem("9600");
-    baudcomboBox->addItem("14400");
-    baudcomboBox->addItem("19200");
-    baudcomboBox->addItem("38400");
-    baudcomboBox->addItem("57600");
-    baudcomboBox->addItem("115200");
-    baudcomboBox->setCurrentIndex(5);
+    baudcomboBox->setMinimumWidth(40);
+    baudcomboBox->addItem("9600", 9600);
+    baudcomboBox->addItem("14400", 14400);
+    baudcomboBox->addItem("19200", 19200);
+    baudcomboBox->addItem("38400", 38400);
+    baudcomboBox->addItem("57600", 57600);
+    baudcomboBox->addItem("115200", 115200);
+    baudcomboBox->addItem("230400", 230400);
+    baudcomboBox->addItem("460800", 460800);
+    baudcomboBox->addItem("921600", 921600);
+    baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
     addWidget(baudcomboBox);
 
 
@@ -193,17 +196,24 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    qDebug() << "LINK COUNT" << LinkManager::instance()->getLinks().count();
+    // Update label if required
+    if (LinkManager::instance()->getSerialLinks().count() < 1) {
+        connectButton->setText(tr("New Serial Link"));
+        baudcomboBox->hide();
+        portComboBox->hide();
+    } else {
 
-    if (LinkManager::instance()->getLinks().count() > 2)
-        addLink(LinkManager::instance()->getLinks().last());
-    // XXX implies that connect button is always active for the last used link
+        QList<SerialLink*> links = LinkManager::instance()->getSerialLinks();
+
+        foreach(SerialLink* slink, links)
+        {
+            addLink(slink);
+        }
+    }
+
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
     connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
-
-    // Update label if required
-    if (LinkManager::instance()->getLinks().count() < 3) {
-        connectButton->setText(tr("New Link"));
-    }
 
     loadSettings();
 
@@ -591,27 +601,42 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
 
 void QGCToolBar::addLink(LinkInterface* link)
 {
-    // XXX magic number
-    if (LinkManager::instance()->getLinks().count() > 2) {
+    // Accept only serial links as current link
+    SerialLink* serial = qobject_cast<SerialLink*>(link);
+
+    if (serial && !currentLink)
+    {
+        baudcomboBox->show();
+        portComboBox->show();
+
         currentLink = link;
         connect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
         updateLinkState(link->isConnected());
+
+        qDebug() << "ADD LINK";
+
+        updateComboBox();
     }
-    updateComboBox();
 }
 
 void QGCToolBar::removeLink(LinkInterface* link)
 {
     if (link == currentLink) {
         currentLink = NULL;
-        //portComboBox->setEnabled(false);
-        //portComboBox->clear();
-        // XXX magic number
-        if (LinkManager::instance()->getLinks().count() > 2) {
-            currentLink = LinkManager::instance()->getLinks().last();
+
+        // Try to get a new serial link
+        foreach (SerialLink* s, LinkManager::instance()->getSerialLinks())
+        {
+            addLink(s);
+        }
+
+        // Update GUI according to scan result
+        if (currentLink) {
             updateLinkState(currentLink->isConnected());
         } else {
-            connectButton->setText(tr("New Link"));
+            connectButton->setText(tr("New Serial Link"));
+            portComboBox->hide();
+            baudcomboBox->hide();
         }
     }
     updateComboBox();
@@ -619,26 +644,31 @@ void QGCToolBar::removeLink(LinkInterface* link)
 void QGCToolBar::updateComboBox()
 {
     portComboBox->clear();
-    for (int i=0;i<LinkManager::instance()->getLinks().count();i++)
+    if (currentLink)
     {
-        SerialLink *slink = qobject_cast<SerialLink*>(LinkManager::instance()->getLinks()[i]);
-        if (slink)
+        SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
+        QList<QString> portlist = slink->getCurrentPorts();
+        foreach(QString port, portlist) {
+            portComboBox->addItem(port, port);
+        }
+
+        portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
+        if (slink->getPortName().trimmed().length() > 0)
         {
-            //It's a serial link
-            QList<QString> portlist = slink->getCurrentPorts();
-            //if (!slink->isConnected())
-            //{
-                for (int j=0;j<portlist.count();j++)
-                {
-                    portComboBox->addItem("Serial port:" + QString::number(i) + ":" + portlist[j]);
-                }
-            //}
-            //We only really want to display from unconnected sources.
+            portComboBox->setEditText(slink->getPortName());
         }
         else
         {
-            portComboBox->addItem(LinkManager::instance()->getLinks()[i]->getName());
+            if (portlist.length() > 0)
+            {
+                portComboBox->setEditText(portlist.first());
+            }
+            else
+            {
+                portComboBox->setEditText(tr("No serial port found"));
+            }
         }
+        baudcomboBox->setCurrentIndex(baudcomboBox->findData(slink->getBaudRate()));
     }
 }
 
@@ -664,30 +694,22 @@ void QGCToolBar::updateLinkState(bool connected)
 void QGCToolBar::connectLink(bool connect)
 {
     // No serial port yet present
-    // XXX magic number
-    if (connect && LinkManager::instance()->getLinks().count() < 3)
+    if (connect && LinkManager::instance()->getSerialLinks().count() == 0)
     {
         MainWindow::instance()->addLink();
+        currentLink = LinkManager::instance()->getLinks().last();
     } else if (connect) {
-        if (portComboBox->currentText().split(":").count()>2)
+        SerialLink *link = qobject_cast<SerialLink*>(currentLink);
+        if (link)
         {
-            int linknum = portComboBox->currentText().split(":")[1].toInt();
-            SerialLink *link = qobject_cast<SerialLink*>(LinkManager::instance()->getLinks().at(linknum));
-            if (link)
-            {
-                QString portname = portComboBox->currentText().split(":")[2];
-                link->setPortName(portname.trimmed());
-            }
+            link->setPortName(portComboBox->itemData(portComboBox->currentIndex()).toString().trimmed());
             int baud = baudcomboBox->currentText().toInt();
             link->setBaudRate(baud);
             link->connect();
         }
-        else
-        {
-            LinkManager::instance()->getLinks().last()->connect();
-        }
-    } else if (!connect && LinkManager::instance()->getLinks().count() > 2) {
-        LinkManager::instance()->getLinks().last()->disconnect();
+
+    } else if (!connect && currentLink) {
+        currentLink->disconnect();
     }
 }
 

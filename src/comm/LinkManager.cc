@@ -210,3 +210,18 @@ const QList<LinkInterface*> LinkManager::getLinks()
 {
     return QList<LinkInterface*>(links);
 }
+
+const QList<SerialLink*> LinkManager::getSerialLinks()
+{
+    QList<SerialLink*> s;
+
+    foreach (LinkInterface* i, links)
+    {
+        SerialLink* link = qobject_cast<SerialLink*>(i);
+
+        if (link)
+            s.append(link);
+    }
+
+    return s;
+}

@@ -74,6 +74,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
 //    }
 
     loadSettings();
+    LinkManager::instance()->add(this);
 }
 void SerialLink::requestReset()
 {

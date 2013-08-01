@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QComboBox>
 #include "UASInterface.h"
 #include "QGCMAVLinkLogPlayer.h"
+#include "SerialLink.h"
 
 class QGCToolBar : public QToolBar
 {

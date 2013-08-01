@@ -176,14 +176,10 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     OpalLink* opalLink = new OpalLink();
     MainWindow::instance()->addLink(opalLink);
 #endif
-    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
-    simulationLink->disconnect();
 
     //We want to have a default serial link available for "quick" connecting.
     SerialLink *slink = new SerialLink();
     MainWindow::instance()->addLink(slink);
-
-    mainWindow = MainWindow::instance(splashScreen);
 
     // Remove splash screen
     splashScreen->finish(mainWindow);
