@@ -96,20 +96,22 @@ void APMToolBar::connectMAV()
 {
     qDebug() << "APMToolBar: connectMAV ";
 
-    bool connected = LinkManager::instance()->getLinks().last()->isConnected();
+    bool connected = false;
+    if (LinkManager::instance()->getSerialLinks().count() > 0)
+        connected = LinkManager::instance()->getSerialLinks().last()->isConnected();
     bool result;
 
-    if (!connected && LinkManager::instance()->getLinks().count() < 3)
+    if (!connected && LinkManager::instance()->getSerialLinks().count() == 0)
     {
         // No Link so prompt to connect one
         MainWindow::instance()->addLink();
     } else if (!connected) {
         // Need to Connect Link
-        result = LinkManager::instance()->getLinks().last()->connect();
+        result = LinkManager::instance()->getSerialLinks().last()->connect();
 
-    } else if (connected && LinkManager::instance()->getLinks().count() > 2) {
+    } else if (connected && LinkManager::instance()->getSerialLinks().count() > 0) {
         // result need to be the opposite of success.
-        result = !LinkManager::instance()->getLinks().last()->disconnect();
+        result = !LinkManager::instance()->getSerialLinks().last()->disconnect();
     }
     qDebug() << "result = " << result;
 
@@ -137,11 +139,11 @@ void APMToolBar::showConnectionDialog()
     qDebug() << "APMToolBar: showConnectionDialog link count ="
              << LinkManager::instance()->getLinks().count();
 
-    LinkInterface *link = LinkManager::instance()->getLinks().last();
     bool result;
 
-    if (link && LinkManager::instance()->getLinks().count() >= 3)
+    if (LinkManager::instance()->getSerialLinks().count() > 0)
     {
+        SerialLink *link = LinkManager::instance()->getSerialLinks().last();
         // Serial Link so prompt to config it
         connect(link, SIGNAL(updateLink(LinkInterface*)),
                              this, SLOT(updateLinkDisplay(LinkInterface*)));
