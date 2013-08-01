@@ -41,6 +41,8 @@ private:
     /** Loads gauge layout from settings file */
     void loadSettings();
 
+    void recalculateItemTextSizing();
+
     /** Column Count */
     int m_columnCount;
 
@@ -53,6 +55,7 @@ private:
     //FlowLayout *layout;
 protected:
     Ui::Form ui;
+    void resizeEvent(QResizeEvent *evt);
 signals:
     
 public slots:
