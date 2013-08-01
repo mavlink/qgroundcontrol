@@ -811,7 +811,17 @@ OTHER_FILES += \
 OTHER_FILES += \
     qml/ApmToolBar.qml \
     qml/components/Button.qml \
-    qml/components/TextButton.qml 
+    qml/components/TextButton.qml \
+    qml/resources/qgroundcontrol/toolbar/connect.png \
+    qml/resources/qgroundcontrol/toolbar/flightplanner.png \
+    qml/resources/qgroundcontrol/toolbar/helpwizard.png \
+    qml/resources/qgroundcontrol/toolbar/softwareconfig.png \
+    qml/resources/qgroundcontrol/toolbar/terminal.png \
+    qml/resources/qgroundcontrol/toolbar/simulation.png \
+    qml/resources/qgroundcontrol/toolbar/hardwareconfig.png \
+    qml/resources/qgroundcontrol/toolbar/flightdata.png \
+    qml/resources/qgroundcontrol/toolbar/disconnect.png \
+    qml/resources/qgroundcontrol/toolbar/donate.png \
 
 
 #qmlcomponents.path    += $${DESTDIR}$${TARGET}/components
