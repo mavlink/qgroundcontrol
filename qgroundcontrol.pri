@@ -73,12 +73,6 @@ macx|macx-g++42|macx-g++|macx-llvm: {
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/components/
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/components/*.qml $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/components
 
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/resources/qgroundcontrol/toolbar/*.png $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
-
-
 	# Fix library paths inside executable
         QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
         QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol

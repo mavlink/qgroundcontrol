@@ -293,6 +293,9 @@ void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
  */
 void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
 {
+    if (uas == this->uas)
+        return; //no need to rewire
+
     // Disconnect the previous one (if any)
     forgetUAS(this->uas);
 
