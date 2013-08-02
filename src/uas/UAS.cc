@@ -1532,7 +1532,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 unknownPackets.append(message.msgid);
 
-                emit packetNotHandled(uasId, message.compid, message.msgid);
+                emit unknownPacketReceived(uasId, message.compid, message.msgid);
             }
         }
             break;
