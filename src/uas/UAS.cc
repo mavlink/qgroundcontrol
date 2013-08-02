@@ -1533,6 +1533,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 unknownPackets.append(message.msgid);
 
                 emit unknownPacketReceived(uasId, message.compid, message.msgid);
+                qWarning() << "Unknown message from system:" << uasId << "message:" << message.msgid;
             }
         }
             break;
