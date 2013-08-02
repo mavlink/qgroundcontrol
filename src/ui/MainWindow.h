@@ -99,7 +99,8 @@ class MainWindow : public QMainWindow
 public:
 
     enum CUSTOM_MODE {
-        CUSTOM_MODE_NONE = 0,
+        CUSTOM_MODE_UNCHANGED = 0,
+        CUSTOM_MODE_NONE,
         CUSTOM_MODE_PX4,
         CUSTOM_MODE_APM,
         CUSTOM_MODE_WIFI
@@ -178,7 +179,10 @@ public:
 
     void setCustomMode(enum MainWindow::CUSTOM_MODE mode)
     {
-        customMode = mode;
+        if (mode != CUSTOM_MODE_UNCHANGED)
+        {
+            customMode = mode;
+        }
     }
 
     enum MainWindow::CUSTOM_MODE getCustomMode()
@@ -301,6 +305,7 @@ public slots:
 
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
+    void styleChanged();
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
@@ -490,6 +495,7 @@ protected:
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
+    CUSTOM_MODE customMode;
 
 private:
     QList<QObject*> commsWidgetList;
@@ -499,7 +505,6 @@ private:
     QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
     bool isAdvancedMode; ///< If enabled dock widgets can be moved and floated.
     bool dockWidgetTitleBarEnabled; ///< If enabled, dock widget titlebars are displayed when NOT in advanced mode.
-    CUSTOM_MODE customMode;
     Ui::MainWindow ui;
 
     /** @brief Set the appropriate titlebar for a given dock widget.
