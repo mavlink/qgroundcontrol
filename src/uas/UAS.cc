@@ -1531,11 +1531,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (!unknownPackets.contains(message.msgid))
             {
                 unknownPackets.append(message.msgid);
-                QString errString = tr("UNABLE TO DECODE MESSAGE NUMBER %1").arg(message.msgid);
-                //GAudioOutput::instance()->say(errString+tr(", please check console for details."));
-                emit textMessageReceived(uasId, message.compid, 255, errString);
-                std::cout << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
-                //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
+
+                // XXX Do NOT show this to users, as they will attribute
+                // completely random problems to this message and won't
+                // even bother to look up what the message actually is.
+
+//                QString errString = tr("UNABLE TO DECODE MESSAGE NUMBER %1").arg(message.msgid);
+//                //GAudioOutput::instance()->say(errString+tr(", please check console for details."));
+//                emit textMessageReceived(uasId, message.compid, 255, errString);
+//                std::cout << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
+//                //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
             }
         }
             break;
