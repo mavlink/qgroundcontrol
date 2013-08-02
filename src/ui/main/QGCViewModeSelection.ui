@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCViewModeSelection</class>
+ <widget class="QWidget" name="QGCViewModeSelection">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>750</width>
+    <height>409</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="3" column="1">
+    <widget class="QCheckBox" name="notAgainCheckBox">
+     <property name="text">
+      <string>Do not ask again on next startup. The selection can be changed any time in the preferences.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>47</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="2">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>46</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="1">
+    <widget class="QWidget" name="viewModeWidget" native="true">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="1" column="1">
+       <widget class="QPushButton" name="viewModeAR">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../qgroundcontrol.qrc">
+          <normaloff>:/files/images/actions/qgroundcontrol-wifi.svg</normaloff>:/files/images/actions/qgroundcontrol-wifi.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>120</width>
+          <height>120</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>APM Autopilot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>PX4 Autopilot</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="viewModeAPM">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../qgroundcontrol.qrc">
+          <normaloff>:/files/images/actions/qgroundcontrol-apm.svg</normaloff>:/files/images/actions/qgroundcontrol-apm.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>120</width>
+          <height>120</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>WiFi / UDP</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="viewModePX4">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../qgroundcontrol.qrc">
+          <normaloff>:/files/images/actions/qgroundcontrol-px4.svg</normaloff>:/files/images/actions/qgroundcontrol-px4.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>120</width>
+          <height>120</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="viewModeGeneric">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../qgroundcontrol.qrc">
+          <normaloff>:/files/images/actions/qgroundcontrol-generic.svg</normaloff>:/files/images/actions/qgroundcontrol-generic.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>120</width>
+          <height>120</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Radio / Serial Link</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLabel" name="viewModeHintLabel">
+     <property name="text">
+      <string>Please select the connection or autopilot you want to use QGroundControl with.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>76</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="1">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>76</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../../qgroundcontrol.qrc"/>
+ </resources>
+ <connections/>
+</ui>

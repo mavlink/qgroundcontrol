@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 #include <QApplication>
 
 #include "MainWindow.h"
+#include "QGCWelcomeMainWindow.h"
 #include "UASManager.h"
 #include "LinkManager.h"
 /*#include "ViconTarsusProtocol.h" */
@@ -56,8 +57,16 @@ class QGCCore : public QApplication
     Q_OBJECT
 
 public:
-    QGCCore(int &argc, char* argv[]);
+    QGCCore(bool firstStart, int &argc, char* argv[]);
     ~QGCCore();
+
+    bool getRestartRequested()
+    {
+        return restartRequested;
+    }
+
+public slots:
+    void customViewModeSelected(enum MainWindow::CUSTOM_MODE mode);
 
 protected:
     void startLinkManager();
@@ -71,6 +80,8 @@ protected:
 
 private:
     MainWindow* mainWindow;
+    bool restartRequested;
+    QGCWelcomeMainWindow* welcome;
 };
 
 #endif /* _CORE_H_ */

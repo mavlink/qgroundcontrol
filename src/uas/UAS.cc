@@ -38,7 +38,10 @@
 * as the previous one created unless one calls deleteSettings in the code after
 * creating the UAS.
 */
+
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
+    lipoFull(4.2f),
+    lipoEmpty(3.5f),
     uasId(id),
     links(new QList<LinkInterface*>()),
     unknownPackets(),
@@ -3334,41 +3337,51 @@ QString UAS::getAudioModeTextFor(int id)
 * The mode returned can be auto, stabilized, test, manual, preflight or unknown.
 * @return the short text of the mode for the id given.
 */
+/**
+* The mode returned can be auto, stabilized, test, manual, preflight or unknown.
+* @return the short text of the mode for the id given.
+*/
 QString UAS::getShortModeTextFor(int id)
 {
-    QString mode;
+    QString mode = "";
     uint8_t modeid = id;
 
-    qDebug() << "MODE:" << modeid;
 
     // BASE MODE DECODING
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO)
-    {
-        mode += "|AUTO";
-    }
-    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
-    {
-        mode += "|VECTOR";
-    }
-    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
-    {
-        mode += "|STABILIZED";
-    }
-    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST)
-    {
-        mode += "|TEST";
-    }
-    else if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
-    {
-        mode += "|MANUAL";
-    }
-    else if (modeid == 0)
+
+    if (modeid == 0)
     {
         mode = "|PREFLIGHT";
     }
-    else
+    else {
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO){
+            mode += "|AUTO";
+        }
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL){
+            mode += "|MANUAL";
+        }
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED){
+            mode += "|VECTOR";
+        }
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE){
+            mode += "|STABILIZED";
+        }
+
+
+        if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST){
+            mode += "|TEST";
+        }
+
+
+    }
+
+    if (mode.length() == 0)
     {
         mode = "|UNKNOWN";
+        qDebug() << __FILE__ << __LINE__ << " Unknown modeid: " << modeid;
     }
 
     // ARMED STATE DECODING
@@ -3386,6 +3399,8 @@ QString UAS::getShortModeTextFor(int id)
     {
         mode.prepend("HIL:");
     }
+
+    qDebug() << "MODE: " << modeid << " " << mode;
 
     return mode;
 }
@@ -3450,8 +3465,8 @@ void UAS::setBattery(BatteryType type, int cells)
     case LIION:
         break;
     case LIPOLY:
-        fullVoltage = this->cells * UAS::lipoFull;
-        emptyVoltage = this->cells * UAS::lipoEmpty;
+        fullVoltage = this->cells * lipoFull;
+        emptyVoltage = this->cells * lipoEmpty;
         break;
     case LIFE:
         break;

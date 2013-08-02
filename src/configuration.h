@@ -11,14 +11,14 @@
 #define WITH_TEXT_TO_SPEECH 1
 
 #define QGC_APPLICATION_NAME "QGroundControl"
-#define QGC_APPLICATION_VERSION "v. 1.0.9 (beta RC1)"
+#define QGC_APPLICATION_VERSION "v. 1.1.0 (beta)"
 
 namespace QGC
 
 {
 const QString APPNAME = "QGROUNDCONTROL";
 const QString COMPANYNAME = "QGROUNDCONTROL";
-const int APPLICATIONVERSION = 109; // 1.0.9
+const int APPLICATIONVERSION = 110; // 1.1.0
 }
 
 #endif // QGC_CONFIGURATION_H
