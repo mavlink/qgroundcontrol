@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>528</width>
-    <height>321</height>
+    <height>455</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -71,6 +71,9 @@
           <bool>false</bool>
          </property>
         </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="customModeComboBox"/>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">

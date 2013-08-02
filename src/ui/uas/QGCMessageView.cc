@@ -4,6 +4,7 @@
 #include "UASManager.h"
 #include "QGCUnconnectedInfoWidget.h"
 #include <QMenu>
+#include <QScrollBar>
 
 QGCMessageView::QGCMessageView(QWidget *parent) :
     QWidget(parent),
@@ -55,9 +56,18 @@ void QGCMessageView::handleTextMessage(int uasid, int componentid, int severity,
 {
     // XXX color messages according to severity
 
-    ui->plainTextEdit->appendHtml(QString("<font color=\"%1\">[%2:%3] %4</font>\n").arg(UASManager::instance()->getUASForId(uasid)->getColor().name()).arg(UASManager::instance()->getUASForId(uasid)->getUASName()).arg(componentid).arg(text));
+    QPlainTextEdit *msgWidget = ui->plainTextEdit;
+
+    //turn off updates while we're appending content to avoid breaking the autoscroll behavior
+    msgWidget->setUpdatesEnabled(false);
+    QScrollBar *scroller = msgWidget->verticalScrollBar();
+
+    UASInterface *uas = UASManager::instance()->getUASForId(uasid);
+    msgWidget->appendHtml(QString("<font color=\"%1\">[%2:%3] %4</font>\n").arg(uas->getColor().name()).arg(uas->getUASName()).arg(componentid).arg(text));
     // Ensure text area scrolls correctly
-    ui->plainTextEdit->ensureCursorVisible();
+    scroller->setValue(scroller->maximum());
+    msgWidget->setUpdatesEnabled(true);
+
 }
 
 void QGCMessageView::contextMenuEvent(QContextMenuEvent* event)

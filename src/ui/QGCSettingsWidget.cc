@@ -48,9 +48,19 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     ui->lowPowerCheckBox->setChecked(mainWindow->lowPowerModeEnabled());
     connect(ui->lowPowerCheckBox, SIGNAL(clicked(bool)), mainWindow, SLOT(enableLowPowerMode(bool)));
 
-    //Dock widget title bars
+    // Dock widget title bars
     ui->titleBarCheckBox->setChecked(mainWindow->dockWidgetTitleBarsEnabled());
     connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),mainWindow,SLOT(enableDockWidgetTitleBars(bool)));
+
+    // Custom mode
+
+    ui->customModeComboBox->addItem(tr("Default: Generic MAVLink and serial links"), MainWindow::CUSTOM_MODE_NONE);
+    ui->customModeComboBox->addItem(tr("Wifi: Generic MAVLink, wifi or serial links"), MainWindow::CUSTOM_MODE_WIFI);
+    ui->customModeComboBox->addItem(tr("PX4: Optimized for PX4 Autopilot Users"), MainWindow::CUSTOM_MODE_PX4);
+    ui->customModeComboBox->addItem(tr("APM: Optimized for ArduPilot Users"), MainWindow::CUSTOM_MODE_APM);
+
+    ui->customModeComboBox->setCurrentIndex(ui->customModeComboBox->findData(mainWindow->getCustomMode()));
+    connect(ui->customModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectCustomMode(int)));
 
     // Intialize the style UI to the proper values obtained from the MainWindow.
     MainWindow::QGC_MAINWINDOW_STYLE style = mainWindow->getStyle();
@@ -176,4 +186,10 @@ void QGCSettingsWidget::setDefaultStyle()
         ui->styleSheetFile->setText(MainWindow::defaultDarkStyle);
         mainWindow->loadStyle(MainWindow::QGC_MAINWINDOW_STYLE_DARK, MainWindow::defaultDarkStyle);
     }
+}
+
+void QGCSettingsWidget::selectCustomMode(int mode)
+{
+    MainWindow::instance()->setCustomMode(static_cast<enum MainWindow::CUSTOM_MODE>(ui->customModeComboBox->itemData(mode).toInt()));
+    MainWindow::instance()->showInfoMessage(tr("Please restart QGroundControl"), tr("The optimization selection was changed. The application needs to be closed and restarted to put all optimizations into effect."));
 }

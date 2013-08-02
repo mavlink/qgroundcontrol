@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "QGCCore.h"
 #include "MainWindow.h"
+#include "QGCWelcomeMainWindow.h"
 #include "GAudioOutput.h"
 
 #ifdef OPAL_RT
@@ -65,8 +66,13 @@ This file is part of the QGROUNDCONTROL project
  **/
 
 
-QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
+QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, argv),
+    restartRequested(false),
+    welcome(NULL)
 {
+    // Exit main application when last window is closed
+    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
+
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
@@ -83,6 +89,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 
     // Show user an upgrade message if QGC got upgraded (see code below, after splash screen)
     bool upgraded = false;
+    enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_NONE;
     QString lastApplicationVersion("");
     if (settings.contains("QGC_APPLICATION_VERSION"))
     {
@@ -95,6 +102,10 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
             settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
             upgraded = true;
         }
+        else
+        {
+            mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_NONE).toInt();
+        }
     }
     else
     {
@@ -106,6 +117,15 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 
     settings.sync();
 
+    // "Bootload" the application
+    if ((!settings.contains("QGC_CUSTOM_MODE_STORED") || settings.value("QGC_CUSTOM_MODE_STORED") == false) && firstStart)
+    {
+        welcome = new QGCWelcomeMainWindow();
+        connect(welcome, SIGNAL(customViewModeSelected(MainWindow::CUSTOM_MODE)), this, SLOT(customViewModeSelected(MainWindow::CUSTOM_MODE)));
+        restartRequested = true;
+        return;
+    }
+
     // Show splash screen
     QPixmap splashImage(":/files/images/splash.png");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage);
@@ -114,9 +134,6 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     splashScreen->show();
     processEvents();
     splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-
-    // Exit main application when last window is closed
-    connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
 
     // Load application font
     QFontDatabase fontDatabase = QFontDatabase();
@@ -140,13 +157,18 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     splashScreen->showMessage(tr("Starting user interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // The first call to instance() creates the MainWindow, so make sure it's passed the splashScreen.
-    mainWindow = MainWindow::instance(splashScreen);
+    mainWindow = MainWindow::instance_mode(splashScreen, mode);
 
-    // Connect links
-    // to make sure that all components are initialized when the
-    // first messages arrive
-    UDPLink* udpLink = new UDPLink(QHostAddress::Any, 14550);
-    MainWindow::instance()->addLink(udpLink);
+    UDPLink* udpLink = NULL;
+
+    if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_WIFI)
+    {
+        // Connect links
+        // to make sure that all components are initialized when the
+        // first messages arrive
+        udpLink = new UDPLink(QHostAddress::Any, 14550);
+        MainWindow::instance()->addLink(udpLink);
+    }
 
 #ifdef OPAL_RT
     // Add OpalRT Link, but do not connect
@@ -162,12 +184,12 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("QGroundControl has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
 
     // Check if link could be connected
-    if (!udpLink->connect())
+    if (udpLink && !udpLink->connect())
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
-        msgBox.setInformativeText("You will not be able to receive data via UDP. Please check that you're running the right executable and then re-start " + qAppName() + ". Do you want to close the application?");
+        msgBox.setInformativeText("It is recommended to close the application and stop all instances. Click Yes to close.");
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msgBox.setDefaultButton(QMessageBox::No);
         int ret = msgBox.exec();
@@ -182,15 +204,6 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
             QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
-
-//    forever
-//    {
-//        QGC::SLEEP::msleep(5000);
-//    }
-
-//    mainWindow->close();
-//    mainWindow->deleteLater();
-//    QGC::SLEEP::msleep(200);
 }
 
 /**
@@ -199,17 +212,23 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
  **/
 QGCCore::~QGCCore()
 {
-    //mainWindow->storeSettings();
-    //mainWindow->close();
-    //mainWindow->deleteLater();
-    // Delete singletons
-    // First systems
-    delete UASManager::instance();
-    // then links
-    delete LinkManager::instance();
-    // Finally the main window
-    //delete MainWindow::instance();
-    //The main window now autodeletes on close.
+
+    if (welcome)
+    {
+        delete welcome;
+    } else {
+        //mainWindow->storeSettings();
+        //mainWindow->close();
+        //mainWindow->deleteLater();
+        // Delete singletons
+        // First systems
+        delete UASManager::instance();
+        // then links
+        delete LinkManager::instance();
+        // Finally the main window
+        //delete MainWindow::instance();
+        //The main window now autodeletes on close.
+    }
 }
 
 /**
@@ -264,4 +283,13 @@ void QGCCore::startUASManager()
     }
 }
 
+void QGCCore::customViewModeSelected(enum MainWindow::CUSTOM_MODE mode)
+{
+    QSettings settings;
+    settings.setValue("QGC_CUSTOM_MODE", (unsigned int)mode);
+    // Store settings only if requested by user
+    settings.setValue("QGC_CUSTOM_MODE_STORED", welcome->getStoreSettings());
+    settings.sync();
+    welcome->close();
 
+}

@@ -102,6 +102,11 @@
         <file>files/images/patterns/lenna.jpg</file>
         <file>files/images/rc_stick.svg</file>
         <file>files/images/actions/qgroundcontrol-connect.svg</file>
+        <file>files/images/actions/qgroundcontrol-generic.svg</file>
+        <file>files/images/actions/qgroundcontrol-px4.svg</file>
+        <file>files/images/actions/qgroundcontrol-apm.svg</file>
+        <file>files/images/actions/qgroundcontrol-ardrone.svg</file>
+        <file>files/images/actions/qgroundcontrol-wifi.svg</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
