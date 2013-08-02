@@ -6,9 +6,8 @@ AccelCalibrationConfig::AccelCalibrationConfig(QWidget *parent) : AP2ConfigWidge
     ui.setupUi(this);
     connect(ui.calibrateAccelButton,SIGNAL(clicked()),this,SLOT(calibrateButtonClicked()));
 
-    connect(UASManager::instance(),SIGNAL(activeUASSet(UASInterface*)),this,SLOT(activeUASSet(UASInterface*)));
-    activeUASSet(UASManager::instance()->getActiveUAS());
     m_accelAckCount=0;
+    initConnections();
 }
 
 AccelCalibrationConfig::~AccelCalibrationConfig()
@@ -58,8 +57,28 @@ void AccelCalibrationConfig::calibrateButtonClicked()
     {
         m_uas->executeCommandAck(m_accelAckCount++,true);
         ui.calibrateAccelButton->setText("Calibrate\nAccelerometer");
+        if (m_accelAckCount > 8)
+        {
+            //We've clicked too many times! Reset.
+            for (int i=0;i<8;i++)
+            {
+                m_uas->executeCommandAck(i,true);
+            }
+            m_accelAckCount = 0;
+        }
     }
 
+}
+void AccelCalibrationConfig::hideEvent(QHideEvent *evt)
+{
+    if (!m_uas || !m_accelAckCount)
+    {
+        return;
+    }
+    for (int i=m_accelAckCount;i<8;i++)
+    {
+        m_uas->executeCommandAck(i,true); //Clear out extra commands.
+    }
 }
 void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, int severity, QString text)
 {
@@ -71,7 +90,7 @@ void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, 
         if (m_accelAckCount == 0)
         {
             //Calibration Sucessful\r"
-            ui.calibrateAccelButton->setText("Any\nKey");
+            ui.calibrateAccelButton->setText("Continue");
             m_accelAckCount++;
         }
         if (m_accelAckCount == 7)
@@ -87,11 +106,21 @@ void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, 
             {
                 m_accelAckCount = 0;
             }
+            else if (text.contains("Calibration") && text.contains("FAILED")) //Failure
+            {
+                m_accelAckCount = 0;
+            }
             ui.outputLabel->setText(ui.outputLabel->text() + "\n" + text);
         }
         else
         {
-            ui.outputLabel->setText(text);
+            ui.outputLabel->setText(text.replace("press any key","click Continue below"));
+            if (!this->isVisible())
+            {
+                //Clear out!
+                m_uas->executeCommandAck(m_accelAckCount++,true);
+                ui.calibrateAccelButton->setText("Calibrate\nAccelerometer");
+            }
         }
     }
 

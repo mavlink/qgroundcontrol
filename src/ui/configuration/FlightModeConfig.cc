@@ -5,6 +5,7 @@ FlightModeConfig::FlightModeConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
     connect(ui.savePushButton,SIGNAL(clicked()),this,SLOT(saveButtonClicked()));
+    initConnections();
 }
 
 FlightModeConfig::~FlightModeConfig()

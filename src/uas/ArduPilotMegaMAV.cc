@@ -53,11 +53,17 @@ ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
 void ArduPilotMegaMAV::sendTxRequests()
 {
     enableExtendedSystemStatusTransmission(2);
+    QGC::SLEEP::msleep(250);
     enablePositionTransmission(3);
+    QGC::SLEEP::msleep(250);
     enableExtra1Transmission(10);
+    QGC::SLEEP::msleep(250);
     enableExtra2Transmission(10);
+    QGC::SLEEP::msleep(250);
     enableExtra3Transmission(2);
+    QGC::SLEEP::msleep(250);
     enableRawSensorDataTransmission(2);
+    QGC::SLEEP::msleep(250);
     enableRCChannelDataTransmission(2);
 }
 

@@ -11,7 +11,7 @@ AdvParameterList::AdvParameterList(QWidget *parent) : AP2ConfigWidget(parent)
     ui.tableWidget->setColumnWidth(1,100);
     ui.tableWidget->setColumnWidth(2,200);
     ui.tableWidget->setColumnWidth(3,800);
-
+    initConnections();
 }
 
 AdvParameterList::~AdvParameterList()
