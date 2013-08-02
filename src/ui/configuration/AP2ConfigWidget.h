@@ -12,6 +12,7 @@ public:
 protected:
     UASInterface *m_uas;
     void showNullMAVErrorMessageBox();
+    void initConnections();
 signals:
     
 public slots:

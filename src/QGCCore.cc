@@ -168,7 +168,16 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
         // to make sure that all components are initialized when the
         // first messages arrive
         udpLink = new UDPLink(QHostAddress::Any, 14550);
-        MainWindow::instance()->addLink(udpLink);
+        LinkManager::instance()->add(udpLink);
+        //MainWindow::instance()->addLink(udpLink);
+    } else if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_PX4) {
+        udpLink = new UDPLink(QHostAddress::Any, 14550);
+        LinkManager::instance()->add(udpLink);
+        SerialLink *slink = new SerialLink();
+    } else {
+        // We want to have a default serial link available for "quick" connecting.
+        SerialLink *slink = new SerialLink();
+//        MainWindow::instance()->addLink(slink);
     }
 
 #ifdef OPAL_RT
@@ -177,15 +186,12 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     MainWindow::instance()->addLink(opalLink);
 #endif
 
-    //We want to have a default serial link available for "quick" connecting.
-    SerialLink *slink = new SerialLink();
-    MainWindow::instance()->addLink(slink);
-
     // Remove splash screen
     splashScreen->finish(mainWindow);
 
     if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"),
                                               tr("qgroundcontrol has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
+
     // Check if link could be connected
     if (udpLink && !udpLink->connect())
     {
