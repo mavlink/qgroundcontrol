@@ -99,7 +99,7 @@ MainWindow* MainWindow::instance_mode(QSplashScreen* screen, enum MainWindow::CU
 
 MainWindow* MainWindow::instance(QSplashScreen* screen)
 {
-    instance_mode(screen, CUSTOM_MODE_NONE);
+    return instance_mode(screen, CUSTOM_MODE_UNCHANGED);
 }
 
 /**
@@ -122,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent):
     lowPowerMode(false),
     isAdvancedMode(false),
     dockWidgetTitleBarEnabled(true),
-    customMode(CUSTOM_MODE_WIFI)
+    customMode(CUSTOM_MODE_NONE)
 {
     this->setAttribute(Qt::WA_DeleteOnClose);
     loadSettings();
@@ -1294,6 +1294,7 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
         // And trigger any changes to other UI elements that are watching for
         // theme changes.
         emit styleChanged(style);
+        emit styleChanged();
 
         // Finally restore the cursor before returning.
         qApp->restoreOverrideCursor();
