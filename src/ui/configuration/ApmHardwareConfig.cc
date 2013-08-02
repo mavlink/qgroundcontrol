@@ -60,9 +60,9 @@ ApmHardwareConfig::ApmHardwareConfig(QWidget *parent) : QWidget(parent)
     connect(ui.frameTypeButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
 
-    QWidget *widget = new QWidget(this);
-    ui.stackedWidget->addWidget(widget); //Firmware placeholder.
-    m_buttonToConfigWidgetMap[ui.firmwareButton] = widget;
+    m_apmFirmwareConfig = new ApmFirmwareConfig(this);
+    ui.stackedWidget->addWidget(m_apmFirmwareConfig); //Firmware placeholder.
+    m_buttonToConfigWidgetMap[ui.firmwareButton] = m_apmFirmwareConfig;
     connect(ui.firmwareButton,SIGNAL(clicked()),this,SLOT(activateStackedWidget()));
 
     m_frameConfig = new FrameTypeConfig(this);

@@ -200,7 +200,7 @@ public slots:
     /** @brief Show the application settings */
     void showSettings();
     /** @brief Add a communication link */
-    void addLink();
+    LinkInterface* addLink();
     void addLink(LinkInterface* link);
     bool configLink(LinkInterface *link);
     void configure();
@@ -238,6 +238,8 @@ public slots:
     void loadMAVLinkView();
     /** @brief Load firmware update view */
     void loadFirmwareUpdateView();
+    /** @brief Load Terminal Console views */
+    void loadTerminalView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -334,6 +336,9 @@ protected:
         VIEW_FIRMWAREUPDATE,
         VIEW_HARDWARE_CONFIG,
         VIEW_SOFTWARE_CONFIG,
+        VIEW_TERMINAL,
+        VIEW_3DWIDGET,
+        VIEW_GOOGLEEARTH,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
@@ -363,7 +368,7 @@ protected:
      * @param widget        The QWidget being added
      * @param title         The entry that will appear in the Menu
      */
-    void addCentralWidget(QWidget* widget, const QString& title);
+    void addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title);
 
     /** @brief Catch window resize events */
     void resizeEvent(QResizeEvent * event);
@@ -387,7 +392,7 @@ protected:
     void storeSettings();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
-    MAVLinkProtocol* mavlink;
+    QPointer<MAVLinkProtocol> mavlink;
 
     LinkInterface* udpLink;
 
@@ -403,6 +408,7 @@ protected:
     QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
+    QPointer<SubMainWindow> terminalView;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
@@ -412,10 +418,10 @@ protected:
     //QPointer<XMLCommProtocolWidget> protocolWidget;
     //QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
-    QPointer<QWidget> _3DWidget;
+    QPointer<QWidget> q3DWidget;
 #endif
 #if (defined _MSC_VER) || (defined Q_OS_MAC)
-    QPointer<QGCGoogleEarthView> gEarthWidget;
+    QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 

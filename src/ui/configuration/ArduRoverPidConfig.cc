@@ -39,7 +39,7 @@ ArduRoverPidConfig::ArduRoverPidConfig(QWidget *parent) : AP2ConfigWidget(parent
 
     connect(ui.writePushButton,SIGNAL(clicked()),this,SLOT(writeButtonClicked()));
     connect(ui.refreshPushButton,SIGNAL(clicked()),this,SLOT(refreshButtonClicked()));
-
+    initConnections();
 }
 
 ArduRoverPidConfig::~ArduRoverPidConfig()

@@ -82,6 +82,12 @@ FailSafeConfig::FailSafeConfig(QWidget *parent) : AP2ConfigWidget(parent)
     connect(ui.throttleCheckBox,SIGNAL(clicked(bool)),this,SLOT(throttleChecked(bool)));
     connect(ui.throttlePwmSpinBox,SIGNAL(editingFinished()),this,SLOT(throttlePwmChanged()));
     connect(ui.throttleFailSafeComboBox,SIGNAL(currentIndexChanged(int)),this,SLOT(throttleFailSafeChanged(int)));
+
+    ui.armedLabel->setText("<h1>DISARMED</h1>");
+
+
+    ui.modeLabel->setText("<h1>MODE</h1>");
+    initConnections();
 }
 void FailSafeConfig::gcsChecked(bool checked)
 {
@@ -224,6 +230,7 @@ void FailSafeConfig::activeUASSet(UASInterface *uas)
     connect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanges(int,float)));
     connect(m_uas,SIGNAL(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)),this,SLOT(hilActuatorsChanged(uint64_t,float,float,float,float,float,float,float,float)));
     connect(m_uas,SIGNAL(armingChanged(bool)),this,SLOT(armingChanged(bool)));
+    connect(m_uas,SIGNAL(gpsLocalizationChanged(UASInterface*,int)),this,SLOT(gpsStatusChanged(UASInterface*,int)));
     if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
     {
         ui.batteryFailCheckBox->setVisible(false);
@@ -415,4 +422,19 @@ void FailSafeConfig::hilActuatorsChanged(uint64_t time, float act1, float act2, 
     ui.radio6Out->setValue(act6);
     ui.radio7Out->setValue(act7);
     ui.radio8Out->setValue(act8);
+}
+void FailSafeConfig::gpsStatusChanged(UASInterface* uas,int fixtype)
+{
+    if (fixtype == 0 || fixtype == 1)
+    {
+        ui.gpsLabel->setText("<h1>None</h1>");
+    }
+    else if (fixtype == 2)
+    {
+        ui.gpsLabel->setText("<h1>2D Fix</h1>");
+    }
+    else if (fixtype == 3)
+    {
+        ui.gpsLabel->setText("<h1>3D Fix</h1>");
+    }
 }

@@ -85,23 +85,27 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
     ui.advancedParamButton->setVisible(true);
     ui.advParamListButton->setVisible(true);
 
+    QString compare = "";
     if (uas->getSystemType() == MAV_TYPE_FIXED_WING)
     {
         ui.arduPlanePidButton->setVisible(true);
         ui.arduCopterPidButton->setVisible(false);
         ui.arduRoverPidButton->setVisible(false);
+        compare = "ArduPlane";
     }
     else if (uas->getSystemType() == MAV_TYPE_QUADROTOR)
     {
         ui.arduCopterPidButton->setVisible(true);
         ui.arduPlanePidButton->setVisible(false);
         ui.arduRoverPidButton->setVisible(false);
+        compare = "ArduCopter";
     }
     else if (uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
     {
         ui.arduRoverPidButton->setVisible(true);
         ui.arduCopterPidButton->setVisible(false);
         ui.arduPlanePidButton->setVisible(false);
+        compare = "APMRover2";
     }
 
 
@@ -138,6 +142,7 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                             {
                                     parametersname = xml.attributes().value("name").toString();
                             }
+
                             QVariantMap genset;
                             QVariantMap advset;
 
@@ -301,24 +306,25 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                         {
                                             valuelist.append(QPair<int,QString>(i.key().toInt(),i.value()));
                                         }
-                                        if (tab == "Standard")
+                                        if (compare == parametersname)
                                         {
-                                            m_standardParamConfig->addCombo(humanname,docs,name,valuelist);
+                                            if (tab == "Standard")
+                                            {
+                                                m_standardParamConfig->addCombo(humanname,docs,name,valuelist);
+                                            }
+                                            else if (tab == "Advanced")
+                                            {
+                                                m_advancedParamConfig->addCombo(humanname,docs,name,valuelist);
+                                            }
+                                            m_advParameterList->setParameterMetaData(name,humanname,docs);
                                         }
-                                        else if (tab == "Advanced")
-                                        {
-                                            m_advancedParamConfig->addCombo(humanname,docs,name,valuelist);
-                                        }
-                                        m_advParameterList->setParameterMetaData(name,humanname,docs);
                                     }
                                     else if (fieldmap.size() > 0)
                                     {
                                         float min = 0;
-                                        float max = 100;
+                                        float max = 65535;
                                         if (fieldmap.contains("Range"))
                                         {
-                                            float min = 0;
-                                            float max = 0;
                                             //Some range fields list "0-10" and some list "0 10". Handle both.
                                             if (fieldmap["Range"].split(" ").size() > 1)
                                             {
@@ -331,15 +337,18 @@ void ApmSoftwareConfig::activeUASSet(UASInterface *uas)
                                                 max = fieldmap["Range"].split("-")[1].trimmed().toFloat();
                                             }
                                         }
-                                        if (tab == "Standard")
+                                        if (compare == parametersname)
                                         {
-                                            m_standardParamConfig->addRange(humanname,docs,name,min,max);
+                                            if (tab == "Standard")
+                                            {
+                                                m_standardParamConfig->addRange(humanname,docs,name,min,max);
+                                            }
+                                            else if (tab == "Advanced")
+                                            {
+                                                m_advancedParamConfig->addRange(humanname,docs,name,min,max);
+                                            }
+                                            m_advParameterList->setParameterMetaData(name,humanname,docs);
                                         }
-                                        else if (tab == "Advanced")
-                                        {
-                                            m_advancedParamConfig->addRange(humanname,docs,name,max,min);
-                                        }
-                                        m_advParameterList->setParameterMetaData(name,humanname,docs);
                                     }
 
                                 }

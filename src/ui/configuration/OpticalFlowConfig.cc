@@ -5,6 +5,7 @@ OpticalFlowConfig::OpticalFlowConfig(QWidget *parent) : AP2ConfigWidget(parent)
 {
     ui.setupUi(this);
     connect(ui.enableCheckBox,SIGNAL(clicked(bool)),this,SLOT(enableCheckBoxClicked(bool)));
+    initConnections();
 }
 
 OpticalFlowConfig::~OpticalFlowConfig()

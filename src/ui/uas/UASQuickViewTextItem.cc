@@ -48,7 +48,26 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
 }
 void UASQuickViewTextItem::setValue(double value)
 {
-    valueLabel->setText(QString::number(value,'f',4));
+    if (value < 10 && value > -10)
+    {
+        valueLabel->setText(QString::number(value,'f',4));
+    }
+    else if (value < 100 && value > -100)
+    {
+        valueLabel->setText(QString::number(value,'f',3));
+    }
+    else if (value < 1000 && value > -1000)
+    {
+        valueLabel->setText(QString::number(value,'f',2));
+    }
+    else if (value < 10000 && value > -10000)
+    {
+        valueLabel->setText(QString::number(value,'f',1));
+    }
+    else if (value >= 100000 || value <= -100000)
+    {
+        valueLabel->setText(QString::number(value,'f',0));
+    }
 }
 
 void UASQuickViewTextItem::setTitle(QString title)
@@ -62,8 +81,58 @@ void UASQuickViewTextItem::setTitle(QString title)
         titleLabel->setText(title);
     }
 }
+int UASQuickViewTextItem::minValuePixelSize()
+{
+    QFont valuefont = valueLabel->font();
+    QFont titlefont = titleLabel->font();
+    valuefont.setPixelSize(this->height());
+    titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+    //spacerItem->setGeometry(QRect(0,0,20,this->height()/10.0));
+
+    QFontMetrics metrics(valuefont);
+    //valuefont.setPixelSize(this->height() / 2.0);
+    bool fit = false;
+    while (!fit)
+    {
+
+        QFontMetrics valfm( valuefont );
+        QRect valbound = valfm.boundingRect(0,0, valueLabel->width(), valueLabel->height(), Qt::TextWordWrap | Qt::AlignLeft, "12345678.00"/*valueLabel->text()*/);
+        //QFontMetrics titlefm( titlefont );
+        //QRect titlebound = titlefm.boundingRect(0,0, titleLabel->width(), titleLabel->height(), Qt::TextWordWrap | Qt::AlignLeft, titleLabel->text());
+
+        if ((valbound.width() <= valueLabel->width() && valbound.height() <= valueLabel->height()))// && (titlebound.width() <= titleLabel->width() && titlebound.height() <= titleLabel->height()))
+            fit = true;
+        else
+        {
+            if (valuefont.pixelSize()-5 <= 0)
+            {
+                fit = true;
+                valuefont.setPixelSize(5);
+            }
+            else
+            {
+                valuefont.setPixelSize(valuefont.pixelSize() - 5);
+            }
+            //titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+            //qDebug() << "Point size:" << valuefont.pixelSize() << valueLabel->width() << valueLabel->height();
+        }
+    }
+    return valuefont.pixelSize();
+}
+void UASQuickViewTextItem::setValuePixelSize(int size)
+{
+    QFont valuefont = valueLabel->font();
+    QFont titlefont = titleLabel->font();
+    valuefont.setPixelSize(size);
+    titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
+    valueLabel->setFont(valuefont);
+    titleLabel->setFont(titlefont);
+    update();
+}
+
 void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
 {
+    return;
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height());
