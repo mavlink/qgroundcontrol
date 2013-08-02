@@ -643,6 +643,9 @@ signals:
     // HOME POSITION / ORIGIN CHANGES
     void homePositionChanged(int uas, double lat, double lon, double alt);
 
+    /** @brief The system received an unknown message, which it could not interpret */
+    void unknownPacketReceived(int uas, int component, int messageid);
+
 protected:
 
     // TIMEOUT CONSTANTS
