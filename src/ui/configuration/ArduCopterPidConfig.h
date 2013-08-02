@@ -17,7 +17,10 @@ private slots:
     void writeButtonClicked();
     void refreshButtonClicked();
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    void lockCheckBoxClicked(bool checked);
+    void stabilLockedChanged(double value);
 private:
+    bool m_pitchRollLocked;
     QList<QPair<int,QString> > m_ch6ValueToTextList;
     QList<QPair<int,QString> > m_ch78ValueToTextList;
     QMap<QString,QDoubleSpinBox*> m_nameToBoxMap;

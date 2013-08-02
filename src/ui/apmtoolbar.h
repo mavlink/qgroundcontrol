@@ -3,6 +3,7 @@
 
 #include <QAction>
 #include <QDeclarativeView>
+#include "UASInterface.h"
 
 class LinkInterface;
 
@@ -43,7 +44,14 @@ public slots:
     void showConnectionDialog();
     void setConnection(bool connection);
 
+    void activeUasSet(UASInterface *uas);
+    void armingChanged(int sysId, QString armingState);
+    void armingChanged(bool armed);
+
     void updateLinkDisplay(LinkInterface *newLink);
+
+private:
+    UASInterface *m_uas;
 };
 
 #endif // APMTOOLBAR_H

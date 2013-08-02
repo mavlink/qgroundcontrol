@@ -20,7 +20,8 @@
 
 # Qt configuration
 CONFIG += qt \
-    thread
+    thread \
+    console
 #    serialport
 
 QT += network \
@@ -265,7 +266,10 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/configuration/ArduRoverPidConfig.ui \
     src/ui/QGCConfigView.ui \
     src/ui/main/QGCViewModeSelection.ui \
-    src/ui/main/QGCWelcomeMainWindow.ui
+    src/ui/main/QGCWelcomeMainWindow.ui \
+    src/ui/configuration/terminalconsole.ui \
+    src/ui/configuration/SerialSettingsDialog.ui \
+    src/ui/configuration/ApmFirmwareConfig.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -378,14 +382,14 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/QGCMapTool.h \
     src/ui/map/QGCMapToolBar.h \
-#    libs/qextserialport/qextserialenumerator.h \
     src/QGCGeo.h \
     src/ui/QGCToolBar.h \
     src/ui/QGCStatusBar.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointEditableView.h \
+    src/ui/WaypointEditableView.h \    
+    src/ui/UnconnectedUASInfoWidget.h \
     src/ui/QGCRGBDView.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
@@ -459,7 +463,12 @@ HEADERS += src/MG.h \
     src/ui/configuration/ArduRoverPidConfig.h \
     src/ui/QGCConfigView.h \
     src/ui/main/QGCViewModeSelection.h \
-    src/ui/main/QGCWelcomeMainWindow.h
+    src/ui/main/QGCWelcomeMainWindow.h \
+    src/ui/configuration/console.h \
+    src/ui/configuration/SerialSettingsDialog.h \
+    src/ui/configuration/terminalconsole.h \
+    src/ui/configuration/ApmHighlighter.h \
+    src/ui/configuration/ApmFirmwareConfig.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -669,7 +678,12 @@ SOURCES += src/main.cc \
     src/ui/configuration/ArduRoverPidConfig.cc \
     src/ui/QGCConfigView.cc \
     src/ui/main/QGCViewModeSelection.cc \
-    src/ui/main/QGCWelcomeMainWindow.cc
+    src/ui/main/QGCWelcomeMainWindow.cc \
+    src/ui/configuration/terminalconsole.cpp \
+    src/ui/configuration/console.cpp \
+    src/ui/configuration/SerialSettingsDialog.cc \
+    src/ui/configuration/ApmHighlighter.cc \
+    src/ui/configuration/ApmFirmwareConfig.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -806,7 +820,8 @@ unix:!macx:!symbian: LIBS += -losg
 OTHER_FILES += \
     dongfang_notes.txt \
     src/ui/dongfang-scrapyard.txt \
-    qml/components/DigitalDisplay.qml
+    qml/components/DigitalDisplay.qml \
+    qml/components/StatusDisplay.qml
 
 OTHER_FILES += \
     qml/ApmToolBar.qml \

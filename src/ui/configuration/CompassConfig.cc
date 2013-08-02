@@ -39,6 +39,7 @@ CompassConfig::CompassConfig(QWidget *parent) : AP2ConfigWidget(parent)
     ui.orientationComboBox->addItem("ROTATION_PITCH_90");
     ui.orientationComboBox->addItem("ROTATION_PITCH_270");
     ui.orientationComboBox->addItem("ROTATION_MAX");
+    initConnections();
 }
 CompassConfig::~CompassConfig()
 {

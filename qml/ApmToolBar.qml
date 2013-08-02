@@ -9,11 +9,26 @@ Rectangle {
     property alias linkNameLabel: linkDevice.label
     property alias baudrateLabel: baudrate.label
     property bool connected: false
+    property bool armed: false
+    property string armedstr: "DISARMED"
 
     width: toolbar.width
     height: 72
     color: "black"
     border.color: "black"
+
+    onArmedChanged: {
+        if (armed) {
+            statusDisplay.statusText = "ARMED"
+            statusDisplay.statusTextColor = "red"
+            statusDisplay.statusBackgroundColor = "#FF880000"
+        }
+        else {
+            statusDisplay.statusText = "DISARMED"
+            statusDisplay.statusTextColor = "yellow"
+            statusDisplay.statusBackgroundColor = "black"
+        }
+    }
 
     onConnectedChanged: {
         if (connected){
@@ -44,7 +59,7 @@ Rectangle {
 
     Row {
         anchors.left: parent.left
-        spacing: 2
+        spacing: 10
 
         Rectangle { // Spacer
             width: 5
@@ -96,6 +111,20 @@ Rectangle {
             label: "TERMINAL"
             image: "./resources/qgroundcontrol/toolbar/terminal.png"
             onClicked: globalObj.triggerTerminalView()
+        }
+
+        Rectangle { // Spacer
+            width: 5
+            height: parent.height
+            color: "black"
+        }
+
+        StatusDisplay {
+            id: statusDisplay
+            width: 110
+            statusText: "DISARMED"
+            statusTextColor: "yellow"
+            statusBackgroundColor: "black"
         }
 
         Rectangle { // Spacer

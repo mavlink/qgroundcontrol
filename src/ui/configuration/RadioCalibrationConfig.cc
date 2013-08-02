@@ -71,6 +71,13 @@ RadioCalibrationConfig::RadioCalibrationConfig(QWidget *parent) : AP2ConfigWidge
 
     guiUpdateTimer = new QTimer(this);
     connect(guiUpdateTimer,SIGNAL(timeout()),this,SLOT(guiUpdateTimerTick()));
+
+    rcMin << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0 << 1100.0;
+    rcMax << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0 << 1900.0;
+    rcTrim << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0 << 1500.0;
+    rcValue << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0;
+
+    initConnections();
 }
 
 RadioCalibrationConfig::~RadioCalibrationConfig()
@@ -170,6 +177,7 @@ void RadioCalibrationConfig::calibrateButtonClicked()
         ui.radio5Widget->showMinMax();
         ui.radio6Widget->showMinMax();
         ui.radio7Widget->showMinMax();
+        ui.throttleWidget->showMinMax();
         ui.radio8Widget->showMinMax();
         QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
     }
@@ -184,6 +192,7 @@ void RadioCalibrationConfig::calibrateButtonClicked()
         ui.yawWidget->hideMinMax();
         ui.radio5Widget->hideMinMax();
         ui.radio6Widget->hideMinMax();
+        ui.throttleWidget->hideMinMax();
         ui.radio7Widget->hideMinMax();
         ui.radio8Widget->hideMinMax();
         QString statusstr;

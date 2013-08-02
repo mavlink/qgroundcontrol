@@ -5,7 +5,7 @@ Rectangle {
     property alias title: displayTitle.text
     property string textValue: "none"
 
-    width: 100
+    width: 110
     height: parent.height/3
     anchors.verticalCenter: parent.verticalCenter
     border.color: "white"

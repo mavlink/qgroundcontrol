@@ -6,6 +6,7 @@ AirspeedConfig::AirspeedConfig(QWidget *parent) : AP2ConfigWidget(parent)
     ui.setupUi(this);
     connect(ui.enableCheckBox,SIGNAL(toggled(bool)),this,SLOT(enableCheckBoxClicked(bool)));
     connect(ui.useAirspeedCheckBox,SIGNAL(toggled(bool)),this,SLOT(useCheckBoxClicked(bool)));
+    initConnections();
 }
 
 AirspeedConfig::~AirspeedConfig()
