@@ -169,15 +169,15 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
         // first messages arrive
         udpLink = new UDPLink(QHostAddress::Any, 14550);
         LinkManager::instance()->add(udpLink);
-        //MainWindow::instance()->addLink(udpLink);
     } else if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_PX4) {
         udpLink = new UDPLink(QHostAddress::Any, 14550);
         LinkManager::instance()->add(udpLink);
         SerialLink *slink = new SerialLink();
+        LinkManager::instance()->add(slink);
     } else {
         // We want to have a default serial link available for "quick" connecting.
         SerialLink *slink = new SerialLink();
-//        MainWindow::instance()->addLink(slink);
+        LinkManager::instance()->add(slink);
     }
 
 #ifdef OPAL_RT

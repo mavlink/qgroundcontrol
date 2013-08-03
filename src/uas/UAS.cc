@@ -1975,13 +1975,23 @@ void UAS::setMode(int mode)
 */
 void UAS::sendMessage(mavlink_message_t message)
 {
-    if (!LinkManager::instance()) return;
+    if (!LinkManager::instance())
+    {
+        qWarning() << "LINKMANAGER NOT AVAILABLE!";
+        return;
+    }
+
+    if (links->count() < 1) {
+        qDebug() << "NO LINK AVAILABLE TO SEND!";
+    }
+
     // Emit message on all links that are currently connected
     foreach (LinkInterface* link, *links)
     {
         if (LinkManager::instance()->getLinks().contains(link))
         {
             sendMessage(link, message);
+            qDebug() << "SENT MESSAGE!";
         }
         else
         {
@@ -2034,11 +2044,16 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
     mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getId(), message.len, messageKeys[message.msgid]);
+
     // If link is connected
     if (link->isConnected())
     {
         // Send the portion of the buffer now occupied by the message
         link->writeBytes((const char*)buffer, len);
+    }
+    else
+    {
+        qDebug() << "LINK NOT CONNECTED, NOT SENDING!";
     }
 }
 
@@ -2232,7 +2247,7 @@ void UAS::requestParameters()
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_ALL);
     sendMessage(msg);
-    qDebug() << __FILE__ << __LINE__ << "LOADING PARAM LIST";
+    qDebug() << __FILE__ << ":" << __LINE__ << "LOADING PARAM LIST";
 }
 
 void UAS::writeParametersToStorage()
