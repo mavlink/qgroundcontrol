@@ -12,6 +12,7 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
     retransmissionBurstRequestSize(5)
 {
     uas->setParamManager(this);
+    paramDataModel = uas->getParamDataModel();
 }
 
 
