@@ -71,9 +71,9 @@ public slots:
     /** @brief Add a component to the list */
     void addComponent(int uas, int component, QString componentName);
     /** @brief Add a parameter to the list with retransmission / safety checks */
-    void addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
+    void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
     /** @brief Add a parameter to the list */
-    void addParameter(int uas, int component, QString parameterName, QVariant value);
+    void receivedParameterUpdate(int uas, int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
     void requestParameterList();
     /** @brief Request one single parameter */
@@ -92,9 +92,11 @@ public slots:
     void parameterItemChanged(QTreeWidgetItem* prev, int column);
 
     /** @brief Store parameters to a file */
-    void saveParameters();
+    void saveParametersToFile();
     /** @brief Load parameters from a file */
-    void loadParameters();
+    void loadParametersFromFile();
+
+    void loadedParameterForComponent(int componentId, QStringList& wpParams );
 
     /** @brief Check for missing parameters */
     void retransmissionGuardTick();

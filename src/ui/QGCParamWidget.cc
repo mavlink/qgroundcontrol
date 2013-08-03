@@ -105,13 +105,13 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
     loadFileButton->setToolTip(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
     loadFileButton->setWhatsThis(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
-    connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParameters()));
+    connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParametersFromFile()));
     horizontalLayout->addWidget(loadFileButton, 3, 0);
 
     QPushButton* saveFileButton = new QPushButton(tr("Save File"));
     saveFileButton->setToolTip(tr("Save parameters in this view to a file on this computer."));
     saveFileButton->setWhatsThis(tr("Save parameters in this view to a file on this computer."));
-    connect(saveFileButton, SIGNAL(clicked()), this, SLOT(saveParameters()));
+    connect(saveFileButton, SIGNAL(clicked()), this, SLOT(saveParametersToFile()));
     horizontalLayout->addWidget(saveFileButton, 3, 1);
 
     QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
@@ -142,7 +142,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
 
     // New parameters from UAS
-    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(addParameter(int,int,int,int,QString,QVariant)));
+    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
     // Connect retransmission guard
     connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
@@ -335,10 +335,10 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
         if (!parameters.contains(component)) {
             parameters.insert(component, new QMap<QString, QVariant>());
         }
-        // Create map in changed parameters
-        if (!changedValues.contains(component)) {
-            changedValues.insert(component, new QMap<QString, QVariant>());
-        }
+//        // Create map in changed parameters
+//        if (!changedValues.contains(component)) {
+//            changedValues.insert(component, new QMap<QString, QVariant>());
+//        }
     }
 }
 
@@ -347,9 +347,9 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
  * @param component id of the component
  * @param parameterName human friendly name of the parameter
  */
-void QGCParamWidget::addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value)
+void QGCParamWidget::receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value)
 {
-    addParameter(uas, component, parameterName, value);
+    receivedParameterUpdate(uas, component, parameterName, value);
 
     // Missing packets list has to be instantiated for all components
     if (!transmissionMissingPackets.contains(component)) {
@@ -494,7 +494,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
  * @param component id of the component
  * @param parameterName human friendly name of the parameter
  */
-void QGCParamWidget::addParameter(int uas, int component, QString parameterName, QVariant value)
+void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString parameterName, QVariant value)
 {
     //qDebug() << "PARAM WIDGET GOT PARAM:" << value;
     Q_UNUSED(uas);
@@ -636,8 +636,18 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     parameterItem->setToolTip(0, tooltipFormat);
     parameterItem->setToolTip(1, tooltipFormat);
 
-    //tree->update();
-    if (changedValues.contains(component)) changedValues.value(component)->remove(parameterName);
+    //verify that the value requested by the user matches the set value
+    //if it doesn't match, leave the pending parameter in the pending list!
+    QMap<int, QMap<QString , QVariant> *> changedValues = this->paramDataModel->getPendingParameters();
+    if (changedValues.contains(component)) {
+        QMap<QString , QVariant> *compReqVals = changedValues.value(component);
+        if ((NULL != compReqVals) && compReqVals->contains(parameterName)) {
+            QVariant reqVal = compReqVals->value(parameterName);
+            if (reqVal == value) {
+                compReqVals->remove(parameterName);
+            }
+        }
+    }
 }
 
 /**
@@ -682,9 +692,14 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
         }
         // Parent is now top-level component
         int key = components->key(parent);
+
+        //ensure we have a placeholder map for this component
+        QMap<int, QMap<QString , QVariant> *> changedValues = this->paramDataModel->getPendingParameters();
         if (!changedValues.contains(key)) {
             changedValues.insert(key, new QMap<QString, QVariant>());
         }
+
+        //insert the changed value into the map
         QMap<QString, QVariant>* map = changedValues.value(key, NULL);
         if (map) {
             QString str = current->data(0, Qt::DisplayRole).toString();
@@ -739,7 +754,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
     }
 }
 
-void QGCParamWidget::saveParameters()
+void QGCParamWidget::saveParametersToFile()
 {
     if (!mav) return;
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./parameters.txt", tr("Parameter File (*.txt)"));
@@ -794,7 +809,47 @@ void QGCParamWidget::saveParameters()
     file.close();
 }
 
-void QGCParamWidget::loadParameters()
+
+void QGCParamWidget::loadedParameterForComponent(int componentId, QStringList& wpParams )
+{
+    // Set parameter value
+
+    QMap<int, QMap<QString , QVariant> *> changedValues = this->paramDataModel->getPendingParameters();
+
+    // Create changed values data structure if necessary
+    if (!changedValues.contains(componentId)) {
+        changedValues.insert(componentId, new QMap<QString, QVariant>());
+    }
+
+    // Add to changed values
+    if (changedValues.value(componentId)->contains(wpParams.at(2))) {
+        changedValues.value(componentId)->remove(wpParams.at(2));
+    }
+
+    switch (wpParams.at(4).toUInt())
+    {
+    case (int)MAV_PARAM_TYPE_REAL32:
+        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, wpParams.at(2), wpParams.at(3).toFloat());
+        changedValues.value(componentId)->insert(wpParams.at(2), wpParams.at(3).toFloat());
+        setParameter(componentId, wpParams.at(2), wpParams.at(3).toFloat());
+        break;
+    case (int)MAV_PARAM_TYPE_UINT32:
+        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, wpParams.at(2), wpParams.at(3).toUInt());
+        changedValues.value(componentId)->insert(wpParams.at(2), wpParams.at(3).toUInt());
+        setParameter(componentId, wpParams.at(2), QVariant(wpParams.at(3).toUInt()));
+        break;
+    case (int)MAV_PARAM_TYPE_INT32:
+        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, wpParams.at(2), wpParams.at(3).toInt());
+        changedValues.value(componentId)->insert(wpParams.at(2), wpParams.at(3).toInt());
+        setParameter(componentId, wpParams.at(2), QVariant(wpParams.at(3).toInt()));
+        break;
+    default:
+        qDebug() << "FAILED LOADING PARAM" << wpParams.at(2) << "NO KNOWN DATA TYPE";
+    }
+
+}
+
+void QGCParamWidget::loadParametersFromFile()
 {
     if (!mav) return;
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Parameter file (*.txt)"));
@@ -817,58 +872,17 @@ void QGCParamWidget::loadParameters()
                 }
 
                 bool changed = false;
-                int component = wpParams.at(1).toInt();
+                int componentId = wpParams.at(1).toInt();
                 QString parameterName = wpParams.at(2);
-                if (!parameters.contains(component) ||
-                        fabs((static_cast<float>(parameters.value(component)->value(parameterName, wpParams.at(3).toDouble()).toDouble())) - (wpParams.at(3).toDouble())) > 2.0f * FLT_EPSILON) {
+                if (!parameters.contains(componentId) ||
+                        fabs((static_cast<float>(parameters.value(componentId)->value(parameterName, wpParams.at(3).toDouble()).toDouble())) - (wpParams.at(3).toDouble())) > 2.0f * FLT_EPSILON) {
                     changed = true;
                     qDebug() << "Changed" << parameterName << "VAL" << wpParams.at(3).toDouble();
                 }
 
-                // Set parameter value
-
-                // Create changed values data structure if necessary
-                if (changed && !changedValues.contains(wpParams.at(1).toInt())) {
-                    changedValues.insert(wpParams.at(1).toInt(), new QMap<QString, QVariant>());
+                if (changed) {
+                    loadedParameterForComponent(componentId,wpParams);
                 }
-
-                // Add to changed values
-                if (changed && changedValues.value(wpParams.at(1).toInt())->contains(wpParams.at(2))) {
-                    changedValues.value(wpParams.at(1).toInt())->remove(wpParams.at(2));
-                }
-
-                switch (wpParams.at(4).toUInt())
-                {
-                case (int)MAV_PARAM_TYPE_REAL32:
-                    addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toFloat());
-                    if (changed) {
-                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toFloat());
-                        setParameter(wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toFloat());
-                        qDebug() << "FLOAT PARAM CHANGED";
-                    }
-                    break;
-                case (int)MAV_PARAM_TYPE_UINT32:
-                    addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toUInt());
-                    if (changed) {
-                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toUInt());
-                        setParameter(wpParams.at(1).toInt(), wpParams.at(2), QVariant(wpParams.at(3).toUInt()));
-                    }
-                    break;
-                case (int)MAV_PARAM_TYPE_INT32:
-                    addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toInt());
-                    if (changed) {
-                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), wpParams.at(3).toInt());
-                        setParameter(wpParams.at(1).toInt(), wpParams.at(2), QVariant(wpParams.at(3).toInt()));
-                    }
-                    break;
-                default:
-                    qDebug() << "FAILED LOADING PARAM" << wpParams.at(2) << "NO KNOWN DATA TYPE";
-                }
-
-                //qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
-
-                // Mark in UI
-
 
             }
         }
@@ -1098,6 +1112,7 @@ void QGCParamWidget::setParameters()
 {
     // Iterate through all components, through all parameters and emit them
     int parametersSent = 0;
+    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
     QMap<int, QMap<QString, QVariant>*>::iterator i;
     for (i = changedValues.begin(); i != changedValues.end(); ++i) {
         // Iterate through the parameters of the component
@@ -1144,16 +1159,17 @@ void QGCParamWidget::writeParameters()
     int changedParamCount = 0;
 
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    for (i = changedValues.begin(); i != changedValues.end(); ++i)
+    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
+
+    for (i = changedValues.begin(); i != changedValues.end() , (0 == changedParamCount);  ++i)
     {
         // Iterate through the parameters of the component
         QMap<QString, QVariant>* comp = i.value();
+        QMap<QString, QVariant>::iterator j;
+        for (j = comp->begin(); j != comp->end(); ++j)
         {
-            QMap<QString, QVariant>::iterator j;
-            for (j = comp->begin(); j != comp->end(); ++j)
-            {
-                changedParamCount++;
-            }
+            changedParamCount++;
+            break;//it only takes one changed param to warrant warning the user
         }
     }
 

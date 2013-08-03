@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
+#include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
 #include "QGCUASParamManager.h"
 #include "RadioCalibration/RadioCalibrationData.h"
@@ -152,8 +153,13 @@ public:
 
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
+
+    /** @brief Access the parameter data model for this UAS (sans widget).  This is the same parameter data model used by the parameter manager. **/
+    virtual UASParameterDataModel* getParamDataModel() = 0;
+
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManager* getParamManager() const = 0;
+
     // TODO Will be removed
     /** @brief Set reference to the param manager **/
     virtual void setParamManager(QGCUASParamManager* manager) = 0;
