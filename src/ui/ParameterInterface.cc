@@ -36,6 +36,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCSensorSettingsWidget.h"
 
 #include <QDebug>
+#include <QSettings>
+#include "MainWindow.h"
 
 ParameterInterface::ParameterInterface(QWidget *parent) :
     QWidget(parent),
@@ -44,6 +46,15 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     m_ui(new Ui::parameterWidget)
 {
     m_ui->setupUi(this);
+
+    QSettings settings;
+    enum MainWindow::CUSTOM_MODE mode = static_cast<enum MainWindow::CUSTOM_MODE>(settings.value("QGC_CUSTOM_MODE", MainWindow::CUSTOM_MODE_NONE).toInt());
+
+    if (mode == MainWindow::CUSTOM_MODE_PX4)
+    {
+        delete m_ui->sensorSettings;
+        m_ui->sensorSettings = NULL;
+    }
 
     // Get current MAV list
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
@@ -67,7 +78,8 @@ ParameterInterface::~ParameterInterface()
 void ParameterInterface::selectUAS(int index)
 {
     m_ui->stackedWidget->setCurrentIndex(index);
-    m_ui->sensorSettings->setCurrentIndex(index);
+    if (m_ui->sensorSettings)
+        m_ui->sensorSettings->setCurrentIndex(index);
     curr = index;
 }
 
@@ -81,14 +93,19 @@ void ParameterInterface::addUAS(UASInterface* uas)
     paramWidgets->insert(uas->getUASID(), param);
     m_ui->stackedWidget->addWidget(param);
 
+    QGCSensorSettingsWidget* sensor = NULL;
 
-    QGCSensorSettingsWidget* sensor = new QGCSensorSettingsWidget(uas, this);
-    m_ui->sensorSettings->addWidget(sensor);
+    if (m_ui->sensorSettings)
+    {
+        sensor = new QGCSensorSettingsWidget(uas, this);
+        m_ui->sensorSettings->addWidget(sensor);
+    }
 
     // Set widgets as default
     if (curr == -1) {
         // Clear
-        m_ui->sensorSettings->setCurrentWidget(sensor);
+        if (m_ui->sensorSettings && sensor)
+            m_ui->sensorSettings->setCurrentWidget(sensor);
         m_ui->stackedWidget->setCurrentWidget(param);
         curr = 0;
     }

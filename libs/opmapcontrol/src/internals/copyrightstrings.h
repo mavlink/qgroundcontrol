@@ -31,11 +31,11 @@
 #include <QDateTime>
  
 namespace internals {
-static const QString googleCopyright = QString("©%1 Google - Map data ©%1 Tele Atlas, Imagery ©%1 TerraMetrics").arg(QDate::currentDate().year());
-static const QString openStreetMapCopyright = QString("© OpenStreetMap - Map data ©%1 OpenStreetMap").arg(QDate::currentDate().year());
-static const QString yahooMapCopyright = QString("© Yahoo! Inc. - Map data & Imagery ©%1 NAVTEQ").arg(QDate::currentDate().year());
-static const QString virtualEarthCopyright = QString("©%1 Microsoft Corporation, ©%1 NAVTEQ, ©%1 Image courtesy of NASA").arg(QDate::currentDate().year());
-static const QString arcGisCopyright = QString("©%1 ESRI - Map data ©%1 ArcGIS").arg(QDate::currentDate().year());
+static const QString googleCopyright = QString("(c)%1 Google - Map data (c)%1 Tele Atlas, Imagery (c)%1 TerraMetrics").arg(QDate::currentDate().year());
+static const QString openStreetMapCopyright = QString("(c) OpenStreetMap - Map data (c)%1 OpenStreetMap").arg(QDate::currentDate().year());
+static const QString yahooMapCopyright = QString("(c) Yahoo! Inc. - Map data & Imagery (c)%1 NAVTEQ").arg(QDate::currentDate().year());
+static const QString virtualEarthCopyright = QString("(c)%1 Microsoft Corporation, (c)%1 NAVTEQ, (c)%1 Image courtesy of NASA").arg(QDate::currentDate().year());
+static const QString arcGisCopyright = QString("(c)%1 ESRI - Map data (c)%1 ArcGIS").arg(QDate::currentDate().year());
 
 }
 #endif // COPYRIGHTSTRINGS_H
