@@ -7,6 +7,7 @@
 #include <QVariant>
 
 class UASInterface;
+class UASParameterDataModel;
 
 class QGCUASParamManager : public QWidget
 {
@@ -62,9 +63,14 @@ public slots:
     virtual void requestParameterList() = 0;
 
 protected:
+
+    //Parameter data model
     UASInterface* mav;   ///< The MAV this widget is controlling
-    QMap<int, QMap<QString, QVariant>* > changedValues; ///< Changed values
+//    QMap<int, QMap<QString, QVariant>* > changedValues; ///< Changed values
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
+    UASParameterDataModel* paramDataModel;///< Shared data model of parameters
+
+    // Communications management
     QVector<bool> received; ///< Successfully received parameters
     QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
     QMap<int, QMap<QString, QVariant>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
