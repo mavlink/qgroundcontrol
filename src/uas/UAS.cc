@@ -131,6 +131,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 
     paramsOnceRequested(false),
     paramManager(NULL),
+    paramDataModel(NULL),
 
     simulation(0),
 
@@ -150,6 +151,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentID[i] = -1;
         componentMulti[i] = false;
     }
+
+    paramDataModel->setUASID(this->getUASID());
 
     // Store a list of available actions for this UAS.
     // Basically everything exposted as a SLOT with no return value or arguments.
