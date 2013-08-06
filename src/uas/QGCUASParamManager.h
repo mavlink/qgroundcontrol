@@ -17,19 +17,13 @@ public:
 
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
-    virtual bool isParamMinKnown(const QString& param) = 0;
-    virtual bool isParamMaxKnown(const QString& param) = 0;
-    virtual bool isParamDefaultKnown(const QString& param) = 0;
-    virtual double getParamMin(const QString& param) = 0;
-    virtual double getParamMax(const QString& param) = 0;
-    virtual double getParamDefault(const QString& param) = 0;
-    virtual QString getParamInfo(const QString& param) = 0;
-    virtual void setParamInfo(const QMap<QString,QString>& param) = 0;
-
     /** @brief Request an update for the parameter list */
     void requestParameterListUpdate(int component = 0);
     /** @brief Request an update for this specific parameter */
     virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
+
+    /** @brief Provide tooltips / user-visible descriptions for parameters */
+    virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs);
 
 protected:
     /** @brief Check for missing parameters */

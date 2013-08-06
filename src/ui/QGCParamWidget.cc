@@ -55,9 +55,9 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     loadSettings();
 
     // Load default values and tooltips
-    QString hey(uas->getAutopilotTypeName());
-    QString hey2(uas->getSystemTypeName());
-    loadParameterInfoCSV(hey, hey2);
+    QString autoPilotName(uas->getAutopilotTypeName());
+    QString sysTypeName(uas->getSystemTypeName());
+    loadParamMetaInfoCSV(autoPilotName, sysTypeName);
 
     // Create tree widget
     tree = new QTreeWidget(this);
@@ -169,15 +169,9 @@ void QGCParamWidget::loadSettings()
 }
 
 
-void QGCParamWidget::setParamInfo(const QMap<QString,QString>& paramInfo) {
-    if (paramInfo.isEmpty()) {
-        qDebug() << __FILE__ << ":" << __LINE__ << "setParamInfo with empty";
-    }
-    paramToolTips = paramInfo;
-}
 
 
-void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QString& airframe)
+void QGCParamWidget::loadParamMetaInfoCSV(const QString& autopilot, const QString& airframe)
 {
     Q_UNUSED(airframe);
 
@@ -198,116 +192,11 @@ void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QStrin
         return;
     }
 
-    // Extract header
 
-    // Read in values
-    // Find all keys
     QTextStream in(&paramMetaFile);
+    paramDataModel->loadParamMetaInfoFromStream(in);
+    paramMetaFile.close();
 
-    // First line is header
-    // there might be more lines, but the first
-    // line is assumed to be at least header
-    QString header = in.readLine();
-
-    // Ignore top-level comment lines
-    while (header.startsWith('#') || header.startsWith('/')
-           || header.startsWith('=') || header.startsWith('^'))
-    {
-        header = in.readLine();
-    }
-
-    bool charRead = false;
-    QString separator = "";
-    QList<QChar> sepCandidates;
-    sepCandidates << '\t';
-    sepCandidates << ',';
-    sepCandidates << ';';
-    //sepCandidates << ' ';
-    sepCandidates << '~';
-    sepCandidates << '|';
-
-    // Iterate until separator is found
-    // or full header is parsed
-    for (int i = 0; i < header.length(); i++)
-    {
-        if (sepCandidates.contains(header.at(i)))
-        {
-            // Separator found
-            if (charRead)
-            {
-                separator += header[i];
-            }
-        }
-        else
-        {
-            // Char found
-            charRead = true;
-            // If the separator is not empty, this char
-            // has been read after a separator, so detection
-            // is now complete
-            if (separator != "") break;
-        }
-    }
-
-    bool stripFirstSeparator = false;
-    bool stripLastSeparator = false;
-
-    // Figure out if the lines start with the separator (e.g. wiki syntax)
-    if (header.startsWith(separator)) stripFirstSeparator = true;
-
-    // Figure out if the lines end with the separator (e.g. wiki syntax)
-    if (header.endsWith(separator)) stripLastSeparator = true;
-
-    QString out = separator;
-    out.replace("\t", "<tab>");
-    //qDebug() << " Separator: \"" << out << "\"";
-    //qDebug() << "READING CSV:" << header;
-
-
-    // Read data
-    while (!in.atEnd())
-    {
-        QString line = in.readLine();
-
-        //qDebug() << "LINE PRE-STRIP" << line;
-
-        // Strip separtors if necessary
-        if (stripFirstSeparator) line.remove(0, separator.length());
-        if (stripLastSeparator) line.remove(line.length()-separator.length(), line.length()-1);
-
-        //qDebug() << "LINE POST-STRIP" << line;
-
-        // Keep empty parts here - we still have to act on them
-        QStringList parts = line.split(separator, QString::KeepEmptyParts);
-
-        // Each line is:
-        // variable name, Min, Max, Default, Multiplier, Enabled (0 = no, 1 = yes), Comment
-
-
-        // Fill in min, max and default values
-        if (parts.count() > 1)
-        {
-            // min
-            paramMin.insert(parts.at(0).trimmed(), parts.at(1).toDouble());
-        }
-        if (parts.count() > 2)
-        {
-            // max
-            paramMax.insert(parts.at(0).trimmed(), parts.at(2).toDouble());
-        }
-        if (parts.count() > 3)
-        {
-            // default
-            paramDefault.insert(parts.at(0).trimmed(), parts.at(3).toDouble());
-        }
-        // IGNORING 4 and 5 for now
-        if (parts.count() > 6)
-        {
-            // tooltip
-            paramToolTips.insert(parts.at(0).trimmed(), parts.at(6).trimmed());
-            qDebug() << "PARAM META:" << parts.at(0).trimmed();
-        }
-    }
 }
 
 /**
@@ -628,15 +517,15 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString par
     parameterItem->setBackground(0, Qt::NoBrush);
     parameterItem->setBackground(1, Qt::NoBrush);
     // Add tooltip
+    QString paramDesc = paramDataModel->getParamDescription(parameterName);
     QString tooltipFormat;
-    if (paramDefault.contains(parameterName))
-    {
+    if (paramDataModel->isParamDefaultKnown(parameterName)) {
         tooltipFormat = tr("Default: %1, %2");
-        tooltipFormat = tooltipFormat.arg(paramDefault.value(parameterName, 0.0f)).arg(paramToolTips.value(parameterName, ""));
+        double paramDefValue = paramDataModel->getParamDefault(parameterName);
+        tooltipFormat = tooltipFormat.arg(paramDefValue).arg(paramDesc);
     }
-    else
-    {
-        tooltipFormat = paramToolTips.value(parameterName, "");
+    else {
+        tooltipFormat = paramDesc;
     }
     parameterItem->setToolTip(0, tooltipFormat);
     parameterItem->setToolTip(1, tooltipFormat);
@@ -837,14 +726,17 @@ void QGCParamWidget::writeParameters()
  */
 void QGCParamWidget::setParameter(int component, QString parameterName, QVariant value)
 {
+    if (parameterName.isEmpty()) {
+        return;
+    }
+
     double dblValue = value.toDouble();
-    if (paramMin.contains(parameterName) && dblValue < paramMin.value(parameterName))
-    {
+
+    if (paramDataModel->isValueLessThanParamMin(parameterName,dblValue)) {
         statusLabel->setText(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue));
         return;
     }
-    if (paramMax.contains(parameterName) && dblValue > paramMax.value(parameterName))
-    {
+    if (paramDataModel->isValueGreaterThanParamMax(parameterName,dblValue)) {
         statusLabel->setText(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue));
         return;
     }

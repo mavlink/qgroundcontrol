@@ -51,14 +51,6 @@ public:
     /** @brief Get the UAS of this widget */
     UASInterface* getUAS();
 
-    bool isParamMinKnown(const QString& param) { return paramMin.contains(param); }
-    bool isParamMaxKnown(const QString& param) { return paramMax.contains(param); }
-    bool isParamDefaultKnown(const QString& param) { return paramDefault.contains(param); }
-    double getParamMin(const QString& param) { return paramMin.value(param, 0.0f); }
-    double getParamMax(const QString& param) { return paramMax.value(param, 0.0f); }
-    double getParamDefault(const QString& param) { return paramDefault.value(param, 0.0f); }
-    QString getParamInfo(const QString& param) { return paramToolTips.value(param, ""); }
-    void setParamInfo(const QMap<QString,QString>& paramInfo);
 
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
@@ -104,18 +96,13 @@ protected:
     QMap<int, QTreeWidgetItem*>* components; ///< The list of components
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
 
-    // Tooltip data structures
-    QMap<QString, QString> paramToolTips; ///< Tooltip values
-    // Min / Default / Max data structures
-    QMap<QString, double> paramMin; ///< Minimum param values
-    QMap<QString, double> paramDefault; ///< Default param values
-    QMap<QString, double> paramMax; ///< Minimum param values
+
 
 
     /** @brief Load  settings */
     void loadSettings();
     /** @brief Load meta information from CSV */
-    void loadParameterInfoCSV(const QString& autopilot, const QString& airframe);
+    void loadParamMetaInfoCSV(const QString& autopilot, const QString& airframe);
 };
 
 #endif // QGCPARAMWIDGET_H
