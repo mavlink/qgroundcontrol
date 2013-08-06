@@ -16,20 +16,11 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 }
 
 
-/**
- * The .. signal is emitted
- */
-void QGCUASParamManager::requestParameterListUpdate(int component)
-{
-	Q_UNUSED(component);
-}
+
 
 bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const {
     return paramDataModel->getOnboardParameterValue(component,parameter,value);
 }
-
-
-
 
 
 /**
@@ -69,7 +60,7 @@ void QGCUASParamManager::requestParameterList()
  */
 void QGCUASParamManager::setRetransmissionGuardEnabled(bool enabled)
 {
-    qDebug() << "setRetransmissionGuardEnabled: " << enabled;
+//    qDebug() << "setRetransmissionGuardEnabled: " << enabled;
 
     if (enabled) {
         retransmissionTimer.start(retransmissionTimeout);

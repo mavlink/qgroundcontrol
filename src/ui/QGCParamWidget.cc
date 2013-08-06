@@ -87,7 +87,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     QPushButton* refreshButton = new QPushButton(tr("Get"));
     refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
     refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
-    connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterListUpdate()));
+    connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestAllParamsUpdate()));
     horizontalLayout->addWidget(refreshButton, 2, 0);
 
     QPushButton* setButton = new QPushButton(tr("Set"));
@@ -151,7 +151,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
 
     // Get parameters
     if (uas) {
-        requestParameterListUpdate();
+        requestAllParamsUpdate();
     }
 }
 
@@ -245,7 +245,8 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
  */
 void QGCParamWidget::receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value)
 {
-    receivedParameterUpdate(uas, component, parameterName, value);
+
+    updateParameterDisplay(uas, component, parameterName, value);
 
     // Missing packets list has to be instantiated for all components
     if (!transmissionMissingPackets.contains(component)) {
@@ -390,10 +391,15 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, int paramCo
  * @param component id of the component
  * @param parameterName human friendly name of the parameter
  */
-void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString parameterName, QVariant value)
+void QGCParamWidget::updateParameterDisplay(int uas, int component, QString parameterName, QVariant value)
 {
-    qDebug() << "PARAM WIDGET GOT PARAM:" << parameterName;
     Q_UNUSED(uas);
+
+
+    QString ptrStr;
+    ptrStr.sprintf("%8p", this);
+    qDebug() <<  "QGCParamWidget " << ptrStr << " got param" <<  parameterName;
+
     // Reference to item in tree
     QTreeWidgetItem* parameterItem = NULL;
 
@@ -417,9 +423,8 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString par
         addComponent(uas, component, componentName);
     }
 
-    // Replace value in map
-
-    paramDataModel->setOnboardParameter(component,parameterName,value);
+    // Replace value in data model
+    paramDataModel->handleParameterUpdate(component,parameterName,value);
 
 
     QString splitToken = "_";
@@ -564,7 +569,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
 
             //TODO this seems incorrect-- we're pre-updating the onboard value before we've received confirmation
-            paramDataModel->setOnboardParameterWithType(componentId,key,value);
+            //paramDataModel->setOnboardParameterWithType(componentId,key,value);
         }
 
     }
@@ -608,7 +613,7 @@ void QGCParamWidget::setParameterStatusMsg(const QString& msg)
 
 
 
-void QGCParamWidget::requestParameterListUpdate()
+void QGCParamWidget::requestAllParamsUpdate()
 {
     if (!mav) {
         return;
