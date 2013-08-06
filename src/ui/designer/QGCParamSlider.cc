@@ -92,29 +92,29 @@ void QGCParamSlider::refreshParamList()
 
 void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 {
-    if (activeUas)
-    {
-        if (uas)
-        {
-            disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)));
-        }
-
-        // Connect buttons and signals
-        connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
-        uas = activeUas;
-        // Update current param value
-        //requestParameter();
+    if (activeUas) {
         // Set param info
-        QString text = uas->getParamManager()->getParamInfo(parameterName);
-        if (text != "")
-        {
-            ui->infoLabel->setToolTip(text);
-            ui->infoLabel->show();
+        if (!parameterName.isEmpty()) {
+            //disconnect from any existing uas signals
+            if (uas != activeUas)  {
+                disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)));
+                connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
+                uas = activeUas;
+            }
+
+            QString text = uas->getParamManager()->getParamInfo(parameterName);
+            if (text != "") {
+                ui->infoLabel->setToolTip(text);
+                ui->infoLabel->show();
+            }
+            // Force-uncheck and hide label if no description is available
+            if (ui->editInfoCheckBox->isChecked()) {
+                showInfo((text.length() > 0));
+            }
         }
-        // Force-uncheck and hide label if no description is available
-        if (ui->editInfoCheckBox->isChecked())
-        {
-            showInfo((text.length() > 0));
+        else {
+            //when parameter widgets are first loaded, they are disconnected from any parameter?
+            qWarning() << __FILE__ << ":" << __LINE__ << "slider has no parameterName??";
         }
     }
 }
