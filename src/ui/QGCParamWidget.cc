@@ -87,7 +87,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     QPushButton* refreshButton = new QPushButton(tr("Get"));
     refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
     refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
-    connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
+    connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterListUpdate()));
     horizontalLayout->addWidget(refreshButton, 2, 0);
 
     QPushButton* setButton = new QPushButton(tr("Set"));
@@ -150,8 +150,11 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
 
     // Get parameters
-    if (uas) requestParameterList();
+    if (uas) {
+        requestParameterListUpdate();
+    }
 }
+
 
 void QGCParamWidget::loadSettings()
 {
@@ -642,38 +645,7 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString par
 
 }
 
-/**
- * Send a request to deliver the list of onboard parameters
- * to the MAV.
- */
-void QGCParamWidget::requestParameterList()
-{
-    if (!mav) return;
-    // FIXME This call does not belong here
-    // Once the comm handling is moved to a new
-    // Param manager class the settings can be directly
-    // loaded from MAVLink protocol
-    loadSettings();
-    // End of FIXME
 
-    // Clear view and request param list
-    clear();
-    paramDataModel->forgetAllOnboardParameters();
-    received.clear();
-    // Clear transmission state
-    transmissionListMode = true;
-    transmissionListSizeKnown.clear();
-    foreach (int key, transmissionMissingPackets.keys())
-    {
-        transmissionMissingPackets.value(key)->clear();
-    }
-    transmissionActive = true;
-
-    // Set status text
-    statusLabel->setText(tr("Requested param list.. waiting"));
-
-    mav->requestParameters();
-}
 
 void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
 {
@@ -740,124 +712,31 @@ void QGCParamWidget::loadParametersFromFile()
 
 }
 
-/**
- * Enabling the retransmission guard enables the parameter widget to track
- * dropped parameters and to re-request them. This works for both individual
- * parameter reads as well for whole list requests.
- *
- * @param enabled True if retransmission checking should be enabled, false else
- */
-void QGCParamWidget::setRetransmissionGuardEnabled(bool enabled)
+void QGCParamWidget::setParameterStatusMsg(const QString& msg)
 {
-    if (enabled) {
-        retransmissionTimer.start(retransmissionTimeout);
-    } else {
-        retransmissionTimer.stop();
-    }
+    statusLabel->setText(msg);
 }
 
-void QGCParamWidget::retransmissionGuardTick()
+
+
+void QGCParamWidget::requestParameterListUpdate()
 {
-    if (transmissionActive) {
-        //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
-
-        // Check for timeout
-        // stop retransmission attempts on timeout
-        if (QGC::groundTimeMilliseconds() > transmissionTimeout) {
-            setRetransmissionGuardEnabled(false);
-            transmissionActive = false;
-
-            // Empty read retransmission list
-            // Empty write retransmission list
-            int missingReadCount = 0;
-            QList<int> readKeys = transmissionMissingPackets.keys();
-            foreach (int component, readKeys) {
-                missingReadCount += transmissionMissingPackets.value(component)->count();
-                transmissionMissingPackets.value(component)->clear();
-            }
-
-            // Empty write retransmission list
-            int missingWriteCount = 0;
-            QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
-            foreach (int component, writeKeys) {
-                missingWriteCount += transmissionMissingWriteAckPackets.value(component)->count();
-                transmissionMissingWriteAckPackets.value(component)->clear();
-            }
-            statusLabel->setText(tr("TIMEOUT! MISSING: %1 read, %2 write.").arg(missingReadCount).arg(missingWriteCount));
-        }
-
-        // Re-request at maximum retransmissionBurstRequestSize parameters at once
-        // to prevent link flooding
-        QMap<int, QMap<QString, QVariant>*>::iterator i;
-        QMap<int, QMap<QString, QVariant>*> onboardParams = paramDataModel->getOnboardParameters();
-        for (i = onboardParams.begin(); i != onboardParams.end(); ++i) {
-            // Iterate through the parameters of the component
-            int component = i.key();
-            // Request n parameters from this component (at maximum)
-            QList<int> * paramList = transmissionMissingPackets.value(component, NULL);
-            if (paramList) {
-                int count = 0;
-                foreach (int id, *paramList) {
-                    if (count < retransmissionBurstRequestSize) {
-                        //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
-                        emit requestParameter(component, id);
-                        statusLabel->setText(tr("Requested retransmission of #%1").arg(id+1));
-                        count++;
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Re-request at maximum retransmissionBurstRequestSize parameters at once
-        // to prevent write-request link flooding
-        // Empty write retransmission list
-        QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
-        foreach (int component, writeKeys) {
-            int count = 0;
-            QMap <QString, QVariant>* missingParams = transmissionMissingWriteAckPackets.value(component);
-            foreach (QString key, missingParams->keys()) {
-                if (count < retransmissionBurstRequestSize) {
-                    // Re-request write operation
-                    QVariant value = missingParams->value(key);
-                    switch ((int)onboardParams.value(component)->value(key).type())
-                    {
-                    case QVariant::Int:
-                    {
-                        QVariant fixedValue(value.toInt());
-                        emit parameterChanged(component, key, fixedValue);
-                    }
-                        break;
-                    case QVariant::UInt:
-                    {
-                        QVariant fixedValue(value.toUInt());
-                        emit parameterChanged(component, key, fixedValue);
-                    }
-                        break;
-                    case QMetaType::Float:
-                    {
-                        QVariant fixedValue(value.toFloat());
-                        emit parameterChanged(component, key, fixedValue);
-                    }
-                        break;
-                    default:
-                        //qCritical() << "ABORTED PARAM RETRANSMISSION, NO VALID QVARIANT TYPE";
-                        return;
-                    }
-                    statusLabel->setText(tr("Requested rewrite of: %1: %2").arg(key).arg(missingParams->value(key).toDouble()));
-                    count++;
-                } else {
-                    break;
-                }
-            }
-        }
-    } else {
-        //qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
-        setRetransmissionGuardEnabled(false);
+    if (!mav) {
+        return;
     }
-}
 
+    // FIXME This call does not belong here
+    // Once the comm handling is moved to a new
+    // Param manager class the settings can be directly
+    // loaded from MAVLink protocol
+    loadSettings();
+    // End of FIXME
+
+    // Clear view and request param list
+    clear();
+
+    requestParameterList();
+}
 
 /**
  * The .. signal is emitted
@@ -867,6 +746,88 @@ void QGCParamWidget::requestParameterUpdate(int component, const QString& parame
     if (mav) mav->requestParameter(component, parameter);
 }
 
+
+
+/**
+ * Set all parameter in the parameter tree on the MAV
+ */
+void QGCParamWidget::setParameters()
+{
+    // Iterate through all components, through all parameters and emit them
+    int parametersSent = 0;
+    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
+    QMap<int, QMap<QString, QVariant>*>::iterator i;
+    for (i = changedValues.begin(); i != changedValues.end(); ++i) {
+        // Iterate through the parameters of the component
+        int compid = i.key();
+        QMap<QString, QVariant>* comp = i.value();
+        {
+            QMap<QString, QVariant>::iterator j;
+            for (j = comp->begin(); j != comp->end(); ++j) {
+                setParameter(compid, j.key(), j.value());
+                parametersSent++;
+            }
+        }
+    }
+
+    // Change transmission status if necessary
+    if (parametersSent == 0) {
+        statusLabel->setText(tr("No transmission: No changed values."));
+    } else {
+        statusLabel->setText(tr("Transmitting %1 parameters.").arg(parametersSent));
+        // Set timeouts
+        if (transmissionActive)
+        {
+            transmissionTimeout += parametersSent*rewriteTimeout;
+        }
+        else
+        {
+            transmissionActive = true;
+            quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + parametersSent*rewriteTimeout;
+            if (newTransmissionTimeout > transmissionTimeout) {
+                transmissionTimeout = newTransmissionTimeout;
+            }
+        }
+        // Enable guard
+        setRetransmissionGuardEnabled(true);
+    }
+}
+
+/**
+ * Write the current onboard parameters from RAM into
+ * permanent storage, e.g. EEPROM or harddisk
+ */
+void QGCParamWidget::writeParameters()
+{
+    int changedParamCount = 0;
+
+    QMap<int, QMap<QString, QVariant>*>::iterator i;
+    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
+
+    for (i = changedValues.begin(); i != changedValues.end() , (0 == changedParamCount);  ++i)
+    {
+        // Iterate through the parameters of the component
+        QMap<QString, QVariant>* comp = i.value();
+        QMap<QString, QVariant>::iterator j;
+        for (j = comp->begin(); j != comp->end(); ++j)
+        {
+            changedParamCount++;
+            break;//it only takes one changed param to warrant warning the user
+        }
+    }
+
+    if (changedParamCount > 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("There are locally changed parameters. Please transmit them first (<TRANSMIT>) or update them with the onboard values (<REFRESH>) before storing onboard from RAM to ROM."));
+        msgBox.exec();
+    }
+    else
+    {
+        if (!mav) return;
+        mav->writeParametersToStorage();
+    }
+}
 
 /**
  * @param component the subsystem which has the parameter
@@ -957,87 +918,6 @@ void QGCParamWidget::setParameter(int component, QString parameterName, QVariant
 
     // Enable guard / reset timeouts
     setRetransmissionGuardEnabled(true);
-}
-
-/**
- * Set all parameter in the parameter tree on the MAV
- */
-void QGCParamWidget::setParameters()
-{
-    // Iterate through all components, through all parameters and emit them
-    int parametersSent = 0;
-    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
-    QMap<int, QMap<QString, QVariant>*>::iterator i;
-    for (i = changedValues.begin(); i != changedValues.end(); ++i) {
-        // Iterate through the parameters of the component
-        int compid = i.key();
-        QMap<QString, QVariant>* comp = i.value();
-        {
-            QMap<QString, QVariant>::iterator j;
-            for (j = comp->begin(); j != comp->end(); ++j) {
-                setParameter(compid, j.key(), j.value());
-                parametersSent++;
-            }
-        }
-    }
-
-    // Change transmission status if necessary
-    if (parametersSent == 0) {
-        statusLabel->setText(tr("No transmission: No changed values."));
-    } else {
-        statusLabel->setText(tr("Transmitting %1 parameters.").arg(parametersSent));
-        // Set timeouts
-        if (transmissionActive)
-        {
-            transmissionTimeout += parametersSent*rewriteTimeout;
-        }
-        else
-        {
-            transmissionActive = true;
-            quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + parametersSent*rewriteTimeout;
-            if (newTransmissionTimeout > transmissionTimeout) {
-                transmissionTimeout = newTransmissionTimeout;
-            }
-        }
-        // Enable guard
-        setRetransmissionGuardEnabled(true);
-    }
-}
-
-/**
- * Write the current onboard parameters from RAM into
- * permanent storage, e.g. EEPROM or harddisk
- */
-void QGCParamWidget::writeParameters()
-{
-    int changedParamCount = 0;
-
-    QMap<int, QMap<QString, QVariant>*>::iterator i;
-    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
-
-    for (i = changedValues.begin(); i != changedValues.end() , (0 == changedParamCount);  ++i)
-    {
-        // Iterate through the parameters of the component
-        QMap<QString, QVariant>* comp = i.value();
-        QMap<QString, QVariant>::iterator j;
-        for (j = comp->begin(); j != comp->end(); ++j)
-        {
-            changedParamCount++;
-            break;//it only takes one changed param to warrant warning the user
-        }
-    }
-
-    if (changedParamCount > 0)
-    {
-        QMessageBox msgBox;
-        msgBox.setText(tr("There are locally changed parameters. Please transmit them first (<TRANSMIT>) or update them with the onboard values (<REFRESH>) before storing onboard from RAM to ROM."));
-        msgBox.exec();
-    }
-    else
-    {
-        if (!mav) return;
-        mav->writeParametersToStorage();
-    }
 }
 
 void QGCParamWidget::readParameters()
