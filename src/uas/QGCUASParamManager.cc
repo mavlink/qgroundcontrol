@@ -24,4 +24,7 @@ void QGCUASParamManager::requestParameterListUpdate(int component)
 	Q_UNUSED(component);
 }
 
+bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const {
+    return paramDataModel->getOnboardParameterValue(component,parameter,value);
+}
 
