@@ -332,8 +332,8 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
         tree->addTopLevelItem(comp);
         tree->update();
         // Create map in parameters
-        if (!parameters.contains(component)) {
-            parameters.insert(component, new QMap<QString, QVariant>());
+        if (!onboardParameters.contains(component)) {
+            onboardParameters.insert(component, new QMap<QString, QVariant>());
         }
 //        // Create map in changed parameters
 //        if (!changedValues.contains(component)) {
@@ -524,8 +524,8 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString par
     // Replace value in map
 
     // FIXME
-    if (parameters.value(component)->contains(parameterName)) parameters.value(component)->remove(parameterName);
-    parameters.value(component)->insert(parameterName, value);
+    if (onboardParameters.value(component)->contains(parameterName)) onboardParameters.value(component)->remove(parameterName);
+    onboardParameters.value(component)->insert(parameterName, value);
 
 
     QString splitToken = "_";
@@ -666,7 +666,7 @@ void QGCParamWidget::requestParameterList()
 
     // Clear view and request param list
     clear();
-    parameters.clear();
+    onboardParameters.clear();
     received.clear();
     // Clear transmission state
     transmissionListMode = true;
@@ -715,35 +715,35 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             map->insert(str, value);
 
             // Check if the value was numerically changed
-            if (!parameters.value(key)->contains(str) || parameters.value(key)->value(str, value.toDouble()-1) != value) {
+            if (!onboardParameters.value(key)->contains(str) || onboardParameters.value(key)->value(str, value.toDouble()-1) != value) {
                 current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
                 current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
             }
 
-            switch ((int)parameters.value(key)->value(str).type())
+            switch ((int)onboardParameters.value(key)->value(str).type())
             {
             case QVariant::Int:
             {
                 QVariant fixedValue(value.toInt());
-                parameters.value(key)->insert(str, fixedValue);
+                onboardParameters.value(key)->insert(str, fixedValue);
             }
                 break;
             case QVariant::UInt:
             {
                 QVariant fixedValue(value.toUInt());
-                parameters.value(key)->insert(str, fixedValue);
+                onboardParameters.value(key)->insert(str, fixedValue);
             }
                 break;
             case QMetaType::Float:
             {
                 QVariant fixedValue(value.toFloat());
-                parameters.value(key)->insert(str, fixedValue);
+                onboardParameters.value(key)->insert(str, fixedValue);
             }
                 break;
             case QMetaType::QChar:
             {
                 QVariant fixedValue(QChar((unsigned char)value.toUInt()));
-                parameters.value(key)->insert(str, fixedValue);
+                onboardParameters.value(key)->insert(str, fixedValue);
             }
                 break;
             default:
@@ -771,7 +771,7 @@ void QGCParamWidget::saveParametersToFile()
 
     // Iterate through all components, through all parameters and emit them
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    for (i = parameters.begin(); i != parameters.end(); ++i) {
+    for (i = onboardParameters.begin(); i != onboardParameters.end(); ++i) {
         // Iterate through the parameters of the component
         int compid = i.key();
         QMap<QString, QVariant>* comp = i.value();
@@ -874,8 +874,8 @@ void QGCParamWidget::loadParametersFromFile()
                 bool changed = false;
                 int componentId = wpParams.at(1).toInt();
                 QString parameterName = wpParams.at(2);
-                if (!parameters.contains(componentId) ||
-                        fabs((static_cast<float>(parameters.value(componentId)->value(parameterName, wpParams.at(3).toDouble()).toDouble())) - (wpParams.at(3).toDouble())) > 2.0f * FLT_EPSILON) {
+                if (!onboardParameters.contains(componentId) ||
+                        fabs((static_cast<float>(onboardParameters.value(componentId)->value(parameterName, wpParams.at(3).toDouble()).toDouble())) - (wpParams.at(3).toDouble())) > 2.0f * FLT_EPSILON) {
                     changed = true;
                     qDebug() << "Changed" << parameterName << "VAL" << wpParams.at(3).toDouble();
                 }
@@ -940,7 +940,7 @@ void QGCParamWidget::retransmissionGuardTick()
         // Re-request at maximum retransmissionBurstRequestSize parameters at once
         // to prevent link flooding
         QMap<int, QMap<QString, QVariant>*>::iterator i;
-        for (i = parameters.begin(); i != parameters.end(); ++i) {
+        for (i = onboardParameters.begin(); i != onboardParameters.end(); ++i) {
             // Iterate through the parameters of the component
             int component = i.key();
             // Request n parameters from this component (at maximum)
@@ -971,7 +971,7 @@ void QGCParamWidget::retransmissionGuardTick()
                 if (count < retransmissionBurstRequestSize) {
                     // Re-request write operation
                     QVariant value = missingParams->value(key);
-                    switch ((int)parameters.value(component)->value(key).type())
+                    switch ((int)onboardParameters.value(component)->value(key).type())
                     {
                     case QVariant::Int:
                     {
@@ -1035,13 +1035,13 @@ void QGCParamWidget::setParameter(int component, QString parameterName, QVariant
         statusLabel->setText(tr("REJ. %1 > max").arg(value.toDouble()));
         return;
     }
-    if (parameters.value(component)->value(parameterName) == value)
+    if (onboardParameters.value(component)->value(parameterName) == value)
     {
         statusLabel->setText(tr("REJ. %1 > max").arg(value.toDouble()));
         return;
     }
 
-    switch ((int)parameters.value(component)->value(parameterName).type())
+    switch ((int)onboardParameters.value(component)->value(parameterName).type())
     {
     case QVariant::Char:
     {
