@@ -14,6 +14,21 @@ public:
     explicit UASParameterDataModel(QObject *parent = 0);
     
 
+    //Parameter meta info
+    bool isParamMinKnown(const QString& param) { return paramMin.contains(param); }
+    virtual bool isValueLessThanParamMin(const QString& param, double dblVal);
+
+    bool isParamMaxKnown(const QString& param) { return paramMax.contains(param); }
+    virtual bool isValueGreaterThanParamMax(const QString& param, double dblVal);
+
+    bool isParamDefaultKnown(const QString& param) { return paramDefault.contains(param); }
+    double getParamMin(const QString& param) { return paramMin.value(param, 0.0f); }
+    double getParamMax(const QString& param) { return paramMax.value(param, 0.0f); }
+    double getParamDefault(const QString& param) { return paramDefault.value(param, 0.0f); }
+    virtual QString getParamDescription(const QString& param) { return paramDescriptions.value(param, ""); }
+    virtual void setParamDescriptions(const QMap<QString,QString>& paramInfo);
+
+
     virtual void addComponent(int componentId);
 
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
@@ -59,8 +74,10 @@ public:
    }
 
 
-    virtual void writeOnboardParametersToStream(QTextStream& stream, const QString& uasName);
-    virtual void readUpdateParametersFromStream(QTextStream& stream);
+    virtual void writeOnboardParametersToStream(QTextStream &stream, const QString& uasName);
+    virtual void readUpdateParametersFromStream(QTextStream &stream);
+
+    virtual void loadParamMetaInfoFromStream(QTextStream& stream);
 
     void setUASID(int anId) {  this->uasId = anId; }
 
@@ -73,6 +90,14 @@ protected:
     int     uasId; ///< The UAS / MAV to which this data model pertains
     QMap<int, QMap<QString, QVariant>* > pendingParameters; ///< Changed values that have not yet been transmitted to the UAS, by component ID
     QMap<int, QMap<QString, QVariant>* > onboardParameters; ///< All parameters confirmed to be stored onboard the UAS, by component ID
+
+    // Tooltip data structures
+    QMap<QString, QString> paramDescriptions; ///< Tooltip values
+
+    // Min / Default / Max data structures
+    QMap<QString, double> paramMin; ///< Minimum param values
+    QMap<QString, double> paramDefault; ///< Default param values
+    QMap<QString, double> paramMax; ///< Minimum param values
 
     
 };

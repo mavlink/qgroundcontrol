@@ -11,8 +11,8 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
     rewriteTimeout(500),
     retransmissionBurstRequestSize(5)
 {
-    uas->setParamManager(this);
     paramDataModel = uas->getParamDataModel();
+    uas->setParamManager(this);
 }
 
 
@@ -81,6 +81,12 @@ void QGCUASParamManager::setParameterStatusMsg(const QString& msg)
 {
     parameterStatusMsg = msg;
 }
+
+void QGCUASParamManager::setParamDescriptions(const QMap<QString,QString>& paramInfo) {
+    paramDataModel->setParamDescriptions(paramInfo);
+}
+
+
 
 void QGCUASParamManager::retransmissionGuardTick()
 {

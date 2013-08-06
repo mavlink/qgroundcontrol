@@ -108,15 +108,14 @@ void QGCComboBox::setActiveUAS(UASInterface* activeUas)
         // Update current param value
         //requestParameter();
         // Set param info
-        QString text = uas->getParamManager()->getParamInfo(parameterName);
-        if (text != "")
-        {
+
+        QString text = uas->getParamDataModel()->getParamDescription(parameterName);
+        if (!text.isEmpty()) {
             ui->infoLabel->setToolTip(text);
             ui->infoLabel->show();
         }
         // Force-uncheck and hide label if no description is available
-        if (ui->editInfoCheckBox->isChecked())
-        {
+        if (ui->editInfoCheckBox->isChecked())  {
             showInfo((text.length() > 0));
         }
     }
@@ -147,27 +146,21 @@ void QGCComboBox::selectParameter(int paramIndex)
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
 
     // Update min and max values if available
-    if (uas)
-    {
-        if (uas->getParamManager())
-        {
-            // Current value
-            //uas->getParamManager()->requestParameterUpdate(component, parameterName);
-
+    if (uas)  {
+        UASParameterDataModel* dataModel =  uas->getParamDataModel();
+        if (dataModel) {
             // Minimum
-            if (uas->getParamManager()->isParamMinKnown(parameterName))
-            {
-                parameterMin = uas->getParamManager()->getParamMin(parameterName);
+            if (dataModel->isParamMinKnown(parameterName)) {
+                parameterMin = dataModel->getParamMin(parameterName);
             }
 
             // Maximum
-            if (uas->getParamManager()->isParamMaxKnown(parameterName))
-            {
-                parameterMax = uas->getParamManager()->getParamMax(parameterName);
+            if (dataModel->isParamMaxKnown(parameterName)) {
+                parameterMax = dataModel->getParamMax(parameterName);
             }
 
             // Description
-            QString text = uas->getParamManager()->getParamInfo(parameterName);
+            QString text = dataModel->getParamDescription(parameterName);
             //ui->infoLabel->setText(text);
             showInfo(!(text.length() > 0));
         }
