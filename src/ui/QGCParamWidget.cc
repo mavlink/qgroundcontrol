@@ -144,10 +144,14 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     // New parameters from UAS
     connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
-    // Connect retransmission guard
-    connect(this, SIGNAL(requestParameterByName(int,QString)), uas, SLOT(requestParameterByName(int,QString)));
-    connect(this, SIGNAL(requestParameterByName(int,int)), uas, SLOT(requestParameterByName(int,int)));
+
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
+
+
+//    connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
+//    connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
+
+
 
     // Get parameters
     if (uas) {
