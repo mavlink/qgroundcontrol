@@ -13,7 +13,7 @@ public:
     
 
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
-    virtual void setPendingParameter(int componentId,  QString& paramKey,  QVariant& paramValue) = 0;
+    virtual void setPendingParameter(int componentId,  QString& paramKey,  QVariant& paramValue);
 
     QMap<int, QMap<QString, QVariant>* >  getPendingParameters() {
        return pendingParameters;
