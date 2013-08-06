@@ -16,23 +16,23 @@ public:
     QGCUASParamManager(UASInterface* uas, QWidget *parent = 0);
 
     QList<QString> getParameterNames(int component) const {
-        return parameters.value(component)->keys();
+        return onboardParameters.value(component)->keys();
     }
     QList<QVariant> getParameterValues(int component) const {
-        return parameters.value(component)->values();
+        return onboardParameters.value(component)->values();
     }
     bool getParameterValue(int component, const QString& parameter, QVariant& value) const {
-        if (!parameters.contains(component))
+        if (!onboardParameters.contains(component))
         {
             return false;
         }
 
-        if (!parameters.value(component)->contains(parameter))
+        if (!onboardParameters.value(component)->contains(parameter))
         {
             return false;
         }
 
-        value = parameters.value(component)->value(parameter);
+        value = onboardParameters.value(component)->value(parameter);
 
         return true;
     }
@@ -64,10 +64,9 @@ public slots:
 
 protected:
 
-    //Parameter data model
+    // Parameter data model
     UASInterface* mav;   ///< The MAV this widget is controlling
-//    QMap<int, QMap<QString, QVariant>* > changedValues; ///< Changed values
-    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
+    QMap<int, QMap<QString, QVariant>* > onboardParameters; ///< All parameters
     UASParameterDataModel* paramDataModel;///< Shared data model of parameters
 
     // Communications management
