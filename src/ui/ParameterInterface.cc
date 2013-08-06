@@ -89,8 +89,18 @@ void ParameterInterface::selectUAS(int index)
  */
 void ParameterInterface::addUAS(UASInterface* uas)
 {
+    int uasId = uas->getUASID();
+    if (paramWidgets->contains(uasId) ) {
+        qDebug() << "Already have QGCParamWidget for: " << uasId ;
+        return;
+    }
+
     QGCParamWidget* param = new QGCParamWidget(uas, this);
-    paramWidgets->insert(uas->getUASID(), param);
+    QString ptrStr;
+    ptrStr.sprintf("%8p", param);
+    qDebug() << "Created QGCParamWidget " << ptrStr << "for UAS id: " << uasId << " count: " << paramWidgets->count();
+
+    paramWidgets->insert(uasId, param);
     m_ui->stackedWidget->addWidget(param);
 
     QGCSensorSettingsWidget* sensor = NULL;

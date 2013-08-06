@@ -65,9 +65,9 @@ public slots:
     /** @brief Add a parameter to the list with retransmission / safety checks */
     void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
     /** @brief Add a parameter to the list */
-    void receivedParameterUpdate(int uas, int component, QString parameterName, QVariant value);
+    void updateParameterDisplay(int uas, int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
-    void requestParameterListUpdate();
+    void requestAllParamsUpdate();
     /** @brief Request one single parameter */
     void requestParameterUpdate(int component, const QString& parameter);
     /** @brief Set one parameter, changes value in RAM of MAV */
