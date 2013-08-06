@@ -59,6 +59,7 @@ signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
     //void parameterChanged(int component, QString parametername, float value); // defined in QGCUASParamManager already
 
+
 public slots:
     /** @brief Add a component to the list */
     void addComponentItem(int uas, int component, QString componentName);
@@ -69,7 +70,7 @@ public slots:
     /** @brief Request list of parameters from MAV */
     void requestAllParamsUpdate();
     /** @brief Set one parameter, changes value in RAM of MAV */
-    void setParameter(int component, QString parameterName, QVariant value);
+    virtual void setParameter(int component, QString parameterName, QVariant value);
     /** @brief Set all parameters, changes the value in RAM of MAV */
     void setParameters();
     /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */
