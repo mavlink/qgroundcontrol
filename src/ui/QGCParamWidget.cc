@@ -636,18 +636,8 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString par
     parameterItem->setToolTip(0, tooltipFormat);
     parameterItem->setToolTip(1, tooltipFormat);
 
-    //verify that the value requested by the user matches the set value
-    //if it doesn't match, leave the pending parameter in the pending list!
-    QMap<int, QMap<QString , QVariant> *> changedValues = this->paramDataModel->getPendingParameters();
-    if (changedValues.contains(component)) {
-        QMap<QString , QVariant> *compReqVals = changedValues.value(component);
-        if ((NULL != compReqVals) && compReqVals->contains(parameterName)) {
-            QVariant reqVal = compReqVals->value(parameterName);
-            if (reqVal == value) {
-                compReqVals->remove(parameterName);
-            }
-        }
-    }
+    paramDataModel->handleParameterUpdate(component,parameterName,value);
+
 }
 
 /**
