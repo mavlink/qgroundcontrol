@@ -26,8 +26,6 @@ public:
     virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs);
 
 protected:
-    /** @brief Check for missing parameters */
-    virtual void retransmissionGuardTick();
     /** @brief Activate / deactivate parameter retransmission */
     virtual void setRetransmissionGuardEnabled(bool enabled);
 
@@ -48,6 +46,8 @@ public slots:
     virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
+    /** @brief Check for missing parameters */
+    virtual void retransmissionGuardTick();
 
 protected:
 
@@ -67,6 +67,8 @@ protected:
     int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
     int rewriteTimeout; ///< Write request timeout, in milliseconds
     int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
+
+    // Status
     QString parameterStatusMsg;
 
 };
