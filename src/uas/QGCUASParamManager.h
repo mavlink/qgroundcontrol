@@ -17,9 +17,6 @@ public:
 
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
-    /** @brief Request an update for this specific parameter */
-    virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
-
     /** @brief Provide tooltips / user-visible descriptions for parameters */
     virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs);
 
@@ -36,8 +33,7 @@ signals:
     void parameterListUpToDate(int component);
     /** @brief Request a single parameter */
     void requestParameter(int component, int parameter);
-    /** @brief Request a single parameter by name */
-    void requestParameter(int component, const QString& parameter);
+
 
 public slots:
     /** @brief Write one parameter to the MAV */
@@ -46,6 +42,10 @@ public slots:
     virtual void requestParameterList();
     /** @brief Check for missing parameters */
     virtual void retransmissionGuardTick();
+
+
+    /** @brief Request one single parameter */
+    virtual void requestParameterUpdate(int component, const QString& parameter);
 
 protected:
 
