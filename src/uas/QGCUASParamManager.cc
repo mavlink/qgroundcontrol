@@ -16,12 +16,18 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 }
 
 
-
-
-bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const {
+bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const
+{
     return paramDataModel->getOnboardParameterValue(component,parameter,value);
 }
 
+
+void QGCUASParamManager::requestParameterUpdate(int component, const QString& parameter)
+{
+    if (mav) {
+        mav->requestParameter(component, parameter);
+    }
+}
 
 /**
  * Send a request to deliver the list of onboard parameters

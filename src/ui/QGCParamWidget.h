@@ -61,15 +61,13 @@ signals:
 
 public slots:
     /** @brief Add a component to the list */
-    void addComponent(int uas, int component, QString componentName);
+    void addComponentItem(int uas, int component, QString componentName);
     /** @brief Add a parameter to the list with retransmission / safety checks */
     void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
     /** @brief Add a parameter to the list */
     void updateParameterDisplay(int uas, int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
     void requestAllParamsUpdate();
-    /** @brief Request one single parameter */
-    void requestParameterUpdate(int component, const QString& parameter);
     /** @brief Set one parameter, changes value in RAM of MAV */
     void setParameter(int component, QString parameterName, QVariant value);
     /** @brief Set all parameters, changes the value in RAM of MAV */
@@ -93,7 +91,7 @@ public slots:
 protected:
     QTreeWidget* tree;   ///< The parameter tree
     QLabel* statusLabel; ///< Parameter transmission label
-    QMap<int, QTreeWidgetItem*>* components; ///< The list of components
+    QMap<int, QTreeWidgetItem*>* componentItems; ///< The list of component items, stored by component ID
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
 
 
