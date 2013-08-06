@@ -15,27 +15,7 @@ class QGCUASParamManager : public QWidget
 public:
     QGCUASParamManager(UASInterface* uas, QWidget *parent = 0);
 
-    QList<QString> getParameterNames(int component) const {
-        return onboardParameters.value(component)->keys();
-    }
-    QList<QVariant> getParameterValues(int component) const {
-        return onboardParameters.value(component)->values();
-    }
-    bool getParameterValue(int component, const QString& parameter, QVariant& value) const {
-        if (!onboardParameters.contains(component))
-        {
-            return false;
-        }
-
-        if (!onboardParameters.value(component)->contains(parameter))
-        {
-            return false;
-        }
-
-        value = onboardParameters.value(component)->value(parameter);
-
-        return true;
-    }
+    virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
     virtual bool isParamMinKnown(const QString& param) = 0;
     virtual bool isParamMaxKnown(const QString& param) = 0;
@@ -66,7 +46,6 @@ protected:
 
     // Parameter data model
     UASInterface* mav;   ///< The MAV this widget is controlling
-    QMap<int, QMap<QString, QVariant>* > onboardParameters; ///< All parameters
     UASParameterDataModel* paramDataModel;///< Shared data model of parameters
 
     // Communications management
