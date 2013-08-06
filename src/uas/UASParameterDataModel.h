@@ -22,6 +22,8 @@ public:
     virtual void addPendingIfParameterChanged(int componentId, QString& key,  QVariant &value);
 
 
+    void handleParameterUpdate(int componentId, QString& key, QVariant& value);
+
     QMap<QString , QVariant>* getPendingParametersForComponent(int componentId) {
         return pendingParameters.value(componentId);
     }
