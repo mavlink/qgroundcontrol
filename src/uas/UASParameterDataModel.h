@@ -5,6 +5,8 @@
 #include <QObject>
 #include <QVariant>
 
+class QTextStream;
+
 class UASParameterDataModel : public QObject
 {
     Q_OBJECT
@@ -15,14 +17,30 @@ public:
     virtual void addComponent(int componentId);
 
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
-    virtual void setPendingParameter(int componentId,  QString& paramKey,  QVariant& paramValue);
-    virtual void setOnboardParameter(int componentId, QString& key,  QVariant &value);
+    virtual void setPendingParameter(int componentId,  QString& key,  const QVariant& value);
+    virtual void setOnboardParameter(int componentId, QString& key, const QVariant& value);
 
-    /** @brief add this parameter to pending list iff it has changed from onboard value */
-    virtual void addPendingIfParameterChanged(int componentId, QString& key,  QVariant &value);
+    /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
+    virtual void setOnboardParameterWithType(int componentId, QString& key, QVariant& value);
+
+    /** @brief clears every parameter for every loaded component */
+    virtual void forgetAllOnboardParameters();
+
+    /**
+     * @return true if the parameter has changed
+    */
+    virtual bool checkParameterChanged(int componentId, const QString& key,  const QVariant &value);
 
 
-    void handleParameterUpdate(int componentId, QString& key, QVariant& value);
+    /** @brief add this parameter to pending list iff it has changed from onboard value
+     * @return true if the parameter has changed
+    */
+    virtual bool addPendingIfParameterChanged(int componentId, QString& key,  QVariant& value);
+
+
+    virtual void handleParameterUpdate(int componentId, QString& key, QVariant& value);
+
+    virtual bool getOnboardParameterValue(int componentId, const QString& key, QVariant& value) const;
 
     QMap<QString , QVariant>* getPendingParametersForComponent(int componentId) {
         return pendingParameters.value(componentId);
@@ -40,6 +58,9 @@ public:
        return onboardParameters;
    }
 
+
+    virtual void writeOnboardParametersToStream(QTextStream& stream, const QString& uasName);
+    virtual void readUpdateParametersFromStream(QTextStream& stream);
 
     void setUASID(int anId) {  this->uasId = anId; }
 
