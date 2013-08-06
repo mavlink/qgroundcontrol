@@ -43,10 +43,12 @@ void QGCUASParamManager::requestParameterList()
     }
 
     paramDataModel->forgetAllOnboardParameters();
-    received.clear();
+
     // Clear transmission state
-    transmissionListMode = true;
+    receivedParamsList.clear();
     transmissionListSizeKnown.clear();
+
+    transmissionListMode = true;
     foreach (int key, transmissionMissingPackets.keys())
     {
         transmissionMissingPackets.value(key)->clear();

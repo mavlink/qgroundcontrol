@@ -764,6 +764,7 @@ void QGCParamWidget::setParameters()
         {
             QMap<QString, QVariant>::iterator j;
             for (j = comp->begin(); j != comp->end(); ++j) {
+                //TODO mavlink command for "set parameter list" ?
                 setParameter(compid, j.key(), j.value());
                 parametersSent++;
             }
