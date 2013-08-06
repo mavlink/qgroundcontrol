@@ -72,6 +72,7 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 
 ParameterInterface::~ParameterInterface()
 {
+    delete paramWidgets;
     delete m_ui;
 }
 
@@ -97,8 +98,8 @@ void ParameterInterface::addUAS(UASInterface* uas)
 
     QGCParamWidget* param = new QGCParamWidget(uas, this);
     QString ptrStr;
-    ptrStr.sprintf("%8p", param);
-    qDebug() << "Created QGCParamWidget " << ptrStr << "for UAS id: " << uasId << " count: " << paramWidgets->count();
+    ptrStr.sprintf("QGCParamWidget %8p (parent %8p)", param,this);
+    qDebug() << "Created " << ptrStr << " for UAS id: " << uasId << " count: " << paramWidgets->count();
 
     paramWidgets->insert(uasId, param);
     m_ui->stackedWidget->addWidget(param);
