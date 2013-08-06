@@ -152,6 +152,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentMulti[i] = false;
     }
 
+    paramDataModel = new UASParameterDataModel(this);
     paramDataModel->setUASID(this->getUASID());
 
     // Store a list of available actions for this UAS.
