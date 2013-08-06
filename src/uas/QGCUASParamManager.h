@@ -17,8 +17,6 @@ public:
 
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
-    /** @brief Request an update for the parameter list */
-    void requestParameterListUpdate(int component = 0);
     /** @brief Request an update for this specific parameter */
     virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
 
