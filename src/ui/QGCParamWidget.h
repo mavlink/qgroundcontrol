@@ -60,13 +60,13 @@ public:
     QString getParamInfo(const QString& param) { return paramToolTips.value(param, ""); }
     void setParamInfo(const QMap<QString,QString>& paramInfo);
 
+protected:
+    virtual void setParameterStatusMsg(const QString& msg);
+
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
     //void parameterChanged(int component, QString parametername, float value); // defined in QGCUASParamManager already
-    /** @brief Request a single parameter */
-    void requestParameter(int component, int parameter);
-    /** @brief Request a single parameter by name */
-    void requestParameter(int component, const QString& parameter);
+
 public slots:
     /** @brief Add a component to the list */
     void addComponent(int uas, int component, QString componentName);
@@ -75,7 +75,7 @@ public slots:
     /** @brief Add a parameter to the list */
     void receivedParameterUpdate(int uas, int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
-    void requestParameterList();
+    void requestParameterListUpdate();
     /** @brief Request one single parameter */
     void requestParameterUpdate(int component, const QString& parameter);
     /** @brief Set one parameter, changes value in RAM of MAV */
@@ -96,8 +96,7 @@ public slots:
     /** @brief Load parameters from a file */
     void loadParametersFromFile();
 
-    /** @brief Check for missing parameters */
-    void retransmissionGuardTick();
+
 
 protected:
     QTreeWidget* tree;   ///< The parameter tree
@@ -112,8 +111,7 @@ protected:
     QMap<QString, double> paramDefault; ///< Default param values
     QMap<QString, double> paramMax; ///< Minimum param values
 
-    /** @brief Activate / deactivate parameter retransmission */
-    void setRetransmissionGuardEnabled(bool enabled);
+
     /** @brief Load  settings */
     void loadSettings();
     /** @brief Load meta information from CSV */
