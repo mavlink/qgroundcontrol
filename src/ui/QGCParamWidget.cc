@@ -49,7 +49,7 @@ This file is part of the QGROUNDCONTROL project
  */
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     QGCUASParamManager(uas, parent),
-    components(new QMap<int, QTreeWidgetItem*>())
+    componentItems(new QMap<int, QTreeWidgetItem*>())
 {
     // Load settings
     loadSettings();
@@ -145,8 +145,8 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
     // Connect retransmission guard
-    connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
-    connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
+    connect(this, SIGNAL(requestParameterByName(int,QString)), uas, SLOT(requestParameterByName(int,QString)));
+    connect(this, SIGNAL(requestParameterByName(int,int)), uas, SLOT(requestParameterByName(int,int)));
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
 
     // Get parameters
@@ -214,20 +214,20 @@ UASInterface* QGCParamWidget::getUAS()
  * @param component id of the component
  * @param componentName human friendly name of the component
  */
-void QGCParamWidget::addComponent(int uas, int component, QString componentName)
+void QGCParamWidget::addComponentItem(int uas, int component, QString componentName)
 {
     Q_UNUSED(uas);
-    if (components->contains(component)) {
+    if (componentItems->contains(component)) {
         // Update existing
-        components->value(component)->setData(0, Qt::DisplayRole, QString("%1 (#%2)").arg(componentName).arg(component));
+        componentItems->value(component)->setData(0, Qt::DisplayRole, QString("%1 (#%2)").arg(componentName).arg(component));
         //components->value(component)->setData(1, Qt::DisplayRole, QString::number(component));
-        components->value(component)->setFirstColumnSpanned(true);
+        componentItems->value(component)->setFirstColumnSpanned(true);
     } else {
         // Add new
         QStringList list(QString("%1 (#%2)").arg(componentName).arg(component));
         QTreeWidgetItem* comp = new QTreeWidgetItem(list);
         comp->setFirstColumnSpanned(true);
-        components->insert(component, comp);
+        componentItems->insert(component, comp);
         // Create grouping and update maps
         paramGroups.insert(component, new QMap<QString, QTreeWidgetItem*>());
         tree->addTopLevelItem(comp);
@@ -391,40 +391,26 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, int paramCo
  * @param component id of the component
  * @param parameterName human friendly name of the parameter
  */
-void QGCParamWidget::updateParameterDisplay(int uas, int component, QString parameterName, QVariant value)
+void QGCParamWidget::updateParameterDisplay(int uas, int componentId, QString parameterName, QVariant value)
 {
     Q_UNUSED(uas);
 
 
-    QString ptrStr;
-    ptrStr.sprintf("%8p", this);
-    qDebug() <<  "QGCParamWidget " << ptrStr << " got param" <<  parameterName;
+//    QString ptrStr;
+//    ptrStr.sprintf("%8p", this);
+//    qDebug() <<  "QGCParamWidget " << ptrStr << " got param" <<  parameterName;
 
     // Reference to item in tree
     QTreeWidgetItem* parameterItem = NULL;
 
     // Get component
-    if (!components->contains(component))
-    {
-        //        QString componentName;
-        //        switch (component)
-        //        {
-        //        case MAV_COMP_ID_CAMERA:
-        //            componentName = tr("Camera (#%1)").arg(component);
-        //            break;
-        //        case MAV_COMP_ID_IMU:
-        //            componentName = tr("IMU (#%1)").arg(component);
-        //            break;
-        //        default:
-        //            componentName = tr("Component #").arg(component);
-        //            break;
-        //        }
-        QString componentName = tr("Component #%1").arg(component);
-        addComponent(uas, component, componentName);
+    if (!componentItems->contains(componentId)) {
+        QString componentName = tr("Component #%1").arg(componentId);
+        addComponentItem(uas, componentId, componentName);
     }
 
     // Replace value in data model
-    paramDataModel->handleParameterUpdate(component,parameterName,value);
+    paramDataModel->handleParameterUpdate(componentId,parameterName,value);
 
 
     QString splitToken = "_";
@@ -432,7 +418,7 @@ void QGCParamWidget::updateParameterDisplay(int uas, int component, QString para
     if (parameterName.contains(splitToken))
     {
         QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
-        QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(component);
+        QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(componentId);
         if (!compParamGroups->contains(parent))
         {
             // Insert group item
@@ -440,7 +426,7 @@ void QGCParamWidget::updateParameterDisplay(int uas, int component, QString para
             glist.append(parent);
             QTreeWidgetItem* item = new QTreeWidgetItem(glist);
             compParamGroups->insert(parent, item);
-            components->value(component)->addChild(item);
+            componentItems->value(componentId)->addChild(item);
         }
 
         // Append child to group
@@ -489,7 +475,7 @@ void QGCParamWidget::updateParameterDisplay(int uas, int component, QString para
     else
     {
         bool found = false;
-        QTreeWidgetItem* parent = components->value(component);
+        QTreeWidgetItem* parent = componentItems->value(componentId);
         for (int i = 0; i < parent->childCount(); i++)
         {
             QTreeWidgetItem* child = parent->child(i);
@@ -513,7 +499,7 @@ void QGCParamWidget::updateParameterDisplay(int uas, int component, QString para
             // CONFIGURE PARAMETER ITEM
             parameterItem->setData(1, Qt::DisplayRole, value);
 
-            components->value(component)->addChild(parameterItem);
+            componentItems->value(componentId)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
         //tree->expandAll();
@@ -535,7 +521,7 @@ void QGCParamWidget::updateParameterDisplay(int uas, int component, QString para
     parameterItem->setToolTip(0, tooltipFormat);
     parameterItem->setToolTip(1, tooltipFormat);
 
-    paramDataModel->handleParameterUpdate(component,parameterName,value);
+    paramDataModel->handleParameterUpdate(componentId,parameterName,value);
 
 }
 
@@ -549,7 +535,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             parent = parent->parent();
         }
         // Parent is now top-level component
-        int componentId = components->key(parent);
+        int componentId = componentItems->key(parent);
 
         QString key = current->data(0, Qt::DisplayRole).toString();
         QVariant value = current->data(1, Qt::DisplayRole);
@@ -603,7 +589,6 @@ void QGCParamWidget::loadParametersFromFile()
     QTextStream in(&file);
     paramDataModel->readUpdateParametersFromStream(in);
     file.close();
-
 }
 
 void QGCParamWidget::setParameterStatusMsg(const QString& msg)
@@ -630,14 +615,6 @@ void QGCParamWidget::requestAllParamsUpdate()
     clear();
 
     requestParameterList();
-}
-
-/**
- * The .. signal is emitted
- */
-void QGCParamWidget::requestParameterUpdate(int component, const QString& parameter)
-{
-    if (mav) mav->requestParameter(component, parameter);
 }
 
 
@@ -830,5 +807,5 @@ void QGCParamWidget::readParameters()
 void QGCParamWidget::clear()
 {
     tree->clear();
-    components->clear();
+    componentItems->clear();
 }
