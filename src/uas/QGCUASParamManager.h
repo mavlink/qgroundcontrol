@@ -31,16 +31,29 @@ public:
     /** @brief Request an update for this specific parameter */
     virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
 
+protected:
+    /** @brief Check for missing parameters */
+    virtual void retransmissionGuardTick();
+    /** @brief Activate / deactivate parameter retransmission */
+    virtual void setRetransmissionGuardEnabled(bool enabled);
+
+    //TODO decouple this UI message display further
+    virtual void setParameterStatusMsg(const QString& msg);
+
 signals:
     void parameterChanged(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
     void parameterListUpToDate(int component);
+    /** @brief Request a single parameter */
+    void requestParameter(int component, int parameter);
+    /** @brief Request a single parameter by name */
+    void requestParameter(int component, const QString& parameter);
 
 public slots:
     /** @brief Write one parameter to the MAV */
     virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
     /** @brief Request list of parameters from MAV */
-    virtual void requestParameterList() = 0;
+    virtual void requestParameterList();
 
 protected:
 
@@ -60,6 +73,7 @@ protected:
     int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
     int rewriteTimeout; ///< Write request timeout, in milliseconds
     int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
+    QString parameterStatusMsg;
 
 };
 
