@@ -62,7 +62,7 @@ protected:
     UASParameterDataModel* paramDataModel;///< Shared data model of parameters
 
     // Communications management
-    QVector<bool> received; ///< Successfully received parameters
+    QVector<bool> receivedParamsList; ///< Successfully received parameters
     QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
     QMap<int, QMap<QString, QVariant>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
     bool transmissionListMode;       ///< Currently requesting list
