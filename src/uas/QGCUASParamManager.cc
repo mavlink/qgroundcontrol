@@ -49,8 +49,7 @@ void QGCUASParamManager::requestParameterList()
     transmissionListSizeKnown.clear();
 
     transmissionListMode = true;
-    foreach (int key, transmissionMissingPackets.keys())
-    {
+    foreach (int key, transmissionMissingPackets.keys()) {
         transmissionMissingPackets.value(key)->clear();
     }
     transmissionActive = true;
@@ -70,6 +69,8 @@ void QGCUASParamManager::requestParameterList()
  */
 void QGCUASParamManager::setRetransmissionGuardEnabled(bool enabled)
 {
+    qDebug() << "setRetransmissionGuardEnabled: " << enabled;
+
     if (enabled) {
         retransmissionTimer.start(retransmissionTimeout);
     } else {
@@ -79,6 +80,7 @@ void QGCUASParamManager::setRetransmissionGuardEnabled(bool enabled)
 
 void QGCUASParamManager::setParameterStatusMsg(const QString& msg)
 {
+    qDebug() << "parameterStatusMsg: " << msg;
     parameterStatusMsg = msg;
 }
 
