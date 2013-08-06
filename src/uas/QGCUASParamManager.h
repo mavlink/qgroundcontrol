@@ -27,12 +27,13 @@ protected:
     //TODO decouple this UI message display further
     virtual void setParameterStatusMsg(const QString& msg);
 
+
 signals:
     void parameterChanged(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
     void parameterListUpToDate(int component);
-    /** @brief Request a single parameter */
-    void requestParameter(int component, int parameter);
+    void parameterUpdateRequested(int component, const QString& parameter);
+    void parameterUpdateRequestedById(int componentId, int paramId);
 
 
 public slots:
@@ -43,8 +44,7 @@ public slots:
     /** @brief Check for missing parameters */
     virtual void retransmissionGuardTick();
 
-
-    /** @brief Request one single parameter */
+    /** @brief Request a single parameter by name */
     virtual void requestParameterUpdate(int component, const QString& parameter);
 
 protected:

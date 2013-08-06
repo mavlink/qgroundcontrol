@@ -91,8 +91,9 @@ void ParameterInterface::selectUAS(int index)
 void ParameterInterface::addUAS(UASInterface* uas)
 {
     int uasId = uas->getUASID();
+    qDebug() << "ParameterInterface::addUAS : " << uasId ;
+
     if (paramWidgets->contains(uasId) ) {
-        qDebug() << "Already have QGCParamWidget for: " << uasId ;
         return;
     }
 

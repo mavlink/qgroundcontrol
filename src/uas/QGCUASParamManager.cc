@@ -13,6 +13,12 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 {
     paramDataModel = uas->getParamDataModel();
     uas->setParamManager(this);
+
+    // Connect retransmission guard
+    connect(this, SIGNAL(parameterUpdateRequested(int,QString)), this, SLOT(requestParameterUpdate(int,QString)));
+    connect(this, SIGNAL(parameterUpdateRequestedById(int,int)), mav, SLOT(requestParameter(int,int)));
+
+
 }
 
 
@@ -28,6 +34,10 @@ void QGCUASParamManager::requestParameterUpdate(int component, const QString& pa
         mav->requestParameter(component, parameter);
     }
 }
+
+
+
+
 
 /**
  * Send a request to deliver the list of onboard parameters
@@ -132,7 +142,7 @@ void QGCUASParamManager::retransmissionGuardTick()
                     if (count < retransmissionBurstRequestSize) {
                         //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
                         //TODO mavlink msg type for "request parameter set" ?
-                        emit requestParameter(component, id);
+                        emit parameterUpdateRequestedById(component, id);
                         setParameterStatusMsg(tr("Requested retransmission of #%1").arg(id+1));
                         count++;
                     } else {
