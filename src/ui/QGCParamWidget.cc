@@ -165,6 +165,15 @@ void QGCParamWidget::loadSettings()
     settings.endGroup();
 }
 
+
+void QGCParamWidget::setParamInfo(const QMap<QString,QString>& paramInfo) {
+    if (paramInfo.isEmpty()) {
+        qDebug() << << __FILE__ << ":" << __LINE__ << "setParamInfo with empty";
+    }
+    paramToolTips = paramInfo;
+}
+
+
 void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QString& airframe)
 {
     Q_UNUSED(airframe);
@@ -331,15 +340,10 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
         paramGroups.insert(component, new QMap<QString, QTreeWidgetItem*>());
         tree->addTopLevelItem(comp);
         tree->update();
-        // Create map in parameters
-        if (!onboardParameters.contains(component)) {
-            onboardParameters.insert(component, new QMap<QString, QVariant>());
-        }
-//        // Create map in changed parameters
-//        if (!changedValues.contains(component)) {
-//            changedValues.insert(component, new QMap<QString, QVariant>());
-//        }
     }
+
+    paramDataModel->addComponent(component);
+
 }
 
 /**
@@ -496,7 +500,7 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, int paramCo
  */
 void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString parameterName, QVariant value)
 {
-    //qDebug() << "PARAM WIDGET GOT PARAM:" << value;
+    qDebug() << "PARAM WIDGET GOT PARAM:" << parameterName;
     Q_UNUSED(uas);
     // Reference to item in tree
     QTreeWidgetItem* parameterItem = NULL;
@@ -523,9 +527,7 @@ void QGCParamWidget::receivedParameterUpdate(int uas, int component, QString par
 
     // Replace value in map
 
-    // FIXME
-    if (onboardParameters.value(component)->contains(parameterName)) onboardParameters.value(component)->remove(parameterName);
-    onboardParameters.value(component)->insert(parameterName, value);
+    paramDataModel->setOnboardParameter(component,parameterName,value);
 
 
     QString splitToken = "_";
@@ -656,7 +658,7 @@ void QGCParamWidget::requestParameterList()
 
     // Clear view and request param list
     clear();
-    onboardParameters.clear();
+    paramDataModel->forgetAllOnboardParameters();
     received.clear();
     // Clear transmission state
     transmissionListMode = true;
@@ -681,68 +683,33 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             parent = parent->parent();
         }
         // Parent is now top-level component
-        int key = components->key(parent);
+        int componentId = components->key(parent);
 
-        //ensure we have a placeholder map for this component
-        QMap<int, QMap<QString , QVariant> *> changedValues = this->paramDataModel->getPendingParameters();
-        if (!changedValues.contains(key)) {
-            changedValues.insert(key, new QMap<QString, QVariant>());
+        QString key = current->data(0, Qt::DisplayRole).toString();
+        QVariant value = current->data(1, Qt::DisplayRole);
+        // Set parameter on changed list to be transmitted to MAV
+        QPalette pal = statusLabel->palette();
+        pal.setColor(backgroundRole(), QGC::colorOrange);
+        statusLabel->setPalette(pal);
+        statusLabel->setText(tr("Transmit pend. %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
+        //qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
+        // Changed values list
+
+        bool changed = paramDataModel->addPendingIfParameterChanged(componentId,key,value);
+
+        // If the value was numerically changed, display it differently
+        if (changed) {
+            current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
+            current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
+
+            //TODO this seems incorrect-- we're pre-updating the onboard value before we've received confirmation
+            paramDataModel->setOnboardParameterWithType(componentId,key,value);
         }
 
-        //insert the changed value into the map
-        QMap<QString, QVariant>* map = changedValues.value(key, NULL);
-        if (map) {
-            QString str = current->data(0, Qt::DisplayRole).toString();
-            QVariant value = current->data(1, Qt::DisplayRole);
-            // Set parameter on changed list to be transmitted to MAV
-            QPalette pal = statusLabel->palette();
-            pal.setColor(backgroundRole(), QGC::colorOrange);
-            statusLabel->setPalette(pal);
-            statusLabel->setText(tr("Transmit pend. %1:%2: %3").arg(key).arg(str).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
-            //qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
-            // Changed values list
-            if (map->contains(str)) map->remove(str);
-            map->insert(str, value);
-
-            // Check if the value was numerically changed
-            if (!onboardParameters.value(key)->contains(str) || onboardParameters.value(key)->value(str, value.toDouble()-1) != value) {
-                current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
-                current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
-            }
-
-            switch ((int)onboardParameters.value(key)->value(str).type())
-            {
-            case QVariant::Int:
-            {
-                QVariant fixedValue(value.toInt());
-                onboardParameters.value(key)->insert(str, fixedValue);
-            }
-                break;
-            case QVariant::UInt:
-            {
-                QVariant fixedValue(value.toUInt());
-                onboardParameters.value(key)->insert(str, fixedValue);
-            }
-                break;
-            case QMetaType::Float:
-            {
-                QVariant fixedValue(value.toFloat());
-                onboardParameters.value(key)->insert(str, fixedValue);
-            }
-                break;
-            case QMetaType::QChar:
-            {
-                QVariant fixedValue(QChar((unsigned char)value.toUInt()));
-                onboardParameters.value(key)->insert(str, fixedValue);
-            }
-                break;
-            default:
-                qCritical() << "ABORTED PARAM UPDATE, NO VALID QVARIANT TYPE";
-                return;
-            }
-        }
     }
 }
+
+
 
 void QGCParamWidget::saveParametersToFile()
 {
@@ -753,91 +720,11 @@ void QGCParamWidget::saveParametersToFile()
         return;
     }
 
-    QTextStream in(&file);
-
-    in << "# Onboard parameters for system " << mav->getUASName() << "\n";
-    in << "#\n";
-    in << "# MAV ID  COMPONENT ID  PARAM NAME  VALUE (FLOAT)\n";
-
-    // Iterate through all components, through all parameters and emit them
-    QMap<int, QMap<QString, QVariant>*>::iterator i;
-    for (i = onboardParameters.begin(); i != onboardParameters.end(); ++i) {
-        // Iterate through the parameters of the component
-        int compid = i.key();
-        QMap<QString, QVariant>* comp = i.value();
-        {
-            QMap<QString, QVariant>::iterator j;
-            for (j = comp->begin(); j != comp->end(); ++j)
-            {
-                QString paramValue("%1");
-                QString paramType("%1");
-                switch ((int)j.value().type())
-                {
-                case QVariant::Int:
-                    paramValue = paramValue.arg(j.value().toInt());
-                    paramType = paramType.arg(MAV_PARAM_TYPE_INT32);
-                    break;
-                case QVariant::UInt:
-                    paramValue = paramValue.arg(j.value().toUInt());
-                    paramType = paramType.arg(MAV_PARAM_TYPE_UINT32);
-                    break;
-                case QMetaType::Float:
-                    // We store parameters as floats, with only 6 digits of precision guaranteed for decimal string conversion
-                    // (see IEEE 754, 32 bit single-precision)
-                    paramValue = paramValue.arg((double)j.value().toFloat(), 25, 'g', 6);
-                    paramType = paramType.arg(MAV_PARAM_TYPE_REAL32);
-                    break;
-                default:
-                    qCritical() << "ABORTED PARAM WRITE TO FILE, NO VALID QVARIANT TYPE" << j.value();
-                    return;
-                }
-                in << mav->getUASID() << "\t" << compid << "\t" << j.key() << "\t" << paramValue << "\t" << paramType << "\n";
-                in.flush();
-            }
-        }
-    }
+    QTextStream outstream(&file);
+    paramDataModel->writeOnboardParametersToStream(outstream,mav->getUASName());
     file.close();
 }
 
-
-void QGCParamWidget::loadedParameterForComponent(int componentId, QStringList& wpParams )
-{
-    // Set parameter value
-
-    QMap<int, QMap<QString , QVariant> *> changedValues = this->paramDataModel->getPendingParameters();
-
-    // Create changed values data structure if necessary
-    if (!changedValues.contains(componentId)) {
-        changedValues.insert(componentId, new QMap<QString, QVariant>());
-    }
-
-    // Add to changed values
-    if (changedValues.value(componentId)->contains(wpParams.at(2))) {
-        changedValues.value(componentId)->remove(wpParams.at(2));
-    }
-
-    switch (wpParams.at(4).toUInt())
-    {
-    case (int)MAV_PARAM_TYPE_REAL32:
-        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, wpParams.at(2), wpParams.at(3).toFloat());
-        changedValues.value(componentId)->insert(wpParams.at(2), wpParams.at(3).toFloat());
-        setParameter(componentId, wpParams.at(2), wpParams.at(3).toFloat());
-        break;
-    case (int)MAV_PARAM_TYPE_UINT32:
-        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, wpParams.at(2), wpParams.at(3).toUInt());
-        changedValues.value(componentId)->insert(wpParams.at(2), wpParams.at(3).toUInt());
-        setParameter(componentId, wpParams.at(2), QVariant(wpParams.at(3).toUInt()));
-        break;
-    case (int)MAV_PARAM_TYPE_INT32:
-        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, wpParams.at(2), wpParams.at(3).toInt());
-        changedValues.value(componentId)->insert(wpParams.at(2), wpParams.at(3).toInt());
-        setParameter(componentId, wpParams.at(2), QVariant(wpParams.at(3).toInt()));
-        break;
-    default:
-        qDebug() << "FAILED LOADING PARAM" << wpParams.at(2) << "NO KNOWN DATA TYPE";
-    }
-
-}
 
 void QGCParamWidget::loadParametersFromFile()
 {
@@ -847,36 +734,8 @@ void QGCParamWidget::loadParametersFromFile()
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
 
-    bool userWarned = false;
-
     QTextStream in(&file);
-    while (!in.atEnd()) {
-        QString line = in.readLine();
-        if (!line.startsWith("#")) {
-            QStringList wpParams = line.split("\t");
-            if (wpParams.size() == 5) {
-                // Only load parameters for right mav
-                if (!userWarned && (mav->getUASID() != wpParams.at(0).toInt())) {
-                    MainWindow::instance()->showCriticalMessage(tr("Parameter loading warning"), tr("The parameters from the file %1 have been saved from system %2, but the currently selected system has the ID %3. If this is unintentional, please click on <READ> to revert to the parameters that are currently onboard").arg(fileName).arg(wpParams.at(0).toInt()).arg(mav->getUASID()));
-                    userWarned = true;
-                }
-
-                bool changed = false;
-                int componentId = wpParams.at(1).toInt();
-                QString parameterName = wpParams.at(2);
-                if (!onboardParameters.contains(componentId) ||
-                        fabs((static_cast<float>(onboardParameters.value(componentId)->value(parameterName, wpParams.at(3).toDouble()).toDouble())) - (wpParams.at(3).toDouble())) > 2.0f * FLT_EPSILON) {
-                    changed = true;
-                    qDebug() << "Changed" << parameterName << "VAL" << wpParams.at(3).toDouble();
-                }
-
-                if (changed) {
-                    loadedParameterForComponent(componentId,wpParams);
-                }
-
-            }
-        }
-    }
+    paramDataModel->readUpdateParametersFromStream(in);
     file.close();
 
 }
@@ -930,7 +789,8 @@ void QGCParamWidget::retransmissionGuardTick()
         // Re-request at maximum retransmissionBurstRequestSize parameters at once
         // to prevent link flooding
         QMap<int, QMap<QString, QVariant>*>::iterator i;
-        for (i = onboardParameters.begin(); i != onboardParameters.end(); ++i) {
+        QMap<int, QMap<QString, QVariant>*> onboardParams = paramDataModel->getOnboardParameters();
+        for (i = onboardParams.begin(); i != onboardParams.end(); ++i) {
             // Iterate through the parameters of the component
             int component = i.key();
             // Request n parameters from this component (at maximum)
@@ -961,7 +821,7 @@ void QGCParamWidget::retransmissionGuardTick()
                 if (count < retransmissionBurstRequestSize) {
                     // Re-request write operation
                     QVariant value = missingParams->value(key);
-                    switch ((int)onboardParameters.value(component)->value(key).type())
+                    switch ((int)onboardParams.value(component)->value(key).type())
                     {
                     case QVariant::Int:
                     {
@@ -1015,23 +875,27 @@ void QGCParamWidget::requestParameterUpdate(int component, const QString& parame
  */
 void QGCParamWidget::setParameter(int component, QString parameterName, QVariant value)
 {
-    if (paramMin.contains(parameterName) && value.toDouble() < paramMin.value(parameterName))
+    double dblValue = value.toDouble();
+    if (paramMin.contains(parameterName) && dblValue < paramMin.value(parameterName))
     {
-        statusLabel->setText(tr("REJ. %1 < min").arg(value.toDouble()));
+        statusLabel->setText(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue));
         return;
     }
-    if (paramMax.contains(parameterName) && value.toDouble() > paramMax.value(parameterName))
+    if (paramMax.contains(parameterName) && dblValue > paramMax.value(parameterName))
     {
-        statusLabel->setText(tr("REJ. %1 > max").arg(value.toDouble()));
+        statusLabel->setText(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue));
         return;
     }
-    if (onboardParameters.value(component)->value(parameterName) == value)
-    {
-        statusLabel->setText(tr("REJ. %1 > max").arg(value.toDouble()));
+    QVariant onboardVal;
+    paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
+    if (onboardVal == value) {
+        statusLabel->setText(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue));
         return;
     }
 
-    switch ((int)onboardParameters.value(component)->value(parameterName).type())
+    //int paramType = (int)onboardParameters.value(component)->value(parameterName).type();
+    int paramType = (int)value.type();
+    switch (paramType)
     {
     case QVariant::Char:
     {
