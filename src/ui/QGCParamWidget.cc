@@ -168,7 +168,7 @@ void QGCParamWidget::loadSettings()
 
 void QGCParamWidget::setParamInfo(const QMap<QString,QString>& paramInfo) {
     if (paramInfo.isEmpty()) {
-        qDebug() << << __FILE__ << ":" << __LINE__ << "setParamInfo with empty";
+        qDebug() << __FILE__ << ":" << __LINE__ << "setParamInfo with empty";
     }
     paramToolTips = paramInfo;
 }
