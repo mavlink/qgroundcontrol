@@ -793,7 +793,7 @@ void QGCPX4VehicleConfig::loadConfig()
         xml.readNext();
     }
 
-    mav->getParamManager()->setParamInfo(paramTooltips);
+    mav->getParamManager()->setParamDescriptions(paramTooltips);
     doneLoadingConfig = true;
     mav->requestParameters(); //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
 }
@@ -892,7 +892,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 
     if (!paramTooltips.isEmpty())
     {
-           mav->getParamManager()->setParamInfo(paramTooltips);
+           mav->getParamManager()->setParamDescriptions(paramTooltips);
     }
 
     qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();

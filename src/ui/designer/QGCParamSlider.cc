@@ -102,8 +102,8 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
                 uas = activeUas;
             }
 
-            QString text = uas->getParamManager()->getParamInfo(parameterName);
-            if (text != "") {
+            QString text = uas->getParamDataModel()->getParamDescription(parameterName);
+            if (!text.isEmpty()) {
                 ui->infoLabel->setToolTip(text);
                 ui->infoLabel->show();
             }
@@ -176,32 +176,20 @@ void QGCParamSlider::selectParameter(int paramIndex)
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
 
     // Update min and max values if available
-    if (uas)
-    {
-        if (uas->getParamManager())
-        {
-            // Current value
-            //uas->getParamManager()->requestParameterUpdate(component, parameterName);
-
+    if (uas) {
+        UASParameterDataModel* dataModel =  uas->getParamDataModel();
+        if (dataModel) {
             // Minimum
-            if (uas->getParamManager()->isParamMinKnown(parameterName))
-            {
-                parameterMin = uas->getParamManager()->getParamMin(parameterName);
+            if (dataModel->isParamMinKnown(parameterName)) {
+                parameterMin = dataModel->getParamMin(parameterName);
                 ui->editMinSpinBox->setValue(parameterMin);
             }
 
             // Maximum
-            if (uas->getParamManager()->isParamMaxKnown(parameterName))
-            {
-                parameterMax = uas->getParamManager()->getParamMax(parameterName);
+            if (dataModel->isParamMaxKnown(parameterName)) {
+                parameterMax = dataModel->getParamMax(parameterName);
                 ui->editMaxSpinBox->setValue(parameterMax);
             }
-
-            // Description
-            //QString text = uas->getParamManager()->getParamInfo(parameterName);
-            //ui->infoLabel->setText(text);
-
-            //showInfo(!(text.length() > 0));
         }
     }
 }

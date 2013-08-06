@@ -152,7 +152,7 @@ void UASParameterDataModel::forgetAllOnboardParameters()
     onboardParameters.clear();
 }
 
-void UASParameterDataModel::readUpdateParametersFromStream(QTextStream& stream)
+void UASParameterDataModel::readUpdateParametersFromStream( QTextStream& stream)
 {
 
     bool userWarned = false;
@@ -228,7 +228,7 @@ void UASParameterDataModel::readUpdateParametersFromStream(QTextStream& stream)
 
 }
 
-void UASParameterDataModel::writeOnboardParametersToStream(QTextStream& stream, const QString& name)
+void UASParameterDataModel::writeOnboardParametersToStream( QTextStream &stream, const QString& name)
 {
     stream << "# Onboard parameters for system " << name << "\n";
     stream << "#\n";
@@ -272,3 +272,143 @@ void UASParameterDataModel::writeOnboardParametersToStream(QTextStream& stream, 
         }
     }
 }
+
+
+void UASParameterDataModel::loadParamMetaInfoFromStream(QTextStream& stream)
+{
+
+    // First line is header
+    // there might be more lines, but the first
+    // line is assumed to be at least header
+    QString header = stream.readLine();
+
+    // Ignore top-level comment lines
+    while (header.startsWith('#') || header.startsWith('/')
+           || header.startsWith('=') || header.startsWith('^'))
+    {
+        header = stream.readLine();
+    }
+
+    bool charRead = false;
+    QString separator = "";
+    QList<QChar> sepCandidates;
+    sepCandidates << '\t';
+    sepCandidates << ',';
+    sepCandidates << ';';
+    //sepCandidates << ' ';
+    sepCandidates << '~';
+    sepCandidates << '|';
+
+    // Iterate until separator is found
+    // or full header is parsed
+    for (int i = 0; i < header.length(); i++)
+    {
+        if (sepCandidates.contains(header.at(i)))
+        {
+            // Separator found
+            if (charRead)
+            {
+                separator += header[i];
+            }
+        }
+        else
+        {
+            // Char found
+            charRead = true;
+            // If the separator is not empty, this char
+            // has been read after a separator, so detection
+            // is now complete
+            if (separator != "") break;
+        }
+    }
+
+    bool stripFirstSeparator = false;
+    bool stripLastSeparator = false;
+
+    // Figure out if the lines start with the separator (e.g. wiki syntax)
+    if (header.startsWith(separator)) stripFirstSeparator = true;
+
+    // Figure out if the lines end with the separator (e.g. wiki syntax)
+    if (header.endsWith(separator)) stripLastSeparator = true;
+
+    QString out = separator;
+    out.replace("\t", "<tab>");
+    //qDebug() << " Separator: \"" << out << "\"";
+    //qDebug() << "READING CSV:" << header;
+
+
+    // Read data
+    while (!stream.atEnd())
+    {
+        QString line = stream.readLine();
+
+        //qDebug() << "LINE PRE-STRIP" << line;
+
+        // Strip separtors if necessary
+        if (stripFirstSeparator) line.remove(0, separator.length());
+        if (stripLastSeparator) line.remove(line.length()-separator.length(), line.length()-1);
+
+        //qDebug() << "LINE POST-STRIP" << line;
+
+        // Keep empty parts here - we still have to act on them
+        QStringList parts = line.split(separator, QString::KeepEmptyParts);
+
+        // Each line is:
+        // variable name, Min, Max, Default, Multiplier, Enabled (0 = no, 1 = yes), Comment
+
+
+        // Fill in min, max and default values
+        if (parts.count() > 1)
+        {
+            // min
+            paramMin.insert(parts.at(0).trimmed(), parts.at(1).toDouble());
+        }
+        if (parts.count() > 2)
+        {
+            // max
+            paramMax.insert(parts.at(0).trimmed(), parts.at(2).toDouble());
+        }
+        if (parts.count() > 3)
+        {
+            // default
+            paramDefault.insert(parts.at(0).trimmed(), parts.at(3).toDouble());
+        }
+        // IGNORING 4 and 5 for now
+        if (parts.count() > 6)
+        {
+            // tooltip
+            paramDescriptions.insert(parts.at(0).trimmed(), parts.at(6).trimmed());
+            qDebug() << "PARAM META:" << parts.at(0).trimmed();
+        }
+    }
+}
+
+ void UASParameterDataModel::setParamDescriptions(const QMap<QString,QString>& paramInfo)
+{
+    if (paramInfo.isEmpty()) {
+        qDebug() << __FILE__ << ":" << __LINE__ << "setParamDescriptions with empty";
+    }
+
+    paramDescriptions = paramInfo;
+}
+
+bool UASParameterDataModel::isValueGreaterThanParamMax(const QString& paramName, double dblVal)
+{
+    if (paramMax.contains(paramName)) {
+        if (dblVal > paramMax.value(paramName))
+            return true;
+    }
+
+    return false;
+}
+
+bool UASParameterDataModel::isValueLessThanParamMin(const QString& paramName, double dblVal)
+{
+     if (paramMin.contains(paramName)) {
+         if (dblVal < paramMin.value(paramName))
+             return true;
+     }
+
+     return false;
+ }
+
