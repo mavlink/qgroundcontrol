@@ -1,55 +1,34 @@
+#include "UASParameterCommsMgr.h"
+
 #include "QGCUASParamManager.h"
 #include "UASInterface.h"
 
-QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
-    QWidget(parent),
-    mav(uas),
-    transmissionListMode(false),
-    transmissionActive(false),
-    transmissionTimeout(0),
-    retransmissionTimeout(350),
-    rewriteTimeout(500),
-    retransmissionBurstRequestSize(5)
+UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
+    QObject(parent)
 {
-    paramDataModel = uas->getParamDataModel();
-    uas->setParamManager(this);
+    mav = uas;
 
-    // Connect retransmission guard
-    connect(this, SIGNAL(parameterUpdateRequested(int,QString)), this, SLOT(requestParameterUpdate(int,QString)));
-    connect(this, SIGNAL(parameterUpdateRequestedById(int,int)), mav, SLOT(requestParameter(int,int)));
+    // Sending params to the UAS
+    connect(this, SIGNAL(parameterChanged(int,QString,QVariant)), mav, SLOT(setParameter(int,QString,QVariant)));
 
+    // New parameters from UAS
+    connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
 }
-
-
-bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const
-{
-    return paramDataModel->getOnboardParameterValue(component,parameter,value);
-}
-
-
-void QGCUASParamManager::requestParameterUpdate(int component, const QString& parameter)
-{
-    if (mav) {
-        mav->requestParameter(component, parameter);
-    }
-}
-
-
-
 
 
 /**
  * Send a request to deliver the list of onboard parameters
- * to the MAV.
+ * from the MAV.
  */
-void QGCUASParamManager::requestParameterList()
+void UASParameterCommsMgr::requestParameterList()
 {
     if (!mav) {
         return;
     }
 
-    paramDataModel->forgetAllOnboardParameters();
+    //TODO check: no need to cause datamodel to forget params here?
+//    paramDataModel->forgetAllOnboardParameters();
 
     // Clear transmission state
     receivedParamsList.clear();
@@ -66,7 +45,8 @@ void QGCUASParamManager::requestParameterList()
 
 }
 
-void QGCUASParamManager::retransmissionGuardTick()
+
+void UASParameterCommsMgr::retransmissionGuardTick()
 {
     if (transmissionActive) {
         //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
@@ -178,7 +158,8 @@ void QGCUASParamManager::retransmissionGuardTick()
  *
  * @param enabled True if retransmission checking should be enabled, false else
  */
-void QGCUASParamManager::setRetransmissionGuardEnabled(bool enabled)
+
+void UASParameterCommsMgr::setRetransmissionGuardEnabled(bool enabled)
 {
 //    qDebug() << "setRetransmissionGuardEnabled: " << enabled;
 
@@ -189,14 +170,109 @@ void QGCUASParamManager::setRetransmissionGuardEnabled(bool enabled)
     }
 }
 
-void QGCUASParamManager::setParameterStatusMsg(const QString& msg)
+void UASParameterCommsMgr::requestParameterUpdate(int component, const QString& parameter)
+{
+    if (mav) {
+        mav->requestParameter(component, parameter);
+    }
+}
+
+/**
+ * @param component the subsystem which has the parameter
+ * @param parameterName name of the parameter, as delivered by the system
+ * @param value value of the parameter
+ */
+void UASParameterCommsMgr::setParameter(int component, QString parameterName, QVariant value)
+{
+    if (parameterName.isEmpty()) {
+        return;
+    }
+
+    double dblValue = value.toDouble();
+
+    if (paramDataModel->isValueLessThanParamMin(parameterName,dblValue)) {
+        setParameterStatusMsg(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue));
+        return;
+    }
+    if (paramDataModel->isValueGreaterThanParamMax(parameterName,dblValue)) {
+        setParameterStatusMsg(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue));
+        return;
+    }
+    QVariant onboardVal;
+    paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
+    if (onboardVal == value) {
+        setParameterStatusMsg(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue));
+        return;
+    }
+
+    //int paramType = (int)onboardParameters.value(component)->value(parameterName).type();
+    int paramType = (int)value.type();
+    switch (paramType)
+    {
+    case QVariant::Char:
+    {
+        QVariant fixedValue(QChar((unsigned char)value.toInt()));
+        emit parameterChanged(component, parameterName, fixedValue);
+        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+    }
+        break;
+    case QVariant::Int:
+    {
+        QVariant fixedValue(value.toInt());
+        emit parameterChanged(component, parameterName, fixedValue);
+        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+    }
+        break;
+    case QVariant::UInt:
+    {
+        QVariant fixedValue(value.toUInt());
+        emit parameterChanged(component, parameterName, fixedValue);
+        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+    }
+        break;
+    case QMetaType::Float:
+    {
+        QVariant fixedValue(value.toFloat());
+        emit parameterChanged(component, parameterName, fixedValue);
+        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+    }
+        break;
+    default:
+        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
+        return;
+    }
+
+    // Wait for parameter to be written back
+    // mark it therefore as missing
+    if (!transmissionMissingWriteAckPackets.contains(component))
+    {
+        transmissionMissingWriteAckPackets.insert(component, new QMap<QString, QVariant>());
+    }
+
+    // Insert it in missing write ACK list
+    transmissionMissingWriteAckPackets.value(component)->insert(parameterName, value);
+
+    // Set timeouts
+    if (transmissionActive)
+    {
+        transmissionTimeout += rewriteTimeout;
+    }
+    else
+    {
+        quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + rewriteTimeout;
+        if (newTransmissionTimeout > transmissionTimeout)
+        {
+            transmissionTimeout = newTransmissionTimeout;
+        }
+        transmissionActive = true;
+    }
+
+    // Enable guard / reset timeouts
+    setRetransmissionGuardEnabled(true);
+}
+
+void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg)
 {
     qDebug() << "parameterStatusMsg: " << msg;
     parameterStatusMsg = msg;
 }
-
-void QGCUASParamManager::setParamDescriptions(const QMap<QString,QString>& paramInfo) {
-    paramDataModel->setParamDescriptions(paramInfo);
-}
-
-
