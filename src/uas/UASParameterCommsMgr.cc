@@ -26,13 +26,16 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
             mav, SLOT(requestParameter(int,int)));
 
     // Sending params to the UAS
-    connect(this, SIGNAL(parameterChanged(int,QString,QVariant)), mav, SLOT(setParameter(int,QString,QVariant)));
+    connect(this, SIGNAL(parameterChanged(int,QString,QVariant)),
+            mav, SLOT(setParameter(int,QString,QVariant)));
 
     // New parameters from UAS
-    connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
+    connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
+            this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
     //connecto retransmissionTimer
-    connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
+    connect(&retransmissionTimer, SIGNAL(timeout()),
+            this, SLOT(retransmissionGuardTick()));
 
 }
 
