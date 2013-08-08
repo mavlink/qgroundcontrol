@@ -94,7 +94,7 @@ void UASParameterCommsMgr::requestParameterList()
 void UASParameterCommsMgr::retransmissionGuardTick()
 {
     if (transmissionActive) {
-        //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
+        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
 
         // Check for timeout
         // stop retransmission attempts on timeout
@@ -189,7 +189,7 @@ void UASParameterCommsMgr::retransmissionGuardTick()
             }
         }
     } else {
-        //qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
+        qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
         setRetransmissionGuardEnabled(false);
     }
 }
@@ -353,16 +353,6 @@ void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsS
     parameterStatusMsg = msg;
 
     emit parameterStatusMsgUpdated(msg,level);
-
-    //TODO indicate OK status somehow (eg color)
-//        QPalette pal = statusLabel->palette();
-//        pal.setColor(backgroundRole(), QGC::colorGreen);
-//        statusLabel->setPalette(pal);
-
-//    pal.setColor(backgroundRole(), QGC::colorRed);
-    //            pal.setColor(backgroundRole(), QGC::colorOrange);
-
-
 }
 
 
@@ -532,5 +522,10 @@ void UASParameterCommsMgr::sendPendingParameters()
         // Enable guard
         setRetransmissionGuardEnabled(true);
     }
+}
+
+UASParameterCommsMgr::~UASParameterCommsMgr()
+{
+    setRetransmissionGuardEnabled(false);
 }
 
