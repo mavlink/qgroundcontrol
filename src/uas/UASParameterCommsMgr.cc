@@ -1,5 +1,7 @@
 #include "UASParameterCommsMgr.h"
 
+#include <QSettings>
+
 #include "QGCUASParamManager.h"
 #include "UASInterface.h"
 
@@ -38,14 +40,14 @@ void UASParameterCommsMgr::loadParamCommsSettings()
 {
     QSettings settings;
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    bool valid;
+    bool ok;
     int val = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", retransmissionTimeout).toInt(&ok);
-    if (valid) {
-        retransmissionTimeout = temp;
+    if (ok) {
+        retransmissionTimeout = val;
     }
     val = settings.value("PARAMETER_REWRITE_TIMEOUT", rewriteTimeout).toInt(&ok);
-    if (valid) {
-        rewriteTimeout = temp;
+    if (ok) {
+        rewriteTimeout = val;
     }
     settings.endGroup();
 }
@@ -224,17 +226,23 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
     double dblValue = value.toDouble();
 
     if (paramDataModel->isValueLessThanParamMin(parameterName,dblValue)) {
-        setParameterStatusMsg(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue));
+        setParameterStatusMsg(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue),
+                              ParamCommsStatusLevel_Error
+                              );
         return;
     }
     if (paramDataModel->isValueGreaterThanParamMax(parameterName,dblValue)) {
-        setParameterStatusMsg(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue));
+        setParameterStatusMsg(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue),
+                              ParamCommsStatusLevel_Error
+                              );
         return;
     }
     QVariant onboardVal;
     paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
     if (onboardVal == value) {
-        setParameterStatusMsg(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue));
+        setParameterStatusMsg(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue),
+                              ParamCommsStatusLevel_Warning
+                              );
         return;
     }
 
@@ -246,28 +254,24 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
     {
         QVariant fixedValue(QChar((unsigned char)value.toInt()));
         emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
     }
         break;
     case QVariant::Int:
     {
         QVariant fixedValue(value.toInt());
         emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
     }
         break;
     case QVariant::UInt:
     {
         QVariant fixedValue(value.toUInt());
         emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
     }
         break;
     case QMetaType::Float:
     {
         QVariant fixedValue(value.toFloat());
         emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
     }
         break;
     default:
@@ -308,6 +312,8 @@ void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsS
 {
     qDebug() << "parameterStatusMsg: " << msg;
     parameterStatusMsg = msg;
+
+    emit parameterStatusMsgUpdated(msg,level);
 
     //TODO indicate OK status somehow (eg color)
 //        QPalette pal = statusLabel->palette();
@@ -360,7 +366,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 
         // Start retransmission guard
         // or reset timer
-        paramCommsMgr->setRetransmissionGuardEnabled(true); //TODO
+        setRetransmissionGuardEnabled(true); //TODO
     }
 
     // Mark this parameter as received in read list
