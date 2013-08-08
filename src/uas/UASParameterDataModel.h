@@ -87,7 +87,8 @@ public:
 
 signals:
     
-    void parameterUpdated(int compId, int paramId, QString paramName, QVariant value);
+    /** @brief We've received an update of a parameter's value */
+    void parameterUpdated(int compId, QString paramName, QVariant value);
 
 public slots:
 
