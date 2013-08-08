@@ -432,9 +432,9 @@ void QGCParamWidget::writeParameters()
     int changedParamCount = 0;
 
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
+    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getPendingParameters();
 
-    for (i = changedValues.begin(); i != changedValues.end() , (0 == changedParamCount);  ++i) {
+    for (i = changedValues->begin(); (i != changedValues->end()) && (0 == changedParamCount);  ++i) {
         // Iterate through the parameters of the component
         QMap<QString, QVariant>* compPending = i.value();
         changedParamCount += compPending->count();
