@@ -70,18 +70,23 @@ void UASParameterCommsMgr::requestParameterList()
     //TODO check: no need to cause datamodel to forget params here?
 //    paramDataModel->forgetAllOnboardParameters();
 
-    // Clear transmission state
-    receivedParamsList.clear();
-    transmissionListSizeKnown.clear();
+    if (!transmissionListMode) {
+        // Clear transmission state
+        receivedParamsList.clear();
+        transmissionListSizeKnown.clear();
 
-    transmissionListMode = true;
-    foreach (int key, transmissionMissingPackets.keys()) {
-        transmissionMissingPackets.value(key)->clear();
+        transmissionListMode = true;
+        foreach (int key, transmissionMissingPackets.keys()) {
+            transmissionMissingPackets.value(key)->clear();
+        }
+        transmissionActive = true;
+
+        setParameterStatusMsg(tr("Requested param list.. waiting"));
+        mav->requestParameters();
     }
-    transmissionActive = true;
-
-    setParameterStatusMsg(tr("Requested param list.. waiting"));
-    mav->requestParameters();
+    else {
+        qDebug() << __FILE__ << __LINE__ << "Ignoring requestParameterList because we're receiving params list";
+    }
 
 }
 

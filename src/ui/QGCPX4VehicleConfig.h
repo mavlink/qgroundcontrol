@@ -10,6 +10,8 @@
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
 
+class UASParameterCommsMgr;
+
 namespace Ui {
 class QGCPX4VehicleConfig;
 }
@@ -159,6 +161,7 @@ protected slots:
 protected:
     bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
+    UASParameterCommsMgr* paramCommsMgr; ///< param comms mgr for the mav
     static const unsigned int chanMax = 8;    ///< Maximum number of channels
     unsigned int chanCount;               ///< Actual channels
     int rcType;                         ///< Type of the remote control
