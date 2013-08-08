@@ -68,6 +68,9 @@ public slots:
     /** @brief Request a single parameter update by name */
     virtual void requestParameterUpdate(int component, const QString& parameter);
 
+    /** @brief Request an update of RC parameters */
+    virtual void requestRcCalibrationParamsUpdate();
+
     virtual void receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value);
 
 //protected slots:
