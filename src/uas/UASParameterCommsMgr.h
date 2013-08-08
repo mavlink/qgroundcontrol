@@ -19,6 +19,8 @@ class UASParameterCommsMgr : public QObject
 
 public:
     explicit UASParameterCommsMgr(QObject *parent = 0, UASInterface* uas = NULL);
+    ~UASParameterCommsMgr();
+
     typedef enum ParamCommsStatusLevel {
         ParamCommsStatusLevel_OK = 0,
         ParamCommsStatusLevel_Warning = 2,
@@ -48,7 +50,7 @@ signals:
     void parameterUpdateRequestedById(int componentId, int paramId);
 
     /** @brief We updated the parameter status message */
-    void parameterStatusMsgUpdated(QString msg, ParamCommsStatusLevel_t level);
+    void parameterStatusMsgUpdated(QString msg, int level);
 
 public slots:
     /** @brief  Iterate through all components, through all pending parameters and send them to UAS */

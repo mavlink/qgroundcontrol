@@ -154,6 +154,9 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
             this, SLOT(handleParameterListUpToDate()));
 
+    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
+            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
+
     // Get parameters
     if (uas) {
         requestAllParamsUpdate();
