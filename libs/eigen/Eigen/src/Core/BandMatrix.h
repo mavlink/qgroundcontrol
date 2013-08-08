@@ -285,6 +285,7 @@ class BandMatrixWrapper : public BandMatrixBase<BandMatrixWrapper<_CoefficientsT
         m_rows(rows), m_supers(supers), m_subs(subs)
     {
       //internal::assert(coeffs.cols()==cols() && (supers()+subs()+1)==coeffs.rows());
+        cols=0; //workaround for compiler warning
     }
 
     /** \returns the number of columns */

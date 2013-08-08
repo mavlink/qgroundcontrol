@@ -10,6 +10,7 @@
 UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     QObject(parent),
     mav(uas),
+    paramDataModel(NULL),
     transmissionListMode(false),
     transmissionActive(false),
     transmissionTimeout(0),
@@ -17,7 +18,7 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     rewriteTimeout(500),
     retransmissionBurstRequestSize(5)
 {
-    mav = uas;
+    paramDataModel = mav->getParamDataModel();
     loadParamCommsSettings();
 
 
@@ -57,6 +58,8 @@ void UASParameterCommsMgr::loadParamCommsSettings()
     settings.endGroup();
 }
 
+
+
 /**
  * Send a request to deliver the list of onboard parameters
  * from the MAV.
@@ -82,7 +85,9 @@ void UASParameterCommsMgr::requestParameterList()
         transmissionActive = true;
 
         setParameterStatusMsg(tr("Requested param list.. waiting"));
+        listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
         mav->requestParameters();
+        setRetransmissionGuardEnabled(true);
     }
     else {
         qDebug() << __FILE__ << __LINE__ << "Ignoring requestParameterList because we're receiving params list";
@@ -94,6 +99,17 @@ void UASParameterCommsMgr::requestParameterList()
 void UASParameterCommsMgr::retransmissionGuardTick()
 {
     if (transmissionActive) {
+        if (transmissionListMode && transmissionListSizeKnown.isEmpty() ) {
+            //we are still waitin for the first parameter list response
+            if (QGC::groundTimeMilliseconds() > this->listRecvTimeout) {
+                //re-request parameters
+                setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
+                listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
+                mav->requestParameters();
+            }
+            return;
+        }
+
         qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
 
         // Check for timeout
@@ -466,11 +482,9 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             transmissionMissingPackets.value(key)->clear();
         }
 
+        setRetransmissionGuardEnabled(false);
         //all parameters have been received, broadcast to UI
         emit parameterListUpToDate();
-        //TODO in UI
-        // Expand visual tree
-        //tree->expandItem(tree->topLevelItem(0));
     }
 }
 
@@ -527,5 +541,10 @@ void UASParameterCommsMgr::sendPendingParameters()
 UASParameterCommsMgr::~UASParameterCommsMgr()
 {
     setRetransmissionGuardEnabled(false);
+
+    QString ptrStr;
+    ptrStr.sprintf("%8p", this);
+    qDebug() <<  "UASParameterCommsMgr destructor: " << ptrStr ;
+
 }
 
