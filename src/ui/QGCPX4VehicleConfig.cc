@@ -13,9 +13,11 @@
 #include <QMessageBox>
 
 #include "QGCPX4VehicleConfig.h"
-#include "UASManager.h"
+
 #include "QGC.h"
 #include "QGCToolWidget.h"
+#include "UASManager.h"
+#include "UASParameterCommsMgr.h"
 #include "ui_QGCPX4VehicleConfig.h"
 
 
@@ -976,28 +978,8 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
 
 void QGCPX4VehicleConfig::requestCalibrationRC()
 {
-    if (!mav ) {
-        return;
-    }
-
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
-
-    // Do not request the RC type, as these values depend on this
-    // active onboard parameter
-
-    for (unsigned int i = 1; i < (chanMax+1); ++i)  {
-        qDebug() << "Request RC " << i;
-        mav->requestParameter(0, minTpl.arg(i));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, trimTpl.arg(i));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, maxTpl.arg(i));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, revTpl.arg(i));
-        QGC::SLEEP::usleep(5000);
+    if (mav) {
+        mav->getParamCommsMgr()->requestRcCalibrationParamsUpdate();
     }
 }
 
