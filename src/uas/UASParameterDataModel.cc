@@ -103,13 +103,13 @@ void UASParameterDataModel::setOnboardParameterWithType(int componentId, QString
     }
 }
 
-void UASParameterDataModel::addComponent(int componentId)
+void UASParameterDataModel::addComponent(int compId)
 {
-    if (!onboardParameters.contains(componentId)) {
-        onboardParameters.insert(componentId, new QMap<QString, QVariant>());
+    if (!onboardParameters.contains(compId)) {
+        onboardParameters.insert(compId, new QMap<QString, QVariant>());
     }
-    if (!pendingParameters.contains(componentId)) {
-        pendingParameters.insert(componentId, new QMap<QString, QVariant>());
+    if (!pendingParameters.contains(compId)) {
+        pendingParameters.insert(compId, new QMap<QString, QVariant>());
     }
 }
 

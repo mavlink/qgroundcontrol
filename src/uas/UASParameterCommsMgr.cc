@@ -4,9 +4,22 @@
 #include "UASInterface.h"
 
 UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
-    QObject(parent)
+    QObject(parent),
+    mav(uas),
+    transmissionListMode(false),
+    transmissionActive(false),
+    transmissionTimeout(0),
+    retransmissionTimeout(350),
+    rewriteTimeout(500),
+    retransmissionBurstRequestSize(5)
 {
     mav = uas;
+    loadParamCommsSettings();
+
+
+    //Requesting parameters one-by-one from mav
+    connect(this, SIGNAL(parameterUpdateRequestedById(int,int)),
+            mav, SLOT(requestParameter(int,int)));
 
     // Sending params to the UAS
     connect(this, SIGNAL(parameterChanged(int,QString,QVariant)), mav, SLOT(setParameter(int,QString,QVariant)));
@@ -14,8 +27,28 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     // New parameters from UAS
     connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
+    //connecto retransmissionTimer
+    connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
+
 }
 
+
+
+void UASParameterCommsMgr::loadParamCommsSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
+    bool valid;
+    int val = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", retransmissionTimeout).toInt(&ok);
+    if (valid) {
+        retransmissionTimeout = temp;
+    }
+    val = settings.value("PARAMETER_REWRITE_TIMEOUT", rewriteTimeout).toInt(&ok);
+    if (valid) {
+        rewriteTimeout = temp;
+    }
+    settings.endGroup();
+}
 
 /**
  * Send a request to deliver the list of onboard parameters
@@ -271,8 +304,188 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
     setRetransmissionGuardEnabled(true);
 }
 
-void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg)
+void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsStatusLevel_t level)
 {
     qDebug() << "parameterStatusMsg: " << msg;
     parameterStatusMsg = msg;
+
+    //TODO indicate OK status somehow (eg color)
+//        QPalette pal = statusLabel->palette();
+//        pal.setColor(backgroundRole(), QGC::colorGreen);
+//        statusLabel->setPalette(pal);
+
+//    pal.setColor(backgroundRole(), QGC::colorRed);
+    //            pal.setColor(backgroundRole(), QGC::colorOrange);
+
+
 }
+
+
+/**
+ * @param uas System which has the component
+ * @param component id of the component
+ * @param parameterName human friendly name of the parameter
+ */
+void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value)
+{
+
+    // Missing packets list has to be instantiated for all components
+    if (!transmissionMissingPackets.contains(compId)) {
+        transmissionMissingPackets.insert(compId, new QList<int>());
+    }
+
+    // List mode is different from single parameter transfers
+    if (transmissionListMode) {
+        // Only accept the list size once on the first packet from
+        // each component
+        if (!transmissionListSizeKnown.contains(compId)) {
+            // Mark list size as known
+            transmissionListSizeKnown.insert(compId, true);
+
+            // Mark all parameters as missing
+            for (int i = 0; i < paramCount; ++i) {
+                if (!transmissionMissingPackets.value(compId)->contains(i)) {
+                    transmissionMissingPackets.value(compId)->append(i);
+                }
+            }
+
+            // There is only one transmission timeout for all components
+            // since components do not manage their transmission,
+            // the longest timeout is safe for all components.
+            quint64 thisTransmissionTimeout = QGC::groundTimeMilliseconds() + ((paramCount)*retransmissionTimeout);
+            if (thisTransmissionTimeout > transmissionTimeout) {
+                transmissionTimeout = thisTransmissionTimeout;
+            }
+        }
+
+        // Start retransmission guard
+        // or reset timer
+        paramCommsMgr->setRetransmissionGuardEnabled(true); //TODO
+    }
+
+    // Mark this parameter as received in read list
+    int index = transmissionMissingPackets.value(compId)->indexOf(paramId);
+    // If the MAV sent the parameter without request, it wont be in missing list
+    if (index != -1) {
+        transmissionMissingPackets.value(compId)->removeAt(index);
+    }
+
+    bool justWritten = false;
+    bool writeMismatch = false;
+    //bool lastWritten = false;
+    // Mark this parameter as received in write ACK list
+    QMap<QString, QVariant>* map = transmissionMissingWriteAckPackets.value(compId);
+    if (map && map->contains(paramName)) {
+        justWritten = true;
+        QVariant newval = map->value(paramName);
+        if (map->value(paramName) != value) {
+            writeMismatch = true;
+        }
+        map->remove(paramName);
+    }
+
+    int missCount = 0;
+    foreach (int key, transmissionMissingPackets.keys()) {
+        missCount +=  transmissionMissingPackets.value(key)->count();
+    }
+
+    int missWriteCount = 0;
+    foreach (int key, transmissionMissingWriteAckPackets.keys()) {
+        missWriteCount += transmissionMissingWriteAckPackets.value(key)->count();
+    }
+
+    //TODO simplify this if-else tree
+    if (justWritten && !writeMismatch && missWriteCount == 0) {
+        // Just wrote one and count went to 0 - this was the last missing write parameter
+        setParameterStatusMsg(tr("SUCCESS: WROTE ALL PARAMETERS"));
+    }
+    else if (justWritten && !writeMismatch) {
+        setParameterStatusMsg(tr("SUCCESS: Wrote %2 (#%1/%4): %3").arg(paramId+1).arg(paramName).arg(value.toDouble()).arg(paramCount));
+    }
+    else if (justWritten && writeMismatch) {
+        // Mismatch, tell user
+        setParameterStatusMsg(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(paramName).arg(map->value(paramName).toDouble()).arg(value.toDouble()),
+                              ParamCommsStatusLevel_Warning);
+    }
+    else {
+        QString val = QString("%1").arg(value.toFloat(), 5, 'f', 1, QChar(' '));
+        if (missCount == 0) {
+            // Transmission done
+            QTime time = QTime::currentTime();
+            QString timeString = time.toString();
+            setParameterStatusMsg(tr("All received. (updated at %1)").arg(timeString));
+        }
+        else {
+            // Transmission in progress
+            setParameterStatusMsg(tr("OK: %1 %2 (%3/%4)").arg(paramName).arg(val).arg(paramCount-missCount).arg(paramCount),
+                                  ParamCommsStatusLevel_Warning);
+        }
+    }
+
+    // Check if last parameter was received
+    if (missCount == 0 && missWriteCount == 0) {
+        this->transmissionActive = false;
+        this->transmissionListMode = false;
+        transmissionListSizeKnown.clear();
+        foreach (int key, transmissionMissingPackets.keys()) {
+            transmissionMissingPackets.value(key)->clear();
+        }
+
+        //all parameters have been received, broadcast to UI
+        emit parameterListUpToDate();
+        //TODO in UI
+        // Expand visual tree
+        //tree->expandItem(tree->topLevelItem(0));
+    }
+}
+
+
+void UASParameterCommsMgr::writeParamsToPersistentStorage()
+{
+    if (mav) {
+        mav->writeParametersToStorage(); //TODO track timeout, retransmit etc?
+    }
+}
+
+
+void UASParameterCommsMgr::sendPendingParameters()
+{
+    // Iterate through all components, through all pending parameters and send them to UAS
+    int parametersSent = 0;
+    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
+    QMap<int, QMap<QString, QVariant>*>::iterator i;
+    for (i = changedValues.begin(); i != changedValues.end(); ++i) {
+        // Iterate through the parameters of the component
+        int compid = i.key();
+        QMap<QString, QVariant>* comp = i.value();
+        {
+            QMap<QString, QVariant>::iterator j;
+            for (j = comp->begin(); j != comp->end(); ++j) {
+                //TODO mavlink command for "set parameter list" ?
+                setParameter(compid, j.key(), j.value());
+                parametersSent++;
+            }
+        }
+    }
+
+    // Change transmission status if necessary
+    if (parametersSent == 0) {
+        setParameterStatusMsg(tr("No transmission: No changed values."),ParamCommsStatusLevel_Warning);
+    } else {
+        setParameterStatusMsg(tr("Transmitting %1 parameters.").arg(parametersSent));
+        // Set timeouts
+        if (transmissionActive) {
+            transmissionTimeout += parametersSent*rewriteTimeout;
+        }
+        else {
+            transmissionActive = true;
+            quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + parametersSent*rewriteTimeout;
+            if (newTransmissionTimeout > transmissionTimeout) {
+                transmissionTimeout = newTransmissionTimeout;
+            }
+        }
+        // Enable guard
+        setRetransmissionGuardEnabled(true);
+    }
+}
+

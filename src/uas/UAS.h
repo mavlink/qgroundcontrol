@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 
+
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
  *
@@ -493,6 +494,7 @@ protected: //COMMENTS FOR TEST UNIT
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
     QGCUASParamManager* paramManager; ///< Parameter manager class
     UASParameterDataModel* paramDataModel; ///< The parameter data model for this UAS
+    UASParameterCommsMgr* paramCommsMgr;
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
@@ -524,6 +526,10 @@ public:
     /** @brief Get reference to the parameter data model (same one shared with the parameter manager)  **/
     UASParameterDataModel* getParamDataModel() {
         return paramDataModel;
+    }
+
+    UASParameterCommsMgr* getParamCommsMgr() {
+        return paramCommsMgr;
     }
 
 

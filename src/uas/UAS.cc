@@ -26,6 +26,7 @@
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 #include "SerialLink.h"
+#include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
 
 #ifdef QGC_PROTOBUF_ENABLED
@@ -132,6 +133,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     paramsOnceRequested(false),
     paramManager(NULL),
     paramDataModel(NULL),
+    paramCommsMgr(NULL),
 
     simulation(0),
 
@@ -154,6 +156,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 
     paramDataModel = new UASParameterDataModel(this);
     paramDataModel->setUASID(this->getUASID());
+
+    paramCommsMgr = new UASParameterCommsMgr(this,this);
 
     // Store a list of available actions for this UAS.
     // Basically everything exposted as a SLOT with no return value or arguments.

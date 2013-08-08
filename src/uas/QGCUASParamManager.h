@@ -6,7 +6,9 @@
 #include <QTimer>
 #include <QVariant>
 
+//forward declarations
 class UASInterface;
+class UASParameterCommsMgr;
 class UASParameterDataModel;
 
 class QGCUASParamManager : public QWidget
@@ -15,25 +17,29 @@ class QGCUASParamManager : public QWidget
 public:
     QGCUASParamManager(UASInterface* uas, QWidget *parent = 0);
 
+    /** @brief Get the known, confirmed value of a parameter */
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
     /** @brief Provide tooltips / user-visible descriptions for parameters */
     virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs);
 
-protected:
-    /** @brief Activate / deactivate parameter retransmission */
-    virtual void setRetransmissionGuardEnabled(bool enabled);
+    /** @brief Get the UAS of this widget
+     * @return The MAV of this mgr. Unless the MAV object has been destroyed, this is never null.
+     */
+    UASInterface* getUAS();
 
+protected:
     //TODO decouple this UI message display further
     virtual void setParameterStatusMsg(const QString& msg);
+    /** @brief Load parameter meta information from appropriate CSV file */
+    virtual void loadParamMetaInfoCSV();
 
 
 signals:
     void parameterChanged(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
-    void parameterListUpToDate(int component);
-    void parameterUpdateRequested(int component, const QString& parameter);
-    void parameterUpdateRequestedById(int componentId, int paramId);
+//    void parameterUpdateRequested(int component, const QString& parameter);
+//    void parameterUpdateRequestedById(int componentId, int paramId);
 
 
 public slots:
@@ -41,30 +47,20 @@ public slots:
     virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
-    /** @brief Check for missing parameters */
-    virtual void retransmissionGuardTick();
 
     /** @brief Request a single parameter by name */
     virtual void requestParameterUpdate(int component, const QString& parameter);
+
+    virtual void handleParameterUpdate(int component, int paramCount, int paramId, const QString& parameterName, QVariant value) = 0;
+    virtual void handleParameterListUpToDate(int component) = 0;
+
 
 protected:
 
     // Parameter data model
     UASInterface* mav;   ///< The MAV this widget is controlling
     UASParameterDataModel* paramDataModel;///< Shared data model of parameters
-
-    // Communications management
-    QVector<bool> receivedParamsList; ///< Successfully received parameters
-    QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
-    QMap<int, QMap<QString, QVariant>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
-    bool transmissionListMode;       ///< Currently requesting list
-    QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
-    bool transmissionActive;         ///< Missing packets, working on list?
-    quint64 transmissionTimeout;     ///< Timeout
-    QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
-    int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
-    int rewriteTimeout; ///< Write request timeout, in milliseconds
-    int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
+    UASParameterCommsMgr*   paramCommsMgr; ///< Shared comms mgr for parameters
 
     // Status
     QString parameterStatusMsg;
