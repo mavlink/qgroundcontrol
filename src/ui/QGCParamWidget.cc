@@ -331,9 +331,8 @@ void QGCParamWidget::addComponentItem( int compId, QString compName)
 //}
 
 
-void QGCParamWidget::handleParameterUpdate(int componentId, int paramCount, int paramId, const QString& paramName, QVariant value)
+void QGCParamWidget::handleParameterUpdate(int componentId, int paramId, const QString& paramName, QVariant value)
 {
-    Q_UNUSED(paramCount);
     Q_UNUSED(paramId);
     updateParameterDisplay(componentId, paramName, value);
 }
