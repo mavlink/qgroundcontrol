@@ -1,6 +1,9 @@
 #include "QGCUASParamManager.h"
-#include "UASInterface.h"
 
+#include <QApplication>>
+#include <QDir>
+
+#include "UASInterface.h"
 #include "UASParameterCommsMgr.h"
 
 QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
@@ -28,15 +31,15 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
     void parameterUpdated(int compId, int paramId, QString paramName, QVariant value);
 
     connect(paramDataModel, SIGNAL(parameterUpdated(int, int, QString , QVariant )),
-            this, SLOT(handleParameterUpdate(int,int,int,QString,QVariant));
+            this, SLOT(handleParameterUpdate(int,int,int,QString,QVariant)));
 
 //    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
 //            this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
 
     // Listen for param list reload finished
-    connect(paramCommsMgr, SIGNAL(parameterListUpToDate(int)),
-            this, SLOT(handleParameterListUpToDate(int))));
+    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
+            this, SLOT(handleParameterListUpToDate()));
 
 
 
@@ -206,6 +209,10 @@ void QGCUASParamManager::setParamDescriptions(const QMap<QString,QString>& param
 }
 
 
+void QGCUASParamManager::setParameter(int component, QString parameterName, QVariant value)
+{
+    paramCommsMgr->setParameter(component,parameterName,value);
+}
 
 
 void QGCUASParamManager::loadParamMetaInfoCSV()
