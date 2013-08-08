@@ -157,6 +157,9 @@ public:
     /** @brief Access the parameter data model for this UAS (sans widget).  This is the same parameter data model used by the parameter manager. **/
     virtual UASParameterDataModel* getParamDataModel() = 0;
 
+
+    virtual UASParameterCommsMgr* getParamCommsMgr() = 0;
+
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManager* getParamManager() const = 0;
 
