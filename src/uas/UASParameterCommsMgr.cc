@@ -5,6 +5,8 @@
 #include "QGCUASParamManager.h"
 #include "UASInterface.h"
 
+#define RC_CAL_CHAN_MAX 8
+
 UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     QObject(parent),
     mav(uas),
@@ -211,6 +213,35 @@ void UASParameterCommsMgr::requestParameterUpdate(int component, const QString& 
         mav->requestParameter(component, parameter);
     }
 }
+
+void UASParameterCommsMgr::requestRcCalibrationParamsUpdate()
+{
+    if (!transmissionListMode) {
+        QString minTpl("RC%1_MIN");
+        QString maxTpl("RC%1_MAX");
+        QString trimTpl("RC%1_TRIM");
+        QString revTpl("RC%1_REV");
+
+        // Do not request the RC type, as these values depend on this
+        // active onboard parameter
+
+        for (unsigned int i = 1; i < (RC_CAL_CHAN_MAX+1); ++i)  {
+            qDebug() << "Request RC " << i;
+            mav->requestParameter(0, minTpl.arg(i));
+            QGC::SLEEP::usleep(5000);
+            mav->requestParameter(0, trimTpl.arg(i));
+            QGC::SLEEP::usleep(5000);
+            mav->requestParameter(0, maxTpl.arg(i));
+            QGC::SLEEP::usleep(5000);
+            mav->requestParameter(0, revTpl.arg(i));
+            QGC::SLEEP::usleep(5000);
+        }
+    }
+    else {
+        qDebug() << __FILE__ << __LINE__ << "Ignoring requestRcCalibrationParamsUpdate because we're receiving params list";
+    }
+}
+
 
 /**
  * @param component the subsystem which has the parameter
