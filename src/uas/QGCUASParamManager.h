@@ -52,7 +52,7 @@ public slots:
     /** @brief Request a single parameter by name from the MAV */
     virtual void requestParameterUpdate(int component, const QString& parameter);
 
-    virtual void handleParameterUpdate(int component, int paramId, const QString& parameterName, QVariant value) = 0;
+    virtual void handleParameterUpdate(int component, const QString& parameterName, QVariant value) = 0;
     virtual void handleParameterListUpToDate() = 0;
 
 

@@ -67,7 +67,7 @@ public slots:
     /** @brief Add a parameter to the list with retransmission / safety checks */
 //    void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
 
-    virtual void handleParameterUpdate(int component, int paramId, const QString& parameterName, QVariant value);
+    virtual void handleParameterUpdate(int component,const QString& parameterName, QVariant value);
     virtual void handleParameterListUpToDate();
 
     virtual void handleParamStatusMsgUpdate(QString msg, int level);
