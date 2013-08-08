@@ -47,13 +47,3 @@ QGCWelcomeMainWindow::~QGCWelcomeMainWindow()
     delete ui;
     delete viewModeSelection;
 }
-
-enum MainWindow::CUSTOM_MODE QGCWelcomeMainWindow::getCustomMode()
-{
-//    QGCViewModeSelection* s = new QGCViewModeSelection(this);
-//    setCentralWidget(s);
-//    show();
-//    enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_WIFI;// = s->waitForInput();
-//    delete s;
-//    return mode;
-}
