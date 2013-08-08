@@ -114,12 +114,12 @@ void UASParameterDataModel::addComponent(int compId)
 }
 
 
-void UASParameterDataModel::handleParameterUpdate(int componentId, QString& key, QVariant& value)
+void UASParameterDataModel::handleParameterUpdate(int compId, QString& key, QVariant& value)
 {
     //verify that the value requested by the user matches the set value
     //if it doesn't match, leave the pending parameter in the pending list!
-    if (pendingParameters.contains(componentId)) {
-        QMap<QString , QVariant> *pendingParams = pendingParameters.value(componentId);
+    if (pendingParameters.contains(compId)) {
+        QMap<QString , QVariant> *pendingParams = pendingParameters.value(compId);
         if ((NULL != pendingParams) && pendingParams->contains(key)) {
             QVariant reqVal = pendingParams->value(key);
             if (reqVal == value) {
@@ -131,7 +131,10 @@ void UASParameterDataModel::handleParameterUpdate(int componentId, QString& key,
         }
     }
 
-    setOnboardParameter(componentId,key, value);
+    setOnboardParameter(compId,key,value);
+
+    emit parameterUpdated(compId,key,value);
+
 }
 
 bool UASParameterDataModel::getOnboardParameterValue(int componentId, const QString& key, QVariant& value) const
