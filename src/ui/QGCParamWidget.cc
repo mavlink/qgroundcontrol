@@ -27,16 +27,17 @@ This file is part of the QGROUNDCONTROL project
  */
 #include <cmath>
 #include <float.h>
-#include <QGridLayout>
-#include <QPushButton>
-#include <QFileDialog>
-#include <QFile>
-#include <QList>
-#include <QTime>
-#include <QSettings>
-#include <QMessageBox>
 #include <QApplication>
 #include <QDebug>
+#include <QFile>
+#include <QFileDialog>
+#include <QGridLayout>
+
+#include <QList>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSettings>
+#include <QTime>
 
 #include "MainWindow.h"
 #include "QGC.h"
@@ -338,7 +339,7 @@ void QGCParamWidget::handleParameterUpdate(int componentId, int paramCount, int 
 }
 
 
-void QGCParamWidget::handleParameterListUpToDate(int component)
+void QGCParamWidget::handleParameterListUpToDate()
 {
     // Expand visual tree
     tree->expandItem(tree->topLevelItem(0));
@@ -593,94 +594,95 @@ void QGCParamWidget::writeParameters()
  * @param parameterName name of the parameter, as delivered by the system
  * @param value value of the parameter
  */
-void QGCParamWidget::setParameter(int component, QString parameterName, QVariant value)
-{
-    if (parameterName.isEmpty()) {
-        return;
-    }
+//void QGCParamWidget::setParameter(int component, QString parameterName, QVariant value)
+//{
 
-    double dblValue = value.toDouble();
+//    if (parameterName.isEmpty()) {
+//        return;
+//    }
 
-    if (paramDataModel->isValueLessThanParamMin(parameterName,dblValue)) {
-        statusLabel->setText(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue));
-        return;
-    }
-    if (paramDataModel->isValueGreaterThanParamMax(parameterName,dblValue)) {
-        statusLabel->setText(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue));
-        return;
-    }
-    QVariant onboardVal;
-    paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
-    if (onboardVal == value) {
-        statusLabel->setText(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue));
-        return;
-    }
+//    double dblValue = value.toDouble();
 
-    //int paramType = (int)onboardParameters.value(component)->value(parameterName).type();
-    int paramType = (int)value.type();
-    switch (paramType)
-    {
-    case QVariant::Char:
-    {
-        QVariant fixedValue(QChar((unsigned char)value.toInt()));
-        emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
-    }
-        break;
-    case QVariant::Int:
-    {
-        QVariant fixedValue(value.toInt());
-        emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
-    }
-        break;
-    case QVariant::UInt:
-    {
-        QVariant fixedValue(value.toUInt());
-        emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
-    }
-        break;
-    case QMetaType::Float:
-    {
-        QVariant fixedValue(value.toFloat());
-        emit parameterChanged(component, parameterName, fixedValue);
-        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
-    }
-        break;
-    default:
-        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
-        return;
-    }
+//    if (paramDataModel->isValueLessThanParamMin(parameterName,dblValue)) {
+//        statusLabel->setText(tr("REJ. %1, %2 < min").arg(parameterName).arg(dblValue));
+//        return;
+//    }
+//    if (paramDataModel->isValueGreaterThanParamMax(parameterName,dblValue)) {
+//        statusLabel->setText(tr("REJ. %1, %2 > max").arg(parameterName).arg(dblValue));
+//        return;
+//    }
+//    QVariant onboardVal;
+//    paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
+//    if (onboardVal == value) {
+//        statusLabel->setText(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue));
+//        return;
+//    }
 
-    // Wait for parameter to be written back
-    // mark it therefore as missing
-    if (!transmissionMissingWriteAckPackets.contains(component))
-    {
-        transmissionMissingWriteAckPackets.insert(component, new QMap<QString, QVariant>());
-    }
+//    //int paramType = (int)onboardParameters.value(component)->value(parameterName).type();
+//    int paramType = (int)value.type();
+//    switch (paramType)
+//    {
+//    case QVariant::Char:
+//    {
+//        QVariant fixedValue(QChar((unsigned char)value.toInt()));
+//        emit parameterChanged(component, parameterName, fixedValue);
+//        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+//    }
+//        break;
+//    case QVariant::Int:
+//    {
+//        QVariant fixedValue(value.toInt());
+//        emit parameterChanged(component, parameterName, fixedValue);
+//        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+//    }
+//        break;
+//    case QVariant::UInt:
+//    {
+//        QVariant fixedValue(value.toUInt());
+//        emit parameterChanged(component, parameterName, fixedValue);
+//        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+//    }
+//        break;
+//    case QMetaType::Float:
+//    {
+//        QVariant fixedValue(value.toFloat());
+//        emit parameterChanged(component, parameterName, fixedValue);
+//        //qDebug() << "PARAM WIDGET SENT:" << fixedValue;
+//    }
+//        break;
+//    default:
+//        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
+//        return;
+//    }
 
-    // Insert it in missing write ACK list
-    transmissionMissingWriteAckPackets.value(component)->insert(parameterName, value);
+//    // Wait for parameter to be written back
+//    // mark it therefore as missing
+//    if (!transmissionMissingWriteAckPackets.contains(component))
+//    {
+//        transmissionMissingWriteAckPackets.insert(component, new QMap<QString, QVariant>());
+//    }
 
-    // Set timeouts
-    if (transmissionActive)
-    {
-        transmissionTimeout += rewriteTimeout;
-    }
-    else
-    {
-        quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + rewriteTimeout;
-        if (newTransmissionTimeout > transmissionTimeout)
-        {
-            transmissionTimeout = newTransmissionTimeout;
-        }
-        transmissionActive = true;
-    }
+//    // Insert it in missing write ACK list
+//    transmissionMissingWriteAckPackets.value(component)->insert(parameterName, value);
 
-    // Enable guard / reset timeouts
-    paramCommsMgr->setRetransmissionGuardEnabled(true); //TODO
-}
+//    // Set timeouts
+//    if (transmissionActive)
+//    {
+//        transmissionTimeout += rewriteTimeout;
+//    }
+//    else
+//    {
+//        quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + rewriteTimeout;
+//        if (newTransmissionTimeout > transmissionTimeout)
+//        {
+//            transmissionTimeout = newTransmissionTimeout;
+//        }
+//        transmissionActive = true;
+//    }
+
+//    // Enable guard / reset timeouts
+//    paramCommsMgr->setRetransmissionGuardEnabled(true); //TODO
+//}
 
 void QGCParamWidget::readParameters()
 {
@@ -695,4 +697,21 @@ void QGCParamWidget::clear()
 {
     tree->clear();
     componentItems->clear();
+}
+
+void QGCParamWidget::handleParamStatusMsgUpdate(QString msg, int level)
+{
+    QColor bgColor = QGC::colorGreen;
+    if ((int)UASParameterCommsMgr::ParamCommsStatusLevel_Warning == level) {
+        bgColor = QGC::colorOrange;
+    }
+    else if ((int)UASParameterCommsMgr::ParamCommsStatusLevel_Error == level) {
+        bgColor =  QGC::colorRed;
+    }
+
+    QPalette pal = statusLabel->palette();
+    pal.setColor(backgroundRole(), bgColor);
+    statusLabel->setPalette(pal);
+    statusLabel->setText(msg);
+
 }
