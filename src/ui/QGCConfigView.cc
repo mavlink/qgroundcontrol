@@ -8,7 +8,7 @@
 QGCConfigView::QGCConfigView(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QGCConfigView),
-    currUAS(NULL)
+    mav(NULL)
 {
     ui->setupUi(this);
 
@@ -26,7 +26,7 @@ QGCConfigView::~QGCConfigView()
 
 void QGCConfigView::activeUASChanged(UASInterface* uas)
 {
-    if (currUAS == uas)
+    if (mav == uas)
         return;
 
     //remove all child widgets since they could contain stale data
@@ -41,11 +41,13 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
         }
     }
 
-    if (NULL != uas) {
+    mav = uas;
+    if (NULL != mav) {
         ui->gridLayout->removeWidget(ui->waitingLabel);
         ui->waitingLabel->setVisible(false);
 
-        switch (uas->getAutopilotType()) {
+        int autopilotType = mav->getAutopilotType();
+        switch (autopilotType) {
         case MAV_AUTOPILOT_PX4:
             ui->gridLayout->addWidget(new QGCPX4VehicleConfig());
             break;
