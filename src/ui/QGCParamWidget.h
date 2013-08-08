@@ -48,9 +48,6 @@ class QGCParamWidget : public QGCUASParamManager
     Q_OBJECT
 public:
     QGCParamWidget(UASInterface* uas, QWidget *parent = 0);
-    /** @brief Get the UAS of this widget */
-    UASInterface* getUAS();
-
 
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
@@ -61,12 +58,20 @@ signals:
 
 
 public slots:
-    /** @brief Add a component to the list */
-    void addComponentItem(int uas, int component, QString componentName);
+    /** @brief Add a component to the list
+     * @param compId Component id of the component
+     * @param compName Human friendly name of the component
+     */
+    void addComponentItem(int compId, QString compName);
+
     /** @brief Add a parameter to the list with retransmission / safety checks */
-    void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
-    /** @brief Add a parameter to the list */
-    void updateParameterDisplay(int uas, int component, QString parameterName, QVariant value);
+//    void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
+
+    virtual void handleParameterUpdate(int component, int paramCount, int paramId, const QString& parameterName, QVariant value);
+    virtual void handleParameterListUpToDate(int component);
+
+    /** @brief Ensure that view of parameter matches data in the model */
+    void updateParameterDisplay(int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
     void requestAllParamsUpdate();
     /** @brief Set one parameter, changes value in RAM of MAV */
@@ -91,17 +96,11 @@ public slots:
 
 protected:
     QTreeWidget* tree;   ///< The parameter tree
-    QLabel* statusLabel; ///< Parameter transmission label
-    QMap<int, QTreeWidgetItem*>* componentItems; ///< The list of component items, stored by component ID
-    QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
+    QLabel* statusLabel; ///< User-facing parameter status label
+    QMap<int, QTreeWidgetItem*>* componentItems; ///< The tree of component items, stored by component ID
+    QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
 
 
-
-
-    /** @brief Load  settings */
-    void loadSettings();
-    /** @brief Load meta information from CSV */
-    void loadParamMetaInfoCSV(const QString& autopilot, const QString& airframe);
 };
 
 #endif // QGCPARAMWIDGET_H
