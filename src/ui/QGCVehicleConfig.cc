@@ -937,6 +937,7 @@ void QGCVehicleConfig::writeCalibrationRC()
     // Do not write the RC type, as these values depend on this
     // active onboard parameter
 
+    //TODO consolidate RC param sending in the UAS comms mgr
     for (unsigned int i = 0; i < chanCount; ++i)
     {
         //qDebug() << "SENDING" << minTpl.arg(i+1) << rcMin[i];

@@ -941,6 +941,7 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     // Do not write the RC type, as these values depend on this
     // active onboard parameter
 
+    //TODO consolidate RC param sending in the UAS comms mgr
     for (unsigned int i = 0; i < chanCount; ++i)
     {
         //qDebug() << "SENDING" << minTpl.arg(i+1) << rcMin[i];
@@ -975,7 +976,9 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
 
 void QGCPX4VehicleConfig::requestCalibrationRC()
 {
-    if (!mav) return;
+    if (!mav ) {
+        return;
+    }
 
     QString minTpl("RC%1_MIN");
     QString maxTpl("RC%1_MAX");
@@ -985,15 +988,15 @@ void QGCPX4VehicleConfig::requestCalibrationRC()
     // Do not request the RC type, as these values depend on this
     // active onboard parameter
 
-    for (unsigned int i = 0; i < chanMax; ++i)
-    {
-        mav->requestParameter(0, minTpl.arg(i+1));
+    for (unsigned int i = 1; i < (chanMax+1); ++i)  {
+        qDebug() << "Request RC " << i;
+        mav->requestParameter(0, minTpl.arg(i));
         QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, trimTpl.arg(i+1));
+        mav->requestParameter(0, trimTpl.arg(i));
         QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, maxTpl.arg(i+1));
+        mav->requestParameter(0, maxTpl.arg(i));
         QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, revTpl.arg(i+1));
+        mav->requestParameter(0, revTpl.arg(i));
         QGC::SLEEP::usleep(5000);
     }
 }
