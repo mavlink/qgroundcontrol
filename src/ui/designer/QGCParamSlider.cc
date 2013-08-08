@@ -92,31 +92,32 @@ void QGCParamSlider::refreshParamList()
 
 void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 {
-    if (activeUas) {
-        // Set param info
-        if (!parameterName.isEmpty()) {
-            //disconnect from any existing uas signals
-            if (uas != activeUas)  {
-                disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)));
-                connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
-                uas = activeUas;
-            }
 
-            QString text = uas->getParamDataModel()->getParamDescription(parameterName);
-            if (!text.isEmpty()) {
-                ui->infoLabel->setToolTip(text);
-                ui->infoLabel->show();
-            }
-            // Force-uncheck and hide label if no description is available
-            if (ui->editInfoCheckBox->isChecked()) {
-                showInfo((text.length() > 0));
-            }
+    if (uas != activeUas)  {
+        if (uas) {
+            disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
+                       this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)));
         }
-        else {
-            //when parameter widgets are first loaded, they are disconnected from any parameter?
-            qWarning() << __FILE__ << ":" << __LINE__ << "slider has no parameterName??";
+        if (activeUas) {
+            connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
+                    this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
+        }
+        uas = activeUas;
+    }
+
+    if (uas && !parameterName.isEmpty()) {
+        QString text = uas->getParamDataModel()->getParamDescription(parameterName);
+        if (!text.isEmpty()) {
+            ui->infoLabel->setToolTip(text);
+            ui->infoLabel->show();
+        }
+        // Force-uncheck and hide label if no description is available
+        if (ui->editInfoCheckBox->isChecked()) {
+            showInfo((text.length() > 0));
         }
     }
+
+
 }
 
 void QGCParamSlider::requestParameter()
@@ -245,7 +246,7 @@ void QGCParamSlider::endEditMode()
     ui->writeButton->show();
     ui->readButton->show();
     ui->valueSlider->show();
-    switch (parameterValue.type())
+    switch ((int)parameterValue.type())
     {
     case QVariant::Char:
     case QVariant::Int:
@@ -289,7 +290,7 @@ void QGCParamSlider::setSliderValue(int sliderValue)
     if (!valueModLock && !valueModLockParam)
     {
         valueModLock = true;
-        switch (parameterValue.type())
+        switch ((int)parameterValue.type())
         {
         case QVariant::Char:
             parameterValue = QVariant(QChar((unsigned char)scaledIntToFloat(sliderValue)));
@@ -393,7 +394,7 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
         parameterValue = value;
         ui->valueSlider->setEnabled(true);
         valueModLockParam = true;
-        switch (value.type())
+        switch ((int)value.type())
         {
         case QVariant::Char:
             ui->intValueSpinBox->show();
