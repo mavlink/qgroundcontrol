@@ -17,7 +17,6 @@ public:
     explicit QGCWelcomeMainWindow(QWidget *parent = 0);
     ~QGCWelcomeMainWindow();
 
-    enum MainWindow::CUSTOM_MODE getCustomMode();
     bool getStoreSettings()
     {
         return storeSettings;
