@@ -69,12 +69,12 @@ public:
         return onboardParameters.value(componentId);
     }
 
-    QMap<int, QMap<QString, QVariant>* >  getPendingParameters() {
-       return pendingParameters;
+    QMap<int, QMap<QString, QVariant>* >*  getPendingParameters() {
+       return &pendingParameters;
    }
 
-    QMap<int, QMap<QString, QVariant>* > getOnboardParameters() {
-       return onboardParameters;
+    QMap<int, QMap<QString, QVariant>* >* getOnboardParameters() {
+       return &onboardParameters;
    }
 
 
