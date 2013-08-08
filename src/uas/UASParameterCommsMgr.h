@@ -62,6 +62,7 @@ public slots:
 
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
+
     /** @brief Check for missing parameters */
     virtual void retransmissionGuardTick();
 
