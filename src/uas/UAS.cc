@@ -234,6 +234,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 */
 UAS::~UAS()
 {
+    delete paramCommsMgr;
+    delete paramDataModel;
     writeSettings();
     delete links;
     delete statusTimeout;
@@ -2029,8 +2031,10 @@ void UAS::forwardMessage(mavlink_message_t message)
                 {
                     if(serial != links->at(i))
                     {
-                        qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
-                        sendMessage(serial, message);
+                        if (link->isConnected()) {
+                            qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
+                            sendMessage(serial, message);
+                        }
                     }
                 }
             }
@@ -2541,7 +2545,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
         if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
         {
-            switch (value.type())
+            switch ((int)value.type())
             {
             case QVariant::Char:
                 union_value.param_float = (unsigned char)value.toChar().toAscii();
@@ -2566,7 +2570,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         }
         else
         {
-            switch (value.type())
+            switch ((int)value.type())
             {
             case QVariant::Char:
                 union_value.param_int8 = (unsigned char)value.toChar().toAscii();

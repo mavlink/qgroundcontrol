@@ -98,6 +98,7 @@ protected:
     int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
     int rewriteTimeout; ///< Write request timeout, in milliseconds
     int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
+    quint64 listRecvTimeout;     ///< How long to wait for first parameter list response before re-requesting
 
     // Status
     QString parameterStatusMsg;
