@@ -68,14 +68,16 @@ public slots:
 //    void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
 
     virtual void handleParameterUpdate(int component, int paramCount, int paramId, const QString& parameterName, QVariant value);
-    virtual void handleParameterListUpToDate(int component);
+    virtual void handleParameterListUpToDate();
+
+    virtual void handleParamStatusMsgUpdate(QString msg, int level);
 
     /** @brief Ensure that view of parameter matches data in the model */
     void updateParameterDisplay(int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
     void requestAllParamsUpdate();
     /** @brief Set one parameter, changes value in RAM of MAV */
-    virtual void setParameter(int component, QString parameterName, QVariant value);
+//    virtual void setParameter(int component, QString parameterName, QVariant value);
     /** @brief Set all parameters, changes the value in RAM of MAV */
     void setParameters();
     /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */

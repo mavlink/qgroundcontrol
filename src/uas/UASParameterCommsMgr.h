@@ -16,16 +16,16 @@ class UASParameterCommsMgr : public QObject
 {
     Q_OBJECT
 
-typedef enum ParamCommsStatusLevel {
-    ParamCommsStatusLevel_OK = 0,
-    ParamCommsStatusLevel_Warning = 2,
-    ParamCommsStatusLevel_Error = 4,
-    ParamCommsStatusLevel_Count
-} ParamCommsStatusLevel_t;
 
 public:
     explicit UASParameterCommsMgr(QObject *parent = 0, UASInterface* uas = NULL);
-    
+    typedef enum ParamCommsStatusLevel {
+        ParamCommsStatusLevel_OK = 0,
+        ParamCommsStatusLevel_Warning = 2,
+        ParamCommsStatusLevel_Error = 4,
+        ParamCommsStatusLevel_Count
+    } ParamCommsStatusLevel_t;
+
 
 protected:
     /** @brief Activate / deactivate parameter retransmission */
@@ -41,7 +41,9 @@ signals:
     void parameterChanged(int component, int parameterIndex, QVariant value);
     void parameterValueConfirmed(int uas, int component,int paramCount, int paramId, QString parameter, QVariant value);
 
-    void parameterListUpToDate(int component);
+    /** @brief We have received a complete list of all parameters onboard the MAV */
+    void parameterListUpToDate();
+
     void parameterUpdateRequested(int component, const QString& parameter);
     void parameterUpdateRequestedById(int componentId, int paramId);
 
@@ -57,6 +59,7 @@ public slots:
 
     /** @brief Write one parameter to the MAV */
     virtual void setParameter(int component, QString parameterName, QVariant value);
+
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
     /** @brief Check for missing parameters */
@@ -67,9 +70,9 @@ public slots:
 
     virtual void receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value);
 
-protected slots:
-    void receivedParameterChange(int uas, int component, QString parameterName, QVariant value);
-    void receivedParameterListChange(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
+//protected slots:
+//    void receivedParameterChange(int uas, int component, QString parameterName, QVariant value);
+//    void receivedParameterListChange(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
 
 protected:
 

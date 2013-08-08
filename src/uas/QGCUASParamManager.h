@@ -43,16 +43,17 @@ signals:
 
 
 public slots:
-    /** @brief Write one parameter to the MAV */
-    virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
+    /** @brief Send one parameter to the MAV: changes value in transient memory of MAV */
+    virtual void setParameter(int component, QString parameterName, QVariant value);
+
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
 
-    /** @brief Request a single parameter by name */
+    /** @brief Request a single parameter by name from the MAV */
     virtual void requestParameterUpdate(int component, const QString& parameter);
 
     virtual void handleParameterUpdate(int component, int paramCount, int paramId, const QString& parameterName, QVariant value) = 0;
-    virtual void handleParameterListUpToDate(int component) = 0;
+    virtual void handleParameterListUpToDate() = 0;
 
 
 protected:
