@@ -99,15 +99,14 @@ void UASParameterCommsMgr::requestParameterList()
 void UASParameterCommsMgr::retransmissionGuardTick()
 {
     if (transmissionActive) {
-        if (transmissionListMode) {
-            if (transmissionListSizeKnown.isEmpty() ) {
-                //we are still waitin for the first parameter list response
-                if (QGC::groundTimeMilliseconds() > this->listRecvTimeout) {
-                    //re-request parameters
-                    setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
-                    listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
-                    mav->requestParameters();
-                }
+
+        if (transmissionListMode && transmissionListSizeKnown.isEmpty() ) {
+            //we are still waitin for the first parameter list response
+            if (QGC::groundTimeMilliseconds() > this->listRecvTimeout) {
+                //re-request parameters
+                setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
+                listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
+                mav->requestParameters();
             }
             return;
         }
@@ -142,8 +141,8 @@ void UASParameterCommsMgr::retransmissionGuardTick()
         // Re-request at maximum retransmissionBurstRequestSize parameters at once
         // to prevent link flooding
         QMap<int, QMap<QString, QVariant>*>::iterator i;
-        QMap<int, QMap<QString, QVariant>*> onboardParams = paramDataModel->getOnboardParameters();
-        for (i = onboardParams.begin(); i != onboardParams.end(); ++i) {
+        QMap<int, QMap<QString, QVariant>*>* onboardParams = paramDataModel->getOnboardParameters();
+        for (i = onboardParams->begin(); i != onboardParams->end(); ++i) {
             // Iterate through the parameters of the component
             int component = i.key();
             // Request n parameters from this component (at maximum)
@@ -175,7 +174,7 @@ void UASParameterCommsMgr::retransmissionGuardTick()
                 if (count < retransmissionBurstRequestSize) {
                     // Re-request write operation
                     QVariant value = missingParams->value(key);
-                    switch ((int)onboardParams.value(component)->value(key).type())
+                    switch ((int)onboardParams->value(component)->value(key).type())
                     {
                     case QVariant::Int:
                     {
@@ -395,12 +394,19 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             // Mark list size as known
             transmissionListSizeKnown.insert(compId, true);
 
-            // Mark all parameters as missing
+            qDebug() << "Mark all parameters as missing";
+            QList<int>* compParamList = transmissionMissingPackets.value(compId);
             for (int i = 0; i < paramCount; ++i) {
-                if (!transmissionMissingPackets.value(compId)->contains(i)) {
-                    transmissionMissingPackets.value(compId)->append(i);
+                if (!compParamList->contains(i)) {
+                    if (i != paramId) {
+                        compParamList->append(i);
+                    }
+                    else {
+                        qDebug() << "Already received " << paramId;
+                    }
                 }
             }
+
 
             // There is only one transmission timeout for all components
             // since components do not manage their transmission,
@@ -491,7 +497,8 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
     else {
         qDebug() << "missCount:" << missCount << "missWriteCount:" << missWriteCount;
         foreach (int key, transmissionMissingPackets.keys()) {
-            qDebug() << "Missing:" << key  ;
+            QList<int>* list = transmissionMissingPackets.value(key);
+            qDebug() << "Component" << key << "missing numParams:" << list->count() ;
         }
     }
 }
@@ -509,9 +516,9 @@ void UASParameterCommsMgr::sendPendingParameters()
 {
     // Iterate through all components, through all pending parameters and send them to UAS
     int parametersSent = 0;
-    QMap<int, QMap<QString, QVariant>*> changedValues = paramDataModel->getPendingParameters();
+    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getPendingParameters();
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    for (i = changedValues.begin(); i != changedValues.end(); ++i) {
+    for (i = changedValues->begin(); i != changedValues->end(); ++i) {
         // Iterate through the parameters of the component
         int compid = i.key();
         QMap<QString, QVariant>* comp = i.value();
