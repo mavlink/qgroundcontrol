@@ -99,13 +99,15 @@ void UASParameterCommsMgr::requestParameterList()
 void UASParameterCommsMgr::retransmissionGuardTick()
 {
     if (transmissionActive) {
-        if (transmissionListMode && transmissionListSizeKnown.isEmpty() ) {
-            //we are still waitin for the first parameter list response
-            if (QGC::groundTimeMilliseconds() > this->listRecvTimeout) {
-                //re-request parameters
-                setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
-                listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
-                mav->requestParameters();
+        if (transmissionListMode) {
+            if (transmissionListSizeKnown.isEmpty() ) {
+                //we are still waitin for the first parameter list response
+                if (QGC::groundTimeMilliseconds() > this->listRecvTimeout) {
+                    //re-request parameters
+                    setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
+                    listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
+                    mav->requestParameters();
+                }
             }
             return;
         }
@@ -485,6 +487,12 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
         setRetransmissionGuardEnabled(false);
         //all parameters have been received, broadcast to UI
         emit parameterListUpToDate();
+    }
+    else {
+        qDebug() << "missCount:" << missCount << "missWriteCount:" << missWriteCount;
+        foreach (int key, transmissionMissingPackets.keys()) {
+            qDebug() << "Missing:" << key  ;
+        }
     }
 }
 
