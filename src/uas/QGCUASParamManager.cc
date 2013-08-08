@@ -30,16 +30,11 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 
     void parameterUpdated(int compId, QString paramName, QVariant value);
 
-    connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
-            this, SLOT(handleParameterUpdate(int,QString,QVariant)));
 
 //    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
 //            this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
 
-    // Listen for param list reload finished
-    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
-            this, SLOT(handleParameterListUpToDate()));
 
 
 

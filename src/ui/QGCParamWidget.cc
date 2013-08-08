@@ -133,16 +133,26 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     tree->setExpandsOnDoubleClick(true);
 
     // Connect signals/slots
-    connect(this, SIGNAL(parameterChanged(int,QString,QVariant)), mav, SLOT(setParameter(int,QString,QVariant)));
-    connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
+//    connect(this, SIGNAL(parameterChanged(int,QString,QVariant)),
+//            mav, SLOT(setParameter(int,QString,QVariant)));
+    connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
+            this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
 
-    // New parameters from UAS
-    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
+//    // New parameters from UAS
+//    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
 
 //    connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
 //    connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
 //    connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
+
+
+    connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
+            this, SLOT(handleParameterUpdate(int,QString,QVariant)));
+
+    // Listen for param list reload finished
+    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
+            this, SLOT(handleParameterListUpToDate()));
 
     // Get parameters
     if (uas) {
@@ -331,9 +341,8 @@ void QGCParamWidget::addComponentItem( int compId, QString compName)
 //}
 
 
-void QGCParamWidget::handleParameterUpdate(int componentId, int paramId, const QString& paramName, QVariant value)
+void QGCParamWidget::handleParameterUpdate(int componentId, const QString& paramName, QVariant value)
 {
-    Q_UNUSED(paramId);
     updateParameterDisplay(componentId, paramName, value);
 }
 
