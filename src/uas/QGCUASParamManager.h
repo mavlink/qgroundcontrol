@@ -46,6 +46,9 @@ public slots:
     /** @brief Send one parameter to the MAV: changes value in transient memory of MAV */
     virtual void setParameter(int component, QString parameterName, QVariant value);
 
+    /** @brief Send all pending parameters to the MAV, for storage in transient (RAM) memory */
+    virtual void sendPendingParameters();
+
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
 
