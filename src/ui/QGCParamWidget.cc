@@ -88,7 +88,6 @@ void QGCParamWidget::layoutWidget()
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
     statusLabel->setAutoFillBackground(true);
-    tree->setColumnWidth(70, 30);
 
     // Set tree widget as widget onto this component
     QGridLayout* horizontalLayout;
@@ -117,7 +116,8 @@ void QGCParamWidget::layoutWidget()
     QPushButton* setButton = new QPushButton(tr("Set"));
     setButton->setToolTip(tr("Set current parameters in non-permanent onboard memory"));
     setButton->setWhatsThis(tr("Set current parameters in non-permanent onboard memory"));
-    connect(setButton, SIGNAL(clicked()), this, SLOT(setParameters()));
+    connect(setButton, SIGNAL(clicked()),
+            this, SLOT(sendPendingParameters()));
     horizontalLayout->addWidget(setButton, 2, 1);
 
     QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
@@ -159,7 +159,7 @@ void QGCParamWidget::layoutWidget()
     headerItems.append("Value");
     tree->setHeaderLabels(headerItems);
     tree->setColumnCount(2);
-    tree->setColumnWidth(0,120);
+    tree->setColumnWidth(0,200);
     tree->setColumnWidth(1,120);
     tree->setExpandsOnDoubleClick(true);
 
@@ -167,8 +167,9 @@ void QGCParamWidget::layoutWidget()
 }
 
 
-void QGCParamWidget::addComponentItem( int compId, QString compName)
+void QGCParamWidget::addComponentItem(int compId, QString compName)
 {
+
     QString compLine = QString("%1 (#%2)").arg(compName).arg(compId);
 
     QString ptrStr = QString().sprintf("%8p", this);
@@ -231,37 +232,41 @@ void QGCParamWidget::handleParameterListUpToDate()
 }
 
 
-void QGCParamWidget::updateParameterDisplay(int componentId, QString parameterName, QVariant value)
+void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
 {
 //    qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
-
 
     // Reference to item in tree
     QTreeWidgetItem* parameterItem = NULL;
 
     // Add component item if necessary
-    if (!componentItems->contains(componentId)) {
-        QString componentName = tr("Component #%1").arg(componentId);
-        addComponentItem(componentId, componentName);
+    if (!componentItems->contains(compId)) {
+        QString componentName = tr("Component #%1").arg(compId);
+        addComponentItem(compId, componentName);
     }
 
     QString splitToken = "_";
     // Check if auto-grouping can work
     if (parameterName.contains(splitToken)) {
-        QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
-        QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(componentId);
-        if (!compParamGroups->contains(parent)) {
+        QString parentStr = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
+        QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(compId);
+        if (!compParamGroups->contains(parentStr)) {
             // Insert group item
             QStringList glist;
-            glist.append(parent);
+            glist.append(parentStr);
             QTreeWidgetItem* groupItem = new QTreeWidgetItem(glist);
-            compParamGroups->insert(parent, groupItem);
-            componentItems->value(componentId)->addChild(groupItem);
+
+            compParamGroups->insert(parentStr, groupItem);
+
+            // insert new group alphabetized
+            QList<QString> groupKeys = compParamGroups->uniqueKeys();
+            int insertIdx = groupKeys.indexOf(parentStr);
+            componentItems->value(compId)->insertChild(insertIdx,groupItem);
         }
 
         // Append child to group
         bool found = false;
-        QTreeWidgetItem* parentItem = compParamGroups->value(parent);
+        QTreeWidgetItem* parentItem = compParamGroups->value(parentStr);
         for (int i = 0; i < parentItem->childCount(); i++) {
             QTreeWidgetItem* child = parentItem->child(i);
             QString key = child->data(0, Qt::DisplayRole).toString();
@@ -292,13 +297,13 @@ void QGCParamWidget::updateParameterDisplay(int componentId, QString parameterNa
                 parameterItem->setData(1, Qt::DisplayRole, value);
             }
 
-            compParamGroups->value(parent)->addChild(parameterItem);
+            compParamGroups->value(parentStr)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
     }
     else  {
         bool found = false;
-        QTreeWidgetItem* parent = componentItems->value(componentId);
+        QTreeWidgetItem* parent = componentItems->value(compId);
         for (int i = 0; i < parent->childCount(); i++) {
             QTreeWidgetItem* child = parent->child(i);
             QString key = child->data(0, Qt::DisplayRole).toString();
@@ -319,7 +324,7 @@ void QGCParamWidget::updateParameterDisplay(int componentId, QString parameterNa
             // CONFIGURE PARAMETER ITEM
             parameterItem->setData(1, Qt::DisplayRole, value);
 
-            componentItems->value(componentId)->addChild(parameterItem);
+            componentItems->value(compId)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
     }
@@ -435,14 +440,6 @@ void QGCParamWidget::requestAllParamsUpdate()
 
 
 /**
- * Set all parameter in the parameter tree on the MAV
- */
-void QGCParamWidget::setParameters()
-{
-    paramCommsMgr->sendPendingParameters();
-}
-
-/**
  * Write the current onboard parameters from RAM into
  * permanent storage, e.g. EEPROM or harddisk
  */
@@ -454,7 +451,7 @@ void QGCParamWidget::writeParameters()
     QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getPendingParameters();
 
     for (i = changedValues->begin(); (i != changedValues->end()) && (0 == changedParamCount);  ++i) {
-        // Iterate through the parameters of the component
+        // Iterate through the pending parameters of the component, break on the first changed parameter
         QMap<QString, QVariant>* compPending = i.value();
         changedParamCount += compPending->count();
     }

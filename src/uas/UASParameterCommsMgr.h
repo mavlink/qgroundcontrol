@@ -39,7 +39,7 @@ protected:
     void loadParamCommsSettings();
 
     /** @brief clear transmissionMissingPackets and transmissionMissingWriteAckPackets */
-    void clearRetransmissionLists();
+    void clearRetransmissionLists(int& missingReadCount, int& missingWriteCount );
 
     void resendReadWriteRequests();
 
