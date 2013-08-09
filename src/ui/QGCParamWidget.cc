@@ -267,72 +267,12 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
             componentItems->value(compId)->insertChild(insertIdx,groupItem);
         }
 
-        // Append child to group
-        //bool found = false;
-        //parent item for this tree widget item will be a group widget item
+        //parent item for this parameter item will be a group widget item
         parentItem = compParamGroups->value(parentStr);
-
-//        for (int i = 0; i < parentItem->childCount(); i++) {
-//            QTreeWidgetItem* child = parentItem->child(i);
-//            QString key = child->data(0, Qt::DisplayRole).toString();
-//            if (key == parameterName)  {
-//                //qDebug() << "UPDATED CHILD";
-//                parameterItem = child;
-//                if (value.type() == QVariant::Char) {
-//                    parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
-//                }
-//                else {
-//                    parameterItem->setData(1, Qt::DisplayRole, value);
-//                }
-//                found = true;
-//            }
-//        }
-
-//        if (!found) {
-//            // Insert parameter into map
-//            QStringList plist;
-//            plist.append(parameterName);
-//            // CREATE PARAMETER ITEM
-//            parameterItem = new QTreeWidgetItem(plist);
-//            // CONFIGURE PARAMETER ITEM
-//            if (value.type() == QVariant::Char) {
-//                parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
-//            }
-//            else {
-//                parameterItem->setData(1, Qt::DisplayRole, value);
-//            }
-//            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
-
-//            parentItem->addChild(parameterItem);
-//        }
     }
     else  {
-        //bool found = false;
+        //parent item for this parameter will be the top level component widget item
         parentItem = componentItems->value(compId);
-
-//        for (int i = 0; i < parent->childCount(); i++) {
-//            QTreeWidgetItem* child = parent->child(i);
-//            QString key = child->data(0, Qt::DisplayRole).toString();
-//            if (key == parameterName) {
-//                //qDebug() << "UPDATED CHILD";
-//                parameterItem = child;
-//                parameterItem->setData(1, Qt::DisplayRole, value);
-//                found = true;
-//            }
-//        }
-
-//        if (!found) {
-//            // Insert parameter into map
-//            QStringList plist;
-//            plist.append(parameterName);
-//            // CREATE PARAMETER ITEM
-//            parameterItem = new QTreeWidgetItem(plist);
-//            // CONFIGURE PARAMETER ITEM
-//            parameterItem->setData(1, Qt::DisplayRole, value);
-
-//            componentItems->value(compId)->addChild(parameterItem);
-//            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
-//        }
     }
 
     if (parentItem) {
@@ -367,7 +307,7 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
                 parameterItem->setData(1, Qt::DisplayRole, value);
             }
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
-
+            //TODO insert alphabetically
             parentItem->addChild(parameterItem);
         }
     }
@@ -411,24 +351,24 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
 
         QString key = current->data(0, Qt::DisplayRole).toString();
         QVariant value = current->data(1, Qt::DisplayRole);
-        // Set parameter on changed list to be transmitted to MAV
-        QPalette pal = statusLabel->palette();
-        pal.setColor(backgroundRole(), QGC::colorOrange);
-        statusLabel->setPalette(pal);
-        statusLabel->setText(tr("Transmit pend. %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
-        //qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
-        // Changed values list
 
         bool changed = paramDataModel->addPendingIfParameterChanged(componentId,key,value);
 
         // If the value was numerically changed, display it differently
         if (changed) {
+
+            // Set parameter on changed list to be transmitted to MAV
+            statusLabel->setText(tr("Transmit pend. %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
+
+            if (current == tree->currentItem()) {
+                //need to unset current item to clear highlighting (green by default)
+                tree->setCurrentItem(NULL); //clear the selected line
+            }
             current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
             current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
-
-            //TODO this seems incorrect-- we're pre-updating the onboard value before we've received confirmation
-            //paramDataModel->setOnboardParameterWithType(componentId,key,value);
+            tree->update();
         }
+
 
     }
 }

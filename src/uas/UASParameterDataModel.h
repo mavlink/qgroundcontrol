@@ -45,7 +45,7 @@ public:
     virtual void forgetAllOnboardParameters();
 
     /**
-     * @return true if the parameter has changed
+     * @return true if the given value for the parameter is different from the existing value
     */
     virtual bool checkParameterChanged(int componentId, const QString& key,  const QVariant &value);
 
