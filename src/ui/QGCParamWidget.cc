@@ -171,7 +171,7 @@ void QGCParamWidget::addComponentItem( int compId, QString compName)
 {
     QString compLine = QString("%1 (#%2)").arg(compName).arg(compId);
 
-    QString ptrStr.sprintf("%8p", this);
+    QString ptrStr = QString().sprintf("%8p", this);
     qDebug() <<  "QGCParamWidget" << ptrStr << "addComponentItem:" << compLine;
 
     if (componentItems->contains(compId)) {
