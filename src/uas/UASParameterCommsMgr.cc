@@ -495,15 +495,31 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
         emit parameterListUpToDate();
     }
     else {
-        qDebug() << "missCount:" << missCount << "missWriteCount:" << missWriteCount;
+        //reset the timeout timer since we received one
+        setRetransmissionGuardEnabled(true);
 
-        if (missCount < 4) {
-            foreach (int key, transmissionMissingPackets.keys()) {
-                QList<int>* list = transmissionMissingPackets.value(key);
-                qDebug() << "Component" << key << "missing params:" << list ;
-            }
-        }
-        setRetransmissionGuardEnabled(true); //reset the timeout timer since we received one
+        //qDebug() << "missCount:" << missCount << "missWriteCount:" << missWriteCount;
+        //if (missCount < 4) {
+        //    foreach (int key, transmissionMissingPackets.keys()) {
+        //        QList<int>* list = transmissionMissingPackets.value(key);
+
+        //        if (list && list->count()) {
+        //            QString yazza = QString().sprintf("Component %d missing %d: ",key,list->count());
+
+        //            for (int i = 0; i < list->count(); i++) {
+        //                int val = list->at(i);
+        //                yazza.append( QString().sprintf("%d,",val) );
+        //            }
+
+        //            qDebug() << yazza;
+        //        }
+        //        else {
+        //            //very suspicious...no actual missing items??
+        //            transmissionMissingPackets.remove(key);
+        //            break;
+        //        }
+        //    }
+        //}
     }
 }
 
