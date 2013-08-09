@@ -175,6 +175,9 @@ void QGCParamSlider::selectParameter(int paramIndex)
 {
     // Set name
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
+    if (parameterName.isEmpty()) {
+        return;
+    }
 
     // Update min and max values if available
     if (uas) {
