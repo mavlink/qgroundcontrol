@@ -66,6 +66,9 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
             this, SLOT(handleParameterUpdate(int,QString,QVariant)));
 
+    connect(paramDataModel, SIGNAL(pendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)),
+            this, SLOT(handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)));
+
     // Listen for param list reload finished
     connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
             this, SLOT(handleParameterListUpToDate()));
@@ -197,6 +200,19 @@ void QGCParamWidget::addComponentItem(int compId, QString compName)
 
 }
 
+void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)
+{
+    QTreeWidgetItem* paramItem = updateParameterDisplay(compId,paramName,value);
+    if (isPending) {
+        paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
+        paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
+    }
+    else {
+        paramItem->setBackground(0, Qt::NoBrush);
+        paramItem->setBackground(1, Qt::NoBrush);
+    }
+
+}
 
 void QGCParamWidget::handleParameterUpdate(int componentId, const QString& paramName, QVariant value)
 {
@@ -206,7 +222,6 @@ void QGCParamWidget::handleParameterUpdate(int componentId, const QString& param
 
 void QGCParamWidget::handleParameterListUpToDate()
 {
-//    tree->collapseAll();
 
     //turn off updates while we refresh the entire list
     tree->setUpdatesEnabled(false);
@@ -231,27 +246,30 @@ void QGCParamWidget::handleParameterListUpToDate()
 
 }
 
-
-void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
+QTreeWidgetItem* QGCParamWidget::findChildWidgetItemForParam(QTreeWidgetItem* parentItem, const QString& paramName)
 {
-//    qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
+    QTreeWidgetItem* childItem = NULL;
 
-    // Reference to item in tree
-    QTreeWidgetItem* parameterItem = NULL;
-
-    // Add component item if necessary
-    if (!componentItems->contains(compId)) {
-        QString componentName = tr("Component #%1").arg(compId);
-        addComponentItem(compId, componentName);
+    for (int i = 0; i < parentItem->childCount(); i++) {
+        QTreeWidgetItem* child = parentItem->child(i);
+        QString key = child->data(0, Qt::DisplayRole).toString();
+        if (key == paramName)  {
+            childItem = child;
+            break;
+        }
     }
 
-    //default parent item for this parameter widget item will be the top level component item
+    return childItem;
+}
+
+QTreeWidgetItem* QGCParamWidget::getParentWidgetItemForParam(int compId, const QString& paramName)
+{
     QTreeWidgetItem* parentItem = componentItems->value(compId);
 
     QString splitToken = "_";
     // Check if auto-grouping can work
-    if (parameterName.contains(splitToken)) {
-        QString parentStr = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
+    if (paramName.contains(splitToken)) {
+        QString parentStr = paramName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
         QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(compId);
         if (!compParamGroups->contains(parentStr)) {
             // Insert group item
@@ -271,29 +289,31 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
         parentItem = compParamGroups->value(parentStr);
     }
     else  {
-        //parent item for this parameter will be the top level component widget item
+        //parent item for this parameter will be the top level (component) widget item
         parentItem = componentItems->value(compId);
     }
 
-    if (parentItem) {
-        bool found = false;
-        for (int i = 0; i < parentItem->childCount(); i++) {
-            QTreeWidgetItem* child = parentItem->child(i);
-            QString key = child->data(0, Qt::DisplayRole).toString();
-            if (key == parameterName)  {
-                //qDebug() << "UPDATED CHILD";
-                parameterItem = child;
-                if (value.type() == QVariant::Char) {
-                    parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
-                }
-                else {
-                    parameterItem->setData(1, Qt::DisplayRole, value);
-                }
-                found = true;
-            }
-        }
+    return parentItem;
+}
 
-        if (!found) {
+QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
+{
+//    qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
+
+    // Reference to item in tree
+    QTreeWidgetItem* parameterItem = NULL;
+
+    // Add component item if necessary
+    if (!componentItems->contains(compId)) {
+        QString componentName = tr("Component #%1").arg(compId);
+        addComponentItem(compId, componentName);
+    }
+
+    //default parent item for this parameter widget item will be the top level component item
+    QTreeWidgetItem* parentItem = getParentWidgetItemForParam(compId,parameterName);
+    if (parentItem) {
+        parameterItem = findChildWidgetItemForParam(parentItem,parameterName);
+        if (!parameterItem) {
             // Insert parameter into map
             QStringList plist;
             plist.append(parameterName);
@@ -309,6 +329,30 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
             //TODO insert alphabetically
             parentItem->addChild(parameterItem);
+
+            //only add the tooltip when the parameter item is first added
+            QString paramDesc = paramDataModel->getParamDescription(parameterName);
+            if (!paramDesc.isEmpty()) {
+                QString tooltipFormat;
+                if (paramDataModel->isParamDefaultKnown(parameterName)) {
+                    tooltipFormat = tr("Default: %1, %2");
+                    double paramDefValue = paramDataModel->getParamDefault(parameterName);
+                    tooltipFormat = tooltipFormat.arg(paramDefValue).arg(paramDesc);
+                }
+                else {
+                    tooltipFormat = paramDesc;
+                }
+                parameterItem->setToolTip(0, tooltipFormat);
+                parameterItem->setToolTip(1, tooltipFormat);
+            }
+        }
+
+        //update the parameterItem's data
+        if (value.type() == QVariant::Char) {
+            parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+        }
+        else {
+            parameterItem->setData(1, Qt::DisplayRole, value);
         }
     }
 
@@ -319,21 +363,7 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
     parameterItem->setTextColor(0, QGC::colorDarkWhite);
     parameterItem->setTextColor(1, QGC::colorDarkWhite);
 
-    // Add tooltip
-    QString paramDesc = paramDataModel->getParamDescription(parameterName);
-    if (!paramDesc.isEmpty()) {
-        QString tooltipFormat;
-        if (paramDataModel->isParamDefaultKnown(parameterName)) {
-            tooltipFormat = tr("Default: %1, %2");
-            double paramDefValue = paramDataModel->getParamDefault(parameterName);
-            tooltipFormat = tooltipFormat.arg(paramDefValue).arg(paramDesc);
-        }
-        else {
-            tooltipFormat = paramDesc;
-        }
-        parameterItem->setToolTip(0, tooltipFormat);
-        parameterItem->setToolTip(1, tooltipFormat);
-    }
+    return parameterItem;
 
 }
 
@@ -367,7 +397,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
         }
         else {
-            QMap<QString , QVariant>* pendingParams = paramDataModel->getOnboardParamsForComponent(componentId);
+            QMap<QString , QVariant>* pendingParams = paramDataModel->getPendingParamsForComponent(componentId);
             int pendingCount = pendingParams->count();
             statusLabel->setText(tr("Pending items: %1").arg(pendingCount));
             current->setBackground(0, Qt::NoBrush);
