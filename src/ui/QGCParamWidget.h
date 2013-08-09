@@ -51,6 +51,7 @@ public:
 
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
+    virtual void layoutWidget();
 
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */

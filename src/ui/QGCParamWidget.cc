@@ -54,6 +54,36 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     componentItems(new QMap<int, QTreeWidgetItem*>())
 {
 
+    layoutWidget();
+
+    // Connect signals/slots
+
+    // Listen for edits to the tree UI
+    connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
+            this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
+
+    // Listen to updated param signals from the data model
+    connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
+            this, SLOT(handleParameterUpdate(int,QString,QVariant)));
+
+    // Listen for param list reload finished
+    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
+            this, SLOT(handleParameterListUpToDate()));
+
+    // Listen to communications status messages so we can display them
+    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
+            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
+
+    // Ensure we're receiving the list of params
+    requestAllParamsUpdate();
+
+}
+
+
+
+
+void QGCParamWidget::layoutWidget()
+{
     // Create tree widget
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
@@ -76,7 +106,6 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     // Status line
     statusLabel->setText(tr("Click refresh to download parameters"));
     horizontalLayout->addWidget(statusLabel, 1, 0, 1, 3);
-
 
     // BUTTONS
     QPushButton* refreshButton = new QPushButton(tr("Get"));
@@ -130,61 +159,35 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     headerItems.append("Value");
     tree->setHeaderLabels(headerItems);
     tree->setColumnCount(2);
+    tree->setColumnWidth(0,120);
+    tree->setColumnWidth(1,120);
     tree->setExpandsOnDoubleClick(true);
 
-    // Connect signals/slots
-//    connect(this, SIGNAL(parameterChanged(int,QString,QVariant)),
-//            mav, SLOT(setParameter(int,QString,QVariant)));
-    connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
-            this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
-
-//    // New parameters from UAS
-//    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
-
-
-//    connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
-//    connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
-//    connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
-
-
-    connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
-            this, SLOT(handleParameterUpdate(int,QString,QVariant)));
-
-    // Listen for param list reload finished
-    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
-            this, SLOT(handleParameterListUpToDate()));
-
-    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
-            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
-
-    // Get parameters
-    if (uas) {
-        requestAllParamsUpdate();
-    }
+    tree->setVisible(true);
 }
-
-
-
-
-
 
 
 void QGCParamWidget::addComponentItem( int compId, QString compName)
 {
+    QString compLine = QString("%1 (#%2)").arg(compName).arg(compId);
+
+    QString ptrStr.sprintf("%8p", this);
+    qDebug() <<  "QGCParamWidget" << ptrStr << "addComponentItem:" << compLine;
+
     if (componentItems->contains(compId)) {
-        // Update existing
-        componentItems->value(compId)->setData(0, Qt::DisplayRole, QString("%1 (#%2)").arg(compName).arg(compId));
+        // Update existing component item
+        componentItems->value(compId)->setData(0, Qt::DisplayRole, compLine);
         //components->value(component)->setData(1, Qt::DisplayRole, QString::number(component));
         componentItems->value(compId)->setFirstColumnSpanned(true);
     } else {
-        // Add new
-        QStringList list(QString("%1 (#%2)").arg(compName).arg(compId));
-        QTreeWidgetItem* comp = new QTreeWidgetItem(list);
-        comp->setFirstColumnSpanned(true);
-        componentItems->insert(compId, comp);
-        // Create grouping and update maps
+        // Add new component item
+        QStringList list(compLine);
+        QTreeWidgetItem* compItem = new QTreeWidgetItem(list);
+        compItem->setFirstColumnSpanned(true);
+        componentItems->insert(compId, compItem);
+        // Create parameter grouping for this component and update maps
         paramGroups.insert(compId, new QMap<QString, QTreeWidgetItem*>());
-        tree->addTopLevelItem(comp);
+        tree->addTopLevelItem(compItem);
         tree->update();
     }
 
@@ -202,7 +205,10 @@ void QGCParamWidget::handleParameterUpdate(int componentId, const QString& param
 
 void QGCParamWidget::handleParameterListUpToDate()
 {
-    tree->collapseAll();
+//    tree->collapseAll();
+
+    //turn off updates while we refresh the entire list
+    tree->setUpdatesEnabled(false);
 
     //rewrite the component item tree after receiving the full list
     QMap<int, QMap<QString, QVariant>*>::iterator i;
@@ -219,44 +225,38 @@ void QGCParamWidget::handleParameterListUpToDate()
 
     // Expand visual tree
     tree->expandItem(tree->topLevelItem(0));
+    tree->setUpdatesEnabled(true);
+    tree->update();
+
 }
 
 
 void QGCParamWidget::updateParameterDisplay(int componentId, QString parameterName, QVariant value)
 {
+//    qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
 
-//    QString ptrStr;
-//    ptrStr.sprintf("%8p", this);
-//    qDebug() <<  "QGCParamWidget " << ptrStr << " got param" <<  parameterName;
 
     // Reference to item in tree
     QTreeWidgetItem* parameterItem = NULL;
 
-    // Get component
+    // Add component item if necessary
     if (!componentItems->contains(componentId)) {
         QString componentName = tr("Component #%1").arg(componentId);
         addComponentItem(componentId, componentName);
     }
 
-    //TODO this should be bubbling up from the model, not vice-versa, right?
-//    // Replace value in data model
-//    paramDataModel->handleParameterUpdate(componentId,parameterName,value);
-
-
     QString splitToken = "_";
     // Check if auto-grouping can work
-    if (parameterName.contains(splitToken))
-    {
+    if (parameterName.contains(splitToken)) {
         QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
         QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(componentId);
-        if (!compParamGroups->contains(parent))
-        {
+        if (!compParamGroups->contains(parent)) {
             // Insert group item
             QStringList glist;
             glist.append(parent);
-            QTreeWidgetItem* item = new QTreeWidgetItem(glist);
-            compParamGroups->insert(parent, item);
-            componentItems->value(componentId)->addChild(item);
+            QTreeWidgetItem* groupItem = new QTreeWidgetItem(glist);
+            compParamGroups->insert(parent, groupItem);
+            componentItems->value(componentId)->addChild(groupItem);
         }
 
         // Append child to group
@@ -322,26 +322,30 @@ void QGCParamWidget::updateParameterDisplay(int componentId, QString parameterNa
             componentItems->value(componentId)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
-        //tree->expandAll();
     }
+
     // Reset background color
     parameterItem->setBackground(0, Qt::NoBrush);
     parameterItem->setBackground(1, Qt::NoBrush);
+
+    parameterItem->setTextColor(0, QGC::colorDarkWhite);
+    parameterItem->setTextColor(1, QGC::colorDarkWhite);
+
     // Add tooltip
     QString paramDesc = paramDataModel->getParamDescription(parameterName);
-    QString tooltipFormat;
-    if (paramDataModel->isParamDefaultKnown(parameterName)) {
-        tooltipFormat = tr("Default: %1, %2");
-        double paramDefValue = paramDataModel->getParamDefault(parameterName);
-        tooltipFormat = tooltipFormat.arg(paramDefValue).arg(paramDesc);
+    if (!paramDesc.isEmpty()) {
+        QString tooltipFormat;
+        if (paramDataModel->isParamDefaultKnown(parameterName)) {
+            tooltipFormat = tr("Default: %1, %2");
+            double paramDefValue = paramDataModel->getParamDefault(parameterName);
+            tooltipFormat = tooltipFormat.arg(paramDefValue).arg(paramDesc);
+        }
+        else {
+            tooltipFormat = paramDesc;
+        }
+        parameterItem->setToolTip(0, tooltipFormat);
+        parameterItem->setToolTip(1, tooltipFormat);
     }
-    else {
-        tooltipFormat = paramDesc;
-    }
-    parameterItem->setToolTip(0, tooltipFormat);
-    parameterItem->setToolTip(1, tooltipFormat);
-
-    //paramDataModel->handleParameterUpdate(componentId,parameterName,value);
 
 }
 
