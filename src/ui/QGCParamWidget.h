@@ -52,10 +52,11 @@ public:
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
     virtual void layoutWidget();
+    virtual QTreeWidgetItem* getParentWidgetItemForParam(int compId, const QString& paramName);
+    virtual QTreeWidgetItem* findChildWidgetItemForParam(QTreeWidgetItem* parentItem, const QString& paramName);
+
 
 signals:
-    /** @brief A parameter was changed in the widget, NOT onboard */
-    //void parameterChanged(int component, QString parametername, float value); // defined in QGCUASParamManager already
 
 
 public slots:
@@ -65,16 +66,16 @@ public slots:
      */
     void addComponentItem(int compId, QString compName);
 
-    /** @brief Add a parameter to the list with retransmission / safety checks */
-//    void receivedParameterUpdate(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
 
     virtual void handleParameterUpdate(int component,const QString& parameterName, QVariant value);
+    virtual void handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
+
     virtual void handleParameterListUpToDate();
 
     virtual void handleParamStatusMsgUpdate(QString msg, int level);
 
     /** @brief Ensure that view of parameter matches data in the model */
-    void updateParameterDisplay(int component, QString parameterName, QVariant value);
+    QTreeWidgetItem* updateParameterDisplay(int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
     void requestAllParamsUpdate();
 
