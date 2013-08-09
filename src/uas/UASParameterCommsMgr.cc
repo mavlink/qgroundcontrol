@@ -30,7 +30,7 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     connect(this, SIGNAL(parameterChanged(int,QString,QVariant)),
             mav, SLOT(setParameter(int,QString,QVariant)));
 
-    // New parameters from UAS
+    // Received parameter updates from UAS
     connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
             this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
@@ -177,7 +177,7 @@ void UASParameterCommsMgr::resendReadWriteRequests()
         QList<int>* missingReadParams = transmissionMissingPackets.value(compId, NULL);
         foreach (int paramId, *missingReadParams) {
             if (requestedReadCount < retransmissionBurstRequestSize) {
-                qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << paramId << "FROM COMPONENT #" << compId;
+                //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << paramId << "FROM COMPONENT #" << compId;
                 emit parameterUpdateRequestedById(compId, paramId);
                 setParameterStatusMsg(tr("Requested retransmission of #%1").arg(paramId+1));
                 requestedReadCount++;
@@ -385,6 +385,10 @@ void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsS
  */
 void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value)
 {
+    Q_UNUSED(uas); //this object is assigned to one UAS only
+
+    //notify the data model that we have an updated param
+    paramDataModel->handleParameterUpdate(compId,paramName,value);
 
     // Missing packets list has to be instantiated for all components
     if (!transmissionMissingPackets.contains(compId)) {
@@ -402,7 +406,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             transmissionListSizeKnown.insert(compId, true);
 
             qDebug() << "Mark all parameters as missing: " << paramCount;
-            for (int i = 0; i < paramCount; ++i) {
+            for (int i = 1; i < paramCount; ++i) { //TODO check: param Id 0 is  "all parameters" ?
                 if (!compXmitMissing->contains(i)) {
                     compXmitMissing->append(i);
                 }
