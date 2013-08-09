@@ -168,7 +168,6 @@ void UASParameterCommsMgr::resendReadWriteRequests()
     // Re-request at maximum retransmissionBurstRequestSize parameters at once
     // to prevent link flooding'
     int requestedReadCount = 0;
-
     compIds = transmissionMissingPackets.keys();
     foreach (compId, compIds) {
         // Request n parameters from this component (at maximum)
@@ -213,6 +212,10 @@ void UASParameterCommsMgr::resendReadWriteRequests()
             setRetransmissionGuardEnabled(false);
             transmissionActive = false;
         }
+    }
+    else {
+        //restart the timer now that we've sent
+        setRetransmissionGuardEnabled(true);
     }
 }
 
@@ -354,7 +357,7 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
     }
 
     QVariant onboardVal;
-    paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
+    paramDataModel->getOnboardParamValue(component,parameterName,onboardVal);
     if (onboardVal == value) {
         setParameterStatusMsg(tr("REJ. %1 already %2").arg(parameterName).arg(dblValue),
                               ParamCommsStatusLevel_Warning
@@ -408,7 +411,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
     Q_UNUSED(uas); //this object is assigned to one UAS only
 
     //notify the data model that we have an updated param
-    paramDataModel->handleParameterUpdate(compId,paramName,value);
+    paramDataModel->handleParamUpdate(compId,paramName,value);
 
     // Missing packets list has to be instantiated for all components
     if (!transmissionMissingPackets.contains(compId)) {
@@ -554,7 +557,7 @@ void UASParameterCommsMgr::sendPendingParameters()
 {
     // Iterate through all components, through all pending parameters and send them to UAS
     int parametersSent = 0;
-    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getPendingParameters();
+    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getAllPendingParams();
     QMap<int, QMap<QString, QVariant>*>::iterator i;
     for (i = changedValues->begin(); i != changedValues->end(); ++i) {
         // Iterate through the parameters of the component

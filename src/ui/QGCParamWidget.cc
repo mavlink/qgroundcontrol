@@ -213,7 +213,7 @@ void QGCParamWidget::handleParameterListUpToDate()
 
     //rewrite the component item tree after receiving the full list
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    QMap<int, QMap<QString, QVariant>*>* onboardParams = paramDataModel->getOnboardParameters();
+    QMap<int, QMap<QString, QVariant>*>* onboardParams = paramDataModel->getAllOnboardParams();
 
     for (i = onboardParams->begin(); i != onboardParams->end(); ++i) {
         int compId = i.key();
@@ -352,13 +352,12 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
         QString key = current->data(0, Qt::DisplayRole).toString();
         QVariant value = current->data(1, Qt::DisplayRole);
 
-        bool changed = paramDataModel->addPendingIfParameterChanged(componentId,key,value);
+        bool pending = paramDataModel->updatePendingParamWithValue(componentId,key,value);
 
-        // If the value was numerically changed, display it differently
-        if (changed) {
-
+        // If the value will result in an update
+        if (pending) {
             // Set parameter on changed list to be transmitted to MAV
-            statusLabel->setText(tr("Transmit pend. %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
+            statusLabel->setText(tr("Pending: %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
 
             if (current == tree->currentItem()) {
                 //need to unset current item to clear highlighting (green by default)
@@ -366,9 +365,14 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             }
             current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
             current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
-            tree->update();
         }
-
+        else {
+            QMap<QString , QVariant>* pendingParams = paramDataModel->getOnboardParamsForComponent(componentId);
+            int pendingCount = pendingParams->count();
+            statusLabel->setText(tr("Pending items: %1").arg(pendingCount));
+            current->setBackground(0, Qt::NoBrush);
+            current->setBackground(1, Qt::NoBrush);
+        }
 
     }
 }
@@ -385,7 +389,7 @@ void QGCParamWidget::saveParametersToFile()
     }
 
     QTextStream outstream(&file);
-    paramDataModel->writeOnboardParametersToStream(outstream,mav->getUASName());
+    paramDataModel->writeOnboardParamsToStream(outstream,mav->getUASName());
     file.close();
 }
 
@@ -399,7 +403,7 @@ void QGCParamWidget::loadParametersFromFile()
         return;
 
     QTextStream in(&file);
-    paramDataModel->readUpdateParametersFromStream(in);
+    paramDataModel->readUpdateParamsFromStream(in);
     file.close();
 }
 
@@ -431,7 +435,7 @@ void QGCParamWidget::writeParameters()
     int changedParamCount = 0;
 
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getPendingParameters();
+    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getAllPendingParams();
 
     for (i = changedValues->begin(); (i != changedValues->end()) && (0 == changedParamCount);  ++i) {
         // Iterate through the pending parameters of the component, break on the first changed parameter

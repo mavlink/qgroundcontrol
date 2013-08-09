@@ -35,54 +35,50 @@ public:
     virtual void addComponent(int compId);
 
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
-    virtual void setPendingParameter(int componentId,  QString& key,  const QVariant& value);
-    virtual void setOnboardParameter(int componentId, QString& key, const QVariant& value);
+    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+
+    virtual void removePendingParam(int compId, QString& key);
 
     /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
-    virtual void setOnboardParameterWithType(int componentId, QString& key, QVariant& value);
+    virtual void setOnboardParamWithType(int componentId, QString& key, QVariant& value);
 
     /** @brief clears every parameter for every loaded component */
-    virtual void forgetAllOnboardParameters();
-
-    /**
-     * @return true if the given value for the parameter is different from the existing value
-    */
-    virtual bool checkParameterChanged(int componentId, const QString& key,  const QVariant &value);
+    virtual void forgetAllOnboardParams();
 
 
     /** @brief add this parameter to pending list iff it has changed from onboard value
-     * @return true if the parameter has changed
+     * @return true if the parameter is now pending
     */
-    virtual bool addPendingIfParameterChanged(int componentId, QString& key,  QVariant& value);
+    virtual bool updatePendingParamWithValue(int componentId, QString& key,  QVariant& value);
+    virtual void handleParamUpdate(int componentId, QString& key, QVariant& value);
+    virtual bool getOnboardParamValue(int componentId, const QString& key, QVariant& value) const;
 
-
-    virtual void handleParameterUpdate(int componentId, QString& key, QVariant& value);
-
-    virtual bool getOnboardParameterValue(int componentId, const QString& key, QVariant& value) const;
-
-    QMap<QString , QVariant>* getPendingParametersForComponent(int componentId) {
+    QMap<QString , QVariant>* getPendingParamsForComponent(int componentId) {
         return pendingParameters.value(componentId);
     }
 
-    QMap<QString , QVariant>* getOnbardParametersForComponent(int componentId) {
+    QMap<QString , QVariant>* getOnboardParamsForComponent(int componentId) {
         return onboardParameters.value(componentId);
     }
 
-    QMap<int, QMap<QString, QVariant>* >*  getPendingParameters() {
+    QMap<int, QMap<QString, QVariant>* >*  getAllPendingParams() {
        return &pendingParameters;
    }
 
-    QMap<int, QMap<QString, QVariant>* >* getOnboardParameters() {
+    QMap<int, QMap<QString, QVariant>* >* getAllOnboardParams() {
        return &onboardParameters;
    }
 
 
-    virtual void writeOnboardParametersToStream(QTextStream &stream, const QString& uasName);
-    virtual void readUpdateParametersFromStream(QTextStream &stream);
+    virtual void writeOnboardParamsToStream(QTextStream &stream, const QString& uasName);
+    virtual void readUpdateParamsFromStream(QTextStream &stream);
 
     virtual void loadParamMetaInfoFromStream(QTextStream& stream);
 
     void setUASID(int anId) {  this->uasId = anId; }
+
+protected:
+    virtual void setOnboardParam(int componentId, QString& key, const QVariant& value);
 
 signals:
     
