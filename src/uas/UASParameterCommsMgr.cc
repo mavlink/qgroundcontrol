@@ -14,8 +14,8 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     transmissionListMode(false),
     transmissionActive(false),
     transmissionTimeout(0),
-    retransmissionTimeout(350),
-    rewriteTimeout(500),
+    retransmissionTimeout(1000),
+    rewriteTimeout(1000),
     retransmissionBurstRequestSize(5)
 {
     paramDataModel = mav->getParamDataModel();
@@ -96,6 +96,125 @@ void UASParameterCommsMgr::requestParameterList()
 }
 
 
+/*
+ Empty read retransmission list
+ Empty write retransmission list
+*/
+void UASParameterCommsMgr::clearRetransmissionLists()
+{
+    qDebug() << __FILE__ << __LINE__ << "clearRetransmissionLists";
+
+    int missingReadCount = 0;
+    QList<int> readKeys = transmissionMissingPackets.keys();
+    foreach (int component, readKeys) {
+        missingReadCount += transmissionMissingPackets.value(component)->count();
+        transmissionMissingPackets.value(component)->clear();
+    }
+
+    int missingWriteCount = 0;
+    QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
+    foreach (int component, writeKeys) {
+        missingWriteCount += transmissionMissingWriteAckPackets.value(component)->count();
+        transmissionMissingWriteAckPackets.value(component)->clear();
+    }
+    setParameterStatusMsg(tr("TIMEOUT! MISSING: %1 read, %2 write.").arg(missingReadCount).arg(missingWriteCount),
+                          ParamCommsStatusLevel_Warning);
+
+}
+
+
+void UASParameterCommsMgr::emitParameterChanged(int compId, const QString& key, QVariant& value)
+{
+    int paramType = (int)value.type();
+    switch (paramType)
+    {
+    case QVariant::Char:
+    {
+        QVariant fixedValue(QChar((unsigned char)value.toInt()));
+        emit parameterChanged(compId, key, fixedValue);
+    }
+        break;
+    case QVariant::Int:
+    {
+        QVariant fixedValue(value.toInt());
+        emit parameterChanged(compId, key, fixedValue);
+    }
+        break;
+    case QVariant::UInt:
+    {
+        QVariant fixedValue(value.toUInt());
+        emit parameterChanged(compId, key, fixedValue);
+    }
+        break;
+    case QMetaType::Float:
+    {
+        QVariant fixedValue(value.toFloat());
+        emit parameterChanged(compId, key, fixedValue);
+    }
+        break;
+    default:
+        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
+        return;
+    }
+
+    setParameterStatusMsg(tr("Requested write of: %1: %2").arg(key).arg(value.toDouble()));
+
+}
+
+
+void UASParameterCommsMgr::resendReadWriteRequests()
+{
+    int compId;
+    QList<int> compIds;
+
+    // Re-request at maximum retransmissionBurstRequestSize parameters at once
+    // to prevent link flooding'
+    int requestedReadCount = 0;
+
+    compIds = transmissionMissingPackets.keys();
+    foreach (compId, compIds) {
+        // Request n parameters from this component (at maximum)
+        QList<int>* missingReadParams = transmissionMissingPackets.value(compId, NULL);
+        foreach (int paramId, *missingReadParams) {
+            if (requestedReadCount < retransmissionBurstRequestSize) {
+                qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << paramId << "FROM COMPONENT #" << compId;
+                emit parameterUpdateRequestedById(compId, paramId);
+                setParameterStatusMsg(tr("Requested retransmission of #%1").arg(paramId+1));
+                requestedReadCount++;
+            }
+            else {
+                qDebug() << "Throttling read retransmit requests at" << requestedReadCount;
+                break;
+            }
+        }
+    }
+
+    // Re-request at maximum retransmissionBurstRequestSize parameters at once
+    // to prevent write-request link flooding
+    int requestedWriteCount = 0;
+    compIds = transmissionMissingWriteAckPackets.keys();
+    foreach (compId, compIds) {
+        QMap <QString, QVariant>* missingParams = transmissionMissingWriteAckPackets.value(compId);
+        foreach (QString key, missingParams->keys()) {
+            if (requestedWriteCount < retransmissionBurstRequestSize) {
+                // Re-request write operation
+                QVariant value = missingParams->value(key);
+                emitParameterChanged(compId, key, value);
+                requestedWriteCount++;
+            }
+            else {
+                qDebug() << "Throttling write retransmit requests at" << requestedWriteCount;
+                break;
+            }
+        }
+    }
+
+    if ((0 == requestedWriteCount) && (0 == requestedReadCount) ) {
+        qDebug() << __FILE__ << __LINE__ << "NO re-read or rewrite requests??";
+        //setRetransmissionGuardEnabled(false);
+    }
+}
+
 void UASParameterCommsMgr::retransmissionGuardTick()
 {
     if (transmissionActive) {
@@ -118,94 +237,14 @@ void UASParameterCommsMgr::retransmissionGuardTick()
         if (QGC::groundTimeMilliseconds() > transmissionTimeout) {
             setRetransmissionGuardEnabled(false);
             transmissionActive = false;
-
-            // Empty read retransmission list
-            // Empty write retransmission list
-            int missingReadCount = 0;
-            QList<int> readKeys = transmissionMissingPackets.keys();
-            foreach (int component, readKeys) {
-                missingReadCount += transmissionMissingPackets.value(component)->count();
-                transmissionMissingPackets.value(component)->clear();
-            }
-
-            // Empty write retransmission list
-            int missingWriteCount = 0;
-            QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
-            foreach (int component, writeKeys) {
-                missingWriteCount += transmissionMissingWriteAckPackets.value(component)->count();
-                transmissionMissingWriteAckPackets.value(component)->clear();
-            }
-            setParameterStatusMsg(tr("TIMEOUT! MISSING: %1 read, %2 write.").arg(missingReadCount).arg(missingWriteCount));
+            transmissionListMode = false;
+            clearRetransmissionLists();
+            return;
         }
 
-        // Re-request at maximum retransmissionBurstRequestSize parameters at once
-        // to prevent link flooding
-        QMap<int, QMap<QString, QVariant>*>::iterator i;
-        QMap<int, QMap<QString, QVariant>*>* onboardParams = paramDataModel->getOnboardParameters();
-        for (i = onboardParams->begin(); i != onboardParams->end(); ++i) {
-            // Iterate through the parameters of the component
-            int component = i.key();
-            // Request n parameters from this component (at maximum)
-            QList<int> * paramList = transmissionMissingPackets.value(component, NULL);
-            if (paramList) {
-                int count = 0;
-                foreach (int id, *paramList) {
-                    if (count < retransmissionBurstRequestSize) {
-                        //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
-                        //TODO mavlink msg type for "request parameter set" ?
-                        emit parameterUpdateRequestedById(component, id);
-                        setParameterStatusMsg(tr("Requested retransmission of #%1").arg(id+1));
-                        count++;
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Re-request at maximum retransmissionBurstRequestSize parameters at once
-        // to prevent write-request link flooding
-        // Empty write retransmission list
-        QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
-        foreach (int component, writeKeys) {
-            int count = 0;
-            QMap <QString, QVariant>* missingParams = transmissionMissingWriteAckPackets.value(component);
-            foreach (QString key, missingParams->keys()) {
-                if (count < retransmissionBurstRequestSize) {
-                    // Re-request write operation
-                    QVariant value = missingParams->value(key);
-                    switch ((int)onboardParams->value(component)->value(key).type())
-                    {
-                    case QVariant::Int:
-                    {
-                        QVariant fixedValue(value.toInt());
-                        emit parameterChanged(component, key, fixedValue);
-                    }
-                        break;
-                    case QVariant::UInt:
-                    {
-                        QVariant fixedValue(value.toUInt());
-                        emit parameterChanged(component, key, fixedValue);
-                    }
-                        break;
-                    case QMetaType::Float:
-                    {
-                        QVariant fixedValue(value.toFloat());
-                        emit parameterChanged(component, key, fixedValue);
-                    }
-                        break;
-                    default:
-                        //qCritical() << "ABORTED PARAM RETRANSMISSION, NO VALID QVARIANT TYPE";
-                        return;
-                    }
-                    setParameterStatusMsg(tr("Requested rewrite of: %1: %2").arg(key).arg(missingParams->value(key).toDouble()));
-                    count++;
-                } else {
-                    break;
-                }
-            }
-        }
-    } else {
+        resendReadWriteRequests();
+    }
+    else {
         qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
         setRetransmissionGuardEnabled(false);
     }
@@ -293,6 +332,7 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
                               );
         return;
     }
+
     QVariant onboardVal;
     paramDataModel->getOnboardParameterValue(component,parameterName,onboardVal);
     if (onboardVal == value) {
@@ -302,43 +342,11 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
         return;
     }
 
-    //int paramType = (int)onboardParameters.value(component)->value(parameterName).type();
-    int paramType = (int)value.type();
-    switch (paramType)
-    {
-    case QVariant::Char:
-    {
-        QVariant fixedValue(QChar((unsigned char)value.toInt()));
-        emit parameterChanged(component, parameterName, fixedValue);
-    }
-        break;
-    case QVariant::Int:
-    {
-        QVariant fixedValue(value.toInt());
-        emit parameterChanged(component, parameterName, fixedValue);
-    }
-        break;
-    case QVariant::UInt:
-    {
-        QVariant fixedValue(value.toUInt());
-        emit parameterChanged(component, parameterName, fixedValue);
-    }
-        break;
-    case QMetaType::Float:
-    {
-        QVariant fixedValue(value.toFloat());
-        emit parameterChanged(component, parameterName, fixedValue);
-    }
-        break;
-    default:
-        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
-        return;
-    }
+    emitParameterChanged(component, parameterName, value);
 
     // Wait for parameter to be written back
     // mark it therefore as missing
-    if (!transmissionMissingWriteAckPackets.contains(component))
-    {
+    if (!transmissionMissingWriteAckPackets.contains(component)) {
         transmissionMissingWriteAckPackets.insert(component, new QMap<QString, QVariant>());
     }
 
@@ -346,15 +354,12 @@ void UASParameterCommsMgr::setParameter(int component, QString parameterName, QV
     transmissionMissingWriteAckPackets.value(component)->insert(parameterName, value);
 
     // Set timeouts
-    if (transmissionActive)
-    {
+    if (transmissionActive) {
         transmissionTimeout += rewriteTimeout;
     }
-    else
-    {
+    else {
         quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + rewriteTimeout;
-        if (newTransmissionTimeout > transmissionTimeout)
-        {
+        if (newTransmissionTimeout > transmissionTimeout) {
             transmissionTimeout = newTransmissionTimeout;
         }
         transmissionActive = true;
@@ -386,6 +391,8 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
         transmissionMissingPackets.insert(compId, new QList<int>());
     }
 
+    QList<int>* compXmitMissing =  transmissionMissingPackets.value(compId);
+
     // List mode is different from single parameter transfers
     if (transmissionListMode) {
         // Only accept the list size once on the first packet from
@@ -394,19 +401,12 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             // Mark list size as known
             transmissionListSizeKnown.insert(compId, true);
 
-            qDebug() << "Mark all parameters as missing";
-            QList<int>* compParamList = transmissionMissingPackets.value(compId);
+            qDebug() << "Mark all parameters as missing: " << paramCount;
             for (int i = 0; i < paramCount; ++i) {
-                if (!compParamList->contains(i)) {
-                    if (i != paramId) {
-                        compParamList->append(i);
-                    }
-                    else {
-                        qDebug() << "Already received " << paramId;
-                    }
+                if (!compXmitMissing->contains(i)) {
+                    compXmitMissing->append(i);
                 }
             }
-
 
             // There is only one transmission timeout for all components
             // since components do not manage their transmission,
@@ -419,19 +419,19 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 
         // Start retransmission guard
         // or reset timer
-        setRetransmissionGuardEnabled(true); //TODO
+        setRetransmissionGuardEnabled(true);
     }
 
     // Mark this parameter as received in read list
-    int index = transmissionMissingPackets.value(compId)->indexOf(paramId);
+    int index = compXmitMissing->indexOf(paramId);
     // If the MAV sent the parameter without request, it wont be in missing list
     if (index != -1) {
-        transmissionMissingPackets.value(compId)->removeAt(index);
+        compXmitMissing->removeAt(index);
     }
 
     bool justWritten = false;
     bool writeMismatch = false;
-    //bool lastWritten = false;
+
     // Mark this parameter as received in write ACK list
     QMap<QString, QVariant>* map = transmissionMissingWriteAckPackets.value(compId);
     if (map && map->contains(paramName)) {
@@ -496,10 +496,14 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
     }
     else {
         qDebug() << "missCount:" << missCount << "missWriteCount:" << missWriteCount;
-        foreach (int key, transmissionMissingPackets.keys()) {
-            QList<int>* list = transmissionMissingPackets.value(key);
-            qDebug() << "Component" << key << "missing numParams:" << list->count() ;
+
+        if (missCount < 4) {
+            foreach (int key, transmissionMissingPackets.keys()) {
+                QList<int>* list = transmissionMissingPackets.value(key);
+                qDebug() << "Component" << key << "missing params:" << list ;
+            }
         }
+        setRetransmissionGuardEnabled(true); //reset the timeout timer since we received one
     }
 }
 
