@@ -18,53 +18,58 @@ UASParameterDataModel::UASParameterDataModel(QObject *parent) :
 
 
 
-bool UASParameterDataModel::checkParameterChanged(int compId, const QString& key,  const QVariant& value)
+
+
+bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key,  QVariant& value)
 {
-    bool changed = true;
+    bool pending = true;
     //ensure we have this component in our onboard and pending lists already
     addComponent(compId);
-    QMap<QString, QVariant>* existParams = getOnbardParametersForComponent(compId);
 
+    QMap<QString, QVariant>* existParams = getOnboardParamsForComponent(compId);
     if (existParams->contains(key)) {
         QVariant existValue = existParams->value(key);
         if (existValue == value) {
-            changed = false;
+            pending = false;
         }
     }
 
-    return changed;
-}
-
-bool UASParameterDataModel::addPendingIfParameterChanged(int componentId, QString& key,  QVariant &value)
-
-{
-    bool changed = checkParameterChanged(componentId,key,value);
-
-    if (changed ) {
-        setPendingParameter(componentId,key,value);
+    if (pending) {
+        setPendingParam(compId,key,value);
+    }
+    else {
+        removePendingParam(compId,key);
     }
 
-    return changed;
+    return pending;
+}
+
+void UASParameterDataModel::removePendingParam(int compId, QString& key)
+{
+    QMap<QString, QVariant> *params = getPendingParamsForComponent(compId);
+    if (params) {
+        params->remove(key);
+    }
 }
 
 
-void UASParameterDataModel::setPendingParameter(int componentId, QString& key,  const QVariant &value)
+void UASParameterDataModel::setPendingParam(int compId, QString& key,  const QVariant &value)
 {
     //ensure we have a placeholder map for this component
-    addComponent(componentId);
-    QMap<QString, QVariant> *params = getPendingParametersForComponent(componentId);
+    addComponent(compId);
+    QMap<QString, QVariant> *params = getPendingParamsForComponent(compId);
     params->insert(key,value);
 }
 
-void UASParameterDataModel::setOnboardParameter(int componentId, QString& key,  const QVariant& value)
+void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVariant& value)
 {
     //ensure we have a placeholder map for this component
-    addComponent(componentId);
-    QMap<QString, QVariant> *params = getOnbardParametersForComponent(componentId);
+    addComponent(compId);
+    QMap<QString, QVariant> *params = getOnboardParamsForComponent(compId);
     params->insert(key,value);
 }
 
-void UASParameterDataModel::setOnboardParameterWithType(int componentId, QString& key, QVariant& value)
+void UASParameterDataModel::setOnboardParamWithType(int compId, QString& key, QVariant& value)
 {
 
 //    switch ((int)onboardParameters.value(componentId)->value(key).type())
@@ -73,25 +78,25 @@ void UASParameterDataModel::setOnboardParameterWithType(int componentId, QString
     case QVariant::Int:
     {
         QVariant fixedValue(value.toInt());
-        onboardParameters.value(componentId)->insert(key, fixedValue);
+        onboardParameters.value(compId)->insert(key, fixedValue);
     }
         break;
     case QVariant::UInt:
     {
         QVariant fixedValue(value.toUInt());
-        onboardParameters.value(componentId)->insert(key, fixedValue);
+        onboardParameters.value(compId)->insert(key, fixedValue);
     }
         break;
     case QMetaType::Float:
     {
         QVariant fixedValue(value.toFloat());
-        onboardParameters.value(componentId)->insert(key, fixedValue);
+        onboardParameters.value(compId)->insert(key, fixedValue);
     }
         break;
     case QMetaType::QChar:
     {
         QVariant fixedValue(QChar((unsigned char)value.toUInt()));
-        onboardParameters.value(componentId)->insert(key, fixedValue);
+        onboardParameters.value(compId)->insert(key, fixedValue);
     }
         break;
     default:
@@ -111,7 +116,7 @@ void UASParameterDataModel::addComponent(int compId)
 }
 
 
-void UASParameterDataModel::handleParameterUpdate(int compId, QString& key, QVariant& value)
+void UASParameterDataModel::handleParamUpdate(int compId, QString& key, QVariant& value)
 {
     //verify that the value requested by the user matches the set value
     //if it doesn't match, leave the pending parameter in the pending list!
@@ -128,13 +133,13 @@ void UASParameterDataModel::handleParameterUpdate(int compId, QString& key, QVar
         }
     }
 
-    setOnboardParameter(compId,key,value);
+    setOnboardParam(compId,key,value);
 
     emit parameterUpdated(compId,key,value);
 
 }
 
-bool UASParameterDataModel::getOnboardParameterValue(int componentId, const QString& key, QVariant& value) const
+bool UASParameterDataModel::getOnboardParamValue(int componentId, const QString& key, QVariant& value) const
 {
 
     if (onboardParameters.contains(componentId)) {
@@ -147,14 +152,13 @@ bool UASParameterDataModel::getOnboardParameterValue(int componentId, const QStr
     return false;
 }
 
-void UASParameterDataModel::forgetAllOnboardParameters()
+void UASParameterDataModel::forgetAllOnboardParams()
 {
     onboardParameters.clear();
 }
 
-void UASParameterDataModel::readUpdateParametersFromStream( QTextStream& stream)
+void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)
 {
-
     bool userWarned = false;
 
     while (!stream.atEnd()) {
@@ -165,7 +169,7 @@ void UASParameterDataModel::readUpdateParametersFromStream( QTextStream& stream)
             if (wpParams.size() == 5) {
                 // Only load parameters for right mav
                 if (!userWarned && (uasId != lineMavId)) {
-                    //TODO warn the user somehow
+                    //TODO warn the user somehow ??
                     QString msg = tr("The parameters in the stream have been saved from system %1, but the currently selected system has the ID %2.").arg(lineMavId).arg(uasId);
 //                    MainWindow::instance()->showCriticalMessage(
 //                                tr("Parameter loading warning"),
@@ -199,26 +203,17 @@ void UASParameterDataModel::readUpdateParametersFromStream( QTextStream& stream)
                     switch (paramType)
                     {
                     case MAV_PARAM_TYPE_REAL32:
-                        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, key, valStr.toFloat());
-                        setPendingParameter(componentId,key,QVariant(valStr.toFloat()));
-                        //setParameter(componentId, key, valStr.toFloat());
+                        setPendingParam(componentId,key,QVariant(valStr.toFloat()));
                         break;
                     case MAV_PARAM_TYPE_UINT32:
-                        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, key, valStr.toUInt());
-                        setPendingParameter(componentId,key, QVariant(valStr.toUInt()));
-                        //setParameter(componentId, key, QVariant(valStr.toUInt()));
+                        setPendingParam(componentId,key, QVariant(valStr.toUInt()));
                         break;
                     case MAV_PARAM_TYPE_INT32:
-                        //receivedParameterUpdate(wpParams.at(0).toInt(), componentId, key, valStr.toInt());
-                        setPendingParameter(componentId,key,QVariant(valStr.toInt()));
-                        //setParameter(componentId, key, QVariant(valStr.toInt()));
+                        setPendingParam(componentId,key,QVariant(valStr.toInt()));
                         break;
                     default:
                         qDebug() << "FAILED LOADING PARAM" << key << "UNKNOWN DATA TYPE";
                     }
-
-                    //TODO update display
-
                 }
 
 
@@ -228,7 +223,7 @@ void UASParameterDataModel::readUpdateParametersFromStream( QTextStream& stream)
 
 }
 
-void UASParameterDataModel::writeOnboardParametersToStream( QTextStream &stream, const QString& name)
+void UASParameterDataModel::writeOnboardParamsToStream( QTextStream &stream, const QString& name)
 {
     stream << "# Onboard parameters for system " << name << "\n";
     stream << "#\n";

@@ -26,7 +26,7 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 
 bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const
 {
-    return paramDataModel->getOnboardParameterValue(component,parameter,value);
+    return paramDataModel->getOnboardParamValue(component,parameter,value);
 }
 
 
