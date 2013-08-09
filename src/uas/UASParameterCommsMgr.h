@@ -84,10 +84,6 @@ public slots:
 
     virtual void receivedParameterUpdate(int uas, int compId, int paramCount, int paramId, QString paramName, QVariant value);
 
-//protected slots:
-//    void receivedParameterChange(int uas, int component, QString parameterName, QVariant value);
-//    void receivedParameterListChange(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
-
 protected:
 
     UASInterface* mav;   ///< The MAV we're talking to
@@ -103,6 +99,7 @@ protected:
     bool transmissionActive;         ///< Missing packets, working on list?
     quint64 transmissionTimeout;     ///< Timeout
     QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
+    quint64 lastTimerReset;     ///< Last time the guard timer was reset, to prevent premature firing
     int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
     int rewriteTimeout; ///< Write request timeout, in milliseconds
     int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
