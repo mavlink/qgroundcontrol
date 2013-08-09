@@ -18,25 +18,21 @@ UASParameterDataModel::UASParameterDataModel(QObject *parent) :
 
 
 
-bool UASParameterDataModel::checkParameterChanged(int componentId, const QString& key,  const QVariant &value)
+bool UASParameterDataModel::checkParameterChanged(int compId, const QString& key,  const QVariant& value)
 {
     bool changed = true;
-    addComponent(componentId);
-    QMap<QString, QVariant>* existParams = getOnbardParametersForComponent(componentId);
+    //ensure we have this component in our onboard and pending lists already
+    addComponent(compId);
+    QMap<QString, QVariant>* existParams = getOnbardParametersForComponent(compId);
 
     if (existParams->contains(key)) {
         QVariant existValue = existParams->value(key);
-        QMap<QString, QVariant>* pendParams = getPendingParametersForComponent(componentId);
-        if (pendParams->contains(key)) {
-            QVariant pendValue = pendParams->value(key);
-            if (existValue == pendValue) {
-                changed = false;
-            }
+        if (existValue == value) {
+            changed = false;
         }
     }
 
     return changed;
-
 }
 
 bool UASParameterDataModel::addPendingIfParameterChanged(int componentId, QString& key,  QVariant &value)
