@@ -70,6 +70,12 @@ void QGCUASParamManager::setParameter(int component, QString parameterName, QVar
     paramCommsMgr->setParameter(component,parameterName,value);
 }
 
+void QGCUASParamManager::sendPendingParameters()
+{
+    paramCommsMgr->sendPendingParameters();
+}
+
+
 
 void QGCUASParamManager::loadParamMetaInfoCSV()
 {
