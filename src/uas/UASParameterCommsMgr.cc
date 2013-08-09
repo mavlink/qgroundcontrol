@@ -100,25 +100,23 @@ void UASParameterCommsMgr::requestParameterList()
  Empty read retransmission list
  Empty write retransmission list
 */
-void UASParameterCommsMgr::clearRetransmissionLists()
+void UASParameterCommsMgr::clearRetransmissionLists(int& missingReadCount, int& missingWriteCount )
 {
     qDebug() << __FILE__ << __LINE__ << "clearRetransmissionLists";
 
-    int missingReadCount = 0;
+    missingReadCount = 0;
     QList<int> readKeys = transmissionMissingPackets.keys();
     foreach (int component, readKeys) {
         missingReadCount += transmissionMissingPackets.value(component)->count();
         transmissionMissingPackets.value(component)->clear();
     }
 
-    int missingWriteCount = 0;
+    missingWriteCount = 0;
     QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
     foreach (int component, writeKeys) {
         missingWriteCount += transmissionMissingWriteAckPackets.value(component)->count();
         transmissionMissingWriteAckPackets.value(component)->clear();
     }
-    setParameterStatusMsg(tr("TIMEOUT! MISSING: %1 read, %2 write.").arg(missingReadCount).arg(missingWriteCount),
-                          ParamCommsStatusLevel_Warning);
 
 }
 
@@ -230,7 +228,6 @@ void UASParameterCommsMgr::retransmissionGuardTick()
             return;
         }
 
-        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
 
         // Check for timeout
         // stop retransmission attempts on timeout
@@ -238,10 +235,17 @@ void UASParameterCommsMgr::retransmissionGuardTick()
             setRetransmissionGuardEnabled(false);
             transmissionActive = false;
             transmissionListMode = false;
-            clearRetransmissionLists();
+            int missingReadCount, missingWriteCount;
+            clearRetransmissionLists(missingReadCount,missingWriteCount);
+            if ((missingReadCount > 0) || (missingWriteCount > 0)) {
+                setParameterStatusMsg(tr("TIMEOUT! MISSING: %1 read, %2 write.").arg(missingReadCount).arg(missingWriteCount),
+                                      ParamCommsStatusLevel_Warning);
+            }
+
             return;
         }
 
+        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
         resendReadWriteRequests();
     }
     else {
@@ -544,15 +548,15 @@ void UASParameterCommsMgr::sendPendingParameters()
     QMap<int, QMap<QString, QVariant>*>::iterator i;
     for (i = changedValues->begin(); i != changedValues->end(); ++i) {
         // Iterate through the parameters of the component
-        int compid = i.key();
-        QMap<QString, QVariant>* comp = i.value();
-        {
-            QMap<QString, QVariant>::iterator j;
-            for (j = comp->begin(); j != comp->end(); ++j) {
-                //TODO mavlink command for "set parameter list" ?
-                setParameter(compid, j.key(), j.value());
-                parametersSent++;
-            }
+        int compId = i.key();
+        QMap<QString, QVariant>* paramList = i.value();
+        QMap<QString, QVariant>::iterator j;
+        setParameterStatusMsg(tr("%1 pending params for component %2").arg(paramList->count()).arg(compId));
+
+        for (j = paramList->begin(); j != paramList->end(); ++j) {
+            //TODO mavlink command for "set parameter list" ?
+            setParameter(compId, j.key(), j.value());
+            parametersSent++;
         }
     }
 

@@ -77,10 +77,7 @@ public slots:
     void updateParameterDisplay(int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
     void requestAllParamsUpdate();
-    /** @brief Set one parameter, changes value in RAM of MAV */
-//    virtual void setParameter(int component, QString parameterName, QVariant value);
-    /** @brief Set all parameters, changes the value in RAM of MAV */
-    void setParameters();
+
     /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */
     void writeParameters();
     /** @brief Read the parameters from permanent storage to RAM */
@@ -102,7 +99,6 @@ protected:
     QLabel* statusLabel; ///< User-facing parameter status label
     QMap<int, QTreeWidgetItem*>* componentItems; ///< The tree of component items, stored by component ID
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
-
 
 };
 
