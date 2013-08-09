@@ -202,6 +202,21 @@ void QGCParamWidget::handleParameterUpdate(int componentId, const QString& param
 
 void QGCParamWidget::handleParameterListUpToDate()
 {
+    tree->collapseAll();
+
+    //rewrite the component item tree after receiving the full list
+    QMap<int, QMap<QString, QVariant>*>::iterator i;
+    QMap<int, QMap<QString, QVariant>*>* onboardParams = paramDataModel->getOnboardParameters();
+
+    for (i = onboardParams->begin(); i != onboardParams->end(); ++i) {
+        int compId = i.key();
+        QMap<QString, QVariant>* paramPairs = onboardParams->value(compId);
+        QMap<QString, QVariant>::iterator j;
+        for (j = paramPairs->begin(); j != paramPairs->end(); j++) {
+            updateParameterDisplay(compId, j.key(),j.value());
+        }
+    }
+
     // Expand visual tree
     tree->expandItem(tree->topLevelItem(0));
 }
