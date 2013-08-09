@@ -49,6 +49,10 @@ void UASParameterDataModel::removePendingParam(int compId, QString& key)
     QMap<QString, QVariant> *params = getPendingParamsForComponent(compId);
     if (params) {
         params->remove(key);
+        //broadcast the existing value
+        QVariant existVal;
+        bool ok = getOnboardParamValue(compId,key,existVal);
+        emit pendingParamUpdate(compId, key,existVal, false);
     }
 }
 
@@ -59,6 +63,8 @@ void UASParameterDataModel::setPendingParam(int compId, QString& key,  const QVa
     addComponent(compId);
     QMap<QString, QVariant> *params = getPendingParamsForComponent(compId);
     params->insert(key,value);
+    emit pendingParamUpdate(compId, key, value, true);
+
 }
 
 void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVariant& value)
