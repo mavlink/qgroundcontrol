@@ -11,7 +11,8 @@
 UASParameterDataModel::UASParameterDataModel(QObject *parent) :
     QObject(parent)
 {
-
+    onboardParameters.clear();
+    pendingParameters.clear();
 
 }
 
