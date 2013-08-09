@@ -234,23 +234,33 @@ void UASParameterCommsMgr::resetAfterListReceive()
 
 void UASParameterCommsMgr::retransmissionGuardTick()
 {
+    quint64 curTime = QGC::groundTimeMilliseconds();
+
+    //Workaround for an apparent Qt bug that causes retransmission guard timer to fire prematurely (350ms)
+    quint64 elapsed = (curTime = lastTimerReset);
+    if (elapsed < transmissionTimeout) {
+        qDebug() << "retransmissionGuardTick elapsed:" << (curTime - lastTimerReset);
+        //reset the guard timer: it fired prematurely
+        setRetransmissionGuardEnabled(true);
+        return;
+    }
+
     if (transmissionActive) {
 
         if (transmissionListMode && transmissionListSizeKnown.isEmpty() ) {
             //we are still waitin for the first parameter list response
-            if (QGC::groundTimeMilliseconds() > this->listRecvTimeout) {
+            if (curTime > this->listRecvTimeout) {
                 //re-request parameters
                 setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
-                listRecvTimeout = QGC::groundTimeMilliseconds() + 10000;
+                listRecvTimeout = curTime + 10000;
                 mav->requestParameters();
             }
             return;
         }
 
-
         // Check for timeout
         // stop retransmission attempts on timeout
-        if (QGC::groundTimeMilliseconds() > transmissionTimeout) {
+        if (curTime > transmissionTimeout) {
             setRetransmissionGuardEnabled(false);
             resetAfterListReceive();
 
@@ -285,10 +295,9 @@ void UASParameterCommsMgr::retransmissionGuardTick()
 
 void UASParameterCommsMgr::setRetransmissionGuardEnabled(bool enabled)
 {
-//    qDebug() << "setRetransmissionGuardEnabled: " << enabled;
-
     if (enabled) {
         retransmissionTimer.start(retransmissionTimeout);
+        lastTimerReset = QGC::groundTimeMilliseconds() ;
     } else {
         retransmissionTimer.stop();
     }
@@ -429,7 +438,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             transmissionListSizeKnown.insert(compId, true);
 
             qDebug() << "Mark all parameters as missing: " << paramCount;
-            for (int i = 1; i < paramCount; ++i) { //TODO check: param Id 0 is  "all parameters" ?
+            for (int i = 1; i < paramCount; ++i) { //TODO check: param Id 0 is  "all parameters" and not valid ?
                 if (!compXmitMissing->contains(i)) {
                     compXmitMissing->append(i);
                 }
@@ -444,9 +453,6 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             }
         }
 
-        // Start retransmission guard
-        // or reset timer
-        setRetransmissionGuardEnabled(true);
     }
 
     // Mark this parameter as received in read list
