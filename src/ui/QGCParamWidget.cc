@@ -245,6 +245,9 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
         addComponentItem(compId, componentName);
     }
 
+    //default parent item for this parameter widget item will be the top level component item
+    QTreeWidgetItem* parentItem = componentItems->value(compId);
+
     QString splitToken = "_";
     // Check if auto-grouping can work
     if (parameterName.contains(splitToken)) {
@@ -265,8 +268,75 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
         }
 
         // Append child to group
+        //bool found = false;
+        //parent item for this tree widget item will be a group widget item
+        parentItem = compParamGroups->value(parentStr);
+
+//        for (int i = 0; i < parentItem->childCount(); i++) {
+//            QTreeWidgetItem* child = parentItem->child(i);
+//            QString key = child->data(0, Qt::DisplayRole).toString();
+//            if (key == parameterName)  {
+//                //qDebug() << "UPDATED CHILD";
+//                parameterItem = child;
+//                if (value.type() == QVariant::Char) {
+//                    parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+//                }
+//                else {
+//                    parameterItem->setData(1, Qt::DisplayRole, value);
+//                }
+//                found = true;
+//            }
+//        }
+
+//        if (!found) {
+//            // Insert parameter into map
+//            QStringList plist;
+//            plist.append(parameterName);
+//            // CREATE PARAMETER ITEM
+//            parameterItem = new QTreeWidgetItem(plist);
+//            // CONFIGURE PARAMETER ITEM
+//            if (value.type() == QVariant::Char) {
+//                parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+//            }
+//            else {
+//                parameterItem->setData(1, Qt::DisplayRole, value);
+//            }
+//            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
+
+//            parentItem->addChild(parameterItem);
+//        }
+    }
+    else  {
+        //bool found = false;
+        parentItem = componentItems->value(compId);
+
+//        for (int i = 0; i < parent->childCount(); i++) {
+//            QTreeWidgetItem* child = parent->child(i);
+//            QString key = child->data(0, Qt::DisplayRole).toString();
+//            if (key == parameterName) {
+//                //qDebug() << "UPDATED CHILD";
+//                parameterItem = child;
+//                parameterItem->setData(1, Qt::DisplayRole, value);
+//                found = true;
+//            }
+//        }
+
+//        if (!found) {
+//            // Insert parameter into map
+//            QStringList plist;
+//            plist.append(parameterName);
+//            // CREATE PARAMETER ITEM
+//            parameterItem = new QTreeWidgetItem(plist);
+//            // CONFIGURE PARAMETER ITEM
+//            parameterItem->setData(1, Qt::DisplayRole, value);
+
+//            componentItems->value(compId)->addChild(parameterItem);
+//            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
+//        }
+    }
+
+    if (parentItem) {
         bool found = false;
-        QTreeWidgetItem* parentItem = compParamGroups->value(parentStr);
         for (int i = 0; i < parentItem->childCount(); i++) {
             QTreeWidgetItem* child = parentItem->child(i);
             QString key = child->data(0, Qt::DisplayRole).toString();
@@ -296,36 +366,9 @@ void QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, Q
             else {
                 parameterItem->setData(1, Qt::DisplayRole, value);
             }
-
-            compParamGroups->value(parentStr)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
-        }
-    }
-    else  {
-        bool found = false;
-        QTreeWidgetItem* parent = componentItems->value(compId);
-        for (int i = 0; i < parent->childCount(); i++) {
-            QTreeWidgetItem* child = parent->child(i);
-            QString key = child->data(0, Qt::DisplayRole).toString();
-            if (key == parameterName) {
-                //qDebug() << "UPDATED CHILD";
-                parameterItem = child;
-                parameterItem->setData(1, Qt::DisplayRole, value);
-                found = true;
-            }
-        }
 
-        if (!found) {
-            // Insert parameter into map
-            QStringList plist;
-            plist.append(parameterName);
-            // CREATE PARAMETER ITEM
-            parameterItem = new QTreeWidgetItem(plist);
-            // CONFIGURE PARAMETER ITEM
-            parameterItem->setData(1, Qt::DisplayRole, value);
-
-            componentItems->value(compId)->addChild(parameterItem);
-            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
+            parentItem->addChild(parameterItem);
         }
     }
 
