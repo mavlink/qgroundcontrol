@@ -176,7 +176,9 @@ void SerialLink::run()
         }
 
         if (isConnected() && (linkErrorCount > 100)) {
+            qDebug() << "linkErrorCount too high: disconnecting!";
             linkErrorCount = 0;
+            communicationError("SerialLink", tr("Disconnecting on too many link errors"));
             disconnect();
         }
 
@@ -210,7 +212,7 @@ void SerialLink::run()
             }
         } else {
             linkErrorCount++;
-            qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
+            //qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
         }
 
         if (bytes != m_bytesRead) // i.e things are good and data is being read.
@@ -369,6 +371,8 @@ bool SerialLink::disconnect()
         emit connected(false);
         return true;
     }
+
+    m_transmitBuffer.clear(); //clear the output buffer to avoid sending garbage at next connect
 
     qDebug() << "already disconnected";
     return true;
