@@ -106,16 +106,16 @@ void UASParameterCommsMgr::clearRetransmissionLists(int& missingReadCount, int& 
 
     missingReadCount = 0;
     QList<int> readKeys = transmissionMissingPackets.keys();
-    foreach (int component, readKeys) {
-        missingReadCount += transmissionMissingPackets.value(component)->count();
-        transmissionMissingPackets.value(component)->clear();
+    foreach (int compId, readKeys) {
+        missingReadCount += transmissionMissingPackets.value(compId)->count();
+        transmissionMissingPackets.value(compId)->clear();
     }
 
     missingWriteCount = 0;
     QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
-    foreach (int component, writeKeys) {
-        missingWriteCount += transmissionMissingWriteAckPackets.value(component)->count();
-        transmissionMissingWriteAckPackets.value(component)->clear();
+    foreach (int compId, writeKeys) {
+        missingWriteCount += transmissionMissingWriteAckPackets.value(compId)->count();
+        transmissionMissingWriteAckPackets.value(compId)->clear();
     }
 
 }
@@ -209,8 +209,24 @@ void UASParameterCommsMgr::resendReadWriteRequests()
 
     if ((0 == requestedWriteCount) && (0 == requestedReadCount) ) {
         qDebug() << __FILE__ << __LINE__ << "NO re-read or rewrite requests??";
-        //setRetransmissionGuardEnabled(false);
+        if (!transmissionListMode) {
+            setRetransmissionGuardEnabled(false);
+            transmissionActive = false;
+        }
     }
+}
+
+void UASParameterCommsMgr::resetAfterListReceive()
+{
+    transmissionListMode = false;
+    transmissionListSizeKnown.clear();
+
+    //TODO we shouldn't clear missingPackets because other transactions might be using them?
+    //for list reception we only clear receive packets?
+//    foreach (int key, transmissionMissingPackets.keys()) {
+//        transmissionMissingPackets.value(key)->clear();
+//    }
+
 }
 
 void UASParameterCommsMgr::retransmissionGuardTick()
@@ -233,8 +249,8 @@ void UASParameterCommsMgr::retransmissionGuardTick()
         // stop retransmission attempts on timeout
         if (QGC::groundTimeMilliseconds() > transmissionTimeout) {
             setRetransmissionGuardEnabled(false);
-            transmissionActive = false;
-            transmissionListMode = false;
+            resetAfterListReceive();
+
             int missingReadCount, missingWriteCount;
             clearRetransmissionLists(missingReadCount,missingWriteCount);
             if ((missingReadCount > 0) || (missingWriteCount > 0)) {
@@ -491,13 +507,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 
     // Check if last parameter was received
     if (missCount == 0 && missWriteCount == 0) {
-        this->transmissionActive = false;
-        this->transmissionListMode = false;
-        transmissionListSizeKnown.clear();
-        foreach (int key, transmissionMissingPackets.keys()) {
-            transmissionMissingPackets.value(key)->clear();
-        }
-
+        resetAfterListReceive();
         setRetransmissionGuardEnabled(false);
         //all parameters have been received, broadcast to UI
         emit parameterListUpToDate();

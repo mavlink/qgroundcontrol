@@ -42,6 +42,7 @@ protected:
     void clearRetransmissionLists(int& missingReadCount, int& missingWriteCount );
 
     void resendReadWriteRequests();
+    void resetAfterListReceive();
 
     void emitParameterChanged(int compId, const QString& key, QVariant& value);
 
