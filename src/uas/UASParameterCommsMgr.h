@@ -38,6 +38,13 @@ protected:
     /** @brief Load settings that control eg retransmission timeouts */
     void loadParamCommsSettings();
 
+    /** @brief clear transmissionMissingPackets and transmissionMissingWriteAckPackets */
+    void clearRetransmissionLists();
+
+    void resendReadWriteRequests();
+
+    void emitParameterChanged(int compId, const QString& key, QVariant& value);
+
 signals:
     void parameterChanged(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
