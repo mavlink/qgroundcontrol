@@ -14,7 +14,6 @@ public:
     explicit UASParameterDataModel(QObject *parent = 0);
     
 
-    int getTotalOnboardParams() { return totalOnboardParameters; }
     //Parameter meta info
     bool isParamMinKnown(const QString& param) { return paramMin.contains(param); }
     virtual bool isValueLessThanParamMin(const QString& param, double dblVal);
@@ -97,7 +96,6 @@ protected:
     int     uasId; ///< The UAS / MAV to which this data model pertains
     QMap<int, QMap<QString, QVariant>* > pendingParameters; ///< Changed values that have not yet been transmitted to the UAS, by component ID
     QMap<int, QMap<QString, QVariant>* > onboardParameters; ///< All parameters confirmed to be stored onboard the UAS, by component ID
-    int totalOnboardParameters;///< The known count of onboard parameters, may not match onboardParameters until all params are received
 
     // Tooltip data structures
     QMap<QString, QString> paramDescriptions; ///< Tooltip values

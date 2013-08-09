@@ -8,7 +8,9 @@
 
 QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
     QWidget(parent),
-    mav(uas)
+    mav(uas),
+    paramDataModel(NULL),
+    paramCommsMgr(NULL)
 {
     paramDataModel = uas->getParamDataModel();
     paramCommsMgr = uas->getParamCommsMgr();
@@ -16,25 +18,6 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 
     // Load default values and tooltips
     loadParamMetaInfoCSV();
-
-
-//    // Connect retransmission guard
-//    connect(this, SIGNAL(parameterUpdateRequested(int,QString)),
-//            this, SLOT(requestParameterUpdate(int,QString)));
-
-//    //TODO connect in paramCommsMgr instead
-//    connect(this, SIGNAL(parameterUpdateRequestedById(int,int)),
-//            mav, SLOT(requestParameter(int,int)));
-
-    // New parameters from UAS
-
-    void parameterUpdated(int compId, QString paramName, QVariant value);
-
-
-//    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
-//            this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
-
-
 
 
 
