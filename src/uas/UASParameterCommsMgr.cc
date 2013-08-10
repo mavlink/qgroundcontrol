@@ -224,11 +224,7 @@ void UASParameterCommsMgr::resetAfterListReceive()
     transmissionListMode = false;
     transmissionListSizeKnown.clear();
 
-    //TODO we shouldn't clear missingPackets because other transactions might be using them?
-    //for list reception we only clear receive packets?
-//    foreach (int key, transmissionMissingPackets.keys()) {
-//        transmissionMissingPackets.value(key)->clear();
-//    }
+    //We shouldn't clear missingPackets because other transactions might be using them?
 
 }
 
