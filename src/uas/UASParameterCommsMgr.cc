@@ -238,7 +238,7 @@ void UASParameterCommsMgr::retransmissionGuardTick()
 
     //Workaround for an apparent Qt bug that causes retransmission guard timer to fire prematurely (350ms)
     quint64 elapsed = (curTime - lastTimerReset);
-    if (elapsed < transmissionTimeout) {
+    if (elapsed < retransmissionTimeout) {
         qDebug() << "retransmissionGuardTick elapsed:" << (curTime - lastTimerReset);
         //reset the guard timer: it fired prematurely
         setRetransmissionGuardEnabled(true);
