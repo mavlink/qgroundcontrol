@@ -66,8 +66,8 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
             this, SLOT(handleParameterUpdate(int,QString,QVariant)));
 
-    connect(paramDataModel, SIGNAL(pendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)),
-            this, SLOT(handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)));
+    connect(paramDataModel, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
+            this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
 
     // Listen for param list reload finished
     connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
@@ -348,6 +348,7 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
         }
 
         //update the parameterItem's data
+        updatedLineItem_weak = parameterItem; //keep a temporary ref to the item that's being updated
         if (value.type() == QVariant::Char) {
             parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
         }
@@ -363,24 +364,30 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
     parameterItem->setTextColor(0, QGC::colorDarkWhite);
     parameterItem->setTextColor(1, QGC::colorDarkWhite);
 
+    updatedLineItem_weak = NULL;
     return parameterItem;
 
 }
 
 
 
-void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
+void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column)
 {
-    if (current && column > 0) {
-        QTreeWidgetItem* parent = current->parent();
+    if (paramItem && column > 0) {
+        if (paramItem == updatedLineItem_weak) {
+            //ignore updates reflected back from the data model, to avoid infinite loop
+            return;
+        }
+
+        QTreeWidgetItem* parent = paramItem->parent();
         while (parent->parent() != NULL) {
             parent = parent->parent();
         }
         // Parent is now top-level component
         int componentId = componentItems->key(parent);
 
-        QString key = current->data(0, Qt::DisplayRole).toString();
-        QVariant value = current->data(1, Qt::DisplayRole);
+        QString key = paramItem->data(0, Qt::DisplayRole).toString();
+        QVariant value = paramItem->data(1, Qt::DisplayRole);
 
         bool pending = paramDataModel->updatePendingParamWithValue(componentId,key,value);
 
@@ -389,19 +396,19 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             // Set parameter on changed list to be transmitted to MAV
             statusLabel->setText(tr("Pending: %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
 
-            if (current == tree->currentItem()) {
+            if (paramItem == tree->currentItem()) {
                 //need to unset current item to clear highlighting (green by default)
                 tree->setCurrentItem(NULL); //clear the selected line
             }
-            current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
-            current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
+            paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
+            paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
         }
         else {
             QMap<QString , QVariant>* pendingParams = paramDataModel->getPendingParamsForComponent(componentId);
             int pendingCount = pendingParams->count();
             statusLabel->setText(tr("Pending items: %1").arg(pendingCount));
-            current->setBackground(0, Qt::NoBrush);
-            current->setBackground(1, Qt::NoBrush);
+            paramItem->setBackground(0, Qt::NoBrush);
+            paramItem->setBackground(1, Qt::NoBrush);
         }
 
     }
