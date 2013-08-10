@@ -50,6 +50,7 @@ void UASParameterCommsMgr::loadParamCommsSettings()
     int val = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", retransmissionTimeout).toInt(&ok);
     if (ok) {
         retransmissionTimeout = val;
+        qDebug() << "retransmissionTimeout" << retransmissionTimeout;
     }
     val = settings.value("PARAMETER_REWRITE_TIMEOUT", rewriteTimeout).toInt(&ok);
     if (ok) {
@@ -240,6 +241,8 @@ void UASParameterCommsMgr::retransmissionGuardTick()
         setRetransmissionGuardEnabled(true);
         return;
     }
+    qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE after" << elapsed;
+
 
     if (transmissionActive) {
 
@@ -250,6 +253,8 @@ void UASParameterCommsMgr::retransmissionGuardTick()
                 setParameterStatusMsg(tr("TIMEOUT: Re-requesting param list"),ParamCommsStatusLevel_Warning);
                 listRecvTimeout = curTime + 10000;
                 mav->requestParameters();
+                //reset the timer
+                setRetransmissionGuardEnabled(true);
             }
             return;
         }
@@ -270,7 +275,6 @@ void UASParameterCommsMgr::retransmissionGuardTick()
             return;
         }
 
-        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
         resendReadWriteRequests();
     }
     else {
@@ -443,7 +447,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             // There is only one transmission timeout for all components
             // since components do not manage their transmission,
             // the longest timeout is safe for all components.
-            quint64 thisTransmissionTimeout = QGC::groundTimeMilliseconds() + ((paramCount)*retransmissionTimeout);
+            quint64 thisTransmissionTimeout = QGC::groundTimeMilliseconds() + (paramCount*retransmissionTimeout);
             if (thisTransmissionTimeout > transmissionTimeout) {
                 transmissionTimeout = thisTransmissionTimeout;
             }

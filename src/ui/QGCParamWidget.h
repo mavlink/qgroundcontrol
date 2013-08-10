@@ -101,6 +101,7 @@ protected:
     QMap<int, QTreeWidgetItem*>* componentItems; ///< The tree of component items, stored by component ID
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
     QTreeWidgetItem* updatedLineItem_weak;///< weak ref to user-edited line
+//    QTreeWidgetItem* updatedPendingItem_weak;///< weak ref to pending-modified line
 
 };
 

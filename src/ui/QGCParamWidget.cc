@@ -202,7 +202,20 @@ void QGCParamWidget::addComponentItem(int compId, QString compName)
 
 void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)
 {
+    qDebug() << "handlePendingParamUpdate:" << paramName << "with updatedLineItem_weak:" << updatedLineItem_weak;
+
+    if (updatedLineItem_weak) {
+        QString key = updatedLineItem_weak->data(0, Qt::DisplayRole).toString();
+        if (paramName == key) {
+            //debounce echo from data model
+            return;
+        }
+    }
+
     QTreeWidgetItem* paramItem = updateParameterDisplay(compId,paramName,value);
+    if (updatedLineItem_weak == NULL) {
+        updatedLineItem_weak = paramItem;
+    }
     if (isPending) {
         paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
         paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
@@ -327,6 +340,8 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
                 parameterItem->setData(1, Qt::DisplayRole, value);
             }
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
+            updatedLineItem_weak = parameterItem; //keep a temporary ref to the item that's being updated
+
             //TODO insert alphabetically
             parentItem->addChild(parameterItem);
 
@@ -347,8 +362,9 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             }
         }
 
-        //update the parameterItem's data
         updatedLineItem_weak = parameterItem; //keep a temporary ref to the item that's being updated
+
+        //update the parameterItem's data
         if (value.type() == QVariant::Char) {
             parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
         }
@@ -357,14 +373,16 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
         }
     }
 
-    // Reset background color
-    parameterItem->setBackground(0, Qt::NoBrush);
-    parameterItem->setBackground(1, Qt::NoBrush);
+    if (parameterItem) {
+        // Reset background color
+        parameterItem->setBackground(0, Qt::NoBrush);
+        parameterItem->setBackground(1, Qt::NoBrush);
 
-    parameterItem->setTextColor(0, QGC::colorDarkWhite);
-    parameterItem->setTextColor(1, QGC::colorDarkWhite);
+        parameterItem->setTextColor(0, QGC::colorDarkWhite);
+        parameterItem->setTextColor(1, QGC::colorDarkWhite);
 
-    updatedLineItem_weak = NULL;
+        updatedLineItem_weak = NULL;
+    }
     return parameterItem;
 
 }
@@ -374,7 +392,8 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
 void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column)
 {
     if (paramItem && column > 0) {
-        if (paramItem == updatedLineItem_weak) {
+
+        if (!paramItem->isSelected() ||  (paramItem == updatedLineItem_weak)) {
             //ignore updates reflected back from the data model, to avoid infinite loop
             return;
         }
