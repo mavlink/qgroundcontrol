@@ -51,7 +51,8 @@ This file is part of the QGROUNDCONTROL project
  */
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     QGCUASParamManager(uas, parent),
-    componentItems(new QMap<int, QTreeWidgetItem*>())
+    componentItems(new QMap<int, QTreeWidgetItem*>()),
+    updatingParamNameLock("")
 {
 
     layoutWidget();
@@ -202,20 +203,17 @@ void QGCParamWidget::addComponentItem(int compId, QString compName)
 
 void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)
 {
-    qDebug() << "handlePendingParamUpdate:" << paramName << "with updatedLineItem_weak:" << updatedLineItem_weak;
+    qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
 
-    if (updatedLineItem_weak) {
-        QString key = updatedLineItem_weak->data(0, Qt::DisplayRole).toString();
-        if (paramName == key) {
-            //debounce echo from data model
-            return;
-        }
+    if (updatingParamNameLock == paramName) {
+        qDebug() << "ignoring bounce from " << paramName;
+        return;
+    }
+    else {
+        updatingParamNameLock = paramName;
     }
 
     QTreeWidgetItem* paramItem = updateParameterDisplay(compId,paramName,value);
-    if (updatedLineItem_weak == NULL) {
-        updatedLineItem_weak = paramItem;
-    }
     if (isPending) {
         paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
         paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
@@ -225,17 +223,20 @@ void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramNa
         paramItem->setBackground(1, Qt::NoBrush);
     }
 
+    updatingParamNameLock.clear();
+
 }
 
 void QGCParamWidget::handleParameterUpdate(int componentId, const QString& paramName, QVariant value)
 {
+    updatingParamNameLock = paramName;
     updateParameterDisplay(componentId, paramName, value);
+    updatingParamNameLock.clear();
 }
 
 
 void QGCParamWidget::handleParameterListUpToDate()
 {
-
     //turn off updates while we refresh the entire list
     tree->setUpdatesEnabled(false);
 
@@ -340,7 +341,6 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
                 parameterItem->setData(1, Qt::DisplayRole, value);
             }
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
-            updatedLineItem_weak = parameterItem; //keep a temporary ref to the item that's being updated
 
             //TODO insert alphabetically
             parentItem->addChild(parameterItem);
@@ -362,8 +362,6 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             }
         }
 
-        updatedLineItem_weak = parameterItem; //keep a temporary ref to the item that's being updated
-
         //update the parameterItem's data
         if (value.type() == QVariant::Char) {
             parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
@@ -381,7 +379,6 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
         parameterItem->setTextColor(0, QGC::colorDarkWhite);
         parameterItem->setTextColor(1, QGC::colorDarkWhite);
 
-        updatedLineItem_weak = NULL;
     }
     return parameterItem;
 
@@ -391,11 +388,18 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
 
 void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column)
 {
+
     if (paramItem && column > 0) {
 
-        if (!paramItem->isSelected() ||  (paramItem == updatedLineItem_weak)) {
-            //ignore updates reflected back from the data model, to avoid infinite loop
+        QString key = paramItem->data(0, Qt::DisplayRole).toString();
+        qDebug() << "parameterItemChanged:" << key << "with updatingParamNameLock:" << updatingParamNameLock;
+
+        if (key == updatingParamNameLock) {
+            qDebug() << "ignoring parameterItemChanged" << key;
             return;
+        }
+        else {
+            updatingParamNameLock = key;
         }
 
         QTreeWidgetItem* parent = paramItem->parent();
@@ -404,9 +408,8 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
         }
         // Parent is now top-level component
         int componentId = componentItems->key(parent);
-
-        QString key = paramItem->data(0, Qt::DisplayRole).toString();
         QVariant value = paramItem->data(1, Qt::DisplayRole);
+
 
         bool pending = paramDataModel->updatePendingParamWithValue(componentId,key,value);
 
@@ -430,6 +433,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
             paramItem->setBackground(1, Qt::NoBrush);
         }
 
+        updatingParamNameLock.clear();
     }
 }
 
