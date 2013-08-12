@@ -929,6 +929,8 @@ void QGCVehicleConfig::writeCalibrationRC()
 {
     if (!mav) return;
 
+    setTrimPositions();
+
     QString minTpl("RC%1_MIN");
     QString maxTpl("RC%1_MAX");
     QString trimTpl("RC%1_TRIM");
