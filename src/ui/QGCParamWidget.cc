@@ -249,7 +249,9 @@ void QGCParamWidget::handleParameterListUpToDate()
         QMap<QString, QVariant>* paramPairs = onboardParams->value(compId);
         QMap<QString, QVariant>::iterator j;
         for (j = paramPairs->begin(); j != paramPairs->end(); j++) {
+            updatingParamNameLock = j.key();
             updateParameterDisplay(compId, j.key(),j.value());
+            updatingParamNameLock.clear();
         }
     }
 
@@ -315,7 +317,7 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
 //    qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
 
     // Reference to item in tree
-    QTreeWidgetItem* parameterItem = NULL;
+    QTreeWidgetItem* paramItem = NULL;
 
     // Add component item if necessary
     if (!componentItems->contains(compId)) {
@@ -326,24 +328,24 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
     //default parent item for this parameter widget item will be the top level component item
     QTreeWidgetItem* parentItem = getParentWidgetItemForParam(compId,parameterName);
     if (parentItem) {
-        parameterItem = findChildWidgetItemForParam(parentItem,parameterName);
-        if (!parameterItem) {
+        paramItem = findChildWidgetItemForParam(parentItem,parameterName);
+        if (!paramItem) {
             // Insert parameter into map
             QStringList plist;
             plist.append(parameterName);
             // CREATE PARAMETER ITEM
-            parameterItem = new QTreeWidgetItem(plist);
+            paramItem = new QTreeWidgetItem(plist);
             // CONFIGURE PARAMETER ITEM
             if (value.type() == QVariant::Char) {
-                parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+                paramItem->setData(1, Qt::DisplayRole, value.toUInt());
             }
             else {
-                parameterItem->setData(1, Qt::DisplayRole, value);
+                paramItem->setData(1, Qt::DisplayRole, value);
             }
-            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
+            paramItem->setFlags(paramItem->flags() | Qt::ItemIsEditable);
 
             //TODO insert alphabetically
-            parentItem->addChild(parameterItem);
+            parentItem->addChild(paramItem);
 
             //only add the tooltip when the parameter item is first added
             QString paramDesc = paramDataModel->getParamDescription(parameterName);
@@ -357,30 +359,35 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
                 else {
                     tooltipFormat = paramDesc;
                 }
-                parameterItem->setToolTip(0, tooltipFormat);
-                parameterItem->setToolTip(1, tooltipFormat);
+                paramItem->setToolTip(0, tooltipFormat);
+                paramItem->setToolTip(1, tooltipFormat);
             }
         }
 
         //update the parameterItem's data
         if (value.type() == QVariant::Char) {
-            parameterItem->setData(1, Qt::DisplayRole, value.toUInt());
+            paramItem->setData(1, Qt::DisplayRole, value.toUInt());
         }
         else {
-            parameterItem->setData(1, Qt::DisplayRole, value);
+            paramItem->setData(1, Qt::DisplayRole, value);
         }
     }
 
-    if (parameterItem) {
+    if (paramItem) {
         // Reset background color
-        parameterItem->setBackground(0, Qt::NoBrush);
-        parameterItem->setBackground(1, Qt::NoBrush);
+        paramItem->setBackground(0, Qt::NoBrush);
+        paramItem->setBackground(1, Qt::NoBrush);
 
-        parameterItem->setTextColor(0, QGC::colorDarkWhite);
-        parameterItem->setTextColor(1, QGC::colorDarkWhite);
+        paramItem->setTextColor(0, QGC::colorDarkWhite);
+        paramItem->setTextColor(1, QGC::colorDarkWhite);
+
+        if (paramItem == tree->currentItem()) {
+            //need to unset current item to clear highlighting (green by default)
+            tree->setCurrentItem(NULL); //clear the selected line
+        }
 
     }
-    return parameterItem;
+    return paramItem;
 
 }
 
@@ -418,10 +425,6 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
             // Set parameter on changed list to be transmitted to MAV
             statusLabel->setText(tr("Pending: %1:%2: %3").arg(componentId).arg(key).arg(value.toFloat(), 5, 'f', 1, QChar(' ')));
 
-            if (paramItem == tree->currentItem()) {
-                //need to unset current item to clear highlighting (green by default)
-                tree->setCurrentItem(NULL); //clear the selected line
-            }
             paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
             paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
         }
@@ -431,6 +434,12 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
             statusLabel->setText(tr("Pending items: %1").arg(pendingCount));
             paramItem->setBackground(0, Qt::NoBrush);
             paramItem->setBackground(1, Qt::NoBrush);
+        }
+
+
+        if (paramItem == tree->currentItem()) {
+            //need to unset current item to clear highlighting (green by default)
+            tree->setCurrentItem(NULL); //clear the selected line
         }
 
         updatingParamNameLock.clear();
