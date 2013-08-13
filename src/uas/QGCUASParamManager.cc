@@ -18,9 +18,6 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
 
     // Load default values and tooltips
     loadParamMetaInfoCSV();
-
-
-
 }
 
 
@@ -73,6 +70,11 @@ void QGCUASParamManager::setParameter(int component, QString parameterName, QVar
 void QGCUASParamManager::sendPendingParameters()
 {
     paramCommsMgr->sendPendingParameters();
+}
+
+void QGCUASParamManager::setPendingParam(int compId,  QString& paramName,  const QVariant& value)
+{
+    paramDataModel->setPendingParam(compId,paramName,value);
 }
 
 
