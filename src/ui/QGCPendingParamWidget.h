@@ -20,7 +20,8 @@ protected:
 signals:
     
 public slots:
-    
+    virtual void handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
+
 };
 
 #endif // QGCPENDINGPARAMWIDGET_H

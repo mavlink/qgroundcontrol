@@ -18,9 +18,42 @@ UASParameterDataModel::UASParameterDataModel(QObject *parent) :
 
 
 
+int UASParameterDataModel::countPendingParams()
+{
+    int totalPending = 0;
+    QMap<int, QMap<QString, QVariant>*>::iterator i;
+    for (i = pendingParameters.begin(); i != pendingParameters.end(); ++i) {
+        // Iterate through the parameters of the component
+        QMap<QString, QVariant>* paramList = i.value();
+        totalPending += paramList->count();
+    }
+
+    return totalPending;
+}
+
+void UASParameterDataModel::commitAllPendingParams()
+{
+    qDebug() << "commitAllPendingParams:" << countPendingParams();
+
+    QList<int> allCompIds = pendingParameters.keys();
+    foreach (int compId, allCompIds) {
+        // Iterate through the parameters of the component
+        QMap<QString, QVariant>* compParams = pendingParameters.value(compId);
+        QList<QString> paramNames = compParams->keys();
+        qDebug() <<  paramNames.count() << "committed params for component" << compId;
+
+        foreach (QString paramName, paramNames) {
+            QVariant value = compParams->value(paramName);
+            setOnboardParamWithType( compId, paramName, value);//update the onboard value to match pending value
+            emit pendingParamUpdate(compId,paramName,value,false); //no longer pending
+            emit parameterUpdated(compId,paramName,value);//ensure the new onboard value is broadcast
+        }
+
+    }
+}
 
 
-bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key,  QVariant& value)
+bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key, const QVariant& value)
 {
     bool pending = true;
     //ensure we have this component in our onboard and pending lists already
@@ -44,27 +77,36 @@ bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key
     return pending;
 }
 
-void UASParameterDataModel::removePendingParam(int compId, QString& key)
-{
-    QMap<QString, QVariant> *params = getPendingParamsForComponent(compId);
-    if (params) {
-        params->remove(key);
-        //broadcast the existing value
-        QVariant existVal;
-        bool ok = getOnboardParamValue(compId,key,existVal);
-        emit pendingParamUpdate(compId, key,existVal, false);
-    }
-}
 
+bool UASParameterDataModel::isParamChangePending(int compId, const QString& key)
+{
+    QMap<QString , QVariant>* pendingParms =  getPendingParamsForComponent(compId);
+    return ((NULL != pendingParms) && pendingParms->contains(key));
+}
 
 void UASParameterDataModel::setPendingParam(int compId, QString& key,  const QVariant &value)
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
-    QMap<QString, QVariant> *params = getPendingParamsForComponent(compId);
-    params->insert(key,value);
-    emit pendingParamUpdate(compId, key, value, true);
+    QMap<QString, QVariant> *pendParams = getPendingParamsForComponent(compId);
+    if (pendParams) {
+        pendParams->insert(key,value);
+        emit pendingParamUpdate(compId, key, value, true);
+     }
+}
 
+void UASParameterDataModel::removePendingParam(int compId, QString& key)
+{
+    qDebug() << "removePendingParam:" << key;
+
+    QMap<QString, QVariant> *pendParams = getPendingParamsForComponent(compId);
+    if (pendParams) {
+        pendParams->remove(key);
+        //broadcast the existing value
+        QVariant existVal;
+        getOnboardParamValue(compId,key,existVal);
+        emit pendingParamUpdate(compId, key,existVal, false);
+    }
 }
 
 void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVariant& value)
@@ -78,7 +120,6 @@ void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVa
 void UASParameterDataModel::setOnboardParamWithType(int compId, QString& key, QVariant& value)
 {
 
-//    switch ((int)onboardParameters.value(componentId)->value(key).type())
     switch ((int)value.type())
     {
     case QVariant::Int:
@@ -209,13 +250,13 @@ void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)
                     switch (paramType)
                     {
                     case MAV_PARAM_TYPE_REAL32:
-                        setPendingParam(componentId,key,QVariant(valStr.toFloat()));
+                        updatePendingParamWithValue(componentId,key,QVariant(valStr.toFloat()));
                         break;
                     case MAV_PARAM_TYPE_UINT32:
-                        setPendingParam(componentId,key, QVariant(valStr.toUInt()));
+                        updatePendingParamWithValue(componentId,key, QVariant(valStr.toUInt()));
                         break;
                     case MAV_PARAM_TYPE_INT32:
-                        setPendingParam(componentId,key,QVariant(valStr.toInt()));
+                        updatePendingParamWithValue(componentId,key,QVariant(valStr.toInt()));
                         break;
                     default:
                         qDebug() << "FAILED LOADING PARAM" << key << "UNKNOWN DATA TYPE";
