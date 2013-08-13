@@ -31,27 +31,6 @@ int UASParameterDataModel::countPendingParams()
     return totalPending;
 }
 
-void UASParameterDataModel::commitAllPendingParams()
-{
-    qDebug() << "commitAllPendingParams:" << countPendingParams();
-
-    QList<int> allCompIds = pendingParameters.keys();
-    foreach (int compId, allCompIds) {
-        // Iterate through the parameters of the component
-        QMap<QString, QVariant>* compParams = pendingParameters.value(compId);
-        QList<QString> paramNames = compParams->keys();
-        qDebug() <<  paramNames.count() << "committed params for component" << compId;
-
-        foreach (QString paramName, paramNames) {
-            QVariant value = compParams->value(paramName);
-            setOnboardParamWithType( compId, paramName, value);//update the onboard value to match pending value
-            emit pendingParamUpdate(compId,paramName,value,false); //no longer pending
-            emit parameterUpdated(compId,paramName,value);//ensure the new onboard value is broadcast
-        }
-
-    }
-}
-
 
 bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key, const QVariant& value)
 {
@@ -163,26 +142,27 @@ void UASParameterDataModel::addComponent(int compId)
 }
 
 
-void UASParameterDataModel::handleParamUpdate(int compId, QString& key, QVariant& value)
+void UASParameterDataModel::handleParamUpdate(int compId, QString& paramName, QVariant& value)
 {
     //verify that the value requested by the user matches the set value
     //if it doesn't match, leave the pending parameter in the pending list!
     if (pendingParameters.contains(compId)) {
         QMap<QString , QVariant> *pendingParams = pendingParameters.value(compId);
-        if ((NULL != pendingParams) && pendingParams->contains(key)) {
-            QVariant reqVal = pendingParams->value(key);
+        if ((NULL != pendingParams) && pendingParams->contains(paramName)) {
+            QVariant reqVal = pendingParams->value(paramName);
             if (reqVal == value) {
-                pendingParams->remove(key);
+                //notify everyone that this item is being removed from the pending parameters list since it's now confirmed
+                emit pendingParamUpdate(compId, paramName,  value, false);
+                pendingParams->remove(paramName);
             }
             else {
-                qDebug() << "Pending commit for " << key << " want: " << reqVal << " got: " << value;
+                qDebug() << "Pending commit for " << paramName << " want: " << reqVal << " got: " << value;
             }
         }
     }
 
-    setOnboardParam(compId,key,value);
-
-    emit parameterUpdated(compId,key,value);
+    emit parameterUpdated(compId,paramName,value);
+    setOnboardParam(compId,paramName,value);
 
 }
 
