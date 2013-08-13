@@ -38,6 +38,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
+    // Got to options
     QAction *guidedaction = new QAction(this);
     guidedaction->setText("Go To Here (Guided Mode)");
     connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedActionTriggered()));
@@ -46,10 +47,16 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     guidedaction->setText("Go To Here Alt (Guided Mode)");
     connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
     this->addAction(guidedaction);
+    // Point camera option
     QAction *cameraaction = new QAction(this);
     cameraaction->setText("Point Camera Here");
     connect(cameraaction,SIGNAL(triggered()),this,SLOT(cameraActionTriggered()));
     this->addAction(cameraaction);
+    // Set home location option
+    QAction *sethomeaction = new QAction(this);
+    sethomeaction->setText("Set Home Location Here");
+    connect(sethomeaction,SIGNAL(triggered()),this,SLOT(setHomeActionTriggered()));
+    this->addAction(sethomeaction);
 }
 void QGCMapWidget::guidedActionTriggered()
 {
@@ -109,6 +116,35 @@ void QGCMapWidget::cameraActionTriggered()
         internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
         newmav->setMountControl(pos.Lat(),pos.Lng(),100,true);
     }
+}
+
+/**
+ * @brief QGCMapWidget::setHomeActionTriggered
+ */
+bool QGCMapWidget::setHomeActionTriggered()
+{
+    if (!uas)
+    {
+        QMessageBox::information(0,"Error","Please connect first");
+        return false;
+    }
+    UASManager *uasManager = UASManager::instance();
+    if (!uasManager) { return false; }
+
+    // Enter an altitude
+    bool ok = false;
+    int alt = QInputDialog::getInt(this,"Altitude","Enter default altitude (in meters) of destination point for guided mode",100,0,30000,1,&ok);
+    if (!ok) return false; //Use has chosen cancel. Do not send the waypoint
+
+    // Create new waypoint and send it to the WPManager to send out.
+    internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+    qDebug() << "Set home location sent. Lat:" << pos.Lat() << ", Lon:" << pos.Lng() << ", Alt: " << alt;
+
+    bool success = uasManager->setHomePositionAndNotify(pos.Lat(),pos.Lng(), alt);
+
+    qDebug() << ((success)? "Set new home location." : "Failed to set new home location.");
+
+    return success;
 }
 
 void QGCMapWidget::mousePressEvent(QMouseEvent *event)

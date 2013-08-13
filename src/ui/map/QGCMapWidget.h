@@ -46,6 +46,8 @@ public slots:
     void guidedActionTriggered();
     /** @brief Action triggered when guided action is selected from the context menu, allows for altitude selection */
     bool guidedAltActionTriggered();
+    /** @brief Action triggered when set home action is selected from the context menu. */
+    bool setHomeActionTriggered();
     /** @brief Add system to map view */
     void addUAS(UASInterface* uas);
     /** @brief Update the global position of a system */
