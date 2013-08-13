@@ -206,10 +206,10 @@ void QGCParamWidget::addComponentItem(int compId, QString compName)
 
 void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)
 {
-    qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
+   // qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
 
     if (updatingParamNameLock == paramName) {
-        qDebug() << "ignoring bounce from " << paramName;
+        //qDebug() << "ignoring bounce from " << paramName;
         return;
     }
     else {
@@ -230,10 +230,15 @@ void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramNa
 
 }
 
-void QGCParamWidget::handleParameterUpdate(int componentId, const QString& paramName, QVariant value)
+void QGCParamWidget::handleParameterUpdate(int compId, const QString& paramName, QVariant value)
 {
+//    qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
+    if (paramName == updatingParamNameLock) {
+        qDebug() << "handlePendingParamUpdate ignoring bounce from " << paramName;
+        return;
+    }
     updatingParamNameLock = paramName;
-    updateParameterDisplay(componentId, paramName, value);
+    updateParameterDisplay(compId, paramName, value);
     updatingParamNameLock.clear();
 }
 
@@ -402,10 +407,10 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
     if (paramItem && column > 0) {
 
         QString key = paramItem->data(0, Qt::DisplayRole).toString();
-        qDebug() << "parameterItemChanged:" << key << "with updatingParamNameLock:" << updatingParamNameLock;
+        //qDebug() << "parameterItemChanged:" << key << "with updatingParamNameLock:" << updatingParamNameLock;
 
         if (key == updatingParamNameLock) {
-            qDebug() << "ignoring parameterItemChanged" << key;
+            //qDebug() << "parameterItemChanged ignoring parameterItemChanged" << key;
             return;
         }
         else {
