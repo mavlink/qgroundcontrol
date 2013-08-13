@@ -55,9 +55,19 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     updatingParamNameLock("")
 {
 
-    layoutWidget();
+}
 
-    // Connect signals/slots
+void QGCParamWidget::init()
+{
+    layoutWidget();
+    connectSignalsAndSlots();
+
+    // Ensure we're receiving the list of params
+    requestAllParamsUpdate();
+}
+
+void QGCParamWidget::connectSignalsAndSlots()
+{
 
     // Listen for edits to the tree UI
     connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
@@ -77,14 +87,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     // Listen to communications status messages so we can display them
     connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SLOT(handleParamStatusMsgUpdate(QString , int )));
-
-    // Ensure we're receiving the list of params
-    requestAllParamsUpdate();
-
 }
-
-
-
 
 void QGCParamWidget::layoutWidget()
 {

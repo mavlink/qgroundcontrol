@@ -49,6 +49,8 @@ public slots:
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
 
+    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+
     /** @brief Request a single parameter by name from the MAV */
     virtual void requestParameterUpdate(int component, const QString& parameter);
 

@@ -187,6 +187,7 @@ protected:
     QTimer updateTimer;                 ///< Controls update intervals
     enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
+    QMap<QString,QGCToolWidget*> toolWidgetsByName; ///<
     bool calibrationEnabled;            ///< calibration mode on / off
 
     QMap<QString,QGCToolWidget*> paramToWidgetMap;                     ///< Holds the current active MAV's parameter widgets.
