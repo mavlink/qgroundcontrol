@@ -62,9 +62,10 @@ void QGCUASParamManager::setParamDescriptions(const QMap<QString,QString>& param
 }
 
 
-void QGCUASParamManager::setParameter(int component, QString parameterName, QVariant value)
+void QGCUASParamManager::setParameter(int compId, QString paramName, QVariant value)
 {
-    paramCommsMgr->setParameter(component,parameterName,value);
+    //paramCommsMgr->setParameter(compId,paramName,value);
+    paramDataModel->updatePendingParamWithValue(compId,paramName,value);
 }
 
 void QGCUASParamManager::sendPendingParameters()
@@ -74,7 +75,7 @@ void QGCUASParamManager::sendPendingParameters()
 
 void QGCUASParamManager::setPendingParam(int compId,  QString& paramName,  const QVariant& value)
 {
-    paramDataModel->setPendingParam(compId,paramName,value);
+    paramDataModel->updatePendingParamWithValue(compId,paramName,value);
 }
 
 

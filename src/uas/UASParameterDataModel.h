@@ -34,10 +34,9 @@ public:
       */
     virtual void addComponent(int compId);
 
-    /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
-    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
 
     virtual void removePendingParam(int compId, QString& key);
+    virtual void commitAllPendingParams();///< Called by eg params comms mgr when all pending params have been sent & acked
 
     /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
     virtual void setOnboardParamWithType(int componentId, QString& key, QVariant& value);
@@ -49,9 +48,11 @@ public:
     /** @brief add this parameter to pending list iff it has changed from onboard value
      * @return true if the parameter is now pending
     */
-    virtual bool updatePendingParamWithValue(int componentId, QString& key,  QVariant& value);
+    virtual bool updatePendingParamWithValue(int componentId, QString& key,  const QVariant &value);
     virtual void handleParamUpdate(int componentId, QString& key, QVariant& value);
     virtual bool getOnboardParamValue(int componentId, const QString& key, QVariant& value) const;
+
+    virtual bool isParamChangePending(int componentId,const QString& key);
 
     QMap<QString , QVariant>* getPendingParamsForComponent(int componentId) {
         return pendingParameters.value(componentId);
@@ -79,6 +80,10 @@ public:
 
 protected:
     virtual void setOnboardParam(int componentId, QString& key, const QVariant& value);
+    /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
+    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+
+    int countPendingParams();
 
 signals:
     
@@ -87,6 +92,8 @@ signals:
 
     /** @brief Notifies listeners that a param was added to or removed from the pending list */
     void pendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
+
+    void allPendingParamsCommitted(); ///< All pending params have been committed to the MAV
 
 public slots:
 
