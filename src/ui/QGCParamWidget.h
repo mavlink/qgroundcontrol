@@ -48,40 +48,39 @@ class QGCParamWidget : public QGCUASParamManager
     Q_OBJECT
 public:
     QGCParamWidget(UASInterface* uas, QWidget *parent = 0);
-    /** @brief Get the UAS of this widget */
-    UASInterface* getUAS();
+    virtual void init(); ///< Two-stage construction: initialize the object
 
-    bool isParamMinKnown(const QString& param) { return paramMin.contains(param); }
-    bool isParamMaxKnown(const QString& param) { return paramMax.contains(param); }
-    bool isParamDefaultKnown(const QString& param) { return paramDefault.contains(param); }
-    double getParamMin(const QString& param) { return paramMin.value(param, 0.0f); }
-    double getParamMax(const QString& param) { return paramMax.value(param, 0.0f); }
-    double getParamDefault(const QString& param) { return paramDefault.value(param, 0.0f); }
-    QString getParamInfo(const QString& param) { return paramToolTips.value(param, ""); }
-    void setParamInfo(const QMap<QString,QString>& param) { paramToolTips = param; }
+protected:
+    virtual void setParameterStatusMsg(const QString& msg);
+    virtual void layoutWidget();///< Layout the appearance of this widget
+    virtual void connectSignalsAndSlots();///< Connect signals/slots as needed
+    virtual QTreeWidgetItem* getParentWidgetItemForParam(int compId, const QString& paramName);
+    virtual QTreeWidgetItem* findChildWidgetItemForParam(QTreeWidgetItem* parentItem, const QString& paramName);
+
 
 signals:
-    /** @brief A parameter was changed in the widget, NOT onboard */
-    //void parameterChanged(int component, QString parametername, float value); // defined in QGCUASParamManager already
-    /** @brief Request a single parameter */
-    void requestParameter(int component, int parameter);
-    /** @brief Request a single parameter by name */
-    void requestParameter(int component, const QString& parameter);
+
+
 public slots:
-    /** @brief Add a component to the list */
-    void addComponent(int uas, int component, QString componentName);
-    /** @brief Add a parameter to the list with retransmission / safety checks */
-    void addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, QVariant value);
-    /** @brief Add a parameter to the list */
-    void addParameter(int uas, int component, QString parameterName, QVariant value);
+    /** @brief Add a component to the list
+     * @param compId Component id of the component
+     * @param compName Human friendly name of the component
+     */
+    void addComponentItem(int compId, QString compName);
+
+
+    virtual void handleParameterUpdate(int component,const QString& parameterName, QVariant value);
+    virtual void handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
+
+    virtual void handleParameterListUpToDate();
+
+    virtual void handleParamStatusMsgUpdate(QString msg, int level);
+
+    /** @brief Ensure that view of parameter matches data in the model */
+    QTreeWidgetItem* updateParameterDisplay(int component, QString parameterName, QVariant value);
     /** @brief Request list of parameters from MAV */
-    void requestParameterList();
-    /** @brief Request one single parameter */
-    void requestParameterUpdate(int component, const QString& parameter);
-    /** @brief Set one parameter, changes value in RAM of MAV */
-    void setParameter(int component, QString parameterName, QVariant value);
-    /** @brief Set all parameters, changes the value in RAM of MAV */
-    void setParameters();
+    void requestAllParamsUpdate();
+
     /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */
     void writeParameters();
     /** @brief Read the parameters from permanent storage to RAM */
@@ -92,32 +91,19 @@ public slots:
     void parameterItemChanged(QTreeWidgetItem* prev, int column);
 
     /** @brief Store parameters to a file */
-    void saveParameters();
+    void saveParametersToFile();
     /** @brief Load parameters from a file */
-    void loadParameters();
+    void loadParametersFromFile();
 
-    /** @brief Check for missing parameters */
-    void retransmissionGuardTick();
+
 
 protected:
     QTreeWidget* tree;   ///< The parameter tree
-    QLabel* statusLabel; ///< Parameter transmission label
-    QMap<int, QTreeWidgetItem*>* components; ///< The list of components
-    QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
+    QLabel* statusLabel; ///< User-facing parameter status label
+    QMap<int, QTreeWidgetItem*>* componentItems; ///< The tree of component items, stored by component ID
+    QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
+    QString     updatingParamNameLock; ///< Name of param currently being updated-- used for reducing echo on param change
 
-    // Tooltip data structures
-    QMap<QString, QString> paramToolTips; ///< Tooltip values
-    // Min / Default / Max data structures
-    QMap<QString, double> paramMin; ///< Minimum param values
-    QMap<QString, double> paramDefault; ///< Default param values
-    QMap<QString, double> paramMax; ///< Minimum param values
-
-    /** @brief Activate / deactivate parameter retransmission */
-    void setRetransmissionGuardEnabled(bool enabled);
-    /** @brief Load  settings */
-    void loadSettings();
-    /** @brief Load meta information from CSV */
-    void loadParameterInfoCSV(const QString& autopilot, const QString& airframe);
 };
 
 #endif // QGCPARAMWIDGET_H

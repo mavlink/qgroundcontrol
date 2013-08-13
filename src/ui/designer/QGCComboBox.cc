@@ -48,7 +48,7 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     connect(ui->editRemoveItemButton,SIGNAL(clicked()),this,SLOT(delButtonClicked()));
 
     // Sending actions
-    connect(ui->writeButton, SIGNAL(clicked()), this, SLOT(sendParameter()));
+    connect(ui->writeButton, SIGNAL(clicked()), this, SLOT(setParamPending()));
     connect(ui->editSelectComponentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectComponent(int)));
     connect(ui->editSelectParamComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectParameter(int)));
     //connect(ui->valueSlider, SIGNAL(valueChanged(int)), this, SLOT(setSliderValue(int)));
@@ -108,15 +108,14 @@ void QGCComboBox::setActiveUAS(UASInterface* activeUas)
         // Update current param value
         //requestParameter();
         // Set param info
-        QString text = uas->getParamManager()->getParamInfo(parameterName);
-        if (text != "")
-        {
+
+        QString text = uas->getParamDataModel()->getParamDescription(parameterName);
+        if (!text.isEmpty()) {
             ui->infoLabel->setToolTip(text);
             ui->infoLabel->show();
         }
         // Force-uncheck and hide label if no description is available
-        if (ui->editInfoCheckBox->isChecked())
-        {
+        if (ui->editInfoCheckBox->isChecked())  {
             showInfo((text.length() > 0));
         }
     }
@@ -147,27 +146,21 @@ void QGCComboBox::selectParameter(int paramIndex)
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
 
     // Update min and max values if available
-    if (uas)
-    {
-        if (uas->getParamManager())
-        {
-            // Current value
-            //uas->getParamManager()->requestParameterUpdate(component, parameterName);
-
+    if (uas)  {
+        UASParameterDataModel* dataModel =  uas->getParamDataModel();
+        if (dataModel) {
             // Minimum
-            if (uas->getParamManager()->isParamMinKnown(parameterName))
-            {
-                parameterMin = uas->getParamManager()->getParamMin(parameterName);
+            if (dataModel->isParamMinKnown(parameterName)) {
+                parameterMin = dataModel->getParamMin(parameterName);
             }
 
             // Maximum
-            if (uas->getParamManager()->isParamMaxKnown(parameterName))
-            {
-                parameterMax = uas->getParamManager()->getParamMax(parameterName);
+            if (dataModel->isParamMaxKnown(parameterName)) {
+                parameterMax = dataModel->getParamMax(parameterName);
             }
 
             // Description
-            QString text = uas->getParamManager()->getParamInfo(parameterName);
+            QString text = dataModel->getParamDescription(parameterName);
             //ui->infoLabel->setText(text);
             showInfo(!(text.length() > 0));
         }
@@ -240,24 +233,13 @@ void QGCComboBox::endEditMode()
     emit editingFinished();
 }
 
-void QGCComboBox::sendParameter()
+void QGCComboBox::setParamPending()
 {
-    if (uas)
-    {
-        // Set value, param manager handles retransmission
-        if (uas->getParamManager())
-        {
-            qDebug() << "Sending param:" << parameterName << "to component" << component << "with a value of" << parameterValue;
-            uas->getParamManager()->setParameter(component, parameterName, parameterValue);
-        }
-        else
-        {
-            qDebug() << "UAS HAS NO PARAM MANAGER, DOING NOTHING";
-        }
+    if (uas)  {
+        uas->getParamManager()->setPendingParam(component, parameterName, parameterValue);
     }
-    else
-    {
-        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
+    else  {
+        qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
 
