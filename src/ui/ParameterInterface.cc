@@ -72,6 +72,7 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 
 ParameterInterface::~ParameterInterface()
 {
+    delete paramWidgets;
     delete m_ui;
 }
 
@@ -89,8 +90,20 @@ void ParameterInterface::selectUAS(int index)
  */
 void ParameterInterface::addUAS(UASInterface* uas)
 {
+    int uasId = uas->getUASID();
+    qDebug() << "ParameterInterface::addUAS : " << uasId ;
+
+    if (paramWidgets->contains(uasId) ) {
+        return;
+    }
+
     QGCParamWidget* param = new QGCParamWidget(uas, this);
-    paramWidgets->insert(uas->getUASID(), param);
+    param->init();
+    QString ptrStr;
+    ptrStr.sprintf("QGCParamWidget %8p (parent %8p)", param,this);
+    qDebug() << "Created " << ptrStr << " for UAS id: " << uasId << " count: " << paramWidgets->count();
+
+    paramWidgets->insert(uasId, param);
     m_ui->stackedWidget->addWidget(param);
 
     QGCSensorSettingsWidget* sensor = NULL;

@@ -149,7 +149,7 @@ void UASListWidget::addUAS(UASInterface* uas)
         QList<LinkInterface*>* x = uas->getLinks();
         if (x->size())
         {
-            LinkInterface* li = x->at(0);
+            LinkInterface* li = x->first();
 
             // Find an existing QGroupBox for this LinkInterface or create a
             // new one.

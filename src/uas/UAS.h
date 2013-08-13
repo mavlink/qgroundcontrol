@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 
+
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
  *
@@ -492,6 +493,8 @@ protected: //COMMENTS FOR TEST UNIT
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
     QGCUASParamManager* paramManager; ///< Parameter manager class
+    UASParameterDataModel* paramDataModel; ///< The parameter data model for this UAS
+    UASParameterCommsMgr* paramCommsMgr;
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
@@ -519,10 +522,24 @@ public:
     QGCUASParamManager* getParamManager() const {
         return paramManager;
     }
+
+    /** @brief Get reference to the parameter data model (same one shared with the parameter manager)  **/
+    UASParameterDataModel* getParamDataModel() {
+        return paramDataModel;
+    }
+
+    UASParameterCommsMgr* getParamCommsMgr() {
+        return paramCommsMgr;
+    }
+
+
     /** @brief Get the HIL simulation */
     QGCHilLink* getHILSimulation() const {
         return simulation;
     }
+
+
+
     // TODO Will be removed
     /** @brief Set reference to the param manager **/
     void setParamManager(QGCUASParamManager* manager) {
@@ -948,6 +965,7 @@ protected:
     quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
     quint64 lastSendTimeSensors;
     QList<QAction*> actions; ///< A list of actions that this UAS can perform.
+
 
 protected slots:
     /** @brief Write settings to disk */

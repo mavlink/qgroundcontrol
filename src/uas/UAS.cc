@@ -26,6 +26,7 @@
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 #include "SerialLink.h"
+#include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
 
 #ifdef QGC_PROTOBUF_ENABLED
@@ -131,6 +132,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 
     paramsOnceRequested(false),
     paramManager(NULL),
+    paramDataModel(NULL),
+    paramCommsMgr(NULL),
 
     simulation(0),
 
@@ -150,6 +153,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentID[i] = -1;
         componentMulti[i] = false;
     }
+
+    paramDataModel = new UASParameterDataModel(this);
+    paramDataModel->setUASID(this->getUASID());
+
+    paramCommsMgr = new UASParameterCommsMgr(this,this);
 
     // Store a list of available actions for this UAS.
     // Basically everything exposted as a SLOT with no return value or arguments.
@@ -226,6 +234,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 */
 UAS::~UAS()
 {
+    delete paramCommsMgr;
+    delete paramDataModel;
     writeSettings();
     delete links;
     delete statusTimeout;
@@ -1991,7 +2001,7 @@ void UAS::sendMessage(mavlink_message_t message)
         if (LinkManager::instance()->getLinks().contains(link))
         {
             sendMessage(link, message);
-            qDebug() << "SENT MESSAGE!";
+            qDebug() << "SENT MESSAGE id" << message.msgid << "component" << message.compid;
         }
         else
         {
@@ -2021,8 +2031,10 @@ void UAS::forwardMessage(mavlink_message_t message)
                 {
                     if(serial != links->at(i))
                     {
-                        qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
-                        sendMessage(serial, message);
+                        if (link->isConnected()) {
+                            qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
+                            sendMessage(serial, message);
+                        }
                     }
                 }
             }
@@ -2247,7 +2259,9 @@ void UAS::requestParameters()
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_ALL);
     sendMessage(msg);
-    qDebug() << __FILE__ << ":" << __LINE__ << "LOADING PARAM LIST";
+
+    QDateTime time = QDateTime::currentDateTime();
+    qDebug() << __FILE__ << ":" << __LINE__ << time.toString() << "LOADING PARAM LIST";
 }
 
 void UAS::writeParametersToStorage()
@@ -2533,7 +2547,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
         if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
         {
-            switch (value.type())
+            switch ((int)value.type())
             {
             case QVariant::Char:
                 union_value.param_float = (unsigned char)value.toChar().toAscii();
@@ -2558,7 +2572,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         }
         else
         {
-            switch (value.type())
+            switch ((int)value.type())
             {
             case QVariant::Char:
                 union_value.param_int8 = (unsigned char)value.toChar().toAscii();
