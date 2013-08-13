@@ -92,7 +92,7 @@ protected:
 
     // Communications management
     QVector<bool> receivedParamsList; ///< Successfully received parameters
-    QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
+    QMap<int, QList<int>* > missingReadPackets; ///< Missing packets
     QMap<int, QMap<QString, QVariant>* > missingWriteAckPackets; ///< Missing write ACK packets
     bool transmissionListMode;       ///< Currently requesting list
     QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?

@@ -80,8 +80,8 @@ void UASParameterCommsMgr::requestParameterList()
         transmissionListSizeKnown.clear();
 
         transmissionListMode = true;
-        foreach (int key, transmissionMissingPackets.keys()) {
-            transmissionMissingPackets.value(key)->clear();
+        foreach (int key, missingReadPackets.keys()) {
+            missingReadPackets.value(key)->clear();
         }
         transmissionActive = true;
 
@@ -106,10 +106,10 @@ void UASParameterCommsMgr::clearRetransmissionLists(int& missingReadCount, int& 
     qDebug() << __FILE__ << __LINE__ << "clearRetransmissionLists";
 
     missingReadCount = 0;
-    QList<int> readKeys = transmissionMissingPackets.keys();
+    QList<int> readKeys = missingReadPackets.keys();
     foreach (int compId, readKeys) {
-        missingReadCount += transmissionMissingPackets.value(compId)->count();
-        transmissionMissingPackets.value(compId)->clear();
+        missingReadCount += missingReadPackets.value(compId)->count();
+        missingReadPackets.value(compId)->clear();
     }
 
     missingWriteCount = 0;
@@ -169,10 +169,11 @@ void UASParameterCommsMgr::resendReadWriteRequests()
     // Re-request at maximum retransmissionBurstRequestSize parameters at once
     // to prevent link flooding'
     int requestedReadCount = 0;
-    compIds = transmissionMissingPackets.keys();
+    compIds = missingReadPackets.keys();
     foreach (compId, compIds) {
         // Request n parameters from this component (at maximum)
-        QList<int>* missingReadParams = transmissionMissingPackets.value(compId, NULL);
+        QList<int>* missingReadParams = missingReadPackets.value(compId, NULL);
+        qDebug() << "missingReadParams:" << missingReadParams->count();
         foreach (int paramId, *missingReadParams) {
             if (requestedReadCount < retransmissionBurstRequestSize) {
                 //qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << paramId << "FROM COMPONENT #" << compId;
@@ -423,11 +424,11 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
     paramDataModel->handleParamUpdate(compId,paramName,value);
 
     // Missing packets list has to be instantiated for all components
-    if (!transmissionMissingPackets.contains(compId)) {
-        transmissionMissingPackets.insert(compId, new QList<int>());
+    if (!missingReadPackets.contains(compId)) {
+        missingReadPackets.insert(compId, new QList<int>());
     }
 
-    QList<int>* compXmitMissing =  transmissionMissingPackets.value(compId);
+    QList<int>* compMissReadPackets =  missingReadPackets.value(compId);
 
     // List mode is different from single parameter transfers
     if (transmissionListMode) {
@@ -439,8 +440,8 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 
             qDebug() << "Mark all parameters as missing: " << paramCount;
             for (int i = 1; i < paramCount; ++i) { //TODO check: param Id 0 is  "all parameters" and not valid ?
-                if (!compXmitMissing->contains(i)) {
-                    compXmitMissing->append(i);
+                if (!compMissReadPackets->contains(i)) {
+                    compMissReadPackets->append(i);
                 }
             }
 
@@ -456,28 +457,27 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
     }
 
     // Mark this parameter as received in read list
-    int index = compXmitMissing->indexOf(paramId);
-    // If the MAV sent the parameter without request, it wont be in missing list
+    int index = compMissReadPackets->indexOf(paramId);
     if (index != -1) {
-        compXmitMissing->removeAt(index);
+        compMissReadPackets->removeAt(index);
     }
 
     bool justWritten = false;
     bool writeMismatch = false;
 
     // Mark this parameter as received in write ACK list
-    QMap<QString, QVariant>* map = missingWriteAckPackets.value(compId);
-    if (map && map->contains(paramName)) {
+    QMap<QString, QVariant>* compMissWritePackets = missingWriteAckPackets.value(compId);
+    if (compMissWritePackets && compMissWritePackets->contains(paramName)) {
         justWritten = true;
-        if (map->value(paramName) != value) {
+        if (compMissWritePackets->value(paramName) != value) {
             writeMismatch = true;
         }
-        map->remove(paramName);
+        compMissWritePackets->remove(paramName);
     }
 
     int missReadCount = 0;
-    foreach (int key, transmissionMissingPackets.keys()) {
-        missReadCount +=  transmissionMissingPackets.value(key)->count();
+    foreach (int key, missingReadPackets.keys()) {
+        missReadCount +=  missingReadPackets.value(key)->count();
     }
 
     int missWriteCount = 0;
@@ -488,15 +488,14 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
     //TODO simplify this if-else tree
     if (justWritten) {
         if (!writeMismatch) {
-            setParameterStatusMsg(tr("SUCCESS: Wrote %2 (#%1/%4): %3").arg(paramId+1).arg(paramName).arg(value.toDouble()).arg(paramCount));
+            setParameterStatusMsg(tr("SUCCESS: Wrote %2 (#%1/%4): %3 [%5]").arg(paramId+1).arg(paramName).arg(value.toDouble()).arg(paramCount).arg(missWriteCount));
             if (0 == missWriteCount) {
                 setParameterStatusMsg(tr("SUCCESS: WROTE ALL PARAMETERS"));
-                paramDataModel->commitAllPendingParams();
             }
         }
         else  {
             // Mismatch, tell user
-            setParameterStatusMsg(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(paramName).arg(map->value(paramName).toDouble()).arg(value.toDouble()),
+            setParameterStatusMsg(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(paramName).arg(compMissWritePackets->value(paramName).toDouble()).arg(value.toDouble()),
                                   ParamCommsStatusLevel_Warning);
         }
     }
@@ -512,6 +511,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             QString val = QString("%1").arg(value.toFloat(), 5, 'f', 1, QChar(' '));
             setParameterStatusMsg(tr("OK: %1 %2 (%3/%4)").arg(paramName).arg(val).arg(paramCount-missReadCount).arg(paramCount),
                                   ParamCommsStatusLevel_Warning);
+            //transmissionMissingPackets
         }
     }
 
@@ -598,6 +598,8 @@ void UASParameterCommsMgr::sendPendingParameters()
         }
         // Enable guard
         setRetransmissionGuardEnabled(true);
+
+        qDebug() << "Pending parameters now:" << paramDataModel->countPendingParams();
     }
 }
 
