@@ -98,6 +98,7 @@ void ParameterInterface::addUAS(UASInterface* uas)
     }
 
     QGCParamWidget* param = new QGCParamWidget(uas, this);
+    param->init();
     QString ptrStr;
     ptrStr.sprintf("QGCParamWidget %8p (parent %8p)", param,this);
     qDebug() << "Created " << ptrStr << " for UAS id: " << uasId << " count: " << paramWidgets->count();

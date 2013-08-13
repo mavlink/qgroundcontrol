@@ -48,10 +48,12 @@ class QGCParamWidget : public QGCUASParamManager
     Q_OBJECT
 public:
     QGCParamWidget(UASInterface* uas, QWidget *parent = 0);
+    virtual void init(); ///< Two-stage construction: initialize the object
 
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
-    virtual void layoutWidget();
+    virtual void layoutWidget();///< Layout the appearance of this widget
+    virtual void connectSignalsAndSlots();///< Connect signals/slots as needed
     virtual QTreeWidgetItem* getParentWidgetItemForParam(int compId, const QString& paramName);
     virtual QTreeWidgetItem* findChildWidgetItemForParam(QTreeWidgetItem* parentItem, const QString& paramName);
 
