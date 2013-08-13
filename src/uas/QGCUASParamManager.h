@@ -6,7 +6,10 @@
 #include <QTimer>
 #include <QVariant>
 
+//forward declarations
 class UASInterface;
+class UASParameterCommsMgr;
+class UASParameterDataModel;
 
 class QGCUASParamManager : public QWidget
 {
@@ -14,68 +17,56 @@ class QGCUASParamManager : public QWidget
 public:
     QGCUASParamManager(UASInterface* uas, QWidget *parent = 0);
 
-    QList<QString> getParameterNames(int component) const {
-        return parameters.value(component)->keys();
-    }
-    QList<QVariant> getParameterValues(int component) const {
-        return parameters.value(component)->values();
-    }
-    bool getParameterValue(int component, const QString& parameter, QVariant& value) const {
-        if (!parameters.contains(component))
-        {
-            return false;
-        }
+    /** @brief Get the known, confirmed value of a parameter */
+    virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
-        if (!parameters.value(component)->contains(parameter))
-        {
-            return false;
-        }
+    /** @brief Provide tooltips / user-visible descriptions for parameters */
+    virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs);
 
-        value = parameters.value(component)->value(parameter);
+    /** @brief Get the UAS of this widget
+     * @return The MAV of this mgr. Unless the MAV object has been destroyed, this is never null.
+     */
+    UASInterface* getUAS();
 
-        return true;
-    }
+protected:
+    //TODO decouple this UI message display further?
+    virtual void setParameterStatusMsg(const QString& msg);
+    /** @brief Load parameter meta information from appropriate CSV file */
+    virtual void loadParamMetaInfoCSV();
 
-    virtual bool isParamMinKnown(const QString& param) = 0;
-    virtual bool isParamMaxKnown(const QString& param) = 0;
-    virtual bool isParamDefaultKnown(const QString& param) = 0;
-    virtual double getParamMin(const QString& param) = 0;
-    virtual double getParamMax(const QString& param) = 0;
-    virtual double getParamDefault(const QString& param) = 0;
-    virtual QString getParamInfo(const QString& param) = 0;
-    virtual void setParamInfo(const QMap<QString,QString>& param) = 0;
-
-    /** @brief Request an update for the parameter list */
-    void requestParameterListUpdate(int component = 0);
-    /** @brief Request an update for this specific parameter */
-    virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
 
 signals:
     void parameterChanged(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
-    void parameterListUpToDate(int component);
 
 public slots:
-    /** @brief Write one parameter to the MAV */
-    virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
+    /** @brief Send one parameter to the MAV: changes value in transient memory of MAV */
+    virtual void setParameter(int component, QString parameterName, QVariant value);
+
+    /** @brief Send all pending parameters to the MAV, for storage in transient (RAM) memory */
+    virtual void sendPendingParameters();
+
     /** @brief Request list of parameters from MAV */
-    virtual void requestParameterList() = 0;
+    virtual void requestParameterList();
+
+    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+
+    /** @brief Request a single parameter by name from the MAV */
+    virtual void requestParameterUpdate(int component, const QString& parameter);
+
+    virtual void handleParameterUpdate(int component, const QString& parameterName, QVariant value) = 0;
+    virtual void handleParameterListUpToDate() = 0;
+
 
 protected:
-    UASInterface* mav;   ///< The MAV this widget is controlling
-    QMap<int, QMap<QString, QVariant>* > changedValues; ///< Changed values
-    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
-    QVector<bool> received; ///< Successfully received parameters
-    QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
-    QMap<int, QMap<QString, QVariant>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
-    bool transmissionListMode;       ///< Currently requesting list
-    QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
-    bool transmissionActive;         ///< Missing packets, working on list?
-    quint64 transmissionTimeout;     ///< Timeout
-    QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
-    int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
-    int rewriteTimeout; ///< Write request timeout, in milliseconds
-    int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
+
+    // Parameter data model
+    UASInterface*           mav;   ///< The MAV this manager is controlling
+    UASParameterDataModel*  paramDataModel;///< Shared data model of parameters
+    UASParameterCommsMgr*   paramCommsMgr; ///< Shared comms mgr for parameters
+
+    // Status
+    QString parameterStatusMsg;
 
 };
 

@@ -280,6 +280,7 @@ void UASManager::addUAS(UASInterface* uas)
     // Only execute if there is no UAS at this index
     if (!systems.contains(uas))
     {
+        qDebug() << "Add new UAS: " << uas->getUASID();
         systems.append(uas);
         // Set home position on UAV if set in UI
         // - this is done on a per-UAV basis
