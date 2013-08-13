@@ -29,7 +29,7 @@ public:
     UASInterface* getUAS();
 
 protected:
-    //TODO decouple this UI message display further
+    //TODO decouple this UI message display further?
     virtual void setParameterStatusMsg(const QString& msg);
     /** @brief Load parameter meta information from appropriate CSV file */
     virtual void loadParamMetaInfoCSV();
@@ -38,9 +38,6 @@ protected:
 signals:
     void parameterChanged(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
-//    void parameterUpdateRequested(int component, const QString& parameter);
-//    void parameterUpdateRequestedById(int componentId, int paramId);
-
 
 public slots:
     /** @brief Send one parameter to the MAV: changes value in transient memory of MAV */
@@ -62,8 +59,8 @@ public slots:
 protected:
 
     // Parameter data model
-    UASInterface* mav;   ///< The MAV this widget is controlling
-    UASParameterDataModel* paramDataModel;///< Shared data model of parameters
+    UASInterface*           mav;   ///< The MAV this manager is controlling
+    UASParameterDataModel*  paramDataModel;///< Shared data model of parameters
     UASParameterCommsMgr*   paramCommsMgr; ///< Shared comms mgr for parameters
 
     // Status
