@@ -23,8 +23,8 @@ public:
 public slots:
     void startEditMode();
     void endEditMode();
-    /** @brief Send the parameter to the MAV */
-    void sendParameter();
+    /** @brief Queue parameter for sending to the MAV (add to pending list)*/
+    void setParamPending();
     /** @brief Update the UI with the new parameter value */
     void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, const QVariant value);
     void writeSettings(QSettings& settings);

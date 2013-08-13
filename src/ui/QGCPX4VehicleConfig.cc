@@ -15,6 +15,7 @@
 #include "QGCPX4VehicleConfig.h"
 
 #include "QGC.h"
+#include "QGCPendingParamWidget.h"
 #include "QGCToolWidget.h"
 #include "UASManager.h"
 #include "UASParameterCommsMgr.h"
@@ -82,7 +83,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
-
+    //TODO connect buttons here to save/clear actions?
+    ui->pendingCommitsWidget->init();
+    ui->pendingCommitsWidget->update();
 
     //TODO the following methods are not yet implemented
 
@@ -301,7 +304,6 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     }
 
     // Generate widgets for the Advanced tab.
-    left = true;
     foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
@@ -1232,8 +1234,6 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
 
 void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-    Q_UNUSED(uas);
-    Q_UNUSED(component);
     if (!doneLoadingConfig) {
         //We do not want to attempt to generate any UI elements until loading of the config file is complete.
         //We should re-request params later if needed, that is not implemented yet.
