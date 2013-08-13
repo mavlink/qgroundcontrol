@@ -509,16 +509,7 @@ void QGCParamWidget::requestAllParamsUpdate()
  */
 void QGCParamWidget::writeParameters()
 {
-    int changedParamCount = 0;
-
-    QMap<int, QMap<QString, QVariant>*>::iterator i;
-    QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getAllPendingParams();
-
-    for (i = changedValues->begin(); (i != changedValues->end()) && (0 == changedParamCount);  ++i) {
-        // Iterate through the pending parameters of the component, break on the first changed parameter
-        QMap<QString, QVariant>* compPending = i.value();
-        changedParamCount += compPending->count();
-    }
+    int changedParamCount = paramDataModel->countPendingParams();
 
     if (changedParamCount > 0) {
         QMessageBox msgBox;
@@ -534,7 +525,7 @@ void QGCParamWidget::writeParameters()
 void QGCParamWidget::readParameters()
 {
     if (!mav) return;
-    mav->readParametersFromStorage();
+    mav->readParametersFromStorage(); //TODO use data model / mgr instead?
 }
 
 /**

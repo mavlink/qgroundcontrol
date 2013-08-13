@@ -35,8 +35,6 @@ public:
     virtual void addComponent(int compId);
 
 
-    virtual void removePendingParam(int compId, QString& key);
-    virtual void commitAllPendingParams();///< Called by eg params comms mgr when all pending params have been sent & acked
 
     /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
     virtual void setOnboardParamWithType(int componentId, QString& key, QVariant& value);
@@ -70,6 +68,9 @@ public:
        return &onboardParameters;
    }
 
+    /** @brief return a count of all pending parameters */
+    int countPendingParams();
+
 
     virtual void writeOnboardParamsToStream(QTextStream &stream, const QString& uasName);
     virtual void readUpdateParamsFromStream(QTextStream &stream);
@@ -79,11 +80,14 @@ public:
     void setUASID(int anId) {  this->uasId = anId; }
 
 protected:
+    /** @brief set the confirmed value of a parameter in the onboard params list */
     virtual void setOnboardParam(int componentId, QString& key, const QVariant& value);
+
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
     virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+    /** @brief remove a parameter from the pending list */
+    virtual void removePendingParam(int compId, QString& key);
 
-    int countPendingParams();
 
 signals:
     
