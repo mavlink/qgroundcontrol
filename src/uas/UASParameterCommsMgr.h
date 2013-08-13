@@ -44,10 +44,10 @@ protected:
     void resendReadWriteRequests();
     void resetAfterListReceive();
 
-    void emitParameterChanged(int compId, const QString& key, QVariant& value);
+    void emitPendingParameterCommit(int compId, const QString& key, QVariant& value);
 
 signals:
-    void parameterChanged(int component, QString parameter, QVariant value);
+    void commitPendingParameter(int component, QString parameter, QVariant value);
     void parameterChanged(int component, int parameterIndex, QVariant value);
     void parameterValueConfirmed(int uas, int component,int paramCount, int paramId, QString parameter, QVariant value);
 
@@ -93,7 +93,7 @@ protected:
     // Communications management
     QVector<bool> receivedParamsList; ///< Successfully received parameters
     QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
-    QMap<int, QMap<QString, QVariant>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
+    QMap<int, QMap<QString, QVariant>* > missingWriteAckPackets; ///< Missing write ACK packets
     bool transmissionListMode;       ///< Currently requesting list
     QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
     bool transmissionActive;         ///< Missing packets, working on list?
