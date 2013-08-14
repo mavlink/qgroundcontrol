@@ -182,6 +182,10 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     MainWindow::instance()->addLink(simulationLink);
     simulationLink->disconnect();
 
+    // Load plugins
+    splashScreen->showMessage(tr("Load plugins"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+    loadPlugins();
+
     // Remove splash screen
     splashScreen->finish(mainWindow);
 
@@ -221,17 +225,7 @@ QGCCore::~QGCCore()
     {
         delete welcome;
     } else {
-        // unload every modules and delete their handler (loader)
-        foreach (QPluginLoader * loader, pluginLoaders) 
-        {
-            if(loader) 
-            {
-                loader->unload();
-                delete loader;
-            }
-        }
-        pluginLoaders.clear();
-
+        unloadPlugins();
         //mainWindow->storeSettings();
         //mainWindow->close();
         //mainWindow->deleteLater();
@@ -263,7 +257,16 @@ void QGCCore::startLinkManager()
  **/
 void QGCCore::startUASManager()
 {
-    // Load UAS plugins
+    UASManager::instance();
+}
+
+/**
+ * @brief Load plugins
+ *
+ **/
+void QGCCore::loadPlugins()
+{
+    // Set the plugins dir
     QDir pluginsDir = QDir(qApp->applicationDirPath());
 
 #if defined(Q_OS_WIN)
@@ -281,9 +284,7 @@ void QGCCore::startUASManager()
 #endif
     pluginsDir.cd("plugins");
 
-    UASManager::instance();
-
-    // Load plugins
+    // Load every plugins present in the dir
 
     foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
         QPluginLoader *loader = new QPluginLoader(pluginsDir.absoluteFilePath(fileName));
@@ -299,6 +300,26 @@ void QGCCore::startUASManager()
             delete loader;
         }
     }
+}
+
+/**
+ * @brief Unload plugins
+ *
+ * Call unload on every plugins in order to call their dtor
+ *
+ **/
+void QGCCore::unloadPlugins()
+{
+    // unload every modules and delete their handler (loader)
+    foreach (QPluginLoader * loader, pluginLoaders) 
+    {
+        if(loader) 
+        {
+            loader->unload();
+            delete loader;
+        }
+    }
+    pluginLoaders.clear();
 }
 
 void QGCCore::customViewModeSelected(enum MainWindow::CUSTOM_MODE mode)

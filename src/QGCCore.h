@@ -79,6 +79,9 @@ protected:
      **/
     void startUASManager();
 
+    void loadPlugins();
+    void unloadPlugins();
+
 private:
     MainWindow* mainWindow;
     bool restartRequested;
