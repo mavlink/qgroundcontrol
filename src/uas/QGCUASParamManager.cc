@@ -45,7 +45,6 @@ void QGCUASParamManager::requestParameterList()
     if (!mav) {
         return;
     }
-    //paramDataModel->forgetAllOnboardParameters(); //TODO really??
     setParameterStatusMsg(tr("Requested param list.. waiting"));
     paramCommsMgr->requestParameterList();
 }
