@@ -791,7 +791,7 @@ void QGCVehicleConfig::loadConfig()
     mav->getParamManager()->setParamDescriptions(paramTooltips);
     doneLoadingConfig = true;
     //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
-    mav->getParamCommsMgr()->requestParameterList();
+    mav->getParamCommsMgr()->requestParameterListIfEmpty();
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)

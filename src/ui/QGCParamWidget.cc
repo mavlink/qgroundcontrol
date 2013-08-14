@@ -62,8 +62,9 @@ void QGCParamWidget::init()
     layoutWidget();
     connectSignalsAndSlots();
 
-    // Ensure we're receiving the list of params
-    requestAllParamsUpdate();
+    // Ensure we have a list of params
+    paramCommsMgr->requestParameterListIfEmpty();
+
 }
 
 void QGCParamWidget::connectSignalsAndSlots()
@@ -497,6 +498,7 @@ void QGCParamWidget::requestAllParamsUpdate()
 
     // Clear view and request param list
     clear();
+    //paramDataModel->forgetAllOnboardParameters(); //TODO really??
 
     requestParameterList();
 }

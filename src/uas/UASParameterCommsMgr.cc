@@ -60,6 +60,15 @@ void UASParameterCommsMgr::loadParamCommsSettings()
 }
 
 
+void UASParameterCommsMgr::requestParameterListIfEmpty()
+{
+    int totalOnboard = paramDataModel->countOnboardParams();
+    if (totalOnboard < 2) { //TODO arbitrary constant, maybe 0 is OK?
+        requestParameterList();
+    }
+}
+
+
 
 /**
  * Send a request to deliver the list of onboard parameters
