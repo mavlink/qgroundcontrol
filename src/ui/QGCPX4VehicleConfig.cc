@@ -802,7 +802,7 @@ void QGCPX4VehicleConfig::loadConfig()
     }
     doneLoadingConfig = true;
     //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
-    mav->getParamCommsMgr()->requestParameterList();
+    paramCommsMgr->requestParameterListIfEmpty();
 }
 
 void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)

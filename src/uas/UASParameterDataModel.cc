@@ -20,15 +20,28 @@ UASParameterDataModel::UASParameterDataModel(QObject *parent) :
 
 int UASParameterDataModel::countPendingParams()
 {
-    int totalPending = 0;
+    int total = 0;
     QMap<int, QMap<QString, QVariant>*>::iterator i;
     for (i = pendingParameters.begin(); i != pendingParameters.end(); ++i) {
         // Iterate through the parameters of the component
         QMap<QString, QVariant>* paramList = i.value();
-        totalPending += paramList->count();
+        total += paramList->count();
     }
 
-    return totalPending;
+    return total;
+}
+
+int UASParameterDataModel::countOnboardParams()
+{
+    int total = 0;
+    QMap<int, QMap<QString, QVariant>*>::iterator i;
+    for (i = onboardParameters.begin(); i != onboardParameters.end(); ++i) {
+        // Iterate through the parameters of the component
+        QMap<QString, QVariant>* paramList = i.value();
+        total += paramList->count();
+    }
+
+    return total;
 }
 
 
