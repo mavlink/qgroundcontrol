@@ -176,6 +176,7 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     MainWindow::instance()->addLink(opalLink);
 #endif
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
+    MainWindow::instance()->addLink(simulationLink);
     simulationLink->disconnect();
 
     // Remove splash screen

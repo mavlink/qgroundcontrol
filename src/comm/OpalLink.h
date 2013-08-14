@@ -41,7 +41,6 @@ This file is part of the QGROUNDCONTROL project
 
 
 #include "LinkInterface.h"
-#include "LinkManager.h"
 #include "MG.h"
 #include "QGCMAVLink.h"
 #include "configuration.h"
