@@ -256,6 +256,6 @@ protected slots:
 };
 
 /* Declare C++ interface as Qt interface */
-//Q_DECLARE_INTERFACE(LinkInterface, "org.openground.comm.links.LinkInterface/1.0")
+Q_DECLARE_INTERFACE(LinkInterface, "org.openground.comm.LinkInterface/1.0")
 
 #endif // _LINKINTERFACE_H_

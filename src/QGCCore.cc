@@ -218,6 +218,17 @@ QGCCore::~QGCCore()
     {
         delete welcome;
     } else {
+        // unload every modules and delete their handler (loader)
+        foreach (QPluginLoader * loader, pluginLoaders) 
+        {
+            if(loader) 
+            {
+                loader->unload();
+                delete loader;
+            }
+        }
+        pluginLoaders.clear();
+
         //mainWindow->storeSettings();
         //mainWindow->close();
         //mainWindow->deleteLater();
@@ -271,15 +282,18 @@ void QGCCore::startUASManager()
 
     // Load plugins
 
-    QStringList pluginFileNames;
-
     foreach (QString fileName, pluginsDir.entryList(QDir::Files)) {
-        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-        QObject *plugin = loader.instance();
+        QPluginLoader *loader = new QPluginLoader(pluginsDir.absoluteFilePath(fileName));
+        QObject *plugin = loader->instance();
         if (plugin) {
             //populateMenus(plugin);
-            pluginFileNames += fileName;
-            //printf(QString("Loaded plugin from " + fileName + "\n").toStdString().c_str());
+            pluginLoaders += loader;
+            qDebug() << "Loaded plugin from " << fileName;
+        }
+        else {
+            qWarning() << "Failed to load plugin from " << fileName;
+            qWarning() << loader->errorString();
+            delete loader;
         }
     }
 }

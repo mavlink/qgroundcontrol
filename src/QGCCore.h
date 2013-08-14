@@ -82,6 +82,7 @@ private:
     MainWindow* mainWindow;
     bool restartRequested;
     QGCWelcomeMainWindow* welcome;
+    QList<QPluginLoader *> pluginLoaders;
 };
 
 #endif /* _CORE_H_ */
