@@ -1272,7 +1272,7 @@ p, li { white-space: pre-wrap; }
   <customwidget>
    <class>QGCPendingParamWidget</class>
    <extends>QWidget</extends>
-   <header>/ui/QGCPendingParamWidget.h</header>
+   <header>ui/QGCPendingParamWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
