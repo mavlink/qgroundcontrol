@@ -69,8 +69,10 @@ public:
    }
 
     /** @brief return a count of all pending parameters */
-    int countPendingParams();
+    virtual int countPendingParams();
 
+    /** @brief return a count of all onboard parameters we've received */
+    virtual int countOnboardParams();
 
     virtual void writeOnboardParamsToStream(QTextStream &stream, const QString& uasName);
     virtual void readUpdateParamsFromStream(QTextStream &stream);
