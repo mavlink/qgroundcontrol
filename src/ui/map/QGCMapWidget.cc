@@ -38,7 +38,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
-    // Got to options
+    // Go to options
     QAction *guidedaction = new QAction(this);
     guidedaction->setText("Go To Here (Guided Mode)");
     connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedActionTriggered()));
@@ -133,12 +133,12 @@ bool QGCMapWidget::setHomeActionTriggered()
 
     // Enter an altitude
     bool ok = false;
-    int alt = QInputDialog::getInt(this,"Altitude","Enter default altitude (in meters) of destination point for guided mode",100,0,30000,1,&ok);
+    double alt = QInputDialog::getDouble(this,"Home Altitude","Enter altitude (in meters) of new home location",0.0,0.0,30000.0,2,&ok);
     if (!ok) return false; //Use has chosen cancel. Do not send the waypoint
 
     // Create new waypoint and send it to the WPManager to send out.
-    internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
-    qDebug() << "Set home location sent. Lat:" << pos.Lat() << ", Lon:" << pos.Lng() << ", Alt: " << alt;
+    internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
+    qDebug("Set home location sent. Lat: %f, Lon: %f, Alt: %f.", pos.Lat(), pos.Lng(), alt);
 
     bool success = uasManager->setHomePositionAndNotify(pos.Lat(),pos.Lng(), alt);
 
@@ -149,6 +149,13 @@ bool QGCMapWidget::setHomeActionTriggered()
 
 void QGCMapWidget::mousePressEvent(QMouseEvent *event)
 {
+
+    // Store right-click event presses separate for context menu
+    // TODO add check if click was on map, or popup box.
+    if (event->button() == Qt::RightButton) {
+        contextMousePressPos = event->pos();
+    }
+
     mapcontrol::OPMapWidget::mousePressEvent(event);
 }
 
@@ -157,6 +164,15 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
     mousePressPos = event->pos();
     mapcontrol::OPMapWidget::mouseReleaseEvent(event);
 }
+
+/*
+void QGCMapWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    // TODO Remove this method
+    qDebug() << "Context menu event triggered.";
+    mapcontrol::OPMapWidget::contextMenuEvent(event);
+}
+*/
 
 QGCMapWidget::~QGCMapWidget()
 {
@@ -556,6 +572,7 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
     Home->SetAltitude(altitude);
     homeAltitude = altitude;
     SetShowHome(true);                      // display the HOME position on the map
+    Home->RefreshPos();
 }
 
 void QGCMapWidget::goHome()
