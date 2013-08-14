@@ -138,6 +138,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent* event);
 
+    //void contextMenuEvent(QContextMenuEvent *);
+
     UASWaypointManager* currWPManager; ///< The current waypoint manager
     bool offlineMode;
     QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
@@ -162,6 +164,7 @@ protected:
     bool mapInitialized;                ///< Map initialized?
     float homeAltitude;                 ///< Home altitude
     QPoint mousePressPos;               ///< Mouse position when the button is released.
+    QPoint contextMousePressPos;        ///< Mouse position when context menu activated.
     int defaultGuidedAlt;               ///< Default altitude for guided mode
     UASInterface *uas;                  ///< Currently selected UAS.
 
