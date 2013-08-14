@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 #define QGC_CORE_H
 
 #include <QApplication>
+#include <QPluginLoader>
 
 #include "MainWindow.h"
 #include "QGCWelcomeMainWindow.h"

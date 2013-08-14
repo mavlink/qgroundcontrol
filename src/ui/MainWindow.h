@@ -38,45 +38,22 @@ This file is part of the QGROUNDCONTROL project
 #include <qlist.h>
 
 #include "ui_MainWindow.h"
-#include "LinkManager.h"
 #include "LinkInterface.h"
 #include "UASInterface.h"
-#include "UASManager.h"
-#include "UASControlWidget.h"
-#include "UASInfoWidget.h"
-#include "WaypointList.h"
-#include "CameraView.h"
-#include "UASListWidget.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
-#include "ObjectDetectionView.h"
 #include "submainwindow.h"
 #include "input/JoystickInput.h"
 #if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
 #endif // MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
-#include "ParameterInterface.h"
-#include "XMLCommProtocolWidget.h"
-#include "HDDisplay.h"
-#include "WatchdogControl.h"
-#include "HSIDisplay.h"
-#include "QGCRemoteControlView.h"
-#include "opmapcontrol.h"
 #if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
 #endif
 #include "QGCToolBar.h"
-#include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
-
-#include "SlugsHilSim.h"
-
-#include "SlugsPadCameraControl.h"
-#include "UASControlParameters.h"
-#include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
-#include "QGCVehicleConfig.h"
 #include "MAVLinkDecoder.h"
 
 class QGCMapTool;
@@ -493,7 +470,6 @@ protected:
     bool autoReconnect;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
-    QGCFlightGearLink* fgLink;
     QTimer windowNameUpdateTimer;
     CUSTOM_MODE customMode;
 

@@ -38,6 +38,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QPainter>
 #include <QStyleFactory>
 #include <QAction>
+#include <QFontDatabase>
+#include <QMessageBox>
+#include <QDir>
 
 #include <QDebug>
 

@@ -26,6 +26,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QSpacerItem>
 #include "QGCToolBar.h"
 #include "UASManager.h"
+#include "LinkManager.h"
 #include "MainWindow.h"
 
 QGCToolBar::QGCToolBar(QWidget *parent) :

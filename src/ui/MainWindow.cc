@@ -66,6 +66,28 @@ This file is part of the QGROUNDCONTROL project
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
 
+#include "LinkManager.h"
+#include "UASManager.h"
+#include "UASControlWidget.h"
+#include "UASInfoWidget.h"
+#include "WaypointList.h"
+#include "CameraView.h"
+#include "UASListWidget.h"
+#include "ObjectDetectionView.h"
+#include "ParameterInterface.h"
+#include "XMLCommProtocolWidget.h"
+#include "HDDisplay.h"
+#include "WatchdogControl.h"
+#include "HSIDisplay.h"
+#include "QGCRemoteControlView.h"
+#include "opmapcontrol.h"
+#include "SlugsDataSensorView.h"
+#include "SlugsHilSim.h"
+#include "SlugsPadCameraControl.h"
+#include "UASControlParameters.h"
+#include "QGCMAVLinkInspector.h"
+#include "QGCVehicleConfig.h"
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -1602,6 +1624,7 @@ void MainWindow::addLink(LinkInterface *link)
         }
     }
 }
+
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
     if (commsWidgetList.contains(obj))

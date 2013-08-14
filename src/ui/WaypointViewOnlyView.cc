@@ -1,3 +1,4 @@
+#include <QPainter>
 #include <QDebug>
 
 #include "MainWindow.h"

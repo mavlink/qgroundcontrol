@@ -1,7 +1,9 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDesktopServices>
+#include <QPainter>
 
+#include "LinkManager.h"
 #include "MainWindow.h"
 #include "SerialLink.h"
 #include "QGCMAVLinkLogPlayer.h"

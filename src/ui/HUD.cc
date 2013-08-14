@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QPaintEvent>
+#include <QGLWidget>
 #include <QDebug>
 
 #include <cmath>
