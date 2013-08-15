@@ -84,7 +84,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
     //TODO connect buttons here to save/clear actions?
-    ui->pendingCommitsWidget->init();
+    ui->pendingCommitsWidget->initWithUAS(this->mav);
     ui->pendingCommitsWidget->update();
 
     //TODO the following methods are not yet implemented
@@ -798,11 +798,11 @@ void QGCPX4VehicleConfig::loadConfig()
     }
 
     if (!paramTooltips.isEmpty()) {
-           mav->getParamManager()->setParamDescriptions(paramTooltips);
+           paramMgr->setParamDescriptions(paramTooltips);
     }
     doneLoadingConfig = true;
     //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
-    paramCommsMgr->requestParameterListIfEmpty();
+    paramMgr->requestParameterListIfEmpty();
 }
 
 void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
@@ -828,6 +828,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 
     if (mav)
     {
+
         // Disconnect old system
         disconnect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                    SLOT(remoteControlChannelRawChanged(int,float)));
@@ -835,7 +836,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
         disconnect(ui->refreshButton,SIGNAL(clicked()),
-                   paramCommsMgr,SLOT(requestParameterList()));
+                   paramMgr,SLOT(requestParameterList()));
 
         // Delete all children from all fixed tabs.
         foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>()) {
@@ -868,22 +869,23 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     // Connect new system
     mav = active;
 
-    paramCommsMgr = mav->getParamCommsMgr();
+    paramMgr = mav->getParamManager();
+
     // Reset current state
     resetCalibrationRC();
-
-    requestCalibrationRC();
+    //TODO eliminate the separate RC_TYPE call
     mav->requestParameter(0, "RC_TYPE");
 
     chanCount = 0;
 
+    //TODO get parameter changes via Param Mgr instead
     // Connect new system
     connect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                SLOT(remoteControlChannelRawChanged(int,float)));
     connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                SLOT(parameterChanged(int,int,QString,QVariant)));
     connect(ui->refreshButton, SIGNAL(clicked()),
-            paramCommsMgr,SLOT(requestParameterList()));
+            paramMgr,SLOT(requestParameterList()));
 
     if (systemTypeToParamMap.contains(mav->getSystemTypeName())) {
         paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
@@ -978,9 +980,7 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
 
 void QGCPX4VehicleConfig::requestCalibrationRC()
 {
-    if (paramCommsMgr) {
-        paramCommsMgr->requestRcCalibrationParamsUpdate();
-    }
+    paramMgr->requestRcCalibrationParamsUpdate();
 }
 
 void QGCPX4VehicleConfig::writeParameters()

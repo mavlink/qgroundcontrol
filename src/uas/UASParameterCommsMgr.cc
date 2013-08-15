@@ -18,7 +18,7 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     rewriteTimeout(1000),
     retransmissionBurstRequestSize(5)
 {
-    paramDataModel = mav->getParamDataModel();
+    paramDataModel = mav->getParamManager()->dataModel();
     loadParamCommsSettings();
 
 
@@ -57,15 +57,6 @@ void UASParameterCommsMgr::loadParamCommsSettings()
         rewriteTimeout = val;
     }
     settings.endGroup();
-}
-
-
-void UASParameterCommsMgr::requestParameterListIfEmpty()
-{
-    int totalOnboard = paramDataModel->countOnboardParams();
-    if (totalOnboard < 2) { //TODO arbitrary constant, maybe 0 is OK?
-        requestParameterList();
-    }
 }
 
 

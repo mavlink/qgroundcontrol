@@ -72,8 +72,6 @@ public slots:
 
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
-    /** @brief Request a list of params onboard the MAV if the onboard param list we have is empty */
-    virtual void requestParameterListIfEmpty();
 
     /** @brief Check for missing parameters */
     virtual void retransmissionGuardTick();

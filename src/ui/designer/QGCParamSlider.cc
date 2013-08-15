@@ -116,7 +116,7 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
     }
 
     if (uas && !parameterName.isEmpty()) {
-        QString text = uas->getParamDataModel()->getParamDescription(parameterName);
+        QString text =  uas->getParamManager()->dataModel()->getParamDescription(parameterName);
         if (!text.isEmpty()) {
             ui->infoLabel->setToolTip(text);
             ui->infoLabel->show();
@@ -190,7 +190,7 @@ void QGCParamSlider::selectParameter(int paramIndex)
 
     // Update min and max values if available
     if (uas) {
-        UASParameterDataModel* dataModel =  uas->getParamDataModel();
+        UASParameterDataModel* dataModel =  uas->getParamManager()->dataModel();
         if (dataModel) {
             // Minimum
             if (dataModel->isParamMinKnown(parameterName)) {

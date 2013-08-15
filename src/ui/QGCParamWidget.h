@@ -37,64 +37,54 @@ This file is part of the QGROUNDCONTROL project
 #include <QLabel>
 #include <QTimer>
 
-#include "QGCUASParamManager.h"
-#include "UASInterface.h"
+#include "QGCBaseParamWidget.h"
+
+
+//forward declarations
+class UASInterface;
 
 /**
  * @brief Widget to read/set onboard parameters
  */
-class QGCParamWidget : public QGCUASParamManager
+class QGCParamWidget : public QGCBaseParamWidget
 {
     Q_OBJECT
 public:
-    QGCParamWidget(UASInterface* uas, QWidget *parent = 0);
-    virtual void init(); ///< Two-stage construction: initialize the object
+    QGCParamWidget(QWidget *parent = 0);
 
 protected:
     virtual void setParameterStatusMsg(const QString& msg);
     virtual void layoutWidget();///< Layout the appearance of this widget
-    virtual void connectSignalsAndSlots();///< Connect signals/slots as needed
+    virtual void connectViewSignalsAndSlots();///< Connect view signals/slots as needed
+    virtual void disconnectViewSignalsAndSlots();///< Connect view signals/slots as needed
+
     virtual QTreeWidgetItem* getParentWidgetItemForParam(int compId, const QString& paramName);
     virtual QTreeWidgetItem* findChildWidgetItemForParam(QTreeWidgetItem* parentItem, const QString& paramName);
 
-
-signals:
-
-
-public slots:
-    /** @brief Add a component to the list
+    /** @brief Add a component item as a child of this widget
      * @param compId Component id of the component
      * @param compName Human friendly name of the component
      */
     void addComponentItem(int compId, QString compName);
 
+signals:
 
-    virtual void handleParameterUpdate(int component,const QString& parameterName, QVariant value);
+
+public slots:
+    virtual void handleOnboardParamUpdate(int component,const QString& parameterName, QVariant value);
     virtual void handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
-
-    virtual void handleParameterListUpToDate();
-
+    virtual void handleOnboardParameterListUpToDate();
     virtual void handleParamStatusMsgUpdate(QString msg, int level);
+
+    virtual void clearOnboardParamDisplay();
+    virtual void clearPendingParamDisplay();
 
     /** @brief Ensure that view of parameter matches data in the model */
     QTreeWidgetItem* updateParameterDisplay(int component, QString parameterName, QVariant value);
-    /** @brief Request list of parameters from MAV */
-    void requestAllParamsUpdate();
 
-    /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */
-    void writeParameters();
-    /** @brief Read the parameters from permanent storage to RAM */
-    void readParameters();
-    /** @brief Clear the parameter list */
-    void clear();
+
     /** @brief Update when user changes parameters */
     void parameterItemChanged(QTreeWidgetItem* prev, int column);
-
-    /** @brief Store parameters to a file */
-    void saveParametersToFile();
-    /** @brief Load parameters from a file */
-    void loadParametersFromFile();
-
 
 
 protected:
@@ -102,7 +92,6 @@ protected:
     QLabel* statusLabel; ///< User-facing parameter status label
     QMap<int, QTreeWidgetItem*>* componentItems; ///< The tree of component items, stored by component ID
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
-    QString     updatingParamNameLock; ///< Name of param currently being updated-- used for reducing echo on param change
 
 };
 

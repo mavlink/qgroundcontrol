@@ -2,28 +2,46 @@
 
 #include <QApplication>>
 #include <QDir>
+#include <QMessageBox>
 
 #include "UASInterface.h"
 #include "UASParameterCommsMgr.h"
 
-QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
-    QWidget(parent),
+QGCUASParamManager::QGCUASParamManager(QObject *parent, UASInterface* uas) :
+    QObject(parent),
     mav(uas),
-    paramDataModel(NULL),
+    paramDataModel(this),
     paramCommsMgr(NULL)
 {
-    paramDataModel = uas->getParamDataModel();
-    paramCommsMgr = uas->getParamCommsMgr();
-    mav->setParamManager(this);
+    paramCommsMgr = new UASParameterCommsMgr(this,mav);
 
     // Load default values and tooltips
     loadParamMetaInfoCSV();
+
+    connectToCommsMgr();
+
 }
+
+void QGCUASParamManager::connectToCommsMgr()
+{
+
+    // Pass along comms mgr status msgs
+    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
+            this, SIGNAL(parameterStatusMsgUpdated(QString,int)));
+
+    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
+            this, SIGNAL(parameterListUpToDate()));
+
+
+}
+
+
+
 
 
 bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const
 {
-    return paramDataModel->getOnboardParamValue(component,parameter,value);
+    return paramDataModel.getOnboardParamValue(component,parameter,value);
 }
 
 
@@ -42,29 +60,31 @@ void QGCUASParamManager::requestParameterUpdate(int component, const QString& pa
  */
 void QGCUASParamManager::requestParameterList()
 {
-    if (!mav) {
-        return;
+    if (mav) {
+        emit parameterStatusMsgUpdated(tr("Requested param list.. waiting"), UASParameterCommsMgr::ParamCommsStatusLevel_OK);
+        paramCommsMgr->requestParameterList();
     }
-    setParameterStatusMsg(tr("Requested param list.. waiting"));
-    paramCommsMgr->requestParameterList();
 }
 
-
-void QGCUASParamManager::setParameterStatusMsg(const QString& msg)
+void QGCUASParamManager::requestParameterListIfEmpty()
 {
-    qDebug() << "parameterStatusMsg: " << msg;
-    parameterStatusMsg = msg;
+    if (mav) {
+        int totalOnboard = paramDataModel.countOnboardParams();
+        if (totalOnboard < 2) { //TODO arbitrary constant, maybe 0 is OK?
+            requestParameterList();
+        }
+    }
 }
+
 
 void QGCUASParamManager::setParamDescriptions(const QMap<QString,QString>& paramInfo) {
-    paramDataModel->setParamDescriptions(paramInfo);
+    paramDataModel.setParamDescriptions(paramInfo);
 }
 
 
 void QGCUASParamManager::setParameter(int compId, QString paramName, QVariant value)
 {
-    //paramCommsMgr->setParameter(compId,paramName,value);
-    paramDataModel->updatePendingParamWithValue(compId,paramName,value);
+    paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
 
 void QGCUASParamManager::sendPendingParameters()
@@ -74,7 +94,7 @@ void QGCUASParamManager::sendPendingParameters()
 
 void QGCUASParamManager::setPendingParam(int compId,  QString& paramName,  const QVariant& value)
 {
-    paramDataModel->updatePendingParamWithValue(compId,paramName,value);
+    paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
 
 
@@ -97,16 +117,59 @@ void QGCUASParamManager::loadParamMetaInfoCSV()
     }
 
     QTextStream in(&paramMetaFile);
-    paramDataModel->loadParamMetaInfoFromStream(in);
+    paramDataModel.loadParamMetaInfoFromStream(in);
     paramMetaFile.close();
 
 }
 
-/**
- * @return The MAV of this mgr. Unless the MAV object has been destroyed, this
- *         pointer is never zero.
- */
+
 UASInterface* QGCUASParamManager::getUAS()
 {
     return mav;
+}
+
+UASParameterDataModel* QGCUASParamManager::dataModel()
+{
+    return &paramDataModel;
+}
+
+
+
+void QGCUASParamManager::writeOnboardParamsToStream(QTextStream &stream, const QString& uasName)
+{
+    paramDataModel.writeOnboardParamsToStream(stream,uasName);
+}
+
+void QGCUASParamManager::readPendingParamsFromStream(QTextStream &stream)
+{
+    paramDataModel.readUpdateParamsFromStream(stream);
+}
+
+
+
+void QGCUASParamManager::copyVolatileParamsToPersistent()
+{
+    int changedParamCount = paramDataModel.countPendingParams();
+
+    if (changedParamCount > 0) {
+        QMessageBox msgBox;
+        msgBox.setText(tr("There are locally changed parameters. Please transmit them first (<TRANSMIT>) or update them with the onboard values (<REFRESH>) before storing onboard from RAM to ROM."));
+        msgBox.exec();
+    }
+    else {
+        paramCommsMgr->writeParamsToPersistentStorage();
+    }
+}
+
+
+void QGCUASParamManager::copyPersistentParamsToVolatile()
+{
+    if (mav) {
+        mav->readParametersFromStorage(); //TODO use comms mgr instead?
+    }
+}
+
+
+void QGCUASParamManager::requestRcCalibrationParamsUpdate() {
+    paramCommsMgr->requestRcCalibrationParamsUpdate();
 }
