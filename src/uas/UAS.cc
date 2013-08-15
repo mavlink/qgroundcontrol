@@ -1661,9 +1661,13 @@ void UAS::setHomePosition(double lat, double lon, double alt)
     if (blockHomePositionChanges)
         return;
 
+    QString uasName = (getUASName() == "")?
+                tr("UAS") + QString::number(getUASID())
+              : getUASName();
+
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText(tr("Set a new home position for vehicle %s").arg(getUASName()));
+    msgBox.setText(tr("Set a new home position for vehicle %1").arg(uasName));
     msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
