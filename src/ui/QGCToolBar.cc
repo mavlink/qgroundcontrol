@@ -75,6 +75,8 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         }
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
         toolBarTimeoutAction->setVisible(true);
+
+        toolBarMessageLabel->hide();
     }
     else
     {
@@ -82,6 +84,8 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         if (toolBarTimeoutAction->isVisible())
         {
             toolBarTimeoutAction->setVisible(false);
+
+            toolBarMessageLabel->show();
         }
     }
 }
