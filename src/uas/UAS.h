@@ -492,9 +492,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// PARAMETERS
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    QGCUASParamManager* paramManager; ///< Parameter manager class
-    UASParameterDataModel* paramDataModel; ///< The parameter data model for this UAS
-    UASParameterCommsMgr* paramCommsMgr;
+    QGCUASParamManager paramManager; ///< Parameter manager for this UAS
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
@@ -515,23 +513,15 @@ public:
     /** @brief Check if vehicle is armed */
     bool isArmed() const { return systemIsArmed; }
 
+    /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
         return &waypointManager;
     }
+
     /** @brief Get reference to the param manager **/
-    QGCUASParamManager* getParamManager() const {
-        return paramManager;
+    virtual QGCUASParamManager* getParamManager()  {
+        return &paramManager;
     }
-
-    /** @brief Get reference to the parameter data model (same one shared with the parameter manager)  **/
-    UASParameterDataModel* getParamDataModel() {
-        return paramDataModel;
-    }
-
-    UASParameterCommsMgr* getParamCommsMgr() {
-        return paramCommsMgr;
-    }
-
 
     /** @brief Get the HIL simulation */
     QGCHilLink* getHILSimulation() const {
@@ -539,12 +529,6 @@ public:
     }
 
 
-
-    // TODO Will be removed
-    /** @brief Set reference to the param manager **/
-    void setParamManager(QGCUASParamManager* manager) {
-        paramManager = manager;
-    }
     int getSystemType();
 
     /**
@@ -952,6 +936,8 @@ protected:
     quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
+
+    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
 
     int componentID[256];
     bool componentMulti[256];

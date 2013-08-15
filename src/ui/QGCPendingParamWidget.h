@@ -10,11 +10,13 @@ class QGCPendingParamWidget : public QGCParamWidget
 
 public:
     explicit QGCPendingParamWidget(QObject* parent);
-    virtual void init(); ///< Two-stage construction: initialize the object
 
 protected:
-    virtual void connectSignalsAndSlots();
+    virtual void connectToParamManager();
+    virtual void disconnectFromParamManager();
 
+    virtual void connectViewSignalsAndSlots();
+    virtual void disconnectViewSignalsAndSlots();
 
 
 signals:

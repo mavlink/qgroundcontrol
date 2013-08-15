@@ -5,29 +5,46 @@
 
 
 QGCPendingParamWidget::QGCPendingParamWidget(QObject *parent) :
-    QGCParamWidget(UASManager::instance()->getActiveUAS(),(QWidget*)parent)
+    QGCParamWidget((QWidget*)parent)
 {
 }
 
 
-void QGCPendingParamWidget::init()
+void QGCPendingParamWidget::connectToParamManager()
 {
-    //we override a lot of the super's init methods
-    layoutWidget();
-    connectSignalsAndSlots();
-
-    //don't request update params here...assume that everything we need is in the data model
-}
-
-void QGCPendingParamWidget::connectSignalsAndSlots()
-{
-    // Listing for pending list update
-    connect(paramDataModel, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
+    //TODO route via paramManager instead?
+    // Listen to updated param signals from the data model
+    connect(paramMgr->dataModel(), SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
             this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
 
     // Listen to communications status messages so we can display them
-    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
+    connect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SLOT(handleParamStatusMsgUpdate(QString , int )));
+}
+
+
+void QGCPendingParamWidget::disconnectFromParamManager()
+{
+    //TODO route via paramManager instead?
+    // Listen to updated param signals from the data model
+    disconnect(paramMgr->dataModel(), SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
+            this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
+
+    // Listen to communications status messages so we can display them
+    disconnect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
+            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
+}
+
+
+void QGCPendingParamWidget::disconnectViewSignalsAndSlots()
+{
+    //we ignore edits from the tree view
+}
+
+
+void QGCPendingParamWidget::connectViewSignalsAndSlots()
+{
+    //we ignore edits from the tree view
 }
 
 void QGCPendingParamWidget::handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)
