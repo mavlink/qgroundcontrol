@@ -788,10 +788,12 @@ void QGCVehicleConfig::loadConfig()
         xml.readNext();
     }
 
-    mav->getParamManager()->setParamDescriptions(paramTooltips);
+    if (!paramTooltips.isEmpty()) {
+           paramMgr->setParamDescriptions(paramTooltips);
+    }
     doneLoadingConfig = true;
     //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
-    mav->getParamCommsMgr()->requestParameterListIfEmpty();
+    paramMgr->requestParameterListIfEmpty();
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
@@ -862,6 +864,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
+    paramMgr = mav->getParamManager();
 
     // Reset current state
     resetCalibrationRC();
@@ -977,15 +980,14 @@ void QGCVehicleConfig::writeCalibrationRC()
 
 void QGCVehicleConfig::requestCalibrationRC()
 {
-    if (mav) {
-        mav->getParamCommsMgr()->requestRcCalibrationParamsUpdate();
-    }
+    paramMgr->requestRcCalibrationParamsUpdate();
 }
 
 void QGCVehicleConfig::writeParameters()
 {
     updateStatus(tr("Writing all onboard parameters."));
     writeCalibrationRC();
+
     mav->writeParametersToStorage();
 }
 
