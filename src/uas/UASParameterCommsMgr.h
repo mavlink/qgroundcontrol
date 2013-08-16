@@ -18,7 +18,9 @@ class UASParameterCommsMgr : public QObject
 
 
 public:
-    explicit UASParameterCommsMgr(QObject *parent = 0, UASInterface* uas = NULL);
+    explicit UASParameterCommsMgr(QObject *parent = 0);
+    UASParameterCommsMgr* initWithUAS(UASInterface* model);///< Two-stage constructor
+
     ~UASParameterCommsMgr();
 
     typedef enum ParamCommsStatusLevel {

@@ -100,29 +100,29 @@ void QGCParamWidget::layoutWidget()
 
     // BUTTONS
     QPushButton* refreshButton = new QPushButton(tr("Get"));
-    refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
-    refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
+    refreshButton->setToolTip(tr("Fetch parameters currently in volatile memory of aircraft."));
+    refreshButton->setWhatsThis(tr("Fetch parameters currently in volatile memory of aircraft."));
     connect(refreshButton, SIGNAL(clicked()),
             this, SLOT(requestOnboardParamsUpdate()));
     horizontalLayout->addWidget(refreshButton, 2, 0);
 
     QPushButton* setButton = new QPushButton(tr("Set"));
-    setButton->setToolTip(tr("Set current parameters in non-permanent onboard memory"));
-    setButton->setWhatsThis(tr("Set current parameters in non-permanent onboard memory"));
+    setButton->setToolTip(tr("Send pending parameters to volatile onboard memory"));
+    setButton->setWhatsThis(tr("Send pending parameters to volatile onboard memory"));
     connect(setButton, SIGNAL(clicked()),
-            this, SLOT(sendPendingParameters()));
+            paramMgr, SLOT(sendPendingParameters()));
     horizontalLayout->addWidget(setButton, 2, 1);
 
     QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
-    writeButton->setToolTip(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
-    writeButton->setWhatsThis(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
+    writeButton->setToolTip(tr("Copy parameters in volatile memory of the aircraft to persistent memory. Transmit your parameters first to write these."));
+    writeButton->setWhatsThis(tr("Copy parameters in volatile memory of the aircraft to persistent memory. Transmit your parameters first to write these."));
     connect(writeButton, SIGNAL(clicked()),
             paramMgr, SLOT(copyVolatileParamsToPersistent()));
     horizontalLayout->addWidget(writeButton, 2, 2);
 
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
-    loadFileButton->setToolTip(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
-    loadFileButton->setWhatsThis(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
+    loadFileButton->setToolTip(tr("Load parameters from a file into qgroundcontrol. To write these to the aircraft, use transmit after loading them."));
+    loadFileButton->setWhatsThis(tr("Load parameters from a file into qgroundcontrol. To write these to the aircraft, use transmit after loading them."));
     connect(loadFileButton, SIGNAL(clicked()),
             this, SLOT(loadParametersFromFile()));
     horizontalLayout->addWidget(loadFileButton, 3, 0);
@@ -135,8 +135,8 @@ void QGCParamWidget::layoutWidget()
     horizontalLayout->addWidget(saveFileButton, 3, 1);
 
     QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
-    readButton->setToolTip(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
-    readButton->setWhatsThis(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
+    readButton->setToolTip(tr("Copy parameters from persistent onboard memory to volatile onboard memory of aircraft. DOES NOT update the parameters in this view: click refresh after copying them to get them."));
+    readButton->setWhatsThis(tr("Copy parameters from persistent onboard memory to volatile onboard memory of aircraft. DOES NOT update the parameters in this view: click refresh after copying them to get them."));
     connect(readButton, SIGNAL(clicked()),
             paramMgr, SLOT(copyPersistentParamsToVolatile()));
     horizontalLayout->addWidget(readButton, 3, 2);

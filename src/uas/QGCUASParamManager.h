@@ -17,7 +17,8 @@ class QGCUASParamManager : public QObject
 {
     Q_OBJECT
 public:
-    QGCUASParamManager(QObject* parent = 0,UASInterface* uas = 0);
+    QGCUASParamManager(QObject* parent = 0);
+    QGCUASParamManager* initWithUAS(UASInterface* uas);
 
     /** @brief Get the known, confirmed value of a parameter */
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;

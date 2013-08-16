@@ -17,7 +17,7 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     parameterScalingFactor(0.0),
     parameterMin(0.0f),
     parameterMax(0.0f),
-    component(0),
+    componentId(0),
     ui(new Ui::QGCParamSlider)
 {
     valueModLock = false;
@@ -133,7 +133,7 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 void QGCParamSlider::requestParameter()
 {
     if (uas && !parameterName.isEmpty()) {
-        uas->getParamManager()->requestParameterUpdate(component, parameterName);
+        uas->getParamManager()->requestParameterUpdate(componentId, parameterName);
     }
 }
 
@@ -177,7 +177,7 @@ void QGCParamSlider::setParamValue(int value)
 
 void QGCParamSlider::selectComponent(int componentIndex)
 {
-    this->component = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
+    this->componentId = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
 }
 
 void QGCParamSlider::selectParameter(int paramIndex)
@@ -280,7 +280,7 @@ void QGCParamSlider::endEditMode()
 void QGCParamSlider::setParamPending()
 {
     if (uas)  {
-        uas->getParamManager()->setPendingParam(component, parameterName, parameterValue);
+        uas->getParamManager()->setPendingParam(componentId, parameterName, parameterValue);
     }
     else {
         qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
@@ -380,7 +380,7 @@ void QGCParamSlider::setParameterValue(int uasId, int compId, int paramCount, in
         }
     }
     Q_UNUSED(uas);
-    if (compId == this->component && paramName == this->parameterName) {
+    if (compId == this->componentId && paramName == this->parameterName) {
         if (!visibleEnabled) {
             return;
         }
@@ -487,7 +487,7 @@ void QGCParamSlider::writeSettings(QSettings& settings)
     settings.setValue("QGC_PARAM_SLIDER_DESCRIPTION", ui->nameLabel->text());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
     settings.setValue("QGC_PARAM_SLIDER_PARAMID", parameterName);
-    settings.setValue("QGC_PARAM_SLIDER_COMPONENTID", component);
+    settings.setValue("QGC_PARAM_SLIDER_COMPONENTID", componentId);
     settings.setValue("QGC_PARAM_SLIDER_MIN", ui->editMinSpinBox->value());
     settings.setValue("QGC_PARAM_SLIDER_MAX", ui->editMaxSpinBox->value());
     settings.setValue("QGC_PARAM_SLIDER_DISPLAY_INFO", ui->editInfoCheckBox->isChecked());
@@ -496,7 +496,7 @@ void QGCParamSlider::writeSettings(QSettings& settings)
 void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings)
 {
     parameterName = settings.value(pre + "QGC_PARAM_SLIDER_PARAMID").toString();
-    component = settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt();
+    componentId = settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value(pre + "QGC_PARAM_SLIDER_DESCRIPTION").toString());
     ui->editNameLabel->setText(settings.value(pre + "QGC_PARAM_SLIDER_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
@@ -516,9 +516,6 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
     ui->editSelectComponentComboBox->setEnabled(true);
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
-
-    // Get param value after settings have been loaded
-    //requestParameter();
 }
 
 void QGCParamSlider::readSettings(const QSettings& settings)
@@ -532,7 +529,7 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     readSettings("",map);
     return;
     parameterName = settings.value("QGC_PARAM_SLIDER_PARAMID").toString();
-    component = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
+    componentId = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     ui->editNameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
@@ -552,6 +549,4 @@ void QGCParamSlider::readSettings(const QSettings& settings)
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
-    // Get param value after settings have been loaded
-    //requestParameter();
 }

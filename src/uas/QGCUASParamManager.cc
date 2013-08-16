@@ -7,19 +7,29 @@
 #include "UASInterface.h"
 #include "UASParameterCommsMgr.h"
 
-QGCUASParamManager::QGCUASParamManager(QObject *parent, UASInterface* uas) :
+QGCUASParamManager::QGCUASParamManager(QObject *parent) :
     QObject(parent),
-    mav(uas),
+    mav(NULL),
     paramDataModel(this),
     paramCommsMgr(NULL)
 {
-    paramCommsMgr = new UASParameterCommsMgr(this,mav);
 
-    // Load default values and tooltips
+
+}
+
+QGCUASParamManager* QGCUASParamManager::initWithUAS(UASInterface* uas)
+{
+    mav = uas;
+
+    // Load default values and tooltips for data model
     loadParamMetaInfoCSV();
+
+    paramCommsMgr = new UASParameterCommsMgr(this);
+    paramCommsMgr->initWithUAS(uas);
 
     connectToCommsMgr();
 
+    return this;
 }
 
 void QGCUASParamManager::connectToCommsMgr()

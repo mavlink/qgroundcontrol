@@ -115,8 +115,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
 
-
     waypointManager(this),
+    paramMgr(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -131,8 +131,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lastAttitude(0),
 
     paramsOnceRequested(false),
-    paramManager(this,this),
-
     simulation(0),
 
     // The protected members.
@@ -217,6 +215,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
+    //need to init paramMgr after readSettings have been loaded, to properly set autopilot and so forth
+    paramMgr.initWithUAS(this);
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
