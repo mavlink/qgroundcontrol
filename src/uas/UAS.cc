@@ -115,8 +115,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
 
-
     waypointManager(this),
+    paramMgr(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -131,10 +131,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lastAttitude(0),
 
     paramsOnceRequested(false),
-    paramManager(NULL),
-    paramDataModel(NULL),
-    paramCommsMgr(NULL),
-
     simulation(0),
 
     // The protected members.
@@ -154,10 +150,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentMulti[i] = false;
     }
 
-    paramDataModel = new UASParameterDataModel(this);
-    paramDataModel->setUASID(this->getUASID());
-
-    paramCommsMgr = new UASParameterCommsMgr(this,this);
 
     // Store a list of available actions for this UAS.
     // Basically everything exposted as a SLOT with no return value or arguments.
@@ -223,6 +215,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
+    //need to init paramMgr after readSettings have been loaded, to properly set autopilot and so forth
+    paramMgr.initWithUAS(this);
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
@@ -234,8 +228,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 */
 UAS::~UAS()
 {
-    delete paramCommsMgr;
-    delete paramDataModel;
     writeSettings();
     delete links;
     delete statusTimeout;
@@ -1036,147 +1028,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
         {
-            mavlink_param_value_t value;
-            mavlink_msg_param_value_decode(&message, &value);
-            QByteArray bytes(value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+            mavlink_param_value_t rawValue;
+            mavlink_msg_param_value_decode(&message, &rawValue);
+            QByteArray bytes(rawValue.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
             // Construct a string stopping at the first NUL (0) character, else copy the whole
             // byte array (max MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN, so safe)
             QString parameterName(bytes);
-            int component = message.compid;
-            mavlink_param_union_t val;
-            val.param_float = value.param_value;
-            val.type = value.param_type;
+            mavlink_param_union_t paramVal;
+            paramVal.param_float = rawValue.param_value;
+            paramVal.type = rawValue.param_type;
 
-            // Insert component if necessary
-            if (!parameters.contains(component))
-            {
-                parameters.insert(component, new QMap<QString, QVariant>());
-            }
+            processParamValueMsg(message, parameterName,rawValue,paramVal);
 
-            // Insert parameter into registry
-            if (parameters.value(component)->contains(parameterName)) parameters.value(component)->remove(parameterName);
-
-            // Insert with correct type
-            // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
-            switch (value.param_type)
-            {
-            case MAV_PARAM_TYPE_REAL32:
-            {
-                // Variant
-                QVariant param;
-                if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-                {
-                    param = QVariant(val.param_float);
-                }
-                else
-                {
-                    param = QVariant(val.param_float);
-                }
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-//                qDebug() << "RECEIVED PARAM:" << param;
-            }
-                break;
-            case MAV_PARAM_TYPE_UINT8:
-            {
-                // Variant
-                QVariant param;
-                if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-                {
-                    param = QVariant(QChar((unsigned char)val.param_float));
-                }
-                else
-                {
-                    param = QVariant(QChar((unsigned char)val.param_uint8));
-                }
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                //qDebug() << "RECEIVED PARAM:" << param;
-            }
-                break;
-            case MAV_PARAM_TYPE_INT8:
-            {
-                // Variant
-                QVariant param;
-                if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-                {
-                    param = QVariant(QChar((char)val.param_float));
-                }
-                else
-                {
-                    param = QVariant(QChar((char)val.param_int8));
-                }
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                //qDebug() << "RECEIVED PARAM:" << param;
-            }
-                break;
-            case MAV_PARAM_TYPE_INT16:
-            {
-                // Variant
-                QVariant param;
-                if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-                {
-                    param = QVariant((short)val.param_float);
-                }
-                else
-                {
-                    param = QVariant(val.param_int16);
-                }
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-                //qDebug() << "RECEIVED PARAM:" << param;
-            }
-                break;
-            case MAV_PARAM_TYPE_UINT32:
-            {
-                // Variant
-                QVariant param;
-                if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-                {
-                    param = QVariant((unsigned int)val.param_float);
-                }
-                else
-                {
-                    param = QVariant(val.param_uint32);
-                }
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-            }
-                break;
-            case MAV_PARAM_TYPE_INT32:
-            {
-                // Variant
-                QVariant param;
-                if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
-                {
-                    param = QVariant((int)val.param_float);
-                }
-                else
-                {
-                    param = QVariant(val.param_int32);
-                }
-                parameters.value(component)->insert(parameterName, param);
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, param);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
-//                qDebug() << "RECEIVED PARAM:" << param;
-            }
-                break;
-            default:
-                qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << value.param_type;
-            } //switch (value.param_type)
-        }
+         }
             break;
         case MAVLINK_MSG_ID_COMMAND_ACK:
         {
@@ -2623,6 +2487,125 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
         sendMessage(msg);
     }
+}
+
+
+
+
+//TODO update this to use the parameter manager / param data model instead
+void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue,  mavlink_param_union_t& paramValue)
+{
+    int compId = msg.compid;
+
+    // Insert component if necessary
+    if (!parameters.contains(compId)) {
+        parameters.insert(compId, new QMap<QString, QVariant>());
+    }
+
+    // Insert parameter into registry
+    if (parameters.value(compId)->contains(paramName)) {
+        parameters.value(compId)->remove(paramName);
+    }
+
+    QVariant param;
+
+    // Insert with correct type
+    // TODO: This is a hack for MAV_AUTOPILOT_ARDUPILOTMEGA until the new version of MAVLink and a fix for their param handling.
+    switch (rawValue.param_type)
+    {
+    case MAV_PARAM_TYPE_REAL32:
+    {
+        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            param = QVariant(paramValue.param_float);
+        }
+        else {
+            param = QVariant(paramValue.param_float);
+        }
+        parameters.value(compId)->insert(paramName, param);
+        // Emit change
+        emit parameterChanged(uasId, compId, paramName, param);
+        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
+//                qDebug() << "RECEIVED PARAM:" << param;
+    }
+        break;
+    case MAV_PARAM_TYPE_UINT8:
+    {
+        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            param = QVariant(QChar((unsigned char)paramValue.param_float));
+        }
+        else {
+            param = QVariant(QChar((unsigned char)paramValue.param_uint8));
+        }
+        parameters.value(compId)->insert(paramName, param);
+        // Emit change
+        emit parameterChanged(uasId, compId, paramName, param);
+        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
+        //qDebug() << "RECEIVED PARAM:" << param;
+    }
+        break;
+    case MAV_PARAM_TYPE_INT8:
+    {
+        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            param = QVariant(QChar((char)paramValue.param_float));
+        }
+        else  {
+            param = QVariant(QChar((char)paramValue.param_int8));
+        }
+        parameters.value(compId)->insert(paramName, param);
+        // Emit change
+        emit parameterChanged(uasId, compId, paramName, param);
+        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
+        //qDebug() << "RECEIVED PARAM:" << param;
+    }
+        break;
+    case MAV_PARAM_TYPE_INT16:
+    {
+        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            param = QVariant((short)paramValue.param_float);
+        }
+        else {
+            param = QVariant(paramValue.param_int16);
+        }
+        parameters.value(compId)->insert(paramName, param);
+        // Emit change
+        emit parameterChanged(uasId, compId, paramName, param);
+        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
+        //qDebug() << "RECEIVED PARAM:" << param;
+    }
+        break;
+    case MAV_PARAM_TYPE_UINT32:
+    {
+        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            param = QVariant((unsigned int)paramValue.param_float);
+        }
+        else {
+            param = QVariant(paramValue.param_uint32);
+        }
+        parameters.value(compId)->insert(paramName, param);
+        // Emit change
+        emit parameterChanged(uasId, compId, paramName, param);
+        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
+    }
+        break;
+    case MAV_PARAM_TYPE_INT32:
+    {
+        if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            param = QVariant((int)paramValue.param_float);
+        }
+        else {
+            param = QVariant(paramValue.param_int32);
+        }
+        parameters.value(compId)->insert(paramName, param);
+        // Emit change
+        emit parameterChanged(uasId, compId, paramName, param);
+        emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
+//                qDebug() << "RECEIVED PARAM:" << param;
+    }
+        break;
+    default:
+        qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << rawValue.param_type;
+    } //switch (value.param_type)
+
 }
 
 /**

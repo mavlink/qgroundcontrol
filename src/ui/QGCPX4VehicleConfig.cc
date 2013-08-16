@@ -79,13 +79,22 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->writeButton, SIGNAL(clicked()),
+            this, SLOT(writeParameters()));
+
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
     //TODO connect buttons here to save/clear actions?
-    ui->pendingCommitsWidget->init();
-    ui->pendingCommitsWidget->update();
+    UASInterface* tmpMav = UASManager::instance()->getActiveUAS();
+    if (tmpMav) {
+        ui->pendingCommitsWidget->initWithUAS(tmpMav);
+        ui->pendingCommitsWidget->update();
+        setActiveUAS(tmpMav);
+    }
+
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+            this, SLOT(setActiveUAS(UASInterface*)));
 
     //TODO the following methods are not yet implemented
 
@@ -109,9 +118,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 //    connect(ui->invertCheckBox_7, SIGNAL(clicked(bool)), this, SLOT(setAux2Inverted(bool)));
 //    connect(ui->invertCheckBox_8, SIGNAL(clicked(bool)), this, SLOT(setAux3Inverted(bool)));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+
+
 
     for (unsigned int i = 0; i < chanMax; i++) {
         rcValue[i] = UINT16_MAX;
@@ -798,25 +807,27 @@ void QGCPX4VehicleConfig::loadConfig()
     }
 
     if (!paramTooltips.isEmpty()) {
-           mav->getParamManager()->setParamDescriptions(paramTooltips);
+           paramMgr->setParamDescriptions(paramTooltips);
     }
     doneLoadingConfig = true;
     //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
-    paramCommsMgr->requestParameterListIfEmpty();
+    paramMgr->requestParameterListIfEmpty();
 }
 
 void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 {
     // Hide items if NULL and abort
     if (!active) {
-        ui->setButton->setEnabled(false);
         ui->refreshButton->setEnabled(false);
-        ui->readButton->show();
+        ui->refreshButton->show();
         ui->readButton->setEnabled(false);
-        ui->writeButton->show();
+        ui->readButton->show();
         ui->writeButton->setEnabled(false);
+        ui->writeButton->show();
         ui->loadFileButton->setEnabled(false);
+        ui->loadFileButton->show();
         ui->saveFileButton->setEnabled(false);
+        ui->saveFileButton->show();
 
         return;
     }
@@ -828,6 +839,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 
     if (mav)
     {
+
         // Disconnect old system
         disconnect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                    SLOT(remoteControlChannelRawChanged(int,float)));
@@ -835,7 +847,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
         disconnect(ui->refreshButton,SIGNAL(clicked()),
-                   paramCommsMgr,SLOT(requestParameterList()));
+                   paramMgr,SLOT(requestParameterList()));
 
         // Delete all children from all fixed tabs.
         foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>()) {
@@ -868,22 +880,25 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     // Connect new system
     mav = active;
 
-    paramCommsMgr = mav->getParamCommsMgr();
+    paramMgr = mav->getParamManager();
+
+    ui->pendingCommitsWidget->setUAS(mav);
+
     // Reset current state
     resetCalibrationRC();
-
-    requestCalibrationRC();
+    //TODO eliminate the separate RC_TYPE call
     mav->requestParameter(0, "RC_TYPE");
 
     chanCount = 0;
 
+    //TODO get parameter changes via Param Mgr instead
     // Connect new system
     connect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                SLOT(remoteControlChannelRawChanged(int,float)));
     connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                SLOT(parameterChanged(int,int,QString,QVariant)));
     connect(ui->refreshButton, SIGNAL(clicked()),
-            paramCommsMgr,SLOT(requestParameterList()));
+            paramMgr,SLOT(requestParameterList()));
 
     if (systemTypeToParamMap.contains(mav->getSystemTypeName())) {
         paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
@@ -907,12 +922,18 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
     // Since a system is now connected, enable the VehicleConfig UI.
-    ui->setButton->setEnabled(true);
     ui->refreshButton->setEnabled(true);
+    ui->refreshButton->show();
     ui->readButton->setEnabled(true);
+    ui->readButton->show();
     ui->writeButton->setEnabled(true);
+    ui->writeButton->show();
     ui->loadFileButton->setEnabled(true);
+    ui->loadFileButton->show();
     ui->saveFileButton->setEnabled(true);
+    ui->saveFileButton->show();
+
+    //TODO never true?
     if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA") {
         ui->readButton->hide();
         ui->writeButton->hide();
@@ -978,9 +999,7 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
 
 void QGCPX4VehicleConfig::requestCalibrationRC()
 {
-    if (paramCommsMgr) {
-        paramCommsMgr->requestRcCalibrationParamsUpdate();
-    }
+    paramMgr->requestRcCalibrationParamsUpdate();
 }
 
 void QGCPX4VehicleConfig::writeParameters()
@@ -1240,6 +1259,7 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
         return;
     }
 
+    //TODO this may introduce a bug with param editor widgets not receiving param updates
     if (parameterName.startsWith("RC")) {
         handleRcParameterChange(parameterName,value);
         return;
