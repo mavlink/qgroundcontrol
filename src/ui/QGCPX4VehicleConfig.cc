@@ -85,8 +85,13 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     //TODO connect buttons here to save/clear actions?
     mav = UASManager::instance()->getActiveUAS();
-    ui->pendingCommitsWidget->initWithUAS(mav);
-    ui->pendingCommitsWidget->update();
+    if (!mav) {
+        qWarning() << "No active mav! ";
+    }
+    else {
+        ui->pendingCommitsWidget->initWithUAS(mav);
+        ui->pendingCommitsWidget->update();
+    }
 
     //TODO the following methods are not yet implemented
 
@@ -871,6 +876,8 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     mav = active;
 
     paramMgr = mav->getParamManager();
+
+    ui->pendingCommitsWidget->setUAS(mav);
 
     // Reset current state
     resetCalibrationRC();

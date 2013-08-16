@@ -20,8 +20,6 @@ QGCBaseParamWidget::QGCBaseParamWidget(QWidget *parent) :
 QGCBaseParamWidget* QGCBaseParamWidget::initWithUAS(UASInterface *uas)
 {
     setUAS(uas);
-    layoutWidget();
-
     return this;
 }
 
@@ -34,11 +32,16 @@ void QGCBaseParamWidget::setUAS(UASInterface* uas)
         clearOnboardParamDisplay();
         clearPendingParamDisplay();
     }
-    mav = uas;
-    connectToParamManager();
-    connectViewSignalsAndSlots();
 
-    paramMgr->requestParameterListIfEmpty();
+    mav = uas;
+
+    if (mav) {
+        connectToParamManager();
+        connectViewSignalsAndSlots();
+        layoutWidget();
+
+        paramMgr->requestParameterListIfEmpty();
+    }
 
 }
 
