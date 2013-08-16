@@ -76,79 +76,81 @@ void QGCParamWidget::connectViewSignalsAndSlots()
 }
 
 
-void QGCParamWidget::layoutWidget()
+void QGCParamWidget::addActionButtonsToLayout(QGridLayout* layout)
 {
-
-    statusLabel->setAutoFillBackground(true);
-
-    // Set tree widget as widget onto this component
-    QGridLayout* horizontalLayout;
-    //form->setAutoFillBackground(false);
-    horizontalLayout = new QGridLayout(this);
-    horizontalLayout->setHorizontalSpacing(6);
-    horizontalLayout->setVerticalSpacing(6);
-    horizontalLayout->setMargin(0);
-    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
-    //horizontalLayout->setSizeConstraint( QLayout::SetFixedSize );
-
-    // Parameter tree
-    horizontalLayout->addWidget(tree, 0, 0, 1, 3);
-
-    // Status line
-    statusLabel->setText(tr("Click refresh to download parameters"));
-    horizontalLayout->addWidget(statusLabel, 1, 0, 1, 3);
-
-    // BUTTONS
     QPushButton* refreshButton = new QPushButton(tr("Get"));
     refreshButton->setToolTip(tr("Fetch parameters currently in volatile memory of aircraft."));
     refreshButton->setWhatsThis(tr("Fetch parameters currently in volatile memory of aircraft."));
     connect(refreshButton, SIGNAL(clicked()),
             this, SLOT(requestOnboardParamsUpdate()));
-    horizontalLayout->addWidget(refreshButton, 2, 0);
+    layout->addWidget(refreshButton, 2, 0);
 
     QPushButton* setButton = new QPushButton(tr("Set"));
     setButton->setToolTip(tr("Send pending parameters to volatile onboard memory"));
     setButton->setWhatsThis(tr("Send pending parameters to volatile onboard memory"));
     connect(setButton, SIGNAL(clicked()),
             paramMgr, SLOT(sendPendingParameters()));
-    horizontalLayout->addWidget(setButton, 2, 1);
+    layout->addWidget(setButton, 2, 1);
 
     QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
     writeButton->setToolTip(tr("Copy parameters in volatile memory of the aircraft to persistent memory. Transmit your parameters first to write these."));
     writeButton->setWhatsThis(tr("Copy parameters in volatile memory of the aircraft to persistent memory. Transmit your parameters first to write these."));
     connect(writeButton, SIGNAL(clicked()),
             paramMgr, SLOT(copyVolatileParamsToPersistent()));
-    horizontalLayout->addWidget(writeButton, 2, 2);
+    layout->addWidget(writeButton, 2, 2);
 
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
     loadFileButton->setToolTip(tr("Load parameters from a file into qgroundcontrol. To write these to the aircraft, use transmit after loading them."));
     loadFileButton->setWhatsThis(tr("Load parameters from a file into qgroundcontrol. To write these to the aircraft, use transmit after loading them."));
     connect(loadFileButton, SIGNAL(clicked()),
             this, SLOT(loadParametersFromFile()));
-    horizontalLayout->addWidget(loadFileButton, 3, 0);
+    layout->addWidget(loadFileButton, 3, 0);
 
     QPushButton* saveFileButton = new QPushButton(tr("Save File"));
     saveFileButton->setToolTip(tr("Save parameters in this view to a file on this computer."));
     saveFileButton->setWhatsThis(tr("Save parameters in this view to a file on this computer."));
     connect(saveFileButton, SIGNAL(clicked()),
             this, SLOT(saveParametersToFile()));
-    horizontalLayout->addWidget(saveFileButton, 3, 1);
+    layout->addWidget(saveFileButton, 3, 1);
 
     QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
     readButton->setToolTip(tr("Copy parameters from persistent onboard memory to volatile onboard memory of aircraft. DOES NOT update the parameters in this view: click refresh after copying them to get them."));
     readButton->setWhatsThis(tr("Copy parameters from persistent onboard memory to volatile onboard memory of aircraft. DOES NOT update the parameters in this view: click refresh after copying them to get them."));
     connect(readButton, SIGNAL(clicked()),
             paramMgr, SLOT(copyPersistentParamsToVolatile()));
-    horizontalLayout->addWidget(readButton, 3, 2);
+    layout->addWidget(readButton, 3, 2);
+
+}
+
+void QGCParamWidget::layoutWidget()
+{
+
+    statusLabel->setAutoFillBackground(true);
+
+    QGridLayout* layout = new QGridLayout(this);
+    layout->setHorizontalSpacing(6);
+    layout->setVerticalSpacing(6);
+    layout->setMargin(0);
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
+
+    // Parameter tree
+    layout->addWidget(tree, 0, 0, 1, 3);
+
+    // Status line
+    statusLabel->setText(tr("Click refresh to download parameters"));
+    layout->addWidget(statusLabel, 1, 0, 1, 3);
+
+    // BUTTONS
+    addActionButtonsToLayout(layout);
 
     // Set correct vertical scaling
-    horizontalLayout->setRowStretch(0, 100);
-    horizontalLayout->setRowStretch(1, 10);
-    horizontalLayout->setRowStretch(2, 10);
-    horizontalLayout->setRowStretch(3, 10);
+    layout->setRowStretch(0, 100);
+    layout->setRowStretch(1, 10);
+    layout->setRowStretch(2, 10);
+    layout->setRowStretch(3, 10);
 
     // Set layout
-    this->setLayout(horizontalLayout);
+    this->setLayout(layout);
 
     // Set header
     QStringList headerItems;

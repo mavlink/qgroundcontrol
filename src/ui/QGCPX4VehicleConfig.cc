@@ -79,7 +79,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->writeButton, SIGNAL(clicked()),
+            this, SLOT(writeParameters()));
+
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
@@ -816,14 +818,16 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 {
     // Hide items if NULL and abort
     if (!active) {
-        ui->setButton->setEnabled(false);
         ui->refreshButton->setEnabled(false);
-        ui->readButton->show();
+        ui->refreshButton->show();
         ui->readButton->setEnabled(false);
-        ui->writeButton->show();
+        ui->readButton->show();
         ui->writeButton->setEnabled(false);
+        ui->writeButton->show();
         ui->loadFileButton->setEnabled(false);
+        ui->loadFileButton->show();
         ui->saveFileButton->setEnabled(false);
+        ui->saveFileButton->show();
 
         return;
     }
@@ -918,12 +922,18 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
     // Since a system is now connected, enable the VehicleConfig UI.
-    ui->setButton->setEnabled(true);
     ui->refreshButton->setEnabled(true);
+    ui->refreshButton->show();
     ui->readButton->setEnabled(true);
+    ui->readButton->show();
     ui->writeButton->setEnabled(true);
+    ui->writeButton->show();
     ui->loadFileButton->setEnabled(true);
+    ui->loadFileButton->show();
     ui->saveFileButton->setEnabled(true);
+    ui->saveFileButton->show();
+
+    //TODO never true?
     if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA") {
         ui->readButton->hide();
         ui->writeButton->hide();

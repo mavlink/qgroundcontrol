@@ -1,6 +1,6 @@
 #include "QGCUASParamManager.h"
 
-#include <QApplication>>
+#include <QApplication>
 #include <QDir>
 #include <QMessageBox>
 
@@ -27,24 +27,26 @@ QGCUASParamManager* QGCUASParamManager::initWithUAS(UASInterface* uas)
     paramCommsMgr = new UASParameterCommsMgr(this);
     paramCommsMgr->initWithUAS(uas);
 
-    connectToCommsMgr();
+    connectToModelAndComms();
 
     return this;
 }
 
-void QGCUASParamManager::connectToCommsMgr()
+void QGCUASParamManager::connectToModelAndComms()
 {
-
     // Pass along comms mgr status msgs
     connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SIGNAL(parameterStatusMsgUpdated(QString,int)));
 
     connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
             this, SIGNAL(parameterListUpToDate()));
-
-
 }
 
+
+void QGCUASParamManager::clearAllPendingParams()
+{
+    paramDataModel.clearAllPendingParams();
+}
 
 
 
