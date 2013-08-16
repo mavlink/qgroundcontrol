@@ -4,6 +4,8 @@
 
 #include "QGCParamWidget.h"
 
+class QGridLayout;
+
 class QGCPendingParamWidget : public QGCParamWidget
 {
     Q_OBJECT
@@ -17,6 +19,8 @@ protected:
 
     virtual void connectViewSignalsAndSlots();
     virtual void disconnectViewSignalsAndSlots();
+
+    virtual void addActionButtonsToLayout(QGridLayout* layout);
 
 
 signals:

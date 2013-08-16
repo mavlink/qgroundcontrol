@@ -1,5 +1,8 @@
 #include "QGCPendingParamWidget.h"
 
+#include <QGridLayout>
+#include <QPushButton>
+
 #include "UASManager.h"
 #include "UASParameterCommsMgr.h"
 
@@ -80,3 +83,22 @@ void QGCPendingParamWidget::handlePendingParamUpdate(int compId, const QString& 
 
 }
 
+void QGCPendingParamWidget::addActionButtonsToLayout(QGridLayout* layout)
+{
+
+    QPushButton* setButton = new QPushButton(tr("Set"));
+    setButton->setToolTip(tr("Send pending parameters to volatile onboard memory"));
+    setButton->setWhatsThis(tr("Send pending parameters to volatile onboard memory"));
+    connect(setButton, SIGNAL(clicked()),
+            paramMgr, SLOT(sendPendingParameters()));
+    layout->addWidget(setButton, 2, 0);
+
+    QPushButton* clearButton = new QPushButton(tr("Clear"));
+    clearButton->setToolTip(tr("Clear pending parameters without sending"));
+    clearButton->setWhatsThis(tr("Clear pending parameters without sending"));
+    connect(clearButton, SIGNAL(clicked()),
+            paramMgr, SLOT(clearAllPendingParams()));
+    layout->addWidget(clearButton, 2, 1);
+
+
+}

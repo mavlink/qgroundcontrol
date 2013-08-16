@@ -39,7 +39,7 @@ protected:
     /** @brief Load parameter meta information from appropriate CSV file */
     virtual void loadParamMetaInfoCSV();
 
-    void connectToCommsMgr();
+    void connectToModelAndComms();
 
 
 signals:
@@ -48,6 +48,8 @@ signals:
     void parameterStatusMsgUpdated(QString msg, int level);
     /** @brief We have received a complete list of all parameters onboard the MAV */
     void parameterListUpToDate();
+
+
 
 public slots:
     /** @brief Send one parameter to the MAV: changes value in transient memory of MAV */
@@ -63,6 +65,9 @@ public slots:
     virtual void requestParameterListIfEmpty();
 
     virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+
+    /** @brief remove all params from the pending list */
+    virtual void clearAllPendingParams();
 
     /** @brief Request a single parameter by name from the MAV */
     virtual void requestParameterUpdate(int component, const QString& parameter);

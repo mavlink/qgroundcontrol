@@ -43,6 +43,7 @@ public:
     virtual void forgetAllOnboardParams();
 
 
+
     /** @brief add this parameter to pending list iff it has changed from onboard value
      * @return true if the parameter is now pending
     */
@@ -88,7 +89,7 @@ protected:
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
     virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
     /** @brief remove a parameter from the pending list */
-    virtual void removePendingParam(int compId, QString& key);
+    virtual void removePendingParam(int compId, const QString &key);
 
 
 signals:
@@ -103,6 +104,7 @@ signals:
 
 public slots:
 
+    virtual void clearAllPendingParams();
 
 protected:
     int     uasId; ///< The UAS / MAV to which this data model pertains

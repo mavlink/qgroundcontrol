@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 
 
 //forward declarations
+class QGridLayout;
 class UASInterface;
 
 /**
@@ -66,6 +67,9 @@ protected:
      * @param compName Human friendly name of the component
      */
     void addComponentItem(int compId, QString compName);
+
+    virtual void addActionButtonsToLayout(QGridLayout* layout);
+
 
 signals:
 
