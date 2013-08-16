@@ -18,7 +18,9 @@ class UASParameterCommsMgr : public QObject
 
 
 public:
-    explicit UASParameterCommsMgr(QObject *parent = 0, UASInterface* uas = NULL);
+    explicit UASParameterCommsMgr(QObject *parent = 0);
+    UASParameterCommsMgr* initWithUAS(UASInterface* model);///< Two-stage constructor
+
     ~UASParameterCommsMgr();
 
     typedef enum ParamCommsStatusLevel {
@@ -72,8 +74,6 @@ public slots:
 
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
-    /** @brief Request a list of params onboard the MAV if the onboard param list we have is empty */
-    virtual void requestParameterListIfEmpty();
 
     /** @brief Check for missing parameters */
     virtual void retransmissionGuardTick();

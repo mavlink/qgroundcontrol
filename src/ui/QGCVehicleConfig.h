@@ -158,6 +158,7 @@ protected slots:
 protected:
     bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
+    QGCUASParamManager* paramMgr;       ///< params mgr for the mav
     static const unsigned int chanMax = 8;    ///< Maximum number of channels
     unsigned int chanCount;               ///< Actual channels
     int rcType;                         ///< Type of the remote control
