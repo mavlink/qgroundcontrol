@@ -209,6 +209,8 @@ void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramNa
     if (isPending) {
         paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
         paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
+        //ensure that the adjusted item is visible
+        tree->expandItem(paramItem->parent());
     }
     else {
         paramItem->setBackground(0, Qt::NoBrush);
@@ -368,6 +370,7 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
         else {
             paramItem->setData(1, Qt::DisplayRole, value);
         }
+
     }
 
     if (paramItem) {
