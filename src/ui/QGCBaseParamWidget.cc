@@ -45,6 +45,7 @@ void QGCBaseParamWidget::setUAS(UASInterface* uas)
 
 void QGCBaseParamWidget::connectToParamManager()
 {
+    paramMgr = mav->getParamManager();
     //TODO route via paramManager instead?
     // Listen to updated param signals from the data model
     connect(paramMgr->dataModel(), SIGNAL(parameterUpdated(int, QString , QVariant )),
@@ -77,6 +78,8 @@ void QGCBaseParamWidget::disconnectFromParamManager()
     // Listen to communications status messages so we can display them
     disconnect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SLOT(handleParamStatusMsgUpdate(QString , int )));
+
+    paramMgr = NULL;
 }
 
 

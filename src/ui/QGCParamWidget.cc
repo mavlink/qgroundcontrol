@@ -51,8 +51,11 @@ This file is part of the QGROUNDCONTROL project
  */
 QGCParamWidget::QGCParamWidget(QWidget *parent) :
     QGCBaseParamWidget(parent),
-    componentItems(new QMap<int, QTreeWidgetItem*>())
+    componentItems(new QMap<int, QTreeWidgetItem*>()),
+    statusLabel(new QLabel(this)),
+    tree(new QTreeWidget(this))
 {
+
 
 }
 
@@ -75,9 +78,7 @@ void QGCParamWidget::connectViewSignalsAndSlots()
 
 void QGCParamWidget::layoutWidget()
 {
-    // Create tree widget
-    tree = new QTreeWidget(this);
-    statusLabel = new QLabel();
+
     statusLabel->setAutoFillBackground(true);
 
     // Set tree widget as widget onto this component

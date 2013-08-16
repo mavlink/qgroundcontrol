@@ -84,7 +84,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
     //TODO connect buttons here to save/clear actions?
-    ui->pendingCommitsWidget->initWithUAS(this->mav);
+    mav = UASManager::instance()->getActiveUAS();
+    ui->pendingCommitsWidget->initWithUAS(mav);
     ui->pendingCommitsWidget->update();
 
     //TODO the following methods are not yet implemented

@@ -12,6 +12,7 @@ QGCPendingParamWidget::QGCPendingParamWidget(QObject *parent) :
 
 void QGCPendingParamWidget::connectToParamManager()
 {
+    paramMgr = mav->getParamManager();
     //TODO route via paramManager instead?
     // Listen to updated param signals from the data model
     connect(paramMgr->dataModel(), SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
@@ -33,6 +34,8 @@ void QGCPendingParamWidget::disconnectFromParamManager()
     // Listen to communications status messages so we can display them
     disconnect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SLOT(handleParamStatusMsgUpdate(QString , int )));
+
+    paramMgr = NULL;
 }
 
 

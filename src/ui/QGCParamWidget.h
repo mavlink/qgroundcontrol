@@ -88,10 +88,10 @@ public slots:
 
 
 protected:
-    QTreeWidget* tree;   ///< The parameter tree
-    QLabel* statusLabel; ///< User-facing parameter status label
     QMap<int, QTreeWidgetItem*>* componentItems; ///< The tree of component items, stored by component ID
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups to organize component items
+    QLabel* statusLabel; ///< User-facing parameter status label
+    QTreeWidget* tree;   ///< The parameter tree
 
 };
 
