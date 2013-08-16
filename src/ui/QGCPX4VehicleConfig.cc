@@ -84,14 +84,15 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
     //TODO connect buttons here to save/clear actions?
-    mav = UASManager::instance()->getActiveUAS();
-    if (!mav) {
-        qWarning() << "No active mav! ";
-    }
-    else {
-        ui->pendingCommitsWidget->initWithUAS(mav);
+    UASInterface* tmpMav = UASManager::instance()->getActiveUAS();
+    if (tmpMav) {
+        ui->pendingCommitsWidget->initWithUAS(tmpMav);
         ui->pendingCommitsWidget->update();
+        setActiveUAS(tmpMav);
     }
+
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+            this, SLOT(setActiveUAS(UASInterface*)));
 
     //TODO the following methods are not yet implemented
 
@@ -115,9 +116,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 //    connect(ui->invertCheckBox_7, SIGNAL(clicked(bool)), this, SLOT(setAux2Inverted(bool)));
 //    connect(ui->invertCheckBox_8, SIGNAL(clicked(bool)), this, SLOT(setAux3Inverted(bool)));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+
+
 
     for (unsigned int i = 0; i < chanMax; i++) {
         rcValue[i] = UINT16_MAX;
@@ -1248,6 +1249,7 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
         return;
     }
 
+    //TODO this may introduce a bug with param editor widgets not receiving param updates
     if (parameterName.startsWith("RC")) {
         handleRcParameterChange(parameterName,value);
         return;
