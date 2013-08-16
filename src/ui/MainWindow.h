@@ -184,6 +184,13 @@ public slots:
     /** @brief Add a communication link */
     void addLink();
     void addLink(LinkInterface* link);
+    /**
+     * @brief Adds a communication link user interface
+     *
+     * This methods should only be used for adding a 
+     * widget to the network menu.
+     */
+    void addLinkUi(LinkInterface *link, QObject *linkUi, QAction *linkUiAction);
     void configure();
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
