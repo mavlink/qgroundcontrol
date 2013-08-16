@@ -492,7 +492,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// PARAMETERS
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    QGCUASParamManager paramManager; ///< Parameter manager for this UAS
+    QGCUASParamManager paramMgr; ///< Parameter manager for this UAS
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
@@ -520,7 +520,7 @@ public:
 
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManager* getParamManager()  {
-        return &paramManager;
+        return &paramMgr;
     }
 
     /** @brief Get the HIL simulation */
