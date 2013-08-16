@@ -14,7 +14,7 @@ public:
     QGCToolWidgetItem(const QString& name, QWidget *parent = 0);
     ~QGCToolWidgetItem();
 
-    int component() {
+    int componentId() {
         return _component;
     }
 
