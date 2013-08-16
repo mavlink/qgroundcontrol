@@ -468,7 +468,11 @@ HEADERS += src/MG.h \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
     src/ui/configuration/ApmHighlighter.h \
-    src/ui/configuration/ApmFirmwareConfig.h
+    src/ui/configuration/ApmFirmwareConfig.h \
+    src/uas/UASParameterDataModel.h \
+    src/uas/UASParameterCommsMgr.h \
+    src/ui/QGCPendingParamWidget.h \
+    src/ui/QGCBaseParamWidget.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -683,7 +687,11 @@ SOURCES += src/main.cc \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \
     src/ui/configuration/ApmHighlighter.cc \
-    src/ui/configuration/ApmFirmwareConfig.cc
+    src/ui/configuration/ApmFirmwareConfig.cc \
+    src/uas/UASParameterDataModel.cc \
+    src/uas/UASParameterCommsMgr.cc \
+    src/ui/QGCPendingParamWidget.cc \
+    src/ui/QGCBaseParamWidget.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

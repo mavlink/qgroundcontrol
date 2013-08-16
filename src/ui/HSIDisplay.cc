@@ -950,35 +950,60 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
 
     if (uas)
     {
-        connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
-        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
-        connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
-        connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)), this, SLOT(updateUserPositionSetpoints(int,float,float,float,float)));
-        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)),
+                this, SLOT(updateSatellite(int,int,float,float,float,bool)));
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)),
+                this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
+        connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)),
+                this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
+        connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)),
+                this, SLOT(updateUserPositionSetpoints(int,float,float,float,float)));
+        connect(uas, SIGNAL(velocityChanged_NED(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),
+                this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeControlEnabled(bool)),
+                this, SLOT(updateAttitudeControllerEnabled(bool)));
+        connect(uas, SIGNAL(positionXYControlEnabled(bool)),
+                this, SLOT(updatePositionXYControllerEnabled(bool)));
+        connect(uas, SIGNAL(positionZControlEnabled(bool)),
+                this, SLOT(updatePositionZControllerEnabled(bool)));
+        connect(uas, SIGNAL(positionYawControlEnabled(bool)),
+                this, SLOT(updatePositionYawControllerEnabled(bool)));
 
-        connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(bool)));
-        connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(bool)));
-        connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(bool)));
-        connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(bool)));
+        connect(uas, SIGNAL(localizationChanged(UASInterface*,int)),
+                this, SLOT(updateLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)),
+                this, SLOT(updateVisionLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)),
+                this, SLOT(updateGpsLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)),
+                this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(objectDetected(uint,int,int,QString,int,float,float)),
+                this, SLOT(updateObjectPosition(uint,int,int,QString,int,float,float)));
 
-        connect(uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
-        connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
-        connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
-        connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
-        connect(uas, SIGNAL(objectDetected(uint,int,int,QString,int,float,float)), this, SLOT(updateObjectPosition(uint,int,int,QString,int,float,float)));
-
-        connect(uas, SIGNAL(gyroStatusChanged(bool,bool,bool)), this, SLOT(updateGyroStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(accelStatusChanged(bool,bool,bool)), this, SLOT(updateAccelStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(magSensorStatusChanged(bool,bool,bool)), this, SLOT(updateMagSensorStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(baroStatusChanged(bool,bool,bool)), this, SLOT(updateBaroStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(airspeedStatusChanged(bool,bool,bool)), this, SLOT(updateAirspeedStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(opticalFlowStatusChanged(bool,bool,bool)), this, SLOT(updateOpticalFlowStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(laserStatusChanged(bool,bool,bool)), this, SLOT(updateLaserStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(groundTruthSensorStatusChanged(bool,bool,bool)), this, SLOT(updateGroundTruthSensorStatus(bool,bool,bool)));
-        connect(uas, SIGNAL(actuatorStatusChanged(bool,bool,bool)), this, SLOT(updateActuatorStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(gyroStatusChanged(bool,bool,bool)),
+                this, SLOT(updateGyroStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(accelStatusChanged(bool,bool,bool)),
+                this, SLOT(updateAccelStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(magSensorStatusChanged(bool,bool,bool)),
+                this, SLOT(updateMagSensorStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(baroStatusChanged(bool,bool,bool)),
+                this, SLOT(updateBaroStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(airspeedStatusChanged(bool,bool,bool)),
+                this, SLOT(updateAirspeedStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(opticalFlowStatusChanged(bool,bool,bool)),
+                this, SLOT(updateOpticalFlowStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(laserStatusChanged(bool,bool,bool)),
+                this, SLOT(updateLaserStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(groundTruthSensorStatusChanged(bool,bool,bool)),
+                this, SLOT(updateGroundTruthSensorStatus(bool,bool,bool)));
+        connect(uas, SIGNAL(actuatorStatusChanged(bool,bool,bool)),
+                this, SLOT(updateActuatorStatus(bool,bool,bool)));
         statusClearTimer.start(3000);
     }
     else

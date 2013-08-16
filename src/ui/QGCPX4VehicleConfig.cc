@@ -13,9 +13,12 @@
 #include <QMessageBox>
 
 #include "QGCPX4VehicleConfig.h"
-#include "UASManager.h"
+
 #include "QGC.h"
+#include "QGCPendingParamWidget.h"
 #include "QGCToolWidget.h"
+#include "UASManager.h"
+#include "UASParameterCommsMgr.h"
 #include "ui_QGCPX4VehicleConfig.h"
 
 
@@ -76,11 +79,22 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    connect(ui->setButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
+    connect(ui->writeButton, SIGNAL(clicked()),
+            this, SLOT(writeParameters()));
+
     connect(ui->rcModeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setRCModeIndex(int)));
     //connect(ui->setTrimButton, SIGNAL(clicked()), this, SLOT(setTrimPositions()));
 
+    //TODO connect buttons here to save/clear actions?
+    UASInterface* tmpMav = UASManager::instance()->getActiveUAS();
+    if (tmpMav) {
+        ui->pendingCommitsWidget->initWithUAS(tmpMav);
+        ui->pendingCommitsWidget->update();
+        setActiveUAS(tmpMav);
+    }
 
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+            this, SLOT(setActiveUAS(UASInterface*)));
 
     //TODO the following methods are not yet implemented
 
@@ -104,9 +118,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 //    connect(ui->invertCheckBox_7, SIGNAL(clicked(bool)), this, SLOT(setAux2Inverted(bool)));
 //    connect(ui->invertCheckBox_8, SIGNAL(clicked(bool)), this, SLOT(setAux3Inverted(bool)));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
-    setActiveUAS(UASManager::instance()->getActiveUAS());
+
+
 
     for (unsigned int i = 0; i < chanMax; i++) {
         rcValue[i] = UINT16_MAX;
@@ -299,7 +313,6 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     }
 
     // Generate widgets for the Advanced tab.
-    left = true;
     foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
     {
         if (file.toLower().endsWith(".qgw")) {
@@ -793,23 +806,28 @@ void QGCPX4VehicleConfig::loadConfig()
         xml.readNext();
     }
 
-    mav->getParamManager()->setParamInfo(paramTooltips);
+    if (!paramTooltips.isEmpty()) {
+           paramMgr->setParamDescriptions(paramTooltips);
+    }
     doneLoadingConfig = true;
-    mav->requestParameters(); //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
+    //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
+    paramMgr->requestParameterListIfEmpty();
 }
 
 void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 {
     // Hide items if NULL and abort
     if (!active) {
-        ui->setButton->setEnabled(false);
         ui->refreshButton->setEnabled(false);
-        ui->readButton->show();
+        ui->refreshButton->show();
         ui->readButton->setEnabled(false);
-        ui->writeButton->show();
+        ui->readButton->show();
         ui->writeButton->setEnabled(false);
+        ui->writeButton->show();
         ui->loadFileButton->setEnabled(false);
+        ui->loadFileButton->show();
         ui->saveFileButton->setEnabled(false);
+        ui->saveFileButton->show();
 
         return;
     }
@@ -821,34 +839,32 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 
     if (mav)
     {
+
         // Disconnect old system
         disconnect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                    SLOT(remoteControlChannelRawChanged(int,float)));
+        //TODO use paramCommsMgr instead
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
-        disconnect(ui->refreshButton,SIGNAL(clicked()),mav,SLOT(requestParameters()));
+        disconnect(ui->refreshButton,SIGNAL(clicked()),
+                   paramMgr,SLOT(requestParameterList()));
 
         // Delete all children from all fixed tabs.
-        foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>())
-        {
+        foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>()) {
             child->deleteLater();
         }
-        foreach(QWidget* child, ui->generalRightContents->findChildren<QWidget*>())
-        {
+        foreach(QWidget* child, ui->generalRightContents->findChildren<QWidget*>()) {
             child->deleteLater();
         }
-        foreach(QWidget* child, ui->advanceColumnContents->findChildren<QWidget*>())
-        {
+        foreach(QWidget* child, ui->advanceColumnContents->findChildren<QWidget*>()) {
             child->deleteLater();
         }
-        foreach(QWidget* child, ui->sensorContents->findChildren<QWidget*>())
-        {
+        foreach(QWidget* child, ui->sensorContents->findChildren<QWidget*>()) {
             child->deleteLater();
         }
 
         // And then delete any custom tabs
-        foreach(QWidget* child, additionalTabs)
-        {
+        foreach(QWidget* child, additionalTabs) {
             child->deleteLater();
         }
         additionalTabs.clear();
@@ -864,35 +880,37 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     // Connect new system
     mav = active;
 
+    paramMgr = mav->getParamManager();
+
+    ui->pendingCommitsWidget->setUAS(mav);
+
     // Reset current state
     resetCalibrationRC();
-
-    requestCalibrationRC();
+    //TODO eliminate the separate RC_TYPE call
     mav->requestParameter(0, "RC_TYPE");
 
     chanCount = 0;
 
+    //TODO get parameter changes via Param Mgr instead
     // Connect new system
-    connect(active, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
+    connect(mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this,
                SLOT(remoteControlChannelRawChanged(int,float)));
-    connect(active, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
+    connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                SLOT(parameterChanged(int,int,QString,QVariant)));
-    connect(ui->refreshButton, SIGNAL(clicked()), active, SLOT(requestParameters()));
+    connect(ui->refreshButton, SIGNAL(clicked()),
+            paramMgr,SLOT(requestParameterList()));
 
-    if (systemTypeToParamMap.contains(mav->getSystemTypeName()))
-    {
+    if (systemTypeToParamMap.contains(mav->getSystemTypeName())) {
         paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
     }
-    else
-    {
+    else {
         //Indication that we have no meta data for this system type.
         qDebug() << "No parameters defined for system type:" << mav->getSystemTypeName();
         paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
     }
 
-    if (!paramTooltips.isEmpty())
-    {
-           mav->getParamManager()->setParamInfo(paramTooltips);
+    if (!paramTooltips.isEmpty()) {
+           mav->getParamManager()->setParamDescriptions(paramTooltips);
     }
 
     qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
@@ -904,14 +922,19 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
     // Since a system is now connected, enable the VehicleConfig UI.
-    ui->setButton->setEnabled(true);
     ui->refreshButton->setEnabled(true);
+    ui->refreshButton->show();
     ui->readButton->setEnabled(true);
+    ui->readButton->show();
     ui->writeButton->setEnabled(true);
+    ui->writeButton->show();
     ui->loadFileButton->setEnabled(true);
+    ui->loadFileButton->show();
     ui->saveFileButton->setEnabled(true);
-    if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA")
-    {
+    ui->saveFileButton->show();
+
+    //TODO never true?
+    if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA") {
         ui->readButton->hide();
         ui->writeButton->hide();
     }
@@ -941,6 +964,7 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     // Do not write the RC type, as these values depend on this
     // active onboard parameter
 
+    //TODO consolidate RC param sending in the UAS comms mgr
     for (unsigned int i = 0; i < chanCount; ++i)
     {
         //qDebug() << "SENDING" << minTpl.arg(i+1) << rcMin[i];
@@ -975,27 +999,7 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
 
 void QGCPX4VehicleConfig::requestCalibrationRC()
 {
-    if (!mav) return;
-
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
-
-    // Do not request the RC type, as these values depend on this
-    // active onboard parameter
-
-    for (unsigned int i = 0; i < chanMax; ++i)
-    {
-        mav->requestParameter(0, minTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, trimTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, maxTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, revTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-    }
+    paramMgr->requestRcCalibrationParamsUpdate();
 }
 
 void QGCPX4VehicleConfig::writeParameters()
@@ -1249,14 +1253,13 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
 
 void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-    Q_UNUSED(uas);
-    Q_UNUSED(component);
     if (!doneLoadingConfig) {
         //We do not want to attempt to generate any UI elements until loading of the config file is complete.
         //We should re-request params later if needed, that is not implemented yet.
         return;
     }
 
+    //TODO this may introduce a bug with param editor widgets not receiving param updates
     if (parameterName.startsWith("RC")) {
         handleRcParameterChange(parameterName,value);
         return;
