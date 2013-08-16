@@ -4,17 +4,23 @@
 
 #include "QGCParamWidget.h"
 
+class QGridLayout;
+
 class QGCPendingParamWidget : public QGCParamWidget
 {
     Q_OBJECT
 
 public:
     explicit QGCPendingParamWidget(QObject* parent);
-    virtual void init(); ///< Two-stage construction: initialize the object
 
 protected:
-    virtual void connectSignalsAndSlots();
+    virtual void connectToParamManager();
+    virtual void disconnectFromParamManager();
 
+    virtual void connectViewSignalsAndSlots();
+    virtual void disconnectViewSignalsAndSlots();
+
+    virtual void addActionButtonsToLayout(QGridLayout* layout);
 
 
 signals:

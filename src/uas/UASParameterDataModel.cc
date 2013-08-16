@@ -87,7 +87,7 @@ void UASParameterDataModel::setPendingParam(int compId, QString& key,  const QVa
      }
 }
 
-void UASParameterDataModel::removePendingParam(int compId, QString& key)
+void UASParameterDataModel::removePendingParam(int compId, const QString& key)
 {
     qDebug() << "removePendingParam:" << key;
 
@@ -195,6 +195,20 @@ bool UASParameterDataModel::getOnboardParamValue(int componentId, const QString&
 void UASParameterDataModel::forgetAllOnboardParams()
 {
     onboardParameters.clear();
+}
+
+void UASParameterDataModel::clearAllPendingParams()
+{
+    QList<int> compIds =   pendingParameters.keys();
+    foreach (int compId , compIds) {
+        QMap<QString, QVariant>* compParams = pendingParameters.value(compId);
+        QList<QString> paramNames = compParams->keys();
+        foreach (QString paramName, paramNames) {
+            //remove this item from pending status and broadcast update
+            removePendingParam(compId,paramName);
+        }
+    }
+
 }
 
 void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)

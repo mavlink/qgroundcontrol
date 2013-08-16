@@ -7,9 +7,9 @@
 
 #define RC_CAL_CHAN_MAX 8
 
-UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
+UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent) :
     QObject(parent),
-    mav(uas),
+    mav(NULL),
     paramDataModel(NULL),
     transmissionListMode(false),
     transmissionActive(false),
@@ -18,9 +18,15 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     rewriteTimeout(1000),
     retransmissionBurstRequestSize(5)
 {
-    paramDataModel = mav->getParamDataModel();
-    loadParamCommsSettings();
 
+
+}
+
+UASParameterCommsMgr* UASParameterCommsMgr::initWithUAS(UASInterface* uas)
+{
+    mav = uas;
+    paramDataModel = mav->getParamManager()->dataModel();
+    loadParamCommsSettings();
 
     //Requesting parameters one-by-one from mav
     connect(this, SIGNAL(parameterUpdateRequestedById(int,int)),
@@ -34,10 +40,11 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
             this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
-    //connecto retransmissionTimer
+    //connect to retransmissionTimer
     connect(&retransmissionTimer, SIGNAL(timeout()),
             this, SLOT(retransmissionGuardTick()));
 
+    return this;
 }
 
 
@@ -57,15 +64,6 @@ void UASParameterCommsMgr::loadParamCommsSettings()
         rewriteTimeout = val;
     }
     settings.endGroup();
-}
-
-
-void UASParameterCommsMgr::requestParameterListIfEmpty()
-{
-    int totalOnboard = paramDataModel->countOnboardParams();
-    if (totalOnboard < 2) { //TODO arbitrary constant, maybe 0 is OK?
-        requestParameterList();
-    }
 }
 
 
