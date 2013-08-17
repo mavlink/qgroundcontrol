@@ -169,17 +169,12 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     setMinimumSize(120, 80);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+    setActiveUAS(UASManager::instance()->getActiveUAS());
+
     // Connect with UAS signal
     //connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
-//    // Get a list of all existing UAS and - well attach to one of them. The first one.
-//    foreach (UASInterface* uas, UASManager::instance()->getUASList()) {
-//        addUAS(uas);
-//    }
-
-    setActiveUAS(UASManager::instance()->getActiveUAS());
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
