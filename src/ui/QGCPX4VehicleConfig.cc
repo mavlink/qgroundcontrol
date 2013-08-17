@@ -465,6 +465,7 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
+
     // Load general calibration for autopilot
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
     tool = new QGCToolWidget("", ui->sensorContents);
@@ -496,11 +497,11 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
         delete tool;
     }
 
-    //description.txt
-    QFile sensortipsfile(autopilotdir.absolutePath() + "/general/calibration/description.txt");
-    sensortipsfile.open(QIODevice::ReadOnly);
-    ui->sensorTips->setHtml(sensortipsfile.readAll());
-    sensortipsfile.close();
+//    //description.txt
+//    QFile sensortipsfile(autopilotdir.absolutePath() + "/general/calibration/description.txt");
+//    sensortipsfile.open(QIODevice::ReadOnly);
+////    ui->sensorTips->setHtml(sensortipsfile.readAll());
+//    sensortipsfile.close();
 }
 void QGCPX4VehicleConfig::menuButtonClicked()
 {
