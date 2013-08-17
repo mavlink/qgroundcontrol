@@ -146,7 +146,7 @@ Config</string>
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="rcTab">
         <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -753,54 +753,31 @@ Config</string>
           <bold>true</bold>
          </font>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_14">
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QLabel" name="tabTitleLabel_3">
-           <property name="text">
-            <string>Sensor Calibration</string>
-           </property>
-          </widget>
+          <widget class="QGCMessageView" name="widget" native="true"/>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_8">
-           <item>
-            <widget class="QTextBrowser" name="sensorTips">
-             <property name="html">
-              <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Lucida Grande'; font-size:16pt; font-weight:600; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0">
+          <widget class="QScrollArea" name="scrollArea_3">
+           <property name="widgetResizable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="sensorContents">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>1039</width>
+              <height>731</height>
+             </rect>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_10">
              <item>
-              <widget class="QScrollArea" name="scrollArea_3">
-               <property name="widgetResizable">
-                <bool>true</bool>
-               </property>
-               <widget class="QWidget" name="sensorContents">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>98</width>
-                  <height>28</height>
-                 </rect>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_10">
-                 <item>
-                  <layout class="QVBoxLayout" name="sensorLayout"/>
-                 </item>
-                </layout>
-               </widget>
-              </widget>
+              <layout class="QVBoxLayout" name="sensorLayout"/>
              </item>
             </layout>
-           </item>
-          </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1204,6 +1181,12 @@ p, li { white-space: pre-wrap; }
    <class>QGCPendingParamWidget</class>
    <extends>QWidget</extends>
    <header>ui/QGCPendingParamWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QGCMessageView</class>
+   <extends>QWidget</extends>
+   <header location="global">QGCMessageView.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

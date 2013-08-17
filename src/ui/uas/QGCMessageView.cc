@@ -22,6 +22,7 @@ QGCMessageView::QGCMessageView(QWidget *parent) :
     ui->horizontalLayout->addWidget(connectWidget);
     ui->plainTextEdit->hide();
 
+    setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 

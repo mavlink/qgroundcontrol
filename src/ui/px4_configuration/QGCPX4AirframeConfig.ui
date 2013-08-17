@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>602</width>
-    <height>345</height>
+    <width>803</width>
+    <height>416</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>561</width>
-        <height>299</height>
+        <width>802</width>
+        <height>531</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
@@ -121,6 +121,16 @@
            <property name="text">
             <string/>
            </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/quad_x.png</normaloff>:/files/images/px4/airframes/quad_x.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
+           </property>
           </widget>
          </item>
          <item>
@@ -159,14 +169,24 @@
        <item row="0" column="3">
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QPushButton" name="QuadPlusPushButton">
+          <widget class="QPushButton" name="quadPlusPushButton">
            <property name="text">
-            <string>PushButton</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/quad_+.png</normaloff>:/files/images/px4/airframes/quad_+.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_4"/>
+          <widget class="QComboBox" name="quadPlusComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_4">
@@ -180,14 +200,24 @@
        <item row="1" column="0">
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QPushButton" name="HexaXPushButton">
+          <widget class="QPushButton" name="hexaXPushButton">
            <property name="text">
-            <string>PushButton</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/hexa_x.png</normaloff>:/files/images/px4/airframes/hexa_x.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_5"/>
+          <widget class="QComboBox" name="hexaXComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_5">
@@ -201,14 +231,24 @@
        <item row="1" column="1">
         <layout class="QVBoxLayout" name="verticalLayout_6">
          <item>
-          <widget class="QPushButton" name="HexaPlusPushButton">
+          <widget class="QPushButton" name="hexaPlusPushButton">
            <property name="text">
-            <string>PushButton</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/hexa_+.png</normaloff>:/files/images/px4/airframes/hexa_+.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_6"/>
+          <widget class="QComboBox" name="hexaPlusComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_6">
@@ -224,12 +264,22 @@
          <item>
           <widget class="QPushButton" name="octoXPushButton">
            <property name="text">
-            <string>PushButton</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/octo_x.png</normaloff>:/files/images/px4/airframes/octo_x.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_7"/>
+          <widget class="QComboBox" name="octoXComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_7">
@@ -245,12 +295,22 @@
          <item>
           <widget class="QPushButton" name="octoPlusPushButton">
            <property name="text">
-            <string>PushButton</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/octo_+.png</normaloff>:/files/images/px4/airframes/octo_+.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_8"/>
+          <widget class="QComboBox" name="octoPlusComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_8">
@@ -266,12 +326,12 @@
          <item>
           <widget class="QPushButton" name="hPushButton">
            <property name="text">
-            <string>PushButton</string>
+            <string/>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="comboBox_9">
+          <widget class="QComboBox" name="hComboBox">
            <item>
             <property name="text">
              <string>Steadydrone</string>
@@ -313,6 +373,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../qgroundcontrol.qrc"/>
+ </resources>
  <connections/>
 </ui>
