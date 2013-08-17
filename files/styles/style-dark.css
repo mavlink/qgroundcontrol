@@ -345,13 +345,14 @@ QPushButton, QToolButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
 }
 
-QPushButton#planePushButton, QPushButton#flyingWingPushButton, QPushButton#quadXPushButton, QPushButton#quadPlusPushButton, QPushButton#hPushButton {
+QPushButton#planePushButton, QPushButton#flyingWingPushButton, QPushButton#quadXPushButton,
+QPushButton#quadPlusPushButton, QPushButton#hexaXPushButton, QPushButton#hexaPlusPushButton,
+QPushButton#octoXPushButton, QPushButton#octoPlusPushButton, QPushButton#hPushButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
     border-radius: 12px;
-    min-height: 120px;
-    max-height: 140px;
-    min-width: 120px;
-    max-width: 140px;
+    min-height: 140px;
+    max-height: 240px;
+    min-width: 140px;
     border: 3px solid #465158;
 }
 

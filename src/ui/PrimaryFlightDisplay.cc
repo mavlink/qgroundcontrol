@@ -357,6 +357,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
             if (yaw<0) yaw+=360;
             this->heading = yaw;
         }
+
 }
 
 void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)
