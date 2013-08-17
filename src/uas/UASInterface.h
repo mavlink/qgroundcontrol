@@ -295,7 +295,7 @@ public slots:
     /** @brief Start/continue the current robot action */
     virtual void go() = 0;
     /** @brief Set the current mode of operation */
-    virtual void setMode(int mode) = 0;
+    virtual void setMode(uint8_t newBaseMode, uint32_t newCustomMode) = 0;
     /** Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     virtual void emergencySTOP() = 0;
     /** Kills the robot. All systems are immediately shut down (e.g. the main power line is cut). This might lead to a crash **/
