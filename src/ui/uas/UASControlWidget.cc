@@ -116,15 +116,17 @@ void UASControlWidget::updateModesList()
 
 void UASControlWidget::setUAS(UASInterface* uas)
 {
-    if (this->uasID) {
+    if (this->uasID > 0) {
         UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uasID);
-        disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
-        disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
-        disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
-        disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
-        //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
-        disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int, QString, QString)));
-        disconnect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+        if (oldUAS) {
+            disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
+            disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
+            disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
+            disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
+            //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
+            disconnect(oldUAS, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int, QString, QString)));
+            disconnect(oldUAS, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+        }
     }
 
     // Connect user interface controls
@@ -141,11 +143,13 @@ void UASControlWidget::setUAS(UASInterface* uas)
 
         this->uasID = uas->getUASID();
         setBackgroundColor(uas->getColor());
+
+        this->updateModesList();
+        this->updateArmText();
+
     } else {
         this->uasID = -1;
     }
-    this->updateModesList();
-    this->updateArmText();
 }
 
 UASControlWidget::~UASControlWidget()
