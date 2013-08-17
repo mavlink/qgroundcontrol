@@ -6,9 +6,11 @@
 #include <QList>
 #include <QGroupBox>
 #include <QPushButton>
+#include <QStringList>
 
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
+#include "px4_configuration/QGCPX4AirframeConfig.h"
 
 class UASParameterCommsMgr;
 
@@ -37,6 +39,8 @@ public slots:
     void sensorMenuButtonClicked();
     void generalMenuButtonClicked();
     void advancedMenuButtonClicked();
+    void airframeMenuButtonClicked();
+    void identifyChannelMapping(int aert_index);
 
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
@@ -136,6 +140,46 @@ public slots:
         rcRev[rcMapping[7]] = inverted;
     }
 
+    /** Identify roll */
+    void identifyRollChannel() {
+        identifyChannelMapping(0);
+    }
+
+    /** Identify pitch */
+    void identifyPitchChannel() {
+        identifyChannelMapping(1);
+    }
+
+    /** Identify yaw */
+    void identifyYawChannel() {
+        identifyChannelMapping(2);
+    }
+
+    /** Identify throttle */
+    void identifyThrottleChannel() {
+        identifyChannelMapping(3);
+    }
+
+    /** Identify mode */
+    void identifyModeChannel() {
+        identifyChannelMapping(4);
+    }
+
+    /** Identify sub mode */
+    void identifySubModeChannel() {
+        identifyChannelMapping(5);
+    }
+
+    /** Identify aux 1 */
+    void identifyAux1Channel() {
+        identifyChannelMapping(6);
+    }
+
+    /** Identify aux 2 */
+    void identifyAux2Channel() {
+        identifyChannelMapping(7);
+    }
+
 protected slots:
     void menuButtonClicked();
     /** Reset the RC calibration */
@@ -174,6 +218,12 @@ protected:
     float rcScaling[chanMax];           ///< Scaling of channel input to control commands
     bool rcRev[chanMax];                ///< Channel reverse
     int rcValue[chanMax];               ///< Last values
+    float rcMappedMin[chanMax];            ///< Mapped channels in default order
+    float rcMappedMax[chanMax];            ///< Mapped channels in default order
+    float rcMappedValue[chanMax];            ///< Mapped channels in default order
+    int channelWanted;                  ///< During channel assignment search the requested default index
+    float channelWantedList[chanMax];   ///< During channel assignment search the start values
+    QStringList channelNames;           ///< List of channel names in standard order
     float rcRoll;                       ///< PPM input channel used as roll control input
     float rcPitch;                      ///< PPM input channel used as pitch control input
     float rcYaw;                        ///< PPM input channel used as yaw control input
@@ -196,6 +246,8 @@ protected:
     QMap<QString,QMap<QString,QGCToolWidget*> > systemTypeToParamMap;   ///< Holds all loaded MAV specific parameter widgets, for every MAV.
     QMap<QGCToolWidget*,QGroupBox*> toolToBoxMap;                       ///< Easy method of figuring out which QGroupBox is tied to which ToolWidget.
     QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
+
+    QGCPX4AirframeConfig* px4AirframeConfig;
 
 private:
     Ui::QGCPX4VehicleConfig *ui;
