@@ -157,18 +157,20 @@ void SerialLink::run()
     int linkErrorCount = 0;
 
     forever  {
+        {
         QMutexLocker locker(&this->m_stoppMutex);
-        if(m_stopp) {
-            m_stopp = false;
-            break; // exit the thread
-        }
+            if(m_stopp) {
+                m_stopp = false;
+                break; // exit the thread
+            }
 
-        if (m_reqReset) {
-            m_reqReset = false;
-            emit communicationUpdate(getName(),"Reset requested via DTR signal");
-            m_port->setDataTerminalReady(true);
-            msleep(250);
-            m_port->setDataTerminalReady(false);
+            if (m_reqReset) {
+                m_reqReset = false;
+                emit communicationUpdate(getName(),"Reset requested via DTR signal");
+                m_port->setDataTerminalReady(true);
+                msleep(250);
+                m_port->setDataTerminalReady(false);
+            }
         }
 
         if (isConnected() && (linkErrorCount > 100)) {

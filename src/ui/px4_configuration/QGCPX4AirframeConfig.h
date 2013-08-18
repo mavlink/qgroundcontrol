@@ -75,6 +75,7 @@ protected:
     
 private:
     UASInterface* mav;
+    int selectedId;
     Ui::QGCPX4AirframeConfig *ui;
 };
 

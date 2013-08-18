@@ -23,8 +23,31 @@ public:
     /** @brief Get the known, confirmed value of a parameter */
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
+    /**
+     * @brief Get a list of all component IDs using this parameter name
+     * @param parameter The string encoding the parameter name
+     * @return A list with all components using this parameter name. Can be empty.
+     */
+    virtual QList<int> getComponentForParam(const QString& parameter) const;
+
     /** @brief Provide tooltips / user-visible descriptions for parameters */
     virtual void setParamDescriptions(const QMap<QString,QString>& paramDescs);
+
+    /**
+     * @brief Count the pending parameters in the current transmission
+     * @return The number of pending parameters
+     */
+    virtual int countPendingParams() {
+        return paramDataModel.countPendingParams();
+    }
+
+    /**
+     * @brief Count the number of onboard parameters
+     * @return The number of onboard parameters
+     */
+    virtual int countOnboardParams() {
+        return paramDataModel.countOnboardParams();
+    }
 
     /** @brief Get the UAS of this widget
      * @return The MAV of this mgr. Unless the MAV object has been destroyed, this is never null.

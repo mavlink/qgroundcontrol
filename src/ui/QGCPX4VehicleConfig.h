@@ -13,6 +13,7 @@
 #include "px4_configuration/QGCPX4AirframeConfig.h"
 
 class UASParameterCommsMgr;
+class DialogBare;
 
 namespace Ui {
 class QGCPX4VehicleConfig;
@@ -40,6 +41,8 @@ public slots:
     void generalMenuButtonClicked();
     void advancedMenuButtonClicked();
     void airframeMenuButtonClicked();
+    void firmwareMenuButtonClicked();
+
     void identifyChannelMapping(int aert_index);
 
     /** Set the MAV currently being calibrated */
@@ -248,6 +251,7 @@ protected:
     QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
 
     QGCPX4AirframeConfig* px4AirframeConfig;
+    DialogBare* firmwareDialog;
 
 private:
     Ui::QGCPX4VehicleConfig *ui;

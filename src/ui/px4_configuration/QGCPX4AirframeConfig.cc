@@ -1,3 +1,5 @@
+#include <QMessageBox>
+
 #include "QGCPX4AirframeConfig.h"
 #include "ui_QGCPX4AirframeConfig.h"
 
@@ -7,6 +9,7 @@
 QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     QWidget(parent),
     mav(NULL),
+    selectedId(-1),
     ui(new Ui::QGCPX4AirframeConfig)
 {
     ui->setupUi(this);
@@ -62,23 +65,73 @@ void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
 
 void QGCPX4AirframeConfig::setAirframeID(int id)
 {
-    // If UAS is present, get param manager and set SYS_AUTOSTART ID
-    if (!mav)
-        return;
-
-    mav->getParamManager()->setParameter(0, "SYS_AUTOSTART", (qint32)id);
+    selectedId = id;
 }
 
 void QGCPX4AirframeConfig::applyAndReboot()
 {
-    UAS* uas = qobject_cast<UAS*>(mav);
+    // Guard against the case of an edit where we didn't receive all params yet
+    if (selectedId < 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("No airframe selected"));
+        msgBox.setInformativeText(tr("Please select an airframe first."));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        (void)msgBox.exec();
 
-    if (!uas)
         return;
+    }
+
+    if (!mav)
+        return;
+
+    if (mav->getParamManager()->countOnboardParams() == 0 &&
+            mav->getParamManager()->countPendingParams() == 0)
+    {
+        mav->getParamManager()->requestParameterListIfEmpty();
+        QGC::SLEEP::msleep(100);
+    }
+
+    // Guard against the case of an edit where we didn't receive all params yet
+    if (mav->getParamManager()->countPendingParams() > 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText(tr("Parameter sync with UAS not yet complete"));
+        msgBox.setInformativeText(tr("Please wait a few moments and retry"));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        (void)msgBox.exec();
+
+        return;
+    }
+
+    QList<int> components = mav->getParamManager()->getComponentForParam("SYS_AUTOSTART");
+
+    // Guard against multiple components responding - this will never show in practice
+    if (components.count() != 1) {
+        QMessageBox msgBox;
+        msgBox.setText(tr("Invalid system setup detected"));
+        msgBox.setInformativeText(tr("None or more than one component advertised to provide the main system configuration option. This is an invalid system setup - please check your autopilot."));
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        (void)msgBox.exec();
+
+        return;
+    }
+
+    qDebug() << "Setting comp" << components.first() << "SYS_AUTOSTART" << (qint32)selectedId;
+
+    mav->getParamManager()->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
+
+    // Send pending params
+    mav->getParamManager()->sendPendingParameters();
+    QGC::SLEEP::msleep(300);
     // Store parameters
-    uas->executeCommand(MAV_CMD_PREFLIGHT_STORAGE, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+    mav->getParamManager()->copyVolatileParamsToPersistent();
+    QGC::SLEEP::msleep(500);
     // Reboot
-    uas->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+    mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
 }
 
 void QGCPX4AirframeConfig::setAutoConfig(bool enabled)

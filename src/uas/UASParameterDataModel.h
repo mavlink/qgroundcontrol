@@ -34,7 +34,12 @@ public:
       */
     virtual void addComponent(int compId);
 
-
+    /**
+     * @brief Return a list of all components for this parameter name
+     * @param parameter The parameter string to search for
+     * @return A list with all components, can be potentially empty
+     */
+    virtual QList<int> getComponentForOnboardParam(const QString& parameter) const;
 
     /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
     virtual void setOnboardParamWithType(int componentId, QString& key, QVariant& value);
