@@ -192,6 +192,19 @@ bool UASParameterDataModel::getOnboardParamValue(int componentId, const QString&
     return false;
 }
 
+QList<int> UASParameterDataModel::getComponentForOnboardParam(const QString& parameter) const
+{
+    QList<int> components;
+    // Iterate through all components
+    foreach (int comp, onboardParameters.keys())
+    {
+        if (onboardParameters.value(comp)->contains(parameter))
+            components.append(comp);
+    }
+
+    return components;
+}
+
 void UASParameterDataModel::forgetAllOnboardParams()
 {
     onboardParameters.clear();

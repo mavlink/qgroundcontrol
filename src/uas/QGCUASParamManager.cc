@@ -48,7 +48,10 @@ void QGCUASParamManager::clearAllPendingParams()
     paramDataModel.clearAllPendingParams();
 }
 
-
+QList<int> QGCUASParamManager::getComponentForParam(const QString& parameter) const
+{
+    return paramDataModel.getComponentForOnboardParam(parameter);
+}
 
 
 bool QGCUASParamManager::getParameterValue(int component, const QString& parameter, QVariant& value) const

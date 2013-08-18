@@ -142,6 +142,27 @@ INCLUDEPATH += \
 
 include(src/apps/mavlinkgen/mavlinkgen.pri)
 
+# Include QUpgrade tool
+exists(qupgrade) {
+    SOURCES += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
+               qupgrade/src/apps/qupgrade/uploader.cpp \
+               qupgrade/src/apps/qupgrade/dialog_bare.cpp
+
+    HEADERS += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
+               qupgrade/src/apps/qupgrade/uploader.h \
+               qupgrade/src/apps/qupgrade/dialog_bare.h
+
+    FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui
+
+    linux*:CONFIG += qesp_linux_udev
+
+    include(qupgrade/libs/qextserialport/src/qextserialport.pri)
+
+    INCLUDEPATH += qupgrade/src/apps/qupgrade
+
+    DEFINES += "QUPGRADE_SUPPORT"
+}
+
 # Include QWT plotting library
 include(libs/qwt/qwt.pri)
 
@@ -152,12 +173,6 @@ INCLUDEPATH += .
 
 # Include serial port library (QSerialPort)
 include(libs/serialport/qserialport.pri)
-
-## Serial port detection (ripped-off from qextserialport library)
-#macx|macx-g++|macx-g++42::SOURCES += libs/qextserialport/qextserialenumerator_osx.cpp
-#linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-#linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-#win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
 
 # Input
 FORMS += src/ui/MainWindow.ui \

@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QXmlStreamReader>
 #include <QMessageBox>
+#include <QLabel>
 
 #include "QGCPX4VehicleConfig.h"
 
@@ -21,12 +22,14 @@
 #include "UASParameterCommsMgr.h"
 #include "ui_QGCPX4VehicleConfig.h"
 #include "px4_configuration/QGCPX4AirframeConfig.h"
+#include <dialog_bare.h>
 
-#define WIDGET_INDEX_RC 0
-#define WIDGET_INDEX_SENSOR_CAL 1
-#define WIDGET_INDEX_AIRFRAME_CONFIG 2
-#define WIDGET_INDEX_GENERAL_CONFIG 3
-#define WIDGET_INDEX_ADV_CONFIG 4
+#define WIDGET_INDEX_FIRMWARE 0
+#define WIDGET_INDEX_RC 1
+#define WIDGET_INDEX_SENSOR_CAL 2
+#define WIDGET_INDEX_AIRFRAME_CONFIG 3
+#define WIDGET_INDEX_GENERAL_CONFIG 4
+#define WIDGET_INDEX_ADV_CONFIG 5
 
 #define MIN_PWM_VAL 800
 #define MAX_PWM_VAL 2200
@@ -48,6 +51,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     rc_mode(RC_MODE_NONE),
     calibrationEnabled(false),
     px4AirframeConfig(NULL),
+    #ifdef QUPGRADE_SUPPORT
+    firmwareDialog(NULL),
+    #endif
     ui(new Ui::QGCPX4VehicleConfig)
 {
     doneLoadingConfig = false;
@@ -71,6 +77,17 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
 
+#ifdef QUPGRADE_SUPPORT
+    firmwareDialog = new DialogBare(this);
+    ui->firmwareLayout->addWidget(firmwareDialog);
+#else
+#error Please check out QUpgrade from http://github.com/LorenzMeier/qupgrade/ into the QGroundControl folder.
+
+    QLabel* label = new QLabel(this);
+    label->setText("THIS VERSION OF QGROUNDCONTROL WAS BUILT WITHOUT QUPGRADE. To enable firmware upload support, checkout QUpgrade WITHIN the QGroundControl folder");
+    ui->firmwareLayout->addWidget(label);
+#endif
+
     ui->rollWidget->setOrientation(Qt::Horizontal);
     ui->rollWidget->setName("Roll");
     ui->yawWidget->setOrientation(Qt::Horizontal);
@@ -91,6 +108,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->generalMenuButton,SIGNAL(clicked()),this,SLOT(generalMenuButtonClicked()));
     connect(ui->advancedMenuButton,SIGNAL(clicked()),this,SLOT(advancedMenuButtonClicked()));
     connect(ui->airframeMenuButton, SIGNAL(clicked()), this, SLOT(airframeMenuButtonClicked()));
+    connect(ui->firmwareMenuButton, SIGNAL(clicked()), this, SLOT(firmwareButtonClicked()));
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
@@ -174,6 +192,11 @@ void QGCPX4VehicleConfig::advancedMenuButtonClicked()
 void QGCPX4VehicleConfig::airframeMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_AIRFRAME_CONFIG);
+}
+
+void QGCPX4VehicleConfig::firmwareMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_FIRMWARE);
 }
 
 void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
@@ -1089,7 +1112,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float val)
 
             channelWanted = -1;
 
-            // Reject
+            // Confirm found channel
             QMessageBox msgBox;
             msgBox.setText(tr("%1 Channel found.").arg(channelNames[chanFound]));
             msgBox.setInformativeText(tr("Found %1 to be on the raw RC channel %2").arg(channelNames[chanFound]).arg(chan + 1));
