@@ -44,6 +44,9 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     connect(ui->hComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(hSelected(int)));
 
+    ui->hComboBox->addItem(tr("TBS Discovery"), 15);
+    ui->hComboBox->addItem(tr("H Custom"), 16);
+
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(applyAndReboot()));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS()));
