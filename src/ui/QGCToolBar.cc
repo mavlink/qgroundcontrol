@@ -462,7 +462,7 @@ void QGCToolBar::updateView()
         {
             toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814; font-size: 15pt;}");
         }
-        toolBarSafetyLabel->setText(tr("SAFE"));
+        toolBarSafetyLabel->setText(tr("DISARMED"));
     }
 
     changed = false;
