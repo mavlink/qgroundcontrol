@@ -102,6 +102,9 @@ void UASListWidget::updateStatus()
     while (i.hasNext()) {
         i.next();
         LinkInterface* link = i.key();
+        if (!link)
+            continue;
+
         ProtocolInterface* p = LinkManager::instance()->getProtocolForLink(link);
 
         // Build the tooltip out of the protocol parsing data: received, dropped, and parsing errors.

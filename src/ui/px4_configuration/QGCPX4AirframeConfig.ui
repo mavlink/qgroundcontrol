@@ -24,7 +24,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>802</width>
+        <width>762</width>
         <height>531</height>
        </rect>
       </property>
@@ -36,6 +36,10 @@
            <property name="text">
             <string/>
            </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/plane_aert.png</normaloff>:/files/images/px4/airframes/plane_aert.png</iconset>
+           </property>
            <property name="iconSize">
             <size>
              <width>120</width>
@@ -45,33 +49,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="planeComboBox">
-           <item>
-            <property name="text">
-             <string>Please select</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>EasyStar</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>EasyStar 2</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>EasyStar 2 w. Ailerons</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Bixler 2</string>
-            </property>
-           </item>
-          </widget>
+          <widget class="QComboBox" name="planeComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label">
@@ -89,21 +67,20 @@
            <property name="text">
             <string/>
            </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/flying_wing.png</normaloff>:/files/images/px4/airframes/flying_wing.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
+           </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="flyingWingComboBox">
-           <item>
-            <property name="text">
-             <string>Bormatec CamFlyer Q</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>FX-61 Phantom</string>
-            </property>
-           </item>
-          </widget>
+          <widget class="QComboBox" name="flyingWingComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_2">
@@ -134,28 +111,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="quadXComboBox">
-           <item>
-            <property name="text">
-             <string>AR.Drone Frame</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Arducopter C Frame</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>DJI F330 Frame</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>DJI F450 Frame</string>
-            </property>
-           </item>
-          </widget>
+          <widget class="QComboBox" name="quadXComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_3">
@@ -331,18 +287,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="hComboBox">
-           <item>
-            <property name="text">
-             <string>Steadydrone</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>H Frame Custom</string>
-            </property>
-           </item>
-          </widget>
+          <widget class="QComboBox" name="hComboBox"/>
          </item>
          <item>
           <widget class="QLabel" name="label_9">
