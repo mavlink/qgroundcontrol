@@ -25,6 +25,15 @@ public slots:
     void setActiveUAS(UASInterface* uas);
 
     /**
+     * @brief Handle parameter changes
+     * @param uas
+     * @param component
+     * @param parameterName
+     * @param value
+     */
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+
+    /**
      * @brief Quadrotor in X configuration has been selected
      */
     void quadXSelected();

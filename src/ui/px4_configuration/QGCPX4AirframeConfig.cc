@@ -54,14 +54,36 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
+void QGCPX4AirframeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+
+    if (parameterName.contains("SYS_AUTOSTART"))
+    {
+        int index = value.toInt();
+        if (index > 0) {
+            setAirframeID(index);
+            ui->statusLabel->setText(tr("Onboard start script ID: #%1").arg(index));
+        } else {
+            ui->statusLabel->setText(tr("System not configured for autostart."));
+        }
+    }
+}
+
 void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
 {
-//    if (mav)
+    if (mav)
+    {
+        disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
+    }
 
     if (!uas)
         return;
 
     mav = uas;
+
+    connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
 
     //connect(uas->getParamManager(), SIGNAL())
 }
@@ -69,12 +91,21 @@ void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
 void QGCPX4AirframeConfig::setAirframeID(int id)
 {
     selectedId = id;
+    ui->statusLabel->setText(tr("Ground start script ID: #%1").arg(selectedId));
+
+    if (id > 0 && id < 10) {
+        ui->planePushButton->setChecked(true);
+    }
+    else if (id > 10 && id < 20)
+    {
+        ui->quadXPushButton->setChecked(true);
+    }
 }
 
 void QGCPX4AirframeConfig::applyAndReboot()
 {
     // Guard against the case of an edit where we didn't receive all params yet
-    if (selectedId < 0)
+    if (selectedId <= 0)
     {
         QMessageBox msgBox;
         msgBox.setText(tr("No airframe selected"));
@@ -125,7 +156,9 @@ void QGCPX4AirframeConfig::applyAndReboot()
 
     qDebug() << "Setting comp" << components.first() << "SYS_AUTOSTART" << (qint32)selectedId;
 
-    mav->getParamManager()->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
+    mav->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
+
+    //mav->getParamManager()->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
 
     // Send pending params
     mav->getParamManager()->sendPendingParameters();
@@ -146,7 +179,7 @@ void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
 
 void QGCPX4AirframeConfig::flyingWingSelected()
 {
-
+    ui->flyingWingPushButton->setChecked(true);
 }
 
 void QGCPX4AirframeConfig::flyingWingSelected(int index)
@@ -157,24 +190,26 @@ void QGCPX4AirframeConfig::flyingWingSelected(int index)
 
 void QGCPX4AirframeConfig::planeSelected()
 {
-
+    ui->planePushButton->setChecked(true);
 }
 
 void QGCPX4AirframeConfig::planeSelected(int index)
 {
     int system_index = ui->planeComboBox->itemData(index).toInt();
+    planeSelected();
     setAirframeID(system_index);
 }
 
 
 void QGCPX4AirframeConfig::quadXSelected()
 {
-
+    ui->quadXPushButton->setChecked(true);
 }
 
 void QGCPX4AirframeConfig::quadXSelected(int index)
 {
     int system_index = ui->quadXComboBox->itemData(index).toInt();
+    quadXSelected();
     setAirframeID(system_index);
 }
 

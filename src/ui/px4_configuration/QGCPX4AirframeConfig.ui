@@ -23,7 +23,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-175</y>
         <width>762</width>
         <height>531</height>
        </rect>
@@ -45,6 +45,9 @@
              <width>120</width>
              <height>120</height>
             </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -77,6 +80,9 @@
              <height>120</height>
             </size>
            </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -107,6 +113,9 @@
              <width>120</width>
              <height>120</height>
             </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -139,6 +148,9 @@
              <height>120</height>
             </size>
            </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -169,6 +181,9 @@
              <width>120</width>
              <height>120</height>
             </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -201,6 +216,9 @@
              <height>120</height>
             </size>
            </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -231,6 +249,9 @@
              <width>120</width>
              <height>120</height>
             </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -263,6 +284,9 @@
              <height>120</height>
             </size>
            </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -283,6 +307,15 @@
           <widget class="QPushButton" name="hPushButton">
            <property name="text">
             <string/>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>120</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
