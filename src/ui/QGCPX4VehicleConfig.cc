@@ -103,12 +103,18 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->radio8Widget->setOrientation(Qt::Horizontal);
     ui->radio8Widget->setName("Radio 8");
 
-    connect(ui->rcMenuButton,SIGNAL(clicked()),this,SLOT(rcMenuButtonClicked()));
-    connect(ui->sensorMenuButton,SIGNAL(clicked()),this,SLOT(sensorMenuButtonClicked()));
-    connect(ui->generalMenuButton,SIGNAL(clicked()),this,SLOT(generalMenuButtonClicked()));
-    connect(ui->advancedMenuButton,SIGNAL(clicked()),this,SLOT(advancedMenuButtonClicked()));
-    connect(ui->airframeMenuButton, SIGNAL(clicked()), this, SLOT(airframeMenuButtonClicked()));
-    connect(ui->firmwareMenuButton, SIGNAL(clicked()), this, SLOT(firmwareButtonClicked()));
+    connect(ui->rcMenuButton,SIGNAL(clicked()),
+            this,SLOT(rcMenuButtonClicked()));
+    connect(ui->sensorMenuButton,SIGNAL(clicked()),
+            this,SLOT(sensorMenuButtonClicked()));
+    connect(ui->generalMenuButton,SIGNAL(clicked()),
+            this,SLOT(generalMenuButtonClicked()));
+    connect(ui->advancedMenuButton,SIGNAL(clicked()),
+            this,SLOT(advancedMenuButtonClicked()));
+    connect(ui->airframeMenuButton, SIGNAL(clicked()),
+            this, SLOT(airframeMenuButtonClicked()));
+    connect(ui->firmwareMenuButton, SIGNAL(clicked()),
+            this, SLOT(firmwareMenuButtonClicked()));
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
