@@ -72,6 +72,12 @@ signals:
     /** @brief We have received a complete list of all parameters onboard the MAV */
     void parameterListUpToDate();
 
+    /** @brief We've received an update of a parameter's value */
+    void parameterUpdated(int compId, QString paramName, QVariant value);
+
+    /** @brief Notifies listeners that a param was added to or removed from the pending list */
+    void pendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending);
+
 
 
 public slots:

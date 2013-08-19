@@ -40,6 +40,15 @@ void QGCUASParamManager::connectToModelAndComms()
 
     connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
             this, SIGNAL(parameterListUpToDate()));
+
+    // Pass along data model updates
+    connect(&paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
+            this, SIGNAL(parameterUpdated(int, QString , QVariant )));
+
+    connect(&paramDataModel, SIGNAL(pendingParamUpdate(int , const QString& , QVariant , bool )),
+            this, SIGNAL(pendingParamUpdate(int , const QString& , QVariant , bool )));
+
+
 }
 
 
