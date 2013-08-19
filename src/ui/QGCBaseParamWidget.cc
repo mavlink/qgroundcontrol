@@ -53,10 +53,10 @@ void QGCBaseParamWidget::connectToParamManager()
     paramMgr = mav->getParamManager();
     //TODO route via paramManager instead?
     // Listen to updated param signals from the data model
-    connect(paramMgr->dataModel(), SIGNAL(parameterUpdated(int, QString , QVariant )),
+    connect(paramMgr, SIGNAL(parameterUpdated(int, QString , QVariant )),
             this, SLOT(handleOnboardParamUpdate(int,QString,QVariant)));
 
-    connect(paramMgr->dataModel(), SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
+    connect(paramMgr, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
             this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
 
     // Listen for param list reload finished
@@ -71,10 +71,10 @@ void QGCBaseParamWidget::connectToParamManager()
 
 void QGCBaseParamWidget::disconnectFromParamManager()
 {
-    disconnect(paramMgr->dataModel(), SIGNAL(parameterUpdated(int, QString , QVariant )),
+    disconnect(paramMgr, SIGNAL(parameterUpdated(int, QString , QVariant )),
             this, SLOT(handleOnboardParamUpdate(int,QString,QVariant)));
 
-    disconnect(paramMgr->dataModel(), SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
+    disconnect(paramMgr, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
             this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
 
     disconnect(paramMgr, SIGNAL(parameterListUpToDate()),
