@@ -368,7 +368,8 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     }
     QMessageBox::information(0,"Status",statusstr);
 
-
+    QMessageBox::information(0,"Uploading the RC Calibration","The configuration will now be uploaded and permanently stored.");
+    writeCalibrationRC();
 }
 
 void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
@@ -1108,6 +1109,8 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     QGC::SLEEP::usleep(50000);
     mav->setParameter(0, "RC_MAP_AUX3", (int32_t)(rcMapping[7]+1));
     QGC::SLEEP::usleep(50000);
+
+    mav->getParamManager()->copyVolatileParamsToPersistent();
 }
 
 void QGCPX4VehicleConfig::requestCalibrationRC()
