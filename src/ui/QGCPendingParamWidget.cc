@@ -75,13 +75,39 @@ void QGCPendingParamWidget::handlePendingParamUpdate(int compId, const QString& 
     }
     else {
         //we don't display non-pending items
-        QTreeWidgetItem* parentItem = paramItem->parent();
+        QTreeWidgetItem* groupItem = paramItem->parent();
+        if (NULL != groupItem) {
+            tree->setUpdatesEnabled(false);
+            QTreeWidgetItem* componentItem = NULL;
+            if (1 == groupItem->childCount()) {
+                componentItem = groupItem->parent();
+            }
 
-        if (NULL != parentItem && 1 == parentItem->childCount()) {
-            parentItem->parent()->removeChild(parentItem);
-        }
-        else {
-            paramItem->parent()->removeChild(paramItem);
+            //always remove the actual paramItem from its parent
+            groupItem->removeChild(paramItem);
+
+            //now we may need to remove the groupItem if it has no more children
+            if (NULL != componentItem) {
+                //remove the group from our internal data structures
+                QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(compId);
+                QString groupStr = paramName.section("_", 0, 0, QString::SectionSkipEmpty);
+                compParamGroups->remove(groupStr);
+                //remove the group item from componentItems
+                componentItems->value(compId)->removeChild(groupItem);
+                // remove the group item from the tree widget itself
+                componentItem->removeChild(groupItem);
+
+                if (0 == componentItem->childCount()) {
+                    //the component itself no longer has any pending changes: remove it
+                    paramGroups.remove(compId);
+                    componentItems->remove(compId);
+                    QTreeWidgetItem* compTop = tree->takeTopLevelItem(tree->indexOfTopLevelItem(componentItem));
+                    delete compTop; //we own it after take
+                }
+            }
+            tree->setUpdatesEnabled(true);
+            tree->update();
+
         }
     }
 
