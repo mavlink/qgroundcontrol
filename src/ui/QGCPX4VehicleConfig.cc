@@ -209,6 +209,9 @@ void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
 {
     if (chanCount == 0)
         return;
+
+    int oldmapping = rcMapping[aert_index];
+
     channelWanted = aert_index;
 
     for (unsigned i = 0; i < sizeof(channelWantedList) / sizeof(channelWantedList[0]); i++)
@@ -218,6 +221,17 @@ void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
         } else {
             channelWantedList[i] = rcValue[i];
         }
+    }
+
+    msgBox.setText(tr("Identifying %1 channel").arg(channelNames[channelWanted]));
+    msgBox.setInformativeText(tr("Please move stick, switch or potentiometer for the %1 channel\n all the way up/down or left/right.").arg(channelNames[channelWanted]));
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    if (QMessageBox::Cancel == msgBox.exec())
+    {
+        channelWanted = -1;
+        rcMapping[aert_index] = oldmapping;
+        return;
     }
 
 }
@@ -289,7 +303,14 @@ void QGCPX4VehicleConfig::detectChannelInversion()
 
 void QGCPX4VehicleConfig::startCalibrationRC()
 {
-    QMessageBox::information(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and reciever are powered and connected\n\nClick OK to confirm");
+    QMessageBox::warning(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and receiver are powered and connected\n\nDo not move the RC sticks, then click OK to confirm");
+
+    for (int i = 0; i < 5; i++) {
+        identifyChannelMapping(i);
+    }
+
+    QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
+
     QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
     ui->rcCalibrationButton->setText(tr("Stop RC Calibration"));
     resetCalibrationRC();
@@ -307,6 +328,7 @@ void QGCPX4VehicleConfig::startCalibrationRC()
 void QGCPX4VehicleConfig::stopCalibrationRC()
 {
     QMessageBox::information(0,"Trims","Ensure all sticks are centeres and throttle is in the downmost position, click OK to continue");
+
     calibrationEnabled = false;
     ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
 
@@ -322,11 +344,18 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     for (int i=0;i<chanCount;i++)
     {
         if (rcMin[i] > 1350)
+        {
             rcMin[i] = 1000;
+        }
 
         if (rcMax[i] < 1650)
+        {
             rcMax[i] = 2000;
+        }
     }
+
+    qDebug() << "SETTING TRIM";
+    setTrimPositions();
 
     QString statusstr;
     statusstr = "Below you will find the detected radio calibration information that will be sent to the autopilot\n";
@@ -338,6 +367,8 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
         statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
     }
     QMessageBox::information(0,"Status",statusstr);
+
+
 }
 
 void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
@@ -1038,8 +1069,6 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
 {
     if (!mav) return;
 
-    setTrimPositions();
-
     QString minTpl("RC%1_MIN");
     QString maxTpl("RC%1_MAX");
     QString trimTpl("RC%1_TRIM");
@@ -1128,7 +1157,6 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float val)
             channelWanted = -1;
 
             // Confirm found channel
-            QMessageBox msgBox;
             msgBox.setText(tr("%1 Channel found.").arg(channelNames[chanFound]));
             msgBox.setInformativeText(tr("Found %1 to be on the raw RC channel %2").arg(channelNames[chanFound]).arg(chan + 1));
             msgBox.setStandardButtons(QMessageBox::Ok);

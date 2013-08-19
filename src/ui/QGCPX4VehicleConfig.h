@@ -7,6 +7,7 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QStringList>
+#include <QMessageBox>
 
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
@@ -209,7 +210,7 @@ protected:
     bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
     QGCUASParamManager* paramMgr;       ///< params mgr for the mav
-    static const unsigned int chanMax = 8;    ///< Maximum number of channels
+    static const unsigned int chanMax = 16;    ///< Maximum number of channels
     unsigned int chanCount;               ///< Actual channels
     int rcType;                         ///< Type of the remote control
     quint64 rcTypeUpdateRequested;      ///< Zero if not requested, non-zero if requested
@@ -252,6 +253,7 @@ protected:
 
     QGCPX4AirframeConfig* px4AirframeConfig;
     DialogBare* firmwareDialog;
+    QMessageBox msgBox;
 
 private:
     Ui::QGCPX4VehicleConfig *ui;
