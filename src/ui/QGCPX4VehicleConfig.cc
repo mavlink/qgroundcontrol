@@ -313,12 +313,21 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     ui->radio7Widget->hideMinMax();
     ui->radio8Widget->hideMinMax();
 
+    for (int i=0;i<chanCount;i++)
+    {
+        if (rcMin[i] > 1350)
+            rcMin[i] = 1000;
+
+        if (rcMax[i] < 1650)
+            rcMax[i] = 2000;
+    }
+
     QString statusstr;
     statusstr = "Below you will find the detected radio calibration information that will be sent to the autopilot\n";
-    statusstr += "Normal values are around 1100 to 1900, with disconnected channels reading very close to 1500\n\n";
+    statusstr += "Normal values are around 1100 to 1900, with disconnected channels reading 1000, 1500, 2000\n\n";
     statusstr += "Channel\tMin\tCenter\tMax\n";
     statusstr += "--------------------\n";
-    for (int i=0;i<8;i++)
+    for (int i=0;i<chanCount;i++)
     {
         statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
     }
