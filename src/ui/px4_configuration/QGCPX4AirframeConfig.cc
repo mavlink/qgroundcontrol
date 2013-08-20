@@ -161,11 +161,8 @@ void QGCPX4AirframeConfig::applyAndReboot()
     //mav->getParamManager()->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
 
     // Send pending params
-    mav->getParamManager()->sendPendingParameters();
-    QGC::SLEEP::msleep(300);
-    // Store parameters
-    mav->getParamManager()->copyVolatileParamsToPersistent();
-    QGC::SLEEP::msleep(500);
+    mav->getParamManager()->sendPendingParameters(true);
+
     // Reboot
     mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
 }

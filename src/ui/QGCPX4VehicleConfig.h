@@ -66,7 +66,7 @@ public slots:
     void setRCModeIndex(int newRcMode);
     /** Render the data updated */
     void updateView();
-    void updateRcWidgetValues();
+
     void handleRcParameterChange(QString parameterName, QVariant value);
 
 
@@ -205,6 +205,14 @@ protected slots:
     void checktimeOuts();
     /** Update checkbox status */
     void updateInvertedCheckboxes(int index);
+    /** Update the displayed values */
+    void updateRcWidgetValues();
+    /** update the channel labels */
+    void updateRcChanLabels();
+
+    QString labelForRcValue(float val) {
+        return  QString("%1").arg(val, 5, 'f', 2, QChar(' '));
+    }
 
 protected:
     bool doneLoadingConfig;
@@ -254,6 +262,7 @@ protected:
     QGCPX4AirframeConfig* px4AirframeConfig;
     DialogBare* firmwareDialog;
     QMessageBox msgBox;
+    QPushButton* skipActionButton;
 
 private:
     Ui::QGCPX4VehicleConfig *ui;
