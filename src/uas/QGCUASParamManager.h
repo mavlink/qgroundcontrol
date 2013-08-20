@@ -84,8 +84,11 @@ public slots:
     /** @brief Send one parameter to the MAV: changes value in transient memory of MAV */
     virtual void setParameter(int component, QString parameterName, QVariant value);
 
-    /** @brief Send all pending parameters to the MAV, for storage in transient (RAM) memory */
-    virtual void sendPendingParameters();
+    /** @brief Send all pending parameters to the MAV, for storage in transient (RAM) memory
+     * @param persistAfterSend  If true, all parameters will be written to persistent storage as well
+    */
+    virtual void sendPendingParameters(bool persistAfterSend = false);
+
 
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
@@ -93,7 +96,8 @@ public slots:
     /** @brief Request a list of params onboard the MAV if the onboard param list we have is empty */
     virtual void requestParameterListIfEmpty();
 
-    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+    /** @brief queue a pending parameter for sending to the MAV */
+    virtual void setPendingParam(int componentId,  const QString& key,  const QVariant& value);
 
     /** @brief remove all params from the pending list */
     virtual void clearAllPendingParams();
