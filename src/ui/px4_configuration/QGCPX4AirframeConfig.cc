@@ -17,13 +17,13 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     // Fill the lists here manually in accordance with the list from:
     // https://github.com/PX4/Firmware/blob/master/ROMFS/px4fmu_common/init.d/rcS
 
-    ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 1);
-    ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 10);
+    ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 100);
+    ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 101);
 
     connect(ui->planeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(planeSelected(int)));
 
-    ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q"), 1);
-    ui->flyingWingComboBox->addItem(tr("Phantom FPV"), 10);
+    ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q"), 30);
+    ui->flyingWingComboBox->addItem(tr("Phantom FPV"), 31);
 
     connect(ui->flyingWingComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(flyingWingSelected(int)));
 
@@ -76,6 +76,7 @@ void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
     if (mav)
     {
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
+        mav = NULL;
     }
 
     if (!uas)
@@ -84,8 +85,19 @@ void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
     mav = uas;
 
     connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
+}
 
-    //connect(uas->getParamManager(), SIGNAL())
+void QGCPX4AirframeConfig::uncheckAll()
+{
+    ui->planePushButton->setChecked(false);
+    ui->flyingWingPushButton->setChecked(false);
+    ui->quadXPushButton->setChecked(false);
+    ui->quadPlusPushButton->setChecked(false);
+    ui->hexaXPushButton->setChecked(false);
+    ui->hexaPlusPushButton->setChecked(false);
+    ui->octoXPushButton->setChecked(false);
+    ui->octoPlusPushButton->setChecked(false);
+    ui->hPushButton->setChecked(false);
 }
 
 void QGCPX4AirframeConfig::setAirframeID(int id)
@@ -93,12 +105,24 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
     selectedId = id;
     ui->statusLabel->setText(tr("Ground start script ID: #%1").arg(selectedId));
 
-    if (id > 0 && id < 10) {
-        ui->planePushButton->setChecked(true);
-    }
-    else if (id > 10 && id < 20)
-    {
+    // XXX too much boilerplate code here - this widget is really just
+    // a quick hack to get started
+    uncheckAll();
+
+    if (id > 0 && id < 15) {
         ui->quadXPushButton->setChecked(true);
+    }
+    else if (id >= 15 && id < 20)
+    {
+        ui->hPushButton->setChecked(true);
+    }
+    else if (id >= 30 && id < 50)
+    {
+        ui->flyingWingPushButton->setChecked(true);
+    }
+    else if (id >= 100 && id < 150)
+    {
+        ui->planePushButton->setChecked(true);
     }
 }
 
@@ -176,6 +200,7 @@ void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
 
 void QGCPX4AirframeConfig::flyingWingSelected()
 {
+    uncheckAll();
     ui->flyingWingPushButton->setChecked(true);
 }
 
@@ -187,6 +212,7 @@ void QGCPX4AirframeConfig::flyingWingSelected(int index)
 
 void QGCPX4AirframeConfig::planeSelected()
 {
+    uncheckAll();
     ui->planePushButton->setChecked(true);
 }
 
@@ -200,6 +226,7 @@ void QGCPX4AirframeConfig::planeSelected(int index)
 
 void QGCPX4AirframeConfig::quadXSelected()
 {
+    uncheckAll();
     ui->quadXPushButton->setChecked(true);
 }
 
@@ -212,7 +239,8 @@ void QGCPX4AirframeConfig::quadXSelected(int index)
 
 void QGCPX4AirframeConfig::quadPlusSelected()
 {
-
+    uncheckAll();
+    ui->quadPlusPushButton->setChecked(true);
 }
 
 void QGCPX4AirframeConfig::quadPlusSelected(int index)
@@ -223,7 +251,8 @@ void QGCPX4AirframeConfig::quadPlusSelected(int index)
 
 void QGCPX4AirframeConfig::hexaXSelected()
 {
-
+    uncheckAll();
+    ui->hexaPlusPushButton->setChecked(true);
 }
 
 void QGCPX4AirframeConfig::hexaXSelected(int index)
@@ -234,7 +263,7 @@ void QGCPX4AirframeConfig::hexaXSelected(int index)
 
 void QGCPX4AirframeConfig::hexaPlusSelected()
 {
-
+    uncheckAll();
 }
 
 void QGCPX4AirframeConfig::hexaPlusSelected(int index)
@@ -245,7 +274,7 @@ void QGCPX4AirframeConfig::hexaPlusSelected(int index)
 
 void QGCPX4AirframeConfig::octoXSelected()
 {
-
+    uncheckAll();
 }
 
 void QGCPX4AirframeConfig::octoXSelected(int index)
@@ -256,7 +285,7 @@ void QGCPX4AirframeConfig::octoXSelected(int index)
 
 void QGCPX4AirframeConfig::octoPlusSelected()
 {
-
+    uncheckAll();
 }
 
 void QGCPX4AirframeConfig::octoPlusSelected(int index)
@@ -267,7 +296,8 @@ void QGCPX4AirframeConfig::octoPlusSelected(int index)
 
 void QGCPX4AirframeConfig::hSelected()
 {
-
+    uncheckAll();
+    ui->hPushButton->setChecked(true);
 }
 
 void QGCPX4AirframeConfig::hSelected(int index)

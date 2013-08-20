@@ -81,7 +81,8 @@ protected:
      */
     void setAutoConfig(bool enabled);
 
-    
+    void uncheckAll();
+
 private:
     UASInterface* mav;
     int selectedId;
