@@ -1,10 +1,14 @@
 #include "QGCMessageView.h"
-#include "ui_QGCMessageView.h"
 
-#include "UASManager.h"
-#include "QGCUnconnectedInfoWidget.h"
 #include <QMenu>
 #include <QScrollBar>
+
+
+#include "GAudioOutput.h"
+#include "QGCUnconnectedInfoWidget.h"
+#include "UASManager.h"
+#include "ui_QGCMessageView.h"
+
 
 QGCMessageView::QGCMessageView(QWidget *parent) :
     QWidget(parent),
@@ -53,7 +57,7 @@ void QGCMessageView::setActiveUAS(UASInterface* uas)
     activeUAS = uas;
 }
 
-void QGCMessageView::handleTextMessage(int uasid, int componentid, int severity, QString text)
+void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QString text)
 {
     // XXX color messages according to severity
 
@@ -64,7 +68,17 @@ void QGCMessageView::handleTextMessage(int uasid, int componentid, int severity,
     QScrollBar *scroller = msgWidget->verticalScrollBar();
 
     UASInterface *uas = UASManager::instance()->getUASForId(uasid);
-    msgWidget->appendHtml(QString("<font color=\"%1\">[%2:%3] %4</font>\n").arg(uas->getColor().name()).arg(uas->getUASName()).arg(componentid).arg(text));
+    QString uasName(uas->getUASName());
+    QString colorName(uas->getColor().name());
+    //change styling based on severity
+    if (160 == severity ) { //TODO where is the constant for "critical" severity?
+        GAudioOutput::instance()->say(text.toLower());
+        msgWidget->appendHtml(QString("<p style=\"color:#DC143C;background-color:#FFFACD;font-size:large;font-weight:bold\">[%1:%2] %3</p>").arg(uasName).arg(compId).arg(text));
+    }
+    else {
+        msgWidget->appendHtml(QString("<p style=\"color:%1;font-size:smaller\">[%2:%3] %4</p>").arg(colorName).arg(uasName).arg(compId).arg(text));
+    }
+
     // Ensure text area scrolls correctly
     scroller->setValue(scroller->maximum());
     msgWidget->setUpdatesEnabled(true);

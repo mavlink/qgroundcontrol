@@ -45,7 +45,7 @@ int UASParameterDataModel::countOnboardParams()
 }
 
 
-bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key, const QVariant& value)
+bool UASParameterDataModel::updatePendingParamWithValue(int compId, const QString& key, const QVariant& value)
 {
     bool pending = true;
     //ensure we have this component in our onboard and pending lists already
@@ -76,7 +76,7 @@ bool UASParameterDataModel::isParamChangePending(int compId, const QString& key)
     return ((NULL != pendingParms) && pendingParms->contains(key));
 }
 
-void UASParameterDataModel::setPendingParam(int compId, QString& key,  const QVariant &value)
+void UASParameterDataModel::setPendingParam(int compId, const QString& key,  const QVariant &value)
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
@@ -101,7 +101,7 @@ void UASParameterDataModel::removePendingParam(int compId, const QString& key)
     }
 }
 
-void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVariant& value)
+void UASParameterDataModel::setOnboardParam(int compId, const QString &key,  const QVariant& value)
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
@@ -109,7 +109,7 @@ void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVa
     params->insert(key,value);
 }
 
-void UASParameterDataModel::setOnboardParamWithType(int compId, QString& key, QVariant& value)
+void UASParameterDataModel::setOnboardParamWithType(int compId, const QString& key, const QVariant &value)
 {
 
     switch ((int)value.type())
@@ -155,7 +155,7 @@ void UASParameterDataModel::addComponent(int compId)
 }
 
 
-void UASParameterDataModel::handleParamUpdate(int compId, QString& paramName, QVariant& value)
+void UASParameterDataModel::handleParamUpdate(int compId, const QString &paramName, const QVariant &value)
 {
     //verify that the value requested by the user matches the set value
     //if it doesn't match, leave the pending parameter in the pending list!
