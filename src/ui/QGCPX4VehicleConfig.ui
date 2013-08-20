@@ -154,7 +154,7 @@ Config</string>
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="firmwareTab">
         <layout class="QVBoxLayout" name="firmwareLayout">
@@ -746,6 +746,13 @@ Config</string>
               </item>
              </layout>
             </item>
+            <item>
+             <widget class="QPushButton" name="persistRcValuesButt">
+              <property name="text">
+               <string>Persist RC Mapping and Calibration</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -874,8 +881,8 @@ Config</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -911,8 +918,8 @@ Config</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1003,8 +1010,8 @@ Config</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>597</width>
+                   <height>569</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
