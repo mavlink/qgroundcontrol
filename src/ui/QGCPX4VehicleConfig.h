@@ -262,6 +262,7 @@ protected:
     QGCPX4AirframeConfig* px4AirframeConfig;
     DialogBare* firmwareDialog;
     QMessageBox msgBox;
+    QPushButton* skipActionButton;
 
 private:
     Ui::QGCPX4VehicleConfig *ui;
