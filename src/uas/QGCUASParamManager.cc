@@ -111,12 +111,15 @@ void QGCUASParamManager::setParameter(int compId, QString paramName, QVariant va
     paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
 
-void QGCUASParamManager::sendPendingParameters()
+void QGCUASParamManager::sendPendingParameters(bool persistAfterSend)
 {
-    paramCommsMgr->sendPendingParameters();
+    paramCommsMgr->sendPendingParameters(persistAfterSend);
 }
 
-void QGCUASParamManager::setPendingParam(int compId,  QString& paramName,  const QVariant& value)
+
+
+
+void QGCUASParamManager::setPendingParam(int compId,  const QString& paramName,  const QVariant& value)
 {
     paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
