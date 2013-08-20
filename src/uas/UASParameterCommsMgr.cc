@@ -218,10 +218,6 @@ void UASParameterCommsMgr::resendReadWriteRequests()
             setRetransmissionGuardEnabled(false);
             transmissionActive = false;
         }
-        if (persistParamsAfterSend) {
-            writeParamsToPersistentStorage();
-            persistParamsAfterSend = false;
-        }
     }
     else {
         //restart the timer now that we've sent
@@ -505,6 +501,10 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             setParameterStatusMsg(tr("SUCCESS: Wrote %2 (#%1/%4): %3 [%5]").arg(paramId+1).arg(paramName).arg(value.toDouble()).arg(paramCount).arg(missWriteCount));
             if (0 == missWriteCount) {
                 setParameterStatusMsg(tr("SUCCESS: WROTE ALL PARAMETERS"));
+                if (persistParamsAfterSend) {
+                    writeParamsToPersistentStorage();
+                    persistParamsAfterSend = false;
+                }
             }
         }
         else  {
