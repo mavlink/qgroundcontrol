@@ -1,10 +1,14 @@
 #include "QGCMessageView.h"
-#include "ui_QGCMessageView.h"
 
-#include "UASManager.h"
-#include "QGCUnconnectedInfoWidget.h"
 #include <QMenu>
 #include <QScrollBar>
+
+
+#include "GAudioOutput.h"
+#include "QGCUnconnectedInfoWidget.h"
+#include "UASManager.h"
+#include "ui_QGCMessageView.h"
+
 
 QGCMessageView::QGCMessageView(QWidget *parent) :
     QWidget(parent),
@@ -68,7 +72,8 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     QString colorName(uas->getColor().name());
     //change styling based on severity
     if (160 == severity ) { //TODO where is the constant for "critical" severity?
-        msgWidget->appendHtml(QString("<p style=\"color:#DC143C;background-color:#FFFACD;font-size:larger;font-weight:bold\">[%1:%2] %3</p>").arg(uasName).arg(compId).arg(text));
+        GAudioOutput::instance()->say(text.toLower());
+        msgWidget->appendHtml(QString("<p style=\"color:#DC143C;background-color:#FFFACD;font-size:large;font-weight:bold\">[%1:%2] %3</p>").arg(uasName).arg(compId).arg(text));
     }
     else {
         msgWidget->appendHtml(QString("<p style=\"color:%1;font-size:smaller\">[%2:%3] %4</p>").arg(colorName).arg(uasName).arg(compId).arg(text));
