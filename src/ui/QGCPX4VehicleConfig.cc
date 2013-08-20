@@ -218,20 +218,25 @@ void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
     for (unsigned i = 0; i < chanMax; i++) {
         if (i >= chanCount) {
             channelWantedList[i] = 0;
-        } else {
+        }
+        else {
             channelWantedList[i] = rcValue[i];
         }
     }
 
     msgBox.setText(tr("Identifying %1 channel").arg(channelNames[channelWanted]));
     msgBox.setInformativeText(tr("Please move stick, switch or potentiometer for the %1 channel\n all the way up/down or left/right.").arg(channelNames[channelWanted]));
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    if (QMessageBox::Cancel == msgBox.exec()) {
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    skipActionButton = msgBox.addButton(tr("Skip"),QMessageBox::RejectRole);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    msgBox.exec();
+    skipActionButton->hide();
+    msgBox.removeButton(skipActionButton);
+    if (msgBox.clickedButton() == skipActionButton ){
         channelWanted = -1;
         rcMapping[aert_index] = oldmapping;
-        return;
     }
+    skipActionButton = NULL;
 
 }
 
@@ -282,12 +287,12 @@ void QGCPX4VehicleConfig::setTrimPositions()
     }
     else  {
         // Reject
-        QMessageBox msgBox;
-        msgBox.setText(tr("Throttle Stick Trim Position Invalid"));
-        msgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the minimum value"));
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        (void)msgBox.exec();
+        QMessageBox warnMsgBox;
+        warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
+        warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the minimum value"));
+        warnMsgBox.setStandardButtons(QMessageBox::Ok);
+        warnMsgBox.setDefaultButton(QMessageBox::Ok);
+        (void)warnMsgBox.exec();
     }
 
     // Set trim for roll, pitch, yaw, throttle
@@ -310,14 +315,15 @@ void QGCPX4VehicleConfig::startCalibrationRC()
 {
     QMessageBox::warning(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and receiver are powered and connected\n\nDo not move the RC sticks, then click OK to confirm");
 
-    for (int i = 0; i < 5; i++) {
+    //go ahead and try to map first 8 channels, now that user can skip channels
+    for (int i = 0; i < 8; i++) {
         identifyChannelMapping(i);
     }
 
-    QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
+    //QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
 
     QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
-    ui->rcCalibrationButton->setText(tr("Stop RC Calibration"));
+    ui->rcCalibrationButton->setText(tr("Save RC Calibration"));
     resetCalibrationRC();
     calibrationEnabled = true;
     ui->rollWidget->showMinMax();
@@ -367,7 +373,15 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     for (unsigned int i=0; i < chanCount; i++) {
         statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
     }
-    QMessageBox::information(0,"Status",statusstr);
+
+
+    msgBox.setText(tr("Confirm Calibration"));
+    msgBox.setInformativeText(statusstr);
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);//allow user to cancel upload after reviewing values
+    int msgBoxResult = msgBox.exec();
+    if (QMessageBox::Cancel == msgBoxResult) {
+        return;//don't commit these values
+    }
 
     QMessageBox::information(0,"Uploading the RC Calibration","The configuration will now be uploaded and permanently stored.");
     writeCalibrationRC();
