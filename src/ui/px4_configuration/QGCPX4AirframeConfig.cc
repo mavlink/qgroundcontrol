@@ -1,4 +1,5 @@
 #include <QMessageBox>
+#include <QDebug>
 
 #include "QGCPX4AirframeConfig.h"
 #include "ui_QGCPX4AirframeConfig.h"
@@ -20,18 +21,22 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 100);
     ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 101);
 
+    connect(ui->planePushButton, SIGNAL(clicked()), this, SLOT(planeSelected()));
     connect(ui->planeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(planeSelected(int)));
 
     ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q"), 30);
     ui->flyingWingComboBox->addItem(tr("Phantom FPV"), 31);
 
+    connect(ui->flyingWingPushButton, SIGNAL(clicked()), this, SLOT(flyingWingSelected()));
     connect(ui->flyingWingComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(flyingWingSelected(int)));
 
     ui->quadXComboBox->addItem(tr("Standard 10\" Quad"), 1);
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 10);
 
+    connect(ui->quadXPushButton, SIGNAL(clicked()), this, SLOT(quadXSelected()));
     connect(ui->quadXComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(quadXSelected(int)));
 
+    connect(ui->quadPlusPushButton, SIGNAL(clicked()), this, SLOT(quadPlusSelected()));
     connect(ui->quadPlusComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(quadPlusSelected(int)));
 
     connect(ui->hexaXComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(hexaXSelected(int)));
@@ -103,6 +108,7 @@ void QGCPX4AirframeConfig::uncheckAll()
 void QGCPX4AirframeConfig::setAirframeID(int id)
 {
     selectedId = id;
+    qDebug() << "ID" << id;
     ui->statusLabel->setText(tr("Ground start script ID: #%1").arg(selectedId));
 
     // XXX too much boilerplate code here - this widget is really just
@@ -119,10 +125,12 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
     else if (id >= 30 && id < 50)
     {
         ui->flyingWingPushButton->setChecked(true);
+        ui->statusLabel->setText(tr("Selected flying wing (ID: #%1)").arg(selectedId));
     }
     else if (id >= 100 && id < 150)
     {
         ui->planePushButton->setChecked(true);
+        ui->statusLabel->setText(tr("Selected plane (ID: #%1)").arg(selectedId));
     }
 }
 
@@ -200,8 +208,7 @@ void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
 
 void QGCPX4AirframeConfig::flyingWingSelected()
 {
-    uncheckAll();
-    ui->flyingWingPushButton->setChecked(true);
+    flyingWingSelected(ui->flyingWingComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::flyingWingSelected(int index)
@@ -212,35 +219,30 @@ void QGCPX4AirframeConfig::flyingWingSelected(int index)
 
 void QGCPX4AirframeConfig::planeSelected()
 {
-    uncheckAll();
-    ui->planePushButton->setChecked(true);
+    planeSelected(ui->planeComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::planeSelected(int index)
 {
     int system_index = ui->planeComboBox->itemData(index).toInt();
-    planeSelected();
     setAirframeID(system_index);
 }
 
 
 void QGCPX4AirframeConfig::quadXSelected()
 {
-    uncheckAll();
-    ui->quadXPushButton->setChecked(true);
+    quadXSelected(ui->quadXComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::quadXSelected(int index)
 {
     int system_index = ui->quadXComboBox->itemData(index).toInt();
-    quadXSelected();
     setAirframeID(system_index);
 }
 
 void QGCPX4AirframeConfig::quadPlusSelected()
 {
-    uncheckAll();
-    ui->quadPlusPushButton->setChecked(true);
+    quadPlusSelected(ui->quadPlusComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::quadPlusSelected(int index)
@@ -251,8 +253,7 @@ void QGCPX4AirframeConfig::quadPlusSelected(int index)
 
 void QGCPX4AirframeConfig::hexaXSelected()
 {
-    uncheckAll();
-    ui->hexaPlusPushButton->setChecked(true);
+    hexaXSelected(ui->hexaXComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::hexaXSelected(int index)
@@ -263,7 +264,7 @@ void QGCPX4AirframeConfig::hexaXSelected(int index)
 
 void QGCPX4AirframeConfig::hexaPlusSelected()
 {
-    uncheckAll();
+    hexaPlusSelected(ui->hexaPlusComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::hexaPlusSelected(int index)
@@ -274,7 +275,7 @@ void QGCPX4AirframeConfig::hexaPlusSelected(int index)
 
 void QGCPX4AirframeConfig::octoXSelected()
 {
-    uncheckAll();
+    octoXSelected(ui->octoXComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::octoXSelected(int index)
@@ -285,7 +286,7 @@ void QGCPX4AirframeConfig::octoXSelected(int index)
 
 void QGCPX4AirframeConfig::octoPlusSelected()
 {
-    uncheckAll();
+    octoPlusSelected(ui->octoPlusComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::octoPlusSelected(int index)
@@ -296,8 +297,7 @@ void QGCPX4AirframeConfig::octoPlusSelected(int index)
 
 void QGCPX4AirframeConfig::hSelected()
 {
-    uncheckAll();
-    ui->hPushButton->setChecked(true);
+    hSelected(ui->hComboBox->currentIndex());
 }
 
 void QGCPX4AirframeConfig::hSelected(int index)
