@@ -5,6 +5,7 @@
 #include "ui_QGCPX4AirframeConfig.h"
 
 #include "UASManager.h"
+#include "LinkManager.h"
 #include "UAS.h"
 
 QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
@@ -111,9 +112,14 @@ void QGCPX4AirframeConfig::uncheckAll()
 
 void QGCPX4AirframeConfig::setAirframeID(int id)
 {
+
+    qDebug() << "setAirframeID" << id;
+    ui->statusLabel->setText(tr("Start script ID: #%1").arg(id));
+
+    if (selectedId == id)
+        return;
+
     selectedId = id;
-    qDebug() << "setAirframeID" << selectedId;
-    ui->statusLabel->setText(tr("Ground start script ID: #%1").arg(selectedId));
 
     // XXX too much boilerplate code here - this widget is really just
     // a quick hack to get started
@@ -121,20 +127,25 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
 
     if (id > 0 && id < 15) {
         ui->quadXPushButton->setChecked(true);
+        ui->quadXComboBox->setCurrentIndex(ui->quadXComboBox->findData(id));
         ui->statusLabel->setText(tr("Selected quad X (ID: #%1)").arg(selectedId));
     }
     else if (id >= 15 && id < 20)
     {
         ui->hPushButton->setChecked(true);
+        ui->hComboBox->setCurrentIndex(ui->hComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected H Frame (ID: #%1)").arg(selectedId));
     }
     else if (id >= 30 && id < 50)
     {
         ui->flyingWingPushButton->setChecked(true);
+        ui->flyingWingComboBox->setCurrentIndex(ui->flyingWingComboBox->findData(id));
         ui->statusLabel->setText(tr("Selected flying wing (ID: #%1)").arg(selectedId));
     }
     else if (id >= 100 && id < 150)
     {
         ui->planePushButton->setChecked(true);
+        ui->planeComboBox->setCurrentIndex(ui->planeComboBox->findData(id));
         ui->statusLabel->setText(tr("Selected plane (ID: #%1)").arg(selectedId));
     }
 }
@@ -204,8 +215,19 @@ void QGCPX4AirframeConfig::applyAndReboot()
 
     // Reboot
     //TODO right now this relies upon the above send & persist finishing before the reboot command is received...
-    QGC::SLEEP::sleep(5);
+    QMessageBox msgBox(this);
+    msgBox.setText(tr("Storing Parameters and Rebooting Autopilot"));
+    msgBox.setInformativeText(tr("Please wait a few seconds for the reboot to complete."));
+    msgBox.setStandardButtons(QMessageBox::NoButton);
+    msgBox.setModal(false);
+    msgBox.show();
+    QGC::SLEEP::sleep(2);
     mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+    QGC::SLEEP::msleep(200);
+    LinkManager::instance()->disconnectAll();
+    QGC::SLEEP::sleep(8);
+    LinkManager::instance()->connectAll();
+    msgBox.close();
 }
 
 void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
