@@ -176,6 +176,11 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     updateTimer.start();
 }
 
+QGCPX4VehicleConfig::~QGCPX4VehicleConfig()
+{
+    delete ui;
+}
+
 void QGCPX4VehicleConfig::rcMenuButtonClicked()
 {
     //TODO eg ui->stackedWidget->findChild("rcConfig");
@@ -240,10 +245,7 @@ void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
 
 }
 
-QGCPX4VehicleConfig::~QGCPX4VehicleConfig()
-{
-    delete ui;
-}
+
 
 void QGCPX4VehicleConfig::setRCModeIndex(int newRcMode)
 {
