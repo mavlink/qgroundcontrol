@@ -58,6 +58,8 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS()));
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
+
+    uncheckAll();
 }
 
 void QGCPX4AirframeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
@@ -194,14 +196,15 @@ void QGCPX4AirframeConfig::applyAndReboot()
     paramMgr->setPendingParam(components.first(),"SYS_AUTOSTART", (qint32)selectedId);
 
     //need to set autoconfig in order for PX4 to pick up the selected airframe params
-    setAutoConfig(true);
+    if (ui->defaultGainsCheckBox->checkState() == Qt::Checked)
+            setAutoConfig(true);
 
     // Send pending params and then write them to persistent storage when done
     paramMgr->sendPendingParameters(true);
 
     // Reboot
     //TODO right now this relies upon the above send & persist finishing before the reboot command is received...
-    QGC::SLEEP::msleep(3000);
+    QGC::SLEEP::sleep(5);
     mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
 }
 
