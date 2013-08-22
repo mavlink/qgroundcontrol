@@ -23,6 +23,9 @@ public:
     /** @brief Get the known, confirmed value of a parameter */
     virtual bool getParameterValue(int component, const QString& parameter, QVariant& value) const;
 
+    /** @brief determine which component is the root component for the UAS and return its ID or 0 if unknown */
+    virtual int getDefaultComponentId();
+
     /**
      * @brief Get a list of all component IDs using this parameter name
      * @param parameter The string encoding the parameter name
@@ -122,6 +125,7 @@ protected:
     UASInterface*           mav;   ///< The MAV this manager is controlling
     UASParameterDataModel  paramDataModel;///< Shared data model of parameters
     UASParameterCommsMgr*   paramCommsMgr; ///< Shared comms mgr for parameters
+    int             defaultComponentId; ///< Cached default component ID
 
 };
 
