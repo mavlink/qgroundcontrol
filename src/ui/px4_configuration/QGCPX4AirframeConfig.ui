@@ -14,7 +14,17 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0" colspan="2">
+   <item row="1" column="2">
+    <widget class="QCheckBox" name="defaultGainsCheckBox">
+     <property name="text">
+      <string>Set default airframe settings</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="4">
     <widget class="QScrollArea" name="scrollArea">
      <property name="widgetResizable">
       <bool>true</bool>
@@ -23,7 +33,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-175</y>
+        <y>0</y>
         <width>762</width>
         <height>531</height>
        </rect>
@@ -335,6 +345,13 @@
      </widget>
     </widget>
    </item>
+   <item row="1" column="3">
+    <widget class="QPushButton" name="applyButton">
+     <property name="text">
+      <string>Apply and Restart</string>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="0">
     <widget class="QLabel" name="statusLabel">
      <property name="text">
@@ -343,11 +360,17 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QPushButton" name="applyButton">
-     <property name="text">
-      <string>Apply and Restart</string>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-    </widget>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>
