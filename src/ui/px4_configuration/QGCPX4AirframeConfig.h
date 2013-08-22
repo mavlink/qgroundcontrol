@@ -85,6 +85,7 @@ protected:
 
 private:
     UASInterface* mav;
+    QGCUASParamManager *paramMgr;
     int selectedId;
     Ui::QGCPX4AirframeConfig *ui;
 };

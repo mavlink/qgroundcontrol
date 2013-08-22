@@ -213,7 +213,7 @@ void SerialLink::run()
         }
         else {
             linkErrorCount++;
-            qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
+            //qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
         }
 
         if (bytes != m_bytesRead) { // i.e things are good and data is being read.
