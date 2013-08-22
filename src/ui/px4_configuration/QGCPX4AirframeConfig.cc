@@ -32,6 +32,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     ui->quadXComboBox->addItem(tr("Standard 10\" Quad"), 1);
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 10);
+    ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 666);
 
     connect(ui->quadXPushButton, SIGNAL(clicked()), this, SLOT(quadXSelected()));
     connect(ui->quadXComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(quadXSelected(int)));
@@ -88,6 +89,7 @@ void QGCPX4AirframeConfig::setActiveUAS(UASInterface* uas)
         return;
 
     mav = uas;
+    paramMgr = mav->getParamManager();
 
     connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
 }
@@ -108,7 +110,7 @@ void QGCPX4AirframeConfig::uncheckAll()
 void QGCPX4AirframeConfig::setAirframeID(int id)
 {
     selectedId = id;
-    qDebug() << "ID" << id;
+    qDebug() << "setAirframeID" << selectedId;
     ui->statusLabel->setText(tr("Ground start script ID: #%1").arg(selectedId));
 
     // XXX too much boilerplate code here - this widget is really just
@@ -117,6 +119,7 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
 
     if (id > 0 && id < 15) {
         ui->quadXPushButton->setChecked(true);
+        ui->statusLabel->setText(tr("Selected quad X (ID: #%1)").arg(selectedId));
     }
     else if (id >= 15 && id < 20)
     {
@@ -152,15 +155,15 @@ void QGCPX4AirframeConfig::applyAndReboot()
     if (!mav)
         return;
 
-    if (mav->getParamManager()->countOnboardParams() == 0 &&
-            mav->getParamManager()->countPendingParams() == 0)
+    if (paramMgr->countOnboardParams() == 0 &&
+            paramMgr->countPendingParams() == 0)
     {
-        mav->getParamManager()->requestParameterListIfEmpty();
+        paramMgr->requestParameterListIfEmpty();
         QGC::SLEEP::msleep(100);
     }
 
     // Guard against the case of an edit where we didn't receive all params yet
-    if (mav->getParamManager()->countPendingParams() > 0)
+    if (paramMgr->countPendingParams() > 0)
     {
         QMessageBox msgBox;
         msgBox.setText(tr("Parameter sync with UAS not yet complete"));
@@ -172,7 +175,7 @@ void QGCPX4AirframeConfig::applyAndReboot()
         return;
     }
 
-    QList<int> components = mav->getParamManager()->getComponentForParam("SYS_AUTOSTART");
+    QList<int> components = paramMgr->getComponentForParam("SYS_AUTOSTART");
 
     // Guard against multiple components responding - this will never show in practice
     if (components.count() != 1) {
@@ -188,14 +191,17 @@ void QGCPX4AirframeConfig::applyAndReboot()
 
     qDebug() << "Setting comp" << components.first() << "SYS_AUTOSTART" << (qint32)selectedId;
 
-    mav->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
+    paramMgr->setPendingParam(components.first(),"SYS_AUTOSTART", (qint32)selectedId);
 
-    //mav->getParamManager()->setParameter(components.first(), "SYS_AUTOSTART", (qint32)selectedId);
+    //need to set autoconfig in order for PX4 to pick up the selected airframe params
+    setAutoConfig(true);
 
-    // Send pending params
-    mav->getParamManager()->sendPendingParameters(true);
+    // Send pending params and then write them to persistent storage when done
+    paramMgr->sendPendingParameters(true);
 
     // Reboot
+    //TODO right now this relies upon the above send & persist finishing before the reboot command is received...
+    QGC::SLEEP::msleep(3000);
     mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
 }
 
@@ -203,7 +209,7 @@ void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
 {
     if (!mav)
         return;
-    mav->getParamManager()->setParameter(0, "SYS_AUTOCONFIG", (qint32) ((enabled) ? 1 : 0));
+    paramMgr->setPendingParam(0, "SYS_AUTOCONFIG", (qint32) ((enabled) ? 1 : 0));
 }
 
 void QGCPX4AirframeConfig::flyingWingSelected()
