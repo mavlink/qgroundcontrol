@@ -88,7 +88,7 @@ void computeProductBlockingSizes(std::ptrdiff_t& k, std::ptrdiff_t& m, std::ptrd
   // at the register level. For vectorization purpose, these small vertical panels are unpacked,
   // e.g., each coefficient is replicated to fit a packet. This small vertical panel has to
   // stay in L1 cache.
-  std::ptrdiff_t l1, l2;
+  std::ptrdiff_t l1, l2, initial_n;
 
   typedef gebp_traits<LhsScalar,RhsScalar> Traits;
   enum {
@@ -98,11 +98,12 @@ void computeProductBlockingSizes(std::ptrdiff_t& k, std::ptrdiff_t& m, std::ptrd
     mr_mask = (0xffffffff/mr)*mr
   };
 
+  initial_n = n;
   manage_caching_sizes(GetAction, &l1, &l2);
   k = std::min<std::ptrdiff_t>(k, l1/kdiv);
   std::ptrdiff_t _m = k>0 ? l2/(4 * sizeof(LhsScalar) * k) : 0;
   if(_m<m) m = _m & mr_mask;
-  n = n;
+  n = initial_n; //workaround for compiler warning: despite headerdoc, this parameter remains unchanged
 }
 
 template<typename LhsScalar, typename RhsScalar>

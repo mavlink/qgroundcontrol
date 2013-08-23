@@ -24,6 +24,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolButton>
 #include <QLabel>
 #include <QSpacerItem>
+#include "SerialLink.h"
 #include "QGCToolBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"
@@ -74,6 +75,8 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         }
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
         toolBarTimeoutAction->setVisible(true);
+
+        toolBarMessageLabel->hide();
     }
     else
     {
@@ -81,6 +84,8 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         if (toolBarTimeoutAction->isVisible())
         {
             toolBarTimeoutAction->setVisible(false);
+
+            toolBarMessageLabel->show();
         }
     }
 }
@@ -145,11 +150,6 @@ void QGCToolBar::createUI()
     toolBarWpLabel->setAlignment(Qt::AlignCenter);
     addWidget(toolBarWpLabel);
 
-    toolBarDistLabel = new QLabel(this);
-    toolBarDistLabel->setToolTip(tr("Distance to current waypoint"));
-    toolBarDistLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarDistLabel);
-
     toolBarMessageLabel = new QLabel(this);
     toolBarMessageLabel->setToolTip(tr("Most recent system message"));
     toolBarMessageLabel->setObjectName("toolBarMessageLabel");
@@ -158,6 +158,30 @@ void QGCToolBar::createUI()
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     addWidget(spacer);
+
+    portComboBox = new QComboBox(this);
+    portComboBox->setToolTip(tr("Choose the COM port to use"));
+    portComboBox->setEnabled(true);
+    portComboBox->setMinimumWidth(100);
+    addWidget(portComboBox);
+
+    baudcomboBox = new QComboBox(this);
+    baudcomboBox->setToolTip(tr("Choose what baud rate to use"));
+    baudcomboBox->setEnabled(true);
+    baudcomboBox->setMinimumWidth(40);
+    baudcomboBox->addItem("9600", 9600);
+    baudcomboBox->addItem("14400", 14400);
+    baudcomboBox->addItem("19200", 19200);
+    baudcomboBox->addItem("38400", 38400);
+    baudcomboBox->addItem("57600", 57600);
+    baudcomboBox->addItem("115200", 115200);
+    baudcomboBox->addItem("230400", 230400);
+    baudcomboBox->addItem("460800", 460800);
+    baudcomboBox->addItem("921600", 921600);
+    baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
+    addWidget(baudcomboBox);
+
+
 
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setObjectName("connectButton");
@@ -176,17 +200,24 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    qDebug() << "LINK COUNT" << LinkManager::instance()->getLinks().count();
+    // Update label if required
+    if (LinkManager::instance()->getSerialLinks().count() < 1) {
+        connectButton->setText(tr("New Serial Link"));
+        baudcomboBox->hide();
+        portComboBox->hide();
+    } else {
 
-    if (LinkManager::instance()->getLinks().count() > 2)
-        addLink(LinkManager::instance()->getLinks().last());
-    // XXX implies that connect button is always active for the last used link
+        QList<SerialLink*> links = LinkManager::instance()->getSerialLinks();
+
+        foreach(SerialLink* slink, links)
+        {
+            addLink(slink);
+        }
+    }
+
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
     connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
-
-    // Update label if required
-    if (LinkManager::instance()->getLinks().count() < 3) {
-        connectButton->setText(tr("New Link"));
-    }
 
     loadSettings();
 
@@ -210,7 +241,6 @@ void QGCToolBar::resetToolbarUI()
     toolBarBatteryBar->setDisabled(true);
     toolBarBatteryVoltageLabel->setText("xx.x V");
     toolBarWpLabel->setText("WP--");
-    toolBarDistLabel->setText("--- ---- m");
     toolBarMessageLabel->clear();
     lastSystemMessage = "";
     lastSystemMessageTimeMs = 0;
@@ -232,9 +262,13 @@ void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
         first->setToolTip(actions.first()->toolTip());
         first->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         first->setCheckable(true);
+
         connect(first, SIGNAL(clicked(bool)), actions.first(), SIGNAL(triggered(bool)));
         connect(actions.first(),SIGNAL(triggered(bool)),first,SLOT(setChecked(bool)));
+
         first->setObjectName("firstAction");
+
+        //first->setStyleSheet("QToolButton { min-height: 24px; max-height: 24px; min-width: 60px; color: #222222; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A2A3A4, stop: 1 #B6B7B8); margin-left: 8px; margin-right: 0px; padding-left: 4px; padding-right: 8px; border-radius: 0px; border : 0px solid blue; border-bottom-left-radius: 6px; border-top-left-radius: 6px; border-left: 1px solid #484848; border-top: 1px solid #484848; border-bottom: 1px solid #484848; } QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #555555, stop: 1 #787878); color: #DDDDDD; }");
         addWidget(first);
         group->addButton(first);
 
@@ -358,7 +392,6 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         toolBarTimeoutAction->setVisible(false);
         toolBarMessageLabel->clear();
         lastSystemMessageTimeMs = 0;
-        toolBarDistLabel->clear();
         toolBarBatteryBar->setEnabled(true);
         setSystemType(mav, mav->getSystemType());
     }
@@ -380,9 +413,6 @@ void QGCToolBar::updateArmingState(bool armed)
 void QGCToolBar::updateView()
 {
     if (!changed) return;
-    //toolBarDistLabel->setText(tr("%1 m").arg(wpDistance, 6, 'f', 2, '0'));
-    // XXX add also rel altitude
-    toolBarDistLabel->setText(QString("%1 m MSL").arg(altitudeMSL, 6, 'f', 2, '0'));
     toolBarWpLabel->setText(tr("WP%1").arg(wpId));
     toolBarBatteryBar->setValue(batteryPercent);
     if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
@@ -432,7 +462,7 @@ void QGCToolBar::updateView()
         {
             toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814; font-size: 15pt;}");
         }
-        toolBarSafetyLabel->setText(tr("SAFE"));
+        toolBarSafetyLabel->setText(tr("DISARMED"));
     }
 
     changed = false;
@@ -455,6 +485,7 @@ void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, doubl
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
     Q_UNUSED(current);
+
     if (batteryPercent != percent || batteryVoltage != voltage) changed = true;
     batteryPercent = percent;
     batteryVoltage = voltage;
@@ -574,11 +605,21 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
 
 void QGCToolBar::addLink(LinkInterface* link)
 {
-    // XXX magic number
-    if (LinkManager::instance()->getLinks().count() > 2) {
+    // Accept only serial links as current link
+    SerialLink* serial = qobject_cast<SerialLink*>(link);
+
+    if (serial && !currentLink)
+    {
+        baudcomboBox->show();
+        portComboBox->show();
+
         currentLink = link;
         connect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
         updateLinkState(link->isConnected());
+
+        qDebug() << "ADD LINK";
+
+        updateComboBox();
     }
 }
 
@@ -586,13 +627,52 @@ void QGCToolBar::removeLink(LinkInterface* link)
 {
     if (link == currentLink) {
         currentLink = NULL;
-        // XXX magic number
-        if (LinkManager::instance()->getLinks().count() > 2) {
-            currentLink = LinkManager::instance()->getLinks().last();
+
+        // Try to get a new serial link
+        foreach (SerialLink* s, LinkManager::instance()->getSerialLinks())
+        {
+            addLink(s);
+        }
+
+        // Update GUI according to scan result
+        if (currentLink) {
             updateLinkState(currentLink->isConnected());
         } else {
-            connectButton->setText(tr("New Link"));
+            connectButton->setText(tr("New Serial Link"));
+            portComboBox->hide();
+            baudcomboBox->hide();
         }
+    }
+    updateComboBox();
+}
+void QGCToolBar::updateComboBox()
+{
+    portComboBox->clear();
+    if (currentLink)
+    {
+        SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
+        QList<QString> portlist = slink->getCurrentPorts();
+        foreach(QString port, portlist) {
+            portComboBox->addItem(port, port);
+        }
+
+        portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
+        if (slink->getPortName().trimmed().length() > 0)
+        {
+            portComboBox->setEditText(slink->getPortName());
+        }
+        else
+        {
+            if (portlist.length() > 0)
+            {
+                portComboBox->setEditText(portlist.first());
+            }
+            else
+            {
+                portComboBox->setEditText(tr("No serial port found"));
+            }
+        }
+        baudcomboBox->setCurrentIndex(baudcomboBox->findData(slink->getBaudRate()));
     }
 }
 
@@ -618,14 +698,22 @@ void QGCToolBar::updateLinkState(bool connected)
 void QGCToolBar::connectLink(bool connect)
 {
     // No serial port yet present
-    // XXX magic number
-    if (connect && LinkManager::instance()->getLinks().count() < 3)
+    if (connect && LinkManager::instance()->getSerialLinks().count() == 0)
     {
         MainWindow::instance()->addLink();
+        currentLink = LinkManager::instance()->getLinks().last();
     } else if (connect) {
-        LinkManager::instance()->getLinks().last()->connect();
-    } else if (!connect && LinkManager::instance()->getLinks().count() > 2) {
-        LinkManager::instance()->getLinks().last()->disconnect();
+        SerialLink *link = qobject_cast<SerialLink*>(currentLink);
+        if (link)
+        {
+            link->setPortName(portComboBox->itemData(portComboBox->currentIndex()).toString().trimmed());
+            int baud = baudcomboBox->currentText().toInt();
+            link->setBaudRate(baud);
+            link->connect();
+        }
+
+    } else if (!connect && currentLink) {
+        currentLink->disconnect();
     }
 }
 

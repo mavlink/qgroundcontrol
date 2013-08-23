@@ -20,7 +20,7 @@ qrc_*.cpp
 tmp
 debug
 release
-qgroundcontrol
+/qgroundcontrol
 mavlinkgen-build-desktop
 qgroundcontrol.xcodeproj/**
 doc/html
@@ -49,7 +49,8 @@ user_config.pri
 *.suo
 *.uhf.txt
 *.opensdf
-
 thirdParty/qserialport-build-desktop/
 thirdParty/qserialport/bin/
 thirdParty/qserialport/lib/
+GeneratedFiles/
+/qupgrade/

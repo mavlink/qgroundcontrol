@@ -49,6 +49,8 @@ public:
     //UDPLink(QHostAddress host = "239.255.76.67", quint16 port = 7667);
     ~UDPLink();
 
+    void requestReset() { }
+
     bool isConnected() const;
     qint64 bytesAvailable();
     int getPort() const {

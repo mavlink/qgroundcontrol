@@ -84,13 +84,13 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
 {
     // Connect link to protocol
     // the protocol will receive new bytes from the link
-    if(!link || !protocol) return;
+    if (!link || !protocol) return;
 
     QList<LinkInterface*> linkList = protocolLinks.values(protocol);
 
     // If protocol has not been added before (list length == 0)
     // OR if link has not been added to protocol, add
-    if ((linkList.length() > 0 && !linkList.contains(link)) || linkList.length() == 0)
+    if (!linkList.contains(link))
     {
         // Protocol is new, add
         connect(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)), protocol, SLOT(receiveBytes(LinkInterface*, QByteArray)));
@@ -209,4 +209,19 @@ LinkInterface* LinkManager::getLinkForId(int id)
 const QList<LinkInterface*> LinkManager::getLinks()
 {
     return QList<LinkInterface*>(links);
+}
+
+const QList<SerialLink*> LinkManager::getSerialLinks()
+{
+    QList<SerialLink*> s;
+
+    foreach (LinkInterface* i, links)
+    {
+        SerialLink* link = qobject_cast<SerialLink*>(i);
+
+        if (link)
+            s.append(link);
+    }
+
+    return s;
 }

@@ -345,6 +345,24 @@ QPushButton, QToolButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
 }
 
+QPushButton#planePushButton, QPushButton#flyingWingPushButton, QPushButton#quadXPushButton,
+QPushButton#quadPlusPushButton, QPushButton#hexaXPushButton, QPushButton#hexaPlusPushButton,
+QPushButton#octoXPushButton, QPushButton#octoPlusPushButton, QPushButton#hPushButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
+    border-radius: 12px;
+    min-height: 140px;
+    max-height: 240px;
+    min-width: 140px;
+    border: 3px solid #465158;
+}
+
+QPushButton:checked#planePushButton, QPushButton:checked#flyingWingPushButton, QPushButton:checked#quadXPushButton,
+QPushButton:checked#quadPlusPushButton, QPushButton:checked#hexaXPushButton, QPushButton:checked#hexaPlusPushButton,
+QPushButton:checked#octoXPushButton, QPushButton:checked#octoPlusPushButton, QPushButton:checked#hPushButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #77F, stop: 1 #33A);
+    border: 3px solid #4651A8;
+}
+
 QPushButton#viewModeGeneric, QPushButton#viewModePX4, QPushButton#viewModeAPM, QPushButton#viewModeAR {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
     border-radius: 12px;

@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
-
 #include <QtGui/QMainWindow>
 #include <QStatusBar>
 #include <QStackedWidget>
@@ -205,9 +204,12 @@ public slots:
     /** @brief Show the application settings */
     void showSettings();
     /** @brief Add a communication link */
-    void addLink();
+    LinkInterface* addLink();
     void addLink(LinkInterface* link);
+    bool configLink(LinkInterface *link);
     void configure();
+    /** @brief Simulate a link */
+    void simulateLink(bool simulate);
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
 
@@ -223,8 +225,9 @@ public slots:
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
     void setAdvancedMode();
-    /** @brief Load configuration view */
-    void loadConfigurationView();
+    /** @brief Load configuration views */
+    void loadHardwareConfigView();
+    void loadSoftwareConfigView();
     /** @brief Load default view when no MAV is connected */
     void loadUnconnectedView();
     /** @brief Load view for pilot */
@@ -239,6 +242,8 @@ public slots:
     void loadMAVLinkView();
     /** @brief Load firmware update view */
     void loadFirmwareUpdateView();
+    /** @brief Load Terminal Console views */
+    void loadTerminalView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -251,6 +256,7 @@ public slots:
     void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
+
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
     /** @brief Load a specific style.
@@ -333,7 +339,11 @@ protected:
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
-        VIEW_CONFIGURATION,
+        VIEW_HARDWARE_CONFIG,
+        VIEW_SOFTWARE_CONFIG,
+        VIEW_TERMINAL,
+        VIEW_3DWIDGET,
+        VIEW_GOOGLEEARTH,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
@@ -363,7 +373,7 @@ protected:
      * @param widget        The QWidget being added
      * @param title         The entry that will appear in the Menu
      */
-    void addCentralWidget(QWidget* widget, const QString& title);
+    void addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title);
 
     /** @brief Catch window resize events */
     void resizeEvent(QResizeEvent * event);
@@ -387,9 +397,8 @@ protected:
     void storeSettings();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
-    MAVLinkProtocol* mavlink;
+    QPointer<MAVLinkProtocol> mavlink;
 
-    MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
 
     QSettings settings;
@@ -400,9 +409,11 @@ protected:
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
     QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
+    QPointer<SubMainWindow> terminalView;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
@@ -412,10 +423,10 @@ protected:
     //QPointer<XMLCommProtocolWidget> protocolWidget;
     //QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
-    QPointer<QWidget> _3DWidget;
+    QPointer<QWidget> q3DWidget;
 #endif
 #if (defined _MSC_VER) || (defined Q_OS_MAC)
-    QPointer<QGCGoogleEarthView> gEarthWidget;
+    QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
@@ -491,6 +502,7 @@ protected:
     QString darkStyleFileName;
     QString lightStyleFileName;
     bool autoReconnect;
+    MAVLinkSimulationLink* simulationLink;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;

@@ -38,6 +38,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <ui_UASControl.h>
 #include <UASInterface.h>
+#include <comm/px4_custom_mode.h>
+
+struct full_mode_s {
+    uint8_t baseMode;
+    uint32_t customMode;
+};
 
 /**
  * @brief Widget controlling one MAV
@@ -51,8 +57,10 @@ public:
     ~UASControlWidget();
 
 public slots:
+    /** @brief Update modes list for selected system */
+    void updateModesList();
     /** @brief Set the system this widget controls */
-    void setUAS(UASInterface* uas);
+    void setUAS(UASInterface* uasID);
     /** @brief Trigger next context action */
     void cycleContextButton();
     /** @brief Set the operation mode of the MAV */
@@ -60,11 +68,11 @@ public slots:
     /** @brief Transmit the operation mode */
     void transmitMode();
     /** @brief Update the mode */
-    void updateMode(int uas,QString mode,QString description);
+    void updateMode(int uasID, QString mode, QString description);
     /** @brief Update state */
     void updateState(int state);
     /** @brief Update internal state machine */
-    void updateStatemachine();
+    void updateArmText();
 
 signals:
     void changedMode(int);
@@ -75,9 +83,11 @@ protected slots:
     void setBackgroundColor(QColor color);
 
 protected:
-    int uas;              ///< Reference to the current uas
-    unsigned int uasMode; ///< Current uas mode
-    bool engineOn;        ///< Engine state
+    int uasID;                        ///< Reference to the current uas
+    struct full_mode_s *modesList;  ///< Modes list for the current UAS
+    int modesNum;                   ///< Number of modes in list for the current UAS
+    int modeIdx;                    ///< Current uas mode index
+    bool armed;                  ///< Engine state
 
 private:
     Ui::uasControl ui;

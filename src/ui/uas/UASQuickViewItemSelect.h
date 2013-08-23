@@ -2,6 +2,7 @@
 #define UASQUICKVIEWITEMSELECT_H
 
 #include <QWidget>
+#include <QCheckBox>
 #include "ui_UASQuickViewItemSelect.h"
 
 class UASQuickViewItemSelect : public QWidget
@@ -14,7 +15,12 @@ public:
     void addItem(QString item,bool enabled = false);
     int currrow;
     int currcol;
+protected:
+    void resizeEvent(QResizeEvent *event);
 private:
+    QMap<QString,int> m_categoryToIndexMap;
+    QMap<QCheckBox*,QString> m_checkboxToValueMap;
+    QList<QCheckBox*> m_checkBoxList;
     Ui::UASQuickViewItemSelect ui;
 private slots:
     void checkBoxClicked(bool checked);
