@@ -38,13 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <ui_UASControl.h>
 #include <UASInterface.h>
-
-enum PX4_CUSTOM_MODE {
-    PX4_CUSTOM_MODE_MANUAL = 1,
-    PX4_CUSTOM_MODE_SEATBELT,
-    PX4_CUSTOM_MODE_EASY,
-    PX4_CUSTOM_MODE_AUTO
-};
+#include <comm/px4_custom_mode.h>
 
 struct full_mode_s {
     uint8_t baseMode;
