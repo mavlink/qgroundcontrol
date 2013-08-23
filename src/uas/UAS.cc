@@ -28,6 +28,7 @@
 #include "SerialLink.h"
 #include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
+#include <comm/px4_custom_mode.h>
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <google/protobuf/descriptor.h>
@@ -1837,7 +1838,7 @@ void UAS::setMode(uint8_t newBaseMode, uint32_t newCustomMode)
     mavlink_message_t msg;
     mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newBaseMode, newCustomMode);
     sendMessage(msg);
-    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << newBaseMode;
+    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", MODE " << newBaseMode << " " << newCustomMode;
 }
 
 /**
@@ -3318,24 +3319,32 @@ QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int au
 {
     QString mode = "";
 
-    enum PX4_CUSTOM_MODE {
-        PX4_CUSTOM_MODE_MANUAL = 1,
-        PX4_CUSTOM_MODE_SEATBELT,
-        PX4_CUSTOM_MODE_EASY,
-        PX4_CUSTOM_MODE_AUTO
-    };
-
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
         // use custom_mode - autopilot-specific
         if (autopilot == MAV_AUTOPILOT_PX4) {
-            if (custom_mode == PX4_CUSTOM_MODE_MANUAL) {
+            union px4_custom_mode px4_mode;
+            px4_mode.data = custom_mode;
+            if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
                 mode += "|MANUAL";
-            } else if (custom_mode == PX4_CUSTOM_MODE_SEATBELT) {
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_SEATBELT) {
                 mode += "|SEATBELT";
-            } else if (custom_mode == PX4_CUSTOM_MODE_EASY) {
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_EASY) {
                 mode += "|EASY";
-            } else if (custom_mode == PX4_CUSTOM_MODE_AUTO) {
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_AUTO) {
                 mode += "|AUTO";
+                if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_READY) {
+                    mode += "|READY";
+                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_TAKEOFF) {
+                    mode += "|TAKEOFF";
+                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LOITER) {
+                    mode += "|LOITER";
+                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_MISSION) {
+                    mode += "|MISSION";
+                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_RTL) {
+                    mode += "|RTL";
+                } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LAND) {
+                    mode += "|LAND";
+                }
             }
         }
     }
