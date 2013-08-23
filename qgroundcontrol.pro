@@ -488,7 +488,8 @@ HEADERS += src/MG.h \
     src/uas/UASParameterCommsMgr.h \
     src/ui/QGCPendingParamWidget.h \
     src/ui/px4_configuration/QGCPX4AirframeConfig.h \
-    src/ui/QGCBaseParamWidget.h
+    src/ui/QGCBaseParamWidget.h \
+    src/comm/px4_custom_mode.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
