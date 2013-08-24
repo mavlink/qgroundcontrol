@@ -61,9 +61,7 @@ public slots:
     /** Set trim positions */
     void setTrimPositions();
     /** Detect which channels need to be inverted */
-    void detectChannelInversion();
-    /** Change the mode setting of the control inputs */
-    void setRCModeIndex(int newRcMode);
+    void detectChannelInversion(int aert_index);
     /** Render the data updated */
     void updateView();
 
@@ -73,75 +71,113 @@ public slots:
     /** Set the RC channel */
     void setRollChan(int channel) {
         rcMapping[0] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        updateMappingView(0);
     }
     /** Set the RC channel */
     void setPitchChan(int channel) {
         rcMapping[1] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        updateMappingView(1);
     }
     /** Set the RC channel */
     void setYawChan(int channel) {
         rcMapping[2] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        updateMappingView(2);
     }
     /** Set the RC channel */
     void setThrottleChan(int channel) {
         rcMapping[3] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        updateMappingView(3);
     }
     /** Set the RC channel */
     void setModeChan(int channel) {
         rcMapping[4] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        updateMappingView(4);
+    }
+    /** Set the RC channel */
+    void setAssistChan(int channel) {
+        rcMapping[5] = channel - 1;
+        updateMappingView(5);
+    }
+    /** Set the RC channel */
+    void setMissionChan(int channel) {
+        rcMapping[6] = channel - 1;
+        updateMappingView(6);
+    }
+    /** Set the RC channel */
+    void setReturnChan(int channel) {
+        rcMapping[7] = channel - 1;
+        updateMappingView(7);
+    }
+    /** Set the RC channel */
+    void setFlapsChan(int channel) {
+        rcMapping[8] = channel - 1;
+        updateMappingView(8);
     }
     /** Set the RC channel */
     void setAux1Chan(int channel) {
-        rcMapping[5] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        rcMapping[9] = channel - 1;
+        updateMappingView(9);
     }
     /** Set the RC channel */
     void setAux2Chan(int channel) {
-        rcMapping[6] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
-    }
-    /** Set the RC channel */
-    void setAux3Chan(int channel) {
-        rcMapping[7] = channel - 1;
-        updateInvertedCheckboxes(channel - 1);
+        rcMapping[10] = channel - 1;
+        updateMappingView(10);
     }
 
     /** Set channel inversion status */
     void setRollInverted(bool inverted) {
         rcRev[rcMapping[0]] = inverted;
+        updateMappingView(0);
     }
     /** Set channel inversion status */
     void setPitchInverted(bool inverted) {
         rcRev[rcMapping[1]] = inverted;
+        updateMappingView(1);
     }
     /** Set channel inversion status */
     void setYawInverted(bool inverted) {
         rcRev[rcMapping[2]] = inverted;
+        updateMappingView(2);
     }
     /** Set channel inversion status */
     void setThrottleInverted(bool inverted) {
         rcRev[rcMapping[3]] = inverted;
+        updateMappingView(3);
     }
     /** Set channel inversion status */
     void setModeInverted(bool inverted) {
         rcRev[rcMapping[4]] = inverted;
+        updateMappingView(4);
+    }
+    /** Set channel inversion status */
+    void setAssistInverted(bool inverted) {
+        rcRev[rcMapping[5]] = inverted;
+        updateMappingView(5);
+    }
+    /** Set channel inversion status */
+    void setMissionInverted(bool inverted) {
+        rcRev[rcMapping[6]] = inverted;
+        updateMappingView(6);
+    }
+    /** Set channel inversion status */
+    void setReturnInverted(bool inverted) {
+        rcRev[rcMapping[7]] = inverted;
+        updateMappingView(7);
+    }
+    /** Set channel inversion status */
+    void setFlapsInverted(bool inverted) {
+        rcRev[rcMapping[8]] = inverted;
+        updateMappingView(8);
     }
     /** Set channel inversion status */
     void setAux1Inverted(bool inverted) {
-        rcRev[rcMapping[5]] = inverted;
+        rcRev[rcMapping[9]] = inverted;
+        updateMappingView(9);
     }
     /** Set channel inversion status */
     void setAux2Inverted(bool inverted) {
-        rcRev[rcMapping[6]] = inverted;
-    }
-    /** Set channel inversion status */
-    void setAux3Inverted(bool inverted) {
-        rcRev[rcMapping[7]] = inverted;
+        rcRev[rcMapping[10]] = inverted;
+        updateMappingView(10);
     }
 
     /** Identify roll */
@@ -169,19 +205,34 @@ public slots:
         identifyChannelMapping(4);
     }
 
-    /** Identify sub mode */
-    void identifySubModeChannel() {
+    /** Identify assist channel */
+    void identifyAssistChannel() {
         identifyChannelMapping(5);
+    }
+
+    /** Identify mission channel */
+    void identifyMissionChannel() {
+        identifyChannelMapping(6);
+    }
+
+    /** Identify return channel */
+    void identifyReturnChannel() {
+        identifyChannelMapping(7);
+    }
+
+    /** Identify flaps channel */
+    void identifyFlapsChannel() {
+        identifyChannelMapping(8);
     }
 
     /** Identify aux 1 */
     void identifyAux1Channel() {
-        identifyChannelMapping(6);
+        identifyChannelMapping(9);
     }
 
     /** Identify aux 2 */
     void identifyAux2Channel() {
-        identifyChannelMapping(7);
+        identifyChannelMapping(10);
     }
 
 protected slots:
@@ -200,11 +251,12 @@ protected slots:
     void parameterChanged(int uas, int component, QString parameterName, QVariant value);
     void updateStatus(const QString& str);
     void updateError(const QString& str);
-    void setRCType(int type);
     /** Check timeouts */
     void checktimeOuts();
     /** Update checkbox status */
-    void updateInvertedCheckboxes(int index);
+    void updateAllInvertedCheckboxes();
+    /** Update mapping view state */
+    void updateMappingView(int index);
     /** Update the displayed values */
     void updateRcWidgetValues();
     /** update the channel labels */
@@ -215,42 +267,51 @@ protected slots:
     }
 
 protected:
+
+    void setChannelToFunctionMapping(int function, int channel);
+
     bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
     QGCUASParamManager* paramMgr;       ///< params mgr for the mav
-    static const unsigned int chanMax = 16;    ///< Maximum number of channels
+    static const unsigned int chanMax = 14;    ///< Maximum number of channels
+    static const unsigned int chanMappedMax = 16; ///< Maximum number of mapped channels (can be higher than input channel count)
     unsigned int chanCount;               ///< Actual channels
-    int rcType;                         ///< Type of the remote control
-    quint64 rcTypeUpdateRequested;      ///< Zero if not requested, non-zero if requested
-    static const unsigned int rcTypeTimeout = 5000; ///< 5 seconds timeout, in milliseconds
     float rcMin[chanMax];                 ///< Minimum values
     float rcMax[chanMax];                 ///< Maximum values
     float rcTrim[chanMax];                ///< Zero-position (center for roll/pitch/yaw, 0 throttle for throttle)
-    int rcMapping[chanMax];             ///< PWM to function mappings
+    int rcMapping[chanMappedMax];             ///< PWM to function mappings
+    int rcToFunctionMapping[chanMax];
     float rcScaling[chanMax];           ///< Scaling of channel input to control commands
     bool rcRev[chanMax];                ///< Channel reverse
-    int rcValue[chanMax];               ///< Last values
-    float rcMappedMin[chanMax];            ///< Mapped channels in default order
-    float rcMappedMax[chanMax];            ///< Mapped channels in default order
-    float rcMappedValue[chanMax];            ///< Mapped channels in default order
+    int rcValue[chanMax];               ///< Last values, RAW
+    float rcValueReversed[chanMax];            ///< Last values, accounted for reverse
+    float rcMappedMin[chanMappedMax];            ///< Mapped channels in default order
+    float rcMappedMax[chanMappedMax];            ///< Mapped channels in default order
+    float rcMappedValue[chanMappedMax];            ///< Mapped channels in default order
+    float rcMappedNormalizedValue[chanMappedMax];            ///< Mapped channels in default order
     int channelWanted;                  ///< During channel assignment search the requested default index
+    int channelReverseStateWanted;
     float channelWantedList[chanMax];   ///< During channel assignment search the start values
+    float channelReverseStateWantedList[chanMax];
     QStringList channelNames;           ///< List of channel names in standard order
     float rcRoll;                       ///< PPM input channel used as roll control input
     float rcPitch;                      ///< PPM input channel used as pitch control input
     float rcYaw;                        ///< PPM input channel used as yaw control input
     float rcThrottle;                   ///< PPM input channel used as throttle control input
     float rcMode;                       ///< PPM input channel used as mode switch control input
+    float rcAssist;                     ///< PPM input channel used as assist switch control input
+    float rcMission;                    ///< PPM input channel used as mission switch control input
+    float rcReturn;                     ///< PPM input channel used as return switch control input
+    float rcFlaps;                      ///< PPM input channel used as flaps control input
     float rcAux1;                       ///< PPM input channel used as aux 1 input
     float rcAux2;                       ///< PPM input channel used as aux 2 input
-    float rcAux3;                       ///< PPM input channel used as aux 3 input
     bool rcCalChanged;                  ///< Set if the calibration changes (and needs to be written)
     bool dataModelChanged;              ///< Set if any of the input data changed
     QTimer updateTimer;                 ///< Controls update intervals
-    enum RC_MODE rc_mode;               ///< Mode of the remote control, according to usual convention
     QList<QGCToolWidget*> toolWidgets;  ///< Configurable widgets
     QMap<QString,QGCToolWidget*> toolWidgetsByName; ///<
     bool calibrationEnabled;            ///< calibration mode on / off
+    bool configEnabled;                 ///< config mode on / off
 
     QMap<QString,QGCToolWidget*> paramToWidgetMap;                     ///< Holds the current active MAV's parameter widgets.
     QList<QWidget*> additionalTabs;                                   ///< Stores additional tabs loaded for this vehicle/autopilot configuration. Used for cleaning up.

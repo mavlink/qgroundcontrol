@@ -56,7 +56,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(applyAndReboot()));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS()));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
