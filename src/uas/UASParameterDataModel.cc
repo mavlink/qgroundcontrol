@@ -80,11 +80,8 @@ void UASParameterDataModel::setPendingParam(int compId, const QString& key,  con
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
-    QMap<QString, QVariant> *pendParams = getPendingParamsForComponent(compId);
-    if (pendParams) {
-        pendParams->insert(key,value);
-        emit pendingParamUpdate(compId, key, value, true);
-     }
+    setParamWithTypeInMap(compId,key,value,pendingParameters);
+    emit pendingParamUpdate(compId, key, value, true);
 }
 
 void UASParameterDataModel::removePendingParam(int compId, const QString& key)
@@ -105,11 +102,12 @@ void UASParameterDataModel::setOnboardParam(int compId, const QString &key,  con
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
+    //TODO use setParamWithTypeInMap instead and verify
     QMap<QString, QVariant> *params = getOnboardParamsForComponent(compId);
     params->insert(key,value);
 }
 
-void UASParameterDataModel::setOnboardParamWithType(int compId, const QString& key, const QVariant &value)
+void UASParameterDataModel::setParamWithTypeInMap(int compId, const QString& key, const QVariant &value, QMap<int, QMap<QString, QVariant>* >& map)
 {
 
     switch ((int)value.type())
@@ -117,25 +115,35 @@ void UASParameterDataModel::setOnboardParamWithType(int compId, const QString& k
     case QVariant::Int:
     {
         QVariant fixedValue(value.toInt());
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     case QVariant::UInt:
     {
         QVariant fixedValue(value.toUInt());
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     case QMetaType::Float:
     {
         QVariant fixedValue(value.toFloat());
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     case QMetaType::QChar:
     {
         QVariant fixedValue(QChar((unsigned char)value.toUInt()));
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
+    }
+        break;
+    case QMetaType::QString:
+    {
+        QString strVal = value.toString();
+        float floatVal = strVal.toFloat();
+        QVariant fixedValue( floatVal );
+        //TODO track down WHY we're getting unexpected QString values here...this is a workaround
+        qDebug() << "Unexpected string QVariant:" << key << " val:" << value << "fixedVal:" << fixedValue;
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     default:
@@ -165,8 +173,7 @@ void UASParameterDataModel::handleParamUpdate(int compId, const QString &paramNa
             QVariant reqVal = pendingParams->value(paramName);
             if (reqVal == value) {
                 //notify everyone that this item is being removed from the pending parameters list since it's now confirmed
-                emit pendingParamUpdate(compId, paramName,  value, false);
-                pendingParams->remove(paramName);
+                removePendingParam(compId,paramName);
             }
             else {
                 qDebug() << "Pending commit for " << paramName << " want: " << reqVal << " got: " << value;

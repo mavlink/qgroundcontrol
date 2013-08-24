@@ -41,8 +41,6 @@ public:
      */
     virtual QList<int> getComponentForOnboardParam(const QString& parameter) const;
 
-    /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
-    virtual void setOnboardParamWithType(int componentId, const QString &key, const QVariant& value);
 
     /** @brief clears every parameter for every loaded component */
     virtual void forgetAllOnboardParams();
@@ -90,6 +88,9 @@ public:
 protected:
     /** @brief set the confirmed value of a parameter in the onboard params list */
     virtual void setOnboardParam(int componentId, const QString& key, const QVariant& value);
+
+    /** @brief Save the parameter with a the type specified in the QVariant as fixed */
+    void setParamWithTypeInMap(int compId, const QString& key, const QVariant &value, QMap<int, QMap<QString, QVariant>* >& map);
 
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
     virtual void setPendingParam(int componentId,  const QString &key,  const QVariant& value);
