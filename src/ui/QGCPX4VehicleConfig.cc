@@ -19,6 +19,7 @@
 //#include "QGCPendingParamWidget.h"
 #include "QGCToolWidget.h"
 #include "UASManager.h"
+#include "LinkManager.h"
 #include "UASParameterCommsMgr.h"
 #include "ui_QGCPX4VehicleConfig.h"
 #include "px4_configuration/QGCPX4AirframeConfig.h"
@@ -89,6 +90,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 #ifdef QUPGRADE_SUPPORT
     firmwareDialog = new DialogBare(this);
     ui->firmwareLayout->addWidget(firmwareDialog);
+
+    connect(firmwareDialog, SIGNAL(connectLinks()), LinkManager::instance(), SLOT(connectAll()));
+    connect(firmwareDialog, SIGNAL(disconnectLinks()), LinkManager::instance(), SLOT(disconnectAll()));
 #else
 #error Please check out QUpgrade from http://github.com/LorenzMeier/qupgrade/ into the QGroundControl folder.
 
