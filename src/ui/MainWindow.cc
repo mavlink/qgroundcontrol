@@ -57,7 +57,6 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 #include "QGCMAVLinkMessageSender.h"
 #include "QGCRGBDView.h"
-#include "QGCFirmwareUpdate.h"
 #include "QGCStatusBar.h"
 #include "UASQuickView.h"
 #include "QGCDataPlot2D.h"
@@ -1414,8 +1413,9 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionMissionView);
     //perspectives->addAction(ui.actionConfiguration_2);
     perspectives->addAction(ui.actionHardwareConfig);
-    perspectives->addAction(ui.actionSoftwareConfig);
-    perspectives->addAction(ui.actionFirmwareUpdateView);
+    if (getCustomMode() == CUSTOM_MODE_APM) {
+        perspectives->addAction(ui.actionSoftwareConfig);
+    }
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->setExclusive(true);
@@ -2027,9 +2027,9 @@ void MainWindow::loadViewState()
         case VIEW_MAVLINK:
             centerStack->setCurrentWidget(mavlinkView);
             break;
-        case VIEW_FIRMWAREUPDATE:
-            centerStack->setCurrentWidget(firmwareUpdateWidget);
-            break;
+//        case VIEW_FIRMWAREUPDATE:
+//            centerStack->setCurrentWidget(firmwareUpdateWidget);
+//            break;
         case VIEW_MISSION:
             centerStack->setCurrentWidget(plannerView);
             break;
@@ -2186,17 +2186,6 @@ void MainWindow::loadMAVLinkView()
         storeViewState();
         currentView = VIEW_MAVLINK;
         ui.actionMavlinkView->setChecked(true);
-        loadViewState();
-    }
-}
-
-void MainWindow::loadFirmwareUpdateView()
-{
-    if (currentView != VIEW_FIRMWAREUPDATE)
-    {
-        storeViewState();
-        currentView = VIEW_FIRMWAREUPDATE;
-        ui.actionFirmwareUpdateView->setChecked(true);
         loadViewState();
     }
 }
