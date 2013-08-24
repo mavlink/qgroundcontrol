@@ -54,3 +54,5 @@ thirdParty/qserialport/bin/
 thirdParty/qserialport/lib/
 GeneratedFiles/
 /qupgrade/
+
+*.autosave
