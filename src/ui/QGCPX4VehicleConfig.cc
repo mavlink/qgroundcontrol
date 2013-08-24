@@ -39,17 +39,21 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     mav(NULL),
     chanCount(0),
     channelWanted(-1),
+    channelReverseStateWanted(-1),
     rcRoll(0.0f),
     rcPitch(0.0f),
     rcYaw(0.0f),
     rcThrottle(0.0f),
     rcMode(0.0f),
+    rcAssist(0.0f),
+    rcMission(0.0f),
+    rcReturn(0.0f),
+    rcFlaps(0.0f),
     rcAux1(0.0f),
     rcAux2(0.0f),
-    rcAux3(0.0f),
     dataModelChanged(true),
-    rc_mode(RC_MODE_NONE),
     calibrationEnabled(false),
+    configEnabled(false),
     px4AirframeConfig(NULL),
     #ifdef QUPGRADE_SUPPORT
     firmwareDialog(NULL),
@@ -62,14 +66,19 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     channelNames << "Pitch / Elevator";
     channelNames << "Yaw / Rudder";
     channelNames << "Throttle";
-    channelNames << "SW1 / Main Mode Switch";
-    channelNames << "SW2 / Sub Mode Switch";
-    channelNames << "Aux1 / Flaps";
+    channelNames << "Main Mode Switch";
+    channelNames << "Assist Switch";
+    channelNames << "Mission Switch";
+    channelNames << "Return Switch";
+    channelNames << "Flaps";
+    channelNames << "Aux1";
     channelNames << "Aux2";
     channelNames << "Aux3";
     channelNames << "Aux4";
     channelNames << "Aux5";
     channelNames << "Aux6";
+    channelNames << "Aux7";
+    channelNames << "Aux8";
 
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
@@ -116,6 +125,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->firmwareMenuButton, SIGNAL(clicked()),
             this, SLOT(firmwareMenuButtonClicked()));
 
+    connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->advancedGroupBox, SLOT(setVisible(bool)));
+    ui->advancedGroupBox->setVisible(false);
+
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
     connect(ui->writeButton, SIGNAL(clicked()),
@@ -138,9 +150,12 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->yawSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setYawChan(int)));
     connect(ui->throttleSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setThrottleChan(int)));
     connect(ui->modeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setModeChan(int)));
+    connect(ui->assistSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAssistChan(int)));
+    connect(ui->missionSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setMissionChan(int)));
+    connect(ui->returnSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setReturnChan(int)));
+    connect(ui->flapsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setFlapsChan(int)));
     connect(ui->aux1SpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAux1Chan(int)));
     connect(ui->aux2SpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAux2Chan(int)));
-    connect(ui->aux3SpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAux3Chan(int)));
 
     // Connect RC reverse assignments
     connect(ui->invertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setRollInverted(bool)));
@@ -148,16 +163,22 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->invertCheckBox_3, SIGNAL(clicked(bool)), this, SLOT(setYawInverted(bool)));
     connect(ui->invertCheckBox_4, SIGNAL(clicked(bool)), this, SLOT(setThrottleInverted(bool)));
     connect(ui->invertCheckBox_5, SIGNAL(clicked(bool)), this, SLOT(setModeInverted(bool)));
-    connect(ui->invertCheckBox_6, SIGNAL(clicked(bool)), this, SLOT(setAux1Inverted(bool)));
-    connect(ui->invertCheckBox_7, SIGNAL(clicked(bool)), this, SLOT(setAux2Inverted(bool)));
-    connect(ui->invertCheckBox_8, SIGNAL(clicked(bool)), this, SLOT(setAux3Inverted(bool)));
+    connect(ui->assistSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAssistInverted(bool)));
+    connect(ui->missionSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setMissionInverted(bool)));
+    connect(ui->returnSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setReturnInverted(bool)));
+    connect(ui->flapsInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setFlapsInverted(bool)));
+    connect(ui->aux1InvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAux1Inverted(bool)));
+    connect(ui->aux2InvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAux2Inverted(bool)));
 
     connect(ui->rollButton, SIGNAL(clicked()), this, SLOT(identifyRollChannel()));
     connect(ui->pitchButton, SIGNAL(clicked()), this, SLOT(identifyPitchChannel()));
     connect(ui->yawButton, SIGNAL(clicked()), this, SLOT(identifyYawChannel()));
     connect(ui->throttleButton, SIGNAL(clicked()), this, SLOT(identifyThrottleChannel()));
     connect(ui->modeButton, SIGNAL(clicked()), this, SLOT(identifyModeChannel()));
-    connect(ui->subButton, SIGNAL(clicked()), this, SLOT(identifySubModeChannel()));
+    connect(ui->assistSwButton, SIGNAL(clicked()), this, SLOT(identifyAssistChannel()));
+    connect(ui->missionSwButton, SIGNAL(clicked()), this, SLOT(identifyMissionChannel()));
+    connect(ui->returnSwButton, SIGNAL(clicked()), this, SLOT(identifyReturnChannel()));
+    connect(ui->flapsButton, SIGNAL(clicked()), this, SLOT(identifyFlapsChannel()));
     connect(ui->aux1Button, SIGNAL(clicked()), this, SLOT(identifyAux1Channel()));
     connect(ui->aux2Button, SIGNAL(clicked()), this, SLOT(identifyAux2Channel()));
     connect(ui->persistRcValuesButt,SIGNAL(clicked()), this, SLOT(writeCalibrationRC()));
@@ -165,10 +186,26 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     //set rc values to defaults
     for (unsigned int i = 0; i < chanMax; i++) {
         rcValue[i] = UINT16_MAX;
+        rcValueReversed[i] = UINT16_MAX;
         rcMapping[i] = i;
+        rcToFunctionMapping[i] = i;
         channelWantedList[i] = (float)UINT16_MAX;//TODO need to clean these up!
         rcMin[i] = 1000.0f;
         rcMax[i] = 2000.0f;
+
+        // Mapping not established here, so can't pick values via mapping yet!
+        rcMappedMin[i] = 1000;
+        rcMappedMax[i] = 2000;
+        rcMappedValue[i] = UINT16_MAX;
+        rcMappedNormalizedValue[i] = 0.0f;
+    }
+
+    for (unsigned int i = chanMax -1; i < chanMappedMax; i++) {
+        rcMapping[i] = -1;
+        rcMappedMin[i] = 1000;
+        rcMappedMax[i] = 2000;
+        rcMappedValue[i] = UINT16_MAX;
+        rcMappedNormalizedValue[i] = 0.0f;
     }
 
     updateTimer.setInterval(150);
@@ -214,7 +251,7 @@ void QGCPX4VehicleConfig::firmwareMenuButtonClicked()
 
 void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
 {
-    if (chanCount == 0)
+    if (chanCount == 0 || aert_index < 0)
         return;
 
     int oldmapping = rcMapping[aert_index];
@@ -245,17 +282,6 @@ void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)
 
 }
 
-
-
-void QGCPX4VehicleConfig::setRCModeIndex(int newRcMode)
-{
-    newRcMode += 1; //promote from an index to a mode enum
-    if (newRcMode > 0 && newRcMode < 5) {
-        rc_mode = (enum RC_MODE) (newRcMode);
-        dataModelChanged = true;
-    }
-}
-
 void QGCPX4VehicleConfig::toggleCalibrationRC(bool enabled)
 {
     if (enabled)
@@ -274,10 +300,11 @@ void QGCPX4VehicleConfig::setTrimPositions()
     int pitchMap = rcMapping[1];
     int yawMap = rcMapping[2];
     int throttleMap = rcMapping[3];
-    int modeSwMap = rcMapping[4];
-    int aux1Map = rcMapping[5];
-    int aux2Map = rcMapping[6];
-    int aux3Map = rcMapping[7];
+
+    // Reset all trims, as some might not be touched
+    for (unsigned i = 0; i < chanCount; i++) {
+        rcTrim[i] = 1500;
+    }
 
     // Set trim to min if stick is close to min
     if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
@@ -302,28 +329,79 @@ void QGCPX4VehicleConfig::setTrimPositions()
     rcTrim[pitchMap] = rcValue[pitchMap]; // pitch
     rcTrim[yawMap] = rcValue[yawMap]; // yaw
 
-    rcTrim[modeSwMap] = ((rcMax[modeSwMap] - rcMin[modeSwMap]) / 2.0f) + rcMin[modeSwMap];   // mode sw
-    rcTrim[aux1Map] = ((rcMax[aux1Map] - rcMin[aux1Map]) / 2.0f) + rcMin[aux1Map];   // aux 1
-    rcTrim[aux2Map] = ((rcMax[aux2Map] - rcMin[aux2Map]) / 2.0f) + rcMin[aux2Map];   // aux 2
-    rcTrim[aux3Map] = ((rcMax[aux3Map] - rcMin[aux3Map]) / 2.0f) + rcMin[aux3Map];   // aux 3
+    // Mode switch and optional modes, might not be mapped (== -1)
+    for (unsigned i = 4; i < chanMappedMax; i++) {
+        if (rcMapping[i] >= 0 && rcMapping[i] < (int)chanCount) {
+            rcTrim[rcMapping[i]] = ((rcMax[rcMapping[i]] - rcMin[rcMapping[i]]) / 2.0f) + rcMin[rcMapping[i]];
+        } else if (rcMapping[i] != -1){
+            qDebug() << "RC MAPPING FAILED #" << i << "VAL:" << rcMapping[i];
+        }
+    }
 }
 
-void QGCPX4VehicleConfig::detectChannelInversion()
+void QGCPX4VehicleConfig::detectChannelInversion(int aert_index)
 {
+    if (chanCount == 0 || aert_index < 0 || aert_index >= (int)chanMappedMax)
+        return;
 
+    bool oldstatus = rcRev[rcMapping[aert_index]];
+    channelReverseStateWanted = aert_index;
+
+    // Reset search list
+    for (unsigned i = 0; i < chanMax; i++) {
+        if (i >= chanCount) {
+            channelReverseStateWantedList[i] = 0;
+        }
+        else {
+            channelReverseStateWantedList[i] = rcValue[i];
+        }
+    }
+
+    QStringList instructions;
+    instructions << "ROLL: Move stick left";
+    instructions << "PITCH: Move stick up";
+    instructions << "YAW: Move stick left";
+    instructions << "THROTTLE: Move stick down";
+    instructions << "MODE SWITCH: Push down / towards you";
+    instructions << "ASSISTED SWITCH: Push down / towards you";
+    instructions << "MISSION SWITCH: Push down / towards you";
+    instructions << "RETURN SWITCH: Push down / towards you";
+    instructions << "FLAPS: Push down / towards you or turn dial to the leftmost position";
+    instructions << "AUX1: Push down / towards you or turn dial to the leftmost position";
+    instructions << "AUX2: Push down / towards you or turn dial to the leftmost position";
+
+    msgBox.setText(tr("Identifying DIRECTION of %1 channel").arg(channelNames[channelReverseStateWanted]));
+    msgBox.setInformativeText(tr("%2").arg((aert_index < instructions.length()) ? instructions[aert_index] : ""));
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    skipActionButton = msgBox.addButton(tr("Skip"),QMessageBox::RejectRole);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    msgBox.exec();
+    skipActionButton->hide();
+    msgBox.removeButton(skipActionButton);
+    if (msgBox.clickedButton() == skipActionButton ){
+        channelReverseStateWanted = -1;
+        rcRev[rcMapping[aert_index]] = oldstatus;
+    }
+    skipActionButton = NULL;
 }
 
 void QGCPX4VehicleConfig::startCalibrationRC()
 {
-    QMessageBox::warning(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and receiver are powered and connected\n\nDo not move the RC sticks, then click OK to confirm");
+    configEnabled = true;
+    QMessageBox::warning(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and receiver are powered and connected.\nRESET ALL TRIMS TO CENTER!\n\nDo not move the RC sticks, then click OK to confirm");
 
     //go ahead and try to map first 8 channels, now that user can skip channels
     for (int i = 0; i < 8; i++) {
         identifyChannelMapping(i);
     }
 
-    //QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
+    // Try to identify inverted channels, but only for R/P/Y/T
+    for (int i = 0; i < 4; i++) {
+        detectChannelInversion(i);
+    }
 
+    //QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
+    configEnabled = false;
     QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
     ui->rcCalibrationButton->setText(tr("Save RC Calibration"));
     resetCalibrationRC();
@@ -343,6 +421,7 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     QMessageBox::information(0,"Trims","Ensure all sticks are centeres and throttle is in the downmost position, click OK to continue");
 
     calibrationEnabled = false;
+    configEnabled = false;
     ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
 
     ui->rollWidget->hideMinMax();
@@ -1109,9 +1188,12 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     paramMgr->setPendingParam(0, "RC_MAP_YAW", (int32_t)(rcMapping[2]+1));
     paramMgr->setPendingParam(0, "RC_MAP_THROTTLE", (int32_t)(rcMapping[3]+1));
     paramMgr->setPendingParam(0, "RC_MAP_MODE_SW", (int32_t)(rcMapping[4]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_AUX1", (int32_t)(rcMapping[5]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_AUX2", (int32_t)(rcMapping[6]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_AUX3", (int32_t)(rcMapping[7]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_ASSIST_SW", (int32_t)(rcMapping[5]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_MISSIO_SW", (int32_t)(rcMapping[6]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_RETURN_SW", (int32_t)(rcMapping[7]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_FLAPS", (int32_t)(rcMapping[8]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_AUX1", (int32_t)(rcMapping[9]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_AUX2", (int32_t)(rcMapping[10]+1));
 
     //let the param mgr manage sending all the pending RC_foo updates and persisting after
     paramMgr->sendPendingParameters(true);
@@ -1140,15 +1222,13 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     }
 
     // Raw value
-    int ival = (int)fval;
-    int delta = abs(ival - rcValue[chan]);
-    if (delta < 3) {
+    int delta = abs(fval - rcMappedValue[rcToFunctionMapping[chan]]);
+    if (!configEnabled && !calibrationEnabled && delta < 12 && delta >= 0 && rcValue[chan] > 800 && rcValue[chan] < 2200) {
         //ignore tiny jitter values
         return;
     }
     else {
-        qDebug() << "chan" << chan << " delta:" << delta;
-        rcValue[chan] = ival;
+        rcValue[chan] = fval;
     }
 
 
@@ -1166,7 +1246,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         // If the first channel moved considerably, pick it
         if (fabsf(channelWantedList[chan] - fval) > 300.0f) {
             rcMapping[channelWanted] = chan;
-            updateInvertedCheckboxes(chan);
+            updateMappingView(channelWanted);
 
             int chanFound = channelWanted;
             channelWanted = -1;
@@ -1177,19 +1257,47 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
             msgBox.setStandardButtons(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
             (void)msgBox.exec();
+
+            // XXX fuse with parameter update handling
+            switch (chanFound) {
+            case 0:
+                ui->rollSpinBox->setValue(chan + 1);
+                break;
+            case 1:
+                ui->pitchSpinBox->setValue(chan + 1);
+                break;
+            case 2:
+                ui->yawSpinBox->setValue(chan + 1);
+                break;
+            case 3:
+                ui->throttleSpinBox->setValue(chan + 1);
+                break;
+            case 4:
+                ui->modeSpinBox->setValue(chan + 1);
+                break;
+            case 5:
+                ui->assistSwSpinBox->setValue(chan + 1);
+                break;
+            case 6:
+                ui->missionSwSpinBox->setValue(chan + 1);
+                break;
+            case 7:
+                ui->returnSwSpinBox->setValue(chan + 1);
+                break;
+            case 8:
+                ui->flapsSpinBox->setValue(chan + 1);
+                break;
+            case 9:
+                ui->aux1SpinBox->setValue(chan + 1);
+                break;
+            case 10:
+                ui->aux2SpinBox->setValue(chan + 1);
+                break;
+            }
         }
     }
 
-    // Find correct mapped channel
-    for (unsigned int i = 0; i < chanCount; i++) {
-        if (chan == rcMapping[i]) {
-            rcMappedValue[i] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
-
-            // Copy min / max
-            rcMappedMin[i] = rcMin[chan];
-            rcMappedMax[i] = rcMax[chan];
-        }
-    }
+    rcValueReversed[chan] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
 
     // Normalized value
     float normalized;
@@ -1205,6 +1313,19 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     normalized = qBound(-1.0f, normalized, 1.0f);
     // Invert
     normalized = (rcRev[chan]) ? -1.0f*normalized : normalized;
+
+    // Find correct mapped channel
+    for (unsigned int i = 0; i < chanCount; i++) {
+        if (chan == rcMapping[i]) {
+            rcMappedValue[i] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
+
+            // Copy min / max
+            rcMappedMin[i] = rcMin[chan];
+            rcMappedMax[i] = rcMax[chan];
+
+            rcMappedNormalizedValue[i] = normalized;
+        }
+    }
 
     if (chan == rcMapping[0]) {
         rcRoll = normalized;
@@ -1226,16 +1347,50 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
     }
     else if (chan == rcMapping[4]) {
-        rcMode = normalized;// MODE SWITCH
+        rcMode = normalized; // MODE SWITCH
     }
     else if (chan == rcMapping[5]) {
-        rcAux1 = normalized; // AUX1
+        rcAssist = normalized; // ASSIST SWITCH
     }
     else if (chan == rcMapping[6]) {
-        rcAux2 = normalized;// AUX2
+        rcMission = normalized; // MISSION SWITCH
     }
     else if (chan == rcMapping[7]) {
-        rcAux3 = normalized; // AUX3
+        rcReturn = normalized; // RETURN SWITCH
+    }
+    else if (chan == rcMapping[8]) {
+        rcFlaps = normalized; // FLAPS
+    }
+    else if (chan == rcMapping[9]) {
+        rcAux1 = normalized; // AUX2
+    }
+    else if (chan == rcMapping[10]) {
+        rcAux2 = normalized; // AUX3
+    }
+
+    if (channelReverseStateWanted >= 0) {
+        // If the *right* channel moved considerably, evaluate it
+        if (fabsf(fval - 1500) > 350.0f &&
+                rcMapping[channelReverseStateWanted] == chan) {
+
+            // Check if the output is positive
+            if (fval > 1750) {
+                rcRev[rcMapping[channelReverseStateWanted]] = true;
+            } else {
+                rcRev[rcMapping[channelReverseStateWanted]] = false;
+            }
+
+            unsigned currRevFunc = channelReverseStateWanted;
+
+            channelReverseStateWanted = -1;
+
+            // Confirm found channel
+            msgBox.setText(tr("Direction of %1 Channel assigned").arg(channelNames[currRevFunc]));
+            msgBox.setInformativeText(tr("%1").arg((rcRev[rcMapping[currRevFunc]]) ? "Reversed channel." : "Did not reverse channel."));
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            (void)msgBox.exec();
+        }
     }
 
     dataModelChanged = true;
@@ -1243,36 +1398,98 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     qDebug() << "RC CHAN:" << chan << "PPM:" << fval << "NORMALIZED:" << normalized;
 }
 
-void QGCPX4VehicleConfig::updateInvertedCheckboxes(int index)
+void QGCPX4VehicleConfig::updateAllInvertedCheckboxes()
 {
-    unsigned int mapindex = rcMapping[index];
+    for (unsigned function_index = 0; function_index < chanMappedMax; function_index++) {
 
-    switch (mapindex)
-    {
-    case 0:
-        ui->invertCheckBox->setChecked(rcRev[index]);
-        break;
-    case 1:
-        ui->invertCheckBox_2->setChecked(rcRev[index]);
-        break;
-    case 2:
-        ui->invertCheckBox_3->setChecked(rcRev[index]);
-        break;
-    case 3:
-        ui->invertCheckBox_4->setChecked(rcRev[index]);
-        break;
-    case 4:
-        ui->invertCheckBox_5->setChecked(rcRev[index]);
-        break;
-    case 5:
-        ui->invertCheckBox_6->setChecked(rcRev[index]);
-        break;
-    case 6:
-        ui->invertCheckBox_7->setChecked(rcRev[index]);
-        break;
-    case 7:
-        ui->invertCheckBox_8->setChecked(rcRev[index]);
-        break;
+        int rc_input_index = rcMapping[function_index];
+
+        if (rc_input_index < 0 || rc_input_index > chanMax)
+            continue;
+
+        // Map index to checkbox.
+        // TODO(lm) Would be better to stick the checkboxes into a vector upfront
+        switch (function_index)
+        {
+        case 0:
+            ui->invertCheckBox->setChecked(rcRev[rc_input_index]);
+            ui->rollWidget->setName(tr("Roll (#%1)").arg(rcMapping[0] + 1));
+            break;
+        case 1:
+            ui->invertCheckBox_2->setChecked(rcRev[rc_input_index]);
+            ui->pitchWidget->setName(tr("Pitch (#%1)").arg(rcMapping[1] + 1));
+            break;
+        case 2:
+            ui->invertCheckBox_3->setChecked(rcRev[rc_input_index]);
+            ui->yawWidget->setName(tr("Yaw (#%1)").arg(rcMapping[2] + 1));
+            break;
+        case 3:
+            ui->invertCheckBox_4->setChecked(rcRev[rc_input_index]);
+            ui->throttleWidget->setName(tr("Throt. (#%1)").arg(rcMapping[3] + 1));
+            break;
+        case 4:
+            ui->invertCheckBox_5->setChecked(rcRev[rc_input_index]);
+            //ui->radio5Widget->setName(tr("Mode Switch (#%1)").arg(rcMapping[4] + 1));
+            break;
+        case 5:
+            ui->assistSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            break;
+        case 6:
+            ui->missionSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            break;
+        case 7:
+            ui->returnSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            break;
+        case 8:
+            ui->flapsInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            break;
+        case 9:
+            ui->aux1InvertCheckBox->setChecked(rcRev[rc_input_index]);
+            break;
+        case 10:
+            ui->aux2InvertCheckBox->setChecked(rcRev[rc_input_index]);
+            break;
+        }
+    }
+}
+
+void QGCPX4VehicleConfig::updateMappingView(int function_index)
+{
+    Q_UNUSED(function_index);
+    updateAllInvertedCheckboxes();
+
+    QStringList assignments;
+
+    for (unsigned i = 0; i < chanMax; i++) {
+        assignments << "";
+    }
+
+    for (unsigned i = 0; i < chanMappedMax; i++) {
+        if (rcMapping[i] >= 0 && rcMapping[i] < (int)chanMax) {
+            assignments.replace(rcMapping[i], assignments[rcMapping[i]].append(QString(" / ").append(channelNames[i])));
+        }
+    }
+
+    for (unsigned i = 0; i < chanMax; i++) {
+        if (assignments[i] == "")
+            assignments[i] = "UNUSED";
+    }
+
+    for (unsigned i = 0; i < chanMax; i++) {
+        switch (i) {
+        case 4:
+            ui->radio5Widget->setName(tr("%1 (#5)").arg(assignments[4]));
+            break;
+        case 5:
+            ui->radio6Widget->setName(tr("%1 (#6)").arg(assignments[5]));
+            break;
+        case 6:
+            ui->radio7Widget->setName(tr("%1 (#7)").arg(assignments[6]));
+            break;
+        case 7:
+            ui->radio8Widget->setName(tr("%1 (#8)").arg(assignments[7]));
+            break;
+        }
     }
 }
 
@@ -1284,45 +1501,61 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
             // Order is: roll, pitch, yaw, throttle, mode sw, aux 1-3
 
             int intValue = value.toInt()  - 1;
+
             if (parameterName.startsWith("RC_MAP_ROLL")) {
-                rcMapping[0] = intValue;
+                setChannelToFunctionMapping(0, intValue);
                 ui->rollSpinBox->setValue(rcMapping[0]+1);
                 ui->rollSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_PITCH")) {
-                rcMapping[1] = intValue;
+                setChannelToFunctionMapping(1, intValue);
                 ui->pitchSpinBox->setValue(rcMapping[1]+1);
                 ui->pitchSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_YAW")) {
-                rcMapping[2] = intValue;
+                setChannelToFunctionMapping(2, intValue);
                 ui->yawSpinBox->setValue(rcMapping[2]+1);
                 ui->yawSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_THROTTLE")) {
-                rcMapping[3] = intValue;
+                setChannelToFunctionMapping(3, intValue);
                 ui->throttleSpinBox->setValue(rcMapping[3]+1);
                 ui->throttleSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_MODE_SW")) {
-                rcMapping[4] = intValue;
+                setChannelToFunctionMapping(4, intValue);
                 ui->modeSpinBox->setValue(rcMapping[4]+1);
                 ui->modeSpinBox->setEnabled(true);
             }
+            else if (parameterName.startsWith("RC_MAP_ASSIST_SW")) {
+                setChannelToFunctionMapping(5, intValue);
+                ui->assistSwSpinBox->setValue(rcMapping[5]+1);
+                ui->assistSwSpinBox->setEnabled(true);
+            }
+            else if (parameterName.startsWith("RC_MAP_MISSIO_SW")) {
+                setChannelToFunctionMapping(6, intValue);
+                ui->missionSwSpinBox->setValue(rcMapping[6]+1);
+                ui->missionSwSpinBox->setEnabled(true);
+            }
+            else if (parameterName.startsWith("RC_MAP_RETURN_SW")) {
+                setChannelToFunctionMapping(7, intValue);
+                ui->returnSwSpinBox->setValue(rcMapping[7]+1);
+                ui->returnSwSpinBox->setEnabled(true);
+            }
+            else if (parameterName.startsWith("RC_MAP_FLAPS")) {
+                setChannelToFunctionMapping(8, intValue);
+                ui->flapsSpinBox->setValue(rcMapping[8]+1);
+                ui->flapsSpinBox->setEnabled(true);
+            }
             else if (parameterName.startsWith("RC_MAP_AUX1")) {
-                rcMapping[5] = intValue;
-                ui->aux1SpinBox->setValue(rcMapping[5]+1);
+                setChannelToFunctionMapping(9, intValue);
+                ui->aux1SpinBox->setValue(rcMapping[9]+1);
                 ui->aux1SpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_AUX2")) {
-                rcMapping[6] = intValue;
-                ui->aux2SpinBox->setValue(rcMapping[6]+1);
+                setChannelToFunctionMapping(10, intValue);
+                ui->aux2SpinBox->setValue(rcMapping[10]+1);
                 ui->aux2SpinBox->setEnabled(true);
-            }
-            else if (parameterName.startsWith("RC_MAP_AUX3")) {
-                rcMapping[7] = intValue;
-                ui->aux3SpinBox->setValue(rcMapping[7]+1);
-                ui->aux3SpinBox->setEnabled(true);
             }
         }
         else if (parameterName.startsWith("RC_SCALE_")) {
@@ -1337,30 +1570,16 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
             else if (parameterName.startsWith("RC_SCALE_YAW")) {
                 rcScaling[2] = floatVal;
             }
-            else if (parameterName.startsWith("RC_SCALE_THROTTLE")) {
-                rcScaling[3] = floatVal;
-            }
-            else if (parameterName.startsWith("RC_SCALE_MODE_SW")) {
-                rcScaling[4] = floatVal;
-            }
-            else if (parameterName.startsWith("RC_SCALE_AUX1")) {
-                rcScaling[5] = floatVal;
-            }
-            else if (parameterName.startsWith("RC_SCALE_AUX2")) {
-                rcScaling[6] = floatVal;
-            }
-            else if (parameterName.startsWith("RC_SCALE_AUX3")) {
-                rcScaling[7] = floatVal;
-            }
-        }
-        else if (parameterName.startsWith("RC_TYPE")) {
-            if (0 != rcTypeUpdateRequested) {
-                rcTypeUpdateRequested = 0;
-                updateStatus(tr("Received RC type update, setting parameters based on model."));
-                rcType = value.toInt();
-                // Request all other parameters as well
-                requestCalibrationRC();
-            }
+            // Not implemented at this point
+//            else if (parameterName.startsWith("RC_SCALE_THROTTLE")) {
+//                rcScaling[3] = floatVal;
+//            }
+//            else if (parameterName.startsWith("RC_SCALE_AUX1")) {
+//                rcScaling[5] = floatVal;
+//            }
+//            else if (parameterName.startsWith("RC_SCALE_AUX2")) {
+//                rcScaling[6] = floatVal;
+//            }
         }
     }
     else  {
@@ -1404,11 +1623,24 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
             index = parameterName.mid(2, 1).toInt(&ok) - 1;
             if (ok && index < chanMax) {
                 rcRev[index] = (intVal == -1) ? true : false;
-                updateInvertedCheckboxes(index);
+
+                for (unsigned i = 0; i < chanMappedMax; i++)
+                {
+                    if (rcMapping[i] == (int)index)
+                        updateMappingView(i);
+                }
             }
         }
     }
+}
 
+void QGCPX4VehicleConfig::setChannelToFunctionMapping(int function, int channel)
+{
+    if (function >= 0 && function < (int)chanMappedMax)
+        rcMapping[function] = channel;
+
+    if (channel >= 0 && channel < (int)chanMax)
+        rcToFunctionMapping[channel] = function;
 }
 
 void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
@@ -1501,25 +1733,9 @@ void QGCPX4VehicleConfig::updateError(const QString& str)
     ui->advancedStatusLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorDarkWhite.name()).arg(QGC::colorMagenta.name()));
 }
 
-
-void QGCPX4VehicleConfig::setRCType(int type)
-{
-    if (!mav) return;
-
-    // XXX TODO Add handling of RC_TYPE vs non-RC_TYPE here
-
-    mav->setParameter(0, "RC_TYPE", type);
-    rcTypeUpdateRequested = QGC::groundTimeMilliseconds();
-    QTimer::singleShot(rcTypeTimeout+100, this, SLOT(checktimeOuts()));
-}
-
 void QGCPX4VehicleConfig::checktimeOuts()
 {
-    if (rcTypeUpdateRequested > 0) {
-        if (QGC::groundTimeMilliseconds() - rcTypeUpdateRequested > rcTypeTimeout)  {
-            updateError(tr("Setting remote control timed out - is the system connected?"));
-        }
-    }
+
 }
 
 
@@ -1530,10 +1746,10 @@ void QGCPX4VehicleConfig::updateRcWidgetValues()
     ui->yawWidget->setValueAndRange(rcMappedValue[2],rcMappedMin[2],rcMappedMax[2]);
     ui->throttleWidget->setValueAndRange(rcMappedValue[3],rcMappedMin[3],rcMappedMax[3]);
 
-    ui->radio5Widget->setValueAndRange(rcMappedValue[4],rcMin[4],rcMax[4]);
-    ui->radio6Widget->setValueAndRange(rcMappedValue[5],rcMin[5],rcMax[5]);
-    ui->radio7Widget->setValueAndRange(rcMappedValue[6],rcMin[6],rcMax[6]);
-    ui->radio8Widget->setValueAndRange(rcMappedValue[7],rcMin[7],rcMax[7]);
+    ui->radio5Widget->setValueAndRange(rcValueReversed[4],rcMin[4],rcMax[4]);
+    ui->radio6Widget->setValueAndRange(rcValueReversed[5],rcMin[5],rcMax[5]);
+    ui->radio7Widget->setValueAndRange(rcValueReversed[6],rcMin[6],rcMax[6]);
+    ui->radio8Widget->setValueAndRange(rcValueReversed[7],rcMin[7],rcMax[7]);
 }
 
 void QGCPX4VehicleConfig::updateRcChanLabels()
@@ -1544,7 +1760,7 @@ void QGCPX4VehicleConfig::updateRcChanLabels()
     ui->throttleChanLabel->setText(labelForRcValue(rcThrottle));
 
     QString blankLabel = tr("---");
-    if (rcValue[rcMapping[4] != UINT16_MAX]) {
+    if (rcValue[rcMapping[4]] != UINT16_MAX) {
         ui->modeChanLabel->setText(labelForRcValue(rcMode));
     }
     else {
@@ -1552,24 +1768,45 @@ void QGCPX4VehicleConfig::updateRcChanLabels()
     }
 
     if (rcValue[rcMapping[5]] != UINT16_MAX) {
+        ui->assistSwChanLabel->setText(labelForRcValue(rcAssist));
+    }
+    else {
+        ui->assistSwChanLabel->setText(blankLabel);
+    }
+
+    if (rcValue[rcMapping[6]] != UINT16_MAX) {
+        ui->missionSwChanLabel->setText(labelForRcValue(rcMission));
+    }
+    else {
+        ui->missionSwChanLabel->setText(blankLabel);
+    }
+
+    if (rcValue[rcMapping[7]] != UINT16_MAX) {
+        ui->returnSwChanLabel->setText(labelForRcValue(rcReturn));
+    }
+    else {
+        ui->returnSwChanLabel->setText(blankLabel);
+    }
+
+    if (rcValue[rcMapping[8]] != UINT16_MAX) {
+        ui->flapsChanLabel->setText(labelForRcValue(rcFlaps));
+    }
+    else {
+        ui->flapsChanLabel->setText(blankLabel);
+    }
+
+    if (rcValue[rcMapping[9]] != UINT16_MAX) {
         ui->aux1ChanLabel->setText(labelForRcValue(rcAux1));
     }
     else {
         ui->aux1ChanLabel->setText(blankLabel);
     }
 
-    if (rcValue[rcMapping[6]] != UINT16_MAX) {
+    if (rcValue[rcMapping[10]] != UINT16_MAX) {
         ui->aux2ChanLabel->setText(labelForRcValue(rcAux2));
     }
     else {
         ui->aux2ChanLabel->setText(blankLabel);
-    }
-
-    if (rcValue[rcMapping[7]] != UINT16_MAX) {
-        ui->aux3ChanLabel->setText(labelForRcValue(rcAux3));
-    }
-    else {
-        ui->aux3ChanLabel->setText(blankLabel);
     }
 }
 
