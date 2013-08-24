@@ -10,6 +10,8 @@
 QGCPendingParamWidget::QGCPendingParamWidget(QObject *parent) :
     QGCParamWidget((QWidget*)parent)
 {
+    //this subclass doesn't display status updates
+    statusLabel->hide();
 }
 
 
@@ -20,10 +22,6 @@ void QGCPendingParamWidget::connectToParamManager()
     // Listen to updated param signals from the data model
     connect(paramMgr, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
             this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
-
-    // Listen to communications status messages so we can display them
-    connect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
-            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
 }
 
 
@@ -32,10 +30,6 @@ void QGCPendingParamWidget::disconnectFromParamManager()
     // Listen to updated param signals from the data model
     disconnect(paramMgr, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
             this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
-
-    // Listen to communications status messages so we can display them
-    disconnect(paramMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
-            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
 
     paramMgr = NULL;
 }
