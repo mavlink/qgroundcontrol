@@ -52,16 +52,7 @@ static struct full_mode_s modes_list_common[] = {
             0 },
 };
 
-static struct full_mode_s modes_list_px4[] = {
-    { (MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED),
-            PX4_CUSTOM_MODE_MANUAL },
-    { (MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED),
-            PX4_CUSTOM_MODE_SEATBELT },
-    { (MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED),
-            PX4_CUSTOM_MODE_EASY },
-    { (MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED),
-            PX4_CUSTOM_MODE_AUTO },
-};
+static struct full_mode_s modes_list_px4[4];
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     uasID(-1),
@@ -83,6 +74,21 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
 void UASControlWidget::updateModesList()
 {
+    union px4_custom_mode px4_cm;
+    px4_cm.data = 0;
+    modes_list_px4[0].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
+    modes_list_px4[0].customMode = px4_cm.data;
+    modes_list_px4[1].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_SEATBELT;
+    modes_list_px4[1].customMode = px4_cm.data;
+    modes_list_px4[2].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_EASY;
+    modes_list_px4[2].customMode = px4_cm.data;
+    modes_list_px4[3].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_AUTO;
+    modes_list_px4[3].customMode = px4_cm.data;
+
     // Detect autopilot type
     int autopilot = 0;
     if (this->uasID >= 0) {
