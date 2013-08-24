@@ -23,33 +23,33 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 101);
 
     connect(ui->planePushButton, SIGNAL(clicked()), this, SLOT(planeSelected()));
-    connect(ui->planeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(planeSelected(int)));
+    connect(ui->planeComboBox, SIGNAL(activated(int)), this, SLOT(planeSelected(int)));
 
     ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q"), 30);
     ui->flyingWingComboBox->addItem(tr("Phantom FPV"), 31);
 
     connect(ui->flyingWingPushButton, SIGNAL(clicked()), this, SLOT(flyingWingSelected()));
-    connect(ui->flyingWingComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(flyingWingSelected(int)));
+    connect(ui->flyingWingComboBox, SIGNAL(activated(int)), this, SLOT(flyingWingSelected(int)));
 
     ui->quadXComboBox->addItem(tr("Standard 10\" Quad"), 1);
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 10);
     ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 666);
 
     connect(ui->quadXPushButton, SIGNAL(clicked()), this, SLOT(quadXSelected()));
-    connect(ui->quadXComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(quadXSelected(int)));
+    connect(ui->quadXComboBox, SIGNAL(activated(int)), this, SLOT(quadXSelected(int)));
 
     connect(ui->quadPlusPushButton, SIGNAL(clicked()), this, SLOT(quadPlusSelected()));
-    connect(ui->quadPlusComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(quadPlusSelected(int)));
+    connect(ui->quadPlusComboBox, SIGNAL(activated(int)), this, SLOT(quadPlusSelected(int)));
 
-    connect(ui->hexaXComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(hexaXSelected(int)));
+    connect(ui->hexaXComboBox, SIGNAL(activated(int)), this, SLOT(hexaXSelected(int)));
 
-    connect(ui->hexaPlusComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(hexaPlusSelected(int)));
+    connect(ui->hexaPlusComboBox, SIGNAL(activated(int)), this, SLOT(hexaPlusSelected(int)));
 
-    connect(ui->octoXComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(octoXSelected(int)));
+    connect(ui->octoXComboBox, SIGNAL(activated(int)), this, SLOT(octoXSelected(int)));
 
-    connect(ui->octoPlusComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(octoPlusSelected(int)));
+    connect(ui->octoPlusComboBox, SIGNAL(activated(int)), this, SLOT(octoPlusSelected(int)));
 
-    connect(ui->hComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(hSelected(int)));
+    connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));
 
     ui->hComboBox->addItem(tr("TBS Discovery"), 15);
     ui->hComboBox->addItem(tr("H Custom"), 16);
