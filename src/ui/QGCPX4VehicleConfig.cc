@@ -21,6 +21,7 @@
 #include "UASParameterCommsMgr.h"
 #include "ui_QGCPX4VehicleConfig.h"
 #include "px4_configuration/QGCPX4AirframeConfig.h"
+#include "px4_configuration/QGCPX4SensorCalibration.h"
 #include <dialog_bare.h>
 
 #define WIDGET_INDEX_FIRMWARE 0
@@ -54,6 +55,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     calibrationEnabled(false),
     configEnabled(false),
     px4AirframeConfig(NULL),
+    px4SensorCalibration(NULL),
     #ifdef QUPGRADE_SUPPORT
     firmwareDialog(NULL),
     #endif
@@ -89,6 +91,9 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
+
+    px4SensorCalibration = new QGCPX4SensorCalibration(this);
+    ui->sensorLayout->addWidget(px4SensorCalibration);
 
 #ifdef QUPGRADE_SUPPORT
     firmwareDialog = new DialogBare(this);
@@ -635,44 +640,6 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
             }
         }
     }
-
-
-    // Load general calibration for autopilot
-    //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
-    tool = new QGCToolWidget("", ui->sensorContents);
-    tool->addUAS(mav);
-    if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
-    {
-        toolWidgets.append(tool);
-        QGroupBox *box = new QGroupBox(ui->sensorContents);
-        box->setTitle(tool->objectName());
-        box->setLayout(new QVBoxLayout(box));
-        box->layout()->addWidget(tool);
-        ui->sensorLayout->addWidget(box);
-    } else {
-        delete tool;
-    }
-
-    // Load vehicle-specific autopilot configuration
-    tool = new QGCToolWidget("", ui->sensorContents);
-    tool->addUAS(mav);
-    if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
-    {
-        toolWidgets.append(tool);
-        QGroupBox *box = new QGroupBox(ui->sensorContents);
-        box->setTitle(tool->objectName());
-        box->setLayout(new QVBoxLayout(box));
-        box->layout()->addWidget(tool);
-        ui->sensorLayout->addWidget(box);
-    } else {
-        delete tool;
-    }
-
-//    //description.txt
-//    QFile sensortipsfile(autopilotdir.absolutePath() + "/general/calibration/description.txt");
-//    sensortipsfile.open(QIODevice::ReadOnly);
-////    ui->sensorTips->setHtml(sensortipsfile.readAll());
-//    sensortipsfile.close();
 }
 void QGCPX4VehicleConfig::menuButtonClicked()
 {
@@ -1056,7 +1023,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
         foreach(QWidget* child, ui->advanceColumnContents->findChildren<QWidget*>()) {
             child->deleteLater();
         }
-        foreach(QWidget* child, ui->sensorContents->findChildren<QWidget*>()) {
+        foreach(QWidget* child, ui->sensorLayout->findChildren<QWidget*>()) {
             child->deleteLater();
         }
 

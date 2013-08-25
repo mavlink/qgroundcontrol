@@ -167,6 +167,14 @@
         <file>files/images/px4/airframes/plane_ert.png</file>
         <file>files/images/px4/airframes/plane_aert.png</file>
         <file>files/images/px4/airframes/quad_h.png</file>
+        <file>files/images/px4/calibration/arrows.png</file>
+        <file>files/images/px4/calibration/accel_x+.png</file>
+        <file>files/images/px4/calibration/accel_x-.png</file>
+        <file>files/images/px4/calibration/accel_y-.png</file>
+        <file>files/images/px4/calibration/accel_z+.png</file>
+        <file>files/images/px4/calibration/accel_z-.png</file>
+        <file>files/images/px4/calibration/accel_y+.png</file>
+        <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>

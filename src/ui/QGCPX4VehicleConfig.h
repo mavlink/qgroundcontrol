@@ -15,6 +15,7 @@
 
 class UASParameterCommsMgr;
 class DialogBare;
+class QGCPX4SensorCalibration;
 
 namespace Ui {
 class QGCPX4VehicleConfig;
@@ -322,6 +323,7 @@ protected:
 
     QGCPX4AirframeConfig* px4AirframeConfig;
     DialogBare* firmwareDialog;
+    QGCPX4SensorCalibration* px4SensorCalibration;
     QMessageBox msgBox;
     QPushButton* skipActionButton;
 
