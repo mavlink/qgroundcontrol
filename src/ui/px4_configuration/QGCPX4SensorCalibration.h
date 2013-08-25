@@ -32,6 +32,10 @@ public slots:
      */
     void handleTextMessage(int uasid, int componentid, int severity, QString text);
 
+    void gyroButtonClicked();
+    void magButtonClicked();
+    void accelButtonClicked();
+
     /**
      * @brief Hand context menu event
      * @param event
@@ -44,6 +48,11 @@ protected:
     UASInterface* activeUAS;
     QAction* clearAction;
     QPixmap instructionIcon;
+    bool accelStarted;
+    bool accelDone[6];
+    bool gyroStarted;
+    bool magStarted;
+    QStringList accelAxes;
 
     virtual void resizeEvent(QResizeEvent* event);
     

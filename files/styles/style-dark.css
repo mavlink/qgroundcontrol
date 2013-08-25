@@ -248,6 +248,19 @@ QLabel#noUas {
     font-size: 30pt;
 }
 
+QMessageBox QLabel {
+    font-size: 12pt;
+}
+
+QLabel#calibrationExplanationLabel {
+    font-size: 20pt;
+}
+
+QLabel#instructionLabel {
+    color: #FEC654;
+    font-size: 26pt;
+}
+
 QLineEdit {
     border: 1px solid #777;
     border-radius: 2px;

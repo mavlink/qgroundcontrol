@@ -1027,9 +1027,9 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
         foreach(QWidget* child, ui->advanceColumnContents->findChildren<QWidget*>()) {
             child->deleteLater();
         }
-        foreach(QWidget* child, ui->sensorLayout->findChildren<QWidget*>()) {
-            child->deleteLater();
-        }
+//        foreach(QWidget* child, ui->sensorLayout->findChildren<QWidget*>()) {
+//            child->deleteLater();
+//        }
 
         foreach(QWidget* child, ui->airframeLayout->findChildren<QWidget*>())
         {
