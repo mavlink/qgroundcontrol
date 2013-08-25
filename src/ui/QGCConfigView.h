@@ -21,6 +21,7 @@ public slots:
     
 private:
     Ui::QGCConfigView *ui;
+    QWidget *config;
     UASInterface* mav;
 
 };

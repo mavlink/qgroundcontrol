@@ -4,18 +4,26 @@
 #include "QGCPX4VehicleConfig.h"
 #include "QGCVehicleConfig.h"
 #include "QGCPX4VehicleConfig.h"
+#include "MainWindow.h"
 
 QGCConfigView::QGCConfigView(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::QGCConfigView),
+    config(NULL),
     mav(NULL)
 {
     ui->setupUi(this);
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASChanged(UASInterface*)));
 
-    //don't show a configuration widget if no vehicle is connected
-    //show a placeholder informational widget instead
+    // The config screens are required for firmware uploading
+    if (MainWindow::instance()->getCustomMode() == MainWindow::CUSTOM_MODE_PX4) {
+        config = new QGCPX4VehicleConfig();
+        ui->gridLayout->addWidget(config);
+    } else {
+        //don't show a configuration widget if no vehicle is connected
+        //show a placeholder informational widget instead
+    }
 
 }
 
@@ -49,10 +57,26 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
         int autopilotType = mav->getAutopilotType();
         switch (autopilotType) {
         case MAV_AUTOPILOT_PX4:
-            ui->gridLayout->addWidget(new QGCPX4VehicleConfig());
+            {
+                QGCPX4VehicleConfig* px4config = qobject_cast<QGCPX4VehicleConfig*>(config);
+                if (!px4config) {
+                    if (config)
+                        delete config;
+                    config = new QGCPX4VehicleConfig();
+                    ui->gridLayout->addWidget(config);
+                }
+            }
             break;
         default:
-            ui->gridLayout->addWidget(new QGCVehicleConfig());
+            {
+                QGCVehicleConfig* generalconfig = qobject_cast<QGCVehicleConfig*>(config);
+                if (!generalconfig) {
+                    if (config)
+                        delete config;
+                    config = new QGCVehicleConfig();
+                    ui->gridLayout->addWidget(config);
+                }
+            }
             break;
         }
     }
