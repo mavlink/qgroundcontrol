@@ -1456,11 +1456,6 @@ void MainWindow::connectCommonActions()
         ui.actionSoftwareConfig->setChecked(true);
         ui.actionSoftwareConfig->activate(QAction::Trigger);
     }
-    if (currentView == VIEW_FIRMWAREUPDATE)
-    {
-        ui.actionFirmwareUpdateView->setChecked(true);
-        ui.actionFirmwareUpdateView->activate(QAction::Trigger);
-    }
     if (currentView == VIEW_TERMINAL)
     {
         ui.actionTerminalView->setChecked(true);
@@ -1509,7 +1504,6 @@ void MainWindow::connectCommonActions()
         connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
     }
 
-    connect(ui.actionFirmwareUpdateView, SIGNAL(triggered()), this, SLOT(loadFirmwareUpdateView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
 
     // Help Actions
