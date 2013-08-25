@@ -146,13 +146,16 @@ include(src/apps/mavlinkgen/mavlinkgen.pri)
 exists(qupgrade) {
     SOURCES += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
                qupgrade/src/apps/qupgrade/uploader.cpp \
-               qupgrade/src/apps/qupgrade/dialog_bare.cpp
+               qupgrade/src/apps/qupgrade/dialog_bare.cpp \
+               qupgrade/src/apps/qupgrade/boardwidget.cpp
 
     HEADERS += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
                qupgrade/src/apps/qupgrade/uploader.h \
-               qupgrade/src/apps/qupgrade/dialog_bare.h
+               qupgrade/src/apps/qupgrade/dialog_bare.h \
+               qupgrade/src/apps/qupgrade/boardwidget.h
 
-    FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui
+    FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui \
+             qupgrade/src/apps/qupgrade/boardwidget.ui
 
     linux*:CONFIG += qesp_linux_udev
 
