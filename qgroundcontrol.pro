@@ -157,6 +157,8 @@ exists(qupgrade) {
     FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui \
              qupgrade/src/apps/qupgrade/boardwidget.ui
 
+    RESOURCES += qupgrade/qupgrade.qrc
+
     linux*:CONFIG += qesp_linux_udev
 
     include(qupgrade/libs/qextserialport/src/qextserialport.pri)
