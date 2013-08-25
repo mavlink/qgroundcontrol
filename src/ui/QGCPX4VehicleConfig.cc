@@ -89,6 +89,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->airframeMenuButton->setEnabled(false);
     ui->sensorMenuButton->setEnabled(false);
     ui->rcMenuButton->setEnabled(false);
+    ui->generalMenuButton->hide();
 
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
@@ -554,7 +555,7 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     // Load tabs for general configuration
     foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        QPushButton *button = new QPushButton(ui->leftNavScrollAreaWidgetContents);
+        QPushButton *button = new QPushButton(this);
         connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
         ui->navBarLayout->insertWidget(2,button);
         button->setMinimumHeight(75);
@@ -598,7 +599,7 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
     // Load additional tabs for vehicle specific configuration
     foreach (QString dir,vehicledir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
     {
-        QPushButton *button = new QPushButton(ui->leftNavScrollAreaWidgetContents);
+        QPushButton *button = new QPushButton(this);
         connect(button,SIGNAL(clicked()),this,SLOT(menuButtonClicked()));
         ui->navBarLayout->insertWidget(2,button);
 
