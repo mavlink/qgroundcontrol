@@ -50,13 +50,6 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </property>
     </spacer>
    </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="titleLabel">
-     <property name="text">
-      <string>Magnetometer Calibration</string>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="0" colspan="3">
     <spacer name="verticalSpacer">
      <property name="orientation">
@@ -124,20 +117,20 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </item>
     </layout>
    </item>
-   <item row="1" column="0">
+   <item row="2" column="0" colspan="3">
+    <widget class="QLabel" name="calibrationExplanationLabel">
+     <property name="text">
+      <string>To calibrate the system, execute the three calibration steps below.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="2">
     <widget class="QLabel" name="iconLabel">
      <property name="text">
       <string/>
      </property>
      <property name="scaledContents">
       <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QLabel" name="calibrationExplanationLabel">
-     <property name="text">
-      <string>To calibrate the system, execute the three calibration steps below.</string>
      </property>
     </widget>
    </item>

@@ -32,7 +32,7 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     ui->magButton->setEnabled(false);
     ui->accelButton->setEnabled(false);
 
-    setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
 
     setObjectName("PX4_SENSOR_CALIBRATION");
 
@@ -111,7 +111,7 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
         if (text.startsWith("accel meas started: ")) {
             QString axis = text.split("meas started: ").last().right(2);
             qDebug() << "AXIS" << axis << "STR" << text;
-            setInstructionImage(QString("./files/images/px4/calibration/accel_%1.png").arg(axis));
+            setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
 
         }
     }
@@ -128,7 +128,7 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
                 accelDone[i] = true;
 
             if (!accelDone[i]) {
-                setInstructionImage(QString("./files/images/px4/calibration/accel_%1.png").arg(accelAxes[i]));
+                setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(accelAxes[i]));
                 ui->calibrationExplanationLabel->setText(tr("Axis %1 completed. Please rotate to a different axis, e.g. the one shown here.").arg(axis));
             }
         }
@@ -136,27 +136,27 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
     if (text.contains("please rotate in a figure 8")) {
         ui->calibrationExplanationLabel->setText(tr("Rotate the system around all its axes, e.g. in a figure eight."));
-        setInstructionImage("./files/images/px4/calibration/mag_calibration_figure8.png");
+        setInstructionImage(":/files/images/px4/calibration/mag_calibration_figure8.png");
     }
 
     if (text.contains("accel calibration done")) {
         accelStarted = false;
         // XXX use a confirmation image or something
-        setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
         ui->calibrationExplanationLabel->setText(tr("Accelerometer calibration completed. Parameters permanently stored."));
     }
 
     if (text.contains("gyro calibration done")) {
         gyroStarted = false;
         // XXX use a confirmation image or something
-        setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
         ui->calibrationExplanationLabel->setText(tr("Gyroscope calibration completed. Parameters permanently stored."));
     }
 
     if (text.contains("mag calibration done")) {
         magStarted = false;
         // XXX use a confirmation image or something
-        setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
         ui->calibrationExplanationLabel->setText(tr("Magnetometer calibration completed. Parameters permanently stored."));
     }
 
@@ -180,7 +180,7 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
 void QGCPX4SensorCalibration::gyroButtonClicked()
 {
-    setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
     ui->calibrationExplanationLabel->setText(tr("Please do not move the system at all and wait for calibration to complete."));
@@ -188,7 +188,7 @@ void QGCPX4SensorCalibration::gyroButtonClicked()
 
 void QGCPX4SensorCalibration::magButtonClicked()
 {
-    setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
     ui->calibrationExplanationLabel->setText(tr("Please put the system in a rest position and wait for instructions."));
@@ -196,7 +196,7 @@ void QGCPX4SensorCalibration::magButtonClicked()
 
 void QGCPX4SensorCalibration::accelButtonClicked()
 {
-    setInstructionImage("./files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
     accelStarted = true;
