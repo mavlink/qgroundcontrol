@@ -18,8 +18,14 @@ QGCConfigView::QGCConfigView(QWidget *parent) :
 
     // The config screens are required for firmware uploading
     if (MainWindow::instance()->getCustomMode() == MainWindow::CUSTOM_MODE_PX4) {
+
+        ui->gridLayout->removeWidget(ui->waitingLabel);
+        ui->waitingLabel->setVisible(false);
+        delete ui->waitingLabel;
+
         config = new QGCPX4VehicleConfig();
         ui->gridLayout->addWidget(config);
+
     } else {
         //don't show a configuration widget if no vehicle is connected
         //show a placeholder informational widget instead
@@ -37,22 +43,27 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
     if (mav == uas)
         return;
 
-    //remove all child widgets since they could contain stale data
-    //for example, when we switch from one PX4 UAS to another UAS
-    foreach (QObject* obj, ui->gridLayout->children()) {
-        QWidget* w = dynamic_cast<QWidget*>(obj);
-        if (w) {
-            if (obj != ui->waitingLabel) {
-                ui->gridLayout->removeWidget(w);
-                delete obj;
-            }
-        }
-    }
+    int type = -1;
+    if (mav)
+        type = mav->getAutopilotType();
 
     mav = uas;
-    if (NULL != mav) {
+    if (NULL != uas && type != uas->getAutopilotType()) {
+
         ui->gridLayout->removeWidget(ui->waitingLabel);
         ui->waitingLabel->setVisible(false);
+
+        //remove all child widgets since they could contain stale data
+        //for example, when we switch from one PX4 UAS to another UAS
+        foreach (QObject* obj, ui->gridLayout->children()) {
+            QWidget* w = dynamic_cast<QWidget*>(obj);
+            if (w) {
+                if (obj != ui->waitingLabel) {
+                    ui->gridLayout->removeWidget(w);
+                    delete obj;
+                }
+            }
+        }
 
         int autopilotType = mav->getAutopilotType();
         switch (autopilotType) {
