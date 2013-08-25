@@ -234,31 +234,37 @@ void QGCPX4VehicleConfig::rcMenuButtonClicked()
 {
     //TODO eg ui->stackedWidget->findChild("rcConfig");
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_RC);
+    ui->tabTitleLabel->setText(tr("Radio Calibration"));
 }
 
 void QGCPX4VehicleConfig::sensorMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_SENSOR_CAL);
+    ui->tabTitleLabel->setText(tr("Sensor Calibration"));
 }
 
 void QGCPX4VehicleConfig::generalMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_GENERAL_CONFIG);
+    ui->tabTitleLabel->setText(tr("General Configuration Options"));
 }
 
 void QGCPX4VehicleConfig::advancedMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_ADV_CONFIG);
+    ui->tabTitleLabel->setText(tr("Advanced Configuration Options"));
 }
 
 void QGCPX4VehicleConfig::airframeMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_AIRFRAME_CONFIG);
+    ui->tabTitleLabel->setText(tr("Airframe Configuration"));
 }
 
 void QGCPX4VehicleConfig::firmwareMenuButtonClicked()
 {
     ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_FIRMWARE);
+    ui->tabTitleLabel->setText(tr("Firmware Upgrade"));
 }
 
 void QGCPX4VehicleConfig::identifyChannelMapping(int aert_index)

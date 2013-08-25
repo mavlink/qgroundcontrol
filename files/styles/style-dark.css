@@ -256,6 +256,13 @@ QLabel#calibrationExplanationLabel {
     font-size: 20pt;
 }
 
+QLabel#tabTitleLabel {
+    font-size: 28pt;
+    font-weight: lighter;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
 QLabel#instructionLabel {
     color: #FEC654;
     font-size: 26pt;
@@ -372,11 +379,11 @@ QPushButton#planePushButton, QPushButton#flyingWingPushButton, QPushButton#quadX
 QPushButton#quadPlusPushButton, QPushButton#hexaXPushButton, QPushButton#hexaPlusPushButton,
 QPushButton#octoXPushButton, QPushButton#octoPlusPushButton, QPushButton#hPushButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
-    border-radius: 12px;
+    border-radius: 5px;
     min-height: 140px;
     max-height: 240px;
     min-width: 140px;
-    border: 3px solid #465158;
+    border: 1px solid #465158;
 }
 
 QPushButton:checked#planePushButton, QPushButton:checked#flyingWingPushButton, QPushButton:checked#quadXPushButton,
