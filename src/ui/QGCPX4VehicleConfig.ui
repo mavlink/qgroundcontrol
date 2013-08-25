@@ -154,7 +154,7 @@ Config</string>
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>5</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="firmwareTab">
         <layout class="QVBoxLayout" name="firmwareLayout">
@@ -918,33 +918,7 @@ Config</string>
           <bold>true</bold>
          </font>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QGCMessageView" name="widget" native="true"/>
-         </item>
-         <item>
-          <widget class="QScrollArea" name="scrollArea_3">
-           <property name="widgetResizable">
-            <bool>true</bool>
-           </property>
-           <widget class="QWidget" name="sensorContents">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>39</width>
-              <height>26</height>
-             </rect>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_10">
-             <item>
-              <layout class="QVBoxLayout" name="sensorLayout"/>
-             </item>
-            </layout>
-           </widget>
-          </widget>
-         </item>
-        </layout>
+        <layout class="QHBoxLayout" name="sensorLayout"/>
        </widget>
        <widget class="QWidget" name="airframeTab">
         <layout class="QHBoxLayout" name="airframeLayout"/>
@@ -1020,8 +994,8 @@ Config</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -1057,8 +1031,8 @@ Config</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1270,12 +1244,6 @@ Config</string>
    <class>QGCPendingParamWidget</class>
    <extends>QWidget</extends>
    <header>ui/QGCPendingParamWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QGCMessageView</class>
-   <extends>QWidget</extends>
-   <header location="global">QGCMessageView.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
