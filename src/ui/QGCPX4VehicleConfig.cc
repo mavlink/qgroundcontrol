@@ -16,7 +16,6 @@
 #include "QGCPX4VehicleConfig.h"
 
 #include "QGC.h"
-//#include "QGCPendingParamWidget.h"
 #include "QGCToolWidget.h"
 #include "UASManager.h"
 #include "LinkManager.h"
@@ -84,6 +83,11 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
 
+    ui->advancedMenuButton->setEnabled(false);
+    ui->airframeMenuButton->setEnabled(false);
+    ui->sensorMenuButton->setEnabled(false);
+    ui->rcMenuButton->setEnabled(false);
+
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
 
@@ -134,8 +138,6 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    connect(ui->writeButton, SIGNAL(clicked()),
-            this, SLOT(writeParameters()));
 
     //TODO connect buttons here to save/clear actions?
     UASInterface* tmpMav = UASManager::instance()->getActiveUAS();
@@ -520,26 +522,29 @@ void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
         }
     }
 
-    // Generate widgets for the Advanced tab.
-    foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
-    {
-        if (file.toLower().endsWith(".qgw")) {
-            QWidget* parent = ui->advanceColumnContents;
-            tool = new QGCToolWidget("", parent);
-            if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
-            {
-                toolWidgets.append(tool);
-                QGroupBox *box = new QGroupBox(parent);
-                box->setTitle(tool->objectName());
-                box->setLayout(new QVBoxLayout(box));
-                box->layout()->addWidget(tool);
-                ui->advancedColumnLayout->addWidget(box);
 
-            } else {
-                delete tool;
-            }
-        }
-    }
+     //TODO fix and reintegrate the Advanced parameter editor
+//    // Generate widgets for the Advanced tab.
+//    foreach (QString file,vehicledir.entryList(QDir::Files | QDir::NoDotAndDotDot))
+//    {
+//        if (file.toLower().endsWith(".qgw")) {
+//            QWidget* parent = ui->advanceColumnContents;
+//            tool = new QGCToolWidget("", parent);
+//            if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
+//            {
+//                toolWidgets.append(tool);
+//                QGroupBox *box = new QGroupBox(parent);
+//                box->setTitle(tool->objectName());
+//                box->setLayout(new QVBoxLayout(box));
+//                box->layout()->addWidget(tool);
+//                ui->advancedColumnLayout->addWidget(box);
+
+//            } else {
+//                delete tool;
+//            }
+//        }
+//    }
+
 
     // Load tabs for general configuration
     foreach (QString dir,generaldir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
@@ -1027,17 +1032,6 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
 {
     // Hide items if NULL and abort
     if (!active) {
-        ui->refreshButton->setEnabled(false);
-        ui->refreshButton->show();
-        ui->readButton->setEnabled(false);
-        ui->readButton->show();
-        ui->writeButton->setEnabled(false);
-        ui->writeButton->show();
-        ui->loadFileButton->setEnabled(false);
-        ui->loadFileButton->show();
-        ui->saveFileButton->setEnabled(false);
-        ui->saveFileButton->show();
-
         return;
     }
 
@@ -1055,8 +1049,6 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
         //TODO use paramCommsMgr instead
         disconnect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                    SLOT(parameterChanged(int,int,QString,QVariant)));
-        disconnect(ui->refreshButton,SIGNAL(clicked()),
-                   paramMgr,SLOT(requestParameterList()));
 
         // Delete all children from all fixed tabs.
         foreach(QWidget* child, ui->generalLeftContents->findChildren<QWidget*>()) {
@@ -1097,6 +1089,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     paramMgr = mav->getParamManager();
 
     ui->pendingCommitsWidget->setUAS(mav);
+    ui->paramTreeWidget->setUAS(mav);
 
     // Reset current state
     resetCalibrationRC();
@@ -1110,8 +1103,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
                SLOT(remoteControlChannelRawChanged(int,float)));
     connect(mav, SIGNAL(parameterChanged(int,int,QString,QVariant)), this,
                SLOT(parameterChanged(int,int,QString,QVariant)));
-    connect(ui->refreshButton, SIGNAL(clicked()),
-            paramMgr,SLOT(requestParameterList()));
+
 
     if (systemTypeToParamMap.contains(mav->getSystemTypeName())) {
         paramToWidgetMap = systemTypeToParamMap[mav->getSystemTypeName()];
@@ -1135,22 +1127,11 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
     // Since a system is now connected, enable the VehicleConfig UI.
-    ui->refreshButton->setEnabled(true);
-    ui->refreshButton->show();
-    ui->readButton->setEnabled(true);
-    ui->readButton->show();
-    ui->writeButton->setEnabled(true);
-    ui->writeButton->show();
-    ui->loadFileButton->setEnabled(true);
-    ui->loadFileButton->show();
-    ui->saveFileButton->setEnabled(true);
-    ui->saveFileButton->show();
-
-    //TODO never true?
-    if (mav->getAutopilotTypeName() == "ARDUPILOTMEGA") {
-        ui->readButton->hide();
-        ui->writeButton->hide();
-    }
+    // Enable buttons
+    ui->advancedMenuButton->setEnabled(true);
+    ui->airframeMenuButton->setEnabled(true);
+    ui->sensorMenuButton->setEnabled(true);
+    ui->rcMenuButton->setEnabled(true);
 }
 
 void QGCPX4VehicleConfig::resetCalibrationRC()
@@ -1226,8 +1207,13 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     }
 
     // Raw value
-    int delta = abs(fval - rcMappedValue[rcToFunctionMapping[chan]]);
-    if (!configEnabled && !calibrationEnabled && delta < 12 && delta >= 0 && rcValue[chan] > 800 && rcValue[chan] < 2200) {
+    float mappedVal = rcMappedValue[rcToFunctionMapping[chan]];
+    bool isMapped = (((float)UINT16_MAX) != mappedVal);
+    float delta = fabsf(fval - mappedVal);
+    if (!configEnabled && !calibrationEnabled &&
+            (!isMapped ||
+                (delta < 12.0f && rcValue[chan] > 800 && rcValue[chan] < 2200) )
+             ) {
         //ignore tiny jitter values
         return;
     }
@@ -1694,33 +1680,33 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
                 break;
             }
         }
-        if (!found) {
-            //New param type, create a QGroupBox for it.
-            QWidget* parent = ui->advanceColumnContents;
+//        if (!found) {
+//            //New param type, create a QGroupBox for it.
+//            QWidget* parent = ui->advanceColumnContents;
 
-            // Create the tool, attaching it to the QGroupBox
-            QGCToolWidget *tool = new QGCToolWidget("", parent);
-            QString tooltitle = parameterName;
-            if (parameterName.split("_").size() > 1) {
-                tooltitle = parameterName.split("_")[0] + "_";
-            }
-            tool->setTitle(tooltitle);
-            tool->setObjectName(tooltitle);
-            //tool->setSettings(set);
-            libParamToWidgetMap.insert(parameterName,tool);
-            toolWidgets.append(tool);
-            tool->addParam(uas, component, parameterName, value);
-            QGroupBox *box = new QGroupBox(parent);
-            box->setTitle(tool->objectName());
-            box->setLayout(new QVBoxLayout(box));
-            box->layout()->addWidget(tool);
+//            // Create the tool, attaching it to the QGroupBox
+//            QGCToolWidget *tool = new QGCToolWidget("", parent);
+//            QString tooltitle = parameterName;
+//            if (parameterName.split("_").size() > 1) {
+//                tooltitle = parameterName.split("_")[0] + "_";
+//            }
+//            tool->setTitle(tooltitle);
+//            tool->setObjectName(tooltitle);
+//            //tool->setSettings(set);
+//            libParamToWidgetMap.insert(parameterName,tool);
+//            toolWidgets.append(tool);
+//            tool->addParam(uas, component, parameterName, value);
+//            QGroupBox *box = new QGroupBox(parent);
+//            box->setTitle(tool->objectName());
+//            box->setLayout(new QVBoxLayout(box));
+//            box->layout()->addWidget(tool);
 
-            libParamToWidgetMap.insert(parameterName,tool);
-            toolWidgets.append(tool);
-            ui->advancedColumnLayout->addWidget(box);
+//            libParamToWidgetMap.insert(parameterName,tool);
+//            toolWidgets.append(tool);
+//            ui->advancedColumnLayout->addWidget(box);
 
-            toolToBoxMap[tool] = box;
-        }
+//            toolToBoxMap[tool] = box;
+//        }
     }
 
 }

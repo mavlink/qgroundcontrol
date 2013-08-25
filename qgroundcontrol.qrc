@@ -166,6 +166,7 @@
         <file>files/images/px4/airframes/flying_wing.png</file>
         <file>files/images/px4/airframes/plane_ert.png</file>
         <file>files/images/px4/airframes/plane_aert.png</file>
+        <file>files/images/px4/airframes/quad_h.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>

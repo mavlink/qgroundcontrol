@@ -33,9 +33,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-291</y>
         <width>762</width>
-        <height>531</height>
+        <height>647</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
@@ -317,6 +317,10 @@
           <widget class="QPushButton" name="hPushButton">
            <property name="text">
             <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../../../qgroundcontrol.qrc">
+             <normaloff>:/files/images/px4/airframes/quad_h.png</normaloff>:/files/images/px4/airframes/quad_h.png</iconset>
            </property>
            <property name="iconSize">
             <size>

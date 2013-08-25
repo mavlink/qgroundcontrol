@@ -156,11 +156,11 @@ void UASParameterCommsMgr::emitPendingParameterCommit(int compId, const QString&
     }
         break;
     default:
-        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
+        qCritical() << "ABORTED PARAM SEND, INVALID QVARIANT TYPE" << paramType;
         return;
     }
 
-    setParameterStatusMsg(tr("Requested write of: %1: %2").arg(key).arg(value.toDouble()));
+    setParameterStatusMsg(tr("Writing %1: %2 for comp. %3").arg(key).arg(value.toDouble()).arg(compId));
 
 }
 
