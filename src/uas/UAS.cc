@@ -2368,9 +2368,9 @@ void UAS::enableExtra3Transmission(int rate)
  * @param component The component to set the parameter
  * @param id Name of the parameter
  */
-void UAS::setParameter(const int component, const QString& id, const QVariant& value)
+void UAS::setParameter(const int compId, const QString& paramId, const QVariant& value)
 {
-    if (!id.isNull())
+    if (!paramId.isNull())
     {
         mavlink_message_t msg;
         mavlink_param_set_t p;
@@ -2431,7 +2431,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
 
         p.param_value = union_value.param_float;
         p.target_system = (uint8_t)uasId;
-        p.target_component = (uint8_t)component;
+        p.target_component = (uint8_t)compId;
 
         //qDebug() << "SENT PARAM:" << value;
 
@@ -2439,9 +2439,9 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         for (unsigned int i = 0; i < sizeof(p.param_id); i++)
         {
             // String characters
-            if ((int)i < id.length())
+            if ((int)i < paramId.length())
             {
-                p.param_id[i] = id.toAscii()[i];
+                p.param_id[i] = paramId.toAscii()[i];
             }
             else
             {
@@ -2449,7 +2449,7 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
                 p.param_id[i] = 0;
             }
         }
-        mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
+        mavlink_msg_param_set_encode(mavlink->getSystemId(), compId, &msg, &p);
         sendMessage(msg);
     }
 }
