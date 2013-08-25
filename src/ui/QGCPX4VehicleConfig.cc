@@ -82,6 +82,11 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     setObjectName("QGC_VEHICLECONFIG");
     ui->setupUi(this);
 
+    ui->advancedMenuButton->setEnabled(false);
+    ui->airframeMenuButton->setEnabled(false);
+    ui->sensorMenuButton->setEnabled(false);
+    ui->rcMenuButton->setEnabled(false);
+
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
 
@@ -1118,7 +1123,11 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     updateStatus(QString("Reading from system %1").arg(mav->getUASName()));
 
     // Since a system is now connected, enable the VehicleConfig UI.
-    //TODO anything?
+    // Enable buttons
+    ui->advancedMenuButton->setEnabled(true);
+    ui->airframeMenuButton->setEnabled(true);
+    ui->sensorMenuButton->setEnabled(true);
+    ui->rcMenuButton->setEnabled(true);
 }
 
 void QGCPX4VehicleConfig::resetCalibrationRC()
