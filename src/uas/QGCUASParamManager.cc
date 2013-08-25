@@ -56,6 +56,8 @@ void QGCUASParamManager::connectToModelAndComms()
 void QGCUASParamManager::clearAllPendingParams()
 {
     paramDataModel.clearAllPendingParams();
+    emit parameterStatusMsgUpdated(tr("Cleared all pending params"), UASParameterCommsMgr::ParamCommsStatusLevel_OK);
+
 }
 
 
