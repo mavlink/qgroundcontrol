@@ -46,19 +46,30 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     connect(ui->quadPlusPushButton, SIGNAL(clicked()), this, SLOT(quadPlusSelected()));
     connect(ui->quadPlusComboBox, SIGNAL(activated(int)), this, SLOT(quadPlusSelected(int)));
+    ui->quadPlusPushButton->setEnabled(ui->quadPlusComboBox->count() > 0);
 
+    connect(ui->hexaXPushButton, SIGNAL(clicked()), this, SLOT(hexaXSelected()));
     connect(ui->hexaXComboBox, SIGNAL(activated(int)), this, SLOT(hexaXSelected(int)));
+    ui->hexaXPushButton->setEnabled(ui->hexaXComboBox->count() > 0);
 
+    connect(ui->hexaPlusPushButton, SIGNAL(clicked()), this, SLOT(hexaPlusSelected()));
     connect(ui->hexaPlusComboBox, SIGNAL(activated(int)), this, SLOT(hexaPlusSelected(int)));
+    ui->hexaPlusPushButton->setEnabled(ui->hexaPlusComboBox->count() > 0);
 
+    connect(ui->octoXPushButton, SIGNAL(clicked()), this, SLOT(octoXSelected()));
     connect(ui->octoXComboBox, SIGNAL(activated(int)), this, SLOT(octoXSelected(int)));
+    ui->octoXPushButton->setEnabled(ui->octoXComboBox->count() > 0);
 
+    connect(ui->octoPlusPushButton, SIGNAL(clicked()), this, SLOT(octoPlusSelected()));
     connect(ui->octoPlusComboBox, SIGNAL(activated(int)), this, SLOT(octoPlusSelected(int)));
-
-    connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));
+    ui->octoPlusPushButton->setEnabled(ui->octoPlusComboBox->count() > 0);
 
     ui->hComboBox->addItem(tr("TBS Discovery"), 15);
     ui->hComboBox->addItem(tr("H Custom"), 16);
+
+    connect(ui->hPushButton, SIGNAL(clicked()), this, SLOT(hSelected()));
+    connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));
+    ui->hPushButton->setEnabled(ui->hComboBox->count() > 0);
 
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(applyAndReboot()));
 
@@ -122,9 +133,6 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
 
     qDebug() << "setAirframeID" << id;
     ui->statusLabel->setText(tr("Start script ID: #%1").arg(id));
-
-    if (selectedId == id)
-        return;
 
     selectedId = id;
 
@@ -223,6 +231,7 @@ void QGCPX4AirframeConfig::applyAndReboot()
 
     configState = CONFIG_STATE_SEND;
     QTimer::singleShot(200, this, SLOT(checkConfigState()));
+    setEnabled(false);
 }
 
 void QGCPX4AirframeConfig::checkConfigState()
@@ -269,6 +278,7 @@ void QGCPX4AirframeConfig::checkConfigState()
 
             if (progress->wasCanceled()) {
                 configState = CONFIG_STATE_ABORT;
+                setEnabled(true);
                 pendingParams = 0;
                 return;
             }
@@ -300,6 +310,13 @@ void QGCPX4AirframeConfig::checkConfigState()
             progress = new QProgressDialog("Waiting for autopilot reboot", "Abort", 0, pendingMax, this);
             progress->setWindowModality(Qt::WindowModal);
             qDebug() << "Waiting for reboot, pending" << pendingParams;
+        } else {
+            if (progress->wasCanceled()) {
+                configState = CONFIG_STATE_ABORT;
+                setEnabled(true);
+                pendingParams = 0;
+                return;
+            }
         }
 
         if (pendingParams == 3) {
@@ -334,6 +351,7 @@ void QGCPX4AirframeConfig::checkConfigState()
             progress->setValue(pendingMax);
             configState = CONFIG_STATE_ABORT;
             pendingParams = 0;
+            setEnabled(true);
             return;
         }
         qDebug() << "PENDING PARAMS REBOOT AFTER:" << pendingParams;

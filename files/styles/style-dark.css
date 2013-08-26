@@ -408,6 +408,15 @@ QPushButton#viewModeGeneric, QPushButton#viewModePX4, QPushButton#viewModeAPM, Q
     border: 3px solid #465158;
 }
 
+QPushButton#magButton, QPushButton#gyroButton, QPushButton#accelButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
+    border-radius: 8px;
+    min-height: 30px;
+    max-height: 50px;
+    min-width: 60px;
+    border: 3px solid #465158;
+}
+
 QWidget#containerWidget {
     background-color: qlineargradient(spread:pad, x1:0.527222, y1:0.961, x2:0.536946, y2:0.198864, stop:0.103448 rgba(65, 65, 65, 255), stop:1 rgba(119, 119, 119, 255));
     border-radius: 16px;

@@ -21,6 +21,7 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     accelAxes << "z+";
     accelAxes << "z-";
 
+
     ui->setupUi(this);
     connect(clearAction, SIGNAL(triggered()), ui->textView, SLOT(clear()));
 
