@@ -52,5 +52,7 @@ user_config.pri
 thirdParty/qserialport-build-desktop/
 thirdParty/qserialport/bin/
 thirdParty/qserialport/lib/
-apmplanner2.xcodeproj/
 GeneratedFiles/
+/qupgrade/
+
+*.autosave

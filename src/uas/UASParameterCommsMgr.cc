@@ -7,9 +7,9 @@
 
 #define RC_CAL_CHAN_MAX 8
 
-UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
+UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent) :
     QObject(parent),
-    mav(uas),
+    mav(NULL),
     paramDataModel(NULL),
     transmissionListMode(false),
     transmissionActive(false),
@@ -18,9 +18,15 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     rewriteTimeout(1000),
     retransmissionBurstRequestSize(5)
 {
-    paramDataModel = mav->getParamDataModel();
-    loadParamCommsSettings();
 
+
+}
+
+UASParameterCommsMgr* UASParameterCommsMgr::initWithUAS(UASInterface* uas)
+{
+    mav = uas;
+    paramDataModel = mav->getParamManager()->dataModel();
+    loadParamCommsSettings();
 
     //Requesting parameters one-by-one from mav
     connect(this, SIGNAL(parameterUpdateRequestedById(int,int)),
@@ -34,10 +40,11 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent, UASInterface *uas) :
     connect(mav, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
             this, SLOT(receivedParameterUpdate(int,int,int,int,QString,QVariant)));
 
-    //connecto retransmissionTimer
+    //connect to retransmissionTimer
     connect(&retransmissionTimer, SIGNAL(timeout()),
             this, SLOT(retransmissionGuardTick()));
 
+    return this;
 }
 
 
@@ -60,15 +67,6 @@ void UASParameterCommsMgr::loadParamCommsSettings()
 }
 
 
-void UASParameterCommsMgr::requestParameterListIfEmpty()
-{
-    int totalOnboard = paramDataModel->countOnboardParams();
-    if (totalOnboard < 2) { //TODO arbitrary constant, maybe 0 is OK?
-        requestParameterList();
-    }
-}
-
-
 
 /**
  * Send a request to deliver the list of onboard parameters
@@ -79,9 +77,6 @@ void UASParameterCommsMgr::requestParameterList()
     if (!mav) {
         return;
     }
-
-    //TODO check: no need to cause datamodel to forget params here?
-//    paramDataModel->forgetAllOnboardParameters();
 
     if (!transmissionListMode) {
         // Clear transmission state
@@ -161,11 +156,11 @@ void UASParameterCommsMgr::emitPendingParameterCommit(int compId, const QString&
     }
         break;
     default:
-        qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
+        qCritical() << "ABORTED PARAM SEND, INVALID QVARIANT TYPE" << paramType;
         return;
     }
 
-    setParameterStatusMsg(tr("Requested write of: %1: %2").arg(key).arg(value.toDouble()));
+    setParameterStatusMsg(tr("Writing %1: %2 for comp. %3").arg(key).arg(value.toDouble()).arg(compId));
 
 }
 
@@ -218,7 +213,7 @@ void UASParameterCommsMgr::resendReadWriteRequests()
     }
 
     if ((0 == requestedWriteCount) && (0 == requestedReadCount) ) {
-        qDebug() << __FILE__ << __LINE__ << "NO re-read or rewrite requests??";
+        qDebug() << __FILE__ << __LINE__ << "No pending re-read or rewrite requests";
         if (!transmissionListMode) {
             setRetransmissionGuardEnabled(false);
             transmissionActive = false;
@@ -429,6 +424,8 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 {
     Q_UNUSED(uas); //this object is assigned to one UAS only
 
+    qDebug() << "compId" << compId << "receivedParameterUpdate:" << paramName;
+
     //notify the data model that we have an updated param
     paramDataModel->handleParamUpdate(compId,paramName,value);
 
@@ -476,6 +473,10 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 
     // Mark this parameter as received in write ACK list
     QMap<QString, QVariant>* compMissWritePackets = missingWriteAckPackets.value(compId);
+    if (!compMissWritePackets) {
+        //we sometimes send a write request on compId 0 and get a response on a nonzero compId eg 50
+        compMissWritePackets = missingWriteAckPackets.value(0);
+    }
     if (compMissWritePackets && compMissWritePackets->contains(paramName)) {
         justWritten = true;
         if (compMissWritePackets->value(paramName) != value) {
@@ -500,6 +501,10 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
             setParameterStatusMsg(tr("SUCCESS: Wrote %2 (#%1/%4): %3 [%5]").arg(paramId+1).arg(paramName).arg(value.toDouble()).arg(paramCount).arg(missWriteCount));
             if (0 == missWriteCount) {
                 setParameterStatusMsg(tr("SUCCESS: WROTE ALL PARAMETERS"));
+                if (persistParamsAfterSend) {
+                    writeParamsToPersistentStorage();
+                    persistParamsAfterSend = false;
+                }
             }
         }
         else  {
@@ -565,12 +570,15 @@ void UASParameterCommsMgr::writeParamsToPersistentStorage()
 {
     if (mav) {
         mav->writeParametersToStorage(); //TODO track timeout, retransmit etc?
+        persistParamsAfterSend = false; //done
     }
 }
 
 
-void UASParameterCommsMgr::sendPendingParameters()
+void UASParameterCommsMgr::sendPendingParameters(bool copyToPersistent)
 {
+    persistParamsAfterSend |= copyToPersistent;
+
     // Iterate through all components, through all pending parameters and send them to UAS
     int parametersSent = 0;
     QMap<int, QMap<QString, QVariant>*>* changedValues = paramDataModel->getAllPendingParams();
@@ -592,7 +600,11 @@ void UASParameterCommsMgr::sendPendingParameters()
     // Change transmission status if necessary
     if (parametersSent == 0) {
         setParameterStatusMsg(tr("No transmission: No changed values."),ParamCommsStatusLevel_Warning);
-    } else {
+        if (persistParamsAfterSend) {
+            writeParamsToPersistentStorage();
+        }
+    }
+    else {
         setParameterStatusMsg(tr("Transmitting %1 parameters.").arg(parametersSent));
         // Set timeouts
         if (transmissionActive) {

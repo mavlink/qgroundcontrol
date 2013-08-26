@@ -142,6 +142,35 @@ INCLUDEPATH += \
 
 include(src/apps/mavlinkgen/mavlinkgen.pri)
 
+# Include QUpgrade tool
+exists(qupgrade) {
+    SOURCES += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
+               qupgrade/src/apps/qupgrade/uploader.cpp \
+               qupgrade/src/apps/qupgrade/dialog_bare.cpp \
+               qupgrade/src/apps/qupgrade/boardwidget.cpp
+
+    HEADERS += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
+               qupgrade/src/apps/qupgrade/uploader.h \
+               qupgrade/src/apps/qupgrade/dialog_bare.h \
+               qupgrade/src/apps/qupgrade/boardwidget.h
+
+    FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui \
+             qupgrade/src/apps/qupgrade/boardwidget.ui
+
+    RESOURCES += qupgrade/qupgrade.qrc
+
+    linux*:CONFIG += qesp_linux_udev
+
+    include(qupgrade/libs/qextserialport/src/qextserialport.pri)
+
+    INCLUDEPATH += qupgrade/src/apps/qupgrade
+
+    DEFINES += "QUPGRADE_SUPPORT"
+}
+
+# Include GLC library
+#include(libs/GLC_lib/glc_lib.pri)
+
 # Include QWT plotting library
 include(libs/qwt/qwt.pri)
 
@@ -152,12 +181,6 @@ INCLUDEPATH += .
 
 # Include serial port library (QSerialPort)
 include(libs/serialport/qserialport.pri)
-
-## Serial port detection (ripped-off from qextserialport library)
-#macx|macx-g++|macx-g++42::SOURCES += libs/qextserialport/qextserialenumerator_osx.cpp
-#linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-#linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-#win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
 
 # Input
 FORMS += src/ui/MainWindow.ui \
@@ -269,7 +292,10 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/main/QGCWelcomeMainWindow.ui \
     src/ui/configuration/terminalconsole.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
-    src/ui/configuration/ApmFirmwareConfig.ui
+    src/ui/configuration/ApmFirmwareConfig.ui \
+    src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
+    src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
+    src/ui/px4_configuration/QGCPX4SensorCalibration.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -388,8 +414,7 @@ HEADERS += src/MG.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointEditableView.h \    
-    src/ui/UnconnectedUASInfoWidget.h \
+    src/ui/WaypointEditableView.h \
     src/ui/QGCRGBDView.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
     src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
@@ -471,7 +496,11 @@ HEADERS += src/MG.h \
     src/ui/configuration/ApmFirmwareConfig.h \
     src/uas/UASParameterDataModel.h \
     src/uas/UASParameterCommsMgr.h \
-    src/ui/QGCPendingParamWidget.h
+    src/ui/QGCPendingParamWidget.h \
+    src/ui/px4_configuration/QGCPX4AirframeConfig.h \
+    src/ui/QGCBaseParamWidget.h \
+    src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
+    src/ui/px4_configuration/QGCPX4SensorCalibration.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -689,7 +718,11 @@ SOURCES += src/main.cc \
     src/ui/configuration/ApmFirmwareConfig.cc \
     src/uas/UASParameterDataModel.cc \
     src/uas/UASParameterCommsMgr.cc \
-    src/ui/QGCPendingParamWidget.cc
+    src/ui/QGCPendingParamWidget.cc \
+    src/ui/px4_configuration/QGCPX4AirframeConfig.cc \
+    src/ui/QGCBaseParamWidget.cc \
+    src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
+    src/ui/px4_configuration/QGCPX4SensorCalibration.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

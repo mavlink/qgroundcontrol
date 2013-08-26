@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
     mav(NULL),
+    userBaudChoice(false),
     changed(true),
     batteryPercent(0),
     batteryVoltage(0),
@@ -75,6 +76,8 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         }
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
         toolBarTimeoutAction->setVisible(true);
+
+        toolBarMessageLabel->hide();
     }
     else
     {
@@ -82,6 +85,8 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         if (toolBarTimeoutAction->isVisible())
         {
             toolBarTimeoutAction->setVisible(false);
+
+            toolBarMessageLabel->show();
         }
     }
 }
@@ -176,7 +181,7 @@ void QGCToolBar::createUI()
     baudcomboBox->addItem("921600", 921600);
     baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
     addWidget(baudcomboBox);
-
+    connect(baudcomboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(baudSelected(int)));
 
 
     connectButton = new QPushButton(tr("Connect"), this);
@@ -217,6 +222,9 @@ void QGCToolBar::createUI()
 
     loadSettings();
 
+    connect(&portBoxTimer, SIGNAL(timeout()), this, SLOT(updateComboBox()));
+    portBoxTimer.start(500);
+
     changed = false;
 }
 
@@ -242,6 +250,11 @@ void QGCToolBar::resetToolbarUI()
     lastSystemMessageTimeMs = 0;
     symbolLabel->setStyleSheet("");
     symbolLabel->clear();
+}
+
+void QGCToolBar::baudSelected(int index)
+{
+    userBaudChoice = true;
 }
 
 void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
@@ -458,7 +471,7 @@ void QGCToolBar::updateView()
         {
             toolBarSafetyLabel->setStyleSheet("QLabel {color: #14C814; font-size: 15pt;}");
         }
-        toolBarSafetyLabel->setText(tr("SAFE"));
+        toolBarSafetyLabel->setText(tr("DISARMED"));
     }
 
     changed = false;
@@ -643,32 +656,41 @@ void QGCToolBar::removeLink(LinkInterface* link)
 }
 void QGCToolBar::updateComboBox()
 {
-    portComboBox->clear();
+//    portComboBox->clear();
     if (currentLink)
     {
         SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
         QList<QString> portlist = slink->getCurrentPorts();
-        foreach(QString port, portlist) {
-            portComboBox->addItem(port, port);
+        foreach (QString port, portlist)
+        {
+            if (portComboBox->findText(port) == -1)
+            {
+                portComboBox->addItem(port, port);
+            }
         }
 
-        portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
         if (slink->getPortName().trimmed().length() > 0)
         {
+            portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
             portComboBox->setEditText(slink->getPortName());
         }
         else
         {
             if (portlist.length() > 0)
             {
-                portComboBox->setEditText(portlist.first());
+                portComboBox->setEditText(portlist.last());
             }
             else
             {
                 portComboBox->setEditText(tr("No serial port found"));
             }
         }
-        baudcomboBox->setCurrentIndex(baudcomboBox->findData(slink->getBaudRate()));
+
+        if (!userBaudChoice) {
+            int index = baudcomboBox->findData(slink->getBaudRate());
+            if (index > 0)
+                baudcomboBox->setCurrentIndex(index);
+        }
     }
 }
 

@@ -49,117 +49,108 @@ This file is part of the QGROUNDCONTROL project
  * @param uas MAV to set the parameters on
  * @param parent Parent widget
  */
-QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
-    QGCUASParamManager(uas, parent),
+QGCParamWidget::QGCParamWidget(QWidget *parent) :
+    QGCBaseParamWidget(parent),
     componentItems(new QMap<int, QTreeWidgetItem*>()),
-    updatingParamNameLock("")
+    statusLabel(new QLabel(this)),
+    tree(new QTreeWidget(this))
 {
+
 
 }
 
-void QGCParamWidget::init()
+
+
+void QGCParamWidget::disconnectViewSignalsAndSlots()
 {
-    layoutWidget();
-    connectSignalsAndSlots();
-
-    // Ensure we have a list of params
-    paramCommsMgr->requestParameterListIfEmpty();
-
+    disconnect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
+            this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
 }
 
-void QGCParamWidget::connectSignalsAndSlots()
-{
 
+void QGCParamWidget::connectViewSignalsAndSlots()
+{
     // Listen for edits to the tree UI
     connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
             this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
-
-    // Listen to updated param signals from the data model
-    connect(paramDataModel, SIGNAL(parameterUpdated(int, QString , QVariant )),
-            this, SLOT(handleParameterUpdate(int,QString,QVariant)));
-
-    connect(paramDataModel, SIGNAL(pendingParamUpdate(int , const QString&, QVariant , bool )),
-            this, SLOT(handlePendingParamUpdate(int , const QString& ,  QVariant, bool )));
-
-    // Listen for param list reload finished
-    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
-            this, SLOT(handleParameterListUpToDate()));
-
-    // Listen to communications status messages so we can display them
-    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
-            this, SLOT(handleParamStatusMsgUpdate(QString , int )));
 }
 
-void QGCParamWidget::layoutWidget()
+
+void QGCParamWidget::addActionButtonsToLayout(QGridLayout* layout)
 {
-    // Create tree widget
-    tree = new QTreeWidget(this);
-    statusLabel = new QLabel();
-    statusLabel->setAutoFillBackground(true);
-
-    // Set tree widget as widget onto this component
-    QGridLayout* horizontalLayout;
-    //form->setAutoFillBackground(false);
-    horizontalLayout = new QGridLayout(this);
-    horizontalLayout->setHorizontalSpacing(6);
-    horizontalLayout->setVerticalSpacing(6);
-    horizontalLayout->setMargin(0);
-    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
-    //horizontalLayout->setSizeConstraint( QLayout::SetFixedSize );
-
-    // Parameter tree
-    horizontalLayout->addWidget(tree, 0, 0, 1, 3);
-
-    // Status line
-    statusLabel->setText(tr("Click refresh to download parameters"));
-    horizontalLayout->addWidget(statusLabel, 1, 0, 1, 3);
-
-    // BUTTONS
     QPushButton* refreshButton = new QPushButton(tr("Get"));
-    refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
-    refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
-    connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestAllParamsUpdate()));
-    horizontalLayout->addWidget(refreshButton, 2, 0);
+    refreshButton->setToolTip(tr("Fetch parameters currently in volatile memory of aircraft."));
+    refreshButton->setWhatsThis(tr("Fetch parameters currently in volatile memory of aircraft."));
+    connect(refreshButton, SIGNAL(clicked()),
+            this, SLOT(requestOnboardParamsUpdate()));
+    layout->addWidget(refreshButton, 2, 0);
 
     QPushButton* setButton = new QPushButton(tr("Set"));
-    setButton->setToolTip(tr("Set current parameters in non-permanent onboard memory"));
-    setButton->setWhatsThis(tr("Set current parameters in non-permanent onboard memory"));
+    setButton->setToolTip(tr("Send pending parameters to volatile onboard memory"));
+    setButton->setWhatsThis(tr("Send pending parameters to volatile onboard memory"));
     connect(setButton, SIGNAL(clicked()),
-            this, SLOT(sendPendingParameters()));
-    horizontalLayout->addWidget(setButton, 2, 1);
+            paramMgr, SLOT(sendPendingParameters()));
+    layout->addWidget(setButton, 2, 1);
 
     QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
-    writeButton->setToolTip(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
-    writeButton->setWhatsThis(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
-    connect(writeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
-    horizontalLayout->addWidget(writeButton, 2, 2);
+    writeButton->setToolTip(tr("Copy parameters in volatile memory of the aircraft to persistent memory. Transmit your parameters first to write these."));
+    writeButton->setWhatsThis(tr("Copy parameters in volatile memory of the aircraft to persistent memory. Transmit your parameters first to write these."));
+    connect(writeButton, SIGNAL(clicked()),
+            paramMgr, SLOT(copyVolatileParamsToPersistent()));
+    layout->addWidget(writeButton, 2, 2);
 
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
-    loadFileButton->setToolTip(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
-    loadFileButton->setWhatsThis(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
-    connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParametersFromFile()));
-    horizontalLayout->addWidget(loadFileButton, 3, 0);
+    loadFileButton->setToolTip(tr("Load parameters from a file into qgroundcontrol. To write these to the aircraft, use transmit after loading them."));
+    loadFileButton->setWhatsThis(tr("Load parameters from a file into qgroundcontrol. To write these to the aircraft, use transmit after loading them."));
+    connect(loadFileButton, SIGNAL(clicked()),
+            this, SLOT(loadParametersFromFile()));
+    layout->addWidget(loadFileButton, 3, 0);
 
     QPushButton* saveFileButton = new QPushButton(tr("Save File"));
     saveFileButton->setToolTip(tr("Save parameters in this view to a file on this computer."));
     saveFileButton->setWhatsThis(tr("Save parameters in this view to a file on this computer."));
-    connect(saveFileButton, SIGNAL(clicked()), this, SLOT(saveParametersToFile()));
-    horizontalLayout->addWidget(saveFileButton, 3, 1);
+    connect(saveFileButton, SIGNAL(clicked()),
+            this, SLOT(saveParametersToFile()));
+    layout->addWidget(saveFileButton, 3, 1);
 
     QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
-    readButton->setToolTip(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
-    readButton->setWhatsThis(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
-    connect(readButton, SIGNAL(clicked()), this, SLOT(readParameters()));
-    horizontalLayout->addWidget(readButton, 3, 2);
+    readButton->setToolTip(tr("Copy parameters from persistent onboard memory to volatile onboard memory of aircraft. DOES NOT update the parameters in this view: click refresh after copying them to get them."));
+    readButton->setWhatsThis(tr("Copy parameters from persistent onboard memory to volatile onboard memory of aircraft. DOES NOT update the parameters in this view: click refresh after copying them to get them."));
+    connect(readButton, SIGNAL(clicked()),
+            paramMgr, SLOT(copyPersistentParamsToVolatile()));
+    layout->addWidget(readButton, 3, 2);
+
+}
+
+void QGCParamWidget::layoutWidget()
+{
+
+    statusLabel->setAutoFillBackground(true);
+
+    QGridLayout* layout = new QGridLayout(this);
+    layout->setHorizontalSpacing(6);
+    layout->setVerticalSpacing(6);
+    layout->setMargin(0);
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
+
+    // Parameter tree
+    layout->addWidget(tree, 0, 0, 1, 3);
+
+    // Status line
+    statusLabel->setText(tr("Click refresh to download parameters"));
+    layout->addWidget(statusLabel, 1, 0, 1, 3);
+
+    // BUTTONS
+    addActionButtonsToLayout(layout);
 
     // Set correct vertical scaling
-    horizontalLayout->setRowStretch(0, 100);
-    horizontalLayout->setRowStretch(1, 10);
-    horizontalLayout->setRowStretch(2, 10);
-    horizontalLayout->setRowStretch(3, 10);
+    layout->setRowStretch(0, 100);
+    layout->setRowStretch(1, 10);
+    layout->setRowStretch(2, 10);
+    layout->setRowStretch(3, 10);
 
     // Set layout
-    this->setLayout(horizontalLayout);
+    this->setLayout(layout);
 
     // Set header
     QStringList headerItems;
@@ -180,8 +171,8 @@ void QGCParamWidget::addComponentItem(int compId, QString compName)
 
     QString compLine = QString("%1 (#%2)").arg(compName).arg(compId);
 
-    QString ptrStr = QString().sprintf("%8p", this);
-    qDebug() <<  "QGCParamWidget" << ptrStr << "addComponentItem:" << compLine;
+    //QString ptrStr = QString().sprintf("%8p", this);
+    //qDebug() <<  "QGCParamWidget" << ptrStr << "addComponentItem:" << compLine;
 
     if (componentItems->contains(compId)) {
         // Update existing component item
@@ -200,14 +191,11 @@ void QGCParamWidget::addComponentItem(int compId, QString compName)
         tree->update();
     }
 
-    //TODO it seems unlikely that the UI would know about a component before the data model...
-    paramDataModel->addComponent(compId);
-
 }
 
 void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramName, QVariant value, bool isPending)
 {
-   // qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
+    //qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
 
     if (updatingParamNameLock == paramName) {
         //qDebug() << "ignoring bounce from " << paramName;
@@ -221,6 +209,8 @@ void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramNa
     if (isPending) {
         paramItem->setBackground(0, QBrush(QColor(QGC::colorOrange)));
         paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
+        //ensure that the adjusted item is visible
+        tree->expandItem(paramItem->parent());
     }
     else {
         paramItem->setBackground(0, Qt::NoBrush);
@@ -231,11 +221,11 @@ void QGCParamWidget::handlePendingParamUpdate(int compId, const QString& paramNa
 
 }
 
-void QGCParamWidget::handleParameterUpdate(int compId, const QString& paramName, QVariant value)
+void QGCParamWidget::handleOnboardParamUpdate(int compId, const QString& paramName, QVariant value)
 {
-//    qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
+    //qDebug() << "handlePendingParamUpdate:" << paramName << "with updatingParamNameLock:" << updatingParamNameLock;
     if (paramName == updatingParamNameLock) {
-        qDebug() << "handlePendingParamUpdate ignoring bounce from " << paramName;
+        //qDebug() << "handlePendingParamUpdate ignoring bounce from " << paramName;
         return;
     }
     updatingParamNameLock = paramName;
@@ -244,14 +234,14 @@ void QGCParamWidget::handleParameterUpdate(int compId, const QString& paramName,
 }
 
 
-void QGCParamWidget::handleParameterListUpToDate()
+void QGCParamWidget::handleOnboardParameterListUpToDate()
 {
     //turn off updates while we refresh the entire list
     tree->setUpdatesEnabled(false);
 
     //rewrite the component item tree after receiving the full list
     QMap<int, QMap<QString, QVariant>*>::iterator i;
-    QMap<int, QMap<QString, QVariant>*>* onboardParams = paramDataModel->getAllOnboardParams();
+    QMap<int, QMap<QString, QVariant>*>* onboardParams = paramMgr->dataModel()->getAllOnboardParams();
 
     for (i = onboardParams->begin(); i != onboardParams->end(); ++i) {
         int compId = i.key();
@@ -323,7 +313,7 @@ QTreeWidgetItem* QGCParamWidget::getParentWidgetItemForParam(int compId, const Q
 
 QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
 {
-//    qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
+    //qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
 
     // Reference to item in tree
     QTreeWidgetItem* paramItem = NULL;
@@ -357,12 +347,12 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             parentItem->addChild(paramItem);
 
             //only add the tooltip when the parameter item is first added
-            QString paramDesc = paramDataModel->getParamDescription(parameterName);
+            QString paramDesc = paramMgr->dataModel()->getParamDescription(parameterName);
             if (!paramDesc.isEmpty()) {
                 QString tooltipFormat;
-                if (paramDataModel->isParamDefaultKnown(parameterName)) {
+                if (paramMgr->dataModel()->isParamDefaultKnown(parameterName)) {
                     tooltipFormat = tr("Default: %1, %2");
-                    double paramDefValue = paramDataModel->getParamDefault(parameterName);
+                    double paramDefValue = paramMgr->dataModel()->getParamDefault(parameterName);
                     tooltipFormat = tooltipFormat.arg(paramDefValue).arg(paramDesc);
                 }
                 else {
@@ -380,6 +370,7 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
         else {
             paramItem->setData(1, Qt::DisplayRole, value);
         }
+
     }
 
     if (paramItem) {
@@ -396,22 +387,21 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
         }
 
     }
-    return paramItem;
 
+    return paramItem;
 }
 
 
 
 void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column)
 {
-
     if (paramItem && column > 0) {
 
         QString key = paramItem->data(0, Qt::DisplayRole).toString();
         //qDebug() << "parameterItemChanged:" << key << "with updatingParamNameLock:" << updatingParamNameLock;
 
         if (key == updatingParamNameLock) {
-            //qDebug() << "parameterItemChanged ignoring parameterItemChanged" << key;
+            //qDebug() << "parameterItemChanged ignoring bounce from " << key;
             return;
         }
         else {
@@ -427,7 +417,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
         QVariant value = paramItem->data(1, Qt::DisplayRole);
 
 
-        bool pending = paramDataModel->updatePendingParamWithValue(componentId,key,value);
+        bool pending = paramMgr->dataModel()->updatePendingParamWithValue(componentId,key,value);
 
         // If the value will result in an update
         if (pending) {
@@ -438,7 +428,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
             paramItem->setBackground(1, QBrush(QColor(QGC::colorOrange)));
         }
         else {
-            QMap<QString , QVariant>* pendingParams = paramDataModel->getPendingParamsForComponent(componentId);
+            QMap<QString , QVariant>* pendingParams = paramMgr->dataModel()->getPendingParamsForComponent(componentId);
             int pendingCount = pendingParams->count();
             statusLabel->setText(tr("Pending items: %1").arg(pendingCount));
             paramItem->setBackground(0, Qt::NoBrush);
@@ -456,88 +446,24 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* paramItem, int column
 }
 
 
-
-void QGCParamWidget::saveParametersToFile()
-{
-    if (!mav) return;
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./parameters.txt", tr("Parameter File (*.txt)"));
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        return;
-    }
-
-    QTextStream outstream(&file);
-    paramDataModel->writeOnboardParamsToStream(outstream,mav->getUASName());
-    file.close();
-}
-
-
-void QGCParamWidget::loadParametersFromFile()
-{
-    if (!mav) return;
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Parameter file (*.txt)"));
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
-
-    QTextStream in(&file);
-    paramDataModel->readUpdateParamsFromStream(in);
-    file.close();
-}
-
 void QGCParamWidget::setParameterStatusMsg(const QString& msg)
 {
     statusLabel->setText(msg);
 }
 
-void QGCParamWidget::requestAllParamsUpdate()
-{
-    if (!mav) {
-        return;
-    }
 
-    // Clear view and request param list
-    clear();
-    //paramDataModel->forgetAllOnboardParameters(); //TODO really??
-
-    requestParameterList();
-}
-
-
-
-/**
- * Write the current onboard parameters from RAM into
- * permanent storage, e.g. EEPROM or harddisk
- */
-void QGCParamWidget::writeParameters()
-{
-    int changedParamCount = paramDataModel->countPendingParams();
-
-    if (changedParamCount > 0) {
-        QMessageBox msgBox;
-        msgBox.setText(tr("There are locally changed parameters. Please transmit them first (<TRANSMIT>) or update them with the onboard values (<REFRESH>) before storing onboard from RAM to ROM."));
-        msgBox.exec();
-    }
-    else {
-        paramCommsMgr->writeParamsToPersistentStorage();
-    }
-}
-
-
-void QGCParamWidget::readParameters()
-{
-    if (!mav) return;
-    mav->readParametersFromStorage(); //TODO use data model / mgr instead?
-}
-
-/**
- * Clear all data in the parameter widget
- */
-void QGCParamWidget::clear()
+void QGCParamWidget::clearOnboardParamDisplay()
 {
     tree->clear();
     componentItems->clear();
 }
+
+void QGCParamWidget::clearPendingParamDisplay()
+{
+    tree->clear();
+    componentItems->clear();
+}
+
 
 void QGCParamWidget::handleParamStatusMsgUpdate(QString msg, int level)
 {
@@ -553,5 +479,4 @@ void QGCParamWidget::handleParamStatusMsgUpdate(QString msg, int level)
     pal.setColor(backgroundRole(), bgColor);
     statusLabel->setPalette(pal);
     statusLabel->setText(msg);
-
 }

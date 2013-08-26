@@ -19,6 +19,8 @@
 #include "QGC.h"
 #include <MG.h>
 
+
+
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
     m_bytesRead(0),
@@ -137,8 +139,7 @@ void SerialLink::writeSettings()
 void SerialLink::run()
 {
     // Initialize the connection
-    if (!hardwareConnect())
-    {
+    if (!hardwareConnect()) {
         //Need to error out here.
         emit communicationError(getName(),"Error connecting: " + m_port->errorString());
         disconnect(); // This tidies up and sends the necessary signals
@@ -155,20 +156,17 @@ void SerialLink::run()
     qint64 timeout = 5000;
     int linkErrorCount = 0;
 
-    forever
-    {
+    forever  {
         {
-            QMutexLocker locker(&this->m_stoppMutex);
-            if(m_stopp)
-            {
+        QMutexLocker locker(&this->m_stoppMutex);
+            if(m_stopp) {
                 m_stopp = false;
                 break; // exit the thread
             }
 
-            if (m_reqReset)
-            {
+            if (m_reqReset) {
                 m_reqReset = false;
-                communicationUpdate(getName(),"Reset requested via DTR signal");
+                emit communicationUpdate(getName(),"Reset requested via DTR signal");
                 m_port->setDataTerminalReady(true);
                 msleep(250);
                 m_port->setDataTerminalReady(false);
@@ -178,27 +176,29 @@ void SerialLink::run()
         if (isConnected() && (linkErrorCount > 100)) {
             qDebug() << "linkErrorCount too high: disconnecting!";
             linkErrorCount = 0;
-            communicationError("SerialLink", tr("Disconnecting on too many link errors"));
+            emit communicationUpdate(getName(), tr("Disconnecting on too many link errors"));
             disconnect();
         }
 
         if (m_transmitBuffer.count() > 0) {
             QMutexLocker writeLocker(&m_writeMutex);
             int numWritten = m_port->write(m_transmitBuffer);
-            bool txSuccess = m_port->waitForBytesWritten(1);
-            if (!txSuccess || (numWritten != m_transmitBuffer.count()))
-            {
+            bool txSuccess = m_port->waitForBytesWritten(5);
+            if (!txSuccess || (numWritten != m_transmitBuffer.count())) {
                 linkErrorCount++;
                 qDebug() << "TX Error! wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";
-            } else {
+            }
+            else {
                 linkErrorCount = 0;
             }
             m_transmitBuffer =  m_transmitBuffer.remove(0, numWritten);
         }
 
+        //wait n msecs for data to be ready
+        //[TODO][BB] lower to SerialLink::poll_interval?
         bool success = m_port->waitForReadyRead(10);
 
-        if (success) { // Waits for 1/2 second [TODO][BB] lower to SerialLink::poll_interval?
+        if (success) {
             QByteArray readData = m_port->readAll();
             while (m_port->waitForReadyRead(10))
                 readData += m_port->readAll();
@@ -210,24 +210,21 @@ void SerialLink::run()
                 m_bitsReceivedTotal += readData.length() * 8;
                 linkErrorCount = 0;
             }
-        } else {
+        }
+        else {
             linkErrorCount++;
             //qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
         }
 
-        if (bytes != m_bytesRead) // i.e things are good and data is being read.
-        {
+        if (bytes != m_bytesRead) { // i.e things are good and data is being read.
             bytes = m_bytesRead;
             msecs = QDateTime::currentMSecsSinceEpoch();
         }
-        else
-        {
-            if (QDateTime::currentMSecsSinceEpoch() - msecs > timeout)
-            {
+        else {
+            if (QDateTime::currentMSecsSinceEpoch() - msecs > timeout) {
                 //It's been 10 seconds since the last data came in. Reset and try again
                 msecs = QDateTime::currentMSecsSinceEpoch();
-                if (msecs - initialmsecs > 25000)
-                {
+                if (msecs - initialmsecs > 25000) {
                     //After initial 25 seconds, timeouts are increased to 30 seconds.
                     //This prevents temporary silences from things like calibration commands
                     //from screwing things up. In all reality, timeouts should be enabled/disabled
@@ -235,25 +232,22 @@ void SerialLink::run()
                     //TODO ^^
                     timeout = 30000;
                 }
-                if (!triedDTR && triedreset)
-                {
+                if (!triedDTR && triedreset) {
                     triedDTR = true;
-                    communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
+                    emit communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
                     qDebug() << "No data!!! Attempting reset via DTR.";
                     m_port->setDataTerminalReady(true);
                     msleep(250);
                     m_port->setDataTerminalReady(false);
                 }
-                else if (!triedreset)
-                {
+                else if (!triedreset) {
                     qDebug() << "No data!!! Attempting reset via reboot command.";
-                    communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
+                    emit communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
                     m_port->write("reboot\r\n",8);
                     triedreset = true;
                 }
-                else
-                {
-                    communicationUpdate(getName(),"No data to receive on COM port....");
+                else {
+                    emit communicationUpdate(getName(),"No data to receive on COM port....");
                     qDebug() << "No data!!!";
                 }
             }
@@ -406,8 +400,7 @@ bool SerialLink::connect()
  **/
 bool SerialLink::hardwareConnect()
 {
-    if(m_port)
-    {
+    if(m_port) {
         qDebug() << "SerialLink:" << QString::number((long)this, 16) << "closing port";
         m_port->close();
         delete m_port;
@@ -416,21 +409,19 @@ bool SerialLink::hardwareConnect()
     qDebug() << "SerialLink: hardwareConnect to " << m_portName;
     m_port = new QSerialPort(m_portName);
 
-    if (m_port == NULL)
-    {
+    if (m_port == NULL) {
         emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
         return false; // couldn't create serial port.
     }
 
     QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
-    QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)),
-                     this, SLOT(linkError(QSerialPort::SerialPortError)));
+    QObject::connect(m_port, SIGNAL(error(SerialLinkPortError_t)),
+                     this, SLOT(linkError(SerialLinkPortError_t)));
 
 //    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
     m_connectionStartTime = MG::TIME::getGroundTimeNow();
 
-    if (!m_port->open(QIODevice::ReadWrite))
-    {
+    if (!m_port->open(QIODevice::ReadWrite)) {
         emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
         m_port->close();
         return false; // couldn't open serial port
@@ -456,7 +447,7 @@ bool SerialLink::hardwareConnect()
     return true; // successful connection
 }
 
-void SerialLink::linkError(QSerialPort::SerialPortError error)
+void SerialLink::linkError(SerialLinkPortError_t error)
 {
     qDebug() << error;
 }

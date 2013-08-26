@@ -157,6 +157,29 @@
         <file>files/images/firmware/X8_on.png</file>
         <file>files/images/firmware/Y6_off.png</file>
         <file>files/images/firmware/Y6_on.png</file>
+        <file>files/images/px4/airframes/quad_x.png</file>
+        <file>files/images/px4/airframes/quad_+.png</file>
+        <file>files/images/px4/airframes/octo_+.png</file>
+        <file>files/images/px4/airframes/hexa_+.png</file>
+        <file>files/images/px4/airframes/hexa_x.png</file>
+        <file>files/images/px4/airframes/octo_x.png</file>
+        <file>files/images/px4/airframes/flying_wing.png</file>
+        <file>files/images/px4/airframes/plane_ert.png</file>
+        <file>files/images/px4/airframes/plane_aert.png</file>
+        <file>files/images/px4/airframes/quad_h.png</file>
+        <file>files/images/px4/calibration/arrows.png</file>
+        <file>files/images/px4/calibration/accel_x+.png</file>
+        <file>files/images/px4/calibration/accel_x-.png</file>
+        <file>files/images/px4/calibration/accel_y-.png</file>
+        <file>files/images/px4/calibration/accel_z+.png</file>
+        <file>files/images/px4/calibration/accel_z-.png</file>
+        <file>files/images/px4/calibration/accel_y+.png</file>
+        <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
+        <file>files/images/px4/menu/sensors.png</file>
+        <file>files/images/px4/menu/firmware_upgrade.png</file>
+        <file>files/images/px4/menu/plane.png</file>
+        <file>files/images/px4/menu/remote.png</file>
+        <file>files/images/px4/menu/cogwheels.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>

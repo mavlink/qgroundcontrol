@@ -69,7 +69,7 @@ public:
     /** @brief Get short mode */
     const QString& getShortMode() const;
     /** @brief Translate from mode id to text */
-    static QString getShortModeTextFor(int id);
+    static QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot);
     /** @brief Translate from mode id to audio text */
     static QString getAudioModeTextFor(int id);
     /** @brief Get the unique system id */
@@ -362,9 +362,8 @@ protected: //COMMENTS FOR TEST UNIT
     int airframe;                 ///< The airframe type
     int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     bool systemIsArmed;           ///< If the system is armed
-    uint8_t mode;                 ///< The current mode of the MAV
+    uint8_t base_mode;                 ///< The current mode of the MAV
     uint32_t custom_mode;         ///< The current mode of the MAV
-    uint32_t navMode;             ///< The current navigation mode of the MAV
     int status;                   ///< The current status of the MAV
     QString shortModeText;        ///< Short textual mode description
     QString shortStateText;       ///< Short textual state description
@@ -492,9 +491,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// PARAMETERS
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    QGCUASParamManager* paramManager; ///< Parameter manager class
-    UASParameterDataModel* paramDataModel; ///< The parameter data model for this UAS
-    UASParameterCommsMgr* paramCommsMgr;
+    QGCUASParamManager paramMgr; ///< Parameter manager for this UAS
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
@@ -508,30 +505,20 @@ public:
     float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
-    /** @brief Get the human-readable navigation mode translation for this mode */
-    QString getNavModeText(int mode);
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
     /** @brief Check if vehicle is armed */
     bool isArmed() const { return systemIsArmed; }
 
+    /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
         return &waypointManager;
     }
+
     /** @brief Get reference to the param manager **/
-    QGCUASParamManager* getParamManager() const {
-        return paramManager;
+    virtual QGCUASParamManager* getParamManager()  {
+        return &paramMgr;
     }
-
-    /** @brief Get reference to the parameter data model (same one shared with the parameter manager)  **/
-    UASParameterDataModel* getParamDataModel() {
-        return paramDataModel;
-    }
-
-    UASParameterCommsMgr* getParamCommsMgr() {
-        return paramCommsMgr;
-    }
-
 
     /** @brief Get the HIL simulation */
     QGCHilLink* getHILSimulation() const {
@@ -539,12 +526,6 @@ public:
     }
 
 
-
-    // TODO Will be removed
-    /** @brief Set reference to the param manager **/
-    void setParamManager(QGCUASParamManager* manager) {
-        paramManager = manager;
-    }
     int getSystemType();
 
     /**
@@ -850,7 +831,7 @@ public slots:
     void setSelected();
 
     /** @brief Set current mode of operation, e.g. auto or manual */
-    void setMode(int mode);
+    void setMode(uint8_t newBaseMode, uint32_t newCustomMode);
 
     /** @brief Request all parameters */
     void requestParameters();
@@ -861,7 +842,7 @@ public slots:
     void requestParameter(int component, int id);
 
     /** @brief Set a system parameter */
-    void setParameter(const int component, const QString& id, const QVariant& value);
+    void setParameter(const int compId, const QString& paramId, const QVariant& value);
 
     /** @brief Write parameters to permanent storage */
     void writeParametersToStorage();
@@ -952,6 +933,8 @@ protected:
     quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
+
+    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
 
     int componentID[256];
     bool componentMulti[256];

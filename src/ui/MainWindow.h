@@ -240,8 +240,6 @@ public slots:
     void loadOperatorView();
     /** @brief Load MAVLink XML generator view */
     void loadMAVLinkView();
-    /** @brief Load firmware update view */
-    void loadFirmwareUpdateView();
     /** @brief Load Terminal Console views */
     void loadTerminalView();
 

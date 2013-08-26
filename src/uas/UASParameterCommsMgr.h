@@ -18,7 +18,9 @@ class UASParameterCommsMgr : public QObject
 
 
 public:
-    explicit UASParameterCommsMgr(QObject *parent = 0, UASInterface* uas = NULL);
+    explicit UASParameterCommsMgr(QObject *parent = 0);
+    UASParameterCommsMgr* initWithUAS(UASInterface* model);///< Two-stage constructor
+
     ~UASParameterCommsMgr();
 
     typedef enum ParamCommsStatusLevel {
@@ -62,7 +64,7 @@ signals:
 
 public slots:
     /** @brief  Iterate through all components, through all pending parameters and send them to UAS */
-    virtual void sendPendingParameters();
+    virtual void sendPendingParameters(bool copyToPersistent = false);
 
     /** @brief  Write the current onboard parameters from transient RAM into persistent storage, e.g. EEPROM or harddisk */
     virtual void writeParamsToPersistentStorage();
@@ -72,8 +74,6 @@ public slots:
 
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
-    /** @brief Request a list of params onboard the MAV if the onboard param list we have is empty */
-    virtual void requestParameterListIfEmpty();
 
     /** @brief Check for missing parameters */
     virtual void retransmissionGuardTick();
@@ -99,6 +99,7 @@ protected:
     bool transmissionListMode;       ///< Currently requesting list
     QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
     bool transmissionActive;         ///< Missing packets, working on list?
+    bool persistParamsAfterSend; ///< Copy all parameters to persistent storage after sending
     quint64 transmissionTimeout;     ///< Timeout
     QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
     quint64 lastTimerReset;     ///< Last time the guard timer was reset, to prevent premature firing

@@ -34,20 +34,24 @@ public:
       */
     virtual void addComponent(int compId);
 
+    /**
+     * @brief Return a list of all components for this parameter name
+     * @param parameter The parameter string to search for
+     * @return A list with all components, can be potentially empty
+     */
+    virtual QList<int> getComponentForOnboardParam(const QString& parameter) const;
 
-
-    /** @brief Save the onboard parameter with a the type specified in the QVariant as fixed */
-    virtual void setOnboardParamWithType(int componentId, QString& key, QVariant& value);
 
     /** @brief clears every parameter for every loaded component */
     virtual void forgetAllOnboardParams();
 
 
+
     /** @brief add this parameter to pending list iff it has changed from onboard value
      * @return true if the parameter is now pending
     */
-    virtual bool updatePendingParamWithValue(int componentId, QString& key,  const QVariant &value);
-    virtual void handleParamUpdate(int componentId, QString& key, QVariant& value);
+    virtual bool updatePendingParamWithValue(int componentId, const QString &key,  const QVariant &value);
+    virtual void handleParamUpdate(int componentId, const QString& key, const QVariant& value);
     virtual bool getOnboardParamValue(int componentId, const QString& key, QVariant& value) const;
 
     virtual bool isParamChangePending(int componentId,const QString& key);
@@ -83,12 +87,15 @@ public:
 
 protected:
     /** @brief set the confirmed value of a parameter in the onboard params list */
-    virtual void setOnboardParam(int componentId, QString& key, const QVariant& value);
+    virtual void setOnboardParam(int componentId, const QString& key, const QVariant& value);
+
+    /** @brief Save the parameter with a the type specified in the QVariant as fixed */
+    void setParamWithTypeInMap(int compId, const QString& key, const QVariant &value, QMap<int, QMap<QString, QVariant>* >& map);
 
     /** @brief Write a new pending parameter value that may be eventually sent to the UAS */
-    virtual void setPendingParam(int componentId,  QString& key,  const QVariant& value);
+    virtual void setPendingParam(int componentId,  const QString &key,  const QVariant& value);
     /** @brief remove a parameter from the pending list */
-    virtual void removePendingParam(int compId, QString& key);
+    virtual void removePendingParam(int compId, const QString &key);
 
 
 signals:
@@ -103,6 +110,7 @@ signals:
 
 public slots:
 
+    virtual void clearAllPendingParams();
 
 protected:
     int     uasId; ///< The UAS / MAV to which this data model pertains
