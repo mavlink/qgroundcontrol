@@ -28,8 +28,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
-    qDebug() << "create SerialLink " << portname << baudRate << hardwareFlowControl
-             << parity << dataBits << stopBits;
     // Setup settings
     m_portName = portname.trimmed();
 
@@ -37,8 +35,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     {
         m_portName = m_ports.first().trimmed();
     }
-
-    qDebug() << "m_portName " << m_portName;
 
     // Set unique ID and add link to the list of links
     m_id = getNextLinkId();
@@ -66,6 +62,11 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopBits = stopBits;
 
     loadSettings();
+
+    qDebug() << "create SerialLink " << portname << baudRate << hardwareFlowControl
+             << parity << dataBits << stopBits;
+    qDebug() << "m_portName " << m_portName;
+
     LinkManager::instance()->add(this);
 }
 void SerialLink::requestReset()

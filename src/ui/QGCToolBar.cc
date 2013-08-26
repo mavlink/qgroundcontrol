@@ -182,8 +182,8 @@ void QGCToolBar::createUI()
     baudcomboBox->addItem("921600", 921600);
     baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
     addWidget(baudcomboBox);
-    connect(baudcomboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(baudSelected(int)));
-    connect(portComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(portSelected(int)));
+    connect(baudcomboBox, SIGNAL(activated(int)), this, SLOT(baudSelected(int)));
+    connect(portComboBox, SIGNAL(activated(int)), this, SLOT(portSelected(int)));
 
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setObjectName("connectButton");
@@ -666,6 +666,10 @@ void QGCToolBar::updateComboBox()
 {
     if (currentLink)
     {
+        // Do not update if not visible
+        if (!portComboBox->isVisible())
+            return;
+
         SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
         QList<QString> portlist = slink->getCurrentPorts();
         foreach (QString port, portlist)
@@ -715,6 +719,8 @@ void QGCToolBar::updateLinkState(bool connected)
         connectButton->blockSignals(true);
         connectButton->setChecked(true);
         connectButton->blockSignals(false);
+        portComboBox->hide();
+        baudcomboBox->hide();
     }
     else
     {
@@ -722,6 +728,8 @@ void QGCToolBar::updateLinkState(bool connected)
         connectButton->blockSignals(true);
         connectButton->setChecked(false);
         connectButton->blockSignals(false);
+        portComboBox->show();
+        baudcomboBox->show();
     }
 }
 
