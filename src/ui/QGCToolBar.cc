@@ -221,6 +221,9 @@ void QGCToolBar::createUI()
 
     loadSettings();
 
+    connect(&portBoxTimer, SIGNAL(timeout()), this, SLOT(updateComboBox()));
+    portBoxTimer.start(500);
+
     changed = false;
 }
 
@@ -647,25 +650,29 @@ void QGCToolBar::removeLink(LinkInterface* link)
 }
 void QGCToolBar::updateComboBox()
 {
-    portComboBox->clear();
+//    portComboBox->clear();
     if (currentLink)
     {
         SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
         QList<QString> portlist = slink->getCurrentPorts();
-        foreach(QString port, portlist) {
-            portComboBox->addItem(port, port);
+        foreach (QString port, portlist)
+        {
+            if (portComboBox->findText(port) == -1)
+            {
+                portComboBox->addItem(port, port);
+            }
         }
 
-        portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
         if (slink->getPortName().trimmed().length() > 0)
         {
+            portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
             portComboBox->setEditText(slink->getPortName());
         }
         else
         {
             if (portlist.length() > 0)
             {
-                portComboBox->setEditText(portlist.first());
+                portComboBox->setEditText(portlist.last());
             }
             else
             {
