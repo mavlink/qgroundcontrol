@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
     mav(NULL),
+    userBaudChoice(false),
     changed(true),
     batteryPercent(0),
     batteryVoltage(0),
@@ -180,7 +181,7 @@ void QGCToolBar::createUI()
     baudcomboBox->addItem("921600", 921600);
     baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
     addWidget(baudcomboBox);
-
+    connect(baudcomboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(baudSelected(int)));
 
 
     connectButton = new QPushButton(tr("Connect"), this);
@@ -249,6 +250,11 @@ void QGCToolBar::resetToolbarUI()
     lastSystemMessageTimeMs = 0;
     symbolLabel->setStyleSheet("");
     symbolLabel->clear();
+}
+
+void QGCToolBar::baudSelected(int index)
+{
+    userBaudChoice = true;
 }
 
 void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
@@ -679,7 +685,12 @@ void QGCToolBar::updateComboBox()
                 portComboBox->setEditText(tr("No serial port found"));
             }
         }
-        baudcomboBox->setCurrentIndex(baudcomboBox->findData(slink->getBaudRate()));
+
+        if (!userBaudChoice) {
+            int index = baudcomboBox->findData(slink->getBaudRate());
+            if (index > 0)
+                baudcomboBox->setCurrentIndex(index);
+        }
     }
 }
 
