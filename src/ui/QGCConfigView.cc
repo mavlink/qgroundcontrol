@@ -22,6 +22,7 @@ QGCConfigView::QGCConfigView(QWidget *parent) :
         ui->gridLayout->removeWidget(ui->waitingLabel);
         ui->waitingLabel->setVisible(false);
         delete ui->waitingLabel;
+        ui->waitingLabel = NULL;
 
         config = new QGCPX4VehicleConfig();
         ui->gridLayout->addWidget(config);
@@ -48,10 +49,12 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
         type = mav->getAutopilotType();
 
     mav = uas;
-    if (NULL != uas && type != uas->getAutopilotType()) {
+    if (uas && type != uas->getAutopilotType()) {
 
-        ui->gridLayout->removeWidget(ui->waitingLabel);
-        ui->waitingLabel->setVisible(false);
+        if (ui->waitingLabel) {
+            ui->gridLayout->removeWidget(ui->waitingLabel);
+            ui->waitingLabel->setVisible(false);
+        }
 
         //remove all child widgets since they could contain stale data
         //for example, when we switch from one PX4 UAS to another UAS

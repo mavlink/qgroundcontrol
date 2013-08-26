@@ -87,6 +87,12 @@ public slots:
     void advancedActivityTriggered(QAction* action);
     void updateComboBox();
 
+    /**
+     * @brief User selected baud rate
+     * @param index The current index of the combo box
+     */
+    void baudSelected(int index);
+
 protected:
     void storeSettings();
     void loadSettings();
@@ -110,6 +116,7 @@ protected:
     QComboBox *portComboBox;
     QComboBox *baudcomboBox;
     QTimer portBoxTimer;
+    bool userBaudChoice;
     bool changed;
     float batteryPercent;
     float batteryVoltage;
