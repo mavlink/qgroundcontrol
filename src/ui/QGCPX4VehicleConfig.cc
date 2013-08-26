@@ -223,6 +223,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     updateTimer.setInterval(150);
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateTimer.start();
+
+    firmwareMenuButtonClicked();
 }
 
 QGCPX4VehicleConfig::~QGCPX4VehicleConfig()
