@@ -97,14 +97,15 @@ void ParameterInterface::addUAS(UASInterface* uas)
         return;
     }
 
-    QGCParamWidget* param = new QGCParamWidget(uas, this);
-    param->init();
+    QGCParamWidget* paramWidget = new QGCParamWidget(this);
+    paramWidget = (QGCParamWidget*)paramWidget->initWithUAS(uas);
+
     QString ptrStr;
-    ptrStr.sprintf("QGCParamWidget %8p (parent %8p)", param,this);
+    ptrStr.sprintf("QGCParamWidget %8p (parent %8p)", paramWidget,this);
     qDebug() << "Created " << ptrStr << " for UAS id: " << uasId << " count: " << paramWidgets->count();
 
-    paramWidgets->insert(uasId, param);
-    m_ui->stackedWidget->addWidget(param);
+    paramWidgets->insert(uasId, paramWidget);
+    m_ui->stackedWidget->addWidget(paramWidget);
 
     QGCSensorSettingsWidget* sensor = NULL;
 
@@ -119,7 +120,7 @@ void ParameterInterface::addUAS(UASInterface* uas)
         // Clear
         if (m_ui->sensorSettings && sensor)
             m_ui->sensorSettings->setCurrentWidget(sensor);
-        m_ui->stackedWidget->setCurrentWidget(param);
+        m_ui->stackedWidget->setCurrentWidget(paramWidget);
         curr = 0;
     }
 }

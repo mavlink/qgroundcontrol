@@ -45,7 +45,7 @@ int UASParameterDataModel::countOnboardParams()
 }
 
 
-bool UASParameterDataModel::updatePendingParamWithValue(int compId, QString& key, const QVariant& value)
+bool UASParameterDataModel::updatePendingParamWithValue(int compId, const QString& key, const QVariant& value)
 {
     bool pending = true;
     //ensure we have this component in our onboard and pending lists already
@@ -76,18 +76,15 @@ bool UASParameterDataModel::isParamChangePending(int compId, const QString& key)
     return ((NULL != pendingParms) && pendingParms->contains(key));
 }
 
-void UASParameterDataModel::setPendingParam(int compId, QString& key,  const QVariant &value)
+void UASParameterDataModel::setPendingParam(int compId, const QString& key,  const QVariant &value)
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
-    QMap<QString, QVariant> *pendParams = getPendingParamsForComponent(compId);
-    if (pendParams) {
-        pendParams->insert(key,value);
-        emit pendingParamUpdate(compId, key, value, true);
-     }
+    setParamWithTypeInMap(compId,key,value,pendingParameters);
+    emit pendingParamUpdate(compId, key, value, true);
 }
 
-void UASParameterDataModel::removePendingParam(int compId, QString& key)
+void UASParameterDataModel::removePendingParam(int compId, const QString& key)
 {
     qDebug() << "removePendingParam:" << key;
 
@@ -101,15 +98,16 @@ void UASParameterDataModel::removePendingParam(int compId, QString& key)
     }
 }
 
-void UASParameterDataModel::setOnboardParam(int compId, QString& key,  const QVariant& value)
+void UASParameterDataModel::setOnboardParam(int compId, const QString &key,  const QVariant& value)
 {
     //ensure we have a placeholder map for this component
     addComponent(compId);
+    //TODO use setParamWithTypeInMap instead and verify
     QMap<QString, QVariant> *params = getOnboardParamsForComponent(compId);
     params->insert(key,value);
 }
 
-void UASParameterDataModel::setOnboardParamWithType(int compId, QString& key, QVariant& value)
+void UASParameterDataModel::setParamWithTypeInMap(int compId, const QString& key, const QVariant &value, QMap<int, QMap<QString, QVariant>* >& map)
 {
 
     switch ((int)value.type())
@@ -117,25 +115,35 @@ void UASParameterDataModel::setOnboardParamWithType(int compId, QString& key, QV
     case QVariant::Int:
     {
         QVariant fixedValue(value.toInt());
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     case QVariant::UInt:
     {
         QVariant fixedValue(value.toUInt());
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     case QMetaType::Float:
     {
         QVariant fixedValue(value.toFloat());
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     case QMetaType::QChar:
     {
         QVariant fixedValue(QChar((unsigned char)value.toUInt()));
-        onboardParameters.value(compId)->insert(key, fixedValue);
+        map.value(compId)->insert(key, fixedValue);
+    }
+        break;
+    case QMetaType::QString:
+    {
+        QString strVal = value.toString();
+        float floatVal = strVal.toFloat();
+        QVariant fixedValue( floatVal );
+        //TODO track down WHY we're getting unexpected QString values here...this is a workaround
+        qDebug() << "Unexpected string QVariant:" << key << " val:" << value << "fixedVal:" << fixedValue;
+        map.value(compId)->insert(key, fixedValue);
     }
         break;
     default:
@@ -155,7 +163,7 @@ void UASParameterDataModel::addComponent(int compId)
 }
 
 
-void UASParameterDataModel::handleParamUpdate(int compId, QString& paramName, QVariant& value)
+void UASParameterDataModel::handleParamUpdate(int compId, const QString &paramName, const QVariant &value)
 {
     //verify that the value requested by the user matches the set value
     //if it doesn't match, leave the pending parameter in the pending list!
@@ -165,8 +173,7 @@ void UASParameterDataModel::handleParamUpdate(int compId, QString& paramName, QV
             QVariant reqVal = pendingParams->value(paramName);
             if (reqVal == value) {
                 //notify everyone that this item is being removed from the pending parameters list since it's now confirmed
-                emit pendingParamUpdate(compId, paramName,  value, false);
-                pendingParams->remove(paramName);
+                removePendingParam(compId,paramName);
             }
             else {
                 qDebug() << "Pending commit for " << paramName << " want: " << reqVal << " got: " << value;
@@ -192,9 +199,36 @@ bool UASParameterDataModel::getOnboardParamValue(int componentId, const QString&
     return false;
 }
 
+QList<int> UASParameterDataModel::getComponentForOnboardParam(const QString& parameter) const
+{
+    QList<int> components;
+    // Iterate through all components
+    foreach (int comp, onboardParameters.keys())
+    {
+        if (onboardParameters.value(comp)->contains(parameter))
+            components.append(comp);
+    }
+
+    return components;
+}
+
 void UASParameterDataModel::forgetAllOnboardParams()
 {
     onboardParameters.clear();
+}
+
+void UASParameterDataModel::clearAllPendingParams()
+{
+    QList<int> compIds =   pendingParameters.keys();
+    foreach (int compId , compIds) {
+        QMap<QString, QVariant>* compParams = pendingParameters.value(compId);
+        QList<QString> paramNames = compParams->keys();
+        foreach (QString paramName, paramNames) {
+            //remove this item from pending status and broadcast update
+            removePendingParam(compId,paramName);
+        }
+    }
+
 }
 
 void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)

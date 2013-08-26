@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
  */
 #include <QPainter>
 #include <QSettings>
+#include <QScrollBar>
 
 #include "DebugConsole.h"
 #include "ui_DebugConsole.h"
@@ -313,9 +314,15 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
             break;
         }
 
+        //turn off updates while we're appending content to avoid breaking the autoscroll behavior
+        m_ui->receiveText->setUpdatesEnabled(false);
+        QScrollBar *scroller = m_ui->receiveText->verticalScrollBar();
+
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
+
         // Ensure text area scrolls correctly
-        m_ui->receiveText->ensureCursorVisible();
+        scroller->setValue(scroller->maximum());
+        m_ui->receiveText->setUpdatesEnabled(true);
     }
 }
 

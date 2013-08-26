@@ -154,18 +154,8 @@ public:
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
-    /** @brief Access the parameter data model for this UAS (sans widget).  This is the same parameter data model used by the parameter manager. **/
-    virtual UASParameterDataModel* getParamDataModel() = 0;
-
-
-    virtual UASParameterCommsMgr* getParamCommsMgr() = 0;
-
     /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManager* getParamManager() const = 0;
-
-    // TODO Will be removed
-    /** @brief Set reference to the param manager **/
-    virtual void setParamManager(QGCUASParamManager* manager) = 0;
+    virtual QGCUASParamManager* getParamManager() = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -305,7 +295,7 @@ public slots:
     /** @brief Start/continue the current robot action */
     virtual void go() = 0;
     /** @brief Set the current mode of operation */
-    virtual void setMode(int mode) = 0;
+    virtual void setMode(uint8_t newBaseMode, uint32_t newCustomMode) = 0;
     /** Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     virtual void emergencySTOP() = 0;
     /** Kills the robot. All systems are immediately shut down (e.g. the main power line is cut). This might lead to a crash **/

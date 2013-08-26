@@ -788,10 +788,12 @@ void QGCVehicleConfig::loadConfig()
         xml.readNext();
     }
 
-    mav->getParamManager()->setParamDescriptions(paramTooltips);
+    if (!paramTooltips.isEmpty()) {
+           paramMgr->setParamDescriptions(paramTooltips);
+    }
     doneLoadingConfig = true;
     //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
-    mav->getParamCommsMgr()->requestParameterListIfEmpty();
+    paramMgr->requestParameterListIfEmpty();
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
@@ -862,6 +864,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
+    paramMgr = mav->getParamManager();
 
     // Reset current state
     resetCalibrationRC();
@@ -977,15 +980,14 @@ void QGCVehicleConfig::writeCalibrationRC()
 
 void QGCVehicleConfig::requestCalibrationRC()
 {
-    if (mav) {
-        mav->getParamCommsMgr()->requestRcCalibrationParamsUpdate();
-    }
+    paramMgr->requestRcCalibrationParamsUpdate();
 }
 
 void QGCVehicleConfig::writeParameters()
 {
     updateStatus(tr("Writing all onboard parameters."));
     writeCalibrationRC();
+
     mav->writeParametersToStorage();
 }
 
@@ -1018,12 +1020,10 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     // Normalized value
     float normalized;
 
-    if (val >= rcTrim[chan])
-    {
+    if (val >= rcTrim[chan]) {
         normalized = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
     }
-    else
-    {
+    else {
         normalized = -(rcTrim[chan] - val)/(rcTrim[chan] - rcMin[chan]);
     }
 
@@ -1032,22 +1032,18 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     // Invert
     normalized = (rcRev[chan]) ? -1.0f*normalized : normalized;
 
-    if (chan == rcMapping[0])
-    {
+    if (chan == rcMapping[0]) {
         // ROLL
         rcRoll = normalized;
     }
-    if (chan == rcMapping[1])
-    {
+    if (chan == rcMapping[1]) {
         // PITCH
         rcPitch = normalized;
     }
-    if (chan == rcMapping[2])
-    {
+    if (chan == rcMapping[2]) {
         rcYaw = normalized;
     }
-    if (chan == rcMapping[3])
-    {
+    if (chan == rcMapping[3]) {
         // THROTTLE
         if (rcRev[chan]) {
             rcThrottle = 1.0f + normalized;
@@ -1057,23 +1053,19 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
 
         rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
     }
-    if (chan == rcMapping[4])
-    {
+    if (chan == rcMapping[4]) {
         // MODE SWITCH
         rcMode = normalized;
     }
-    if (chan == rcMapping[5])
-    {
+    if (chan == rcMapping[5]) {
         // AUX1
         rcAux1 = normalized;
     }
-    if (chan == rcMapping[6])
-    {
+    if (chan == rcMapping[6]) {
         // AUX2
         rcAux2 = normalized;
     }
-    if (chan == rcMapping[7])
-    {
+    if (chan == rcMapping[7]) {
         // AUX3
         rcAux3 = normalized;
     }

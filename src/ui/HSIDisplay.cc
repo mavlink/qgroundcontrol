@@ -176,7 +176,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     setToolTip(tr("View from top in body frame. Scroll with mouse wheel to change the horizontal field of view of the widget."));
     setStatusTip(tr("View from top in body frame. Scroll with mouse wheel to change the horizontal field of view of the widget."));
 
-    connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
+    // XXX this looks a potential recursive issue
+    //connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
 
     if (UASManager::instance()->getActiveUAS())
     {
