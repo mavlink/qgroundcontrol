@@ -220,6 +220,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
         rcMappedNormalizedValue[i] = 0.0f;
     }
 
+    firmwareMenuButtonClicked();
+
     updateTimer.setInterval(150);
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateTimer.start();
