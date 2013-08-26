@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <UASInterface.h>
 
+class QProgressDialog;
+
 namespace Ui {
 class QGCPX4AirframeConfig;
 }
@@ -67,6 +69,9 @@ public slots:
      */
     void applyAndReboot();
 
+protected slots:
+    void checkConfigState();
+
 protected:
 
     /**
@@ -83,9 +88,19 @@ protected:
 
     void uncheckAll();
 
+    enum CONFIG_STATE {
+        CONFIG_STATE_ABORT = 0,
+        CONFIG_STATE_SEND,
+        CONFIG_STATE_WAIT_PENDING,
+        CONFIG_STATE_REBOOT
+    };
+
 private:
     UASInterface* mav;
     QGCUASParamManager *paramMgr;
+    QProgressDialog* progress;
+    unsigned pendingParams;
+    enum CONFIG_STATE configState;
     int selectedId;
     Ui::QGCPX4AirframeConfig *ui;
 };

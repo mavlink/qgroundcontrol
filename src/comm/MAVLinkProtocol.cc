@@ -250,9 +250,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 0 && !decodedFirstPacket)
         {
             nonmavlinkCount++;
-            if (nonmavlinkCount > 500 && !warnedUserNonMavlink)
+            if (nonmavlinkCount > 2000 && !warnedUserNonMavlink)
             {
-                //500 bytes with no mavlink message. Are we connected to a mavlink capable device?
+                //2000 bytes with no mavlink message. Are we connected to a mavlink capable device?
                 if (!checkedUserNonMavlink)
                 {
                     link->requestReset();

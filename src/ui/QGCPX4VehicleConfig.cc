@@ -1182,12 +1182,11 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
 
     // Raw value
     float mappedVal = rcMappedValue[rcToFunctionMapping[chan]];
-    bool isMapped = (((float)UINT16_MAX) != mappedVal);
+    float deltaRaw = fabsf(fval - rcValue[chan]);
     float delta = fabsf(fval - mappedVal);
     if (!configEnabled && !calibrationEnabled &&
-            (!isMapped ||
-                (delta < 12.0f && rcValue[chan] > 800 && rcValue[chan] < 2200) )
-             ) {
+        (deltaRaw < 12.0f && delta < 12.0f && rcValue[chan] > 800 && rcValue[chan] < 2200))
+    {
         //ignore tiny jitter values
         return;
     }

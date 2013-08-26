@@ -183,7 +183,7 @@ void SerialLink::run()
         if (m_transmitBuffer.count() > 0) {
             QMutexLocker writeLocker(&m_writeMutex);
             int numWritten = m_port->write(m_transmitBuffer);
-            bool txSuccess = m_port->waitForBytesWritten(1);
+            bool txSuccess = m_port->waitForBytesWritten(5);
             if (!txSuccess || (numWritten != m_transmitBuffer.count())) {
                 linkErrorCount++;
                 qDebug() << "TX Error! wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";

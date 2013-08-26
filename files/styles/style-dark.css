@@ -249,7 +249,12 @@ QLabel#noUas {
 }
 
 QMessageBox QLabel {
-    font-size: 12pt;
+    font-size: 14pt;
+}
+
+QMessageBox {
+    min-width: 400px;
+    min-height: 300px;
 }
 
 QLabel#calibrationExplanationLabel {

@@ -1,5 +1,7 @@
 #include <QMessageBox>
+#include <QProgressDialog>
 #include <QDebug>
+#include <QTimer>
 
 #include "QGCPX4AirframeConfig.h"
 #include "ui_QGCPX4AirframeConfig.h"
@@ -7,10 +9,14 @@
 #include "UASManager.h"
 #include "LinkManager.h"
 #include "UAS.h"
+#include "QGC.h"
 
 QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     QWidget(parent),
     mav(NULL),
+    progress(NULL),
+    pendingParams(0),
+    configState(CONFIG_STATE_ABORT),
     selectedId(-1),
     ui(new Ui::QGCPX4AirframeConfig)
 {
@@ -75,6 +81,7 @@ void QGCPX4AirframeConfig::parameterChanged(int uas, int component, QString para
             setAirframeID(index);
             ui->statusLabel->setText(tr("Onboard start script ID: #%1").arg(index));
         } else {
+            uncheckAll();
             ui->statusLabel->setText(tr("System not configured for autostart."));
         }
     }
@@ -171,12 +178,14 @@ void QGCPX4AirframeConfig::applyAndReboot()
     if (paramMgr->countOnboardParams() == 0 &&
             paramMgr->countPendingParams() == 0)
     {
-        paramMgr->requestParameterListIfEmpty();
-        QGC::SLEEP::msleep(100);
+        paramMgr->requestParameterList();
+        QGC::SLEEP::msleep(300);
     }
 
+    QList<int> components = paramMgr->getComponentForParam("SYS_AUTOSTART");
+
     // Guard against the case of an edit where we didn't receive all params yet
-    if (paramMgr->countPendingParams() > 0)
+    if (paramMgr->countPendingParams() > 0 || components.count() == 0)
     {
         QMessageBox msgBox;
         msgBox.setText(tr("Parameter sync with UAS not yet complete"));
@@ -187,8 +196,6 @@ void QGCPX4AirframeConfig::applyAndReboot()
 
         return;
     }
-
-    QList<int> components = paramMgr->getComponentForParam("SYS_AUTOSTART");
 
     // Guard against multiple components responding - this will never show in practice
     if (components.count() != 1) {
@@ -202,32 +209,137 @@ void QGCPX4AirframeConfig::applyAndReboot()
         return;
     }
 
-    qDebug() << "Setting comp" << components.first() << "SYS_AUTOSTART" << (qint32)selectedId;
+    // This is really evil: 'fake' a thread by
+    // periodic work queue calls and clock
+    // through a small state machine
+    // ugh.. if we just had time to do this properly.
 
-    paramMgr->setPendingParam(components.first(),"SYS_AUTOSTART", (qint32)selectedId);
+    // To the reader who can't program and wants to whine:
+    // this is not beautiful, but technically completely
+    // sound. If you want to fix it, you'd be welcome
+    // to rebase the link, param manager and UI classes
+    // on a proper threading framework - which I'd love to do
+    // if I just had more time..
 
-    //need to set autoconfig in order for PX4 to pick up the selected airframe params
-    if (ui->defaultGainsCheckBox->checkState() == Qt::Checked)
-            setAutoConfig(true);
+    configState = CONFIG_STATE_SEND;
+    QTimer::singleShot(200, this, SLOT(checkConfigState()));
+}
 
-    // Send pending params and then write them to persistent storage when done
-    paramMgr->sendPendingParameters(true);
+void QGCPX4AirframeConfig::checkConfigState()
+{
 
-    // Reboot
-    //TODO right now this relies upon the above send & persist finishing before the reboot command is received...
-    QMessageBox msgBox(this);
-    msgBox.setText(tr("Storing Parameters and Rebooting Autopilot"));
-    msgBox.setInformativeText(tr("Please wait a few seconds for the reboot to complete."));
-    msgBox.setStandardButtons(QMessageBox::NoButton);
-    msgBox.setModal(false);
-    msgBox.show();
-    QGC::SLEEP::sleep(2);
-    mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
-    QGC::SLEEP::msleep(200);
-    LinkManager::instance()->disconnectAll();
-    QGC::SLEEP::sleep(8);
-    LinkManager::instance()->connectAll();
-    msgBox.close();
+    if (configState == CONFIG_STATE_SEND)
+    {
+        QList<int> components = paramMgr->getComponentForParam("SYS_AUTOSTART");
+        qDebug() << "Setting comp" << components.first() << "SYS_AUTOSTART" << (qint32)selectedId;
+
+        paramMgr->setPendingParam(components.first(),"SYS_AUTOSTART", (qint32)selectedId);
+
+        //need to set autoconfig in order for PX4 to pick up the selected airframe params
+        if (ui->defaultGainsCheckBox->checkState() == Qt::Checked)
+                setAutoConfig(true);
+
+        // Send pending params and then write them to persistent storage when done
+        paramMgr->sendPendingParameters(true);
+
+        configState = CONFIG_STATE_WAIT_PENDING;
+        pendingParams = 0;
+        QTimer::singleShot(2000, this, SLOT(checkConfigState()));
+        return;
+    }
+
+    if (configState == CONFIG_STATE_WAIT_PENDING) {
+        // Guard against the case of an edit where we didn't receive all params yet
+        if (paramMgr->countPendingParams() > 0)
+        {
+            if (pendingParams == 0) {
+
+                pendingParams = paramMgr->countPendingParams();
+
+                if (progress)
+                    delete progress;
+
+                progress = new QProgressDialog("Writing parameters", "Abort Send", 0, pendingParams, this);
+                progress->setWindowModality(Qt::WindowModal);
+                progress->setMinimumDuration(2000);
+            }
+
+            qDebug() << "PENDING" << paramMgr->countPendingParams() << "PROGRESS" << pendingParams - paramMgr->countPendingParams();
+            progress->setValue(pendingParams - paramMgr->countPendingParams());
+
+            if (progress->wasCanceled()) {
+                configState = CONFIG_STATE_ABORT;
+                pendingParams = 0;
+                return;
+            }
+        } else {
+            pendingParams = 0;
+            configState = CONFIG_STATE_REBOOT;
+        }
+
+        qDebug() << "PENDING PARAMS WAIT PENDING: " << paramMgr->countPendingParams();
+        QTimer::singleShot(1000, this, SLOT(checkConfigState()));
+        return;
+    }
+
+    if (configState == CONFIG_STATE_REBOOT) {
+
+        // Reboot
+        //TODO right now this relies upon the above send & persist finishing before the reboot command is received...
+
+        unsigned pendingMax = 20;
+
+        qDebug() << "PENDING PARAMS REBOOT BEFORE" << pendingParams;
+
+        if (pendingParams == 0) {
+            pendingParams = 1;
+
+            if (progress)
+                delete progress;
+
+            progress = new QProgressDialog("Waiting for autopilot reboot", "Abort", 0, pendingMax, this);
+            progress->setWindowModality(Qt::WindowModal);
+            qDebug() << "Waiting for reboot, pending" << pendingParams;
+        }
+
+        if (pendingParams == 3) {
+            qDebug() << "REQUESTING REBOOT";
+            mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+            mav->executeCommand(MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+        }
+
+        if (pendingParams == 4) {
+            qDebug() << "DISCONNECT AIRFRAME";
+            LinkManager::instance()->disconnectAll();
+        }
+
+        if (pendingParams == 14) {
+            qDebug() << "CONNECT AIRFRAME";
+            LinkManager::instance()->connectAll();
+        }
+        if (pendingParams == 15) {
+            qDebug() << "DISCONNECT AIRFRAME";
+            LinkManager::instance()->disconnectAll();
+        }
+        if (pendingParams == 16) {
+            qDebug() << "CONNECT AIRFRAME";
+            LinkManager::instance()->connectAll();
+        }
+
+        if (pendingParams < pendingMax) {
+            progress->setValue(pendingParams);
+            QTimer::singleShot(1000, this, SLOT(checkConfigState()));
+        } else {
+            paramMgr->requestParameterList();
+            progress->setValue(pendingMax);
+            configState = CONFIG_STATE_ABORT;
+            pendingParams = 0;
+            return;
+        }
+        qDebug() << "PENDING PARAMS REBOOT AFTER:" << pendingParams;
+        pendingParams++;
+        return;
+    }
 }
 
 void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
