@@ -93,6 +93,12 @@ public slots:
      */
     void baudSelected(int index);
 
+    /**
+     * @brief User selected port
+     * @param index The current index of the combo box
+     */
+    void portSelected(int index);
+
 protected:
     void storeSettings();
     void loadSettings();
@@ -117,6 +123,7 @@ protected:
     QComboBox *baudcomboBox;
     QTimer portBoxTimer;
     bool userBaudChoice;
+    bool userPortChoice;
     bool changed;
     float batteryPercent;
     float batteryVoltage;

@@ -33,6 +33,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
     mav(NULL),
     userBaudChoice(false),
+    userPortChoice(false),
     changed(true),
     batteryPercent(0),
     batteryVoltage(0),
@@ -182,7 +183,7 @@ void QGCToolBar::createUI()
     baudcomboBox->setCurrentIndex(baudcomboBox->findData(57600));
     addWidget(baudcomboBox);
     connect(baudcomboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(baudSelected(int)));
-
+    connect(portComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(portSelected(int)));
 
     connectButton = new QPushButton(tr("Connect"), this);
     connectButton->setObjectName("connectButton");
@@ -254,7 +255,14 @@ void QGCToolBar::resetToolbarUI()
 
 void QGCToolBar::baudSelected(int index)
 {
+    Q_UNUSED(index);
     userBaudChoice = true;
+}
+
+void QGCToolBar::portSelected(int index)
+{
+    Q_UNUSED(index);
+    userPortChoice = true;
 }
 
 void QGCToolBar::setPerspectiveChangeActions(const QList<QAction*> &actions)
@@ -656,7 +664,6 @@ void QGCToolBar::removeLink(LinkInterface* link)
 }
 void QGCToolBar::updateComboBox()
 {
-//    portComboBox->clear();
     if (currentLink)
     {
         SerialLink *slink = qobject_cast<SerialLink*>(currentLink);
@@ -669,26 +676,31 @@ void QGCToolBar::updateComboBox()
             }
         }
 
-        if (slink->getPortName().trimmed().length() > 0)
-        {
-            portComboBox->setCurrentIndex(portComboBox->findData(slink->getPortName()));
-            portComboBox->setEditText(slink->getPortName());
-        }
-        else
-        {
-            if (portlist.length() > 0)
+        if (!userPortChoice) {
+            if (slink->getPortName().trimmed().length() > 0)
             {
-                portComboBox->setEditText(portlist.last());
+                int portIndex = portComboBox->findData(slink->getPortName());
+                if (portIndex >= 0) {
+                    portComboBox->setCurrentIndex(portIndex);
+                    portComboBox->setEditText(slink->getPortName());
+                }
             }
             else
             {
-                portComboBox->setEditText(tr("No serial port found"));
+                if (portlist.length() > 0)
+                {
+                    portComboBox->setEditText(portlist.last());
+                }
+                else
+                {
+                    portComboBox->setEditText(tr("No serial port found"));
+                }
             }
         }
 
         if (!userBaudChoice) {
             int index = baudcomboBox->findData(slink->getBaudRate());
-            if (index > 0)
+            if (index >= 0)
                 baudcomboBox->setCurrentIndex(index);
         }
     }
