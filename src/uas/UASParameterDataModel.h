@@ -28,6 +28,9 @@ public:
     virtual QString getParamDescription(const QString& param) { return paramDescriptions.value(param, ""); }
     virtual void setParamDescriptions(const QMap<QString,QString>& paramInfo);
 
+    /** @brief Get the default component ID for the UAS */
+    virtual int getDefaultComponentId();
+
     //TODO make this method protected?
      /** @brief Ensure that the data model is aware of this component
       * @param compId Id of the component
@@ -113,6 +116,8 @@ public slots:
     virtual void clearAllPendingParams();
 
 protected:
+    int             defaultComponentId; ///< Cached default component ID
+
     int     uasId; ///< The UAS / MAV to which this data model pertains
     QMap<int, QMap<QString, QVariant>* > pendingParameters; ///< Changed values that have not yet been transmitted to the UAS, by component ID
     QMap<int, QMap<QString, QVariant>* > onboardParameters; ///< All parameters confirmed to be stored onboard the UAS, by component ID
