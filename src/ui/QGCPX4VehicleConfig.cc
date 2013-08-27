@@ -421,6 +421,11 @@ void QGCPX4VehicleConfig::detectChannelInversion(int aert_index)
 
 void QGCPX4VehicleConfig::startCalibrationRC()
 {
+    if (chanCount < 5) {
+        QMessageBox::warning(0,tr("Warning! Not enough RC channels"), tr("Detected %1 radio channels. To operate PX4, you need at least 5 channels. Is the radio control connected?").arg(chanCount));
+        return;
+    }
+
     configEnabled = true;
     QMessageBox::warning(0,"Warning!","You are about to start radio calibration.\nPlease ensure all motor power is disconnected AND all props are removed from the vehicle.\nAlso ensure transmitter and receiver are powered and connected.\nRESET ALL TRIMS TO CENTER!\n\nDo not move the RC sticks, then click OK to confirm");
 
