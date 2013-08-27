@@ -180,6 +180,8 @@
         <file>files/images/px4/menu/plane.png</file>
         <file>files/images/px4/menu/remote.png</file>
         <file>files/images/px4/menu/cogwheels.png</file>
+        <file>files/images/px4/rc/cessna_back.png</file>
+        <file>files/images/px4/rc/cessna_side.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
