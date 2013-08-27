@@ -250,10 +250,10 @@ void UASParameterCommsMgr::silenceTimerExpired()
 
     int totalElapsed = (int)(curTime - lastReceiveTime);
     if (totalElapsed > maxSilenceTimeout) {
-        qDebug() << "Max silence time exceeded: " + totalElapsed;
+        qDebug() << "maxSilenceTimeout exceeded: " << totalElapsed;
         int missingReads, missingWrites;
         clearRetransmissionLists(missingReads,missingWrites);
-        //TODO notify user!
+        setParameterStatusMsg(tr("TIMEOUT: Abandoning %1 reads %2 writes after %3 seconds").arg(missingReads).arg(missingWrites).arg(totalElapsed/1000));
     }
     else {
         resendReadWriteRequests();
@@ -360,7 +360,7 @@ void UASParameterCommsMgr::updateSilenceTimer()
 
 
     if (missReadCount > 0 || missWriteCount > 0) {
-        silenceTimer.start(silenceTimeout); //TODO configurable silence timeout
+        silenceTimer.start(silenceTimeout);
         lastSilenceTimerReset = QGC::groundTimeMilliseconds();
     }
     else {
