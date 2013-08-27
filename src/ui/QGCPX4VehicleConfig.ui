@@ -42,7 +42,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="firmwareTab">
         <layout class="QVBoxLayout" name="firmwareLayout"/>
@@ -204,6 +204,9 @@
             <string>Show Advanced Configuration Options</string>
            </property>
           </widget>
+         </item>
+         <item>
+          <widget class="QGraphicsView" name="graphicsView"/>
          </item>
          <item>
           <widget class="QGroupBox" name="advancedGroupBox">
@@ -819,8 +822,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>21</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -856,8 +859,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>21</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -907,8 +910,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">

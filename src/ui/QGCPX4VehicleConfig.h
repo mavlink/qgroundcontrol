@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QStringList>
 #include <QMessageBox>
+#include <QGraphicsScene>
 
 #include "QGCToolWidget.h"
 #include "UASInterface.h"
@@ -285,10 +286,11 @@ protected:
     float rcScaling[chanMax];           ///< Scaling of channel input to control commands
     bool rcRev[chanMax];                ///< Channel reverse
     int rcValue[chanMax];               ///< Last values, RAW
-    float rcValueReversed[chanMax];            ///< Last values, accounted for reverse
-    float rcMappedMin[chanMappedMax];            ///< Mapped channels in default order
-    float rcMappedMax[chanMappedMax];            ///< Mapped channels in default order
-    float rcMappedValue[chanMappedMax];            ///< Mapped channels in default order
+    int rcValueReversed[chanMax];            ///< Last values, accounted for reverse
+    int rcMappedMin[chanMappedMax];            ///< Mapped channels in default order
+    int rcMappedMax[chanMappedMax];            ///< Mapped channels in default order
+    int rcMappedValue[chanMappedMax];            ///< Mapped channels in default order
+    int rcMappedValueRev[chanMappedMax];
     float rcMappedNormalizedValue[chanMappedMax];            ///< Mapped channels in default order
     int channelWanted;                  ///< During channel assignment search the requested default index
     int channelReverseStateWanted;
@@ -323,8 +325,11 @@ protected:
 
     QGCPX4AirframeConfig* px4AirframeConfig;
     DialogBare* firmwareDialog;
+    QPixmap planeBack;
+    QPixmap planeSide;
     QGCPX4SensorCalibration* px4SensorCalibration;
     QMessageBox msgBox;
+    QGraphicsScene scene;
     QPushButton* skipActionButton;
 
 private:

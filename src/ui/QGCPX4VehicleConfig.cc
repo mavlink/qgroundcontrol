@@ -60,6 +60,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     #ifdef QUPGRADE_SUPPORT
     firmwareDialog(NULL),
     #endif
+    planeBack(":/files/images/px4/rc/cessna_back.png"),
+    planeSide(":/files/images/px4/rc/cessna_side.png"),
     ui(new Ui::QGCPX4VehicleConfig)
 {
     doneLoadingConfig = false;
@@ -142,6 +144,15 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->advancedGroupBox, SLOT(setVisible(bool)));
     ui->advancedGroupBox->setVisible(false);
 
+    connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->graphicsView, SLOT(setHidden(bool)));
+    ui->graphicsView->setScene(&scene);
+
+    scene.addPixmap(planeBack);
+    scene.addPixmap(planeSide);
+
+    // XXX hide while WIP
+    ui->graphicsView->hide();
+
     ui->rcCalibrationButton->setCheckable(true);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
 
@@ -209,6 +220,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
         rcMappedMin[i] = 1000;
         rcMappedMax[i] = 2000;
         rcMappedValue[i] = UINT16_MAX;
+        rcMappedValueRev[i] = UINT16_MAX;
         rcMappedNormalizedValue[i] = 0.0f;
     }
 
@@ -217,6 +229,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
         rcMappedMin[i] = 1000;
         rcMappedMax[i] = 2000;
         rcMappedValue[i] = UINT16_MAX;
+        rcMappedValueRev[i] = UINT16_MAX;
         rcMappedNormalizedValue[i] = 0.0f;
     }
 
@@ -1184,13 +1197,12 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     }
 
     // Raw value
-    float mappedVal = rcMappedValue[rcToFunctionMapping[chan]];
     float deltaRaw = fabsf(fval - rcValue[chan]);
-    float delta = fabsf(fval - mappedVal);
+    float delta = fabsf(fval - rcMappedValue[rcToFunctionMapping[chan]]);
     if (!configEnabled && !calibrationEnabled &&
         (deltaRaw < 12.0f && delta < 12.0f && rcValue[chan] > 800 && rcValue[chan] < 2200))
     {
-        //ignore tiny jitter values
+        // ignore tiny jitter values
         return;
     }
     else {
@@ -1281,17 +1293,13 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     normalized = (rcRev[chan]) ? -1.0f*normalized : normalized;
 
     // Find correct mapped channel
-    for (unsigned int i = 0; i < chanCount; i++) {
-        if (chan == rcMapping[i]) {
-            rcMappedValue[i] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
+    rcMappedValueRev[rcToFunctionMapping[chan]] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
+    rcMappedValue[rcToFunctionMapping[chan]] = fval;
 
-            // Copy min / max
-            rcMappedMin[i] = rcMin[chan];
-            rcMappedMax[i] = rcMax[chan];
-
-            rcMappedNormalizedValue[i] = normalized;
-        }
-    }
+    // Copy min / max
+    rcMappedMin[rcToFunctionMapping[chan]] = rcMin[chan];
+    rcMappedMax[rcToFunctionMapping[chan]] = rcMax[chan];
+    rcMappedNormalizedValue[rcToFunctionMapping[chan]] = normalized;
 
     if (chan == rcMapping[0]) {
         rcRoll = normalized;
