@@ -9,7 +9,8 @@
 #include "QGCMAVLink.h"
 
 UASParameterDataModel::UASParameterDataModel(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    defaultComponentId(-1)
 {
     onboardParameters.clear();
     pendingParameters.clear();
@@ -197,6 +198,26 @@ bool UASParameterDataModel::getOnboardParamValue(int componentId, const QString&
     }
 
     return false;
+}
+
+int UASParameterDataModel::getDefaultComponentId()
+{
+    int result = 0;
+
+    if (-1 != defaultComponentId)
+        return defaultComponentId;
+
+    QList<int> components = getComponentForOnboardParam("SYS_AUTOSTART");//TODO is this the best way to find the right component?
+
+    // Guard against multiple components responding - this will never show in practice
+    if (1 == components.count()) {
+        result = components.first();
+        defaultComponentId = result;
+    }
+
+    qDebug() << "Default compId: " << result;
+
+    return result;
 }
 
 QList<int> UASParameterDataModel::getComponentForOnboardParam(const QString& parameter) const

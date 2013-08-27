@@ -11,8 +11,7 @@ QGCUASParamManager::QGCUASParamManager(QObject *parent) :
     QObject(parent),
     mav(NULL),
     paramDataModel(this),
-    paramCommsMgr(NULL),
-    defaultComponentId(-1)
+    paramCommsMgr(NULL)
 {
 
 
@@ -63,22 +62,7 @@ void QGCUASParamManager::clearAllPendingParams()
 
 int QGCUASParamManager::getDefaultComponentId()
 {
-    int result = 0;
-
-    if (-1 != defaultComponentId)
-        return defaultComponentId;
-
-    QList<int> components = getComponentForParam("SYS_AUTOSTART");//TODO is this the best way to find the right component?
-
-    // Guard against multiple components responding - this will never show in practice
-    if (1 == components.count()) {
-        result = components.first();
-        defaultComponentId = result;
-    }
-
-    qDebug() << "Default compId: " << result;
-
-    return result;
+    return paramDataModel.getDefaultComponentId();
 }
 
 QList<int> QGCUASParamManager::getComponentForParam(const QString& parameter) const
@@ -119,7 +103,6 @@ void QGCUASParamManager::requestParameterListIfEmpty()
     if (mav) {
         int totalOnboard = paramDataModel.countOnboardParams();
         if (totalOnboard < 2) { //TODO arbitrary constant, maybe 0 is OK?
-            defaultComponentId = -1; //reset this ...we have no idea what the default component ID is
             requestParameterList();
         }
     }
@@ -135,7 +118,7 @@ void QGCUASParamManager::setParameter(int compId, QString paramName, QVariant va
 {
     if ((0 == compId) || (-1 == compId)) {
         //attempt to get an actual component ID
-        compId = getDefaultComponentId();
+        compId = paramDataModel.getDefaultComponentId();
     }
     paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
@@ -152,7 +135,7 @@ void QGCUASParamManager::setPendingParam(int compId,  const QString& paramName, 
 {
     if ((0 == compId) || (-1 == compId)) {
         //attempt to get an actual component ID
-        compId = getDefaultComponentId();
+        compId = paramDataModel.getDefaultComponentId();
     }
     paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
