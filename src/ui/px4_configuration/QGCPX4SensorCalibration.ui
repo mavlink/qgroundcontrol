@@ -36,20 +36,7 @@ QPushButton#gyroButton, QPushButton#accelButton {
     border: 2px solid #465158;
 }</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="1,20,3,2,1,1,0" columnstretch="30,15,5">
-   <item row="6" column="2">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
+  <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0,0,0,0,0" columnstretch="30,0,0">
    <item row="4" column="0" colspan="3">
     <spacer name="verticalSpacer">
      <property name="orientation">
@@ -63,22 +50,25 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </property>
     </spacer>
    </item>
+   <item row="6" column="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
    <item row="3" column="0" colspan="2">
     <widget class="QLabel" name="instructionLabel">
      <property name="text">
       <string/>
      </property>
     </widget>
-   </item>
-   <item row="5" column="0" colspan="3">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>24</number>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1" rowspan="2" colspan="2">
-    <widget class="QPlainTextEdit" name="textView"/>
    </item>
    <item row="6" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -117,13 +107,6 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </item>
     </layout>
    </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QLabel" name="calibrationExplanationLabel">
-     <property name="text">
-      <string>To calibrate the system, execute the three calibration steps below.</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="0" rowspan="2">
     <widget class="QLabel" name="iconLabel">
      <property name="text">
@@ -133,6 +116,16 @@ QPushButton#gyroButton, QPushButton#accelButton {
       <bool>true</bool>
      </property>
     </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" rowspan="3" colspan="2">
+    <widget class="QPlainTextEdit" name="textView"/>
    </item>
   </layout>
  </widget>
