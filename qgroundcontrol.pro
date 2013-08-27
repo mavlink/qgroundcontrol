@@ -20,14 +20,18 @@
 
 # Qt configuration
 CONFIG += qt \
-    thread
+    thread \
+    console
+#    serialport
+
 QT += network \
     opengl \
     svg \
     xml \
     phonon \
     webkit \
-    sql
+    sql \
+    declarative
 
 TEMPLATE = app
 TARGET = qgroundcontrol
@@ -45,6 +49,9 @@ linux-g++|linux-g++-64{
     TARGETDIR = $${OUT_PWD}
     BUILDDIR = $${OUT_PWD}/build
 }
+
+
+
 LANGUAGE = C++
 OBJECTS_DIR = $${BUILDDIR}/obj
 MOC_DIR = $${BUILDDIR}/moc
@@ -93,7 +100,7 @@ DEPENDPATH += \
 INCLUDEPATH += \
     libs/utils \
     libs \
-    libs/opmapcontrol
+    libs/opmapcontrol \
 
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
@@ -135,30 +142,46 @@ INCLUDEPATH += \
 
 include(src/apps/mavlinkgen/mavlinkgen.pri)
 
+# Include QUpgrade tool
+exists(qupgrade) {
+    SOURCES += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
+               qupgrade/src/apps/qupgrade/uploader.cpp \
+               qupgrade/src/apps/qupgrade/dialog_bare.cpp \
+               qupgrade/src/apps/qupgrade/boardwidget.cpp
 
+    HEADERS += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
+               qupgrade/src/apps/qupgrade/uploader.h \
+               qupgrade/src/apps/qupgrade/dialog_bare.h \
+               qupgrade/src/apps/qupgrade/boardwidget.h
+
+    FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui \
+             qupgrade/src/apps/qupgrade/boardwidget.ui
+
+    RESOURCES += qupgrade/qupgrade.qrc
+
+    linux*:CONFIG += qesp_linux_udev
+
+    include(qupgrade/libs/qextserialport/src/qextserialport.pri)
+
+    INCLUDEPATH += qupgrade/src/apps/qupgrade
+
+    DEFINES += "QUPGRADE_SUPPORT"
+}
+
+# Include GLC library
+#include(libs/GLC_lib/glc_lib.pri)
 
 # Include QWT plotting library
 include(libs/qwt/qwt.pri)
+
 DEPENDPATH += . \
-    plugins \
-    libs/thirdParty/qserialport/include \
-    libs/thirdParty/qserialport/include/QtSerialPort \
-    libs/thirdParty/qserialport \
-    libs/qextserialport
+    plugins
 
-INCLUDEPATH += . \
-    libs/thirdParty/qserialport/include \
-    libs/thirdParty/qserialport/include/QtSerialPort \
-    libs/thirdParty/qserialport/src \
-    libs/qextserialport
-# Include serial port library (QSerial)
-include(qserialport.pri)
+INCLUDEPATH += .
 
-# Serial port detection (ripped-off from qextserialport library)
-macx|macx-g++|macx-g++42::SOURCES += libs/qextserialport/qextserialenumerator_osx.cpp
-linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
+# Include serial port library (QSerialPort)
+include(libs/serialport/qserialport.pri)
+
 # Input
 FORMS += src/ui/MainWindow.ui \
     src/ui/CommSettings.ui \
@@ -223,6 +246,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCMissionDoStartSearch.ui \
     src/ui/mission/QGCMissionDoFinishSearch.ui \
     src/ui/QGCVehicleConfig.ui \
+    src/ui/QGCPX4VehicleConfig.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
@@ -237,8 +261,42 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/uas/QGCMessageView.ui \
     src/ui/JoystickButton.ui \
     src/ui/JoystickAxis.ui \
+    src/ui/configuration/ApmHardwareConfig.ui \
+    src/ui/configuration/ApmSoftwareConfig.ui \
+    src/ui/configuration/FrameTypeConfig.ui \
+    src/ui/configuration/CompassConfig.ui \
+    src/ui/configuration/AccelCalibrationConfig.ui \
+    src/ui/configuration/RadioCalibrationConfig.ui \
+    src/ui/configuration/FlightModeConfig.ui \
+    src/ui/configuration/Radio3DRConfig.ui \
+    src/ui/configuration/BatteryMonitorConfig.ui \
+    src/ui/configuration/SonarConfig.ui \
+    src/ui/configuration/AirspeedConfig.ui \
+    src/ui/configuration/OpticalFlowConfig.ui \
+    src/ui/configuration/OsdConfig.ui \
+    src/ui/configuration/AntennaTrackerConfig.ui \
+    src/ui/configuration/CameraGimbalConfig.ui \
+    src/ui/configuration/BasicPidConfig.ui \
+    src/ui/configuration/StandardParamConfig.ui \
+    src/ui/configuration/GeoFenceConfig.ui \
+    src/ui/configuration/FailSafeConfig.ui \
+    src/ui/configuration/AdvancedParamConfig.ui \
+    src/ui/configuration/ArduCopterPidConfig.ui \
+    src/ui/configuration/ApmPlaneLevel.ui \
+    src/ui/configuration/ParamWidget.ui \
+    src/ui/configuration/ArduPlanePidConfig.ui \
+    src/ui/configuration/AdvParameterList.ui \
+    src/ui/configuration/ArduRoverPidConfig.ui \
+    src/ui/QGCConfigView.ui \
     src/ui/main/QGCViewModeSelection.ui \
-    src/ui/main/QGCWelcomeMainWindow.ui
+    src/ui/main/QGCWelcomeMainWindow.ui \
+    src/ui/configuration/terminalconsole.ui \
+    src/ui/configuration/SerialSettingsDialog.ui \
+    src/ui/configuration/ApmFirmwareConfig.ui \
+    src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
+    src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
+    src/ui/px4_configuration/QGCPX4SensorCalibration.ui
+
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -255,6 +313,7 @@ INCLUDEPATH += src \
     src/ui/map3D \
     src/ui/mission \
     src/ui/designer \
+    src/ui/configuration \
     src/ui/main
 HEADERS += src/MG.h \
     src/QGCCore.h \
@@ -349,7 +408,6 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/QGCMapTool.h \
     src/ui/map/QGCMapToolBar.h \
-    libs/qextserialport/qextserialenumerator.h \
     src/QGCGeo.h \
     src/ui/QGCToolBar.h \
     src/ui/QGCStatusBar.h \
@@ -376,6 +434,7 @@ HEADERS += src/MG.h \
     src/ui/mission/QGCMissionDoStartSearch.h \
     src/ui/mission/QGCMissionDoFinishSearch.h \
     src/ui/QGCVehicleConfig.h \
+    src/ui/QGCPX4VehicleConfig.h \
     src/comm/QGCHilLink.h \
     src/ui/QGCHilConfiguration.h \
     src/ui/QGCHilFlightGearConfiguration.h \
@@ -399,8 +458,49 @@ HEADERS += src/MG.h \
     src/ui/uas/QGCMessageView.h \
     src/ui/JoystickButton.h \
     src/ui/JoystickAxis.h \
+    src/ui/configuration/ApmHardwareConfig.h \
+    src/ui/configuration/ApmSoftwareConfig.h \
+    src/ui/configuration/FrameTypeConfig.h \
+    src/ui/configuration/CompassConfig.h \
+    src/ui/configuration/AccelCalibrationConfig.h \
+    src/ui/configuration/RadioCalibrationConfig.h \
+    src/ui/configuration/FlightModeConfig.h \
+    src/ui/configuration/Radio3DRConfig.h \
+    src/ui/configuration/BatteryMonitorConfig.h \
+    src/ui/configuration/SonarConfig.h \
+    src/ui/configuration/AirspeedConfig.h \
+    src/ui/configuration/OpticalFlowConfig.h \
+    src/ui/configuration/OsdConfig.h \
+    src/ui/configuration/AntennaTrackerConfig.h \
+    src/ui/configuration/CameraGimbalConfig.h \
+    src/ui/configuration/AP2ConfigWidget.h \
+    src/ui/configuration/BasicPidConfig.h \
+    src/ui/configuration/StandardParamConfig.h \
+    src/ui/configuration/GeoFenceConfig.h \
+    src/ui/configuration/FailSafeConfig.h \
+    src/ui/configuration/AdvancedParamConfig.h \
+    src/ui/configuration/ArduCopterPidConfig.h \
+    src/ui/apmtoolbar.h \
+    src/ui/configuration/ApmPlaneLevel.h \
+    src/ui/configuration/ParamWidget.h \
+    src/ui/configuration/ArduPlanePidConfig.h \
+    src/ui/configuration/AdvParameterList.h \
+    src/ui/configuration/ArduRoverPidConfig.h \
+    src/ui/QGCConfigView.h \
     src/ui/main/QGCViewModeSelection.h \
-    src/ui/main/QGCWelcomeMainWindow.h
+    src/ui/main/QGCWelcomeMainWindow.h \
+    src/ui/configuration/console.h \
+    src/ui/configuration/SerialSettingsDialog.h \
+    src/ui/configuration/terminalconsole.h \
+    src/ui/configuration/ApmHighlighter.h \
+    src/ui/configuration/ApmFirmwareConfig.h \
+    src/uas/UASParameterDataModel.h \
+    src/uas/UASParameterCommsMgr.h \
+    src/ui/QGCPendingParamWidget.h \
+    src/ui/px4_configuration/QGCPX4AirframeConfig.h \
+    src/ui/QGCBaseParamWidget.h \
+    src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
+    src/ui/px4_configuration/QGCPX4SensorCalibration.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -557,6 +657,7 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
     src/ui/mission/QGCMissionDoFinishSearch.cc \
     src/ui/QGCVehicleConfig.cc \
+    src/ui/QGCPX4VehicleConfig.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
@@ -576,11 +677,52 @@ SOURCES += src/main.cc \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
     src/ui/PrimaryFlightDisplay.cc \
-    src/ui/uas/QGCMessageView.cc \
     src/ui/JoystickButton.cc \
     src/ui/JoystickAxis.cc \
+    src/ui/uas/QGCMessageView.cc \
+    src/ui/configuration/ApmHardwareConfig.cc \
+    src/ui/configuration/ApmSoftwareConfig.cc \
+    src/ui/configuration/FrameTypeConfig.cc \
+    src/ui/configuration/CompassConfig.cc \
+    src/ui/configuration/AccelCalibrationConfig.cc \
+    src/ui/configuration/RadioCalibrationConfig.cc \
+    src/ui/configuration/FlightModeConfig.cc \
+    src/ui/configuration/Radio3DRConfig.cc \
+    src/ui/configuration/BatteryMonitorConfig.cc \
+    src/ui/configuration/SonarConfig.cc \
+    src/ui/configuration/AirspeedConfig.cc \
+    src/ui/configuration/OpticalFlowConfig.cc \
+    src/ui/configuration/OsdConfig.cc \
+    src/ui/configuration/AntennaTrackerConfig.cc \
+    src/ui/configuration/CameraGimbalConfig.cc \
+    src/ui/configuration/AP2ConfigWidget.cc \
+    src/ui/configuration/BasicPidConfig.cc \
+    src/ui/configuration/StandardParamConfig.cc \
+    src/ui/configuration/GeoFenceConfig.cc \
+    src/ui/configuration/FailSafeConfig.cc \
+    src/ui/configuration/AdvancedParamConfig.cc \
+    src/ui/configuration/ArduCopterPidConfig.cc \
+    src/ui/apmtoolbar.cpp \
+    src/ui/configuration/ApmPlaneLevel.cc \
+    src/ui/configuration/ParamWidget.cc \
+    src/ui/configuration/ArduPlanePidConfig.cc \
+    src/ui/configuration/AdvParameterList.cc \
+    src/ui/configuration/ArduRoverPidConfig.cc \
+    src/ui/QGCConfigView.cc \
     src/ui/main/QGCViewModeSelection.cc \
-    src/ui/main/QGCWelcomeMainWindow.cc
+    src/ui/main/QGCWelcomeMainWindow.cc \
+    src/ui/configuration/terminalconsole.cpp \
+    src/ui/configuration/console.cpp \
+    src/ui/configuration/SerialSettingsDialog.cc \
+    src/ui/configuration/ApmHighlighter.cc \
+    src/ui/configuration/ApmFirmwareConfig.cc \
+    src/uas/UASParameterDataModel.cc \
+    src/uas/UASParameterCommsMgr.cc \
+    src/ui/QGCPendingParamWidget.cc \
+    src/ui/px4_configuration/QGCPX4AirframeConfig.cc \
+    src/ui/QGCBaseParamWidget.cc \
+    src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
+    src/ui/px4_configuration/QGCPX4SensorCalibration.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -716,4 +858,32 @@ unix:!macx:!symbian: LIBS += -losg
 
 OTHER_FILES += \
     dongfang_notes.txt \
-    src/ui/dongfang-scrapyard.txt
+    src/ui/dongfang-scrapyard.txt \
+    qml/components/DigitalDisplay.qml \
+    qml/components/StatusDisplay.qml
+
+OTHER_FILES += \
+    qml/ApmToolBar.qml \
+    qml/components/Button.qml \
+    qml/components/TextButton.qml \
+    qml/resources/qgroundcontrol/toolbar/connect.png \
+    qml/resources/qgroundcontrol/toolbar/flightplanner.png \
+    qml/resources/qgroundcontrol/toolbar/helpwizard.png \
+    qml/resources/qgroundcontrol/toolbar/softwareconfig.png \
+    qml/resources/qgroundcontrol/toolbar/terminal.png \
+    qml/resources/qgroundcontrol/toolbar/simulation.png \
+    qml/resources/qgroundcontrol/toolbar/hardwareconfig.png \
+    qml/resources/qgroundcontrol/toolbar/flightdata.png \
+    qml/resources/qgroundcontrol/toolbar/disconnect.png \
+    qml/resources/qgroundcontrol/toolbar/donate.png \
+
+
+#qmlcomponents.path    += $${DESTDIR}$${TARGET}/components
+#qmlcomponents.files   += ./components/Button.qml
+
+#sources.files       += ApmToolBar.qml
+#sources.path        += $$DESTDIR/qml
+#target.path         += qgroundcontrol
+#INSTALLS            += sources target
+
+message( BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET TARGETDIR $$TARGETDIR)

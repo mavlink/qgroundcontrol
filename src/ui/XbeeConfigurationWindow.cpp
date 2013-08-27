@@ -8,7 +8,8 @@
 #include <qdatastream.h>
 
 #ifdef _WIN32
-#include <QextSerialEnumerator.h>
+//#include <QextSerialEnumerator.h>
+#include <qserialportinfo.h>
 #endif
 
 #if defined (__APPLE__) && defined (__MACH__)
@@ -368,11 +369,12 @@ void XbeeConfigurationWindow::setupPortList()
 
 #ifdef _WIN32
     // Get the ports available on this system
-    QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
+    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
+    //QList<QextPortInfo> ports = QextSerialEnumerator::getPorts();
 
     // Add the ports in reverse order, because we prepend them to the list
     for (int i = ports.size() - 1; i >= 0; i--) {
-        QString portString = QString(ports.at(i).portName.toLocal8Bit().constData()) + " - " + QString(ports.at(i).friendName.toLocal8Bit().constData()).split("(").first();
+        QString portString = QString(ports.at(i).portName().toLocal8Bit().constData());
         // Prepend newly found port to the list
         if (portBox->findText(portString) == -1) {
             portBox->insertItem(0, portString);

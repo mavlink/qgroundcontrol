@@ -7,6 +7,8 @@
 
 #include "QGCToolWidgetItem.h"
 
+class QGCUASParamManager;
+
 namespace Ui
 {
 class QGCComboBox;
@@ -23,14 +25,15 @@ public:
 public slots:
     void startEditMode();
     void endEditMode();
-    /** @brief Send the parameter to the MAV */
-    void sendParameter();
+    /** @brief Queue parameter for sending to the MAV (add to pending list)*/
+    void setParamPending();
     /** @brief Update the UI with the new parameter value */
-    void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, const QVariant value);
+    void setParameterValue(int uas, int componentId, int paramCount, int paramIndex, QString parameterName, const QVariant value);
     void writeSettings(QSettings& settings);
     void readSettings(const QString& pre,const QVariantMap& settings);
     void readSettings(const QSettings& settings);
-    void refreshParamList();
+    /** @brief request that the parameter for this widget be refreshed */
+    void refreshParameter();
     void setActiveUAS(UASInterface *uas);
     void selectComponent(int componentIndex);
     void selectParameter(int paramIndex);
@@ -49,6 +52,7 @@ protected slots:
     /** @brief Updates current parameter based on new combobox value */
     void comboBoxIndexChanged(QString val);
 protected:
+    QGCUASParamManager *paramMgr; ///< Access to parameter manager
     bool visibleEnabled;
     QString visibleParam;
     int visibleVal;
@@ -61,7 +65,7 @@ protected:
     float parameterMin;
     bool isDisabled;
     float parameterMax;
-    int component;                 ///< ID of the MAV component to address
+    int componentId;                 ///< ID of the MAV component to address
     //double scaledInt;
     void changeEvent(QEvent *e);
 

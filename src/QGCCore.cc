@@ -53,6 +53,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "UDPLink.h"
 #include "MAVLinkSimulationLink.h"
+#include "SerialLink.h"
 
 
 /**
@@ -76,8 +77,8 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("QGroundControl"));
-    this->setOrganizationDomain("org.qgroundcontrol");
+    this->setOrganizationName(QLatin1String("diydrones"));
+    this->setOrganizationDomain("com.diydrones");
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -167,7 +168,16 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
         // to make sure that all components are initialized when the
         // first messages arrive
         udpLink = new UDPLink(QHostAddress::Any, 14550);
-        MainWindow::instance()->addLink(udpLink);
+        LinkManager::instance()->add(udpLink);
+    } else if (mainWindow->getCustomMode() == MainWindow::CUSTOM_MODE_PX4) {
+        udpLink = new UDPLink(QHostAddress::Any, 14550);
+        LinkManager::instance()->add(udpLink);
+        SerialLink *slink = new SerialLink();
+        LinkManager::instance()->add(slink);
+    } else {
+        // We want to have a default serial link available for "quick" connecting.
+        SerialLink *slink = new SerialLink();
+        LinkManager::instance()->add(slink);
     }
 
 #ifdef OPAL_RT
@@ -175,13 +185,12 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
     OpalLink* opalLink = new OpalLink();
     MainWindow::instance()->addLink(opalLink);
 #endif
-    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
-    simulationLink->disconnect();
 
     // Remove splash screen
     splashScreen->finish(mainWindow);
 
-    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("QGroundControl has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
+    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"),
+                                              tr("qgroundcontrol has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
 
     // Check if link could be connected
     if (udpLink && !udpLink->connect())

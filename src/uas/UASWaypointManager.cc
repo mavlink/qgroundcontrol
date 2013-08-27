@@ -975,7 +975,9 @@ void UASWaypointManager::sendWaypointRequestList()
     wprl.target_system = uasid;
     wprl.target_component = MAV_COMP_ID_MISSIONPLANNER;
 
-    emit updateStatusString(QString("Requesting waypoint list..."));
+    QString statusMsg(tr("Requesting waypoint list..."));
+    qDebug() << __FILE__ << __LINE__ << statusMsg;
+    emit updateStatusString(statusMsg);
 
     mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
     uas->sendMessage(message);

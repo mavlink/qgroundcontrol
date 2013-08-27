@@ -20,8 +20,9 @@ public:
 	~XbeeLink();
 	
 public: // virtual functions from XbeeLinkInterface
-    QString getPortName() const;
-    int getBaudRate() const;
+	QString getPortName();
+	void requestReset() { }
+	int getBaudRate();
 
 public slots: // virtual functions from XbeeLinkInterface
 	bool setPortName(QString portName);

@@ -30,8 +30,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <QLabel>
 #include <QProgressBar>
+#include <QComboBox>
+#include <QTimer>
 #include "UASInterface.h"
 #include "QGCMAVLinkLogPlayer.h"
+#include "SerialLink.h"
 
 class QGCToolBar : public QToolBar
 {
@@ -82,13 +85,25 @@ public slots:
     void clearStatusString();
     /** @brief Set an activity action as checked in menu */
     void advancedActivityTriggered(QAction* action);
+    void updateComboBox();
+
+    /**
+     * @brief User selected baud rate
+     * @param index The current index of the combo box
+     */
+    void baudSelected(int index);
+
+    /**
+     * @brief User selected port
+     * @param index The current index of the combo box
+     */
+    void portSelected(int index);
 
 protected:
     void storeSettings();
     void loadSettings();
     void createUI();
     void resetToolbarUI();
-
     UASInterface* mav;
     QLabel* symbolLabel;
     QLabel* toolBarNameLabel;
@@ -98,11 +113,17 @@ protected:
     QLabel* toolBarModeLabel;
     QLabel* toolBarStateLabel;
     QLabel* toolBarWpLabel;
-    QLabel* toolBarDistLabel;
     QLabel* toolBarMessageLabel;
     QPushButton* connectButton;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
+
+    QGCMAVLinkLogPlayer* player;
+    QComboBox *portComboBox;
+    QComboBox *baudcomboBox;
+    QTimer portBoxTimer;
+    bool userBaudChoice;
+    bool userPortChoice;
     bool changed;
     float batteryPercent;
     float batteryVoltage;

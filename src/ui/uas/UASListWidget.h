@@ -53,6 +53,7 @@ public slots:
     void addUAS(UASInterface* uas);
     void activeUAS(UASInterface* uas);
     void removeUAS(UASInterface* uas);
+    void removeLink(LinkInterface* link);
 
 protected:
     // Keep a mapping from UASes to their GroupBox. Useful for determining when groupboxes are empty.

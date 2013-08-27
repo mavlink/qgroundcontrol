@@ -262,15 +262,24 @@ void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
 {
     if (this->uas != NULL && this->uas == uas) {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
-        disconnect(this->uas, SIGNAL(primarySpeedChanged(UASInterface*, double, quint64)), this, SLOT(updatePrimarySpeed(UASInterface*,double,quint64)));
-        disconnect(this->uas, SIGNAL(gpsSpeedChanged(UASInterface*, double, quint64)), this, SLOT(updateGPSSpeed(UASInterface*,double,quint64)));
-        disconnect(this->uas, SIGNAL(climbRateChanged(UASInterface*, double, quint64)), this, SLOT(updateClimbRate(UASInterface*, AltitudeMeasurementSource, double, quint64)));
-        disconnect(this->uas, SIGNAL(primaryAltitudeChanged(UASInterface*, double, quint64)), this, SLOT(updatePrimaryAltitude(UASInterface*, double, quint64)));
-        disconnect(this->uas, SIGNAL(gpsAltitudeChanged(UASInterface*, double, quint64)), this, SLOT(updateGPSAltitude(UASInterface*, double, quint64)));
-        disconnect(this->uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)), this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),
+                   this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)),
+                   this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
+        //disconnect(this->uas, SIGNAL(waypointSelected(int,int)),
+        //           this, SLOT(selectWaypoint(int, int)));
+        disconnect(this->uas, SIGNAL(primarySpeedChanged(UASInterface*, double, quint64)),
+                   this, SLOT(updatePrimarySpeed(UASInterface*,double,quint64)));
+        disconnect(this->uas, SIGNAL(gpsSpeedChanged(UASInterface*, double, quint64)),
+                   this, SLOT(updateGPSSpeed(UASInterface*,double,quint64)));
+        disconnect(this->uas, SIGNAL(climbRateChanged(UASInterface*, double, quint64)),
+                   this,SLOT(updateClimbRate(UASInterface*, double, quint64)));
+        disconnect(this->uas, SIGNAL(primaryAltitudeChanged(UASInterface*, double, quint64)),
+                   this, SLOT(updatePrimaryAltitude(UASInterface*, double, quint64)));
+        disconnect(this->uas, SIGNAL(gpsAltitudeChanged(UASInterface*, double, quint64)),
+                   this, SLOT(updateGPSAltitude(UASInterface*, double, quint64)));
+        disconnect(this->uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)),
+                   this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
 
         //disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, double, int)));
         //disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
@@ -288,6 +297,9 @@ void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
  */
 void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
 {
+    if (uas == this->uas)
+        return; //no need to rewire
+
     // Disconnect the previous one (if any)
     forgetUAS(this->uas);
 
@@ -306,10 +318,12 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
 
         //connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         //connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        //connect(uas, SIGNAL(waypointSelected(int,int)), this,
+        //        SLOT(selectWaypoint(int, int)));
         connect(uas, SIGNAL(primarySpeedChanged(UASInterface*, double, quint64)), this, SLOT(updatePrimarySpeed(UASInterface*,double,quint64)));
         connect(uas, SIGNAL(gpsSpeedChanged(UASInterface*, double, quint64)), this, SLOT(updateGPSSpeed(UASInterface*,double,quint64)));
-        connect(uas, SIGNAL(climbRateChanged(UASInterface*, double, quint64)), this, SLOT(updateClimbRate(UASInterface*, AltitudeMeasurementSource, double, quint64)));
+        connect(uas, SIGNAL(climbRateChanged(UASInterface*, double, quint64)), this,
+                SLOT(updateClimbRate(UASInterface*, double, quint64)));
         connect(uas, SIGNAL(primaryAltitudeChanged(UASInterface*, double, quint64)), this, SLOT(updatePrimaryAltitude(UASInterface*, double, quint64)));
         connect(uas, SIGNAL(gpsAltitudeChanged(UASInterface*, double, quint64)), this, SLOT(updateGPSAltitude(UASInterface*, double, quint64)));
         connect(uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)), this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
@@ -343,6 +357,7 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
             if (yaw<0) yaw+=360;
             this->heading = yaw;
         }
+
 }
 
 void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp)

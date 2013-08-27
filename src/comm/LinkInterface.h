@@ -61,6 +61,8 @@ public:
      */
     virtual QString getName() const = 0;
 
+    virtual void requestReset() = 0;
+
     /**
      * @brief Determine the connection status
      *
