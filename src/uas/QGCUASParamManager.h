@@ -125,7 +125,6 @@ protected:
     UASInterface*           mav;   ///< The MAV this manager is controlling
     UASParameterDataModel  paramDataModel;///< Shared data model of parameters
     UASParameterCommsMgr*   paramCommsMgr; ///< Shared comms mgr for parameters
-    int             defaultComponentId; ///< Cached default component ID
 
 };
 

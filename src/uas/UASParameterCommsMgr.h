@@ -32,8 +32,9 @@ public:
 
 
 protected:
-    /** @brief Activate / deactivate parameter retransmission */
-    virtual void setRetransmissionGuardEnabled(bool enabled);
+
+    /** @brief activate the silence timer if there are unack'd reads or writes */
+    virtual void updateSilenceTimer();
 
     virtual void setParameterStatusMsg(const QString& msg, ParamCommsStatusLevel_t level=ParamCommsStatusLevel_OK);
 
@@ -42,6 +43,12 @@ protected:
 
     /** @brief clear transmissionMissingPackets and transmissionMissingWriteAckPackets */
     void clearRetransmissionLists(int& missingReadCount, int& missingWriteCount );
+
+    /** @brief we are waiting for a response to this read param request */
+    virtual void markReadParamWaiting(int compId, int paramId);
+
+    /** @brief we are waiting for a response to this write param request */
+    void markWriteParamWaiting(int compId, QString paramName, QVariant value);
 
     void resendReadWriteRequests();
     void resetAfterListReceive();
@@ -75,8 +82,8 @@ public slots:
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();
 
-    /** @brief Check for missing parameters */
-    virtual void retransmissionGuardTick();
+    /** @brief The max silence time expired */
+    virtual void silenceTimerExpired();
 
     /** @brief Request a single parameter update by name */
     virtual void requestParameterUpdate(int component, const QString& parameter);
@@ -88,28 +95,24 @@ public slots:
 
 protected:
 
+
+    QMap<int, int> knownParamListSize;///< The known param list size for each component, by component ID
+    quint64 lastReceiveTime; ///< The last time we received anything from our partner
+    quint64 lastSilenceTimerReset;
     UASInterface* mav;   ///< The MAV we're talking to
+
+    int maxSilenceTimeout; ///< If nothing received within this period of time, abandon resends
 
     UASParameterDataModel* paramDataModel;
 
-    // Communications management
-    QVector<bool> receivedParamsList; ///< Successfully received parameters
-    QMap<int, QList<int>* > missingReadPackets; ///< Missing packets
-    QMap<int, QMap<QString, QVariant>* > missingWriteAckPackets; ///< Missing write ACK packets
-    bool transmissionListMode;       ///< Currently requesting list
-    QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
-    bool transmissionActive;         ///< Missing packets, working on list?
     bool persistParamsAfterSend; ///< Copy all parameters to persistent storage after sending
-    quint64 transmissionTimeout;     ///< Timeout
-    QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
-    quint64 lastTimerReset;     ///< Last time the guard timer was reset, to prevent premature firing
-    int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
-    int rewriteTimeout; ///< Write request timeout, in milliseconds
-    int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
-    quint64 listRecvTimeout;     ///< How long to wait for first parameter list response before re-requesting
+    QMap<int, QSet<int>*> readsWaiting; ///< All reads that have not yet been received, by component ID
+    int retransmitBurstLimit; ///< Number of packets requested for retransmission per burst
+    int silenceTimeout; ///< If nothing received within this period of time, start resends
+    QTimer silenceTimer;      ///< Timer handling parameter retransmission
+    bool transmissionListMode;       ///< Currently requesting list
+    QMap<int, QMap<QString, QVariant>* > writesWaiting; ///< All writes that have not yet been ack'd, by component ID
 
-    // Status
-    QString parameterStatusMsg;
 
 };
     
