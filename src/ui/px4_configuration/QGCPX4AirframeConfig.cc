@@ -30,6 +30,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     connect(ui->planePushButton, SIGNAL(clicked()), this, SLOT(planeSelected()));
     connect(ui->planeComboBox, SIGNAL(activated(int)), this, SLOT(planeSelected(int)));
+    ui->planePushButton->setEnabled(ui->planeComboBox->count() > 0);
 
     ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q"), 30);
     ui->flyingWingComboBox->addItem(tr("Phantom FPV"), 31);
@@ -37,9 +38,11 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     connect(ui->flyingWingPushButton, SIGNAL(clicked()), this, SLOT(flyingWingSelected()));
     connect(ui->flyingWingComboBox, SIGNAL(activated(int)), this, SLOT(flyingWingSelected(int)));
 
-    ui->quadXComboBox->addItem(tr("Standard 10\" Quad"), 1);
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 10);
+    ui->quadXComboBox->addItem(tr("DJI F450 10\" Quad"), 11);
     ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 666);
+    ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 8);
+    ui->quadXComboBox->addItem(tr("AR.Drone Quad (w. PX4FLOW)"), 9);
 
     connect(ui->quadXPushButton, SIGNAL(clicked()), this, SLOT(quadXSelected()));
     connect(ui->quadXComboBox, SIGNAL(activated(int)), this, SLOT(quadXSelected(int)));
@@ -64,8 +67,8 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     connect(ui->octoPlusComboBox, SIGNAL(activated(int)), this, SLOT(octoPlusSelected(int)));
     ui->octoPlusPushButton->setEnabled(ui->octoPlusComboBox->count() > 0);
 
+    ui->hComboBox->addItem(tr("3DR Iris"), 16);
     ui->hComboBox->addItem(tr("TBS Discovery"), 15);
-    ui->hComboBox->addItem(tr("H Custom"), 16);
 
     connect(ui->hPushButton, SIGNAL(clicked()), this, SLOT(hSelected()));
     connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));
