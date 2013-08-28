@@ -56,12 +56,12 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     calibrationEnabled(false),
     configEnabled(false),
     px4AirframeConfig(NULL),
-    px4SensorCalibration(NULL),
     #ifdef QUPGRADE_SUPPORT
     firmwareDialog(NULL),
     #endif
     planeBack(":/files/images/px4/rc/cessna_back.png"),
     planeSide(":/files/images/px4/rc/cessna_side.png"),
+    px4SensorCalibration(NULL),
     ui(new Ui::QGCPX4VehicleConfig)
 {
     doneLoadingConfig = false;
@@ -1383,7 +1383,7 @@ void QGCPX4VehicleConfig::updateAllInvertedCheckboxes()
 
         int rc_input_index = rcMapping[function_index];
 
-        if (rc_input_index < 0 || rc_input_index > chanMax)
+        if (rc_input_index < 0 || rc_input_index > (int)chanMax)
             continue;
 
         // Map index to checkbox.
