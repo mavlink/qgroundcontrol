@@ -393,7 +393,7 @@ void QGCPX4VehicleConfig::detectChannelInversion(int aert_index)
 
     QStringList instructions;
     instructions << "ROLL: Move stick left";
-    instructions << "PITCH: Move stick up";
+    instructions << "PITCH: Move stick down";//matches the other sticks: should cause DECREASE in raw rc channel value when not reversed
     instructions << "YAW: Move stick left";
     instructions << "THROTTLE: Move stick down";
     instructions << "MODE SWITCH: Push down / towards you";
