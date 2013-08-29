@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>531</width>
-    <height>448</height>
+    <width>657</width>
+    <height>598</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,8 +36,29 @@ QPushButton#gyroButton, QPushButton#accelButton {
     border: 2px solid #465158;
 }</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0,0,0,0,0" columnstretch="30,0,0">
-   <item row="4" column="0" colspan="3">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0,0,0,0,0,0,0,0" columnstretch="30,8,8,15">
+   <item row="3" column="0" colspan="2">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Autopilot and GPS / Compass Orientation</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="3">
+    <widget class="QLabel" name="instructionLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="4">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -45,12 +66,12 @@ QPushButton#gyroButton, QPushButton#accelButton {
      <property name="sizeHint" stdset="0">
       <size>
        <width>498</width>
-       <height>21</height>
+       <height>5</height>
       </size>
      </property>
     </spacer>
    </item>
-   <item row="6" column="2">
+   <item row="9" column="2">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -63,49 +84,14 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </property>
     </spacer>
    </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QLabel" name="instructionLabel">
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
+   <item row="5" column="0">
+    <widget class="QComboBox" name="autopilotComboBox"/>
    </item>
-   <item row="6" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QPushButton" name="magButton">
-       <property name="text">
-        <string>Magnetometer</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="gyroButton">
-       <property name="text">
-        <string>Gyroscope</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="accelButton">
-       <property name="text">
-        <string>Accelerometer</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../../../qgroundcontrol.qrc">
-         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
-       </property>
-      </widget>
-     </item>
-    </layout>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="magComboBox"/>
+   </item>
+   <item row="0" column="2" rowspan="7" colspan="2">
+    <widget class="QPlainTextEdit" name="textView"/>
    </item>
    <item row="0" column="0" rowspan="2">
     <widget class="QLabel" name="iconLabel">
@@ -117,15 +103,86 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>24</number>
+   <item row="9" column="0" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="2">
+      <widget class="QLabel" name="accelLabel">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="gyroLabel">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="gyroButton">
+       <property name="text">
+        <string>Gyroscope</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="magButton">
+       <property name="text">
+        <string>Magnetometer</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="accelButton">
+       <property name="text">
+        <string>Accelerometer</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="magLabel">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="autopilotLabel">
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </item>
-   <item row="0" column="1" rowspan="3" colspan="2">
-    <widget class="QPlainTextEdit" name="textView"/>
+   <item row="4" column="1">
+    <widget class="QLabel" name="gpsLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
