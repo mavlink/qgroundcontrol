@@ -208,6 +208,27 @@ QGCToolBar .QWidget {
     background-color: transparent;
 }
 
+QGCPX4SensorCalibration QLabel#magLabel {
+    font-size: 15pt;
+    font-weight: bold;
+    border-radius: 4px;
+    min-height: 25px;
+}
+
+QGCPX4SensorCalibration QLabel#gyroLabel {
+    font-size: 15pt;
+    font-weight: bold;
+    border-radius: 4px;
+    min-height: 25px;
+}
+
+QGCPX4SensorCalibration QLabel#accelLabel {
+    font-size: 15pt;
+    font-weight: bold;
+    border-radius: 4px;
+    min-height: 25px;
+}
+
 QGCToolWidgetItem {
     border: 1px solid #666;
     border-radius: 3px;
@@ -409,12 +430,9 @@ QPushButton#viewModeGeneric, QPushButton#viewModePX4, QPushButton#viewModeAPM, Q
 }
 
 QPushButton#magButton, QPushButton#gyroButton, QPushButton#accelButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
-    border-radius: 8px;
-    min-height: 30px;
-    max-height: 50px;
-    min-width: 60px;
-    border: 3px solid #465158;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #757575, stop: 1 #333);
+    border-radius: 5px;
+    border: 1px solid #000000;
 }
 
 QWidget#containerWidget {
