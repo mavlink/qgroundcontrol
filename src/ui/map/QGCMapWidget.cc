@@ -81,7 +81,7 @@ void QGCMapWidget::guidedActionTriggered()
             }
         }
         // Create new waypoint and send it to the WPManager to send out.
-        internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+        internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
         qDebug() << "Guided action requested. Lat:" << pos.Lat() << "Lon:" << pos.Lng();
         Waypoint wp;
         wp.setLatitude(pos.Lat());
@@ -119,7 +119,7 @@ void QGCMapWidget::cameraActionTriggered()
     if (newmav)
     {
         newmav->setMountConfigure(4,true,true,true);
-        internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+        internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
         newmav->setMountControl(pos.Lat(),pos.Lng(),100,true);
     }
 }
