@@ -264,13 +264,13 @@ void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)
             if (wpParams.size() == 5) {
                 // Only load parameters for right mav
                 if (!userWarned && (uasId != lineMavId)) {
-                    //TODO warn the user somehow ??
+                    //TODO warn the user somehow ?? Appears these are saved currently with mav ID 0 but mav ID is often nonzero?
                     QString msg = tr("The parameters in the stream have been saved from system %1, but the currently selected system has the ID %2.").arg(lineMavId).arg(uasId);
-//                    MainWindow::instance()->showCriticalMessage(
-//                                tr("Parameter loading warning"),
-//                                tr("The parameters from the file %1 have been saved from system %2, but the currently selected system has the ID %3. If this is unintentional, please click on <READ> to revert to the parameters that are currently onboard").arg(fileName).arg(wpParams.at(0).toInt()).arg(mav->getUASID()));
+                    qWarning() << msg ;
+                    //MainWindow::instance()->showCriticalMessage(
+                    //            tr("Parameter loading warning"),
+                    //            tr("The parameters from the file %1 have been saved from system %2, but the currently selected system has the ID %3. If this is unintentional, please click on <READ> to revert to the parameters that are currently onboard").arg(fileName).arg(wpParams.at(0).toInt()).arg(mav->getUASID()));
                     userWarned = true;
-                    return;
                 }
 
                 bool changed = false;
@@ -286,8 +286,9 @@ void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)
                     changed = true;
                 }
                 else {
-                    if (fabs((static_cast<float>(onboardParameters.value(componentId)->value(key, dblVal).toDouble())) - (dblVal)) >
-                            2.0f * FLT_EPSILON) {
+                    QMap<QString,QVariant>* compParams = onboardParameters.value(componentId);
+                    if (!compParams->contains(key) ||
+                        (fabs((static_cast<float>(compParams->value(key).toDouble())) - (dblVal)) > 2.0f * FLT_EPSILON)) {
                             changed = true;
                             qDebug() << "Changed" << key << "VAL" << dblVal;
                        }
