@@ -171,15 +171,6 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
     mapcontrol::OPMapWidget::mouseReleaseEvent(event);
 }
 
-/*
-void QGCMapWidget::contextMenuEvent(QContextMenuEvent *event)
-{
-    // TODO Remove this method
-    qDebug() << "Context menu event triggered.";
-    mapcontrol::OPMapWidget::contextMenuEvent(event);
-}
-*/
-
 QGCMapWidget::~QGCMapWidget()
 {
     SetShowHome(false);	// doing this appears to stop the map lib crashing on exit
