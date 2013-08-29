@@ -34,7 +34,13 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     //this->SetShowTileGridLines(true);
 
     //default appears to be Google Hybrid, and is broken currently
+#if defined MAP_DEFAULT_TYPE_BING
     this->SetMapType(MapType::BingHybrid);
+#elif defined MAP_DEFAULT_TYPE_GOOGLE
+    this->SetMapType(MapType::GoogleHybrid);
+#else
+    this->SetMapType(MapType::OpenStreetMap);
+#endif
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
