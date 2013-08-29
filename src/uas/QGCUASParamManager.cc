@@ -24,6 +24,7 @@ QGCUASParamManager* QGCUASParamManager::initWithUAS(UASInterface* uas)
     // Load default values and tooltips for data model
     loadParamMetaInfoCSV();
 
+    paramDataModel.setUASID(mav->getUASID());
     paramCommsMgr = new UASParameterCommsMgr(this);
     paramCommsMgr->initWithUAS(uas);
 
