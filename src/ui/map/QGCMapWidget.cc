@@ -34,7 +34,13 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     //this->SetShowTileGridLines(true);
 
     //default appears to be Google Hybrid, and is broken currently
+#if defined MAP_DEFAULT_TYPE_BING
     this->SetMapType(MapType::BingHybrid);
+#elif defined MAP_DEFAULT_TYPE_GOOGLE
+    this->SetMapType(MapType::GoogleHybrid);
+#else
+    this->SetMapType(MapType::OpenStreetMap);
+#endif
 
     this->setContextMenuPolicy(Qt::ActionsContextMenu);
 
@@ -75,7 +81,7 @@ void QGCMapWidget::guidedActionTriggered()
             }
         }
         // Create new waypoint and send it to the WPManager to send out.
-        internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+        internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
         qDebug() << "Guided action requested. Lat:" << pos.Lat() << "Lon:" << pos.Lng();
         Waypoint wp;
         wp.setLatitude(pos.Lat());
@@ -113,7 +119,7 @@ void QGCMapWidget::cameraActionTriggered()
     if (newmav)
     {
         newmav->setMountConfigure(4,true,true,true);
-        internals::PointLatLng pos = map->FromLocalToLatLng(mousePressPos.x(), mousePressPos.y());
+        internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
         newmav->setMountControl(pos.Lat(),pos.Lng(),100,true);
     }
 }
@@ -164,15 +170,6 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
     mousePressPos = event->pos();
     mapcontrol::OPMapWidget::mouseReleaseEvent(event);
 }
-
-/*
-void QGCMapWidget::contextMenuEvent(QContextMenuEvent *event)
-{
-    // TODO Remove this method
-    qDebug() << "Context menu event triggered.";
-    mapcontrol::OPMapWidget::contextMenuEvent(event);
-}
-*/
 
 QGCMapWidget::~QGCMapWidget()
 {
