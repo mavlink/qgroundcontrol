@@ -1862,7 +1862,8 @@ void UAS::sendMessage(mavlink_message_t message)
     {
         if (LinkManager::instance()->getLinks().contains(link))
         {
-            sendMessage(link, message);
+            if (link->isConnected())
+                sendMessage(link, message);
             qDebug() << "SENT MESSAGE id" << message.msgid << "component" << message.compid;
         }
         else
