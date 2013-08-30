@@ -15,6 +15,19 @@ Documentation
 =============
 For generating documentation, refer to README in the doc directory.
 
+Notes:
+=====
+Please make sure to delete your build folder before re-building. Independent of which 
+build system you use (this is not related to Qt or your OS) the dependency checking and 
+cleaning is based on the current project revision. So if you change the project and not 
+doing a clean build before you do, incremental building can leave you with stale
+object files.
+
+For the current config branch 'qupgrade' has to be installed (subject to change): 
+
+cd qgroundcontrol
+git clone https://github.com/LorenzMeier/qupgrade.git
+
 
 Mac OS X
 ========
@@ -33,13 +46,13 @@ Install QT
 
 2) Double click the package installer
 
-Build QGroundControl
---------------------
+Build QGroundControl (use clang compiler - not gcc)
+-------------------------------------
 1) From the terminal go to the `groundcontrol` directory
 
-2) Run `qmake -spec macx-g++`
+2) Run `qmake qgroundcontrol.pro -r -spec unsupported/macx-clang CONFIG+=x86_64`
 
-3) Run `make -j8`
+3) Run `make -j4`
 
 
 Linux 
