@@ -1,4 +1,8 @@
+#include <QFile>
 #include <QSettings>
+#include <QDesktopWidget>
+#include <QMessageBox>
+#include <QFileDialog>
 
 #include "QGCSettingsWidget.h"
 #include "MainWindow.h"

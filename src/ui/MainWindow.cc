@@ -66,6 +66,28 @@ This file is part of the QGROUNDCONTROL project
 #include "UASRawStatusView.h"
 #include "PrimaryFlightDisplay.h"
 
+#include "LinkManager.h"
+#include "UASManager.h"
+#include "UASControlWidget.h"
+#include "UASInfoWidget.h"
+#include "WaypointList.h"
+#include "CameraView.h"
+#include "UASListWidget.h"
+#include "ObjectDetectionView.h"
+#include "ParameterInterface.h"
+#include "XMLCommProtocolWidget.h"
+#include "HDDisplay.h"
+#include "WatchdogControl.h"
+#include "HSIDisplay.h"
+#include "QGCRemoteControlView.h"
+#include "opmapcontrol.h"
+#include "SlugsDataSensorView.h"
+#include "SlugsHilSim.h"
+#include "SlugsPadCameraControl.h"
+#include "UASControlParameters.h"
+#include "QGCMAVLinkInspector.h"
+#include "QGCVehicleConfig.h"
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -1602,6 +1624,33 @@ void MainWindow::addLink(LinkInterface *link)
         }
     }
 }
+
+void MainWindow::addLinkUi(LinkInterface *link, QObject *linkUi, QAction *linkUiAction)
+{
+    // be sure that this link already exists
+    const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+    if(0 <= linkIndex)
+    {
+        // check that the widget isn't already registered
+        const int32_t& linkUiIndex(commsWidgetList.indexOf(linkUi));
+        if(linkUiIndex < 0)
+        {
+            // insert the ui action in the network menu
+            ui.menuNetwork->addAction(linkUiAction);
+
+            // connect the destroy signal to manage the commsWidgetList
+            connect(linkUi,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
+
+            // connect the error handling signal to manage the error messages
+            // FIXME : not the good place if we decide to only manage the ui here...
+            // connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
+
+            // add the widget to the commsWidgetList 
+            commsWidgetList.append(linkUi);
+        }
+    }
+}
+
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
     if (commsWidgetList.contains(obj))

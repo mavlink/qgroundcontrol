@@ -12,6 +12,8 @@
  */
 
 #include <QDoubleSpinBox>
+#include <QGroupBox>
+#include <QPainter>
 #include <QDebug>
 
 #include <cmath>

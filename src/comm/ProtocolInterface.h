@@ -87,4 +87,7 @@ signals:
 
 };
 
+/* Declare C++ interface as Qt interface */
+Q_DECLARE_INTERFACE(ProtocolInterface, "org.openground.comm.ProtocolInterface/1.0")
+
 #endif // _PROTOCOLINTERFACE_H_

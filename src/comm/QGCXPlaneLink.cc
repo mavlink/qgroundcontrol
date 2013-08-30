@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutexLocker>
 #include <QNetworkInterface>
 #include <iostream>
+#include <Eigen/Geometry>
 #include "QGCXPlaneLink.h"
 #include "QGC.h"
 #include <QHostInfo>

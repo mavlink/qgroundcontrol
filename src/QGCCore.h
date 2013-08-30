@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 #define QGC_CORE_H
 
 #include <QApplication>
+#include <QPluginLoader>
 
 #include "MainWindow.h"
 #include "QGCWelcomeMainWindow.h"
@@ -78,10 +79,14 @@ protected:
      **/
     void startUASManager();
 
+    void loadPlugins();
+    void unloadPlugins();
+
 private:
     MainWindow* mainWindow;
     bool restartRequested;
     QGCWelcomeMainWindow* welcome;
+    QList<QPluginLoader *> pluginLoaders;
 };
 
 #endif /* _CORE_H_ */

@@ -653,6 +653,6 @@ protected:
 
 };
 
-Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
+Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol.uas.UasInterface/1.0")
 
 #endif // _UASINTERFACE_H_

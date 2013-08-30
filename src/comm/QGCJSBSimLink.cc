@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QTimer>
 #include <QList>
+#include <QFileInfo>
 #include <QDebug>
 #include <QMutexLocker>
 #include <iostream>
@@ -38,6 +39,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include <QHostInfo>
 #include "MainWindow.h"
+#include "UAS.h"
 
 QGCJSBSimLink::QGCJSBSimLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     socket(NULL),

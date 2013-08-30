@@ -33,6 +33,7 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 #include <QMenu>
 #include <QInputDialog>
+#include <QPainter>
 
 #include "QGC.h"
 #include "UASManager.h"

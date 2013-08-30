@@ -24,6 +24,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolButton>
 #include <QLabel>
 #include <QSpacerItem>
+#include <QDesktopServices>
+#include <QPainter>
+#include <QFileDialog>
+#include <QMessageBox>
 #include "QGCStatusBar.h"
 #include "UASManager.h"
 #include "MainWindow.h"

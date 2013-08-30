@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QFileInfoList>
 #include <QBoxLayout>
 #include <QWidget>
+#include <QDesktopWidget>
 
 #include "CommConfigurationWindow.h"
 #include "SerialConfigurationWindow.h"
