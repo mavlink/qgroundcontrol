@@ -429,7 +429,7 @@ void QGCPX4VehicleConfig::startCalibrationRC()
     configEnabled = true;
 
     QMessageBox::warning(0,tr("Safety Warning"),
-                         tr("Starting RC calibration.\n Ensure that motor power is disconnected, all props are removed, RC transmitter and receiver are powered and connected.\n\nRESET ALL TRIMS TO CENTER! Do not move the RC controls, then click OK to continue"));
+                         tr("Starting RC calibration.\n\nEnsure that motor power is disconnected, all props are removed, RC transmitter and receiver are powered and connected.\n\nReset transmitter trims to center, then click OK to continue"));
 
     //go ahead and try to map first 8 channels, now that user can skip channels
     for (int i = 0; i < 8; i++) {
@@ -489,7 +489,7 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
 
     QString statusstr;
     statusstr = tr("This is the RC calibration information that will be sent to the autopilot if you click OK. To prevent transmission, click Cancel.");
-    statusstr += tr("Normal values range from 1000 to 2000, with disconnected channels reading 1000, 1500, 2000\n\n");
+    statusstr += tr("  Normal values range from 1000 to 2000, with disconnected channels reading 1000, 1500, 2000\n\n");
     statusstr += tr("Channel\tMin\tCenter\tMax\n");
     statusstr += "-------\t---\t------\t---\n";
     for (unsigned int i=0; i < chanCount; i++) {
