@@ -426,6 +426,11 @@ void QGCPX4VehicleConfig::startCalibrationRC()
         return;
     }
 
+    // reset all channel mappings above Ch 5 to invalid/unused value before starting calibration
+    for (unsigned int j= 5; j < chanMappedMax; j++) {
+        rcMapping[j] = -1;
+    }
+
     configEnabled = true;
 
     QMessageBox::warning(0,tr("Safety Warning"),
