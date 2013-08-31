@@ -11,6 +11,7 @@
 
 UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent) :
     QObject(parent),
+    lastReceiveTime(0),
     mav(NULL),
     maxSilenceTimeout(30000),
     paramDataModel(NULL),
@@ -254,6 +255,7 @@ void UASParameterCommsMgr::silenceTimerExpired()
         int missingReads, missingWrites;
         clearRetransmissionLists(missingReads,missingWrites);
         silenceTimer.stop();
+        lastReceiveTime = 0;
         lastSilenceTimerReset = curTime;
         setParameterStatusMsg(tr("TIMEOUT: Abandoning %1 reads %2 writes after %3 seconds").arg(missingReads).arg(missingWrites).arg(totalElapsed/1000));
     }
@@ -362,14 +364,18 @@ void UASParameterCommsMgr::updateSilenceTimer()
 
 
     if (missReadCount > 0 || missWriteCount > 0) {
-        silenceTimer.start(silenceTimeout);
         lastSilenceTimerReset = QGC::groundTimeMilliseconds();
+        if (0 == lastReceiveTime) {
+            lastReceiveTime = lastSilenceTimerReset;
+        }
+        silenceTimer.start(silenceTimeout);
     }
     else {
         //all parameters have been received, broadcast to UI
         emit parameterListUpToDate();
         resetAfterListReceive();
         silenceTimer.stop();
+        lastReceiveTime = 0;
     }
 
 
