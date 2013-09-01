@@ -229,6 +229,11 @@ QGCPX4SensorCalibration QLabel#accelLabel {
     min-height: 25px;
 }
 
+QGCPX4VehicleConfig QLabel#rcLabel {
+    color: #FEC654;
+    font-size: 18pt;
+}
+
 QGCToolWidgetItem {
     border: 1px solid #666;
     border-radius: 3px;
