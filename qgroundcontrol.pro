@@ -79,7 +79,9 @@ win32 {
 	}
 }
 
-
+macx {
+    QMAKE_INFO_PLIST = Custom-Info.plist
+}
 
 #################################################################
 # EXTERNAL LIBRARY CONFIGURATION
