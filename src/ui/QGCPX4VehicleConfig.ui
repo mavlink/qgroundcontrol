@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1256</width>
-    <height>918</height>
+    <height>985</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -197,6 +197,13 @@
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="rcLabel">
+           <property name="text">
+            <string>Waiting for RC channel data..</string>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="advancedCheckBox">
@@ -822,8 +829,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>21</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -859,8 +866,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>21</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -910,8 +917,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
