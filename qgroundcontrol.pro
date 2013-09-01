@@ -62,6 +62,12 @@ MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
 DEFINES += MAVLINK_NO_DATA
 
 win32 {
+	VERSION = 2.0.0.227
+	QMAKE_TARGET_COMPANY = qgroundcontrol.org
+	QMAKE_TARGET_PRODUCT = qgroundcontrol
+	QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
+	QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2013 QGroundControl Development Team. All rights reserved."
+
     QMAKE_INCDIR_QT = $$(QTDIR)/include
     QMAKE_LIBDIR_QT = $$(QTDIR)/lib
     QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
@@ -79,7 +85,9 @@ win32 {
 	}
 }
 
-
+macx {
+    QMAKE_INFO_PLIST = Custom-Info.plist
+}
 
 #################################################################
 # EXTERNAL LIBRARY CONFIGURATION
