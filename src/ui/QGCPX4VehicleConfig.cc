@@ -239,6 +239,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateTimer.start();
 
+    ui->rcLabel->setText(tr("NO RADIO CONTROL INPUT DETECTED. PLEASE ENSURE THE TRANSMITTER IS ON."));
+
 }
 
 QGCPX4VehicleConfig::~QGCPX4VehicleConfig()
@@ -423,6 +425,7 @@ void QGCPX4VehicleConfig::startCalibrationRC()
         QMessageBox::warning(0,
                              tr("RC not Connected"),
                              tr("Is the RC receiver connected and transmitter turned on? Detected %1 radio channels. To operate PX4, you need at least 5 channels. ").arg(chanCount));
+        ui->rcCalibrationButton->setChecked(false);
         return;
     }
 
@@ -464,6 +467,9 @@ void QGCPX4VehicleConfig::startCalibrationRC()
 
 void QGCPX4VehicleConfig::stopCalibrationRC()
 {
+    if (!calibrationEnabled)
+        return;
+
     QMessageBox::information(0,"Trims","Ensure all controls are centered and throttle is in the lowest position. Click OK to continue");
 
     calibrationEnabled = false;
@@ -1808,5 +1814,8 @@ void QGCPX4VehicleConfig::updateView()
 
         updateRcWidgetValues();
         updateRcChanLabels();
+        if (chanCount > 0)
+            ui->rcLabel->setText(tr("Radio control detected with %1 channels.").arg(chanCount));
     }
+
 }
