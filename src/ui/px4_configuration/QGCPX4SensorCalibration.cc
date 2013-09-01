@@ -226,12 +226,12 @@ void QGCPX4SensorCalibration::setInstructionImage(const QString &path)
 
 void QGCPX4SensorCalibration::setAutopilotImage(int index)
 {
-    setAutopilotImage(QString(":/files/images/px4/calibration/pixhawk_%1.png").arg(index));
+    setAutopilotImage(QString(":/files/images/px4/calibration/pixhawk_%1.png").arg(index, 2, 10, QChar('0')));
 }
 
 void QGCPX4SensorCalibration::setGpsImage(int index)
 {
-    setGpsImage(QString(":/files/images/px4/calibration/gps_%1.png").arg(index));
+    setGpsImage(QString(":/files/images/px4/calibration/3dr_gps/gps_%1.png").arg(index, 2, 10, QChar('0')));
 }
 
 void QGCPX4SensorCalibration::setAutopilotOrientation(int index)
