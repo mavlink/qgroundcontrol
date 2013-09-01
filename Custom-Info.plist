@@ -19,6 +19,6 @@
 	<key>CFBundleIdentifier</key>
 	<string>org.qgroundcontrol.qgroundcontrol</string>
 	<key>NOTE</key>
-	<string>Open source ground control app provided by PX4 dev team</string>
+	<string>Open source ground control app provided by QGroundControl dev team</string>
 </dict>
 </plist>

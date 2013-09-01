@@ -65,8 +65,8 @@ win32 {
 	VERSION = 2.0.0.227
 	QMAKE_TARGET_COMPANY = qgroundcontrol.org
 	QMAKE_TARGET_PRODUCT = qgroundcontrol
-	QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by PX4 dev team"
-	QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2013 PX4 Development Team. All rights reserved."
+	QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
+	QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2013 QGroundControl Development Team. All rights reserved."
 
     QMAKE_INCDIR_QT = $$(QTDIR)/include
     QMAKE_LIBDIR_QT = $$(QTDIR)/lib
