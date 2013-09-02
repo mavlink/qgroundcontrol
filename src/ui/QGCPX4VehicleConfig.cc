@@ -154,7 +154,11 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->graphicsView->hide();
 
     ui->rcCalibrationButton->setCheckable(true);
+    ui->rcCalibrationButton->setEnabled(false);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
+    ui->spektrumPairButton->setCheckable(true);
+    ui->spektrumPairButton->setEnabled(false);
+    connect(ui->spektrumPairButton, SIGNAL(clicked(bool)), this, SLOT(toggleSpektrumPairing(bool)));
 
     //TODO connect buttons here to save/clear actions?
     UASInterface* tmpMav = UASManager::instance()->getActiveUAS();
@@ -326,6 +330,22 @@ void QGCPX4VehicleConfig::toggleCalibrationRC(bool enabled)
     else
     {
         stopCalibrationRC();
+    }
+}
+
+void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
+{
+    if (enabled)
+    {
+        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", (int)1);
+        // Do not save this parameter, just set in RAM
+        mav->getParamManager()->sendPendingParameters();
+    }
+    else
+    {
+        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", (int)0);
+        // Do not save this parameter, just set in RAM
+        mav->getParamManager()->sendPendingParameters();
     }
 }
 
@@ -1140,6 +1160,9 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     ui->airframeMenuButton->setEnabled(true);
     ui->sensorMenuButton->setEnabled(true);
     ui->rcMenuButton->setEnabled(true);
+
+    ui->rcCalibrationButton->setEnabled(true);
+    ui->spektrumPairButton->setEnabled(true);
 }
 
 void QGCPX4VehicleConfig::resetCalibrationRC()

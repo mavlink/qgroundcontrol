@@ -60,6 +60,8 @@ public slots:
     void stopCalibrationRC();
     /** Start/stop the RC calibration routine */
     void toggleCalibrationRC(bool enabled);
+    /** Start/stop the Spektrum pair routine */
+    void toggleSpektrumPairing(bool enabled);
     /** Set trim positions */
     void setTrimPositions();
     /** Detect which channels need to be inverted */

@@ -179,6 +179,12 @@ QPushButton#gyroButton, QPushButton#accelButton {
    </item>
    <item row="4" column="1">
     <widget class="QLabel" name="gpsLabel">
+     <property name="minimumSize">
+      <size>
+       <width>150</width>
+       <height>150</height>
+      </size>
+     </property>
      <property name="text">
       <string/>
      </property>
