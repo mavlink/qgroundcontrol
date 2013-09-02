@@ -67,6 +67,18 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_270_YAW_135"), 23);
     ui->autopilotComboBox->addItem(tr("ROTATION_PITCH_90"), 24);
     ui->autopilotComboBox->addItem(tr("ROTATION_PITCH_270"), 25);
+    ui->autopilotComboBox->addItem(tr("ROTATION_PITCH_180_YAW_90"), 26);
+    ui->autopilotComboBox->addItem(tr("ROTATION_PITCH_180_YAW_270"), 27);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_90_PITCH_90"), 28);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_180_PITCH_90"), 29);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_270_PITCH_90"), 30);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_90_PITCH_180"), 31);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_270_PITCH_180"), 32);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_90_PITCH_270"), 33);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_180_PITCH_270"), 34);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_270_PITCH_270"), 35);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_90_PITCH_180_YAW_90"), 36);
+    ui->autopilotComboBox->addItem(tr("ROTATION_ROLL_90_YAW_270"), 37);
 
     ui->magComboBox->addItem(tr("Default Orientation"), 0);
     ui->magComboBox->addItem(tr("ROTATION_YAW_45"), 1);
@@ -381,8 +393,10 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
         accelStarted = false;
         // XXX use a confirmation image or something
         setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-        if (activeUAS)
+        if (activeUAS) {
             activeUAS->requestParameter(0, "SENS_ACC_XOFF");
+            activeUAS->requestParameter(0, "SENS_BOARD_ROT");
+        }
     }
 
     if (text.contains("gyro calibration done")) {
@@ -398,8 +412,10 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
         magStarted = false;
         // XXX use a confirmation image or something
         setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-        if (activeUAS)
+        if (activeUAS) {
             activeUAS->requestParameter(0, "SENS_MAG_XOFF");
+            activeUAS->requestParameter(0, "SENS_EXT_MAG_ROT");
+        }
     }
 
     if (text.contains("accel calibration started")) {

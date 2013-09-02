@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1256</width>
-    <height>985</height>
+    <height>1009</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -50,9 +50,25 @@
        <widget class="QWidget" name="rcTab">
         <layout class="QVBoxLayout" name="verticalLayout_17">
          <item>
-          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0" columnstretch="0,0,0,0">
-           <item row="2" column="1">
-            <widget class="QGCRadioChannelDisplay" name="yawWidget" native="true">
+          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0,0,0">
+           <item row="0" column="1">
+            <widget class="QGCRadioChannelDisplay" name="throttleWidget" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QGCRadioChannelDisplay" name="rollWidget" native="true">
              <property name="minimumSize">
               <size>
                <width>250</width>
@@ -63,6 +79,28 @@
               <size>
                <width>250</width>
                <height>40</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QGCRadioChannelDisplay" name="pitchWidget" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>1</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
               </size>
              </property>
             </widget>
@@ -135,30 +173,8 @@
              </item>
             </layout>
            </item>
-           <item row="0" column="2">
-            <widget class="QGCRadioChannelDisplay" name="pitchWidget" native="true">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>1</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>200</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>50</width>
-               <height>200</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QGCRadioChannelDisplay" name="rollWidget" native="true">
+           <item row="1" column="1">
+            <widget class="QGCRadioChannelDisplay" name="yawWidget" native="true">
              <property name="minimumSize">
               <size>
                <width>250</width>
@@ -169,32 +185,40 @@
               <size>
                <width>250</width>
                <height>40</height>
-              </size>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QGCRadioChannelDisplay" name="throttleWidget" native="true">
-             <property name="minimumSize">
-              <size>
-               <width>50</width>
-               <height>200</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>50</width>
-               <height>200</height>
               </size>
              </property>
             </widget>
            </item>
            <item row="0" column="0">
-            <widget class="QPushButton" name="rcCalibrationButton">
-             <property name="text">
-              <string>Start Calibration</string>
-             </property>
-            </widget>
+            <layout class="QVBoxLayout" name="verticalLayout_9">
+             <item>
+              <widget class="QPushButton" name="rcCalibrationButton">
+               <property name="text">
+                <string>Start Calibration</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="spektrumPairButton">
+               <property name="text">
+                <string>Spektrum RC Pairing</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
@@ -829,8 +853,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -866,8 +890,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -917,8 +941,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
