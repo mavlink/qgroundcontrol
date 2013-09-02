@@ -190,7 +190,6 @@
         <file>files/images/px4/calibration/3dr_gps/gps_18.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_17.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_16.png</file>
-        <file>files/images/px4/calibration/3dr_gps/gps_07.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_06.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_05.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_04.png</file>
@@ -198,6 +197,7 @@
         <file>files/images/px4/calibration/3dr_gps/gps_02.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_01.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_24.png</file>
+        <file>files/images/px4/calibration/3dr_gps/gps_00.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
