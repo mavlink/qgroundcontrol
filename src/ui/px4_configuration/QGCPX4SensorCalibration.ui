@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>657</width>
-    <height>598</height>
+    <width>659</width>
+    <height>603</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,42 +36,11 @@ QPushButton#gyroButton, QPushButton#accelButton {
     border: 2px solid #465158;
 }</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0,0,0,0,0,0,0,0" columnstretch="30,8,8,15">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="20,0,0,0,0,0,0" columnstretch="30,0,0,0">
    <item row="3" column="0" colspan="2">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Autopilot and GPS / Compass Orientation</string>
-     </property>
-    </widget>
+    <widget class="QPlainTextEdit" name="textView"/>
    </item>
-   <item row="7" column="0" colspan="3">
-    <widget class="QLabel" name="instructionLabel">
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>24</number>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0" colspan="4">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>498</width>
-       <height>5</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="9" column="2">
+   <item row="6" column="2">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -84,26 +53,20 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </property>
     </spacer>
    </item>
-   <item row="5" column="0">
-    <widget class="QComboBox" name="autopilotComboBox"/>
-   </item>
-   <item row="5" column="1">
-    <widget class="QComboBox" name="magComboBox"/>
-   </item>
-   <item row="0" column="2" rowspan="7" colspan="2">
-    <widget class="QPlainTextEdit" name="textView"/>
-   </item>
-   <item row="0" column="0" rowspan="2">
-    <widget class="QLabel" name="iconLabel">
-     <property name="text">
-      <string/>
+   <item row="5" column="0" colspan="4">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="scaledContents">
-      <bool>true</bool>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>498</width>
+       <height>5</height>
+      </size>
      </property>
-    </widget>
+    </spacer>
    </item>
-   <item row="9" column="0" colspan="2">
+   <item row="6" column="0" colspan="2">
     <layout class="QGridLayout" name="gridLayout_2">
      <item row="0" column="2">
       <widget class="QLabel" name="accelLabel">
@@ -170,24 +133,75 @@ QPushButton#gyroButton, QPushButton#accelButton {
      </item>
     </layout>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="autopilotLabel">
+   <item row="2" column="0" colspan="2">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2" colspan="2">
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>Autopilot Orientation</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="autopilotLabel">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>250</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="autopilotComboBox"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="2" colspan="2">
+    <widget class="QLabel" name="iconLabel">
      <property name="text">
       <string/>
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
-    <widget class="QLabel" name="gpsLabel">
-     <property name="minimumSize">
-      <size>
-       <width>150</width>
-       <height>150</height>
-      </size>
-     </property>
+   <item row="4" column="0" colspan="2">
+    <widget class="QLabel" name="instructionLabel">
      <property name="text">
       <string/>
      </property>
+    </widget>
+   </item>
+   <item row="1" column="2" rowspan="4" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Magnetometer Orientation</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="gpsLabel">
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>120</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="magComboBox"/>
+      </item>
+     </layout>
     </widget>
    </item>
   </layout>
