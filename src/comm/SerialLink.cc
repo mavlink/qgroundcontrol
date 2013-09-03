@@ -174,7 +174,7 @@ void SerialLink::run()
             }
         }
 
-        if (isConnected() && (linkErrorCount > 100)) {
+        if (isConnected() && (linkErrorCount > 1000)) {
             qDebug() << "linkErrorCount too high: disconnecting!";
             linkErrorCount = 0;
             emit communicationUpdate(getName(), tr("Disconnecting on too many link errors"));
