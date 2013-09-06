@@ -78,6 +78,7 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         toolBarTimeoutLabel->setText(tr("CONNECTION LOST: %1 s").arg((ms / 1000.0f), 2, 'f', 1, ' '));
         toolBarTimeoutAction->setVisible(true);
         toolBarMessageAction->setVisible(false);
+        toolBarBatteryBarAction->setVisible(false);
     }
     else
     {
@@ -86,6 +87,7 @@ void QGCToolBar::heartbeatTimeout(bool timeout, unsigned int ms)
         {
             toolBarTimeoutAction->setVisible(false);
             toolBarMessageAction->setVisible(true);
+            toolBarBatteryBarAction->setVisible(true);
         }
     }
 }
@@ -136,13 +138,13 @@ void QGCToolBar::createUI()
     toolBarBatteryBar->setToolTip(tr("Battery charge level"));
     toolBarBatteryBar->setObjectName("toolBarBatteryBar");
     toolBarBatteryBar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    addWidget(toolBarBatteryBar);
+    toolBarBatteryBarAction = addWidget(toolBarBatteryBar);
 
     toolBarBatteryVoltageLabel = new QLabel(this);
     toolBarBatteryVoltageLabel->setToolTip(tr("Battery voltage"));
     toolBarBatteryVoltageLabel->setObjectName("toolBarBatteryVoltageLabel");
     toolBarBatteryVoltageLabel->setAlignment(Qt::AlignCenter);
-    addWidget(toolBarBatteryVoltageLabel);
+    toolBarBatteryVoltageAction = addWidget(toolBarBatteryVoltageLabel);
 
     toolBarWpLabel = new QLabel(this);
     toolBarWpLabel->setToolTip(tr("Current waypoint"));

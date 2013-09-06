@@ -113,6 +113,8 @@ protected:
     QAction* toolBarPortAction;
     QAction* toolBarBaudAction;
     QAction* toolBarWpAction;
+    QAction* toolBarBatteryBarAction;
+    QAction* toolBarBatteryVoltageAction;
     QLabel* toolBarSafetyLabel;
     QLabel* toolBarModeLabel;
     QLabel* toolBarStateLabel;
