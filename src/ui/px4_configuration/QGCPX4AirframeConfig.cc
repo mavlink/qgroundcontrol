@@ -27,6 +27,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 100);
     ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 101);
+    ui->planeComboBox->addItem(tr("HilStar (SIMULATION)"), 1000);
 
     connect(ui->planePushButton, SIGNAL(clicked()), this, SLOT(planeSelected()));
     connect(ui->planeComboBox, SIGNAL(activated(int)), this, SLOT(planeSelected(int)));
