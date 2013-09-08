@@ -335,9 +335,23 @@ void QGCPX4VehicleConfig::toggleCalibrationRC(bool enabled)
 
 void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
 {
+    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton) {
+        // Reject
+        QMessageBox warnMsgBox;
+        warnMsgBox.setText(tr("Please select a Spektrum Protocol Version"));
+        warnMsgBox.setInformativeText(tr("Please select either DSM2 or DSM-X\ndirectly below the pair button,\nbased on the receiver type."));
+        warnMsgBox.setStandardButtons(QMessageBox::Ok);
+        warnMsgBox.setDefaultButton(QMessageBox::Ok);
+        (void)warnMsgBox.exec();
+    }
+
     if (enabled)
     {
-        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", (int)1);
+        int mode = 1; // DSM2
+        if (ui->dsmxRadioButton->isChecked())
+            mode = 2; // DSMX
+
+        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", mode);
         // Do not save this parameter, just set in RAM
         mav->getParamManager()->sendPendingParameters();
     }
