@@ -223,6 +223,8 @@ win32-msvc2008|win32-msvc2010 {
                 QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtWebKitd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
                 QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXmld4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
                 QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXmlPatternsd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtDeclaratived4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtScriptd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
         }
 
         CONFIG(release, debug|release) {
@@ -242,6 +244,8 @@ win32-msvc2008|win32-msvc2010 {
                 QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtWebKit4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
                 QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXml4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
                 QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXmlPatterns4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtDeclarative4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+                QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtScript4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
                 QMAKE_POST_LINK += $$quote(del /F "$$TARGETDIR_WIN\\release\\qupgrade.exp"$$escape_expand(\\n))
                 QMAKE_POST_LINK += $$quote(del /F "$$TARGETDIR_WIN\\release\\qupgrade.lib"$$escape_expand(\\n))
 
