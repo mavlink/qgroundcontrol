@@ -46,19 +46,21 @@ int UASParameterDataModel::countOnboardParams()
 }
 
 
-bool UASParameterDataModel::updatePendingParamWithValue(int compId, const QString& key, const QVariant& value)
+bool UASParameterDataModel::updatePendingParamWithValue(int compId, const QString& key, const QVariant& value, bool forceSend)
 {
     bool pending = true;
     //ensure we have this component in our onboard and pending lists already
     addComponent(compId);
 
-    QMap<QString, QVariant>* existParams = getOnboardParamsForComponent(compId);
-    if (existParams->contains(key)) {
-        QVariant existValue = existParams->value(key);
-        if (existValue == value) {
-            pending = false;
-        }
-    }
+	if (!forceSend) {
+		QMap<QString, QVariant>* existParams = getOnboardParamsForComponent(compId);
+		if (existParams->contains(key)) {
+			QVariant existValue = existParams->value(key);
+			if (existValue == value) {
+				pending = false;
+			}
+		}
+	}
 
     if (pending) {
         setPendingParam(compId,key,value);

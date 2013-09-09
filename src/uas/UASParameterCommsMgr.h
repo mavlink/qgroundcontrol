@@ -71,13 +71,13 @@ signals:
 
 public slots:
     /** @brief  Iterate through all components, through all pending parameters and send them to UAS */
-    virtual void sendPendingParameters(bool copyToPersistent = false);
+    virtual void sendPendingParameters(bool copyToPersistent = false, bool forceSend = false);
 
     /** @brief  Write the current onboard parameters from transient RAM into persistent storage, e.g. EEPROM or harddisk */
     virtual void writeParamsToPersistentStorage();
 
     /** @brief Write one parameter to the MAV */
-    virtual void setParameter(int component, QString parameterName, QVariant value);
+    virtual void setParameter(int component, QString parameterName, QVariant value, bool forceSend = false);
 
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList();

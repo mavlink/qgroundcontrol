@@ -307,7 +307,7 @@ void UASParameterCommsMgr::requestRcCalibrationParamsUpdate()
  * @param parameterName name of the parameter, as delivered by the system
  * @param value value of the parameter
  */
-void UASParameterCommsMgr::setParameter(int compId, QString paramName, QVariant value)
+void UASParameterCommsMgr::setParameter(int compId, QString paramName, QVariant value, bool forceSend)
 {
     if (paramName.isEmpty()) {
         return;
@@ -328,14 +328,16 @@ void UASParameterCommsMgr::setParameter(int compId, QString paramName, QVariant 
         return;
     }
 
-    QVariant onboardVal;
-    paramDataModel->getOnboardParamValue(compId,paramName,onboardVal);
-    if (onboardVal == value) {
-        setParameterStatusMsg(tr("REJ. %1 already %2").arg(paramName).arg(dblValue),
-                              ParamCommsStatusLevel_Warning
-                              );
-        return;
-    }
+	if (!forceSend) {
+		QVariant onboardVal;
+		paramDataModel->getOnboardParamValue(compId,paramName,onboardVal);
+		if (onboardVal == value) {
+			setParameterStatusMsg(tr("REJ. %1 already %2").arg(paramName).arg(dblValue),
+				ParamCommsStatusLevel_Warning
+				);
+			return;
+		}
+	}
 
     emitPendingParameterCommit(compId, paramName, value);
 
@@ -501,7 +503,7 @@ void UASParameterCommsMgr::writeParamsToPersistentStorage()
 }
 
 
-void UASParameterCommsMgr::sendPendingParameters(bool copyToPersistent)
+void UASParameterCommsMgr::sendPendingParameters(bool copyToPersistent, bool forceSend)
 {
     persistParamsAfterSend |= copyToPersistent;
 
@@ -517,7 +519,7 @@ void UASParameterCommsMgr::sendPendingParameters(bool copyToPersistent)
         setParameterStatusMsg(tr("%1 pending params for component %2").arg(paramList->count()).arg(compId));
 
         for (j = paramList->begin(); j != paramList->end(); ++j) {
-            setParameter(compId, j.key(), j.value());
+            setParameter(compId, j.key(), j.value(), forceSend);
             parametersSent++;
         }
     }
