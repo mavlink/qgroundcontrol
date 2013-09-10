@@ -226,6 +226,9 @@ void QGCToolBar::createUI()
     connect(&portBoxTimer, SIGNAL(timeout()), this, SLOT(updateComboBox()));
     portBoxTimer.start(500);
 
+    toolBarMessageAction->setVisible(false);
+    toolBarBatteryBarAction->setVisible(false);
+
     changed = false;
 }
 
@@ -251,6 +254,8 @@ void QGCToolBar::resetToolbarUI()
     lastSystemMessageTimeMs = 0;
     symbolLabel->setStyleSheet("");
     symbolLabel->clear();
+    toolBarMessageAction->setVisible(false);
+    toolBarBatteryBarAction->setVisible(false);
 }
 
 void QGCToolBar::baudSelected(int index)
@@ -433,10 +438,10 @@ void QGCToolBar::updateArmingState(bool armed)
 void QGCToolBar::updateView()
 {
     if (!changed) return;
-    if (toolBarWpLabel->isVisible())
+    if (toolBarWpAction->isVisible())
         toolBarWpLabel->setText(tr("WP%1").arg(wpId));
 
-    if (toolBarBatteryBar->isVisible()) {
+    if (toolBarBatteryBarAction->isVisible()) {
         toolBarBatteryBar->setValue(batteryPercent);
 
         if (batteryPercent < 30 && toolBarBatteryBar->value() >= 30) {
@@ -468,7 +473,7 @@ void QGCToolBar::updateView()
     toolBarNameLabel->setText(systemName);
     // expire after 15 seconds
 
-    if (toolBarMessageLabel->isVisible()) {
+    if (toolBarMessageAction->isVisible()) {
         if (QGC::groundTimeMilliseconds() - lastSystemMessageTimeMs < 15000) {
             toolBarMessageLabel->setText(QString("%1").arg(lastSystemMessage));
         } else {
