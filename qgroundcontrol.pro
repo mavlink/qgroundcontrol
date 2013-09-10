@@ -22,7 +22,6 @@
 CONFIG += qt \
     thread \
     console
-#    serialport
 
 QT += network \
     opengl \
@@ -34,7 +33,7 @@ QT += network \
     declarative
 
 TEMPLATE = app
-TARGET = qgroundcontrol
+TARGET = qgroundcontrol2
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
     debug {
@@ -108,7 +107,7 @@ DEPENDPATH += \
 INCLUDEPATH += \
     libs/utils \
     libs \
-    libs/opmapcontrol \
+    libs/opmapcontrol
 
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
@@ -129,7 +128,6 @@ isEmpty(MAVLINK_CONF) {
     INCLUDEPATH += $$MAVLINKPATH/common
 } else {
     INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-    #DEFINES += 'MAVLINK_CONF="$${MAVLINK_CONF}.h"'
     DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
 }
 
