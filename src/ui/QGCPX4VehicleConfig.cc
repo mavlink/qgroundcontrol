@@ -156,7 +156,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->rcCalibrationButton->setCheckable(true);
     ui->rcCalibrationButton->setEnabled(false);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    ui->spektrumPairButton->setCheckable(true);
+    ui->spektrumPairButton->setCheckable(false);
     ui->spektrumPairButton->setEnabled(false);
     connect(ui->spektrumPairButton, SIGNAL(clicked(bool)), this, SLOT(toggleSpektrumPairing(bool)));
 
@@ -345,22 +345,13 @@ void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
         (void)warnMsgBox.exec();
     }
 
-    if (enabled)
-    {
-        int mode = 1; // DSM2
-        if (ui->dsmxRadioButton->isChecked())
-            mode = 2; // DSMX
+    int mode = 1; // DSM2
+    if (ui->dsmxRadioButton->isChecked())
+        mode = 2; // DSMX
 
-        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", mode);
-        // Do not save this parameter, just set in RAM
-        mav->getParamManager()->sendPendingParameters();
-    }
-    else
-    {
-        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", (int)0);
-        // Do not save this parameter, just set in RAM
-        mav->getParamManager()->sendPendingParameters();
-    }
+	mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", mode, true);
+	// Do not save this parameter, just set in RAM
+	mav->getParamManager()->sendPendingParameters(false, true);
 }
 
 void QGCPX4VehicleConfig::setTrimPositions()
