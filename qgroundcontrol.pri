@@ -371,9 +371,16 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtWebKitd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXmld4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXmlPatternsd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtDeclaratived4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtScriptd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 	}
 
 	CONFIG(release, debug|release) {
+	
+		# Use link time code generation for beteer optimization (I believe this is supported in msvc express, but not 100% sure)
+		QMAKE_LFLAGS_LTCG = /LTCG
+		QMAKE_CFLAGS_LTCG = -GL
+
 		# Copy supporting library DLLs
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\mavlink" "$$TARGETDIR_WIN\\release\\mavlink" /E /I $$escape_expand(\\n))
@@ -397,6 +404,8 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtWebKit4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXml4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtXmlPatterns4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtDeclarative4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\bin\\QtScript4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(del /F "$$TARGETDIR_WIN\\release\\qgroundcontrol.exp"$$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(del /F "$$TARGETDIR_WIN\\release\\qgroundcontrol.lib"$$escape_expand(\\n))
 
