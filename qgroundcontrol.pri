@@ -356,6 +356,7 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 		# Copy application resources
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\debug\\files" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\qml" "$$TARGETDIR_WIN\\debug\\qml" /E /I $$escape_expand(\\n))
 
 		# Copy Qt DLLs
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\debug" /E /I $$escape_expand(\\n))
@@ -389,6 +390,7 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 		# Copy application resources
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\release\\files" /E /I $$escape_expand(\\n))
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\release\\models" /E /I $$escape_expand(\\n))
+		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\qml" "$$TARGETDIR_WIN\\release\\qml" /E /I $$escape_expand(\\n))
 
 		# Copy Qt DLLs
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\release" /E /I $$escape_expand(\\n))
