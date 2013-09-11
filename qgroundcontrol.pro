@@ -33,7 +33,7 @@ QT += network \
     declarative
 
 TEMPLATE = app
-TARGET = qgroundcontrol2
+TARGET = qgroundcontrol
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
     debug {
