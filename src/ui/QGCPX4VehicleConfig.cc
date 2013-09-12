@@ -343,15 +343,12 @@ void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
         warnMsgBox.setStandardButtons(QMessageBox::Ok);
         warnMsgBox.setDefaultButton(QMessageBox::Ok);
         (void)warnMsgBox.exec();
+        return;
     }
 
-    int mode = 1; // DSM2
-    if (ui->dsmxRadioButton->isChecked())
-        mode = 2; // DSMX
-
-	mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", mode, true);
-	// Do not save this parameter, just set in RAM
-	mav->getParamManager()->sendPendingParameters(false, true);
+    UASInterface* mav = UASManager::instance()->getActiveUAS();
+    if (mav)
+        mav->pairRX(0, ui->dsmxRadioButton->isChecked() ? 1 : 0);
 }
 
 void QGCPX4VehicleConfig::setTrimPositions()
