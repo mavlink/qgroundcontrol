@@ -290,6 +290,8 @@ public slots:
     virtual void home() = 0;
     /** @brief Order the robot to land **/
     virtual void land() = 0;
+    /** @brief Order the robot to pair its receiver **/
+    virtual void pairRX(int rxType, int rxSubType) = 0;
     /** @brief Halt the system */
     virtual void halt() = 0;
     /** @brief Start/continue the current robot action */
