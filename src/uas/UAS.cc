@@ -2867,7 +2867,7 @@ void UAS::land()
 }
 
 /**
-* Order the robot to land on the runway
+* Order the robot to start receiver pairing
 */
 void UAS::pairRX(int rxType, int rxSubType)
 {
