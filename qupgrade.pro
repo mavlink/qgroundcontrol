@@ -84,7 +84,7 @@ include(qserialport.pri)
 macx|macx-g++|macx-g++42::SOURCES += libs/qextserialport/qextserialenumerator_osx.cpp
 linux-g++::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
 linux-g++-64::SOURCES += libs/qextserialport/qextserialenumerator_unix.cpp
-win32::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
+win32-g++::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
 win32-msvc2008|win32-msvc2010::SOURCES += libs/qextserialport/qextserialenumerator_win.cpp
 
 # -------------------------------------------------
