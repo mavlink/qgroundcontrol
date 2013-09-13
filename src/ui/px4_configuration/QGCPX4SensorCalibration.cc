@@ -118,7 +118,7 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     connect(ui->autopilotComboBox, SIGNAL(activated(int)), this, SLOT(setAutopilotOrientation(int)));
     connect(ui->magComboBox, SIGNAL(activated(int)), this, SLOT(setGpsOrientation(int)));
 
-    // XXX ask for params (if not loaded)
+    updateIcons();
 }
 
 QGCPX4SensorCalibration::~QGCPX4SensorCalibration()
@@ -282,9 +282,8 @@ void QGCPX4SensorCalibration::setGpsImage(const QString &path)
     ui->gpsLabel->setPixmap(gpsIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-void QGCPX4SensorCalibration::resizeEvent(QResizeEvent* event)
+void QGCPX4SensorCalibration::updateIcons()
 {
-
     int w = ui->iconLabel->width();
     int h = ui->iconLabel->height();
     ui->iconLabel->setPixmap(instructionIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
@@ -296,7 +295,11 @@ void QGCPX4SensorCalibration::resizeEvent(QResizeEvent* event)
     int wg = ui->gpsLabel->width();
     int hg = ui->gpsLabel->height();
     ui->gpsLabel->setPixmap(gpsIcon.scaled(wg, hg, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
 
+void QGCPX4SensorCalibration::resizeEvent(QResizeEvent* event)
+{
+    updateIcons();
     QWidget::resizeEvent(event);
 }
 
