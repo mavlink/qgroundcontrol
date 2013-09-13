@@ -723,6 +723,9 @@ public slots:
     void home();
     /** @brief Order the robot to land **/
     void land();
+    /** @brief Order the robot to pair its receiver **/
+    void pairRX(int rxType, int rxSubType);
+
     void halt();
     void go();
 
