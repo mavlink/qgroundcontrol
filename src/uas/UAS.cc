@@ -2867,6 +2867,17 @@ void UAS::land()
 }
 
 /**
+* Order the robot to start receiver pairing
+*/
+void UAS::pairRX(int rxType, int rxSubType)
+{
+    mavlink_message_t msg;
+
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_START_RX_PAIR, 0, rxType, rxSubType, 0, 0, 0, 0, 0);
+    sendMessage(msg);
+}
+
+/**
  * The MAV starts the emergency landing procedure. The behaviour depends on the onboard implementation
  * and might differ between systems.
  */
