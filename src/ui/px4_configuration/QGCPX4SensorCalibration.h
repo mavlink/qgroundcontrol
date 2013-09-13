@@ -75,9 +75,12 @@ protected:
     void setMagCalibrated(bool calibrated);
     void setGyroCalibrated(bool calibrated);
     void setAccelCalibrated(bool calibrated);
+
+    void updateIcons();
     
 private:
     Ui::QGCPX4SensorCalibration *ui;
+
 };
 
 #endif // QGCPX4SENSORCALIBRATION_H
