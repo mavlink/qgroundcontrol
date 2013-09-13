@@ -53,7 +53,7 @@ public:
     /** @brief add this parameter to pending list iff it has changed from onboard value
      * @return true if the parameter is now pending
     */
-    virtual bool updatePendingParamWithValue(int componentId, const QString &key,  const QVariant &value);
+    virtual bool updatePendingParamWithValue(int componentId, const QString &key,  const QVariant &value, bool forceSend = false);
     virtual void handleParamUpdate(int componentId, const QString& key, const QVariant& value);
     virtual bool getOnboardParamValue(int componentId, const QString& key, QVariant& value) const;
 

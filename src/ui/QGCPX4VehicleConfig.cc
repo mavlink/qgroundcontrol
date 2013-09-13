@@ -156,7 +156,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->rcCalibrationButton->setCheckable(true);
     ui->rcCalibrationButton->setEnabled(false);
     connect(ui->rcCalibrationButton, SIGNAL(clicked(bool)), this, SLOT(toggleCalibrationRC(bool)));
-    ui->spektrumPairButton->setCheckable(true);
+    ui->spektrumPairButton->setCheckable(false);
     ui->spektrumPairButton->setEnabled(false);
     connect(ui->spektrumPairButton, SIGNAL(clicked(bool)), this, SLOT(toggleSpektrumPairing(bool)));
 
@@ -335,18 +335,23 @@ void QGCPX4VehicleConfig::toggleCalibrationRC(bool enabled)
 
 void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
 {
-    if (enabled)
-    {
-        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", (int)1);
-        // Do not save this parameter, just set in RAM
-        mav->getParamManager()->sendPendingParameters();
+    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton) {
+        // Reject
+        QMessageBox warnMsgBox;
+        warnMsgBox.setText(tr("Please select a Spektrum Protocol Version"));
+        warnMsgBox.setInformativeText(tr("Please select either DSM2 or DSM-X\ndirectly below the pair button,\nbased on the receiver type."));
+        warnMsgBox.setStandardButtons(QMessageBox::Ok);
+        warnMsgBox.setDefaultButton(QMessageBox::Ok);
+        (void)warnMsgBox.exec();
     }
-    else
-    {
-        mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", (int)0);
-        // Do not save this parameter, just set in RAM
-        mav->getParamManager()->sendPendingParameters();
-    }
+
+    int mode = 1; // DSM2
+    if (ui->dsmxRadioButton->isChecked())
+        mode = 2; // DSMX
+
+	mav->getParamManager()->setPendingParam(0, "RC_DSM_BIND", mode, true);
+	// Do not save this parameter, just set in RAM
+	mav->getParamManager()->sendPendingParameters(false, true);
 }
 
 void QGCPX4VehicleConfig::setTrimPositions()
@@ -464,15 +469,10 @@ void QGCPX4VehicleConfig::startCalibrationRC()
         identifyChannelMapping(i);
     }
 
-    // Try to identify inverted channels, but only for R/P/Y/T
-    for (int i = 0; i < 4; i++) {
-        detectChannelInversion(i);
-    }
-
     //QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
     configEnabled = false;
-    QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
-    ui->rcCalibrationButton->setText(tr("Save RC Calibration"));
+    QMessageBox::information(0, tr("Information"),tr("Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches"));
+    ui->rcCalibrationButton->setText(tr("Finish RC Calibration"));
     resetCalibrationRC();
     calibrationEnabled = true;
     ui->rollWidget->showMinMax();
@@ -483,12 +483,19 @@ void QGCPX4VehicleConfig::startCalibrationRC()
     ui->radio6Widget->showMinMax();
     ui->radio7Widget->showMinMax();
     ui->radio8Widget->showMinMax();
+
+    QMessageBox::information(0, tr("Information"), tr("Please click on the <Finish RC Calibration> button once finished"));
 }
 
 void QGCPX4VehicleConfig::stopCalibrationRC()
 {
     if (!calibrationEnabled)
         return;
+
+    // Try to identify inverted channels, but only for R/P/Y/T
+    for (int i = 0; i < 4; i++) {
+        detectChannelInversion(i);
+    }
 
     QMessageBox::information(0,"Trims","Ensure all controls are centered and throttle is in the lowest position. Click OK to continue");
 

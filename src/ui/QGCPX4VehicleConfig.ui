@@ -199,13 +199,6 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="spektrumPairButton">
-               <property name="text">
-                <string>Spektrum RC Pairing</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <spacer name="verticalSpacer_3">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -217,6 +210,39 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string>Spektrum RC</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <widget class="QPushButton" name="spektrumPairButton">
+                  <property name="text">
+                   <string>Pair Receiver</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="dsm2RadioButton">
+                  <property name="text">
+                   <string>DSM2 Mode</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="dsmxRadioButton">
+                  <property name="text">
+                   <string>DSMX Mode</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
              </item>
             </layout>
            </item>

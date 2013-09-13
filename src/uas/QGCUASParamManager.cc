@@ -124,21 +124,21 @@ void QGCUASParamManager::setParameter(int compId, QString paramName, QVariant va
     paramDataModel.updatePendingParamWithValue(compId,paramName,value);
 }
 
-void QGCUASParamManager::sendPendingParameters(bool persistAfterSend)
+void QGCUASParamManager::sendPendingParameters(bool persistAfterSend, bool forceSend)
 {
-    paramCommsMgr->sendPendingParameters(persistAfterSend);
+    paramCommsMgr->sendPendingParameters(persistAfterSend, forceSend);
 }
 
 
 
 
-void QGCUASParamManager::setPendingParam(int compId,  const QString& paramName,  const QVariant& value)
+void QGCUASParamManager::setPendingParam(int compId,  const QString& paramName,  const QVariant& value, bool forceSend)
 {
     if ((0 == compId) || (-1 == compId)) {
         //attempt to get an actual component ID
         compId = paramDataModel.getDefaultComponentId();
     }
-    paramDataModel.updatePendingParamWithValue(compId,paramName,value);
+    paramDataModel.updatePendingParamWithValue(compId,paramName,value, forceSend);
 }
 
 
