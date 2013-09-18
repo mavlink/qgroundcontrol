@@ -83,6 +83,10 @@ public:
         return _sensorHilEnabled;
     }
 
+    void sensorHilEnabled(bool sensorHilEnabled) {
+        _sensorHilEnabled = sensorHilEnabled;
+    }
+
     void run();
 
 public slots:

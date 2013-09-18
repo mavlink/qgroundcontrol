@@ -40,7 +40,7 @@ void QGCHilFlightGearConfiguration::on_startButton_clicked()
     //XXX check validity of inputs
     QString options = ui->optionsPlainTextEdit->toPlainText();
     options.append(" --aircraft=" + ui->aircraftComboBox->currentText());
-    mav->enableHilFlightGear(true,  options);
+    mav->enableHilFlightGear(true,  options, ui->sensorHilCheckBox->isChecked());
 }
 
 void QGCHilFlightGearConfiguration::on_stopButton_clicked()
