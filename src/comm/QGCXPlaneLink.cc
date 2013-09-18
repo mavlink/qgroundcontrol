@@ -329,18 +329,11 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
         qDebug() << "MAV_TYPE_QUADROTOR";
 
         // Individual effort will be provided directly to the actuators on Xplane quadrotor.
-#if 1
-        p.f[0] = rollAilerons;
-        p.f[1] = pitchElevator;
-        p.f[2] = yawRudder;
-        p.f[3] = throttle;
-#endif
-#if 0
-        p.f[0] = throttle;
+        p.f[0] = yawRudder;
         p.f[1] = rollAilerons;
-        p.f[2] = pitchElevator;
-        p.f[3] = yawRudder;
-#endif
+        p.f[2] = throttle;
+        p.f[3] = pitchElevator;
+
         isFixedWing = false;
     }
     else
