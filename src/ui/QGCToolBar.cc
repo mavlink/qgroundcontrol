@@ -464,7 +464,9 @@ void QGCToolBar::updateView()
             }
         }
 
-        toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
+    }
+    if (toolBarBatteryVoltageLabel->isVisible()) {
+	toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
     }
 
 

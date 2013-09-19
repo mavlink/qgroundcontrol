@@ -387,7 +387,7 @@ void UASParameterCommsMgr::updateSilenceTimer()
 
 void UASParameterCommsMgr::setParameterStatusMsg(const QString& msg, ParamCommsStatusLevel_t level)
 {
-    qDebug() << "parameterStatusMsg: " << msg;
+    //qDebug() << "parameterStatusMsg: " << msg;
     emit parameterStatusMsgUpdated(msg,level);
 }
 
@@ -395,7 +395,7 @@ void UASParameterCommsMgr::receivedParameterUpdate(int uas, int compId, int para
 {
     Q_UNUSED(uas); //this object is assigned to one UAS only
     lastReceiveTime = QGC::groundTimeMilliseconds();
-    qDebug() << "compId" << compId << "receivedParameterUpdate:" << paramName;
+    // qDebug() << "compId" << compId << "receivedParameterUpdate:" << paramName;
 
     //notify the data model that we have an updated param
     paramDataModel->handleParamUpdate(compId,paramName,value);
