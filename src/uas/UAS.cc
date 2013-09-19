@@ -1195,6 +1195,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
         }
             break;
+#if 0
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
         {
             mavlink_servo_output_raw_t raw;
@@ -1209,6 +1210,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
         }
         break;
+#endif
 #ifdef MAVLINK_ENABLED_PIXHAWK
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
