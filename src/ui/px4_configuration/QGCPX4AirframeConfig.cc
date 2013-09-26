@@ -301,7 +301,7 @@ void QGCPX4AirframeConfig::checkConfigState()
         // Reboot
         //TODO right now this relies upon the above send & persist finishing before the reboot command is received...
 
-        unsigned pendingMax = 20;
+        unsigned pendingMax = 17;
 
         qDebug() << "PENDING PARAMS REBOOT BEFORE" << pendingParams;
 
@@ -335,14 +335,6 @@ void QGCPX4AirframeConfig::checkConfigState()
         }
 
         if (pendingParams == 14) {
-            qDebug() << "CONNECT AIRFRAME";
-            LinkManager::instance()->connectAll();
-        }
-        if (pendingParams == 15) {
-            qDebug() << "DISCONNECT AIRFRAME";
-            LinkManager::instance()->disconnectAll();
-        }
-        if (pendingParams == 16) {
             qDebug() << "CONNECT AIRFRAME";
             LinkManager::instance()->connectAll();
         }
