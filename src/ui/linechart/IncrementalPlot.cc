@@ -214,6 +214,9 @@ void IncrementalPlot::resetScaling()
 void IncrementalPlot::updateScale()
 {
     const double margin = 0.05;
+    if(xmin == DBL_MAX)
+        return;
+
     double xMinRange = xmin-(qAbs(xmin*margin));
     double xMaxRange = xmax+(qAbs(xmax*margin));
     double yMinRange = ymin-(qAbs(ymin*margin));
