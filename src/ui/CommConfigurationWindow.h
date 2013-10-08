@@ -47,7 +47,9 @@ enum qgc_link_t {
 #ifdef XBEELINK
 	QGC_LINK_XBEE,
 #endif
+#ifdef OPAL_RT
     QGC_LINK_OPAL
+#endif
 };
 
 enum qgc_protocol_t {
@@ -71,9 +73,12 @@ public:
     ~CommConfigurationWindow();
 
     QAction* getAction();
+    void setLinkType(qgc_link_t linktype);
+
+private slots:
+    void linkCurrentIndexChanged(int currentIndex);
 
 public slots:
-    void setLinkType(int linktype);
     /** @brief Set the protocol for this link */
     void setProtocol(int protocol);
     void setConnection();
