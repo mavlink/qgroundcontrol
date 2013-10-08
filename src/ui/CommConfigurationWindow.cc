@@ -62,11 +62,6 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Setup the user interface according to link type
     ui.setupUi(this);
 
-    // Center the window on the screen.
-    QRect position = frameGeometry();
-    position.moveCenter(QDesktopWidget().availableGeometry().center());
-    move(position.topLeft());
-
     // Initialize basic ui state
 
     // Do not allow changes here unless advanced is checked
