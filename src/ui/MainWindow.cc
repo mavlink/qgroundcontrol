@@ -1683,7 +1683,7 @@ void MainWindow::addLink(LinkInterface *link)
 
     if (!found)
     {
-        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, NULL);
+        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
         commsWidgetList.append(commWidget);
         connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();
