@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #define _COMMCONFIGURATIONWINDOW_H_
 
 #include <QObject>
-#include <QWidget>
+#include <QDialog>
 #include <QAction>
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
@@ -62,7 +62,7 @@ enum qgc_protocol_t {
 /**
  * @brief Configuration window for communication links
  */
-class CommConfigurationWindow : public QWidget
+class CommConfigurationWindow : public QDialog
 {
     Q_OBJECT
 
