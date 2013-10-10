@@ -155,7 +155,7 @@ void IncrementalPlot::showLegend(bool show)
  *
  * @param style Formatting string for line/data point style
  */
-void IncrementalPlot::setStyleText(QString style)
+void IncrementalPlot::setStyleText(const QString &style)
 {
     foreach (QwtPlotCurve* curve, curves) {
         // Style of datapoints
@@ -250,12 +250,12 @@ void IncrementalPlot::updateScale()
     zoomer->setZoomBase(true);
 }
 
-void IncrementalPlot::appendData(QString key, double x, double y)
+void IncrementalPlot::appendData(const QString &key, double x, double y)
 {
     appendData(key, &x, &y, 1);
 }
 
-void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
+void IncrementalPlot::appendData(const QString &key, double *x, double *y, int size)
 {
     CurveData* data;
     QwtPlotCurve* curve;
@@ -349,7 +349,7 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 /**
  * @return Number of copied data points, 0 on failure
  */
-int IncrementalPlot::data(QString key, double* r_x, double* r_y, int maxSize)
+int IncrementalPlot::data(const QString &key, double* r_x, double* r_y, int maxSize)
 {
     int result = 0;
     if (d_data.contains(key)) {
