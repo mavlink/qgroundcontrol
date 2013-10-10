@@ -96,6 +96,7 @@ public slots:
     /** @brief Append double data to the given curve. */
     void appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec);
 
+    void toggleLogarithmicScaling(bool toggled);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
@@ -152,14 +153,11 @@ protected:
     QScrollBar* scrollbar;                ///< The plot window scroll bar
     QSpinBox* averageSpinBox;             ///< Spin box to setup average window filter size
 
-    QAction* setScalingLogarithmic;       ///< Set logarithmic scaling
-    QAction* setScalingLinear;            ///< Set linear scaling
     QAction* addNewCurve;                 ///< Add curve candidate to the active curves
 
     QMenu* curveMenu;
     QGridLayout* mainLayout;
 
-    QToolButton* scalingLinearButton;
     QToolButton* scalingLogButton;
     QToolButton* logButton;
     QPointer<QCheckBox> timeButton;

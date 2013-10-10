@@ -225,23 +225,14 @@ void LinechartWidget::createLayout()
     layout->setRowStretch(0, 10);
     layout->setRowStretch(1, 1);
 
-    // Linear scaling button
-    scalingLinearButton = createButton(this);
-    scalingLinearButton->setDefaultAction(setScalingLinear);
-    scalingLinearButton->setCheckable(true);
-    scalingLinearButton->setToolTip(tr("Set linear scale for Y axis"));
-    scalingLinearButton->setWhatsThis(tr("Set linear scale for Y axis"));
-    layout->addWidget(scalingLinearButton, 1, 0);
-    layout->setColumnStretch(0, 0);
-
     // Logarithmic scaling button
     scalingLogButton = createButton(this);
-    scalingLogButton->setDefaultAction(setScalingLogarithmic);
+    scalingLogButton->setText(tr("LOG"));
     scalingLogButton->setCheckable(true);
     scalingLogButton->setToolTip(tr("Set logarithmic scale for Y axis"));
     scalingLogButton->setWhatsThis(tr("Set logarithmic scale for Y axis"));
-    layout->addWidget(scalingLogButton, 1, 1);
-    layout->setColumnStretch(1, 0);
+    layout->addWidget(scalingLogButton, 1, 0);
+    layout->setColumnStretch(0, 0);
 
     // Averaging spin box
     averageSpinBox = new QSpinBox(this);
@@ -251,8 +242,8 @@ void LinechartWidget::createLayout()
     averageSpinBox->setValue(200);
     setAverageWindow(200);
     averageSpinBox->setMaximum(9999);
-    layout->addWidget(averageSpinBox, 1, 2);
-    layout->setColumnStretch(2, 0);
+    layout->addWidget(averageSpinBox, 1, 1);
+    layout->setColumnStretch(1, 0);
     connect(averageSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAverageWindow(int)));
 
     // Log Button
@@ -260,8 +251,8 @@ void LinechartWidget::createLayout()
     logButton->setToolTip(tr("Start to log curve data into a CSV or TXT file"));
     logButton->setWhatsThis(tr("Start to log curve data into a CSV or TXT file"));
     logButton->setText(tr("Start Logging"));
-    layout->addWidget(logButton, 1, 3);
-    layout->setColumnStretch(3, 0);
+    layout->addWidget(logButton, 1, 2);
+    layout->setColumnStretch(2, 0);
     connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
 
     // Ground time button
@@ -269,8 +260,8 @@ void LinechartWidget::createLayout()
     timeButton->setText(tr("Ground Time"));
     timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
-    layout->addWidget(timeButton, 1, 4);
-    layout->setColumnStretch(4, 0);
+    layout->addWidget(timeButton, 1, 3);
+    layout->setColumnStretch(3, 0);
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
     connect(timeButton, SIGNAL(clicked()), this, SLOT(writeSettings()));
 
@@ -294,8 +285,15 @@ void LinechartWidget::createLayout()
     connect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
 
     // Set scaling
-    connect(scalingLinearButton, SIGNAL(clicked()), activePlot, SLOT(setLinearScaling()));
-    connect(scalingLogButton, SIGNAL(clicked()), activePlot, SLOT(setLogarithmicScaling()));
+    connect(scalingLogButton, SIGNAL(toggled(bool)), this, SLOT(toggleLogarithmicScaling(bool)));
+}
+
+void LinechartWidget::toggleLogarithmicScaling(bool checked)
+{
+    if(checked)
+        activePlot->setLogarithmicScaling();
+    else
+        activePlot->setLinearScaling();
 }
 
 void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, qint8 value, quint64 usec)
@@ -626,8 +624,6 @@ void LinechartWidget::setAverageWindow(int windowSize)
 
 void LinechartWidget::createActions()
 {
-    setScalingLogarithmic = new QAction("LOG", this);
-    setScalingLinear = new QAction("LIN", this);
 }
 
 /**
