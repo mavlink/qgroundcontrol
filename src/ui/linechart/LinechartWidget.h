@@ -123,6 +123,10 @@ public slots:
     /** @brief Select all curves */
     void selectAllCurves(bool all);
 
+private slots:
+    /** Called when the user changes the time scale combobox. */
+    void timeScaleChanged(int index);
+
 protected:
     void addCurveToList(QString curve);
     void removeCurveFromList(QString curve);
@@ -156,7 +160,7 @@ protected:
     QAction* addNewCurve;                 ///< Add curve candidate to the active curves
 
     QMenu* curveMenu;
-    QGridLayout* mainLayout;
+    QComboBox *timeScaleCmb;
 
     QToolButton* scalingLogButton;
     QToolButton* logButton;
