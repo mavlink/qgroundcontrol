@@ -19,13 +19,7 @@ QGCTextLabel::QGCTextLabel(QWidget *parent) :
     // Hide all edit items
     ui->editFinishButton->hide();
     ui->editNameLabel->hide();
-    ui->editTextParam->hide();
-    ui->editComponentSpinBox->hide();
     ui->editLine1->hide();
-    ui->editLine2->hide();
-
-    // Add commands to combo box
-
 }
 
 QGCTextLabel::~QGCTextLabel()
@@ -37,13 +31,9 @@ void QGCTextLabel::startEditMode()
 {
     // Hide elements
     ui->nameLabel->hide();
-
-    ui->editTextParam->show();
     ui->editFinishButton->show();
     ui->editNameLabel->show();
-    ui->editComponentSpinBox->show();
     ui->editLine1->show();
-    ui->editLine2->show();
 
     // Attempt to undock the dock widget
     QWidget* p = this;
@@ -66,12 +56,8 @@ void QGCTextLabel::startEditMode()
 void QGCTextLabel::endEditMode()
 {
     ui->editFinishButton->hide();
-    ui->editTextParam->hide();
     ui->editNameLabel->hide();
-    ui->editComponentSpinBox->hide();
     ui->editLine1->hide();
-    ui->editLine2->hide();
-
     ui->nameLabel->show();
 
     // Write to settings
@@ -105,23 +91,17 @@ void QGCTextLabel::writeSettings(QSettings& settings)
 }
 void QGCTextLabel::readSettings(const QString& pre,const QVariantMap& settings)
 {
-    ui->editTextParam->setText(settings.value(pre + "QGC_TEXT_SOURCE", "UNKNOWN").toString());
-    //ui->editCommandComboBox->setCurrentIndex(settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt());
-    if (ui->editTextParam->text() == "NONE")
+    ui->isMavCommand->setChecked(settings.value(pre + "QGC_TEXT_SOURCE", "NONE").toString() == "MAV");
+    if (!ui->isMavCommand->isChecked())
     {
         ui->editNameLabel->setText(settings.value(pre + "QGC_TEXT_TEXT","").toString());
         ui->nameLabel->setText(ui->editNameLabel->text());
     }
-    else if (ui->editTextParam->text() == "MAV")
+    else
     {
         //MAV command text
         connect(uas,SIGNAL(textMessageReceived(int,int,int,QString)),this,SLOT(textMessageReceived(int,int,int,QString)));
     }
-
-    //int commandId = settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt();
-
-    //ui->editNameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
-    //ui->nameLabel->setText(settings.value(pre + "QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
 }
 void QGCTextLabel::textMessageReceived(int uasid, int component, int severity, QString message)
 {
@@ -148,17 +128,14 @@ void QGCTextLabel::textMessageReceived(int uasid, int component, int severity, Q
 
 void QGCTextLabel::readSettings(const QSettings& settings)
 {
-    //ui->editNameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
-    //ui->nameLabel->setText(settings.value("QGC_COMMAND_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
-    ui->editTextParam->setText(settings.value("QGC_TEXT_SOURCE", "UNKNOWN").toString());
+    ui->isMavCommand->setChecked(settings.value("QGC_TEXT_SOURCE", "NONE").toString() == "MAV");
     ui->editNameLabel->setText(settings.value("QGC_TEXT_TEXT","").toString());
-    //ui->editCommandComboBox->setCurrentIndex(settings.value(pre + "QGC_COMMAND_BUTTON_COMMANDID", 0).toInt());
-    if (ui->editTextParam->text() == "NONE")
+    if (!ui->isMavCommand->isChecked())
     {
         ui->textLabel->setText(ui->editNameLabel->text());
         ui->nameLabel->setText("");
     }
-    else if (ui->editTextParam->text() == "MAV")
+    else
     {
         //MAV command text
         ui->nameLabel->setText(ui->editNameLabel->text());

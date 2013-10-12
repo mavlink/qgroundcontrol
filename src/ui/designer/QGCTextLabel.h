@@ -26,6 +26,7 @@ public slots:
     void readSettings(const QSettings& settings);
     void readSettings(const QString& pre,const QVariantMap& settings);
     void textMessageReceived(int uasid, int componentId, int severity, QString message);
+
 private:
     int enabledNum;
     Ui::QGCTextLabel *ui;
