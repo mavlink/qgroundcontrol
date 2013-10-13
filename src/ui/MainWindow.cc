@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilFlightGearConfiguration.h>
 #include <QDeclarativeView>
 #include "dockwidgettitlebareventfilter.h"
+#include "dockwidgeteventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -450,7 +451,7 @@ void MainWindow::buildCustomWidget()
             ui.menuTools->addAction(showAction);*/
 
             // Load dock widget location (default is bottom)
-            Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
+            Qt::DockWidgetArea location = tool->getDockWidgetArea(currentView);
 
             //addDockWidget(location, dock);
             //dock->hide();
@@ -895,7 +896,8 @@ void MainWindow::setDockWidgetTitleBar(QDockWidget* widget)
     {
         QLabel* label = new QLabel(this);
         label->setText(widget->windowTitle());
-        label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        label->installEventFilter(new DockWidgetTitleBarEventFilter()); //Ignore mouse clicks
+        widget->installEventFilter(new DockWidgetEventFilter()); //Update label if window title changes
         widget->setTitleBarWidget(label);
     }
     // And if nothing should be shown, use an empty widget.
@@ -1683,7 +1685,7 @@ void MainWindow::addLink(LinkInterface *link)
 
     if (!found)
     {
-        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, NULL);
+        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
         commsWidgetList.append(commWidget);
         connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();
