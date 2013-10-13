@@ -296,7 +296,7 @@ void QGCToolWidget::loadSettings(QVariantMap& settings)
             else if (type == "COMBO")
             {
                 item = new QGCComboBox(this);
-                //qDebug() << "CREATED PARAM COMBOBOX";
+                //qDebug() << "CREATED COMBOBOX";
             }
             if (item)
             {
@@ -482,6 +482,7 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
     QMenu menu(this);
     menu.addAction(addParamAction);
     menu.addAction(addCommandAction);
+    menu.addAction(addLabelAction);
     menu.addSeparator();
     menu.addAction(setTitleAction);
     menu.addAction(exportAction);
