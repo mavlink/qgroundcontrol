@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilFlightGearConfiguration.h>
 #include <QDeclarativeView>
 #include "dockwidgettitlebareventfilter.h"
+#include "dockwidgeteventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -895,7 +896,8 @@ void MainWindow::setDockWidgetTitleBar(QDockWidget* widget)
     {
         QLabel* label = new QLabel(this);
         label->setText(widget->windowTitle());
-        label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        label->installEventFilter(new DockWidgetTitleBarEventFilter()); //Ignore mouse clicks
+        widget->installEventFilter(new DockWidgetEventFilter()); //Update label if window title changes
         widget->setTitleBarWidget(label);
     }
     // And if nothing should be shown, use an empty widget.
