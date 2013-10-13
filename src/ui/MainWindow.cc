@@ -450,7 +450,7 @@ void MainWindow::buildCustomWidget()
             ui.menuTools->addAction(showAction);*/
 
             // Load dock widget location (default is bottom)
-            Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
+            Qt::DockWidgetArea location = tool->getDockWidgetArea(currentView);
 
             //addDockWidget(location, dock);
             //dock->hide();
