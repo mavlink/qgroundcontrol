@@ -237,7 +237,14 @@
                 <item>
                  <widget class="QRadioButton" name="dsmxRadioButton">
                   <property name="text">
-                   <string>DSMX Mode</string>
+                   <string>DSMX Mode (3 to 7 channels)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="dsmx8RadioButton">
+                  <property name="text">
+                   <string>DSMX Mode (8 or more channels)</string>
                   </property>
                  </widget>
                 </item>
