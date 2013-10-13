@@ -518,6 +518,10 @@ void QGCToolWidget::createActions()
     addCommandAction->setStatusTip(tr("Add a new action button to the tool"));
     connect(addCommandAction, SIGNAL(triggered()), this, SLOT(addCommand()));
 
+    addLabelAction = new QAction(tr("New &Text Label"), this);
+    addLabelAction->setStatusTip(tr("Add a new label to the tool"));
+    connect(addLabelAction, SIGNAL(triggered()), this, SLOT(addLabel()));
+
     setTitleAction = new QAction(tr("Set Widget Title"), this);
     setTitleAction->setStatusTip(tr("Set the title caption of this tool widget"));
     connect(setTitleAction, SIGNAL(triggered()), this, SLOT(setTitle()));
@@ -589,6 +593,14 @@ void QGCToolWidget::addCommand()
     }
     toolLayout->addWidget(button);
     button->startEditMode();
+}
+
+void QGCToolWidget::addLabel()
+{
+    QGCTextLabel* label= new QGCTextLabel(this);
+    connect(label, SIGNAL(destroyed()), this, SLOT(storeSettings()));
+    toolLayout->addWidget(label);
+    label->startEditMode();
 }
 
 void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
