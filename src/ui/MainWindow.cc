@@ -753,6 +753,7 @@ void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* w
         centralWidgetToDockWidgetsMap[view][widget->objectName()]= widget;
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
         connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+        connect(widget, SIGNAL(destroyed()), tempAction, SLOT(deleteLater()));
         tempAction->setChecked(widget->isVisible());
     }
     else
@@ -786,9 +787,20 @@ QDockWidget* MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString
         widget->setMinimumWidth(minwidth);
     }
     addTool(qobject_cast<SubMainWindow*>(parent),view,widget,title,area);
+    connect(child, SIGNAL(destroyed()), widget, SLOT(deleteLater()));
+    connect(widget, SIGNAL(destroyed()), this, SLOT(dockWidgetDestroyed()));
 
     return widget;
 }
+void MainWindow::dockWidgetDestroyed()
+{
+    QDockWidget *dock = dynamic_cast<QDockWidget *>(QObject::sender());
+    Q_ASSERT(dock);
+    if(!dock) return;
+
+    dockWidgets.removeAll(dock);
+}
+
 void MainWindow::loadDockWidget(QString name)
 {
     if (centralWidgetToDockWidgetsMap[currentView].contains(name))
@@ -1038,8 +1050,6 @@ void MainWindow::createCustomWidget()
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue(QString("TOOL_PARENT_") + tool->objectName(),currentView);
     settings.endGroup();
-
-
 
     //connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     //dock->setWidget(tool);
