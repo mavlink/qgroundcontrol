@@ -1038,7 +1038,7 @@ void MainWindow::createCustomWidget()
     //void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
     //QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
 
-    if (QGCToolWidget::instances()->size() < 2)
+    if (QGCToolWidget::instances()->isEmpty())
     {
         // This is the first widget
         ui.menuTools->addSeparator();
