@@ -13,6 +13,7 @@
 #include "QGCParamSlider.h"
 #include "QGCComboBox.h"
 #include "QGCTextLabel.h"
+#include "QGCXYPlot.h"
 #include "QGCCommandButton.h"
 #include "UASManager.h"
 
@@ -272,6 +273,11 @@ void QGCToolWidget::loadSettings(QVariantMap& settings)
                 item = new QGCComboBox(this);
                 //qDebug() << "CREATED COMBOBOX";
             }
+            else if (type == "XYPLOT")
+            {
+                item = new QGCXYPlot(this);
+                //qDebug() << "CREATED XYPlot";
+            }
             if (item)
             {
                 // Configure and add to layout
@@ -328,6 +334,11 @@ void QGCToolWidget::loadSettings(QSettings& settings)
             {
                 item = new QGCTextLabel(this);
                 item->setObjectName(settings.value("QGC_TEXT_ID").toString());
+                item->setActiveUAS(mav);
+            }
+            else if (type == "XYPLOT")
+            {
+                item = new QGCXYPlot(this);
                 item->setActiveUAS(mav);
             }
 
@@ -428,6 +439,7 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
     menu.addAction(addParamAction);
     menu.addAction(addCommandAction);
     menu.addAction(addLabelAction);
+    menu.addAction(addPlotAction);
     menu.addSeparator();
     menu.addAction(setTitleAction);
     menu.addAction(exportAction);
@@ -466,6 +478,10 @@ void QGCToolWidget::createActions()
     addLabelAction = new QAction(tr("New &Text Label"), this);
     addLabelAction->setStatusTip(tr("Add a new label to the tool"));
     connect(addLabelAction, SIGNAL(triggered()), this, SLOT(addLabel()));
+
+    addPlotAction = new QAction(tr("New &XY Plot"), this);
+    addPlotAction->setStatusTip(tr("Add a XY Plot to the tool"));
+    connect(addPlotAction, SIGNAL(triggered()), this, SLOT(addPlot()));
 
     setTitleAction = new QAction(tr("Set Widget Title"), this);
     setTitleAction->setStatusTip(tr("Set the title caption of this tool widget"));
@@ -513,6 +529,11 @@ void QGCToolWidget::addCommand()
 void QGCToolWidget::addLabel()
 {
     addToolWidgetAndEdit(new QGCTextLabel(this));
+}
+
+void QGCToolWidget::addPlot()
+{
+    addToolWidgetAndEdit(new QGCXYPlot(this));
 }
 
 void QGCToolWidget::addToolWidgetAndEdit(QGCToolWidgetItem* widget)

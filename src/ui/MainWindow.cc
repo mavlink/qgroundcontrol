@@ -480,6 +480,8 @@ void MainWindow::buildCommonWidgets()
 {
     // Add generic MAVLink decoder
     mavlinkDecoder = new MAVLinkDecoder(mavlink, this);
+    connect(mavlinkDecoder, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),
+                      this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
     // Log player
     logPlayer = new QGCMAVLinkLogPlayer(mavlink, customStatusBar);
@@ -1641,6 +1643,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
 
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
+    connect(uas, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
 
     // HIL
     showHILConfigurationWidget(uas);
