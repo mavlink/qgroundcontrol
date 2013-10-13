@@ -74,6 +74,7 @@ protected:
     QVariantMap settingsMap;
     QAction* addParamAction;
     QAction* addCommandAction;
+    QAction* addPlotAction;
     QAction* addLabelAction;
     QAction* setTitleAction;
     QAction* deleteAction;
@@ -100,6 +101,7 @@ public slots:
 protected slots:
     void addParam();
     void addCommand();
+    void addPlot();
     void addLabel();
     void setTitle();
     void widgetRemoved();

@@ -301,6 +301,9 @@ protected slots:
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
+    /** Emitted when any value changes from any source */
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
