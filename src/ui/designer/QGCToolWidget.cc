@@ -578,6 +578,11 @@ void QGCToolWidget::addLabel()
 {
     QGCTextLabel* label= new QGCTextLabel(this);
     connect(label, SIGNAL(destroyed()), this, SLOT(storeSettings()));
+    if (ui->hintLabel)
+    {
+        ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
+    }
     toolLayout->addWidget(label);
     label->startEditMode();
 }
