@@ -335,7 +335,7 @@ void QGCPX4VehicleConfig::toggleCalibrationRC(bool enabled)
 
 void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
 {
-    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton) {
+    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton && !ui->dsmx8RadioButton) {
         // Reject
         QMessageBox warnMsgBox;
         warnMsgBox.setText(tr("Please select a Spektrum Protocol Version"));
@@ -347,8 +347,16 @@ void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
     }
 
     UASInterface* mav = UASManager::instance()->getActiveUAS();
-    if (mav)
-        mav->pairRX(0, ui->dsmxRadioButton->isChecked() ? 1 : 0);
+    if (mav) {
+        int rxSubType;
+        if (ui->dsm2RadioButton->isChecked())
+            rxSubType = 0;
+        else if (ui->dsmxRadioButton->isChecked())
+            rxSubType = 1;
+        else // if (ui->dsmx8RadioButton->isChecked())
+            rxSubType = 2;
+        mav->pairRX(0, rxSubType);
+    }
 }
 
 void QGCPX4VehicleConfig::setTrimPositions()
