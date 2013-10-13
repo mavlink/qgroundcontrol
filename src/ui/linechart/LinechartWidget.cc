@@ -207,10 +207,9 @@ void LinechartWidget::createLayout()
     createActions();
 
     // Setup the plot group box area layout
-    QGridLayout* layout = new QGridLayout(ui.diagramGroupBox);
-    mainLayout = layout;
-    layout->setSpacing(4);
-    layout->setMargin(2);
+    QVBoxLayout* vlayout = new QVBoxLayout(ui.diagramGroupBox);
+    vlayout->setSpacing(4);
+    vlayout->setMargin(2);
 
     // Create plot container widget
     activePlot = new LinechartPlot(this, sysid);
@@ -221,27 +220,18 @@ void LinechartWidget::createLayout()
     //    activePlot = getPlot(0);
     //    plotContainer->setPlot(activePlot);
 
-    layout->addWidget(activePlot, 0, 0, 1, 6);
-    layout->setRowStretch(0, 10);
-    layout->setRowStretch(1, 1);
+    vlayout->addWidget(activePlot);
 
-    // Linear scaling button
-    scalingLinearButton = createButton(this);
-    scalingLinearButton->setDefaultAction(setScalingLinear);
-    scalingLinearButton->setCheckable(true);
-    scalingLinearButton->setToolTip(tr("Set linear scale for Y axis"));
-    scalingLinearButton->setWhatsThis(tr("Set linear scale for Y axis"));
-    layout->addWidget(scalingLinearButton, 1, 0);
-    layout->setColumnStretch(0, 0);
+    QHBoxLayout *hlayout = new QHBoxLayout;
+    vlayout->addLayout(hlayout);
 
     // Logarithmic scaling button
     scalingLogButton = createButton(this);
-    scalingLogButton->setDefaultAction(setScalingLogarithmic);
+    scalingLogButton->setText(tr("LOG"));
     scalingLogButton->setCheckable(true);
     scalingLogButton->setToolTip(tr("Set logarithmic scale for Y axis"));
     scalingLogButton->setWhatsThis(tr("Set logarithmic scale for Y axis"));
-    layout->addWidget(scalingLogButton, 1, 1);
-    layout->setColumnStretch(1, 0);
+    hlayout->addWidget(scalingLogButton);
 
     // Averaging spin box
     averageSpinBox = new QSpinBox(this);
@@ -251,8 +241,7 @@ void LinechartWidget::createLayout()
     averageSpinBox->setValue(200);
     setAverageWindow(200);
     averageSpinBox->setMaximum(9999);
-    layout->addWidget(averageSpinBox, 1, 2);
-    layout->setColumnStretch(2, 0);
+    hlayout->addWidget(averageSpinBox);
     connect(averageSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAverageWindow(int)));
 
     // Log Button
@@ -260,8 +249,7 @@ void LinechartWidget::createLayout()
     logButton->setToolTip(tr("Start to log curve data into a CSV or TXT file"));
     logButton->setWhatsThis(tr("Start to log curve data into a CSV or TXT file"));
     logButton->setText(tr("Start Logging"));
-    layout->addWidget(logButton, 1, 3);
-    layout->setColumnStretch(3, 0);
+    hlayout->addWidget(logButton);
     connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
 
     // Ground time button
@@ -269,16 +257,36 @@ void LinechartWidget::createLayout()
     timeButton->setText(tr("Ground Time"));
     timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
-    layout->addWidget(timeButton, 1, 4);
-    layout->setColumnStretch(4, 0);
+    hlayout->addWidget(timeButton);
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
     connect(timeButton, SIGNAL(clicked()), this, SLOT(writeSettings()));
+
+    hlayout->addStretch();
+
+    QLabel *timeScaleLabel = new QLabel("Time axis:");
+    hlayout->addWidget(timeScaleLabel);
+
+    timeScaleCmb = new QComboBox(this);
+    timeScaleCmb->addItem("10 seconds", 10);
+    timeScaleCmb->addItem("20 seconds", 20);
+    timeScaleCmb->addItem("30 seconds", 30);
+    timeScaleCmb->addItem("40 seconds", 40);
+    timeScaleCmb->addItem("50 seconds", 50);
+    timeScaleCmb->addItem("1 minute", 60);
+    timeScaleCmb->addItem("2 minutes", 60*2);
+    timeScaleCmb->addItem("3 minutes", 60*3);
+    timeScaleCmb->addItem("4 minutes", 60*4);
+    timeScaleCmb->addItem("5 minutes", 60*5);
+    timeScaleCmb->addItem("10 minutes", 60*10);
+    //timeScaleCmb->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    timeScaleCmb->setMinimumContentsLength(12);
+
+    hlayout->addWidget(timeScaleCmb);
+    connect(timeScaleCmb, SIGNAL(currentIndexChanged(int)), this, SLOT(timeScaleChanged(int)));
 
     // Initialize the "Show units" checkbox. This is configured in the .ui file, so all
     // we do here is attach the clicked() signal.
     connect(ui.showUnitsCheckBox, SIGNAL(clicked()), this, SLOT(writeSettings()));
-
-    ui.diagramGroupBox->setLayout(layout);
 
     // Add actions
     averageSpinBox->setValue(activePlot->getAverageWindow());
@@ -294,8 +302,20 @@ void LinechartWidget::createLayout()
     connect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
 
     // Set scaling
-    connect(scalingLinearButton, SIGNAL(clicked()), activePlot, SLOT(setLinearScaling()));
-    connect(scalingLogButton, SIGNAL(clicked()), activePlot, SLOT(setLogarithmicScaling()));
+    connect(scalingLogButton, SIGNAL(toggled(bool)), this, SLOT(toggleLogarithmicScaling(bool)));
+}
+
+void LinechartWidget::timeScaleChanged(int index)
+{
+    activePlot->setPlotInterval(timeScaleCmb->itemData(index).toInt()*1000);
+}
+
+void LinechartWidget::toggleLogarithmicScaling(bool checked)
+{
+    if(checked)
+        activePlot->setLogarithmicScaling();
+    else
+        activePlot->setLinearScaling();
 }
 
 void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, qint8 value, quint64 usec)
@@ -626,8 +646,6 @@ void LinechartWidget::setAverageWindow(int windowSize)
 
 void LinechartWidget::createActions()
 {
-    setScalingLogarithmic = new QAction("LOG", this);
-    setScalingLinear = new QAction("LIN", this);
 }
 
 /**
