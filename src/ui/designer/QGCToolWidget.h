@@ -74,6 +74,7 @@ protected:
     QVariantMap settingsMap;
     QAction* addParamAction;
     QAction* addCommandAction;
+    QAction* addLabelAction;
     QAction* setTitleAction;
     QAction* deleteAction;
     QAction* exportAction;
@@ -99,6 +100,7 @@ public slots:
 protected slots:
     void addParam();
     void addCommand();
+    void addLabel();
     void setTitle();
 
     void setWindowTitle(const QString& title);
