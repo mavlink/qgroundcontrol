@@ -318,38 +318,15 @@ void LinechartWidget::toggleLogarithmicScaling(bool checked)
         activePlot->setLinearScaling();
 }
 
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, qint8 value, quint64 usec)
+void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, const QVariant &variant, quint64 usec)
 {
-    appendData(uasId, curve, unit, static_cast<qint64>(value), usec);
-}
+    QMetaType::Type type = static_cast<QMetaType::Type>(variant.type());
+    bool ok;
+    double value = variant.toDouble(&ok);
+    if(!ok || type == QMetaType::QByteArray || type == QMetaType::QString)
+        return;
+    bool isDouble = type == QMetaType::Float || type == QMetaType::Double;
 
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, quint8 value, quint64 usec)
-{
-    appendData(uasId, curve, unit, static_cast<quint64>(value), usec);
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, qint16 value, quint64 usec)
-{
-    appendData(uasId, curve, unit, static_cast<qint64>(value), usec);
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, quint16 value, quint64 usec)
-{
-    appendData(uasId, curve, unit, static_cast<quint64>(value), usec);
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, qint32 value, quint64 usec)
-{
-    appendData(uasId, curve, unit, static_cast<qint64>(value), usec);
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, quint32 value, quint64 usec)
-{
-    appendData(uasId, curve, unit, static_cast<quint64>(value), usec);
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, qint64 value, quint64 usec)
-{
     if ((selectedMAV == -1 && isVisible()) || (selectedMAV == uasId && isVisible()))
     {
         // Order matters here, first append to plot, then update curve list
@@ -359,12 +336,14 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         // Make sure the curve will be created if it does not yet exist
         if(!label)
         {
-            intData.insert(curve+unit, 0);
+            if(!isDouble)
+                intData.insert(curve+unit, 0);
             addCurve(curve, unit);
         }
 
         // Add int data
-        intData.insert(curve+unit, value);
+        if(!isDouble)
+            intData.insert(curve+unit, variant.toInt());
     }
 
     if (lastTimestamp == 0 && usec != 0)
@@ -390,96 +369,6 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
             if (time < 0) time = 0;
 
             logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
-        }
-    }
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, quint64 value, quint64 usec)
-{
-    if ((selectedMAV == -1 && isVisible()) || (selectedMAV == uasId && isVisible()))
-    {
-        // Order matters here, first append to plot, then update curve list
-        activePlot->appendData(curve+unit, usec, value);
-        // Store data
-        QLabel* label = curveLabels->value(curve+unit, NULL);
-        // Make sure the curve will be created if it does not yet exist
-        if(!label)
-        {
-            intData.insert(curve+unit, 0);
-            addCurve(curve, unit);
-        }
-
-        // Add int data
-        intData.insert(curve+unit, value);
-    }
-
-    if (lastTimestamp == 0 && usec != 0)
-    {
-        lastTimestamp = usec;
-    } else if (usec != 0) {
-        // Difference larger than 5 secs, enforce ground time
-        if (abs((int)((qint64)usec - (quint64)lastTimestamp)) > 5000)
-        {
-            autoGroundTimeSet = true;
-            if (activePlot) activePlot->groundTime();
-        }
-    }
-
-    // Log data
-    if (logging)
-    {
-        if (activePlot->isVisible(curve+unit))
-        {
-            if (usec == 0) usec = QGC::groundTimeMilliseconds();
-            if (logStartTime == 0) logStartTime = usec;
-            qint64 time = usec - logStartTime;
-            if (time < 0) time = 0;
-
-            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
-            logFile->flush();
-        }
-    }
-}
-
-void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec)
-{
-    if ((selectedMAV == -1 && isVisible()) || (selectedMAV == uasId && isVisible()))
-    {
-        // Order matters here, first append to plot, then update curve list
-        activePlot->appendData(curve+unit, usec, value);
-        // Store data
-        QLabel* label = curveLabels->value(curve+unit, NULL);
-        // Make sure the curve will be created if it does not yet exist
-        if(!label)
-        {
-            addCurve(curve, unit);
-        }
-    }
-
-    if (lastTimestamp == 0 && usec != 0)
-    {
-        lastTimestamp = usec;
-    } else if (usec != 0) {
-        // Difference larger than 1 sec, enforce ground time
-        if (abs((int)((qint64)usec - (quint64)lastTimestamp)) > 1000)
-        {
-            autoGroundTimeSet = true;
-            if (activePlot) activePlot->groundTime();
-        }
-    }
-
-    // Log data
-    if (logging)
-    {
-        if (activePlot->isVisible(curve+unit))
-        {
-            if (usec == 0) usec = QGC::groundTimeMilliseconds();
-            if (logStartTime == 0) logStartTime = usec;
-            qint64 time = usec - logStartTime;
-            if (time < 0) time = 0;
-
-            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value,'g',18) + "\n").toLatin1());
-            logFile->flush();
         }
     }
 }
