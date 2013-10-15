@@ -19,7 +19,7 @@ class QGCToolWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGCToolWidget(const QString& title=QString("Unnamed Tool"), QWidget *parent = 0, QSettings* settings = 0);
+    explicit QGCToolWidget(const QString& objectName, const QString& title, QWidget *parent = 0, QSettings* settings = 0);
     ~QGCToolWidget();
 
     /** @brief Factory method to instantiate all tool widgets */
@@ -85,7 +85,6 @@ protected:
     QMap<int, Qt::DockWidgetArea> dockWidgetArea;   ///< Dock widget area desired by this widget
     QMap<int, bool> viewVisible;  ///< Visibility in one view
     QString widgetTitle;
-    static int instanceCount;     ///< Number of instances around
 
     void contextMenuEvent(QContextMenuEvent* event);
     void createActions();
@@ -104,6 +103,12 @@ protected slots:
     void setTitle();
 
 private:
+    /** Do not use this from outside the class to set the object name,
+     * because we cannot track changes to the object name, and the
+     * QObject::setObjectName() function is not virtual. Instead only
+     * pass in the object name to the constructor, or use the , then
+     * never change it again. */
+    void setObjectName(const QString &name) { QWidget::setObjectName(name); }
     Ui::QGCToolWidget *ui;
 };
 
