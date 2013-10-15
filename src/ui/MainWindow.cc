@@ -39,8 +39,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
 #include <QDeclarativeView>
-#include "dockwidgettitlebareventfilter.h"
-#include "dockwidgeteventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -72,6 +70,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCConfigView.h>
 #include "SerialSettingsDialog.h"
 #include "terminalconsole.h"
+#include "menuactionhelper.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -128,12 +127,12 @@ MainWindow::MainWindow(QWidget *parent):
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
-    isAdvancedMode(false),
     mavlink(new MAVLinkProtocol()),
-    dockWidgetTitleBarEnabled(true),
-    customMode(CUSTOM_MODE_NONE)
+    customMode(CUSTOM_MODE_NONE),
+    menuActionHelper(new MenuActionHelper())
 {
     this->setAttribute(Qt::WA_DeleteOnClose);
+    connect(menuActionHelper, SIGNAL(needToShowDockWidget(QString,bool)),SLOT(showDockWidget(QString,bool)));
     //TODO:  move protocol outside UI
     connect(mavlink, SIGNAL(protocolStatusMessage(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
     loadSettings();
@@ -155,7 +154,7 @@ void MainWindow::init()
 
     if (settings.contains("ADVANCED_MODE"))
     {
-        isAdvancedMode = settings.value("ADVANCED_MODE").toBool();
+        menuActionHelper->setAdvancedMode(settings.value("ADVANCED_MODE").toBool());
     }
 
     if (!settings.contains("CURRENT_VIEW"))
@@ -182,6 +181,7 @@ void MainWindow::init()
     // Setup user interface
     ui.setupUi(this);
     hide();
+    menuActionHelper->setMenu(ui.menuTools);
 
     // We only need this menu if we have more than one system
     //    ui.menuConnected_Systems->setEnabled(false);
@@ -386,12 +386,8 @@ MainWindow::~MainWindow()
         }
     }
     // Delete all UAS objects
-
-
-    if (debugConsole)
-    {
-        delete debugConsole;
-    }
+    delete debugConsole;
+    delete menuActionHelper;
     for (int i=0;i<commsWidgetList.size();i++)
     {
         commsWidgetList[i]->deleteLater();
@@ -438,17 +434,6 @@ void MainWindow::buildCustomWidget()
         {
             QSettings settings;
             settings.beginGroup("QGC_MAINWINDOW");
-
-            /*QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
-            dock->setObjectName(tool->objectName()+"_DOCK");
-            dock->setWidget(tool);
-            connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-            QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
-            showAction->setCheckable(true);
-            connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-            connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-            widgets.at(i)->setMainMenuAction(showAction);
-            ui.menuTools->addAction(showAction);*/
 
             // Load dock widget location (default is bottom)
             Qt::DockWidgetArea location = tool->getDockWidgetArea(currentView);
@@ -577,22 +562,10 @@ void MainWindow::buildCommonWidgets()
     }
 
     // Dock widgets
-    QAction* tempAction = ui.menuTools->addAction(tr("Control"));
-    tempAction->setCheckable(true);
-    connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-
     createDockWidget(simView,new UASControlWidget(this),tr("Control"),"UNMANNED_SYSTEM_CONTROL_DOCKWIDGET",VIEW_SIMULATION,Qt::LeftDockWidgetArea);
 
     createDockWidget(plannerView,new UASListWidget(this),tr("Unmanned Systems"),"UNMANNED_SYSTEM_LIST_DOCKWIDGET",VIEW_MISSION,Qt::LeftDockWidgetArea);
     createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
-
-    {
-        //createDockWidget(plannerView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_MISSION,Qt::BottomDockWidgetArea);
-        QAction* tempAction = ui.menuTools->addAction(tr("Mission Plan"));
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-        menuToDockNameMap[tempAction] = "WAYPOINT_LIST_DOCKWIDGET";
-    }
 
     createDockWidget(simView,new QGCWaypointListMulti(this),tr("Mission Plan"),"WAYPOINT_LIST_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
     createDockWidget(engineeringView,new QGCMAVLinkInspector(mavlink,this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
@@ -600,13 +573,8 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
     createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
 
+    menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
-    {
-        QAction* tempAction = ui.menuTools->addAction(tr("Status Details"));
-        menuToDockNameMap[tempAction] = "UAS_STATUS_DETAILS_DOCKWIDGET";
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-    }
     {
         if (!debugConsole)
         {
@@ -614,40 +582,22 @@ void MainWindow::buildCommonWidgets()
             debugConsole->setWindowTitle("Communications Console");
             debugConsole->hide();
             QAction* tempAction = ui.menuTools->addAction(tr("Communication Console"));
-            //menuToDockNameMap[tempAction] = "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET";
             tempAction->setCheckable(true);
             connect(tempAction,SIGNAL(triggered(bool)),debugConsole,SLOT(setShown(bool)));
-
         }
     }
     createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
 
-    {
-        QAction* tempAction = ui.menuTools->addAction(tr("Flight Display"));
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-        menuToDockNameMap[tempAction] = "HEAD_DOWN_DISPLAY_1_DOCKWIDGET";
-    }
+    menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
+    menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
+    menuActionHelper->createToolAction(tr("Radio Control"));
 
-    {
-        QAction* tempAction = ui.menuTools->addAction(tr("Actuator Status"));
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-        menuToDockNameMap[tempAction] = "HEAD_DOWN_DISPLAY_2_DOCKWIDGET";
-    }
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
 
-    {
-        QAction* tempAction = ui.menuTools->addAction(tr("Radio Control"));
-        tempAction->setCheckable(true);
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-    }
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
 
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,this->width()/1.5);
-
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,this->width()/1.5);
-
-    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,this->width()/1.5);
-    createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
+    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
+    createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,QSize(this->width()/1.8,0));
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
@@ -730,83 +680,38 @@ void MainWindow::buildCommonWidgets()
 
 void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
 {
-    QList<QAction*> actionlist = ui.menuTools->actions();
-    bool found = false;
-    QAction *targetAction;
-    for (int i=0;i<actionlist.size();i++)
-    {
-        if (actionlist[i]->text() == title)
-        {
-            found = true;
-            targetAction = actionlist[i];
-        }
-    }
-    if (!found)
-    {
-        QAction* tempAction = ui.menuTools->addAction(title);
-        tempAction->setCheckable(true);
-        menuToDockNameMap[tempAction] = widget->objectName();
-        if (!centralWidgetToDockWidgetsMap.contains(view))
-        {
-            centralWidgetToDockWidgetsMap[view] = QMap<QString,QWidget*>();
-        }
-        centralWidgetToDockWidgetsMap[view][widget->objectName()]= widget;
-        connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
-        connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
-        connect(widget, SIGNAL(destroyed()), tempAction, SLOT(deleteLater()));
-        tempAction->setChecked(widget->isVisible());
-    }
-    else
-    {
-        if (!menuToDockNameMap.contains(targetAction))
-        {
-            menuToDockNameMap[targetAction] = widget->objectName();
-            //menuToDockNameMap[targetAction] = title;
-        }
-        if (!centralWidgetToDockWidgetsMap.contains(view))
-        {
-            centralWidgetToDockWidgetsMap[view] = QMap<QString,QWidget*>();
-        }
-        centralWidgetToDockWidgetsMap[view][widget->objectName()]= widget;
-        connect(widget, SIGNAL(visibilityChanged(bool)), targetAction, SLOT(setChecked(bool)));
-    }
+    menuActionHelper->createToolActionForCustomDockWidget(title, widget->objectName(), widget, view);
     parent->addDockWidget(area,widget);
 }
 
-QDockWidget* MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
+QDockWidget* MainWindow::createDockWidget(QWidget *subMainWindowParent,QWidget *child,const QString& title,const QString& objectName,VIEW_SECTIONS view,Qt::DockWidgetArea area,const QSize& minSize)
 {
-    child->setObjectName(objectname);
-    QDockWidget *widget = new QDockWidget(title,this);
-    dockWidgets.append(widget);
-    setDockWidgetTitleBar(widget);
-    widget->setObjectName(child->objectName());
-    widget->setWidget(child);
-    if (minheight != 0 || minwidth != 0)
-    {
-        widget->setMinimumHeight(minheight);
-        widget->setMinimumWidth(minwidth);
-    }
-    addTool(qobject_cast<SubMainWindow*>(parent),view,widget,title,area);
-    connect(child, SIGNAL(destroyed()), widget, SLOT(deleteLater()));
-    connect(widget, SIGNAL(destroyed()), this, SLOT(dockWidgetDestroyed()));
+    SubMainWindow *parent = qobject_cast<SubMainWindow*>(subMainWindowParent);
+    Q_ASSERT(parent);
+    QDockWidget* dockWidget = menuActionHelper->createDockWidget(title, objectName);
+    child->setObjectName(objectName);
+    dockWidget->setWidget(child); //Set child objectName before setting dockwidget, since the dock widget might react to object name changes
+    connect(child, SIGNAL(destroyed()), dockWidget, SLOT(deleteLater()));  //Our dockwidget only has only child widget, so kill the dock widget if the child is deleted
 
-    return widget;
-}
-void MainWindow::dockWidgetDestroyed()
-{
-    QDockWidget *dock = dynamic_cast<QDockWidget *>(QObject::sender());
-    Q_ASSERT(dock);
-    if(!dock) return;
-
-    dockWidgets.removeAll(dock);
+    if (!minSize.isNull())
+        dockWidget->setMinimumSize(minSize);
+    addTool(parent,view,dockWidget,title,area);
+    return dockWidget;
 }
 
-void MainWindow::loadDockWidget(QString name)
+void MainWindow::showDockWidget(const QString& name, bool show)
 {
-    if (centralWidgetToDockWidgetsMap[currentView].contains(name))
-    {
+    QDockWidget *dockWidget = menuActionHelper->getDockWidget(currentView, name);
+    if(dockWidget)
+        dockWidget->setVisible(show);
+    else if (show)
+        loadDockWidget(name);
+}
+
+void MainWindow::loadDockWidget(const QString& name)
+{
+    if(menuActionHelper->containsDockWidget(currentView, name))
         return;
-    }
     if (name.startsWith("HIL_CONFIG"))
     {
         //It's a HIL widget.
@@ -839,8 +744,6 @@ void MainWindow::loadDockWidget(QString name)
     else if (name == "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET")
     {
         //This is now a permanently detached window.
-        //centralWidgetToDockWidgetsMap[currentView][name] = console;
-        //createDockWidget(centerStack->currentWidget(),new DebugConsole(this),tr("Communication Console"),"COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET",currentView,Qt::BottomDockWidgetArea);
     }
     else if (name == "HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET")
     {
@@ -848,21 +751,19 @@ void MainWindow::loadDockWidget(QString name)
     }
     else if (name == "HEAD_DOWN_DISPLAY_1_DOCKWIDGET")
     {
-        //FIXME: memory of acceptList will never be freed again
-        QStringList* acceptList = new QStringList();
-        acceptList->append("-3.3,ATTITUDE.roll,rad,+3.3,s");
-        acceptList->append("-3.3,ATTITUDE.pitch,deg,+3.3,s");
-        acceptList->append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
+        QStringList acceptList;
+        acceptList.append("-3.3,ATTITUDE.roll,rad,+3.3,s");
+        acceptList.append("-3.3,ATTITUDE.pitch,deg,+3.3,s");
+        acceptList.append("-3.3,ATTITUDE.yaw,deg,+3.3,s");
         HDDisplay *hddisplay = new HDDisplay(acceptList,"Flight Display",this);
         hddisplay->addSource(mavlinkDecoder);
         createDockWidget(centerStack->currentWidget(),hddisplay,tr("Flight Display"),"HEAD_DOWN_DISPLAY_1_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "HEAD_DOWN_DISPLAY_2_DOCKWIDGET")
     {
-        //FIXME: memory of acceptList2 will never be freed again
-        QStringList* acceptList2 = new QStringList();
-        acceptList2->append("0,RAW_PRESSURE.pres_abs,hPa,65500");
-        HDDisplay *hddisplay = new HDDisplay(acceptList2,"Actuator Status",this);
+        QStringList acceptList;
+        acceptList.append("0,RAW_PRESSURE.pres_abs,hPa,65500");
+        HDDisplay *hddisplay = new HDDisplay(acceptList,"Actuator Status",this);
         hddisplay->addSource(mavlinkDecoder);
         createDockWidget(centerStack->currentWidget(),hddisplay,tr("Actuator Status"),"HEAD_DOWN_DISPLAY_2_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
@@ -873,7 +774,6 @@ void MainWindow::loadDockWidget(QString name)
     }
     else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
-        // createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
         createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
@@ -894,80 +794,6 @@ void MainWindow::loadDockWidget(QString name)
     }
 }
 
-void MainWindow::setDockWidgetTitleBar(QDockWidget* widget)
-{
-    QWidget* oldTitleBar = widget->titleBarWidget();
-
-    // In advanced mode, we use the default titlebar provided by Qt.
-    if (isAdvancedMode)
-    {
-        widget->setTitleBarWidget(0);
-    }
-    // Otherwise, if just a textlabel should be shown, make that the titlebar.
-    else if (dockWidgetTitleBarEnabled)
-    {
-        QLabel* label = new QLabel(this);
-        label->setText(widget->windowTitle());
-        label->installEventFilter(new DockWidgetTitleBarEventFilter()); //Ignore mouse clicks
-        widget->installEventFilter(new DockWidgetEventFilter()); //Update label if window title changes
-        widget->setTitleBarWidget(label);
-    }
-    // And if nothing should be shown, use an empty widget.
-    else
-    {
-        QWidget* newTitleBar = new QWidget(this);
-        widget->setTitleBarWidget(newTitleBar);
-    }
-
-    // Be sure to clean up the old titlebar. When using QDockWidget::setTitleBarWidget(),
-    // it doesn't delete the old titlebar object.
-    if (oldTitleBar)
-    {
-        delete oldTitleBar;
-    }
-}
-
-void MainWindow::showTool(bool show)
-{
-    //Called when a menu item is clicked on, regardless of view.
-
-    QAction* act = qobject_cast<QAction *>(sender());
-    if (menuToDockNameMap.contains(act))
-    {
-        QString name = menuToDockNameMap[act];
-        if (centralWidgetToDockWidgetsMap.contains(currentView))
-        {
-            if (centralWidgetToDockWidgetsMap[currentView].contains(name))
-            {
-                if (show)
-                {
-                    centralWidgetToDockWidgetsMap[currentView][name]->show();
-                }
-                else
-                {
-                    centralWidgetToDockWidgetsMap[currentView][name]->hide();
-                }
-            }
-            else if (show)
-            {
-                loadDockWidget(name);
-            }
-        }
-    }
-    //QWidget* widget = qVariantValue<QWidget *>(act->data());
-    //widget->setVisible(show);
-}
-/*void addToolByName(QString name,SubMainWindow parent,const QString& title, Qt::DockWidgetArea area)
-{
-    if (name == "Control")
-    {
-        QDockWidget *widget = new QDockWidget(tr("Control"),this);
-        dockToTitleBarMap[widget] = widget->titleBarWidget();
-        widget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
-        widget->setWidget(new UASControlWidget(this));
-        addTool(parent,VIEW_SIMULATION,widget,tr("Control"),area);
-    }
-}*/
 void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title)
 {
     Q_UNUSED(title);
@@ -977,7 +803,6 @@ void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSe
     if (centerStack->indexOf(widget) == -1)
     {
         centerStack->addWidget(widget);
-        centralWidgetToDockWidgetsMap[viewSection] = QMap<QString,QWidget*>();
     }
 }
 
@@ -996,18 +821,10 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
 
     if (mav && !hilDocks.contains(mav->getUASID()))
     {
-        //QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
-        //createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
-
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
         QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
         QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockName.toUpper().replace(" ", "_"),VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
-
-        //        if (currentView != VIEW_SIMULATION)
-        //            hilDock->hide();
-        //        else
-        //            hilDock->show();
     }
 }
 
@@ -1035,33 +852,20 @@ void MainWindow::connectCommonWidgets()
 
 void MainWindow::createCustomWidget()
 {
-    //void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
-    //QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
-
     if (QGCToolWidget::instances()->isEmpty())
     {
         // This is the first widget
         ui.menuTools->addSeparator();
     }
-    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool " + QString::number(ui.menuTools->actions().size()));
-    createDockWidget(centerStack->currentWidget(),tool,"Unnamed Tool " + QString::number(ui.menuTools->actions().size()),"UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK",currentView,Qt::BottomDockWidgetArea);
-    //tool->setObjectName("UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()));
+    QString title = "Unnamed Tool " + QString::number(ui.menuTools->actions().size());
+    QString objectName = "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK";
+    QGCToolWidget* tool = new QGCToolWidget(objectName, title);
+    createDockWidget(centerStack->currentWidget(),tool,title,objectName,currentView,Qt::BottomDockWidgetArea);
+
     QSettings settings;
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue(QString("TOOL_PARENT_") + tool->objectName(),currentView);
     settings.endGroup();
-
-    //connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-    //dock->setWidget(tool);
-
-    //QAction* showAction = new QAction(tool->getTitle(), this);
-    //showAction->setCheckable(true);
-    //connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-    //connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-    //tool->setMainMenuAction(showAction);
-    //ui.menuTools->addAction(showAction);
-    //this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-    //dock->setVisible(true);
 }
 
 void MainWindow::loadCustomWidget()
@@ -1072,7 +876,7 @@ void MainWindow::loadCustomWidget()
 }
 void MainWindow::loadCustomWidget(const QString& fileName, int view)
 {
-    QGCToolWidget* tool = new QGCToolWidget("", this);
+    QGCToolWidget* tool = new QGCToolWidget("", "", this);
     if (tool->loadSettings(fileName, true))
     {
         qDebug() << "Loading custom tool:" << tool->getTitle() << tool->objectName();
@@ -1091,16 +895,12 @@ void MainWindow::loadCustomWidget(const QString& fileName, int view)
             createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         default:
-        {
+            {
             //Delete tool, create menu item to tie it to.
             customWidgetNameToFilenameMap[tool->objectName()+"DOCK"] = fileName;
-            QAction* tempAction = ui.menuTools->addAction(tool->getTitle());
-            menuToDockNameMap[tempAction] = tool->objectName()+"DOCK";
-            tempAction->setCheckable(true);
-            connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+            menuActionHelper->createToolAction(tool->getTitle(), tool->objectName()+"DOCK");
             tool->deleteLater();
-            //createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
-        }
+            }
             break;
         }
     }
@@ -1112,7 +912,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, int view)
 
 void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
 {
-    QGCToolWidget* tool = new QGCToolWidget("", this);
+    QGCToolWidget* tool = new QGCToolWidget("", "", this);
     if (tool->loadSettings(fileName, true) || !singleinstance)
     {
         qDebug() << "Loading custom tool:" << tool->getTitle() << tool->objectName();
@@ -1136,35 +936,18 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
             createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
             break;
         default:
-        {
+            {
             //Delete tool, create menu item to tie it to.
             customWidgetNameToFilenameMap[tool->objectName()+"DOCK"] = fileName;
-            QAction* tempAction = ui.menuTools->addAction(tool->getTitle());
-            menuToDockNameMap[tempAction] = tool->objectName()+"DOCK";
-            tempAction->setCheckable(true);
-            connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+            QAction *action = menuActionHelper->createToolAction(tool->getTitle(), tool->objectName()+"DOCK");
+            ui.menuTools->addAction(action);
             tool->deleteLater();
-            //createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName()+"DOCK",(VIEW_SECTIONS)view,Qt::LeftDockWidgetArea);
-        }
+            }
             break;
         }
 
 
         settings.endGroup();
-        // Add widget to UI
-        /*QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
-        connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-        dock->setWidget(tool);
-        tool->setParent(dock);
-
-        QAction* showAction = new QAction(tool->getTitle(), this);
-        showAction->setCheckable(true);
-        connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-        connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-        tool->setMainMenuAction(showAction);
-        ui.menuTools->addAction(showAction);
-        this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-        dock->hide();*/
     }
     else
     {
@@ -1214,7 +997,7 @@ void MainWindow::loadSettings()
     darkStyleFileName = settings.value("DARK_STYLE_FILENAME", darkStyleFileName).toString();
     lightStyleFileName = settings.value("LIGHT_STYLE_FILENAME", lightStyleFileName).toString();
     lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
-    dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled).toBool();
+    bool dockWidgetTitleBarEnabled = settings.value("DOCK_WIDGET_TITLEBARS",menuActionHelper->dockWidgetTitleBarsEnabled()).toBool();
     settings.endGroup();
     enableDockWidgetTitleBars(dockWidgetTitleBarEnabled);
 }
@@ -1308,17 +1091,12 @@ void MainWindow::saveScreen()
 }
 void MainWindow::enableDockWidgetTitleBars(bool enabled)
 {
-    dockWidgetTitleBarEnabled = enabled;
+    menuActionHelper->setDockWidgetTitleBarsEnabled(enabled);
     QSettings settings;
     settings.beginGroup("QGC_MAINWINDOW");
-    settings.setValue("DOCK_WIDGET_TITLEBARS",dockWidgetTitleBarEnabled);
+    settings.setValue("DOCK_WIDGET_TITLEBARS",enabled);
     settings.endGroup();
     settings.sync();
-
-    for (int i = 0; i < dockWidgets.size(); i++)
-    {
-        setDockWidgetTitleBar(dockWidgets[i]);
-    }
 }
 
 void MainWindow::enableAutoReconnect(bool enabled)
@@ -1488,8 +1266,8 @@ void MainWindow::connectCommonActions()
 
     // Connect actions from ui
     connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
-    ui.actionAdvanced_Mode->setChecked(isAdvancedMode);
-    connect(ui.actionAdvanced_Mode,SIGNAL(triggered()),this,SLOT(setAdvancedMode()));
+    ui.actionAdvanced_Mode->setChecked(menuActionHelper->isAdvancedMode());
+    connect(ui.actionAdvanced_Mode,SIGNAL(toggled(bool)),this,SLOT(setAdvancedMode(bool)));
 
     // Connect internal actions
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
@@ -2085,16 +1863,11 @@ void MainWindow::loadViewState()
         win->restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
     }
 }
-void MainWindow::setAdvancedMode()
+void MainWindow::setAdvancedMode(bool isAdvancedMode)
 {
-    isAdvancedMode = !isAdvancedMode;
+    menuActionHelper->setAdvancedMode(isAdvancedMode);
     ui.actionAdvanced_Mode->setChecked(isAdvancedMode);
     settings.setValue("ADVANCED_MODE",isAdvancedMode);
-
-    for (int i = 0; i < dockWidgets.size(); i++)
-    {
-        setDockWidgetTitleBar(dockWidgets[i]);
-    }
 }
 
 void MainWindow::loadEngineerView()
@@ -2217,9 +1990,14 @@ void MainWindow::loadMAVLinkView()
 //}
 
 
-QList<QAction*> MainWindow::listLinkMenuActions(void)
+QList<QAction*> MainWindow::listLinkMenuActions()
 {
     return ui.menuNetwork->actions();
+}
+
+bool MainWindow::dockWidgetTitleBarsEnabled() const
+{
+    return menuActionHelper->dockWidgetTitleBarsEnabled();
 }
 
 #ifdef MOUSE_ENABLED_LINUX
