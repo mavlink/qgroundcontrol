@@ -77,24 +77,8 @@ public slots:
     void recolor();
     /** @brief Set short names for curves */
     void setShortNames(bool enable);
-    /** @brief Append int8 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint8 value, quint64 usec);
-    /** @brief Append uint8 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint8 value, quint64 usec);
-    /** @brief Append int16 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint16 value, quint64 usec);
-    /** @brief Append uint16 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint16 value, quint64 usec);
-    /** @brief Append int32 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint32 value, quint64 usec);
-    /** @brief Append uint32 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint32 value, quint64 usec);
-    /** @brief Append int64 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint64 value, quint64 usec);
-    /** @brief Append uint64 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint64 value, quint64 usec);
-    /** @brief Append double data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec);
+    /** @brief Append data to the given curve. */
+    void appendData(int uasId, const QString& curve, const QString& unit, const QVariant& value, quint64 usec);
 
     void toggleLogarithmicScaling(bool toggled);
     void takeButtonClick(bool checked);

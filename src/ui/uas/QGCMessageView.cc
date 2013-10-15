@@ -87,7 +87,9 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
 
 void QGCMessageView::contextMenuEvent(QContextMenuEvent* event)
 {
-    QMenu menu(this);
-    menu.addAction(clearAction);
-    menu.exec(event->globalPos());
+    if(activeUAS) {
+        QMenu menu(this);
+        menu.addAction(clearAction);
+        menu.exec(event->globalPos());
+    }
 }
