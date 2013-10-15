@@ -16,7 +16,7 @@
 #include "QGCCommandButton.h"
 #include "UASManager.h"
 
-QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent, QSettings* settings) :
+QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QWidget *parent, QSettings* settings) :
         QWidget(parent),
         mav(NULL),
         mainMenuAction(NULL),
@@ -50,6 +50,11 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent, QSettings* s
     }
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
 
+    if(!objectName.isEmpty()) {
+        instances()->insert(objectName, this);
+        setObjectName(objectName);
+    } //Otherwise we must call loadSettings() immediately to set the object name
+
     // Enforce storage if this not loaded from settings
     // is MUST NOT BE SAVED if it was loaded from settings!
     //if (!settings) storeWidgetsToSettings();
@@ -58,7 +63,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent, QSettings* s
 QGCToolWidget::~QGCToolWidget()
 {
     if (mainMenuAction) mainMenuAction->deleteLater();
-    if (QGCToolWidget::instances()) QGCToolWidget::instances()->remove(widgetTitle);
+    if (QGCToolWidget::instances()) QGCToolWidget::instances()->remove(objectName());
     delete ui;
 }
 
@@ -98,11 +103,10 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
         QString name = settings->value("TITLE", "").toString();
         QString objname = settings->value("OBJECT_NAME", "").toString();
 
-        if (!instances()->contains(name) && name.length() != 0)
+        if (!instances()->contains(objname) && !objname.isEmpty())
         {
             //qDebug() << "CREATED WIDGET:" << name;
-            QGCToolWidget* tool = new QGCToolWidget(name, parent, settings);
-            tool->setObjectName(objname);
+            QGCToolWidget* tool = new QGCToolWidget(objname, name, parent, settings);
             newWidgets.append(tool);
         }
         else if (name.length() == 0)
@@ -154,12 +158,13 @@ bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
     QStringList groups = set.childGroups();
     if (groups.length() > 0)
     {
-        QString widgetName = groups.first();
-	this->setObjectName(widgetName);
-        if (singleinstance && QGCToolWidget::instances()->keys().contains(widgetName)) return false;
+        QString objectName = groups.first();
+        setObjectName(objectName);
+        if (singleinstance && QGCToolWidget::instances()->contains(objectName)) return false;
+        instances()->insert(objectName, this);
         // Do not use setTitle() here,
         // interferes with loading settings
-        widgetTitle = widgetName;
+        widgetTitle = objectName;
         //qDebug() << "WIDGET TITLE LOADED: " << widgetName;
         loadSettings(set);
         return true;
@@ -385,7 +390,7 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
                 settings->setArrayIndex(num++);
                 settings->setValue("TITLE", instances()->values().at(i)->getTitle());
                 settings->setValue("OBJECT_NAME", instances()->values().at(i)->objectName());
-                //qDebug() << "WRITING TITLE" << instances()->values().at(i)->getTitle();
+                qDebug() << "WRITING TITLE" << instances()->values().at(i)->getTitle() << "object:" << instances()->values().at(i)->objectName();
             }
         }
         else
@@ -640,20 +645,16 @@ void QGCToolWidget::setTitle()
 
 void QGCToolWidget::setTitle(const QString& title)
 {
-    if (instances()->contains(widgetTitle)) instances()->remove(widgetTitle);
-    if (!instances()->contains(title)) instances()->insert(title, this);
-
     // Sets title and calls setWindowTitle on QWidget
     widgetTitle = title;
     QWidget::setWindowTitle(title);
-    setObjectName(widgetTitle);
     QDockWidget* dock = dynamic_cast<QDockWidget*>(this->parentWidget());
-    if (dock) {
+    if (dock)
         dock->setWindowTitle(widgetTitle);
-        dock->setObjectName(widgetTitle+"DOCK");
-    }
     emit titleChanged(title);
     if (mainMenuAction) mainMenuAction->setText(title);
+
+    storeWidgetsToSettings();
 }
 
 void QGCToolWidget::setMainMenuAction(QAction* action)
@@ -667,7 +668,7 @@ void QGCToolWidget::deleteWidget()
 
     // Hide
     this->hide();
-    instances()->remove(getTitle());
+    instances()->remove(objectName());
 
     QSettings settings;
     settings.beginGroup("QGC_MAINWINDOW");
