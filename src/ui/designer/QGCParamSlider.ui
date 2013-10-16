@@ -190,8 +190,8 @@
    </item>
    <item row="1" column="1" colspan="7">
     <widget class="QLineEdit" name="editNameLabel">
-     <property name="text">
-      <string>&lt;Parameter Name / Label&gt;</string>
+     <property name="placeholderText">
+      <string>Parameter Name / Label</string>
      </property>
     </widget>
    </item>

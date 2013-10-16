@@ -668,11 +668,12 @@ void QGCToolWidget::deleteWidget()
     // Hide
     this->hide();
     instances()->remove(getTitle());
-    /*QSettings settings;
-    settings.beginGroup(getTitle());
-    settings.remove("");
+
+    QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
+    settings.remove(QString("TOOL_PARENT_") + objectName());
     settings.endGroup();
-    storeWidgetsToSettings();*/
+
     storeWidgetsToSettings();
 
     // Delete
