@@ -823,7 +823,8 @@ void MainWindow::showHILConfigurationWidget(UASInterface* uas)
     {
         QGCHilConfiguration* hconf = new QGCHilConfiguration(mav, this);
         QString hilDockName = tr("HIL Config %1").arg(uas->getUASName());
-        QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockName.toUpper().replace(" ", "_"),VIEW_SIMULATION,Qt::LeftDockWidgetArea);
+        QString hilDockObjectName = QString("HIL_CONFIG_%1").arg(uas->getUASName().toUpper().replace(' ','_'));
+        QDockWidget* hilDock = createDockWidget(simView, hconf,hilDockName, hilDockObjectName,VIEW_SIMULATION,Qt::LeftDockWidgetArea);
         hilDocks.insert(mav->getUASID(), hilDock);
     }
 }
