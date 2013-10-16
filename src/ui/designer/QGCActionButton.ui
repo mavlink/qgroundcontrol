@@ -61,14 +61,14 @@
    </item>
    <item row="0" column="2">
     <widget class="QLineEdit" name="editButtonName">
-     <property name="text">
+     <property name="placeholderText">
       <string>Button name</string>
      </property>
     </widget>
    </item>
    <item row="0" column="0" colspan="2">
     <widget class="QLineEdit" name="editNameLabel">
-     <property name="text">
+     <property name="placeholderText">
       <string>Description</string>
      </property>
     </widget>
