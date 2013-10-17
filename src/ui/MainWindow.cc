@@ -693,8 +693,10 @@ QDockWidget* MainWindow::createDockWidget(QWidget *subMainWindowParent,QWidget *
     dockWidget->setWidget(child); //Set child objectName before setting dockwidget, since the dock widget might react to object name changes
     connect(child, SIGNAL(destroyed()), dockWidget, SLOT(deleteLater()));  //Our dockwidget only has only child widget, so kill the dock widget if the child is deleted
 
-    if (!minSize.isNull())
-        dockWidget->setMinimumSize(minSize);
+    if (minSize.height() >= 0)
+        dockWidget->setMinimumHeight(minSize.height());
+    if (minSize.width() >= 0)
+        dockWidget->setMinimumWidth(minSize.width());
     addTool(parent,view,dockWidget,title,area);
     return dockWidget;
 }
