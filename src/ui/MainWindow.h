@@ -307,6 +307,10 @@ public slots:
 
     void commsWidgetDestroyed(QObject *obj);
 
+protected slots:
+    /** @brief Called by a dock widget when it is has been deleted */
+    void dockWidgetDestroyed();
+
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
     void styleChanged();
