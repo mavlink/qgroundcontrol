@@ -165,15 +165,6 @@ bool MenuActionHelper::eventFilter(QObject *object,QEvent *event)
             if(action)
                 action->setText(dock->windowTitle());
             //Now modify the object name - it is a strange naming scheme..
-/*            QString newObjectName = widgetTitle+"DOCK";
-            dock->setObjectName(newObjectName);
-            m_menuToDockNameMap[action] = newObjectName;
-            QMap<MainWindow::VIEW_SECTIONS,QMap<QString,QDockWidget*> >::iterator it;
-            for (it = m_centralWidgetToDockWidgetsMap.begin(); it != m_centralWidgetToDockWidgetsMap.end(); ++it) {
-                QMap<QString,QDockWidget*> &map = it.value();
-                map[newObjectName] = map[oldObjectName];
-                map.remove(oldObjectName);
-            }*/
         }
     } else if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease)
     {
