@@ -60,7 +60,7 @@ class HDDisplay : public QGraphicsView
 {
     Q_OBJECT
 public:
-    HDDisplay(QStringList* plotList, QString title="", QWidget *parent = 0);
+    HDDisplay(const QStringList& plotList, QString title="", QWidget *parent = 0);
     ~HDDisplay();
 
 public slots:

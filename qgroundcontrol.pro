@@ -449,7 +449,6 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCComboBox.h \
     src/ui/designer/QGCTextLabel.h \
     src/ui/submainwindow.h \
-    src/ui/dockwidgettitlebareventfilter.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewItem.h \
     src/ui/linechart/ChartPlot.h \
@@ -507,7 +506,7 @@ HEADERS += src/MG.h \
     src/ui/QGCBaseParamWidget.h \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
-    src/ui/dockwidgeteventfilter.h
+    src/ui/menuactionhelper.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -672,7 +671,6 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCComboBox.cc \
     src/ui/designer/QGCTextLabel.cc \
     src/ui/submainwindow.cpp \
-    src/ui/dockwidgettitlebareventfilter.cpp \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickView.cc \
     src/ui/linechart/ChartPlot.cc \
@@ -730,7 +728,7 @@ SOURCES += src/main.cc \
     src/ui/QGCBaseParamWidget.cc \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
-    src/ui/dockwidgeteventfilter.cpp
+    src/ui/menuactionhelper.cpp
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
