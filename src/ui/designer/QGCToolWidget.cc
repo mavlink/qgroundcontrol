@@ -48,10 +48,6 @@ QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QW
         instances()->insert(objectName, this);
         setObjectName(objectName);
     } //Otherwise we must call loadSettings() immediately to set the object name
-
-    // Enforce storage if this not loaded from settings
-    // is MUST NOT BE SAVED if it was loaded from settings!
-    if (!settings) storeWidgetsToSettings();
 }
 
 QGCToolWidget::~QGCToolWidget()
@@ -353,26 +349,13 @@ void QGCToolWidget::loadSettings(QSettings& settings)
     settings.endGroup();
 }
 
-void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
+void QGCToolWidget::storeWidgetsToSettings(QSettings &settings) //static
 {
-    // Store list of widgets
-    QSettings* settings;
-    if (!settingsFile.isEmpty())
-    {
-        settings = new QSettings(settingsFile, QSettings::IniFormat);
-        //qDebug() << "STORING SETTINGS TO" << settings->fileName();
-    }
-    else
-    {
-        settings = new QSettings();
-        //qDebug() << "STORING SETTINGS TO DEFAULT" << settings->fileName();
-    }
+    settings.beginGroup("Custom_Tool_Widgets");
+    int preArraySize = settings.beginReadArray("QGC_TOOL_WIDGET_NAMES");
+    settings.endArray();
 
-    settings->beginGroup("Custom_Tool_Widgets");
-    int preArraySize = settings->beginReadArray("QGC_TOOL_WIDGET_NAMES");
-    settings->endArray();
-
-    settings->beginWriteArray("QGC_TOOL_WIDGET_NAMES");
+    settings.beginWriteArray("QGC_TOOL_WIDGET_NAMES");
     int num = 0;
     for (int i = 0; i < qMax(preArraySize, instances()->size()); ++i)
     {
@@ -381,44 +364,34 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
             // Updating value
             if (!instances()->values().at(i)->fromMetaData())
             {
-                settings->setArrayIndex(num++);
-                settings->setValue("TITLE", instances()->values().at(i)->getTitle());
-                settings->setValue("OBJECT_NAME", instances()->values().at(i)->objectName());
+                settings.setArrayIndex(num++);
+                settings.setValue("TITLE", instances()->values().at(i)->getTitle());
+                settings.setValue("OBJECT_NAME", instances()->values().at(i)->objectName());
                 qDebug() << "WRITING TITLE" << instances()->values().at(i)->getTitle() << "object:" << instances()->values().at(i)->objectName();
             }
         }
         else
         {
             // Deleting old value
-            settings->remove("TITLE");
+            settings.remove("TITLE");
         }
     }
-    settings->endArray();
+    settings.endArray();
 
     // Store individual widget items
     for (int i = 0; i < instances()->size(); ++i)
     {
-        instances()->values().at(i)->storeSettings(*settings);
+        instances()->values().at(i)->storeSettings(settings);
     }
-    settings->endGroup();
-    settings->sync();
-    delete settings;
-}
-
-void QGCToolWidget::storeSettings()
-{
-    QSettings settings;
-    storeSettings(settings);
-}
-
-void QGCToolWidget::storeSettings(const QString& settingsFile)
-{
-    QSettings settings(settingsFile, QSettings::IniFormat);
-    storeSettings(settings);
+    settings.endGroup();
+    settings.sync();
 }
 
 void QGCToolWidget::storeSettings(QSettings& settings)
 {
+    /* This function should be called from storeWidgetsToSettings() which sets up the group etc */
+    Q_ASSERT(settings.group() == "Custom_Tool_Widgets");
+
     if (isFromMetaData)
     {
         //Refuse to store if this is loaded from metadata or dynamically generated.
@@ -428,17 +401,11 @@ void QGCToolWidget::storeSettings(QSettings& settings)
     settings.beginGroup(widgetTitle);
     settings.beginWriteArray("QGC_TOOL_WIDGET_ITEMS");
     int k = 0; // QGCToolItem counter
-    for (int j = 0; j  < children().size(); ++j)
-    {
-        // Store only QGCToolWidgetItems
-        QGCToolWidgetItem* item = dynamic_cast<QGCToolWidgetItem*>(children().at(j));
-        if (item)
-        {
-            // Only count actual tool widget item children
-            settings.setArrayIndex(k++);
-            // Store the ToolWidgetItem
-            item->writeSettings(settings);
-        }
+    foreach(QGCToolWidgetItem *item, toolItemList) {
+        // Only count actual tool widget item children
+        settings.setArrayIndex(k++);
+        // Store the ToolWidgetItem
+        item->writeSettings(settings);
     }
     //qDebug() << "WROTE" << k << "SUB-WIDGETS TO SETTINGS";
     settings.endArray();
@@ -524,13 +491,6 @@ QMap<QString, QGCToolWidget*>* QGCToolWidget::instances()
     return instances;
 }
 
-QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
-{
-    static QList<QGCToolWidgetItem*>* instances;
-    if (!instances) instances = new QList<QGCToolWidgetItem*>();
-    return instances;
-}
-
 void QGCToolWidget::addParam(int uas,int component,QString paramname,QVariant value)
 {
     isFromMetaData = true;
@@ -568,7 +528,8 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
         ui->hintLabel->deleteLater();
         ui->hintLabel = NULL;
     }
-    connect(widget, SIGNAL(destroyed()), this, SLOT(storeSettings()));
+    connect(widget, SIGNAL(editingFinished()), this, SLOT(storeWidgetsToSettings()));
+    connect(widget, SIGNAL(destroyed()), this, SLOT(storeWidgetsToSettings()));
     toolLayout->addWidget(widget);
     toolItemList.append(widget);
 }
@@ -581,7 +542,8 @@ void QGCToolWidget::exportWidget()
     {
         fileName = fileName.append(widgetFileExtension);
     }
-    storeSettings(fileName);
+    QSettings settings(fileName, QSettings::IniFormat);
+    storeSettings(settings);
 }
 
 void QGCToolWidget::importWidget()
@@ -623,7 +585,9 @@ void QGCToolWidget::setTitle(const QString& title)
     emit titleChanged(title);
     if (mainMenuAction) mainMenuAction->setText(title);
 
-    storeWidgetsToSettings();
+    //Do not save the settings here, because this function might be
+    //called while loading, and thus saving here could end up clobbering
+    //all of the other widgets
 }
 
 void QGCToolWidget::setMainMenuAction(QAction* action)

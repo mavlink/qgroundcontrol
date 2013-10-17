@@ -35,6 +35,9 @@ public:
     Qt::DockWidgetArea getDockWidgetArea(int view) { return dockWidgetArea.value(view, Qt::BottomDockWidgetArea); }
     void setParent(QWidget *parent);
 
+    /** @brief Store all widgets of this type to QSettings */
+    static void storeWidgetsToSettings(QSettings &settingsFile);
+
 public slots:
     void addUAS(UASInterface* uas);
     /** @brief Delete this widget */
@@ -44,18 +47,14 @@ public slots:
     /** @brief Import settings for this widget from a file */
     void importWidget();
     /** @brief Store all widgets of this type to QSettings */
-    static void storeWidgetsToSettings(QString settingsFile=QString());
+    void storeWidgetsToSettings() { QSettings settings; QGCToolWidget::storeWidgetsToSettings(settings); }
+
+public:
     void loadSettings(QVariantMap& settings);
     /** @brief Load this widget from a QSettings object */
     void loadSettings(QSettings& settings);
     /** @brief Load this widget from a settings file */
     bool loadSettings(const QString& settings, bool singleinstance=false);
-    /** @brief Store this widget to a QSettings object */
-    void storeSettings(QSettings& settings);
-    /** @brief Store this widget to a settings file */
-    void storeSettings(const QString& settingsFile);
-    /** @brief Store this widget to a settings file */
-    void storeSettings();
     /** @brief Store the view id and dock widget area */
     void setViewVisibilityAndDockWidgetArea(int view, bool visible, Qt::DockWidgetArea area);
     void setSettings(QVariantMap& settings);
@@ -63,8 +62,9 @@ public slots:
     void setParameterValue(int uas, int component, QString parameterName, const QVariant value);
     bool fromMetaData() { return isFromMetaData; }
     void showLabel(QString name,int num);
+
 signals:
-    void titleChanged(QString);
+    void titleChanged(const QString &title);
 
 protected:
     bool isFromMetaData;
@@ -88,7 +88,6 @@ protected:
 
     void contextMenuEvent(QContextMenuEvent* event);
     void createActions();
-    QList<QGCToolWidgetItem* >* itemList();
     /** @brief Add an existing tool widget */
     void addToolWidget(QGCToolWidgetItem* widget);
     /** @brief Add an existing tool widget and set it to edit mode */
@@ -111,6 +110,9 @@ private:
      * pass in the object name to the constructor, or use the , then
      * never change it again. */
     void setObjectName(const QString &name) { QWidget::setObjectName(name); }
+    /** Helper for storeWidgetsToSettings() */
+    void storeSettings(QSettings& settings);
+
     Ui::QGCToolWidget *ui;
 };
 

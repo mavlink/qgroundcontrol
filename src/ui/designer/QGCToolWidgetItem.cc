@@ -20,11 +20,6 @@ QGCToolWidgetItem::QGCToolWidgetItem(const QString& name, QWidget *parent) :
     deleteAction = new QAction(tr("Delete %1").arg(qgcToolWidgetItemName), this);
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
 
-    QGCToolWidget* tool = dynamic_cast<QGCToolWidget*>(parent);
-    if (tool) {
-        connect(this, SIGNAL(editingFinished()), tool, SLOT(storeWidgetsToSettings()));
-    }
-
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
     // Set first UAS if it exists

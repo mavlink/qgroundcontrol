@@ -1035,6 +1035,7 @@ void MainWindow::storeSettings()
     }
     settings.setValue("LOW_POWER_MODE", lowPowerMode);
     settings.setValue("QGC_CUSTOM_MODE", (int)customMode);
+    QGCToolWidget::storeWidgetsToSettings(settings);
     settings.sync();
 }
 
