@@ -91,6 +91,8 @@ protected:
     QList<QGCToolWidgetItem* >* itemList();
     /** @brief Add an existing tool widget */
     void addToolWidget(QGCToolWidgetItem* widget);
+    /** @brief Add an existing tool widget and set it to edit mode */
+    void addToolWidgetAndEdit(QGCToolWidgetItem* widget);
 
     void hideEvent(QHideEvent* event);
 public slots:
