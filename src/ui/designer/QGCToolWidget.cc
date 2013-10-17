@@ -27,12 +27,6 @@ QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QW
     ui->setupUi(this);
     if (settings) loadSettings(*settings);
 
-    if (title == "Unnamed Tool")
-    {
-        widgetTitle = QString("%1 %2").arg(title).arg(QGCToolWidget::instances()->count());
-    }
-    //qDebug() << "WidgetTitle" << widgetTitle;
-
     createActions();
     toolLayout = ui->toolLayout;
     toolLayout->setAlignment(Qt::AlignTop);

@@ -860,8 +860,16 @@ void MainWindow::createCustomWidget()
         // This is the first widget
         ui.menuTools->addSeparator();
     }
-    QString title = "Unnamed Tool " + QString::number(ui.menuTools->actions().size());
-    QString objectName = "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size())+"DOCK";
+    QString objectName;
+    int customToolIndex = 0;
+    //Find the next unique object name that we can use
+    do {
+        ++customToolIndex;
+        objectName = QString("CUSTOM_TOOL_%1").arg(customToolIndex) + "DOCK";
+    } while(QGCToolWidget::instances()->contains(objectName));
+
+    QString title = tr("Custom Tool %1").arg(customToolIndex );
+
     QGCToolWidget* tool = new QGCToolWidget(objectName, title);
     createDockWidget(centerStack->currentWidget(),tool,title,objectName,currentView,Qt::BottomDockWidgetArea);
 
