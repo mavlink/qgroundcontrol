@@ -51,7 +51,7 @@ QGCToolWidget::QGCToolWidget(const QString& objectName, const QString& title, QW
 
     // Enforce storage if this not loaded from settings
     // is MUST NOT BE SAVED if it was loaded from settings!
-    //if (!settings) storeWidgetsToSettings();
+    if (!settings) storeWidgetsToSettings();
 }
 
 QGCToolWidget::~QGCToolWidget()
@@ -530,60 +530,35 @@ QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
     if (!instances) instances = new QList<QGCToolWidgetItem*>();
     return instances;
 }
+
 void QGCToolWidget::addParam(int uas,int component,QString paramname,QVariant value)
 {
     isFromMetaData = true;
     QGCParamSlider* slider = new QGCParamSlider(this);
-    connect(slider, SIGNAL(destroyed()), this, SLOT(storeSettings()));
-    if (ui->hintLabel)
-    {
-        ui->hintLabel->deleteLater();
-        ui->hintLabel = NULL;
-    }
-    toolLayout->addWidget(slider);
+    addToolWidget(slider);
     slider->setActiveUAS(mav);
     slider->setParameterValue(uas,component,0,-1,paramname,value);
-
-
 }
 
 void QGCToolWidget::addParam()
 {
-    QGCParamSlider* slider = new QGCParamSlider(this);
-    connect(slider, SIGNAL(destroyed()), this, SLOT(storeSettings()));
-    if (ui->hintLabel)
-    {
-        ui->hintLabel->deleteLater();
-        ui->hintLabel = NULL;
-    }
-    toolLayout->addWidget(slider);
-    slider->startEditMode();
+    addToolWidgetAndEdit(new QGCParamSlider(this));
 }
 
 void QGCToolWidget::addCommand()
 {
-    QGCCommandButton* button = new QGCCommandButton(this);
-    connect(button, SIGNAL(destroyed()), this, SLOT(storeSettings()));
-    if (ui->hintLabel)
-    {
-        ui->hintLabel->deleteLater();
-        ui->hintLabel = NULL;
-    }
-    toolLayout->addWidget(button);
-    button->startEditMode();
+    addToolWidgetAndEdit(new QGCCommandButton(this));
 }
 
 void QGCToolWidget::addLabel()
 {
-    QGCTextLabel* label= new QGCTextLabel(this);
-    connect(label, SIGNAL(destroyed()), this, SLOT(storeSettings()));
-    if (ui->hintLabel)
-    {
-        ui->hintLabel->deleteLater();
-        ui->hintLabel = NULL;
-    }
-    toolLayout->addWidget(label);
-    label->startEditMode();
+    addToolWidgetAndEdit(new QGCTextLabel(this));
+}
+
+void QGCToolWidget::addToolWidgetAndEdit(QGCToolWidgetItem* widget)
+{
+    addToolWidget(widget);
+    widget->startEditMode();
 }
 
 void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
