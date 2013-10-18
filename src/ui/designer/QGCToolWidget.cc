@@ -529,9 +529,18 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
         ui->hintLabel = NULL;
     }
     connect(widget, SIGNAL(editingFinished()), this, SLOT(storeWidgetsToSettings()));
-    connect(widget, SIGNAL(destroyed()), this, SLOT(storeWidgetsToSettings()));
+    connect(widget, SIGNAL(destroyed()), this, SLOT(widgetRemoved()));
     toolLayout->addWidget(widget);
     toolItemList.append(widget);
+}
+
+void QGCToolWidget::widgetRemoved()
+{
+    //Must static cast and not dynamic cast since the object is in the destructor
+    //and we only want to use it as a pointer value
+    QGCToolWidgetItem *widget = static_cast<QGCToolWidgetItem *>(QObject::sender());
+    toolItemList.removeAll(widget);
+    storeWidgetsToSettings();
 }
 
 void QGCToolWidget::exportWidget()
