@@ -19,9 +19,8 @@ public:
     ~QGCTextLabel();
     void setActiveUAS(UASInterface *uas);
     void enableText(int num);
+    virtual void setEditMode(bool editMode) override;
 public slots:
-    void startEditMode();
-    void endEditMode();
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
     void readSettings(const QString& pre,const QVariantMap& settings);
