@@ -102,6 +102,7 @@ protected slots:
     void addCommand();
     void addLabel();
     void setTitle();
+    void widgetRemoved();
 
 private:
     /** Do not use this from outside the class to set the object name,
