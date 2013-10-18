@@ -5,12 +5,13 @@
 
 #include "QGCToolWidget.h"
 #include "UASManager.h"
+#include <QDockWidget>
 
 QGCToolWidgetItem::QGCToolWidgetItem(const QString& name, QWidget *parent) :
     QWidget(parent),
+    uas(NULL),
     isInEditMode(false),
     qgcToolWidgetItemName(name),
-    uas(NULL),
     _component(-1)
 {
     startEditAction = new QAction(tr("Edit %1").arg(qgcToolWidgetItemName), this);
@@ -48,4 +49,26 @@ void QGCToolWidgetItem::contextMenuEvent (QContextMenuEvent* event)
 void QGCToolWidgetItem::setActiveUAS(UASInterface *uas)
 {
     this->uas = uas;
+}
+
+void QGCToolWidgetItem::setEditMode(bool editMode)
+{
+    isInEditMode = editMode;
+
+    // Attempt to undock the dock widget
+    QWidget* p = this;
+    QDockWidget* dock;
+
+    do {
+        p = p->parentWidget();
+        dock = dynamic_cast<QDockWidget*>(p);
+
+        if (dock)
+        {
+            dock->setFloating(editMode);
+            break;
+        }
+    } while (p && !dock);
+
+    emit editingFinished();
 }
