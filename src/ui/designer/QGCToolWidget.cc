@@ -562,7 +562,7 @@ void QGCToolWidget::importWidget()
     loadSettings(fileName);
 }
 
-const QString QGCToolWidget::getTitle()
+QString QGCToolWidget::getTitle() const
 {
     return widgetTitle;
 }

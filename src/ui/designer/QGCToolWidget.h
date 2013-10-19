@@ -29,9 +29,9 @@ public:
     /** @brief All instances of this class */
     static QMap<QString, QGCToolWidget*>* instances();
     /** @brief Get title of widget */
-    const QString getTitle();
+    QString getTitle() const;
 
-    int isVisible(int view) { return viewVisible.value(view, false); }
+    int isVisible(int view) const { return viewVisible.value(view, false); }
     Qt::DockWidgetArea getDockWidgetArea(int view) { return dockWidgetArea.value(view, Qt::BottomDockWidgetArea); }
     void setParent(QWidget *parent);
 
@@ -60,7 +60,7 @@ public:
     void setSettings(QVariantMap& settings);
     QList<QString> getParamList();
     void setParameterValue(int uas, int component, QString parameterName, const QVariant value);
-    bool fromMetaData() { return isFromMetaData; }
+    bool fromMetaData() const { return isFromMetaData; }
     void showLabel(QString name,int num);
 
 signals:
