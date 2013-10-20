@@ -159,8 +159,7 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     ui->setupUi(this);
     plot = new QwtPlot();
 
-    QHBoxLayout* layout = new QHBoxLayout(ui->xyPlotFrame);
-    layout->addWidget(plot);
+    ui->xyPlotLayout->addWidget(plot);
 
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 
