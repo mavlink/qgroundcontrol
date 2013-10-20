@@ -103,37 +103,10 @@
   </ground_reactions>
   <!-- the front and rear motors spin clockwise, and the left and right motors spin counter-clockwise. -->
   <propulsion>
-    <engine file="a2830-12" name="front">
+<engine file="a2830-12" name="right">
       <location unit="M">
-        <x>  -0.283 </x>
-        <y>   0.00  </y>
-        <z>   0.00  </z>
-      </location>
-      <orient unit="DEG">
-        <pitch> 90.00 </pitch>
-        <roll>   0.00 </roll>
-        <yaw>    0.00 </yaw>
-      </orient>
-      <feed>0</feed>
-      <thruster file="prop10x4.5">
-        <location unit="M">
-          <x>  -0.283 </x>
-          <y>   0.00  </y>
-          <z>   0.125 </z>
-        </location>
-        <orient unit="DEG">
-          <pitch> 90.00 </pitch>
-          <roll>   0.00 </roll>
-          <yaw>    0.00 </yaw>
-        </orient>
-        <sense> 1 </sense>
-        <p_factor> 10 </p_factor>
-      </thruster>
-    </engine>
-    <engine file="a2830-12" name="rear">
-      <location unit="M">
-        <x>   0.283 </x>
-        <y>   0.000 </y>
+        <x>   0.000 </x>
+        <y>  -0.283 </y>
         <z>   0.000 </z>
       </location>
       <orient unit="DEG">
@@ -144,8 +117,8 @@
       <feed>0</feed>
       <thruster file="prop10x4.5">
         <location unit="M">
-          <x>   0.283 </x>
-          <y>   0.000 </y>
+          <x>   0.000 </x>
+          <y>  -0.283 </y>
           <z>   0.125 </z>
         </location>
         <orient unit="DEG">
@@ -180,15 +153,16 @@
           <roll>   0.00 </roll>
           <yaw>    0.00 </yaw>
         </orient>
-        <sense> -1 </sense>
+        <sense> 1 </sense>
         <p_factor> 10 </p_factor>
       </thruster>
     </engine>
-    <engine file="a2830-12" name="right">
+
+    <engine file="a2830-12" name="front">
       <location unit="M">
-        <x>   0.000 </x>
-        <y>  -0.283 </y>
-        <z>   0.000 </z>
+        <x>  -0.283 </x>
+        <y>   0.00  </y>
+        <z>   0.00  </z>
       </location>
       <orient unit="DEG">
         <pitch> 90.00 </pitch>
@@ -198,8 +172,8 @@
       <feed>0</feed>
       <thruster file="prop10x4.5">
         <location unit="M">
-          <x>   0.000 </x>
-          <y>  -0.283 </y>
+          <x>  -0.283 </x>
+          <y>   0.00  </y>
           <z>   0.125 </z>
         </location>
         <orient unit="DEG">
@@ -211,6 +185,35 @@
         <p_factor> 10 </p_factor>
       </thruster>
     </engine>
+    <engine file="a2830-12" name="rear">
+      <location unit="M">
+        <x>   0.283 </x>
+        <y>   0.000 </y>
+        <z>   0.000 </z>
+      </location>
+      <orient unit="DEG">
+        <pitch> 90.00 </pitch>
+        <roll>   0.00 </roll>
+        <yaw>    0.00 </yaw>
+      </orient>
+      <feed>0</feed>
+      <thruster file="prop10x4.5">
+        <location unit="M">
+          <x>   0.283 </x>
+          <y>   0.000 </y>
+          <z>   0.125 </z>
+        </location>
+        <orient unit="DEG">
+          <pitch> 90.00 </pitch>
+          <roll>   0.00 </roll>
+          <yaw>    0.00 </yaw>
+        </orient>
+        <sense> -1 </sense>
+        <p_factor> 10 </p_factor>
+      </thruster>
+    </engine>
+    
+    
     <tank type="FUEL" number="0">
       <location unit="M">
         <x>   0.00 </x>
@@ -222,6 +225,7 @@
       <contents unit="KG"> 0.0 </contents>
     </tank>
   </propulsion>
+
   <aerodynamics>
     <axis name="LIFT">
         </axis>
