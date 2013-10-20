@@ -31,12 +31,13 @@ public slots:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style);
     void updateMinMaxSettings();
 
+private slots:
+    void on_maxDataShowSpinBox_valueChanged(int value);
+
 private:
     Ui::QGCXYPlot *ui;
     QwtPlot *plot;
     XYPlotCurve* xycurve;
-
-    int maxElementsToDraw;
 
     double x; /**< Last unused value for the x-coordinate */
     quint64 x_timestamp_us; /**< Timestamp that we last recieved a value for x */

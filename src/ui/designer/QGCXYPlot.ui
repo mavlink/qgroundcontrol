@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>771</width>
-    <height>626</height>
+    <height>365</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -145,22 +145,45 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QLabel" name="lblMaxData">
+          <widget class="QLabel" name="lblMaxDataShow">
            <property name="text">
             <string>Number of data points to &amp;show:</string>
            </property>
            <property name="buddy">
-            <cstring>maxDataSpinBox</cstring>
+            <cstring>maxDataShowSpinBox</cstring>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="maxDataSpinBox">
+          <widget class="QSpinBox" name="maxDataShowSpinBox">
            <property name="minimum">
             <number>2</number>
            </property>
            <property name="maximum">
             <number>999</number>
+           </property>
+           <property name="value">
+            <number>15</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblMaxDataStore">
+           <property name="text">
+            <string>To s&amp;tore:</string>
+           </property>
+           <property name="buddy">
+            <cstring>maxDataStoreSpinBox</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="maxDataStoreSpinBox">
+           <property name="minimum">
+            <number>10</number>
+           </property>
+           <property name="maximum">
+            <number>999999999</number>
            </property>
            <property name="value">
             <number>15</number>
@@ -348,7 +371,9 @@
  <tabstops>
   <tabstop>editXParam</tabstop>
   <tabstop>editYParam</tabstop>
-  <tabstop>maxDataSpinBox</tabstop>
+  <tabstop>maxDataShowSpinBox</tabstop>
+  <tabstop>maxDataStoreSpinBox</tabstop>
+  <tabstop>automaticAxisRange</tabstop>
   <tabstop>minX</tabstop>
   <tabstop>maxX</tabstop>
   <tabstop>minY</tabstop>

@@ -15,14 +15,17 @@ class XYPlotCurve : public QwtPlotItem
 {
 public:
     XYPlotCurve() {
-        m_maxPoints = 15;
+        m_maxStorePoints = 10000;
+        m_maxShowPoints = 15;
         setItemAttribute(QwtPlotItem::AutoScale);
         minMaxSet = false;
         m_color = Qt::white;
     }
 
-    void setMaxDataPoints(int max) { m_maxPoints = max; }
-    int maxPoints() const { return m_maxPoints; }
+    void setMaxDataStorePoints(int max) { m_maxStorePoints = max; itemChanged(); }
+    void setMaxDataShowPoints(int max) { m_maxShowPoints = max; itemChanged(); }
+    int maxDataStorePoints() const { return m_maxStorePoints; }
+    int maxDataShowPoints() const { return m_maxShowPoints; }
 
     void appendData(const QPointF &data) {
         if(!minMaxSet) {
@@ -36,9 +39,8 @@ public:
             ymax = qMax(ymax, data.y());
         }
 
-
         m_data.append(data);
-        while(m_data.size() > m_maxPoints)
+        while(m_data.size() > m_maxStorePoints)
             m_data.removeFirst();
         itemChanged();
     }
@@ -84,18 +86,18 @@ protected:
     {
         Q_UNUSED(canvasRect);
         QPointF lastPoint;
-        int i = 0;
         if(m_data.isEmpty())
             return;
-        int dataSize = m_data.size();
-
-        foreach(const QPointF &point, m_data) {
+        int start = qMax(0,m_data.size() - m_maxShowPoints);
+        int count = qMin(m_data.size()-start, m_maxShowPoints);
+        for(int i = 0; i < count; ++i) {
+            const QPointF &point = m_data.at(i+start);
             QPointF paintCoord = QPointF(xMap.xTransform(point.x()), yMap.xTransform(point.y()));
-            m_color.setAlpha((i+m_maxPoints - dataSize)*255/m_maxPoints);
+            m_color.setAlpha((m_maxShowPoints - count + i)*255/m_maxShowPoints);
             p->setPen(m_color);
-            if(i++)
+            if(i != 0)
                 p->drawLine(lastPoint, paintCoord);
-            if(i == dataSize) {
+            if(i == count-1) {
                 //Draw marker for first point
                 const int marker_radius = 2;
                 QRectF marker = QRectF(paintCoord.x()-marker_radius, paintCoord.y()-marker_radius, marker_radius*2+1,marker_radius*2+1);
@@ -107,7 +109,8 @@ protected:
 
 private:
     QList< QPointF > m_data;
-    int m_maxPoints;
+    int m_maxStorePoints;
+    int m_maxShowPoints;
     mutable QColor m_color;
 
     double xmin;
@@ -123,7 +126,6 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     ui(new Ui::QGCXYPlot),
     plot(0),
     xycurve(0),
-    maxElementsToDraw(5),
     x(0),
     x_timestamp_us(0),
     x_valid(false),
@@ -167,7 +169,8 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     connect(ui->minY, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxY, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->automaticAxisRange, SIGNAL(toggled(bool)),this, SLOT(updateMinMaxSettings()));
-    connect(ui->maxDataSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
+    connect(ui->maxDataShowSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
+    connect(ui->maxDataStoreSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
     setEditMode(false);
 }
 
@@ -191,7 +194,8 @@ void QGCXYPlot::setEditMode(bool editMode)
     ui->editFinishButton->setVisible(editMode);
     ui->editLine1->setVisible(editMode);
     ui->editLine2->setVisible(editMode);
-    ui->lblMaxData->setVisible(editMode);
+    ui->lblMaxDataStore->setVisible(editMode);
+    ui->lblMaxDataShow->setVisible(editMode);
     ui->lblMaxX->setVisible(editMode);
     ui->lblMaxY->setVisible(editMode);
     ui->lblMinX->setVisible(editMode);
@@ -200,7 +204,8 @@ void QGCXYPlot::setEditMode(bool editMode)
     ui->maxY->setVisible(editMode);
     ui->minX->setVisible(editMode);
     ui->minY->setVisible(editMode);
-    ui->maxDataSpinBox->setVisible(editMode);
+    ui->maxDataShowSpinBox->setVisible(editMode);
+    ui->maxDataStoreSpinBox->setVisible(editMode);
     ui->automaticAxisRange->setVisible(editMode);
 
     if(!editMode) {
@@ -221,7 +226,8 @@ void QGCXYPlot::writeSettings(QSettings& settings)
     settings.setValue("QGC_XYPLOT_MAXX", ui->maxX->value());
     settings.setValue("QGC_XYPLOT_MINY", ui->minY->value());
     settings.setValue("QGC_XYPLOT_MAXY", ui->maxY->value());
-    settings.setValue("QGC_XYPLOT_MAXDATA", ui->maxDataSpinBox->value());
+    settings.setValue("QGC_XYPLOT_MAXDATA_STORE", ui->maxDataStoreSpinBox->value());
+    settings.setValue("QGC_XYPLOT_MAXDATA_SHOW", ui->maxDataShowSpinBox->value());
     settings.setValue("QGC_XYPLOT_AUTO", ui->automaticAxisRange->isChecked());
 
     settings.sync();
@@ -235,7 +241,8 @@ void QGCXYPlot::readSettings(const QString& pre,const QVariantMap& settings)
     ui->maxX->setValue(settings.value(pre + "QGC_XYPLOT_MAXX", 0).toDouble());
     ui->minY->setValue(settings.value(pre + "QGC_XYPLOT_MINY", 0).toDouble());
     ui->maxY->setValue(settings.value(pre + "QGC_XYPLOT_MAXY", 0).toDouble());
-    ui->maxDataSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA", 15).toInt());
+    ui->maxDataStoreSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA_STORE", 10000).toInt());
+    ui->maxDataShowSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA_SHOW", 15).toInt());
     plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
     plot->setAxisTitle(QwtPlot::yLeft, ui->editYParam->currentText());
     updateMinMaxSettings();
@@ -250,7 +257,8 @@ void QGCXYPlot::readSettings(const QSettings& settings)
     ui->maxX->setValue(settings.value("QGC_XYPLOT_MAXX", 0).toDouble());
     ui->minY->setValue(settings.value("QGC_XYPLOT_MINY", 0).toDouble());
     ui->maxY->setValue(settings.value("QGC_XYPLOT_MAXY", 0).toDouble());
-    ui->maxDataSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA", 15).toInt());
+    ui->maxDataStoreSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA_STORE", 10000).toInt());
+    ui->maxDataShowSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA_SHOW", 15).toInt());
     plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
     plot->setAxisTitle(QwtPlot::yLeft, ui->editYParam->currentText());
     updateMinMaxSettings();
@@ -316,5 +324,13 @@ void QGCXYPlot::updateMinMaxSettings()
     } else {
         xycurve->setMinMax(ui->minX->value(), ui->maxX->value(), ui->minY->value(), ui->maxY->value());
     }
-    xycurve->setMaxDataPoints(ui->maxDataSpinBox->value());
+    xycurve->setMaxDataStorePoints(ui->maxDataStoreSpinBox->value());
+    xycurve->setMaxDataShowPoints(ui->maxDataShowSpinBox->value());
+}
+
+void QGCXYPlot::on_maxDataShowSpinBox_valueChanged(int value)
+{
+    ui->maxDataStoreSpinBox->setMinimum(value);
+    if(ui->maxDataStoreSpinBox->value() < value)
+        ui->maxDataStoreSpinBox->setValue(value);
 }
