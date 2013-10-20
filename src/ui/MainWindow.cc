@@ -1145,7 +1145,6 @@ bool MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style, QString cssFile)
         // And trigger any changes to other UI elements that are watching for
         // theme changes.
         emit styleChanged(style);
-        emit styleChanged();
 
         // Finally restore the cursor before returning.
         qApp->restoreOverrideCursor();

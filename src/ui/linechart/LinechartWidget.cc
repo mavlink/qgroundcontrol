@@ -138,7 +138,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     createLayout();
 
     // And make sure we're listening for future style changes
-    connect(MainWindow::instance(), SIGNAL(styleChanged()), this, SLOT(recolor()));
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(recolor()));
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
