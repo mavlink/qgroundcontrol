@@ -191,6 +191,32 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="lblSmooth">
+           <property name="toolTip">
+            <string>Number of points to average, to provide a smoothing effect of the plotted values</string>
+           </property>
+           <property name="text">
+            <string>S&amp;mooth:</string>
+           </property>
+           <property name="buddy">
+            <cstring>smoothSpinBox</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="smoothSpinBox">
+           <property name="toolTip">
+            <string>Number of points to average, to provide a smoothing effect of the plotted values</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>99999</number>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="automaticAxisRange">
            <property name="text">
             <string>Automatic Axis Range</string>
@@ -373,6 +399,7 @@
   <tabstop>editYParam</tabstop>
   <tabstop>maxDataShowSpinBox</tabstop>
   <tabstop>maxDataStoreSpinBox</tabstop>
+  <tabstop>smoothSpinBox</tabstop>
   <tabstop>automaticAxisRange</tabstop>
   <tabstop>minX</tabstop>
   <tabstop>maxX</tabstop>

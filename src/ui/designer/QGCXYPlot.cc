@@ -20,12 +20,15 @@ public:
         setItemAttribute(QwtPlotItem::AutoScale);
         minMaxSet = false;
         m_color = Qt::white;
+        m_smoothPoints = 1;
     }
 
     void setMaxDataStorePoints(int max) { m_maxStorePoints = max; itemChanged(); }
     void setMaxDataShowPoints(int max) { m_maxShowPoints = max; itemChanged(); }
+    void setSmoothPoints(int smoothPoints) { m_smoothPoints = smoothPoints; itemChanged(); }
     int maxDataStorePoints() const { return m_maxStorePoints; }
     int maxDataShowPoints() const { return m_maxShowPoints; }
+    int smoothPoints() const { return m_smoothPoints; }
 
     void appendData(const QPointF &data) {
         if(!minMaxSet) {
@@ -88,10 +91,25 @@ protected:
         QPointF lastPoint;
         if(m_data.isEmpty())
             return;
+        QPointF smoothTotal(0,0);
+        int smoothCount = 0;
         int start = qMax(0,m_data.size() - m_maxShowPoints);
         int count = qMin(m_data.size()-start, m_maxShowPoints);
+        for(int i = qMax(0,start - m_smoothPoints); i < start; ++i) {
+            smoothTotal += m_data.at(i);
+            ++smoothCount;
+        }
         for(int i = 0; i < count; ++i) {
-            const QPointF &point = m_data.at(i+start);
+            QPointF point = m_data.at(i+start);
+            if(m_smoothPoints > 1) {
+                smoothTotal += point;
+                if(smoothCount >= m_smoothPoints) {
+                    Q_ASSERT(i + start - m_smoothPoints >= 0);
+                    smoothTotal -= m_data.at(i + start - m_smoothPoints);
+                } else
+                    ++smoothCount;
+                point = smoothTotal/smoothCount;
+            }
             QPointF paintCoord = QPointF(xMap.xTransform(point.x()), yMap.xTransform(point.y()));
             m_color.setAlpha((m_maxShowPoints - count + i)*255/m_maxShowPoints);
             p->setPen(m_color);
@@ -111,6 +129,7 @@ private:
     QList< QPointF > m_data;
     int m_maxStorePoints;
     int m_maxShowPoints;
+    int m_smoothPoints; /** Number of points to average across */
     mutable QColor m_color;
 
     double xmin;
@@ -171,6 +190,7 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     connect(ui->automaticAxisRange, SIGNAL(toggled(bool)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxDataShowSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxDataStoreSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
+    connect(ui->smoothSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
     setEditMode(false);
 }
 
@@ -207,6 +227,8 @@ void QGCXYPlot::setEditMode(bool editMode)
     ui->maxDataShowSpinBox->setVisible(editMode);
     ui->maxDataStoreSpinBox->setVisible(editMode);
     ui->automaticAxisRange->setVisible(editMode);
+    ui->lblSmooth->setVisible(editMode);
+    ui->smoothSpinBox->setVisible(editMode);
 
     if(!editMode) {
         plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
@@ -229,6 +251,7 @@ void QGCXYPlot::writeSettings(QSettings& settings)
     settings.setValue("QGC_XYPLOT_MAXDATA_STORE", ui->maxDataStoreSpinBox->value());
     settings.setValue("QGC_XYPLOT_MAXDATA_SHOW", ui->maxDataShowSpinBox->value());
     settings.setValue("QGC_XYPLOT_AUTO", ui->automaticAxisRange->isChecked());
+    settings.setValue("QGC_XYPLOT_SMOOTH", ui->smoothSpinBox->value());
 
     settings.sync();
 }
@@ -243,6 +266,7 @@ void QGCXYPlot::readSettings(const QString& pre,const QVariantMap& settings)
     ui->maxY->setValue(settings.value(pre + "QGC_XYPLOT_MAXY", 0).toDouble());
     ui->maxDataStoreSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA_STORE", 10000).toInt());
     ui->maxDataShowSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA_SHOW", 15).toInt());
+    ui->smoothSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_SMOOTH", 1).toInt());
     plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
     plot->setAxisTitle(QwtPlot::yLeft, ui->editYParam->currentText());
     updateMinMaxSettings();
@@ -259,6 +283,7 @@ void QGCXYPlot::readSettings(const QSettings& settings)
     ui->maxY->setValue(settings.value("QGC_XYPLOT_MAXY", 0).toDouble());
     ui->maxDataStoreSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA_STORE", 10000).toInt());
     ui->maxDataShowSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA_SHOW", 15).toInt());
+    ui->smoothSpinBox->setValue(settings.value("QGC_XYPLOT_SMOOTH", 1).toInt());
     plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
     plot->setAxisTitle(QwtPlot::yLeft, ui->editYParam->currentText());
     updateMinMaxSettings();
@@ -326,6 +351,7 @@ void QGCXYPlot::updateMinMaxSettings()
     }
     xycurve->setMaxDataStorePoints(ui->maxDataStoreSpinBox->value());
     xycurve->setMaxDataShowPoints(ui->maxDataShowSpinBox->value());
+    xycurve->setSmoothPoints(ui->smoothSpinBox->value());
 }
 
 void QGCXYPlot::on_maxDataShowSpinBox_valueChanged(int value)
