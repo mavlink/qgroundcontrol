@@ -300,7 +300,6 @@ protected slots:
 
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
-    void styleChanged();
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
