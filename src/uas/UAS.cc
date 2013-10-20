@@ -3124,6 +3124,10 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
     }
 }
 
+/*
+* @param abs_pressure Absolute Pressure (hPa)
+* @param diff_pressure Differential Pressure  (hPa)
+*/
 void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                                     float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed)
 {

@@ -142,14 +142,6 @@
      <factor>0.514444444444444</factor>      <!-- knots to mps -->
    </chunk>
 
-   <chunk>
-     <name>airspeed-indicated-mps</name>
-     <type>float</type>
-     <format>%.8f</format>
-     <node>/instrumentation/indicated-speed-kt</node>
-     <factor>0.514444444444444</factor>      <!-- knots to mps -->
-   </chunk>
-
    <!-- Magnetometer -->
    <chunk>
     <name>Magnetic Variation (rad)</name>
