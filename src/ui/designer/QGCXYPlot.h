@@ -33,6 +33,9 @@ public slots:
 
 private slots:
     void on_maxDataShowSpinBox_valueChanged(int value);
+    void on_stopStartButton_toggled(bool checked);
+
+    void on_timeScrollBar_valueChanged(int value);
 
 private:
     Ui::QGCXYPlot *ui;

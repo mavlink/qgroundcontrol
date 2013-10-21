@@ -21,6 +21,7 @@ public:
         minMaxSet = false;
         m_color = Qt::white;
         m_smoothPoints = 1;
+        m_startIndex = -1; //Disable
     }
 
     void setMaxDataStorePoints(int max) { m_maxStorePoints = max; itemChanged(); }
@@ -30,7 +31,8 @@ public:
     int maxDataShowPoints() const { return m_maxShowPoints; }
     int smoothPoints() const { return m_smoothPoints; }
 
-    void appendData(const QPointF &data) {
+    /** Append data, returning the number of removed items */
+    int appendData(const QPointF &data) {
         if(!minMaxSet) {
             xmin = xmax = data.x();
             ymin = ymax = data.y();
@@ -43,9 +45,13 @@ public:
         }
 
         m_data.append(data);
-        while(m_data.size() > m_maxStorePoints)
+        int removed = 0;
+        while(m_data.size() > m_maxStorePoints) {
+            ++removed;
             m_data.removeFirst();
+        }
         itemChanged();
+        return removed;
     }
     void clear() {
         minMaxSet = false;
@@ -59,7 +65,20 @@ public:
         if(m_autoScale)
             return;
         m_autoScale = true;
-        clear();
+        //Recalculate the automatic scale
+        if(m_data.isEmpty())
+            minMaxSet = false;
+        else {
+            minMaxSet = true;
+            xmax = xmin = m_data.at(0).x();
+            ymax = ymin = m_data.at(0).y();
+            for(int i = 1; i < m_data.size(); i++) {
+                xmin = qMin(xmin, m_data.at(i).x());
+                xmax = qMax(xmax, m_data.at(i).x());
+                ymin = qMin(ymin, m_data.at(i).y());
+                ymax = qMax(ymax, m_data.at(i).y());
+            }
+        }
     }
     void setMinMax(double xmin, double xmax, double ymin, double ymax )
     {
@@ -71,6 +90,11 @@ public:
         minMaxSet = true;
         itemChanged();
     }
+    void setStartIndex(int time) {  /** Set to -1 to just use latest */
+        m_startIndex = time;
+        itemChanged();
+    }
+    int dataSize() const { return m_data.size(); }
 
     double xMin() const { return xmin; }
     double xMax() const { return xmax; }
@@ -93,8 +117,16 @@ protected:
             return;
         QPointF smoothTotal(0,0);
         int smoothCount = 0;
-        int start = qMax(0,m_data.size() - m_maxShowPoints);
-        int count = qMin(m_data.size()-start, m_maxShowPoints);
+        int start;
+        int count;
+        if(m_startIndex >= 0) {
+            int end = qMin(m_startIndex, m_data.size()-1);
+            start = qBound(0, end - m_maxShowPoints, m_data.size()-1);
+            count = end - start;
+        } else {
+            start = qMax(0,m_data.size() - m_maxShowPoints);
+            count = qMin(m_data.size()-start, m_maxShowPoints);
+        }
         for(int i = qMax(0,start - m_smoothPoints); i < start; ++i) {
             smoothTotal += m_data.at(i);
             ++smoothCount;
@@ -138,6 +170,7 @@ private:
     double ymax;
     bool minMaxSet;
     bool m_autoScale;
+    int m_startIndex;
 };
 
 QGCXYPlot::QGCXYPlot(QWidget *parent) :
@@ -202,6 +235,8 @@ void QGCXYPlot::clearPlot()
 {
     xycurve->clear();
     plot->clear();
+    ui->timeScrollBar->setMaximum(xycurve->dataSize());
+    ui->timeScrollBar->setValue(ui->timeScrollBar->maximum());
 }
 
 void QGCXYPlot::setEditMode(bool editMode)
@@ -295,14 +330,21 @@ void QGCXYPlot::appendData(int uasId, const QString& curve, const QString& unit,
     if(isEditMode()) {
         //When in edit mode, add all the items to the combo box
         if(ui->editXParam->findText(curve) == -1) {
+            ui->editXParam->blockSignals(true);
+            ui->editYParam->blockSignals(true);
             QString oldX = ui->editXParam->currentText();
             QString oldY = ui->editYParam->currentText();
             ui->editXParam->addItem(curve); //Annoyingly this can wipe out the current text
             ui->editYParam->addItem(curve);
             ui->editXParam->setEditText(oldX);
             ui->editYParam->setEditText(oldY);
+            ui->editXParam->blockSignals(false);
+            ui->editYParam->blockSignals(false);
         }
     }
+
+    if(ui->stopStartButton->isChecked())
+        return;
 
     bool ok;
     if(curve == ui->editXParam->currentText()) {
@@ -321,10 +363,19 @@ void QGCXYPlot::appendData(int uasId, const QString& curve, const QString& unit,
         return;
 
     if(x_valid && y_valid && (int)qAbs(y_timestamp_us - x_timestamp_us) <= max_timestamp_diff_us) {
-        xycurve->appendData( QPointF(x,y) );
-        plot->update();
+        int removed = xycurve->appendData( QPointF(x,y) );
         x_valid = false;
         y_valid = false;
+        bool atMaximum = (ui->timeScrollBar->value() == ui->timeScrollBar->maximum());
+        if(ui->timeScrollBar->maximum() != xycurve->dataSize()) {
+            ui->timeScrollBar->setMaximum(xycurve->dataSize());
+            if(atMaximum)
+                ui->timeScrollBar->setValue(ui->timeScrollBar->maximum());
+        } else if(!atMaximum) { //Move the scrollbar to keep current value selected
+            int value = qMax(ui->timeScrollBar->minimum(), ui->timeScrollBar->value() - removed);
+            ui->timeScrollBar->setValue(value);
+            xycurve->setStartIndex(value);
+        }
     }
 }
 
@@ -358,4 +409,18 @@ void QGCXYPlot::on_maxDataShowSpinBox_valueChanged(int value)
     ui->maxDataStoreSpinBox->setMinimum(value);
     if(ui->maxDataStoreSpinBox->value() < value)
         ui->maxDataStoreSpinBox->setValue(value);
+}
+
+void QGCXYPlot::on_stopStartButton_toggled(bool checked)
+{
+    if(!checked)
+        clearPlot();
+}
+
+void QGCXYPlot::on_timeScrollBar_valueChanged(int value)
+{
+    if(value == ui->timeScrollBar->maximum())
+        xycurve->setStartIndex(-1);
+    else
+        xycurve->setStartIndex(value);
 }
