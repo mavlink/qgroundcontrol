@@ -356,9 +356,56 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <property name="sizeConstraint">
-      <enum>QLayout::SetMinimumSize</enum>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <property name="spacing">
+      <number>6</number>
      </property>
+     <item>
+      <widget class="QScrollBar" name="timeScrollBar">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimum">
+        <number>2</number>
+       </property>
+       <property name="tracking">
+        <bool>true</bool>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="stopStartButton">
+       <property name="icon">
+        <iconset resource="../../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/actions/media-playback-stop.svg</normaloff>
+         <normalon>:/files/images/actions/media-playback-start.svg</normalon>:/files/images/actions/media-playback-stop.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -419,6 +466,8 @@
   <tabstop>maxY</tabstop>
   <tabstop>editFinishButton</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../../../qgroundcontrol.qrc"/>
+ </resources>
  <connections/>
 </ui>
