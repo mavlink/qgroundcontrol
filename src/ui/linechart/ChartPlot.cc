@@ -70,7 +70,7 @@ QColor ChartPlot::getNextColor()
     return colors[nextColorIndex++];
 }
 
-QColor ChartPlot::getColorForCurve(QString id)
+QColor ChartPlot::getColorForCurve(const QString &id)
 {
     return curves.value(id)->pen().color();
 }

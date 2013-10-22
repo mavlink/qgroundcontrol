@@ -74,6 +74,7 @@ protected:
     QVariantMap settingsMap;
     QAction* addParamAction;
     QAction* addCommandAction;
+    QAction* addLabelAction;
     QAction* setTitleAction;
     QAction* deleteAction;
     QAction* exportAction;
@@ -94,15 +95,13 @@ protected:
 
     void hideEvent(QHideEvent* event);
 public slots:
-    void setTitle(QString title);
+    void setTitle(const QString &title);
     void addParam(int uas,int component,QString paramname,QVariant value);
 protected slots:
     void addParam();
     void addCommand();
+    void addLabel();
     void setTitle();
-
-    void setWindowTitle(const QString& title);
-
 
 private:
     Ui::QGCToolWidget *ui;

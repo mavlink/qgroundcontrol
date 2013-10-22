@@ -64,11 +64,6 @@ protected:
     QPixmap instructionIcon;
     QPixmap autopilotIcon;
     QPixmap gpsIcon;
-    bool accelStarted;
-    bool accelDone[6];
-    bool gyroStarted;
-    bool magStarted;
-    QStringList accelAxes;
 
     virtual void resizeEvent(QResizeEvent* event);
 

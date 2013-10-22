@@ -865,93 +865,36 @@ float HDDisplay::refLineWidthToPen(float line)
 // Connect a generic source
 void HDDisplay::addSource(QObject* obj)
 {
-    //genericSources.append(obj);
-    // FIXME XXX HACK
-//    if (plots.size() > 0)
-//    {
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), this, SLOT(updateValue(int,QString,QString,qint8,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), this, SLOT(updateValue(int,QString,QString,quint8,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), this, SLOT(updateValue(int,QString,QString,qint16,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), this, SLOT(updateValue(int,QString,QString,quint16,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), this, SLOT(updateValue(int,QString,QString,qint32,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), this, SLOT(updateValue(int,QString,QString,quint32,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), this, SLOT(updateValue(int,QString,QString,quint64,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), this, SLOT(updateValue(int,QString,QString,qint64,quint64)));
-        connect(obj, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
-//    }
+    connect(obj, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SLOT(updateValue(int,QString,QString,QVariant,quint64)));
 }
 
 // Disconnect a generic source
 void HDDisplay::removeSource(QObject* obj)
 {
-    //genericSources.append(obj);
-    // FIXME XXX HACK
-//    if (plots.size() > 0)
-//    {
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint8,quint64)), this, SLOT(updateValue(int,QString,QString,qint8,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint8,quint64)), this, SLOT(updateValue(int,QString,QString,quint8,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint16,quint64)), this, SLOT(updateValue(int,QString,QString,qint16,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint16,quint64)), this, SLOT(updateValue(int,QString,QString,quint16,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint32,quint64)), this, SLOT(updateValue(int,QString,QString,qint32,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint32,quint64)), this, SLOT(updateValue(int,QString,QString,quint32,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), this, SLOT(updateValue(int,QString,QString,quint64,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), this, SLOT(updateValue(int,QString,QString,qint64,quint64)));
-        disconnect(obj, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
-//    }
+    disconnect(obj, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SLOT(updateValue(int,QString,QString,QVariant,quint64)));
 }
 
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint16 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint16 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint32 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint32 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec)
-{
-    if (!intValues.contains(name)) intValues.insert(name, true);
-    updateValue(uasId, name, unit, (double)value, msec);
-}
-
-void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const QVariant &variant, const quint64 msec)
 {
     Q_UNUSED(uasId);
     Q_UNUSED(unit);
+
+    QMetaType::Type type = static_cast< QMetaType::Type>(variant.type());
+    if(type == QMetaType::QByteArray || type == QMetaType::QString)
+        return;
+
+    bool ok;
+    double value = variant.toDouble(&ok);
+    if(!ok)
+        return;
+
+    if(type == QMetaType::Int || type == QMetaType::UInt || type == QMetaType::Long || type == QMetaType::LongLong
+       || type == QMetaType::Short || type == QMetaType::Char || type == QMetaType::ULong || type == QMetaType::ULongLong
+       || type == QMetaType::UShort || type == QMetaType::UChar || type == QMetaType::Bool ) {
+            if (!intValues.contains(name))
+                intValues.insert(name, true);
+    }
+
     // Update mean
     const float oldMean = valuesMean.value(name, 0.0f);
     const int meanCount = valuesCount.value(name, 0);

@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilFlightGearConfiguration.h>
 #include <QDeclarativeView>
 #include "dockwidgettitlebareventfilter.h"
+#include "dockwidgeteventfilter.h"
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -450,7 +451,7 @@ void MainWindow::buildCustomWidget()
             ui.menuTools->addAction(showAction);*/
 
             // Load dock widget location (default is bottom)
-            Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
+            Qt::DockWidgetArea location = tool->getDockWidgetArea(currentView);
 
             //addDockWidget(location, dock);
             //dock->hide();
@@ -752,6 +753,7 @@ void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* w
         centralWidgetToDockWidgetsMap[view][widget->objectName()]= widget;
         connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
         connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+        connect(widget, SIGNAL(destroyed()), tempAction, SLOT(deleteLater()));
         tempAction->setChecked(widget->isVisible());
     }
     else
@@ -785,9 +787,20 @@ QDockWidget* MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString
         widget->setMinimumWidth(minwidth);
     }
     addTool(qobject_cast<SubMainWindow*>(parent),view,widget,title,area);
+    connect(child, SIGNAL(destroyed()), widget, SLOT(deleteLater()));
+    connect(widget, SIGNAL(destroyed()), this, SLOT(dockWidgetDestroyed()));
 
     return widget;
 }
+void MainWindow::dockWidgetDestroyed()
+{
+    QDockWidget *dock = dynamic_cast<QDockWidget *>(QObject::sender());
+    Q_ASSERT(dock);
+    if(!dock) return;
+
+    dockWidgets.removeAll(dock);
+}
+
 void MainWindow::loadDockWidget(QString name)
 {
     if (centralWidgetToDockWidgetsMap[currentView].contains(name))
@@ -895,7 +908,8 @@ void MainWindow::setDockWidgetTitleBar(QDockWidget* widget)
     {
         QLabel* label = new QLabel(this);
         label->setText(widget->windowTitle());
-        label->installEventFilter(new DockWidgetTitleBarEventFilter());
+        label->installEventFilter(new DockWidgetTitleBarEventFilter()); //Ignore mouse clicks
+        widget->installEventFilter(new DockWidgetEventFilter()); //Update label if window title changes
         widget->setTitleBarWidget(label);
     }
     // And if nothing should be shown, use an empty widget.
@@ -1024,7 +1038,7 @@ void MainWindow::createCustomWidget()
     //void MainWindow::createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth,int minheight)
     //QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
 
-    if (QGCToolWidget::instances()->size() < 2)
+    if (QGCToolWidget::instances()->isEmpty())
     {
         // This is the first widget
         ui.menuTools->addSeparator();
@@ -1036,8 +1050,6 @@ void MainWindow::createCustomWidget()
     settings.beginGroup("QGC_MAINWINDOW");
     settings.setValue(QString("TOOL_PARENT_") + tool->objectName(),currentView);
     settings.endGroup();
-
-
 
     //connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     //dock->setWidget(tool);
@@ -1683,7 +1695,7 @@ void MainWindow::addLink(LinkInterface *link)
 
     if (!found)
     {
-        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, NULL);
+        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
         commsWidgetList.append(commWidget);
         connect(commWidget,SIGNAL(destroyed(QObject*)),this,SLOT(commsWidgetDestroyed(QObject*)));
         QAction* action = commWidget->getAction();

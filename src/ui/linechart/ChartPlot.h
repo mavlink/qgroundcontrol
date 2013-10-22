@@ -17,7 +17,7 @@ public:
     QColor getNextColor();
 
     /** @brief Get color for curve id */
-    QColor getColorForCurve(QString id);
+    QColor getColorForCurve(const QString &id);
 
     /** @brief Reset color map */
     void shuffleColors();

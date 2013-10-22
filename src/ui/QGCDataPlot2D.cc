@@ -120,6 +120,8 @@ void QGCDataPlot2D::savePlot()
     fileName = QFileDialog::getSaveFileName(
                    this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
                    "PDF Documents (*.pdf);;SVG Images (*.svg)");
+    if (fileName.isEmpty())
+        return;
 
     if (!fileName.contains(".")) {
         // .pdf is default extension
@@ -138,6 +140,8 @@ void QGCDataPlot2D::savePlot()
         fileName = QFileDialog::getSaveFileName(
                        this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
                        "PDF Documents (*.pdf);;SVG Images (*.svg)");
+        if (fileName.isEmpty())
+            return; //Abort if cancelled
     }
 
     if (fileName.endsWith(".pdf")) {
@@ -689,6 +693,8 @@ void QGCDataPlot2D::saveCsvLog()
     fileName = QFileDialog::getSaveFileName(
                    this, "Export CSV File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
                    "CSV file (*.csv);;Text file (*.txt)");
+    if (fileName.isEmpty())
+        return; //User cancelled
 
     if (!fileName.contains(".")) {
         // .csv is default extension
