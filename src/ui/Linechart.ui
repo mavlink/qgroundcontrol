@@ -47,7 +47,7 @@
       <number>10</number>
      </property>
      <widget class="QWidget" name="curveGroupBox" native="true">
-      <layout class="QGridLayout" name="gridLayout" rowstretch="50,0">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="50,0,0">
        <property name="leftMargin">
         <number>6</number>
        </property>
@@ -103,14 +103,14 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>884</width>
-            <height>491</height>
+            <width>948</width>
+            <height>454</height>
            </rect>
           </property>
          </widget>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="2" column="0">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
           <number>2</number>
@@ -217,6 +217,9 @@
           </layout>
          </item>
         </layout>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLineEdit" name="plotFilterLineEdit"/>
        </item>
       </layout>
      </widget>
