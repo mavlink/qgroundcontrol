@@ -108,6 +108,8 @@ public slots:
     void readSettings();
     /** @brief Select all curves */
     void selectAllCurves(bool all);
+    /** @brief Sets the focus to the LineEdit for plot-filtering */
+    void setPlotFilterLineEditFocus();
 
 private slots:
     /** Called when the user changes the time scale combobox. */

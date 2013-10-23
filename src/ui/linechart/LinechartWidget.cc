@@ -106,6 +106,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     connect(ui.recolorButton, SIGNAL(clicked()), this, SLOT(recolor()));
     connect(ui.shortNameCheckBox, SIGNAL(clicked(bool)), this, SLOT(setShortNames(bool)));
     connect(ui.plotFilterLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(filterCurves(const QString&)));
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, SLOT(setPlotFilterLineEditFocus()));
 
     int labelRow = curvesWidgetLayout->rowCount();
 
@@ -692,6 +693,11 @@ void LinechartWidget::recolor()
             colorIcon->setStyleSheet(colorstyle);
         }
     }
+}
+
+void LinechartWidget::setPlotFilterLineEditFocus()
+{
+    ui.plotFilterLineEdit->setFocus(Qt::ShortcutFocusReason);
 }
 
 void LinechartWidget::filterCurve(const QString &key, bool match)
