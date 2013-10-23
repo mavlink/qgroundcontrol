@@ -9,19 +9,8 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     QWidget(parent),
     activeUAS(NULL),
     clearAction(new QAction(tr("Clear Text"), this)),
-    accelStarted(false),
-    gyroStarted(false),
-    magStarted(false),
     ui(new Ui::QGCPX4SensorCalibration)
 {
-    accelAxes << "x+";
-    accelAxes << "x-";
-    accelAxes << "y+";
-    accelAxes << "y-";
-    accelAxes << "z+";
-    accelAxes << "z-";
-
-
     ui->setupUi(this);
     connect(clearAction, SIGNAL(triggered()), ui->textView, SLOT(clear()));
 
@@ -333,10 +322,8 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
         text.startsWith("[mavlink pm]"))
         return;
 
-    if (text.contains("progress")) {
-        qDebug() << "PROGRESS:" << text;
+    if (text.contains("progress <")) {
         QString percent = text.split("<").last().split(">").first();
-        qDebug() << "PERCENT CANDIDATE" << percent;
         bool ok;
         int p = percent.toInt(&ok);
         if (ok)
@@ -346,96 +333,63 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
     ui->instructionLabel->setText(QString("%1").arg(text));
 
-
-    if (text.contains("accel")) {
-        qDebug() << "ACCEL" << text;
-
-        if (text.startsWith("accel measurement started: ")) {
-            QString axis = text.split("measurement started: ").last().left(2);
-            qDebug() << "AXIS" << axis << "STR" << text;
-            setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
-
-        }
+    if (text.startsWith("accel measurement started: ")) {
+        QString axis = text.split("measurement started: ").last().left(2);
+        setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 
-    if (text.startsWith("directions left")) {
-        for (int i = 0; i < 6; i++)
-        {
-            if (!text.contains(accelAxes[i])) {
-                qDebug() << "FINISHED" << accelAxes[i];
-                accelDone[i] = true;
-            }
-        }
+    if (text.startsWith("directions left: ")) {
+        QString axis = text.split("directions left: ").last().left(2);
+        setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 
-    if (text.startsWith("result for")) {
-
-        QString axis = text.split("result for ").last().left(2);
-
-        qDebug() << "ACCELDONE AXIS" << axis << "STR" << text;
-
-        for (int i = 0; i < 6; i++)
-        {
-            if (axis == accelAxes[i])
-                accelDone[i] = true;
-
-            if (!accelDone[i]) {
-                qDebug() << "NEW AXIS: " << accelAxes[i];
-                setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(accelAxes[i]));
-                ui->instructionLabel->setText(tr("Axis %1 completed. Please rotate like shown here.").arg(axis));
-                break;
-            }
-        }
-    }
-
-    if (text.contains("please rotate in a figure 8")) {
+    if (text == "rotate in a figure 8 around all axis") {
         setInstructionImage(":/files/images/px4/calibration/mag_calibration_figure8.png");
     }
 
-    if (text.contains("accel calibration done")) {
-        accelStarted = false;
+    if (text.endsWith(" calibration: done") || text.endsWith(" calibration: failed")) {
         // XXX use a confirmation image or something
         setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+        if (text.endsWith(" calibration: done")) {
+            ui->progressBar->setValue(100);
+        } else {
+            ui->progressBar->setValue(0);
+        }
+
         if (activeUAS) {
-            activeUAS->requestParameter(0, "SENS_ACC_XOFF");
-            activeUAS->requestParameter(0, "SENS_BOARD_ROT");
+            if (text.startsWith("accel ")) {
+                activeUAS->requestParameter(0, "SENS_ACC_XOFF");
+                activeUAS->requestParameter(0, "SENS_ACC_YOFF");
+                activeUAS->requestParameter(0, "SENS_ACC_ZOFF");
+                activeUAS->requestParameter(0, "SENS_ACC_XSCALE");
+                activeUAS->requestParameter(0, "SENS_ACC_YSCALE");
+                activeUAS->requestParameter(0, "SENS_ACC_ZSCALE");
+                activeUAS->requestParameter(0, "SENS_BOARD_ROT");
+            }
+            if (text.startsWith("gyro ")) {
+                activeUAS->requestParameter(0, "SENS_GYRO_XOFF");
+                activeUAS->requestParameter(0, "SENS_GYRO_YOFF");
+                activeUAS->requestParameter(0, "SENS_GYRO_ZOFF");
+                activeUAS->requestParameter(0, "SENS_GYRO_XSCALE");
+                activeUAS->requestParameter(0, "SENS_GYRO_YSCALE");
+                activeUAS->requestParameter(0, "SENS_GYRO_ZSCALE");
+                activeUAS->requestParameter(0, "SENS_BOARD_ROT");
+            }
+            if (text.startsWith("mag ")) {
+                activeUAS->requestParameter(0, "SENS_MAG_XOFF");
+                activeUAS->requestParameter(0, "SENS_MAG_YOFF");
+                activeUAS->requestParameter(0, "SENS_MAG_ZOFF");
+                activeUAS->requestParameter(0, "SENS_MAG_XSCALE");
+                activeUAS->requestParameter(0, "SENS_MAG_YSCALE");
+                activeUAS->requestParameter(0, "SENS_MAG_ZSCALE");
+                activeUAS->requestParameter(0, "SENS_EXT_MAG_ROT");
+            }
         }
     }
 
-    if (text.contains("gyro calibration done")) {
-        gyroStarted = false;
-        // XXX use a confirmation image or something
-        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-        if (activeUAS)
-            activeUAS->requestParameter(0, "SENS_GYRO_XOFF");
-    }
-
-    if (text.contains("mag calibration done")
-            || text.contains("magnetometer calibration completed")) {
-        magStarted = false;
-        // XXX use a confirmation image or something
-        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-        if (activeUAS) {
-            activeUAS->requestParameter(0, "SENS_MAG_XOFF");
-            activeUAS->requestParameter(0, "SENS_EXT_MAG_ROT");
-        }
-    }
-
-    if (text.contains("accel calibration started")) {
-        accelStarted = true;
+    if (text.endsWith(" calibration: started")) {
         setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     }
-
-    if (text.contains("gyro calibration started")) {
-        gyroStarted = true;
-        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-    }
-
-    if (text.contains("mag calibration started")) {
-        magStarted = false;
-        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-    }
-
 
     // XXX color messages according to severity
 
@@ -457,7 +411,6 @@ void QGCPX4SensorCalibration::gyroButtonClicked()
     setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
-    ui->instructionLabel->setText(tr("Please do not move the system at all."));
 }
 
 void QGCPX4SensorCalibration::magButtonClicked()
@@ -465,7 +418,6 @@ void QGCPX4SensorCalibration::magButtonClicked()
     setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
-    ui->instructionLabel->setText(tr("Please put the system in a rest position."));
 }
 
 void QGCPX4SensorCalibration::accelButtonClicked()
@@ -473,15 +425,6 @@ void QGCPX4SensorCalibration::accelButtonClicked()
     setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
-    accelStarted = true;
-    accelDone[0] = false;
-    accelDone[1] = false;
-    accelDone[2] = false;
-    accelDone[3] = false;
-    accelDone[4] = false;
-    accelDone[5] = false;
-
-    ui->instructionLabel->setText(tr("Please hold the system very still in the shown orientations."));
 }
 
 void QGCPX4SensorCalibration::contextMenuEvent(QContextMenuEvent* event)
