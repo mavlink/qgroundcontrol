@@ -221,7 +221,7 @@
        <item row="1" column="0">
         <widget class="QLineEdit" name="plotFilterLineEdit">
          <property name="placeholderText">
-          <string>Filter...</string>
+          <string>Filter... (Ctrl+F)</string>
          </property>
         </widget>
        </item>
