@@ -235,9 +235,10 @@ void QGCFlightGearLink::readBytes()
     QStringList values = state.split("\t");
 
     // Check length
-    if (values.size() != 22)
+    const int nValues = 21;
+    if (values.size() != nValues)
     {
-        qDebug() << "RETURN LENGTH MISMATCHING EXPECTED" << 22 << "BUT GOT" << values.size();
+        qDebug() << "RETURN LENGTH MISMATCHING EXPECTED" << nValues << "BUT GOT" << values.size();
         qDebug() << state;
         return;
     }
@@ -273,13 +274,12 @@ void QGCFlightGearLink::readBytes()
     vz = values.at(15).toFloat();
 
     true_airspeed = values.at(16).toFloat();
-    ind_airspeed = values.at(17).toFloat();
 
-    mag_variation = values.at(18).toFloat();
-    mag_dip = values.at(19).toFloat();
+    mag_variation = values.at(17).toFloat();
+    mag_dip = values.at(18).toFloat();
 
-    temperature = values.at(20).toFloat();
-    abs_pressure = values.at(21).toFloat();
+    temperature = values.at(19).toFloat();
+    abs_pressure = values.at(20).toFloat()*1e2; //convert to Pa from hPa
 
     // Send updated state
     //qDebug()  << "sensorHilEnabled: " << sensorHilEnabled;
@@ -292,6 +292,19 @@ void QGCFlightGearLink::readBytes()
         const float absolute_null_celsius = -273.15f; // °C
         float density = abs_pressure / (air_gas_constant * (temperature - absolute_null_celsius));
         diff_pressure = true_airspeed * true_airspeed * density / 2.0f;
+        //qDebug() << "diff_pressure: " << diff_pressure << "abs_pressure: " << abs_pressure;
+
+        /* Calculate indicated airspeed */
+        const float air_density_sea_level_15C  = 1.225f; //kg/m^3
+        if (diff_pressure > 0)
+        {
+            ind_airspeed =  sqrtf((2.0f*diff_pressure) / air_density_sea_level_15C);
+        } else
+        {
+            ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
+        }
+
+        //qDebug() << "ind_airspeed: " << ind_airspeed << "true_airspeed: " << true_airspeed;
 
         float pressure_alt = alt;
 
@@ -336,7 +349,7 @@ void QGCFlightGearLink::readBytes()
         zmag_body = mag_body(2);
 
         emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
-                                    xmag_body, ymag_body, zmag_body, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
+                                    xmag_body, ymag_body, zmag_body, abs_pressure*1e-2f, diff_pressure*1e-2f, pressure_alt, temperature, fields_changed); //Pressure in hPa for mavlink
 
 //        qDebug()  << "sensorHilRawImuChanged " << xacc  << yacc << zacc  << rollspeed << pitchspeed << yawspeed << xmag << ymag << zmag << abs_pressure << diff_pressure << pressure_alt << temperature;
         int gps_fix_type = 3;
