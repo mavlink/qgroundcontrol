@@ -26,7 +26,7 @@ This file is part of the PIXHAWK project
  *   @brief Line chart plot widget
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
+ *   @author Thomas Gubler <thomasgubler@student.ethz.ch>
  */
 
 #include <QDebug>
@@ -105,6 +105,8 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     connect(ui.recolorButton, SIGNAL(clicked()), this, SLOT(recolor()));
     connect(ui.shortNameCheckBox, SIGNAL(clicked(bool)), this, SLOT(setShortNames(bool)));
+    connect(ui.plotFilterLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(filterCurves(const QString&)));
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, SLOT(setPlotFilterLineEditFocus()));
 
     int labelRow = curvesWidgetLayout->rowCount();
 
@@ -564,6 +566,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     checkBox->setObjectName(curve+unit);
     checkBox->setToolTip(tr("Enable the curve in the graph window"));
     checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
+    checkBoxes.insert(curve+unit, checkBox);
     curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
     // Icon
@@ -593,6 +596,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     unitLabel->setText(unit);
     unitLabel->setToolTip(tr("Unit of ") + curve);
     unitLabel->setWhatsThis(tr("Unit of ") + curve);
+    curveUnits.insert(curve+unit, unitLabel);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
     unitLabel->setVisible(ui.showUnitsCheckBox->isChecked());
     connect(ui.showUnitsCheckBox, SIGNAL(clicked(bool)), unitLabel, SLOT(setVisible(bool)));
@@ -687,6 +691,52 @@ void LinechartWidget::recolor()
             QColor color = activePlot->getColorForCurve(key);
             colorstyle = colorstyle.sprintf("QWidget { background-color: #%02X%02X%02X; }", color.red(), color.green(), color.blue());
             colorIcon->setStyleSheet(colorstyle);
+        }
+    }
+}
+
+void LinechartWidget::setPlotFilterLineEditFocus()
+{
+    ui.plotFilterLineEdit->setFocus(Qt::ShortcutFocusReason);
+}
+
+void LinechartWidget::filterCurve(const QString &key, bool match)
+{
+        colorIcons[key]->setVisible(match);
+        curveNameLabels[key]->setVisible(match);
+        (*curveLabels)[key]->setVisible(match);
+        (*curveMeans)[key]->setVisible(match);
+        (*curveVariances)[key]->setVisible(match);
+        curveUnits[key]->setVisible(match);
+        checkBoxes[key]->setVisible(match);
+}
+
+void LinechartWidget::filterCurves(const QString &filter)
+{
+    //qDebug() << "filterCurves: filter: " << filter;
+
+    if (filter != "")
+    {
+        /* Hide Elements which do not match the filter pattern */
+        QStringMatcher stringMatcher(filter, Qt::CaseInsensitive);
+        foreach (QString key, colorIcons.keys())
+        {
+            if (stringMatcher.indexIn(key) < 0)
+            {
+                filterCurve(key, false);
+            }
+            else
+            {
+                filterCurve(key, true);
+            }
+        }
+    }
+    else
+    {
+        /* Show all Elements */
+        foreach (QString key, colorIcons.keys())
+        {
+            filterCurve(key, true);
         }
     }
 }
