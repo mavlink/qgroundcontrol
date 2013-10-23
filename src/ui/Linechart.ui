@@ -219,7 +219,11 @@
         </layout>
        </item>
        <item row="1" column="0">
-        <widget class="QLineEdit" name="plotFilterLineEdit"/>
+        <widget class="QLineEdit" name="plotFilterLineEdit">
+         <property name="placeholderText">
+          <string>Filter...</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
