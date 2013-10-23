@@ -298,11 +298,11 @@ void QGCFlightGearLink::readBytes()
         const float air_density_sea_level_15C  = 1.225f; //kg/m^3
         if (diff_pressure > 0)
         {
-        	ind_airspeed =  sqrtf((2.0f*diff_pressure) / air_density_sea_level_15C);
-		} else
-		{
-			ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
-		}
+            ind_airspeed =  sqrtf((2.0f*diff_pressure) / air_density_sea_level_15C);
+        } else
+        {
+            ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
+        }
 
         //qDebug() << "ind_airspeed: " << ind_airspeed << "true_airspeed: " << true_airspeed;
 
