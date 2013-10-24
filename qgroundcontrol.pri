@@ -204,7 +204,7 @@ linux-g++|linux-g++-64{
 		-lflite_cmulex \
 		-lflite \
 		-lSDL \
-		-lSDLmain \
+#		-lSDLmain \
 		-lasound
 
 	exists(/usr/include/osg) | exists(/usr/local/include/osg) {
