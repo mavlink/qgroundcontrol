@@ -159,93 +159,33 @@ void QGCCommandButton::setCommandButtonName(QString text)
     ui->commandButton->setText(text);
 }
 
-void QGCCommandButton::startEditMode()
+void QGCCommandButton::setEditMode(bool editMode)
 {
     // Hide elements
-    ui->commandButton->hide();
-    ui->nameLabel->hide();
+    ui->commandButton->setVisible(!editMode);
+    ui->nameLabel->setVisible(!editMode);
 
-    ui->editCommandComboBox->blockSignals(false);
-    ui->editCommandComboBox->show();
-    ui->editFinishButton->show();
-    ui->editNameLabel->show();
-    ui->editButtonName->show();
-    ui->editConfirmationCheckBox->show();
-    ui->editComponentSpinBox->show();
-    ui->editParamsVisibleCheckBox->show();
-    ui->editParam1SpinBox->show();
-    ui->editParam2SpinBox->show();
-    ui->editParam3SpinBox->show();
-    ui->editParam4SpinBox->show();
-    ui->editParam5SpinBox->show();
-    ui->editParam6SpinBox->show();
-    ui->editParam7SpinBox->show();
-    ui->editLine1->show();
-    ui->editLine2->show();
+    ui->editCommandComboBox->blockSignals(!editMode);
+    ui->editCommandComboBox->setVisible(editMode);
+    ui->editFinishButton->setVisible(editMode);
+    ui->editNameLabel->setVisible(editMode);
+    ui->editButtonName->setVisible(editMode);
+    ui->editConfirmationCheckBox->setVisible(editMode);
+    ui->editComponentSpinBox->setVisible(editMode);
+    ui->editParamsVisibleCheckBox->setVisible(editMode);
+    bool showParams = editMode || ui->editParamsVisibleCheckBox->isChecked();
+    ui->editParam1SpinBox->setVisible(showParams);
+    ui->editParam2SpinBox->setVisible(showParams);
+    ui->editParam3SpinBox->setVisible(showParams);
+    ui->editParam4SpinBox->setVisible(showParams);
+    ui->editParam5SpinBox->setVisible(showParams);
+    ui->editParam6SpinBox->setVisible(showParams);
+    ui->editParam7SpinBox->setVisible(showParams);
 
-    // Attempt to undock the dock widget
-    QWidget* p = this;
-    QDockWidget* dock;
+    ui->editLine1->setVisible(editMode);
+    ui->editLine2->setVisible(editMode);
 
-    do {
-        p = p->parentWidget();
-        dock = dynamic_cast<QDockWidget*>(p);
-
-        if (dock)
-        {
-            dock->setFloating(true);
-            break;
-        }
-    } while (p && !dock);
-
-    isInEditMode = true;
-}
-
-void QGCCommandButton::endEditMode()
-{
-    ui->editCommandComboBox->blockSignals(true);
-    ui->editCommandComboBox->hide();
-    ui->editFinishButton->hide();
-    ui->editNameLabel->hide();
-    ui->editButtonName->hide();
-    ui->editConfirmationCheckBox->hide();
-    ui->editComponentSpinBox->hide();
-    ui->editParamsVisibleCheckBox->hide();
-    ui->editLine1->hide();
-    ui->editLine2->hide();
-    if (!ui->editParamsVisibleCheckBox->isChecked())
-    {
-        ui->editParam1SpinBox->hide();
-        ui->editParam2SpinBox->hide();
-        ui->editParam3SpinBox->hide();
-        ui->editParam4SpinBox->hide();
-        ui->editParam5SpinBox->hide();
-        ui->editParam6SpinBox->hide();
-        ui->editParam7SpinBox->hide();
-    }
-
-    ui->commandButton->show();
-    ui->nameLabel->show();
-
-    // Write to settings
-    emit editingFinished();
-
-    // Attempt to dock the dock widget
-    QWidget* p = this;
-    QDockWidget* dock;
-
-    do {
-        p = p->parentWidget();
-        dock = dynamic_cast<QDockWidget*>(p);
-
-        if (dock)
-        {
-            dock->setFloating(false);
-            break;
-        }
-    } while (p && !dock);
-
-    isInEditMode = false;
+    QGCToolWidgetItem::setEditMode(editMode);
 }
 
 void QGCCommandButton::writeSettings(QSettings& settings)

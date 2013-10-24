@@ -20,6 +20,7 @@ public:
     int value() { return m_value; }
     int min() { return m_min; }
     int max() { return m_max; }
+
 protected:
     void paintEvent(QPaintEvent *event);
 private:

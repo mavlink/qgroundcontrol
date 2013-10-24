@@ -31,61 +31,17 @@ QGCTextLabel::~QGCTextLabel()
     delete ui;
 }
 
-void QGCTextLabel::startEditMode()
+void QGCTextLabel::setEditMode(bool editMode)
 {
-    // Hide elements
-    ui->editFinishButton->show();
-    ui->editNameLabel->show();
-    ui->editLine1->show();
-    ui->editLine2->show();
-    ui->isMavCommand->show();
+    if(!editMode)
+        update_isMavCommand();
+    ui->editFinishButton->setVisible(editMode);
+    ui->editNameLabel->setVisible(editMode);
+    ui->editLine1->setVisible(editMode);
+    ui->editLine2->setVisible(editMode);
+    ui->isMavCommand->setVisible(editMode);
 
-    // Attempt to undock the dock widget
-    QWidget* p = this;
-    QDockWidget* dock;
-
-    do {
-        p = p->parentWidget();
-        dock = dynamic_cast<QDockWidget*>(p);
-
-        if (dock)
-        {
-            dock->setFloating(true);
-            break;
-        }
-    } while (p && !dock);
-
-    isInEditMode = true;
-}
-
-void QGCTextLabel::endEditMode()
-{
-    update_isMavCommand();
-    ui->editFinishButton->hide();
-    ui->editNameLabel->hide();
-    ui->editLine1->hide();
-    ui->editLine2->hide();
-    ui->isMavCommand->hide();
-
-    // Write to settings
-    emit editingFinished();
-
-    // Attempt to dock the dock widget
-    QWidget* p = this;
-    QDockWidget* dock;
-
-    do {
-        p = p->parentWidget();
-        dock = dynamic_cast<QDockWidget*>(p);
-
-        if (dock)
-        {
-            dock->setFloating(false);
-            break;
-        }
-    } while (p && !dock);
-
-    isInEditMode = false;
+    QGCToolWidgetItem::setEditMode(editMode);
 }
 
 void QGCTextLabel::writeSettings(QSettings& settings)

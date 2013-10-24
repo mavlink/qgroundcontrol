@@ -157,36 +157,43 @@ void IncrementalPlot::showLegend(bool show)
  */
 void IncrementalPlot::setStyleText(const QString &style)
 {
+    styleText = style.toLower();
     foreach (QwtPlotCurve* curve, curves) {
-        // Style of datapoints
-        if (style.toLower().contains("circles")) {
-            curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse,
-                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
-        } else if (style.toLower().contains("crosses")) {
-            curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
-                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(5, 5)) );
-        } else if (style.toLower().contains("rect")) {
-            curve->setSymbol(QwtSymbol(QwtSymbol::Rect,
-                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
-        } else if (style.toLower().contains("line")) { // Show no symbol
-            curve->setSymbol(QwtSymbol(QwtSymbol::NoSymbol,
-                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
-        }
-
-        // Style of lines
-        if (style.toLower().contains("dotted")) {
-            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DotLine));
-        } else if (style.toLower().contains("dashed")) {
-            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DashLine));
-        } else if (style.toLower().contains("line") || style.toLower().contains("solid")) {
-            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::SolidLine));
-        } else {
-            curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::NoPen));
-        }
-        curve->setStyle(QwtPlotCurve::Lines);
-
+        updateStyle(curve);
     }
     replot();
+}
+
+void IncrementalPlot::updateStyle(QwtPlotCurve *curve)
+{
+    if(styleText.isNull())
+        return;
+    // Style of datapoints
+    if (styleText.contains("circles")) {
+        curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse,
+                                   Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
+    } else if (styleText.contains("crosses")) {
+        curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
+                                   Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(5, 5)) );
+    } else if (styleText.contains("rect")) {
+        curve->setSymbol(QwtSymbol(QwtSymbol::Rect,
+                                   Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
+    } else if (styleText.contains("line")) { // Show no symbol
+        curve->setSymbol(QwtSymbol(QwtSymbol::NoSymbol,
+                                   Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
+    }
+
+    // Style of lines
+    if (styleText.contains("dotted")) {
+        curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DotLine));
+    } else if (styleText.contains("dashed")) {
+        curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::DashLine));
+    } else if (styleText.contains("line") || styleText.contains("solid")) {
+        curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::SolidLine));
+    } else {
+        curve->setPen(QPen(QBrush(curve->symbol().pen().color()), curveWidth, Qt::NoPen));
+    }
+    curve->setStyle(QwtPlotCurve::Lines);
 }
 
 void IncrementalPlot::resetScaling()
@@ -275,7 +282,7 @@ void IncrementalPlot::appendData(const QString &key, double *x, double *y, int s
         const QColor &c = getNextColor();
         curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
                                    QBrush(c), QPen(c, symbolWidth), QSize(5, 5)) );
-
+        updateStyle(curve); //Apply any user-set style
         curve->attach(this);
     } else {
         curve = curves.value(key);
@@ -374,7 +381,7 @@ void IncrementalPlot::showGrid(bool show)
     replot();
 }
 
-bool IncrementalPlot::gridEnabled()
+bool IncrementalPlot::gridEnabled() const
 {
     return grid->isVisible();
 }
