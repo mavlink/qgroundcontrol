@@ -20,9 +20,9 @@ public:
     explicit QGCParamSlider(QWidget *parent = 0);
     ~QGCParamSlider();
 
+    virtual void setEditMode(bool editMode) override;
+
 public slots:
-    void startEditMode();
-    void endEditMode();
     /** @brief Queue parameter for sending to the MAV (add to pending list)*/
     void setParamPending();
     /** @brief Set the slider value as parameter value */
