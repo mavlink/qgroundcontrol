@@ -49,7 +49,7 @@ This file is part of the QGROUNDCONTROL project
 
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
-    HDDisplay(NULL, "HSI", parent),
+    HDDisplay(QStringList(), "HSI", parent),
     dragStarted(false),
     leftDragStarted(false),
     mouseHasMoved(false),

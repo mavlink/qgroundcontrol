@@ -18,11 +18,11 @@ public:
     explicit QGCCommandButton(QWidget *parent = 0);
     ~QGCCommandButton();
 
+    virtual void setEditMode(bool editMode) override;
+
 public slots:
     void sendCommand();
     void setCommandButtonName(QString text);
-    void startEditMode();
-    void endEditMode();
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
     void readSettings(const QString& pre,const QVariantMap& settings);
