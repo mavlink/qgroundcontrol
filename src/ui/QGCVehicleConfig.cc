@@ -261,7 +261,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     {
         if (file.toLower().endsWith(".qgw")) {
             QWidget* parent = left?ui->generalLeftContents:ui->generalRightContents;
-            tool = new QGCToolWidget("", parent);
+            tool = new QGCToolWidget("", "", parent);
             if (tool->loadSettings(generaldir.absoluteFilePath(file), false))
             {
                 toolWidgets.append(tool);
@@ -291,7 +291,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     {
         if (file.toLower().endsWith(".qgw")) {
             QWidget* parent = left?ui->advancedLeftContents:ui->advancedRightContents;
-            tool = new QGCToolWidget("", parent);
+            tool = new QGCToolWidget("", "", parent);
             if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
             {
                 toolWidgets.append(tool);
@@ -342,7 +342,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
             if (file.toLower().endsWith(".qgw")) {
-                tool = new QGCToolWidget("", tab);
+                tool = new QGCToolWidget("", "", tab);
                 if (tool->loadSettings(newdir.absoluteFilePath(file), false))
                 {
                     toolWidgets.append(tool);
@@ -389,7 +389,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
             if (file.toLower().endsWith(".qgw")) {
-                tool = new QGCToolWidget("", tab);
+                tool = new QGCToolWidget("","", tab);
                 tool->addUAS(mav);
                 if (tool->loadSettings(newdir.absoluteFilePath(file), false))
                 {
@@ -411,7 +411,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
 
     // Load general calibration for autopilot
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
-    tool = new QGCToolWidget("", ui->sensorContents);
+    tool = new QGCToolWidget("", "", ui->sensorContents);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
     {
@@ -426,7 +426,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     }
 
     // Load vehicle-specific autopilot configuration
-    tool = new QGCToolWidget("", ui->sensorContents);
+    tool = new QGCToolWidget("", "", ui->sensorContents);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
     {
@@ -681,10 +681,8 @@ void QGCVehicleConfig::loadConfig()
                                 {
                                     parent = ui->generalRightContents;
                                 }
-                                tool = new QGCToolWidget("", parent);
+                                tool = new QGCToolWidget(parametersname, parametersname, parent);
                                 tool->addUAS(mav);
-                                tool->setTitle(parametersname);
-                                tool->setObjectName(parametersname);
                                 tool->setSettings(genset);
                                 QList<QString> paramlist = tool->getParamList();
                                 for (int i=0;i<paramlist.size();i++)
@@ -735,10 +733,8 @@ void QGCVehicleConfig::loadConfig()
                                 {
                                     parent = ui->generalRightContents;
                                 }
-                                tool = new QGCToolWidget("", parent);
+                                tool = new QGCToolWidget(parametersname, parametersname, parent);
                                 tool->addUAS(mav);
-                                tool->setTitle(parametersname);
-                                tool->setObjectName(parametersname);
                                 tool->setSettings(advset);
                                 QList<QString> paramlist = tool->getParamList();
                                 for (int i=0;i<paramlist.size();i++)
@@ -1175,14 +1171,12 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             }
 
             // Create the tool, attaching it to the QGroupBox
-            QGCToolWidget *tool = new QGCToolWidget("", parent);
             QString tooltitle = parameterName;
             if (parameterName.split("_").size() > 1)
             {
                 tooltitle = parameterName.split("_")[0] + "_";
             }
-            tool->setTitle(tooltitle);
-            tool->setObjectName(tooltitle);
+            QGCToolWidget *tool = new QGCToolWidget(tooltitle, tooltitle, parent);
             //tool->setSettings(set);
             libParamToWidgetMap.insert(parameterName,tool);
             toolWidgets.append(tool);
