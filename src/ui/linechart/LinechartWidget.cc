@@ -673,9 +673,19 @@ void LinechartWidget::removeCurve(QString curve)
     widget = curveVariances->take(curve);
     curvesWidgetLayout->removeWidget(widget);
     widget->deleteLater();
-//    widget = colorIcons->take(curve);
-//    curvesWidgetLayout->removeWidget(colorIcons->take(curve));
+    widget = colorIcons.take(curve);
+    curvesWidgetLayout->removeWidget(widget);
     widget->deleteLater();
+    widget = curveNameLabels.take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    widget = curveUnits.take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    QCheckBox* checkbox;
+    checkbox = checkBoxes.take(curve);
+    curvesWidgetLayout->removeWidget(checkbox);
+    checkbox->deleteLater();
 //    intData->remove(curve);
 }
 
