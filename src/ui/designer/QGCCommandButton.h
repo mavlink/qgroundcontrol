@@ -18,7 +18,7 @@ public:
     explicit QGCCommandButton(QWidget *parent = 0);
     ~QGCCommandButton();
 
-    virtual void setEditMode(bool editMode) override;
+    virtual void setEditMode(bool editMode);
 
 public slots:
     void sendCommand();

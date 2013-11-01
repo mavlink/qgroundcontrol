@@ -22,7 +22,7 @@ public:
     explicit QGCComboBox(QWidget *parent = 0);
     ~QGCComboBox();
 
-    virtual void setEditMode(bool editMode) override;
+    virtual void setEditMode(bool editMode);
 
 public slots:
     /** @brief Queue parameter for sending to the MAV (add to pending list)*/
