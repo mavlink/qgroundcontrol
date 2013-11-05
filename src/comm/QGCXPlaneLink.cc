@@ -709,7 +709,7 @@ void QGCXPlaneLink::readBytes()
             fields_changed |= (1 << 11);
 
             emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
-                                        xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
+                                        xmag, ymag, zmag, abs_pressure, diff_pressure / 100.0, pressure_alt, temperature, fields_changed);
 
             // XXX make these GUI-configurable and add randomness
             int gps_fix_type = 3;
