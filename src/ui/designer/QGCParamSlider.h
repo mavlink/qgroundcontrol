@@ -20,7 +20,7 @@ public:
     explicit QGCParamSlider(QWidget *parent = 0);
     ~QGCParamSlider();
 
-    virtual void setEditMode(bool editMode) override;
+    virtual void setEditMode(bool editMode);
 
 public slots:
     /** @brief Queue parameter for sending to the MAV (add to pending list)*/
