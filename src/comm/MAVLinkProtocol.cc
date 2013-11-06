@@ -268,6 +268,20 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 1)
         {
             decodedFirstPacket = true;
+
+            if(message.msgid == MAVLINK_MSG_ID_PING)
+            {
+                // process ping requests (tgt_system and tgt_comp must be zero)
+                mavlink_ping_t ping;
+                mavlink_msg_ping_decode(&message, &ping);
+                if(!ping.target_system && !ping.target_component)
+                {
+                    mavlink_message_t msg;
+                    mavlink_msg_ping_pack(getSystemId(), getComponentId(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
+                    sendMessage(msg);
+                }
+            }
+
 #if defined(QGC_PROTOBUF_ENABLED)
 
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
