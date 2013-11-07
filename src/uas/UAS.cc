@@ -85,7 +85,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     currentVoltage(12.6f),
     lpVoltage(12.0f),
     currentCurrent(0.4f),
-    batteryRemainingEstimateEnabled(true),
+    batteryRemainingEstimateEnabled(false),
     // chargeLevel not initialized
     // timeRemaining  not initialized
     lowBattAlarm(false),
@@ -211,7 +211,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     actions.append(newAction);
 
     color = UASInterface::getNextColor();
-    setBatterySpecs(QString("9V,9.5V,12.6V"));
+    setBatterySpecs(QString(""));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
