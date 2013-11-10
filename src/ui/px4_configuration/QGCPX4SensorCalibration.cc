@@ -17,6 +17,7 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     connect(ui->gyroButton, SIGNAL(clicked()), this, SLOT(gyroButtonClicked()));
     connect(ui->magButton, SIGNAL(clicked()), this, SLOT(magButtonClicked()));
     connect(ui->accelButton, SIGNAL(clicked()), this, SLOT(accelButtonClicked()));
+    connect(ui->diffPressureButton, SIGNAL(clicked()), this, SLOT(diffPressureButtonClicked()));
 
     ui->gyroButton->setEnabled(false);
     ui->magButton->setEnabled(false);
@@ -168,6 +169,17 @@ void QGCPX4SensorCalibration::parameterChanged(int uas, int component, QString p
             setAccelCalibrated(true);
         }
     }
+
+    // Check differential pressure calibration naively
+    if (parameterName.contains("SENS_DPRES_OFF")) {
+      float offset = value.toFloat();
+      if (offset < 0.000001f && offset > -0.000001f) {
+          // Must be zero, not good
+          setDiffPressureCalibrated(false);
+      } else {
+          setDiffPressureCalibrated(true);
+      }
+    }
 }
 
 void QGCPX4SensorCalibration::setMagCalibrated(bool calibrated)
@@ -210,6 +222,21 @@ void QGCPX4SensorCalibration::setAccelCalibrated(bool calibrated)
     } else {
         ui->accelLabel->setText(tr("ACCEL UNCALIBRATED"));
         ui->accelLabel->setStyleSheet("QLabel { color: #FFFFFF;"
+                                    "background-color: #FF0037;"
+                                    "}");
+    }
+}
+
+void QGCPX4SensorCalibration::setDiffPressureCalibrated(bool calibrated)
+{
+    if (calibrated) {
+        ui->diffPressureLabel->setText(tr("DIFF. PRESSURE CALIBRATED"));
+        ui->diffPressureLabel->setStyleSheet("QLabel { color: #FFFFFF;"
+                                    "background-color: #20AA20;"
+                                    "}");
+    } else {
+        ui->diffPressureLabel->setText(tr("DIFF. PRESSURE UNCALIBRATED"));
+        ui->diffPressureLabel->setStyleSheet("QLabel { color: #FFFFFF;"
                                     "background-color: #FF0037;"
                                     "}");
     }
@@ -384,6 +411,11 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
                 activeUAS->requestParameter(0, "SENS_MAG_ZSCALE");
                 activeUAS->requestParameter(0, "SENS_EXT_MAG_ROT");
             }
+
+            if (text.startsWith("dpress ")) {
+                activeUAS->requestParameter(0, "SENS_DPRES_OFF");
+                activeUAS->requestParameter(0, "SENS_DPRES_ANA");
+            }
         }
     }
 
@@ -424,6 +456,13 @@ void QGCPX4SensorCalibration::accelButtonClicked()
 {
     setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0);
+    ui->progressBar->setValue(0);
+}
+
+void QGCPX4SensorCalibration::diffPressureButtonClicked()
+{
+    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+    activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
 }
 
