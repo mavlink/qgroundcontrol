@@ -712,13 +712,16 @@ void LinechartWidget::setPlotFilterLineEditFocus()
 
 void LinechartWidget::filterCurve(const QString &key, bool match)
 {
-        colorIcons[key]->setVisible(match);
-        curveNameLabels[key]->setVisible(match);
-        (*curveLabels)[key]->setVisible(match);
-        (*curveMeans)[key]->setVisible(match);
-        (*curveVariances)[key]->setVisible(match);
-        curveUnits[key]->setVisible(match);
-        checkBoxes[key]->setVisible(match);
+        if (!checkBoxes[key]->isChecked())
+        {
+            colorIcons[key]->setVisible(match);
+            curveNameLabels[key]->setVisible(match);
+            (*curveLabels)[key]->setVisible(match);
+            (*curveMeans)[key]->setVisible(match);
+            (*curveVariances)[key]->setVisible(match);
+            curveUnits[key]->setVisible(match);
+            checkBoxes[key]->setVisible(match);
+        }
 }
 
 void LinechartWidget::filterCurves(const QString &filter)
