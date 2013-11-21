@@ -82,10 +82,10 @@ public:
         return orbit;
     }
     double getAcceptanceRadius() const {
-        return param2;
+        return param1;
     }
     double getHoldTime() const {
-        return param1;
+        return param2;
     }
     double getParam1() const {
         return param1;

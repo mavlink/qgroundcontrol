@@ -222,9 +222,9 @@ void Waypoint::setCurrent(bool current)
 
 void Waypoint::setAcceptanceRadius(double radius)
 {
-    if (this->param2 != radius)
+    if (this->param1 != radius)
     {
-        this->param2 = radius;
+        this->param1 = radius;
         emit changed(this);
     }
 }
@@ -299,24 +299,24 @@ void Waypoint::setLoiterOrbit(double orbit)
 
 void Waypoint::setHoldTime(int holdTime)
 {
-    if (this->param1 != holdTime) {
-        this->param1 = holdTime;
+    if (this->param2 != holdTime) {
+        this->param2 = holdTime;
         emit changed(this);
     }
 }
 
 void Waypoint::setHoldTime(double holdTime)
 {
-    if (this->param1 != holdTime) {
-        this->param1 = holdTime;
+    if (this->param2 != holdTime) {
+        this->param2 = holdTime;
         emit changed(this);
     }
 }
 
 void Waypoint::setTurns(int turns)
 {
-    if (this->param1 != turns) {
-        this->param1 = turns;
+    if (this->param2 != turns) {
+        this->param2 = turns;
         emit changed(this);
     }
 }

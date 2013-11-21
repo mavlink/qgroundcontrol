@@ -10,8 +10,8 @@ QGCMissionNavWaypoint::QGCMissionNavWaypoint(WaypointEditableView* WEV) :
         this->WEV = WEV;
 
         //Using UI to change WP:
-        connect(this->ui->holdTimeSpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam1(double)));
-        connect(this->ui->acceptanceSpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam2(double)));
+        connect(this->ui->acceptanceSpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam1(double)));
+        connect(this->ui->holdTimeSpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam2(double)));
         //connect(this->ui->param3SpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam3(double)));
         connect(this->ui->yawSpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam4(double)));
         connect(this->ui->posNSpinBox, SIGNAL(valueChanged(double)),WEV,SLOT(changedParam5(double)));//NED
@@ -23,8 +23,8 @@ QGCMissionNavWaypoint::QGCMissionNavWaypoint(WaypointEditableView* WEV) :
 
         //Reading WP to update UI:
         connect(WEV,SIGNAL(frameBroadcast(MAV_FRAME)),this,SLOT(updateFrame(MAV_FRAME)));
-        connect(WEV,SIGNAL(param1Broadcast(double)),this->ui->holdTimeSpinBox,SLOT(setValue(double)));
-        connect(WEV,SIGNAL(param2Broadcast(double)),this->ui->acceptanceSpinBox,SLOT(setValue(double)));
+        connect(WEV,SIGNAL(param1Broadcast(double)),this->ui->acceptanceSpinBox,SLOT(setValue(double)));
+        connect(WEV,SIGNAL(param2Broadcast(double)),this->ui->holdTimeSpinBox,SLOT(setValue(double)));
         //connect(WEV,SIGNAL(param3Broadcast(double)),this->ui->param3SpinBox,SLOT(setValue(double)));
         connect(WEV,SIGNAL(param4Broadcast(double)),this->ui->yawSpinBox,SLOT(setValue(double)));
         connect(WEV,SIGNAL(param5Broadcast(double)),this->ui->posNSpinBox,SLOT(setValue(double)));//NED
