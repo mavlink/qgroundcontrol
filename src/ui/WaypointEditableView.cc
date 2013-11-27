@@ -352,16 +352,20 @@ void WaypointEditableView::changedCurrent(int state)
 {
     if (state == 0)
     {
-        if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
-        {
-            m_ui->selectedBox->setChecked(true);
-            m_ui->selectedBox->setCheckState(Qt::Checked);
-        }
-        else
-        {
+        //User clicked on the waypoint, that is already current, allow to deselect
+//        if (wp->getCurrent() == true)
+//        {
+//            qDebug() << "already current";
+//            m_ui->selectedBox->setChecked(true);
+//            m_ui->selectedBox->setCheckState(Qt::Checked);
+//        }
+//        else
+//        {
+            qDebug() << "now unchecked";
             m_ui->selectedBox->setChecked(false);
+            wp->setCurrent(false);
             m_ui->selectedBox->setCheckState(Qt::Unchecked);
-        }
+//        }
     }
     else
     {

@@ -225,6 +225,17 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             current_state = WP_IDLE;
             readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
             emit updateStatusString("done.");
+        } else if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS)) {
+            //give up transmitting if a WP is rejected
+            if (wpa->type == 1) {
+                emit updateStatusString("upload failed: general error");
+            } else if (wpa->type == 2) {
+                emit updateStatusString("upload failed: coordinate frame unsupported.");
+            } else {
+                emit updateStatusString("upload failed: other error.");
+            }
+            protocol_timer.stop();
+            current_state = WP_IDLE;
         } else if(current_state == WP_CLEARLIST) {
             protocol_timer.stop();
             current_state = WP_IDLE;
@@ -892,10 +903,11 @@ void UASWaypointManager::writeWaypoints()
                 cur_d->y = cur_s->getY();
                 cur_d->z = cur_s->getZ();
 
-                if (cur_s->getCurrent() && noCurrent)
-                    noCurrent = false;
-                if (i == (current_count - 1) && noCurrent == true) //not a single waypoint was set as "current"
-                    cur_d->current = true; // set the last waypoint as current. Or should it better be the first waypoint ?
+                //let the UAV handle which one is current if none is selected
+//                if (cur_s->getCurrent() && noCurrent)
+//                    noCurrent = false;
+//                if (i == (current_count - 1) && noCurrent == true) //not a single waypoint was set as "current"
+//                    cur_d->current = true; // set the last waypoint as current. Or should it better be the first waypoint ?
             }
 
 
@@ -905,7 +917,7 @@ void UASWaypointManager::writeWaypoints()
             sendWaypointCount();
         } else if (waypointsEditable.count() == 0)
         {
-            sendWaypointClearAll();
+            clearWaypointList();
         }
     }
     else

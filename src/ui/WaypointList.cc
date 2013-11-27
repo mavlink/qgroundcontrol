@@ -283,9 +283,9 @@ void WaypointList::addEditable(bool onCurrentPosition)
             wp->setZ(last->getZ());
         }
         wp->setParam1(last->getParam1());
-        wp->setParam1(last->getParam2());
-        wp->setParam1(last->getParam3());
-        wp->setParam1(last->getParam4());
+        wp->setParam2(last->getParam2());
+        wp->setParam3(last->getParam3());
+        wp->setParam4(last->getParam4());
         wp->setAutocontinue(last->getAutoContinue());
 //        wp->blockSignals(false);
         wp->setAction(last->getAction());
@@ -306,7 +306,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
                     } else {
                         updateStatusLabel(tr("Added default GLOBAL (Relative alt.) waypoint."));
                     }
-                    wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                    wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), WPM->getAcceptanceRadiusRecommendation(), 0, 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
                     WPM->addWaypointEditable(wp);
 
                 } else {
@@ -318,7 +318,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
                     }
                     wp = new Waypoint(0, UASManager::instance()->getHomeLatitude(),
                                       UASManager::instance()->getHomeLongitude(),
-                                      WPM->getAltitudeRecommendation(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                                      WPM->getAltitudeRecommendation(), WPM->getAcceptanceRadiusRecommendation(), 0, 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
                     WPM->addWaypointEditable(wp);
                 }
             }
@@ -327,11 +327,11 @@ void WaypointList::addEditable(bool onCurrentPosition)
                 if (onCurrentPosition)
                 {
                     updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
-                    wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                    wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), WPM->getAcceptanceRadiusRecommendation(), 0, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
                     WPM->addWaypointEditable(wp);
                 } else {
                     updateStatusLabel(tr("Added default LOCAL (NED) waypoint."));
-                    wp = new Waypoint(0, 0, 0, -0.50, 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
+                    wp = new Waypoint(0, 0, 0, -0.50, WPM->getAcceptanceRadiusRecommendation(), 0, 0, 0,true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
                     WPM->addWaypointEditable(wp);
                 }
             }
@@ -341,7 +341,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
                 updateStatusLabel(tr("WARNING: No position known. Adding default LOCAL (NED) waypoint"));
                 wp = new Waypoint(0, UASManager::instance()->getHomeLatitude(),
                                   UASManager::instance()->getHomeLongitude(),
-                                  WPM->getAltitudeRecommendation(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                                  WPM->getAltitudeRecommendation(), WPM->getAcceptanceRadiusRecommendation(), 0, 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
                 WPM->addWaypointEditable(wp);
             }
         }
@@ -351,7 +351,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
             updateStatusLabel(tr("No UAV connected. Adding default GLOBAL (NED) waypoint"));
             wp = new Waypoint(0, UASManager::instance()->getHomeLatitude(),
                               UASManager::instance()->getHomeLongitude(),
-                              WPM->getAltitudeRecommendation(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                              WPM->getAltitudeRecommendation(), WPM->getAcceptanceRadiusRecommendation(), 0, 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
             WPM->addWaypointEditable(wp);
         }
     }
