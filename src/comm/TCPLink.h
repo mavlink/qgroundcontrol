@@ -40,12 +40,14 @@
 #include <LinkInterface.h>
 #include <configuration.h>
 
+//#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
+
 class TCPLink : public LinkInterface
 {
     Q_OBJECT
     
 public:
-    TCPLink(QHostAddress host = QHostAddress::Any, quint16 port = 14550);
+    TCPLink(QHostAddress hostAddress = QHostAddress::LocalHost, quint16 socketPort = 5760);
     ~TCPLink();
     
     void requestReset() { }
@@ -54,6 +56,9 @@ public:
     qint64 bytesAvailable();
     int getPort() const {
         return port;
+    }
+    QHostAddress getHostAddress() const {
+        return host;
     }
     
     QString getName() const;
@@ -88,7 +93,9 @@ public slots:
     void writeBytes(const char* data, qint64 length);
     bool connect();
     bool disconnect();
-    void socketConnected();
+    void socketError(QAbstractSocket::SocketError socketError);
+    void setAddress(const QString &text);
+
     
 protected:
     QString name;
@@ -112,6 +119,9 @@ protected:
     
 private:
 	bool hardwareConnect(void);
+#ifdef TCPLINK_READWRITE_DEBUG
+    void writeDebugBytes(const char *data, qint16 size);
+#endif
     
 signals:
     //Signals are defined by LinkInterface

@@ -53,6 +53,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "QGCUDPLinkConfiguration.h"
+#include "QGCTCPLinkConfiguration.h"
 #include "LinkManager.h"
 #include "MainWindow.h"
 
@@ -152,6 +153,8 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     }
     TCPLink* tcp = dynamic_cast<TCPLink*>(link);
     if (tcp != 0) {
+        QWidget* conf = new QGCTCPLinkConfiguration(tcp, this);
+        ui.linkScrollArea->setWidget(conf);
         ui.linkGroupBox->setTitle(tr("TCP Link"));
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_TCP));
     }
@@ -264,12 +267,12 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 			}
 			
         case QGC_LINK_TCP:
-        {
+            {
             TCPLink *tcp = new TCPLink();
             tmpLink = tcp;
             MainWindow::instance()->addLink(tmpLink);
             break;
-        }
+            }
 
 #ifdef OPAL_RT
         case QGC_LINK_OPAL:
