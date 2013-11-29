@@ -37,24 +37,20 @@
 #include "LinkManager.h"
 #include "QGC.h"
 #include <QHostInfo>
-//#include <netinet/in.h>
 
-TCPLink::TCPLink(QHostAddress host, quint16 port)
-: socket(NULL)
+TCPLink::TCPLink(QHostAddress hostAddress, quint16 socketPort) :
+    host(hostAddress),
+    port(socketPort),
+    socket(NULL),
+    socketIsConnected(false)
+
 {
-    // FIXFIX: host and port and hard-wired
-    this->host = "127.0.0.1";
-    this->port = 5760;
-    
-    this->socketIsConnected = false;
-    
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
-    // FIXFIX: What about host name?
 	this->name = tr("TCP Link (port:%1)").arg(this->port);
 	emit nameChanged(this->name);
     
-    qDebug() << "TCP Created " << name;
+    qDebug() << "TCP Created " << this->name;
 }
 
 TCPLink::~TCPLink()
@@ -63,25 +59,26 @@ TCPLink::~TCPLink()
 	this->deleteLater();
 }
 
-/**
- * @brief Runs the thread
- *
- **/
 void TCPLink::run()
 {
 	exec();
 }
 
+void TCPLink::setAddress(const QString &text)
+{
+    setAddress(QHostAddress(text));
+}
+
 void TCPLink::setAddress(QHostAddress host)
 {
     bool reconnect(false);
-	if(this->isConnected())
+	if (this->isConnected())
 	{
 		disconnect();
 		reconnect = true;
 	}
 	this->host = host;
-	if(reconnect)
+	if (reconnect)
 	{
 		connect();
 	}
@@ -104,10 +101,9 @@ void TCPLink::setPort(int port)
 	}
 }
 
-void TCPLink::writeBytes(const char* data, qint64 size)
+#ifdef TCPLINK_READWRITE_DEBUG
+void TCPLink::writeDebugBytes(const char *data, qint16 size)
 {
-    //#define TCPLINK_DEBUG
-#ifdef TCPLINK_DEBUG
     QString bytes;
     QString ascii;
     for (int i=0; i<size; i++)
@@ -123,9 +119,16 @@ void TCPLink::writeBytes(const char* data, qint64 size)
             ascii.append(219);
         }
     }
-    qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
+    qDebug() << "Sent" << size << "bytes to" << host.toString() << ":" << port << "data:";
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
+}
+#endif
+
+void TCPLink::writeBytes(const char* data, qint64 size)
+{
+#ifdef TCPLINK_READWRITE_DEBUG
+    writeDebugBytes(data, size);
 #endif
     socket->write(data, size);
 }
@@ -148,17 +151,10 @@ void TCPLink::readBytes()
         socket->read(buffer.data(), buffer.size());
         
         emit bytesReceived(this, buffer);
-        
-        //        // Echo data for debugging purposes
-        //        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-        //        int i;
-        //        for (i=0; i<s; i++)
-        //        {
-        //            unsigned int v=data[i];
-        //            fprintf(stderr,"%02x ", v);
-        //        }
-        //        std::cerr << std::endl;
-        
+
+#ifdef TCPLINK_READWRITE_DEBUG
+        writeDebugBytes(buffer.data(), buffer.size());
+#endif
     }
 }
 
@@ -185,10 +181,8 @@ bool TCPLink::disconnect()
     
     if (socket)
 	{
-        if (socketIsConnected) {
-            socket->disconnect();
-            socketIsConnected = false;
-        }
+        socket->disconnect();
+        socketIsConnected = false;
 		delete socket;
 		socket = NULL;
 	}
@@ -220,17 +214,25 @@ bool TCPLink::hardwareConnect(void)
     socket->connectToHost(host, port);
     
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-    //QObject::connect(socket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    socketIsConnected = true;
+    QObject::connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
     
+    // Give the socket a second to connect to the other side otherwise error out
+    if (!socket->waitForConnected(1000))
+    {
+        emit communicationError(getName(), "connection failed");
+        return false;
+    }
+    
+    socketIsConnected = true;
     connectionStartTime = QGC::groundTimeUsecs()/1000;
-	
+    emit connected(true);
+
     return true;
 }
 
-void TCPLink::socketConnected()
+void TCPLink::socketError(QAbstractSocket::SocketError socketError)
 {
-    socketIsConnected = true;
+    emit communicationError(getName(), "Error on socket: " + socket->errorString());
 }
 
 /**

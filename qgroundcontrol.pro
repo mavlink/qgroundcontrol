@@ -227,6 +227,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
+    src/ui/QGCTCPLinkConfiguration.ui \
     src/ui/QGCSettingsWidget.ui \
     src/ui/UASControlParameters.ui \
     src/ui/map/QGCMapTool.ui \
@@ -408,6 +409,7 @@ HEADERS += src/MG.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/ui/QGCWaypointListMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
+    src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCSettingsWidget.h \
     src/ui/uas/UASControlParameters.h \
     src/uas/QGCUASParamManager.h \
@@ -634,6 +636,7 @@ SOURCES += src/main.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/ui/QGCWaypointListMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
+    src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCSettingsWidget.cc \
     src/ui/uas/UASControlParameters.cpp \
     src/uas/QGCUASParamManager.cc \
