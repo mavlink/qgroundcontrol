@@ -143,7 +143,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     sensorHil(false),
     lastSendTimeGPS(0),
     lastSendTimeSensors(0),
-    blockHomePositionChanges(false)
+    blockHomePositionChanges(false),
+    receivedMode(false)
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -309,6 +310,7 @@ void UAS::updateState()
     if (!connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
     {
         connectionLost = true;
+        receivedMode = false;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
         GAudioOutput::instance()->say(audiostring.toLower());
     }
@@ -572,6 +574,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (this->base_mode != state.base_mode || this->custom_mode != state.custom_mode)
             {
                 modechanged = true;
+                receivedMode = true;
                 this->base_mode = state.base_mode;
                 this->custom_mode = state.custom_mode;
                 shortModeText = getShortModeTextFor(this->base_mode, this->custom_mode, this->autopilot);
@@ -1821,26 +1824,51 @@ QList<int> UAS::getComponentIds()
 }
 
 /**
-* @param mode that UAS is to be set to.
+* @param newBaseMode that UAS is to be set to.
+* @param newCustomMode that UAS is to be set to.
 */
 void UAS::setMode(uint8_t newBaseMode, uint32_t newCustomMode)
 {
-    //this->mode = mode; //no call assignament, update receive message from UAS
+    if (receivedMode)
+    {
+        //this->mode = mode; //no call assignament, update receive message from UAS
 
-    // Strip armed / disarmed call, this is not relevant for setting the mode
-    newBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
-    // Now set current state (request no change)
-    newBaseMode |= this->base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
+        // Strip armed / disarmed call for safety reasons, this is not relevant for setting the mode
+        newBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+        // Now set current state (request no change)
+        newBaseMode |= this->base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 
-    // Strip HIL part, replace it with current system state
-    newBaseMode &= (~MAV_MODE_FLAG_HIL_ENABLED);
-    // Now set current state (request no change)
-    newBaseMode |= this->base_mode & MAV_MODE_FLAG_HIL_ENABLED;
+//        // Strip HIL part, replace it with current system state
+//        newBaseMode &= (~MAV_MODE_FLAG_HIL_ENABLED);
+//        // Now set current state (request no change)
+//        newBaseMode |= this->base_mode & MAV_MODE_FLAG_HIL_ENABLED;
 
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newBaseMode, newCustomMode);
-    sendMessage(msg);
-    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", MODE " << newBaseMode << " " << newCustomMode;
+        setModeArm(newBaseMode, newCustomMode);
+    }
+    else
+    {
+        qDebug() << "WARNING: setMode called before base_mode bitmask was received from UAS";
+    }
+}
+
+/**
+* @param newBaseMode that UAS is to be set to.
+* @param newCustomMode that UAS is to be set to.
+*/
+void UAS::setModeArm(uint8_t newBaseMode, uint32_t newCustomMode)
+{
+    if (receivedMode)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newBaseMode, newCustomMode);
+        qDebug() << "mavlink_msg_set_mode_pack 1";
+        sendMessage(msg);
+        qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", MODE " << newBaseMode << " " << newCustomMode;
+    }
+    else
+    {
+        qDebug() << "WARNING: setModeArm called before base_mode bitmask was received from UAS";
+    }
 }
 
 /**
@@ -2716,9 +2744,10 @@ void UAS::launch()
  */
 void UAS::armSystem()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+    setModeArm(base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+//    sendMessage(msg);
 }
 
 /**
@@ -2727,37 +2756,42 @@ void UAS::armSystem()
  */
 void UAS::disarmSystem()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+    setModeArm(base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+//    sendMessage(msg);
 }
 
 void UAS::toggleArmedState()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+    setModeArm(base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+//    sendMessage(msg);
 }
 
 void UAS::goAutonomous()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_AUTO_ENABLED, 0);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+    setMode(base_mode | MAV_MODE_FLAG_AUTO_ENABLED, custom_mode);
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_AUTO_ENABLED, 0);
+//    sendMessage(msg);
 }
 
 void UAS::goManual()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+    setMode(base_mode | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, custom_mode);
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
+//    sendMessage(msg);
 }
 
 void UAS::toggleAutonomy()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+    setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, custom_mode);
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
+//    sendMessage(msg);
 }
 
 /**
@@ -3117,9 +3151,10 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
     else
     {
         // Attempt to set HIL mode
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-        sendMessage(msg);
+//        mavlink_message_t msg;
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//        sendMessage(msg);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3144,9 +3179,10 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
     else
     {
         // Attempt to set HIL mode
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-        sendMessage(msg);
+//        mavlink_message_t msg;
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//        sendMessage(msg);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3175,9 +3211,10 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
     else
     {
         // Attempt to set HIL mode
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-        sendMessage(msg);
+//        mavlink_message_t msg;
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//        sendMessage(msg);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3191,9 +3228,10 @@ void UAS::startHil()
     if (hilEnabled) return;
     hilEnabled = true;
     sensorHil = false;
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-    sendMessage(msg);
+//  mavlink_message_t msg;
+    setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//  mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//  sendMessage(msg);
     // Connect HIL simulation link
     simulation->connectSimulation();
 }
@@ -3204,9 +3242,10 @@ void UAS::startHil()
 void UAS::stopHil()
 {
     if (simulation) simulation->disconnectSimulation();
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & !MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+    setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+//    sendMessage(msg);
     hilEnabled = false;
     sensorHil = false;
 }
