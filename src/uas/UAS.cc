@@ -1847,7 +1847,7 @@ void UAS::setMode(uint8_t newBaseMode, uint32_t newCustomMode)
     }
     else
     {
-        qDebug() << "WARNING: setMode called before base_mode bitmask was received from UAS";
+        qDebug() << "WARNING: setMode called before base_mode bitmask was received from UAS, new mode was not sent to system";
     }
 }
 
@@ -1867,7 +1867,7 @@ void UAS::setModeArm(uint8_t newBaseMode, uint32_t newCustomMode)
     }
     else
     {
-        qDebug() << "WARNING: setModeArm called before base_mode bitmask was received from UAS";
+        qDebug() << "WARNING: setModeArm called before base_mode bitmask was received from UAS, new mode was not sent to system";
     }
 }
 
@@ -2744,10 +2744,7 @@ void UAS::launch()
  */
 void UAS::armSystem()
 {
-//    mavlink_message_t msg;
     setModeArm(base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-//    sendMessage(msg);
 }
 
 /**
@@ -2756,42 +2753,27 @@ void UAS::armSystem()
  */
 void UAS::disarmSystem()
 {
-//    mavlink_message_t msg;
     setModeArm(base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-//    sendMessage(msg);
 }
 
 void UAS::toggleArmedState()
 {
-//    mavlink_message_t msg;
     setModeArm(base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-//    sendMessage(msg);
 }
 
 void UAS::goAutonomous()
 {
-//    mavlink_message_t msg;
     setMode(base_mode | MAV_MODE_FLAG_AUTO_ENABLED, custom_mode);
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_AUTO_ENABLED, 0);
-//    sendMessage(msg);
 }
 
 void UAS::goManual()
 {
-//    mavlink_message_t msg;
     setMode(base_mode | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, custom_mode);
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
-//    sendMessage(msg);
 }
 
 void UAS::toggleAutonomy()
 {
-//    mavlink_message_t msg;
     setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, custom_mode);
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
-//    sendMessage(msg);
 }
 
 /**
@@ -3151,10 +3133,7 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
     else
     {
         // Attempt to set HIL mode
-//        mavlink_message_t msg;
         setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//        sendMessage(msg);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3179,10 +3158,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
     else
     {
         // Attempt to set HIL mode
-//        mavlink_message_t msg;
         setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//        sendMessage(msg);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3211,10 +3187,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
     else
     {
         // Attempt to set HIL mode
-//        mavlink_message_t msg;
         setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//        sendMessage(msg);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3228,10 +3201,7 @@ void UAS::startHil()
     if (hilEnabled) return;
     hilEnabled = true;
     sensorHil = false;
-//  mavlink_message_t msg;
     setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//  mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//  sendMessage(msg);
     // Connect HIL simulation link
     simulation->connectSimulation();
 }
@@ -3242,10 +3212,7 @@ void UAS::startHil()
 void UAS::stopHil()
 {
     if (simulation) simulation->disconnectSimulation();
-//    mavlink_message_t msg;
-//    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
     setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-//    sendMessage(msg);
     hilEnabled = false;
     sensorHil = false;
 }
