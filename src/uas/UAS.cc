@@ -2763,17 +2763,17 @@ void UAS::toggleArmedState()
 
 void UAS::goAutonomous()
 {
-    setMode(base_mode | MAV_MODE_FLAG_AUTO_ENABLED, custom_mode);
+    setMode((base_mode & ~MAV_MODE_FLAG_MANUAL_INPUT_ENABLED) | (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED), 0);
 }
 
 void UAS::goManual()
 {
-    setMode(base_mode | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, custom_mode);
+    setMode((base_mode & ~(MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED))  | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
 }
 
 void UAS::toggleAutonomy()
 {
-    setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, custom_mode);
+    setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED ^ MAV_MODE_FLAG_GUIDED_ENABLED ^ MAV_MODE_FLAG_STABILIZE_ENABLED, 0);
 }
 
 /**
