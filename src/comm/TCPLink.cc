@@ -224,7 +224,6 @@ bool TCPLink::hardwareConnect(void)
     }
     
     socketIsConnected = true;
-    connectionStartTime = QGC::groundTimeUsecs()/1000;
     emit connected(true);
 
     return true;
@@ -232,6 +231,7 @@ bool TCPLink::hardwareConnect(void)
 
 void TCPLink::socketError(QAbstractSocket::SocketError socketError)
 {
+    Q_UNUSED(socketError);
     emit communicationError(getName(), "Error on socket: " + socket->errorString());
 }
 
@@ -265,61 +265,4 @@ void TCPLink::setName(QString name)
 qint64 TCPLink::getNominalDataRate() const
 {
     return 54000000; // 54 Mbit
-}
-
-qint64 TCPLink::getTotalUpstream()
-{
-    statisticsMutex.lock();
-    qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalUpstream;
-}
-
-qint64 TCPLink::getCurrentUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 TCPLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 TCPLink::getBitsSent() const
-{
-    return bitsSentTotal;
-}
-
-qint64 TCPLink::getBitsReceived() const
-{
-    return bitsReceivedTotal;
-}
-
-qint64 TCPLink::getTotalDownstream()
-{
-    statisticsMutex.lock();
-    qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalDownstream;
-}
-
-qint64 TCPLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 TCPLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool TCPLink::isFullDuplex() const
-{
-    return true;
-}
-
-int TCPLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
 }
