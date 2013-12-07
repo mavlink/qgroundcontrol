@@ -465,6 +465,7 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
+    bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay overlay;
@@ -833,8 +834,11 @@ public slots:
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
-    /** @brief Set current mode of operation, e.g. auto or manual */
+    /** @brief Set current mode of operation, e.g. auto or manual, always uses the current arming status for safety reason */
     void setMode(uint8_t newBaseMode, uint32_t newCustomMode);
+
+    /** @brief Set current mode of operation, e.g. auto or manual, does not check the arming status, for anything else than arming/disarming operations use setMode instead */
+    void setModeArm(uint8_t newBaseMode, uint32_t newCustomMode);
 
     /** @brief Request all parameters */
     void requestParameters();
