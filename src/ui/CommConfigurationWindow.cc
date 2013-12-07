@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialConfigurationWindow.h"
 #include "SerialLink.h"
 #include "UDPLink.h"
+#include "TCPLink.h"
 #include "MAVLinkSimulationLink.h"
 #ifdef XBEELINK
 #include "XbeeLink.h"
@@ -52,6 +53,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "QGCUDPLinkConfiguration.h"
+#include "QGCTCPLinkConfiguration.h"
 #include "LinkManager.h"
 #include "MainWindow.h"
 
@@ -82,6 +84,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // add link types
     ui.linkType->addItem(tr("Serial"), QGC_LINK_SERIAL);
     ui.linkType->addItem(tr("UDP"), QGC_LINK_UDP);
+    ui.linkType->addItem(tr("TCP"), QGC_LINK_TCP);
     if(dynamic_cast<MAVLinkSimulationLink*>(link)) {
         //Only show simulation option if already setup elsewhere as a simulation
         ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
@@ -148,6 +151,13 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("UDP Link"));
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_UDP));
     }
+    TCPLink* tcp = dynamic_cast<TCPLink*>(link);
+    if (tcp != 0) {
+        QWidget* conf = new QGCTCPLinkConfiguration(tcp, this);
+        ui.linkScrollArea->setWidget(conf);
+        ui.linkGroupBox->setTitle(tr("TCP Link"));
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_TCP));
+    }
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim != 0) {
         ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_SIMULATION));
@@ -177,7 +187,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		connect(xbee,SIGNAL(tryConnectEnd(bool)),ui.actionConnect,SLOT(setEnabled(bool)));
 	}
 #endif // XBEELINK
-    if (serial == 0 && udp == 0 && sim == 0
+    if (serial == 0 && udp == 0 && sim == 0 && tcp == 0
 #ifdef OPAL_RT
             && opal == 0
 #endif
@@ -256,6 +266,14 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 				break;
 			}
 			
+        case QGC_LINK_TCP:
+            {
+            TCPLink *tcp = new TCPLink();
+            tmpLink = tcp;
+            MainWindow::instance()->addLink(tmpLink);
+            break;
+            }
+
 #ifdef OPAL_RT
         case QGC_LINK_OPAL:
 			{
