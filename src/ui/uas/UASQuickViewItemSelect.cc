@@ -59,7 +59,9 @@ void UASQuickViewItemSelect::addItem(QString item,bool enabled)
 }
 void UASQuickViewItemSelect::resizeEvent(QResizeEvent *event)
 {
-    /*for (int i=0;i<m_checkBoxList.size();i++)
+    Q_UNUSED(event);
+#if 0
+    for (int i=0;i<m_checkBoxList.size();i++)
     {
         ui.gridLayout->removeWidget(m_checkBoxList[i]);
     }
@@ -72,8 +74,8 @@ void UASQuickViewItemSelect::resizeEvent(QResizeEvent *event)
         ui.gridLayout->widget()->width() > this->width();
         //need to reduce column number.
 
-    }*/
-
+    }
+#endif
 }
 
 void UASQuickViewItemSelect::checkBoxClicked(bool checked)

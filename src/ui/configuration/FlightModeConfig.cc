@@ -130,6 +130,9 @@ void FlightModeConfig::activeUASSet(UASInterface *uas)
 }
 void FlightModeConfig::modeChanged(int sysId, QString status, QString description)
 {
+    Q_UNUSED(sysId);
+    Q_UNUSED(status);
+    Q_UNUSED(description);
     //Unused?
 }
 void FlightModeConfig::saveButtonClicked()
@@ -227,6 +230,9 @@ void FlightModeConfig::remoteControlChannelRawChanged(int chan,float val)
 
 void FlightModeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
     {
         if (parameterName == "FLTMODE1")

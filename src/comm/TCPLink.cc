@@ -232,6 +232,7 @@ bool TCPLink::hardwareConnect(void)
 
 void TCPLink::socketError(QAbstractSocket::SocketError socketError)
 {
+    Q_UNUSED(socketError);
     emit communicationError(getName(), "Error on socket: " + socket->errorString());
 }
 
