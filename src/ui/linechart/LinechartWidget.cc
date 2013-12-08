@@ -171,7 +171,7 @@ void LinechartWidget::selectAllCurves(bool all)
 {
     QMap<QString, QLabel*>::iterator i;
     for (i = curveLabels->begin(); i != curveLabels->end(); ++i) {
-        activePlot->setVisible(i.key(), all);
+        activePlot->setCurveVisible(i.key(), all);
     }
 }
 
@@ -647,7 +647,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     // Set UI components to initial state
     checkBox->setChecked(false);
-    plot->setVisible(curve+unit, false);
+    plot->setCurveVisible(curve+unit, false);
 }
 
 /**
@@ -952,7 +952,7 @@ void LinechartWidget::takeButtonClick(bool checked)
 
     if(button != NULL)
     {
-        activePlot->setVisible(button->objectName(), checked);
+        activePlot->setCurveVisible(button->objectName(), checked);
         QWidget* colorIcon = colorIcons.value(button->objectName(), 0);
         if (colorIcon)
         {

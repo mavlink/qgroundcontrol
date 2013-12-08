@@ -279,7 +279,7 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     
     bool ok;
     double value = variant.toDouble(&ok);
-    if(!ok || variant.type() == QMetaType::QString || variant.type() == QMetaType::QByteArray)
+    if(!ok || (int)variant.type() == QMetaType::QString || (int)variant.type() == QMetaType::QByteArray)
         return;
 
     if (!uasPropertyValueMap.contains(name))
