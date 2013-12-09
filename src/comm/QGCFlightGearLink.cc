@@ -280,29 +280,19 @@ void QGCFlightGearLink::readBytes()
 
     temperature = values.at(19).toFloat();
     abs_pressure = values.at(20).toFloat()*1e2; //convert to Pa from hPa
+    
+    //calculate differential pressure
+    const float air_gas_constant = 287.1f; // J/(kg * K)
+    const float absolute_null_celsius = -273.15f; // °C
+    float density = abs_pressure / (air_gas_constant * (temperature - absolute_null_celsius));
+    diff_pressure = true_airspeed * true_airspeed * density / 2.0f;
+    //qDebug() << "diff_pressure: " << diff_pressure << "abs_pressure: " << abs_pressure;
 
     // Send updated state
     //qDebug()  << "sensorHilEnabled: " << sensorHilEnabled;
     if (_sensorHilEnabled)
     {
         quint16 fields_changed = 0xFFF; //set all 12 used bits
-
-        //calculate differential pressure
-        const float air_gas_constant = 287.1f; // J/(kg * K)
-        const float absolute_null_celsius = -273.15f; // °C
-        float density = abs_pressure / (air_gas_constant * (temperature - absolute_null_celsius));
-        diff_pressure = true_airspeed * true_airspeed * density / 2.0f;
-        //qDebug() << "diff_pressure: " << diff_pressure << "abs_pressure: " << abs_pressure;
-
-        /* Calculate indicated airspeed */
-        const float air_density_sea_level_15C  = 1.225f; //kg/m^3
-        if (diff_pressure > 0)
-        {
-            ind_airspeed =  sqrtf((2.0f*diff_pressure) / air_density_sea_level_15C);
-        } else
-        {
-            ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
-        }
 
         //qDebug() << "ind_airspeed: " << ind_airspeed << "true_airspeed: " << true_airspeed;
 
@@ -363,6 +353,17 @@ void QGCFlightGearLink::readBytes()
 
 //        qDebug()  << "sensorHilGpsChanged " << lat  << lon << alt  << vel;
     } else {
+        /* Calculate indicated airspeed */
+        const float air_density_sea_level_15C  = 1.225f; //kg/m^3
+        if (diff_pressure > 0)
+        {
+            ind_airspeed =  sqrtf((2.0f*diff_pressure) / air_density_sea_level_15C);
+        } else
+        {
+            ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
+        }
+        
+
         emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                          pitchspeed, yawspeed, lat, lon, alt,
                          vx, vy, vz,
