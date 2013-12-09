@@ -30,8 +30,6 @@ signals:
     void triggerSimulationView();
     void triggerTerminalView();
 
-    void MAVConnected(bool connected);
-
 public slots:
     void selectFlightView();
     void selectFlightPlanView();

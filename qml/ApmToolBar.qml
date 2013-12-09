@@ -42,21 +42,6 @@ Rectangle {
         }
     }
 
-// [BB] The code below should work, not sure why. replaced with code above
-//    Connections {
-//            target: globalObj
-//            onMAVConnected: {
-//                console.log("QML Change Connection " + connected)
-//                if (connected){
-//                    console.log("connected")
-//                    connectButton.image = "./resources/qgroundcontrol/toolbar/disconnect.png"
-//                } else {
-//                    console.log("disconnected")
-//                    connectButton.image = "./resources/qgroundcontrol/toolbar/connect.png"
-//                }
-//            }
-//    }
-
     Row {
         anchors.left: parent.left
         spacing: 10
