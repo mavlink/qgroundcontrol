@@ -85,7 +85,7 @@ public:
 
 public slots:
     void moveBy(double x, double y);
-    virtual void move(double x, double y);
+    virtual void moveTo(const QPointF &);
 
     virtual void zoom(const QwtDoubleRect &);
     virtual void zoom(int up);
