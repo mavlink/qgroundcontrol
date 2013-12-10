@@ -28,6 +28,14 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
+// This is the list of application resources which must be copied to the build target location
+// We create one list and use it in each build type so that the various build flavors don't
+// get out of sync.
+COPY_RESOURCE_LIST = \
+    $$BASEDIR/files \
+    $$BASEDIR/qml \
+    $$BASEDIR/data
+
 # MAC OS X
 macx|macx-g++42|macx-g++|macx-llvm: {
 
@@ -47,15 +55,9 @@ macx|macx-g++42|macx-g++|macx-llvm: {
 
 	ICON = $$BASEDIR/files/images/icons/macx.icns
 
-	# Copy contributed files
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
-	# Copy google earth starter file
-        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
-	# Copy CSS stylesheets
-        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-dark.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-dark.css
-        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-light.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-light.css
-        # Copy support files
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+    # Copy application resources
+    for(COPY_DIR, COPY_RESOURCE_LIST):QMAKE_POST_LINK += && cp -rf $${COPY_DIR} $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+
         # Copy MAVLink
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/mavlink $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
 	# Copy libraries
@@ -64,19 +66,6 @@ macx|macx-g++42|macx-g++|macx-llvm: {
         # Copy frameworks
         QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
         QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/Frameworks/* $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
-
-        # Copy QML stuff
-        message(BASEDIR $$BASEDIR)
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/*.qml $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml
-
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/components/
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/components/*.qml $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/components
-
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/resources/qgroundcontrol/toolbar/*.png $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
 
 
 	# Fix library paths inside executable
@@ -256,10 +245,9 @@ linux-g++|linux-g++-64{
 		QMAKE_POST_LINK += && mkdir -p $$TARGETDIR
 	}
 	DESTDIR = $$TARGETDIR
-	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR
-	QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR
-	QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/files/images
-	QMAKE_POST_LINK += && cp -rf $$BASEDIR/files/styles/Vera.ttf $$TARGETDIR/files/styles/Vera.ttf
+    
+    # Copy application resources
+    for(COPY_DIR, COPY_RESOURCE_LIST):QMAKE_POST_LINK += && cp -rf $${COPY_DIR} $$TARGETDIR
 
 	# osg/osgEarth dynamic casts might fail without this compiler option.
 	# see http://osgearth.org/wiki/FAQ for details.
@@ -346,6 +334,7 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 	# Copy dependencies
 	BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
 	TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+    COPY_RESOURCE_LIST_WIN = $$replace(COPY_RESOURCE_LIST, "/","\\")
 
 	CONFIG(debug, debug|release) {
 		# Copy supporting library DLLs
@@ -354,9 +343,7 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 
 		# Copy application resources
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\debug\\files" /E /I $$escape_expand(\\n))
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\qml" "$$TARGETDIR_WIN\\debug\\qml" /E /I $$escape_expand(\\n))
+        for(COPY_DIR, COPY_RESOURCE_LIST):QMAKE_POST_LINK += $$quote(xcopy /D /Y "$${COPY_DIR}" "$$TARGETDIR_WIN\\debug" /E /I $$escape_expand(\\n))
 
 		# Copy Qt DLLs
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\debug" /E /I $$escape_expand(\\n))
@@ -388,9 +375,7 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 
 		# Copy application resources
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\release\\files" /E /I $$escape_expand(\\n))
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\release\\models" /E /I $$escape_expand(\\n))
-		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$BASEDIR_WIN\\qml" "$$TARGETDIR_WIN\\release\\qml" /E /I $$escape_expand(\\n))
+        for(COPY_DIR, COPY_RESOURCE_LIST_WIN):QMAKE_POST_LIST += $$quote(xcopy /D /Y "$${COPY_DIR}" "$$TARGETDIR_WIN\\release" /E /I $$escape_expand(\\n))
 
 		# Copy Qt DLLs
 		QMAKE_POST_LINK += $$quote(xcopy /D /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\release" /E /I $$escape_expand(\\n))
