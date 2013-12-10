@@ -9,7 +9,7 @@ QGCTCPLinkConfiguration::QGCTCPLinkConfiguration(TCPLink* link, QWidget *parent)
     ui(new Ui::QGCTCPLinkConfiguration)
 {
     ui->setupUi(this);
-    uint16_t port = link->getPort();
+    quint16 port = link->getPort();
     ui->portSpinBox->setValue(port);
     QString addr = link->getHostAddress().toString();
     ui->hostAddressLineEdit->setText(addr);
