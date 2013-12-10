@@ -48,95 +48,95 @@ macx|macx-g++42|macx-g++|macx-llvm: {
 	ICON = $$BASEDIR/files/images/icons/macx.icns
 
 	# Copy contributed files
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/$${TARGET}.app/Contents/MacOS
 	# Copy google earth starter file
-        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/images/earth.html $$TARGETDIR/$${TARGET}.app/Contents/MacOS
 	# Copy CSS stylesheets
-        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-dark.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-dark.css
-        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-light.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-light.css
+        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-dark.css $$TARGETDIR/$${TARGET}.app/Contents/MacOS/style-dark.css
+        QMAKE_POST_LINK += && cp -f $$BASEDIR/files/styles/style-light.css $$TARGETDIR/$${TARGET}.app/Contents/MacOS/style-light.css
         # Copy support files
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/$${TARGET}.app/Contents/MacOS
         # Copy MAVLink
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/mavlink $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/mavlink $$TARGETDIR/$${TARGET}.app/Contents/MacOS
 	# Copy libraries
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/libs
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/mac64/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/libs
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/libs
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/mac64/lib/* $$TARGETDIR/$${TARGET}.app/Contents/libs
         # Copy frameworks
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/Frameworks/* $$TARGETDIR/qgroundcontrol.app/Contents/Frameworks
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/libs/lib/Frameworks/* $$TARGETDIR/$${TARGET}.app/Contents/Frameworks
 
         # Copy QML stuff
         message(BASEDIR $$BASEDIR)
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/*.qml $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/*.qml $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml
 
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/components/
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/components/*.qml $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/components
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml/components/
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/components/*.qml $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml/components
 
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol
-        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/resources/qgroundcontrol/toolbar/*.png $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml/resources
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml/resources/qgroundcontrol
+        QMAKE_POST_LINK += && mkdir -p $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/qml/resources/qgroundcontrol/toolbar/*.png $$TARGETDIR/$${TARGET}.app/Contents/MacOS/qml/resources/qgroundcontrol/toolbar
 
 
 	# Fix library paths inside executable
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
-        QMAKE_POST_LINK += && install_name_tool -change libosgViewer.dylib "@executable_path/../libs/libosgViewer.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
-        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
-        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
-        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
-        QMAKE_POST_LINK += && install_name_tool -change libosgWidget.dylib "@executable_path/../libs/libosgWidget.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        QMAKE_POST_LINK += && install_name_tool -change libosgViewer.dylib "@executable_path/../libs/libosgViewer.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        QMAKE_POST_LINK += && install_name_tool -change libosgWidget.dylib "@executable_path/../libs/libosgWidget.dylib" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
 
 	# Fix library paths within libraries (inter-library dependencies)
 
 	# OSG GA LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgGA.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgGA.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgGA.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgGA.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgGA.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgGA.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgGA.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgGA.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgGA.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgGA.dylib
 
 	# OSG DB LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgDB.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgDB.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgDB.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgDB.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgDB.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgDB.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgDB.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgDB.dylib
 
 	# OSG TEXT LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgText.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgText.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgText.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgText.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgText.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgText.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgText.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgText.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgText.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgText.dylib
 
 	# OSG UTIL LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgUtil.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgUtil.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgUtil.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgUtil.dylib
 
 
 	# OSG VIEWER LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgViewer.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgViewer.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgViewer.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgViewer.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgViewer.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgViewer.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgViewer.dylib
 
 	# OSG WIDGET LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
-        QMAKE_POST_LINK += && install_name_tool -change libosgViewer.dylib "@executable_path/../libs/libosgViewer.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgGA.dylib "@executable_path/../libs/libosgGA.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgText.dylib "@executable_path/../libs/libosgText.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgDB.dylib "@executable_path/../libs/libosgDB.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgUtil.dylib "@executable_path/../libs/libosgUtil.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosg.dylib "@executable_path/../libs/libosg.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libosgViewer.dylib "@executable_path/../libs/libosgViewer.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosgWidget.dylib
 
 	# CORE OSG LIBRARY
-        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/qgroundcontrol.app/Contents/libs/libosg.dylib
+        QMAKE_POST_LINK += && install_name_tool -change libOpenThreads.dylib "@executable_path/../libs/libOpenThreads.dylib" $$TARGETDIR/$${TARGET}.app/Contents/libs/libosg.dylib
 
         # SDL Framework
-        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL.framework/Versions/A/SDL" "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL" $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/qgroundcontrol
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL.framework/Versions/A/SDL" "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL" $$TARGETDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
 
 	# No check for GLUT.framework since it's a MAC default
 	message("Building support for OpenSceneGraph")
