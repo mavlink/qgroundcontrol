@@ -306,7 +306,7 @@ void WaypointList::addEditable(bool onCurrentPosition)
                     } else {
                         updateStatusLabel(tr("Added default GLOBAL (Relative alt.) waypoint."));
                     }
-                    wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
+                    wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitudeAMSL(), 0, WPM->getAcceptanceRadiusRecommendation(), 0, 0,true, true, (MAV_FRAME)WPM->getFrameRecommendation(), MAV_CMD_NAV_WAYPOINT);
                     WPM->addWaypointEditable(wp);
 
                 } else {
