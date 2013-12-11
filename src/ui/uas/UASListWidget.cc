@@ -165,7 +165,6 @@ void UASListWidget::addUAS(UASInterface* uas)
             uWidget = NULL;
         }
     }
-
     if (!uasViews.contains(uas))
     {
         // Only display the UAS in a single link.
