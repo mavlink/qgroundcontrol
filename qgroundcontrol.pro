@@ -32,7 +32,7 @@ QT += network \
     sql \
     declarative
 
-# Setting this define allows you to include this .pro file in another such that
+# Setting this varibale allows you to include this .pro file in another such that
 # you can set your own TARGET and main() function. This is used by the unit test
 # build files to build unit test using all built parts of QGCS except for main.
 isEmpty(QGCS_UNITTEST_OVERRIDE) {
