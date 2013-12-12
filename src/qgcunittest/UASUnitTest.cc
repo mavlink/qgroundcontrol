@@ -178,23 +178,23 @@ void UASUnitTest::getSystemType_test()
 
 void UASUnitTest::getAirframe_test()
 {
-    //when uas is constructed, airframe is set to QGC_AIRFRAME_GENERIC which is 0
-    QCOMPARE(uas->getAirframe(), 0);
+    //when uas is constructed, airframe is set to QGC_AIRFRAME_GENERIC
+    QVERIFY(uas->getAirframe() == UASInterface::QGC_AIRFRAME_GENERIC);
 }
 
 void UASUnitTest::setAirframe_test()
 {
     //check at construction, that airframe=0 (GENERIC)
-    QVERIFY(uas->getAirframe() == 0);
+    QVERIFY(uas->getAirframe() == UASInterface::QGC_AIRFRAME_GENERIC);
 
     //check that set airframe works
-    uas->setAirframe(11);
-    QVERIFY(uas->getAirframe() == 11);
+    uas->setAirframe(UASInterface::QGC_AIRFRAME_HEXCOPTER);
+    QVERIFY(uas->getAirframe() == UASInterface::QGC_AIRFRAME_HEXCOPTER);
 
     //check that setAirframe will not assign a number to airframe, that is 
     //not defined in the enum 
-    uas->setAirframe(12);
-    QVERIFY(uas->getAirframe() == 11);
+    uas->setAirframe(UASInterface::QGC_AIRFRAME_END_OF_ENUM);
+    QVERIFY(uas->getAirframe() == UASInterface::QGC_AIRFRAME_HEXCOPTER);
 }
 
 void UASUnitTest::getWaypointList_test()
@@ -391,10 +391,10 @@ void UASUnitTest::signalIdUASLink_test()
     LinkInterface* b = static_cast<LinkInterface*>(links.at(1));
     LinkInterface* c = static_cast<LinkInterface*>(links.at(2));
     LinkInterface* d = static_cast<LinkInterface*>(links.at(3));
-    QCOMPARE(a->getName(), QString("serial port COM 17"));
-    QCOMPARE(b->getName(), QString("serial port COM 18"));
-    QCOMPARE(c->getName(), QString("serial port COM 19"));
-    QCOMPARE(d->getName(), QString("serial port COM 20"));
+    QCOMPARE(a->getName(), QString("COM 17"));
+    QCOMPARE(b->getName(), QString("COM 18"));
+    QCOMPARE(c->getName(), QString("COM 19"));
+    QCOMPARE(d->getName(), QString("COM 20"));
 
     LinkManager::instance()->removeLink(myLink4);
     delete myLink4;
