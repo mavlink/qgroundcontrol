@@ -28,9 +28,9 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
-// This is the list of application resources which must be copied to the build target location
-// We create one list and use it in each build type so that the various build flavors don't
-// get out of sync.
+# This is the list of application resources which must be copied to the build target location
+# We create one list and use it in each build type so that the various build flavors don't
+# get out of sync.
 COPY_RESOURCE_LIST = \
     $$BASEDIR/files \
     $$BASEDIR/qml \
