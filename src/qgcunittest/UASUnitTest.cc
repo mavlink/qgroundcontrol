@@ -199,7 +199,7 @@ void UASUnitTest::setAirframe_test()
 
 void UASUnitTest::getWaypointList_test()
 {
-    QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();
+    QList<Waypoint*> kk = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(kk.count(), 0);
 
     Waypoint* wp = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");
@@ -232,7 +232,7 @@ void UASUnitTest::getWaypoint_test()
 
     uas->getWaypointManager()->addWaypointEditable(wp, true);
 
-    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
+    QList<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
 
     QCOMPARE(wpList.count(), 1);
     QCOMPARE(static_cast<quint16>(0), static_cast<Waypoint*>(wpList.at(0))->getId());
@@ -281,7 +281,7 @@ void UASUnitTest::signalWayPoint_test()
     QCOMPARE(spy2.count(), 1);
 
     uas->getWaypointManager()->clearWaypointList();
-    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
+    QList<Waypoint*> wpList = uas->getWaypointManager()->getWaypointEditableList();
     QCOMPARE(wpList.count(), 1);
     delete uas;
     uas = NULL;
@@ -292,7 +292,7 @@ void UASUnitTest::signalUASLink_test()
 {
 
     QSignalSpy spy(uas, SIGNAL(modeChanged(int,QString,QString)));
-    uas->setMode(2);
+    uas->setMode(2, 0);
     QCOMPARE(spy.count(), 0);// not solve for UAS not receiving message from UAS
 
     QSignalSpy spyS(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)));
