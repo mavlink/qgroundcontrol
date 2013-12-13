@@ -266,16 +266,11 @@ void QGCMapWidget::loadSettings(bool changePosition)
     // Set the correct trail interval
     if (trailType == mapcontrol::UAVTrailType::ByDistance)
     {
-        // XXX
-#ifdef Q_OS_WIN
-#pragma message ("WARNING: Settings loading for trail type not implemented")
-#else
-#warning Settings loading for trail type not implemented
-#endif
+        // FIXME: XXX NYI
     }
     else if (trailType == mapcontrol::UAVTrailType::ByTimeElapsed)
     {
-        // XXX
+        // FIXME: XXX NYI
     }
 
     // SET TRAIL TYPE

@@ -677,6 +677,8 @@ void PrimaryFlightDisplay::drawPitchScale(
         bool drawNumbersRight
         ) {
 
+    Q_UNUSED(intrusion);
+    
     float displayPitch = this->pitch;
     if (displayPitch == UNKNOWN_ATTITUDE)
         displayPitch = 0;
@@ -1098,6 +1100,8 @@ void PrimaryFlightDisplay::drawVelocityMeter(
         float secondarySpeed
         ) {
 
+    Q_UNUSED(secondarySpeed);
+    
     painter.resetTransform();
     fillInstrumentBackground(painter, area);
 

@@ -99,8 +99,11 @@ class OSGUTIL_EXPORT GLObjectsVisitor : public osg::NodeVisitor
           */
         virtual void apply(osg::Geode& node);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
         void apply(osg::Drawable& drawable);
         void apply(osg::StateSet& stateset);
+#pragma clang diagnostic pop
 
     protected:
 

@@ -213,7 +213,7 @@ public slots:
     void setActive(bool active);
 
     // Functions referring to the currently active plot
-    void setVisible(QString id, bool visible);
+    void setCurveVisible(QString id, bool visible);
 
     /**
      * @brief Set the color of a curve and its symbols.

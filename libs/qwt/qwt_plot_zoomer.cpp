@@ -479,32 +479,35 @@ void QwtPlotZoomer::widgetKeyPressEvent(QKeyEvent *ke)
 void QwtPlotZoomer::moveBy(double dx, double dy)
 {
     const QwtDoubleRect &rect = d_data->zoomStack[d_data->zoomRectIndex];
-    move(rect.left() + dx, rect.top() + dy);
+    moveTo(QPointF( rect.left() + dx, rect.top() + dy ));
 }
 
 /*!
-  Move the the current zoom rectangle.
-
-  \param x X value
-  \param y Y value
-
-  \sa QwtDoubleRect::move
-  \note The changed rectangle is limited by the zoom base
-*/
-void QwtPlotZoomer::move(double x, double y)
+ Move the the current zoom rectangle.
+ 
+ \param pos New position
+ 
+ \sa QRectF::moveTo()
+ \note The changed rectangle is limited by the zoom base
+ */
+void QwtPlotZoomer::moveTo( const QPointF &pos )
 {
+    double x = pos.x();
+    double y = pos.y();
+    
     if ( x < zoomBase().left() )
         x = zoomBase().left();
     if ( x > zoomBase().right() - zoomRect().width() )
         x = zoomBase().right() - zoomRect().width();
-
+    
     if ( y < zoomBase().top() )
         y = zoomBase().top();
     if ( y > zoomBase().bottom() - zoomRect().height() )
         y = zoomBase().bottom() - zoomRect().height();
-
-    if ( x != zoomRect().left() || y != zoomRect().top() ) {
-        d_data->zoomStack[d_data->zoomRectIndex].moveTo(x, y);
+    
+    if ( x != zoomRect().left() || y != zoomRect().top() )
+    {
+        d_data->zoomStack[d_data->zoomRectIndex].moveTo( x, y );
         rescale();
     }
 }

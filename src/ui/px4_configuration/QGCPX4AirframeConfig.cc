@@ -161,7 +161,7 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
         ui->flyingWingComboBox->setCurrentIndex(ui->flyingWingComboBox->findData(id));
         ui->statusLabel->setText(tr("Selected flying wing (ID: #%1)").arg(selectedId));
     }
-    else if (id >= 100 && id < 150 || id >= 1000 <= 2000)
+    else if ((id >= 100 && id < 150) || (id >= 1000 && id <= 2000))
     {
         ui->planePushButton->setChecked(true);
         ui->planeComboBox->setCurrentIndex(ui->planeComboBox->findData(id));

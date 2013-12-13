@@ -117,7 +117,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     nedAttGlobalOffset(0,0,0),
 
     waypointManager(this),
-    paramMgr(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -131,7 +130,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     attitudeStamped(false),
     lastAttitude(0),
 
+    blockHomePositionChanges(false),
+    receivedMode(false),
+
     paramsOnceRequested(false),
+    paramMgr(this),
     simulation(0),
 
     // The protected members.
@@ -142,9 +145,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0),
-    blockHomePositionChanges(false),
-    receivedMode(false)
+    lastSendTimeSensors(0)
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -3045,6 +3046,11 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
+    Q_UNUSED(time_us);
+    Q_UNUSED(xacc);
+    Q_UNUSED(yacc);
+    Q_UNUSED(zacc);
+    
         float q[4];
 
         double cosPhi_2 = cos(double(roll) / 2.0);

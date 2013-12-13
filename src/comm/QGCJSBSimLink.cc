@@ -241,8 +241,7 @@ void QGCJSBSimLink::readBytes()
 
         // Echo data for debugging purposes
         std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-        int i;
-        for (i=0; i<s; i++)
+        for (unsigned int i=0; i<s; i++)
         {
             unsigned int v=data[i];
             fprintf(stderr,"%02x ", v);

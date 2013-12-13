@@ -191,6 +191,7 @@ void UASQuickView::sortItems(int columncount)
 }
 void UASQuickView::resizeEvent(QResizeEvent *evt)
 {
+    Q_UNUSED(evt);
     recalculateItemTextSizing();
 }
 void UASQuickView::recalculateItemTextSizing()
@@ -274,9 +275,11 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
 {
     Q_UNUSED(uasId);
     Q_UNUSED(unit);
+    Q_UNUSED(msec);
+    
     bool ok;
     double value = variant.toDouble(&ok);
-    if(!ok || variant.type() == QMetaType::QString || variant.type() == QMetaType::QByteArray)
+    if(!ok || (int)variant.type() == QMetaType::QString || (int)variant.type() == QMetaType::QByteArray)
         return;
 
     if (!uasPropertyValueMap.contains(name))

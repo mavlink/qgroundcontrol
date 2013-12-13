@@ -46,10 +46,12 @@ class OSGUTIL_EXPORT StateToCompile : public osg::NodeVisitor
         virtual void apply(osg::Node& node);
         virtual void apply(osg::Geode& node);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
         virtual void apply(osg::Drawable& drawable);
         virtual void apply(osg::StateSet& stateset);
         virtual void apply(osg::Texture& texture);
-
+#pragma clang diagnostic pop
 };
 
 class OSGUTIL_EXPORT IncrementalCompileOperation : public osg::GraphicsOperation

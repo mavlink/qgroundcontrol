@@ -52,6 +52,9 @@ void ApmPlaneLevel::manualCheckBoxToggled(bool checked)
 }
 void ApmPlaneLevel::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "MANUAL_LEVEL")
     {
         if (value.toInt() == 1)
