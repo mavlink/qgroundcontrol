@@ -7,12 +7,12 @@ QGCMapToolBar::QGCMapToolBar(QWidget *parent) :
     ui(new Ui::QGCMapToolBar),
     map(NULL),
     optionsMenu(this),
-    mapTypesMenu(this),
     trailPlotMenu(this),
     updateTimesMenu(this),
-    mapTypesGroup(new QActionGroup(this)),
+    mapTypesMenu(this),
     trailSettingsGroup(new QActionGroup(this)),
-    updateTimesGroup(new QActionGroup(this))
+    updateTimesGroup(new QActionGroup(this)),
+    mapTypesGroup(new QActionGroup(this))
 {
     ui->setupUi(this);
 }

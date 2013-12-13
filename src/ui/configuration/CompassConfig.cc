@@ -46,6 +46,9 @@ CompassConfig::~CompassConfig()
 }
 void CompassConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "MAG_ENABLE")
     {
         if (value.toInt() == 0)

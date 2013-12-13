@@ -57,6 +57,7 @@ This file is part of the QGROUNDCONTROL project
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QLabel(parent),
+      image(NULL),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -111,12 +112,14 @@ HUD::HUD(int width, int height, QWidget* parent)
       nextOfflineImage(""),
       HUDInstrumentsEnabled(false),
       videoEnabled(true),
+      imageLoggingEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageLoggingEnabled(false),
-      imageRequested(false),
-      image(NULL)
+      imageRequested(false)
 {
+    Q_UNUSED(width);
+    Q_UNUSED(height);
+    
     // Set auto fill to false
     setAutoFillBackground(false);
 
@@ -501,11 +504,19 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
  */
 void HUD::setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight)
 {
+#if 0
+    // Left this code in since I assume it's the start of something useful
     int pixelWidth  = (int)(referenceWidth * scalingFactor);
     int pixelHeight = (int)(referenceHeight * scalingFactor);
     // Translate and scale the GL view in the virtual reference coordinate units on the screen
     int pixelPositionX = (int)((referencePositionX * scalingFactor) + xCenterOffset);
     int pixelPositionY = this->height() - (referencePositionY * scalingFactor) + yCenterOffset - pixelHeight;
+#else
+    Q_UNUSED(referencePositionY);
+    Q_UNUSED(referencePositionX);
+    Q_UNUSED(referenceWidth);
+    Q_UNUSED(referenceHeight);
+#endif
 }
 
 void HUD::paintRollPitchStrips()
@@ -515,7 +526,7 @@ void HUD::paintRollPitchStrips()
 
 void HUD::paintEvent(QPaintEvent *event)
 {
-
+    Q_UNUSED(event);
     paintHUD();
 }
 
@@ -588,13 +599,13 @@ void HUD::paintHUD()
         // And if either video or the data stream is enabled, draw the next frame.
         if (dataStreamEnabled || videoEnabled)
         {
-
+            // FIXME: missing code
+#if 0
             xImageFactor = width() / (float)glImage.width();
             yImageFactor = height() / (float)glImage.height();
             float imageFactor = qMin(xImageFactor, yImageFactor);
             // Resize to correct size and fill with image
-            // FIXME
-
+#endif
         }
 
         QPainter painter;

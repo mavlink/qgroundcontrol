@@ -52,6 +52,9 @@ FrameTypeConfig::~FrameTypeConfig()
 }
 void FrameTypeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "FRAME")
     {
         ui.xRadioButton->setEnabled(true);

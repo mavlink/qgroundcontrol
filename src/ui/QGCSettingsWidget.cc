@@ -13,8 +13,8 @@
 
 QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     QDialog(parent, flags),
-    ui(new Ui::QGCSettingsWidget),
-    mainWindow((MainWindow*)parent)
+    mainWindow((MainWindow*)parent),
+    ui(new Ui::QGCSettingsWidget)
 {
     ui->setupUi(this);
 

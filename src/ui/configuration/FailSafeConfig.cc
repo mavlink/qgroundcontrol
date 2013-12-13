@@ -278,6 +278,9 @@ void FailSafeConfig::activeUASSet(UASInterface *uas)
 }
 void FailSafeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     //Arducopter
     if (parameterName == "FS_THR_ENABLE")
     {
@@ -414,6 +417,8 @@ void FailSafeConfig::remoteControlChannelRawChanges(int chan,float value)
 }
 void FailSafeConfig::hilActuatorsChanged(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
+    Q_UNUSED(time);
+    
     ui.radio1Out->setValue(act1);
     ui.radio2Out->setValue(act2);
     ui.radio3Out->setValue(act3);
@@ -425,6 +430,8 @@ void FailSafeConfig::hilActuatorsChanged(uint64_t time, float act1, float act2, 
 }
 void FailSafeConfig::gpsStatusChanged(UASInterface* uas,int fixtype)
 {
+    Q_UNUSED(uas);
+    
     if (fixtype == 0 || fixtype == 1)
     {
         ui.gpsLabel->setText("<h1>None</h1>");
