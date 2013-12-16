@@ -303,7 +303,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
-    src/ui/designer/QGCXYPlot.ui
+    src/ui/designer/QGCXYPlot.ui \
+    src/ui/logging/QGCLogDownloader.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -511,7 +512,9 @@ HEADERS += src/MG.h \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/designer/QGCXYPlot.h \
-    src/ui/menuactionhelper.h
+    src/ui/menuactionhelper.h \
+    src/ui/logging/QGCLogDownloader.h \
+    src/uas/QGCUASLogManager.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -736,7 +739,9 @@ SOURCES += src/main.cc \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
-    src/ui/menuactionhelper.cpp
+    src/ui/menuactionhelper.cpp \
+    src/ui/logging/QGCLogDownloader.cc \
+    src/uas/QGCUASLogManager.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
