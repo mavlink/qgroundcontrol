@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
+#include "uas/QGCUASLogManager.h"
 
 
 /**
@@ -493,6 +494,7 @@ protected: //COMMENTS FOR TEST UNIT
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
     QGCUASParamManager paramMgr; ///< Parameter manager for this UAS
+    QGCUASLogManager logManager;
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
