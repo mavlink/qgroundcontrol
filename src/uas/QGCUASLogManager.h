@@ -2,9 +2,10 @@
 #define QGCUASLOGMANAGER_H
 
 #include <QObject>
-#include "uas/UASInterface.h"
 #include "comm/MAVLinkProtocol.h"
 #include "comm/LinkInterface.h"
+
+class UASInterface;
 
 class QGCUASLogManager : public QObject
 {
@@ -16,6 +17,8 @@ signals:
     
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    void requestLogList();
+    void deleteLogs();
 
 protected:
     UASInterface* mav;
