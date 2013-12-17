@@ -17,7 +17,7 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     parameterScalingFactor(0.0),
     parameterMin(0.0f),
     parameterMax(0.0f),
-    component(0),
+    componentId(0),
     ui(new Ui::QGCParamSlider)
 {
     valueModLock = false;
@@ -47,20 +47,31 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 
     // Sending actions
-    connect(ui->writeButton, SIGNAL(clicked()), this, SLOT(sendParameter()));
-    connect(ui->editSelectComponentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectComponent(int)));
-    connect(ui->editSelectParamComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectParameter(int)));
-    connect(ui->valueSlider, SIGNAL(valueChanged(int)), this, SLOT(setSliderValue(int)));
-    connect(ui->doubleValueSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setParamValue(double)));
-    connect(ui->intValueSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setParamValue(int)));
-    connect(ui->editNameLabel, SIGNAL(textChanged(QString)), ui->nameLabel, SLOT(setText(QString)));
+    connect(ui->writeButton, SIGNAL(clicked()),
+            this, SLOT(setParamPending()));
+    connect(ui->editSelectComponentComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(selectComponent(int)));
+    connect(ui->editSelectParamComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(selectParameter(int)));
+    connect(ui->valueSlider, SIGNAL(valueChanged(int)),
+            this, SLOT(setSliderValue(int)));
+    connect(ui->doubleValueSpinBox, SIGNAL(valueChanged(double)),
+            this, SLOT(setParamValue(double)));
+    connect(ui->intValueSpinBox, SIGNAL(valueChanged(int)),
+            this, SLOT(setParamValue(int)));
+    connect(ui->editNameLabel, SIGNAL(textChanged(QString)),
+            ui->nameLabel, SLOT(setText(QString)));
     connect(ui->readButton, SIGNAL(clicked()), this, SLOT(requestParameter()));
-    connect(ui->editRefreshParamsButton, SIGNAL(clicked()), this, SLOT(refreshParamList()));
-    connect(ui->editInfoCheckBox, SIGNAL(clicked(bool)), this, SLOT(showInfo(bool)));
+    connect(ui->editRefreshParamsButton, SIGNAL(clicked()),
+            this, SLOT(refreshParamList()));
+    connect(ui->editInfoCheckBox, SIGNAL(clicked(bool)),
+            this, SLOT(showInfo(bool)));
     // connect to self
-    connect(ui->infoLabel, SIGNAL(released()), this, SLOT(showTooltip()));
+    connect(ui->infoLabel, SIGNAL(released()),
+            this, SLOT(showTooltip()));
     // Set the current UAS if present
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+            this, SLOT(setActiveUAS(UASInterface*)));
 }
 
 QGCParamSlider::~QGCParamSlider()
@@ -83,8 +94,7 @@ void QGCParamSlider::refreshParamList()
 {
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
-    if (uas)
-    {
+    if (uas) {
         uas->getParamManager()->requestParameterList();
         ui->editStatusLabel->setText(tr("Parameter list updating.."));
     }
@@ -92,38 +102,38 @@ void QGCParamSlider::refreshParamList()
 
 void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 {
-    if (activeUas)
-    {
-        if (uas)
-        {
-            disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)));
-        }
 
-        // Connect buttons and signals
-        connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
+    if (uas != activeUas)  {
+        if (uas) {
+            disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
+                       this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)));
+        }
+        if (activeUas) {
+            connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)),
+                    this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
+        }
         uas = activeUas;
-        // Update current param value
-        //requestParameter();
-        // Set param info
-        QString text = uas->getParamManager()->getParamInfo(parameterName);
-        if (text != "")
-        {
+    }
+
+    if (uas && !parameterName.isEmpty()) {
+        QString text =  uas->getParamManager()->dataModel()->getParamDescription(parameterName);
+        if (!text.isEmpty()) {
             ui->infoLabel->setToolTip(text);
             ui->infoLabel->show();
         }
         // Force-uncheck and hide label if no description is available
-        if (ui->editInfoCheckBox->isChecked())
-        {
+        if (ui->editInfoCheckBox->isChecked()) {
             showInfo((text.length() > 0));
         }
     }
+
+
 }
 
 void QGCParamSlider::requestParameter()
 {
-    if (!parameterName.isEmpty() && uas)
-    {
-        uas->getParamManager()->requestParameterUpdate(this->component, this->parameterName);
+    if (uas && !parameterName.isEmpty()) {
+        uas->getParamManager()->requestParameterUpdate(componentId, parameterName);
     }
 }
 
@@ -167,132 +177,96 @@ void QGCParamSlider::setParamValue(int value)
 
 void QGCParamSlider::selectComponent(int componentIndex)
 {
-    this->component = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
+    this->componentId = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
 }
 
 void QGCParamSlider::selectParameter(int paramIndex)
 {
     // Set name
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
+    if (parameterName.isEmpty()) {
+        return;
+    }
 
     // Update min and max values if available
-    if (uas)
-    {
-        if (uas->getParamManager())
-        {
-            // Current value
-            //uas->getParamManager()->requestParameterUpdate(component, parameterName);
-
+    if (uas) {
+        UASParameterDataModel* dataModel =  uas->getParamManager()->dataModel();
+        if (dataModel) {
             // Minimum
-            if (uas->getParamManager()->isParamMinKnown(parameterName))
-            {
-                parameterMin = uas->getParamManager()->getParamMin(parameterName);
+            if (dataModel->isParamMinKnown(parameterName)) {
+                parameterMin = dataModel->getParamMin(parameterName);
                 ui->editMinSpinBox->setValue(parameterMin);
             }
 
             // Maximum
-            if (uas->getParamManager()->isParamMaxKnown(parameterName))
-            {
-                parameterMax = uas->getParamManager()->getParamMax(parameterName);
+            if (dataModel->isParamMaxKnown(parameterName)) {
+                parameterMax = dataModel->getParamMax(parameterName);
                 ui->editMaxSpinBox->setValue(parameterMax);
             }
-
-            // Description
-            //QString text = uas->getParamManager()->getParamInfo(parameterName);
-            //ui->infoLabel->setText(text);
-
-            //showInfo(!(text.length() > 0));
         }
     }
 }
 
-void QGCParamSlider::startEditMode()
+void QGCParamSlider::setEditMode(bool editMode)
 {
-    ui->valueSlider->hide();
-    ui->doubleValueSpinBox->hide();
-    ui->intValueSpinBox->hide();
-    ui->nameLabel->hide();
-    ui->writeButton->hide();
-    ui->readButton->hide();
+    if(!editMode) {
+        // Store component id
+        selectComponent(ui->editSelectComponentComboBox->currentIndex());
 
-    ui->editInfoCheckBox->show();
-    ui->editDoneButton->show();
-    ui->editNameLabel->show();
-    ui->editRefreshParamsButton->show();
-    ui->editSelectParamComboBox->show();
-    ui->editSelectComponentComboBox->show();
-    ui->editStatusLabel->show();
-    ui->editMinSpinBox->show();
-    ui->editMaxSpinBox->show();
-    ui->writeButton->hide();
-    ui->readButton->hide();
-    ui->editLine1->show();
-    ui->editLine2->show();
-    isInEditMode = true;
-}
+        // Store parameter name and id
+        selectParameter(ui->editSelectParamComboBox->currentIndex());
 
-void QGCParamSlider::endEditMode()
-{
-    // Store component id
-    selectComponent(ui->editSelectComponentComboBox->currentIndex());
+        // Min/max
+        parameterMin = ui->editMinSpinBox->value();
+        parameterMax = ui->editMaxSpinBox->value();
 
-    // Store parameter name and id
-    selectParameter(ui->editSelectParamComboBox->currentIndex());
-
-    // Min/max
-    parameterMin = ui->editMinSpinBox->value();
-    parameterMax = ui->editMaxSpinBox->value();
-
-    ui->editInfoCheckBox->hide();
-    ui->editDoneButton->hide();
-    ui->editNameLabel->hide();
-    ui->editRefreshParamsButton->hide();
-    ui->editSelectParamComboBox->hide();
-    ui->editSelectComponentComboBox->hide();
-    ui->editStatusLabel->hide();
-    ui->editMinSpinBox->hide();
-    ui->editMaxSpinBox->hide();
-    ui->editLine1->hide();
-    ui->editLine2->hide();
-    ui->writeButton->show();
-    ui->readButton->show();
-    ui->valueSlider->show();
-    switch (parameterValue.type())
-    {
-    case QVariant::Char:
-    case QVariant::Int:
-    case QVariant::UInt:
-        ui->intValueSpinBox->show();
-        break;
-    case QMetaType::Float:
-        ui->doubleValueSpinBox->show();
-        break;
-    default:
-        qCritical() << "ERROR: NO VALID PARAM TYPE";
-        return;
-    }
-    ui->nameLabel->show();
-    isInEditMode = false;
-    emit editingFinished();
-}
-
-void QGCParamSlider::sendParameter()
-{
-    if (uas)
-    {
-        // Set value, param manager handles retransmission
-        if (uas->getParamManager())
+        switch ((int)parameterValue.type())
         {
-            uas->getParamManager()->setParameter(component, parameterName, parameterValue);
+        case QVariant::Char:
+        case QVariant::Int:
+        case QVariant::UInt:
+            ui->intValueSpinBox->show();
+            break;
+        case QMetaType::Float:
+            ui->doubleValueSpinBox->show();
+            break;
+        default:
+            qCritical() << "ERROR: NO VALID PARAM TYPE";
+            return;
         }
-        else
-        {
-            qDebug() << "UAS HAS NO PARAM MANAGER, DOING NOTHING";
-        }
+    } else {
+        ui->doubleValueSpinBox->hide();
+        ui->intValueSpinBox->hide();
     }
-    else
-    {
-        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
+    ui->valueSlider->setVisible(!editMode);
+    ui->nameLabel->setVisible(!editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+
+    ui->editInfoCheckBox->setVisible(editMode);
+    ui->editDoneButton->setVisible(editMode);
+    ui->editNameLabel->setVisible(editMode);
+    ui->editRefreshParamsButton->setVisible(editMode);
+    ui->editSelectParamComboBox->setVisible(editMode);
+    ui->editSelectComponentComboBox->setVisible(editMode);
+    ui->editStatusLabel->setVisible(editMode);
+    ui->editMinSpinBox->setVisible(editMode);
+    ui->editMaxSpinBox->setVisible(editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+    ui->editLine1->setVisible(editMode);
+    ui->editLine2->setVisible(editMode);
+
+    QGCToolWidgetItem::setEditMode(editMode);
+}
+
+void QGCParamSlider::setParamPending()
+{
+    if (uas)  {
+        uas->getParamManager()->setPendingParam(componentId, parameterName, parameterValue);
+    }
+    else {
+        qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
 
@@ -301,7 +275,7 @@ void QGCParamSlider::setSliderValue(int sliderValue)
     if (!valueModLock && !valueModLockParam)
     {
         valueModLock = true;
-        switch (parameterValue.type())
+        switch ((int)parameterValue.type())
         {
         case QVariant::Char:
             parameterValue = QVariant(QChar((unsigned char)scaledIntToFloat(sliderValue)));
@@ -337,55 +311,48 @@ void QGCParamSlider::setSliderValue(int sliderValue)
  * @brief parameterName Key/name of the parameter
  * @brief value Value of the parameter
  */
-void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, QVariant value)
+void QGCParamSlider::setParameterValue(int uasId, int compId, int paramCount, int paramIndex, QString paramName, QVariant value)
 {
     Q_UNUSED(paramCount);
-    if (ui->nameLabel->text() == "Name")
-    {
-        ui->nameLabel->setText(parameterName);
+    if (uasId != this->uas->getUASID()) {
+        return;
+    }
+
+    if (ui->nameLabel->text() == "Name")  {
+        ui->nameLabel->setText(paramName);
     }
     // Check if this component and parameter are part of the list
     bool found = false;
-    for (int i = 0; i< ui->editSelectComponentComboBox->count(); ++i)
-    {
-        if (component == ui->editSelectComponentComboBox->itemData(i).toInt())
-        {
+    for (int i = 0; i< ui->editSelectComponentComboBox->count(); ++i) {
+        if (compId == ui->editSelectComponentComboBox->itemData(i).toInt()) {
             found = true;
         }
     }
 
-    if (!found)
-    {
-        ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(component), component);
+    if (!found) {
+        ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(compId), compId);
     }
 
     // Parameter checking
     found = false;
-    for (int i = 0; i < ui->editSelectParamComboBox->count(); ++i)
-    {
-        if (parameterName == ui->editSelectParamComboBox->itemText(i))
-        {
+    for (int i = 0; i < ui->editSelectParamComboBox->count(); ++i) {
+        if (paramName == ui->editSelectParamComboBox->itemText(i))  {
             found = true;
         }
     }
 
-    if (!found)
-    {
-        ui->editSelectParamComboBox->addItem(parameterName, paramIndex);
+    if (!found) {
+        ui->editSelectParamComboBox->addItem(paramName, paramIndex);
     }
 
-    if (visibleParam != "")
-    {
-        if (parameterName == visibleParam)
-        {
-            if (visibleVal == value.toInt())
-            {
-                this->uas->requestParameter(this->component,this->parameterName);
+    if (visibleParam != "") {
+        if (paramName == visibleParam)  {
+            if (visibleVal == value.toInt())  {
+                uas->getParamManager()->requestParameterUpdate(compId,paramName);
                 visibleEnabled = true;
                 this->show();
             }
-            else
-            {
+            else  {
                 //Disable the component here.
                 ui->valueSlider->setEnabled(false);
                 ui->intValueSpinBox->setEnabled(false);
@@ -396,16 +363,14 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
         }
     }
     Q_UNUSED(uas);
-    if (component == this->component && parameterName == this->parameterName)
-    {
-        if (!visibleEnabled)
-        {
+    if (compId == this->componentId && paramName == this->parameterName) {
+        if (!visibleEnabled) {
             return;
         }
         parameterValue = value;
         ui->valueSlider->setEnabled(true);
         valueModLockParam = true;
-        switch (value.type())
+        switch ((int)value.type())
         {
         case QVariant::Char:
             ui->intValueSpinBox->show();
@@ -468,8 +433,7 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
         parameterMin = ui->editMinSpinBox->value();
     }
 
-    if (paramIndex == paramCount - 1)
-    {
+    if (paramIndex == paramCount - 1) {
         ui->editStatusLabel->setText(tr("Complete parameter list received."));
     }
 }
@@ -506,7 +470,7 @@ void QGCParamSlider::writeSettings(QSettings& settings)
     settings.setValue("QGC_PARAM_SLIDER_DESCRIPTION", ui->nameLabel->text());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
     settings.setValue("QGC_PARAM_SLIDER_PARAMID", parameterName);
-    settings.setValue("QGC_PARAM_SLIDER_COMPONENTID", component);
+    settings.setValue("QGC_PARAM_SLIDER_COMPONENTID", componentId);
     settings.setValue("QGC_PARAM_SLIDER_MIN", ui->editMinSpinBox->value());
     settings.setValue("QGC_PARAM_SLIDER_MAX", ui->editMaxSpinBox->value());
     settings.setValue("QGC_PARAM_SLIDER_DISPLAY_INFO", ui->editInfoCheckBox->isChecked());
@@ -515,7 +479,7 @@ void QGCParamSlider::writeSettings(QSettings& settings)
 void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings)
 {
     parameterName = settings.value(pre + "QGC_PARAM_SLIDER_PARAMID").toString();
-    component = settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt();
+    componentId = settings.value(pre + "QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value(pre + "QGC_PARAM_SLIDER_DESCRIPTION").toString());
     ui->editNameLabel->setText(settings.value(pre + "QGC_PARAM_SLIDER_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
@@ -535,9 +499,6 @@ void QGCParamSlider::readSettings(const QString& pre,const QVariantMap& settings
     ui->editSelectComponentComboBox->setEnabled(true);
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
-
-    // Get param value after settings have been loaded
-    //requestParameter();
 }
 
 void QGCParamSlider::readSettings(const QSettings& settings)
@@ -551,7 +512,7 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     readSettings("",map);
     return;
     parameterName = settings.value("QGC_PARAM_SLIDER_PARAMID").toString();
-    component = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
+    componentId = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     ui->editNameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
@@ -571,6 +532,4 @@ void QGCParamSlider::readSettings(const QSettings& settings)
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
-    // Get param value after settings have been loaded
-    //requestParameter();
 }

@@ -129,10 +129,13 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven(bool)));
         connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBits(int)));
         connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBits(int)));
+        connect(ui.advCheckBox,SIGNAL(clicked(bool)),ui.advGroupBox,SLOT(setShown(bool)));
+        ui.advCheckBox->setChecked(false);
+        ui.advGroupBox->setVisible(false);
 
         //connect(this->link, SIGNAL(connected(bool)), this, SLOT());
-        ui.portName->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
-        ui.baudRate->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
+        //ui.portName->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
+        //ui.baudRate->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
 
         switch(this->link->getParityType()) {
         case 0:
@@ -216,23 +219,23 @@ void SerialConfigurationWindow::setupPortList()
     if (!link) return;
 
     // Get the ports available on this system
-    QVector<QString>* ports = link->getCurrentPorts();
+    QList<QString> ports = link->getCurrentPorts();
 
     QString storedName = this->link->getPortName();
     bool storedFound = false;
 
     // Add the ports in reverse order, because we prepend them to the list
-    for (int i = ports->size() - 1; i >= 0; --i)
+    for (int i = ports.count() - 1; i >= 0; --i)
     {
         // Prepend newly found port to the list
-        if (ui.portName->findText(ports->at(i)) == -1)
+        if (ui.portName->findText(ports[i]) == -1)
         {
-            ui.portName->insertItem(0, ports->at(i));
-            if (!userConfigured) ui.portName->setEditText(ports->at(i));
+            ui.portName->insertItem(0, ports[i]);
+            if (!userConfigured) ui.portName->setEditText(ports[i]);
         }
 
         // Check if the stored link name is still present
-        if (ports->at(i).contains(storedName) || storedName.contains(ports->at(i)))
+        if (ports[i].contains(storedName) || storedName.contains(ports[i]))
             storedFound = true;
     }
 
@@ -259,7 +262,7 @@ void SerialConfigurationWindow::setParityNone(bool accept)
 
 void SerialConfigurationWindow::setParityOdd(bool accept)
 {
-    if (accept) link->setParityType(1);
+    if (accept) link->setParityType(1); // [TODO] This needs to be Fixed [BB]
 }
 
 void SerialConfigurationWindow::setParityEven(bool accept)

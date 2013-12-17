@@ -42,16 +42,8 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
-#if _MSC_VER2
+#if _MSC_VER
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
-#define _ATL_APARTMENT_THREADED
-
-#include <atlbase.h>
-//You may derive a class from CComModule and use it if you want to override something,
-//but do not change the name of _Module
-extern CComModule _Module;
-#include <atlcom.h>
-
 #include <sapi.h>
 
 //using System;
@@ -61,11 +53,13 @@ extern CComModule _Module;
 #ifdef Q_OS_LINUX
 extern "C" {
 #include <flite/flite.h>
-    cst_voice* register_cmu_us_kal(const char* voxdir);
+    cst_voice *register_cmu_us_kal(const char *voxdir);
 };
 #endif
 
-
+#ifdef _MSC_VER
+ISpVoice *GAudioOutput::pVoice = NULL;
+#endif
 
 /**
  * This class follows the singleton design pattern
@@ -74,22 +68,24 @@ extern "C" {
  * the call can occur at any place in the code, no reference to the
  * GAudioOutput object has to be passed.
  */
-GAudioOutput* GAudioOutput::instance()
+GAudioOutput *GAudioOutput::instance()
 {
-    static GAudioOutput* _instance = 0;
-    if(_instance == 0)
+    static GAudioOutput *_instance = 0;
+
+    if (_instance == 0)
     {
         _instance = new GAudioOutput();
         // Set the application as parent to ensure that this object
         // will be destroyed when the main application exits
         _instance->setParent(qApp);
     }
+
     return _instance;
 }
 
 #define QGC_GAUDIOOUTPUT_KEY QString("QGC_AUDIOOUTPUT_")
 
-GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
+GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
     voiceIndex(0),
     emergency(false),
     muted(false)
@@ -97,57 +93,65 @@ GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
     // Load settings
     QSettings settings;
     settings.sync();
-    muted = settings.value(QGC_GAUDIOOUTPUT_KEY+"muted", muted).toBool();
+    muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
 
 
 #ifdef Q_OS_LINUX
     flite_init();
 #endif
 
-#if _MSC_VER2
+#if _MSC_VER
+    pVoice = NULL;
 
-    ISpVoice * pVoice = NULL;
     if (FAILED(::CoInitialize(NULL)))
     {
         qDebug("Creating COM object for audio output failed!");
     }
+
     else
     {
 
-        HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice;);
-        if( SUCCEEDED( hr ) )
+        HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
+
+        if (SUCCEEDED(hr))
         {
-            hr = pVoice->Speak(L"Hello world", 0, NULL);
-            pVoice->Release();
-            pVoice = NULL;
+            hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
+            //pVoice->Release();
+            //pVoice = NULL;
         }
     }
+
 #endif
     // Initialize audio output
-    //m_media = new Phonon::MediaObject(this);
-    //Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-    //createPath(m_media, audioOutput);
+    m_media = new Phonon::MediaObject(this);
+    Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
+    createPath(m_media, audioOutput);
 
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
     connect(emergencyTimer, SIGNAL(timeout()), this, SLOT(beep()));
 
-    switch (voiceIndex) {
+    switch (voiceIndex)
+    {
     case 0:
         selectFemaleVoice();
         break;
+
     default:
         selectMaleVoice();
         break;
     }
 }
 
-//GAudioOutput::~GAudioOutput()
-//{
-//#ifdef _MSC_VER2
-//    ::CoUninitialize();
-//#endif
-//}
+GAudioOutput::~GAudioOutput()
+{
+#ifdef _MSC_VER
+    pVoice->Release();
+    pVoice = NULL;
+    ::CoUninitialize();
+#endif
+}
+
 
 void GAudioOutput::mute(bool mute)
 {
@@ -155,7 +159,7 @@ void GAudioOutput::mute(bool mute)
     {
         this->muted = mute;
         QSettings settings;
-        settings.setValue(QGC_GAUDIOOUTPUT_KEY+"muted", this->muted);
+        settings.setValue(QGC_GAUDIOOUTPUT_KEY + "muted", this->muted);
         settings.sync();
         emit mutedChanged(muted);
     }
@@ -173,29 +177,49 @@ bool GAudioOutput::say(QString text, int severity)
         // TODO Add severity filter
         Q_UNUSED(severity);
         bool res = false;
+
         if (!emergency)
         {
 
             // Speech synthesis is only supported with MSVC compiler
-#ifdef _MSC_VER2
-            SpeechSynthesizer synth = new SpeechSynthesizer();
+#ifdef _MSC_VER
+            /*SpeechSynthesizer synth = new SpeechSynthesizer();
             synth.SelectVoice("Microsoft Anna");
             synth.SpeakText(text.toStdString().c_str());
-            res = true;
+            res = true;*/
+            /*ISpVoice * pVoice = NULL;
+            if (FAILED(::CoInitialize(NULL)))
+            {
+            	qDebug("Creating COM object for audio output failed!");
+            }
+            else
+            {
+            	HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
+            	if( SUCCEEDED( hr ) )
+            	{
+            		hr = */pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
+            /*pVoice->WaitUntilDone(5000);
+            pVoice->Release();
+            pVoice = NULL;
+            }
+            }*/
 #endif
 
 #ifdef Q_OS_LINUX
             QTemporaryFile file;
             file.setFileTemplate("XXXXXX.wav");
-            if (file.open()) {
-                cst_voice* v = register_cmu_us_kal(NULL);
-                cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), v);
+
+            if (file.open())
+            {
+                cst_voice *v = register_cmu_us_kal(NULL);
+                cst_wave *wav = flite_text_to_wave(text.toStdString().c_str(), v);
                 // file.fileName() returns the unique file name
                 cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
-                //m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
-                //m_media->play();
+                m_media->setCurrentSource(Phonon::MediaSource(QUrl::fromLocalFile(file.fileName().toStdString().c_str())));
+                m_media->play();
                 res = true;
             }
+
 #endif
 
 #ifdef Q_OS_MAC
@@ -209,8 +233,10 @@ bool GAudioOutput::say(QString text, int severity)
             res = true;
 #endif
         }
+
         return res;
     }
+
     else
     {
         return false;
@@ -230,6 +256,7 @@ bool GAudioOutput::alert(QString text)
         say(text, 2);
         return true;
     }
+
     else
     {
         return false;
@@ -241,7 +268,7 @@ void GAudioOutput::notifyPositive()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath()+QString("/files/audio/double_notify.wav"));
+        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/double_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -252,7 +279,7 @@ void GAudioOutput::notifyNegative()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath()+QString("/files/audio/flat_notify.wav"));
+        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/flat_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -270,11 +297,14 @@ bool GAudioOutput::startEmergency()
     if (!emergency)
     {
         emergency = true;
+
         // Beep immediately and then start timer
         if (!muted) beep();
+
         emergencyTimer->start(1500);
         QTimer::singleShot(5000, this, SLOT(stopEmergency()));
     }
+
     return true;
 }
 
@@ -286,10 +316,12 @@ bool GAudioOutput::startEmergency()
  */
 bool GAudioOutput::stopEmergency()
 {
-    if (emergency) {
+    if (emergency)
+    {
         emergency = false;
         emergencyTimer->stop();
     }
+
     return true;
 }
 
@@ -298,7 +330,7 @@ void GAudioOutput::beep()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath()+QString("/files/audio/alert.wav"));
+        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
         qDebug() << "FILE:" << f.fileName();
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
@@ -337,13 +369,16 @@ QStringList GAudioOutput::listVoices(void)
 
 
     printf("Voices available: ");
-    for (v=flite_voice_list; v; v=val_cdr(v)) {
+
+    for (v = flite_voice_list; v; v = val_cdr(v))
+    {
         voice = val_voice(val_car(v));
         QString s;
-        s.sprintf("%s",voice->name);
-        printf("%s",voice->name);
+        s.sprintf("%s", voice->name);
+        printf("%s", voice->name);
         l.append(s);
     }
+
     printf("\n");
 
 #endif

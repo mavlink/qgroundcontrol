@@ -30,7 +30,6 @@ This file is part of the QGROUNDCONTROL project
 
 #ifndef _MAINWINDOW_H_
 #define _MAINWINDOW_H_
-
 #include <QtGui/QMainWindow>
 #include <QStatusBar>
 #include <QStackedWidget>
@@ -87,6 +86,7 @@ class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
 class JoystickWidget;
+class MenuActionHelper;
 
 /**
  * @brief Main Application Window
@@ -143,41 +143,38 @@ public:
     static const QString defaultLightStyle;
 
     /** @brief Get current visual style */
-    QGC_MAINWINDOW_STYLE getStyle()
+    QGC_MAINWINDOW_STYLE getStyle() const
     {
         return currentStyle;
     }
 
     /** @brief Get current light visual stylesheet */
-    QString getLightStyleSheet()
+    QString getLightStyleSheet() const
     {
         return lightStyleFileName;
     }
 
     /** @brief Get current dark visual stylesheet */
-    QString getDarkStyleSheet()
+    QString getDarkStyleSheet() const
     {
         return darkStyleFileName;
     }
     /** @brief Get auto link reconnect setting */
-    bool autoReconnectEnabled()
+    bool autoReconnectEnabled() const
     {
         return autoReconnect;
     }
 
     /** @brief Get title bar mode setting */
-    bool dockWidgetTitleBarsEnabled()
-    {
-        return dockWidgetTitleBarEnabled;
-    }
+    bool dockWidgetTitleBarsEnabled() const;
 
     /** @brief Get low power mode setting */
-    bool lowPowerModeEnabled()
+    bool lowPowerModeEnabled() const
     {
         return lowPowerMode;
     }
 
-    void setCustomMode(enum MainWindow::CUSTOM_MODE mode)
+    void setCustomMode(MainWindow::CUSTOM_MODE mode)
     {
         if (mode != CUSTOM_MODE_UNCHANGED)
         {
@@ -185,12 +182,12 @@ public:
         }
     }
 
-    enum MainWindow::CUSTOM_MODE getCustomMode()
+    MainWindow::CUSTOM_MODE getCustomMode() const
     {
         return customMode;
     }
 
-    QList<QAction*> listLinkMenuActions(void);
+    QList<QAction*> listLinkMenuActions();
 
 public slots:
     /** @brief Shows a status message on the bottom status bar */
@@ -205,9 +202,12 @@ public slots:
     /** @brief Show the application settings */
     void showSettings();
     /** @brief Add a communication link */
-    void addLink();
+    LinkInterface* addLink();
     void addLink(LinkInterface* link);
+    bool configLink(LinkInterface *link);
     void configure();
+    /** @brief Simulate a link */
+    void simulateLink(bool simulate);
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
 
@@ -222,9 +222,10 @@ public slots:
     void saveScreen();
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
-    void setAdvancedMode();
-    /** @brief Load configuration view */
-    void loadConfigurationView();
+    void setAdvancedMode(bool isAdvancedMode);
+    /** @brief Load configuration views */
+    void loadHardwareConfigView();
+    void loadSoftwareConfigView();
     /** @brief Load default view when no MAV is connected */
     void loadUnconnectedView();
     /** @brief Load view for pilot */
@@ -237,8 +238,8 @@ public slots:
     void loadOperatorView();
     /** @brief Load MAVLink XML generator view */
     void loadMAVLinkView();
-    /** @brief Load firmware update view */
-    void loadFirmwareUpdateView();
+    /** @brief Load Terminal Console views */
+    void loadTerminalView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -251,6 +252,7 @@ public slots:
     void enableDockWidgetTitleBars(bool enabled);
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
+
     /** @brief Save power by reducing update rates */
     void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
     /** @brief Load a specific style.
@@ -280,16 +282,6 @@ public slots:
 //    void loadDataView(QString fileName);
 
     /**
-     * @brief Shows a Docked Widget based on the action sender
-     *
-     * This slot is written to be used in conjunction with the addTool() function
-     * It shows the QDockedWidget based on the action sender
-     *
-     */
-    void showTool(bool visible);
-
-
-    /**
      * @brief Shows a Widget from the center stack based on the action sender
      *
      * This slot is written to be used in conjunction with the addCentralWidget() function
@@ -303,10 +295,15 @@ public slots:
 
     void commsWidgetDestroyed(QObject *obj);
 
+protected slots:
+    void showDockWidget(const QString &name, bool show);
+
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
-    void styleChanged();
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
+    /** Emitted when any value changes from any source */
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+
 #ifdef MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
@@ -333,7 +330,11 @@ protected:
         VIEW_SIMULATION,
         VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
-        VIEW_CONFIGURATION,
+        VIEW_HARDWARE_CONFIG,
+        VIEW_SOFTWARE_CONFIG,
+        VIEW_TERMINAL,
+        VIEW_3DWIDGET,
+        VIEW_GOOGLEEARTH,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
@@ -350,8 +351,9 @@ protected:
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
     void addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area);
-    void loadDockWidget(QString name);
-    QDockWidget* createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth=0,int minheight=0);
+    void loadDockWidget(const QString &name);
+
+    QDockWidget* createDockWidget(QWidget *subMainWindowParent,QWidget *child,const QString& title,const QString& objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,const QSize& minSize = QSize());
     /**
      * @brief Adds an already instantiated QWidget to the center stack
      *
@@ -363,7 +365,7 @@ protected:
      * @param widget        The QWidget being added
      * @param title         The entry that will appear in the Menu
      */
-    void addCentralWidget(QWidget* widget, const QString& title);
+    void addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title);
 
     /** @brief Catch window resize events */
     void resizeEvent(QResizeEvent * event);
@@ -387,9 +389,8 @@ protected:
     void storeSettings();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
-    MAVLinkProtocol* mavlink;
+    QPointer<MAVLinkProtocol> mavlink;
 
-    MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
 
     QSettings settings;
@@ -400,9 +401,11 @@ protected:
     QPointer<SubMainWindow> plannerView;
     QPointer<SubMainWindow> pilotView;
     QPointer<SubMainWindow> configView;
+    QPointer<SubMainWindow> softwareConfigView;
     QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
+    QPointer<SubMainWindow> terminalView;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
@@ -412,10 +415,10 @@ protected:
     //QPointer<XMLCommProtocolWidget> protocolWidget;
     //QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
-    QPointer<QWidget> _3DWidget;
+    QPointer<QWidget> q3DWidget;
 #endif
 #if (defined _MSC_VER) || (defined Q_OS_MAC)
-    QPointer<QGCGoogleEarthView> gEarthWidget;
+    QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
@@ -491,6 +494,7 @@ protected:
     QString darkStyleFileName;
     QString lightStyleFileName;
     bool autoReconnect;
+    MAVLinkSimulationLink* simulationLink;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
@@ -500,11 +504,7 @@ protected:
 private:
     QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
-    QMap<QAction*,QString > menuToDockNameMap;
-    QList<QDockWidget*> dockWidgets;
-    QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
-    bool isAdvancedMode; ///< If enabled dock widgets can be moved and floated.
-    bool dockWidgetTitleBarEnabled; ///< If enabled, dock widget titlebars are displayed when NOT in advanced mode.
+    MenuActionHelper *menuActionHelper;
     Ui::MainWindow ui;
 
     /** @brief Set the appropriate titlebar for a given dock widget.
@@ -515,6 +515,7 @@ private:
     QString getWindowStateKey();
     QString getWindowGeometryKey();
 
+    friend class MenuActionHelper; //For VIEW_SECTIONS
 };
 
 #endif /* _MAINWINDOW_H_ */

@@ -20,51 +20,20 @@ UASRawStatusView::UASRawStatusView(QWidget *parent) : QWidget(parent)
 }
 void UASRawStatusView::addSource(MAVLinkDecoder *decoder)
 {
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,double,quint64)),this,SLOT(valueChanged(int,QString,QString,double,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,qint8,quint64)),this,SLOT(valueChanged(int,QString,QString,qint8,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,qint16,quint64)),this,SLOT(valueChanged(int,QString,QString,qint16,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,qint32,quint64)),this,SLOT(valueChanged(int,QString,QString,qint32,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,qint64,quint64)),this,SLOT(valueChanged(int,QString,QString,qint64,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,quint8,quint64)),this,SLOT(valueChanged(int,QString,QString,quint8,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,qint16,quint64)),this,SLOT(valueChanged(int,QString,QString,qint16,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,quint32,quint64)),this,SLOT(valueChanged(int,QString,QString,quint32,quint64)));
-    connect(decoder,SIGNAL(valueChanged(int,QString,QString,quint64,quint64)),this,SLOT(valueChanged(int,QString,QString,quint64,quint64)));
+    connect(decoder,SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)),this,SLOT(valueChanged(int,QString,QString,QVariant,quint64)));
 }
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec)
+void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant &variant, const quint64 msec)
 {
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint16 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint16 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint32 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint32 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec)
-{
-    valueChanged(uasId,name,unit,(double)value,msec);
-}
+    Q_UNUSED(uasId);
+    Q_UNUSED(unit);
+    Q_UNUSED(msec);
 
-void UASRawStatusView::valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
-{
+    bool ok;
+    double value = variant.toDouble(&ok);
+    QMetaType::Type type = static_cast<QMetaType::Type>(variant.type());
+    if(!ok || type ==  QMetaType::QString || type ==  QMetaType::QByteArray)
+        return;
+
     valueMap[name] = value;
     if (nameToUpdateWidgetMap.contains(name))
     {
@@ -122,6 +91,7 @@ void UASRawStatusView::updateTableTimerTick()
                         //We're over what we can do. Add a column and continue.
                         columncount+=2;
                         broke = true;
+                        i = valueMap.constEnd(); // Ensure loop breakout.
                         break;
                     }
                 }

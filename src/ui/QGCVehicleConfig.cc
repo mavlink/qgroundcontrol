@@ -13,9 +13,11 @@
 #include <QMessageBox>
 
 #include "QGCVehicleConfig.h"
-#include "UASManager.h"
+
 #include "QGC.h"
 #include "QGCToolWidget.h"
+#include "UASManager.h"
+#include "UASParameterCommsMgr.h"
 #include "ui_QGCVehicleConfig.h"
 
 QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
@@ -259,7 +261,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     {
         if (file.toLower().endsWith(".qgw")) {
             QWidget* parent = left?ui->generalLeftContents:ui->generalRightContents;
-            tool = new QGCToolWidget("", parent);
+            tool = new QGCToolWidget("", "", parent);
             if (tool->loadSettings(generaldir.absoluteFilePath(file), false))
             {
                 toolWidgets.append(tool);
@@ -289,7 +291,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     {
         if (file.toLower().endsWith(".qgw")) {
             QWidget* parent = left?ui->advancedLeftContents:ui->advancedRightContents;
-            tool = new QGCToolWidget("", parent);
+            tool = new QGCToolWidget("", "", parent);
             if (tool->loadSettings(vehicledir.absoluteFilePath(file), false))
             {
                 toolWidgets.append(tool);
@@ -340,7 +342,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
             if (file.toLower().endsWith(".qgw")) {
-                tool = new QGCToolWidget("", tab);
+                tool = new QGCToolWidget("", "", tab);
                 if (tool->loadSettings(newdir.absoluteFilePath(file), false))
                 {
                     toolWidgets.append(tool);
@@ -387,7 +389,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
         foreach (QString file,newdir.entryList(QDir::Files| QDir::NoDotAndDotDot))
         {
             if (file.toLower().endsWith(".qgw")) {
-                tool = new QGCToolWidget("", tab);
+                tool = new QGCToolWidget("","", tab);
                 tool->addUAS(mav);
                 if (tool->loadSettings(newdir.absoluteFilePath(file), false))
                 {
@@ -409,7 +411,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
 
     // Load general calibration for autopilot
     //TODO: Handle this more gracefully, maybe have it scan the directory for multiple calibration entries?
-    tool = new QGCToolWidget("", ui->sensorContents);
+    tool = new QGCToolWidget("", "", ui->sensorContents);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/general/calibration/calibration.qgw", false))
     {
@@ -424,7 +426,7 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     }
 
     // Load vehicle-specific autopilot configuration
-    tool = new QGCToolWidget("", ui->sensorContents);
+    tool = new QGCToolWidget("", "", ui->sensorContents);
     tool->addUAS(mav);
     if (tool->loadSettings(autopilotdir.absolutePath() + "/" +  mav->getSystemTypeName().toLower() + "/calibration/calibration.qgw", false))
     {
@@ -679,10 +681,8 @@ void QGCVehicleConfig::loadConfig()
                                 {
                                     parent = ui->generalRightContents;
                                 }
-                                tool = new QGCToolWidget("", parent);
+                                tool = new QGCToolWidget(parametersname, parametersname, parent);
                                 tool->addUAS(mav);
-                                tool->setTitle(parametersname);
-                                tool->setObjectName(parametersname);
                                 tool->setSettings(genset);
                                 QList<QString> paramlist = tool->getParamList();
                                 for (int i=0;i<paramlist.size();i++)
@@ -733,10 +733,8 @@ void QGCVehicleConfig::loadConfig()
                                 {
                                     parent = ui->generalRightContents;
                                 }
-                                tool = new QGCToolWidget("", parent);
+                                tool = new QGCToolWidget(parametersname, parametersname, parent);
                                 tool->addUAS(mav);
-                                tool->setTitle(parametersname);
-                                tool->setObjectName(parametersname);
                                 tool->setSettings(advset);
                                 QList<QString> paramlist = tool->getParamList();
                                 for (int i=0;i<paramlist.size();i++)
@@ -786,9 +784,12 @@ void QGCVehicleConfig::loadConfig()
         xml.readNext();
     }
 
-    mav->getParamManager()->setParamInfo(paramTooltips);
+    if (!paramTooltips.isEmpty()) {
+           paramMgr->setParamDescriptions(paramTooltips);
+    }
     doneLoadingConfig = true;
-    mav->requestParameters(); //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
+    //Config is finished, lets do a parameter request to ensure none are missed if someone else started requesting before we were finished.
+    paramMgr->requestParameterListIfEmpty();
 }
 
 void QGCVehicleConfig::setActiveUAS(UASInterface* active)
@@ -859,6 +860,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     // Connect new system
     mav = active;
+    paramMgr = mav->getParamManager();
 
     // Reset current state
     resetCalibrationRC();
@@ -888,7 +890,7 @@ void QGCVehicleConfig::setActiveUAS(UASInterface* active)
 
     if (!paramTooltips.isEmpty())
     {
-           mav->getParamManager()->setParamInfo(paramTooltips);
+           mav->getParamManager()->setParamDescriptions(paramTooltips);
     }
 
     qDebug() << "CALIBRATION!! System Type Name:" << mav->getSystemTypeName();
@@ -929,6 +931,8 @@ void QGCVehicleConfig::writeCalibrationRC()
 {
     if (!mav) return;
 
+    setTrimPositions();
+
     QString minTpl("RC%1_MIN");
     QString maxTpl("RC%1_MAX");
     QString trimTpl("RC%1_TRIM");
@@ -937,6 +941,7 @@ void QGCVehicleConfig::writeCalibrationRC()
     // Do not write the RC type, as these values depend on this
     // active onboard parameter
 
+    //TODO consolidate RC param sending in the UAS comms mgr
     for (unsigned int i = 0; i < chanCount; ++i)
     {
         //qDebug() << "SENDING" << minTpl.arg(i+1) << rcMin[i];
@@ -971,33 +976,14 @@ void QGCVehicleConfig::writeCalibrationRC()
 
 void QGCVehicleConfig::requestCalibrationRC()
 {
-    if (!mav) return;
-
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
-
-    // Do not request the RC type, as these values depend on this
-    // active onboard parameter
-
-    for (unsigned int i = 0; i < chanMax; ++i)
-    {
-        mav->requestParameter(0, minTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, trimTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, maxTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-        mav->requestParameter(0, revTpl.arg(i+1));
-        QGC::SLEEP::usleep(5000);
-    }
+    paramMgr->requestRcCalibrationParamsUpdate();
 }
 
 void QGCVehicleConfig::writeParameters()
 {
     updateStatus(tr("Writing all onboard parameters."));
     writeCalibrationRC();
+
     mav->writeParametersToStorage();
 }
 
@@ -1030,12 +1016,10 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     // Normalized value
     float normalized;
 
-    if (val >= rcTrim[chan])
-    {
+    if (val >= rcTrim[chan]) {
         normalized = (val - rcTrim[chan])/(rcMax[chan] - rcTrim[chan]);
     }
-    else
-    {
+    else {
         normalized = -(rcTrim[chan] - val)/(rcTrim[chan] - rcMin[chan]);
     }
 
@@ -1044,22 +1028,18 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
     // Invert
     normalized = (rcRev[chan]) ? -1.0f*normalized : normalized;
 
-    if (chan == rcMapping[0])
-    {
+    if (chan == rcMapping[0]) {
         // ROLL
         rcRoll = normalized;
     }
-    if (chan == rcMapping[1])
-    {
+    if (chan == rcMapping[1]) {
         // PITCH
         rcPitch = normalized;
     }
-    if (chan == rcMapping[2])
-    {
+    if (chan == rcMapping[2]) {
         rcYaw = normalized;
     }
-    if (chan == rcMapping[3])
-    {
+    if (chan == rcMapping[3]) {
         // THROTTLE
         if (rcRev[chan]) {
             rcThrottle = 1.0f + normalized;
@@ -1069,23 +1049,19 @@ void QGCVehicleConfig::remoteControlChannelRawChanged(int chan, float val)
 
         rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
     }
-    if (chan == rcMapping[4])
-    {
+    if (chan == rcMapping[4]) {
         // MODE SWITCH
         rcMode = normalized;
     }
-    if (chan == rcMapping[5])
-    {
+    if (chan == rcMapping[5]) {
         // AUX1
         rcAux1 = normalized;
     }
-    if (chan == rcMapping[6])
-    {
+    if (chan == rcMapping[6]) {
         // AUX2
         rcAux2 = normalized;
     }
-    if (chan == rcMapping[7])
-    {
+    if (chan == rcMapping[7]) {
         // AUX3
         rcAux3 = normalized;
     }
@@ -1195,14 +1171,12 @@ void QGCVehicleConfig::parameterChanged(int uas, int component, QString paramete
             }
 
             // Create the tool, attaching it to the QGroupBox
-            QGCToolWidget *tool = new QGCToolWidget("", parent);
             QString tooltitle = parameterName;
             if (parameterName.split("_").size() > 1)
             {
                 tooltitle = parameterName.split("_")[0] + "_";
             }
-            tool->setTitle(tooltitle);
-            tool->setObjectName(tooltitle);
+            QGCToolWidget *tool = new QGCToolWidget(tooltitle, tooltitle, parent);
             //tool->setSettings(set);
             libParamToWidgetMap.insert(parameterName,tool);
             toolWidgets.append(tool);
@@ -1525,14 +1499,14 @@ void QGCVehicleConfig::updateView()
             ui->throttleWidget->setValue(rcValue[2]);
             ui->yawWidget->setValue(rcValue[3]);
 
-            ui->rollWidget->setMin(rcMin[0]);
-            ui->rollWidget->setMax(rcMax[0]);
-            ui->pitchWidget->setMin(rcMin[1]);
-            ui->pitchWidget->setMax(rcMax[1]);
-            ui->throttleWidget->setMin(rcMin[2]);
-            ui->throttleWidget->setMax(rcMax[2]);
-            ui->yawWidget->setMin(rcMin[3]);
-            ui->yawWidget->setMax(rcMax[3]);
+            ui->rollWidget->setMin(800);
+            ui->rollWidget->setMax(2200);
+            ui->pitchWidget->setMin(800);
+            ui->pitchWidget->setMax(2200);
+            ui->throttleWidget->setMin(800);
+            ui->throttleWidget->setMax(2200);
+            ui->yawWidget->setMin(800);
+            ui->yawWidget->setMax(2200);
         }
 
         ui->chanLabel->setText(QString("%1/%2").arg(rcValue[rcMapping[0]]).arg(rcRoll, 5, 'f', 2, QChar(' ')));

@@ -1,4 +1,5 @@
 #include "senseSoarMAV.h"
+#include <cmath>
 #include <qmath.h>
 
 senseSoarMAV::senseSoarMAV(MAVLinkProtocol* mavlink, int id)
@@ -207,8 +208,8 @@ void senseSoarMAV::receiveMessage(LinkInterface *link, mavlink_message_t message
 
 void senseSoarMAV::quat2euler(const double *quat, double &roll, double &pitch, double &yaw)
 { 
-	roll = std::atan2(2*(quat[0]*quat[1] + quat[2]*quat[3]),quat[0]*quat[0] - quat[1]*quat[1] - quat[2]*quat[2] + quat[3]*quat[3]);
-	pitch = std::asin(qMax(-1.0,qMin(1.0,2*(quat[0]*quat[2] - quat[1]*quat[3]))));
-	yaw = std::atan2(2*(quat[1]*quat[2] + quat[0]*quat[3]),quat[0]*quat[0] + quat[1]*quat[1] - quat[2]*quat[2] - quat[3]*quat[3]);
+	roll = atan2(2*(quat[0]*quat[1] + quat[2]*quat[3]),quat[0]*quat[0] - quat[1]*quat[1] - quat[2]*quat[2] + quat[3]*quat[3]);
+	pitch = asin(qMax(-1.0,qMin(1.0,2*(quat[0]*quat[2] - quat[1]*quat[3]))));
+	yaw = atan2(2*(quat[1]*quat[2] + quat[0]*quat[3]),quat[0]*quat[0] + quat[1]*quat[1] - quat[2]*quat[2] - quat[3]*quat[3]);
 	return;
 }

@@ -64,6 +64,8 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent),
 
     this->setVisible(false);
 
+    connect(LinkManager::instance(), SIGNAL(linkRemoved(LinkInterface*)), this, SLOT(removeLink(LinkInterface*)));
+
     // Listen for when UASes are added or removed. This does not manage the UASView
     // widgets that are displayed within this widget.
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
@@ -96,12 +98,33 @@ void UASListWidget::changeEvent(QEvent *e)
     }
 }
 
+// XXX This is just to prevent
+// upfront crashes, will probably need further inspection
+void UASListWidget::removeLink(LinkInterface* link)
+{
+    QGroupBox* box = linkToBoxMapping.value(link, NULL);
+
+    if (box) {
+        // Just stop updating the status for now - we should
+        // remove the UAS probably
+        linkToBoxMapping.remove(link);
+    }
+}
+
 void UASListWidget::updateStatus()
 {
     QMapIterator<LinkInterface*, QGroupBox*> i(linkToBoxMapping);
     while (i.hasNext()) {
         i.next();
         LinkInterface* link = i.key();
+
+        // Paranoid sanity check
+        if (!LinkManager::instance()->getLinks().contains(link))
+            continue;
+
+        if (!link)
+            continue;
+
         ProtocolInterface* p = LinkManager::instance()->getProtocolForLink(link);
 
         // Build the tooltip out of the protocol parsing data: received, dropped, and parsing errors.
@@ -149,7 +172,7 @@ void UASListWidget::addUAS(UASInterface* uas)
         QList<LinkInterface*>* x = uas->getLinks();
         if (x->size())
         {
-            LinkInterface* li = x->at(0);
+            LinkInterface* li = x->first();
 
             // Find an existing QGroupBox for this LinkInterface or create a
             // new one.

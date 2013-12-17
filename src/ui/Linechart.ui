@@ -47,7 +47,7 @@
       <number>10</number>
      </property>
      <widget class="QWidget" name="curveGroupBox" native="true">
-      <layout class="QGridLayout" name="gridLayout" rowstretch="50,0">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="50,0,0,0">
        <property name="leftMargin">
         <number>6</number>
        </property>
@@ -110,11 +110,18 @@
          </widget>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="3" column="0">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
           <number>2</number>
          </property>
+         <item>
+          <widget class="QLineEdit" name="plotFilterLineEdit">
+           <property name="placeholderText">
+            <string>Filter... (Ctrl+F)</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QComboBox" name="uasSelectionBox">
            <item>

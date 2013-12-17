@@ -12,12 +12,15 @@ public:
     void setValue(int value);
     void showMinMax();
     void hideMinMax();
+    void setValueAndRange(int val, int min, int max);
+    void setMinMax(int min, int max);
     void setMin(int value);
     void setMax(int value);
     void setName(QString name);
     int value() { return m_value; }
     int min() { return m_min; }
     int max() { return m_max; }
+
 protected:
     void paintEvent(QPaintEvent *event);
 private:
@@ -27,6 +30,8 @@ private:
     int m_max;
     bool m_showMinMax;
     QString m_name;
+    QBrush m_fillBrush;
+
 signals:
     
 public slots:

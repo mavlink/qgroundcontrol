@@ -198,7 +198,7 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
             link->writeBytes(init, sizeof(init));
 
             // Stop any running mavlink instance
-            char* cmd = "mavlink stop\n";
+            const char* cmd = "mavlink stop\n";
             link->writeBytes(cmd, strlen(cmd));
             link->writeBytes(init, 2);
             cmd = "uorb start";
@@ -228,8 +228,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     int linkId = link->getId();
 
     static int mavlink09Count = 0;
+    static int nonmavlinkCount = 0;
     static bool decodedFirstPacket = false;
     static bool warnedUser = false;
+    static bool checkedUserNonMavlink = false;
+    static bool warnedUserNonMavlink = false;
 
     // FIXME: Add check for if link->getId() >= MAVLINK_COMM_NUM_BUFFERS
     for (int position = 0; position < b.size(); position++) {
@@ -244,12 +247,41 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             emit protocolStatusMessage("MAVLink Version or Baud Rate Mismatch", "Your MAVLink device seems to use the deprecated version 0.9, while QGroundControl only supports version 1.0+. Please upgrade the MAVLink version of your autopilot. If your autopilot is using version 1.0, check if the baud rates of QGroundControl and your autopilot are the same.");
         }
 
-        // Count parser errors as well.
-        totalErrorCounter[linkId] += status.packet_rx_drop_count;
-
+        if (decodeState == 0 && !decodedFirstPacket)
+        {
+            nonmavlinkCount++;
+            if (nonmavlinkCount > 2000 && !warnedUserNonMavlink)
+            {
+                //2000 bytes with no mavlink message. Are we connected to a mavlink capable device?
+                if (!checkedUserNonMavlink)
+                {
+                    link->requestReset();
+                    checkedUserNonMavlink = true;
+                }
+                else
+                {
+                    warnedUserNonMavlink = true;
+                    emit protocolStatusMessage("MAVLink Baud Rate Mismatch", "Please check if the baud rates of QGroundControl and your autopilot are the same.");
+                }
+            }
+        }
         if (decodeState == 1)
         {
             decodedFirstPacket = true;
+
+            if(message.msgid == MAVLINK_MSG_ID_PING)
+            {
+                // process ping requests (tgt_system and tgt_comp must be zero)
+                mavlink_ping_t ping;
+                mavlink_msg_ping_decode(&message, &ping);
+                if(!ping.target_system && !ping.target_component)
+                {
+                    mavlink_message_t msg;
+                    mavlink_msg_ping_pack(getSystemId(), getComponentId(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
+                    sendMessage(msg);
+                }
+            }
+
 #if defined(QGC_PROTOBUF_ENABLED)
 
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
@@ -521,7 +553,7 @@ void MAVLinkProtocol::sendMessage(mavlink_message_t message)
     for (i = links.begin(); i != links.end(); ++i)
     {
         sendMessage(*i, message);
-        qDebug() << __FILE__ << __LINE__ << "SENT MESSAGE OVER" << ((LinkInterface*)*i)->getName() << "LIST SIZE:" << links.size();
+//        qDebug() << __FILE__ << __LINE__ << "SENT MESSAGE OVER" << ((LinkInterface*)*i)->getName() << "LIST SIZE:" << links.size();
     }
 }
 

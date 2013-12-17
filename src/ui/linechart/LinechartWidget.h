@@ -26,7 +26,7 @@ This file is part of the PIXHAWK project
  *   @brief Definition of Line chart plot widget
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
+ *   @author Thomas Gubler <thomasgubler@student.ethz.ch>
  */
 #ifndef LINECHARTWIDGET_H
 #define LINECHARTWIDGET_H
@@ -77,25 +77,12 @@ public slots:
     void recolor();
     /** @brief Set short names for curves */
     void setShortNames(bool enable);
-    /** @brief Append int8 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint8 value, quint64 usec);
-    /** @brief Append uint8 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint8 value, quint64 usec);
-    /** @brief Append int16 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint16 value, quint64 usec);
-    /** @brief Append uint16 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint16 value, quint64 usec);
-    /** @brief Append int32 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint32 value, quint64 usec);
-    /** @brief Append uint32 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint32 value, quint64 usec);
-    /** @brief Append int64 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, qint64 value, quint64 usec);
-    /** @brief Append uint64 data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, quint64 value, quint64 usec);
-    /** @brief Append double data to the given curve. */
-    void appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec);
+    /** @brief Append data to the given curve. */
+    void appendData(int uasId, const QString& curve, const QString& unit, const QVariant& value, quint64 usec);
+    /** @brief Hide curves which do not match the filter pattern */
+    void filterCurves(const QString &filter);
 
+    void toggleLogarithmicScaling(bool toggled);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
@@ -121,6 +108,14 @@ public slots:
     void readSettings();
     /** @brief Select all curves */
     void selectAllCurves(bool all);
+    /** @brief Sets the focus to the LineEdit for plot-filtering */
+    void setPlotFilterLineEditFocus();
+
+private slots:
+    /** Called when the user changes the time scale combobox. */
+    void timeScaleChanged(int index);
+    /** @brief Toggles visibility of curve based on bool match if corresponding checkbox is not checked */
+    void filterCurve(const QString &key, bool match);
 
 protected:
     void addCurveToList(QString curve);
@@ -143,23 +138,22 @@ protected:
     QMap<QString, QString> curveNames;    ///< Full curve names
     QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
+    QMap<QString, QWidget*> curveUnits;    ///< References to the curve units
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
     QMap<QString, int> intData;           ///< Current values for integer-valued curves
     QMap<QString, QWidget*> colorIcons;    ///< Reference to color icons
+    QMap<QString, QCheckBox*> checkBoxes;    ///< Reference to checkboxes
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
     QGridLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
     QScrollBar* scrollbar;                ///< The plot window scroll bar
     QSpinBox* averageSpinBox;             ///< Spin box to setup average window filter size
 
-    QAction* setScalingLogarithmic;       ///< Set logarithmic scaling
-    QAction* setScalingLinear;            ///< Set linear scaling
     QAction* addNewCurve;                 ///< Add curve candidate to the active curves
 
     QMenu* curveMenu;
-    QGridLayout* mainLayout;
+    QComboBox *timeScaleCmb;
 
-    QToolButton* scalingLinearButton;
     QToolButton* scalingLogButton;
     QToolButton* logButton;
     QPointer<QCheckBox> timeButton;

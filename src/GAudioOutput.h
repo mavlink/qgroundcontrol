@@ -59,8 +59,13 @@ This file is part of the PIXHAWK project
 extern "C" {
     cst_voice *REGISTER_VOX(const char *voxdir);
     void UNREGISTER_VOX(cst_voice *vox);
-    cst_voice* register_cmu_us_kal16(const char *voxdir);
+    cst_voice *register_cmu_us_kal16(const char *voxdir);
 }
+#endif
+
+#if _MSC_VER
+// Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
+#include <sapi.h>
 #endif
 
 /**
@@ -73,10 +78,11 @@ class GAudioOutput : public QObject
     Q_OBJECT
 public:
     /** @brief Get the singleton instance */
-    static GAudioOutput* instance();
+    static GAudioOutput *instance();
     /** @brief List available voices */
     QStringList listVoices(void);
-    enum {
+    enum
+    {
         VOICE_MALE = 0,
         VOICE_FEMALE
     } QGVoice;
@@ -86,7 +92,7 @@ public:
 
 public slots:
     /** @brief Say this text if current output priority matches */
-    bool say(QString text, int severity=1);
+    bool say(QString text, int severity = 1);
     /** @brief Play alert sound and say notification message */
     bool alert(QString text);
     /** @brief Start emergency sound */
@@ -116,15 +122,19 @@ protected:
 #ifdef Q_OS_LINUX
     //cst_voice* voice; ///< The flite voice object
 #endif
+#ifdef _MSC_VER
+    static ISpVoice *pVoice;
+#endif
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
-    Phonon::MediaObject* m_media; ///< The output object for audio
-    Phonon::AudioOutput* m_audioOutput;
+    Phonon::MediaObject *m_media; ///< The output object for audio
+    Phonon::AudioOutput *m_audioOutput;
     bool emergency;   ///< Emergency status flag
-    QTimer* emergencyTimer;
+    QTimer *emergencyTimer;
     bool muted;
 private:
-    GAudioOutput(QObject* parent=NULL);
-//    ~GAudioOutput();
+    GAudioOutput(QObject *parent = NULL);
+    ~GAudioOutput();
 };
 
 #endif // AUDIOOUTPUT_H
+
