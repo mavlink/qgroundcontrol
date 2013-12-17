@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
  */
 #include <QPainter>
 #include <QSettings>
+#include <QScrollBar>
 
 #include "DebugConsole.h"
 #include "ui_DebugConsole.h"
@@ -217,6 +218,7 @@ void DebugConsole::removeLink(LinkInterface* const linkInterface)
 }
 void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 {
+    Q_UNUSED(name);
     m_ui->receiveText->appendPlainText(text);
     // Ensure text area scrolls correctly
     m_ui->receiveText->ensureCursorVisible();
@@ -312,9 +314,15 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
             break;
         }
 
+        //turn off updates while we're appending content to avoid breaking the autoscroll behavior
+        m_ui->receiveText->setUpdatesEnabled(false);
+        QScrollBar *scroller = m_ui->receiveText->verticalScrollBar();
+
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
+
         // Ensure text area scrolls correctly
-        m_ui->receiveText->ensureCursorVisible();
+        scroller->setValue(scroller->maximum());
+        m_ui->receiveText->setUpdatesEnabled(true);
     }
 }
 
@@ -579,7 +587,7 @@ QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
     } else if (b.contains(0x09)) {
         text = "<TAB>";
     } else if (b.contains((char)0x00)) {
-        text == "<NUL>";
+        text = "<NUL>";
     } else if (b.contains(0x1B)) {
         text = "<ESC>";
     } else if (b.contains(0x7E)) {
@@ -688,7 +696,7 @@ void DebugConsole::sendBytes()
         str.append(specialSymbol);
         str.remove(' ');
         str.remove("0x");
-        str.simplified();
+        str = str.simplified();
         int bufferIndex = 0;
         if ((str.size() % 2) == 0) {
             for (int i = 0; i < str.size(); i=i+2) {

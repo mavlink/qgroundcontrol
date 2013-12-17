@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 #include <QList>
 #include <QMultiMap>
 #include <LinkInterface.h>
+#include <SerialLink.h>
 #include <ProtocolInterface.h>
 
 /**
@@ -63,6 +64,9 @@ public:
 
     /** @brief Get a list of all links */
     const QList<LinkInterface*> getLinks();
+
+    /** @brief Get a list of all serial links */
+    const QList<SerialLink*> getSerialLinks();
 
     /** @brief Get a list of all protocols */
     const QList<ProtocolInterface*> getProtocols() {

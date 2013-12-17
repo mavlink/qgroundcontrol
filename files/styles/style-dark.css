@@ -208,6 +208,32 @@ QGCToolBar .QWidget {
     background-color: transparent;
 }
 
+QGCPX4SensorCalibration QLabel#magLabel {
+    font-size: 15pt;
+    font-weight: bold;
+    border-radius: 4px;
+    min-height: 25px;
+}
+
+QGCPX4SensorCalibration QLabel#gyroLabel {
+    font-size: 15pt;
+    font-weight: bold;
+    border-radius: 4px;
+    min-height: 25px;
+}
+
+QGCPX4SensorCalibration QLabel#accelLabel {
+    font-size: 15pt;
+    font-weight: bold;
+    border-radius: 4px;
+    min-height: 25px;
+}
+
+QGCPX4VehicleConfig QLabel#rcLabel {
+    color: #FEC654;
+    font-size: 18pt;
+}
+
 QGCToolWidgetItem {
     border: 1px solid #666;
     border-radius: 3px;
@@ -246,6 +272,31 @@ QLabel:disabled {
 
 QLabel#noUas {
     font-size: 30pt;
+}
+
+QMessageBox QLabel {
+    font-size: 14pt;
+}
+
+QMessageBox {
+    min-width: 400px;
+    min-height: 300px;
+}
+
+QLabel#calibrationExplanationLabel {
+    font-size: 20pt;
+}
+
+QLabel#tabTitleLabel {
+    font-size: 28pt;
+    font-weight: lighter;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+QLabel#instructionLabel {
+    color: #FEC654;
+    font-size: 26pt;
 }
 
 QLineEdit {
@@ -345,6 +396,34 @@ QPushButton, QToolButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
 }
 
+QPushButton#advancedMenuButton, QPushButton#airframeMenuButton, QPushButton#firmwareMenuButton,
+QPushButton#generalMenuButton, QPushButton#rcMenuButton, QPushButton#sensorMenuButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333, stop: 1 #111);
+    border-radius: 5px;
+    min-height: 64px;
+    max-height: 64px;
+    min-width: 80px;
+    border: 1px solid #000000;
+}
+
+QPushButton#planePushButton, QPushButton#flyingWingPushButton, QPushButton#quadXPushButton,
+QPushButton#quadPlusPushButton, QPushButton#hexaXPushButton, QPushButton#hexaPlusPushButton,
+QPushButton#octoXPushButton, QPushButton#octoPlusPushButton, QPushButton#hPushButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777, stop: 1 #333);
+    border-radius: 5px;
+    min-height: 140px;
+    max-height: 240px;
+    min-width: 140px;
+    border: 1px solid #465158;
+}
+
+QPushButton:checked#planePushButton, QPushButton:checked#flyingWingPushButton, QPushButton:checked#quadXPushButton,
+QPushButton:checked#quadPlusPushButton, QPushButton:checked#hexaXPushButton, QPushButton:checked#hexaPlusPushButton,
+QPushButton:checked#octoXPushButton, QPushButton:checked#octoPlusPushButton, QPushButton:checked#hPushButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #77F, stop: 1 #33A);
+    border: 3px solid #4651A8;
+}
+
 QPushButton#viewModeGeneric, QPushButton#viewModePX4, QPushButton#viewModeAPM, QPushButton#viewModeAR {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #73D95D, stop: 1 #18A154);
     border-radius: 12px;
@@ -353,6 +432,24 @@ QPushButton#viewModeGeneric, QPushButton#viewModePX4, QPushButton#viewModeAPM, Q
     min-width: 120px;
     max-width: 140px;
     border: 3px solid #465158;
+}
+
+QPushButton#magButton, QPushButton#gyroButton, QPushButton#accelButton {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #757575, stop: 1 #333);
+    border-radius: 5px;
+    border: 1px solid #000000;
+}
+
+QWidget#containerWidget {
+    background-color: qlineargradient(spread:pad, x1:0.527222, y1:0.961, x2:0.536946, y2:0.198864, stop:0.103448 rgba(65, 65, 65, 255), stop:1 rgba(119, 119, 119, 255));
+    border-radius: 16px;
+    border: 2px solid #CCCCCC;
+}
+
+QWidget#navBarWidget {
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #404040, stop:1 #727272);
+    border-radius: 0px;
+    border: 1px solid #222222;
 }
 
 QPushButton#connectButton, QPushButton#controlButton {

@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialConfigurationWindow.h"
 #include "SerialLink.h"
 #include "UDPLink.h"
+#include "TCPLink.h"
 #include "MAVLinkSimulationLink.h"
 #ifdef XBEELINK
 #include "XbeeLink.h"
@@ -52,38 +53,46 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "QGCUDPLinkConfiguration.h"
+#include "QGCTCPLinkConfiguration.h"
 #include "LinkManager.h"
 #include "MainWindow.h"
 
-CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent) : QWidget(NULL)
+CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent) : QDialog(parent)
 {
     this->link = link;
 
     // Setup the user interface according to link type
     ui.setupUi(this);
 
-    // Center the window on the screen.
-    QRect position = frameGeometry();
-    position.moveCenter(QDesktopWidget().availableGeometry().center());
-    move(position.topLeft());
-
     // Initialize basic ui state
 
     // Do not allow changes here unless advanced is checked
     ui.connectionType->setEnabled(false);
-    ui.linkType->setEnabled(false);
     ui.protocolGroupBox->setVisible(false);
+    ui.protocolTypeGroupBox->setVisible(false);
 
     // Connect UI element visibility to checkbox
-    connect(ui.advancedOptionsCheckBox, SIGNAL(clicked(bool)), ui.connectionType, SLOT(setEnabled(bool)));
-    connect(ui.advancedOptionsCheckBox, SIGNAL(clicked(bool)), ui.linkType, SLOT(setEnabled(bool)));
-    connect(ui.advancedOptionsCheckBox, SIGNAL(clicked(bool)), ui.protocolGroupBox, SLOT(setVisible(bool)));
+    //connect(ui.advancedOptionsCheckBox, SIGNAL(clicked(bool)), ui.connectionType, SLOT(setEnabled(bool)));
+    //connect(ui.advancedOptionsCheckBox, SIGNAL(clicked(bool)), ui.linkType, SLOT(setEnabled(bool)));
+    //connect(ui.advancedOptionsCheckBox, SIGNAL(clicked(bool)), ui.protocolGroupBox, SLOT(setVisible(bool)));
+    ui.advancedOptionsCheckBox->setVisible(false);
+    //connect(ui.advCheckBox,SIGNAL(clicked(bool)),ui.advancedOptionsCheckBox,SLOT(setChecked(bool)));
+    connect(ui.advCheckBox,SIGNAL(clicked(bool)),ui.protocolTypeGroupBox,SLOT(setVisible(bool)));
+    connect(ui.advCheckBox, SIGNAL(clicked(bool)), ui.connectionType, SLOT(setEnabled(bool)));
+    connect(ui.advCheckBox, SIGNAL(clicked(bool)), ui.protocolGroupBox, SLOT(setVisible(bool)));
 
     // add link types
     ui.linkType->addItem(tr("Serial"), QGC_LINK_SERIAL);
     ui.linkType->addItem(tr("UDP"), QGC_LINK_UDP);
-    ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
+    ui.linkType->addItem(tr("TCP"), QGC_LINK_TCP);
+    if(dynamic_cast<MAVLinkSimulationLink*>(link)) {
+        //Only show simulation option if already setup elsewhere as a simulation
+        ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
+    }
+
+#ifdef OPAL_RT
     ui.linkType->addItem(tr("Opal-RT Link"), QGC_LINK_OPAL);
+#endif
 #ifdef XBEELINK
 	ui.linkType->addItem(tr("Xbee API"),QGC_LINK_XBEE);
 #endif // XBEELINK
@@ -133,18 +142,26 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         QWidget* conf = new SerialConfigurationWindow(serial, this);
         ui.linkScrollArea->setWidget(conf);
         ui.linkGroupBox->setTitle(tr("Serial Link"));
-        ui.linkType->setCurrentIndex(0);
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_SERIAL));
     }
     UDPLink* udp = dynamic_cast<UDPLink*>(link);
     if (udp != 0) {
         QWidget* conf = new QGCUDPLinkConfiguration(udp, this);
         ui.linkScrollArea->setWidget(conf);
         ui.linkGroupBox->setTitle(tr("UDP Link"));
-        ui.linkType->setCurrentIndex(1);
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_UDP));
+    }
+    TCPLink* tcp = dynamic_cast<TCPLink*>(link);
+    if (tcp != 0) {
+        QWidget* conf = new QGCTCPLinkConfiguration(tcp, this);
+        ui.linkScrollArea->setWidget(conf);
+        ui.linkGroupBox->setTitle(tr("TCP Link"));
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_TCP));
     }
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim != 0) {
-        ui.linkType->setCurrentIndex(2);
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_SIMULATION));
+        ui.linkType->setEnabled(false); //Don't allow the user to change to a non-simulation
         ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
     }
 #ifdef OPAL_RT
@@ -154,7 +171,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
         layout->addWidget(conf);
         ui.linkGroupBox->setLayout(layout);
-        ui.linkType->setCurrentIndex(3);
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_OPAL));
         ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
     }
 #endif
@@ -165,12 +182,12 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		QWidget* conf = new XbeeConfigurationWindow(xbee,this); 
 		ui.linkScrollArea->setWidget(conf);
 		ui.linkGroupBox->setTitle(tr("Xbee Link"));
-		ui.linkType->setCurrentIndex(4);
+        ui.linkType->setCurrentIndex(ui.linkType->findData(QGC_LINK_XBEE));
 		connect(xbee,SIGNAL(tryConnectBegin(bool)),ui.actionConnect,SLOT(setDisabled(bool)));
 		connect(xbee,SIGNAL(tryConnectEnd(bool)),ui.actionConnect,SLOT(setEnabled(bool)));
 	}
 #endif // XBEELINK
-    if (serial == 0 && udp == 0 && sim == 0
+    if (serial == 0 && udp == 0 && sim == 0 && tcp == 0
 #ifdef OPAL_RT
             && opal == 0
 #endif
@@ -181,9 +198,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
 
-#ifdef XBEELINK
-	connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(setLinkType(int)));
-#endif // XBEELINK
+    connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(linkCurrentIndexChanged(int)));
 
     // Open details pane for MAVLink if necessary
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
@@ -213,7 +228,12 @@ QAction* CommConfigurationWindow::getAction()
     return action;
 }
 
-void CommConfigurationWindow::setLinkType(int linktype)
+void CommConfigurationWindow::linkCurrentIndexChanged(int currentIndex)
+{
+    setLinkType(static_cast<qgc_link_t>(ui.linkType->itemData(currentIndex).toInt()));
+}
+
+void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 {
 	if(link->isConnected())
 	{
@@ -230,7 +250,7 @@ void CommConfigurationWindow::setLinkType(int linktype)
 	switch(linktype)
 	{
 #ifdef XBEELINK
-		case 4:
+        case QGC_LINK_XBEE:
 			{
 				XbeeLink *xbee = new XbeeLink();
 				tmpLink = xbee;
@@ -238,7 +258,7 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				break;
 			}
 #endif // XBEELINK
-		case 1:
+        case QGC_LINK_UDP:
 			{
 				UDPLink *udp = new UDPLink();
 				tmpLink = udp;
@@ -246,8 +266,16 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				break;
 			}
 			
+        case QGC_LINK_TCP:
+            {
+            TCPLink *tcp = new TCPLink();
+            tmpLink = tcp;
+            MainWindow::instance()->addLink(tmpLink);
+            break;
+            }
+
 #ifdef OPAL_RT
-		case 3:
+        case QGC_LINK_OPAL:
 			{
 				OpalLink* opal = new OpalLink();
 				tmpLink = opal;
@@ -258,7 +286,7 @@ void CommConfigurationWindow::setLinkType(int linktype)
 		default:
 			{
 			}
-		case 0:
+        case QGC_LINK_SERIAL:
 			{
 				SerialLink *serial = new SerialLink();
 				tmpLink = serial;

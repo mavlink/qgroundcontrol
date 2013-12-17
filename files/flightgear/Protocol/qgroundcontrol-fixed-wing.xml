@@ -141,6 +141,41 @@
      <node>/velocities/airspeed-kt</node>
      <factor>0.514444444444444</factor>      <!-- knots to mps -->
    </chunk>
+
+   <!-- Magnetometer -->
+   <chunk>
+    <name>Magnetic Variation (rad)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/magnetic-variation-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <chunk>
+    <name>Magnetic Dip (rad)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/magnetic-dip-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <!-- Temperature -->
+   <chunk>
+    <name>Temperature (deg C)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/temperature-degc</node>
+    <factor>1</factor>
+   </chunk>
+
+   <!-- Pressure -->
+   <chunk>
+    <name>Pressure (hPa)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/pressure-inhg</node>
+    <factor>33.86389</factor>                  <!-- inhg to hpa -->
+   </chunk>
    
   </output>
 

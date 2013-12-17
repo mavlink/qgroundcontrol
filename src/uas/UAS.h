@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 
+
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
  *
@@ -68,7 +69,7 @@ public:
     /** @brief Get short mode */
     const QString& getShortMode() const;
     /** @brief Translate from mode id to text */
-    static QString getShortModeTextFor(int id);
+    static QString getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int autopilot);
     /** @brief Translate from mode id to audio text */
     static QString getAudioModeTextFor(int id);
     /** @brief Get the unique system id */
@@ -361,9 +362,8 @@ protected: //COMMENTS FOR TEST UNIT
     int airframe;                 ///< The airframe type
     int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     bool systemIsArmed;           ///< If the system is armed
-    uint8_t mode;                 ///< The current mode of the MAV
+    uint8_t base_mode;                 ///< The current mode of the MAV
     uint32_t custom_mode;         ///< The current mode of the MAV
-    uint32_t navMode;             ///< The current navigation mode of the MAV
     int status;                   ///< The current status of the MAV
     QString shortModeText;        ///< Short textual mode description
     QString shortStateText;       ///< Short textual state description
@@ -465,6 +465,7 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
+    bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay overlay;
@@ -491,7 +492,7 @@ protected: //COMMENTS FOR TEST UNIT
     /// PARAMETERS
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
-    QGCUASParamManager* paramManager; ///< Parameter manager class
+    QGCUASParamManager paramMgr; ///< Parameter manager for this UAS
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
@@ -505,29 +506,27 @@ public:
     float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
-    /** @brief Get the human-readable navigation mode translation for this mode */
-    QString getNavModeText(int mode);
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
     /** @brief Check if vehicle is armed */
     bool isArmed() const { return systemIsArmed; }
 
+    /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
         return &waypointManager;
     }
+
     /** @brief Get reference to the param manager **/
-    QGCUASParamManager* getParamManager() const {
-        return paramManager;
+    virtual QGCUASParamManager* getParamManager()  {
+        return &paramMgr;
     }
+
     /** @brief Get the HIL simulation */
     QGCHilLink* getHILSimulation() const {
         return simulation;
     }
-    // TODO Will be removed
-    /** @brief Set reference to the param manager **/
-    void setParamManager(QGCUASParamManager* manager) {
-        paramManager = manager;
-    }
+
+
     int getSystemType();
 
     /**
@@ -725,11 +724,14 @@ public slots:
     void home();
     /** @brief Order the robot to land **/
     void land();
+    /** @brief Order the robot to pair its receiver **/
+    void pairRX(int rxType, int rxSubType);
+
     void halt();
     void go();
 
     /** @brief Enable / disable HIL */
-    void enableHilFlightGear(bool enable, QString options);
+    void enableHilFlightGear(bool enable, QString options, bool sensorHil);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
@@ -832,8 +834,11 @@ public slots:
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
-    /** @brief Set current mode of operation, e.g. auto or manual */
-    void setMode(int mode);
+    /** @brief Set current mode of operation, e.g. auto or manual, always uses the current arming status for safety reason */
+    void setMode(uint8_t newBaseMode, uint32_t newCustomMode);
+
+    /** @brief Set current mode of operation, e.g. auto or manual, does not check the arming status, for anything else than arming/disarming operations use setMode instead */
+    void setModeArm(uint8_t newBaseMode, uint32_t newCustomMode);
 
     /** @brief Request all parameters */
     void requestParameters();
@@ -844,7 +849,7 @@ public slots:
     void requestParameter(int component, int id);
 
     /** @brief Set a system parameter */
-    void setParameter(const int component, const QString& id, const QVariant& value);
+    void setParameter(const int compId, const QString& paramId, const QVariant& value);
 
     /** @brief Write parameters to permanent storage */
     void writeParametersToStorage();
@@ -936,6 +941,8 @@ protected:
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
 
+    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
+
     int componentID[256];
     bool componentMulti[256];
     bool connectionLost; ///< Flag indicates a timed out connection
@@ -948,6 +955,7 @@ protected:
     quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
     quint64 lastSendTimeSensors;
     QList<QAction*> actions; ///< A list of actions that this UAS can perform.
+
 
 protected slots:
     /** @brief Write settings to disk */

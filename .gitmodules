@@ -1,0 +1,3 @@
+[submodule "qupgrade"]
+	path = qupgrade
+	url = https://github.com/LorenzMeier/qupgrade.git

@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
+#include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
 #include "QGCUASParamManager.h"
 #include "RadioCalibration/RadioCalibrationData.h"
@@ -152,11 +153,9 @@ public:
 
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
+
     /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManager* getParamManager() const = 0;
-    // TODO Will be removed
-    /** @brief Set reference to the param manager **/
-    virtual void setParamManager(QGCUASParamManager* manager) = 0;
+    virtual QGCUASParamManager* getParamManager() = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -291,12 +290,14 @@ public slots:
     virtual void home() = 0;
     /** @brief Order the robot to land **/
     virtual void land() = 0;
+    /** @brief Order the robot to pair its receiver **/
+    virtual void pairRX(int rxType, int rxSubType) = 0;
     /** @brief Halt the system */
     virtual void halt() = 0;
     /** @brief Start/continue the current robot action */
     virtual void go() = 0;
     /** @brief Set the current mode of operation */
-    virtual void setMode(int mode) = 0;
+    virtual void setMode(uint8_t newBaseMode, uint32_t newCustomMode) = 0;
     /** Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     virtual void emergencySTOP() = 0;
     /** Kills the robot. All systems are immediately shut down (e.g. the main power line is cut). This might lead to a crash **/
@@ -487,16 +488,7 @@ signals:
       * @param value the value that changed
       * @param msec the timestamp of the message, in milliseconds
       */
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const quint8 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const qint8 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const quint16 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const qint16 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const quint32 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const qint32 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec);
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
-    void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant value,const quint64 msecs);
+    void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant &value,const quint64 msecs);
 
     void voltageChanged(int uasId, double voltage);
     void waypointUpdated(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool active);

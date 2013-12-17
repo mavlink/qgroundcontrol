@@ -5,6 +5,11 @@
 #include <QTimer>
 #include "../../../libs/opmapcontrol/opmapcontrol.h"
 
+// Choose one default map type
+#define MAP_DEFAULT_TYPE_BING
+//#define MAP_DEFAULT_TYPE_GOOGLE
+//#define MAP_DEFAULT_TYPE_OSM
+
 class UASInterface;
 class UASWaypointManager;
 class Waypoint;
@@ -46,6 +51,8 @@ public slots:
     void guidedActionTriggered();
     /** @brief Action triggered when guided action is selected from the context menu, allows for altitude selection */
     bool guidedAltActionTriggered();
+    /** @brief Action triggered when set home action is selected from the context menu. */
+    bool setHomeActionTriggered();
     /** @brief Add system to map view */
     void addUAS(UASInterface* uas);
     /** @brief Update the global position of a system */
@@ -136,6 +143,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent* event);
 
+    //void contextMenuEvent(QContextMenuEvent *);
+
     UASWaypointManager* currWPManager; ///< The current waypoint manager
     bool offlineMode;
     QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
@@ -160,6 +169,7 @@ protected:
     bool mapInitialized;                ///< Map initialized?
     float homeAltitude;                 ///< Home altitude
     QPoint mousePressPos;               ///< Mouse position when the button is released.
+    QPoint contextMousePressPos;        ///< Mouse position when context menu activated.
     int defaultGuidedAlt;               ///< Default altitude for guided mode
     UASInterface *uas;                  ///< Currently selected UAS.
 

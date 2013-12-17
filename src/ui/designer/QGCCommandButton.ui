@@ -49,8 +49,8 @@
    </item>
    <item row="2" column="0" colspan="3">
     <widget class="QLineEdit" name="editNameLabel">
-     <property name="text">
-      <string>&lt;Button Description Label (in front of button)&gt;</string>
+     <property name="placeholderText">
+      <string>Button Description</string>
      </property>
     </widget>
    </item>

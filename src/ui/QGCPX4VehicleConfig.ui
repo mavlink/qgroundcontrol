@@ -1,0 +1,1290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCPX4VehicleConfig</class>
+ <widget class="QWidget" name="QGCPX4VehicleConfig">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1256</width>
+    <height>1009</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_3">
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item row="1" column="1">
+    <widget class="QLabel" name="tabTitleLabel">
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QStackedWidget" name="stackedWidget">
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <widget class="QWidget" name="firmwareTab">
+        <layout class="QVBoxLayout" name="firmwareLayout"/>
+       </widget>
+       <widget class="QWidget" name="rcTab">
+        <layout class="QVBoxLayout" name="verticalLayout_17">
+         <item>
+          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0,0,0">
+           <item row="0" column="1">
+            <widget class="QGCRadioChannelDisplay" name="throttleWidget" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QGCRadioChannelDisplay" name="rollWidget" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>250</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>250</width>
+               <height>40</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QGCRadioChannelDisplay" name="pitchWidget" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>1</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>200</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <widget class="QGCRadioChannelDisplay" name="radio5Widget" native="true">
+               <property name="minimumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGCRadioChannelDisplay" name="radio6Widget" native="true">
+               <property name="minimumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGCRadioChannelDisplay" name="radio7Widget" native="true">
+               <property name="minimumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGCRadioChannelDisplay" name="radio8Widget" native="true">
+               <property name="minimumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>250</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="1">
+            <widget class="QGCRadioChannelDisplay" name="yawWidget" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>250</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>250</width>
+               <height>40</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_9">
+             <item>
+              <widget class="QPushButton" name="rcCalibrationButton">
+               <property name="text">
+                <string>Start Calibration</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string>Spektrum RC</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <widget class="QPushButton" name="spektrumPairButton">
+                  <property name="text">
+                   <string>Pair Receiver</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="dsm2RadioButton">
+                  <property name="text">
+                   <string>DSM2 Mode</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="dsmxRadioButton">
+                  <property name="text">
+                   <string>DSMX Mode (3 to 7 channels)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="dsmx8RadioButton">
+                  <property name="text">
+                   <string>DSMX Mode (8 or more channels)</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="rcLabel">
+           <property name="text">
+            <string>Waiting for RC channel data..</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="advancedCheckBox">
+           <property name="text">
+            <string>Show Advanced Configuration Options</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGraphicsView" name="graphicsView"/>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="advancedGroupBox">
+           <property name="title">
+            <string>Stick to Channel Mapping and Reverse</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_16">
+            <item>
+             <layout class="QGridLayout" name="gridLayout_2">
+              <item row="6" column="0">
+               <widget class="QLabel" name="chanNameAssistSw">
+                <property name="text">
+                 <string>Assist Switch</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLabel" name="yawChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_5">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="3">
+               <widget class="QSpinBox" name="modeSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="4">
+               <widget class="QPushButton" name="aux1Button">
+                <property name="text">
+                 <string>Identify Aux 1 Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3" colspan="2">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Mapping to Index of RC Channel used for (0 if not used)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="0">
+               <widget class="QLabel" name="label_7">
+                <property name="text">
+                 <string>Return Switch</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="1">
+               <widget class="QLabel" name="returnSwChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="0">
+               <widget class="QLabel" name="chanNameAux2_2">
+                <property name="text">
+                 <string>Aux 1</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="4">
+               <widget class="QPushButton" name="modeButton">
+                <property name="text">
+                 <string>Identify Mode Switch</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="4">
+               <widget class="QPushButton" name="yawButton">
+                <property name="text">
+                 <string>Identify Yaw Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="3">
+               <widget class="QSpinBox" name="throttleSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="1">
+               <widget class="QLabel" name="aux1ChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="chanName_2">
+                <property name="text">
+                 <string>Pitch / Elevator</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Reverse / Invert</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="chanName_3">
+                <property name="text">
+                 <string>Yaw / Rudder</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QSpinBox" name="rollSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_4">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QLabel" name="modeChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="1">
+               <widget class="QLabel" name="aux2ChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="3">
+               <widget class="QSpinBox" name="aux2SpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="3">
+               <widget class="QSpinBox" name="aux1SpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="2">
+               <widget class="QCheckBox" name="aux2InvertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QLabel" name="missionSwChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="chanName_5">
+                <property name="text">
+                 <string>Mode Switch</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="4">
+               <widget class="QPushButton" name="aux2Button">
+                <property name="text">
+                 <string>Identify Aux 2 Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QSpinBox" name="pitchSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="chanName">
+                <property name="text">
+                 <string>Roll / Ailerons</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="4">
+               <widget class="QPushButton" name="throttleButton">
+                <property name="text">
+                 <string>Identify Throttle Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>Channel Name</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="2">
+               <widget class="QCheckBox" name="assistSwInvertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="rollChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="4">
+               <widget class="QPushButton" name="assistSwButton">
+                <property name="text">
+                 <string>Identify Assist Switch</string>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="0">
+               <widget class="QLabel" name="chanNameAux2">
+                <property name="text">
+                 <string>Aux 2</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QCheckBox" name="invertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="3">
+               <widget class="QSpinBox" name="assistSwSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="pitchChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_3">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Normalized Value</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QCheckBox" name="invertCheckBox_2">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QPushButton" name="pitchButton">
+                <property name="text">
+                 <string>Identify Pitch Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="10" column="2">
+               <widget class="QCheckBox" name="aux1InvertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QLabel" name="assistSwChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="3">
+               <widget class="QSpinBox" name="yawSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>16</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="4">
+               <widget class="QPushButton" name="rollButton">
+                <property name="text">
+                 <string>Identify Roll Channel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="label_6">
+                <property name="text">
+                 <string>Mission Switch</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLabel" name="throttleChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="chanName_4">
+                <property name="text">
+                 <string>Throttle</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="0">
+               <widget class="QLabel" name="label_10">
+                <property name="text">
+                 <string>Flaps</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="1">
+               <widget class="QLabel" name="flapsChanLabel">
+                <property name="text">
+                 <string>0000</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="2">
+               <widget class="QCheckBox" name="missionSwInvertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="2">
+               <widget class="QCheckBox" name="returnSwInvertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="2">
+               <widget class="QCheckBox" name="flapsInvertCheckBox">
+                <property name="text">
+                 <string>Reverse</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="3">
+               <widget class="QSpinBox" name="missionSwSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="3">
+               <widget class="QSpinBox" name="returnSwSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="3">
+               <widget class="QSpinBox" name="flapsSpinBox">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="cursor">
+                 <cursorShape>ArrowCursor</cursorShape>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="4">
+               <widget class="QPushButton" name="missionSwButton">
+                <property name="text">
+                 <string>Identify Mission Switch</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="4">
+               <widget class="QPushButton" name="returnSwButton">
+                <property name="text">
+                 <string>Identify Return Switch</string>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="4">
+               <widget class="QPushButton" name="flapsButton">
+                <property name="text">
+                 <string>Identify Flaps Channel</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="persistRcValuesButt">
+              <property name="text">
+               <string>Persist RC Mapping and Calibration</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="sensorTab">
+        <property name="font">
+         <font>
+          <pointsize>16</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <layout class="QHBoxLayout" name="sensorLayout"/>
+       </widget>
+       <widget class="QWidget" name="airframeTab">
+        <layout class="QHBoxLayout" name="airframeLayout"/>
+       </widget>
+       <widget class="QWidget" name="generalTab">
+        <property name="font">
+         <font>
+          <pointsize>16</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox">
+             <property name="title">
+              <string>Configuration</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_3">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QScrollArea" name="scrollArea">
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="generalLeftContents">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>16</width>
+                   <height>16</height>
+                  </rect>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                  <property name="margin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <layout class="QVBoxLayout" name="generalLeftLayout"/>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="multiRotorControlAttitudeGroupBox_2">
+             <property name="title">
+              <string>Configuration</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QScrollArea" name="scrollArea_2">
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="generalRightContents">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>16</width>
+                   <height>16</height>
+                  </rect>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                  <property name="margin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <layout class="QVBoxLayout" name="generalRightLayout"/>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="advancedTab">
+        <layout class="QVBoxLayout" name="verticalLayout_13">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QGroupBox" name="advancedConfigurationGroupBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>3</horstretch>
+               <verstretch>1</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Onboard Configuration</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <property name="margin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QScrollArea" name="scrollArea_4">
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="advanceColumnContents">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>16</width>
+                   <height>16</height>
+                  </rect>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_7">
+                  <property name="margin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <layout class="QVBoxLayout" name="advancedColumnLayout">
+                    <item>
+                     <widget class="QGCParamWidget" name="paramTreeWidget" native="true">
+                      <property name="autoFillBackground">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="pendingChangesGroupBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>2</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>329</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Changes Pending</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_8">
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
+                <property name="spacing">
+                 <number>-1</number>
+                </property>
+                <item>
+                 <widget class="QGCPendingParamWidget" name="pendingCommitsWidget" native="true">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_13">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="advancedStatusLabel">
+           <property name="text">
+            <string>Status</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="0" rowspan="3">
+    <widget class="QWidget" name="navBarWidget" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="margin">
+       <number>0</number>
+      </property>
+      <item>
+       <layout class="QVBoxLayout" name="navBarLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinAndMaxSize</enum>
+        </property>
+        <property name="leftMargin">
+         <number>12</number>
+        </property>
+        <property name="topMargin">
+         <number>12</number>
+        </property>
+        <property name="rightMargin">
+         <number>24</number>
+        </property>
+        <property name="bottomMargin">
+         <number>12</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="firmwareMenuButton">
+          <property name="text">
+           <string>Firmware
+Upgrade</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/firmware_upgrade.png</normaloff>:/files/images/px4/menu/firmware_upgrade.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>64</width>
+            <height>64</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="rcMenuButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Radio
+Calibration</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/remote.png</normaloff>:/files/images/px4/menu/remote.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>64</width>
+            <height>64</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="sensorMenuButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Sensor
+Calibration</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/sensors.png</normaloff>:/files/images/px4/menu/sensors.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>64</width>
+            <height>64</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="airframeMenuButton">
+          <property name="text">
+           <string>Airframe
+Config</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/plane.png</normaloff>:/files/images/px4/menu/plane.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>64</width>
+            <height>64</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="generalMenuButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>General
+Config</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/cogwheels.png</normaloff>:/files/images/px4/menu/cogwheels.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>64</width>
+            <height>64</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="advancedMenuButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Advanced
+Config</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/cogwheels.png</normaloff>:/files/images/px4/menu/cogwheels.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>64</width>
+            <height>64</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QGCRadioChannelDisplay</class>
+   <extends>QWidget</extends>
+   <header>ui/designer/QGCRadioChannelDisplay.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QGCPendingParamWidget</class>
+   <extends>QWidget</extends>
+   <header>ui/QGCPendingParamWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QGCParamWidget</class>
+   <extends>QWidget</extends>
+   <header>ui/QGCParamWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../../qgroundcontrol.qrc"/>
+ </resources>
+ <connections/>
+</ui>

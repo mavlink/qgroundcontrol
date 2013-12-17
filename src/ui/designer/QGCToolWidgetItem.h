@@ -14,13 +14,16 @@ public:
     QGCToolWidgetItem(const QString& name, QWidget *parent = 0);
     ~QGCToolWidgetItem();
 
-    int component() {
+    int componentId() {
         return _component;
     }
 
+    virtual void setEditMode(bool editMode);
+    bool isEditMode() const { return isInEditMode; }
 public slots:
-    virtual void startEditMode() {}
-    virtual void endEditMode() {}
+    void startEditMode() { setEditMode(true); }
+    void endEditMode() { setEditMode(false); }
+
     virtual void setComponent(int comp) {
         _component = comp;
     }
@@ -33,15 +36,18 @@ signals:
     void editingFinished();
 
 protected:
+    void contextMenuEvent (QContextMenuEvent* event);
+    UASInterface* uas;
+
+private:
     QAction* startEditAction;
     QAction* stopEditAction;
     QAction* deleteAction;
     bool isInEditMode;
     QString qgcToolWidgetItemName;
-    UASInterface* uas;
     int _component;          ///< The MAV component (the process or device ID)
 
-    void contextMenuEvent (QContextMenuEvent* event);
+
 
 };
 

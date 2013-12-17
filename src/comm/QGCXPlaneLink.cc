@@ -292,15 +292,6 @@ void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float
 
 void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
 {
-    // Do not update this control type for
-    // all multirotors
-    if (mav->getSystemType() == MAV_TYPE_QUADROTOR ||
-            mav->getSystemType() == MAV_TYPE_HEXAROTOR ||
-            mav->getSystemType() == MAV_TYPE_OCTOROTOR)
-    {
-        return;
-    }
-
     #pragma pack(push, 1)
     struct payload {
         char b[5];
@@ -315,7 +306,11 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
     p.b[3] = 'A';
     p.b[4] = '\0';
 
-    p.index = 12;
+    Q_UNUSED(time);
+    Q_UNUSED(systemMode);
+    Q_UNUSED(navMode);
+
+    bool isFixedWing = true;
 
     if (mav->getAirframe() == UASInterface::QGC_AIRFRAME_X8 ||
             mav->getAirframe() == UASInterface::QGC_AIRFRAME_VIPER_2_0 ||
@@ -329,31 +324,52 @@ void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitc
         // yaw
         p.f[2] = 0.0f;
     }
+    else if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        qDebug() << "MAV_TYPE_QUADROTOR";
+
+        // Individual effort will be provided directly to the actuators on Xplane quadrotor.
+        p.f[0] = yawRudder;
+        p.f[1] = rollAilerons;
+        p.f[2] = throttle;
+        p.f[3] = pitchElevator;
+
+        isFixedWing = false;
+    }
     else
     {
-        // direct pass-through
+        // direct pass-through, normal fixed-wing.
         p.f[0] = -pitchElevator;
         p.f[1] = rollAilerons;
         p.f[2] = yawRudder;
     }
 
-    Q_UNUSED(time);
-    Q_UNUSED(systemMode);
-    Q_UNUSED(navMode);
+    if(isFixedWing)
+    {
+        // Ail / Elevon / Rudder
+        p.index = 12;   // XPlane, wing sweep
+        writeBytes((const char*)&p, sizeof(p));
 
-    // Ail / Elevon / Rudder
-    writeBytes((const char*)&p, sizeof(p));
-    p.index = 8;
-    writeBytes((const char*)&p, sizeof(p));
+        p.index = 8;    // XPlane, joystick? why?
+        writeBytes((const char*)&p, sizeof(p));
 
-    p.index = 25;
-    memset(p.f, 0, sizeof(p.f));
-    p.f[0] = throttle;
-    p.f[1] = throttle;
-    p.f[2] = throttle;
-    p.f[3] = throttle;
-    // Throttle
-    writeBytes((const char*)&p, sizeof(p));
+        p.index = 25;   // Thrust
+        memset(p.f, 0, sizeof(p.f));
+        p.f[0] = throttle;
+        p.f[1] = throttle;
+        p.f[2] = throttle;
+        p.f[3] = throttle;
+
+        // Throttle
+        writeBytes((const char*)&p, sizeof(p));
+    }
+    else
+    {
+        qDebug() << "Transmitting p.index = 25";
+        p.index = 25;   // XPlane, throttle command.
+        writeBytes((const char*)&p, sizeof(p));
+    }
+
 }
 
 Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
@@ -693,7 +709,7 @@ void QGCXPlaneLink::readBytes()
             fields_changed |= (1 << 11);
 
             emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
-                                        xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
+                                        xmag, ymag, zmag, abs_pressure, diff_pressure / 100.0, pressure_alt, temperature, fields_changed);
 
             // XXX make these GUI-configurable and add randomness
             int gps_fix_type = 3;

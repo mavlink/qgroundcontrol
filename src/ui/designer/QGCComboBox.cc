@@ -17,7 +17,7 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     parameterScalingFactor(0.0),
     parameterMin(0.0f),
     parameterMax(0.0f),
-    component(0),
+    componentId(0),
     ui(new Ui::QGCComboBox)
 {
     ui->setupUi(this);
@@ -48,7 +48,7 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     connect(ui->editRemoveItemButton,SIGNAL(clicked()),this,SLOT(delButtonClicked()));
 
     // Sending actions
-    connect(ui->writeButton, SIGNAL(clicked()), this, SLOT(sendParameter()));
+    connect(ui->writeButton, SIGNAL(clicked()), this, SLOT(setParamPending()));
     connect(ui->editSelectComponentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectComponent(int)));
     connect(ui->editSelectParamComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectParameter(int)));
     //connect(ui->valueSlider, SIGNAL(valueChanged(int)), this, SLOT(setSliderValue(int)));
@@ -56,7 +56,7 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     //connect(ui->intValueSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setParamValue(int)));
     connect(ui->editNameLabel, SIGNAL(textChanged(QString)), ui->nameLabel, SLOT(setText(QString)));
     connect(ui->readButton, SIGNAL(clicked()), this, SLOT(requestParameter()));
-    connect(ui->editRefreshParamsButton, SIGNAL(clicked()), this, SLOT(refreshParamList()));
+    connect(ui->editRefreshParamsButton, SIGNAL(clicked()), this, SLOT(refreshParameter()));
     connect(ui->editInfoCheckBox, SIGNAL(clicked(bool)), this, SLOT(showInfo(bool)));
     // connect to self
     connect(ui->infoLabel, SIGNAL(released()), this, SLOT(showTooltip()));
@@ -82,14 +82,13 @@ void QGCComboBox::showTooltip()
     }
 }
 
-void QGCComboBox::refreshParamList()
+void QGCComboBox::refreshParameter()
 {
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
-    if (uas)
-    {
-        uas->getParamManager()->requestParameterList();
-        ui->editStatusLabel->setText(tr("Parameter list updating.."));
+    if (uas && !parameterName.isEmpty()) {
+        uas->getParamManager()->requestParameterUpdate(componentId,parameterName);
+        ui->editStatusLabel->setText(tr("Requesting refresh..."));
     }
 }
 
@@ -105,18 +104,18 @@ void QGCComboBox::setActiveUAS(UASInterface* activeUas)
         // Connect buttons and signals
         connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
         uas = activeUas;
+        paramMgr = uas->getParamManager();
         // Update current param value
         //requestParameter();
         // Set param info
-        QString text = uas->getParamManager()->getParamInfo(parameterName);
-        if (text != "")
-        {
+
+        QString text = paramMgr->dataModel()->getParamDescription(parameterName);
+        if (!text.isEmpty()) {
             ui->infoLabel->setToolTip(text);
             ui->infoLabel->show();
         }
         // Force-uncheck and hide label if no description is available
-        if (ui->editInfoCheckBox->isChecked())
-        {
+        if (ui->editInfoCheckBox->isChecked())  {
             showInfo((text.length() > 0));
         }
     }
@@ -126,7 +125,7 @@ void QGCComboBox::requestParameter()
 {
     if (!parameterName.isEmpty() && uas)
     {
-        uas->getParamManager()->requestParameterUpdate(this->component, this->parameterName);
+        paramMgr->requestParameterUpdate(this->componentId, this->parameterName);
     }
 }
 
@@ -138,7 +137,7 @@ void QGCComboBox::showInfo(bool enable)
 
 void QGCComboBox::selectComponent(int componentIndex)
 {
-    this->component = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
+    this->componentId = ui->editSelectComponentComboBox->itemData(componentIndex).toInt();
 }
 
 void QGCComboBox::selectParameter(int paramIndex)
@@ -147,117 +146,72 @@ void QGCComboBox::selectParameter(int paramIndex)
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
 
     // Update min and max values if available
-    if (uas)
-    {
-        if (uas->getParamManager())
-        {
-            // Current value
-            //uas->getParamManager()->requestParameterUpdate(component, parameterName);
-
+    if (uas)  {
+        UASParameterDataModel* dataModel =  paramMgr->dataModel();
+        if (dataModel) {
             // Minimum
-            if (uas->getParamManager()->isParamMinKnown(parameterName))
-            {
-                parameterMin = uas->getParamManager()->getParamMin(parameterName);
+            if (dataModel->isParamMinKnown(parameterName)) {
+                parameterMin = dataModel->getParamMin(parameterName);
             }
 
             // Maximum
-            if (uas->getParamManager()->isParamMaxKnown(parameterName))
-            {
-                parameterMax = uas->getParamManager()->getParamMax(parameterName);
+            if (dataModel->isParamMaxKnown(parameterName)) {
+                parameterMax = dataModel->getParamMax(parameterName);
             }
 
             // Description
-            QString text = uas->getParamManager()->getParamInfo(parameterName);
+            QString text = dataModel->getParamDescription(parameterName);
             //ui->infoLabel->setText(text);
             showInfo(!(text.length() > 0));
         }
     }
 }
 
-void QGCComboBox::startEditMode()
+void QGCComboBox::setEditMode(bool editMode)
 {
-    ui->nameLabel->hide();
-    ui->writeButton->hide();
-    ui->readButton->hide();
+    if(!editMode) {
+        // Store component id
+        selectComponent(ui->editSelectComponentComboBox->currentIndex());
+        // Store parameter name and id
+        selectParameter(ui->editSelectParamComboBox->currentIndex());
+    }
 
-    ui->editInfoCheckBox->show();
-    ui->editDoneButton->show();
-    ui->editNameLabel->show();
-    ui->editRefreshParamsButton->show();
-    ui->editSelectParamComboBox->show();
-    ui->editSelectComponentComboBox->show();
-    ui->editStatusLabel->show();
-    ui->writeButton->hide();
-    ui->readButton->hide();
-    ui->editLine1->show();
-    ui->editLine2->show();
-    ui->editAddItemButton->show();
-    ui->editRemoveItemButton->show();
-    ui->editItemValueSpinBox->show();
-    ui->editItemNameLabel->show();
-    ui->itemValueLabel->show();
-    ui->itemNameLabel->show();
+    ui->nameLabel->setVisible(!editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+
+    ui->editInfoCheckBox->setVisible(editMode);
+    ui->editDoneButton->setVisible(editMode);
+    ui->editNameLabel->setVisible(editMode);
+    ui->editRefreshParamsButton->setVisible(editMode);
+    ui->editSelectParamComboBox->setVisible(editMode);
+    ui->editSelectComponentComboBox->setVisible(editMode);
+    ui->editStatusLabel->setVisible(editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+    ui->editLine1->setVisible(editMode);
+    ui->editLine2->setVisible(editMode);
+    ui->editAddItemButton->setVisible(editMode);
+    ui->editRemoveItemButton->setVisible(editMode);
+    ui->editItemValueSpinBox->setVisible(editMode);
+    ui->editItemNameLabel->setVisible(editMode);
+    ui->itemValueLabel->setVisible(editMode);
+    ui->itemNameLabel->setVisible(editMode);
     if (isDisabled)
     {
-        ui->editOptionComboBox->setEnabled(true);
+        ui->editOptionComboBox->setEnabled(editMode);
     }
-    isInEditMode = true;
+
+    QGCToolWidgetItem::setEditMode(editMode);
 }
 
-void QGCComboBox::endEditMode()
+void QGCComboBox::setParamPending()
 {
-    // Store component id
-    selectComponent(ui->editSelectComponentComboBox->currentIndex());
-
-    // Store parameter name and id
-    selectParameter(ui->editSelectParamComboBox->currentIndex());
-
-    // Min/max
-
-    ui->editInfoCheckBox->hide();
-    ui->editDoneButton->hide();
-    ui->editNameLabel->hide();
-    ui->editRefreshParamsButton->hide();
-    ui->editSelectParamComboBox->hide();
-    ui->editSelectComponentComboBox->hide();
-    ui->editStatusLabel->hide();
-    ui->editLine1->hide();
-    ui->editLine2->hide();
-    ui->writeButton->show();
-    ui->readButton->show();
-    ui->editAddItemButton->hide();
-    ui->editRemoveItemButton->hide();
-    ui->editItemValueSpinBox->hide();
-    ui->editItemNameLabel->hide();
-    ui->itemValueLabel->hide();
-    ui->itemNameLabel->hide();
-    ui->nameLabel->show();
-    if (isDisabled)
-    {
-        ui->editOptionComboBox->setEnabled(false);
+    if (uas)  {
+        uas->getParamManager()->setPendingParam(componentId, parameterName, parameterValue);
     }
-    isInEditMode = false;
-    emit editingFinished();
-}
-
-void QGCComboBox::sendParameter()
-{
-    if (uas)
-    {
-        // Set value, param manager handles retransmission
-        if (uas->getParamManager())
-        {
-            qDebug() << "Sending param:" << parameterName << "to component" << component << "with a value of" << parameterValue;
-            uas->getParamManager()->setParameter(component, parameterName, parameterValue);
-        }
-        else
-        {
-            qDebug() << "UAS HAS NO PARAM MANAGER, DOING NOTHING";
-        }
-    }
-    else
-    {
-        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
+    else  {
+        qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
 
@@ -310,7 +264,7 @@ void QGCComboBox::setParameterValue(int uas, int component, int paramCount, int 
         {
             if (visibleVal == value.toInt())
             {
-                this->uas->requestParameter(this->component,this->parameterName);
+                this->uas->requestParameter(this->componentId,this->parameterName);
                 visibleEnabled = true;
                 this->show();
             }
@@ -325,7 +279,7 @@ void QGCComboBox::setParameterValue(int uas, int component, int paramCount, int 
             }
         }
     }
-    if (component == this->component && parameterName == this->parameterName)
+    if (component == this->componentId && parameterName == this->parameterName)
     {
         if (!visibleEnabled)
         {
@@ -368,7 +322,7 @@ void QGCComboBox::writeSettings(QSettings& settings)
     settings.setValue("QGC_PARAM_COMBOBOX_DESCRIPTION", ui->nameLabel->text());
     //settings.setValue("QGC_PARAM_COMBOBOX_BUTTONTEXT", ui->actionButton->text());
     settings.setValue("QGC_PARAM_COMBOBOX_PARAMID", parameterName);
-    settings.setValue("QGC_PARAM_COMBOBOX_COMPONENTID", component);
+    settings.setValue("QGC_PARAM_COMBOBOX_COMPONENTID", componentId);
     settings.setValue("QGC_PARAM_COMBOBOX_DISPLAY_INFO", ui->editInfoCheckBox->isChecked());
 
     settings.setValue("QGC_PARAM_COMBOBOX_COUNT", ui->editOptionComboBox->count());
@@ -382,7 +336,7 @@ void QGCComboBox::writeSettings(QSettings& settings)
 void QGCComboBox::readSettings(const QString& pre,const QVariantMap& settings)
 {
     parameterName = settings.value(pre + "QGC_PARAM_COMBOBOX_PARAMID").toString();
-    component = settings.value(pre + "QGC_PARAM_COMBOBOX_COMPONENTID").toInt();
+    componentId = settings.value(pre + "QGC_PARAM_COMBOBOX_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value(pre + "QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
     ui->editNameLabel->setText(settings.value(pre + "QGC_PARAM_COMBOBOX_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());

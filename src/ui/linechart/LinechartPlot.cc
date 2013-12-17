@@ -566,13 +566,29 @@ quint64 LinechartPlot::getPlotInterval()
  **/
 void LinechartPlot::setPlotInterval(int interval)
 {
-    plotInterval = interval;
-    QMap<QString, TimeSeriesData*>::iterator j;
-    for(j = data.begin(); j != data.end(); ++j)
-    {
-        TimeSeriesData* d = data.value(j.key());
-        d->setInterval(interval);
+    //Only ever increase the amount of stored data,
+    // so that we allow the user to change between
+    // different intervals without constantly losing
+    // data points
+    if((unsigned)interval > plotInterval) {
+
+        QMap<QString, TimeSeriesData*>::iterator j;
+        for(j = data.begin(); j != data.end(); ++j)
+        {
+            TimeSeriesData* d = data.value(j.key());
+            d->setInterval(interval);
+        }
     }
+    plotInterval = interval;
+    if(plotInterval > 5*60*1000) //If the interval is longer than 4 minutes, change the time scale step to 2 minutes
+        timeScaleStep = 2*60*1000;
+    else if(plotInterval >= 4*60*1000) //If the interval is longer than 4 minutes, change the time scale step to 1 minutes
+        timeScaleStep = 1*60*1000;
+    else if(plotInterval >= 60*1000) //If the interval is longer than a minute, change the time scale step to 30 seconds
+        timeScaleStep = 30*1000;
+    else
+        timeScaleStep = DEFAULT_SCALE_INTERVAL;
+
 }
 
 /**

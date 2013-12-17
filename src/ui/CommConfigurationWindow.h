@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #define _COMMCONFIGURATIONWINDOW_H_
 
 #include <QObject>
-#include <QWidget>
+#include <QDialog>
 #include <QAction>
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
@@ -42,12 +42,15 @@ This file is part of the QGROUNDCONTROL project
 enum qgc_link_t {
     QGC_LINK_SERIAL,
     QGC_LINK_UDP,
+    QGC_LINK_TCP,
     QGC_LINK_SIMULATION,
     QGC_LINK_FORWARDING,
 #ifdef XBEELINK
 	QGC_LINK_XBEE,
 #endif
+#ifdef OPAL_RT
     QGC_LINK_OPAL
+#endif
 };
 
 enum qgc_protocol_t {
@@ -62,7 +65,7 @@ enum qgc_protocol_t {
 /**
  * @brief Configuration window for communication links
  */
-class CommConfigurationWindow : public QWidget
+class CommConfigurationWindow : public QDialog
 {
     Q_OBJECT
 
@@ -71,9 +74,12 @@ public:
     ~CommConfigurationWindow();
 
     QAction* getAction();
+    void setLinkType(qgc_link_t linktype);
+
+private slots:
+    void linkCurrentIndexChanged(int currentIndex);
 
 public slots:
-    void setLinkType(int linktype);
     /** @brief Set the protocol for this link */
     void setProtocol(int protocol);
     void setConnection();
