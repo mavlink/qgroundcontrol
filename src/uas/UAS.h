@@ -523,6 +523,11 @@ public:
         return &paramMgr;
     }
 
+    /** @brief Get reference to the log manager **/
+    virtual QGCUASLogManager* getLogManager()  {
+        return &logManager;
+    }
+
     /** @brief Get the HIL simulation */
     QGCHilLink* getHILSimulation() const {
         return simulation;
@@ -844,6 +849,20 @@ public slots:
 
     /** @brief Request all parameters */
     void requestParameters();
+
+    void requestLogList()
+    {
+        mavlink_message_t msg;
+        mavlink_msg_log_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, 0x0, 0xFFFF);
+        sendMessage(msg);
+    }
+
+    void deleteLogs()
+    {
+        mavlink_message_t msg;
+        mavlink_msg_log_erase_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0);
+        sendMessage(msg);
+    }
 
     /** @brief Request a single parameter by name */
     void requestParameter(int component, const QString& parameter);
