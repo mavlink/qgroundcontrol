@@ -632,7 +632,7 @@ void QGCGoogleEarthView::updateState()
             uasId = currMav->getUASID();
             lat = currMav->getLatitude();
             lon = currMav->getLongitude();
-            alt = currMav->getAltitude();
+            alt = currMav->getAltitudeAMSL();
             roll = currMav->getRoll();
             pitch = currMav->getPitch();
             yaw = currMav->getYaw();
