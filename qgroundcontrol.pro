@@ -32,8 +32,15 @@ QT += network \
     sql \
     declarative
 
-TEMPLATE = app
-TARGET = qgroundcontrol
+# Setting this variable allows you to include this .pro file in another such that
+# you can set your own TARGET and main() function. This is used by the unit test
+# build files to build unit test using all built parts of QGCS except for main.
+isEmpty(QGCS_UNITTEST_OVERRIDE) {
+    TEMPLATE = app
+    TARGET = qgroundcontrol
+    SOURCES += src/main.cc
+}
+
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
     debug {
@@ -556,7 +563,7 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
     # Enable only if libfreenect is available
     HEADERS += src/input/Freenect.h
 }
-SOURCES += src/main.cc \
+SOURCES += \
     src/QGCCore.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
