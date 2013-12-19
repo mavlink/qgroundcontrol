@@ -97,14 +97,6 @@ public:
 
     /* Extensive statistics for scientific purposes */
     qint64 getNominalDataRate() const;
-    qint64 getTotalUpstream();
-    qint64 getCurrentUpstream();
-    qint64 getMaxUpstream();
-    qint64 getTotalDownstream();
-    qint64 getCurrentDownstream();
-    qint64 getMaxDownstream();
-    qint64 getBitsSent() const;
-    qint64 getBitsReceived() const;
 
     void loadSettings();
     void writeSettings();
@@ -112,8 +104,6 @@ public:
     void run();
     void run2();
 
-    int getLinkQuality() const;
-    bool isFullDuplex() const;
     int getId() const;
 
 signals: //[TODO] Refactor to Linkinterface
@@ -161,16 +151,6 @@ protected:
     int m_timeout;
     int m_id;
 
-    quint64 m_bitsSentTotal;
-    quint64 m_bitsSentShortTerm;
-    quint64 m_bitsSentCurrent;
-    quint64 m_bitsSentMax;
-    quint64 m_bitsReceivedTotal;
-    quint64 m_bitsReceivedShortTerm;
-    quint64 m_bitsReceivedCurrent;
-    quint64 m_bitsReceivedMax;
-    quint64 m_connectionStartTime;
-    QMutex m_statisticsMutex;
     QMutex m_dataMutex;
     QMutex m_writeMutex;
     QList<QString> m_ports;
