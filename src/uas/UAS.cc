@@ -109,6 +109,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     localX(0.0),
     localY(0.0),
     localZ(0.0),
+
+    latitude(0.0),
+    longitude(0.0),
+    altitude(0.0),
+
     globalEstimatorActive(false),
     latitude_gps(0.0),
     longitude_gps(0.0),
@@ -130,6 +135,10 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     attitudeKnown(false),
     attitudeStamped(false),
     lastAttitude(0),
+
+    roll(0.0),
+    pitch(0.0),
+    yaw(0.0),
 
     paramsOnceRequested(false),
     simulation(0),
