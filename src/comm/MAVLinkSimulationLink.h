@@ -60,16 +60,6 @@ public:
 
     /* Extensive statistics for scientific purposes */
     qint64 getNominalDataRate() const;
-    qint64 getTotalUpstream();
-    qint64 getShortTermUpstream();
-    qint64 getCurrentUpstream();
-    qint64 getMaxUpstream();
-    qint64 getTotalDownstream();
-    qint64 getShortTermDownstream();
-    qint64 getCurrentDownstream();
-    qint64 getMaxDownstream();
-    qint64 getBitsSent() const;
-    qint64 getBitsReceived() const;
 
     QString getName() const;
     int getId() const;
@@ -79,9 +69,6 @@ public:
     int getParityType() const;
     int getDataBitsType() const;
     int getStopBitsType() const;
-
-    int getLinkQuality() const;
-    bool isFullDuplex() const;
 
 public slots:
     void writeBytes(const char* data, qint64 size);

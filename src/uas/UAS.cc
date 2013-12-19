@@ -144,6 +144,10 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     attitudeStamped(false),
     lastAttitude(0),
 
+    roll(0.0),
+    pitch(0.0),
+    yaw(0.0),
+
     paramsOnceRequested(false),
     simulation(0),
 

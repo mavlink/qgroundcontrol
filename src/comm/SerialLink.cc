@@ -208,7 +208,6 @@ void SerialLink::run()
 //                qDebug() << "rx of length " << QString::number(readData.length());
 
                 m_bytesRead += readData.length();
-                m_bitsReceivedTotal += readData.length() * 8;
                 linkErrorCount = 0;
             }
         }
@@ -278,9 +277,6 @@ void SerialLink::writeBytes(const char* data, qint64 size)
             m_transmitBuffer.append(byteArray);
         }
 
-        // Increase write counter
-        m_bitsSentTotal += size * 8;
-
         // Extra debug logging
 //            qDebug() << byteArray->toHex();
     } else {
@@ -321,7 +317,6 @@ void SerialLink::readBytes()
             //                fprintf(stderr,"%02x ", v);
             //            }
             //            fprintf(stderr,"\n");
-            m_bitsReceivedTotal += numBytes * 8;
         }
     }
     m_dataMutex.unlock();
@@ -420,7 +415,6 @@ bool SerialLink::hardwareConnect()
                      this, SLOT(linkError(SerialLinkPortError_t)));
 
 //    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
-    m_connectionStartTime = MG::TIME::getGroundTimeNow();
 
     if (!m_port->open(QIODevice::ReadWrite)) {
         emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
@@ -530,62 +524,6 @@ qint64 SerialLink::getNominalDataRate() const
             break;
     }
     return dataRate;
-}
-
-qint64 SerialLink::getTotalUpstream()
-{
-    m_statisticsMutex.lock();
-    return m_bitsSentTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
-    m_statisticsMutex.unlock();
-}
-
-qint64 SerialLink::getCurrentUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getBitsSent() const
-{
-    return m_bitsSentTotal;
-}
-
-qint64 SerialLink::getBitsReceived() const
-{
-    return m_bitsReceivedTotal;
-}
-
-qint64 SerialLink::getTotalDownstream()
-{
-    m_statisticsMutex.lock();
-    return m_bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
-    m_statisticsMutex.unlock();
-}
-
-qint64 SerialLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool SerialLink::isFullDuplex() const
-{
-    /* Serial connections are always half duplex */
-    return false;
-}
-
-int SerialLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
 }
 
 QString SerialLink::getPortName() const

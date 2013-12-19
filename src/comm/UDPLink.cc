@@ -344,7 +344,6 @@ bool UDPLink::hardwareConnect(void)
     emit connected(connectState);
     if (connectState) {
         emit connected();
-        connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
 	return connectState;
 }
@@ -380,61 +379,4 @@ void UDPLink::setName(QString name)
 qint64 UDPLink::getNominalDataRate() const
 {
     return 54000000; // 54 Mbit
-}
-
-qint64 UDPLink::getTotalUpstream()
-{
-    statisticsMutex.lock();
-    qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalUpstream;
-}
-
-qint64 UDPLink::getCurrentUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getBitsSent() const
-{
-    return bitsSentTotal;
-}
-
-qint64 UDPLink::getBitsReceived() const
-{
-    return bitsReceivedTotal;
-}
-
-qint64 UDPLink::getTotalDownstream()
-{
-    statisticsMutex.lock();
-    qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalDownstream;
-}
-
-qint64 UDPLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool UDPLink::isFullDuplex() const
-{
-    return true;
-}
-
-int UDPLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
 }
