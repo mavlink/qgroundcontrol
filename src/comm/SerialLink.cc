@@ -157,9 +157,9 @@ void SerialLink::run()
     qint64 timeout = 5000;
     int linkErrorCount = 0;
 
-    forever  {
+    forever {
         {
-        QMutexLocker locker(&this->m_stoppMutex);
+            QMutexLocker locker(&this->m_stoppMutex);
             if(m_stopp) {
                 m_stopp = false;
                 break; // exit the thread
@@ -174,6 +174,7 @@ void SerialLink::run()
             }
         }
 
+        // If there are too many errors on this link, disconnect.
         if (isConnected() && (linkErrorCount > 1000)) {
             qDebug() << "linkErrorCount too high: disconnecting!";
             linkErrorCount = 0;
@@ -181,6 +182,7 @@ void SerialLink::run()
             disconnect();
         }
 
+        // Write all our buffered data out the serial port.
         if (m_transmitBuffer.count() > 0) {
             QMutexLocker writeLocker(&m_writeMutex);
             int numWritten = m_port->write(m_transmitBuffer);
@@ -190,6 +192,8 @@ void SerialLink::run()
                 qDebug() << "TX Error! wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";
             }
             else {
+
+                // Since we were successful, reset out error counter.
                 linkErrorCount = 0;
             }
             m_transmitBuffer =  m_transmitBuffer.remove(0, numWritten);
@@ -205,7 +209,6 @@ void SerialLink::run()
                 readData += m_port->readAll();
             if (readData.length() > 0) {
                 emit bytesReceived(this, readData);
-//                qDebug() << "rx of length " << QString::number(readData.length());
 
                 m_bytesRead += readData.length();
                 linkErrorCount = 0;
@@ -213,7 +216,6 @@ void SerialLink::run()
         }
         else {
             linkErrorCount++;
-            //qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
         }
 
         if (bytes != m_bytesRead) { // i.e things are good and data is being read.
@@ -269,7 +271,6 @@ void SerialLink::run()
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
     if(m_port && m_port->isOpen()) {
-//        qDebug() << "writeBytes" << m_portName << "attempting to tx " << size << "bytes.";
 
         QByteArray byteArray(data, size);
         {
@@ -299,7 +300,6 @@ void SerialLink::readBytes()
         const qint64 maxLength = 2048;
         char data[maxLength];
         qint64 numBytes = m_port->bytesAvailable();
-        //qDebug() << "numBytes: " << numBytes;
 
         if(numBytes > 0) {
             /* Read as much data in buffer as possible without overflow */
@@ -308,15 +308,6 @@ void SerialLink::readBytes()
             m_port->read(data, numBytes);
             QByteArray b(data, numBytes);
             emit bytesReceived(this, b);
-
-            //qDebug() << "SerialLink::readBytes()" << std::hex << data;
-            //            int i;
-            //            for (i=0; i<numBytes; i++){
-            //                unsigned int v=data[i];
-            //
-            //                fprintf(stderr,"%02x ", v);
-            //            }
-            //            fprintf(stderr,"\n");
         }
     }
     m_dataMutex.unlock();
@@ -654,7 +645,6 @@ bool SerialLink::setPortName(QString portName)
     if ((portName != m_portName)
             && (portName.trimmed().length() > 0)) {
         m_portName = portName.trimmed();
-//        m_name = tr("serial port ") + portName.trimmed(); // [TODO] Do we need this?
         if(m_port)
             m_port->setPortName(portName);
 

@@ -78,13 +78,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     m_ui->receiveText->setMaximumBlockCount(500);
     // Allow to wrap everywhere
     m_ui->receiveText->setWordWrapMode(QTextOption::WrapAnywhere);
-//    // Set monospace font
-//    m_ui->receiveText->setFontFamily("Monospace");
 
-    // Enable 10 Hz output
-    //connect(&lineBufferTimer, SIGNAL(timeout()), this, SLOT(showData()));
-    //lineBufferTimer.setInterval(100); // 100 Hz
-    //lineBufferTimer.start();
+    // Load settings for the DebugConsole
     loadSettings();
 
     // Enable traffic measurements
@@ -155,13 +150,6 @@ void DebugConsole::loadSettings()
     MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", filterMAVLINK).toBool());
     setAutoHold(settings.value("AUTO_HOLD_ENABLED", autoHold).toBool());
     settings.endGroup();
-
-//    // Update visibility settings
-//    if (m_ui->specialCheckBox->isChecked())
-//    {
-//        m_ui->specialCheckBox->setVisible(true);
-//        m_ui->addSymbolButton->setVisible(false);
-//    }
 }
 
 void DebugConsole::storeSettings()
@@ -176,7 +164,6 @@ void DebugConsole::storeSettings()
     settings.setValue("AUTO_HOLD_ENABLED", autoHold);
     settings.endGroup();
     settings.sync();
-    //qDebug() << "Storing settings!";
 }
 
 void DebugConsole::uasCreated(UASInterface* uas)
@@ -205,7 +192,6 @@ void DebugConsole::addLink(LinkInterface* link)
 
 void DebugConsole::removeLink(LinkInterface* const linkInterface)
 {
-    //LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
     // Add link to link list
     if (links.contains(linkInterface)) {
         int linkIndex = links.indexOf(linkInterface);
@@ -250,7 +236,6 @@ void DebugConsole::updateLinkName(QString name)
 {
 	// Set name if signal came from a link
     LinkInterface* link = qobject_cast<LinkInterface*>(sender());
-	//if (link != NULL) m_ui->linkComboBox->setItemText(link->getId(), name);
 	if((link != NULL) && (links.contains(link)))
 	{
 		const qint16 &linkIndex(links.indexOf(link));
@@ -344,38 +329,9 @@ void DebugConsole::updateTrafficMeasurements()
     m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassDataRate, 4, 'f', 1));
 }
 
-//QPainter painter(m_ui->receiveText);
-//painter.setRenderHint(QPainter::HighQualityAntialiasing);
-//painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
-
 void DebugConsole::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
-    // Update bandwidth
-//    if (holdOn)
-//    {
-//        //qDebug() << "Data rate:" << dataRate/1000.0f << "kB/s";
-//        QString rate("data rate: %1");
-//        rate.arg(dataRate);
-//        QPainter painter(this);
-//        painter.setRenderHint(QPainter::HighQualityAntialiasing);
-//        painter.translate(width()/5.0f, height()/5.0f);
-
-
-
-//        //QFont font("Bitstream Vera Sans");
-//        QFont font = painter.font();
-//        font.setPixelSize((int)(60.0f));
-
-//        QFontMetrics metrics = QFontMetrics(font);
-//        int border = qMax(4, metrics.leading());
-//        QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
-//                                          Qt::AlignLeft | Qt::TextWordWrap, rate);
-//        painter.setPen(QColor(255, 50, 50));
-//        painter.setRenderHint(QPainter::TextAntialiasing);
-//        painter.drawText(QRect(QPoint(static_cast<int>(width()/5.0f), static_cast<int>(height()/5.0f)), QPoint(static_cast<int>(width() - width()/5.0f), static_cast<int>(height() - height()/5.0f))), rate);
-//        //Qt::AlignRight | Qt::TextWordWrap
-//    }
 }
 
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
@@ -428,7 +384,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                         if (escIndex < static_cast<int>(sizeof(escBytes)))
                         {
                             escBytes[escIndex] = byte;
-                            //qDebug() << "GOT BYTE ESC:" << byte;
                             if (/*escIndex == 1 && */escBytes[escIndex] == 0x48)
                             {
                                 // Handle sequence
@@ -436,7 +391,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                                 m_ui->receiveText->clear();
                                 escReceived = false;
                             }
-                            else if (/*escIndex == 1 && */escBytes[escIndex] == 0x4b)
+                            else if (escBytes[escIndex] == 0x4b)
                             {
                                 // Handle sequence
                                 // for this one, do nothing
@@ -483,7 +438,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                                 // Do nothing for now
                                 break;
                             default:                    // Append replacement character (box) if char is not ASCII
-//                                str.append(QChar(QChar::ReplacementCharacter));
                                 QString str2;
                                 if ( lastSpace == 1)
                                     str2.sprintf("0x%02x ", byte);
@@ -514,8 +468,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             else
             {
                 if (filterMAVLINK) this->bytesToIgnore--;
-                // Constrain bytes to positive range
-//                bytesToIgnore = qMax(0, bytesToIgnore);
             }
 
         }
@@ -599,7 +551,6 @@ QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
 void DebugConsole::specialSymbolSelected(const QString& text)
 {
     Q_UNUSED(text);
-    //m_ui->specialCheckBox->setVisible(true);
 }
 
 void DebugConsole::appendSpecialSymbol(const QString& text)
@@ -705,7 +656,6 @@ void DebugConsole::sendBytes()
 
                 if (okByte) {
                     // Feedback
-                    //feedback.append("0x");
                     feedback.append(str.at(i).toUpper());
                     feedback.append(str.at(i+1).toUpper());
                     feedback.append(" ");
@@ -722,16 +672,8 @@ void DebugConsole::sendBytes()
     // Transmit ASCII or HEX formatted text, only if more than one symbol
     if (ok && m_ui->sendText->text().toLatin1().size() > 0) {
         // Transmit only if conversion succeeded
-        //        int transmitted =
         currLink->writeBytes(transmit, transmit.size());
-        //        if (transmit.size() == transmitted)
-        //        {
         m_ui->sentText->setText(tr("Sent: ") + feedback);
-        //        }
-        //        else
-        //        {
-        //            m_ui->sentText->setText(tr("Error during sending: Transmitted only %1 bytes instead of %2.").arg(transmitted, transmit.size()));
-        //        }
     } else if (m_ui->sendText->text().toLatin1().size() > 0) {
         // Conversion failed, display error message
         m_ui->sentText->setText(tr("Not sent: ") + feedback);
