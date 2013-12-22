@@ -75,10 +75,9 @@ public:
     QString getName() const;
     bool isConnected() const;
 
-    /* Connection characteristics */
-
-
-    qint64 getNominalDataRate() const;
+    qint64 getConnectionSpeed() const;
+    qint64 getCurrentInDataRate() const;
+    qint64 getCurrentOutDataRate() const;
 
     bool connect();
 

@@ -262,7 +262,17 @@ void TCPLink::setName(QString name)
 }
 
 
-qint64 TCPLink::getNominalDataRate() const
+qint64 TCPLink::getConnectionSpeed() const
 {
     return 54000000; // 54 Mbit
+}
+
+qint64 TCPLink::getCurrentInDataRate() const
+{
+    return 0;
+}
+
+qint64 TCPLink::getCurrentOutDataRate() const
+{
+    return 0;
 }

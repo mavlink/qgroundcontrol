@@ -73,7 +73,7 @@ public:
     /* Connection characteristics */
 
     /**
-     * @Brief Get the nominal data rate of the interface.
+     * @Brief Get the maximum connection speed for this interface.
      *
      * The nominal data rate is the theoretical maximum data rate of the
      * interface. For 100Base-T Ethernet this would be 100 Mbit/s (100'000'000
@@ -81,7 +81,27 @@ public:
      *
      * @return The nominal data rate of the interface in bit per second, 0 if unknown
      **/
-    virtual qint64 getNominalDataRate() const = 0;
+    virtual qint64 getConnectionSpeed() const = 0;
+
+    /**
+     * @Brief Get the current incoming data rate.
+     *
+     * This should be over a short timespan, something like 100ms. A precise value isn't necessary,
+     * and this can be filtered, but should be a reasonable estimate of current data rate.
+     *
+     * @return The data rate of the interface in bits per second, 0 if unknown
+     **/
+    virtual qint64 getCurrentInDataRate() const = 0;
+
+    /**
+     * @Brief Get the current outgoing data rate.
+     *
+     * This should be over a short timespan, something like 100ms. A precise value isn't necessary,
+     * and this can be filtered, but should be a reasonable estimate of current data rate.
+     *
+     * @return The data rate of the interface in bits per second, 0 if unknown
+     **/
+    virtual qint64 getCurrentOutDataRate() const = 0;
 
     /**
      * @brief Connect this interface logically

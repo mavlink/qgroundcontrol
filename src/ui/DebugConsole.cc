@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Implementation of DebugConsole
+ *   @brief This file implements the Debug Console, a serial console built-in to QGC. 
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPainter>
 #include <QSettings>
 #include <QScrollBar>
+#include <QDebug>
 
 #include "DebugConsole.h"
 #include "ui_DebugConsole.h"
@@ -38,8 +39,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASManager.h"
 #include "protocol.h"
 #include "QGC.h"
-
-#include <QDebug>
 
 DebugConsole::DebugConsole(QWidget *parent) :
     QWidget(parent),
@@ -58,11 +57,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     lastLineBuffer(0),
     lineBufferTimer(),
     snapShotTimer(),
-    snapShotInterval(500),
-    snapShotBytes(0),
-    dataRate(0.0f),
-    lowpassDataRate(0.0f),
-    dataRateThreshold(400),
+    lowpassInDataRate(0.0f),
+    lowpassOutDataRate(0.0f),
     commandIndex(0),
     m_ui(new Ui::DebugConsole)
 {
@@ -78,21 +74,14 @@ DebugConsole::DebugConsole(QWidget *parent) :
     m_ui->receiveText->setMaximumBlockCount(500);
     // Allow to wrap everywhere
     m_ui->receiveText->setWordWrapMode(QTextOption::WrapAnywhere);
-//    // Set monospace font
-//    m_ui->receiveText->setFontFamily("Monospace");
 
-    // Enable 10 Hz output
-    //connect(&lineBufferTimer, SIGNAL(timeout()), this, SLOT(showData()));
-    //lineBufferTimer.setInterval(100); // 100 Hz
-    //lineBufferTimer.start();
+    // Load settings for this widget
     loadSettings();
 
-    // Enable traffic measurements
+    // Enable traffic measurements. We only start/stop the timer as our links change, as
+    // these calculations are dependent on the specific link.
     connect(&snapShotTimer, SIGNAL(timeout()), this, SLOT(updateTrafficMeasurements()));
     snapShotTimer.setInterval(snapShotInterval);
-    snapShotTimer.start();
-    // Update measurements the first time
-    updateTrafficMeasurements();
 
     // First connect management slots, then make sure to add all existing objects
     // Connect to link manager to get notified about new links
@@ -155,13 +144,6 @@ void DebugConsole::loadSettings()
     MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", filterMAVLINK).toBool());
     setAutoHold(settings.value("AUTO_HOLD_ENABLED", autoHold).toBool());
     settings.endGroup();
-
-//    // Update visibility settings
-//    if (m_ui->specialCheckBox->isChecked())
-//    {
-//        m_ui->specialCheckBox->setVisible(true);
-//        m_ui->addSymbolButton->setVisible(false);
-//    }
 }
 
 void DebugConsole::storeSettings()
@@ -176,7 +158,6 @@ void DebugConsole::storeSettings()
     settings.setValue("AUTO_HOLD_ENABLED", autoHold);
     settings.endGroup();
     settings.sync();
-    //qDebug() << "Storing settings!";
 }
 
 void DebugConsole::uasCreated(UASInterface* uas)
@@ -205,7 +186,6 @@ void DebugConsole::addLink(LinkInterface* link)
 
 void DebugConsole::removeLink(LinkInterface* const linkInterface)
 {
-    //LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
     // Add link to link list
     if (links.contains(linkInterface)) {
         int linkIndex = links.indexOf(linkInterface);
@@ -214,7 +194,14 @@ void DebugConsole::removeLink(LinkInterface* const linkInterface)
 
         m_ui->linkComboBox->removeItem(linkIndex);
     }
-    if (linkInterface == currLink) currLink = NULL;
+    // Now if this was the current link, clean up some stuff.
+    if (linkInterface == currLink)
+    {
+        // Like disable the update time for the UI.
+        snapShotTimer.stop();
+
+        currLink = NULL;
+    }
 }
 void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 {
@@ -227,11 +214,14 @@ void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 void DebugConsole::linkSelected(int linkId)
 {
     // Disconnect
-    if (currLink) {
+    if (currLink)
+    {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
         disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
         disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
+        snapShotTimer.stop();
     }
+
     // Clear data
     m_ui->receiveText->clear();
 
@@ -241,6 +231,7 @@ void DebugConsole::linkSelected(int linkId)
     connect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
     connect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
     setConnectionState(currLink->isConnected());
+    snapShotTimer.start();
 }
 
 /**
@@ -250,7 +241,6 @@ void DebugConsole::updateLinkName(QString name)
 {
 	// Set name if signal came from a link
     LinkInterface* link = qobject_cast<LinkInterface*>(sender());
-	//if (link != NULL) m_ui->linkComboBox->setItemText(link->getId(), name);
 	if((link != NULL) && (links.contains(link)))
 	{
 		const qint16 &linkIndex(links.indexOf(link));
@@ -326,65 +316,44 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
     }
 }
 
+/**
+ * This function updates the speed indicator text in the GUI.
+ * Additionally, if this speed is too high, the display of incoming characters is disabled.
+ */
 void DebugConsole::updateTrafficMeasurements()
 {
-    lowpassDataRate = lowpassDataRate * 0.9f + (0.1f * ((float)snapShotBytes / (float)snapShotInterval) * 1000.0f);
-    dataRate = ((float)snapShotBytes / (float)snapShotInterval) * 1000.0f;
-    snapShotBytes = 0;
+    // Calculate the rate of incoming data, converting to
+    // kilobytes per second from the received bits per second.
+    qint64 inDataRate = currLink->getCurrentInDataRate() / 1000.0f;
+    lowpassInDataRate = lowpassInDataRate * 0.9f + (0.1f * inDataRate / 8.0f);
 
-    // Check if limit has been exceeded
-    if ((lowpassDataRate > dataRateThreshold) && autoHold) {
-        // Enable auto-old
+    // If the incoming data rate is faster than our threshold, don't display the data.
+    // We don't use the low-passed data rate as we want the true data rate. The low-passed data
+    // is just for displaying to the user to remove jitter.
+    if ((inDataRate > inDataRateThreshold) && autoHold) {
+        // Enable auto-hold
         m_ui->holdButton->setChecked(true);
         hold(true);
     }
 
-    QString speed;
-    speed = speed.sprintf("%04.1f kB/s", dataRate/1000.0f);
-    m_ui->speedLabel->setText(speed);
+    // Update the incoming data rate label.
+    m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassInDataRate, 4, 'f', 1, '0'));
 
-    if (holdOn) {
-        //repaint();
-    }
+    // Calculate the rate of outgoing data, converting to
+    // kilobytes per second from the received bits per second.
+    lowpassOutDataRate = lowpassOutDataRate * 0.9f + (0.1f * currLink->getCurrentOutDataRate() / 8.0f / 1000.0f);
+   
+    // Update the outoing data rate label.
+    m_ui->upSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassOutDataRate, 4, 'f', 1, '0'));
 }
-
-//QPainter painter(m_ui->receiveText);
-//painter.setRenderHint(QPainter::HighQualityAntialiasing);
-//painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
 void DebugConsole::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
-    // Update bandwidth
-//    if (holdOn)
-//    {
-//        //qDebug() << "Data rate:" << dataRate/1000.0f << "kB/s";
-//        QString rate("data rate: %1");
-//        rate.arg(dataRate);
-//        QPainter painter(this);
-//        painter.setRenderHint(QPainter::HighQualityAntialiasing);
-//        painter.translate(width()/5.0f, height()/5.0f);
-
-
-
-//        //QFont font("Bitstream Vera Sans");
-//        QFont font = painter.font();
-//        font.setPixelSize((int)(60.0f));
-
-//        QFontMetrics metrics = QFontMetrics(font);
-//        int border = qMax(4, metrics.leading());
-//        QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
-//                                          Qt::AlignLeft | Qt::TextWordWrap, rate);
-//        painter.setPen(QColor(255, 50, 50));
-//        painter.setRenderHint(QPainter::TextAntialiasing);
-//        painter.drawText(QRect(QPoint(static_cast<int>(width()/5.0f), static_cast<int>(height()/5.0f)), QPoint(static_cast<int>(width() - width()/5.0f), static_cast<int>(height() - height()/5.0f))), rate);
-//        //Qt::AlignRight | Qt::TextWordWrap
-//    }
 }
 
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
-    snapShotBytes += bytes.size();
     int len = bytes.size();
     int lastSpace = 0;
     if ((this->bytesToIgnore > 260) || (this->bytesToIgnore < -2)) this->bytesToIgnore = 0;
@@ -432,7 +401,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                         if (escIndex < static_cast<int>(sizeof(escBytes)))
                         {
                             escBytes[escIndex] = byte;
-                            //qDebug() << "GOT BYTE ESC:" << byte;
                             if (/*escIndex == 1 && */escBytes[escIndex] == 0x48)
                             {
                                 // Handle sequence
@@ -440,7 +408,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                                 m_ui->receiveText->clear();
                                 escReceived = false;
                             }
-                            else if (/*escIndex == 1 && */escBytes[escIndex] == 0x4b)
+                            else if (escBytes[escIndex] == 0x4b)
                             {
                                 // Handle sequence
                                 // for this one, do nothing
@@ -487,7 +455,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                                 // Do nothing for now
                                 break;
                             default:                    // Append replacement character (box) if char is not ASCII
-//                                str.append(QChar(QChar::ReplacementCharacter));
                                 QString str2;
                                 if ( lastSpace == 1)
                                     str2.sprintf("0x%02x ", byte);
@@ -518,8 +485,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             else
             {
                 if (filterMAVLINK) this->bytesToIgnore--;
-                // Constrain bytes to positive range
-//                bytesToIgnore = qMax(0, bytesToIgnore);
             }
 
         }
@@ -603,7 +568,6 @@ QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
 void DebugConsole::specialSymbolSelected(const QString& text)
 {
     Q_UNUSED(text);
-    //m_ui->specialCheckBox->setVisible(true);
 }
 
 void DebugConsole::appendSpecialSymbol(const QString& text)
@@ -709,7 +673,6 @@ void DebugConsole::sendBytes()
 
                 if (okByte) {
                     // Feedback
-                    //feedback.append("0x");
                     feedback.append(str.at(i).toUpper());
                     feedback.append(str.at(i+1).toUpper());
                     feedback.append(" ");
@@ -726,16 +689,8 @@ void DebugConsole::sendBytes()
     // Transmit ASCII or HEX formatted text, only if more than one symbol
     if (ok && m_ui->sendText->text().toLatin1().size() > 0) {
         // Transmit only if conversion succeeded
-        //        int transmitted =
         currLink->writeBytes(transmit, transmit.size());
-        //        if (transmit.size() == transmitted)
-        //        {
         m_ui->sentText->setText(tr("Sent: ") + feedback);
-        //        }
-        //        else
-        //        {
-        //            m_ui->sentText->setText(tr("Error during sending: Transmitted only %1 bytes instead of %2.").arg(transmitted, transmit.size()));
-        //        }
     } else if (m_ui->sendText->text().toLatin1().size() > 0) {
         // Conversion failed, display error message
         m_ui->sentText->setText(tr("Not sent: ") + feedback);
@@ -787,7 +742,7 @@ void DebugConsole::hold(bool hold)
             // TODO No conversion is done to the bytes in the hold buffer
             m_ui->receiveText->appendPlainText(QString(holdBuffer));
             holdBuffer.clear();
-            lowpassDataRate = 0.0f;
+            lowpassInDataRate = 0.0f;
         }
 
         this->holdOn = hold;
