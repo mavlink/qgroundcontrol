@@ -139,9 +139,9 @@ protected:
     QTimer snapShotTimer;     ///< Timer for measuring traffic snapshots
     int snapShotInterval;     ///< Snapshot interval for traffic measurements
     int snapShotBytes;        ///< Number of bytes received in current snapshot
-    float dataRate;           ///< Current data rate
-    float lowpassDataRate;    ///< Lowpass filtered data rate
-    float dataRateThreshold;  ///< Threshold where to enable auto-hold
+    float dataRate;           ///< Current data rate (kB/s)
+    float lowpassDataRate;    ///< Lowpass filtered data rate (kB/s)
+    float dataRateThreshold;  ///< Threshold of when to enable auto-hold (kB/s)
     QStringList commandHistory;
     QString currCommand;
     int commandIndex;
