@@ -411,8 +411,7 @@ bool SerialLink::hardwareConnect()
     }
 
     QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
-    QObject::connect(m_port, SIGNAL(error(SerialLinkPortError_t)),
-                     this, SLOT(linkError(SerialLinkPortError_t)));
+    QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
 
 //    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
 
@@ -442,7 +441,7 @@ bool SerialLink::hardwareConnect()
     return true; // successful connection
 }
 
-void SerialLink::linkError(SerialLinkPortError_t error)
+void SerialLink::linkError(QSerialPort::SerialPortError error)
 {
     qDebug() << error;
 }

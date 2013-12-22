@@ -40,9 +40,6 @@ This file is part of the QGROUNDCONTROL project
 #include <configuration.h>
 #include "SerialLinkInterface.h"
 
-// convenience type for passing errors
-typedef  QSerialPort::SerialPortError SerialLinkPortError_t;
-
 /**
  * @brief The SerialLink class provides cross-platform access to serial links.
  * It takes care of the link management and provides a common API to higher
@@ -136,7 +133,7 @@ public slots:
     bool connect();
     bool disconnect();
 
-    void linkError(SerialLinkPortError_t error);
+    void linkError(QSerialPort::SerialPortError error);
 
 protected:
     quint64 m_bytesRead;
