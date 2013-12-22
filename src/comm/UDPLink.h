@@ -71,8 +71,10 @@ public:
         return hosts;
     }
 
-    /* Extensive statistics for scientific purposes */
-    qint64 getNominalDataRate() const;
+    // Extensive statistics for scientific purposes
+    qint64 getConnectionSpeed() const;
+    qint64 getCurrentInDataRate() const;
+    qint64 getCurrentOutDataRate() const;
 
     void run();
 

@@ -58,8 +58,10 @@ public:
     bool connect();
     bool disconnect();
 
-    /* Extensive statistics for scientific purposes */
-    qint64 getNominalDataRate() const;
+    // Extensive statistics for scientific purposes
+    qint64 getConnectionSpeed() const;
+    qint64 getCurrentInDataRate() const;
+    qint64 getCurrentOutDataRate() const;
 
     QString getName() const;
     int getId() const;
