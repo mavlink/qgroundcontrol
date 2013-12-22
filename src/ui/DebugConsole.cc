@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Implementation of DebugConsole
+ *   @brief This file implements the Debug Console, a serial console built-in to QGC. 
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QPainter>
 #include <QSettings>
 #include <QScrollBar>
+#include <QDebug>
 
 #include "DebugConsole.h"
 #include "ui_DebugConsole.h"
@@ -39,7 +40,8 @@ This file is part of the QGROUNDCONTROL project
 #include "protocol.h"
 #include "QGC.h"
 
-#include <QDebug>
+// Set the snapshot interval to 500ms.
+#define DEBUGCONSOLE_SNAPSHOT_INTERVAL 500
 
 DebugConsole::DebugConsole(QWidget *parent) :
     QWidget(parent),
@@ -58,11 +60,10 @@ DebugConsole::DebugConsole(QWidget *parent) :
     lastLineBuffer(0),
     lineBufferTimer(),
     snapShotTimer(),
-    snapShotInterval(500),
-    snapShotBytes(0),
-    dataRate(0.0f),
-    lowpassDataRate(0.0f),
-    dataRateThreshold(0.4),
+    snapShotInterval(DEBUGCONSOLE_SNAPSHOT_INTERVAL),
+    lowpassInDataRate(0.0f),
+    inDataRateThreshold(0.4),
+    lowpassOutDataRate(0.0f),
     commandIndex(0),
     m_ui(new Ui::DebugConsole)
 {
@@ -79,7 +80,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Allow to wrap everywhere
     m_ui->receiveText->setWordWrapMode(QTextOption::WrapAnywhere);
 
-    // Load settings for the DebugConsole
+    // Load settings for this widget
     loadSettings();
 
     // Enable traffic measurements
@@ -311,22 +312,41 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
     }
 }
 
+/**
+ * This function updates the speed indicator text in the GUI.
+ * Additionally, if this speed is too high, the display of incoming characters is disabled.
+ */
 void DebugConsole::updateTrafficMeasurements()
 {
-    // Low-pass the calculated data rate with a very low frequency digital FIR filter.
-    dataRate = (float)snapShotBytes / (float)snapShotInterval;
-    lowpassDataRate = 0.9f * lowpassDataRate + 0.1f * dataRate;
-    snapShotBytes = 0;
+    // We need a link to read its data rates from, so if there isn't one, don't do anything.
+    if (!currLink)
+    {
+        return;
+    }
 
-    // Check if the hold rate limit has been exceeded, and if so, stop displaying the incoming data stream.
-    // We use the real data rate here because we want this to kick in immediately.
-    if ((dataRate > dataRateThreshold) && autoHold) {
+    // Calculate the rate of incoming data, converting to
+    // kilobytes per second from the received bits per second.
+    qint64 inDataRate = currLink->getCurrentInDataRate() / 1000.0f;
+    lowpassInDataRate = lowpassInDataRate * 0.9f + (0.1f * inDataRate / 8.0f);
+
+    // If the incoming data rate is faster than our threshold, don't display the data.
+    // We don't use the low-passed data rate as we want the true data rate. The low-passed data
+    // is just for displaying to the user to remove jitter.
+    if ((inDataRate > inDataRateThreshold) && autoHold) {
+        // Enable auto-hold
         m_ui->holdButton->setChecked(true);
         hold(true);
     }
 
-    // Update the rate label.
-    m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassDataRate, 4, 'f', 1, '0'));
+    // Update the incoming data rate label.
+    m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassInDataRate, 4, 'f', 1, '0'));
+
+    // Calculate the rate of outgoing data, converting to
+    // kilobytes per second from the received bits per second.
+    lowpassOutDataRate = lowpassOutDataRate * 0.9f + (0.1f * currLink->getCurrentOutDataRate() / 8.0f / 1000.0f);
+   
+    // Update the outoing data rate label.
+    m_ui->upSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassOutDataRate, 4, 'f', 1, '0'));
 }
 
 void DebugConsole::paintEvent(QPaintEvent *event)
@@ -336,7 +356,6 @@ void DebugConsole::paintEvent(QPaintEvent *event)
 
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
-    snapShotBytes += bytes.size();
     int len = bytes.size();
     int lastSpace = 0;
     if ((this->bytesToIgnore > 260) || (this->bytesToIgnore < -2)) this->bytesToIgnore = 0;
@@ -725,7 +744,7 @@ void DebugConsole::hold(bool hold)
             // TODO No conversion is done to the bytes in the hold buffer
             m_ui->receiveText->appendPlainText(QString(holdBuffer));
             holdBuffer.clear();
-            lowpassDataRate = 0.0f;
+            lowpassInDataRate = 0.0f;
         }
 
         this->holdOn = hold;

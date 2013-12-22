@@ -137,11 +137,10 @@ protected:
     quint64 lastLineBuffer;   ///< Last line buffer emission time
     QTimer lineBufferTimer;   ///< Line buffer timer
     QTimer snapShotTimer;     ///< Timer for measuring traffic snapshots
-    int snapShotInterval;     ///< Snapshot interval for traffic measurements
-    int snapShotBytes;        ///< Number of bytes received in current snapshot
-    float dataRate;           ///< Current data rate (kB/s)
-    float lowpassDataRate;    ///< Lowpass filtered data rate (kB/s)
-    float dataRateThreshold;  ///< Threshold of when to enable auto-hold (kB/s)
+    int snapShotInterval;     ///< Set the time between UI updates for the data rate (ms)
+    float lowpassInDataRate;    ///< Lowpass filtered data rate (kilobytes/s)
+    float inDataRateThreshold;  ///< Threshold where to enable auto-hold (kilobytes/s)
+    float lowpassOutDataRate;   ///< Low-pass filtered outgoing data rate (kilobytes/s)
     QStringList commandHistory;
     QString currCommand;
     int commandIndex;
