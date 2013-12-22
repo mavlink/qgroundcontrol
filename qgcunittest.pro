@@ -19,17 +19,9 @@
 
 
 TARGET = qgcunittest
-QT += testlib
 
 QGCS_UNITTEST_OVERRIDE = true
 include (qgroundcontrol.pro)
 
-TESTDIR = $$BASEDIR/src/qgcunittest
-
-HEADERS += \
-    $$TESTDIR/AutoTest.h \
-    $$TESTDIR/UASUnitTest.h \
-
 SOURCES += \
-    $$TESTDIR/testSuite.cc \
-    $$TESTDIR/UASUnitTest.cc
+    src/qgcunittest/testSuite.cc \

@@ -21,12 +21,10 @@
  
  ======================================================================*/
 
-/**
- * @file
- *   @brief TCP connection (server) for unmanned vehicles
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
+/// @file
+///     @brief TCP link type for SITL support
+///
+///     @author Don Gagne <don@thegagnes.com>
 
 #ifndef TCPLINK_H
 #define TCPLINK_H
@@ -50,64 +48,62 @@ public:
     TCPLink(QHostAddress hostAddress = QHostAddress::LocalHost, quint16 socketPort = 5760);
     ~TCPLink();
     
-    void requestReset() { }
+    void setHostAddress(QHostAddress hostAddress);
     
-    bool isConnected() const;
-    qint64 bytesAvailable();
-    int getPort() const {
-        return port;
-    }
-    QHostAddress getHostAddress() const {
-        return host;
-    }
+    QHostAddress getHostAddress(void) const { return _hostAddress; }
+    quint16 getPort(void) const { return _port; }
+    QTcpSocket* getSocket(void) { return _socket; }
     
-    QString getName() const;
-    int getBaudRate() const;
-    int getBaudRateType() const;
-    int getFlowType() const;
-    int getParityType() const;
-    int getDataBitsType() const;
-    int getStopBitsType() const;
-    
-    /* Extensive statistics for scientific purposes */
-    qint64 getNominalDataRate() const;
-    
-    void run();
-    
-    int getId() const;
+    // LinkInterface methods
+    virtual int     getId(void) const;
+    virtual QString getName(void) const;
+    virtual bool    isConnected(void) const;
+    virtual bool    connect(void);
+    virtual bool    disconnect(void);
+    virtual qint64  bytesAvailable(void);
+    virtual void    requestReset(void) {};
+
+    virtual qint64 getNominalDataRate(void) const;
     
 public slots:
-    void setAddress(QHostAddress host);
-    void setPort(int port);    
-    void readBytes();
-    void writeBytes(const char* data, qint64 length);
-    bool connect();
-    bool disconnect();
-    void socketError(QAbstractSocket::SocketError socketError);
-    void setAddress(const QString &text);
+    void setHostAddress(const QString& hostAddress);
+    void setPort(int port);
+    
+    // From LinkInterface
+    virtual void writeBytes(const char* data, qint64 length);
 
-    
+protected slots:
+    void _socketError(QAbstractSocket::SocketError socketError);
+
+    // From LinkInterface
+    virtual void readBytes(void);
+
 protected:
-    QString name;
-    QHostAddress host;
-    quint16 port;
-    int id;
-    QTcpSocket* socket;
-    bool socketIsConnected;
-    
-    QMutex dataMutex;
-    
-    void setName(QString name);
-    
+    // From LinkInterface->QThread
+    virtual void run(void);
+
 private:
-	bool hardwareConnect(void);
+    void _resetName(void);
+	bool _hardwareConnect(void);
 #ifdef TCPLINK_READWRITE_DEBUG
-    void writeDebugBytes(const char *data, qint16 size);
+    void _writeDebugBytes(const char *data, qint16 size);
 #endif
+
+    QString         _name;
+    QHostAddress    _hostAddress;
+    quint16         _port;
+    int             _linkId;
+    QTcpSocket*     _socket;
+    bool            _socketIsConnected;
     
-signals:
-    //Signals are defined by LinkInterface
-    
+    quint64 _bitsSentTotal;
+    quint64 _bitsSentCurrent;
+    quint64 _bitsSentMax;
+    quint64 _bitsReceivedTotal;
+    quint64 _bitsReceivedCurrent;
+    quint64 _bitsReceivedMax;
+    quint64 _connectionStartTime;
+    QMutex  _statisticsMutex;
 };
 
 #endif // TCPLINK_H
