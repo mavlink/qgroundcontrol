@@ -1000,8 +1000,18 @@ QString MAVLinkSimulationLink::getName() const
     return name;
 }
 
-qint64 MAVLinkSimulationLink::getNominalDataRate() const
+qint64 MAVLinkSimulationLink::getConnectionSpeed() const
 {
     /* 100 Mbit is reasonable fast and sufficient for all embedded applications */
     return 100000000;
+}
+
+qint64 MAVLinkSimulationLink::getCurrentInDataRate() const
+{
+    return 0;
+}
+
+qint64 MAVLinkSimulationLink::getCurrentOutDataRate() const
+{
+    return 0;
 }

@@ -376,7 +376,17 @@ void UDPLink::setName(QString name)
 }
 
 
-qint64 UDPLink::getNominalDataRate() const
+qint64 UDPLink::getConnectionSpeed() const
 {
     return 54000000; // 54 Mbit
+}
+
+qint64 UDPLink::getCurrentInDataRate() const
+{
+    return 0;
+}
+
+qint64 UDPLink::getCurrentOutDataRate() const
+{
+    return 0;
 }
