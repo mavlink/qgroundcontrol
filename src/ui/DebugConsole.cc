@@ -326,7 +326,7 @@ void DebugConsole::updateTrafficMeasurements()
     }
 
     // Update the rate label.
-    m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassDataRate, 4, 'f', 1));
+    m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassDataRate, 4, 'f', 1, '0'));
 }
 
 void DebugConsole::paintEvent(QPaintEvent *event)

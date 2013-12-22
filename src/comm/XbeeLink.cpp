@@ -119,10 +119,21 @@ bool XbeeLink::isConnected() const
 	return this->m_connected;
 }
 
-qint64 XbeeLink::getNominalDataRate() const
+qint64 XbeeLink::getConnectionSpeed() const
 {
 	return this->m_baudRate;
 }
+
+qint64 XbeeLink::getCurrentInDataRate() const
+{
+    return 0;
+}
+
+qint64 XbeeLink::getCurrentOutDataRate() const
+{
+    return 0;
+}
+
 bool XbeeLink::hardwareConnect()
 {
 	emit tryConnectBegin(true);

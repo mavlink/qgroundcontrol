@@ -496,16 +496,18 @@ bool OpalLink::disconnect()
     return true;
 }
 
-
-
-
-/*
- *
-  Statisctics
- *
- */
-
-qint64 OpalLink::getNominalDataRate() const
+// Data rate functions
+qint64 OpalLink::getConnectionSpeed() const
 {
     return 0; //unknown
+}
+
+qint64 OpalLink::getCurrentInDataRate() const
+{
+    return 0;
+}
+
+qint64 OpalLink::getCurrentOutDataRate() const
+{
+    return 0;
 }
