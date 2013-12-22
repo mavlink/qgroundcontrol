@@ -40,9 +40,6 @@ This file is part of the QGROUNDCONTROL project
 #include "protocol.h"
 #include "QGC.h"
 
-// Set the snapshot interval to 500ms.
-#define DEBUGCONSOLE_SNAPSHOT_INTERVAL 500
-
 DebugConsole::DebugConsole(QWidget *parent) :
     QWidget(parent),
     currLink(NULL),
@@ -60,9 +57,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     lastLineBuffer(0),
     lineBufferTimer(),
     snapShotTimer(),
-    snapShotInterval(DEBUGCONSOLE_SNAPSHOT_INTERVAL),
     lowpassInDataRate(0.0f),
-    inDataRateThreshold(0.4),
     lowpassOutDataRate(0.0f),
     commandIndex(0),
     m_ui(new Ui::DebugConsole)
