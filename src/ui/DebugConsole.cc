@@ -62,7 +62,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     snapShotBytes(0),
     dataRate(0.0f),
     lowpassDataRate(0.0f),
-    dataRateThreshold(400),
+    dataRateThreshold(0.4),
     commandIndex(0),
     m_ui(new Ui::DebugConsole)
 {
@@ -328,24 +328,20 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
 
 void DebugConsole::updateTrafficMeasurements()
 {
-    lowpassDataRate = lowpassDataRate * 0.9f + (0.1f * ((float)snapShotBytes / (float)snapShotInterval) * 1000.0f);
-    dataRate = ((float)snapShotBytes / (float)snapShotInterval) * 1000.0f;
+    // Low-pass the calculated data rate with a very low frequency digital FIR filter.
+    dataRate = (float)snapShotBytes / (float)snapShotInterval;
+    lowpassDataRate = 0.9f * lowpassDataRate + 0.1f * dataRate;
     snapShotBytes = 0;
 
-    // Check if limit has been exceeded
-    if ((lowpassDataRate > dataRateThreshold) && autoHold) {
-        // Enable auto-old
+    // Check if the hold rate limit has been exceeded, and if so, stop displaying the incoming data stream.
+    // We use the real data rate here because we want this to kick in immediately.
+    if ((dataRate > dataRateThreshold) && autoHold) {
         m_ui->holdButton->setChecked(true);
         hold(true);
     }
 
-    QString speed;
-    speed = speed.sprintf("%04.1f kB/s", dataRate/1000.0f);
-    m_ui->downSpeedLabel->setText(speed);
-
-    if (holdOn) {
-        //repaint();
-    }
+    // Update the rate label.
+    m_ui->downSpeedLabel->setText(tr("%L1 kB/s").arg(lowpassDataRate, 4, 'f', 1));
 }
 
 //QPainter painter(m_ui->receiveText);
