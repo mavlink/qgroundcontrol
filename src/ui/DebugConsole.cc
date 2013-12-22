@@ -83,12 +83,10 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Load settings for this widget
     loadSettings();
 
-    // Enable traffic measurements
+    // Enable traffic measurements. We only start/stop the timer as our links change, as
+    // these calculations are dependent on the specific link.
     connect(&snapShotTimer, SIGNAL(timeout()), this, SLOT(updateTrafficMeasurements()));
     snapShotTimer.setInterval(snapShotInterval);
-    snapShotTimer.start();
-    // Update measurements the first time
-    updateTrafficMeasurements();
 
     // First connect management slots, then make sure to add all existing objects
     // Connect to link manager to get notified about new links
@@ -201,7 +199,14 @@ void DebugConsole::removeLink(LinkInterface* const linkInterface)
 
         m_ui->linkComboBox->removeItem(linkIndex);
     }
-    if (linkInterface == currLink) currLink = NULL;
+    // Now if this was the current link, clean up some stuff.
+    if (linkInterface == currLink)
+    {
+        // Like disable the update time for the UI.
+        snapShotTimer.stop();
+
+        currLink = NULL;
+    }
 }
 void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 {
@@ -214,11 +219,14 @@ void DebugConsole::linkStatusUpdate(const QString& name,const QString& text)
 void DebugConsole::linkSelected(int linkId)
 {
     // Disconnect
-    if (currLink) {
+    if (currLink)
+    {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
         disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
         disconnect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
+        snapShotTimer.stop();
     }
+
     // Clear data
     m_ui->receiveText->clear();
 
@@ -228,6 +236,7 @@ void DebugConsole::linkSelected(int linkId)
     connect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
     connect(currLink,SIGNAL(communicationUpdate(QString,QString)),this,SLOT(linkStatusUpdate(QString,QString)));
     setConnectionState(currLink->isConnected());
+    snapShotTimer.start();
 }
 
 /**
@@ -318,12 +327,6 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
  */
 void DebugConsole::updateTrafficMeasurements()
 {
-    // We need a link to read its data rates from, so if there isn't one, don't do anything.
-    if (!currLink)
-    {
-        return;
-    }
-
     // Calculate the rate of incoming data, converting to
     // kilobytes per second from the received bits per second.
     qint64 inDataRate = currLink->getCurrentInDataRate() / 1000.0f;
