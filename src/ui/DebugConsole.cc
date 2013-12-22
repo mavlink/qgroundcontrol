@@ -341,7 +341,7 @@ void DebugConsole::updateTrafficMeasurements()
 
     QString speed;
     speed = speed.sprintf("%04.1f kB/s", dataRate/1000.0f);
-    m_ui->speedLabel->setText(speed);
+    m_ui->downSpeedLabel->setText(speed);
 
     if (holdOn) {
         //repaint();
