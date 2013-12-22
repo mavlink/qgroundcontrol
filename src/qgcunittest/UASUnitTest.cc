@@ -147,9 +147,13 @@ void UASUnitTest::getLongitude_test()
 {
     QCOMPARE(uas->getLongitude(), 0.0);
 }
-void UASUnitTest::getAltitude_test()
+void UASUnitTest::getAltitudeAMSL_test()
 {
-    QCOMPARE(uas->getAltitude(), 0.0);
+    QCOMPARE(uas->getAltitudeAMSL(), 0.0);
+}
+void UASUnitTest::getAltitudeRelative_test()
+{
+    QCOMPARE(uas->getAltitudeRelative(), 0.0);
 }
 void UASUnitTest::getRoll_test()
 {
