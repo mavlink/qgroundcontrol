@@ -7,7 +7,7 @@
 #include "AutoTest.h"
 #include <QDebug>
 
-#if 1
+#if 0
 // This is all you need to run all the tests
 TEST_MAIN
 #else
