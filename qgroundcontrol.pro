@@ -30,7 +30,8 @@ QT += network \
     phonon \
     webkit \
     sql \
-    declarative
+    declarative \
+    testlib
 
 # Setting this variable allows you to include this .pro file in another such that
 # you can set your own TARGET and main() function. This is used by the unit test
@@ -744,6 +745,20 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
+    
+# Unit Test sources/headers go here
+# We always compile unit test code even for non unit test builds to keep them from being broken at least from a build standpoint
+
+HEADERS += \
+    src/qgcunittest/AutoTest.h \
+    src/qgcunittest/UASUnitTest.h \
+    src/qgcunittest/TCPLinkTest.h \
+    src/qgcunittest/MultiSignalSpy.h \
+
+SOURCES += \
+    src/qgcunittest/UASUnitTest.cc \
+    src/qgcunittest/TCPLinkTest.cc \
+    src/qgcunittest/MultiSignalSpy.cc \
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
