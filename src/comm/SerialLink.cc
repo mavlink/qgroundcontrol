@@ -23,19 +23,9 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
                        int dataBits, int stopBits) :
     m_bytesRead(0),
     m_port(NULL),
-    inDataIndex(0),
-    outDataIndex(0),
     m_stopp(false),
     m_reqReset(false)
 {
-    // Initialize our arrays manually, cause C++<03 is dumb.
-    for (int i = 0; i < buffer_size; ++i)
-    {
-        inDataWriteAmounts[i] = 0;
-        inDataWriteTimes[i] = 0;
-        outDataWriteAmounts[i] = 0;
-        outDataWriteTimes[i] = 0;
-    }
 
     // Get the name of the current port in use.
     m_portName = portname.trimmed();
@@ -212,8 +202,8 @@ void SerialLink::run()
 
             // Log this written data for this timestep. If this value ends up being 0 due to
             // write() failing, that's what we want as well.
-            QMutexLocker statsLocker(&m_statisticsMutex);
-            WriteDataStatsBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, numWritten, QDateTime::currentMSecsSinceEpoch());
+            QMutexLocker dataRateLocker(&dataRateMutex);
+            logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, numWritten, QDateTime::currentMSecsSinceEpoch());
         }
 
         //wait n msecs for data to be ready
@@ -230,8 +220,8 @@ void SerialLink::run()
                 emit bytesReceived(this, readData);
 
                 // Log this data reception for this timestep
-                QMutexLocker statsLocker(&m_statisticsMutex);
-                WriteDataStatsBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, readData.length(), QDateTime::currentMSecsSinceEpoch());
+                QMutexLocker dataRateLocker(&dataRateMutex);
+                logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, readData.length(), QDateTime::currentMSecsSinceEpoch());
 
                 // Track the total amount of data read.
                 m_bytesRead += readData.length();
@@ -291,23 +281,6 @@ void SerialLink::run()
         emit disconnected();
         emit connected(false);
     }
-}
-
-void SerialLink::WriteDataStatsBuffer(quint64 *bytesBuffer, qint64 *timeBuffer, int *writeIndex, quint64 bytes, qint64 time)
-{
-    int i = *writeIndex;
-
-    // Now write into the buffer, if there's no room, we just overwrite the first data point.
-    bytesBuffer[i] = bytes;
-    timeBuffer[i] = time;
-
-    // Increment and wrap the write index
-    ++i;
-    if (i == buffer_size)
-    {
-        i = 0;
-    }
-    *writeIndex = i;
 }
 
 void SerialLink::writeBytes(const char* data, qint64 size)
@@ -552,94 +525,6 @@ qint64 SerialLink::getConnectionSpeed() const
             dataRate = -1;
             break;
     }
-    return dataRate;
-}
-
-qint64 SerialLink::getCurrentOutDataRate() const
-{
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-
-    // Limit the time we calculate to the recent past
-    const qint64 cutoff = now - stats_timespan;
-
-    // Grab the mutex for working with the stats variables
-    QMutexLocker statsLocker(&m_statisticsMutex);
-
-    // Now iterate through the buffer of all received data packets adding up all values
-    // within now and our cutof.
-    int index = outDataIndex;
-    qint64 totalBytes = 0;
-    qint64 totalTime = 0;
-    qint64 lastTime = 0;
-    int size = buffer_size;
-    while (size-- > 0)
-    {
-        // If this data is within our cutoff time, include it in our calculations.
-        // This also accounts for when the buffer is empty and filled with 0-times.
-        if (outDataWriteTimes[index] > cutoff && lastTime > 0) {
-            // Track the total time, using the previous time as our timeperiod.
-            totalTime += outDataWriteTimes[index] - lastTime;
-            totalBytes += outDataWriteAmounts[index];
-        }
-
-        // Track the last time sample for doing timespan calculations
-        lastTime = outDataWriteTimes[index];
-
-        // Increment and wrap the index if necessary.
-        if (++index == buffer_size)
-        {
-            index = 0;
-        }
-    }
-
-    // Return the final calculated value in bits / s, converted from bytes/ms.
-    qint64 dataRate = (totalTime != 0)?(qint64)((float)totalBytes * 8.0f / ((float)totalTime / 1000.0f)):0;
-
-    // Finally return our calculated data rate.
-    return dataRate;
-}
-
-qint64 SerialLink::getCurrentInDataRate() const
-{
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
-
-    // Limit the time we calculate to the recent past
-    const qint64 cutoff = now - stats_timespan;
-
-    // Grab the mutex for working with the stats variables
-    QMutexLocker statsLocker(&m_statisticsMutex);
-
-    // Now iterate through the buffer of all received data packets adding up all values
-    // within now and our cutof.
-    int index = inDataIndex;
-    qint64 totalBytes = 0;
-    qint64 totalTime = 0;
-    qint64 lastTime = 0;
-    int size = buffer_size;
-    while (size-- > 0)
-    {
-        // If this data is within our cutoff time, include it in our calculations.
-        // This also accounts for when the buffer is empty and filled with 0-times.
-        if (inDataWriteTimes[index] > cutoff && lastTime > 0) {
-            // Track the total time, using the previous time as our timeperiod.
-            totalTime += inDataWriteTimes[index] - lastTime;
-            totalBytes += inDataWriteAmounts[index];
-        }
-
-        // Track the last time sample for doing timespan calculations
-        lastTime = inDataWriteTimes[index];
-
-        // Increment and wrap the index if necessary.
-        if (++index == buffer_size)
-        {
-            index = 0;
-        }
-    }
-
-    // Return the final calculated value in bits / s, converted from bytes/ms.
-    qint64 dataRate = (totalTime != 0)?(qint64)((float)totalBytes * 8.0f / ((float)totalTime / 1000.0f)):0;
-
-    // Finally return our calculated data rate.
     return dataRate;
 }
 

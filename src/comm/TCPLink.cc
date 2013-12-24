@@ -131,6 +131,10 @@ void TCPLink::writeBytes(const char* data, qint64 size)
     writeDebugBytes(data, size);
 #endif
     socket->write(data, size);
+
+    // Log the amount and time written out for future data rate calculations.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
 }
 
 /**
@@ -151,6 +155,10 @@ void TCPLink::readBytes()
         socket->read(buffer.data(), buffer.size());
         
         emit bytesReceived(this, buffer);
+
+        // Log the amount and time received for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, byteCount, QDateTime::currentMSecsSinceEpoch());
 
 #ifdef TCPLINK_READWRITE_DEBUG
         writeDebugBytes(buffer.data(), buffer.size());
