@@ -254,6 +254,10 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         }
 #endif
     }
+
+    // Log the amount and time written out for future data rate calculations.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
 }
 
 
@@ -263,6 +267,9 @@ void OpalLink::readBytes()
     emit bytesReceived(this, receiveBuffer->dequeue());
     receiveDataMutex.unlock();
 
+    // Log the amount and time received for future data rate calculations.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, s, QDateTime::currentMSecsSinceEpoch());
 }
 
 void OpalLink::receiveMessage(mavlink_message_t message)

@@ -39,9 +39,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 //#include <netinet/in.h>
 
-UDPLink::UDPLink(QHostAddress host, quint16 port)
-	: socket(NULL)
+UDPLink::UDPLink(QHostAddress host, quint16 port) :
+    socket(NULL)
 {
+
     this->host = host;
     this->port = port;
     this->connectState = false;
@@ -197,6 +198,10 @@ void UDPLink::writeBytes(const char* data, qint64 size)
         qDebug() << "ASCII:" << ascii;
 #endif
         socket->writeDatagram(data, size, currentHost, currentPort);
+
+        // Log the amount and time written out for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
     }
 }
 
@@ -219,6 +224,11 @@ void UDPLink::readBytes()
 
         // FIXME TODO Check if this method is better than retrieving the data by individual processes
         emit bytesReceived(this, datagram);
+
+        // Log this data reception for this timestep
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, datagram.length(), QDateTime::currentMSecsSinceEpoch());
+
 
 //        // Echo data for debugging purposes
 //        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
