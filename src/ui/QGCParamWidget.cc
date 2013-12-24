@@ -343,8 +343,22 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             }
             paramItem->setFlags(paramItem->flags() | Qt::ItemIsEditable);
 
-            //TODO insert alphabetically
-            parentItem->addChild(paramItem);
+            //Insert alphabetically
+            bool inserted = false;
+            for(int i = 0; i < parentItem->childCount(); i++) {
+                if (strcoll(parameterName.toStdString().c_str(), parentItem->child(i)->text(0).toStdString().c_str()) < 0)
+                {
+                    parentItem->insertChild(i, paramItem);
+                    inserted = true;
+                    break;
+                }
+            }
+
+            if (!inserted)
+            {
+                //Insert at the end
+                parentItem->addChild(paramItem);
+            }
 
             //only add the tooltip when the parameter item is first added
             QString paramDesc = paramMgr->dataModel()->getParamDescription(parameterName);
