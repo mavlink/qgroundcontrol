@@ -346,7 +346,7 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             //Insert alphabetically
             bool inserted = false;
             for(int i = 0; i < parentItem->childCount(); i++) {
-                if (strcoll(parameterName.toStdString().c_str(), parentItem->child(i)->text(0).toStdString().c_str()) < 0)
+                if (strcmp(parameterName.toStdString().c_str(), parentItem->child(i)->text(0).toStdString().c_str()) < 0)
                 {
                     parentItem->insertChild(i, paramItem);
                     inserted = true;
