@@ -55,3 +55,4 @@ thirdParty/qserialport/lib/
 GeneratedFiles/
 
 *.autosave
+.settings/
