@@ -51,7 +51,7 @@ namespace AutoTest
     inline int run(int argc, char *argv[])
     { 
 	int ret = 0;
-	QCoreApplication t(argc, argv);
+	QApplication t(argc, argv);
 	foreach (QObject* test, testList())
 	{  
             ret += QTest::qExec(test, argc, argv);
