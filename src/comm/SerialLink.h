@@ -68,10 +68,6 @@ public:
 
     static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
 
-    static const int buffer_size = 20; ///< Specify how many data points to capture for data rate calculations.
-
-    static const qint64 stats_timespan = 500; ///< Set the maximum age of samples to use for data calculations (ms).
-
     /** @brief Get a list of the currently available ports */
     QList<QString> getCurrentPorts();
 
@@ -154,39 +150,11 @@ protected:
     QString m_portName;
     int m_timeout;
     int m_id;
-    // Implement a simple circular buffer for storing when and how much data was received.
-    // Used for calculating the incoming data rate. Use with *StatsBuffer() functions.
-    int inDataIndex;
-    quint64 inDataWriteAmounts[buffer_size]; // In bytes
-    qint64 inDataWriteTimes[buffer_size]; // in ms
-
-    // Implement a simple circular buffer for storing when and how much data was transmit.
-    // Used for calculating the outgoing data rate. Use with *StatsBuffer() functions.
-    int outDataIndex;
-    quint64 outDataWriteAmounts[buffer_size]; // In bytes
-    qint64 outDataWriteTimes[buffer_size]; // in ms
-
-    quint64 m_connectionStartTime; // Connection start time (ms since epoch)
-    mutable QMutex m_statisticsMutex; // Mutex for accessing the statistics member variables (inData*,outData*,bitsSent,bitsReceived)
     QMutex m_dataMutex;       // Mutex for reading data from m_port
     QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
     QList<QString> m_ports;
 
 private:
-    /**
-     * @brief WriteDataStatsBuffer Stores transmission times/amounts for statistics
-     *
-     * This function logs the send times and amounts of datas to the given circular buffers.
-     * This data is used for calculating the transmission rate.
-     *
-     * @param bytesBuffer The buffer to write the bytes value into.
-     * @param timeBuffer The buffer to write the time value into
-     * @param writeIndex The write index used for this buffer.
-     * @param bytes The amount of bytes transmit.
-     * @param time The time (in ms) this transmission occurred.
-     */
-    void WriteDataStatsBuffer(quint64 *bytesBuffer, qint64 *timeBuffer, int *writeIndex, quint64 bytes, qint64 time);
-    
     volatile bool m_stopp;
     volatile bool m_reqReset;
     QMutex m_stoppMutex; // Mutex for accessing m_stopp
