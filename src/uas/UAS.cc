@@ -115,8 +115,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     altitudeAMSL(0.0),
     altitudeRelative(0.0),
 
-    airSpeed(NAN),
-    groundSpeed(NAN),
+    airSpeed(std::numeric_limits<double>::quiet_NaN()),
+    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
 
     speedX(0.0),
     speedY(0.0),

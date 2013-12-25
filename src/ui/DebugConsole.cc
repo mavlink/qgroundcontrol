@@ -40,6 +40,8 @@ This file is part of the QGROUNDCONTROL project
 #include "protocol.h"
 #include "QGC.h"
 
+const float DebugConsole::inDataRateThreshold = 0.4f;
+
 DebugConsole::DebugConsole(QWidget *parent) :
     QWidget(parent),
     currLink(NULL),

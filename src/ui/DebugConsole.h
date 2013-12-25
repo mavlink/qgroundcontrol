@@ -139,7 +139,7 @@ protected:
     QTimer snapShotTimer;     ///< Timer for measuring traffic snapshots
     static const int snapShotInterval = 500;     ///< Set the time between UI updates for the data rate (ms)
     float lowpassInDataRate;    ///< Lowpass filtered data rate (kilobytes/s)
-    static const float inDataRateThreshold = 0.4;  ///< Threshold where to enable auto-hold (kilobytes/s)
+    static const float inDataRateThreshold;  ///< Threshold where to enable auto-hold (kilobytes/s)
     float lowpassOutDataRate;   ///< Low-pass filtered outgoing data rate (kilobytes/s)
     QStringList commandHistory;
     QString currCommand;
