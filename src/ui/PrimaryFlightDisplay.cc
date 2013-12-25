@@ -125,15 +125,15 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     pitch(0),
     heading(0),
 
-    altitudeAMSL(NAN),
-    altitudeRelative(NAN),
+    altitudeAMSL(std::numeric_limits<double>::quiet_NaN()),
+    altitudeRelative(std::numeric_limits<double>::quiet_NaN()),
 
-    groundSpeed(NAN),
-    airSpeed(NAN),
-    climbRate(NAN),
+    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+    airSpeed(std::numeric_limits<double>::quiet_NaN()),
+    climbRate(std::numeric_limits<double>::quiet_NaN()),
 
     navigationCrosstrackError(0),
-    navigationTargetBearing(NAN),
+    navigationTargetBearing(std::numeric_limits<double>::quiet_NaN()),
 
     layout(COMPASS_INTEGRATED),
     style(OVERLAY_HSI),
@@ -291,19 +291,19 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
     Q_UNUSED(timestamp);
         // Called from UAS.cc l. 616
         if (isinf(roll)) {
-            this->roll = NAN;
+            this->roll = std::numeric_limits<double>::quiet_NaN();
         } else {
             this->roll = roll * (180.0 / M_PI);
         }
 
         if (isinf(pitch)) {
-            this->pitch = NAN;
+            this->pitch = std::numeric_limits<double>::quiet_NaN();
         } else {
             this->pitch = pitch * (180.0 / M_PI);
         }
 
         if (isinf(yaw)) {
-            this->heading = NAN;
+            this->heading = std::numeric_limits<double>::quiet_NaN();
         } else {
             yaw = yaw * (180.0 / M_PI);
             if (yaw<0) yaw+=360;
