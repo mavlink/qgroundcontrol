@@ -33,6 +33,9 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 #define _LINKINTERFACE_H_
 
 #include <QThread>
+#include <QDateTime>
+#include <QMutex>
+#include <QMutexLocker>
 
 /**
 * The link interface defines the interface for all links used to communicate
@@ -43,8 +46,27 @@ class LinkInterface : public QThread
 {
     Q_OBJECT
 public:
-    LinkInterface(QObject* parent = 0) : QThread(parent) {}
-    virtual ~LinkInterface() { emit this->deleteLink(this); }
+    LinkInterface() :
+        QThread(0)
+    {
+        // Initialize everything for the data rate calculation buffers.
+        inDataIndex = 0;
+        outDataIndex = 0;
+
+        // Initialize our data rate buffers manually, cause C++<03 is dumb.
+        for (int i = 0; i < dataRateBufferSize; ++i)
+        {
+            inDataWriteAmounts[i] = 0;
+            inDataWriteTimes[i] = 0;
+            outDataWriteAmounts[i] = 0;
+            outDataWriteTimes[i] = 0;
+        }
+
+    }
+
+    virtual ~LinkInterface() {
+        emit this->deleteLink(this);
+    }
 
     /* Connection management */
 
@@ -91,7 +113,10 @@ public:
      *
      * @return The data rate of the interface in bits per second, 0 if unknown
      **/
-    virtual qint64 getCurrentInDataRate() const = 0;
+    qint64 getCurrentInDataRate() const
+    {
+        return getCurrentDataRate(inDataIndex, inDataWriteTimes, inDataWriteAmounts);
+    }
 
     /**
      * @Brief Get the current outgoing data rate.
@@ -101,7 +126,10 @@ public:
      *
      * @return The data rate of the interface in bits per second, 0 if unknown
      **/
-    virtual qint64 getCurrentOutDataRate() const = 0;
+    qint64 getCurrentOutDataRate() const
+    {
+        return getCurrentDataRate(outDataIndex, outDataWriteTimes, outDataWriteAmounts);
+    }
 
     /**
      * @brief Connect this interface logically
@@ -177,10 +205,114 @@ signals:
 
     void communicationUpdate(const QString& linkname, const QString& text);
 
-	/** @brief destroying element */
-	void deleteLink(LinkInterface* const link);
+    /** @brief destroying element */
+    void deleteLink(LinkInterface* const link);
 
 protected:
+
+    static const int dataRateBufferSize = 20; ///< Specify how many data points to capture for data rate calculations.
+
+    static const qint64 dataRateCurrentTimespan = 500; ///< Set the maximum age of samples to use for data calculations (ms).
+
+    // Implement a simple circular buffer for storing when and how much data was received.
+    // Used for calculating the incoming data rate. Use with *StatsBuffer() functions.
+    int inDataIndex;
+    quint64 inDataWriteAmounts[dataRateBufferSize]; // In bytes
+    qint64 inDataWriteTimes[dataRateBufferSize]; // in ms
+
+    // Implement a simple circular buffer for storing when and how much data was transmit.
+    // Used for calculating the outgoing data rate. Use with *StatsBuffer() functions.
+    int outDataIndex;
+    quint64 outDataWriteAmounts[dataRateBufferSize]; // In bytes
+    qint64 outDataWriteTimes[dataRateBufferSize]; // in ms
+
+    mutable QMutex dataRateMutex; // Mutex for accessing the data rate member variables
+
+    /**
+     * @brief logDataRateToBuffer Stores transmission times/amounts for statistics
+     *
+     * This function logs the send times and amounts of datas to the given circular buffers.
+     * This data is used for calculating the transmission rate.
+     *
+     * @param bytesBuffer[out] The buffer to write the bytes value into.
+     * @param timeBuffer[out] The buffer to write the time value into
+     * @param writeIndex[out] The write index used for this buffer.
+     * @param bytes The amount of bytes transmit.
+     * @param time The time (in ms) this transmission occurred.
+     */
+    static void logDataRateToBuffer(quint64 *bytesBuffer, qint64 *timeBuffer, int *writeIndex, quint64 bytes, qint64 time)
+    {
+        int i = *writeIndex;
+
+        // Now write into the buffer, if there's no room, we just overwrite the first data point.
+        bytesBuffer[i] = bytes;
+        timeBuffer[i] = time;
+
+        // Increment and wrap the write index
+        ++i;
+        if (i == dataRateBufferSize)
+        {
+            i = 0;
+        }
+        *writeIndex = i;
+    }
+
+    /**
+     * @brief getCurrentDataRate Get the current data rate given a data rate buffer.
+     *
+     * This function attempts to use the times and number of bytes transmit into a current data rate
+     * estimation. Since it needs to use timestamps to get the timeperiods over when the data was sent,
+     * this is effectively a global data rate over the last dataRateBufferSize - 1 data points. Also note
+     * that data points older than NOW - dataRateCurrentTimespan are ignored.
+     *
+     * @param index The first valid sample in the data rate buffer. Refers to the oldest time sample.
+     * @param dataWriteTimes The time, in ms since epoch, that each data sample took place.
+     * @param dataWriteAmounts The amount of data (in bits) that was transferred.
+     * @return The bits per second of data transferrence of the interface over the last [-statsCurrentTimespan, 0] timespan.
+     */
+    qint64 getCurrentDataRate(int index, const qint64 dataWriteTimes[], const quint64 dataWriteAmounts[]) const
+    {
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+        // Limit the time we calculate to the recent past
+        const qint64 cutoff = now - dataRateCurrentTimespan;
+
+        // Grab the mutex for working with the stats variables
+        QMutexLocker dataRateLocker(&dataRateMutex);
+
+        // Now iterate through the buffer of all received data packets adding up all values
+        // within now and our cutof.
+        qint64 totalBytes = 0;
+        qint64 totalTime = 0;
+        qint64 lastTime = 0;
+        int size = dataRateBufferSize;
+        while (size-- > 0)
+        {
+            // If this data is within our cutoff time, include it in our calculations.
+            // This also accounts for when the buffer is empty and filled with 0-times.
+            if (dataWriteTimes[index] > cutoff && lastTime > 0) {
+                // Track the total time, using the previous time as our timeperiod.
+                totalTime += dataWriteTimes[index] - lastTime;
+                totalBytes += dataWriteAmounts[index];
+            }
+
+            // Track the last time sample for doing timespan calculations
+            lastTime = dataWriteTimes[index];
+
+            // Increment and wrap the index if necessary.
+            if (++index == dataRateBufferSize)
+            {
+                index = 0;
+            }
+        }
+
+        // Return the final calculated value in bits / s, converted from bytes/ms.
+        qint64 dataRate = (totalTime != 0)?(qint64)((float)totalBytes * 8.0f / ((float)totalTime / 1000.0f)):0;
+
+        // Finally return our calculated data rate.
+        return dataRate;
+    }
+
     static int getNextLinkId() {
         static int nextId = 1;
         return nextId++;
@@ -197,8 +329,5 @@ protected slots:
     virtual void readBytes() = 0;
 
 };
-
-/* Declare C++ interface as Qt interface */
-//Q_DECLARE_INTERFACE(LinkInterface, "org.openground.comm.links.LinkInterface/1.0")
 
 #endif // _LINKINTERFACE_H_

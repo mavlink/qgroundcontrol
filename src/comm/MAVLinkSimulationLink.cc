@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
  * @param writeFile The received messages are written to that file
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
-MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) : LinkInterface(parent),
+MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) :
     readyBytes(0),
     timeOffset(0)
 {
@@ -857,6 +857,12 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
         }
     }
 
+    // Log the amount and time written out for future data rate calculations.
+    // While this interface doesn't actually write any data to external systems,
+    // this data "transmit" here should still count towards the outgoing data rate.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
+
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)
     {
@@ -884,25 +890,12 @@ void MAVLinkSimulationLink::readBytes()
 
     QByteArray b(data, len);
     emit bytesReceived(this, b);
-
     readyBufferMutex.unlock();
 
-//    if (len > 0)
-//    {
-//        qDebug() << "Simulation sent " << len << " bytes to groundstation: ";
+    // Log the amount and time received for future data rate calculations.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, len, QDateTime::currentMSecsSinceEpoch());
 
-//        /* Increase write counter */
-//        //bitsSentTotal += size * 8;
-
-//        //Output all bytes as hex digits
-//        int i;
-//        for (i=0; i<len; i++)
-//        {
-//            unsigned int v=data[i];
-//            fprintf(stderr,"%02x ", v);
-//        }
-//        fprintf(stderr,"\n");
-//    }
 }
 
 /**
