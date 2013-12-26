@@ -283,9 +283,9 @@ void WaypointList::addEditable(bool onCurrentPosition)
             wp->setZ(last->getZ());
         }
         wp->setParam1(last->getParam1());
-        wp->setParam1(last->getParam2());
-        wp->setParam1(last->getParam3());
-        wp->setParam1(last->getParam4());
+        wp->setParam2(last->getParam2());
+        wp->setParam3(last->getParam3());
+        wp->setParam4(last->getParam4());
         wp->setAutocontinue(last->getAutoContinue());
 //        wp->blockSignals(false);
         wp->setAction(last->getAction());
