@@ -905,7 +905,7 @@ void UASWaypointManager::writeWaypoints()
             sendWaypointCount();
         } else if (waypointsEditable.count() == 0)
         {
-            sendWaypointClearAll();
+            clearWaypointList();
         }
     }
     else
