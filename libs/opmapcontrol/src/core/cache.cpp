@@ -54,7 +54,7 @@ namespace core {
     {
         if(cache.isNull()|cache.isEmpty())
         {
-            cache = QDir::homePath() + "/mapscache/";
+            cache = QDir::homePath() + "/.mapscache/";
             setCacheLocation(cache);
         }
     }
