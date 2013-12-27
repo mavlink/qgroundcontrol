@@ -29,6 +29,7 @@
 #include "UASParameterCommsMgr.h"
 #include <Eigen/Geometry>
 #include <comm/px4_custom_mode.h>
+#include "uas/QGCUASLogManager.h"
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <google/protobuf/descriptor.h>
@@ -131,6 +132,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 
     waypointManager(this),
     paramMgr(this),
+    logManager(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -1402,6 +1404,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_NAMED_VALUE_INT:
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
         case MAVLINK_MSG_ID_HIGHRES_IMU:
+            break;
+        case MAVLINK_MSG_ID_LOG_REQUEST_LIST ... MAVLINK_MSG_ID_LOG_REQUEST_END:
+            logManager.receiveMessage(link, message);
             break;
         default:
         {

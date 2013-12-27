@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
 #include "UASParameterDataModel.h"
+#include "QGCUASLogManager.h"
 #include "UASWaypointManager.h"
 #include "QGCUASParamManager.h"
 #include "RadioCalibration/RadioCalibrationData.h"
@@ -157,6 +158,9 @@ public:
 
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManager* getParamManager() = 0;
+
+    /** @brief Get reference to the log manager **/
+    virtual QGCUASLogManager* getLogManager() = 0;
 
     /* COMMUNICATION FLAGS */
 
