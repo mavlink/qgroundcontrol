@@ -30,7 +30,8 @@ QT += network \
     phonon \
     webkit \
     sql \
-    declarative
+    declarative \
+    testlib
 
 # Setting this variable allows you to include this .pro file in another such that
 # you can set your own TARGET and main() function. This is used by the unit test
@@ -43,11 +44,11 @@ isEmpty(QGCS_UNITTEST_OVERRIDE) {
 
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
-    debug {
+    CONFIG(debug, debug|release) {
         TARGETDIR = $${OUT_PWD}/debug
         BUILDDIR = $${OUT_PWD}/build-debug
     }
-    release {
+    CONFIG(release, debug|release) {
         TARGETDIR = $${OUT_PWD}/release
         BUILDDIR = $${OUT_PWD}/build-release
     }
@@ -735,6 +736,20 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
+
+CONFIG(debug, debug|release) {
+    # Unit Test sources/headers go here
+    
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/qgcunittest/AutoTest.h \
+        src/qgcunittest/UASUnitTest.h
+
+    SOURCES += \
+        src/qgcunittest/UASUnitTest.cc
+}
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

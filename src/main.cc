@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
-
+#include "AutoTest.h"
 
 /* SDL does ugly things to main() */
 #ifdef main
@@ -67,6 +67,28 @@ int main(int argc, char *argv[])
 // install the message handler
 #ifdef Q_OS_WIN
     qInstallMsgHandler( msgHandler );
+#endif
+    
+#ifdef QT_DEBUG
+    if (argc > 1 && QString(argv[1]).compare("--unittest", Qt::CaseInsensitive) == 0) {
+        // Strip off extra command line args so QTest doesn't complain
+        for (int i=1; i<argc-1; i++)
+        {
+            argv[i] = argv[i+1];
+        }
+        
+        // Run the test
+        int failures = AutoTest::run(argc-1, argv);
+        if (failures == 0)
+        {
+            qDebug() << "ALL TESTS PASSED";
+        }
+        else
+        {
+            qDebug() << failures << " TESTS FAILED!";
+        }
+        return failures;
+    }
 #endif
 
     QGCCore* core = NULL;
