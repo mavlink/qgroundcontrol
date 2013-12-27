@@ -175,7 +175,7 @@ linux-g++|linux-g++-64{
 	CONFIG -= console
 	DEFINES += __STDC_LIMIT_MACROS
 
-	release {
+	CONFIG(release, debug|release) {
 		DEFINES += QT_NO_DEBUG
 	}
 
@@ -429,11 +429,11 @@ win32-g++ {
 
 
 
-	debug {
+	CONFIG(debug, debug|release) {
 		CONFIG += console
 	}
 
-	release {
+	CONFIG(release, debug|release) {
 		CONFIG -= console
 		DEFINES += QT_NO_DEBUG
 	}
@@ -445,14 +445,14 @@ win32-g++ {
 	system(cp): {
 		# CP command is available, use it instead of copy / xcopy
 		message("Using cp to copy image and audio files to executable")
-		debug {
+		CONFIG(debug, debug|release) {
 			QMAKE_POST_LINK += && cp $$BASEDIR/libs/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/files $$TARGETDIR/debug/files
                         QMAKE_POST_LINK += && cp -r $$BASEDIR/libs/mavlink $$TARGETDIR/debug/mavlink
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/debug/models
 		}
 
-		release {
+		CONFIG(release, debug|release) {
 			QMAKE_POST_LINK += && cp $$BASEDIR/libs/lib/sdl/win32/SDL.dll $$TARGETDIR/release/SDL.dll
 			QMAKE_POST_LINK += && cp -r $$BASEDIR/files $$TARGETDIR/release/files
                         QMAKE_POST_LINK += && cp -r $$BASEDIR/libs/mavlink $$TARGETDIR/release/mavlink
