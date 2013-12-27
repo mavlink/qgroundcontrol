@@ -34,17 +34,14 @@ public: // virtual functions from LinkInterface
     int getId() const;
     QString getName() const;
     bool isConnected() const;
-    qint64 getNominalDataRate() const;
-    bool isFullDuplex() const;
-    int getLinkQuality() const;
-    qint64 getTotalUpstream();
-    qint64 getCurrentUpstream();
-    qint64 getMaxUpstream();
-    qint64 getBitsSent() const;
-    qint64 getBitsReceived() const;
     bool connect();
     bool disconnect();
     qint64 bytesAvailable();
+
+    // Extensive statistics for scientific purposes
+    qint64 getConnectionSpeed() const;
+    qint64 getCurrentOutDataRate() const;
+    qint64 getCurrentInDataRate() const;
 
 public slots: // virtual functions from LinkInterface
 	void writeBytes(const char *bytes, qint64 length);

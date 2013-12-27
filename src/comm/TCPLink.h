@@ -68,22 +68,14 @@ public:
     int getParityType() const;
     int getDataBitsType() const;
     int getStopBitsType() const;
-    
-    /* Extensive statistics for scientific purposes */
-    qint64 getNominalDataRate() const;
-    qint64 getTotalUpstream();
-    qint64 getCurrentUpstream();
-    qint64 getMaxUpstream();
-    qint64 getTotalDownstream();
-    qint64 getCurrentDownstream();
-    qint64 getMaxDownstream();
-    qint64 getBitsSent() const;
-    qint64 getBitsReceived() const;
+
+    // Extensive statistics for scientific purposes
+    qint64 getConnectionSpeed() const;
+    qint64 getCurrentInDataRate() const;
+    qint64 getCurrentOutDataRate() const;
     
     void run();
     
-    int getLinkQuality() const;
-    bool isFullDuplex() const;
     int getId() const;
     
 public slots:
@@ -105,14 +97,6 @@ protected:
     QTcpSocket* socket;
     bool socketIsConnected;
     
-    quint64 bitsSentTotal;
-    quint64 bitsSentCurrent;
-    quint64 bitsSentMax;
-    quint64 bitsReceivedTotal;
-    quint64 bitsReceivedCurrent;
-    quint64 bitsReceivedMax;
-    quint64 connectionStartTime;
-    QMutex statisticsMutex;
     QMutex dataMutex;
     
     void setName(QString name);

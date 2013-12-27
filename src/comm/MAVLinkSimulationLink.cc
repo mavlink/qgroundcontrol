@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
  * @param writeFile The received messages are written to that file
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
-MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) : LinkInterface(parent),
+MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) :
     readyBytes(0),
     timeOffset(0)
 {
@@ -857,6 +857,12 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
         }
     }
 
+    // Log the amount and time written out for future data rate calculations.
+    // While this interface doesn't actually write any data to external systems,
+    // this data "transmit" here should still count towards the outgoing data rate.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
+
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)
     {
@@ -884,25 +890,12 @@ void MAVLinkSimulationLink::readBytes()
 
     QByteArray b(data, len);
     emit bytesReceived(this, b);
-
     readyBufferMutex.unlock();
 
-//    if (len > 0)
-//    {
-//        qDebug() << "Simulation sent " << len << " bytes to groundstation: ";
+    // Log the amount and time received for future data rate calculations.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, len, QDateTime::currentMSecsSinceEpoch());
 
-//        /* Increase write counter */
-//        //bitsSentTotal += size * 8;
-
-//        //Output all bytes as hex digits
-//        int i;
-//        for (i=0; i<len; i++)
-//        {
-//            unsigned int v=data[i];
-//            fprintf(stderr,"%02x ", v);
-//        }
-//        fprintf(stderr,"\n");
-//    }
 }
 
 /**
@@ -1000,72 +993,18 @@ QString MAVLinkSimulationLink::getName() const
     return name;
 }
 
-qint64 MAVLinkSimulationLink::getNominalDataRate() const
+qint64 MAVLinkSimulationLink::getConnectionSpeed() const
 {
     /* 100 Mbit is reasonable fast and sufficient for all embedded applications */
     return 100000000;
 }
 
-qint64 MAVLinkSimulationLink::getTotalUpstream()
-{
-    return 0;
-    //TODO Add functionality here
-    // @todo Add functionality here
-}
-
-qint64 MAVLinkSimulationLink::getShortTermUpstream()
+qint64 MAVLinkSimulationLink::getCurrentInDataRate() const
 {
     return 0;
 }
 
-qint64 MAVLinkSimulationLink::getCurrentUpstream()
+qint64 MAVLinkSimulationLink::getCurrentOutDataRate() const
 {
     return 0;
-}
-
-qint64 MAVLinkSimulationLink::getMaxUpstream()
-{
-    return 0;
-}
-
-qint64 MAVLinkSimulationLink::getBitsSent() const
-{
-    return 0;
-}
-
-qint64 MAVLinkSimulationLink::getBitsReceived() const
-{
-    return 0;
-}
-
-qint64 MAVLinkSimulationLink::getTotalDownstream()
-{
-    return 0;
-}
-
-qint64 MAVLinkSimulationLink::getShortTermDownstream()
-{
-    return 0;
-}
-
-qint64 MAVLinkSimulationLink::getCurrentDownstream()
-{
-    return 0;
-}
-
-qint64 MAVLinkSimulationLink::getMaxDownstream()
-{
-    return 0;
-}
-
-bool MAVLinkSimulationLink::isFullDuplex() const
-{
-    /* Full duplex is no problem when running in pure software, but this is a serial simulation */
-    return false;
-}
-
-int MAVLinkSimulationLink::getLinkQuality() const
-{
-    /* The Link quality is always perfect when running in software */
-    return 100;
 }

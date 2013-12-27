@@ -125,7 +125,8 @@ public:
 
     virtual double getLatitude() const = 0;
     virtual double getLongitude() const = 0;
-    virtual double getAltitude() const = 0;
+    virtual double getAltitudeAMSL() const = 0;
+    virtual double getAltitudeRelative() const = 0;
     virtual bool globalPositionKnown() const = 0;
 
     virtual double getRoll() const = 0;
@@ -527,16 +528,12 @@ signals:
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void localPositionChanged(UASInterface*, int component, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
-    void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
-    void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    void altitudeChanged(UASInterface*, double altitudeAMSL, double altitudeRelative, double climbRate, quint64 usec);
     /** @brief Update the status of one satellite used for localization */
     void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
 
     // The horizontal speed (a scalar)
-    void primarySpeedChanged(UASInterface*, double speed, quint64 usec);
-    void gpsSpeedChanged(UASInterface*, double speed, quint64 usec);
-    // The vertical speed (a scalar)
-    void climbRateChanged(UASInterface*, double climb, quint64 usec);
+    void speedChanged(UASInterface* uas, double groundSpeed, double airSpeed, quint64 usec);
     // Consider adding a MAV_FRAME parameter to this; could help specifying what the 3 scalars are.
     void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 
