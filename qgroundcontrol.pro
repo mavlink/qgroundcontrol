@@ -746,10 +746,14 @@ CONFIG(debug, debug|release) {
 
     HEADERS += \
         src/qgcunittest/AutoTest.h \
-        src/qgcunittest/UASUnitTest.h
+        src/qgcunittest/UASUnitTest.h \
+        src/qgcunittest/MultiSignalSpy.h \
+        src/qgcunittest/TCPLinkTest.h
 
     SOURCES += \
-        src/qgcunittest/UASUnitTest.cc
+        src/qgcunittest/UASUnitTest.cc \
+        src/qgcunittest/MultiSignalSpy.cc \
+        src/qgcunittest/TCPLinkTest.cc
 }
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
