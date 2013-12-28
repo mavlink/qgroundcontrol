@@ -343,7 +343,8 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
         setInstructionImage(QString(":/files/images/px4/calibration/accel_%1.png").arg(axis));
     }
 
-    if (text == "rotate in a figure 8 around all axis") {
+    if (text == "rotate in a figure 8 around all axis" /* support for old typo */
+            || text == "rotate in a figure 8 around all axes" /* current version */) {
         setInstructionImage(":/files/images/px4/calibration/mag_calibration_figure8.png");
     }
 
