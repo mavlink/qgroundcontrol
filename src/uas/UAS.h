@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
+#include "QGCUASParamManager.h"
 
 
 /**
@@ -542,7 +543,7 @@ public:
     }
 
     /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManager* getParamManager()  {
+    virtual QGCUASParamManagerInterface* getParamManager()  {
         return &paramMgr;
     }
 

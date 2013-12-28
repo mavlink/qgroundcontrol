@@ -276,7 +276,7 @@ protected:
 
     bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
-    QGCUASParamManager* paramMgr;       ///< params mgr for the mav
+    QGCUASParamManagerInterface* paramMgr;       ///< params mgr for the mav
     static const unsigned int chanMax = 14;    ///< Maximum number of channels
     static const unsigned int chanMappedMax = 16; ///< Maximum number of mapped channels (can be higher than input channel count)
     unsigned int chanCount;               ///< Actual channels
