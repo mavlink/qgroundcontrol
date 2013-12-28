@@ -30,17 +30,25 @@ QT += network \
     phonon \
     webkit \
     sql \
-    declarative
+    declarative \
+    testlib
 
-TEMPLATE = app
-TARGET = qgroundcontrol
+# Setting this variable allows you to include this .pro file in another such that
+# you can set your own TARGET and main() function. This is used by the unit test
+# build files to build unit test using all built parts of QGCS except for main.
+isEmpty(QGCS_UNITTEST_OVERRIDE) {
+    TEMPLATE = app
+    TARGET = qgroundcontrol
+    SOURCES += src/main.cc
+}
+
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
-    debug {
+    CONFIG(debug, debug|release) {
         TARGETDIR = $${OUT_PWD}/debug
         BUILDDIR = $${OUT_PWD}/build-debug
     }
-    release {
+    CONFIG(release, debug|release) {
         TARGETDIR = $${OUT_PWD}/release
         BUILDDIR = $${OUT_PWD}/build-release
     }
@@ -73,15 +81,6 @@ win32 {
     QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
     QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
     QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
-	
-	# Build QAX for GoogleEarth API access
-	!exists( $(QTDIR)/src/activeqt/Makefile ) {
-		message( Making QAx (ONE TIME) )
-		system( cd $$(QTDIR)\\src\\activeqt && $$(QTDIR)\\bin\\qmake.exe )
-		system( cd $$(QTDIR)\\src\\activeqt\\container && $$(QTDIR)\\bin\\qmake.exe )
-		system( cd $$(QTDIR)\\src\\activeqt\\control && $$(QTDIR)\\bin\\qmake.exe )
-                system( cd $$(QTDIR)\\src\\activeqt && nmake )
-	}
 }
 
 macx {
@@ -107,7 +106,8 @@ DEPENDPATH += \
 INCLUDEPATH += \
     libs/utils \
     libs \
-    libs/opmapcontrol
+    libs/opmapcontrol \
+    src/qgcunittest
 
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
@@ -227,6 +227,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
+    src/ui/QGCTCPLinkConfiguration.ui \
     src/ui/QGCSettingsWidget.ui \
     src/ui/UASControlParameters.ui \
     src/ui/map/QGCMapTool.ui \
@@ -352,6 +353,7 @@ HEADERS += src/MG.h \
     src/ui/CameraView.h \
     src/comm/MAVLinkSimulationLink.h \
     src/comm/UDPLink.h \
+    src/comm/TCPLink.h \
     src/ui/ParameterInterface.h \
     src/ui/WaypointList.h \
     src/Waypoint.h \
@@ -407,6 +409,7 @@ HEADERS += src/MG.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/ui/QGCWaypointListMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
+    src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCSettingsWidget.h \
     src/ui/uas/UASControlParameters.h \
     src/uas/QGCUASParamManager.h \
@@ -508,7 +511,9 @@ HEADERS += src/MG.h \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/designer/QGCXYPlot.h \
-    src/ui/menuactionhelper.h
+    src/ui/menuactionhelper.h \
+    src/uas/UASManagerInterface.h \
+    src/uas/QGCUASParamManagerInterface.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -553,7 +558,7 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
     # Enable only if libfreenect is available
     HEADERS += src/input/Freenect.h
 }
-SOURCES += src/main.cc \
+SOURCES += \
     src/QGCCore.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
@@ -578,6 +583,7 @@ SOURCES += src/main.cc \
     src/ui/CameraView.cc \
     src/comm/MAVLinkSimulationLink.cc \
     src/comm/UDPLink.cc \
+    src/comm/TCPLink.cc \
     src/ui/ParameterInterface.cc \
     src/ui/WaypointList.cc \
     src/Waypoint.cc \
@@ -632,6 +638,7 @@ SOURCES += src/main.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/ui/QGCWaypointListMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
+    src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCSettingsWidget.cc \
     src/ui/uas/UASControlParameters.cpp \
     src/uas/QGCUASParamManager.cc \
@@ -732,6 +739,26 @@ SOURCES += src/main.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
+
+CONFIG(debug, debug|release) {
+    # Unit Test sources/headers go here
+    
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/qgcunittest/AutoTest.h \
+        src/qgcunittest/UASUnitTest.h \
+        src/qgcunittest/MockUASManager.h \
+        src/qgcunittest/MockUAS.h \
+        src/qgcunittest/MockQGCUASParamManager.h
+
+    SOURCES += \
+        src/qgcunittest/UASUnitTest.cc \
+        src/qgcunittest/MockUASManager.cc \
+        src/qgcunittest/MockUAS.cc \
+        src/qgcunittest/MockQGCUASParamManager.cc 
+}
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -862,8 +889,6 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
     INCLUDEPATH += libs/thirdParty/3DMouse/win
     DEFINES += MOUSE_ENABLED_WIN
 }
-
-unix:!macx:!symbian: LIBS += -losg
 
 OTHER_FILES += \
     dongfang_notes.txt \

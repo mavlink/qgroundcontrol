@@ -54,7 +54,10 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 
     uint8_t msgid = message.msgid;
 
-    // Handle time sync message
+    // Store an arrival time for this message. This value ends up being calculated later.
+    quint64 time = 0;
+    
+    // The SYSTEM_TIME message is special, in that it's handled here for synchronizing the QGC time with the remote time.
     if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME)
     {
         mavlink_system_time_t timebase;
@@ -65,11 +68,7 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     else
     {
 
-        QString messageName("%1 (#%2)");
-        messageName = messageName.arg(messageInfo[msgid].name).arg(msgid);
-
-        // See if first value is a time value
-        quint64 time = 0;
+        // See if first value is a time value and if it is, use that as the arrival time for this data.
         uint8_t fieldid = 0;
         uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
         if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_boot_ms") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
@@ -81,20 +80,15 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
             time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             time = (time+500)/1000; // Scale to milliseconds, round up/down correctly
         }
-        else
-        {
-            // First value is not time, send out value 0
-            emitFieldValue(&message, fieldid, getUnixTimeFromMs(message.sysid, 0));
-        }
+    }
 
-        // Align time to global time
-        time = getUnixTimeFromMs(message.sysid, time);
+    // Align UAS time to global time
+    time = getUnixTimeFromMs(message.sysid, time);
 
-        // Send out field values from 1..n
-        for (unsigned int i = 1; i < messageInfo[msgid].num_fields; ++i)
-        {
-            emitFieldValue(&message, i, time);
-        }
+    // Send out all field values for this message
+    for (int i = 0; i < messageInfo[msgid].num_fields; ++i)
+    {
+        emitFieldValue(&message, i, time);
     }
 
     // Send out combined math expressions

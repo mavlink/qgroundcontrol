@@ -44,14 +44,6 @@ This file is part of the QGROUNDCONTROL project
 // Speech synthesis is only supported with MSVC compiler
 #if _MSC_VER
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
-#define _ATL_APARTMENT_THREADED
-
-#include <atlbase.h>
-//You may derive a class from CComModule and use it if you want to override something,
-//but do not change the name of _Module
-extern CComModule _Module;
-#include <atlcom.h>
-
 #include <sapi.h>
 
 //using System;
@@ -131,9 +123,9 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 #endif
     // Initialize audio output
-    //m_media = new Phonon::MediaObject(this);
-    //Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-    //createPath(m_media, audioOutput);
+    m_media = new Phonon::MediaObject(this);
+    Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
+    createPath(m_media, audioOutput);
 
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
@@ -223,8 +215,8 @@ bool GAudioOutput::say(QString text, int severity)
                 cst_wave *wav = flite_text_to_wave(text.toStdString().c_str(), v);
                 // file.fileName() returns the unique file name
                 cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
-                //m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
-                //m_media->play();
+                m_media->setCurrentSource(Phonon::MediaSource(QUrl::fromLocalFile(file.fileName().toStdString().c_str())));
+                m_media->play();
                 res = true;
             }
 

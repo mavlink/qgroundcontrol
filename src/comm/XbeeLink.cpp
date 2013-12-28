@@ -119,44 +119,19 @@ bool XbeeLink::isConnected() const
 	return this->m_connected;
 }
 
-qint64 XbeeLink::getNominalDataRate() const
+qint64 XbeeLink::getConnectionSpeed() const
 {
 	return this->m_baudRate;
 }
 
-bool XbeeLink::isFullDuplex() const
+qint64 XbeeLink::getCurrentInDataRate() const
 {
-	return false;
+    return 0;
 }
 
-int XbeeLink::getLinkQuality() const
+qint64 XbeeLink::getCurrentOutDataRate() const
 {
-	return -1; // TO DO:
-}
-
-qint64 XbeeLink::getTotalUpstream()
-{
-	return 0; // TO DO:
-}
-
-qint64 XbeeLink::getCurrentUpstream()
-{
-	return 0; // TO DO:
-}
-
-qint64 XbeeLink::getMaxUpstream()
-{
-	return 0; // TO DO:
-}
-
-qint64 XbeeLink::getBitsSent() const
-{
-	return 0; // TO DO:
-}
-
-qint64 XbeeLink::getBitsReceived() const
-{
-	return 0; // TO DO:
+    return 0;
 }
 
 bool XbeeLink::hardwareConnect()
@@ -223,6 +198,9 @@ void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete th
 	}
 	if(!xbee_nsenddata(this->m_xbeeCon,data,length)) // return value of 0 is successful written
 	{
+        // Log the amount and time written out for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, length, QDateTime::currentMSecsSinceEpoch());
 	}
 	else
 	{
@@ -241,9 +219,13 @@ void XbeeLink::readBytes()
 		for(unsigned int i=0;i<=xbeePkt->datalen;i++)
 		{
 			data.push_back(xbeePkt->data[i]);
-		}
-		qDebug() << data;
-		emit bytesReceived(this,data);
+        }
+
+        emit bytesReceived(this, data);
+
+        // Log the amount and time received for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, data.length(), QDateTime::currentMSecsSinceEpoch());
 	}
 }
 

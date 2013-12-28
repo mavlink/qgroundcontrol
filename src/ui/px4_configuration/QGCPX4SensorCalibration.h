@@ -35,6 +35,7 @@ public slots:
     void gyroButtonClicked();
     void magButtonClicked();
     void accelButtonClicked();
+    void diffPressureButtonClicked();
 
     /**
      * @brief Hand context menu event
@@ -70,6 +71,7 @@ protected:
     void setMagCalibrated(bool calibrated);
     void setGyroCalibrated(bool calibrated);
     void setAccelCalibrated(bool calibrated);
+    void setDiffPressureCalibrated(bool calibrated);
 
     void updateIcons();
     

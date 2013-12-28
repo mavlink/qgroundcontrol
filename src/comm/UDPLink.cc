@@ -39,9 +39,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 //#include <netinet/in.h>
 
-UDPLink::UDPLink(QHostAddress host, quint16 port)
-	: socket(NULL)
+UDPLink::UDPLink(QHostAddress host, quint16 port) :
+    socket(NULL)
 {
+
     this->host = host;
     this->port = port;
     this->connectState = false;
@@ -197,6 +198,10 @@ void UDPLink::writeBytes(const char* data, qint64 size)
         qDebug() << "ASCII:" << ascii;
 #endif
         socket->writeDatagram(data, size, currentHost, currentPort);
+
+        // Log the amount and time written out for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
     }
 }
 
@@ -219,6 +224,11 @@ void UDPLink::readBytes()
 
         // FIXME TODO Check if this method is better than retrieving the data by individual processes
         emit bytesReceived(this, datagram);
+
+        // Log this data reception for this timestep
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, datagram.length(), QDateTime::currentMSecsSinceEpoch());
+
 
 //        // Echo data for debugging purposes
 //        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
@@ -344,7 +354,6 @@ bool UDPLink::hardwareConnect(void)
     emit connected(connectState);
     if (connectState) {
         emit connected();
-        connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
 	return connectState;
 }
@@ -377,64 +386,17 @@ void UDPLink::setName(QString name)
 }
 
 
-qint64 UDPLink::getNominalDataRate() const
+qint64 UDPLink::getConnectionSpeed() const
 {
     return 54000000; // 54 Mbit
 }
 
-qint64 UDPLink::getTotalUpstream()
+qint64 UDPLink::getCurrentInDataRate() const
 {
-    statisticsMutex.lock();
-    qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalUpstream;
+    return 0;
 }
 
-qint64 UDPLink::getCurrentUpstream()
+qint64 UDPLink::getCurrentOutDataRate() const
 {
-    return 0; // TODO
-}
-
-qint64 UDPLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getBitsSent() const
-{
-    return bitsSentTotal;
-}
-
-qint64 UDPLink::getBitsReceived() const
-{
-    return bitsReceivedTotal;
-}
-
-qint64 UDPLink::getTotalDownstream()
-{
-    statisticsMutex.lock();
-    qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalDownstream;
-}
-
-qint64 UDPLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool UDPLink::isFullDuplex() const
-{
-    return true;
-}
-
-int UDPLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
+    return 0;
 }

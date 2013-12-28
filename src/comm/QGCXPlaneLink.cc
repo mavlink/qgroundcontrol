@@ -404,35 +404,16 @@ Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
 {
     if (!data) return;
-    //#define QGCXPlaneLink_DEBUG
-#if 1
-    QString bytes;
-    QString ascii;
-    for (int i=0; i<size; i++)
+
+    // If socket exists and is connected, transmit the data
+    if (socket && connectState)
     {
-        unsigned char v = data[i];
-        bytes.append(QString().sprintf("%02x ", v));
-        if (data[i] > 31 && data[i] < 127)
-        {
-            ascii.append(data[i]);
-        }
-        else
-        {
-            ascii.append(219);
-        }
+        socket->writeDatagram(data, size, remoteHost, remotePort);
     }
-    //qDebug() << "Sent" << size << "bytes to" << remoteHost.toString() << ":" << remotePort << "data:";
-    //qDebug() << bytes;
-    //qDebug() << "ASCII:" << ascii;
-#endif
-    if (connectState && socket) socket->writeDatagram(data, size, remoteHost, remotePort);
 }
 
 /**
- * @brief Read a number of bytes from the interface.
- *
- * @param data Pointer to the data byte array to write the bytes to
- * @param maxLength The maximum number of bytes to write
+ * @brief Read all pending packets from the interface.
  **/
 void QGCXPlaneLink::readBytes()
 {
@@ -448,11 +429,6 @@ void QGCXPlaneLink::readBytes()
     unsigned int s = socket->pendingDatagramSize();
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
-
-    QByteArray b(data, s);
-
-    /*// Print string
-    QString state(b)*/;
 
     // Calculate the number of data segments a 36 bytes
     // XPlane always has 5 bytes header: 'DATA@'
@@ -911,14 +887,14 @@ void QGCXPlaneLink::setRandomPosition()
     double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
     double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
 
-    if (mav->getAltitude() + offAlt < 0)
+    if (mav->getAltitudeAMSL() + offAlt < 0)
     {
         offAlt *= -1.0;
     }
 
     setPositionAttitude(mav->getLatitude() + offLat,
                         mav->getLongitude() + offLon,
-                        mav->getAltitude() + offAlt,
+                        mav->getAltitudeAMSL() + offAlt,
                         mav->getRoll(),
                         mav->getPitch(),
                         mav->getYaw());
@@ -935,7 +911,7 @@ void QGCXPlaneLink::setRandomAttitude()
 
     setPositionAttitude(mav->getLatitude(),
                         mav->getLongitude(),
-                        mav->getAltitude(),
+                        mav->getAltitudeAMSL(),
                         roll,
                         pitch,
                         yaw);
