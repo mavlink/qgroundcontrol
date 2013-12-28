@@ -511,7 +511,9 @@ HEADERS += src/MG.h \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/designer/QGCXYPlot.h \
-    src/ui/menuactionhelper.h
+    src/ui/menuactionhelper.h \
+    src/uas/UASManagerInterface.h \
+    src/uas/QGCUASParamManagerInterface.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -737,7 +739,7 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
-
+    
 CONFIG(debug, debug|release) {
     # Unit Test sources/headers go here
     
@@ -746,10 +748,16 @@ CONFIG(debug, debug|release) {
 
     HEADERS += \
         src/qgcunittest/AutoTest.h \
-        src/qgcunittest/UASUnitTest.h
+        src/qgcunittest/UASUnitTest.h \
+        src/qgcunittest/MockUASManager.h \
+        src/qgcunittest/MockUAS.h \
+        src/qgcunittest/MockQGCUASParamManager.h
 
     SOURCES += \
-        src/qgcunittest/UASUnitTest.cc
+        src/qgcunittest/UASUnitTest.cc \
+        src/qgcunittest/MockUASManager.cc \
+        src/qgcunittest/MockUAS.cc \
+        src/qgcunittest/MockQGCUASParamManager.cc 
 }
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
