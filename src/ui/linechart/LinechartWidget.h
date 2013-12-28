@@ -114,7 +114,7 @@ public slots:
 private slots:
     /** Called when the user changes the time scale combobox. */
     void timeScaleChanged(int index);
-    /** @brief Applies action on curve corresponding to key based on the bool match. I used to filter curves */
+    /** @brief Toggles visibility of curve based on bool match if corresponding checkbox is not checked */
     void filterCurve(const QString &key, bool match);
 
 protected:

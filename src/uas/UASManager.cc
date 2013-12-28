@@ -22,8 +22,20 @@
 #define MEAN_EARTH_DIAMETER	12756274.0
 #define UMR	0.017453292519943295769236907684886
 
-UASManager* UASManager::instance()
+UASManagerInterface* UASManager::_mockUASManager = NULL;
+
+
+void UASManager::setMockUASManager(UASManagerInterface* mockUASManager)
 {
+    _mockUASManager = mockUASManager;
+}
+
+UASManagerInterface* UASManager::instance()
+{
+    if (_mockUASManager) {
+        return _mockUASManager;
+    }
+    
     static UASManager* _instance = 0;
     if(_instance == 0) {
         _instance = new UASManager();

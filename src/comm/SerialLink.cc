@@ -19,8 +19,6 @@
 #include "QGC.h"
 #include <MG.h>
 
-
-
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
     m_bytesRead(0),
@@ -28,9 +26,9 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
-    // Setup settings
-    m_portName = portname.trimmed();
 
+    // Get the name of the current port in use.
+    m_portName = portname.trimmed();
     if (m_portName == "" && getCurrentPorts().size() > 0)
     {
         m_portName = m_ports.first().trimmed();
@@ -69,6 +67,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
 
     LinkManager::instance()->add(this);
 }
+
 void SerialLink::requestReset()
 {
     QMutexLocker locker(&this->m_stoppMutex);
@@ -157,9 +156,9 @@ void SerialLink::run()
     qint64 timeout = 5000;
     int linkErrorCount = 0;
 
-    forever  {
+    forever {
         {
-        QMutexLocker locker(&this->m_stoppMutex);
+            QMutexLocker locker(&this->m_stoppMutex);
             if(m_stopp) {
                 m_stopp = false;
                 break; // exit the thread
@@ -174,6 +173,7 @@ void SerialLink::run()
             }
         }
 
+        // If there are too many errors on this link, disconnect.
         if (isConnected() && (linkErrorCount > 1000)) {
             qDebug() << "linkErrorCount too high: disconnecting!";
             linkErrorCount = 0;
@@ -181,8 +181,9 @@ void SerialLink::run()
             disconnect();
         }
 
+        // Write all our buffered data out the serial port.
         if (m_transmitBuffer.count() > 0) {
-            QMutexLocker writeLocker(&m_writeMutex);
+            m_writeMutex.lock();
             int numWritten = m_port->write(m_transmitBuffer);
             bool txSuccess = m_port->waitForBytesWritten(5);
             if (!txSuccess || (numWritten != m_transmitBuffer.count())) {
@@ -190,31 +191,46 @@ void SerialLink::run()
                 qDebug() << "TX Error! wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";
             }
             else {
+
+                // Since we were successful, reset out error counter.
                 linkErrorCount = 0;
             }
-            m_transmitBuffer =  m_transmitBuffer.remove(0, numWritten);
+
+            // Now that we transmit all of the data in the transmit buffer, flush it.
+            m_transmitBuffer = m_transmitBuffer.remove(0, numWritten);
+            m_writeMutex.unlock();
+
+            // Log this written data for this timestep. If this value ends up being 0 due to
+            // write() failing, that's what we want as well.
+            QMutexLocker dataRateLocker(&dataRateMutex);
+            logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, numWritten, QDateTime::currentMSecsSinceEpoch());
         }
 
         //wait n msecs for data to be ready
         //[TODO][BB] lower to SerialLink::poll_interval?
+        m_dataMutex.lock();
         bool success = m_port->waitForReadyRead(10);
 
         if (success) {
             QByteArray readData = m_port->readAll();
             while (m_port->waitForReadyRead(10))
                 readData += m_port->readAll();
+            m_dataMutex.unlock();
             if (readData.length() > 0) {
                 emit bytesReceived(this, readData);
-//                qDebug() << "rx of length " << QString::number(readData.length());
 
+                // Log this data reception for this timestep
+                QMutexLocker dataRateLocker(&dataRateMutex);
+                logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, readData.length(), QDateTime::currentMSecsSinceEpoch());
+
+                // Track the total amount of data read.
                 m_bytesRead += readData.length();
-                m_bitsReceivedTotal += readData.length() * 8;
                 linkErrorCount = 0;
             }
         }
         else {
+            m_dataMutex.unlock();
             linkErrorCount++;
-            //qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
         }
 
         if (bytes != m_bytesRead) { // i.e things are good and data is being read.
@@ -270,19 +286,11 @@ void SerialLink::run()
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
     if(m_port && m_port->isOpen()) {
-//        qDebug() << "writeBytes" << m_portName << "attempting to tx " << size << "bytes.";
 
         QByteArray byteArray(data, size);
-        {
-            QMutexLocker writeLocker(&m_writeMutex);
-            m_transmitBuffer.append(byteArray);
-        }
-
-        // Increase write counter
-        m_bitsSentTotal += size * 8;
-
-        // Extra debug logging
-//            qDebug() << byteArray->toHex();
+        m_writeMutex.lock();
+        m_transmitBuffer.append(byteArray);
+        m_writeMutex.unlock();
     } else {
         disconnect();
         // Error occured
@@ -298,12 +306,11 @@ void SerialLink::writeBytes(const char* data, qint64 size)
  **/
 void SerialLink::readBytes()
 {
-    m_dataMutex.lock();
     if(m_port && m_port->isOpen()) {
         const qint64 maxLength = 2048;
         char data[maxLength];
+        m_dataMutex.lock();
         qint64 numBytes = m_port->bytesAvailable();
-        //qDebug() << "numBytes: " << numBytes;
 
         if(numBytes > 0) {
             /* Read as much data in buffer as possible without overflow */
@@ -312,19 +319,9 @@ void SerialLink::readBytes()
             m_port->read(data, numBytes);
             QByteArray b(data, numBytes);
             emit bytesReceived(this, b);
-
-            //qDebug() << "SerialLink::readBytes()" << std::hex << data;
-            //            int i;
-            //            for (i=0; i<numBytes; i++){
-            //                unsigned int v=data[i];
-            //
-            //                fprintf(stderr,"%02x ", v);
-            //            }
-            //            fprintf(stderr,"\n");
-            m_bitsReceivedTotal += numBytes * 8;
         }
+        m_dataMutex.unlock();
     }
-    m_dataMutex.unlock();
 }
 
 
@@ -420,7 +417,6 @@ bool SerialLink::hardwareConnect()
                      this, SLOT(linkError(SerialLinkPortError_t)));
 
 //    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
-    m_connectionStartTime = MG::TIME::getGroundTimeNow();
 
     if (!m_port->open(QIODevice::ReadWrite)) {
         emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
@@ -488,7 +484,7 @@ QString SerialLink::getName() const
   * This function maps baud rate constants to numerical equivalents.
   * It relies on the mapping given in qportsettings.h from the QSerialPort library.
   */
-qint64 SerialLink::getNominalDataRate() const
+qint64 SerialLink::getConnectionSpeed() const
 {
     int baudRate;
     if (m_port) {
@@ -532,62 +528,6 @@ qint64 SerialLink::getNominalDataRate() const
     return dataRate;
 }
 
-qint64 SerialLink::getTotalUpstream()
-{
-    m_statisticsMutex.lock();
-    return m_bitsSentTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
-    m_statisticsMutex.unlock();
-}
-
-qint64 SerialLink::getCurrentUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getBitsSent() const
-{
-    return m_bitsSentTotal;
-}
-
-qint64 SerialLink::getBitsReceived() const
-{
-    return m_bitsReceivedTotal;
-}
-
-qint64 SerialLink::getTotalDownstream()
-{
-    m_statisticsMutex.lock();
-    return m_bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
-    m_statisticsMutex.unlock();
-}
-
-qint64 SerialLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool SerialLink::isFullDuplex() const
-{
-    /* Serial connections are always half duplex */
-    return false;
-}
-
-int SerialLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
-}
-
 QString SerialLink::getPortName() const
 {
     return m_portName;
@@ -597,7 +537,7 @@ QString SerialLink::getPortName() const
 
 int SerialLink::getBaudRate() const
 {
-    return getNominalDataRate();
+    return getConnectionSpeed();
 }
 
 int SerialLink::getBaudRateType() const
@@ -716,7 +656,6 @@ bool SerialLink::setPortName(QString portName)
     if ((portName != m_portName)
             && (portName.trimmed().length() > 0)) {
         m_portName = portName.trimmed();
-//        m_name = tr("serial port ") + portName.trimmed(); // [TODO] Do we need this?
         if(m_port)
             m_port->setPortName(portName);
 

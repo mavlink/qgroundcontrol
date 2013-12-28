@@ -7,13 +7,14 @@
 #include <QVariant>
 
 #include "UASParameterDataModel.h"
+#include "QGCUASParamManagerInterface.h"
 
 //forward declarations
 class QTextStream;
 class UASInterface;
 class UASParameterCommsMgr;
 
-class QGCUASParamManager : public QObject
+class QGCUASParamManager : public QGCUASParamManagerInterface
 {
     Q_OBJECT
 public:
