@@ -106,7 +106,8 @@ DEPENDPATH += \
 INCLUDEPATH += \
     libs/utils \
     libs \
-    libs/opmapcontrol
+    libs/opmapcontrol \
+    src/qgcunittest
 
 # If the user config file exists, it will be included.
 # if the variable MAVLINK_CONF contains the name of an
