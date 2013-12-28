@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
-#include "QGCUASParamManager.h"
+#include "QGCUASParamManagerInterface.h"
 #include "RadioCalibration/RadioCalibrationData.h"
 
 #ifdef QGC_PROTOBUF_ENABLED
@@ -156,7 +156,7 @@ public:
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
     /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManager* getParamManager() = 0;
+    virtual QGCUASParamManagerInterface* getParamManager() = 0;
 
     /* COMMUNICATION FLAGS */
 

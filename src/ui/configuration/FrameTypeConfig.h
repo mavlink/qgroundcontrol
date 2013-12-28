@@ -34,10 +34,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QWidget>
 #include "ui_FrameTypeConfig.h"
-#include "UASInterface.h"
-#include "UASManager.h"
-#include "QGCUASParamManager.h"
 #include "AP2ConfigWidget.h"
+
 class FrameTypeConfig : public AP2ConfigWidget
 {
     Q_OBJECT

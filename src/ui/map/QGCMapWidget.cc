@@ -134,7 +134,7 @@ bool QGCMapWidget::setHomeActionTriggered()
         QMessageBox::information(0,"Error","Please connect first");
         return false;
     }
-    UASManager *uasManager = UASManager::instance();
+    UASManagerInterface *uasManager = UASManager::instance();
     if (!uasManager) { return false; }
 
     // Enter an altitude

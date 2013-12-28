@@ -7,7 +7,7 @@
 
 #include "QGCToolWidgetItem.h"
 
-class QGCUASParamManager;
+class QGCUASParamManagerInterface;
 
 namespace Ui
 {
@@ -52,7 +52,7 @@ protected slots:
     /** @brief Updates current parameter based on new combobox value */
     void comboBoxIndexChanged(QString val);
 protected:
-    QGCUASParamManager *paramMgr; ///< Access to parameter manager
+    QGCUASParamManagerInterface *paramMgr; ///< Access to parameter manager
     bool visibleEnabled;
     QString visibleParam;
     int visibleVal;
