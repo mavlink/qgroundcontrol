@@ -97,7 +97,7 @@ protected:
 
 private:
     UASInterface* mav;
-    QGCUASParamManager *paramMgr;
+    QGCUASParamManagerInterface *paramMgr;
     QProgressDialog* progress;
     unsigned pendingParams;
     enum CONFIG_STATE configState;

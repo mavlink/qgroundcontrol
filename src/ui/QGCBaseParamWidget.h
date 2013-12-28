@@ -8,7 +8,7 @@
 
 
 //forward declarations
-class QGCUASParamManager;
+class QGCUASParamManagerInterface;
 class UASInterface;
 
 
@@ -50,7 +50,7 @@ public slots:
     virtual void loadParametersFromFile();
 
 protected:
-    QGCUASParamManager* paramMgr;
+    QGCUASParamManagerInterface* paramMgr;
     UASInterface* mav;
     QString     updatingParamNameLock; ///< Name of param currently being updated-- used for reducing echo on param change
 

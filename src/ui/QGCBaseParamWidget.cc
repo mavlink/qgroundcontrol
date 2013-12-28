@@ -3,9 +3,9 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QVariant>
-#include <QTextStream>>
+#include <QTextStream>
 
-#include "QGCUASParamManager.h"
+#include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"
 
 

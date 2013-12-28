@@ -2,7 +2,7 @@
 
 #include <QSettings>
 
-#include "QGCUASParamManager.h"
+#include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"
 
 
