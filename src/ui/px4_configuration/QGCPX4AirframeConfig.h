@@ -46,11 +46,12 @@ public slots:
      */
     void quadXSelected(int index);
 
-    void flyingWingSelected();
-    void flyingWingSelected(int index);
+    void simSelected();
+    void simSelected(int index);
     void planeSelected();
     void planeSelected(int index);
-
+    void flyingWingSelected();
+    void flyingWingSelected(int index);
     void quadPlusSelected();
     void quadPlusSelected(int index);
     void hexaXSelected();
