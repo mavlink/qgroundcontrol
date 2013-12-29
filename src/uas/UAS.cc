@@ -1017,14 +1017,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_rc_channels_scaled_t channels;
             mavlink_msg_rc_channels_scaled_decode(&message, &channels);
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            emit remoteControlChannelScaledChanged(0, channels.chan1_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(1, channels.chan2_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(2, channels.chan3_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(3, channels.chan4_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(4, channels.chan5_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(5, channels.chan6_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(6, channels.chan7_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(7, channels.chan8_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 0, channels.chan1_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 1, channels.chan2_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 2, channels.chan3_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 3, channels.chan4_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 4, channels.chan5_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 5, channels.chan6_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 6, channels.chan7_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port + 7, channels.chan8_scaled/10000.0f);
         }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
@@ -1207,7 +1207,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_servo_output_raw_t raw;
             mavlink_msg_servo_output_raw_decode(&message, &raw);
 
-            if (hilEnabled)
+            if (hilEnabled && raw.port == 0)
             {
                 emit hilActuatorsChanged(static_cast<uint64_t>(getUnixTimeFromMs(raw.time_usec)), static_cast<float>(raw.servo1_raw),
                                      static_cast<float>(raw.servo2_raw), static_cast<float>(raw.servo3_raw),
