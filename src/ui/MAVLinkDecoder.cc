@@ -261,7 +261,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     {
         // XXX this is really ugly, but we do not know a better way to do this
         mavlink_servo_output_raw_t servo;
-        mavlink_msg_rc_channels_scaled_decode(msg, &servo);
+        mavlink_msg_servo_output_raw_decode(msg, &servo);
         name = name.arg(messageInfo[msgid].name).arg(fieldName);
         name.prepend(QString("port%1_").arg(servo.port));
     }
