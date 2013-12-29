@@ -1001,30 +1001,36 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         {
             mavlink_rc_channels_raw_t channels;
             mavlink_msg_rc_channels_raw_decode(&message, &channels);
+
+            const unsigned int portWidth = 8; // XXX magic number
+
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            emit remoteControlChannelRawChanged(channels.port + 0, channels.chan1_raw);
-            emit remoteControlChannelRawChanged(channels.port + 1, channels.chan2_raw);
-            emit remoteControlChannelRawChanged(channels.port + 2, channels.chan3_raw);
-            emit remoteControlChannelRawChanged(channels.port + 3, channels.chan4_raw);
-            emit remoteControlChannelRawChanged(channels.port + 4, channels.chan5_raw);
-            emit remoteControlChannelRawChanged(channels.port + 5, channels.chan6_raw);
-            emit remoteControlChannelRawChanged(channels.port + 6, channels.chan7_raw);
-            emit remoteControlChannelRawChanged(channels.port + 7, channels.chan8_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 0, channels.chan1_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 1, channels.chan2_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 2, channels.chan3_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 3, channels.chan4_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 4, channels.chan5_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 5, channels.chan6_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 6, channels.chan7_raw);
+            emit remoteControlChannelRawChanged(channels.port * portWidth + 7, channels.chan8_raw);
         }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
         {
             mavlink_rc_channels_scaled_t channels;
             mavlink_msg_rc_channels_scaled_decode(&message, &channels);
+
+            const unsigned int portWidth = 8; // XXX magic number
+
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 0, channels.chan1_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 1, channels.chan2_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 2, channels.chan3_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 3, channels.chan4_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 4, channels.chan5_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 5, channels.chan6_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 6, channels.chan7_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(channels.port + 7, channels.chan8_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 0, channels.chan1_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 1, channels.chan2_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 2, channels.chan3_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 3, channels.chan4_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 4, channels.chan5_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 5, channels.chan6_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 6, channels.chan7_scaled/10000.0f);
+            emit remoteControlChannelScaledChanged(channels.port * portWidth + 7, channels.chan8_scaled/10000.0f);
         }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
