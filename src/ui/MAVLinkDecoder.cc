@@ -30,6 +30,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
     messageFilter.insert(MAVLINK_MSG_ID_DATA_STREAM, false);
     messageFilter.insert(MAVLINK_MSG_ID_GPS_STATUS, false);
+    messageFilter.insert(MAVLINK_MSG_ID_RC_CHANNELS_RAW, false);
     #ifdef MAVLINK_MSG_ID_ENCAPSULATED_DATA
     messageFilter.insert(MAVLINK_MSG_ID_ENCAPSULATED_DATA, false);
     #endif
@@ -239,6 +240,30 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         buf[10] = '\0';
         name = QString(buf);
         time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
+    }
+    else if (msgid == MAVLINK_MSG_ID_RC_CHANNELS_RAW)
+    {
+        // XXX this is really ugly, but we do not know a better way to do this
+        mavlink_rc_channels_raw_t raw;
+        mavlink_msg_rc_channels_raw_decode(msg, &raw);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
+        name.prepend(QString("port%1_").arg(raw.port));
+    }
+    else if (msgid == MAVLINK_MSG_ID_RC_CHANNELS_SCALED)
+    {
+        // XXX this is really ugly, but we do not know a better way to do this
+        mavlink_rc_channels_scaled_t scaled;
+        mavlink_msg_rc_channels_scaled_decode(msg, &scaled);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
+        name.prepend(QString("port%1_").arg(scaled.port));
+    }
+    else if (msgid == MAVLINK_MSG_ID_SERVO_OUTPUT_RAW)
+    {
+        // XXX this is really ugly, but we do not know a better way to do this
+        mavlink_servo_output_raw_t servo;
+        mavlink_msg_rc_channels_scaled_decode(msg, &servo);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
+        name.prepend(QString("port%1_").arg(servo.port));
     }
     else
     {

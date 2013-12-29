@@ -1002,14 +1002,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_rc_channels_raw_t channels;
             mavlink_msg_rc_channels_raw_decode(&message, &channels);
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            emit remoteControlChannelRawChanged(0, channels.chan1_raw);
-            emit remoteControlChannelRawChanged(1, channels.chan2_raw);
-            emit remoteControlChannelRawChanged(2, channels.chan3_raw);
-            emit remoteControlChannelRawChanged(3, channels.chan4_raw);
-            emit remoteControlChannelRawChanged(4, channels.chan5_raw);
-            emit remoteControlChannelRawChanged(5, channels.chan6_raw);
-            emit remoteControlChannelRawChanged(6, channels.chan7_raw);
-            emit remoteControlChannelRawChanged(7, channels.chan8_raw);
+            emit remoteControlChannelRawChanged(channels.port + 0, channels.chan1_raw);
+            emit remoteControlChannelRawChanged(channels.port + 1, channels.chan2_raw);
+            emit remoteControlChannelRawChanged(channels.port + 2, channels.chan3_raw);
+            emit remoteControlChannelRawChanged(channels.port + 3, channels.chan4_raw);
+            emit remoteControlChannelRawChanged(channels.port + 4, channels.chan5_raw);
+            emit remoteControlChannelRawChanged(channels.port + 5, channels.chan6_raw);
+            emit remoteControlChannelRawChanged(channels.port + 6, channels.chan7_raw);
+            emit remoteControlChannelRawChanged(channels.port + 7, channels.chan8_raw);
         }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
