@@ -753,7 +753,8 @@ CONFIG(debug, debug|release) {
         src/qgcunittest/MockUAS.h \
         src/qgcunittest/MockQGCUASParamManager.h \
         src/qgcunittest/MultiSignalSpy.h \
-        src/qgcunittest/TCPLinkTest.h
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/FlightModeConfigTest.h
 
     SOURCES += \
         src/qgcunittest/UASUnitTest.cc \
@@ -761,7 +762,8 @@ CONFIG(debug, debug|release) {
         src/qgcunittest/MockUAS.cc \
         src/qgcunittest/MockQGCUASParamManager.cc \
         src/qgcunittest/MultiSignalSpy.cc \
-        src/qgcunittest/TCPLinkTest.cc
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/FlightModeConfigTest.cc
 }
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
