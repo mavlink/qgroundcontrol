@@ -14,7 +14,7 @@ QGCTCPLinkConfiguration::QGCTCPLinkConfiguration(TCPLink* link, QWidget *parent)
     QString addr = link->getHostAddress().toString();
     ui->hostAddressLineEdit->setText(addr);
     connect(ui->portSpinBox, SIGNAL(valueChanged(int)), link, SLOT(setPort(int)));
-    connect(ui->hostAddressLineEdit, SIGNAL(textChanged (const QString &)), link, SLOT(setAddress(const QString &)));
+    connect(ui->hostAddressLineEdit, SIGNAL(textChanged (const QString &)), link, SLOT(setHostAddress(const QString &)));
 }
 
 QGCTCPLinkConfiguration::~QGCTCPLinkConfiguration()
