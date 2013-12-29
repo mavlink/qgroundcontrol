@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>818</width>
-    <height>359</height>
+    <height>435</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,15 +40,15 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="labelLayout">
       <property name="spacing">
-       <number>8</number>
+       <number>-1</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_11">
+       <widget class="QLabel" name="mode0Label">
         <property name="text">
          <string>Flight Mode 1</string>
         </property>
@@ -58,7 +58,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_5">
+       <widget class="QLabel" name="mode1Label">
         <property name="text">
          <string>Flight Mode 2</string>
         </property>
@@ -68,7 +68,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_9">
+       <widget class="QLabel" name="mode2Label">
         <property name="text">
          <string>Flight Mode 3</string>
         </property>
@@ -78,7 +78,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="mode3Label">
         <property name="text">
          <string>Flight Mode 4</string>
         </property>
@@ -88,7 +88,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_7">
+       <widget class="QLabel" name="mode4Label">
         <property name="text">
          <string>Flight Mode 5</string>
         </property>
@@ -98,7 +98,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_13">
+       <widget class="QLabel" name="mode5Label">
         <property name="text">
          <string>Flight Mode 6</string>
         </property>
@@ -110,20 +110,32 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_4">
+     <layout class="QVBoxLayout" name="comboLayout">
+      <property name="topMargin">
+       <number>0</number>
+      </property>
       <item>
-       <widget class="QComboBox" name="mode1ComboBox">
+       <widget class="QComboBox" name="mode0ComboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="frame">
          <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="mode2ComboBox">
+       <widget class="QComboBox" name="mode1ComboBox">
         <property name="styleSheet">
          <string notr="true"/>
         </property>
        </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="mode2ComboBox"/>
       </item>
       <item>
        <widget class="QComboBox" name="mode3ComboBox"/>
@@ -134,19 +146,23 @@
       <item>
        <widget class="QComboBox" name="mode5ComboBox"/>
       </item>
-      <item>
-       <widget class="QComboBox" name="mode6ComboBox"/>
-      </item>
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <layout class="QVBoxLayout" name="simpleCheckBoxLayout">
       <property name="spacing">
-       <number>8</number>
+       <number>12</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
+      <item>
+       <widget class="QCheckBox" name="mode0SimpleCheckBox">
+        <property name="text">
+         <string>Simple Mode</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QCheckBox" name="mode1SimpleCheckBox">
         <property name="text">
@@ -182,19 +198,15 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QCheckBox" name="mode6SimpleCheckBox">
-        <property name="text">
-         <string>Simple Mode</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="PWMLabelLayout">
+      <property name="spacing">
+       <number>-1</number>
+      </property>
       <item>
-       <widget class="QLabel" name="mode1Label">
+       <widget class="QLabel" name="mode0PWMLabel">
         <property name="styleSheet">
          <string notr="true"/>
         </property>
@@ -204,35 +216,35 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="mode2Label">
+       <widget class="QLabel" name="mode1PWMLabel">
         <property name="text">
          <string>PWM 1231 - 1360</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="mode3Label">
+       <widget class="QLabel" name="mode2PWMLabel">
         <property name="text">
          <string>PWM 1361 - 1490</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="mode4Label">
+       <widget class="QLabel" name="mode3PWMLabel">
         <property name="text">
          <string>PWM 1491 - 1620</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="mode5Label">
+       <widget class="QLabel" name="mode4PWMLabel">
         <property name="text">
          <string>PWM 1621 - 1749</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="mode6Label">
+       <widget class="QLabel" name="mode5PWMLabel">
         <property name="styleSheet">
          <string notr="true"/>
         </property>
