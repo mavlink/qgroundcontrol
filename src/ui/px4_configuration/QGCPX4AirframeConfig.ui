@@ -26,6 +26,12 @@
    </item>
    <item row="0" column="0" colspan="4">
     <widget class="QScrollArea" name="scrollArea">
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="widgetResizable">
       <bool>true</bool>
      </property>
@@ -33,9 +39,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-282</y>
         <width>762</width>
-        <height>647</height>
+        <height>638</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
@@ -340,6 +346,27 @@
           <widget class="QLabel" name="label_9">
            <property name="text">
             <string>H Frame</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="1">
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <widget class="QPushButton" name="simPushButton">
+           <property name="text">
+            <string>Simulation Setup</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="simComboBox"/>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Simulation / Experimental</string>
            </property>
           </widget>
          </item>
