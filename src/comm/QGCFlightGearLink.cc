@@ -598,7 +598,7 @@ bool QGCFlightGearLink::connectSimulation()
     }
     flightGearArguments << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
     flightGearArguments << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
-    flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
+//    flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
     // Add new argument with this: flightGearArguments << "";
     //flightGearArguments << QString("--aircraft=%2").arg(aircraft);
 
