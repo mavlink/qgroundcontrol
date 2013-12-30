@@ -2,7 +2,7 @@ var launchCatapult = func {
 	# time on catapult = 1/10 sec
 	# speed when leaving catapult = 50 km/h ?
 	var countdownRunning = 1;
-	var count = 5;
+	var count = 3;
 	var countdown = func {
 		if (countdownRunning) {
 			if (count != 0) {
@@ -14,8 +14,6 @@ var launchCatapult = func {
 				countdownRunning = 0;
 				setprop("/sim/screen/yellow","Go!");
 				launch();
-				var launchPad = aircraft.door.new("/sim/model/X100/launch-pad", 0.2);
-				launchPad.toggle();
 			}
 		}
 	}
