@@ -131,6 +131,8 @@ public slots:
 
     void printTerraSyncOutput();
     void printTerraSyncError();
+    void printFgfsOutput();
+    void printFgfsError();
     void setStartupArguments(QString startupArguments);
 
 protected:
