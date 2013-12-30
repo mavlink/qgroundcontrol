@@ -625,6 +625,8 @@ bool QGCFlightGearLink::connectSimulation()
 //    qDebug() << "STARTING: " << processTerraSync << terraSyncArguments;
 
     process->start(processFgfs, flightGearArguments);
+//    connect (process, SIGNAL(readyReadStandardOutput()), this, SLOT(printFgfsOutput()));
+//    connect (process, SIGNAL(readyReadStandardError()), this, SLOT(printFgfsError()));
 
 
 
@@ -658,6 +660,29 @@ void QGCFlightGearLink::printTerraSyncError()
    qDebug() << "TerraSync stderr:";
 
    QByteArray byteArray = terraSync->readAllStandardError();
+   QStringList strLines = QString(byteArray).split("\n");
+
+   foreach (QString line, strLines){
+    qDebug() << line;
+   }
+}
+
+void QGCFlightGearLink::printFgfsOutput()
+{
+   qDebug() << "fgfs stdout:";
+   QByteArray byteArray = process->readAllStandardOutput();
+   QStringList strLines = QString(byteArray).split("\n");
+
+   foreach (QString line, strLines){
+    qDebug() << line;
+   }
+}
+
+void QGCFlightGearLink::printFgfsError()
+{
+   qDebug() << "fgfs stderr:";
+
+   QByteArray byteArray = process->readAllStandardError();
    QStringList strLines = QString(byteArray).split("\n");
 
    foreach (QString line, strLines){
