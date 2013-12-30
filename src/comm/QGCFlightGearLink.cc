@@ -598,7 +598,10 @@ bool QGCFlightGearLink::connectSimulation()
     }
     flightGearArguments << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
     flightGearArguments << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
-//    flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
+    //The altitude is not set because an altitude not equal to the ground altitude leads to a non-zero default throttle in flightgear
+    //Without the altitude-setting the aircraft is positioned on the ground
+    //flightGearArguments << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
+
     // Add new argument with this: flightGearArguments << "";
     //flightGearArguments << QString("--aircraft=%2").arg(aircraft);
 
