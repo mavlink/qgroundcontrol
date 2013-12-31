@@ -127,6 +127,26 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->radio7Widget->setName("Radio 7");
     ui->radio8Widget->setOrientation(Qt::Horizontal);
     ui->radio8Widget->setName("Radio 8");
+    ui->radio9Widget->setOrientation(Qt::Horizontal);
+    ui->radio9Widget->setName("Radio 9");
+    ui->radio10Widget->setOrientation(Qt::Horizontal);
+    ui->radio10Widget->setName("Radio 10");
+    ui->radio11Widget->setOrientation(Qt::Horizontal);
+    ui->radio11Widget->setName("Radio 11");
+    ui->radio12Widget->setOrientation(Qt::Horizontal);
+    ui->radio12Widget->setName("Radio 12");
+    ui->radio13Widget->setOrientation(Qt::Horizontal);
+    ui->radio13Widget->setName("Radio 13");
+    ui->radio14Widget->setOrientation(Qt::Horizontal);
+    ui->radio14Widget->setName("Radio 14");
+    ui->radio15Widget->setOrientation(Qt::Horizontal);
+    ui->radio15Widget->setName("Radio 15");
+    ui->radio16Widget->setOrientation(Qt::Horizontal);
+    ui->radio16Widget->setName("Radio 16");
+    ui->radio17Widget->setOrientation(Qt::Horizontal);
+    ui->radio17Widget->setName("Radio 17");
+    ui->radio18Widget->setOrientation(Qt::Horizontal);
+    ui->radio18Widget->setName("Radio 18");
 
     connect(ui->rcMenuButton,SIGNAL(clicked()),
             this,SLOT(rcMenuButtonClicked()));
@@ -488,6 +508,16 @@ void QGCPX4VehicleConfig::startCalibrationRC()
     ui->radio6Widget->showMinMax();
     ui->radio7Widget->showMinMax();
     ui->radio8Widget->showMinMax();
+    ui->radio9Widget->showMinMax();
+    ui->radio10Widget->showMinMax();
+    ui->radio11Widget->showMinMax();
+    ui->radio12Widget->showMinMax();
+    ui->radio13Widget->showMinMax();
+    ui->radio14Widget->showMinMax();
+    ui->radio15Widget->showMinMax();
+    ui->radio16Widget->showMinMax();
+    ui->radio17Widget->showMinMax();
+    ui->radio18Widget->showMinMax();
 
     QMessageBox::information(0, tr("Information"), tr("Please click on the <Finish RC Calibration> button once finished"));
 }
@@ -516,6 +546,16 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     ui->radio6Widget->hideMinMax();
     ui->radio7Widget->hideMinMax();
     ui->radio8Widget->hideMinMax();
+    ui->radio9Widget->hideMinMax();
+    ui->radio10Widget->hideMinMax();
+    ui->radio11Widget->hideMinMax();
+    ui->radio12Widget->hideMinMax();
+    ui->radio13Widget->hideMinMax();
+    ui->radio14Widget->hideMinMax();
+    ui->radio15Widget->hideMinMax();
+    ui->radio16Widget->hideMinMax();
+    ui->radio17Widget->hideMinMax();
+    ui->radio18Widget->hideMinMax();
 
     for (unsigned int i = 0; i < chanCount; i++) {
         if (rcMin[i] > 1350) {
@@ -1517,6 +1557,36 @@ void QGCPX4VehicleConfig::updateMappingView(int function_index)
         case 7:
             ui->radio8Widget->setName(tr("%1 (#8)").arg(assignments[7]));
             break;
+        case 8:
+            ui->radio9Widget->setName(tr("%1 (#9)").arg(assignments[8]));
+            break;
+        case 9:
+            ui->radio10Widget->setName(tr("%1 (#10)").arg(assignments[9]));
+            break;
+        case 10:
+            ui->radio11Widget->setName(tr("%1 (#11)").arg(assignments[10]));
+            break;
+        case 11:
+            ui->radio12Widget->setName(tr("%1 (#12)").arg(assignments[11]));
+            break;
+        case 12:
+            ui->radio13Widget->setName(tr("%1 (#13)").arg(assignments[12]));
+            break;
+        case 13:
+            ui->radio14Widget->setName(tr("%1 (#14)").arg(assignments[13]));
+            break;
+        case 14:
+            ui->radio15Widget->setName(tr("%1 (#15)").arg(assignments[14]));
+            break;
+        case 15:
+            ui->radio16Widget->setName(tr("%1 (#16)").arg(assignments[15]));
+            break;
+        case 16:
+            ui->radio17Widget->setName(tr("%1 (#17)").arg(assignments[16]));
+            break;
+        case 17:
+            ui->radio18Widget->setName(tr("%1 (#18)").arg(assignments[17]));
+            break;
         }
     }
 }
@@ -1778,6 +1848,16 @@ void QGCPX4VehicleConfig::updateRcWidgetValues()
     ui->radio6Widget->setValueAndRange(rcValueReversed[5],rcMin[5],rcMax[5]);
     ui->radio7Widget->setValueAndRange(rcValueReversed[6],rcMin[6],rcMax[6]);
     ui->radio8Widget->setValueAndRange(rcValueReversed[7],rcMin[7],rcMax[7]);
+    ui->radio9Widget->setValueAndRange(rcValueReversed[8],rcMin[8],rcMax[8]);
+    ui->radio10Widget->setValueAndRange(rcValueReversed[9],rcMin[9],rcMax[9]);
+    ui->radio11Widget->setValueAndRange(rcValueReversed[10],rcMin[10],rcMax[10]);
+    ui->radio12Widget->setValueAndRange(rcValueReversed[11],rcMin[11],rcMax[11]);
+    ui->radio13Widget->setValueAndRange(rcValueReversed[12],rcMin[12],rcMax[12]);
+    ui->radio14Widget->setValueAndRange(rcValueReversed[13],rcMin[13],rcMax[13]);
+    ui->radio15Widget->setValueAndRange(rcValueReversed[14],rcMin[14],rcMax[14]);
+    ui->radio16Widget->setValueAndRange(rcValueReversed[15],rcMin[15],rcMax[15]);
+    ui->radio17Widget->setValueAndRange(rcValueReversed[16],rcMin[16],rcMax[16]);
+    ui->radio18Widget->setValueAndRange(rcValueReversed[17],rcMin[17],rcMax[17]);
 }
 
 void QGCPX4VehicleConfig::updateRcChanLabels()
