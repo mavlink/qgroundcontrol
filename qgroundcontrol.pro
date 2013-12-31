@@ -752,8 +752,11 @@ CONFIG(debug, debug|release) {
         src/qgcunittest/MockUASManager.h \
         src/qgcunittest/MockUAS.h \
         src/qgcunittest/MockQGCUASParamManager.h \
+<<<<<<< HEAD
         src/qgcunittest/MultiSignalSpy.h \
         src/qgcunittest/TCPLinkTest.h \
+=======
+>>>>>>> b90a0e96162e58cc5c6f5f5d2e285145cdd75f42
         src/qgcunittest/FlightModeConfigTest.h
 
     SOURCES += \
@@ -761,8 +764,11 @@ CONFIG(debug, debug|release) {
         src/qgcunittest/MockUASManager.cc \
         src/qgcunittest/MockUAS.cc \
         src/qgcunittest/MockQGCUASParamManager.cc \
+<<<<<<< HEAD
         src/qgcunittest/MultiSignalSpy.cc \
         src/qgcunittest/TCPLinkTest.cc \
+=======
+>>>>>>> b90a0e96162e58cc5c6f5f5d2e285145cdd75f42
         src/qgcunittest/FlightModeConfigTest.cc
 }
 
