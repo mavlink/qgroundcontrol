@@ -1,307 +1,287 @@
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
+
 #include "FlightModeConfig.h"
 
+// We used the _rgModeInfo* arrays to populate the combo box choices. The numeric value
+// is the flight mode value that corresponds to the label. We store that value in the
+// combo box item data. There is a different set or each vehicle type.
 
-FlightModeConfig::FlightModeConfig(QWidget *parent) : AP2ConfigWidget(parent)
+const FlightModeConfig::FlightModeInfo_t FlightModeConfig::_rgModeInfoFixedWing[] = {
+    { "Manual",     0 },
+    { "Circle",     1 },
+    { "Stabilize",  2 },
+    { "Training",   3 },
+    { "FBW A",      5 },
+    { "FBW B",      6 },
+    { "Auto",       10 },
+    { "RTL",        11 },
+    { "Loiter",     12 },
+    { "Guided",     15 },
+};
+
+const FlightModeConfig::FlightModeInfo_t FlightModeConfig::_rgModeInfoRotor[] = {
+    { "Stabilize",  0 },
+    { "Acro",       1 },
+    { "Alt Hold",   2 },
+    { "Auto",       3 },
+    { "Guided",     4 },
+    { "Loiter",     5 },
+    { "RTL",        6 },
+    { "Circle",     7 },
+    { "Position",   8 },
+    { "Land",       9 },
+    { "OF_Loiter",  10 },
+    { "Toy A",      11 },
+    { "Toy M",      12 },
+};
+
+const FlightModeConfig::FlightModeInfo_t FlightModeConfig::_rgModeInfoRover[] = {
+    { "Manual",     0 },
+    { "Learning",   2 },
+    { "Steering",   3 },
+    { "Hold",       4 },
+    { "Auto",       10 },
+    { "RTL",        11 },
+    { "Guided",     15 },
+};
+
+// We use the _rgModeParam* arrays to store the parameter names for each selectable
+// flight mode. The order of these corresponds to the combox box order as well. Array
+// element 0, is the parameter for mode0ComboBox, array element 1 = mode1ComboBox and
+// so on. The number of elements in the array also determines how many combo boxes we
+// are going to need. Different vehicle types have different numbers of selectable
+// flight modes.
+
+const char* FlightModeConfig::_rgModeParamFixedWing[_cModes] = { "FLTMODE1", "FLTMODE2", "FLTMODE3", "FLTMODE4", "FLTMODE5", "FLTMODE6" };
+
+const char* FlightModeConfig::_rgModeParamRotor[_cModes] = { "FLTMODE1", "FLTMODE2", "FLTMODE3", "FLTMODE4", "FLTMODE5", "FLTMODE6" };
+
+const char* FlightModeConfig::_rgModeParamRover[_cModes] = { "MODE1", "MODE2", "MODE3", "MODE4", "MODE5", "MODE6" };
+
+// Parameter which contains simple mode bitmask
+const char* FlightModeConfig::_simpleModeBitMaskParam = "SIMPLE";
+
+// Parameter which controls which RC channel mode switching is on.
+// ArduCopter is hardcoded so no param
+const char* FlightModeConfig::_modeSwitchRCChannelParamFixedWing = "FLTMODE_CH";
+const char* FlightModeConfig::_modeSwitchRCChannelParamRover = "MODE_CH";
+
+// PWM values which are the boundaries between each mode selection
+const int FlightModeConfig::_rgModePWMBoundary[_cModes] = { 1230, 1360, 1490, 1620, 1749, 20000 };
+
+FlightModeConfig::FlightModeConfig(QWidget *parent) :
+    AP2ConfigWidget(parent),
+    _rgModeInfo(NULL),
+    _cModeInfo(0),
+    _rgModeParam(NULL),
+    _simpleModeSupported(false),
+    _modeSwitchRCChannel(_modeSwitchRCChannelInvalid)
 {
-    ui.setupUi(this);
-    connect(ui.savePushButton,SIGNAL(clicked()),this,SLOT(saveButtonClicked()));
+    _ui.setupUi(this);
+    
+    // Find all the widgets we are going to programmatically control
+    for (size_t i=0; i<_cModes; i++) {
+        _rgLabel[i] = findChild<QLabel*>(QString("mode%1Label").arg(i));
+        _rgCombo[i] = findChild<QComboBox*>(QString("mode%1ComboBox").arg(i));
+        _rgSimpleModeCheckBox[i] = findChild<QCheckBox*>(QString("mode%1SimpleCheckBox").arg(i));
+        _rgPWMLabel[i] = findChild<QLabel*>(QString("mode%1PWMLabel").arg(i));
+        Q_ASSERT(_rgLabel[i]);
+        Q_ASSERT(_rgCombo[i]);
+        Q_ASSERT(_rgSimpleModeCheckBox[i]);
+        Q_ASSERT(_rgPWMLabel[i]);
+    }
+    
+    // Start disabled until we get a UAS
+    setEnabled(false);
+
+    connect(_ui.savePushButton, SIGNAL(clicked()), this, SLOT(saveButtonClicked()));
     initConnections();
 }
 
-FlightModeConfig::~FlightModeConfig()
-{
-}
 void FlightModeConfig::activeUASSet(UASInterface *uas)
 {
+    // Clear the highlighting on PWM labels
+    for (size_t i=0; i<_cModes; i++) {
+        _rgPWMLabel[i]->setStyleSheet(QString(""));
+    }
+
+    // Disconnect from old UAS
     if (m_uas)
     {
-        disconnect(m_uas,SIGNAL(modeChanged(int,QString,QString)),this,SLOT(modeChanged(int,QString,QString)));
-        disconnect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanged(int,float)));
+        disconnect(m_uas, SIGNAL(remoteControlChannelRawChanged(int, float)), this, SLOT(remoteControlChannelRawChanged(int, float)));
     }
+    
+    // Connect to new UAS (if any)
     AP2ConfigWidget::activeUASSet(uas);
-    if (!uas) return;
-    connect(m_uas,SIGNAL(modeChanged(int,QString,QString)),this,SLOT(modeChanged(int,QString,QString)));
-    connect(m_uas,SIGNAL(remoteControlChannelRawChanged(int,float)),this,SLOT(remoteControlChannelRawChanged(int,float)));
-    QStringList itemlist;
-    if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
-    {
-        itemlist << "Manual";
-        itemlist << "Circle";
-        itemlist << "Stabilize";
-        itemlist << "Training";
-        itemlist << "FBW A";
-        itemlist << "FBW B";
-        itemlist << "Auto";
-        itemlist << "RTL";
-        itemlist << "Loiter";
-        itemlist << "Guided";
-
-        planeModeIndexToUiIndex[0] = 0;
-        planeModeUiIndexToIndex[0] = 0;
-
-        planeModeIndexToUiIndex[1] = 1;
-        planeModeUiIndexToIndex[1] = 1;
-
-        planeModeIndexToUiIndex[2] = 2;
-        planeModeUiIndexToIndex[2] = 2;
-
-        planeModeIndexToUiIndex[3] = 3;
-        planeModeUiIndexToIndex[3] = 3;
-
-        planeModeIndexToUiIndex[5] = 4;
-        planeModeUiIndexToIndex[4] = 5;
-
-        planeModeIndexToUiIndex[6] = 5;
-        planeModeUiIndexToIndex[5] = 6;
-
-        planeModeIndexToUiIndex[10] = 6;
-        planeModeUiIndexToIndex[6] = 10;
-
-        planeModeIndexToUiIndex[11] = 7;
-        planeModeUiIndexToIndex[7] = 11;
-
-        planeModeIndexToUiIndex[12] = 8;
-        planeModeUiIndexToIndex[8] = 12;
-
-        planeModeIndexToUiIndex[15] = 9;
-        planeModeUiIndexToIndex[9] = 15;
-
-        ui.mode6ComboBox->setEnabled(true);
+    if (!uas) {
+        setEnabled(false);
+        return;
     }
-    else if (m_uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
-    {
-        itemlist << "Manual";
-        itemlist << "Learning";
-        itemlist << "Steering";
-        itemlist << "Hold";
-        itemlist << "Auto";
-        itemlist << "RTL";
-        itemlist << "Guided";
-        itemlist << "Initialising";
-        ui.mode6ComboBox->setEnabled(false);
-        roverModeIndexToUiIndex[0] = 0;
-        roverModeUiIndexToIndex[0] = 0;
-
-        roverModeIndexToUiIndex[2] = 1;
-        roverModeUiIndexToIndex[1] = 2;
-
-        roverModeIndexToUiIndex[3] = 2;
-        roverModeUiIndexToIndex[2] = 3;
-
-        roverModeIndexToUiIndex[4] = 3;
-        roverModeUiIndexToIndex[3] = 4;
-
-        roverModeIndexToUiIndex[10] = 5;
-        roverModeUiIndexToIndex[5] = 10;
-
-        roverModeIndexToUiIndex[11] = 6;
-        roverModeUiIndexToIndex[6] = 11;
-
-        roverModeIndexToUiIndex[15] = 7;
-        roverModeUiIndexToIndex[7] = 15;
-
-        roverModeIndexToUiIndex[16] = 8;
-        roverModeUiIndexToIndex[8] = 16;
-
-
+    connect(m_uas, SIGNAL(remoteControlChannelRawChanged(int, float)), this, SLOT(remoteControlChannelRawChanged(int, float)));
+    setEnabled(true);
+    
+    // Select the correct set of Flight Modes and Flight Mode Parameters. If the rc channel
+    // associated with the mode switch is settable through a param, it is invalid until
+    // we get that param through.
+    switch (m_uas->getSystemType()) {
+        case MAV_TYPE_FIXED_WING:
+            _rgModeInfo = &_rgModeInfoFixedWing[0];
+            _cModeInfo = sizeof(_rgModeInfoFixedWing)/sizeof(_rgModeInfoFixedWing[0]);
+            _rgModeParam = _rgModeParamFixedWing;
+            _simpleModeSupported = false;
+            _modeSwitchRCChannelParam = _modeSwitchRCChannelParamFixedWing;
+            _modeSwitchRCChannel = _modeSwitchRCChannelInvalid;
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            _rgModeInfo = &_rgModeInfoRover[0];
+            _cModeInfo = sizeof(_rgModeInfoRover)/sizeof(_rgModeInfoRover[0]);
+            _rgModeParam = _rgModeParamRover;
+            _simpleModeSupported = false;
+            _modeSwitchRCChannelParam = _modeSwitchRCChannelParamRover;
+            _modeSwitchRCChannel = _modeSwitchRCChannelInvalid;
+            break;
+        case MAV_TYPE_QUADROTOR:
+        case MAV_TYPE_TRICOPTER:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_HELICOPTER:
+            _rgModeInfo = &_rgModeInfoRotor[0];
+            _cModeInfo = sizeof(_rgModeInfoRotor)/sizeof(_rgModeInfoRotor[0]);
+            _rgModeParam = _rgModeParamRotor;
+            _simpleModeSupported = true;
+            _modeSwitchRCChannelParam = NULL;
+            _modeSwitchRCChannel = _modeSwitchRCChannelRotor; // Rotor is harcoded
+            break;
+        default:
+            // We've gotten a mav type we can't handle, just disable to whole thing
+            qDebug() << QString("Unknown System Type %1").arg(m_uas->getSystemType());
+            setEnabled(false);
+            return;
     }
-    else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
-    {
-        itemlist << "Stabilize";
-        itemlist << "Acro";
-        itemlist << "Alt Hold";
-        itemlist << "Auto";
-        itemlist << "Guided";
-        itemlist << "Loiter";
-        itemlist << "RTL";
-        itemlist << "Circle";
-        itemlist << "Pos Hold";
-        itemlist << "Land";
-        itemlist << "OF_LOITER";
-        itemlist << "Toy";
-        ui.mode6ComboBox->setEnabled(true);
-    }
-    ui.mode1ComboBox->addItems(itemlist);
-    ui.mode2ComboBox->addItems(itemlist);
-    ui.mode3ComboBox->addItems(itemlist);
-    ui.mode4ComboBox->addItems(itemlist);
-    ui.mode5ComboBox->addItems(itemlist);
-    ui.mode6ComboBox->addItems(itemlist);
-}
-void FlightModeConfig::modeChanged(int sysId, QString status, QString description)
-{
-    //Unused?
-}
-void FlightModeConfig::saveButtonClicked()
-{
-    if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
-    {
-        m_uas->getParamManager()->setParameter(1,"FLTMODE1",(char)planeModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE2",(char)planeModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE3",(char)planeModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE4",(char)planeModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE5",(char)planeModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"FLTMODE6",(char)planeModeUiIndexToIndex[ui.mode6ComboBox->currentIndex()]);
-    }
-    else if (m_uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
-    {
-        m_uas->getParamManager()->setParameter(1,"MODE1",(char)roverModeUiIndexToIndex[ui.mode1ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"MODE2",(char)roverModeUiIndexToIndex[ui.mode2ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"MODE3",(char)roverModeUiIndexToIndex[ui.mode3ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"MODE4",(char)roverModeUiIndexToIndex[ui.mode4ComboBox->currentIndex()]);
-        m_uas->getParamManager()->setParameter(1,"MODE5",(char)roverModeUiIndexToIndex[ui.mode5ComboBox->currentIndex()]);
-    }
-    else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
-    {
-        m_uas->getParamManager()->setParameter(1,"FLTMODE1",(char)ui.mode1ComboBox->currentIndex());
-        m_uas->getParamManager()->setParameter(1,"FLTMODE2",(char)ui.mode2ComboBox->currentIndex());
-        m_uas->getParamManager()->setParameter(1,"FLTMODE3",(char)ui.mode3ComboBox->currentIndex());
-        m_uas->getParamManager()->setParameter(1,"FLTMODE4",(char)ui.mode4ComboBox->currentIndex());
-        m_uas->getParamManager()->setParameter(1,"FLTMODE5",(char)ui.mode5ComboBox->currentIndex());
-        m_uas->getParamManager()->setParameter(1,"FLTMODE6",(char)ui.mode6ComboBox->currentIndex());
+
+    // Set up the combo boxes
+    for (size_t i=0; i<_cModes; i++) {
+        // Fill each combo box with the available flight modes
+        for (size_t j=0; j<_cModeInfo; j++) {
+            _rgCombo[i]->addItem(_rgModeInfo[j].label, QVariant(QChar((char)_rgModeInfo[j].value)));
+        }
+        
+        // Not all vehicle types support simple mode, hide/show as appropriate
+        _rgSimpleModeCheckBox[i]->setEnabled(_simpleModeSupported);
     }
 }
 
-void FlightModeConfig::remoteControlChannelRawChanged(int chan,float val)
+void FlightModeConfig::saveButtonClicked(void)
 {
-    if (chan == 4)
+    // Save the current setting for each flight mode slot
+    for (size_t i=0; i<_cModes; i++) {
+        m_uas->getParamManager()->setParameter(1, _rgModeParam[i], _rgCombo[i]->itemData(_rgCombo[i]->currentIndex()));
+        QVariant var =_rgCombo[i]->itemData(_rgCombo[i]->currentIndex());
+    }
+    
+    // Save Simple Mode bit mask if supported
+    if (_simpleModeSupported) {
+        int bitMask = 0;
+        for (size_t i=0; i<_cModes; i++) {
+            if (_rgSimpleModeCheckBox[i]->isChecked()) {
+                bitMask |= 1 << i;
+            }
+        }
+        m_uas->getParamManager()->setParameter(1, _simpleModeBitMaskParam, QVariant(QChar(bitMask)));
+    }
+}
+
+// Higlights the PWM label for currently selected mode according the mode switch
+// rc channel value.
+void FlightModeConfig::remoteControlChannelRawChanged(int chan, float val)
+{
+    qDebug() << chan << val << _modeSwitchRCChannel;
+    // Until we get the _modeSwitchRCChannel value from a parameter it will be set
+    // to -1, which is an invalid channel thus the labels won't update
+    if (chan == _modeSwitchRCChannel)
     {
-        //Channel 5 (0 array) is the mode switch.
-        ///TODO: Make this configurable
-        if (val <= 1230)
-        {
-            ui.mode1Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
-            ui.mode2Label->setStyleSheet("");
-            ui.mode3Label->setStyleSheet("");
-            ui.mode4Label->setStyleSheet("");
-            ui.mode5Label->setStyleSheet("");
-            ui.mode6Label->setStyleSheet("");
+        qDebug() << chan << val;
+        size_t highlightIndex;
+        
+        for (size_t i=0; i<_cModes; i++) {
+            if (val < _rgModePWMBoundary[i]) {
+                highlightIndex = i;
+                break;
+            }
         }
-        else if (val <= 1360)
-        {
-            ui.mode1Label->setStyleSheet("");
-            ui.mode2Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
-            ui.mode3Label->setStyleSheet("");
-            ui.mode4Label->setStyleSheet("");
-            ui.mode5Label->setStyleSheet("");
-            ui.mode6Label->setStyleSheet("");
-        }
-        else if (val <= 1490)
-        {
-            ui.mode1Label->setStyleSheet("");
-            ui.mode2Label->setStyleSheet("");
-            ui.mode3Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
-            ui.mode4Label->setStyleSheet("");
-            ui.mode5Label->setStyleSheet("");
-            ui.mode6Label->setStyleSheet("");
-        }
-        else if (val <=1620)
-        {
-            ui.mode1Label->setStyleSheet("");
-            ui.mode2Label->setStyleSheet("");
-            ui.mode3Label->setStyleSheet("");
-            ui.mode4Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
-            ui.mode5Label->setStyleSheet("");
-            ui.mode6Label->setStyleSheet("");
-        }
-        else if (val <=1749)
-        {
-            ui.mode1Label->setStyleSheet("");
-            ui.mode2Label->setStyleSheet("");
-            ui.mode3Label->setStyleSheet("");
-            ui.mode4Label->setStyleSheet("");
-            ui.mode5Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
-            ui.mode6Label->setStyleSheet("");
-        }
-        else
-        {
-            ui.mode1Label->setStyleSheet("");
-            ui.mode2Label->setStyleSheet("");
-            ui.mode3Label->setStyleSheet("");
-            ui.mode4Label->setStyleSheet("");
-            ui.mode5Label->setStyleSheet("");
-            ui.mode6Label->setStyleSheet("background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);");
+        
+        for (size_t i=0; i<_cModes; i++) {
+            QString styleSheet;
+            if (i == highlightIndex) {
+                styleSheet = "background-color: rgb(0, 255, 0);color: rgb(0, 0, 0);";
+            } else {
+                styleSheet = "";
+            }
+            _rgPWMLabel[i]->setStyleSheet(styleSheet);
         }
     }
 }
 
 void FlightModeConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-    if (m_uas->getSystemType() == MAV_TYPE_FIXED_WING)
-    {
-        if (parameterName == "FLTMODE1")
-        {
-            ui.mode1ComboBox->setCurrentIndex(planeModeIndexToUiIndex[value.toInt()]);
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
+    int iValue = value.toInt();
+    
+    if (parameterName == _modeSwitchRCChannelParam) {
+        _modeSwitchRCChannel = iValue - 1;  // 1-based in params
+    } else if (parameterName == _simpleModeBitMaskParam) {
+        if (_simpleModeSupported) {
+            for (size_t i=0; i<_cModes; i++) {
+                _rgSimpleModeCheckBox[i]->setCheckState((iValue & (1 << i)) ? Qt::Checked : Qt::Unchecked);
+            }
+        } else {
+            qDebug() << "Received simple mode parameter on non simple mode vehicle type";
         }
-        else if (parameterName == "FLTMODE2")
-        {
-            ui.mode2ComboBox->setCurrentIndex(planeModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "FLTMODE3")
-        {
-            ui.mode3ComboBox->setCurrentIndex(planeModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "FLTMODE4")
-        {
-            ui.mode4ComboBox->setCurrentIndex(planeModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "FLTMODE5")
-        {
-            ui.mode5ComboBox->setCurrentIndex(planeModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "FLTMODE6")
-        {
-            ui.mode6ComboBox->setCurrentIndex(planeModeIndexToUiIndex[value.toInt()]);
-        }
-    }
-    else if (m_uas->getSystemType() == MAV_TYPE_GROUND_ROVER)
-    {
-        if (parameterName == "MODE1")
-        {
-            ui.mode1ComboBox->setCurrentIndex(roverModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "MODE2")
-        {
-            ui.mode2ComboBox->setCurrentIndex(roverModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "MODE3")
-        {
-            ui.mode3ComboBox->setCurrentIndex(roverModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "MODE4")
-        {
-            ui.mode4ComboBox->setCurrentIndex(roverModeIndexToUiIndex[value.toInt()]);
-        }
-        else if (parameterName == "MODE5")
-        {
-            ui.mode5ComboBox->setCurrentIndex(roverModeIndexToUiIndex[value.toInt()]);
-        }
-    }
-    else if (m_uas->getSystemType() == MAV_TYPE_QUADROTOR)
-    {
-        if (parameterName == "FLTMODE1")
-        {
-            ui.mode1ComboBox->setCurrentIndex(value.toInt());
-        }
-        else if (parameterName == "FLTMODE2")
-        {
-            ui.mode2ComboBox->setCurrentIndex(value.toInt());
-        }
-        else if (parameterName == "FLTMODE3")
-        {
-            ui.mode3ComboBox->setCurrentIndex(value.toInt());
-        }
-        else if (parameterName == "FLTMODE4")
-        {
-            ui.mode4ComboBox->setCurrentIndex(value.toInt());
-        }
-        else if (parameterName == "FLTMODE5")
-        {
-            ui.mode5ComboBox->setCurrentIndex(value.toInt());
-        }
-        else if (parameterName == "FLTMODE6")
-        {
-            ui.mode6ComboBox->setCurrentIndex(value.toInt());
+    } else {
+        // Loop over the flight mode params looking for a match
+        for (size_t i=0; i<_cModes; i++) {
+            if (parameterName == _rgModeParam[i]) {
+                // We found a match, i is now the index of the combo box which displays that mode slot
+                // Loop over the mode info till we find the matching value, this tells us which row in the
+                // combo box to select.
+                QComboBox* combo = _rgCombo[i];
+                for (size_t j=0; j<_cModeInfo; j++) {
+                    if (_rgModeInfo[j].value == iValue) {
+                        combo->setCurrentIndex(j);
+                        return;
+                    }
+                }
+                
+                // We should have been able to find the flight mode value. If we didn't, we have been passed a
+                // flight mode that we don't understand. Possibly a newer firmware version we are not yet up
+                // to date with. In this case, add a new item to the combo box to represent it.
+                qDebug() << QString("Unknown flight mode value %1").arg(iValue);
+                combo->addItem(QString("%1 - Unknown").arg(iValue), QVariant(iValue));
+                combo->setCurrentIndex(combo->count() - 1);
+            }
         }
     }
 }
