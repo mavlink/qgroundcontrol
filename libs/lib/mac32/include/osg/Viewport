@@ -1,0 +1,137 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_VIEWPORT
+#define OSG_VIEWPORT 1
+
+#include <osg/StateAttribute>
+#include <osg/Matrix>
+
+namespace osg {
+
+/** Encapsulate OpenGL glViewport. */     
+class OSG_EXPORT Viewport : public StateAttribute
+{
+    public :
+
+#if 0
+        typedef int value_type;
+#else
+        typedef double value_type;
+#endif
+        Viewport();
+        
+        Viewport(value_type x,value_type y,value_type width,value_type height):
+            _x(x),
+            _y(y),
+            _width(width),
+            _height(height) {}
+            
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        Viewport(const Viewport& vp,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(vp,copyop),
+            _x(vp._x),
+            _y(vp._y),
+            _width(vp._width),
+            _height(vp._height) {}
+
+        META_StateAttribute(osg, Viewport,VIEWPORT);
+        
+        /** Return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs. */
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // check the types are equal and then create the rhs variable
+            // used by the COMPARE_StateAttribute_Parameter macros below.
+            COMPARE_StateAttribute_Types(Viewport,sa)
+
+            // compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_x)
+            COMPARE_StateAttribute_Parameter(_y)
+            COMPARE_StateAttribute_Parameter(_width)
+            COMPARE_StateAttribute_Parameter(_height)
+            
+            return 0; // passed all the above comparison macros, must be equal.
+        }
+
+        inline void setViewport(value_type x,value_type y,value_type width,value_type height)
+        {
+            _x = x;
+            _y = y;
+            _width = width;
+            _height = height;
+        }
+
+#if 0        
+        void getViewport(int& x,int& y,int& width,int& height) const
+        {
+            x = _x;
+            y = _y;
+            width = _width;
+            height = _height;
+        }
+
+        void getViewport(double& x,double& y,double& width,double& height) const
+        {
+            x = _x;
+            y = _y;
+            width = _width;
+            height = _height;
+        }
+#endif
+        inline value_type& x() { return _x; }
+        inline value_type x() const { return _x; }
+
+        inline value_type& y() { return _y; }
+        inline value_type y() const { return _y; }
+
+        inline value_type& width() { return _width; }
+        inline value_type width() const { return _width; }
+
+        inline value_type& height() { return _height; }
+        inline value_type height() const { return _height; }
+
+        inline bool valid() const { return _width>0 && _height>0; }
+
+        /** Return the aspectRatio of the viewport, which is equal to width/height.
+          * If height is zero, the potential division by zero is avoided by simply returning 1.0f.
+        */
+        inline double aspectRatio() const { if (_height!=0) return (double)_width/(double)_height; else return 1.0; }
+        
+        /** Compute the Window Matrix which takes projected coords into Window coordinates.
+          * To convert local coordinates into window coordinates use v_window = v_local * MVPW matrix,
+          * where the MVPW matrix is ModelViewMatrix * ProjectionMatrix * WindowMatrix, the latter supplied by
+          * Viewport::computeWindowMatrix(), the ModelView and Projection Matrix can either be sourced from the
+          * current osg::State object, via osgUtil::SceneView or CullVisitor.
+        */
+        inline const osg::Matrix computeWindowMatrix() const
+        {
+            return osg::Matrix::translate(1.0,1.0,1.0)*osg::Matrix::scale(0.5*width(),0.5*height(),0.5f)*osg::Matrix::translate(x(),y(),0.0f);
+        }
+
+        virtual void apply(State& state) const;
+
+    protected:
+    
+        virtual ~Viewport();
+
+        value_type _x;
+        value_type _y;
+        value_type _width;
+        value_type _height;
+
+};
+
+}
+
+#endif

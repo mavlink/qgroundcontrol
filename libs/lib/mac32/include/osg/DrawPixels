@@ -1,0 +1,80 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_DRAWPIXELS
+#define OSG_DRAWPIXELS 1
+
+#include <osg/Drawable>
+#include <osg/Vec3>
+#include <osg/Image>
+
+namespace osg {
+
+/** DrawPixels is an osg::Drawable subclass which encapsulates the drawing of
+  * images using glDrawPixels.*/
+class OSG_EXPORT DrawPixels : public Drawable
+{
+    public:
+
+        DrawPixels();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        DrawPixels(const DrawPixels& drawimage,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+            
+        virtual Object* cloneType() const { return new DrawPixels(); }
+
+        virtual Object* clone(const CopyOp& copyop) const { return new DrawPixels(*this,copyop); }
+        
+        virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const DrawPixels*>(obj)!=NULL; }
+        
+        virtual const char* libraryName() const { return "osg"; }
+        virtual const char* className() const { return "DrawPixels"; }
+
+
+        void setPosition(const osg::Vec3& position);
+        
+        osg::Vec3& getPosition() { return _position; }
+        const osg::Vec3& getPosition() const { return _position; }
+
+        void setImage(osg::Image* image) { _image = image; }
+        
+        osg::Image* getImage() { return _image.get(); }
+        const osg::Image* getImage() const { return _image.get(); }
+        
+        void setUseSubImage(bool useSubImage) { _useSubImage=useSubImage; }
+        bool getUseSubImage() const { return _useSubImage; }
+
+        void setSubImageDimensions(unsigned int offsetX,unsigned int offsetY,unsigned int width,unsigned int height);
+        void getSubImageDimensions(unsigned int& offsetX,unsigned int& offsetY,unsigned int& width,unsigned int& height) const;
+
+        virtual void drawImplementation(RenderInfo& renderInfo) const;
+
+        virtual BoundingBox computeBound() const;
+        
+    protected:
+
+        DrawPixels& operator = (const DrawPixels&) { return *this;}
+
+        virtual ~DrawPixels();
+
+        Vec3            _position;
+        ref_ptr<Image>  _image;
+        
+        bool            _useSubImage;
+        unsigned int    _offsetX, _offsetY, _width, _height;
+        
+};
+
+}
+
+#endif

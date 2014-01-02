@@ -1,0 +1,51 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+//C++ header 
+
+#ifndef OSGUTIL_TRANSFORMCALLBACK
+#define OSGUTIL_TRANSFORMCALLBACK 1
+
+#include <osg/Node>
+#include <osgUtil/Export>
+
+namespace osgUtil
+{
+
+/** TransformCallback is now deprecated, use osg::AnimationPathCallback instead.*/
+class OSGUTIL_EXPORT TransformCallback : public osg::NodeCallback
+{
+
+    public:
+
+        TransformCallback(const osg::Vec3& pivot,const osg::Vec3& axis,float angularVelocity);
+
+        void setPause(bool pause) { _pause = pause; }
+
+        /** implements the callback*/
+        virtual void operator()(osg::Node* node, osg::NodeVisitor* nv);
+
+    protected:
+    
+        float               _angular_velocity;
+        osg::Vec3           _pivot;
+        osg::Vec3           _axis;
+
+        unsigned int        _previousTraversalNumber;
+        double              _previousTime;
+        bool                _pause;
+
+};
+
+}
+
+#endif

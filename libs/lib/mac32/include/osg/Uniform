@@ -1,0 +1,518 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ * Copyright (C) 2003-2005 3Dlabs Inc. Ltd.
+ * Copyright (C) 2008 Zebra Imaging
+ *
+ * This application is open source and may be redistributed and/or modified   
+ * freely and without restriction, both in commercial and non commercial
+ * applications, as long as this copyright notice is maintained.
+ * 
+ * This application is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
+/* file:   include/osg/Uniform
+ * author: Mike Weiblen 2008-01-02
+*/
+
+#ifndef OSG_UNIFORM
+#define OSG_UNIFORM 1
+
+#include <osg/ref_ptr>
+#include <osg/Array>
+#include <osg/Vec2>
+#include <osg/Vec3>
+#include <osg/Vec4>
+#include <osg/Matrix>
+#include <osg/GL2Extensions>
+
+#include <string>
+#include <vector>
+
+#ifndef GL_SAMPLER_1D
+    #define GL_SAMPLER_1D               0x8B5D
+    #define GL_SAMPLER_2D               0x8B5E
+    #define GL_SAMPLER_3D               0x8B5F
+    #define GL_SAMPLER_1D_SHADOW        0x8B61
+    #define GL_SAMPLER_2D_SHADOW        0x8B62
+#endif
+
+
+namespace osg {
+
+// forward declare
+class GL2Extensions;
+class NodeVisitor;
+
+///////////////////////////////////////////////////////////////////////////
+// C++ classes to represent the GLSL-specific types.
+
+class OSG_EXPORT Matrix2
+{
+    public:
+        Matrix2() { makeIdentity(); }
+        Matrix2( const Matrix2& mat ) { set(mat.ptr()); }
+        Matrix2( float a00, float a01,
+                 float a10, float a11 )
+        {
+            set( a00, a01, a10, a11 );
+        }
+        ~Matrix2() {}
+        float& operator()(int row, int col) { return _mat[row][col]; }
+        float operator()(int row, int col) const { return _mat[row][col]; }
+
+        Matrix2& operator = (const Matrix2& rhs)
+        {
+            if( &rhs == this ) return *this;
+            set(rhs.ptr());
+            return *this;
+        }
+
+        void set(const Matrix2& rhs) { set(rhs.ptr()); }
+
+        void set(float const * const ptr)
+        {
+            float* local_ptr = (float*)_mat;
+            for(int i=0;i<4;++i) local_ptr[i]=ptr[i];
+        }
+
+        void set(float a00, float a01,
+                 float a10, float a11)
+         {
+             _mat[0][0]=a00; _mat[0][1]=a01;
+             _mat[1][0]=a10; _mat[1][1]=a11;
+         }
+
+        float* ptr() { return (float*)_mat; }
+        const float* ptr() const { return (const float*)_mat; }
+
+        float& operator [] (int i) {return ptr()[i];}
+        float operator [] (int i) const {return ptr()[i];}
+
+        void makeIdentity() { set( 1, 0, 0, 1 ); }
+
+    protected:
+        float _mat[2][2];
+};
+
+
+class OSG_EXPORT Matrix3
+{
+    public:
+        Matrix3() { makeIdentity(); }
+        Matrix3( const Matrix3& mat ) { set(mat.ptr()); }
+        Matrix3( float a00, float a01, float a02,
+                 float a10, float a11, float a12,
+                 float a20, float a21, float a22 )
+        {
+            set( a00, a01, a02, a10, a11, a12, a20, a21, a22 );
+        }
+        ~Matrix3() {}
+        float& operator()(int row, int col) { return _mat[row][col]; }
+        float operator()(int row, int col) const { return _mat[row][col]; }
+
+        Matrix3& operator = (const Matrix3& rhs)
+        {
+            if( &rhs == this ) return *this;
+            set(rhs.ptr());
+            return *this;
+        }
+
+        void set(const Matrix3& rhs) { set(rhs.ptr()); }
+
+        void set(float const * const ptr)
+        {
+            float* local_ptr = (float*)_mat;
+            for(int i=0;i<9;++i) local_ptr[i]=ptr[i];
+        }
+
+        void set(float a00, float a01, float a02,
+                 float a10, float a11, float a12,
+                 float a20, float a21, float a22 )
+         {
+             _mat[0][0]=a00; _mat[0][1]=a01; _mat[0][2]=a02;
+             _mat[1][0]=a10; _mat[1][1]=a11; _mat[1][2]=a12;
+             _mat[2][0]=a20; _mat[2][1]=a21; _mat[2][2]=a22;
+         }
+
+        float* ptr() { return (float*)_mat; }
+        const float* ptr() const { return (const float*)_mat; }
+
+        float& operator [] (int i) {return ptr()[i];}
+        float operator [] (int i) const {return ptr()[i];}
+
+        void makeIdentity() { set( 1, 0, 0, 0, 1, 0, 0, 0, 1 ); }
+
+    protected:
+        float _mat[3][3];
+};
+
+// TODO add new GL 2.1 non-square matrix types
+// class OSG_EXPORT Matrix2x3
+// class OSG_EXPORT Matrix3x2
+// class OSG_EXPORT Matrix2x4
+// class OSG_EXPORT Matrix4x2
+// class OSG_EXPORT Matrix3x4
+// class OSG_EXPORT Matrix4x3
+
+
+///////////////////////////////////////////////////////////////////////////
+
+/** Uniform encapsulates glUniform values */
+class OSG_EXPORT Uniform : public Object
+{
+    public:
+        enum Type {
+            FLOAT = GL_FLOAT,
+            FLOAT_VEC2 = GL_FLOAT_VEC2,
+            FLOAT_VEC3 = GL_FLOAT_VEC3,
+            FLOAT_VEC4 = GL_FLOAT_VEC4,
+            INT = GL_INT,
+            INT_VEC2 = GL_INT_VEC2,
+            INT_VEC3 = GL_INT_VEC3,
+            INT_VEC4 = GL_INT_VEC4,
+            BOOL = GL_BOOL,
+            BOOL_VEC2 = GL_BOOL_VEC2,
+            BOOL_VEC3 = GL_BOOL_VEC3,
+            BOOL_VEC4 = GL_BOOL_VEC4,
+            FLOAT_MAT2 = GL_FLOAT_MAT2,
+            FLOAT_MAT3 = GL_FLOAT_MAT3,
+            FLOAT_MAT4 = GL_FLOAT_MAT4,
+            SAMPLER_1D = GL_SAMPLER_1D,
+            SAMPLER_2D = GL_SAMPLER_2D,
+            SAMPLER_3D = GL_SAMPLER_3D,
+            SAMPLER_CUBE = GL_SAMPLER_CUBE,
+            SAMPLER_1D_SHADOW = GL_SAMPLER_1D_SHADOW,
+            SAMPLER_2D_SHADOW = GL_SAMPLER_2D_SHADOW,
+            
+            SAMPLER_1D_ARRAY  = GL_SAMPLER_1D_ARRAY_EXT,
+            SAMPLER_2D_ARRAY  = GL_SAMPLER_2D_ARRAY_EXT,
+            SAMPLER_1D_ARRAY_SHADOW = GL_SAMPLER_1D_ARRAY_SHADOW_EXT,
+            SAMPLER_2D_ARRAY_SHADOW = GL_SAMPLER_2D_ARRAY_SHADOW_EXT,
+
+// TODO the following must be integrated fully here and Uniform.cpp
+            FLOAT_MAT2x3 = GL_FLOAT_MAT2x3,
+            FLOAT_MAT2x4 = GL_FLOAT_MAT2x4,
+            FLOAT_MAT3x2 = GL_FLOAT_MAT3x2,
+            FLOAT_MAT3x4 = GL_FLOAT_MAT3x4,
+            FLOAT_MAT4x2 = GL_FLOAT_MAT4x2,
+            FLOAT_MAT4x3 = GL_FLOAT_MAT4x3,
+            SAMPLER_BUFFER = GL_SAMPLER_BUFFER_EXT,
+            SAMPLER_CUBE_SHADOW = GL_SAMPLER_CUBE_SHADOW_EXT,
+            UNSIGNED_INT = GL_UNSIGNED_INT,
+            UNSIGNED_INT_VEC2 = GL_UNSIGNED_INT_VEC2_EXT,
+            UNSIGNED_INT_VEC3 = GL_UNSIGNED_INT_VEC3_EXT,
+            UNSIGNED_INT_VEC4 = GL_UNSIGNED_INT_VEC4_EXT,
+            INT_SAMPLER_1D       = GL_INT_SAMPLER_1D_EXT,
+            INT_SAMPLER_2D       = GL_INT_SAMPLER_2D_EXT,
+            INT_SAMPLER_3D       = GL_INT_SAMPLER_3D_EXT,
+            INT_SAMPLER_CUBE     = GL_INT_SAMPLER_CUBE_EXT,
+            INT_SAMPLER_2D_RECT  = GL_INT_SAMPLER_2D_RECT_EXT,
+            INT_SAMPLER_1D_ARRAY = GL_INT_SAMPLER_1D_ARRAY_EXT,
+            INT_SAMPLER_2D_ARRAY = GL_INT_SAMPLER_2D_ARRAY_EXT,
+            INT_SAMPLER_BUFFER   = GL_INT_SAMPLER_BUFFER_EXT,
+            UNSIGNED_INT_SAMPLER_1D       = GL_UNSIGNED_INT_SAMPLER_1D_EXT,
+            UNSIGNED_INT_SAMPLER_2D       = GL_UNSIGNED_INT_SAMPLER_2D_EXT,
+            UNSIGNED_INT_SAMPLER_3D       = GL_UNSIGNED_INT_SAMPLER_3D_EXT,
+            UNSIGNED_INT_SAMPLER_CUBE     = GL_UNSIGNED_INT_SAMPLER_CUBE_EXT,
+            UNSIGNED_INT_SAMPLER_2D_RECT  = GL_UNSIGNED_INT_SAMPLER_2D_RECT_EXT,
+            UNSIGNED_INT_SAMPLER_1D_ARRAY = GL_UNSIGNED_INT_SAMPLER_1D_ARRAY_EXT,
+            UNSIGNED_INT_SAMPLER_2D_ARRAY = GL_UNSIGNED_INT_SAMPLER_2D_ARRAY_EXT,
+            UNSIGNED_INT_SAMPLER_BUFFER   = GL_UNSIGNED_INT_SAMPLER_BUFFER_EXT,
+
+            UNDEFINED = 0x0
+        };
+
+    public:
+
+        Uniform();
+        Uniform( Type type, const std::string& name, int numElements=1 );
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        Uniform(const Uniform& rhs, const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        META_Object(osg, Uniform);
+
+
+        /** Set the type of glUniform, ensuring it is only set once.*/
+        bool setType( Type t );
+
+        /** Get the type of glUniform as enum. */
+        Type getType() const { return _type; }
+
+        /** Set the name of the glUniform, ensuring it is only set once.*/
+        virtual void setName( const std::string& name );
+
+        /** Set the length of a uniform, ensuring it is only set once (1==scalar)*/
+        void setNumElements( unsigned int numElements );
+
+        /** Get the number of GLSL elements of the osg::Uniform (1==scalar) */
+        unsigned int getNumElements() const { return _numElements; }
+
+        /** Get the number of elements required for the internal data array.
+          * Returns 0 if the osg::Uniform is not properly configured.  */
+        unsigned int getInternalArrayNumElements() const;
+
+        /** Return the name of a Type enum as string. */
+        static const char* getTypename( Type t );
+
+        /** Return the the number of components for a GLSL type. */
+        static int getTypeNumComponents( Type t );
+
+        /** Return the Type enum of a Uniform typename string */
+        static Uniform::Type getTypeId( const std::string& tname );
+
+        /** Return the GL API type corresponding to a GLSL type */
+        static Type getGlApiType( Type t );
+
+        /** Return the internal data array type corresponding to a GLSL type */
+        static GLenum getInternalArrayType( Type t );
+
+        /** Return the number that the name maps to uniquely */
+        static unsigned int getNameID(const std::string& name);
+
+        /** convenient scalar (non-array) constructors w/ assignment */
+        explicit Uniform( const char* name, float f );
+        explicit Uniform( const char* name, int i );
+        explicit Uniform( const char* name, unsigned int i );
+        explicit Uniform( const char* name, bool b );
+        Uniform( const char* name, const osg::Vec2& v2 );
+        Uniform( const char* name, const osg::Vec3& v3 );
+        Uniform( const char* name, const osg::Vec4& v4 );
+        Uniform( const char* name, const osg::Matrix2& m2 );
+        Uniform( const char* name, const osg::Matrix3& m3 );
+        Uniform( const char* name, const osg::Matrixf& m4 );
+        Uniform( const char* name, const osg::Matrixd& m4 );
+        Uniform( const char* name, int i0, int i1 );
+        Uniform( const char* name, int i0, int i1, int i2 );
+        Uniform( const char* name, int i0, int i1, int i2, int i3 );
+        Uniform( const char* name, unsigned int i0, unsigned int i1 );
+        Uniform( const char* name, unsigned int i0, unsigned int i1, unsigned int i2 );
+        Uniform( const char* name, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3 );
+        Uniform( const char* name, bool b0, bool b1 );
+        Uniform( const char* name, bool b0, bool b1, bool b2 );
+        Uniform( const char* name, bool b0, bool b1, bool b2, bool b3 );
+        // TODO must add new types
+
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs. */
+        virtual int compare(const Uniform& rhs) const;
+        virtual int compareData(const Uniform& rhs) const;
+
+        bool operator <  (const Uniform& rhs) const { return compare(rhs)<0; }
+        bool operator == (const Uniform& rhs) const { return compare(rhs)==0; }
+        bool operator != (const Uniform& rhs) const { return compare(rhs)!=0; }
+
+        void copyData( const Uniform& rhs );
+
+
+        /** A vector of osg::StateSet pointers which is used to store the parent(s) of this Uniform, the parents could be osg::Node or osg::Drawable.*/
+        typedef std::vector<StateSet*> ParentList;
+
+        /** Get the parent list of this Uniform. */
+        inline const ParentList& getParents() const { return _parents; }
+
+        /** Get the a copy of parent list of node. A copy is returned to 
+          * prevent modification of the parent list.*/
+        inline ParentList getParents() { return _parents; }
+
+        inline StateSet* getParent(unsigned int i)  { return _parents[i]; }
+        /**
+         * Get a single const parent of this Uniform.
+         * @param i index of the parent to get.
+         * @return the parent i.
+         */
+        inline const StateSet* getParent(unsigned int i) const  { return _parents[i]; }
+
+        /**
+         * Get the number of parents of this Uniform.
+         * @return the number of parents of this Uniform.
+         */
+        inline unsigned int getNumParents() const { return _parents.size(); }
+
+
+        /** convenient scalar (non-array) value assignment */
+        bool set( float f );
+        bool set( int i );
+        bool set( unsigned int i );
+        bool set( bool b );
+        bool set( const osg::Vec2& v2 );
+        bool set( const osg::Vec3& v3 );
+        bool set( const osg::Vec4& v4 );
+        bool set( const osg::Matrix2& m2 );
+        bool set( const osg::Matrix3& m3 );
+        bool set( const osg::Matrixf& m4 );
+        bool set( const osg::Matrixd& m4 );
+        bool set( int i0, int i1 );
+        bool set( int i0, int i1, int i2 );
+        bool set( int i0, int i1, int i2, int i3 );
+        bool set( unsigned int i0, unsigned int i1 );
+        bool set( unsigned int i0, unsigned int i1, unsigned int i2 );
+        bool set( unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3 );
+        bool set( bool b0, bool b1 );
+        bool set( bool b0, bool b1, bool b2 );
+        bool set( bool b0, bool b1, bool b2, bool b3 );
+
+        /** convenient scalar (non-array) value query */
+        bool get( float& f ) const;
+        bool get( int& i ) const;
+        bool get( unsigned int& i ) const;
+        bool get( bool& b ) const;
+        bool get( osg::Vec2& v2 ) const;
+        bool get( osg::Vec3& v3 ) const;
+        bool get( osg::Vec4& v4 ) const;
+        bool get( osg::Matrix2& m2 ) const;
+        bool get( osg::Matrix3& m3 ) const;
+        bool get( osg::Matrixf& m4 ) const;
+        bool get( osg::Matrixd& m4 ) const;
+        bool get( int& i0, int& i1 ) const;
+        bool get( int& i0, int& i1, int& i2 ) const;
+        bool get( int& i0, int& i1, int& i2, int& i3 ) const;
+        bool get( unsigned int& i0, unsigned int& i1 ) const;
+        bool get( unsigned int& i0, unsigned int& i1, unsigned int& i2 ) const;
+        bool get( unsigned int& i0, unsigned int& i1, unsigned int& i2, unsigned int& i3 ) const;
+        bool get( bool& b0, bool& b1 ) const;
+        bool get( bool& b0, bool& b1, bool& b2 ) const;
+        bool get( bool& b0, bool& b1, bool& b2, bool& b3 ) const;
+
+        /** value assignment for array uniforms */
+        bool setElement( unsigned int index, float f );
+        bool setElement( unsigned int index, int i );
+        bool setElement( unsigned int index, unsigned int i );
+        bool setElement( unsigned int index, bool b );
+        bool setElement( unsigned int index, const osg::Vec2& v2 );
+        bool setElement( unsigned int index, const osg::Vec3& v3 );
+        bool setElement( unsigned int index, const osg::Vec4& v4 );
+        bool setElement( unsigned int index, const osg::Matrix2& m2 );
+        bool setElement( unsigned int index, const osg::Matrix3& m3 );
+        bool setElement( unsigned int index, const osg::Matrixf& m4 );
+        bool setElement( unsigned int index, const osg::Matrixd& m4 );
+        bool setElement( unsigned int index, int i0, int i1 );
+        bool setElement( unsigned int index, int i0, int i1, int i2 );
+        bool setElement( unsigned int index, int i0, int i1, int i2, int i3 );
+        bool setElement( unsigned int index, unsigned int i0, unsigned int i1 );
+        bool setElement( unsigned int index, unsigned int i0, unsigned int i1, unsigned int i2 );
+        bool setElement( unsigned int index, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3 );
+        bool setElement( unsigned int index, bool b0, bool b1 );
+        bool setElement( unsigned int index, bool b0, bool b1, bool b2 );
+        bool setElement( unsigned int index, bool b0, bool b1, bool b2, bool b3 );
+
+        /** value query for array uniforms */
+        bool getElement( unsigned int index, float& f ) const;
+        bool getElement( unsigned int index, int& i ) const;
+        bool getElement( unsigned int index, unsigned int& i ) const;
+        bool getElement( unsigned int index, bool& b ) const;
+        bool getElement( unsigned int index, osg::Vec2& v2 ) const;
+        bool getElement( unsigned int index, osg::Vec3& v3 ) const;
+        bool getElement( unsigned int index, osg::Vec4& v4 ) const;
+        bool getElement( unsigned int index, osg::Matrix2& m2 ) const;
+        bool getElement( unsigned int index, osg::Matrix3& m3 ) const;
+        bool getElement( unsigned int index, osg::Matrixf& m4 ) const;
+        bool getElement( unsigned int index, osg::Matrixd& m4 ) const;
+        bool getElement( unsigned int index, int& i0, int& i1 ) const;
+        bool getElement( unsigned int index, int& i0, int& i1, int& i2 ) const;
+        bool getElement( unsigned int index, int& i0, int& i1, int& i2, int& i3 ) const;
+        bool getElement( unsigned int index, unsigned int& i0, unsigned int& i1 ) const;
+        bool getElement( unsigned int index, unsigned int& i0, unsigned int& i1, unsigned int& i2 ) const;
+        bool getElement( unsigned int index, unsigned int& i0, unsigned int& i1, unsigned int& i2, unsigned int& i3 ) const;
+        bool getElement( unsigned int index, bool& b0, bool& b1 ) const;
+        bool getElement( unsigned int index, bool& b0, bool& b1, bool& b2 ) const;
+        bool getElement( unsigned int index, bool& b0, bool& b1, bool& b2, bool& b3 ) const;
+
+
+        struct Callback : public virtual osg::Object
+        {
+            Callback() {}
+
+            Callback(const Callback&,const CopyOp&) {}
+
+            META_Object(osg,Callback);
+
+            /** do customized update code.*/
+            virtual void operator () (Uniform*, NodeVisitor*) {}
+        };
+
+        /** Set the UpdateCallback which allows users to attach customize the updating of an object during the update traversal.*/
+        void setUpdateCallback(Callback* uc);
+
+        /** Get the non const UpdateCallback.*/
+        Callback* getUpdateCallback() { return _updateCallback.get(); }
+
+        /** Get the const UpdateCallback.*/
+        const Callback* getUpdateCallback() const { return _updateCallback.get(); }
+
+
+        /** Set the EventCallback which allows users to attach customize the updating of an object during the Event traversal.*/
+        void setEventCallback(Callback* ec);
+
+        /** Get the non const EventCallback.*/
+        Callback* getEventCallback() { return _eventCallback.get(); }
+
+        /** Get the const EventCallback.*/
+        const Callback* getEventCallback() const { return _eventCallback.get(); }
+
+        /** Increment the modified count on the Uniform so Programs watching it know it update themselves.
+          * NOTE: automatically called during osg::Uniform::set*();
+          * you must call if modifying the internal data array directly. */
+        inline void dirty() { ++_modifiedCount; }
+
+        /** Set the internal data array for a osg::Uniform */
+        bool setArray( FloatArray* array );
+        bool setArray( IntArray* array );
+        bool setArray( UIntArray* array );
+
+        /** Get the internal data array for a float osg::Uniform. */
+        FloatArray* getFloatArray() { return _floatArray.get(); }
+        const FloatArray* getFloatArray() const { return _floatArray.get(); }
+
+        /** Get the internal data array for an int osg::Uniform. */
+        IntArray* getIntArray() { return _intArray.get(); }
+        const IntArray* getIntArray() const { return _intArray.get(); }
+
+        /** Get the internal data array for an unsigned int osg::Uniform. */
+        UIntArray* getUIntArray() { return _uintArray.get(); }
+        const UIntArray* getUIntArray() const { return _uintArray.get(); }
+
+        inline void setModifiedCount(unsigned int mc) { _modifiedCount = mc; }
+        inline unsigned int getModifiedCount() const { return _modifiedCount; }
+
+        /** Get the number that the Uniform's name maps to uniquely */
+        unsigned int getNameID() const;
+
+        void apply(const GL2Extensions* ext, GLint location) const;
+
+
+    protected:
+    
+        virtual ~Uniform();
+        Uniform& operator=(const Uniform&) { return *this; }
+
+        bool isCompatibleType( Type t ) const;
+        bool isScalar() const { return _numElements==1; }
+        void allocateDataArray();
+
+        void addParent(osg::StateSet* object);
+        void removeParent(osg::StateSet* object);
+
+        ParentList _parents;
+        friend class osg::StateSet;
+
+        Type                _type;
+        unsigned int        _numElements;
+        unsigned int        _nameID;
+
+
+        // The internal data for osg::Uniforms are stored as an array of
+        // getInternalArrayType() of length getInternalArrayNumElements().
+        ref_ptr<FloatArray> _floatArray;
+        ref_ptr<IntArray>   _intArray;
+        ref_ptr<UIntArray>  _uintArray;
+
+        ref_ptr<Callback>   _updateCallback;
+        ref_ptr<Callback>   _eventCallback;
+        
+        unsigned int        _modifiedCount;
+};
+
+}
+
+#endif

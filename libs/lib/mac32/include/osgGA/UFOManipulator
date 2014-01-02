@@ -1,0 +1,188 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGGA_UFO_MANIPULATOR_DEF
+#define OSGGA_UFO_MANIPULATOR_DEF 1
+
+#include <iostream>
+
+#include <osgGA/CameraManipulator>
+#include <osg/Node>
+#include <osg/Matrix>
+
+/**
+  \class osgGA::UFOManipulator
+  \brief A UFO manipulator driven with keybindings.
+
+  The UFOManipulator is better suited for applications that employ 
+  architectural walk-throughs, or situations where the eyepoint motion
+  model must move slowly, deliberately and well controlled.  
+
+  The UFO Manipulator allows the following movements with the listed
+  Key combinations:
+    \param UpArrow          Acceleration forward.
+    \param DownArrow        Acceleration backward (or deceleration forward).
+    \param LeftArrow        Rotate view and direction of travel to the left.
+    \param RightArrow       Rotate view and direction of travel to the right.
+    \param SpaceBar         Brake.  Gradually decelerates linear and rotational movement.
+    \param Shift/UpArrow    Accelerate up.
+    \param Shift/DownArrow  Accelerate down.
+    \param Shift/LeftArrow  Accelerate (linearly) left.
+    \param Shift/RightArrow Accelerate (linearly) right.
+    \param Shift/SpaceBar   Instant brake.  Immediately stop all linear and rotational movement.
+
+When the Shift key is released, up, down, linear left and/or linear right movement is decelerated.
+
+    \param Ctrl/UpArrow     Rotate view (but not direction of travel) up.
+    \param Ctrl/DownArrow   Rotate view (but not direction of travel) down.
+    \param Ctrl/LeftArrow   Rotate view (but not direction of travel) left.
+    \param Ctrl/RightArrow  Rotate view (but not direction of travel) right.
+    \param Ctrl/Return      Straightens out the view offset.
+
+*/
+
+namespace osgGA {
+
+class OSGGA_EXPORT UFOManipulator : public osgGA::CameraManipulator
+{
+
+    public:
+        /** Default constructor */
+        UFOManipulator();
+
+        /** return className
+          \return returns constant "UFO"
+          */
+        virtual const char* className() const;
+
+        /** Set the current position with a matrix 
+          \param matrix  A viewpoint matrix.
+         */
+        virtual void setByMatrix( const osg::Matrixd &matrix ) ;
+
+        /** Set the current position with the inverse matrix
+          \param invmat The inverse of a viewpoint matrix
+          */
+        virtual void setByInverseMatrix( const osg::Matrixd &invmat);
+
+        /** Get the current viewmatrix */
+        virtual osg::Matrixd getMatrix() const;
+
+        /** Get the current inverse view matrix */
+        virtual osg::Matrixd getInverseMatrix() const ;
+
+        /** Set the  subgraph this manipulator is driving the eye through.
+            \param node     root of subgraph
+         */
+        virtual void setNode(osg::Node* node);
+
+        /** Get the root node of the subgraph this manipulator is driving the eye through (const)*/
+        virtual const osg::Node* getNode() const;
+
+        /** Get the root node of the subgraph this manipulator is driving the eye through */
+        virtual osg::Node* getNode();
+
+        /** Computes the home position based on the extents and scale of the 
+            scene graph rooted at node */
+        virtual void computeHomePosition();
+
+        /** Sets the viewpoint matrix to the home position */
+        virtual void home(const osgGA::GUIEventAdapter&, osgGA::GUIActionAdapter&) ;
+        void home(double);
+
+        virtual void init(const GUIEventAdapter& ,GUIActionAdapter&);
+
+        /** Handles incoming osgGA events */
+        bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter &aa);
+
+        /** Reports Usage parameters to the application */
+        void getUsage(osg::ApplicationUsage& usage) const;
+
+        /** Report the current position as LookAt vectors */
+        void getCurrentPositionAsLookAt( osg::Vec3d& eye, osg::Vec3d& center, osg::Vec3d& up );
+
+
+        void setMinHeight( double in_min_height ) { _minHeightAboveGround = in_min_height; }
+        double getMinHeight() const { return _minHeightAboveGround; }
+
+        void setMinDistance( double in_min_dist ) { _minDistanceInFront = in_min_dist; }
+        double getMinDistance() const { return _minDistanceInFront; }
+
+        void setForwardSpeed( double in_fs ) { _forwardSpeed = in_fs; }
+        double getForwardSpeed() const { return _forwardSpeed; }
+
+        void setSideSpeed( double in_ss ) { _sideSpeed = in_ss; }
+        double getSideSpeed() const { return _sideSpeed; }
+
+        void setRotationSpeed( double in_rot_speed ) { _directionRotationRate = in_rot_speed; }
+        double getRotationSpeed() const { return _directionRotationRate; }
+
+
+    protected:
+
+        virtual ~UFOManipulator();
+
+        bool intersect(const osg::Vec3d& start, const osg::Vec3d& end, osg::Vec3d& intersection) const;
+
+        osg::observer_ptr<osg::Node> _node;
+        float       _viewAngle;
+        osg::Matrixd _matrix;
+        osg::Matrixd _inverseMatrix;
+        osg::Matrixd _offset;
+
+        double    _minHeightAboveGround;
+        double    _minDistanceInFront;
+
+        double    _speedEpsilon;
+        double    _forwardSpeed;
+        double    _sideSpeed;
+        double    _upSpeed;
+        double    _speedAccelerationFactor;
+        double    _speedDecelerationFactor;
+
+        bool      _decelerateUpSideRate;
+
+        double    _directionRotationEpsilon;
+        double    _directionRotationRate;
+        double    _directionRotationAcceleration;
+        double    _directionRotationDeceleration;
+
+        double    _viewOffsetDelta;
+        double    _pitchOffsetRate;
+        double    _pitchOffset;
+        double    _yawOffsetRate;
+        double    _yawOffset;
+
+        double    _t0;
+        double    _dt;
+        osg::Vec3d _direction;
+        osg::Vec3d _position;
+
+
+        bool _shift;
+        bool _ctrl;
+        bool _decelerateOffsetRate;
+
+        bool _straightenOffset;
+
+        void _stop();
+        void _keyDown( const osgGA::GUIEventAdapter &ea, osgGA::GUIActionAdapter &);
+        void _keyUp( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter &);
+        void _frame(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter &);
+
+        void _adjustPosition();
+};
+
+}
+
+#endif

@@ -1,0 +1,273 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGDB_OPTIONS
+#define OSGDB_OPTIONS 1
+
+#include <osgDB/Callbacks>
+#include <osg/ObserverNodePath>
+
+#include <deque>
+#include <list>
+#include <iosfwd>
+
+namespace osgDB {
+
+
+/** Options base class used for passing options into plugins to control their operation.*/
+class OSGDB_EXPORT Options : public osg::Object
+{
+    public:
+
+        /// bit mask for setting up which object types get cached by readObject/Image/HeightField/Node(filename) calls
+        enum CacheHintOptions
+        {   /// do not cache objects of any type
+            CACHE_NONE          = 0,
+
+            /// cache nodes loaded via readNode(filename)
+            CACHE_NODES         = 1<<0,
+
+            /// cache images loaded via readImage(filename)
+            CACHE_IMAGES        = 1<<1,
+
+            /// cache heightfield loaded via readHeightField(filename)
+            CACHE_HEIGHTFIELDS  = 1<<2,
+
+            /// cache heightfield loaded via readHeightField(filename)
+            CACHE_ARCHIVES      = 1<<3,
+
+            /// cache objects loaded via readObject(filename)
+            CACHE_OBJECTS       = 1<<4,
+
+            /// cache shaders loaded via readShader(filename)
+            CACHE_SHADERS       = 1<<5,
+
+            /// cache on all read*(filename) calls
+            CACHE_ALL           = CACHE_NODES |
+                                    CACHE_IMAGES |
+                                    CACHE_HEIGHTFIELDS |
+                                    CACHE_ARCHIVES |
+                                    CACHE_OBJECTS |
+                                    CACHE_SHADERS
+        };
+
+        /// Bit mask for which geometry attributes should be imported with double precision where source data is held in double precision
+        /// This is useful for data that will be pre-processed before rendering.
+        /// In general the geometry should be converted to floating point before rendering to ensure good performance.
+        enum PrecisionHint
+        {
+            FLOAT_PRECISION_ALL              = 0,
+
+            DOUBLE_PRECISION_VERTEX          = 1<<0,
+            DOUBLE_PRECISION_NORMAL          = 1<<1,
+            DOUBLE_PRECISION_COLOR           = 1<<2,
+            DOUBLE_PRECISION_SECONDARY_COLOR = 1<<3,
+            DOUBLE_PRECISION_FOG_COORD       = 1<<4,
+            DOUBLE_PRECISION_TEX_COORD       = 1<<5,
+            DOUBLE_PRECISION_VERTEX_ATTRIB   = 1<<6,
+
+            DOUBLE_PRECISION_ALL = DOUBLE_PRECISION_VERTEX |
+                                   DOUBLE_PRECISION_NORMAL |
+                                   DOUBLE_PRECISION_COLOR |
+                                   DOUBLE_PRECISION_SECONDARY_COLOR |
+                                   DOUBLE_PRECISION_FOG_COORD |
+                                   DOUBLE_PRECISION_TEX_COORD |
+                                   DOUBLE_PRECISION_VERTEX_ATTRIB
+        };
+
+        /// range of options of whether to build kdtrees automatically on loading
+        enum BuildKdTreesHint
+        {
+            NO_PREFERENCE,
+            DO_NOT_BUILD_KDTREES,
+            BUILD_KDTREES
+        };
+
+
+        Options():
+            osg::Object(true),
+            _objectCacheHint(CACHE_ARCHIVES),
+            _precisionHint(FLOAT_PRECISION_ALL),
+            _buildKdTreesHint(NO_PREFERENCE) {}
+
+        Options(const std::string& str):
+            osg::Object(true),
+            _str(str),
+            _objectCacheHint(CACHE_ARCHIVES),
+            _precisionHint(FLOAT_PRECISION_ALL),
+            _buildKdTreesHint(NO_PREFERENCE)
+        {
+            parsePluginStringData(str);
+        }
+
+        Options(const Options& options,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        META_Object(osgDB,Options);
+
+        Options* cloneOptions(const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY) const { return static_cast<Options*>(clone(copyop)); }
+
+        /** Set the general Options string.*/
+        void setOptionString(const std::string& str) { _str = str; parsePluginStringData(str); }
+
+        /** Get the general Options string.*/
+        const std::string& getOptionString() const { return _str; }
+
+        /** Set the database path to use a hint of where to look when loading models.*/
+        void setDatabasePath(const std::string& str) { _databasePaths.clear();  _databasePaths.push_back(str); }
+
+        /** Get the database path which is used a hint of where to look when loading models.*/
+        FilePathList& getDatabasePathList() { return _databasePaths; }
+
+        /** Get the const database path which is used a hint of where to look when loading models.*/
+        const FilePathList& getDatabasePathList() const { return _databasePaths; }
+
+
+        /** Set whether the Registry::ObjectCache should be used by default.*/
+        void setObjectCacheHint(CacheHintOptions useObjectCache) { _objectCacheHint = useObjectCache; }
+
+        /** Get whether the Registry::ObjectCache should be used by default.*/
+        CacheHintOptions getObjectCacheHint() const { return _objectCacheHint; }
+
+        /** Set which geometry attributes plugins should import at double precision. */
+        void setPrecisionHint(PrecisionHint hint) { _precisionHint = hint; }
+
+        /** Get which geometry attributes plugins should import at double precision. */
+        PrecisionHint getPrecisionHint() const { return _precisionHint; }
+
+        /** Set whether the KdTrees should be built for geometry in the loader model. */
+        void setBuildKdTreesHint(BuildKdTreesHint hint) { _buildKdTreesHint = hint; }
+
+        /** Get whether the KdTrees should be built for geometry in the loader model. */
+        BuildKdTreesHint getBuildKdTreesHint() const { return _buildKdTreesHint; }
+
+
+        /** Set the password map to be used by plugins when access files from secure locations.*/
+        void setAuthenticationMap(AuthenticationMap* authenticationMap) { _authenticationMap = authenticationMap; }
+
+        /** Get the password map to be used by plugins when access files from secure locations.*/
+        const AuthenticationMap* getAuthenticationMap() const { return _authenticationMap.get(); }
+
+
+        /** Sets a plugindata value PluginData with a string */
+        void setPluginData(const std::string& s, void* v) const { _pluginData[s] = v; }
+
+        /** Get a value from the PluginData */
+        void* getPluginData(const std::string& s) { return _pluginData[s]; }
+
+        /** Get a value from the PluginData */
+        const void* getPluginData(const std::string& s) const
+        {
+            PluginDataMap::const_iterator itr = _pluginData.find(s);
+            return (itr == _pluginData.end()) ? 0 : itr->second;
+        }
+
+        /** Remove a value from the PluginData */
+        void removePluginData(const std::string& s) const { _pluginData.erase(s); }
+        
+        /** Get number of PluginData values */
+        unsigned int getNumPluginData() const { return _pluginData.size(); }
+
+
+        /** Sets a plugindata value PluginData with a string */
+        void setPluginStringData(const std::string& s, const std::string& v) const { _pluginStringData[s] = v; }
+
+        /** Get a string from the PluginStrData */
+        std::string& getPluginStringData(const std::string& s) { return _pluginStringData[s]; }
+
+        /** Get a value from the PluginData */
+        const std::string getPluginStringData(const std::string& s) const
+        {
+            PluginStringDataMap::const_iterator itr = _pluginStringData.find(s);
+            return (itr == _pluginStringData.end()) ? std::string("") : itr->second;
+        }
+
+        /** Remove a value from the PluginData */
+        void removePluginStringData(const std::string& s) const { _pluginStringData.erase(s); }
+
+        /** Get number of PluginStrData values */
+        unsigned int getNumPluginStringData() const { return _pluginStringData.size(); }
+
+        /** Parse string into plugin string data. This will be automatically done in Options(const std::string&) */
+        void parsePluginStringData(const std::string& str, char separator1=' ', char separator2='=');
+
+
+        /** Set the find callback to use in place of the default findFile calls.*/
+        void setFindFileCallback( FindFileCallback* cb) { _findFileCallback = cb; }
+
+        /** Get the const findFile callback.*/
+        FindFileCallback* getFindFileCallback() const { return _findFileCallback.get(); }
+
+
+        /** Set the read callback to use in place of the default readFile calls.*/
+        void setReadFileCallback( ReadFileCallback* cb) { _readFileCallback = cb; }
+
+        /** Get the const readFile callback.*/
+        ReadFileCallback* getReadFileCallback() const { return _readFileCallback.get(); }
+
+
+        /** Set the callback to use in place of the default writeFile calls.*/
+        void setWriteFileCallback( WriteFileCallback* cb) { _writeFileCallback = cb; }
+
+        /** Get the const writeFile callback.*/
+        WriteFileCallback* getWriteFileCallback() const { return _writeFileCallback.get(); }
+
+
+        /** Set the callback to use inform the DatabasePager whether a file is located on local or remote file system.*/
+        void setFileLocationCallback( FileLocationCallback* cb) { _fileLocationCallback = cb; }
+
+        /** Get the callback to use inform the DatabasePager whether a file is located on local or remote file system.*/
+        FileLocationCallback* getFileLocationCallback() const { return _fileLocationCallback.get(); }
+
+        /** Set the FileCache that is used to manage local storage of files downloaded from the internet.*/
+        void setFileCache(FileCache* fileCache) { _fileCache = fileCache; }
+
+        /** Get the FileCache that is used to manage local storage of files downloaded from the internet.*/
+        FileCache* getFileCache() const { return _fileCache.get(); }
+
+
+        /** Set the terrain observer_ptr, use to decorate any osgTerrain subgraphs.*/
+        void setTerrain(osg::observer_ptr<osg::Node>& terrain) { _terrain = terrain; }
+
+        /** Get the terrain observer_ptr, use to decorate any osgTerrain subgraphs.*/
+        const osg::observer_ptr<osg::Node>& getTerrain() const { return _terrain; }
+
+
+    protected:
+
+        virtual ~Options() {}
+
+        std::string                     _str;
+        FilePathList                    _databasePaths;
+        CacheHintOptions                _objectCacheHint;
+        PrecisionHint                   _precisionHint;
+        BuildKdTreesHint                _buildKdTreesHint;
+        osg::ref_ptr<AuthenticationMap> _authenticationMap;
+
+        typedef std::map<std::string,void*> PluginDataMap;
+        mutable PluginDataMap _pluginData;
+        typedef std::map<std::string,std::string> PluginStringDataMap;
+        mutable PluginStringDataMap _pluginStringData;
+
+        osg::ref_ptr<FindFileCallback>      _findFileCallback;
+        osg::ref_ptr<ReadFileCallback>      _readFileCallback;
+        osg::ref_ptr<WriteFileCallback>     _writeFileCallback;
+        osg::ref_ptr<FileLocationCallback>  _fileLocationCallback;
+
+        osg::ref_ptr<FileCache>             _fileCache;
+
+        osg::observer_ptr<osg::Node>        _terrain;
+};
+
+}
+
+#endif // OSGDB_OPTIONS

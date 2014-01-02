@@ -1,0 +1,186 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_SCENEGRAPHBUILDER
+#define OSGUTIL_SCENEGRAPHBUILDER 1
+
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/MatrixTransform>
+#include <osg/GLU>
+
+#include <osgUtil/Export>
+
+namespace osgUtil {
+
+/** A class for assisting the building ascene graphs that is equivilant to OpenGL 1.0 style calls.
+  */
+class OSGUTIL_EXPORT SceneGraphBuilder
+{
+    public:
+
+        SceneGraphBuilder();
+
+        // 
+        //  OpenGL 1.0 style building methods
+        //
+        void PushMatrix();
+        void PopMatrix();
+        void LoadIdentity();
+        void LoadMatrixd(const GLdouble* m);
+        void MultMatrixd(const GLdouble* m);
+        void Translated(GLdouble x, GLdouble y, GLdouble z);
+        void Scaled(GLdouble x, GLdouble y, GLdouble z);
+        void Rotated(GLdouble angle, GLdouble x, GLdouble y, GLdouble z);
+        
+        void BlendFunc(GLenum srcFactor, GLenum dstFactor);
+        void CullFace(GLenum mode);
+        void DepthFunc(GLenum mode);
+        void FrontFace(GLenum mode);
+        void LineStipple(GLint factor, GLushort pattern);
+        void LineWidth(GLfloat lineWidth);
+        void PointSize(GLfloat pointSize);
+        void PolygonMode(GLenum face, GLenum mode);
+        void PolygonOffset(GLfloat factor, GLfloat units);
+        void PolygonStipple(const GLubyte* mask);
+        void ShadeModel(GLenum mode);
+        
+        void Enable(GLenum mode);
+        void Disable(GLenum mode);
+        
+        void Color4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+        void Color4fv(GLfloat* c) { Color4f(c[0], c[1], c[2], c[3]); }
+
+        void Vertex3f(GLfloat x, GLfloat y, GLfloat z);
+        void Vertex3fv(GLfloat* v) { Vertex3f(v[0], v[1], v[2]); }
+
+        void Normal3f(GLfloat x, GLfloat y, GLfloat z);
+        void Normal3fv(GLfloat* n) { Normal3f(n[0], n[1], n[2]); }
+
+        void TexCoord1f(GLfloat x);
+        void TexCoord1fv(GLfloat* tc) { TexCoord1f(tc[0]); }
+
+        void TexCoord2f(GLfloat x, GLfloat y);
+        void TexCoord2fv(GLfloat* tc) { TexCoord2f(tc[0],tc[1]); }
+
+        void TexCoord3f(GLfloat x, GLfloat y, GLfloat z);
+        void TexCoord3fv(GLfloat* tc) { TexCoord3f(tc[0], tc[1], tc[2]); }
+
+        void TexCoord4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+        void TexCoord4fv(GLfloat* tc) { TexCoord4f(tc[0], tc[1], tc[2], tc[3]); }
+
+        void Begin(GLenum mode);
+        void End();
+
+        //
+        // glu style building methods
+        //
+        void QuadricDrawStyle(GLenum aDrawStyle);
+        void QuadricNormals(GLenum aNormals);
+        void QuadricOrientation(GLenum aOrientation);
+        void QuadricTexture(GLboolean aTexture);
+
+        void Cylinder(GLfloat base,
+                      GLfloat top,
+                      GLfloat height,
+                      GLint slices,
+                      GLint stacks);
+
+       void Disk(GLfloat inner,
+                 GLfloat outer,
+                 GLint slices,
+                 GLint loops);
+
+       void PartialDisk(GLfloat inner,
+                        GLfloat outer,
+                        GLint slices,
+                        GLint loops,
+                        GLfloat start,
+                        GLfloat sweep);
+
+       void Sphere(GLfloat radius,
+                   GLint slices,
+                   GLint stacks);
+
+
+        //
+        // methods for obtaining the built scene graph
+        //
+        osg::Node* getScene();
+        osg::Node* takeScene();
+
+    protected:
+    
+        typedef std::vector<osg::Matrixd> Matrices;
+
+        void matrixChanged();
+        void addAttribute(osg::StateAttribute* attribute);
+        void addMode(GLenum mode, bool enabled);                
+        void addTextureAttribute(unsigned int unit, osg::StateAttribute* attribute);
+        void addTextureMode(unsigned int unit, GLenum mode, bool enabled);                
+        void addShape(osg::Shape* shape);
+        void addDrawable(osg::Drawable* drawable);
+        void newGeometry();
+        
+        void allocateGeometry();
+        void completeGeometry();
+        
+        void allocateStateSet();
+        
+        Matrices                            _matrixStack;
+        osg::ref_ptr<osg::StateSet>         _stateset;
+        bool                                _statesetAssigned;
+        
+        bool                                _normalSet;
+        osg::Vec3f                          _normal;
+
+        bool                                _colorSet;
+        osg::Vec4f                          _color;
+
+        unsigned int                        _maxNumTexCoordComponents;
+        osg::Vec4f                          _texCoord;
+
+        GLenum                              _primitiveMode;
+        osg::ref_ptr<osg::Vec3Array>        _vertices;
+        osg::ref_ptr<osg::Vec3Array>        _normals;
+        osg::ref_ptr<osg::Vec4Array>        _colors;
+        osg::ref_ptr<osg::Vec4Array>        _texCoords;
+    
+        struct QuadricState
+        {
+            QuadricState():
+                _drawStyle(GLU_FILL),
+                _normals(GLU_SMOOTH),
+                _orientation(GLU_OUTSIDE),
+                _texture(GLU_FALSE) {}
+
+            GLenum      _drawStyle;
+            GLenum      _normals;
+            GLenum      _orientation;
+            GLboolean   _texture;
+        };
+
+        QuadricState _quadricState;
+
+
+        osg::ref_ptr<osg::Geometry>         _geometry;
+        osg::ref_ptr<osg::Geode>            _geode;
+        osg::ref_ptr<osg::MatrixTransform>  _transform;
+        osg::ref_ptr<osg::Group>            _group;
+    
+};
+
+
+}
+
+#endif

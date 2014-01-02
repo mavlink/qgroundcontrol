@@ -1,0 +1,227 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_OPERATIONTHREAD
+#define OSG_OPERATIONTHREAD 1
+
+#include <osg/observer_ptr>
+#include <osg/Object>
+
+#include <OpenThreads/Thread>
+#include <OpenThreads/Barrier>
+#include <OpenThreads/Condition>
+#include <OpenThreads/Block>
+
+#include <list>
+#include <set>
+
+namespace osg {
+
+class RefBlock : virtual public osg::Referenced, public OpenThreads::Block
+{
+    public:
+
+        RefBlock():
+            osg::Referenced(true) {}
+
+};
+
+class RefBlockCount : virtual public osg::Referenced, public OpenThreads::BlockCount
+{
+    public:
+
+        RefBlockCount(unsigned blockCount):
+            osg::Referenced(true),
+            OpenThreads::BlockCount(blockCount) {}
+
+};
+
+/** Base class for implementing graphics operations.*/
+class Operation : virtual public Referenced
+{
+    public:
+
+        Operation(const std::string& name, bool keep):
+            osg::Referenced(true),
+            _name(name),
+            _keep(keep) {}
+
+
+        /** Set the human readable name of the operation.*/
+        void setName(const std::string& name) { _name = name; }
+
+        /** Get the human readable name of the operation.*/
+        const std::string& getName() const { return _name; }
+
+        /** Set whether the operation should be kept once its been applied.*/ 
+        void setKeep(bool keep) { _keep = keep; }
+
+        /** Get whether the operation should be kept once its been applied.*/ 
+        bool getKeep() const { return _keep; }
+
+        /** if this operation is a barrier then release it.*/
+        virtual void release() {}
+
+        /** Do the actual task of this operation.*/ 
+        virtual void operator () (Object*) = 0;
+
+    protected:
+    
+        Operation():
+            Referenced(true),
+            _keep(false) {}
+
+        Operation(const Operation& op):
+            Referenced(true),
+            _name(op._name),
+            _keep(op._keep) {}
+
+        virtual ~Operation() {}
+
+        std::string _name;
+        bool        _keep;
+};
+
+class OperationThread;
+
+class OSG_EXPORT OperationQueue : public Referenced
+{
+    public:
+    
+        OperationQueue();
+        
+        /** Get the next operation from the operation queue. 
+          * Return null ref_ptr<> if no operations are left in queue. */  
+        osg::ref_ptr<Operation> getNextOperation(bool blockIfEmpty = false);
+
+        /** Return true if the operation queue is empty. */
+        bool empty();
+        
+        /** Return the num of pending operations that are sitting in the OperationQueue.*/
+        unsigned int getNumOperationsInQueue();
+
+        /** Add operation to end of OperationQueue, this will be 
+          * executed by the operation thread once this operation gets to the head of the queue.*/
+        void add(Operation* operation);
+        
+        /** Remove operation from OperationQueue.*/
+        void remove(Operation* operation);
+
+        /** Remove named operation from OperationQueue.*/
+        void remove(const std::string& name);
+
+        /** Remove all operations from OperationQueue.*/
+        void removeAllOperations();
+        
+        /** Run the operations. */
+        void runOperations(Object* callingObject=0);
+
+        /** Call release on all operations. */
+        void releaseAllOperations(); 
+
+        /** Release operations block that is used to block threads that are waiting on an empty operations queue.*/
+        void releaseOperationsBlock();
+
+        typedef std::set<OperationThread*> OperationThreads;
+        
+        /** Get the set of OperationThreads that are sharing this OperationQueue. */
+        const OperationThreads& getOperationThreads() const { return _operationThreads; }
+
+    protected:
+
+        virtual ~OperationQueue();
+
+        friend class OperationThread;
+        
+        void addOperationThread(OperationThread* thread);
+        void removeOperationThread(OperationThread* thread);
+        
+        typedef std::list< osg::ref_ptr<Operation> > Operations;
+
+        OpenThreads::Mutex          _operationsMutex;
+        osg::ref_ptr<osg::RefBlock> _operationsBlock;
+        Operations                  _operations;
+        Operations::iterator        _currentOperationIterator;
+
+        OperationThreads            _operationThreads;
+};
+
+/** OperationThread is a helper class for running Operation within a single thread.*/
+class OSG_EXPORT OperationThread : public Referenced, public OpenThreads::Thread
+{
+    public:
+        OperationThread();
+
+        void setParent(Object* parent) { _parent = parent; }
+
+        Object* getParent() { return _parent.get(); }
+        
+        const Object* getParent() const { return _parent.get(); }
+
+
+        /** Set the OperationQueue. */
+        void setOperationQueue(OperationQueue* opq);
+
+        /** Get the OperationQueue. */
+        OperationQueue* getOperationQueue() { return _operationQueue.get(); }
+
+        /** Get the const OperationQueue. */
+        const OperationQueue* getOperationQueue() const { return _operationQueue.get(); }
+
+        
+        /** Add operation to end of OperationQueue, this will be 
+          * executed by the graphics thread once this operation gets to the head of the queue.*/
+        void add(Operation* operation);
+        
+        /** Remove operation from OperationQueue.*/
+        void remove(Operation* operation);
+
+        /** Remove named operation from OperationQueue.*/
+        void remove(const std::string& name);
+
+        /** Remove all operations from OperationQueue.*/
+        void removeAllOperations();
+
+        
+        /** Get the operation currently being run.*/
+        osg::ref_ptr<Operation> getCurrentOperation() { return _currentOperation; }
+
+        /** Run does the opertion thread run loop.*/
+        virtual void run();
+        
+        void setDone(bool done);
+        
+        bool getDone() const { return _done; }
+
+        /** Cancel this graphics thread.*/        
+        virtual int cancel();
+
+    protected:
+    
+        virtual ~OperationThread();
+        
+        observer_ptr<Object>            _parent;
+
+        bool                            _done;
+
+        OpenThreads::Mutex              _threadMutex;
+        osg::ref_ptr<OperationQueue>    _operationQueue;
+        osg::ref_ptr<Operation>         _currentOperation;
+
+};
+
+typedef OperationThread OperationsThread;
+
+}
+
+#endif

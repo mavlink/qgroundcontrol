@@ -1,0 +1,476 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGDB_DATABASEPAGER
+#define OSGDB_DATABASEPAGER 1
+
+#include <osg/NodeVisitor>
+#include <osg/Group>
+#include <osg/PagedLOD>
+#include <osg/Drawable>
+#include <osg/GraphicsThread>
+#include <osg/FrameStamp>
+#include <osg/ObserverNodePath>
+#include <osg/observer_ptr>
+
+#include <OpenThreads/Thread>
+#include <OpenThreads/Mutex>
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Condition>
+
+#include <osgUtil/IncrementalCompileOperation>
+
+#include <osgDB/SharedStateManager>
+#include <osgDB/ReaderWriter>
+#include <osgDB/Options>
+
+
+#include <map>
+#include <list>
+#include <algorithm>
+#include <functional>
+
+namespace osgDB {
+
+
+
+/** Database paging class which manages the loading of files in a background thread, 
+  * and synchronizing of loaded models with the main scene graph.*/
+class OSGDB_EXPORT DatabasePager : public osg::NodeVisitor::DatabaseRequestHandler
+{
+    public :
+
+        typedef OpenThreads::Thread::ThreadPriority ThreadPriority;
+
+        DatabasePager();
+
+        DatabasePager(const DatabasePager& rhs);
+
+        virtual const char* className() const { return "DatabasePager"; }
+
+        /** Create a shallow copy on the DatabasePager.*/
+        virtual DatabasePager* clone() const { return new DatabasePager(*this); }
+
+        /** get the prototype singleton used by DatabasePager::create().*/
+        static osg::ref_ptr<DatabasePager>& prototype();
+        
+        /** create a DatabasePager by cloning DatabasePager::prototype().*/
+        static DatabasePager* create();
+
+        
+
+        /** Add a request to load a node file to end the the database request list.*/
+        virtual void requestNodeFile(const std::string& fileName, osg::NodePath& nodePath,
+                                     float priority, const osg::FrameStamp* framestamp,
+                                     osg::ref_ptr<osg::Referenced>& databaseRequest,
+                                     const osg::Referenced* options);
+
+        /** Set the priority of the database pager thread(s).*/
+        int setSchedulePriority(OpenThreads::Thread::ThreadPriority priority);
+
+        /** Cancel the database pager thread(s).*/        
+        virtual int cancel();
+        
+        virtual bool isRunning() const;
+        
+        /** Clear all internally cached structures.*/
+        virtual void clear();
+        
+        class OSGDB_EXPORT DatabaseThread : public osg::Referenced, public OpenThreads::Thread
+        {
+        public:
+        
+            enum Mode
+            {
+                HANDLE_ALL_REQUESTS,
+                HANDLE_NON_HTTP,
+                HANDLE_ONLY_HTTP
+            };
+        
+            DatabaseThread(DatabasePager* pager, Mode mode, const std::string& name);
+            
+            DatabaseThread(const DatabaseThread& dt, DatabasePager* pager);
+
+            void setName(const std::string& name) { _name = name; }
+            const std::string& getName() const { return _name; }
+
+            void setDone(bool done) { _done.exchange(done?1:0); }
+            bool getDone() const { return _done!=0; }
+            
+            void setActive(bool active) { _active = active; }
+            bool getActive() const { return _active; }
+
+            virtual int cancel();
+            
+            virtual void run();
+            
+        protected:
+
+            virtual ~DatabaseThread();
+        
+            OpenThreads::Atomic _done;
+            volatile bool       _active;
+            DatabasePager*      _pager;
+            Mode                _mode;
+            std::string         _name;
+
+        };
+        
+        void setUpThreads(unsigned int totalNumThreads=2, unsigned int numHttpThreads=1);
+
+        unsigned int addDatabaseThread(DatabaseThread::Mode mode, const std::string& name);
+
+        DatabaseThread* getDatabaseThread(unsigned int i) { return _databaseThreads[i].get(); }
+        
+        const DatabaseThread* getDatabaseThread(unsigned int i) const { return _databaseThreads[i].get(); }
+
+        unsigned int getNumDatabaseThreads() const { return _databaseThreads.size(); }
+        
+        /** Set whether the database pager thread should be paused or not.*/
+        void setDatabasePagerThreadPause(bool pause);
+        
+        /** Get whether the database pager thread should is paused or not.*/
+        bool getDatabasePagerThreadPause() const { return _databasePagerThreadPaused; }
+        
+        /** Set whether new database request calls are accepted or ignored.*/
+        void setAcceptNewDatabaseRequests(bool acceptNewRequests) { _acceptNewRequests = acceptNewRequests; }
+        
+        /** Get whether new database request calls are accepted or ignored.*/
+        bool getAcceptNewDatabaseRequests() const { return _acceptNewRequests; }
+        
+        /** Get the number of frames that are currently active.*/
+        int getNumFramesActive() const { return _numFramesActive; }
+
+        /** Signal the database thread that the update, cull and draw has begun for a new frame.
+          * Note, this is called by the application so that the database pager can go to sleep while the CPU is busy on the main rendering threads. */
+        virtual void signalBeginFrame(const osg::FrameStamp* framestamp);
+        
+        /** Signal the database thread that the update, cull and draw dispatch has completed.
+          * Note, this is called by the application so that the database pager can go to wake back up now the main rendering threads are iddle waiting for the next frame.*/
+        virtual void signalEndFrame();
+        
+
+        /** Find all PagedLOD nodes in a subgraph and register them with 
+          * the DatabasePager so it can keep track of expired nodes.
+          * note, should be only be called from the update thread. */
+        virtual void registerPagedLODs(osg::Node* subgraph, unsigned int frameNumber = 0);
+
+        /** Set the incremental compile operation.
+          * Used to manage the OpenGL object compilation and merging of subgraphs in a way that avoids overloading
+          * the rendering of frame with too many new objects in one frame. */
+        void setIncrementalCompileOperation(osgUtil::IncrementalCompileOperation* ico);
+
+        /** Get the incremental compile operation. */
+        osgUtil::IncrementalCompileOperation* getIncrementalCompileOperation() { return _incrementalCompileOperation.get(); }
+
+
+        /** Set whether the database pager should pre compile OpenGL objects before allowing
+          * them to be merged into the scene graph.
+          * Pre compilation helps reduce the chances of frame drops, but also slows the
+          * speed at which tiles are merged as they have to be compiled first.*/
+        void setDoPreCompile(bool flag) { _doPreCompile = flag; }
+
+        /** Get whether the database pager should pre compile OpenGL objects before allowing
+          * them to be merged into the scene graph.*/
+        bool getDoPreCompile() const { return _doPreCompile; }
+
+
+
+        /** Set the target maximum number of PagedLOD to maintain in memory.
+          * Note, if more than the target number are required for rendering of a frame then these active PagedLOD are excempt from being expiried.
+          * But once the number of active drops back below the target the inactive PagedLOD will be trimmed back to the target number.*/
+        void setTargetMaximumNumberOfPageLOD(unsigned int target) { _targetMaximumNumberOfPageLOD = target; }
+
+        /** Get the target maximum number of PagedLOD to maintain in memory.*/
+        unsigned int getTargetMaximumNumberOfPageLOD() const { return _targetMaximumNumberOfPageLOD; }
+
+
+        /** Set whether the removed subgraphs should be deleted in the database thread or not.*/
+        void setDeleteRemovedSubgraphsInDatabaseThread(bool flag) { _deleteRemovedSubgraphsInDatabaseThread = flag; }
+        
+        /** Get whether the removed subgraphs should be deleted in the database thread or not.*/
+        bool getDeleteRemovedSubgraphsInDatabaseThread() const { return _deleteRemovedSubgraphsInDatabaseThread; }
+
+        enum DrawablePolicy
+        {
+            DO_NOT_MODIFY_DRAWABLE_SETTINGS,
+            USE_DISPLAY_LISTS,
+            USE_VERTEX_BUFFER_OBJECTS,
+            USE_VERTEX_ARRAYS
+        };
+
+        /** Set how loaded drawables should be handled w.r.t their display list/vertex buffer object/vertex array settings.*/
+        void setDrawablePolicy(DrawablePolicy policy) { _drawablePolicy = policy; }
+
+        /** Get how loaded drawables should be handled w.r.t their display list/vertex buffer object/vertex array settings.*/
+        DrawablePolicy getDrawablePolicy() const { return _drawablePolicy; }
+
+
+        /** Set whether newly loaded textures should have a PixelBufferObject assigned to them to aid download to the GPU.*/
+        void setApplyPBOToImages(bool assignPBOToImages) { _assignPBOToImages = assignPBOToImages; }
+
+        /** Get whether newly loaded textures should have a PixelBufferObject assigned to them..*/
+        bool getApplyPBOToImages() const { return _assignPBOToImages; }
+
+
+        /** Set whether newly loaded textures should have their UnrefImageDataAfterApply set to a specified value.*/
+        void setUnrefImageDataAfterApplyPolicy(bool changeAutoUnRef, bool valueAutoUnRef) { _changeAutoUnRef = changeAutoUnRef; _valueAutoUnRef = valueAutoUnRef; }
+
+        /** Get whether newly loaded textures should have their UnrefImageDataAfterApply set to a specified value.*/
+        void getUnrefImageDataAfterApplyPolicy(bool& changeAutoUnRef, bool& valueAutoUnRef) const { changeAutoUnRef = _changeAutoUnRef; valueAutoUnRef = _valueAutoUnRef; }
+
+
+        /** Set whether newly loaded textures should have their MaxAnisotopy set to a specified value.*/
+        void setMaxAnisotropyPolicy(bool changeAnisotropy, float valueAnisotropy) { _changeAnisotropy = changeAnisotropy; _valueAnisotropy = valueAnisotropy; }
+
+        /** Set whether newly loaded textures should have their MaxAnisotopy set to a specified value.*/
+        void getMaxAnisotropyPolicy(bool& changeAnisotropy, float& valueAnisotropy) const { changeAnisotropy = _changeAnisotropy; valueAnisotropy = _valueAnisotropy; }
+
+
+        /** Return true if there are pending updates to the scene graph that require a call to updateSceneGraph(double). */
+        bool requiresUpdateSceneGraph() const;
+        
+        /** Merge the changes to the scene graph by calling calling removeExpiredSubgraphs then addLoadedDataToSceneGraph.
+          * Note, must only be called from single thread update phase. */
+        virtual void updateSceneGraph(const osg::FrameStamp& frameStamp);
+
+        /** Report how many items are in the _fileRequestList queue */
+        unsigned int getFileRequestListSize() const { return _fileRequestQueue->size() + _httpRequestQueue->size(); }
+
+        /** Report how many items are in the _dataToCompileList queue */
+        unsigned int getDataToCompileListSize() const { return _dataToCompileList->size(); }
+        
+        /** Report how many items are in the _dataToMergeList queue */
+        unsigned int getDataToMergeListSize() const { return _dataToMergeList->size(); }
+
+        /** Report whether any requests are in the pager.*/
+        bool getRequestsInProgress() const;
+        
+        /** Get the minimum time between the first request for a tile to be loaded and the time of its merge into the main scene graph.*/
+        double getMinimumTimeToMergeTile() const { return _minimumTimeToMergeTile; }
+
+        /** Get the maximum time between the first request for a tile to be loaded and the time of its merge into the main scene graph.*/
+        double getMaximumTimeToMergeTile() const { return _maximumTimeToMergeTile; }
+
+        /** Get the average time between the first request for a tile to be loaded and the time of its merge into the main scene graph.*/
+        double getAverageTimeToMergeTiles() const { return (_numTilesMerges > 0) ? _totalTimeToMergeTiles/static_cast<double>(_numTilesMerges) : 0; }
+
+        /** Reset the Stats variables.*/
+        void resetStats();
+
+        typedef std::set< osg::ref_ptr<osg::StateSet> >                 StateSetList;
+        typedef std::vector< osg::ref_ptr<osg::Drawable> >              DrawableList;
+
+        class ExpirePagedLODsVisitor;
+
+        typedef std::list<  osg::ref_ptr<osg::Object> > ObjectList;
+
+        struct PagedLODList : public osg::Referenced
+        {
+            virtual PagedLODList* clone() = 0;
+            virtual void clear() = 0;
+            virtual unsigned int size() = 0;
+            virtual void removeExpiredChildren(int numberChildrenToRemove, double expiryTime, unsigned int expiryFrame, ObjectList& childrenRemoved, bool visitActive) = 0;
+            virtual void removeNodes(osg::NodeList& nodesToRemove) = 0;
+            virtual void insertPagedLOD(const osg::observer_ptr<osg::PagedLOD>& plod) = 0;
+            virtual bool containsPagedLOD(const osg::observer_ptr<osg::PagedLOD>& plod) const = 0;
+        };
+
+
+    protected:
+
+        virtual ~DatabasePager();
+
+        friend class DatabaseThread;
+        friend struct DatabaseRequest;
+
+        struct RequestQueue;
+
+        struct OSGDB_EXPORT DatabaseRequest : public osg::Referenced
+        {
+            DatabaseRequest():
+                osg::Referenced(true),
+                _valid(false),
+                _frameNumberFirstRequest(0),
+                _timestampFirstRequest(0.0),
+                _priorityFirstRequest(0.f),
+                _frameNumberLastRequest(0),
+                _timestampLastRequest(0.0),
+                _priorityLastRequest(0.0f),
+                _numOfRequests(0),
+                _groupExpired(false)
+            {}
+
+            void invalidate();
+
+            bool valid() const { return _valid; }
+
+            bool                        _valid;
+            std::string                 _fileName;
+            unsigned int                _frameNumberFirstRequest;
+            double                      _timestampFirstRequest;
+            float                       _priorityFirstRequest;
+            unsigned int                _frameNumberLastRequest;
+            double                      _timestampLastRequest;
+            float                       _priorityLastRequest;
+            unsigned int                _numOfRequests;
+            
+            osg::observer_ptr<osg::Node>        _terrain;
+            osg::observer_ptr<osg::Group>       _group;
+
+            osg::ref_ptr<osg::Node>             _loadedModel;
+            osg::ref_ptr<Options>               _loadOptions;
+
+            osg::observer_ptr<osgUtil::IncrementalCompileOperation::CompileSet> _compileSet;
+            bool                        _groupExpired; // flag used only in update thread
+
+            bool isRequestCurrent (int frameNumber) const
+            {
+                return _valid && (frameNumber - _frameNumberLastRequest <= 1);
+            }
+        };
+
+
+        struct OSGDB_EXPORT RequestQueue : public osg::Referenced
+        {
+        public:
+
+            RequestQueue(DatabasePager* pager);
+
+            void add(DatabaseRequest* databaseRequest);
+            void remove(DatabaseRequest* databaseRequest);
+
+            void addNoLock(DatabaseRequest* databaseRequest);
+
+            void takeFirst(osg::ref_ptr<DatabaseRequest>& databaseRequest);
+
+            /// prune all the old requests and then return true if requestList left empty
+            bool pruneOldRequestsAndCheckIfEmpty();
+
+            virtual void updateBlock() {}
+
+            void invalidate(DatabaseRequest* dr);
+
+            bool empty();
+
+            unsigned int size();
+
+            void clear();
+
+
+            typedef std::list< osg::ref_ptr<DatabaseRequest> > RequestList;
+            void swap(RequestList& requestList);
+
+            DatabasePager*              _pager;
+            RequestList                 _requestList;
+            OpenThreads::Mutex          _requestMutex;
+            unsigned int                _frameNumberLastPruned;
+
+        protected:
+            virtual ~RequestQueue();
+        };
+
+        
+        typedef std::vector< osg::ref_ptr<DatabaseThread> > DatabaseThreadList;
+
+        struct OSGDB_EXPORT ReadQueue : public RequestQueue
+        {
+            ReadQueue(DatabasePager* pager, const std::string& name);
+
+            void block() { _block->block(); }
+
+            void release() { _block->release(); }
+
+            virtual void updateBlock();
+
+
+            osg::ref_ptr<osg::RefBlock> _block;
+
+            std::string                 _name;
+
+            OpenThreads::Mutex          _childrenToDeleteListMutex;
+            ObjectList                  _childrenToDeleteList;
+        };
+
+        // forward declare inner helper classes
+        class FindCompileableGLObjectsVisitor;
+        friend class FindCompileableGLObjectsVisitor;
+
+        struct DatabasePagerCompileCompletedCallback;
+        friend struct DatabasePagerCompileCompletedCallback;
+
+        class FindPagedLODsVisitor;
+        friend class FindPagedLODsVisitor;
+
+        struct SortFileRequestFunctor;
+        friend struct SortFileRequestFunctor;
+
+        
+        OpenThreads::Mutex              _run_mutex;
+        OpenThreads::Mutex              _dr_mutex;
+        bool                            _startThreadCalled;
+
+        void compileCompleted(DatabaseRequest* databaseRequest);
+
+        /** Iterate through the active PagedLOD nodes children removing
+          * children which havn't been visited since specified expiryTime.
+          * note, should be only be called from the update thread. */
+        virtual void removeExpiredSubgraphs(const osg::FrameStamp &frameStamp);
+
+        /** Add the loaded data to the scene graph.*/
+        void addLoadedDataToSceneGraph(const osg::FrameStamp &frameStamp);
+
+
+        bool                            _done;
+        bool                            _acceptNewRequests;
+        bool                            _databasePagerThreadPaused;
+
+        DatabaseThreadList              _databaseThreads;
+
+        int                             _numFramesActive;
+        mutable OpenThreads::Mutex      _numFramesActiveMutex;
+        OpenThreads::Atomic             _frameNumber;
+
+        osg::ref_ptr<ReadQueue>         _fileRequestQueue;
+        osg::ref_ptr<ReadQueue>         _httpRequestQueue;
+        osg::ref_ptr<RequestQueue>      _dataToCompileList;
+        osg::ref_ptr<RequestQueue>      _dataToMergeList;
+
+        DrawablePolicy                  _drawablePolicy;
+
+        bool                            _assignPBOToImages;
+        bool                            _changeAutoUnRef;
+        bool                            _valueAutoUnRef;
+        bool                            _changeAnisotropy;
+        float                           _valueAnisotropy;
+
+        bool                            _deleteRemovedSubgraphsInDatabaseThread;
+
+
+        osg::ref_ptr<PagedLODList>      _activePagedLODList;
+
+        unsigned int                    _targetMaximumNumberOfPageLOD;
+
+        bool                            _doPreCompile;
+        osg::ref_ptr<osgUtil::IncrementalCompileOperation>  _incrementalCompileOperation;
+
+
+        double                          _minimumTimeToMergeTile;
+        double                          _maximumTimeToMergeTile;
+        double                          _totalTimeToMergeTiles;
+        unsigned int                    _numTilesMerges;
+};
+
+}
+
+#endif

@@ -1,0 +1,42 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_GLOBJECTS
+#define OSG_GLOBJECTS 1
+
+#include <osg/Export>
+
+namespace osg {
+
+/** Flush all deleted OpenGL objects within the specified availableTime.
+  * Note, must be called from a thread which has current the graphics context associated with contextID. */
+extern OSG_EXPORT void flushDeletedGLObjects(unsigned int contextID, double currentTime, double& availableTime);
+
+/** Flush all deleted OpenGL objects.
+  * Note, must be called from a thread which has current the graphics context associated with contextID. */
+extern OSG_EXPORT void flushAllDeletedGLObjects(unsigned int contextID);
+
+/** Do a GL delete all OpenGL objects.
+  * Note, must be called from a thread which has current the graphics context associated with contextID. */
+extern OSG_EXPORT void deleteAllGLObjects(unsigned int contextID);
+
+/** Discard all OpenGL objects.
+  * Note, unlike deleteAllObjectObjects discard does not
+  * do any OpenGL calls so can be called from any thread, but as a consequence it
+  * also doesn't remove the associated OpenGL resource so discard should only be
+  * called when the associated graphics context is being/has been closed. */
+extern OSG_EXPORT void discardAllGLObjects(unsigned int contextID);
+
+}
+
+#endif

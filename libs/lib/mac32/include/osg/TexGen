@@ -1,0 +1,142 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_TEXGEN
+#define OSG_TEXGEN 1
+
+#include <osg/Plane>
+#include <osg/StateAttribute>
+
+#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE) || defined(OSG_GL3_AVAILABLE)
+    #define GL_OBJECT_LINEAR    0x2401
+    #define GL_EYE_LINEAR       0x2400
+    #define GL_SPHERE_MAP       0x2402
+    #define GL_TEXTURE_GEN_S    0x0C60
+    #define GL_TEXTURE_GEN_T    0x0C61
+    #define GL_TEXTURE_GEN_R    0x0C62
+    #define GL_TEXTURE_GEN_Q    0x0C63
+#endif
+
+#ifndef GL_NORMAL_MAP_ARB
+    #define GL_NORMAL_MAP_ARB                   0x8511
+#endif
+
+#ifndef GL_REFLECTION_MAP_ARB
+    #define GL_REFLECTION_MAP_ARB               0x8512
+#endif
+
+namespace osg {
+
+/** TexGen encapsulates the OpenGL glTexGen (texture coordinate generation)
+  * state.*/
+class OSG_EXPORT TexGen : public StateAttribute
+{
+    public :
+    
+        TexGen();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        TexGen(const TexGen& texgen,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(texgen,copyop),
+            _mode(texgen._mode),
+            _plane_s(texgen._plane_s),
+            _plane_t(texgen._plane_t),
+            _plane_r(texgen._plane_r),
+            _plane_q(texgen._plane_q) {}
+
+        META_StateAttribute(osg, TexGen, TEXGEN);
+        
+        virtual bool isTextureAttribute() const { return true; }
+
+        /** Return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs. */
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // Check for equal types, then create the rhs variable
+            // used by the COMPARE_StateAttribute_Parameter macros below.
+            COMPARE_StateAttribute_Types(TexGen,sa)
+
+            // Compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_mode)
+            COMPARE_StateAttribute_Parameter(_plane_s)
+            COMPARE_StateAttribute_Parameter(_plane_t)
+            COMPARE_StateAttribute_Parameter(_plane_r)
+            COMPARE_StateAttribute_Parameter(_plane_q)
+
+            return 0; // Passed all the above comparison macros, so must be equal.
+        }
+
+        virtual bool getModeUsage(StateAttribute::ModeUsage& usage) const
+        {
+            usage.usesTextureMode(GL_TEXTURE_GEN_S);
+            usage.usesTextureMode(GL_TEXTURE_GEN_T);
+
+            // Not happy with turning all tex gen parameters on
+            // as the OSG currently only supports 2D textures and therefore
+            // only S and T will be required, R&Q would be redundant...
+            // So commenting out the following until OSG supports 3D textures.
+            // I plan to revamp the OpenGL state management later so will
+            // tidy up then.  Robert Osfield. Jan 2001.
+            
+            // The tidy up is now happening, but will have a think before
+            // resolving the below parameters.
+
+            usage.usesTextureMode(GL_TEXTURE_GEN_R);
+            usage.usesTextureMode(GL_TEXTURE_GEN_Q);
+            return true;
+        }
+
+        virtual void apply(State& state) const;
+
+        enum Mode {
+            OBJECT_LINEAR  = GL_OBJECT_LINEAR,
+            EYE_LINEAR     = GL_EYE_LINEAR,
+            SPHERE_MAP     = GL_SPHERE_MAP,
+            NORMAL_MAP     = GL_NORMAL_MAP_ARB,
+            REFLECTION_MAP = GL_REFLECTION_MAP_ARB
+        };
+
+        inline void setMode( Mode mode ) { _mode = mode; }
+
+        Mode getMode() const { return _mode; }
+
+        enum Coord {
+          S, T, R, Q
+        };
+
+        void setPlane(Coord which, const Plane& plane);
+
+        Plane& getPlane(Coord which);
+
+        const Plane& getPlane(Coord which) const;
+        
+        /** Set the tex gen planes from specified matrix.
+          * Typical usage would be to pass in a projection
+          * matrix to set up projective texturing.
+          */
+        void setPlanesFromMatrix(const Matrixd& matrix);
+
+    protected :
+
+        virtual ~TexGen( void );
+
+        Mode _mode;
+
+        /** Additional texgen coefficients for GL_OBJECT_PLANE or
+          * GL_EYE_PLANE, */
+        Plane _plane_s, _plane_t, _plane_r, _plane_q;
+
+};
+
+}
+
+#endif

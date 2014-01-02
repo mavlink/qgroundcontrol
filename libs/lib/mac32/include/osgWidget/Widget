@@ -1,0 +1,651 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+// Code by: Jeremy Moles (cubicool) 2007-2008
+
+#ifndef OSGWIDGET_WIDGET
+#define OSGWIDGET_WIDGET
+
+#include <osg/Texture2D>
+#include <osgWidget/EventInterface>
+#include <osgWidget/StyleInterface>
+#include <osgWidget/UIObjectParent>
+#include <osgWidget/Types>
+
+namespace osgWidget {
+
+class Window;
+class WindowManager;
+
+// A Widget is a rectangular region that recieves events about the state of various input
+// devices such as the pointer and keyboard. It is aware of it's width, height, and origin but
+// nothing else. It is the job of higher-level container objects to organize layouts and
+// the like, and to contextualize the meaning of the widgets "origin" (whether it is absolute
+// or relative).
+class OSGWIDGET_EXPORT Widget: public osg::Geometry, public EventInterface, public StyleInterface {
+public:
+        enum Corner {
+            LOWER_LEFT  = 0,
+            LOWER_RIGHT = 1,
+            UPPER_RIGHT = 2,
+            UPPER_LEFT  = 3,
+            LL          = LOWER_LEFT,
+            LR          = LOWER_RIGHT,
+            UR          = UPPER_RIGHT,
+            UL          = UPPER_LEFT,
+            ALL_CORNERS = 4
+        };
+
+        enum Layer {
+            LAYER_TOP    = 100,
+            LAYER_HIGH   = 75,
+            LAYER_MIDDLE = 50,
+            LAYER_LOW    = 25,
+            LAYER_BG     = 0
+        };
+
+        enum VerticalAlignment {
+            VA_CENTER,
+            VA_TOP,
+            VA_BOTTOM
+        };
+
+        enum HorizontalAlignment {
+            HA_CENTER,
+            HA_LEFT,
+            HA_RIGHT
+        };
+
+        enum CoordinateMode {
+            CM_ABSOLUTE,
+            CM_RELATIVE
+        };        
+
+
+        Widget (const std::string& = "", point_type = 0.0f, point_type = 0.0f);
+        Widget (const Widget&, const osg::CopyOp&);
+
+        META_Object   (osgWidget, Widget);
+
+        virtual ~Widget() {
+        }
+
+        // This method is called when the widget is added to a Window; this is useful
+        // when the widget needs to do something advanced (like a Label). The parent
+        // is passed as the first argument, although _parent should already be set.
+        virtual void parented(Window*) {
+        }
+
+        virtual void unparented(Window*) {
+        }
+
+        // This method is called when the widget's parent Window is added to a
+        // WindowManager object. The base managed method (WHICH YOU MUST REMEMBER
+        // TO CALL IN YOUR DERIVED METHODS!) sets the TexMat properly depending
+        // on what coordinate system you're using.
+        virtual void managed(WindowManager*) {
+        }
+
+        virtual void unmanaged(WindowManager*) {
+        }
+
+        // This method is called when the widget is resized or reallocated in any
+        // way. This is useful when the widget manages some internal Drawables that need
+        // to be modified in some way.
+        virtual void positioned() {
+        }
+
+        void setDimensions(
+            point_type = -1.0f,
+            point_type = -1.0f,
+            point_type = -1.0f,
+            point_type = -1.0f,
+            point_type = -1.0f
+        );
+
+        void setPadding  (point_type);
+        void setColor    (color_type, color_type, color_type, color_type, Corner = ALL_CORNERS);
+        void addColor    (color_type, color_type, color_type, color_type, Corner = ALL_CORNERS);
+        void setTexCoord (texcoord_type, texcoord_type, Corner = ALL_CORNERS);
+        void setLayer    (Layer l, unsigned int offset = 0);
+
+        // These are additional texture coordinate setting methods.
+        // This method will use a given origin as the LOWER_LEFT point and texture the
+        // remaining area based on some width and height values.
+        void setTexCoordRegion(point_type, point_type, point_type, point_type);
+
+        // These are convenience methods for setting up wrapping modes.
+        void setTexCoordWrapHorizontal ();
+        void setTexCoordWrapVertical   ();
+
+        bool setImage   (osg::Image*, bool = false, bool = false);
+        bool setImage   (const std::string&, bool = false, bool = false);
+        bool setTexture (osg::Texture*, bool = false, bool = false);
+
+        void addX      (point_type);
+        void addY      (point_type);
+        void addWidth  (point_type);
+        void addHeight (point_type);
+        void addOrigin (point_type, point_type);
+        void addSize   (point_type, point_type);
+
+        point_type getWidth         () const;
+        point_type getHeight        () const;
+        point_type getX             () const;
+        point_type getY             () const;
+        point_type getZ             () const;
+        point_type getPadHorizontal () const;
+        point_type getPadVertical   () const;
+
+        const Point&    getPoint    (Corner = ALL_CORNERS) const;
+        const Color&    getColor    (Corner = ALL_CORNERS) const;
+        const TexCoord& getTexCoord (Corner = ALL_CORNERS) const;
+
+        Color   getImageColorAtXY (point_type x, point_type y) const;
+        XYCoord localXY           (double, double) const;
+
+        bool isPaddingUniform() const;
+
+        bool isManaged() const {
+            return _isManaged;
+        }
+
+        bool isStyled() const {
+            return _isStyled;
+        }
+
+        void setDimensions(const Quad& q, point_type z = -1.0f) {
+            setDimensions(q[0], q[1], q[2], q[3], z);
+        }
+
+        void setX(point_type x) {
+            setDimensions(x);
+        }
+
+        void setY(point_type y) {
+            setDimensions(-1.0f, y);
+        }
+
+        // This method should be use with extreme caution.
+        void setZ(point_type z) {
+            setDimensions(-1.0f, -1.0f, -1.0f, -1.0f, z);
+        }
+
+        void setWidth(point_type w) {
+            setDimensions(-1.0f, -1.0f, w);
+        }
+
+        void setHeight(point_type h) {
+            setDimensions(-1.0f, -1.0f, -1.0f, h);
+        }
+
+        void setOrigin(point_type x, point_type y) {
+            setDimensions(x, y);
+        }
+
+        void setOrigin(const XYCoord& xy) {
+            setOrigin(xy.x(), xy.y());
+        }
+
+        void setSize(point_type w, point_type h) {
+            setDimensions(-1.0f, -1.0f, w, h);
+        }
+
+        void setSize(const XYCoord& xy) {
+            setSize(xy.x(), xy.y());
+        }
+
+        void setColor(const Color& col, Corner p = ALL_CORNERS) {
+            setColor(col.r(), col.g(), col.b(), col.a(), p);
+        }
+
+        void setTexCoord(const XYCoord& xy, Corner p = ALL_CORNERS) {
+            setTexCoord(xy.x(), xy.y(), p);
+        }
+
+        void setTexCoordRegion(const XYCoord& xy, point_type w, point_type h) {
+            setTexCoordRegion(xy.x(), xy.y(), w, h);
+        }
+
+        void setTexCoordRegion(point_type x, point_type y, const XYCoord& wh) {
+            setTexCoordRegion(x, y, wh.x(), wh.y());
+        }
+
+        void setTexCoordRegion(const XYCoord& xy, const XYCoord& wh) {
+            setTexCoordRegion(xy.x(), xy.y(), wh.x(), wh.y());
+        }
+
+        void addColor(const Color& col, Corner p = ALL_CORNERS) {
+            addColor(col.r(), col.g(), col.b(), col.a(), p);
+        }
+
+        void addOrigin(const XYCoord& xy) {
+            addOrigin(xy.x(), xy.y());
+        }
+
+        void addSize(const XYCoord& xy) {
+            addSize(xy.x(), xy.y());
+        }
+
+        void setMinimumSize(point_type width, point_type height) {
+            _minWidth  = width;
+            _minHeight = height;
+        }
+
+        void setMinimumSize(const XYCoord& xy) {
+            setMinimumSize(xy.x(), xy.y());
+        }
+
+        void setPadLeft(point_type p) {
+            _padLeft = p;
+        }
+
+        void setPadRight(point_type p) {
+            _padRight = p;
+        }
+
+        void setPadTop(point_type p) {
+            _padTop = p;
+        }
+
+        void setPadBottom(point_type p) {
+            _padBottom = p;
+        }
+
+        void setAlignHorizontal(HorizontalAlignment h) {
+            _halign = h;
+        }
+
+        void setAlignVertical(VerticalAlignment v) {
+            _valign = v;
+        }
+
+        void setCoordinateMode(CoordinateMode cm) {
+            _coordMode = cm;
+        }
+
+        void setCanFill(bool f) {
+            _canFill = f;
+        }
+
+        void setCanClone(bool c) {
+            _canClone = c;
+        }
+
+        WindowManager* getWindowManager() {
+            return _getWindowManager();
+        }
+
+        const WindowManager* getWindowManager() const {
+            return _getWindowManager();
+        }
+
+        Window* getParent() {
+            return _parent;
+        }
+
+        const Window* getParent() const {
+            return _parent;
+        }
+
+        unsigned int getIndex() const {
+            return _index;
+        }
+
+        XYCoord getOrigin() const {
+            return XYCoord(getX(), getY());
+        }
+
+        Color getImageColorAtXY(const XYCoord& xy) const {
+            return getImageColorAtXY(xy.x(), xy.y());
+        }
+
+        Color getImageColorAtPointerXY(double x, double y) const {
+            return getImageColorAtXY(localXY(x, y));
+        }
+
+        Point getPosition() const {
+            return Point(getX(), getY(), getZ());
+        }
+
+        XYCoord getSize() const {
+            return XYCoord(getWidth(), getHeight());
+        }
+
+        Quad getDimensions() const {
+            return Quad(getX(), getY(), getWidth(), getHeight());
+        }
+
+        point_type getPadLeft() const {
+            return _padLeft;
+        }
+
+        point_type getPadRight() const {
+            return _padRight;
+        }
+
+        point_type getPadTop() const {
+            return _padTop;
+        }
+
+        point_type getPadBottom() const {
+            return _padBottom;
+        }
+
+        HorizontalAlignment getAlignHorizontal() const {
+            return _halign;
+        }
+
+        VerticalAlignment getAlignVertical() const {
+            return _valign;
+        }
+
+        CoordinateMode getCoordinateMode() const {
+            return _coordMode;
+        }
+
+        bool canFill() const {
+            return _canFill;
+        }
+
+        bool canClone() const {
+            return _canClone;
+        }
+
+        // This casts the bool _fill variable to be used in iteratively in functions such
+        // as Window::_accumulate and whatnot.
+        point_type getFillAsNumeric() const {
+            return static_cast<point_type>(_canFill);
+        }
+
+        point_type getWidthTotal() const {
+            return getWidth() + getPadHorizontal();
+        }
+
+        point_type getHeightTotal() const {
+            return getHeight() + getPadVertical();
+        }
+
+        point_type getMinWidth() const {
+            return _minWidth;
+        }
+
+        point_type getMinHeight() const {
+            return _minHeight;
+        }
+
+        point_type getMinWidthTotal() const {
+            return _minWidth + getPadHorizontal();
+        }
+
+        point_type getMinHeightTotal() const {
+            return _minHeight + getPadVertical();
+        }
+
+        unsigned int getLayer() const {
+            return _layer;
+        }
+
+    protected:
+
+        point_type _calculateZ(unsigned int) const;
+
+        PointArray* _verts() {
+            return dynamic_cast<PointArray*>(getVertexArray());
+        }
+
+        const PointArray* _verts() const {
+            return dynamic_cast<const PointArray*>(getVertexArray());
+        }
+
+        ColorArray* _cols() {
+            return dynamic_cast<ColorArray*>(getColorArray());
+        }
+
+        const ColorArray* _cols() const {
+            return dynamic_cast<const ColorArray*>(getColorArray());
+        }
+
+        TexCoordArray* _texs() {
+            return dynamic_cast<TexCoordArray*>(getTexCoordArray(0));
+        }
+
+        const TexCoordArray* _texs() const {
+            return dynamic_cast<const TexCoordArray*>(getTexCoordArray(0));
+        }
+
+        osg::Texture* _texture() {
+            osg::StateSet* ss = getStateSet();
+
+            if(!ss) return 0;
+
+            return dynamic_cast<osg::Texture2D*>(
+                ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE)
+            );
+        }
+
+        const osg::Texture* _texture() const {
+            const osg::StateSet* ss = getStateSet();
+
+            if(!ss) return 0;
+
+            return dynamic_cast<const osg::Texture2D*>(
+                ss->getTextureAttribute(0, osg::StateAttribute::TEXTURE)
+            );
+        }
+
+        osg::Image* _image() {
+            return _getImage();
+        }
+
+        const osg::Image* _image() const {
+            return _getImage();
+        }
+
+        friend class Window;
+
+        // TODO: Because of the current class design, I don't think it's possible to 
+        // have a ref_ptr here. :(
+        Window* _parent;
+
+        unsigned int _index;
+        unsigned int _layer;
+
+        // Padding is the value of pixels of space between whatever the widget is "contianed"
+        // in and the point at which it starts getting placed.
+        point_type _padLeft;
+        point_type _padRight;
+        point_type _padTop;
+        point_type _padBottom;
+
+        // The alignments are used in conjuction when the widget is NOT set to fill.
+        VerticalAlignment _valign;
+        HorizontalAlignment _halign;
+
+        // This flag determines how sizing values are interpretted by setDimensions().
+        CoordinateMode _coordMode;
+
+        // These are the relative values, which are not stored directly in our verts
+        // array but kept around for calculation later.
+        Quad _relCoords;
+
+        // This fill flag determines whether or not the widget will resize itself to fill
+        // all available space.
+        bool _canFill;
+
+        // Set this to false in an implementation to prevent copying.
+        bool _canClone;
+
+        // This variable is only used by the Window object to determine if it's necessary
+        // to call managed().
+        bool _isManaged;
+
+        // This variable is like _isManaged; it is used to store whether the Widget has
+        // been styled yet.
+        bool _isStyled;
+
+        // Set these variables to be the minimum size of a Widget so that it cannot be
+        // resized any smaller than this.
+        point_type _minWidth;
+        point_type _minHeight;
+
+        static osg::ref_ptr<PointArray> _norms;
+
+        WindowManager* _getWindowManager () const;
+        osg::Image*    _getImage         () const;
+
+};
+
+typedef std::list<osg::observer_ptr<Widget> > WidgetList;
+
+// A Widget subclass that prints stuff using osg::notify(). :)
+struct NotifyWidget: public Widget {
+        META_Object(osgWidget, NotifyWidget);
+
+        NotifyWidget(const std::string& n = "", point_type w = 0.0f, point_type h = 0.0f):
+        Widget(n, w, h) {
+            setEventMask(EVENT_ALL);
+        }
+
+        NotifyWidget(const NotifyWidget& widget, const osg::CopyOp& co):
+        Widget(widget, co) {
+        }
+
+        bool focus(const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > focus called" << std::endl;
+
+            return false;
+        }
+
+        bool unfocus(const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > unfocus called" << std::endl;
+
+            return false;
+        }
+
+        bool mouseEnter(double, double, const WindowManager*) { 
+            osg::notify(osg::NOTICE) << _name << " > mouseEnter called" << std::endl;
+
+            return false;
+        }
+
+        bool mouseOver(double, double, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > mouseOver called" << std::endl;
+
+            return false;
+        }
+
+        bool mouseLeave(double, double, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > mouseLeave called" << std::endl;
+
+            return false;
+        }
+
+        bool mouseDrag(double, double, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > mouseDrag called" << std::endl;
+
+            return false;
+        }
+
+        bool mousePush(double, double, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > mousePush called" << std::endl;
+
+            return false;
+        }
+
+        bool mouseRelease(double, double, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > mouseRelease called" << std::endl;
+
+            return false;
+        }
+
+        bool mouseScroll(double, double, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > mouseScroll called" << std::endl;
+
+            return false;
+        }
+
+        bool keyPress(int, int, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > keyPress called" << std::endl;
+
+            return false;
+        }
+
+        bool keyRelease(int, int, const WindowManager*) {
+            osg::notify(osg::NOTICE) << _name << " > keyRelease called" << std::endl;
+
+            return false;
+        }
+};
+
+// A Widget that eats all events and returns true.
+struct NullWidget: public Widget {
+        META_Object(osgWidget, NullWidget);
+
+        NullWidget(const std::string& n = "", point_type w = 0.0f, point_type h = 0.0f):
+        Widget(n, w, h) {
+            setEventMask(EVENT_ALL);
+        }
+
+        NullWidget(const NullWidget& widget, const osg::CopyOp& co):
+        Widget(widget, co) {
+        }
+
+        bool focus(const WindowManager*) {
+            return true;
+        }
+
+        bool unfocus(const WindowManager*) {
+            return true;
+        }
+
+        bool mouseEnter(double, double, const WindowManager*) { 
+            return true;
+        }
+
+        bool mouseOver(double, double, const WindowManager*) {
+            return true;
+        }
+
+        bool mouseLeave(double, double, const WindowManager*) {
+            return true;
+        }
+
+        bool mouseDrag(double, double, const WindowManager*) {
+            return true;
+        }
+
+        bool mousePush(double, double, const WindowManager*) {
+            return true;
+        }
+
+        bool mouseRelease(double, double, const WindowManager*) {
+            return true;
+        }
+
+        bool mouseScroll(double, double, const WindowManager*) {
+            return true;
+        }
+
+        bool keyPress(int, int, const WindowManager*) {
+            return true;
+        }
+
+        bool keyRelease(int, int, const WindowManager*) {
+            return true;
+        }
+};
+
+}
+
+#endif

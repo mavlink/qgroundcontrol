@@ -1,0 +1,318 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_RENDERSTAGE
+#define OSGUTIL_RENDERSTAGE 1
+
+#include <osg/ColorMask>
+#include <osg/Viewport>
+#include <osg/Texture>
+#include <osg/FrameBufferObject>
+#include <osg/Camera>
+
+#include <osgUtil/RenderBin>
+#include <osgUtil/PositionalStateContainer>
+
+namespace osgUtil {
+
+/**
+ * RenderStage base class. Used for encapsulate a complete stage in
+ * rendering - setting up of viewport, the projection and model
+ * matrices and rendering the RenderBin's enclosed with this RenderStage.
+ * RenderStage also has a dependency list of other RenderStages, each
+ * of which must be called before the rendering of this stage.  These
+ * 'pre' rendering stages are used for advanced rendering techniques
+ * like multistage pixel shading or impostors.
+ */
+class OSGUTIL_EXPORT RenderStage : public RenderBin
+{
+    public:
+    
+
+        RenderStage();
+        RenderStage(SortMode mode);
+        
+        RenderStage(const RenderStage& rhs,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+        
+        virtual osg::Object* cloneType() const { return new RenderStage(); }
+        virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new RenderStage(*this,copyop); } // note only implements a clone of type.
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const RenderStage*>(obj)!=0L; }
+        virtual const char* className() const { return "RenderStage"; }
+
+        virtual void reset();
+        
+        
+        /** Set the draw buffer used at the start of each frame draw. */
+        void setDrawBuffer(GLenum buffer, bool applyMask = true ) { _drawBuffer = buffer; setDrawBufferApplyMask( applyMask ); }
+
+        /** Get the draw buffer used at the start of each frame draw. */
+        GLenum getDrawBuffer() const { return _drawBuffer; }
+
+        /** Get the apply mask defining whether glDrawBuffer is called at each frame draw. */
+        bool getDrawBufferApplyMask() const { return _drawBufferApplyMask; }
+
+        /** Set the apply mask defining whether glDrawBuffer is called at each frame draw. */
+        void setDrawBufferApplyMask( bool applyMask ) { _drawBufferApplyMask = applyMask; }
+
+
+
+        /** Set the read buffer for any required copy operations to use. */
+        void setReadBuffer(GLenum buffer, bool applyMask = true) { _readBuffer = buffer; setReadBufferApplyMask( applyMask ); }
+
+        /** Get the read buffer for any required copy operations to use. */
+        GLenum getReadBuffer() const { return _readBuffer; }
+
+        /** Get the apply mask defining whether glReadBuffer is called at each frame draw. */
+        bool getReadBufferApplyMask() const { return _readBufferApplyMask; }
+
+        /** Set the apply mask defining whether glReadBuffer is called at each frame draw. */
+        void setReadBufferApplyMask( bool applyMask ) { _readBufferApplyMask = applyMask; }
+
+
+        /** Set the viewport.*/
+        void setViewport(osg::Viewport* viewport) { _viewport = viewport; }
+
+        /** Get the const viewport. */
+        const osg::Viewport* getViewport() const { return _viewport.get(); }
+
+        /** Get the viewport. */
+        osg::Viewport* getViewport() { return _viewport.get(); }
+        
+        /** Set the initial view matrix.*/
+        void setInitialViewMatrix(const osg::RefMatrix* matrix) { _initialViewMatrix = matrix; }
+        
+        /** Get the initial view matrix.*/
+        const osg::RefMatrix* getInitialViewMatrix() { return _initialViewMatrix.get(); }
+
+        /** Set the clear mask used in glClear(..).
+          * Defaults to GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT. */
+        void setClearMask(GLbitfield mask) { _clearMask = mask; }
+
+        /** Get the clear mask.*/
+        GLbitfield getClearMask() const { return _clearMask; }
+
+
+        void setColorMask(osg::ColorMask* cm) { _colorMask = cm; }
+        osg::ColorMask* getColorMask() { return _colorMask.get(); }
+        const osg::ColorMask* getColorMask() const { return _colorMask.get(); }
+
+
+        /** Set the clear color used in glClearColor(..). 
+          * glClearColor is only called if mask & GL_COLOR_BUFFER_BIT is true*/
+        void setClearColor(const osg::Vec4& color) { _clearColor=color; }
+        
+        /** Get the clear color.*/
+        const osg::Vec4& getClearColor() const { return _clearColor; }
+        
+        /** Set the clear accum used in glClearAccum(..). 
+          * glClearAcumm is only called if mask & GL_ACCUM_BUFFER_BIT is true. */
+        void setClearAccum(const osg::Vec4& color) { _clearAccum=color; }
+        
+        /** Get the clear accum.*/
+        const osg::Vec4& getClearAccum() const { return _clearAccum; }
+        
+        /** Set the clear depth used in glClearDepth(..). Defaults to 1.0
+          * glClearDepth is only called if mask & GL_DEPTH_BUFFER_BIT is true. */
+        void setClearDepth(double depth) { _clearDepth=depth; }
+        
+        /** Get the clear depth.*/
+        double getClearDepth() const { return _clearDepth; }
+
+        /** Set the clear stencil value used in glClearStencil(). Defaults to 0;
+          * glClearStencil is only called if mask & GL_STENCIL_BUFFER_BIT is true*/
+        void setClearStencil(int stencil) { _clearStencil=stencil; }
+        
+        /** Get the clear color.*/
+        int getClearStencil() const { return _clearStencil; }
+        
+
+        void setCamera(osg::Camera* camera) { if (_camera!=camera) { _camera = camera; _cameraRequiresSetUp = true; } }
+        osg::Camera* getCamera() { return _camera; }
+        const osg::Camera* getCamera() const { return _camera; }
+
+        void setCameraRequiresSetUp(bool flag) { _cameraRequiresSetUp = flag; }
+        bool getCameraRequiresSetUp() const { return _cameraRequiresSetUp; }
+        
+        /** Attempt the set the RenderStage from the Camera settings.*/
+        void runCameraSetUp(osg::RenderInfo& renderInfo);
+        
+        void setTexture(osg::Texture* texture, unsigned int level = 0, unsigned int face=0) { _texture = texture; _level = level; _face = face; }
+        osg::Texture* getTexture() { return _texture.get(); }
+        
+        void setImage(osg::Image* image) { _image = image; }
+        osg::Image* getImage() { return _image.get(); }
+        
+        void setImageReadPixelFormat(GLenum format) { _imageReadPixelFormat = format; }
+        GLenum getImageReadPixelFormat() const { return _imageReadPixelFormat; }
+
+        void setImageReadPixelDataType(GLenum type) { _imageReadPixelDataType = type; }
+        GLenum getImageReadPixelDataType() const { return _imageReadPixelDataType; }
+
+        /** Set a framebuffer object to render into. It is permissible for the
+          * framebuffer object to be multisampled, in which case you should also
+          * set a resolve framebuffer object - see setMultisampleResolveFramebufferObject(). */
+        void setFrameBufferObject(osg::FrameBufferObject* fbo) { _fbo = fbo; }
+        osg::FrameBufferObject* getFrameBufferObject() { return _fbo.get(); }
+        const osg::FrameBufferObject* getFrameBufferObject() const { return _fbo.get(); }
+
+        /** Sets the destination framebuffer object for glBlitFramebufferEXT to
+          * resolve a multisampled framebuffer object after the RenderStage is
+          * drawn. The resolve framebuffer object must not be multisampled. The
+          * resolve framebuffer object is only necessary if the primary framebuffer
+          * object is multisampled, if not then leave it set to null. */
+        void setMultisampleResolveFramebufferObject(osg::FrameBufferObject* fbo);
+        osg::FrameBufferObject* getMultisampleResolveFramebufferObject() { return _resolveFbo.get(); }
+        const osg::FrameBufferObject* getMultisampleResolveFramebufferObject() const { return _resolveFbo.get(); }
+
+        /** Set whether the framebuffer object should be unbound after
+          * rendering. By default this is set to true. Set it to false if the
+          * unbinding is not required. */
+        void setDisableFboAfterRender(bool disable) {_disableFboAfterRender = disable;}
+        bool getDisableFboAfterRender() const {return _disableFboAfterRender;}
+
+        void setGraphicsContext(osg::GraphicsContext* context) { _graphicsContext = context; }
+        osg::GraphicsContext* getGraphicsContext() { return _graphicsContext.get(); }
+        const osg::GraphicsContext* getGraphicsContext() const { return _graphicsContext.get(); }
+
+
+
+
+        void setInheritedPositionalStateContainerMatrix(const osg::Matrix& matrix) { _inheritedPositionalStateContainerMatrix = matrix; }
+        const osg::Matrix& getInheritedPositionalStateContainerMatrix() const { return _inheritedPositionalStateContainerMatrix; }
+
+        void setInheritedPositionalStateContainer(PositionalStateContainer* rsl) { _inheritedPositionalStateContainer = rsl; }
+        PositionalStateContainer* getInheritedPositionalStateContainer() { return _inheritedPositionalStateContainer.get(); }
+
+        void setPositionalStateContainer(PositionalStateContainer* rsl) { _renderStageLighting = rsl; }
+
+        PositionalStateContainer* getPositionalStateContainer() const
+        {
+            if (!_renderStageLighting.valid()) _renderStageLighting = new PositionalStateContainer;
+            return _renderStageLighting.get();
+        }
+
+        virtual void addPositionedAttribute(osg::RefMatrix* matrix,const osg::StateAttribute* attr)
+        {
+            getPositionalStateContainer()->addPositionedAttribute(matrix,attr);
+        }
+        
+        virtual void addPositionedTextureAttribute(unsigned int textureUnit, osg::RefMatrix* matrix,const osg::StateAttribute* attr)
+        {
+            getPositionalStateContainer()->addPositionedTextureAttribute(textureUnit, matrix,attr);
+        }
+
+        void copyTexture(osg::RenderInfo& renderInfo);
+
+        virtual void sort();
+        
+        virtual void drawPreRenderStages(osg::RenderInfo& renderInfo,RenderLeaf*& previous);
+
+        virtual void draw(osg::RenderInfo& renderInfo,RenderLeaf*& previous);
+
+        virtual void drawInner(osg::RenderInfo& renderInfo,RenderLeaf*& previous, bool& doCopyTexture);
+    
+        virtual void drawPostRenderStages(osg::RenderInfo& renderInfo,RenderLeaf*& previous);
+
+        virtual void drawImplementation(osg::RenderInfo& renderInfo,RenderLeaf*& previous);
+
+
+        void addToDependencyList(RenderStage* rs) { addPreRenderStage(rs); }
+
+        void addPreRenderStage(RenderStage* rs, int order = 0);
+        
+        void addPostRenderStage(RenderStage* rs, int order = 0);
+
+        /** Extract stats for current draw list. */
+        bool getStats(Statistics& stats) const; 
+ 
+        /** Compute the number of dynamic RenderLeaves.*/
+        virtual unsigned int computeNumberOfDynamicRenderLeaves() const;
+
+        struct Attachment
+        {
+            osg::ref_ptr<osg::Image>                _image;
+            GLenum                                  _imageReadPixelFormat;
+            GLenum                                  _imageReadPixelDataType;
+        };
+
+        void attach(osg::Camera::BufferComponent buffer, osg::Image* image);
+
+        /** search through any pre and post RenderStage that reference a Camera, and take a reference to each of these cameras to prevent them being deleted while they are still be used by the drawing thread.*/
+        void collateReferencesToDependentCameras();
+
+        /** clear the references to any dependent cameras.*/
+        void clearReferencesToDependentCameras();
+
+        /** If State is non-zero, this function releases any associated OpenGL objects for
+           * the specified graphics context. Otherwise, releases OpenGL objexts
+           * for all graphics contexts. */
+        virtual void releaseGLObjects(osg::State* state= 0) const;
+
+protected:
+
+        virtual ~RenderStage();
+
+        typedef std::pair< int , osg::ref_ptr<RenderStage> > RenderStageOrderPair;
+        typedef std::list< RenderStageOrderPair > RenderStageList;
+        typedef std::vector< osg::ref_ptr<osg::Camera> > Cameras;
+
+        bool                                _stageDrawnThisFrame;
+        RenderStageList                     _preRenderList;
+        RenderStageList                     _postRenderList;
+
+        Cameras                             _dependentCameras;
+
+        // viewport x,y,width,height.
+        osg::ref_ptr<osg::Viewport>         _viewport;
+        osg::ref_ptr<const osg::RefMatrix>  _initialViewMatrix;
+        
+        GLenum                              _drawBuffer;
+        bool                                _drawBufferApplyMask;
+        GLenum                              _readBuffer;
+        bool                                _readBufferApplyMask;
+        GLbitfield                          _clearMask;
+        osg::ref_ptr<osg::ColorMask>        _colorMask;
+        osg::Vec4                           _clearColor;
+        osg::Vec4                           _clearAccum;
+        double                              _clearDepth;
+        int                                 _clearStencil;
+
+        bool                                _cameraRequiresSetUp;
+        osg::Camera*                        _camera;
+        
+        osg::ref_ptr<osg::Texture>              _texture;
+        unsigned int                            _level;
+        unsigned int                            _face;
+
+        osg::ref_ptr<osg::Image>                _image;
+        GLenum                                  _imageReadPixelFormat;
+        GLenum                                  _imageReadPixelDataType;
+        
+        std::map< osg::Camera::BufferComponent, Attachment> _bufferAttachmentMap;
+        
+        osg::ref_ptr<osg::FrameBufferObject>    _fbo;
+        osg::ref_ptr<osg::FrameBufferObject>    _resolveFbo;
+        osg::ref_ptr<osg::GraphicsContext>      _graphicsContext;
+        bool                                    _disableFboAfterRender;
+
+        mutable osg::Matrix                         _inheritedPositionalStateContainerMatrix;
+        mutable osg::ref_ptr<PositionalStateContainer>   _inheritedPositionalStateContainer;
+        mutable osg::ref_ptr<PositionalStateContainer>   _renderStageLighting;
+
+
+};
+
+}
+
+#endif
+

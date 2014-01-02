@@ -1,0 +1,246 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_Tessellator
+#define OSGUTIL_Tessellator
+
+#include <osg/Geometry>
+
+#include <osgUtil/Export>
+
+#include <osg/GLU>
+
+#include <vector>
+
+#ifndef CALLBACK
+    /* Win32 calling conventions. (or a least thats what the GLUT example tess.c uses.)*/
+    #define CALLBACK
+#endif
+
+namespace osgUtil {
+
+/** Originally a simple class for tessellating a single polygon boundary.
+  * Using old style glu tessellation functions for portability.
+  * Upgraded Jan 2004 to use the modern glu tessellation functions.*/
+
+class OSGUTIL_EXPORT Tessellator : public osg::Referenced
+{
+    public:
+   
+        Tessellator();
+        ~Tessellator();
+
+        /** The winding rule, see red book ch 11. */
+        enum WindingType{
+            TESS_WINDING_ODD          = GLU_TESS_WINDING_ODD,
+            TESS_WINDING_NONZERO      = GLU_TESS_WINDING_NONZERO,
+            TESS_WINDING_POSITIVE     = GLU_TESS_WINDING_POSITIVE,
+            TESS_WINDING_NEGATIVE     = GLU_TESS_WINDING_NEGATIVE,
+            TESS_WINDING_ABS_GEQ_TWO  = GLU_TESS_WINDING_ABS_GEQ_TWO
+        } ;
+
+        /** we interpret all contours in the geometry as a single set to be tessellated or
+         * each separate drawable's contours needs to be tessellated. */
+        enum TessellationType {
+            TESS_TYPE_GEOMETRY, // tessellate everything in the geometry object
+            TESS_TYPE_DRAWABLE, // tessellate each polygon, triangles & quads drawables in geometry separately
+            TESS_TYPE_POLYGONS // tessellate ONLY polygon drawables in geometry separately
+        };
+
+        /** Set and get tessellation request boundary only on/off */
+        void setBoundaryOnly (const bool tt) { _boundaryOnly=tt;}
+        inline bool getBoundaryOnly ( ) { return _boundaryOnly;}
+
+        /** Set and get tessellation windong rule */
+        void setWindingType (const WindingType wt) { _wtype=wt;}
+        inline WindingType getWindingType ( ) { return _wtype;}
+
+        /** Set and get tessellation type */
+        void setTessellationType (const TessellationType tt) { _ttype=tt;}
+        inline TessellationType getTessellationType ( ) { return _ttype;}
+
+        /** Change the contours lists of the geometry into tessellated primitives (the
+          * list of primitives in the original geometry is stored in the Tessellator for
+          * possible re-use. 
+          * The name remains retessellatePolygons although it now handles trifans, strips, quads etc.
+          * as well as Polygons so as to not break old codes relying on this function name. */
+        void retessellatePolygons(osg::Geometry &cxgeom);
+
+        /** Define the normal to the tessellated polygon - this provides a hint how to
+         *  tessellate the contours; see gluTessNormal in red book or man pages.
+         *  GWM July 2005. Can improve teselation
+         *  "For example, if you know that all polygons lie in the x-y plane, 
+         *   call gluTessNormal(tess, 0.0, 0.0, 1.0) before rendering any polygons."
+         */
+        void setTessellationNormal(const osg::Vec3 norm) { tessNormal=norm;}
+
+        osg::Geometry::PrimitiveSetList  getContours() { return _Contours;}
+
+        typedef std::vector<osg::Vec3*> VertexPointList;
+        
+        struct Prim : public osg::Referenced
+        {
+            Prim(GLenum mode):_mode(mode) {}
+        
+            typedef std::vector<osg::Vec3*> VecList;
+
+            GLenum  _mode;
+            VecList _vertices;
+        };
+        
+        void beginTessellation();
+        
+        void beginContour();
+        void addVertex(osg::Vec3* vertex);
+        void endContour();
+        
+        void endTessellation();
+
+        typedef std::vector< osg::ref_ptr<Prim> > PrimList;
+        
+        PrimList& getPrimList() { return _primList; }        
+        
+        void reset();
+        
+    protected:
+
+        /** remove unused parts of the array, eg for wehn retessellating
+         * tessellation can introduce extra vertices for concave or crossing boundaries,
+         * these will leak memory if not removed when retessellating. */
+        void reduceArray(osg::Array * cold, const unsigned int nnu);
+
+        void collectTessellation(osg::Geometry &cxgeom, unsigned int originalIndex);
+        
+        typedef std::map<osg::Vec3*,unsigned int> VertexPtrToIndexMap;
+        void addContour(GLenum  mode, unsigned int first, unsigned int last, osg::Vec3Array* vertices);
+        void addContour(osg::PrimitiveSet* primitive, osg::Vec3Array* vertices);
+        void handleNewVertices(osg::Geometry& geom,VertexPtrToIndexMap &vertexPtrToIndexMap);
+
+        void begin(GLenum mode);
+        void vertex(osg::Vec3* vertex);
+        void combine(osg::Vec3* vertex,void* vertex_data[4],GLfloat weight[4]);
+        void end();
+        void error(GLenum errorCode);
+
+    
+        static void CALLBACK beginCallback(GLenum which, void* userData);
+        static void CALLBACK vertexCallback(GLvoid *data, void* userData);
+        static void CALLBACK combineCallback(GLdouble coords[3], void* vertex_data[4],
+                              GLfloat weight[4], void** outData,
+                              void* useData);
+        static void CALLBACK endCallback(void* userData);
+        static void CALLBACK errorCallback(GLenum errorCode, void* userData);
+        
+        
+        struct Vec3d
+        {
+            double _v[3];
+        };
+
+
+        struct NewVertex
+        {
+        
+            NewVertex():
+                _vpos(0),
+                _f1(0),
+                _v1(0),
+                _f2(0),
+                _v2(0),
+                _f3(0),
+                _v3(0),
+                _f4(0),
+                _v4(0) {}
+            
+            NewVertex(const NewVertex& nv):
+                _vpos(nv._vpos),
+                _f1(nv._f1),
+                _v1(nv._v1),
+                _f2(nv._f2),
+                _v2(nv._v2),
+                _f3(nv._f3),
+                _v3(nv._v3),
+                _f4(nv._f4),
+                _v4(nv._v4) {}
+
+            NewVertex(osg::Vec3* vx,
+                      float f1,osg::Vec3* v1,
+                      float f2,osg::Vec3* v2,
+                      float f3,osg::Vec3* v3,
+                      float f4,osg::Vec3* v4):
+                _vpos(vx),
+                _f1(f1),
+                _v1(v1),
+                _f2(f2),
+                _v2(v2),
+                _f3(f3),
+                _v3(v3),
+                _f4(f4),
+                _v4(v4) {}
+
+            osg::Vec3  *_vpos; // added gwm Jan 2004 the vertex coords s.t. NewVertex can be used in a std::vector
+        
+            float       _f1;
+            osg::Vec3*  _v1;
+
+            float       _f2;
+            osg::Vec3*  _v2;
+
+            float       _f3;
+            osg::Vec3*  _v3;
+
+            float       _f4;
+            osg::Vec3*  _v4;
+            
+        };
+        
+        //change NewVertexList from std::map<osg::Vec3*,NewVertex> NewVertexList;
+        // because this has undefined order of insertion for new vertices. 
+        // which occasionally corrupted the texture mapping.
+        typedef std::vector<NewVertex> NewVertexList;
+        typedef std::vector<Vec3d*> Vec3dList;
+
+        osg::GLUtesselator*  _tobj;
+
+        PrimList        _primList;
+        Vec3dList       _coordData;
+        NewVertexList   _newVertexList;
+        GLenum          _errorCode;
+
+        /** winding rule, which parts will become solid */
+        WindingType _wtype; 
+
+        /** tessellation rule, which parts will become solid */
+        TessellationType _ttype;
+
+        bool _boundaryOnly; // see gluTessProperty - if true: make the boundary edges only.
+
+        /** number of vertices that are part of the 'original' set of contours */
+        unsigned int _numberVerts;
+
+        /** List of primitives that define the contours */
+        osg::Geometry::PrimitiveSetList                _Contours;
+
+        /** count number of primitives in a geometry to get right no. of norms/colurs etc for per_primitive attributes. */
+        unsigned int _index;
+
+        /** the gluTessNormal for tessellation hint */
+        osg::Vec3 tessNormal;
+
+        /** count of number of extra primitives added */
+        unsigned int _extraPrimitives;
+};
+
+}
+
+#endif

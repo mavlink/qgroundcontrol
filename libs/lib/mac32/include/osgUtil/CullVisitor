@@ -1,0 +1,456 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_CULLVISITOR
+#define OSGUTIL_CULLVISITOR 1
+
+#include <map>
+#include <vector>
+
+#include <osg/NodeVisitor>
+#include <osg/BoundingSphere>
+#include <osg/BoundingBox>
+#include <osg/Matrix>
+#include <osg/Drawable>
+#include <osg/StateSet>
+#include <osg/State>
+#include <osg/ClearNode>
+#include <osg/Camera>
+#include <osg/Notify>
+
+#include <osg/CullStack>
+
+#include <osgUtil/StateGraph>
+#include <osgUtil/RenderStage>
+
+#include <osg/Vec3>
+
+namespace osgUtil {
+
+/**
+ * Basic NodeVisitor implementation for rendering a scene.
+ * This visitor traverses the scene graph, collecting transparent and
+ * opaque osg::Drawables into a depth sorted transparent bin and a state
+ * sorted opaque bin.  The opaque bin is rendered first, and then the
+ * transparent bin is rendered in order from the furthest osg::Drawable
+ * from the eye to the one nearest the eye. 
+ */
+class OSGUTIL_EXPORT CullVisitor : public osg::NodeVisitor, public osg::CullStack
+{
+    public:
+    
+        typedef osg::Matrix::value_type value_type;
+    
+
+        CullVisitor();
+        
+        /// Copy constructor that does a shallow copy.
+        CullVisitor(const CullVisitor&);
+
+        META_NodeVisitor("osgUtil","CullVisitor")
+
+        /** Create a shallow copy of the CullVisitor, used by CullVisitor::create() to clone the prototype. */
+        virtual CullVisitor* clone() const { return new CullVisitor(*this); }
+
+        /** get the prototype singleton used by CullVisitor::create().*/
+        static osg::ref_ptr<CullVisitor>& prototype();
+        
+        /** create a CullVisitor by cloning CullVisitor::prototype().*/
+        static CullVisitor* create();
+
+        virtual void reset();
+
+        struct Identifier : public osg::Referenced
+        {
+            Identifier() {}
+            virtual ~Identifier() {}
+        };
+
+        void setIdentifier(Identifier* identifier) { _identifier = identifier; }
+        Identifier* getIdentifier() { return _identifier.get(); }
+        const Identifier* getIdentifier() const { return _identifier.get(); }
+
+        virtual osg::Vec3 getEyePoint() const { return getEyeLocal(); }
+        virtual osg::Vec3 getViewPoint() const { return getViewPointLocal(); }
+
+        virtual float getDistanceToEyePoint(const osg::Vec3& pos, bool withLODScale) const;
+        virtual float getDistanceFromEyePoint(const osg::Vec3& pos, bool withLODScale) const;
+
+        virtual float getDistanceToViewPoint(const osg::Vec3& pos, bool withLODScale) const;
+
+        virtual void apply(osg::Node&);
+        virtual void apply(osg::Geode& node);
+        virtual void apply(osg::Billboard& node);
+        virtual void apply(osg::LightSource& node);
+        virtual void apply(osg::ClipNode& node);
+        virtual void apply(osg::TexGenNode& node);
+
+        virtual void apply(osg::Group& node);
+        virtual void apply(osg::Transform& node);
+        virtual void apply(osg::Projection& node);
+        virtual void apply(osg::Switch& node);
+        virtual void apply(osg::LOD& node);
+        virtual void apply(osg::ClearNode& node);
+        virtual void apply(osg::Camera& node);
+        virtual void apply(osg::OccluderNode& node);
+        virtual void apply(osg::OcclusionQueryNode& node);
+
+        /** Push state set on the current state group.
+          * If the state exists in a child state group of the current
+          * state group then move the current state group to that child.
+          * Otherwise, create a new state group for the state set, add
+          * it to the current state group then move the current state
+          * group pointer to the new state group.
+          */
+        inline void pushStateSet(const osg::StateSet* ss)
+        {
+            _currentStateGraph = _currentStateGraph->find_or_insert(ss);
+
+            if (_numberOfEncloseOverrideRenderBinDetails==0 && ss->useRenderBinDetails() && !ss->getBinName().empty())
+            {
+                _renderBinStack.push_back(_currentRenderBin);
+
+                _currentRenderBin = ss->getNestRenderBins() ?
+                    _currentRenderBin->find_or_insert(ss->getBinNumber(),ss->getBinName()) :
+                    _currentRenderBin->getStage()->find_or_insert(ss->getBinNumber(),ss->getBinName());
+            }
+
+            if (ss->getRenderBinMode()==osg::StateSet::OVERRIDE_RENDERBIN_DETAILS)
+            {
+                ++_numberOfEncloseOverrideRenderBinDetails;
+            }
+        }
+        
+        /** Pop the top state set and hence associated state group.
+          * Move the current state group to the parent of the popped
+          * state group.
+          */
+        inline void popStateSet()
+        {
+            const osg::StateSet* ss = _currentStateGraph->getStateSet();
+            if (ss->getRenderBinMode()==osg::StateSet::OVERRIDE_RENDERBIN_DETAILS)
+            {
+                --_numberOfEncloseOverrideRenderBinDetails;
+            }
+            if (_numberOfEncloseOverrideRenderBinDetails==0 && ss->useRenderBinDetails() && !ss->getBinName().empty())
+            {
+                if (_renderBinStack.empty())
+                {
+                    _currentRenderBin = _currentRenderBin->getStage();
+                }
+                else
+                {
+                    _currentRenderBin = _renderBinStack.back();
+                    _renderBinStack.pop_back();
+                }
+            }
+            _currentStateGraph = _currentStateGraph->_parent;
+        }
+        
+        inline void setStateGraph(StateGraph* rg)
+        {
+            _rootStateGraph = rg;
+            _currentStateGraph = rg;
+        }
+
+        inline StateGraph* getRootStateGraph()
+        {
+            return _rootStateGraph.get();
+        }
+
+        inline StateGraph* getCurrentStateGraph()
+        {
+            return _currentStateGraph;
+        }
+
+        inline void setRenderStage(RenderStage* rg)
+        {
+            _rootRenderStage = rg;
+            _currentRenderBin = rg;
+        }
+
+        inline RenderStage* getRenderStage()
+        {
+            return _rootRenderStage.get();
+        }
+
+        inline RenderStage* getCurrentRenderStage()
+        {
+            return _currentRenderBin->getStage();
+        }
+
+        inline osg::Camera* getCurrentCamera()
+        {
+            return getCurrentRenderStage()->getCamera();
+        }
+
+        inline RenderBin* getCurrentRenderBin()
+        {
+            return _currentRenderBin;
+        }
+
+        inline void setCurrentRenderBin(RenderBin* rb)
+        {
+            _currentRenderBin = rb;
+        }
+
+        void setCalculatedNearPlane(value_type value) { _computed_znear = value; }
+        inline value_type getCalculatedNearPlane() const { return _computed_znear; }
+        
+        void setCalculatedFarPlane(value_type value) { _computed_zfar = value; }
+        inline value_type getCalculatedFarPlane() const { return _computed_zfar; }
+
+        value_type computeNearestPointInFrustum(const osg::Matrix& matrix, const osg::Polytope::PlaneList& planes,const osg::Drawable& drawable);
+
+        bool updateCalculatedNearFar(const osg::Matrix& matrix,const osg::BoundingBox& bb);
+
+        bool updateCalculatedNearFar(const osg::Matrix& matrix,const osg::Drawable& drawable, bool isBillboard=false);
+        
+        void updateCalculatedNearFar(const osg::Vec3& pos);
+        
+        /** Add a drawable to current render graph.*/
+        inline void addDrawable(osg::Drawable* drawable,osg::RefMatrix* matrix);
+
+        /** Add a drawable and depth to current render graph.*/
+        inline void addDrawableAndDepth(osg::Drawable* drawable,osg::RefMatrix* matrix,float depth);
+
+        /** Add an attribute which is positioned relative to the modelview matrix.*/
+        inline void addPositionedAttribute(osg::RefMatrix* matrix,const osg::StateAttribute* attr);
+
+        /** Add an attribute which is positioned relative to the modelview matrix.*/
+        inline void addPositionedTextureAttribute(unsigned int textureUnit, osg::RefMatrix* matrix,const osg::StateAttribute* attr);
+
+
+        /** compute near plane based on the polgon intersection of primtives in near plane candidate list of drawables.
+          * Note, you have to set ComputeNearFarMode to COMPUTE_NEAR_FAR_USING_PRIMITIVES to be able to near plane candidate drawables to be recorded by the cull traversal. */ 
+        void computeNearPlane();
+
+        /** Re-implement CullStack's popProjectionMatrix() adding clamping of the projection matrix to
+          * the computed near and far.*/
+        virtual void popProjectionMatrix();
+        
+
+        /** CullVisitor's default clamping of the projection float matrix to computed near and far values.
+          * Note, do not call this method directly, use clampProjectionMatrix(..) instead, unless you want to bypass the callback.*/
+        virtual bool clampProjectionMatrixImplementation(osg::Matrixf& projection, double& znear, double& zfar) const;
+
+        /** CullVisitor's default clamping of the projection double matrix to computed near and far values.
+          * Note, do not call this method directly, use clampProjectionMatrix(..) instead, unless you want to bypass the callback.*/
+        virtual bool clampProjectionMatrixImplementation(osg::Matrixd& projection, double& znear, double& zfar) const;
+
+        /** Clamp the projection float matrix to computed near and far values, use callback if it exists,
+          * otherwise use default CullVisitor implementation.*/
+        inline bool clampProjectionMatrix(osg::Matrixf& projection, value_type& znear, value_type& zfar) const
+        {
+            double zn = znear;
+            double zf = zfar;
+            bool result = false;
+            if (_clampProjectionMatrixCallback.valid()) result = _clampProjectionMatrixCallback->clampProjectionMatrixImplementation(projection, zn, zf);
+            else result = clampProjectionMatrixImplementation(projection, zn, zf);
+
+            if (result)
+            {
+                znear = zn;
+                zfar = zf;
+                return true;
+            }
+            else 
+                return false;
+        }
+
+        /** Clamp the projection double matrix to computed near and far values, use callback if it exists,
+          * otherwise use default CullVisitor implementation.*/
+        inline bool clampProjectionMatrix(osg::Matrixd& projection, value_type& znear, value_type& zfar) const
+        {
+            double zn = znear;
+            double zf = zfar;
+            bool result = false;
+
+            if (_clampProjectionMatrixCallback.valid()) result = _clampProjectionMatrixCallback->clampProjectionMatrixImplementation(projection, zn, zf);
+            else result = clampProjectionMatrixImplementation(projection, zn, zf);
+
+            if (result)
+            {
+                znear = zn;
+                zfar = zf;
+                return true;
+            }
+            else 
+                return false;
+        }
+        
+
+        void setState(osg::State* state) { _renderInfo.setState(state); }
+        osg::State* getState() { return _renderInfo.getState(); }
+        const osg::State* getState() const { return _renderInfo.getState(); }
+
+        void setRenderInfo(osg::RenderInfo& renderInfo) { _renderInfo = renderInfo; }
+        osg::RenderInfo& getRenderInfo() { return _renderInfo; }
+        const osg::RenderInfo& getRenderInfo() const { return _renderInfo; }
+
+    protected:
+
+        virtual ~CullVisitor();
+
+        /** Prevent unwanted copy operator.*/
+        CullVisitor& operator = (const CullVisitor&) { return *this; }
+        
+        inline void handle_cull_callbacks_and_traverse(osg::Node& node)
+        {
+            osg::NodeCallback* callback = node.getCullCallback();
+            if (callback) (*callback)(&node,this);
+            else traverse(node);
+        }
+
+        inline void handle_cull_callbacks_and_accept(osg::Node& node,osg::Node* acceptNode)
+        {
+            osg::NodeCallback* callback = node.getCullCallback();
+            if (callback) (*callback)(&node,this);
+            else acceptNode->accept(*this);
+        }
+
+        osg::ref_ptr<StateGraph>                                   _rootStateGraph;
+        StateGraph*                                                _currentStateGraph;
+
+        osg::ref_ptr<RenderStage>                                   _rootRenderStage;        
+        RenderBin*                                                  _currentRenderBin;
+        std::vector<RenderBin*>                                     _renderBinStack;
+
+        unsigned int             _traversalNumber;
+
+        value_type               _computed_znear;
+        value_type               _computed_zfar;
+        
+        
+        typedef std::vector< osg::ref_ptr<RenderLeaf> > RenderLeafList;
+        RenderLeafList _reuseRenderLeafList;
+        unsigned int _currentReuseRenderLeafIndex;
+    
+        inline RenderLeaf* createOrReuseRenderLeaf(osg::Drawable* drawable,osg::RefMatrix* projection,osg::RefMatrix* matrix, float depth=0.0f);
+        
+        unsigned int _numberOfEncloseOverrideRenderBinDetails;
+
+        osg::RenderInfo         _renderInfo;
+
+
+        struct MatrixPlanesDrawables
+        {
+            MatrixPlanesDrawables(const osg::Matrix& matrix, const osg::Drawable* drawable, const osg::Polytope& frustum):
+                _matrix(matrix),
+                _drawable(drawable)
+            {
+                // create a new list of planes from the active walls of the frustum.
+                osg::Polytope::ClippingMask result_mask = frustum.getResultMask();
+                osg::Polytope::ClippingMask selector_mask = 0x1;
+                for(osg::Polytope::PlaneList::const_iterator itr=frustum.getPlaneList().begin();
+                    itr!=frustum.getPlaneList().end();
+                    ++itr)
+                {
+                    if (result_mask&selector_mask) _planes.push_back(*itr);
+                    selector_mask <<= 1; 
+                }
+            }
+            
+            MatrixPlanesDrawables(const MatrixPlanesDrawables& mpd):
+                _matrix(mpd._matrix),
+                _drawable(mpd._drawable),
+                _planes(mpd._planes) {}
+                
+            MatrixPlanesDrawables& operator = (const MatrixPlanesDrawables& mpd)
+            {
+                _matrix = mpd._matrix;
+                _drawable = mpd._drawable;
+                _planes = mpd._planes;
+                return *this;
+            }
+            
+            osg::Matrix                 _matrix;
+            const osg::Drawable*        _drawable;
+            osg::Polytope::PlaneList    _planes;
+        };
+        
+        typedef std::multimap<value_type, MatrixPlanesDrawables>   DistanceMatrixDrawableMap;
+        DistanceMatrixDrawableMap                                  _nearPlaneCandidateMap;
+
+        osg::ref_ptr<Identifier> _identifier;
+};
+
+inline void CullVisitor::addDrawable(osg::Drawable* drawable,osg::RefMatrix* matrix)
+{
+    if (_currentStateGraph->leaves_empty())
+    {
+        // this is first leaf to be added to StateGraph
+        // and therefore should not already know to current render bin,
+        // so need to add it.
+        _currentRenderBin->addStateGraph(_currentStateGraph);
+    }
+    //_currentStateGraph->addLeaf(new RenderLeaf(drawable,matrix));
+    _currentStateGraph->addLeaf(createOrReuseRenderLeaf(drawable,_projectionStack.back().get(),matrix));
+}
+
+/** Add a drawable and depth to current render graph.*/
+inline void CullVisitor::addDrawableAndDepth(osg::Drawable* drawable,osg::RefMatrix* matrix,float depth)
+{
+    if (_currentStateGraph->leaves_empty())
+    {
+        // this is first leaf to be added to StateGraph
+        // and therefore should not already know to current render bin,
+        // so need to add it.
+        _currentRenderBin->addStateGraph(_currentStateGraph);
+    }
+    //_currentStateGraph->addLeaf(new RenderLeaf(drawable,matrix,depth));
+    _currentStateGraph->addLeaf(createOrReuseRenderLeaf(drawable,_projectionStack.back().get(),matrix,depth));
+}
+
+/** Add an attribute which is positioned relative to the modelview matrix.*/
+inline void CullVisitor::addPositionedAttribute(osg::RefMatrix* matrix,const osg::StateAttribute* attr)
+{
+    _currentRenderBin->getStage()->addPositionedAttribute(matrix,attr);
+}
+
+/** Add an attribute which is positioned relative to the modelview matrix.*/
+inline void CullVisitor::addPositionedTextureAttribute(unsigned int textureUnit, osg::RefMatrix* matrix,const osg::StateAttribute* attr)
+{
+    _currentRenderBin->getStage()->addPositionedTextureAttribute(textureUnit,matrix,attr);
+}
+
+inline RenderLeaf* CullVisitor::createOrReuseRenderLeaf(osg::Drawable* drawable,osg::RefMatrix* projection,osg::RefMatrix* matrix, float depth)
+{
+    // Skips any already reused renderleaf.
+    while (_currentReuseRenderLeafIndex<_reuseRenderLeafList.size() && 
+           _reuseRenderLeafList[_currentReuseRenderLeafIndex]->referenceCount()>1)
+    {
+        osg::notify(osg::NOTICE)<<"Warning:createOrReuseRenderLeaf() skipping multiply refrenced entry."<< std::endl;
+        ++_currentReuseRenderLeafIndex;
+    }
+
+    // If still within list, element must be singularly referenced then return it to be reused.
+    if (_currentReuseRenderLeafIndex<_reuseRenderLeafList.size())
+    {
+        RenderLeaf* renderleaf = _reuseRenderLeafList[_currentReuseRenderLeafIndex++].get();
+        renderleaf->set(drawable,projection,matrix,depth,_traversalNumber++);
+        return renderleaf;
+    }
+
+    // Otherwise need to create new renderleaf.
+    RenderLeaf* renderleaf = new RenderLeaf(drawable,projection,matrix,depth,_traversalNumber++);
+    _reuseRenderLeafList.push_back(renderleaf);
+    ++_currentReuseRenderLeafIndex;
+    return renderleaf;
+}
+
+
+}
+
+#endif
+

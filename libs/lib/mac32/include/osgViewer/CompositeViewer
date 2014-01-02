@@ -1,0 +1,144 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGVIEWER_CompositeViewer
+#define OSGVIEWER_CompositeViewer 1
+
+#include <osg/ArgumentParser>
+#include <osgUtil/UpdateVisitor>
+#include <osgViewer/GraphicsWindow>
+#include <osgViewer/View>
+
+namespace osgViewer {
+
+/** CompositeViewer holds one or more views to one or more scenes.*/
+class OSGVIEWER_EXPORT CompositeViewer : public ViewerBase
+{
+    public:
+
+        CompositeViewer();
+
+        CompositeViewer(const CompositeViewer&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        CompositeViewer(osg::ArgumentParser& arguments);
+
+        META_Object(osgViewer,CompositeViewer);
+
+        virtual ~CompositeViewer();
+
+        /** Read the viewer configuration from a configuration file.*/
+        bool readConfiguration(const std::string& filename);
+
+
+        /** Set the Stats object used for collect various frame related timing and scene graph stats.*/
+        virtual void setViewerStats(osg::Stats* stats) { _stats = stats; }
+
+        /** Get the Viewers Stats object.*/
+        virtual osg::Stats* getViewerStats() { return _stats.get(); }
+
+        /** Get the Viewers Stats object.*/
+        virtual const osg::Stats* getViewerStats() const { return _stats.get(); }
+
+
+        void addView(osgViewer::View* view);
+        void removeView(osgViewer::View* view);
+
+        osgViewer::View* getView(unsigned i) { return _views[i].get(); }
+        const osgViewer::View* getView(unsigned i) const { return _views[i].get(); }
+
+        unsigned int getNumViews() const { return _views.size(); }
+
+
+        /** Get whether at least of one of this viewer's windows are realized.*/
+        virtual bool isRealized() const;
+
+        /** Set up windows and associated threads.*/
+        virtual void realize();
+
+        virtual void setStartTick(osg::Timer_t tick);
+
+        void setReferenceTime(double time=0.0);
+
+        osg::FrameStamp* getFrameStamp() { return _frameStamp.get(); }
+        const osg::FrameStamp* getFrameStamp() const { return _frameStamp.get(); }
+
+        virtual double elapsedTime();
+
+        virtual osg::FrameStamp* getViewerFrameStamp() { return getFrameStamp(); }
+
+
+        /** Execute a main frame loop.
+          * Equivalent to while (!viewer.done()) viewer.frame();
+          * Also calls realize() if the viewer is not already realized,
+          * and installs trackball manipulator if one is not already assigned.
+          */
+        virtual int run();
+
+        /** Check to see if the new frame is required, called by run() when FrameScheme is set to ON_DEMAND.*/
+        virtual bool checkNeedToDoFrame();
+
+        virtual void advance(double simulationTime=USE_REFERENCE_TIME);
+
+        virtual void eventTraversal();
+
+        virtual void updateTraversal();
+
+
+        void setCameraWithFocus(osg::Camera* camera);
+        osg::Camera* getCameraWithFocus() { return _cameraWithFocus.get(); }
+        const osg::Camera* getCameraWithFocus() const { return _cameraWithFocus.get(); }
+
+        osgViewer::View* getViewWithFocus() { return _viewWithFocus.get(); }
+        const osgViewer::View* getViewWithFocus() const { return _viewWithFocus.get(); }
+
+        virtual void getCameras(Cameras& cameras, bool onlyActive=true);
+
+        virtual void getContexts(Contexts& contexts, bool onlyValid=true);
+
+        virtual void getAllThreads(Threads& threads, bool onlyActive=true);
+
+        virtual void getOperationThreads(OperationThreads& threads, bool onlyActive=true);
+
+        virtual void getScenes(Scenes& scenes, bool onlyValid=true);
+
+        virtual void getViews(Views& views, bool onlyValid=true);
+
+
+        /** Get the keyboard and mouse usage of this viewer.*/
+        virtual void getUsage(osg::ApplicationUsage& usage) const;
+
+    protected:
+
+        void constructorInit();
+
+        virtual void viewerInit();
+
+        typedef std::vector< osg::ref_ptr<osgViewer::View> > RefViews;
+        RefViews _views;
+
+        bool _firstFrame;
+
+        osg::ref_ptr<osg::Stats>            _stats;
+
+        osg::Timer_t                        _startTick;
+        osg::ref_ptr<osg::FrameStamp>       _frameStamp;
+
+        osg::observer_ptr<osg::Camera>      _cameraWithFocus;
+        osg::observer_ptr<osgViewer::View>  _viewWithFocus;
+
+};
+
+
+}
+
+#endif

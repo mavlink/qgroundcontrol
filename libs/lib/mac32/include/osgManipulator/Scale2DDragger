@@ -1,0 +1,117 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+//osgManipulator - Copyright (C) 2007 Fugro-Jason B.V.
+
+#ifndef OSGMANIPULATOR_SCALE2DDRAGGER
+#define OSGMANIPULATOR_SCALE2DDRAGGER 1
+
+#include <osgManipulator/Dragger>
+#include <osgManipulator/Projector>
+
+namespace osgManipulator {
+
+/**
+ * Dragger for performing 2D scaling.
+ */
+class OSGMANIPULATOR_EXPORT Scale2DDragger : public Dragger
+{
+    public:
+
+        enum ScaleMode
+        {
+            SCALE_WITH_ORIGIN_AS_PIVOT = 0,
+            SCALE_WITH_OPPOSITE_HANDLE_AS_PIVOT
+        };
+
+        Scale2DDragger(ScaleMode scaleMode=SCALE_WITH_ORIGIN_AS_PIVOT);
+
+        META_OSGMANIPULATOR_Object(osgManipulator,Scale2DDragger)
+
+        /**
+         * Handle pick events on dragger and generate TranslateInLine commands.
+         */
+        virtual bool handle(const PointerInfo& pi, const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us);
+
+        /** Setup default geometry for dragger. */
+        void setupDefaultGeometry();
+
+        /** Set/Get min scale for dragger. */
+        inline void             setMinScale(const osg::Vec2d& min) { _minScale = min; }
+        inline const osg::Vec2d& getMinScale() const               { return _minScale; }
+
+        /** Set/Get color for dragger. */
+        inline void setColor(const osg::Vec4& color) { _color = color; setMaterialColor(_color,*this); }
+        inline const osg::Vec4& getColor() const { return _color; }
+
+        /**
+         * Set/Get pick color for dragger. Pick color is color of the dragger
+         * when picked. It gives a visual feedback to show that the dragger has
+         * been picked.
+         */
+        inline void setPickColor(const osg::Vec4& color) { _pickColor = color; }
+        inline const osg::Vec4& getPickColor() const { return _pickColor; }
+
+        /** Set/Get the handle nodes for dragger. */
+        inline void setTopLeftHandleNode (osg::Node& node) { _topLeftHandleNode = &node; }
+        inline osg::Node* getTopLeftHandleNode() { return _topLeftHandleNode.get(); }
+        inline const osg::Node* getTopLeftHandleNode() const { return _topLeftHandleNode.get(); }
+        inline void setBottomLeftHandleNode (osg::Node& node) { _bottomLeftHandleNode = &node; }
+        inline osg::Node* getBottomLeftHandleNode() { return _bottomLeftHandleNode.get(); }
+        inline const osg::Node* getBottomLeftHandleNode() const { return _bottomLeftHandleNode.get(); }
+        inline void setTopRightHandleNode(osg::Node& node) { _topRightHandleNode = &node; }
+        inline osg::Node* getTopRightHandleNode() { return _topRightHandleNode.get(); }
+        inline const osg::Node* getTopRightHandleNode() const { return _topRightHandleNode.get(); }
+        inline void setBottomRightHandleNode(osg::Node& node) { _bottomRightHandleNode = &node; }
+        inline osg::Node* getBottomRightHandleNode() { return _bottomRightHandleNode.get(); }
+        inline const osg::Node* getBottomRightHandleNode() const { return _bottomRightHandleNode.get(); }
+
+        /** Set/Get the handle nodes postion for dragger. */
+        inline void setTopLeftHandlePosition(const osg::Vec2d& pos) { _topLeftHandlePosition = pos; }
+        const osg::Vec2d& getTopLeftHandlePosition() const { return _topLeftHandlePosition; }
+        inline void setBottomLeftHandlePosition(const osg::Vec2d& pos) { _bottomLeftHandlePosition = pos; }
+        const osg::Vec2d& getBottomLeftHandlePosition() const { return _bottomLeftHandlePosition; }
+        inline void setTopRightHandlePosition(const osg::Vec2d& pos) { _topRightHandlePosition = pos; }
+        const osg::Vec2d& getTopRightHandlePosition() const { return _topRightHandlePosition; }
+        inline void setBottomRightHandlePosition(const osg::Vec2d& pos){ _bottomRightHandlePosition = pos; }
+        const osg::Vec2d& getBottomRightHandlePosition() const { return _bottomRightHandlePosition; }
+
+    protected:
+
+        virtual ~Scale2DDragger();
+
+        osg::ref_ptr< PlaneProjector >  _projector;
+        osg::Vec3d                      _startProjectedPoint;
+        osg::Vec2d                      _scaleCenter;
+        osg::Vec2d                      _referencePoint;
+        osg::Vec2d                      _minScale;
+
+        osg::ref_ptr< osg::Node >       _topLeftHandleNode;
+        osg::ref_ptr< osg::Node >       _bottomLeftHandleNode;
+        osg::ref_ptr< osg::Node >       _topRightHandleNode;
+        osg::ref_ptr< osg::Node >       _bottomRightHandleNode;
+
+        osg::Vec2d                      _topLeftHandlePosition;
+        osg::Vec2d                      _bottomLeftHandlePosition;
+        osg::Vec2d                      _topRightHandlePosition;
+        osg::Vec2d                      _bottomRightHandlePosition;
+
+        osg::Vec4                       _color;
+        osg::Vec4                       _pickColor;
+
+        ScaleMode                       _scaleMode;
+};
+
+
+}
+
+#endif

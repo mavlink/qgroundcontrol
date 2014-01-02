@@ -1,0 +1,54 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGDB_IMAGEPROCESSOR
+#define OSGDB_IMAGEPROCESSOR 1
+
+#include <osg/Object>
+
+namespace osgDB {
+
+class ImageProcessor : public osg::Object
+{
+    public:
+
+        ImageProcessor():
+            osg::Object(true) {}
+
+        ImageProcessor(const ImageProcessor& rw,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY):
+            osg::Object(rw,copyop) {}
+
+        virtual ~ImageProcessor() {}
+
+        META_Object(osgDB,ImageProcessor);
+
+        enum CompressionMethod
+        {
+            USE_CPU, /// Use CPU for compression even when GPU compression is available
+            USE_GPU  /// Use GPU for compression when available (i.e CUDA), otherwise fallback to CPU
+        };
+
+        enum CompressionQuality
+        {
+            FASTEST,
+            NORMAL,
+            PRODUCTION,
+            HIGHEST
+        };
+
+        virtual void compress(osg::Image& /*image*/, osg::Texture::InternalFormatMode /*compressedFormat*/, bool /*generateMipMap*/, bool /*resizeToPowerOfTwo*/, CompressionMethod /*method*/, CompressionQuality /*quality*/) {}
+        virtual void generateMipMap(osg::Image& /*image*/, bool /*resizeToPowerOfTwo*/, CompressionMethod /*method*/) {}
+};
+
+}
+#endif

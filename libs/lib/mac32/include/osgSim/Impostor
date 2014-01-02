@@ -1,0 +1,121 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGSIM_IMPOSTOR
+#define OSGSIM_IMPOSTOR 1
+
+#include <osg/LOD>
+#include <osg/buffered_value>
+
+#include <osgUtil/CullVisitor>
+
+#include <osgSim/ImpostorSprite>
+
+namespace osgSim {
+
+/** Impostor - is a form of Level Of Detail group node which allows both switching 
+  * between children depending on distance from eye point and image caching.
+  * 
+  * The principle behind Imposters is that they cache an image of real geometry and then the image is drawn 
+  * in subsequent frames instead of the real geometry. It's a bit like a
+  * Billboard *but* is updated at runtime and w.r.t view point. By drawing
+  * just the texture mapped quad you can cut down scene complexity and
+  * improve performance.
+  * 
+  * For more details have a look at:
+  * 
+  *    http://grail.cs.washington.edu/projects/hic/
+  * 
+  * The OSG doesn't implement exactly the same technique as above, but its
+  * should be a good starting place. The OSG's impostors are much less
+  * intrusive since you don't need to restructure your whole scene to use
+  * them.
+  *
+  * All you need to do to use Impostors is to set up the visible
+  * range values for each LOD child of the Impostor, as per osg::LOD,
+  * and set an Impostor threshold to tell the renderer at what distance
+  * the Impostor's image caching should cut in.  The osg::CullVisitor
+  * automatically handles all the setting of pre-rendering stages to
+  * calculate the required ImpostorSprites (which encapsulates the image
+  * cache and quad), and updates them as the view point changes. If you 
+  * use osg::SceneView/CullVisitor all the complexity of supporting 
+  * Impostor will be nicely hidden away.
+  *
+  * TODO:
+  * Various improvements are planned for the Impostor-
+  * 1) Estimation of how many frames an ImpostorSprite will be reused, if
+  * it won't be used more often than a minimum threshold then do not create
+  * ImpostorSprite - use the real geometry.
+  * 2) Sharing of texture memory between ImpostorSprites.
+  * 3) Simple 3D geometry for ImpostorSprite's rather than Billboarding.
+  * 4) Shrinking of the ImpostorSprite size to more closely fit the underlying
+  * geometry.
+  */
+class OSGSIM_EXPORT Impostor : public osg::LOD
+{
+    public :
+        Impostor();
+
+        Impostor(const Impostor& es, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY):
+            osg::LOD(es,copyop),
+            _impostorThreshold(es._impostorThreshold) {}
+            
+        META_Node(osgSim, Impostor);
+        
+        virtual void traverse(osg::NodeVisitor& nv);
+
+        typedef std::vector< osg::ref_ptr<ImpostorSprite> > ImpostorSpriteList;
+
+        /** Set the Impostor threshold distance.
+          * For eye points further than this threshold the Imposter is used if appropriate,
+          * otherwise the LOD children as chosen as per a standard LOD node.
+        */
+        inline void setImpostorThreshold(float distance) { _impostorThreshold = distance; }
+        
+        /* Get the Impostor threshold distance. */
+        inline float getImpostorThreshold() const { return _impostorThreshold; }
+
+        /** Set the Impostor threshold distance relative to the node's bounding
+          * sphere's radius.
+          */
+        inline void setImpostorThresholdToBound(float ratio=1.0f) { _impostorThreshold = getBound().radius()*ratio; }
+
+        /** Find the ImposterSprite which fits the current eye point best. */
+        ImpostorSprite* findBestImpostorSprite(unsigned int contextID, const osg::Vec3& currLocalEyePoint) const;
+        
+        /** Add an ImpostorSprite to the Impostor. */
+        void addImpostorSprite(unsigned int contextID, ImpostorSprite* is);
+
+        /** Get the list of ImpostorSprites attached to this Impostor. */
+        inline ImpostorSpriteList& getImpostorSpriteList(unsigned int contexID) { return _impostorSpriteListBuffer[contexID]; }
+
+        /** Get a const list of ImpostorSprites attached to this const Impostor. */
+        inline const ImpostorSpriteList& getImpostorSpriteList(unsigned int contexID) const { return _impostorSpriteListBuffer[contexID]; }
+
+        virtual osg::BoundingSphere computeBound() const;
+        
+    protected :
+
+        virtual ~Impostor() {}
+
+        mutable osg::buffered_object<ImpostorSpriteList>  _impostorSpriteListBuffer;
+        
+        ImpostorSprite* createImpostorSprite(osgUtil::CullVisitor* cv);
+
+        float _impostorThreshold;
+
+};
+
+}
+
+#endif

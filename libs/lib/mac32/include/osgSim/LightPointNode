@@ -1,0 +1,114 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGSIM_LIGHTPOINTNODE
+#define OSGSIM_LIGHTPOINTNODE 1
+
+#include <osgSim/Export>
+#include <osgSim/LightPoint>
+#include <osgSim/LightPointSystem>
+
+#include <osg/Node>
+#include <osg/NodeVisitor>
+#include <osg/BoundingBox>
+#include <osg/Quat>
+#include <osg/Vec4>
+
+#include <vector>
+#include <set>
+
+namespace osgSim {
+
+
+class OSGSIM_EXPORT LightPointNode : public osg::Node
+{
+    public :
+
+        typedef std::vector< LightPoint > LightPointList;
+
+        LightPointNode();
+        
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        LightPointNode(const LightPointNode&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        META_Node(osgSim,LightPointNode);
+
+        virtual void traverse(osg::NodeVisitor& nv);
+
+
+        unsigned int getNumLightPoints() const { return _lightPointList.size(); }
+
+
+        unsigned int addLightPoint(const LightPoint& lp);
+    
+        void removeLightPoint(unsigned int pos);
+
+
+        LightPoint& getLightPoint(unsigned int pos) { return _lightPointList[pos]; }
+
+        const LightPoint& getLightPoint(unsigned int pos) const { return _lightPointList[pos]; }
+        
+
+        void setLightPointList(const LightPointList& lpl) { _lightPointList=lpl; }
+
+        LightPointList& getLightPointList() { return _lightPointList; }
+
+        const LightPointList& getLightPointList() const { return _lightPointList; }
+
+
+        void setMinPixelSize(float minPixelSize) { _minPixelSize = minPixelSize; }
+        
+        float getMinPixelSize() const { return _minPixelSize; }
+
+        void setMaxPixelSize(float maxPixelSize) { _maxPixelSize = maxPixelSize; }
+        
+        float getMaxPixelSize() const { return _maxPixelSize; }
+
+        void setMaxVisibleDistance2(float maxVisibleDistance2) { _maxVisibleDistance2 = maxVisibleDistance2; }
+        
+        float getMaxVisibleDistance2() const { return _maxVisibleDistance2; }
+        
+        void setLightPointSystem( osgSim::LightPointSystem* lps) { _lightSystem = lps; }
+
+        osgSim::LightPointSystem* getLightPointSystem() { return _lightSystem.get(); }
+        const osgSim::LightPointSystem* getLightPointSystem() const { return _lightSystem.get(); }
+
+        void setPointSprite(bool enable=true) { _pointSprites = enable; }
+
+        bool getPointSprite() const { return _pointSprites; }
+
+        virtual osg::BoundingSphere computeBound() const;
+
+    protected:
+
+        ~LightPointNode() {}
+
+        // used to cache the bouding box of the lightpoints as a tighter
+        // view frustum check. 
+        mutable osg::BoundingBox _bbox;
+
+        LightPointList  _lightPointList;
+
+        float _minPixelSize;
+        float _maxPixelSize;
+        float _maxVisibleDistance2;
+
+        osg::ref_ptr<osgSim::LightPointSystem> _lightSystem;        
+        
+        bool _pointSprites;
+
+};
+
+}
+
+#endif

@@ -1,0 +1,248 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_COORDINATESYSTEMNODE
+#define OSG_COORDINATESYSTEMNODE 1
+
+#include <osg/Group>
+#include <osg/Matrixd>
+
+namespace osg
+{
+
+const double WGS_84_RADIUS_EQUATOR = 6378137.0;
+const double WGS_84_RADIUS_POLAR = 6356752.3142;
+
+/** EllipsoidModel encapsulates the ellipsoid used to model astronomical bodies,
+ * such as sun, planets, moon etc. 
+ * All distance quantities (i.e. heights + radius) are in meters,
+ * and latitude and longitude are in radians.*/
+class EllipsoidModel : public Object
+{
+    public:
+
+        /** WGS_84 is a common representation of the earth's spheroid */
+        EllipsoidModel(double radiusEquator = WGS_84_RADIUS_EQUATOR,
+                       double radiusPolar = WGS_84_RADIUS_POLAR):
+            _radiusEquator(radiusEquator),
+            _radiusPolar(radiusPolar) { computeCoefficients(); }
+
+        EllipsoidModel(const EllipsoidModel& et,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            Object(et,copyop),
+            _radiusEquator(et._radiusEquator),
+            _radiusPolar(et._radiusPolar) { computeCoefficients(); }
+
+        META_Object(osg,EllipsoidModel);
+
+        void setRadiusEquator(double radius) { _radiusEquator = radius; computeCoefficients(); }
+        double getRadiusEquator() const { return _radiusEquator; }
+
+        void setRadiusPolar(double radius) { _radiusPolar = radius; computeCoefficients(); }
+        double getRadiusPolar() const { return _radiusPolar; }
+
+        inline void convertLatLongHeightToXYZ(double latitude, double longitude, double height,
+                                              double& X, double& Y, double& Z) const;
+
+        inline void convertXYZToLatLongHeight(double X, double Y, double Z,
+                                              double& latitude, double& longitude, double& height) const;
+
+        inline void computeLocalToWorldTransformFromLatLongHeight(double latitude, double longitude, double height, osg::Matrixd& localToWorld) const;
+
+        inline void computeLocalToWorldTransformFromXYZ(double X, double Y, double Z, osg::Matrixd& localToWorld) const;
+
+        inline void computeCoordinateFrame(double latitude, double longitude, osg::Matrixd& localToWorld) const;
+
+        inline osg::Vec3d computeLocalUpVector(double X, double Y, double Z) const;
+
+        // Convenience method for determining if EllipsoidModel is a stock WGS84 ellipsoid
+        inline bool isWGS84() const {return(_radiusEquator == WGS_84_RADIUS_EQUATOR && _radiusPolar == WGS_84_RADIUS_POLAR);}
+
+        // Compares two EllipsoidModel by comparing critical internal values.
+        // Ignores _eccentricitySquared since it's just a cached value derived from
+        // the _radiusEquator and _radiusPolar members.
+        friend bool operator == ( const EllipsoidModel & e1, const EllipsoidModel& e2) {return(e1._radiusEquator == e2._radiusEquator && e1._radiusPolar == e2._radiusPolar);}
+
+
+    protected:
+
+        void computeCoefficients()
+        {
+            double flattening = (_radiusEquator-_radiusPolar)/_radiusEquator;
+            _eccentricitySquared = 2*flattening - flattening*flattening;
+        }
+
+        double _radiusEquator;
+        double _radiusPolar;
+        double _eccentricitySquared;
+
+};
+
+/** CoordinateFrame encapsulates the orientation of east, north and up.*/ 
+typedef Matrixd CoordinateFrame;
+
+/** CoordinateSystem encapsulate the coordinate system that is associated with objects in a scene.
+    For an overview of common earth bases coordinate systems see http://www.colorado.edu/geography/gcraft/notes/coordsys/coordsys_f.html */
+class OSG_EXPORT CoordinateSystemNode : public Group
+{
+    public:
+
+        CoordinateSystemNode();
+
+        CoordinateSystemNode(const std::string& format, const std::string& cs);
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        CoordinateSystemNode(const CoordinateSystemNode&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+        
+        META_Node(osg,CoordinateSystemNode);
+        
+        
+        /** Set the coordinate system node up by copying the format, coordinate system string, and ellipsoid model of another coordinate system node.*/
+        void set(const CoordinateSystemNode& csn);
+                
+        /** Set the coordinate system format string. Typical values would be WKT, PROJ4, USGS etc.*/
+        void setFormat(const std::string& format) { _format = format; }
+        
+        /** Get the coordinate system format string.*/
+        const std::string& getFormat() const { return _format; }
+
+        /** Set the CoordinateSystem reference string, should be stored in a form consistent with the Format.*/
+        void setCoordinateSystem(const std::string& cs) { _cs = cs; }
+        
+        /** Get the CoordinateSystem reference string.*/
+        const std::string& getCoordinateSystem() const { return _cs; }
+        
+        
+        /** Set EllipsoidModel to describe the model used to map lat, long and height into geocentric XYZ and back. */
+        void setEllipsoidModel(EllipsoidModel* ellipsode) { _ellipsoidModel = ellipsode; }
+        
+        /** Get the EllipsoidModel.*/
+        EllipsoidModel* getEllipsoidModel() { return _ellipsoidModel.get(); }
+        
+        /** Get the const EllipsoidModel.*/
+        const EllipsoidModel* getEllipsoidModel() const { return _ellipsoidModel.get(); }
+        
+        /** Compute the local coordinate frame for specified point.*/
+        CoordinateFrame computeLocalCoordinateFrame(const Vec3d& position) const;
+        
+        /** Compute the local up-vector for specified point.*/
+        osg::Vec3d computeLocalUpVector(const Vec3d& position) const;
+
+    protected:
+
+        virtual ~CoordinateSystemNode() {}
+                
+        std::string             _format;
+        std::string             _cs;
+        ref_ptr<EllipsoidModel> _ellipsoidModel;
+
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// implement inline methods.
+//
+inline void EllipsoidModel::convertLatLongHeightToXYZ(double latitude, double longitude, double height,
+                                      double& X, double& Y, double& Z) const
+{
+    // for details on maths see http://www.colorado.edu/geography/gcraft/notes/datum/gif/llhxyz.gif
+    double sin_latitude = sin(latitude);
+    double cos_latitude = cos(latitude);
+    double N = _radiusEquator / sqrt( 1.0 - _eccentricitySquared*sin_latitude*sin_latitude);
+    X = (N+height)*cos_latitude*cos(longitude);
+    Y = (N+height)*cos_latitude*sin(longitude);
+    Z = (N*(1-_eccentricitySquared)+height)*sin_latitude;
+}
+
+
+inline void EllipsoidModel::convertXYZToLatLongHeight(double X, double Y, double Z,
+                                      double& latitude, double& longitude, double& height) const
+{
+    // http://www.colorado.edu/geography/gcraft/notes/datum/gif/xyzllh.gif
+    double p = sqrt(X*X + Y*Y);
+    double theta = atan2(Z*_radiusEquator , (p*_radiusPolar));
+    double eDashSquared = (_radiusEquator*_radiusEquator - _radiusPolar*_radiusPolar)/
+                          (_radiusPolar*_radiusPolar);
+
+    double sin_theta = sin(theta);
+    double cos_theta = cos(theta);
+
+    latitude = atan( (Z + eDashSquared*_radiusPolar*sin_theta*sin_theta*sin_theta) /
+                     (p - _eccentricitySquared*_radiusEquator*cos_theta*cos_theta*cos_theta) );
+    longitude = atan2(Y,X);
+
+    double sin_latitude = sin(latitude);
+    double N = _radiusEquator / sqrt( 1.0 - _eccentricitySquared*sin_latitude*sin_latitude);
+
+    height = p/cos(latitude) - N;
+}
+
+inline void EllipsoidModel::computeLocalToWorldTransformFromLatLongHeight(double latitude, double longitude, double height, osg::Matrixd& localToWorld) const
+{
+    double X, Y, Z;
+    convertLatLongHeightToXYZ(latitude,longitude,height,X,Y,Z);
+
+    localToWorld.makeTranslate(X,Y,Z);
+    computeCoordinateFrame(latitude, longitude, localToWorld);
+}
+
+inline void EllipsoidModel::computeLocalToWorldTransformFromXYZ(double X, double Y, double Z, osg::Matrixd& localToWorld) const
+{
+    double  latitude, longitude, height;
+    convertXYZToLatLongHeight(X,Y,Z,latitude,longitude,height);
+
+    localToWorld.makeTranslate(X,Y,Z);
+    computeCoordinateFrame(latitude, longitude, localToWorld);
+}
+
+inline void EllipsoidModel::computeCoordinateFrame(double latitude, double longitude, osg::Matrixd& localToWorld) const
+{
+    // Compute up vector
+    osg::Vec3d    up      ( cos(longitude)*cos(latitude), sin(longitude)*cos(latitude), sin(latitude));
+
+    // Compute east vector
+    osg::Vec3d    east    (-sin(longitude), cos(longitude), 0);
+
+    // Compute north vector = outer product up x east
+    osg::Vec3d    north   = up ^ east;
+
+    // set matrix
+    localToWorld(0,0) = east[0];
+    localToWorld(0,1) = east[1];
+    localToWorld(0,2) = east[2];
+
+    localToWorld(1,0) = north[0];
+    localToWorld(1,1) = north[1];
+    localToWorld(1,2) = north[2];
+
+    localToWorld(2,0) = up[0];
+    localToWorld(2,1) = up[1];
+    localToWorld(2,2) = up[2];
+}
+
+inline osg::Vec3d EllipsoidModel::computeLocalUpVector(double X, double Y, double Z) const
+{
+    // Note latitude is angle between normal to ellipsoid surface and XY-plane
+    double  latitude;
+    double  longitude;
+    double  altitude;
+    convertXYZToLatLongHeight(X,Y,Z,latitude,longitude,altitude);
+
+    // Compute up vector
+    return osg::Vec3d(  cos(longitude) * cos(latitude),
+                        sin(longitude) * cos(latitude),
+                                         sin(latitude));
+}
+
+}
+#endif

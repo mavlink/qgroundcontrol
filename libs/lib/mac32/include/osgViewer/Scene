@@ -1,0 +1,75 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGVIEWER_SCENE
+#define OSGVIEWER_SCENE 1
+
+#include <osgGA/GUIEventHandler>
+#include <osgGA/EventVisitor>
+#include <osgDB/DatabasePager>
+#include <osgDB/ImagePager>
+
+#include <osgViewer/Export>
+
+#include <list>
+
+namespace osgViewer{
+
+/** Scene holds the higher level reference to a single scene graph.*/
+class OSGVIEWER_EXPORT Scene : public osg::Referenced
+{
+    public:
+
+        virtual const char* className() const { return "Scene"; }
+
+        void setSceneData(osg::Node* node);
+        osg::Node* getSceneData();
+        const osg::Node* getSceneData() const;
+
+
+        void setDatabasePager(osgDB::DatabasePager* dp);
+        osgDB::DatabasePager* getDatabasePager() { return _databasePager.get(); }
+        const osgDB::DatabasePager* getDatabasePager() const { return _databasePager.get(); }
+
+        void setImagePager(osgDB::ImagePager* ip);
+        osgDB::ImagePager* getImagePager() { return _imagePager.get(); }
+        const osgDB::ImagePager* getImagePager() const { return _imagePager.get(); }
+
+        void updateSceneGraph(osg::NodeVisitor& updateVisitor);
+
+
+        /** Get the Scene object that has the specified node assigned to it.
+          * return 0 if no Scene has yet been assigned the specified node.*/
+        static Scene* getScene(osg::Node* node);
+
+    protected:
+
+        Scene();
+        virtual ~Scene();
+
+        /** Get the Scene object that has the specified node assigned to it.
+          * or return a new Scene if no Scene has yet been assigned the specified node.*/
+        static Scene* getOrCreateScene(osg::Node* node);
+        
+        friend class View;
+    
+        osg::ref_ptr<osg::Node>             _sceneData;
+
+        osg::ref_ptr<osgDB::DatabasePager>  _databasePager;
+        osg::ref_ptr<osgDB::ImagePager>     _imagePager;
+};
+
+
+}
+
+#endif

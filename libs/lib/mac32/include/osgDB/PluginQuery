@@ -1,0 +1,57 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This application is open source and may be redistributed and/or modified   
+ * freely and without restriction, both in commercial and non commercial applications,
+ * as long as this copyright notice is maintained.
+ * 
+ * This application is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
+#ifndef PLUGINQUERY_H
+#define PLUGINQUERY_H
+
+#include <osgDB/Export>
+#include <osgDB/ReaderWriter>
+
+#include <osg/Referenced>
+#include <osg/ref_ptr>
+
+#include <list>
+#include <string>
+
+namespace osgDB
+{
+
+typedef std::list<std::string> FileNameList;
+
+FileNameList OSGDB_EXPORT listAllAvailablePlugins();
+
+class ReaderWriterInfo : public osg::Referenced
+{
+    public:
+        
+        ReaderWriterInfo() {}
+    
+        std::string                         plugin;
+        std::string                         description;
+        ReaderWriter::FormatDescriptionMap  protocols;
+        ReaderWriter::FormatDescriptionMap  extensions;
+        ReaderWriter::FormatDescriptionMap  options;
+        ReaderWriter::Features              features;
+
+    protected:
+        
+        virtual ~ReaderWriterInfo() {}
+};
+
+typedef std::list< osg::ref_ptr<ReaderWriterInfo> > ReaderWriterInfoList;
+
+bool OSGDB_EXPORT queryPlugin(const std::string& fileName, ReaderWriterInfoList& infoList);
+
+bool OSGDB_EXPORT outputPluginDetails(std::ostream& out, const std::string& fileName);
+
+}
+
+#endif

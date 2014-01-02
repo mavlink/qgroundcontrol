@@ -1,0 +1,145 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_NOTIFY_H
+#define OSG_NOTIFY_H 1
+
+#include <osg/Export>
+#include <osg/Referenced> // for NotifyHandler
+
+#include <ostream>
+
+namespace osg {
+
+/** Range of notify levels from DEBUG_FP through to FATAL, ALWAYS
+  * is reserved for forcing the absorption of all messages.  The
+  * keywords are also used verbatim when specified by the environmental
+  * variable OSGNOTIFYLEVEL or OSG_NOTIFY_LEVEL.
+  * See documentation on osg::notify() for further details.
+  */
+enum NotifySeverity {
+    ALWAYS=0,
+    FATAL=1,
+    WARN=2,
+    NOTICE=3,
+    INFO=4,
+    DEBUG_INFO=5,
+    DEBUG_FP=6
+};
+
+/** set the notify level, overriding the default or the value set by
+  * the environmental variable OSGNOTIFYLEVEL or OSG_NOTIFY_LEVEL.
+  */
+extern OSG_EXPORT void setNotifyLevel(NotifySeverity severity);
+
+/** get the notify level. */
+extern OSG_EXPORT NotifySeverity getNotifyLevel();
+
+/** initialize notify level. */
+extern OSG_EXPORT bool initNotifyLevel();
+
+#ifdef OSG_NOTIFY_DISABLED
+    inline bool isNotifyEnabled(NotifySeverity) { return false; }
+#else
+    /** is notification enabled, given the current setNotifyLevel() setting? */
+    extern OSG_EXPORT bool isNotifyEnabled(NotifySeverity severity);
+#endif
+
+/** notify messaging function for providing fatal through to verbose
+  * debugging messages.  Level of messages sent to the console can
+  * be controlled by setting the NotifyLevel either within your 
+  * application or via the an environmental variable i.e.
+  * - setenv OSGNOTIFYLEVEL DEBUG (for tsh)
+  * - export OSGNOTIFYLEVEL=DEBUG (for bourne shell)
+  * - set OSGNOTIFYLEVEL=DEBUG (for Windows)
+  *
+  * All tell the osg to redirect all debugging and more important messages
+  * to the notification stream (useful for debugging) setting ALWAYS will force
+  * all messages to be absorbed, which might be appropriate for final
+  * applications.  Default NotifyLevel is NOTICE.  Check the enum 
+  * #NotifySeverity for full range of possibilities.  To use the notify
+  * with your code simply use the notify function as a normal file
+  * stream (like std::cout) i.e 
+  * @code
+  * osg::notify(osg::DEBUG) << "Hello Bugs!" << std::endl;
+  * @endcode
+  * @see setNotifyLevel, setNotifyHandler
+  */
+extern OSG_EXPORT std::ostream& notify(const NotifySeverity severity);
+
+inline std::ostream& notify(void) { return notify(osg::INFO); }
+
+#define OSG_NOTIFY(level) if (osg::isNotifyEnabled(level)) osg::notify(level)
+#define OSG_ALWAYS OSG_NOTIFY(osg::ALWAYS)
+#define OSG_FATAL OSG_NOTIFY(osg::FATAL)
+#define OSG_WARN OSG_NOTIFY(osg::WARN)
+#define OSG_NOTICE OSG_NOTIFY(osg::NOTICE)
+#define OSG_INFO OSG_NOTIFY(osg::INFO)
+#define OSG_DEBUG OSG_NOTIFY(osg::DEBUG_INFO)
+#define OSG_DEBUG_FP OSG_NOTIFY(osg::DEBUG_FP)
+
+/** Handler processing output of notification stream. It acts as a sink to 
+  * notification messages. It is called when notification stream needs to be 
+  * synchronized (i.e. after osg::notify() << std::endl).
+  * StandardNotifyHandler is used by default, it writes notifications to stderr 
+  * (severity <= WARN) or stdout (severity > WARN).
+  * Notifications can be redirected to other sinks such as GUI widgets or 
+  * windows debugger (WinDebugNotifyHandler) with custom handlers.
+  * Use setNotifyHandler to set custom handler.
+  * Note that osg notification API is not thread safe although notification 
+  * handler is called from many threads. When incorporating handlers into GUI
+  * widgets you must take care of thread safety on your own.
+  * @see setNotifyHandler
+  */
+class OSG_EXPORT NotifyHandler : public osg::Referenced
+{
+public:
+    virtual void notify(osg::NotifySeverity severity, const char *message) = 0;
+};
+
+/** Set notification handler, by default StandardNotifyHandler is used.
+  * @see NotifyHandler
+  */
+extern OSG_EXPORT void setNotifyHandler(NotifyHandler *handler);
+
+/** Get currrent notification handler. */
+extern OSG_EXPORT NotifyHandler *getNotifyHandler();
+
+/** Redirects notification stream to stderr (severity <= WARN) or stdout (severity > WARN).
+  * The fputs() function is used to write messages to standard files. Note that
+  * std::out and std::cerr streams are not used.
+  * @see setNotifyHandler
+  */
+class OSG_EXPORT StandardNotifyHandler : public NotifyHandler
+{
+public:
+    void notify(osg::NotifySeverity severity, const char *message);
+};
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+
+/** Redirects notification stream to windows debugger with use of 
+  * OuputDebugString functions.
+  * @see setNotifyHandler
+  */
+class OSG_EXPORT WinDebugNotifyHandler : public NotifyHandler
+{
+public:
+    void notify(osg::NotifySeverity severity, const char *message);
+};
+
+#endif
+
+}
+
+#endif

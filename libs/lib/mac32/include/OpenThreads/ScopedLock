@@ -1,0 +1,70 @@
+/* -*-c++-*- OpenThreads library, Copyright (C) 2002 - 2007  The Open Thread Group
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+
+//
+// ScopedLock and ReverseScopedLock templates
+// ~~~~~~~
+// 
+#ifndef _ScopedLock_
+#define _ScopedLock_
+
+namespace OpenThreads{
+
+template <class M> class ScopedLock
+{
+    private:
+        M& m_lock;
+        ScopedLock(const ScopedLock&); // prevent copy
+        ScopedLock& operator=(const ScopedLock&); // prevent assign
+    public:
+        explicit ScopedLock(M& m):m_lock(m) {m_lock.lock();}
+        ~ScopedLock(){m_lock.unlock();}
+};
+
+template <class M> class ReverseScopedLock
+{
+    private:
+        M& m_lock;
+        ReverseScopedLock(const ReverseScopedLock&); // prevent copy
+        ReverseScopedLock& operator=(const ReverseScopedLock&); // prevent assign
+    public:
+        explicit ReverseScopedLock(M& m):m_lock(m) {m_lock.unlock();}
+        ~ReverseScopedLock(){m_lock.lock();}
+};
+
+
+template <class M> class ScopedPointerLock
+{
+    private:
+        M* m_lock;
+        ScopedPointerLock(const ScopedPointerLock&); // prevent copy
+        ScopedPointerLock& operator=(const ScopedPointerLock&); // prevent assign
+    public:
+        explicit ScopedPointerLock(M* m):m_lock(m) { if (m_lock) m_lock->lock();}
+        ~ScopedPointerLock(){ if (m_lock) m_lock->unlock();}
+};
+
+template <class M> class ReverseScopedPointerLock
+{
+    private:
+        M* m_lock;
+        ReverseScopedPointerLock(const ReverseScopedPointerLock&); // prevent copy
+        ReverseScopedPointerLock& operator=(const ReverseScopedPointerLock&); // prevent assign
+    public:
+        explicit ReverseScopedPointerLock(M* m):m_lock(m) { if (m_lock) m_lock->unlock();}
+        ~ReverseScopedPointerLock(){ if (m_lock) m_lock->lock();}
+};
+
+}
+#endif
