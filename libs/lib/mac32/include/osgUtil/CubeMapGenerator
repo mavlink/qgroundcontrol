@@ -1,0 +1,121 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+#ifndef OSGUTIL_CUBEMAPGENERATOR_
+#define OSGUTIL_CUBEMAPGENERATOR_
+
+#include <osgUtil/Export>
+
+#include <osg/Vec3>
+#include <osg/Vec4>
+#include <osg/CopyOp>
+#include <osg/Referenced>
+#include <osg/TextureCubeMap>
+#include <osg/Image>
+#include <osg/Notify>
+
+#include <vector>
+
+namespace osgUtil
+{
+
+    /** This is the base class for cube map generators. 
+        It exposes the necessary interface to access the six generated images;
+        descendants should only override the compute_color() method.
+    */
+    class OSGUTIL_EXPORT CubeMapGenerator: public osg::Referenced {
+    public:
+        explicit CubeMapGenerator(int texture_size = 64);
+        CubeMapGenerator(const CubeMapGenerator &copy, const osg::CopyOp &copyop = osg::CopyOp::SHALLOW_COPY);
+
+        inline osg::Image *getImage(osg::TextureCubeMap::Face face);
+        inline const osg::Image *getImage(osg::TextureCubeMap::Face face) const;
+
+        /** Generate the six cube images. 
+            If use_osg_system is true, then the OSG's coordinate system is used instead 
+            of the default OpenGL one.
+        */
+        void generateMap(bool use_osg_system = true);
+
+    protected:
+        virtual ~CubeMapGenerator() {}
+        CubeMapGenerator &operator=(const CubeMapGenerator &) { return *this; }
+
+        inline void set_pixel(int index, int c, int r, const osg::Vec4 &color);
+        inline static osg::Vec4 vector_to_color(const osg::Vec3 &vec);        
+
+        /** Override this method to define how colors are computed. 
+            The parameter R is the reflection vector, pointing from the center of the cube.
+            The return value should be the RGBA color associated with that reflection ray.
+        */
+        virtual osg::Vec4 compute_color(const osg::Vec3 &R) const = 0;
+
+    private:
+        int texture_size_;
+
+        typedef std::vector<osg::ref_ptr<osg::Image> > Image_list;
+        Image_list images_;        
+    };
+
+    // INLINE METHODS
+
+    inline osg::Image *CubeMapGenerator::getImage(osg::TextureCubeMap::Face face)
+    {
+        switch (face) {
+            case osg::TextureCubeMap::POSITIVE_X: return images_[0].get();
+            case osg::TextureCubeMap::NEGATIVE_X: return images_[1].get();
+            case osg::TextureCubeMap::POSITIVE_Y: return images_[2].get();
+            case osg::TextureCubeMap::NEGATIVE_Y: return images_[3].get();
+            case osg::TextureCubeMap::POSITIVE_Z: return images_[4].get();
+            case osg::TextureCubeMap::NEGATIVE_Z: return images_[5].get();            
+            default: return 0;
+        }
+    }
+
+    inline const osg::Image *CubeMapGenerator::getImage(osg::TextureCubeMap::Face face) const
+    {
+        switch (face) {
+            case osg::TextureCubeMap::POSITIVE_X: return images_[0].get();
+            case osg::TextureCubeMap::NEGATIVE_X: return images_[1].get();
+            case osg::TextureCubeMap::POSITIVE_Y: return images_[2].get();
+            case osg::TextureCubeMap::NEGATIVE_Y: return images_[3].get();
+            case osg::TextureCubeMap::POSITIVE_Z: return images_[4].get();
+            case osg::TextureCubeMap::NEGATIVE_Z: return images_[5].get();            
+            default: return 0;
+        }
+    }
+
+    inline void CubeMapGenerator::set_pixel(int index, int c, int r, const osg::Vec4 &color)
+    {
+        osg::Image *i = images_[index].get();
+        if (i) {
+            *(i->data(c, r)+0) = static_cast<unsigned char>(osg::clampBetween(color.x(),0.0f,1.0f) * 255);
+            *(i->data(c, r)+1) = static_cast<unsigned char>(osg::clampBetween(color.y(),0.0f,1.0f) * 255);
+            *(i->data(c, r)+2) = static_cast<unsigned char>(osg::clampBetween(color.z(),0.0f,1.0f) * 255);
+            *(i->data(c, r)+3) = static_cast<unsigned char>(osg::clampBetween(color.w(),0.0f,1.0f) * 255);            
+        } else {
+            osg::notify(osg::WARN) << "Warning: CubeMapGenerator::set_pixel(): invalid image index\n";
+        }
+    }
+
+    inline osg::Vec4 CubeMapGenerator::vector_to_color(const osg::Vec3 &vec)
+    {
+        return osg::Vec4(
+            vec.x() / vec.length() / 2 + 0.5f,
+            vec.y() / vec.length() / 2 + 0.5f,
+            vec.z() / vec.length() / 2 + 0.5f,
+            1);
+    }
+
+}
+
+#endif

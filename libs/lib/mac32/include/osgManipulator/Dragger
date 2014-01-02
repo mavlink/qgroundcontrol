@@ -1,0 +1,345 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+//osgManipulator - Copyright (C) 2007 Fugro-Jason B.V.
+
+#ifndef OSGMANIPULATOR_DRAGGER
+#define OSGMANIPULATOR_DRAGGER 1
+
+#include <osgManipulator/Constraint>
+#include <osgManipulator/Command>
+
+#include <osg/BoundingSphere>
+#include <osg/MatrixTransform>
+#include <osgUtil/SceneView>
+#include <osgUtil/IntersectVisitor>
+#include <osgGA/GUIEventAdapter>
+#include <osgGA/GUIActionAdapter>
+
+namespace osgManipulator
+{
+
+class CompositeDragger;
+class MotionCommand;
+class TranslateInLineCommand;
+class TranslateInPlaneCommand;
+class Scale1DCommand;
+class Scale2DCommand;
+class ScaleUniformCommand;
+class Rotate3DCommand;
+
+/** Computes the nodepath from the given node all the way upto the root. */
+extern OSGMANIPULATOR_EXPORT void computeNodePathToRoot(osg::Node& node, osg::NodePath& np);
+
+class DraggerCallback : virtual public osg::Object
+{
+    public:
+        DraggerCallback():
+            osg::Object(true) {}
+
+        DraggerCallback(const DraggerCallback&, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY):
+            osg::Object(true) {}
+
+        META_Object(osgManipulator, DraggerCallback);
+
+        /**
+         * Receive motion commands. Returns true on success.
+         */
+        virtual bool receive(const MotionCommand&) { return false; }
+        virtual bool receive(const TranslateInLineCommand& command)  { return receive((MotionCommand&)command); }
+        virtual bool receive(const TranslateInPlaneCommand& command) { return receive((MotionCommand&)command); }
+        virtual bool receive(const Scale1DCommand& command)          { return receive((MotionCommand&)command); }
+        virtual bool receive(const Scale2DCommand& command)          { return receive((MotionCommand&)command); }
+        virtual bool receive(const ScaleUniformCommand& command)     { return receive((MotionCommand&)command); }
+        virtual bool receive(const Rotate3DCommand& command)         { return receive((MotionCommand&)command); }
+};
+
+class OSGMANIPULATOR_EXPORT DraggerTransformCallback : public DraggerCallback
+{
+    public:
+
+        DraggerTransformCallback(osg::MatrixTransform* transform);
+
+        virtual bool receive(const MotionCommand&);
+
+        osg::MatrixTransform* getTransform() { return _transform.get(); }
+        const osg::MatrixTransform* getTransform() const { return _transform.get(); }
+
+    protected:
+
+        osg::observer_ptr<osg::MatrixTransform> _transform;
+        osg::Matrix _startMotionMatrix;
+
+        osg::Matrix _localToWorld;
+        osg::Matrix _worldToLocal;
+};
+
+
+class OSGMANIPULATOR_EXPORT PointerInfo
+{
+    public:
+
+        PointerInfo();
+
+        PointerInfo(const PointerInfo& rhs):
+            _hitList(rhs._hitList),
+            _nearPoint(rhs._nearPoint),
+            _farPoint(rhs._farPoint),
+            _eyeDir(rhs._eyeDir)
+        {
+            _hitIter = _hitList.begin();
+        }
+
+        void reset()
+        {
+            _hitList.clear();
+            _hitIter = _hitList.begin();
+            setCamera(0);
+        }
+
+
+        bool completed() const { return _hitIter==_hitList.end(); }
+
+        void next()
+        {
+            if (!completed()) ++_hitIter;
+        }
+
+        typedef std::pair<osg::NodePath, osg::Vec3d> NodePathIntersectionPair;
+        typedef std::list< NodePathIntersectionPair> IntersectionList;
+
+
+        osg::Vec3d getLocalIntersectPoint() const { return _hitIter->second; }
+
+
+
+        void setNearFarPoints (osg::Vec3d nearPoint, osg::Vec3d farPoint) {
+            _nearPoint = nearPoint;
+            _farPoint=farPoint;
+            _eyeDir = farPoint - nearPoint;
+        }
+
+        const osg::Vec3d& getEyeDir() const {return _eyeDir;}
+
+        void getNearFarPoints( osg::Vec3d& nearPoint, osg::Vec3d& farPoint) const {
+            nearPoint = _nearPoint;
+            farPoint = _farPoint;
+        }
+
+        bool contains(const osg::Node* node) const;
+
+        void setCamera(osg::Camera* camera)
+        {
+
+            if (camera)
+            {
+                _MVPW = camera->getViewMatrix() * camera->getProjectionMatrix();
+                if (camera->getViewport()) _MVPW.postMult(camera->getViewport()->computeWindowMatrix());
+                _inverseMVPW.invert(_MVPW);
+                osg::Vec3d eye, center, up;
+                camera->getViewMatrix().getLookAt(eye, center, up);
+                _eyeDir = eye - center;
+
+            }
+            else
+            {
+                _MVPW.makeIdentity();
+                _inverseMVPW.makeIdentity();
+                _eyeDir = osg::Vec3d(0,0,1);
+            }
+
+        }
+
+        void addIntersection(const osg::NodePath& nodePath, const osg::Vec3d& intersectionPoint)
+        {
+            bool needToResetHitIter = _hitList.empty();
+            _hitList.push_back(NodePathIntersectionPair(nodePath, intersectionPoint));
+            if (needToResetHitIter) _hitIter = _hitList.begin();
+        }
+
+        void setMousePosition(float pixel_x, float pixel_y)
+        {
+            projectWindowXYIntoObject(osg::Vec2d(pixel_x, pixel_y), _nearPoint, _farPoint);
+        }
+
+    protected:
+        bool projectWindowXYIntoObject(const osg::Vec2d& windowCoord, osg::Vec3d& nearPoint, osg::Vec3d& farPoint) const;
+
+    public:
+        IntersectionList _hitList;
+        IntersectionList::const_iterator _hitIter;
+
+    protected:
+
+        osg::Vec3d _nearPoint,_farPoint;
+        osg::Vec3d _eyeDir;
+
+        osg::Matrix _MVPW;
+        osg::Matrix _inverseMVPW;
+
+};
+
+/**
+ * Base class for draggers. Concrete draggers implement the pick event handler
+ * and generate motion commands (translate, rotate, ...) and sends these
+ * command to all the DraggerCallbacks & Transforms that are connected to the Dragger that generates the
+ * commands.
+ */
+class OSGMANIPULATOR_EXPORT Dragger : public osg::MatrixTransform
+{
+    public:
+
+
+        META_Node(osgManipulator,Dragger)
+
+        /**
+         * Set/Get parent dragger. For simple draggers parent points to itself.
+         * For composite draggers parent points to the parent dragger that uses
+         * this dragger.
+         */
+        virtual void setParentDragger(Dragger* parent) { _parentDragger = parent; }
+        Dragger* getParentDragger() { return _parentDragger; }
+        const Dragger* getParentDragger() const { return _parentDragger; }
+
+        /** Returns 0 if this Dragger is not a CompositeDragger. */
+        virtual const CompositeDragger* getComposite() const { return 0; }
+
+        /** Returns 0 if this Dragger is not a CompositeDragger. */
+        virtual CompositeDragger* getComposite() { return 0; }
+
+
+        void setHandleEvents(bool flag);
+        bool getHandleEvents() const { return _handleEvents; }
+
+        void setActivationModKeyMask(unsigned int mask) { _activationModKeyMask = mask; }
+        unsigned int getActivationModKeyMask() const { return _activationModKeyMask; }
+
+        void setActivationKeyEvent(int key) { _activationKeyEvent = key; }
+        int getActivationKeyEvent() const { return _activationKeyEvent; }
+
+
+        virtual void traverse(osg::NodeVisitor& nv);
+
+        virtual bool handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+        virtual bool handle(const PointerInfo&, const osgGA::GUIEventAdapter&, osgGA::GUIActionAdapter&) { return false; }
+
+
+        typedef std::vector< osg::ref_ptr<Constraint> > Constraints;
+
+        void addConstraint(Constraint* constraint);
+        void removeConstraint(Constraint* constraint);
+
+        Constraints& getConstraints() { return _constraints; }
+        const Constraints& getConstraints() const { return _constraints; }
+
+
+        typedef std::vector< osg::ref_ptr<DraggerCallback> > DraggerCallbacks;
+
+        void addDraggerCallback(DraggerCallback* dc);
+        void removeDraggerCallback(DraggerCallback* dc);
+
+        DraggerCallbacks& getDraggerCallbacks() { return _draggerCallbacks; }
+        const DraggerCallbacks& getDraggerCallbacks() const { return _draggerCallbacks; }
+
+        void addTransformUpdating(MatrixTransform* transform);
+        void removeTransformUpdating(MatrixTransform* transform);
+
+        /** Setup default geometry for dragger. */
+        virtual void setupDefaultGeometry() {}
+
+        virtual bool receive(const MotionCommand& command);
+        void dispatch(MotionCommand& command);
+
+        void setDraggerActive(bool active) { _draggerActive = active; }
+        bool getDraggerActive() const { return _draggerActive; }
+
+    protected:
+
+        Dragger();
+        Dragger(const Dragger& rhs, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+        virtual ~Dragger();
+
+
+        bool                            _handleEvents;
+        bool                            _draggerActive;
+
+        unsigned int                    _activationModKeyMask;
+        int                             _activationKeyEvent;
+        bool                            _activationPermittedByModKeyMask;
+        bool                            _activationPermittedByKeyEvent;
+
+        osgManipulator::PointerInfo     _pointer;
+
+        Dragger*                        _parentDragger;
+
+        osg::ref_ptr<DraggerCallback>   _selfUpdater;
+        Constraints                     _constraints;
+        DraggerCallbacks                _draggerCallbacks;
+
+};
+
+
+/**
+ * CompositeDragger allows to create complex draggers that are composed of a
+ * hierarchy of Draggers.
+ */
+class OSGMANIPULATOR_EXPORT CompositeDragger : public Dragger
+{
+    public:
+
+        META_Node(osgManipulator,CompositeDragger)
+
+        typedef std::vector< osg::ref_ptr<Dragger> > DraggerList;
+
+        virtual const CompositeDragger* getComposite() const { return this; }
+        virtual CompositeDragger* getComposite() { return this; }
+
+        virtual void setParentDragger(Dragger* parent);
+
+        virtual bool handle(const PointerInfo& pi, const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa);
+
+        // Composite-specific methods below
+        virtual bool addDragger(Dragger* dragger);
+        virtual bool removeDragger(Dragger* dragger);
+        unsigned int getNumDraggers() const { return _draggerList.size(); }
+        Dragger* getDragger(unsigned int i) { return _draggerList[i].get(); }
+        const Dragger* getDragger(unsigned int i) const { return _draggerList[i].get(); }
+        bool containsDragger(const Dragger* dragger) const;
+        DraggerList::iterator findDragger(const Dragger* dragger);
+
+    protected:
+
+        CompositeDragger() {}
+        CompositeDragger(const CompositeDragger& rhs, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+        virtual ~CompositeDragger() {}
+
+        DraggerList _draggerList;
+};
+
+/**
+ * Culls the drawable all the time. Used by draggers to have invisible geometry
+ * around lines and points so that they can be picked. For example, a dragger
+ * could have a line with an invisible cylinder around it to enable picking on
+ * that line.
+ */
+void OSGMANIPULATOR_EXPORT setDrawableToAlwaysCull(osg::Drawable& drawable);
+
+/**
+ * Convenience function for setting the material color on a node.
+ */
+void OSGMANIPULATOR_EXPORT setMaterialColor(const osg::Vec4& color, osg::Node& node);
+
+}
+
+#endif

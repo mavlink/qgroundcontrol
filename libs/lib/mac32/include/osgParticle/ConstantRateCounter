@@ -1,0 +1,77 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGPARTICLE_CONSTANTRATECOUNTER
+#define OSGPARTICLE_CONSTANTRATECOUNTER 1
+
+#include <osgParticle/Counter>
+
+#include <osg/Object>
+#include <osg/Math>
+
+namespace osgParticle
+{
+
+    class ConstantRateCounter: public Counter {
+    public:
+        ConstantRateCounter():
+            Counter(), 
+            _minimumNumberOfParticlesToCreate(0),
+            _numberOfParticlesPerSecondToCreate(0),
+            _carryOver(0)
+        {
+        }
+
+        ConstantRateCounter(const ConstantRateCounter& copy, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY):
+             Counter(copy, copyop), 
+             _minimumNumberOfParticlesToCreate(copy._minimumNumberOfParticlesToCreate),
+             _numberOfParticlesPerSecondToCreate(copy._numberOfParticlesPerSecondToCreate),
+             _carryOver(copy._carryOver)
+        {
+        }
+            
+        
+        META_Object(osgParticle, ConstantRateCounter);
+        
+        void setMinimumNumberOfParticlesToCreate(int minNumToCreate) { _minimumNumberOfParticlesToCreate = minNumToCreate; }
+        int getMinimumNumberOfParticlesToCreate() const { return _minimumNumberOfParticlesToCreate; }
+    
+        void setNumberOfParticlesPerSecondToCreate(double numPerSecond) { _numberOfParticlesPerSecondToCreate = numPerSecond; }
+        double getNumberOfParticlesPerSecondToCreate() const { return _numberOfParticlesPerSecondToCreate; }
+
+        /// Return the number of particles to be created in this frame
+        virtual int numParticlesToCreate(double dt) const
+        {
+            double v = (dt*_numberOfParticlesPerSecondToCreate);
+            int i = (int)(v);
+            _carryOver += (v-(double)i);
+            if (_carryOver>1.0)
+            {
+                ++i;
+                _carryOver -= 1.0;
+            }
+            return osg::maximum(_minimumNumberOfParticlesToCreate, i);
+        }
+        
+    protected:
+        virtual ~ConstantRateCounter() {}
+        
+        int _minimumNumberOfParticlesToCreate;
+        double _numberOfParticlesPerSecondToCreate;
+        mutable double _carryOver;
+    };
+    
+}
+
+
+#endif

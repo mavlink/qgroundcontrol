@@ -1,0 +1,63 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGTEXT_FADETEXT
+#define OSGTEXT_FADETEXT 1
+
+#include <osgText/Text>
+
+namespace osgText {
+
+
+class OSGTEXT_EXPORT FadeText : public osgText::Text
+{
+public:
+
+    FadeText();
+    FadeText(const Text& text,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+    META_Object(osgText,FadeText)
+
+
+    /** Set the speed that the alpha value changes as the text is occluded or becomes visible.*/
+    void setFadeSpeed(float fadeSpeed) { _fadeSpeed = fadeSpeed; }
+
+    /** Get the speed that the alpha value changes.*/
+    float getFadeSpeed() const { return _fadeSpeed; }
+
+    /** Draw the text.*/
+    virtual void drawImplementation(osg::RenderInfo& renderInfo) const;
+
+protected:
+
+    virtual ~FadeText() {}
+
+    void init();
+  
+    struct FadeTextUpdateCallback;
+    friend struct FadeTextUpdateCallback;
+
+    typedef std::map<osg::View*, osg::Vec4 > ViewBlendColourMap;
+    
+    ViewBlendColourMap& getViewBlendColourMap() { return _viewBlendColourMap; }
+    const ViewBlendColourMap& getViewBlendColourMap() const { return _viewBlendColourMap; }
+
+    float _fadeSpeed;
+    
+    mutable ViewBlendColourMap _viewBlendColourMap;
+};
+
+}
+
+
+#endif

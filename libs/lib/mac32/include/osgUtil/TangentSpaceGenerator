@@ -1,0 +1,78 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_TANGENTSPACEGENERATOR_
+#define OSGUTIL_TANGENTSPACEGENERATOR_
+
+#include <osgUtil/Export>
+
+#include <osg/ref_ptr>
+#include <osg/Referenced>
+#include <osg/Array>
+#include <osg/Geometry>
+
+namespace osgUtil
+{
+
+/**
+ The TangentSpaceGenerator class generates three arrays containing tangent-space basis vectors.
+ It takes a texture-mapped Geometry object as input, traverses its primitive sets and computes
+ Tangent, Normal and Binormal vectors for each vertex, storing them into arrays.
+ The resulting arrays can be used as vertex program varying (per-vertex) parameters,
+ enabling advanced effects like bump-mapping.
+ To use this class, simply call the generate() method specifying the Geometry object
+ you want to process and the texture unit that contains UV mapping for the normal map;
+ then you can retrieve the TBN arrays by calling getTangentArray(), getNormalArray()
+ and getBinormalArray() methods.
+ */
+class OSGUTIL_EXPORT TangentSpaceGenerator: public osg::Referenced {
+public:
+    TangentSpaceGenerator();
+    TangentSpaceGenerator(const TangentSpaceGenerator &copy, const osg::CopyOp &copyop = osg::CopyOp::SHALLOW_COPY);
+
+    void generate(osg::Geometry *geo, int normal_map_tex_unit = 0);
+
+    inline osg::Vec4Array *getTangentArray()               { return T_.get(); }
+    inline const osg::Vec4Array *getTangentArray() const   { return T_.get(); }
+    inline void setTangentArray(osg::Vec4Array *array)     { T_ = array; }
+
+    inline osg::Vec4Array *getNormalArray()                { return N_.get(); }
+    inline const osg::Vec4Array *getNormalArray() const    { return N_.get(); }
+    inline void setNormalArray(osg::Vec4Array *array)      { N_ = array; }
+
+    inline osg::Vec4Array *getBinormalArray()              { return B_.get(); }
+    inline const osg::Vec4Array *getBinormalArray() const  { return B_.get(); }
+    inline void setBinormalArray(osg::Vec4Array *array)    { B_ = array; }
+
+    inline osg::IndexArray *getIndices() { return indices_.get(); }
+
+protected:
+
+    virtual ~TangentSpaceGenerator() {}
+    TangentSpaceGenerator &operator=(const TangentSpaceGenerator &) { return *this; }
+
+    void compute(osg::PrimitiveSet *pset,
+                 const osg::Array *vx,
+                 const osg::Array *nx,
+                 const osg::Array *tx,
+                 int iA, int iB, int iC);
+
+    osg::ref_ptr<osg::Vec4Array> T_;
+    osg::ref_ptr<osg::Vec4Array> B_;
+    osg::ref_ptr<osg::Vec4Array> N_;
+    osg::ref_ptr<osg::UIntArray> indices_;
+};
+
+}
+
+#endif

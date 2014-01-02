@@ -1,0 +1,38 @@
+/* -*-c++-*- OpenThreads library, Copyright (C) 2002 - 2007  The Open Thread Group
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OPENTHREADS_VERSION
+#define OPENTHREADS_VERSION 1
+
+#include <OpenThreads/Exports>
+
+extern "C" {
+
+#define OPENTHREADS_MAJOR_VERSION 2
+#define OPENTHREADS_MINOR_VERSION 6
+#define OPENTHREADS_PATCH_VERSION 0
+#define OPENTHREADS_SOVERSION 12
+
+/** OpenThreadsGetVersion() returns the library version number.
+ * Numbering convention : OpenThreads-1.0 will return 1.0 from OpenThreadsGetVersion. */
+extern OPENTHREAD_EXPORT_DIRECTIVE const char* OpenThreadsGetVersion();
+
+/** The OpenThreadsGetSOVersion() method returns the OpenSceneGraph soversion number. */
+extern OPENTHREAD_EXPORT_DIRECTIVE const char* OpenThreadsGetSOVersion();
+
+/** The OpenThreadsGetLibraryName() method returns the library name in human-friendly form. */
+extern OPENTHREAD_EXPORT_DIRECTIVE const char* OpenThreadsGetLibraryName();
+
+}
+
+#endif

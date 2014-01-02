@@ -1,0 +1,141 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2008 Cedric Pinson <mornifle@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGANIMATION_KEYFRAME_H
+#define OSGANIMATION_KEYFRAME_H
+
+#include <string>
+#include <osg/Referenced>
+#include <osgAnimation/Vec3Packed>
+#include <osgAnimation/CubicBezier>
+#include <osg/Quat>
+#include <osg/Vec4>
+#include <osg/Vec3>
+#include <osg/Vec2>
+#include <osg/Matrixf>
+
+namespace osgAnimation 
+{
+
+    class Keyframe 
+    {
+    public:
+        double getTime() const { return _time; }
+        void setTime(double time) { _time = time; }
+              
+    protected:
+        double _time;
+
+    };
+
+    template <class T>
+    class TemplateKeyframe : public Keyframe
+    {
+    protected:
+        T _value;
+    public:
+        TemplateKeyframe () {}
+        ~TemplateKeyframe () {}
+
+        TemplateKeyframe (double time, const T& value) 
+        { 
+            _time = time;
+            _value = value;
+        }
+
+        void setValue(const T& value) { _value = value;}
+        const T& getValue() const { return _value;}
+    };
+
+
+    class KeyframeContainer : public osg::Referenced
+    {
+    public:
+        KeyframeContainer() {}
+        virtual unsigned int size() const = 0;
+    protected:
+        ~KeyframeContainer() {}
+        std::string _name;
+    };
+
+
+    template <class T>
+    class TemplateKeyframeContainer : public std::vector<TemplateKeyframe<T> >, public KeyframeContainer
+    {
+    public:
+        //    const char* getKeyframeType() { return #T ;}
+        TemplateKeyframeContainer() {}
+        typedef TemplateKeyframe<T> KeyType;
+
+        virtual unsigned int size() const { return (unsigned int)std::vector<TemplateKeyframe<T> >::size(); }
+
+    };
+
+    template <>
+    class TemplateKeyframeContainer<Vec3Packed> : public std::vector<TemplateKeyframe<Vec3Packed> >, public KeyframeContainer
+    {
+    public:
+        typedef TemplateKeyframe<Vec3Packed> KeyType;
+
+        TemplateKeyframeContainer() {}
+        const char* getKeyframeType() { return "Vec3Packed" ;}
+        void init(const osg::Vec3f& min, const osg::Vec3f& scale) { _min = min; _scale = scale; }
+
+        osg::Vec3f _min;
+        osg::Vec3f _scale;
+    };
+
+
+    typedef TemplateKeyframe<float> FloatKeyframe;
+    typedef TemplateKeyframeContainer<float> FloatKeyframeContainer;
+    
+    typedef TemplateKeyframe<double> DoubleKeyframe;
+    typedef TemplateKeyframeContainer<double> DoubleKeyframeContainer;    
+
+    typedef TemplateKeyframe<osg::Vec2> Vec2Keyframe;
+    typedef TemplateKeyframeContainer<osg::Vec2> Vec2KeyframeContainer;
+
+    typedef TemplateKeyframe<osg::Vec3> Vec3Keyframe;
+    typedef TemplateKeyframeContainer<osg::Vec3> Vec3KeyframeContainer;
+
+    typedef TemplateKeyframe<osg::Vec4> Vec4Keyframe;
+    typedef TemplateKeyframeContainer<osg::Vec4> Vec4KeyframeContainer;
+
+    typedef TemplateKeyframe<osg::Quat> QuatKeyframe;
+    typedef TemplateKeyframeContainer<osg::Quat> QuatKeyframeContainer;
+
+    typedef TemplateKeyframe<osg::Matrixf> MatrixKeyframe;
+    typedef TemplateKeyframeContainer<osg::Matrixf> MatrixKeyframeContainer;
+
+    typedef TemplateKeyframe<Vec3Packed> Vec3PackedKeyframe;
+    typedef TemplateKeyframeContainer<Vec3Packed> Vec3PackedKeyframeContainer;
+
+    typedef TemplateKeyframe<FloatCubicBezier> FloatCubicBezierKeyframe;
+    typedef TemplateKeyframeContainer<FloatCubicBezier> FloatCubicBezierKeyframeContainer;
+    
+    typedef TemplateKeyframe<DoubleCubicBezier> DoubleCubicBezierKeyframe;
+    typedef TemplateKeyframeContainer<DoubleCubicBezier> DoubleCubicBezierKeyframeContainer;
+    
+    typedef TemplateKeyframe<Vec2CubicBezier> Vec2CubicBezierKeyframe;
+    typedef TemplateKeyframeContainer<Vec2CubicBezier> Vec2CubicBezierKeyframeContainer;
+    
+    typedef TemplateKeyframe<Vec3CubicBezier> Vec3CubicBezierKeyframe;
+    typedef TemplateKeyframeContainer<Vec3CubicBezier> Vec3CubicBezierKeyframeContainer;
+    
+    typedef TemplateKeyframe<Vec4CubicBezier> Vec4CubicBezierKeyframe;
+    typedef TemplateKeyframeContainer<Vec4CubicBezier> Vec4CubicBezierKeyframeContainer;
+
+}
+
+#endif

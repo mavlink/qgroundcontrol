@@ -1,0 +1,138 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_ArrayDispatchers
+#define OSG_ArrayDispatchers 1
+
+#include <osg/ref_ptr>
+#include <osg/Array>
+#include <osg/Matrixd>
+#include <osg/GLBeginEndAdapter>
+
+namespace osg {
+
+// forward declare
+class State;
+class AttributeDispatchMap;
+
+struct AttributeDispatch : public osg::Referenced
+{
+    virtual void assign(const GLvoid*, const IndexArray*) {}
+    virtual void operator() (unsigned int) {};
+};
+
+/** Helper class for managing the dispatch to OpenGL of various attribute arrays such as stored in osg::Geometry.*/
+class OSG_EXPORT ArrayDispatchers : public osg::Referenced
+{
+    public:
+
+        ArrayDispatchers();
+        ~ArrayDispatchers();
+
+        void setState(osg::State* state);
+
+        AttributeDispatch* vertexDispatcher(Array* array, IndexArray* indices);
+        AttributeDispatch* normalDispatcher(Array* array, IndexArray* indices);
+        AttributeDispatch* colorDispatcher(Array* array, IndexArray* indices);
+        AttributeDispatch* secondaryColorDispatcher(Array* array, IndexArray* indices);
+        AttributeDispatch* fogCoordDispatcher(Array* array, IndexArray* indices);
+        AttributeDispatch* texCoordDispatcher(unsigned int unit, Array* array, IndexArray* indices);
+        AttributeDispatch* vertexAttribDispatcher(unsigned int unit, Array* array, IndexArray* indices);
+
+        void reset();
+
+        void setUseGLBeginEndAdapter(bool flag) { _useGLBeginEndAdapter = flag; }
+        bool getUseGLBeginEndAdapter() const { return _useGLBeginEndAdapter; }
+
+        void setUseVertexAttribAlias(bool flag) { _useVertexAttribAlias = flag; }
+        bool getUseVertexAttribAlias() const { return _useVertexAttribAlias; }
+
+        void activate(unsigned int binding, AttributeDispatch* at)
+        {
+            if (at) _activeDispatchList[binding].push_back(at);
+        }
+
+        void activateVertexArray(unsigned int binding, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, vertexDispatcher(array, indices)); }
+        void activateColorArray(unsigned int binding, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, colorDispatcher(array, indices)); }
+        void activateNormalArray(unsigned int binding, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, normalDispatcher(array, indices)); }
+        void activateSecondaryColorArray(unsigned int binding, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, secondaryColorDispatcher(array, indices)); }
+        void activateFogCoordArray(unsigned int binding, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, fogCoordDispatcher(array, indices)); }
+        void activateTexCoordArray(unsigned int binding, unsigned int unit, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, texCoordDispatcher(unit, array, indices)); }
+        void activateVertexAttribArray(unsigned int binding, unsigned int unit, osg::Array* array, osg::IndexArray* indices) { if (binding && array) activate(binding, vertexAttribDispatcher(unit, array, indices)); }
+
+        void dispatch(unsigned int binding, unsigned int index)
+        {
+            AttributeDispatchList& ad = _activeDispatchList[binding];
+            for(AttributeDispatchList::iterator itr = ad.begin();
+                itr != ad.end();
+                ++itr)
+            {
+                (*(*itr))(index);
+            }
+        }
+
+        bool active(unsigned int binding) const { return !_activeDispatchList[binding].empty(); }
+
+        void Begin(GLenum mode)
+        {
+#ifdef OSG_GL1_AVAILABLE
+            if (_useGLBeginEndAdapter) _glBeginEndAdapter->Begin(mode);
+            else ::glBegin(mode);
+#else
+            _glBeginEndAdapter->Begin(mode);
+#endif
+        }
+
+        void End()
+        {
+#ifdef OSG_GL1_AVAILABLE
+            if (_useGLBeginEndAdapter) _glBeginEndAdapter->End();
+            else ::glEnd();
+#else
+            _glBeginEndAdapter->End();
+#endif
+        }
+
+    protected:
+
+        void init();
+
+        void assignTexCoordDispatchers(unsigned int unit);
+        void assignVertexAttribDispatchers(unsigned int unit);
+
+        bool                  _initialized;
+        State*                _state;
+        GLBeginEndAdapter*    _glBeginEndAdapter;
+
+        AttributeDispatchMap* _vertexDispatchers;
+        AttributeDispatchMap* _normalDispatchers;
+        AttributeDispatchMap* _colorDispatchers;
+        AttributeDispatchMap* _secondaryColorDispatchers;
+        AttributeDispatchMap* _fogCoordDispatchers;
+
+        typedef std::vector<AttributeDispatchMap*> AttributeDispatchMapList;
+        AttributeDispatchMapList _texCoordDispatchers;
+        AttributeDispatchMapList _vertexAttribDispatchers;
+
+        typedef std::vector<AttributeDispatch*> AttributeDispatchList;
+
+        typedef std::vector<AttributeDispatchList> ActiveDispatchList;
+        ActiveDispatchList    _activeDispatchList;
+
+        bool                    _useVertexAttribAlias;
+        bool                    _useGLBeginEndAdapter;
+};
+
+}
+
+#endif

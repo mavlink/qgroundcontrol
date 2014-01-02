@@ -1,0 +1,57 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGANIMATION_ACTION_STRIPANIMATION_H
+#define OSGANIMATION_ACTION_STRIPANIMATION_H
+
+#include <osgAnimation/Action>
+#include <osgAnimation/Export>
+#include <osgAnimation/FrameAction>
+#include <osgAnimation/ActionBlendIn>
+#include <osgAnimation/ActionBlendOut>
+#include <osgAnimation/ActionAnimation>
+
+namespace osgAnimation
+{
+
+    // encapsulate animation with blend in blend out for classic usage
+    class OSGANIMATION_EXPORT ActionStripAnimation : public Action
+    {
+    public:
+        META_Action(osgAnimation, ActionStripAnimation);
+        ActionStripAnimation() {}
+        ActionStripAnimation(const ActionStripAnimation& a, const osg::CopyOp& c);
+        ActionStripAnimation(Animation* animation, double blendInDuration = 0.0, double blendOutDuration = 0.0, double blendInWeightTarget = 1.0  );
+        ActionAnimation* getAnimation();
+        ActionBlendIn* getBlendIn();
+        ActionBlendOut* getBlendOut();
+        const ActionAnimation* getAnimation() const;
+        const ActionBlendIn* getBlendIn() const;
+        const ActionBlendOut* getBlendOut() const;
+        unsigned int getBlendOutStartFrame() const;
+        
+        unsigned int getLoop() const;
+        void setLoop(unsigned int loop);
+        void traverse(ActionVisitor& visitor);
+
+    protected:
+        typedef std::pair<unsigned int, osg::ref_ptr<ActionBlendOut> > FrameBlendOut;
+        osg::ref_ptr<ActionBlendIn> _blendIn;
+        FrameBlendOut _blendOut;
+        osg::ref_ptr<ActionAnimation> _animation;
+    };
+
+}
+
+#endif

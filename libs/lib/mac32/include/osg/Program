@@ -1,0 +1,406 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ * Copyright (C) 2003-2005 3Dlabs Inc. Ltd.
+ * Copyright (C) 2004-2005 Nathan Cournia
+ * Copyright (C) 2008 Zebra Imaging
+ * Copyright (C) 2010 Vires Simulationstechnologie GmbH
+ *
+ * This application is open source and may be redistributed and/or modified
+ * freely and without restriction, both in commercial and non commercial
+ * applications, as long as this copyright notice is maintained.
+ * 
+ * This application is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
+/* file:        include/osg/Program
+ * author:      Mike Weiblen 2008-01-02
+ *              Holger Helmich 2010-10-21
+*/
+
+#ifndef OSG_PROGRAM
+#define OSG_PROGRAM 1
+
+#include <string>
+#include <vector>
+#include <map>
+
+#include <osg/buffered_value>
+#include <osg/ref_ptr>
+#include <osg/Uniform>
+#include <osg/Shader>
+#include <osg/StateAttribute>
+
+namespace osg {
+
+class State;
+
+
+///////////////////////////////////////////////////////////////////////////
+/** osg::Program is an application-level abstraction of an OpenGL glProgram.
+  * It is an osg::StateAttribute that, when applied, will activate a
+  * glProgram for subsequent rendering.
+  * osg::Shaders containing the actual shader source code are
+  * attached to a Program, which will then manage the compilation,
+  * linking, and activation of the GLSL program.
+  * osg::Program will automatically manage per-context instancing of the
+  * OpenGL glPrograms, if that is necessary for a particular display
+  * configuration.
+  */
+
+class OSG_EXPORT Program : public osg::StateAttribute
+{
+    public:
+        Program();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        Program(const Program& rhs, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        META_StateAttribute(osg, Program, PROGRAM);
+
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        virtual int compare(const osg::StateAttribute& sa) const;
+
+        /** If enabled, activate our program in the GL pipeline,
+          * performing any rebuild operations that might be pending. */
+        virtual void apply(osg::State& state) const;
+
+        /** Set whether to use a mutex to ensure ref() and unref() are thread safe.*/
+        virtual void setThreadSafeRefUnref(bool threadSafe);
+
+        /** Compile program and associated shaders.*/
+        virtual void compileGLObjects(osg::State& state) const;
+
+        /** Resize any per context GLObject buffers to specified size. */
+        virtual void resizeGLObjectBuffers(unsigned int maxSize);
+
+        /** release OpenGL objects in specified graphics context if State
+            object is passed, otherwise release OpenGL objects for all graphics context if
+            State object pointer NULL.*/
+        virtual void releaseGLObjects(osg::State* state=0) const;
+
+        /** Mark our PCSOs as needing relink */
+        void dirtyProgram();
+
+        /** Attach an osg::Shader to this osg::Program.
+          * Mark Program as needing relink.  Return true for success */
+        bool addShader( Shader* shader );
+
+        unsigned int getNumShaders() const { return static_cast<unsigned int>(_shaderList.size()); }
+
+        Shader* getShader( unsigned int i ) { return _shaderList[i].get(); }
+        const Shader* getShader( unsigned int i ) const { return _shaderList[i].get(); }
+
+        /** Remove osg::Shader from this osg::Program.
+          * Mark Program as needing relink.  Return true for success */
+        bool removeShader( Shader* shader );
+
+        /** Set/get GL program parameters */
+        void setParameter( GLenum pname, GLint value );
+        GLint getParameter( GLenum pname ) const;
+
+        void setParameterfv( GLenum pname, const GLfloat* value );
+        const GLfloat* getParameterfv( GLenum pname ) const;
+
+        /** Add an attribute location binding. */
+        void addBindAttribLocation( const std::string& name, GLuint index );
+        
+        /** Remove an attribute location binding. */
+        void removeBindAttribLocation( const std::string& name );
+
+        /** Add an frag data location binding. See EXT_gpu_shader4 for BindFragDataLocationEXT */
+        void addBindFragDataLocation( const std::string& name, GLuint index );
+
+        /** Remove an frag data location binding. */
+        void removeBindFragDataLocation( const std::string& name );
+
+        /** Add a uniform block binding to an index target. XXX This
+         * should not be an attribute of the program. It should be a
+         * pseudo-uniform that can live in StateSet objects because
+         * it is cheap to set. */
+        void addBindUniformBlock(const std::string& name, GLuint index);
+
+        /** Remove a uniform block binding. */
+        void removeBindUniformBlock(const std::string& name);
+
+        /** Simple class for wrapping up the data used in glProgramBinary and glGetProgramBinary.
+          * On the first run of your application Programs should be assigned an empty ProgramBinary.
+          * Before your application exits it should retrieve the program binary via
+          * Program::PerContextProgram::compileProgramBinary and save it to disk.
+          * When your application is run subsequently, load your binary from disk and use it to set
+          * the data of a ProgramBinary, and set the ProgramBinary on the associated Program.
+          * This will typically result in Program::compileGLObjects executing much faster.*/
+        class OSG_EXPORT ProgramBinary : public osg::Object
+        {
+            public:
+
+                ProgramBinary();
+
+                /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+                ProgramBinary(const ProgramBinary& rhs, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+                META_Object(osg, ProgramBinary);
+
+                /** Allocated a data buffer of specified size/*/
+                void allocate(unsigned int size);
+
+                /** Assign program binary data, copying the specified data into locally stored data buffer, the original data can then be deleted.*/
+                void assign(unsigned int size, const unsigned char* data);
+
+                /** Set the format of the program binary data.*/
+                void setFormat(GLenum format) {_format = format;}
+
+                /** Get the format of the program binary data.*/
+                GLenum getFormat() const {return _format;}
+
+                /** Get the size of the program binary data.*/
+                unsigned int getSize() const { return _data.size(); }
+
+                /** Get a ptr to the program binary data.*/
+                unsigned char* getData() { return _data.empty() ? 0 : &(_data.front()); }
+
+                /** Get a const ptr to the program binary data.*/
+                const unsigned char* getData() const { return _data.empty() ? 0 : &(_data.front()); }
+
+            protected:
+                std::vector<unsigned char> _data;
+                GLenum _format;
+        };
+
+
+        /** Set the Program using a ProgramBinary. If a ProgramBinary is not yet
+         * available then setting an empty one signals that compileProgramBinary
+         * will be called later.*/
+        void setProgramBinary(ProgramBinary* programBinary) { _programBinary = programBinary; } 
+
+        /** Get the Program's ProgramBinary, return NULL if none is assigned. */
+        ProgramBinary* getProgramBinary() { return _programBinary.get(); } 
+
+        /** Get the const Program's ProgramBinary, return NULL if none is assigned. */
+        const ProgramBinary* getProgramBinary() const { return _programBinary.get(); } 
+
+        typedef std::map<std::string,GLuint> AttribBindingList;
+        typedef std::map<std::string,GLuint> FragDataBindingList;
+        typedef std::map<std::string,GLuint> UniformBlockBindingList;
+
+        const AttribBindingList& getAttribBindingList() const { return _attribBindingList; }
+        const FragDataBindingList& getFragDataBindingList() const { return _fragDataBindingList; }
+        const UniformBlockBindingList& getUniformBlockBindingList() const { return _uniformBlockBindingList; }
+
+        /** Return true if this Program represents "fixed-functionality" rendering */
+        bool isFixedFunction() const;
+
+        /** Query InfoLog from a glProgram */
+        bool getGlProgramInfoLog(unsigned int contextID, std::string& log) const;
+
+        /** Mark internal glProgram for deletion.
+          * Deletion requests are queued until they can be executed
+          * in the proper GL context. */
+        static void deleteGlProgram(unsigned int contextID, GLuint program);
+
+        /** flush all the cached glPrograms which need to be deleted
+          * in the OpenGL context related to contextID.*/
+        static void flushDeletedGlPrograms(unsigned int contextID,double currentTime, double& availableTime);
+
+        /** discard all the cached glPrograms which need to be deleted
+          * in the OpenGL context related to contextID.
+          * Note, unlike flush no OpenGL calls are made, instead the handles are all removed.
+          * this call is useful for when an OpenGL context has been destroyed. */
+        static void discardDeletedGlPrograms(unsigned int contextID);
+
+        struct ActiveVarInfo {
+            ActiveVarInfo() : _location(-1), _type(Uniform::UNDEFINED), _size(-1) {}
+            ActiveVarInfo( GLint loc, GLenum type, GLint size ) : _location(loc), _type(type), _size(size) {}
+            GLint _location;
+            GLenum _type;
+            GLint _size;
+        };
+        typedef std::map< unsigned int, ActiveVarInfo > ActiveUniformMap;
+        typedef std::map< std::string, ActiveVarInfo > ActiveVarInfoMap;
+        const ActiveUniformMap& getActiveUniforms(unsigned int contextID) const;
+        const ActiveVarInfoMap& getActiveAttribs(unsigned int contextID) const;
+        struct UniformBlockInfo
+        {
+            UniformBlockInfo() : _index(GL_INVALID_INDEX), _size(0) {}
+            UniformBlockInfo(GLuint index, GLsizei size)
+                : _index(index), _size(size)
+            {
+            }
+            GLuint _index;
+            GLsizei _size;
+        };
+        typedef std::map<std::string, UniformBlockInfo> UniformBlockMap;
+        const UniformBlockMap& getUniformBlocks(unsigned contextID) const;
+    public:
+
+        // make PerContextProgram a friend to allow it access Program's protected
+        // methods and member variables.
+        class PerContextProgram;
+        friend class PerContextProgram;
+
+        /** PerContextProgram (PCP) is an OSG-internal encapsulation of glPrograms per-GL context.  */
+        class OSG_EXPORT PerContextProgram : public osg::Referenced
+        {
+            public:
+                PerContextProgram(const Program* program, unsigned int contextID);
+
+                GLuint getHandle() const {return _glProgramHandle;}
+
+                void requestLink();
+                void linkProgram(osg::State& state);
+                bool validateProgram();
+                bool needsLink() const {return _needsLink;}
+                bool isLinked() const {return _isLinked;}
+                bool getInfoLog( std::string& infoLog ) const;
+
+                /** Was glProgramBinary called successfully? */
+                bool loadedBinary() const {return _loadedBinary;}
+
+                /** Compile a program binary. For this to work setProgramBinary must have
+                 * been called on the osg::Program with an empty ProgramBinary prior to
+                 * compileGLObjects being called.
+                 * compileProgramBinary should be called after the program has been
+                 * "exercised" by rendering with it. The ProgramBinary can then be saved
+                 * to disk for faster subsequent compiling. */
+                ProgramBinary* compileProgramBinary(osg::State& state);
+
+                void useProgram() const;
+
+                void resetAppliedUniforms() const
+                {
+                    for(LastAppliedUniformList::iterator itr=_lastAppliedUniformList.begin();
+                        itr!=_lastAppliedUniformList.end();
+                        ++itr)
+                    {
+                        (*itr).first = 0;
+                        (*itr).second = 0;
+                    }
+                }
+                
+                
+                inline void apply(const Uniform& uniform) const
+                {
+                    GLint location = getUniformLocation(uniform.getNameID());
+                    if (location>=0)
+                    {
+                        if ((unsigned int)location>=_lastAppliedUniformList.size()) _lastAppliedUniformList.resize(location+1);
+                        const Uniform* lastAppliedUniform = _lastAppliedUniformList[location].first.get();
+                        if (lastAppliedUniform != &uniform)
+                        {
+                            // new attribute
+                            uniform.apply(_extensions.get(),location);
+                            _lastAppliedUniformList[location].first = &uniform;
+                            _lastAppliedUniformList[location].second = uniform.getModifiedCount();
+                        }
+                        else if (_lastAppliedUniformList[location].second != uniform.getModifiedCount())
+                        {
+                            // existing attribute has been modified
+                            uniform.apply(_extensions.get(),location);
+                            _lastAppliedUniformList[location].first = &uniform;
+                            _lastAppliedUniformList[location].second = uniform.getModifiedCount();
+                        }
+                    }
+                }
+
+                const ActiveUniformMap& getActiveUniforms() const {return _uniformInfoMap;}
+                const ActiveVarInfoMap& getActiveAttribs() const {return _attribInfoMap;}
+                const UniformBlockMap& getUniformBlocks() const {return _uniformBlockMap; }
+                inline GLint getUniformLocation( unsigned int uniformNameID ) const { ActiveUniformMap::const_iterator itr = _uniformInfoMap.find(uniformNameID); return (itr!=_uniformInfoMap.end()) ? itr->second._location : -1; }
+
+                /**
+                  * Alternative version of getUniformLocation( unsigned int uniformNameID )
+                  * retrofited into OSG for backward compatibility with osgCal,
+                  * after uniform ids were refactored from std::strings to GLints in OSG version 2.9.10.
+                  * 
+                  * Drawbacks: This method is not particularly fast. It has to access mutexed static 
+                  * map of uniform ids. So don't overuse it or your app performance will suffer.
+                */
+                inline GLint getUniformLocation( const std::string & uniformName ) const { return getUniformLocation( Uniform::getNameID( uniformName ) ); }
+
+                inline GLint getAttribLocation( const std::string& name ) const { ActiveVarInfoMap::const_iterator itr = _attribInfoMap.find(name); return (itr!=_attribInfoMap.end()) ? itr->second._location : -1; }
+
+                inline void addShaderToAttach(Shader *shader)
+                {
+                    _shadersToAttach.push_back(shader);
+                }
+
+                inline void addShaderToDetach(Shader *shader)
+                {
+                    _shadersToDetach.push_back(shader);
+                }
+      
+            protected:        /*methods*/
+                ~PerContextProgram();
+
+            protected:        /*data*/
+                /** Pointer to our parent Program */
+                const Program* _program;
+                /** Pointer to this context's extension functions */
+                osg::ref_ptr<GL2Extensions> _extensions;
+                /** Handle to the actual OpenGL glProgram */
+                GLuint _glProgramHandle;
+                /** Does our glProgram need to be linked? */
+                bool _needsLink;
+                /** Is our glProgram successfully linked? */
+                bool _isLinked;
+                /** Was glProgramBinary called successfully? */
+                bool _loadedBinary;
+                const unsigned int _contextID;
+
+                ActiveUniformMap _uniformInfoMap;
+                ActiveVarInfoMap _attribInfoMap;
+                UniformBlockMap _uniformBlockMap;
+                
+                typedef std::pair<osg::ref_ptr<const osg::Uniform>, unsigned int> UniformModifiedCountPair;
+                typedef std::vector<UniformModifiedCountPair> LastAppliedUniformList;
+                mutable LastAppliedUniformList _lastAppliedUniformList;
+      
+                typedef std::vector< ref_ptr<Shader> > ShaderList;
+                ShaderList _shadersToDetach;
+                ShaderList _shadersToAttach;
+
+            private:
+                PerContextProgram();        // disallowed
+                PerContextProgram(const PerContextProgram&);        // disallowed
+                PerContextProgram& operator=(const PerContextProgram&);        // disallowed
+        };
+
+        /** Get the PCP for a particular GL context */
+        PerContextProgram* getPCP(unsigned int contextID) const;
+
+    protected:        /*methods*/
+        virtual ~Program();
+
+    protected:        /*data*/
+
+        mutable osg::buffered_value< osg::ref_ptr<PerContextProgram> > _pcpList;
+        AttribBindingList _attribBindingList;
+        FragDataBindingList _fragDataBindingList;
+        UniformBlockBindingList _uniformBlockBindingList;
+
+        typedef std::vector< ref_ptr<Shader> > ShaderList;
+        ShaderList _shaderList;
+
+        osg::ref_ptr<ProgramBinary> _programBinary;
+
+        /** Parameters maintained with glProgramParameteriEXT */
+        GLint _geometryVerticesOut;
+        GLint _geometryInputType;
+        GLint _geometryOutputType;
+
+        /** Parameter maintained with glPatchParameteri */
+        GLint _patchVertices;
+
+        /** Parameter maintained with glPatchParameterfv */
+        // todo add tessellation default level
+        //GLfloat _patchDefaultInnerLevel[2];
+        //GLfloat _patchDefaultOuterLevel[4];
+
+    private:
+        Program& operator=(const Program&);        // disallowed
+
+};
+
+}
+
+#endif

@@ -1,0 +1,147 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGANIMATION_ACTION_H
+#define OSGANIMATION_ACTION_H
+
+#include <osgAnimation/Export>
+#include <osgAnimation/Animation>
+#include <osgAnimation/ActionVisitor>
+#include <osgAnimation/FrameAction>
+#include <iostream>
+
+#define META_Action(library,name) \
+        virtual osg::Object* cloneType() const { return new name (); } \
+        virtual osg::Object* clone(const osg::CopyOp& copyop) const { return new name (*this,copyop); } \
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const name *>(obj)!=NULL; } \
+        virtual const char* className() const { return #name; } \
+        virtual const char* libraryName() const { return #library; } \
+        virtual void accept(osgAnimation::ActionVisitor& nv) { nv.apply(*this); } \
+
+
+namespace osgAnimation
+{
+
+    class OSGANIMATION_EXPORT Action : public osg::Object
+    {
+    public:
+
+        class Callback : public osg::Object
+        {
+        public:
+            Callback(){}
+            Callback(const Callback& nc,const osg::CopyOp&) :
+                _nestedCallback(nc._nestedCallback) {}
+
+            META_Object(osgAnimation,Callback);
+        
+            virtual void operator()(Action* action, osgAnimation::ActionVisitor* nv) {}
+            
+            Callback* getNestedCallback() { return _nestedCallback.get(); } 
+            void addNestedCallback(Callback* callback) 
+            { 
+                if (callback) {
+                    if (_nestedCallback.valid())
+                        _nestedCallback->addNestedCallback(callback);
+                    else
+                        _nestedCallback = callback;
+                }
+            }
+
+            void removeCallback(Callback* cb)
+            { 
+                if (!cb)
+                    return;
+
+                if (_nestedCallback.get() == cb)
+                    _nestedCallback = _nestedCallback->getNestedCallback();
+                else if (_nestedCallback.valid())
+                    _nestedCallback->removeCallback(cb);
+            }
+
+        protected:
+            osg::ref_ptr<Callback> _nestedCallback;
+        };
+
+
+        typedef std::map<unsigned int, osg::ref_ptr<Callback> > FrameCallback;
+
+        META_Action(osgAnimation, Action);
+        
+        Action();
+        Action(const Action&,const osg::CopyOp&);
+
+        void setCallback(double when, Callback* callback)
+        {
+            setCallback(static_cast<unsigned int>(floor(when*_fps)), callback);
+        }
+
+        void setCallback(unsigned int frame, Callback* callback)
+        {
+            if (_framesCallback[frame].valid())
+                _framesCallback[frame]->addNestedCallback(callback);
+            else
+                _framesCallback[frame] = callback;
+        }
+        Callback* getCallback(unsigned int frame)
+        {
+            if (_framesCallback.find(frame) == _framesCallback.end())
+                return 0;
+            return _framesCallback[frame].get();
+        }
+
+        void removeCallback(Callback*);
+
+        Callback* getFrameCallback(unsigned int frame);
+        Callback* getFrameCallback(double time);
+        unsigned int getFramesPerSecond() const { return _fps; }
+
+        void setNumFrames(unsigned int numFrames) { _numberFrame = numFrames;}
+        void setDuration(double duration) { _numberFrame = static_cast<unsigned int>(floor(duration * _fps)); }
+        unsigned int getNumFrames() const { return _numberFrame;}
+        double getDuration() const { return _numberFrame * 1.0 / _fps; }
+
+        // 0 means infini else it's the number of loop
+        virtual void setLoop(unsigned int nb) { _loop = nb; }
+        virtual unsigned int getLoop() const { return _loop;}
+
+        // get the number of loop, the frame relative to loop.
+        // return true if in range, and false if out of range.
+        bool evaluateFrame(unsigned int frame, unsigned int& resultframe, unsigned int& nbloop );
+        virtual void traverse(ActionVisitor& visitor) {}
+        //virtual void evaluate(unsigned int frame);
+
+    protected:
+        FrameCallback _framesCallback;
+
+        double _speed;
+        unsigned int _fps;
+        unsigned int _numberFrame;
+        unsigned int _loop;
+
+        enum Status
+        {
+            Play,
+            Stop
+        };
+        
+        Status _state;
+    };
+
+
+
+
+}
+
+#endif

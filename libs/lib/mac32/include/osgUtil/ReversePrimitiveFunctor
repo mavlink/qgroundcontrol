@@ -1,0 +1,60 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_REVERSEPRIMITIVEFUNCTOR
+#define OSGUTIL_REVERSEPRIMITIVEFUNCTOR 1
+
+#include <osg/PrimitiveSet>
+#include <osg/Notify>
+#include <osgUtil/Export>
+
+namespace osgUtil {
+
+
+class OSGUTIL_EXPORT ReversePrimitiveFunctor : public osg::PrimitiveIndexFunctor
+{
+    public:
+    
+        virtual ~ReversePrimitiveFunctor() {}
+    
+        osg::PrimitiveSet * getReversedPrimitiveSet() { return _reversedPrimitiveSet.get(); }
+        
+        virtual void setVertexArray(unsigned int , const osg::Vec2* ) {}
+        virtual void setVertexArray(unsigned int , const osg::Vec3* ) {}
+        virtual void setVertexArray(unsigned int , const osg::Vec4* ) {}
+        virtual void setVertexArray(unsigned int , const osg::Vec2d* ) {}
+        virtual void setVertexArray(unsigned int , const osg::Vec3d* ) {}
+        virtual void setVertexArray(unsigned int , const osg::Vec4d* ) {}
+    
+        virtual void drawArrays(GLenum mode,GLint first,GLsizei count);
+        virtual void drawElements(GLenum mode,GLsizei count, const GLubyte* indices);
+        virtual void drawElements(GLenum mode,GLsizei count, const GLushort* indices);
+        virtual void drawElements(GLenum mode,GLsizei count, const GLuint* indices);
+     
+    
+        /// Mimics the OpenGL \c glBegin() function.
+        virtual void begin(GLenum mode);
+        virtual void vertex(unsigned int /*pos*/);
+        virtual void end();
+        
+        
+        osg::ref_ptr<osg::PrimitiveSet> _reversedPrimitiveSet;
+    
+    private:
+    
+        bool _running;
+};
+
+} // end osgUtil namespace
+
+#endif // ** OSGUTIL_REVERSEFACEVISITOR ** //

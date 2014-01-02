@@ -1,0 +1,135 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+// Written by Wang Rui, (C) 2010
+
+#ifndef OSGDB_DATATYPES
+#define OSGDB_DATATYPES
+
+#include <string>
+
+namespace osgDB
+{
+
+// OSG Header (MD5, 16Bit)
+#define OSG_HEADER_LOW  0x6C910EA1
+#define OSG_HEADER_HIGH 0x1AFB4545
+
+// Reader/writer plugin version
+const unsigned int PLUGIN_VERSION = 2;
+
+const int BOOL_SIZE =   1;
+const int CHAR_SIZE =   1;
+const int SHORT_SIZE =  2;
+const int INT_SIZE =    4;
+const int LONG_SIZE =   4;
+const int FLOAT_SIZE =  4;
+const int DOUBLE_SIZE = 8;
+const int GLENUM_SIZE = 4;
+
+const int ID_BYTE_ARRAY = 0;
+const int ID_UBYTE_ARRAY = 1;
+const int ID_SHORT_ARRAY = 2;
+const int ID_USHORT_ARRAY = 3;
+const int ID_INT_ARRAY = 4;
+const int ID_UINT_ARRAY = 5;
+const int ID_FLOAT_ARRAY = 6;
+const int ID_DOUBLE_ARRAY = 7;
+const int ID_VEC2B_ARRAY = 8;
+const int ID_VEC3B_ARRAY = 9;
+const int ID_VEC4B_ARRAY = 10;
+const int ID_VEC4UB_ARRAY = 11;
+const int ID_VEC2S_ARRAY = 12;
+const int ID_VEC3S_ARRAY = 13;
+const int ID_VEC4S_ARRAY = 14;
+const int ID_VEC2_ARRAY = 15;
+const int ID_VEC3_ARRAY = 16;
+const int ID_VEC4_ARRAY = 17;
+const int ID_VEC2D_ARRAY = 18;
+const int ID_VEC3D_ARRAY = 19;
+const int ID_VEC4D_ARRAY = 20;
+
+const int ID_DRAWARRAYS = 50;
+const int ID_DRAWARRAY_LENGTH = 51;
+const int ID_DRAWELEMENTS_UBYTE = 52;
+const int ID_DRAWELEMENTS_USHORT = 53;
+const int ID_DRAWELEMENTS_UINT = 54;
+
+// Used by BEGIN_BRACKET and END_BRACKET
+const int INDENT_VALUE = 2;
+
+// Used by the writeImage/readImage parameter
+const int IMAGE_INLINE_DATA = 0;
+const int IMAGE_INLINE_FILE = 1;
+const int IMAGE_EXTERNAL = 2;
+const int IMAGE_WRITE_OUT = 3;
+
+struct ObjectGLenum
+{
+    ObjectGLenum( GLenum value=0 ) : _value(value) {}
+    ObjectGLenum( const ObjectGLenum& copy ) : _value(copy._value) {}
+    void set( GLenum e ) { _value = e; }
+    GLenum get() const { return _value; }
+    GLenum _value;
+};
+#define GLENUM(value) osgDB::ObjectGLenum(value)
+#define DEF_GLENUM(var) osgDB::ObjectGLenum var;
+
+class ObjectProperty
+{
+public:
+    ObjectProperty( const char* name, int value=0, bool useMap=false )
+    : _name(name), _value(value), _mapProperty(useMap) {}
+    
+    ObjectProperty( const ObjectProperty& copy )
+    : _name(copy._name), _value(copy._value), _mapProperty(copy._mapProperty) {}
+    
+    ObjectProperty& proto( const char* name )
+    { _name = name; return *this; }
+    
+    void set( int v ) { _value = v; }
+    int get() const { return _value; }
+    
+    std::string _name;
+    int _value;
+    bool _mapProperty;
+
+protected:
+    ObjectProperty():_value(0),_mapProperty(false) {}
+};
+static ObjectProperty defaultProp("");
+
+#define PROPERTY(name) defaultProp.proto(name)
+#define MAPPEE(pairName, value) osgDB::ObjectProperty(#pairName, value, true)
+#define DEF_PROPERTY(name, var) osgDB::ObjectProperty var(name);
+#define DEF_MAPPEE(pairName, var) osgDB::ObjectProperty var(#pairName, 0, true);
+
+class ObjectMark
+{
+public:
+    ObjectMark( const char* name, int delta=0 )
+    : _name(name), _indentDelta(delta) {}
+    
+    ObjectMark( const ObjectMark& copy )
+    : _name(copy._name), _indentDelta(copy._indentDelta) {}
+    
+    std::string _name;
+    int _indentDelta;
+
+protected:
+    ObjectMark():_indentDelta(0) {}
+};
+static ObjectMark BEGIN_BRACKET("{", +INDENT_VALUE);
+static ObjectMark END_BRACKET  ("}", -INDENT_VALUE);
+
+}
+#endif

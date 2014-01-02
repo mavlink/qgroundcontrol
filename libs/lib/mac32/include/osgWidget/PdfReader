@@ -1,0 +1,147 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGWIDGET_PDFREADER
+#define OSGWIDGET_PDFREADER
+
+#include <osg/Image>
+#include <osg/Geode>
+
+#include <osgWidget/Export>
+
+namespace osgWidget {
+
+
+/** Hints structure that can be passed to PdfReader and VncClient classes to help guide them on what geometry to build.*/
+struct GeometryHints
+{
+    enum AspectRatioPolicy
+    {
+        RESIZE_HEIGHT_TO_MAINTAINCE_ASPECT_RATIO,
+        RESIZE_WIDTH_TO_MAINTAINCE_ASPECT_RATIO,
+        IGNORE_DOCUMENT_ASPECT_RATIO
+    };
+
+    GeometryHints():
+        position(0.0f,0.0f,0.0f),
+        widthVec(1.0f,0.0f,0.0f),
+        heightVec(0.0f,1.0f,0.0f),
+        backgroundColor(1.0f,1.0f,1.0f,1.0f),
+        aspectRatioPolicy(RESIZE_HEIGHT_TO_MAINTAINCE_ASPECT_RATIO),
+        widthResolution(1024),
+        heightResolution(1024) {}
+
+    GeometryHints(const osg::Vec3& pos,
+                  const osg::Vec3& wVec,
+                  const osg::Vec3& hVec, 
+                  const osg::Vec4& bColor,
+                  AspectRatioPolicy asp=RESIZE_HEIGHT_TO_MAINTAINCE_ASPECT_RATIO,
+                  unsigned int wRes=1024,
+                  unsigned int hRes=1024):
+        position(pos),
+        widthVec(wVec),
+        heightVec(hVec),
+        backgroundColor(bColor),
+        aspectRatioPolicy(asp),
+        widthResolution(wRes),
+        heightResolution(hRes) {}
+
+    osg::Vec3           position;
+    osg::Vec3           widthVec;
+    osg::Vec3           heightVec;
+
+    osg::Vec4           backgroundColor;
+
+    AspectRatioPolicy   aspectRatioPolicy;
+
+    unsigned int        widthResolution;
+    unsigned int        heightResolution;
+
+};
+
+/** Pure virtual base class for interfacing with implementation of PDF reader.*/
+class PdfImage : public osg::Image
+{
+    public:
+    
+        PdfImage():
+            _backgroundColor(1.0f,1.0f,1.0f,1.0f),
+            _pageNum(0),
+            _nextPageKeyEvent('n'),
+            _previousPageKeyEvent('p') {}
+
+        void setBackgroundColor(const osg::Vec4& backgroundColor) { _backgroundColor = backgroundColor; }
+        const osg::Vec4& getBackgroundColor() const { return _backgroundColor; }
+
+        int getPageNum() const { return _pageNum; }
+
+        virtual int getNumOfPages() = 0;
+
+        virtual bool page(int pageNum) = 0;
+
+        bool previous()
+        {
+            return page(_pageNum-1);
+        }
+
+        bool next()
+        { 
+             return page(_pageNum+1);
+        }
+
+        void setNextPageKeyEvent(int key) { _nextPageKeyEvent = key; }
+        int getNextPageKeyEvent() const { return _nextPageKeyEvent; }
+
+        void setPreviousPageKeyEvent(int key) { _previousPageKeyEvent = key; }
+        int getPreviousPageKeyEvent() const { return _previousPageKeyEvent; }
+
+    protected:
+
+        virtual ~PdfImage() {}
+
+        osg::Vec4 _backgroundColor;
+
+        int _pageNum;
+        int _nextPageKeyEvent;
+        int _previousPageKeyEvent;
+
+};
+
+
+/** Convinience class that provides a interactive quad that can be placed directly in the scene.*/
+class OSGWIDGET_EXPORT PdfReader : public osg::Geode
+{
+    public:
+
+        PdfReader() {}
+
+        PdfReader(const std::string& filename, const GeometryHints& hints = GeometryHints());
+
+        bool assign(PdfImage* pdfImage, const GeometryHints& hints = GeometryHints());
+
+        bool open(const std::string& filename, const GeometryHints& hints = GeometryHints());
+
+        bool page(int pageNum);
+
+        bool previous();
+
+        bool next();
+
+    protected:
+
+        osg::ref_ptr<PdfImage> _pdfImage;
+};
+
+}
+
+#endif

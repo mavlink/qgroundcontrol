@@ -1,0 +1,112 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+// Written by Wang Rui, (C) 2010
+
+#ifndef OSGPARTICLE_ORBITOPERATOR
+#define OSGPARTICLE_ORBITOPERATOR
+
+#include <osgParticle/ModularProgram>
+#include <osgParticle/Operator>
+#include <osgParticle/Particle>
+
+namespace osgParticle
+{
+
+
+/** An orbit operator forces particles in the orbit around a point.
+    Refer to David McAllister's Particle System API (http://www.particlesystems.org)
+*/
+class OrbitOperator : public Operator
+{
+public:
+    OrbitOperator()
+    : Operator(), _magnitude(1.0f), _epsilon(1e-3), _maxRadius(FLT_MAX)
+    {}
+    
+    OrbitOperator( const OrbitOperator& copy, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY )
+    :   Operator(copy, copyop), _center(copy._center), _magnitude(copy._magnitude),
+        _epsilon(copy._epsilon), _maxRadius(copy._maxRadius)
+    {}
+    
+    META_Object( osgParticle, OrbitOperator );
+    
+    /// Set the center of orbit
+    void setCenter( const osg::Vec3& c ) { _center = c; }
+    
+    /// Get the center of orbit
+    const osg::Vec3& getCenter() const { return _center; }
+    
+    /// Set the acceleration scale
+    void setMagnitude( float mag ) { _magnitude = mag; }
+    
+    /// Get the acceleration scale
+    float getMagnitude() const { return _magnitude; }
+    
+    /// Set the acceleration epsilon
+    void setEpsilon( float eps ) { _epsilon = eps; }
+    
+    /// Get the acceleration epsilon
+    float getEpsilon() const { return _epsilon; }
+    
+    /// Set max radius between the center and the particle
+    void setMaxRadius( float max ) { _maxRadius = max; }
+    
+    /// Get max radius between the center and the particle
+    float getMaxRadius() const { return _maxRadius; }
+    
+    /// Apply the acceleration to a particle. Do not call this method manually.
+    inline void operate( Particle* P, double dt );
+    
+    /// Perform some initializations. Do not call this method manually.
+    inline void beginOperate( Program* prg );
+    
+protected:
+    virtual ~OrbitOperator() {}
+    OrbitOperator& operator=( const OrbitOperator& ) { return *this; }
+    
+    osg::Vec3 _center;
+    osg::Vec3 _xf_center;
+    float _magnitude;
+    float _epsilon;
+    float _maxRadius;
+};
+
+// INLINE METHODS
+
+inline void OrbitOperator::operate( Particle* P, double dt )
+{
+    osg::Vec3 dir = _xf_center - P->getPosition();
+    float length = dir.length();
+    if ( length<_maxRadius )
+    {
+        P->addVelocity( dir * ((_magnitude * dt) /
+                        (length * (_epsilon+length*length))) );
+    }
+}
+
+inline void OrbitOperator::beginOperate( Program* prg )
+{
+    if ( prg->getReferenceFrame()==ModularProgram::RELATIVE_RF )
+    {
+        _xf_center = prg->transformLocalToWorld(_center);
+    }
+    else
+    {
+        _xf_center = _center;
+    }
+}
+
+
+}
+
+#endif

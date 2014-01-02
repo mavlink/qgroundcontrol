@@ -1,0 +1,79 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_CULLFACE
+#define OSG_CULLFACE 1
+
+#include <osg/GL>
+#include <osg/StateAttribute>
+
+namespace osg {
+
+/** Class to globally enable/disable OpenGL's polygon culling mode.
+ */     
+class OSG_EXPORT CullFace : public StateAttribute
+{
+    public :
+    
+        enum Mode {
+            FRONT = GL_FRONT,
+            BACK = GL_BACK,
+            FRONT_AND_BACK = GL_FRONT_AND_BACK
+        };
+    
+        CullFace(Mode mode=BACK):
+            _mode(mode) {}
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        CullFace(const CullFace& cf,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(cf,copyop),
+            _mode(cf._mode) {}
+
+        META_StateAttribute(osg, CullFace, CULLFACE);
+        
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // check the types are equal and then create the rhs variable
+            // used by the COMPARE_StateAttribute_Parameter macros below.
+            COMPARE_StateAttribute_Types(CullFace,sa)
+
+            // compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_mode)
+
+            return 0; // passed all the above comparison macros, must be equal.
+        }
+
+        virtual bool getModeUsage(StateAttribute::ModeUsage& usage) const
+        {
+            usage.usesMode(GL_CULL_FACE);
+            return true;
+        }
+
+        inline void setMode(Mode mode) { _mode = mode; }
+
+        inline Mode getMode() const { return _mode; }
+    
+        virtual void apply(State& state) const;
+        
+    protected:
+    
+        virtual ~CullFace();
+        
+        Mode _mode;
+
+};
+
+}
+
+#endif

@@ -1,0 +1,104 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+// Written by Wang Rui, (C) 2010
+
+#ifndef OSGPARTICLE_COMPOSITEPLACER
+#define OSGPARTICLE_COMPOSITEPLACER
+
+#include <osgParticle/Placer>
+#include <osgParticle/Particle>
+
+namespace osgParticle
+{
+
+
+/** A composite particle placer which allows particles to be generated from a union of placers. */
+class CompositePlacer : public Placer
+{
+public:
+    CompositePlacer() : Placer() {}
+    
+    CompositePlacer( const CompositePlacer& copy, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY )
+    : Placer(copy, copyop), _placers(copy._placers) {}
+    
+    META_Object( osgParticle, CompositePlacer );
+    
+    // Set a child placer at specific index
+    void setPlacer( unsigned int i, Placer* p )
+    {
+        if (i<_placers.size()) _placers[i] = p;
+        else addPlacer(p);
+    }
+    
+    /// Add a child placer
+    void addPlacer( Placer* p ) { _placers.push_back(p); }
+    
+    /// Remove a child placer
+    void removePlacer( unsigned int i )
+    { if (i<_placers.size()) _placers.erase(_placers.begin()+i); }
+    
+    /// Get a child placer
+    Placer* getPlacer( unsigned int i ) { return _placers[i].get(); }
+    const Placer* getPlacer( unsigned int i ) const { return _placers[i].get(); }
+    
+    /// Get number of placers
+    unsigned int getNumPlacers() const { return _placers.size(); }
+    
+    /// Place a particle. Do not call it manually.
+    inline void place( Particle* P ) const;
+    
+    /// return the volume of the box
+    inline float volume() const;
+    
+    /// return the control position
+    inline osg::Vec3 getControlPosition() const;
+    
+protected:
+    virtual ~CompositePlacer() {}
+    CompositePlacer& operator=( const CompositePlacer& ) { return *this; }
+    
+    typedef std::vector< osg::ref_ptr<Placer> > PlacerList;
+    PlacerList _placers;
+};
+
+// INLINE METHODS
+
+inline void CompositePlacer::place( Particle* P ) const
+{
+    rangef sizeRange( 0.0f, volume() );
+    float current = 0.0f, selected = sizeRange.get_random();
+    for ( PlacerList::const_iterator itr=_placers.begin(); itr!=_placers.end(); ++itr )
+    {
+        current += (*itr)->volume();
+        if ( selected<=current ) (*itr)->place( P );
+    }
+}
+
+inline float CompositePlacer::volume() const
+{
+    float total_size = 0.0f;
+    for ( PlacerList::const_iterator itr=_placers.begin(); itr!=_placers.end(); ++itr )
+        total_size += (*itr)->volume();
+    return total_size;
+}
+
+inline osg::Vec3 CompositePlacer::getControlPosition() const
+{
+    if ( !_placers.size() ) return osg::Vec3();
+    return _placers.front()->getControlPosition();
+}
+
+
+}
+
+#endif

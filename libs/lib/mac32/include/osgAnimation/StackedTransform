@@ -1,0 +1,42 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ */
+
+#ifndef OSGANIMATION_STACKED_TRANSFORM
+#define OSGANIMATION_STACKED_TRANSFORM 1
+
+#include <osg/MixinVector>
+#include <osgAnimation/Export>
+#include <osgAnimation/StackedTransformElement>
+
+namespace osgAnimation
+{
+
+    class OSGANIMATION_EXPORT StackedTransform : public osg::MixinVector<osg::ref_ptr<StackedTransformElement> >
+    {
+    public:
+        StackedTransform();
+        StackedTransform(const StackedTransform&, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+        void update();
+        const osg::Matrix& getMatrix() const;
+
+    protected:
+        osg::Matrix _matrix;
+    };
+
+
+
+}
+
+#endif

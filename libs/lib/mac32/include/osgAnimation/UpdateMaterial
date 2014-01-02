@@ -1,0 +1,46 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ */
+
+#ifndef OSGANIMATION_UPDATE_MATERIAL
+#define OSGANIMATION_UPDATE_MATERIAL 1
+
+#include <osgAnimation/AnimationUpdateCallback>
+#include <osgAnimation/Export>
+#include <osg/StateAttribute>
+#include <osg/Material>
+
+namespace osgAnimation
+{
+
+    class OSGANIMATION_EXPORT UpdateMaterial : public AnimationUpdateCallback<osg::StateAttributeCallback>
+    {
+    protected:
+        osg::ref_ptr<Vec4Target> _diffuse;
+    
+    public:
+
+        META_Object(osgAnimation, UpdateMaterial);
+
+        UpdateMaterial(const std::string& name = "");
+        UpdateMaterial(const UpdateMaterial& apc,const osg::CopyOp& copyop);
+
+        /** Callback method called by the NodeVisitor when visiting a node.*/
+        virtual void operator () (osg::StateAttribute*, osg::NodeVisitor*);
+        void update(osg::Material& material);
+        bool link(Channel* channel);
+        Vec4Target* getDiffuse();
+    };
+}
+
+#endif

@@ -1,0 +1,724 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGDB_REGISTRY
+#define OSGDB_REGISTRY 1
+
+#include <OpenThreads/ReentrantMutex>
+
+#include <osg/ref_ptr>
+#include <osg/ArgumentParser>
+#include <osg/KdTree>
+
+#include <osgDB/DynamicLibrary>
+#include <osgDB/ReaderWriter>
+#include <osgDB/Options>
+#include <osgDB/DotOsgWrapper>
+#include <osgDB/ObjectWrapper>
+#include <osgDB/FileCache>
+#include <osgDB/SharedStateManager>
+#include <osgDB/ImageProcessor>
+
+#include <vector>
+#include <map>
+#include <string>
+
+extern "C"
+{
+    typedef void (* CPluginFunction) (void);
+}
+
+namespace osgDB {
+
+/** basic structure for custom runtime inheritance checking */
+struct basic_type_wrapper {
+    virtual ~basic_type_wrapper() {}
+    virtual bool matches(const osg::Object *proto) const = 0;
+};
+
+/** a class template that checks inheritance between a given
+    Object's class and a class defined at compile time through
+        the template parameter T.
+        This is used in conjunction with readObjectOfType() to
+        specify an abstract class as reference type.
+**/
+template<class T>
+struct type_wrapper: basic_type_wrapper {
+    bool matches(const osg::Object *proto) const
+    {
+        return dynamic_cast<const T*>(proto) != 0;
+    }
+};
+
+/**
+    Registry is a singleton factory which stores
+    the reader/writers which are linked in
+    at runtime for reading non-native file formats.
+
+    The RegisterReaderWriterProxy can be used to automatically
+    register at runtime a reader/writer with the Registry.
+*/
+class OSGDB_EXPORT Registry : public osg::Referenced
+{
+    public:
+
+
+
+        
+        static Registry* instance(bool erase = false);
+
+        /** read the command line arguments.*/
+        void readCommandLine(osg::ArgumentParser& commandLine);
+
+        /** register an .fileextension alias to mapExt toExt, the later
+          * should the the extension name of the readerwriter plugin library.
+          * For example to map .tif files to the tiff loader, use
+          * addExtAlias("tif","tiff") which will enable .tif to be read
+          * by the libdb_tiff readerwriter plugin.*/
+        void addFileExtensionAlias(const std::string mapExt, const std::string toExt);
+
+        /** Reads a file that configures extension mappings. File is ASCII text
+          * and each line contains the parameters to the addFileExtensionAlias
+          * method. Lines can be commented out with an initial '#' character.*/
+        bool readPluginAliasConfigurationFile( const std::string& file );
+
+        /** Registers a mapping of a mime-type to an extension. A process fetching data
+          * over HTTP can use this facility to determine the proper ReaderWriter to use
+          * when there is no filename extension to rely upon.
+          */
+        void addMimeTypeExtensionMapping(const std::string fromMimeType, const std::string toExt);
+
+        void addReaderWriter(ReaderWriter* rw);
+        void removeReaderWriter(ReaderWriter* rw);
+
+        void addImageProcessor(ImageProcessor* ip);
+        void removeImageProcessor(ImageProcessor* ip);
+
+        /** create the platform specific library name associated with file.*/
+        std::string createLibraryNameForFile(const std::string& fileName);
+
+        /** create the platform specific library name associated with file extension.*/
+        std::string createLibraryNameForExtension(const std::string& ext);
+
+        /** create the platform specific library name associated with nodekit library name.*/
+        std::string createLibraryNameForNodeKit(const std::string& name);
+
+
+        enum LoadStatus {
+            NOT_LOADED = 0,
+            PREVIOUSLY_LOADED,
+            LOADED
+        };
+
+        /** find the library in the OSG_LIBRARY_PATH and load it.*/
+        LoadStatus loadLibrary(const std::string& fileName);
+        
+        /** close the attached library with specified name.*/
+        bool closeLibrary(const std::string& fileName);
+        
+        /** close all libraries.*/
+        void closeAllLibraries();
+
+        typedef std::vector< osg::ref_ptr<ReaderWriter> > ReaderWriterList;
+
+        /** get a reader writer which handles specified extension.*/
+        ReaderWriter* getReaderWriterForExtension(const std::string& ext);
+
+        /** gets a reader/writer that handles the extension mapped to by one of
+          * the registered mime-types. */
+        ReaderWriter* getReaderWriterForMimeType(const std::string& mimeType);
+        
+        /** get list of all registered ReaderWriters.*/
+        ReaderWriterList& getReaderWriterList() { return _rwList; }
+
+        /** get const list of all registered ReaderWriters.*/
+        const ReaderWriterList& getReaderWriterList() const { return _rwList; }
+ 
+
+        typedef std::vector< osg::ref_ptr<ImageProcessor> > ImageProcessorList;
+
+        /** get a image processor if available.*/
+        ImageProcessor* getImageProcessor();
+
+        /** get a image processor which is associated specified extension.*/
+        ImageProcessor* getImageProcessorForExtension(const std::string& ext);
+
+        /** get list of all registered ImageProcessors.*/
+        ImageProcessorList& getImageProcessorList() { return _ipList; }
+
+        /** get const list of all registered ImageProcessors.*/
+        const ImageProcessorList& getImageProcessorList() const { return _ipList; }
+
+
+        typedef class osgDB::FindFileCallback FindFileCallback;
+        typedef class osgDB::ReadFileCallback ReadFileCallback;
+        typedef class osgDB::WriteFileCallback WriteFileCallback;
+        typedef class osgDB::FileLocationCallback FileLocationCallback;
+
+        /** Set the Registry callback to use in place of the default findFile calls.*/
+        void setFindFileCallback( FindFileCallback* cb) { _findFileCallback = cb; }
+
+        /** Get the findFile callback.*/
+        FindFileCallback* getFindFileCallback() { return _findFileCallback.get(); }
+
+        /** Get the const findFile callback.*/
+        const FindFileCallback* getFindFileCallback() const { return _findFileCallback.get(); }
+
+
+        std::string findDataFile(const std::string& fileName, const Options* options, CaseSensitivity caseSensitivity)
+        {
+            if (options && options->getFindFileCallback()) return options->getFindFileCallback()->findDataFile(fileName, options, caseSensitivity);
+            else if (_findFileCallback.valid()) return _findFileCallback->findDataFile(fileName, options, caseSensitivity);
+            else return findDataFileImplementation(fileName, options, caseSensitivity);
+        }
+        std::string findDataFileImplementation(const std::string& fileName, const Options* options, CaseSensitivity caseSensitivity);
+
+        std::string findLibraryFile(const std::string& fileName, const Options* options, CaseSensitivity caseSensitivity)
+        {
+            if (options && options->getFindFileCallback()) return options->getFindFileCallback()->findLibraryFile(fileName, options, caseSensitivity);
+            else if (_findFileCallback.valid()) return _findFileCallback->findLibraryFile(fileName, options, caseSensitivity);
+            else return findLibraryFileImplementation(fileName, options, caseSensitivity);
+        }
+        std::string findLibraryFileImplementation(const std::string& fileName, const Options* options, CaseSensitivity caseSensitivity);
+
+
+
+        /** Set the Registry callback to use in place of the default readFile calls.*/
+        void setReadFileCallback( ReadFileCallback* cb) { _readFileCallback = cb; }
+
+        /** Get the readFile callback.*/
+        ReadFileCallback* getReadFileCallback() { return _readFileCallback.get(); }
+        
+        /** Get the const readFile callback.*/
+        const ReadFileCallback* getReadFileCallback() const { return _readFileCallback.get(); }
+
+
+        ReaderWriter::ReadResult openArchive(const std::string& fileName,ReaderWriter::ArchiveStatus status, unsigned int indexBlockSizeHint, const Options* options)
+        {
+            if (options && options->getReadFileCallback()) return options->getReadFileCallback()->openArchive(fileName, status, indexBlockSizeHint, options);
+            else if (_readFileCallback.valid()) return _readFileCallback->openArchive(fileName, status, indexBlockSizeHint, options);
+            else return openArchiveImplementation(fileName, status, indexBlockSizeHint, options);
+        }
+        ReaderWriter::ReadResult openArchiveImplementation(const std::string& fileName, ReaderWriter::ArchiveStatus status, unsigned int indexBlockSizeHint, const Options* options);
+
+        ReaderWriter::ReadResult readObject(const std::string& fileName,const Options* options, bool buildKdTreeIfRequired=true)
+        {
+            ReaderWriter::ReadResult result;
+            if (options && options->getReadFileCallback()) result = options->getReadFileCallback()->readObject(fileName,options);
+            else if (_readFileCallback.valid()) result = _readFileCallback->readObject(fileName,options);
+            else result = readObjectImplementation(fileName,options);
+
+            if (buildKdTreeIfRequired) _buildKdTreeIfRequired(result, options);
+
+            return result;
+        }
+        ReaderWriter::ReadResult readObjectImplementation(const std::string& fileName,const Options* options);
+
+        ReaderWriter::ReadResult readImage(const std::string& fileName,const Options* options)
+        {
+            if (options && options->getReadFileCallback()) return options->getReadFileCallback()->readImage(fileName,options);
+            else if (_readFileCallback.valid()) return _readFileCallback->readImage(fileName,options);
+            else return readImageImplementation(fileName,options);
+        }
+        ReaderWriter::ReadResult readImageImplementation(const std::string& fileName,const Options* options);
+
+        ReaderWriter::ReadResult readHeightField(const std::string& fileName,const Options* options)
+        {
+            if (options && options->getReadFileCallback()) return options->getReadFileCallback()->readHeightField(fileName,options);
+            else if (_readFileCallback.valid()) return _readFileCallback->readHeightField(fileName,options);
+            else return readHeightFieldImplementation(fileName,options);
+        }
+        ReaderWriter::ReadResult readHeightFieldImplementation(const std::string& fileName,const Options* options);
+
+        ReaderWriter::ReadResult readNode(const std::string& fileName,const Options* options, bool buildKdTreeIfRequired=true)
+        {
+            ReaderWriter::ReadResult result;
+            if (options && options->getReadFileCallback()) result = options->getReadFileCallback()->readNode(fileName,options);
+            else if (_readFileCallback.valid()) result = _readFileCallback->readNode(fileName,options);
+            else result = readNodeImplementation(fileName,options);
+
+            if (buildKdTreeIfRequired) _buildKdTreeIfRequired(result, options);
+
+            return result;
+        }
+        ReaderWriter::ReadResult readNodeImplementation(const std::string& fileName,const Options* options);
+
+        ReaderWriter::ReadResult readShader(const std::string& fileName,const Options* options)
+        {
+            if (options && options->getReadFileCallback()) return options->getReadFileCallback()->readShader(fileName,options);
+            if (_readFileCallback.valid()) return _readFileCallback->readShader(fileName,options);
+            else return readShaderImplementation(fileName,options);
+        }
+        ReaderWriter::ReadResult readShaderImplementation(const std::string& fileName,const Options* options);
+
+
+        /** Set the Registry callback to use in place of the default writeFile calls.*/
+        void setWriteFileCallback( WriteFileCallback* cb) { _writeFileCallback = cb; }
+
+        /** Get the writeFile callback.*/
+        WriteFileCallback* getWriteFileCallback() { return _writeFileCallback.get(); }
+        
+        /** Get the const writeFile callback.*/
+        const WriteFileCallback* getWriteFileCallback() const { return _writeFileCallback.get(); }
+
+
+        ReaderWriter::WriteResult writeObject(const osg::Object& obj, const std::string& fileName,const Options* options)
+        {
+            if (options && options->getWriteFileCallback()) return options->getWriteFileCallback()->writeObject(obj,fileName,options);
+            else if (_writeFileCallback.valid()) return _writeFileCallback->writeObject(obj,fileName,options);
+            else return writeObjectImplementation(obj,fileName,options);
+        }
+        ReaderWriter::WriteResult writeObjectImplementation(const osg::Object& obj, const std::string& fileName,const Options* options);
+
+        ReaderWriter::WriteResult writeImage(const osg::Image& obj, const std::string& fileName,const Options* options)
+        {
+            if (options && options->getWriteFileCallback()) return options->getWriteFileCallback()->writeImage(obj,fileName,options);
+            else if (_writeFileCallback.valid()) return _writeFileCallback->writeImage(obj,fileName,options);
+            else return writeImageImplementation(obj,fileName,options);
+        }
+        ReaderWriter::WriteResult writeImageImplementation(const osg::Image& obj, const std::string& fileName,const Options* options);
+
+        ReaderWriter::WriteResult writeHeightField(const osg::HeightField& obj, const std::string& fileName,const Options* options)
+        {
+            if (options && options->getWriteFileCallback()) return options->getWriteFileCallback()->writeHeightField(obj,fileName,options);
+            else if (_writeFileCallback.valid()) return _writeFileCallback->writeHeightField(obj,fileName,options);
+            else return writeHeightFieldImplementation(obj,fileName,options);
+        }
+        ReaderWriter::WriteResult writeHeightFieldImplementation(const osg::HeightField& obj, const std::string& fileName,const Options* options);
+
+        ReaderWriter::WriteResult writeNode(const osg::Node& node, const std::string& fileName,const Options* options)
+        {
+            if (options && options->getWriteFileCallback()) return options->getWriteFileCallback()->writeNode(node,fileName,options);
+            else if (_writeFileCallback.valid()) return _writeFileCallback->writeNode(node,fileName,options);
+            else return writeNodeImplementation(node,fileName,options);
+        }
+        ReaderWriter::WriteResult writeNodeImplementation(const osg::Node& node, const std::string& fileName,const Options* options);
+        
+        ReaderWriter::WriteResult writeShader(const osg::Shader& obj, const std::string& fileName,const Options* options)
+        {
+            if (options && options->getWriteFileCallback()) return options->getWriteFileCallback()->writeShader(obj,fileName,options);
+            else if (_writeFileCallback.valid()) return _writeFileCallback->writeShader(obj,fileName,options);
+            else return writeShaderImplementation(obj,fileName,options);
+        }
+        ReaderWriter::WriteResult writeShaderImplementation(const osg::Shader& obj, const std::string& fileName,const Options* options);
+        
+
+        inline void _buildKdTreeIfRequired(ReaderWriter::ReadResult& result, const Options* options)
+        {
+            bool doKdTreeBuilder = (options && options->getBuildKdTreesHint()!=Options::NO_PREFERENCE) ?
+                options->getBuildKdTreesHint() == Options::BUILD_KDTREES :
+                _buildKdTreesHint == Options::BUILD_KDTREES;
+
+            if (doKdTreeBuilder && _kdTreeBuilder.valid() && result.validNode()) 
+            {
+                osg::ref_ptr<osg::KdTreeBuilder> builder = _kdTreeBuilder->clone();
+                result.getNode()->accept(*builder);
+            }
+        }
+
+        /** Set the callback to use inform to the DatabasePager whether a file is located on local or remote file system.*/
+        void setFileLocationCallback( FileLocationCallback* cb) { _fileLocationCallback = cb; }
+
+        /** Get the callback to use inform to the DatabasePager whether a file is located on local or remote file system.*/
+        FileLocationCallback* getFileLocationCallback() const { return _fileLocationCallback.get(); }
+
+
+
+        /** Set whether the KdTrees should be built for geometry in the loader model. */
+        void setBuildKdTreesHint(Options::BuildKdTreesHint hint) { _buildKdTreesHint = hint; }
+
+        /** Get whether the KdTrees should be built for geometry in the loader model. */
+        Options::BuildKdTreesHint getBuildKdTreesHint() const { return _buildKdTreesHint; }
+
+        /** Set the KdTreeBuilder visitor that is used to build KdTree on loaded models.*/
+        void setKdTreeBuilder(osg::KdTreeBuilder* builder) { _kdTreeBuilder = builder; }
+
+        /** Get the KdTreeBuilder visitor that is used to build KdTree on loaded models.*/
+        osg::KdTreeBuilder* getKdTreeBuilder() { return _kdTreeBuilder.get(); }
+
+
+        /** Set the FileCache that is used to manage local storage of files downloaded from the internet.*/
+        void setFileCache(FileCache* fileCache) { _fileCache = fileCache; }
+
+        /** Get the FileCache that is used to manage local storage of files downloaded from the internet.*/
+        FileCache* getFileCache() { return _fileCache.get(); }
+
+        /** Get the const FileCache that is used to manage local storage of files downloaded from the internet.*/
+        const FileCache* getFileCache() const { return _fileCache.get(); }
+
+
+        /** Set the password map to be used by plugins when access files from secure locations.*/
+        void setAuthenticationMap(AuthenticationMap* authenticationMap) { _authenticationMap = authenticationMap; }
+
+        /** Get the password map to be used by plugins when access files from secure locations.*/
+        AuthenticationMap* getAuthenticationMap() { return _authenticationMap.get(); }
+
+        /** Get the password map to be used by plugins when access files from secure locations.*/
+        const AuthenticationMap* getAuthenticationMap() const { return _authenticationMap.get(); }
+
+
+        void setCreateNodeFromImage(bool flag) { _createNodeFromImage = flag; }
+        bool getCreateNodeFromImage() const { return _createNodeFromImage; }
+        
+
+        void setOptions(Options* opt) { _options = opt; }
+        Options* getOptions() { return _options.get(); }
+        const Options*  getOptions() const { return _options.get(); }
+
+
+        /** initialize both the Data and Library FilePaths, by default called by the 
+          * constructor, so it should only be required if you want to force
+          * the re-reading of environmental variables.*/
+        void initFilePathLists() { initDataFilePathList(); initLibraryFilePathList(); }
+        
+        /** initialize the Data FilePath by reading the OSG_FILE_PATH environmental variable.*/
+        void initDataFilePathList();
+
+        /** Set the data file path using a list of paths stored in a FilePath, which is used when search for data files.*/
+        void setDataFilePathList(const FilePathList& filepath) { _dataFilePath = filepath; }
+
+        /** Set the data file path using a single string delimited either with ';' (Windows) or ':' (All other platforms), which is used when search for data files.*/
+        void setDataFilePathList(const std::string& paths);
+
+        /** get the data file path which is used when search for data files.*/
+        FilePathList& getDataFilePathList() { return _dataFilePath; }
+
+        /** get the const data file path which is used when search for data files.*/
+        const FilePathList& getDataFilePathList() const { return _dataFilePath; }
+
+        /** initialize the Library FilePath by reading the OSG_LIBRARY_PATH 
+          * and the appropriate system environmental variables*/
+        void initLibraryFilePathList();
+
+        /** Set the library file path using a list of paths stored in a FilePath, which is used when search for data files.*/
+        void setLibraryFilePathList(const FilePathList& filepath) { _libraryFilePath = filepath; }
+
+        /** Set the library file path using a single string delimited either with ';' (Windows) or ':' (All other platforms), which is used when search for data files.*/
+        void setLibraryFilePathList(const std::string& paths);
+
+        /** get the library file path which is used when search for library (dso/dll's) files.*/
+        FilePathList& getLibraryFilePathList() { return _libraryFilePath; }
+        
+        /** get the const library file path which is used when search for library (dso/dll's) files.*/
+        const FilePathList& getLibraryFilePathList() const { return _libraryFilePath; }
+
+        /** For each object in the cache which has an reference count greater than 1 
+          * (and therefore referenced by elsewhere in the application) set the time stamp
+          * for that object in the cache to specified time.
+          * This would typically be called once per frame by applications which are doing database paging,
+          * and need to prune objects that are no longer required.
+          * The time used is taken from the FrameStamp::getReferenceTime().*/
+        void updateTimeStampOfObjectsInCacheWithExternalReferences(const osg::FrameStamp& frameStamp);
+
+        /** Removed object in the cache which have a time stamp at or before the specified expiry time.
+          * This would typically be called once per frame by applications which are doing database paging,
+          * and need to prune objects that are no longer required, and called after the a called
+          * after the call to updateTimeStampOfObjectsInCacheWithExternalReferences(frameStamp).*/
+        void removeExpiredObjectsInCache(const osg::FrameStamp& frameStamp);
+
+        /** set hint to viewer code calling removeExpiredObjectsInCache to specify how long it should give before expiring objects in Registry cache,*/
+        void setExpiryDelay(double expiryDelay) { _expiryDelay = expiryDelay; }
+
+        double getExpiryDelay() const { return _expiryDelay; }
+
+
+        /** Remove all objects in the cache regardless of having external references or expiry times.*/ 
+        void clearObjectCache();
+
+        /** Add a filename,object,timestamp triple to the Registry::ObjectCache.*/
+        void addEntryToObjectCache(const std::string& filename, osg::Object* object, double timestamp = 0.0);
+
+        /** Get an Object from the object cache*/
+        osg::Object* getFromObjectCache(const std::string& fileName);
+        
+        /** Get an ref_ptr<Object> from the object cache*/
+        osg::ref_ptr<osg::Object> getRefFromObjectCache(const std::string& fileName);
+
+        /** Add archive to archive cache so that future calls reference this archive.*/
+        void addToArchiveCache(const std::string& fileName, osgDB::Archive* archive);
+
+        /** Remove Archive from cache.*/
+        void removeFromArchiveCache(const std::string& fileName);
+        
+        /** Get an Archive from the archive cache.*/
+        osgDB::Archive* getFromArchiveCache(const std::string& fileName);
+
+        /** Get an ref_ptr<Archive> from the archive cache.*/
+        osg::ref_ptr<osgDB::Archive> getRefFromArchiveCache(const std::string& fileName);
+        
+        /** Remove all archives from the archive cache.*/
+        void clearArchiveCache();
+        
+         /** If State is non-zero, this function releases OpenGL objects for
+           * the specified graphics context. Otherwise, releases OpenGL objexts
+           * for all graphics contexts. */
+        void releaseGLObjects(osg::State* state=0);
+
+        /** get the attached library with specified name.*/
+        DynamicLibrary*              getLibrary(const std::string& fileName);
+
+        /** Set the SharedStateManager.*/
+        void setSharedStateManager(SharedStateManager* SharedStateManager) { _sharedStateManager = SharedStateManager; }
+
+        /** Get the SharedStateManager, creating one if one is not already created.*/
+        SharedStateManager* getOrCreateSharedStateManager();
+        
+        /** Get the SharedStateManager. Return 0 if no SharedStateManager has been assigned.*/
+        SharedStateManager* getSharedStateManager() { return _sharedStateManager.get(); }
+
+        /** Add an Archive extension.*/
+        void addArchiveExtension(const std::string ext);
+        
+        /** registers a protocol */
+        void registerProtocol(const std::string& protocol);
+        
+        /** returns true, if named protocol is registered */
+        bool isProtocolRegistered(const std::string& protocol);
+
+        /** Get the ObjectWrapperManager that is used to store all the ObjectWrappers. */
+        ObjectWrapperManager* getObjectWrapperManager() { return _objectWrapperManager.get(); }
+
+        /** Get the ObjectWrapperManager that is used to store all the ObjectWrappers. */
+        DeprecatedDotOsgWrapperManager* getDeprecatedDotOsgObjectWrapperManager() { return _deprecatedDotOsgWrapperManager.get(); }
+
+        typedef std::vector< std::string> ArchiveExtensionList;
+        const ArchiveExtensionList& getArchiveExtensions() const { return _archiveExtList; }
+
+    protected:
+
+        virtual ~Registry();
+
+        typedef std::vector< osg::ref_ptr<DynamicLibrary> >             DynamicLibraryList;
+        typedef std::map< std::string, std::string>                     ExtensionAliasMap;
+        typedef std::map< std::string, std::string>                     MimeTypeExtensionMap;
+        
+        typedef std::pair<osg::ref_ptr<osg::Object>, double >           ObjectTimeStampPair;
+        typedef std::map<std::string, ObjectTimeStampPair >             ObjectCache;
+        typedef std::map<std::string, osg::ref_ptr<osgDB::Archive> >    ArchiveCache;
+        
+        typedef std::set<std::string>                                   RegisteredProtocolsSet;
+
+        /** constructor is private, as its a singleton, preventing
+            construction other than via the instance() method and
+            therefore ensuring only one copy is ever constructed*/
+        Registry();
+
+        /** get the attached library with specified name.*/
+        DynamicLibraryList::iterator getLibraryItr(const std::string& fileName);
+
+        Options::BuildKdTreesHint     _buildKdTreesHint;
+        osg::ref_ptr<osg::KdTreeBuilder>            _kdTreeBuilder;
+        
+        osg::ref_ptr<FileCache>                     _fileCache;
+        
+        osg::ref_ptr<AuthenticationMap>             _authenticationMap;
+        
+        bool                                        _createNodeFromImage;
+        
+        RegisteredProtocolsSet                      _registeredProtocols;
+
+    public:
+        /** Functor used in internal implementations.*/
+        struct ReadFunctor
+        {
+            ReadFunctor(const std::string& filename, const Options* options):
+                _filename(filename),
+                _options(options) {}
+
+            virtual ~ReadFunctor() {}
+            virtual ReaderWriter::ReadResult doRead(ReaderWriter& rw) const = 0;
+            virtual bool isValid(ReaderWriter::ReadResult& readResult) const = 0;
+            virtual bool isValid(osg::Object* object) const = 0;
+
+            std::string _filename;
+            const Options* _options;
+        };
+
+   protected:
+   
+        void destruct();
+   
+        // forward declare helper classes
+        struct ReadObjectFunctor;
+        struct ReadImageFunctor;
+        struct ReadHeightFieldFunctor;
+        struct ReadNodeFunctor;
+        struct ReadArchiveFunctor;
+        struct ReadShaderFunctor;
+        
+        // make helper classes friends to get round VS6.0 "issues"
+        friend struct ReadFunctor;
+        friend struct ReadObjectFunctor;
+        friend struct ReadImageFunctor;
+        friend struct ReadHeightFieldFunctor;
+        friend struct ReadNodeFunctor;
+        friend struct ReadArchiveFunctor;
+        friend struct ReadShaderFunctor;
+
+        ReaderWriter::ReadResult read(const ReadFunctor& readFunctor);
+        ReaderWriter::ReadResult readImplementation(const ReadFunctor& readFunctor,Options::CacheHintOptions cacheHint);
+
+
+        // forward declare helper class
+        class AvailableReaderWriterIterator;
+        friend class AvailableReaderWriterIterator;
+        class AvailableArchiveIterator;
+        friend class AvailableArchiveIterator;
+
+
+        osg::ref_ptr<FindFileCallback>      _findFileCallback;
+        osg::ref_ptr<ReadFileCallback>      _readFileCallback;
+        osg::ref_ptr<WriteFileCallback>     _writeFileCallback;
+        osg::ref_ptr<FileLocationCallback>  _fileLocationCallback;
+
+        OpenThreads::ReentrantMutex _pluginMutex;
+        ReaderWriterList            _rwList;
+        ImageProcessorList          _ipList;
+        DynamicLibraryList          _dlList;
+
+        OpenThreads::ReentrantMutex _archiveCacheMutex;
+        ArchiveCache                _archiveCache;
+
+        bool _openingLibrary;
+    
+        // map to alias to extensions to plugins.
+        ExtensionAliasMap  _extAliasMap;
+
+        // maps mime-types to extensions.
+        MimeTypeExtensionMap _mimeTypeExtMap;
+
+        // Utility: Removes whitespace from both ends of a string.
+        static std::string trim( const std::string& str );
+        
+        // options to pass to reader writers.
+        osg::ref_ptr<Options>     _options;
+        
+        FilePathList                            _dataFilePath;
+        FilePathList                            _libraryFilePath;
+
+        double                                  _expiryDelay;
+        ObjectCache                             _objectCache;
+        OpenThreads::Mutex                      _objectCacheMutex;
+        
+
+        ArchiveExtensionList                    _archiveExtList;
+
+        osg::ref_ptr<SharedStateManager>        _sharedStateManager;
+
+        osg::ref_ptr<ObjectWrapperManager>      _objectWrapperManager;
+        osg::ref_ptr<DeprecatedDotOsgWrapperManager> _deprecatedDotOsgWrapperManager;
+};
+
+/** read the command line arguments.*/
+inline void readCommandLine(osg::ArgumentParser& parser)
+{
+    Registry::instance()->readCommandLine(parser);
+}
+
+/** Proxy class for automatic registration of reader/writers with the Registry.*/
+template<class T>
+class RegisterReaderWriterProxy
+{
+    public:
+        RegisterReaderWriterProxy()
+        {
+            if (Registry::instance())
+            {
+                _rw = new T;
+                Registry::instance()->addReaderWriter(_rw.get());
+            }
+        }
+
+        ~RegisterReaderWriterProxy()
+        {
+            if (Registry::instance())
+            {
+                Registry::instance()->removeReaderWriter(_rw.get());
+            }
+        }
+        
+        T* get() { return _rw.get(); }
+        
+    protected:
+        osg::ref_ptr<T> _rw;
+};
+
+
+/** Proxy class for automatic registration of reader/writers with the Registry.*/
+template<class T>
+class RegisterImageProcessorProxy
+{
+    public:
+        RegisterImageProcessorProxy()
+        {
+            if (Registry::instance())
+            {
+                _rw = new T;
+                Registry::instance()->addImageProcessor(_rw.get());
+            }
+        }
+
+        ~RegisterImageProcessorProxy()
+        {
+            if (Registry::instance())
+            {
+                Registry::instance()->removeImageProcessor(_rw.get());
+            }
+        }
+
+        T* get() { return _rw.get(); }
+
+    protected:
+        osg::ref_ptr<T> _rw;
+};
+
+struct PluginFunctionProxy
+{
+    PluginFunctionProxy(CPluginFunction function) { (function)(); }
+};
+
+#define USE_OSGPLUGIN(ext) \
+    extern "C" void osgdb_##ext(void); \
+    static osgDB::PluginFunctionProxy proxy_##ext(osgdb_##ext);
+
+#define USE_DOTOSGWRAPPER(classname) \
+    extern "C" void dotosgwrapper_##classname(void); \
+    static osgDB::PluginFunctionProxy proxy_dotosgwrapper_##classname(dotosgwrapper_##classname);
+
+#define USE_DOTOSGWRAPPER_LIBRARY(libname) \
+    extern "C" void dotosgwrapper_library_##libname(void); \
+    static osgDB::PluginFunctionProxy proxy_dotosgwrapper_library_##libname(dotosgwrapper_library_##libname);
+
+#define USE_SERIALIZER_WRAPPER(classname) \
+    extern "C" void wrapper_serializer_##classname(void); \
+    static osgDB::PluginFunctionProxy proxy_serializer_##classname(wrapper_serializer_##classname);
+
+#define USE_SERIALIZER_WRAPPER_LIBRARY(libname) \
+    extern "C" void wrapper_serializer_library_##libname(void); \
+    static osgDB::PluginFunctionProxy proxy_serializer_library_##libname(wrapper_serializer_library_##libname);
+
+#define USE_COMPRESSOR_WRAPPER(classname) \
+    extern "C" void wrapper_serializer_##classname(void); \
+    static osgDB::PluginFunctionProxy proxy_compressor_##classname(wrapper_compressor_##classname);
+
+#define REGISTER_OSGPLUGIN(ext, classname) \
+    extern "C" void osgdb_##ext(void) {} \
+    static osgDB::RegisterReaderWriterProxy<classname> g_proxy_##classname;
+
+#define REGISTER_OSGIMAGEPROCESSOR(ext, classname) \
+    extern "C" void osgdb_##ext(void) {} \
+    static osgDB::RegisterImageProcessorProxy<classname> g_proxy_##classname;
+
+}
+
+#endif

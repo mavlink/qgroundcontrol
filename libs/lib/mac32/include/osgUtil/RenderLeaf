@@ -1,0 +1,118 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_RENDERLEAF
+#define OSGUTIL_RENDERLEAF 1
+
+#include <osg/ref_ptr>
+#include <osg/Matrix>
+#include <osg/Drawable>
+#include <osg/State>
+
+#include <osgUtil/Export>
+
+namespace osgUtil {
+
+#define OSGUTIL_RENDERBACKEND_USE_REF_PTR
+
+// Forward declare StateGraph
+class StateGraph;
+
+/** Container class for all data required for rendering of drawables.
+  */
+class OSGUTIL_EXPORT RenderLeaf : public osg::Referenced
+{
+    public:
+    
+
+        inline RenderLeaf(osg::Drawable* drawable,osg::RefMatrix* projection,osg::RefMatrix* modelview, float depth=0.0f, unsigned int traversalNumber=0):
+            osg::Referenced(false),
+            _parent(0),
+            _drawable(drawable),
+            _projection(projection),
+            _modelview(modelview),
+            _depth(depth),
+            _traversalNumber(traversalNumber)
+        {
+            _dynamic = (drawable->getDataVariance()==osg::Object::DYNAMIC);
+        }
+
+        
+        inline void set(osg::Drawable* drawable,osg::RefMatrix* projection,osg::RefMatrix* modelview, float depth=0.0f, unsigned int traversalNumber=0)
+        {
+            _parent = 0;
+            _drawable = drawable;
+            _projection = projection,
+            _modelview = modelview,
+            _depth = depth;
+            _dynamic = (drawable->getDataVariance()==osg::Object::DYNAMIC);
+            _traversalNumber = traversalNumber;
+        }
+        
+        inline void reset()
+        {
+            _parent = 0;
+            _drawable = 0;
+            _projection = 0;
+            _modelview = 0;
+            _depth = 0.0f;
+            _dynamic = false;
+            _traversalNumber = 0;
+        }
+    
+        virtual void render(osg::RenderInfo& renderInfo,RenderLeaf* previous);
+        
+        /// Allow StateGraph to change the RenderLeaf's _parent.
+        friend class osgUtil::StateGraph;
+
+    public:
+    
+    
+    
+        StateGraph*                     _parent;
+
+#ifdef OSGUTIL_RENDERBACKEND_USE_REF_PTR
+        osg::ref_ptr<osg::Drawable>     _drawable;
+        const osg::Drawable* getDrawable() const { return _drawable.get(); }
+#else
+        osg::Drawable*                  _drawable;
+        const osg::Drawable* getDrawable() const { return _drawable; }
+#endif        
+        osg::ref_ptr<osg::RefMatrix>    _projection;
+        osg::ref_ptr<osg::RefMatrix>    _modelview;
+        float                           _depth;
+        bool                            _dynamic;
+        unsigned int                    _traversalNumber;
+
+    private:
+
+        /// disallow creation of blank RenderLeaf as this isn't useful.
+        RenderLeaf():
+            osg::Referenced(false),
+            _parent(0),
+            _drawable(0),
+            _projection(0),
+            _modelview(0),
+            _depth(0.0f),
+            _traversalNumber(0) {}
+
+        /// disallow copy construction.
+        RenderLeaf(const RenderLeaf&):osg::Referenced(false) {}
+        /// disallow copy operator.
+        RenderLeaf& operator = (const RenderLeaf&) { return *this; }
+
+};
+
+}
+
+#endif

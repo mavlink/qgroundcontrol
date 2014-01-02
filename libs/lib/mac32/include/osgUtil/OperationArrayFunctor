@@ -1,0 +1,116 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_OPERATIONARRAYFUNCTOR
+#define OSGUTIL_OPERATIONARRAYFUNCTOR 1
+
+
+#include <osg/Array>
+#include <osgUtil/ConvertVec>
+
+// ** template ArrayVisitor to handle all method in one template.
+// **  Only use when process done on each array could be templated
+
+namespace osgUtil {
+
+template <class T>
+class OperationArrayFunctor : public osg::ArrayVisitor, public T
+{
+    public:
+        
+        virtual void apply(osg::Array&) {}
+//        virtual void apply(osg::ByteArray& array) { T::process<osg::ByteArray>(array); }
+//        virtual void apply(osg::ShortArray& array) { T::process(array); }
+//        virtual void apply(osg::IntArray& array) { T::process<osg::IntArray>(array); }
+//        virtual void apply(osg::UByteArray& array) { T::process<osg::UByteArray>(array); }
+//        virtual void apply(osg::UShortArray& array) { T::process<osg::UShortArray>(array); }
+//        virtual void apply(osg::UIntArray& array) { T::process<osg::UIntArray>(array); }
+//        virtual void apply(osg::FloatArray& array) { T::process<osg::FloatArray>(array); }
+//        virtual void apply(osg::DoubleArray& array) { T::process<osg::DoubleArray>(array); }
+
+        virtual void apply(osg::Vec2Array & array) { T::process(array); }
+        virtual void apply(osg::Vec3Array& array) { T::process(array); }
+        virtual void apply(osg::Vec4Array& array) { T::process(array); }
+
+        virtual void apply(osg::Vec4ubArray& array) { T::process(array); }
+
+        virtual void apply(osg::Vec2bArray& array) { T::process(array); }
+        virtual void apply(osg::Vec3bArray& array) { T::process(array); }
+        virtual void apply(osg::Vec4bArray& array) { T::process(array); }
+
+        virtual void apply(osg::Vec2sArray& array) { T::process(array); }
+        virtual void apply(osg::Vec3sArray& array) { T::process(array); }
+        virtual void apply(osg::Vec4sArray& array) { T::process(array); }
+
+        virtual void apply(osg::Vec2dArray& array) { T::process(array); }
+        virtual void apply(osg::Vec3dArray& array) { T::process(array); }
+        virtual void apply(osg::Vec4dArray& array) { T::process(array); }
+};
+
+struct AddRangeOperator
+{
+    template <typename ArrayType>
+    void process(ArrayType & array) 
+    {   
+        typedef typename ArrayType::ElementDataType ElementDataType;
+                
+        ElementDataType convertedVector;
+        osgUtil::ConvertVec<osg::Vec3d, ElementDataType>::convert(_vector, convertedVector);
+        
+        typename ArrayType::iterator it = array.begin();
+        std::advance(it, _begin);
+        
+        typename ArrayType::iterator end = it;
+        std::advance(end, _count);
+        
+        for (; it < end; ++it)
+            (*it) += convertedVector;
+    }
+
+    unsigned int _begin;
+    unsigned int _count;
+    
+    osg::Vec3d _vector;
+};
+typedef OperationArrayFunctor<AddRangeOperator> AddRangeFunctor;
+
+struct MultiplyRangeOperator
+{
+    template <typename ArrayType>
+    void process(ArrayType & array) 
+    {   
+        typedef typename ArrayType::ElementDataType ElementDataType;
+                
+        ElementDataType convertedVector;
+        osgUtil::ConvertVec<osg::Vec3d, ElementDataType>::convert(_vector, convertedVector);
+        
+        typename ArrayType::iterator it = array.begin();
+        std::advance(it, _begin);
+        
+        typename ArrayType::iterator end = it;
+        std::advance(end, _count);
+        
+        for (; it < end; ++it)
+            (*it) *= convertedVector;
+    }
+
+    unsigned int _begin;
+    unsigned int _count;
+    
+    osg::Vec3d _vector;
+};
+typedef OperationArrayFunctor<MultiplyRangeOperator> MultiplyRangeFunctor;
+
+} // end osgUtil namespace
+
+#endif // ** OPERATIONARRAYFUNCTOR ** //

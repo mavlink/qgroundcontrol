@@ -1,0 +1,87 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+//osgParticle - Copyright (C) 2002 Marco Jez
+
+#ifndef OSGPARTICLE_INTERPOLATOR
+#define OSGPARTICLE_INTERPOLATOR
+
+#include <osgParticle/range>
+
+#include <osg/CopyOp>
+#include <osg/Object>
+#include <osg/Vec2>
+#include <osg/Vec3>
+#include <osg/Vec4>
+
+namespace osgParticle
+{
+
+    /// An abstract base class for implementing interpolators.
+    class Interpolator : public osg::Object {
+    public:
+        Interpolator()
+        : osg::Object() {}
+        
+        Interpolator(const Interpolator& copy, const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY)
+        : osg::Object(copy, copyop) {}
+        
+        virtual const char* libraryName() const { return "osgParticle"; }
+        virtual const char* className() const { return "Interpolator"; }
+        virtual bool isSameKindAs(const osg::Object* obj) const { return dynamic_cast<const Interpolator* >(obj) != 0; }
+                
+        /// Interpolate between floats. Must be overriden in descendant classes.
+        virtual float interpolate(float t, float y1, float y2) const = 0;    
+        
+        /// Interpolate between 2-dimensional vectors. Default behavior is to interpolate each component separately.
+        virtual osg::Vec2 interpolate(float t, const osg::Vec2& y1, const osg::Vec2& y2) const
+        {
+            return osg::Vec2(
+                interpolate(t, y1.x(), y2.x()),
+                interpolate(t, y1.y(), y2.y())
+            );
+        }
+
+        /// Interpolate between 3-dimensional vectors. Default behavior is to interpolate each component separately.
+        virtual osg::Vec3 interpolate(float t, const osg::Vec3& y1, const osg::Vec3& y2) const
+        {
+            return osg::Vec3(
+                interpolate(t, y1.x(), y2.x()),
+                interpolate(t, y1.y(), y2.y()),
+                interpolate(t, y1.z(), y2.z())
+            );
+        }
+        
+        /// Interpolate between 4-dimensional vectors. Default behavior is to interpolate each component separately.
+        virtual osg::Vec4 interpolate(float t, const osg::Vec4& y1, const osg::Vec4& y2) const
+        {
+            return osg::Vec4(
+                interpolate(t, y1.x(), y2.x()),
+                interpolate(t, y1.y(), y2.y()),
+                interpolate(t, y1.z(), y2.z()),
+                interpolate(t, y1.w(), y2.w())
+            );
+        }
+        
+        template<class ValueType>
+        ValueType interpolate(float t, const range<ValueType>& r) const
+        {
+            return interpolate(t, r.minimum, r.maximum);
+        }
+        
+    protected:
+        virtual ~Interpolator() {}
+    };
+
+}
+
+#endif

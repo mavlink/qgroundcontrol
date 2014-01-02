@@ -1,0 +1,207 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 2011 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_VALUEOBJECT
+#define OSG_VALUEOBJECT 1
+
+#include <osg/Object>
+#include <osg/UserDataContainer>
+
+namespace osg {
+
+// foward declare core OSG math classes
+class Vec2f;
+class Vec3f;
+class Vec4f;
+class Vec2d;
+class Vec3d;
+class Vec4d;
+class Quat;
+class Plane;
+class Matrixf;
+class Matrixd;
+
+class ValueObject : public Object
+{
+    public:
+
+        ValueObject() : Object(true) {}
+        ValueObject(const std::string& name) : Object(true) { setName(name); }
+        ValueObject(const ValueObject& rhs, const osg::CopyOp copyop=osg::CopyOp::SHALLOW_COPY): Object(rhs,copyop) {}
+
+        META_Object(osg, ValueObject)
+
+        class GetValueVisitor
+        {
+        public:
+            virtual void apply(bool value) {}
+            virtual void apply(char value) {}
+            virtual void apply(unsigned char value) {}
+            virtual void apply(short value) {}
+            virtual void apply(unsigned short value) {}
+            virtual void apply(int value) {}
+            virtual void apply(unsigned int value) {}
+            virtual void apply(float value) {}
+            virtual void apply(double value) {}
+            virtual void apply(const std::string& value) {}
+            virtual void apply(const osg::Vec2f& value) {}
+            virtual void apply(const osg::Vec3f& value) {}
+            virtual void apply(const osg::Vec4f& value) {}
+            virtual void apply(const osg::Vec2d& value) {}
+            virtual void apply(const osg::Vec3d& value) {}
+            virtual void apply(const osg::Vec4d& value) {}
+            virtual void apply(const osg::Quat& value) {}
+            virtual void apply(const osg::Plane& value) {}
+            virtual void apply(const osg::Matrixf& value) {}
+            virtual void apply(const osg::Matrixd& value) {}
+        };
+
+        class SetValueVisitor
+        {
+        public:
+            virtual void apply(bool& value) {}
+            virtual void apply(char& value) {}
+            virtual void apply(unsigned char& value) {}
+            virtual void apply(short& value) {}
+            virtual void apply(unsigned short& value) {}
+            virtual void apply(int& value) {}
+            virtual void apply(unsigned int& value) {}
+            virtual void apply(float& value) {}
+            virtual void apply(double& value) {}
+            virtual void apply(std::string& value) {}
+            virtual void apply(osg::Vec2f& value) {}
+            virtual void apply(osg::Vec3f& value) {}
+            virtual void apply(osg::Vec4f& value) {}
+            virtual void apply(osg::Vec2d& value) {}
+            virtual void apply(osg::Vec3d& value) {}
+            virtual void apply(osg::Vec4d& value) {}
+            virtual void apply(osg::Quat& value) {}
+            virtual void apply(osg::Plane& value) {}
+            virtual void apply(osg::Matrixf& value) {}
+            virtual void apply(osg::Matrixd& value) {}
+        };
+
+        virtual bool get(GetValueVisitor& gvv) const { return false; }
+        virtual bool set(SetValueVisitor& gvv) { return false; }
+};
+
+template< typename T >
+struct ValueObjectClassNameTrait
+{
+    static const char* className() { return "TemplateValueObject"; }
+};
+
+
+template< typename T >
+class TemplateValueObject : public ValueObject
+{
+    public:
+
+        TemplateValueObject():
+            ValueObject(),
+            _value() {}
+
+        TemplateValueObject(const std::string& name, const T& value) :
+            ValueObject(name),
+            _value(value) {}
+
+        TemplateValueObject(const TemplateValueObject& rhs, const osg::CopyOp copyop=osg::CopyOp::SHALLOW_COPY) :
+            ValueObject(rhs,copyop),
+            _value(rhs._value) {}
+
+        virtual Object* cloneType() const { return new TemplateValueObject(); }
+        virtual Object* clone(const CopyOp& copyop) const { return new TemplateValueObject(*this, copyop); }
+        virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const TemplateValueObject*>(obj)!=NULL; }
+        virtual const char* libraryName() const { return "osg"; }
+        virtual const char* className() const { return ValueObjectClassNameTrait<T>::className(); }
+
+        void setValue(const T& value) { _value = value; }
+        const T& getValue() const { return _value; }
+
+        virtual bool get(GetValueVisitor& gvv) const { gvv.apply(_value); return true; }
+        virtual bool set(SetValueVisitor& svv) { svv.apply(_value); return true; }
+
+protected:
+
+        static const char* s_TemplateValueObject_className;
+        
+        T _value;
+};
+
+#define META_ValueObject(TYPE,NAME) \
+    template<> struct ValueObjectClassNameTrait<TYPE> { static const char* className() { return #NAME; } }; \
+    typedef TemplateValueObject<TYPE> NAME;
+
+META_ValueObject(std::string, StringValueObject)
+META_ValueObject(bool, BoolValueObject)
+META_ValueObject(char, CharValueObject)
+META_ValueObject(unsigned char, UCharValueObject)
+META_ValueObject(short, ShortValueObject)
+META_ValueObject(unsigned short, UShortValueObject)
+META_ValueObject(int, IntValueObject)
+META_ValueObject(unsigned int, UIntValueObject)
+META_ValueObject(float, FloatValueObject)
+META_ValueObject(double, DoubleValueObject)
+META_ValueObject(Vec2f, Vec2fValueObject)
+META_ValueObject(Vec3f, Vec3fValueObject)
+META_ValueObject(Vec4f, Vec4fValueObject)
+META_ValueObject(Vec2d, Vec2dValueObject)
+META_ValueObject(Vec3d, Vec3dValueObject)
+META_ValueObject(Vec4d, Vec4dValueObject)
+META_ValueObject(Quat, QuatValueObject)
+META_ValueObject(Plane, PlaneValueObject)
+META_ValueObject(Matrixf, MatrixfValueObject)
+META_ValueObject(Matrixd, MatrixdValueObject)
+
+/** provide implementation of osg::Object::getUserValue(..) template*/
+template<typename T>
+bool osg::Object::getUserValue(const std::string& name, T& value) const
+{
+    typedef TemplateValueObject<T> UserValueObject;
+    
+    const osg::UserDataContainer* udc = dynamic_cast<const osg::UserDataContainer*>(this);
+    if (!udc) udc = _userDataContainer;
+    
+    const UserValueObject* uvo = udc ? dynamic_cast<const UserValueObject*>(udc->getUserObject(name)) : 0;
+    if (uvo)
+    {
+        value = uvo->getValue();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+/** provide implementation of osg::Object::setUserValue(..) template.*/
+template<typename T>
+void osg::Object::setUserValue(const std::string& name, const T& value)
+{
+    typedef TemplateValueObject<T> UserValueObject;
+
+    osg::UserDataContainer* udc = dynamic_cast<osg::UserDataContainer*>(this);
+    if (!udc)
+    {
+        getOrCreateUserDataContainer();
+        udc = _userDataContainer;
+    }
+    
+    unsigned int i = udc->getUserObjectIndex(name);
+    if (i<udc->getNumUserObjects()) udc->setUserObject(i, new UserValueObject(name,value));
+    else udc->addUserObject(new UserValueObject(name,value));
+}
+
+}
+#endif
+

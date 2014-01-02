@@ -1,0 +1,74 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+// The following symbol has a underscore suffix for compatibility.
+#ifndef OSGGA_EXPORT_
+#define OSGGA_EXPORT_ 1
+
+#include<osg/Config>
+
+#if defined(_MSC_VER) && defined(OSG_DISABLE_MSVC_WARNINGS)
+    #pragma warning( disable : 4244 )
+    #pragma warning( disable : 4251 )
+    #pragma warning( disable : 4267 )
+    #pragma warning( disable : 4275 )
+    #pragma warning( disable : 4290 )
+    #pragma warning( disable : 4786 )
+    #pragma warning( disable : 4305 )
+    #pragma warning( disable : 4996 )
+#endif
+
+#if defined(_MSC_VER) || defined(__CYGWIN__) || defined(__MINGW32__) || defined( __BCPLUSPLUS__) || defined( __MWERKS__)
+    #  if defined( OSG_LIBRARY_STATIC )
+        #    define OSGGA_EXPORT
+        #  elif defined( OSGGA_LIBRARY )
+        #    define OSGGA_EXPORT   __declspec(dllexport)
+        #  else
+        #    define OSGGA_EXPORT   __declspec(dllimport)
+        #endif
+#else
+        #define OSGGA_EXPORT 
+#endif 
+
+#endif
+
+
+/**
+
+\namespace osgGA
+
+The 'GA' in osgGA stands for 'GUI Abstraction'; the osgGA namespace provides facilities to
+help developers write the glue to allow the osg to work with varying window systems.
+
+As a cross-platform, window system-agnostic class library, the OpenSceneGraph
+has no direct ties to any given windowing environment. Viewers, however, must at
+some level interact with a window system - where Window system may refer to a windowing
+API, e.g. GLUT, Qt, FLTK, MFC, ...
+
+There is much commonality in the implementation of Viewers for varying windowing
+environments. E.g. most Viewers will update a Camera position in response to a mouse
+event, and may request that a timer be started as a result of a model being 'spun'.
+
+The purpose of the osgGA namespace is to centralise the common areas of this
+functionality. The viewer writer needs then only write a GUIEventAdapter, a
+GUIActionAdapter, and assemble a collection of GUIEventHandlers
+as appropriate for the viewer.
+
+Events from the windowing environment are adpated, and then fed into the GUIEventHandlers.
+The GUIEventHandlers analyse and take action, and make requests of the windowing
+environemnt via the GUIActionAdapter. The viewer writer should then honour these
+requests, translating them into calls to the windowing API.
+
+*/
+
+

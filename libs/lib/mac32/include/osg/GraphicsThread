@@ -1,0 +1,136 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_GRAPHICSTHREAD
+#define OSG_GRAPHICSTHREAD 1
+
+#include <osg/OperationThread>
+#include <osg/State>
+
+namespace osg {
+
+class GraphicsContext;
+
+/** GraphicsThread is a helper class for running OpenGL GraphicsOperation within a single thread assigned to a specific GraphicsContext.*/
+class OSG_EXPORT GraphicsThread : public osg::OperationThread
+{
+    public:
+    
+        GraphicsThread();
+        
+        /** Run does the graphics thread run loop.*/        
+        virtual void run();
+};
+
+struct OSG_EXPORT GraphicsOperation : public Operation
+{
+    GraphicsOperation(const std::string& name, bool keep):
+        Operation(name,keep) {}
+
+    /** Override the standard Operation operator and dynamic cast object to a GraphicsContext,
+      * on success call operation()(GraphicsContext*).*/
+    virtual void operator () (Object* object);
+
+    virtual void operator () (GraphicsContext* context) = 0;
+};
+
+
+/** SwapBufferOperation calls swap buffers on the GraphicsContext.*/
+struct OSG_EXPORT SwapBuffersOperation : public GraphicsOperation
+{
+    SwapBuffersOperation():
+        GraphicsOperation("SwapBuffers",true) {}
+
+    virtual void operator () (GraphicsContext* context);
+};
+
+/** BarrierOperation allows one to synchronize multiple GraphicsThreads with each other.*/
+struct OSG_EXPORT BarrierOperation : public Operation, public OpenThreads::Barrier
+{
+    enum PreBlockOp
+    {
+        NO_OPERATION,
+        GL_FLUSH,
+        GL_FINISH
+    };
+
+    BarrierOperation(int numThreads, PreBlockOp op=NO_OPERATION, bool keep=true):
+        Operation("Barrier", keep),
+        OpenThreads::Barrier(numThreads),
+        _preBlockOp(op) {}
+
+    virtual void release();
+
+    virtual void operator () (Object* object);
+    
+    PreBlockOp _preBlockOp;
+};
+
+/** ReleaseContext_Block_MakeCurrentOperation releases the context for another thread to acquire, 
+  * then blocks waiting for context to be released, once the block is release the context is re-acquired.*/
+struct OSG_EXPORT ReleaseContext_Block_MakeCurrentOperation : public GraphicsOperation, public RefBlock
+{
+    ReleaseContext_Block_MakeCurrentOperation():
+        GraphicsOperation("ReleaseContext_Block_MakeCurrent", false) {}
+
+    virtual void release();
+
+    virtual void operator () (GraphicsContext* context);
+};
+
+struct OSG_EXPORT BlockAndFlushOperation : public GraphicsOperation, public OpenThreads::Block
+{
+    BlockAndFlushOperation();
+
+    virtual void release();
+
+    virtual void operator () (GraphicsContext*);
+};
+
+
+struct OSG_EXPORT FlushDeletedGLObjectsOperation : public GraphicsOperation
+{
+    FlushDeletedGLObjectsOperation(double availableTime, bool keep=false);
+
+    virtual void operator () (GraphicsContext*);
+    
+    double _availableTime;
+};
+
+class OSG_EXPORT RunOperations : public osg::GraphicsOperation
+{
+public:
+
+    RunOperations():
+        osg::GraphicsOperation("RunOperation",true) {}
+    
+    virtual void operator () (osg::GraphicsContext* context);
+    
+};
+
+class OSG_EXPORT EndOfDynamicDrawBlock : public OpenThreads::BlockCount, public osg::State::DynamicObjectRenderingCompletedCallback
+{
+    public:
+    
+        EndOfDynamicDrawBlock(unsigned int);
+    
+        void completed(osg::State* state);
+
+    protected:
+
+        ~EndOfDynamicDrawBlock() {}
+};
+
+}
+
+#endif
