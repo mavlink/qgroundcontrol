@@ -32,7 +32,9 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
+#ifdef QT_DEBUG
 #include "AutoTest.h"
+#endif
 
 /* SDL does ugly things to main() */
 #ifdef main
