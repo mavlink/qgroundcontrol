@@ -157,46 +157,40 @@ WindowsBuild {
 	BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
 	DESTDIR_WIN = $$replace(DESTDIR,"/","\\")
 
-	DebugBuild {
-        COPY_FILE_DESTDIR = $$DESTDIR_WIN\\debug
-    }
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY_DIR "$$(QTDIR)\\plugins" "$$DESTDIR_WIN")
 
-    ReleaseBuild {
-        COPY_FILE_DESTDIR = $$DESTDIR_WIN\\release
-    }
-
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY_DIR "$$(QTDIR)\\plugins" "$$DESTDIR_WIN\\debug")
-
+    COPY_FILE_DESTDIR = $$DESTDIR_WIN
+	DebugBuild: DLL_QT_DEBUGCHAR = "d"
+    ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
         $$BASEDIR_WIN\\libs\\lib\\sdl\\win32\\SDL.dll \
         $$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
-        $$(QTDIR)\\bin\\phonond4.dll \
-        $$(QTDIR)\\bin\\QtCored4.dll \
-        $$(QTDIR)\\bin\\QtGuid4.dll \
-        $$(QTDIR)\\bin\\QtMultimediad4.dll \
-        $$(QTDIR)\\bin\\QtNetworkd4.dll \
-        $$(QTDIR)\\bin\\QtOpenGLd4.dll \
-        $$(QTDIR)\\bin\\QtSqld4.dll \
-        $$(QTDIR)\\bin\\QtSvgd4.dll \
-        $$(QTDIR)\\bin\\QtTestd4.dll \
-        $$(QTDIR)\\bin\\QtWebKitd4.dll \
-        $$(QTDIR)\\bin\\QtXmld4.dll \
-        $$(QTDIR)\\bin\\QtXmlPatternsd4.dll \
-        $$(QTDIR)\\bin\\QtDeclaratived4.dll \
-        $$(QTDIR)\\bin\\QtScriptd4.dll
+        $$(QTDIR)\\bin\\phonon$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtCore$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtGui$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtMultimedia$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtNetwork$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtOpenGL$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtSql$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtSvg$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtTest$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtWebKit$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtXml$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtXmlPatterns$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtDeclarative$${DLL_QT_DEBUGCHAR}4.dll \
+        $$(QTDIR)\\bin\\QtScript$${DLL_QT_DEBUGCHAR}4.dll
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY "$$COPY_FILE" "$$COPY_FILE_DESTDIR")
     }
 
 	ReleaseBuild {
-		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\release\\$${TARGET}.exp")
-		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\release\\$${TARGET}")
+		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\$${TARGET}.exp")
 
 		# Copy Visual Studio DLLs
 		# Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
 		# I'm not certain of the path for VS2008, so this only works for VS2010.
 		win32-msvc2010 {
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(xcopy /D /Y "\"C:\\Program Files \(x86\)\\Microsoft Visual Studio 10.0\\VC\\redist\\x86\\Microsoft.VC100.CRT\\*.dll\""  "$$DESTDIR_WIN\\release\\")
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(xcopy /D /Y "\"C:\\Program Files \(x86\)\\Microsoft Visual Studio 10.0\\VC\\redist\\x86\\Microsoft.VC100.CRT\\*.dll\""  "$$DESTDIR_WIN\\")
 		}
 	}
 }

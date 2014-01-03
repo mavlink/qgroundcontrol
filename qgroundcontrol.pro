@@ -79,6 +79,9 @@ QT += network \
     webkit \
     sql \
     declarative
+        
+#  testlib is needed even in release flavor for QSignalSpy support
+QT += testlib
 
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
@@ -136,9 +139,6 @@ ReleaseBuild {
 #
 
 DebugBuild {
-
-    QT += testlib
-    
     INCLUDEPATH += \
         src/qgcunittest
 
