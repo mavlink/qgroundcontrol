@@ -117,6 +117,59 @@ WindowsBuild {
 }
 
 #
+# Warnings cleanup. Plan of attack is to turn off all existing warnings and turn on warnings as errors.
+# Then we will clean up the warnings one type at a time, removing the override for that specific warning
+# from the lists below. Eventually we will be left with no overlooked warnings and all future warnings
+# generating an error and breaking the build.
+#
+
+MacBuild | LinuxBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        -Werror \
+        -Wno-unused-parameter \
+        -Wno-reorder \
+        -Wno-unused-variable \
+        -Wno-enum-compare \
+        -Wno-narrowing \
+        -Wno-type-limits \
+        -Wno-sign-compare \
+        -Wno-uninitialized \
+        -Wno-switch \
+        -Wno-unused-function
+}
+
+LinuxBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        -Wno-unused-but-set-variable \
+        -Wno-cpp
+}
+
+MacBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        -Wno-tautological-compare \
+        -Wno-null-conversion \
+        -Wno-overloaded-virtual \
+        -Wno-tautological-constant-out-of-range-compare \
+        -Wno-unused-private-field \
+        -Wno-#warnings
+}
+
+WindowsBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        /wd4100 \
+        /wd4189 \
+        /wd4005 \
+        /wd4305 \
+        /wd4996 \
+        /wd4018 \
+        /wd4305 \
+        /wd4700 \
+        /wd4290 \
+        /wd4146 \
+        /wd4309
+}
+
+#
 # Build flavor specific settings
 #
 
