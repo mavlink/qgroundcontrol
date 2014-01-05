@@ -17,11 +17,59 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
+message(Qt version $$[QT_VERSION])
+
+# Setup our supported build types. We do this once here and then use the defined config scopes
+# to allow us to easily modify suported build types in one place instead of duplicated throughout
+# the project file.
+
+linux-g++ | linux-g++-64 {
+    message(Linux build)
+    CONFIG += LinuxBuild
+} else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 {
+    message(Windows build)
+    CONFIG += WindowsBuild
+} else : macx-clang {
+    message(Mac build)
+    CONFIG += MacBuild
+} else {
+    error(Unsupported build type)
+}
+
+# Setup our supported build flavors
+
+CONFIG(debug, debug|release) {
+    message(Debug flavor)
+    CONFIG += DebugBuild
+} else:CONFIG(release, debug|release) {
+    message(Release flavor)
+    CONFIG += ReleaseBuild
+} else {
+    error(Unsupported build flavor)
+}
+
+# Setup our build directories
+
+BASEDIR = $${IN_PWD}
+DebugBuild {
+    DESTDIR = $${OUT_PWD}/debug
+    BUILDDIR = $${OUT_PWD}/build-debug
+}
+ReleaseBuild {
+    DESTDIR = $${OUT_PWD}/release
+    BUILDDIR = $${OUT_PWD}/build-release
+}
+OBJECTS_DIR = $${BUILDDIR}/obj
+MOC_DIR = $${BUILDDIR}/moc
+UI_DIR = $${BUILDDIR}/ui
+RCC_DIR = $${BUILDDIR}/rcc
+LANGUAGE = C++
+
+message(BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET)
 
 # Qt configuration
 CONFIG += qt \
-    thread \
-    console
+    thread
 
 QT += network \
     opengl \
@@ -30,166 +78,140 @@ QT += network \
     phonon \
     webkit \
     sql \
-    declarative \
-    testlib
+    declarative
+        
+#  testlib is needed even in release flavor for QSignalSpy support
+QT += testlib
 
-# Setting this variable allows you to include this .pro file in another such that
-# you can set your own TARGET and main() function. This is used by the unit test
-# build files to build unit test using all built parts of QGCS except for main.
-isEmpty(QGCS_UNITTEST_OVERRIDE) {
-    TEMPLATE = app
-    TARGET = qgroundcontrol
-    SOURCES += src/main.cc
-}
+# Turn off serial port warnings
+DEFINES += _TTY_NOWARN_
 
-BASEDIR = $${IN_PWD}
-linux-g++|linux-g++-64{
-    CONFIG(debug, debug|release) {
-        TARGETDIR = $${OUT_PWD}/debug
-        BUILDDIR = $${OUT_PWD}/build-debug
-    }
-    CONFIG(release, debug|release) {
-        TARGETDIR = $${OUT_PWD}/release
-        BUILDDIR = $${OUT_PWD}/build-release
-    }
-} else {
-    TARGETDIR = $${OUT_PWD}
-    BUILDDIR = $${OUT_PWD}/build
-}
+#
+# OS Specific settings
+#
 
-
-
-LANGUAGE = C++
-OBJECTS_DIR = $${BUILDDIR}/obj
-MOC_DIR = $${BUILDDIR}/moc
-UI_DIR = $${BUILDDIR}/ui
-RCC_DIR = $${BUILDDIR}/rcc
-MAVLINK_CONF = ""
-MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
-DEFINES += MAVLINK_NO_DATA
-
-win32 {
-	VERSION = 2.0.0.227
-	QMAKE_TARGET_COMPANY = qgroundcontrol.org
-	QMAKE_TARGET_PRODUCT = qgroundcontrol
-	QMAKE_TARGET_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
-	QMAKE_TARGET_COPYRIGHT = "Copyright (C) 2013 QGroundControl Development Team. All rights reserved."
-
-    QMAKE_INCDIR_QT = $$(QTDIR)/include
-    QMAKE_LIBDIR_QT = $$(QTDIR)/lib
-    QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
-    QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
-    QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
-    QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
-}
-
-macx {
+MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
+    CONFIG += x86_64
+    CONFIG -= x86
+	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+	ICON = $$BASEDIR/files/images/icons/macx.icns
 }
 
-#################################################################
-# EXTERNAL LIBRARY CONFIGURATION
+LinuxBuild {
+	DEFINES += __STDC_LIMIT_MACROS
+}
 
-# EIGEN matrix library (header-only)
-INCLUDEPATH += libs/eigen
+WindowsBuild {
+	DEFINES += __STDC_LIMIT_MACROS
 
-# OPMapControl library (from OpenPilot)
-include(libs/utils/utils_external.pri)
-include(libs/opmapcontrol/opmapcontrol_external.pri)
+	# Specify multi-process compilation within Visual Studio.
+	# (drastically improves compilation times for multi-core computers)
+	QMAKE_CXXFLAGS_DEBUG += -MP
+	QMAKE_CXXFLAGS_RELEASE += -MP
+
+	# QWebkit is not needed on MS-Windows compilation environment
+	CONFIG -= webkit
+
+	RC_FILE = $$BASEDIR/qgroundcontrol.rc
+}
+
+#
+# Build flavor specific settings
+#
+
+DebugBuild {
+    CONFIG += console
+}
+
+ReleaseBuild {
+    DEFINES += QT_NO_DEBUG
+
+	WindowsBuild {
+		# Use link time code generation for beteer optimization (I believe this is supported in msvc express, but not 100% sure)
+		QMAKE_LFLAGS_LTCG = /LTCG
+		QMAKE_CFLAGS_LTCG = -GL
+    }
+}
+
+#
+# Unit Test specific configuration goes here (debug only)
+#
+
+DebugBuild {
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/qgcunittest/AutoTest.h \
+        src/qgcunittest/UASUnitTest.h \
+        src/qgcunittest/MockUASManager.h \
+        src/qgcunittest/MockUAS.h \
+        src/qgcunittest/MockQGCUASParamManager.h \
+        src/qgcunittest/MultiSignalSpy.h \
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/FlightModeConfigTest.h
+
+    SOURCES += \
+        src/qgcunittest/UASUnitTest.cc \
+        src/qgcunittest/MockUASManager.cc \
+        src/qgcunittest/MockUAS.cc \
+        src/qgcunittest/MockQGCUASParamManager.cc \
+        src/qgcunittest/MultiSignalSpy.cc \
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/FlightModeConfigTest.cc
+}
+
+#
+# External library configuration
+#
+
+include(QGCExternalLibs.pri)
+
+#
+# Post link configuration
+#
+
+include(QGCSetup.pri)
+
+#
+# Main QGroundControl portion of project file
+#
+
+RESOURCES += qgroundcontrol.qrc
+
+TRANSLATIONS += \
+    es-MX.ts \
+    en-US.ts
+    
 DEPENDPATH += \
-    libs/utils \
-    libs/utils/src \
-    libs/opmapcontrol \
-    libs/opmapcontrol/src \
-    libs/opmapcontrol/src/mapwidget
-
-INCLUDEPATH += \
-    libs/utils \
-    libs \
-    libs/opmapcontrol \
-    src/qgcunittest
-
-# If the user config file exists, it will be included.
-# if the variable MAVLINK_CONF contains the name of an
-# additional project, QGroundControl includes the support
-# of custom MAVLink messages of this project. It will also
-# create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use
-# within the actual code.
-exists(user_config.pri) {
-    include(user_config.pri)
-    message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
-    message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
-    message("------------------------------------------------------------------------")
-} else {
-    MAVLINK_CONF += ardupilotmega
-}
-INCLUDEPATH += $$MAVLINKPATH
-isEmpty(MAVLINK_CONF) {
-    INCLUDEPATH += $$MAVLINKPATH/common
-} else {
-    INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
-}
-
-# Include general settings for QGroundControl
-# necessary as last include to override any non-acceptable settings
-# done by the plugins above
-include(qgroundcontrol.pri)
-
-# Include MAVLink generator
-# has been deprecated
-DEPENDPATH += \
-    src/apps/mavlinkgen
-
-INCLUDEPATH += \
-    src/apps/mavlinkgen \
-    src/apps/mavlinkgen/ui \
-    src/apps/mavlinkgen/generator
-
-include(src/apps/mavlinkgen/mavlinkgen.pri)
-
-# Include QUpgrade tool
-exists(qupgrade) {
-    SOURCES += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
-               qupgrade/src/apps/qupgrade/uploader.cpp \
-               qupgrade/src/apps/qupgrade/dialog_bare.cpp \
-               qupgrade/src/apps/qupgrade/boardwidget.cpp
-
-    HEADERS += qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
-               qupgrade/src/apps/qupgrade/uploader.h \
-               qupgrade/src/apps/qupgrade/dialog_bare.h \
-               qupgrade/src/apps/qupgrade/boardwidget.h
-
-    FORMS += qupgrade/src/apps/qupgrade/dialog_bare.ui \
-             qupgrade/src/apps/qupgrade/boardwidget.ui
-
-    RESOURCES += qupgrade/qupgrade.qrc
-
-    linux*:CONFIG += qesp_linux_udev
-
-    include(qupgrade/libs/qextserialport/src/qextserialport.pri)
-
-    INCLUDEPATH += qupgrade/src/apps/qupgrade
-
-    DEFINES += "QUPGRADE_SUPPORT"
-}
-
-# Include GLC library
-#include(libs/GLC_lib/glc_lib.pri)
-
-# Include QWT plotting library
-include(libs/qwt/qwt.pri)
-
-DEPENDPATH += . \
+    . \
     plugins
 
 INCLUDEPATH += .
 
-# Include serial port library (QSerialPort)
-include(libs/serialport/qserialport.pri)
+INCLUDEPATH += \
+    src \
+    src/ui \
+    src/ui/linechart \
+    src/ui/uas \
+    src/ui/map \
+    src/uas \
+    src/comm \
+    include/ui \
+    src/input \
+    src/lib/qmapcontrol \
+    src/ui/mavlink \
+    src/ui/param \
+    src/ui/watchdog \
+    src/ui/map3D \
+    src/ui/mission \
+    src/ui/designer \
+    src/ui/configuration \
+    src/ui/main
 
-# Input
-FORMS += src/ui/MainWindow.ui \
+FORMS += \
+    src/ui/MainWindow.ui \
     src/ui/CommSettings.ui \
     src/ui/SerialSettings.ui \
     src/ui/UASControl.ui \
@@ -305,25 +327,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
     src/ui/designer/QGCXYPlot.ui
 
-INCLUDEPATH += src \
-    src/ui \
-    src/ui/linechart \
-    src/ui/uas \
-    src/ui/map \
-    src/uas \
-    src/comm \
-    include/ui \
-    src/input \
-    src/lib/qmapcontrol \
-    src/ui/mavlink \
-    src/ui/param \
-    src/ui/watchdog \
-    src/ui/map3D \
-    src/ui/mission \
-    src/ui/designer \
-    src/ui/configuration \
-    src/ui/main
-HEADERS += src/MG.h \
+HEADERS += \
+    src/MG.h \
     src/QGCCore.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
@@ -515,50 +520,8 @@ HEADERS += src/MG.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h
 
-# Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
-macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-contains(DEPENDENCIES_PRESENT, osg) {
-    message("Including headers for OpenSceneGraph")
-
-    # Enable only if OpenSceneGraph is available
-    HEADERS += src/ui/map3D/gpl.h \
-        src/ui/map3D/CameraParams.h \
-        src/ui/map3D/ViewParamWidget.h \
-        src/ui/map3D/SystemContainer.h \
-        src/ui/map3D/SystemViewParams.h \
-        src/ui/map3D/GlobalViewParams.h \
-        src/ui/map3D/SystemGroupNode.h \
-        src/ui/map3D/Q3DWidget.h \
-        src/ui/map3D/GCManipulator.h \
-        src/ui/map3D/ImageWindowGeode.h \
-        src/ui/map3D/PixhawkCheetahNode.h \
-        src/ui/map3D/Pixhawk3DWidget.h \
-        src/ui/map3D/Q3DWidgetFactory.h \
-        src/ui/map3D/WebImageCache.h \
-        src/ui/map3D/WebImage.h \
-        src/ui/map3D/TextureCache.h \
-        src/ui/map3D/Texture.h \
-        src/ui/map3D/Imagery.h \
-        src/ui/map3D/HUDScaleGeode.h \
-        src/ui/map3D/WaypointGroupNode.h \
-        src/ui/map3D/TerrainParamDialog.h \
-        src/ui/map3D/ImageryParamDialog.h
-}
-contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
-    message("Including headers for Protocol Buffers")
-
-    # Enable only if protobuf is available
-    HEADERS += libs/mavlink/include/mavlink/v1.0/pixhawk/pixhawk.pb.h \
-        src/ui/map3D/ObstacleGroupNode.h \
-        src/ui/map3D/GLOverlayGeode.h
-}
-contains(DEPENDENCIES_PRESENT, libfreenect) {
-    message("Including headers for libfreenect")
-
-    # Enable only if libfreenect is available
-    HEADERS += src/input/Freenect.h
-}
 SOURCES += \
+    src/main.cc \
     src/QGCCore.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
@@ -739,191 +702,3 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
-
-CONFIG(debug, debug|release) {
-    # Unit Test sources/headers go here
-    
-    INCLUDEPATH += \
-        src/qgcunittest
-
-    HEADERS += \
-        src/qgcunittest/AutoTest.h \
-        src/qgcunittest/UASUnitTest.h \
-        src/qgcunittest/MockUASManager.h \
-        src/qgcunittest/MockUAS.h \
-        src/qgcunittest/MockQGCUASParamManager.h \
-        src/qgcunittest/MultiSignalSpy.h \
-        src/qgcunittest/TCPLinkTest.h \
-        src/qgcunittest/FlightModeConfigTest.h
-
-    SOURCES += \
-        src/qgcunittest/UASUnitTest.cc \
-        src/qgcunittest/MockUASManager.cc \
-        src/qgcunittest/MockUAS.cc \
-        src/qgcunittest/MockQGCUASParamManager.cc \
-        src/qgcunittest/MultiSignalSpy.cc \
-        src/qgcunittest/TCPLinkTest.cc \
-        src/qgcunittest/FlightModeConfigTest.cc
-}
-
-# Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
-macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-
-# Enable OSG only if it has been found
-contains(DEPENDENCIES_PRESENT, osg) {
-    message("Including sources for OpenSceneGraph")
-
-    # Enable only if OpenSceneGraph is available
-    SOURCES += src/ui/map3D/gpl.cc \
-        src/ui/map3D/CameraParams.cc \
-        src/ui/map3D/ViewParamWidget.cc \
-        src/ui/map3D/SystemContainer.cc \
-        src/ui/map3D/SystemViewParams.cc \
-        src/ui/map3D/GlobalViewParams.cc \
-        src/ui/map3D/SystemGroupNode.cc \
-        src/ui/map3D/Q3DWidget.cc \
-        src/ui/map3D/ImageWindowGeode.cc \
-        src/ui/map3D/GCManipulator.cc \
-        src/ui/map3D/PixhawkCheetahNode.cc \
-        src/ui/map3D/Pixhawk3DWidget.cc \
-        src/ui/map3D/Q3DWidgetFactory.cc \
-        src/ui/map3D/WebImageCache.cc \
-        src/ui/map3D/WebImage.cc \
-        src/ui/map3D/TextureCache.cc \
-        src/ui/map3D/Texture.cc \
-        src/ui/map3D/Imagery.cc \
-        src/ui/map3D/HUDScaleGeode.cc \
-        src/ui/map3D/WaypointGroupNode.cc \
-        src/ui/map3D/TerrainParamDialog.cc \
-        src/ui/map3D/ImageryParamDialog.cc
-
-    contains(DEPENDENCIES_PRESENT, osgearth) {
-        message("Including sources for osgEarth")
-
-        # Enable only if OpenSceneGraph is available
-        SOURCES +=
-    }
-}
-contains(DEPENDENCIES_PRESENT, protobuf):contains(MAVLINK_CONF, pixhawk) {
-    message("Including sources for Protocol Buffers")
-
-    # Enable only if protobuf is available
-    SOURCES += libs/mavlink/share/mavlink/src/v1.0/pixhawk/pixhawk.pb.cc \
-        src/ui/map3D/ObstacleGroupNode.cc \
-        src/ui/map3D/GLOverlayGeode.cc
-}
-contains(DEPENDENCIES_PRESENT, libfreenect) {
-    message("Including sources for libfreenect")
-
-    # Enable only if libfreenect is available
-    SOURCES += src/input/Freenect.cc
-}
-
-# Add icons and other resources
-RESOURCES += qgroundcontrol.qrc
-
-# Include RT-LAB Library
-win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
-    message("Building support for Opal-RT")
-    LIBS += -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
-        -lOpalApi
-    INCLUDEPATH += src/lib/opalrt
-    HEADERS += src/comm/OpalRT.h \
-        src/comm/OpalLink.h \
-        src/comm/Parameter.h \
-        src/comm/QGCParamID.h \
-        src/comm/ParameterList.h \
-        src/ui/OpalLinkConfigurationWindow.h
-    SOURCES += src/comm/OpalRT.cc \
-        src/comm/OpalLink.cc \
-        src/comm/Parameter.cc \
-        src/comm/QGCParamID.cc \
-        src/comm/ParameterList.cc \
-        src/ui/OpalLinkConfigurationWindow.cc
-    FORMS += src/ui/OpalLinkSettings.ui
-    DEFINES += OPAL_RT
-}
-TRANSLATIONS += es-MX.ts \
-    en-US.ts
-
-# xbee support
-# libxbee only supported by linux and windows systems
-win32-msvc2008|win32-msvc2010|win32-msvc2012|linux {
-    HEADERS += src/comm/XbeeLinkInterface.h \
-        src/comm/XbeeLink.h \
-        src/comm/HexSpinBox.h \
-        src/ui/XbeeConfigurationWindow.h \
-        src/comm/CallConv.h
-    SOURCES += src/comm/XbeeLink.cpp \
-        src/comm/HexSpinBox.cpp \
-        src/ui/XbeeConfigurationWindow.cpp
-    DEFINES += XBEELINK
-    INCLUDEPATH += libs/thirdParty/libxbee
-# TO DO: build library when it does not exist already
-    LIBS += -llibs/thirdParty/libxbee/lib/libxbee
-}
-
-###################################################################
-#### --- 3DConnexion 3d Mice support (e.g. spacenavigator) --- ####
-###################################################################
-
-# xdrvlib only supported by linux (theoretical all X11) systems
-# You have to install the official 3DxWare driver for linux to use 3D mouse support on linux systems!
-linux-g++|linux-g++-64{
-    exists(/usr/local/lib/libxdrvlib.so){
-        message("Including support for Magellan 3DxWare for linux system.")
-        SOURCES  += src/input/Mouse6dofInput.cpp
-        HEADERS  += src/input/Mouse6dofInput.h
-        LIBS += -L/usr/local/lib/ -lxdrvlib
-        INCLUDEPATH *= /usr/local/include
-        DEFINES += MOUSE_ENABLED_LINUX \
-                    ParameterCheck                      # Hack: Has to be defined for magellan usage
-    }
-}
-
-# Support for Windows systems
-# You have to install the official 3DxWare driver for Windows to use the 3D mouse support on Windows systems!
-win32-msvc2008|win32-msvc2010|win32-msvc2012 {
-    message("Including support for 3DxWare for Windows system.")
-    SOURCES  += libs/thirdParty/3DMouse/win/MouseParameters.cpp \
-                libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
-                src/input/Mouse6dofInput.cpp
-    HEADERS  += libs/thirdParty/3DMouse/win/I3dMouseParams.h \
-                libs/thirdParty/3DMouse/win/MouseParameters.h \
-                libs/thirdParty/3DMouse/win/Mouse3DInput.h \
-                src/input/Mouse6dofInput.h
-    INCLUDEPATH += libs/thirdParty/3DMouse/win
-    DEFINES += MOUSE_ENABLED_WIN
-}
-
-OTHER_FILES += \
-    dongfang_notes.txt \
-    src/ui/dongfang-scrapyard.txt \
-    qml/components/DigitalDisplay.qml \
-    qml/components/StatusDisplay.qml
-
-OTHER_FILES += \
-    qml/ApmToolBar.qml \
-    qml/components/Button.qml \
-    qml/components/TextButton.qml \
-    qml/resources/qgroundcontrol/toolbar/connect.png \
-    qml/resources/qgroundcontrol/toolbar/flightplanner.png \
-    qml/resources/qgroundcontrol/toolbar/helpwizard.png \
-    qml/resources/qgroundcontrol/toolbar/softwareconfig.png \
-    qml/resources/qgroundcontrol/toolbar/terminal.png \
-    qml/resources/qgroundcontrol/toolbar/simulation.png \
-    qml/resources/qgroundcontrol/toolbar/hardwareconfig.png \
-    qml/resources/qgroundcontrol/toolbar/flightdata.png \
-    qml/resources/qgroundcontrol/toolbar/disconnect.png \
-    qml/resources/qgroundcontrol/toolbar/donate.png \
-
-
-#qmlcomponents.path    += $${DESTDIR}$${TARGET}/components
-#qmlcomponents.files   += ./components/Button.qml
-
-#sources.files       += ApmToolBar.qml
-#sources.path        += $$DESTDIR/qml
-#target.path         += qgroundcontrol
-#INSTALLS            += sources target
-
-message( BASEDIR $$BASEDIR DESTDIR $$DESTDIR TARGET $$TARGET TARGETDIR $$TARGETDIR)
