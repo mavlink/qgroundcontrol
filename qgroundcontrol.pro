@@ -122,6 +122,8 @@ WindowsBuild {
 # from the lists below. Eventually we will be left with no overlooked warnings and all future warnings
 # generating an error and breaking the build.
 #
+# NEW WARNINGS SHOULD NOT BE ADDED TO THIS LIST. IF YOU GET AN ERROR, FIT IT BEFORE COMMITING.
+#
 
 MacBuild | LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
@@ -156,6 +158,7 @@ MacBuild {
 
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
+        /WX \
         /wd4100 \
         /wd4189 \
         /wd4005 \
