@@ -122,7 +122,7 @@ WindowsBuild {
 # from the lists below. Eventually we will be left with no overlooked warnings and all future warnings
 # generating an error and breaking the build.
 #
-# NEW WARNINGS SHOULD NOT BE ADDED TO THIS LIST. IF YOU GET AN ERROR, FIT IT BEFORE COMMITING.
+# NEW WARNINGS SHOULD NOT BE ADDED TO THIS LIST. IF YOU GET AN ERROR, FIX IT BEFORE COMMITING.
 #
 
 MacBuild | LinuxBuild {
@@ -153,23 +153,23 @@ MacBuild {
         -Wno-overloaded-virtual \
         -Wno-tautological-constant-out-of-range-compare \
         -Wno-unused-private-field \
-        -Wno-#warnings
+        -Wno-\#warnings
 }
 
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
         /WX \
-        /wd4005 \
-        /wd4018 \
-        /wd4100 \
-        /wd4101 \
-        /wd4146 \
-        /wd4189 \
-        /wd4290 \
-        /wd4305 \
-        /wd4309
-        /wd4700 \
-        /wd4996 \
+        /wd4005 \ # macro redefinition
+        /wd4018 \ # signed/unsigned mismatch
+        /wd4100 \ # unrefernced formal parameter
+        /wd4101 \ # unreference local variable
+        /wd4146 \ # unary minus operator applied to unsigned type
+        /wd4189 \ # local variable initialized but not used
+        /wd4290 \ # function declared using exception specification, but not supported
+        /wd4305 \ # truncation from double to float
+        /wd4309 \ # truncation of constant value
+        /wd4700 \ # uninitialized local variable used
+        /wd4996   # deprecated function
 }
 
 #
