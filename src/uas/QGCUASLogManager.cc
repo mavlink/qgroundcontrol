@@ -34,6 +34,11 @@ void QGCUASLogManager::requestLogList()
     }
 }
 
+void QGCUASLogManager::requestLogData(unsigned int id)
+{
+
+}
+
 void QGCUASLogManager::deleteLogs()
 {
     UAS* uas = qobject_cast<UAS*>(mav);

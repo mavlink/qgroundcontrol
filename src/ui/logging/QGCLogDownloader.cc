@@ -31,7 +31,8 @@ void QGCLogDownloader::setActiveUAS(UASInterface* uas)
         return; // no need to rewire
 
     // Disconnect the previous one (if any)
-    forgetUAS(this->mav);
+    if (this->mav)
+        forgetUAS(this->mav);
 
     // Connect this one
     if (uas) {
