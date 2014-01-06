@@ -18,11 +18,8 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 
-    void updatePrimarySpeed(UASInterface* uas, double speed, quint64 timstamp);
-    void updateGPSSpeed(UASInterface* uas, double speed, quint64 timstamp);
-    void updateClimbRate(UASInterface* uas, double altitude, quint64 timestamp);
-    void updatePrimaryAltitude(UASInterface* uas, double altitude, quint64 timestamp);
-    void updateGPSAltitude(UASInterface* uas, double altitude, quint64 timestamp);
+    void updateSpeed(UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
+    void updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
 
     /** @brief Set the currently monitored UAS */
@@ -102,8 +99,8 @@ private:
     void drawAICompassDisk(QPainter& painter, QRectF area, float halfspan);
     void drawSeparateCompassDisk(QPainter& painter, QRectF area);
 
-    void drawAltimeter(QPainter& painter, QRectF area, float altitude, float secondaryAltitude, float vv);
-    void drawVelocityMeter(QPainter& painter, QRectF area, float speed, float secondarySpeed);
+    void drawAltimeter(QPainter& painter, QRectF area);
+    void drawVelocityMeter(QPainter& painter, QRectF area);
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
     void fillInstrumentOpagueBackground(QPainter& painter, QRectF edge);
     void drawInstrumentBackground(QPainter& painter, QRectF edge);
@@ -125,24 +122,23 @@ private:
     SpeedMode speedMode;
     */
 
-    bool didReceivePrimaryAltitude;
-    bool didReceivePrimarySpeed;
+    bool didReceiveSpeed;
 
     float roll;
     float pitch;
     float heading;
 
-    float primaryAltitude;
-    float GPSAltitude;
+    float altitudeAMSL;
+    float altitudeRelative;
 
     // APM: GPS and baro mix above home (GPS) altitude. This value comes from the GLOBAL_POSITION_INT message.
     // Do !!!NOT!!! ever do altitude calculations at the ground station. There are enough pitfalls already.
     // If the MP "set home altitude" button is migrated to here, it must set the UAS home altitude, not a GS-local one.
     float aboveHomeAltitude;
 
-    float primarySpeed;
-    float groundspeed;
-    float verticalVelocity;
+    float groundSpeed;
+    float airSpeed;
+    float climbRate;
 
     float navigationAltitudeError;
     float navigationSpeedError;

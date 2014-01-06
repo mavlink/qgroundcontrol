@@ -131,6 +131,10 @@ void TCPLink::writeBytes(const char* data, qint64 size)
     writeDebugBytes(data, size);
 #endif
     socket->write(data, size);
+
+    // Log the amount and time written out for future data rate calculations.
+    QMutexLocker dataRateLocker(&dataRateMutex);
+    logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, size, QDateTime::currentMSecsSinceEpoch());
 }
 
 /**
@@ -151,6 +155,10 @@ void TCPLink::readBytes()
         socket->read(buffer.data(), buffer.size());
         
         emit bytesReceived(this, buffer);
+
+        // Log the amount and time received for future data rate calculations.
+        QMutexLocker dataRateLocker(&dataRateMutex);
+        logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, byteCount, QDateTime::currentMSecsSinceEpoch());
 
 #ifdef TCPLINK_READWRITE_DEBUG
         writeDebugBytes(buffer.data(), buffer.size());
@@ -224,7 +232,6 @@ bool TCPLink::hardwareConnect(void)
     }
     
     socketIsConnected = true;
-    connectionStartTime = QGC::groundTimeUsecs()/1000;
     emit connected(true);
 
     return true;
@@ -232,6 +239,7 @@ bool TCPLink::hardwareConnect(void)
 
 void TCPLink::socketError(QAbstractSocket::SocketError socketError)
 {
+    Q_UNUSED(socketError);
     emit communicationError(getName(), "Error on socket: " + socket->errorString());
 }
 
@@ -262,64 +270,17 @@ void TCPLink::setName(QString name)
 }
 
 
-qint64 TCPLink::getNominalDataRate() const
+qint64 TCPLink::getConnectionSpeed() const
 {
     return 54000000; // 54 Mbit
 }
 
-qint64 TCPLink::getTotalUpstream()
+qint64 TCPLink::getCurrentInDataRate() const
 {
-    statisticsMutex.lock();
-    qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalUpstream;
+    return 0;
 }
 
-qint64 TCPLink::getCurrentUpstream()
+qint64 TCPLink::getCurrentOutDataRate() const
 {
-    return 0; // TODO
-}
-
-qint64 TCPLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 TCPLink::getBitsSent() const
-{
-    return bitsSentTotal;
-}
-
-qint64 TCPLink::getBitsReceived() const
-{
-    return bitsReceivedTotal;
-}
-
-qint64 TCPLink::getTotalDownstream()
-{
-    statisticsMutex.lock();
-    qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalDownstream;
-}
-
-qint64 TCPLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 TCPLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool TCPLink::isFullDuplex() const
-{
-    return true;
-}
-
-int TCPLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
+    return 0;
 }

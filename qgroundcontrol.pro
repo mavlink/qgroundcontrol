@@ -30,17 +30,25 @@ QT += network \
     phonon \
     webkit \
     sql \
-    declarative
+    declarative \
+    testlib
 
-TEMPLATE = app
-TARGET = qgroundcontrol
+# Setting this variable allows you to include this .pro file in another such that
+# you can set your own TARGET and main() function. This is used by the unit test
+# build files to build unit test using all built parts of QGCS except for main.
+isEmpty(QGCS_UNITTEST_OVERRIDE) {
+    TEMPLATE = app
+    TARGET = qgroundcontrol
+    SOURCES += src/main.cc
+}
+
 BASEDIR = $${IN_PWD}
 linux-g++|linux-g++-64{
-    debug {
+    CONFIG(debug, debug|release) {
         TARGETDIR = $${OUT_PWD}/debug
         BUILDDIR = $${OUT_PWD}/build-debug
     }
-    release {
+    CONFIG(release, debug|release) {
         TARGETDIR = $${OUT_PWD}/release
         BUILDDIR = $${OUT_PWD}/build-release
     }
@@ -73,15 +81,6 @@ win32 {
     QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
     QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
     QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
-	
-	# Build QAX for GoogleEarth API access
-	!exists( $(QTDIR)/src/activeqt/Makefile ) {
-		message( Making QAx (ONE TIME) )
-		system( cd $$(QTDIR)\\src\\activeqt && $$(QTDIR)\\bin\\qmake.exe )
-		system( cd $$(QTDIR)\\src\\activeqt\\container && $$(QTDIR)\\bin\\qmake.exe )
-		system( cd $$(QTDIR)\\src\\activeqt\\control && $$(QTDIR)\\bin\\qmake.exe )
-                system( cd $$(QTDIR)\\src\\activeqt && nmake )
-	}
 }
 
 macx {
@@ -559,7 +558,7 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
     # Enable only if libfreenect is available
     HEADERS += src/input/Freenect.h
 }
-SOURCES += src/main.cc \
+SOURCES += \
     src/QGCCore.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
@@ -743,6 +742,20 @@ SOURCES += src/main.cc \
     src/ui/logging/QGCLogDownloader.cc \
     src/uas/QGCUASLogManager.cc
 
+CONFIG(debug, debug|release) {
+    # Unit Test sources/headers go here
+    
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/qgcunittest/AutoTest.h \
+        src/qgcunittest/UASUnitTest.h
+
+    SOURCES += \
+        src/qgcunittest/UASUnitTest.cc
+}
+
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|macx-g++|macx-g++42|win32-msvc2008|win32-msvc2010|win32-msvc2012::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 
@@ -872,8 +885,6 @@ win32-msvc2008|win32-msvc2010|win32-msvc2012 {
     INCLUDEPATH += libs/thirdParty/3DMouse/win
     DEFINES += MOUSE_ENABLED_WIN
 }
-
-unix:!macx:!symbian: LIBS += -losg
 
 OTHER_FILES += \
     dongfang_notes.txt \

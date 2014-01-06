@@ -95,16 +95,9 @@ public:
     int getDataBitsType() const;
     int getStopBitsType() const;
 
-    /* Extensive statistics for scientific purposes */
-    qint64 getNominalDataRate() const;
-    qint64 getTotalUpstream();
-    qint64 getCurrentUpstream();
-    qint64 getMaxUpstream();
-    qint64 getTotalDownstream();
-    qint64 getCurrentDownstream();
-    qint64 getMaxDownstream();
-    qint64 getBitsSent() const;
-    qint64 getBitsReceived() const;
+    qint64 getConnectionSpeed() const;
+    qint64 getCurrentInDataRate() const;
+    qint64 getCurrentOutDataRate() const;
 
     void loadSettings();
     void writeSettings();
@@ -112,8 +105,6 @@ public:
     void run();
     void run2();
 
-    int getLinkQuality() const;
-    bool isFullDuplex() const;
     int getId() const;
 
 signals: //[TODO] Refactor to Linkinterface
@@ -157,29 +148,17 @@ protected:
     int m_stopBits;
     int m_parity;
     QString m_portName;
-//    QString m_name;
     int m_timeout;
     int m_id;
-
-    quint64 m_bitsSentTotal;
-    quint64 m_bitsSentShortTerm;
-    quint64 m_bitsSentCurrent;
-    quint64 m_bitsSentMax;
-    quint64 m_bitsReceivedTotal;
-    quint64 m_bitsReceivedShortTerm;
-    quint64 m_bitsReceivedCurrent;
-    quint64 m_bitsReceivedMax;
-    quint64 m_connectionStartTime;
-    QMutex m_statisticsMutex;
-    QMutex m_dataMutex;
-    QMutex m_writeMutex;
+    QMutex m_dataMutex;       // Mutex for reading data from m_port
+    QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
     QList<QString> m_ports;
 
 private:
     volatile bool m_stopp;
     volatile bool m_reqReset;
-	QMutex m_stoppMutex;
-    QByteArray m_transmitBuffer;
+    QMutex m_stoppMutex; // Mutex for accessing m_stopp
+    QByteArray m_transmitBuffer; // An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
 
     bool hardwareConnect();
 
