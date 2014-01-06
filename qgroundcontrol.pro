@@ -3,7 +3,7 @@
 # Please see our website at <http://qgroundcontrol.org>
 # Maintainer:
 # Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2011 QGroundControl Developers
+# (c) 2009-2014 QGroundControl Developers
 # This file is part of the open groundstation project
 # QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

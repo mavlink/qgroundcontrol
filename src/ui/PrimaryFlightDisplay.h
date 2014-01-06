@@ -172,7 +172,7 @@ private:
     static const int tickValues[];
     static const QString compassWindNames[];
 
-    static const int updateInterval = 40;   
+    static const int updateInterval = 50;
 };
 
 #endif // PRIMARYFLIGHTDISPLAY_H
