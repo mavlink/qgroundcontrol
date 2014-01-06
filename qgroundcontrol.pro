@@ -159,17 +159,17 @@ MacBuild {
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
         /WX \
-        /wd4100 \
-        /wd4189 \
         /wd4005 \
-        /wd4305 \
-        /wd4996 \
         /wd4018 \
-        /wd4305 \
-        /wd4700 \
-        /wd4290 \
+        /wd4100 \
+        /wd4101 \
         /wd4146 \
+        /wd4189 \
+        /wd4290 \
+        /wd4305 \
         /wd4309
+        /wd4700 \
+        /wd4996 \
 }
 
 #
