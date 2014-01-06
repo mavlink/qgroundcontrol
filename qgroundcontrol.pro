@@ -117,6 +117,62 @@ WindowsBuild {
 }
 
 #
+# Warnings cleanup. Plan of attack is to turn off all existing warnings and turn on warnings as errors.
+# Then we will clean up the warnings one type at a time, removing the override for that specific warning
+# from the lists below. Eventually we will be left with no overlooked warnings and all future warnings
+# generating an error and breaking the build.
+#
+# NEW WARNINGS SHOULD NOT BE ADDED TO THIS LIST. IF YOU GET AN ERROR, FIX IT BEFORE COMMITING.
+#
+
+MacBuild | LinuxBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        -Werror \
+        -Wno-unused-parameter \
+        -Wno-reorder \
+        -Wno-unused-variable \
+        -Wno-enum-compare \
+        -Wno-narrowing \
+        -Wno-type-limits \
+        -Wno-sign-compare \
+        -Wno-uninitialized \
+        -Wno-switch \
+        -Wno-unused-function
+}
+
+LinuxBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        -Wno-unused-but-set-variable \
+        -Wno-cpp
+}
+
+MacBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        -Wno-tautological-compare \
+        -Wno-null-conversion \
+        -Wno-overloaded-virtual \
+        -Wno-tautological-constant-out-of-range-compare \
+        -Wno-unused-private-field \
+        -Wno-\#warnings
+}
+
+WindowsBuild {
+	QMAKE_CXXFLAGS_WARN_ON += \
+        /WX \
+        /wd4005 \ # macro redefinition
+        /wd4018 \ # signed/unsigned mismatch
+        /wd4100 \ # unrefernced formal parameter
+        /wd4101 \ # unreference local variable
+        /wd4146 \ # unary minus operator applied to unsigned type
+        /wd4189 \ # local variable initialized but not used
+        /wd4290 \ # function declared using exception specification, but not supported
+        /wd4305 \ # truncation from double to float
+        /wd4309 \ # truncation of constant value
+        /wd4700 \ # uninitialized local variable used
+        /wd4996   # deprecated function
+}
+
+#
 # Build flavor specific settings
 #
 
