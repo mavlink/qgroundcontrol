@@ -136,29 +136,26 @@ void APMToolBar::connectMAV()
 {
     qDebug() << "APMToolBar: connectMAV ";
 
-    bool connected = false;
-    if (LinkManager::instance()->getSerialLinks().count() > 0)
-        connected = LinkManager::instance()->getSerialLinks().last()->isConnected();
-    bool result;
+    if (LinkManager::instance()->getSerialLinks().count() > 0) {
+        bool result;
+        bool connected = LinkManager::instance()->getSerialLinks().last()->isConnected();
+        if (connected) {
+            // result need to be the opposite of success.
+            result = !LinkManager::instance()->getSerialLinks().last()->disconnect();
+        } else {
+            // Need to Connect Link
+            result = LinkManager::instance()->getSerialLinks().last()->connect();
+        }
+        qDebug() << "result = " << result;
 
-    if (!connected && LinkManager::instance()->getSerialLinks().count() == 0)
-    {
+        // Change the image to represent the state
+        setConnection(result);
+        
+        emit MAVConnected(result);
+    } else {
         // No Link so prompt to connect one
         MainWindow::instance()->addLink();
-    } else if (!connected) {
-        // Need to Connect Link
-        result = LinkManager::instance()->getSerialLinks().last()->connect();
-
-    } else if (connected && LinkManager::instance()->getSerialLinks().count() > 0) {
-        // result need to be the opposite of success.
-        result = !LinkManager::instance()->getSerialLinks().last()->disconnect();
     }
-    qDebug() << "result = " << result;
-
-    // Change the image to represent the state
-    setConnection(result);
-
-    emit MAVConnected(result);
 }
 
 void APMToolBar::setConnection(bool connection)
