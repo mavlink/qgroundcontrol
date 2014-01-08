@@ -346,7 +346,7 @@ WindowsBuild | LinuxBuild {
         src/ui/XbeeConfigurationWindow.cpp
 
     WindowsBuild {
-        LIBS += -llibs/thirdParty/libxbee/lib/libxbee
+        LIBS += -l$$BASEDIR/libs/thirdParty/libxbee/lib/libxbee
     }
 
     LinuxBuild {
