@@ -311,6 +311,39 @@ QTreeWidgetItem* QGCParamWidget::getParentWidgetItemForParam(int compId, const Q
     return parentItem;
 }
 
+void QGCParamWidget::insertParamAlphabetical(int indexLowerBound, int indexUpperBound, QTreeWidgetItem* parentItem, QTreeWidgetItem* paramItem)
+{
+    if (indexLowerBound >= indexUpperBound)
+    {
+        if (paramItem->text(0).compare(parentItem->child(indexLowerBound)->text(0)) < 0) {
+            parentItem->insertChild(indexLowerBound, paramItem);
+        }
+        else
+        {
+            if (indexLowerBound < parentItem->childCount() - 1) {
+                parentItem->insertChild(indexLowerBound + 1, paramItem);
+            }
+            else
+            {
+                parentItem->addChild(paramItem);
+            }
+        }
+    }
+    else
+    {
+        int midpoint = indexLowerBound + floor(indexUpperBound - indexLowerBound)/2;
+
+        if (paramItem->text(0).compare(parentItem->child(midpoint)->text(0)) < 0)
+        {
+            insertParamAlphabetical(indexLowerBound, midpoint - 1, parentItem, paramItem);
+        } else
+        {
+            insertParamAlphabetical(midpoint + 1, indexUpperBound, parentItem, paramItem);
+        }
+
+    }
+}
+
 QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString parameterName, QVariant value)
 {
     //qDebug() << "QGCParamWidget::updateParameterDisplay" << parameterName;
@@ -343,8 +376,13 @@ QTreeWidgetItem* QGCParamWidget::updateParameterDisplay(int compId, QString para
             }
             paramItem->setFlags(paramItem->flags() | Qt::ItemIsEditable);
 
-            //TODO insert alphabetically
-            parentItem->addChild(paramItem);
+            //Insert alphabetically
+            if (parentItem->childCount() > 0) {
+                insertParamAlphabetical(0, parentItem->childCount() - 1, parentItem, paramItem);
+            } else
+            {
+                parentItem->addChild(paramItem);
+            }
 
             //only add the tooltip when the parameter item is first added
             QString paramDesc = paramMgr->dataModel()->getParamDescription(parameterName);
