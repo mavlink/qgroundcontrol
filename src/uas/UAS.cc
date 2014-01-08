@@ -1031,21 +1031,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             const unsigned int portWidth = 8; // XXX magic number
 
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            if (channels.chan1_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan1_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 0, channels.chan1_scaled/10000.0f);
-            if (channels.chan2_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan2_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 1, channels.chan2_scaled/10000.0f);
-            if (channels.chan3_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan3_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 2, channels.chan3_scaled/10000.0f);
-            if (channels.chan4_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan4_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 3, channels.chan4_scaled/10000.0f);
-            if (channels.chan5_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan5_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 4, channels.chan5_scaled/10000.0f);
-            if (channels.chan6_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan6_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 5, channels.chan6_scaled/10000.0f);
-            if (channels.chan7_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan7_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 6, channels.chan7_scaled/10000.0f);
-            if (channels.chan8_scaled != UINT16_MAX)
+            if (static_cast<uint16_t>(channels.chan8_scaled) != UINT16_MAX)
                 emit remoteControlChannelScaledChanged(channels.port * portWidth + 7, channels.chan8_scaled/10000.0f);
         }
             break;
