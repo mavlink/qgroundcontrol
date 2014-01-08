@@ -136,7 +136,6 @@ MacBuild | LinuxBuild {
         -Wno-narrowing \
         -Wno-type-limits \
         -Wno-sign-compare \
-        -Wno-uninitialized \
         -Wno-switch \
         -Wno-unused-function
 }
@@ -175,11 +174,9 @@ WindowsBuild {
         /wd4389 \ # == signed/unsigned mismatch
         /wd4505 \ # unreferenced local function
         /wd4512 \ # assignment operation could not be generated
-        /wd4700 \ # uninitialized local variable used
         /wd4701 \ # potentially uninitialized local variable
         /wd4702 \ # unreachable code
         /wd4996   # deprecated function
-
 }
 
 #
