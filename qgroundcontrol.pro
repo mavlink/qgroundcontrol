@@ -132,24 +132,18 @@ MacBuild | LinuxBuild {
         -Wno-unused-parameter \
         -Wno-reorder \
         -Wno-unused-variable \
-        -Wno-enum-compare \
         -Wno-narrowing \
-        -Wno-type-limits \
-        -Wno-sign-compare \
-        -Wno-switch \
         -Wno-unused-function
-}
+ }
 
 LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
         -Wno-unused-but-set-variable \
-        -Wno-cpp
+        -Wno-unused-local-typedefs
 }
 
 MacBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-tautological-compare \
-        -Wno-null-conversion \
         -Wno-overloaded-virtual \
         -Wno-unused-private-field
 }
