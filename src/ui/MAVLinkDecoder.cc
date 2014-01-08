@@ -87,7 +87,7 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     time = getUnixTimeFromMs(message.sysid, time);
 
     // Send out all field values for this message
-    for (int i = 0; i < messageInfo[msgid].num_fields; ++i)
+    for (unsigned int i = 0; i < messageInfo[msgid].num_fields; ++i)
     {
         emitFieldValue(&message, i, time);
     }
