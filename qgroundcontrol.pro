@@ -153,8 +153,6 @@ WindowsBuild {
         /W4 \
         /WX \
         /wd4005 \ # macro redefinition
-        /wd4018 \ # signed/unsigned mismatch
-        /wd4063 \ # case not valid for switch enum
         /wd4100 \ # unrefernced formal parameter
         /wd4101 \ # unreference local variable
         /wd4127 \ # conditional expression constant
