@@ -275,7 +275,7 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
     Q_UNUSED(unit);
     bool ok;
     double value = variant.toDouble(&ok);
-    QMetaType metaType = static_cast<QMetaType::Type>(variant.type());
+    QMetaType::Type metaType = static_cast<QMetaType::Type>(variant.type());
     if(!ok || metaType == QMetaType::QString || metaType == QMetaType::QByteArray)
         return;
 
