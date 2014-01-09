@@ -48,7 +48,7 @@ private:
     double y; /**< Last unused value for the x-coordinate */
     quint64 y_timestamp_us; /**< Timestamp that we last recieved a value for x */
     bool y_valid; /**< Whether we have recieved an x value but so far no corresponding y value */
-    int max_timestamp_diff_us; /**< Only combine x and y to a data point if the timestamp for both doesn't differ by more than this */
+    quint64 max_timestamp_diff_us; /**< Only combine x and y to a data point if the timestamp for both doesn't differ by more than this */
 };
 
 #endif // QGCXYPLOT_H

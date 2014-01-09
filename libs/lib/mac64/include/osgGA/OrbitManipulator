@@ -67,7 +67,7 @@ class OSGGA_EXPORT OrbitManipulator : public StandardManipulator
         virtual void setWheelZoomFactor( double wheelZoomFactor );
         inline double getWheelZoomFactor() const;
 
-        virtual void setMinimumDistance( const double& minimumDistance, bool relativeToModelSize = NULL );
+        virtual void setMinimumDistance( const double& minimumDistance, bool relativeToModelSize = false );
         double getMinimumDistance( bool *relativeToModelSize = NULL ) const;
 
         virtual osgUtil::SceneView::FusionDistanceMode getFusionDistanceMode() const;

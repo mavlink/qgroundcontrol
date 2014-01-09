@@ -132,25 +132,18 @@ MacBuild | LinuxBuild {
         -Wno-unused-parameter \
         -Wno-reorder \
         -Wno-unused-variable \
-        -Wno-enum-compare \
         -Wno-narrowing \
-        -Wno-type-limits \
-        -Wno-sign-compare \
-        -Wno-uninitialized \
-        -Wno-switch \
         -Wno-unused-function
-}
+ }
 
 LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
         -Wno-unused-but-set-variable \
-        -Wno-cpp
+        -Wno-unused-local-typedefs
 }
 
 MacBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-tautological-compare \
-        -Wno-null-conversion \
         -Wno-overloaded-virtual \
         -Wno-unused-private-field
 }
@@ -160,8 +153,6 @@ WindowsBuild {
         /W4 \
         /WX \
         /wd4005 \ # macro redefinition
-        /wd4018 \ # signed/unsigned mismatch
-        /wd4063 \ # case not valid for switch enum
         /wd4100 \ # unrefernced formal parameter
         /wd4101 \ # unreference local variable
         /wd4127 \ # conditional expression constant
@@ -175,11 +166,9 @@ WindowsBuild {
         /wd4389 \ # == signed/unsigned mismatch
         /wd4505 \ # unreferenced local function
         /wd4512 \ # assignment operation could not be generated
-        /wd4700 \ # uninitialized local variable used
         /wd4701 \ # potentially uninitialized local variable
         /wd4702 \ # unreachable code
         /wd4996   # deprecated function
-
 }
 
 #
