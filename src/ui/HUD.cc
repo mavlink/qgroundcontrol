@@ -501,11 +501,6 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
  */
 void HUD::setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight)
 {
-    int pixelWidth  = (int)(referenceWidth * scalingFactor);
-    int pixelHeight = (int)(referenceHeight * scalingFactor);
-    // Translate and scale the GL view in the virtual reference coordinate units on the screen
-    int pixelPositionX = (int)((referencePositionX * scalingFactor) + xCenterOffset);
-    int pixelPositionY = this->height() - (referencePositionY * scalingFactor) + yCenterOffset - pixelHeight;
 }
 
 void HUD::paintRollPitchStrips()
@@ -588,13 +583,8 @@ void HUD::paintHUD()
         // And if either video or the data stream is enabled, draw the next frame.
         if (dataStreamEnabled || videoEnabled)
         {
-
-            xImageFactor = width() / (float)glImage.width();
-            yImageFactor = height() / (float)glImage.height();
-            float imageFactor = qMin(xImageFactor, yImageFactor);
             // Resize to correct size and fill with image
             // FIXME
-
         }
 
         QPainter painter;

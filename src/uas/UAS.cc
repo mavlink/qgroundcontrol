@@ -3070,23 +3070,6 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
-        float q[4];
-
-        double cosPhi_2 = cos(double(roll) / 2.0);
-        double sinPhi_2 = sin(double(roll) / 2.0);
-        double cosTheta_2 = cos(double(pitch) / 2.0);
-        double sinTheta_2 = sin(double(pitch) / 2.0);
-        double cosPsi_2 = cos(double(yaw) / 2.0);
-        double sinPsi_2 = sin(double(yaw) / 2.0);
-        q[0] = (cosPhi_2 * cosTheta_2 * cosPsi_2 +
-                sinPhi_2 * sinTheta_2 * sinPsi_2);
-        q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 -
-                cosPhi_2 * sinTheta_2 * sinPsi_2);
-        q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 +
-                sinPhi_2 * cosTheta_2 * sinPsi_2);
-        q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 -
-                sinPhi_2 * sinTheta_2 * cosPsi_2);
-
         // Emit attitude for cross-check
         emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
         emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
