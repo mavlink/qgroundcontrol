@@ -310,6 +310,10 @@ static const unsigned message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
 
 mavlink_message_info_t message_info[256] = MAVLINK_MESSAGE_INFO;
 
+//#define MAVSIM_MSG_DEBUGGING // uncomment to print simulation messages for debugging
+
+#ifdef MAVSIM_MSG_DEBUGGING
+
 static void print_one_field(const mavlink_message_t *msg, const mavlink_field_info_t *f, int idx)
 {
 #define PRINT_FORMAT(f, def) (f->print_format?f->print_format:def)
@@ -382,19 +386,22 @@ static void print_message(const mavlink_message_t *msg)
     const mavlink_message_info_t *m = &message_info[msg->msgid];
     const mavlink_field_info_t *f = m->fields;
     unsigned i;
-//    qDebug("%s { ", m->name);
-//    for (i=0; i<m->num_fields; i++) {
-//        print_field(msg, &f[i]);
-//    }
-//    qDebug("}\n");
+    qDebug("%s { ", m->name);
+    for (i=0; i<m->num_fields; i++) {
+        print_field(msg, &f[i]);
+    }
+    qDebug("}\n");
 }
+#endif
 
 void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
 {
     if (msg.sysid != systemid)
     {
+#ifdef MAVSIM_MSG_DEBUGGING
         print_message(&msg);
-//        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
+        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
+#endif
     }
 
     switch(msg.msgid) {
