@@ -245,7 +245,6 @@ void householder_qr_inplace_blocked(MatrixQR& mat, HCoeffs& hCoeffs,
 {
   typedef typename MatrixQR::Index Index;
   typedef typename MatrixQR::Scalar Scalar;
-  typedef typename MatrixQR::RealScalar RealScalar;
   typedef Block<MatrixQR,Dynamic,Dynamic> BlockType;
 
   Index rows = mat.rows();
