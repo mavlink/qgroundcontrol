@@ -362,19 +362,27 @@ void QGCXYPlot::appendData(int uasId, const QString& curve, const QString& unit,
     } else
         return;
 
-    if(x_valid && y_valid && (int)qAbs(y_timestamp_us - x_timestamp_us) <= max_timestamp_diff_us) {
-        int removed = xycurve->appendData( QPointF(x,y) );
-        x_valid = false;
-        y_valid = false;
-        bool atMaximum = (ui->timeScrollBar->value() == ui->timeScrollBar->maximum());
-        if(ui->timeScrollBar->maximum() != xycurve->dataSize()) {
-            ui->timeScrollBar->setMaximum(xycurve->dataSize());
-            if(atMaximum)
-                ui->timeScrollBar->setValue(ui->timeScrollBar->maximum());
-        } else if(!atMaximum) { //Move the scrollbar to keep current value selected
-            int value = qMax(ui->timeScrollBar->minimum(), ui->timeScrollBar->value() - removed);
-            ui->timeScrollBar->setValue(value);
-            xycurve->setStartIndex(value);
+    if(x_valid && y_valid) {
+        quint64 difference;
+        if (y_timestamp_us < x_timestamp_us) {
+            difference = x_timestamp_us - y_timestamp_us;
+        } else {
+            difference = y_timestamp_us - x_timestamp_us;
+        }
+        if (difference <= max_timestamp_diff_us) {
+            int removed = xycurve->appendData( QPointF(x,y) );
+            x_valid = false;
+            y_valid = false;
+            bool atMaximum = (ui->timeScrollBar->value() == ui->timeScrollBar->maximum());
+            if(ui->timeScrollBar->maximum() != xycurve->dataSize()) {
+                ui->timeScrollBar->setMaximum(xycurve->dataSize());
+                if(atMaximum)
+                    ui->timeScrollBar->setValue(ui->timeScrollBar->maximum());
+            } else if(!atMaximum) { //Move the scrollbar to keep current value selected
+                int value = qMax(ui->timeScrollBar->minimum(), ui->timeScrollBar->value() - removed);
+                ui->timeScrollBar->setValue(value);
+                xycurve->setStartIndex(value);
+            }
         }
     }
 }
