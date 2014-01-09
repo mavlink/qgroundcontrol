@@ -41,7 +41,6 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
   Scalar alpha)
 {
   typedef typename packet_traits<Scalar>::type Packet;
-  typedef typename NumTraits<Scalar>::Real RealScalar;
   const Index PacketSize = sizeof(Packet)/sizeof(Scalar);
 
   enum {

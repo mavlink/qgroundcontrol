@@ -438,7 +438,6 @@ template<typename T, bool Align> inline void conditional_aligned_delete_auto(T *
 template<typename Scalar, typename Index>
 inline static Index first_aligned(const Scalar* array, Index size)
 {
-  typedef typename packet_traits<Scalar>::type Packet;
   enum { PacketSize = packet_traits<Scalar>::size,
          PacketAlignedMask = PacketSize-1
   };
