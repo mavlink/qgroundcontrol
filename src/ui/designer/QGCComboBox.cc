@@ -431,7 +431,7 @@ void QGCComboBox::comboBoxIndexChanged(QString val)
     {
         parameterName = comboBoxTextToParamMap.value(ui->editOptionComboBox->currentText());
     }
-    switch (parameterValue.type())
+    switch (static_cast<int>(parameterValue.type()))
     {
     case QVariant::Char:
         parameterValue = QVariant(QChar((unsigned char)comboBoxTextToValMap[val]));

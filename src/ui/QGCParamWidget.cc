@@ -331,7 +331,7 @@ void QGCParamWidget::insertParamAlphabetical(int indexLowerBound, int indexUpper
     }
     else
     {
-        int midpoint = indexLowerBound + floor(indexUpperBound - indexLowerBound)/2;
+        int midpoint = indexLowerBound + ((indexUpperBound - indexLowerBound) / 2);
 
         if (paramItem->text(0).compare(parentItem->child(midpoint)->text(0)) < 0)
         {
