@@ -220,8 +220,11 @@ public:
             tail = buffers.at(tailBuffer).size();
         }
 
+#if 0
+        // this code is unreachable
         if (isEmpty())
             clear(); // try to minify/squeeze us
+#endif
     }
 
     inline bool isEmpty() const {
