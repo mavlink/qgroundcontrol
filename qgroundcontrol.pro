@@ -131,15 +131,7 @@ MacBuild | LinuxBuild {
         -Werror \
         -Wno-unused-parameter \
         -Wno-reorder \
-        -Wno-unused-variable \
-        -Wno-narrowing \
-        -Wno-unused-function
- }
-
-LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-unused-but-set-variable \
-        -Wno-unused-local-typedefs
+        -Wno-narrowing
 }
 
 MacBuild {
@@ -154,17 +146,14 @@ WindowsBuild {
         /WX \
         /wd4005 \ # macro redefinition
         /wd4100 \ # unrefernced formal parameter
-        /wd4101 \ # unreference local variable
         /wd4127 \ # conditional expression constant
         /wd4146 \ # unary minus operator applied to unsigned type
-        /wd4189 \ # local variable initialized but not used
         /wd4201 \ # non standard extension: nameless struct/union
         /wd4245 \ # signed/unsigned mismtach
         /wd4290 \ # function declared using exception specification, but not supported
         /wd4305 \ # truncation from double to float
         /wd4309 \ # truncation of constant value
         /wd4389 \ # == signed/unsigned mismatch
-        /wd4505 \ # unreferenced local function
         /wd4512 \ # assignment operation could not be generated
         /wd4701 \ # potentially uninitialized local variable
         /wd4702 \ # unreachable code
