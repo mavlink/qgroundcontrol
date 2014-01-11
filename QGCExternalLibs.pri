@@ -350,7 +350,8 @@ WindowsBuild | LinuxBuild {
     }
 
     LinuxBuild {
-        LIBS += -lxbee
+        LIBS += -L$$BASEDIR/libs/thirdParty/libxbee/lib \
+    		-lxbee
     }
 } else {
     message(Skipping support for XBee)
