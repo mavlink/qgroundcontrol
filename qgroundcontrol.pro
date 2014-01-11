@@ -128,7 +128,6 @@ WindowsBuild {
 MacBuild | LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += \
         -Wall \
-        -Werror \
         -Wno-unused-parameter \
         -Wno-reorder \
         -Wno-unused-variable \
