@@ -93,14 +93,8 @@ QVector <double> LKS94Projection::DTM10(const QVector <double>& lonlat)
     double es;              // Eccentricity squared : (a^2 - b^2)/a^2
     double semiMajor = 6378137.0;		// major axis
     double semiMinor = 6356752.3142451793;		// minor axis
-    double ab;				// Semi_major / semi_minor
-    double ba;				// Semi_minor / semi_major
-    double ses;             // Second eccentricity squared : (a^2 - b^2)/b^2
 
     es = 1.0 - (semiMinor * semiMinor) / (semiMajor * semiMajor); //e^2
-    ses = (pow(semiMajor, 2) - pow(semiMinor, 2)) / pow(semiMinor, 2);
-    ba = semiMinor / semiMajor;
-    ab = semiMajor / semiMinor;
 
     // ...
 
@@ -126,14 +120,10 @@ QVector <double>  LKS94Projection::MTD10(QVector <double>&  pnt)
     double es;                             // Eccentricity squared : (a^2 - b^2)/a^2
     double semiMajor = 6378137.0;		    // major axis
     double semiMinor = 6356752.3141403561;	// minor axis
-    double ab;				// Semi_major / semi_minor
-    double ba;				// Semi_minor / semi_major
     double ses;            // Second eccentricity squared : (a^2 - b^2)/b^2
 
     es = 1.0 - (semiMinor * semiMinor) / (semiMajor * semiMajor); //e^2
     ses = (pow(semiMajor, 2) - pow(semiMinor, 2)) / pow(semiMinor, 2);
-    ba = semiMinor / semiMajor;
-    ab = semiMajor / semiMinor;
 
     // ...
 
@@ -228,11 +218,10 @@ QVector <double> LKS94Projection::DTM00(QVector <double>& lonlat)
     double metersPerUnit = 1.0;
 
     double e0, e1, e2, e3;	// eccentricity constants
-    double e, es, esp;		// eccentricity constants
+    double es, esp;		// eccentricity constants
     double ml0;		    // small value m
 
     es = 1.0 - pow(semiMinor / semiMajor, 2);
-    e = sqrt(es);
     e0 = e0fn(es);
     e1 = e1fn(es);
     e2 = e2fn(es);
@@ -292,14 +281,8 @@ QVector <double> LKS94Projection::DTM01(QVector <double>& lonlat)
     double es;                             // Eccentricity squared : (a^2 - b^2)/a^2
     double semiMajor = 6378137.0;		    // major axis
     double semiMinor = 6356752.3141403561;	// minor axis
-    double ab;				                // Semi_major / semi_minor
-    double ba;				                // Semi_minor / semi_major
-    double ses;                            // Second eccentricity squared : (a^2 - b^2)/b^2
 
     es = 1.0 - (semiMinor * semiMinor) / (semiMajor * semiMajor);
-    ses = (pow(semiMajor, 2) -pow(semiMinor, 2)) / pow(semiMinor, 2);
-    ba = semiMinor / semiMajor;
-    ab = semiMajor / semiMinor;
 
     // ...
 
@@ -324,14 +307,10 @@ QVector <double> LKS94Projection::MTD01(QVector <double>& pnt)
     double es;                             // Eccentricity squared : (a^2 - b^2)/a^2
     double semiMajor = 6378137.0;		    // major axis
     double semiMinor = 6356752.3142451793;	// minor axis
-    double ab;		                        // Semi_major / semi_minor
-    double ba;				                // Semi_minor / semi_major
     double ses;                            // Second eccentricity squared : (a^2 - b^2)/b^2
 
     es = 1.0 - (semiMinor * semiMinor) / (semiMajor * semiMajor);
     ses = (pow(semiMajor, 2) - pow(semiMinor, 2)) / pow(semiMinor, 2);
-    ba = semiMinor / semiMajor;
-    ab = semiMajor / semiMinor;
 
     // ...
 
@@ -430,12 +409,11 @@ QVector <double> LKS94Projection::MTD11(QVector <double>& p)
     double metersPerUnit = 1.0;
 
     double e0, e1, e2, e3;	// eccentricity constants
-    double e, es, esp;		// eccentricity constants
+    double es, esp;		// eccentricity constants
     double ml0;		    // small value m
 
     es =(semiMinor * semiMinor) / (semiMajor * semiMajor);
     es=1.0-es;
-    e = sqrt(es);
     e0 = e0fn(es);
     e1 = e1fn(es);
     e2 = e2fn(es);

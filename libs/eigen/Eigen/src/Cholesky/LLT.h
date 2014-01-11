@@ -198,7 +198,6 @@ template<> struct llt_inplace<Lower>
   static typename MatrixType::Index unblocked(MatrixType& mat)
   {
     typedef typename MatrixType::Index Index;
-    typedef typename MatrixType::Scalar Scalar;
     typedef typename MatrixType::RealScalar RealScalar;
     
     eigen_assert(mat.rows()==mat.cols());

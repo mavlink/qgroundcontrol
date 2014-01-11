@@ -511,6 +511,9 @@ void QGCParamSlider::readSettings(const QSettings& settings)
 
     readSettings("",map);
     return;
+    
+    // Assuming the code below was useful for something so leaving in
+#if 0
     parameterName = settings.value("QGC_PARAM_SLIDER_PARAMID").toString();
     componentId = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
@@ -531,5 +534,5 @@ void QGCParamSlider::readSettings(const QSettings& settings)
     ui->editSelectComponentComboBox->setEnabled(true);
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
-
+#endif
 }

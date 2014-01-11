@@ -528,7 +528,7 @@ bool QSerialPortPrivate::waitForBytesWritten(int msecs)
         }
     }
 
-    return false;
+    // return false; unreachable
 }
 
 #endif // #ifndef Q_OS_WINCE

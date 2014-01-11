@@ -363,7 +363,6 @@ struct complex_schur_reduce_to_hessenberg<MatrixType, false>
   static void run(ComplexSchur<MatrixType>& _this, const MatrixType& matrix, bool computeU)
   {
     typedef typename ComplexSchur<MatrixType>::ComplexScalar ComplexScalar;
-    typedef typename ComplexSchur<MatrixType>::ComplexMatrixType ComplexMatrixType;
 
     // Note: m_hess is over RealScalar; m_matT and m_matU is over ComplexScalar
     _this.m_hess.compute(matrix);
