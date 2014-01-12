@@ -13,6 +13,9 @@ OpticalFlowConfig::~OpticalFlowConfig()
 }
 void OpticalFlowConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "FLOW_ENABLE")
     {
         if (value.toInt() == 0)
