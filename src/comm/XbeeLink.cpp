@@ -219,7 +219,7 @@ void XbeeLink::readBytes()
 	if(!(NULL==xbeePkt))
 	{
 		QByteArray data;
-		for(unsigned int i=0;i<=xbeePkt->dataLen;i++)
+		for(int i=0;i<=xbeePkt->dataLen;i++)
 		{
 			data.push_back(xbeePkt->data[i]);
         }
