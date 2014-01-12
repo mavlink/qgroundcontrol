@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_GENERAL_MATRIX_VECTOR_H
 #define EIGEN_GENERAL_MATRIX_VECTOR_H
+
+namespace Eigen { 
 
 namespace internal {
 
@@ -40,8 +27,8 @@ namespace internal {
  *  |cplx |real |cplx | invalid, the caller has to do tmp: = A * B; C += alpha*tmp
  *  |cplx |real |real | optimal case, vectorization possible via real-cplx mul
  */
-template<typename Index, typename LhsScalar, bool ConjugateLhs, typename RhsScalar, bool ConjugateRhs>
-struct general_matrix_vector_product<Index,LhsScalar,ColMajor,ConjugateLhs,RhsScalar,ConjugateRhs>
+template<typename Index, typename LhsScalar, bool ConjugateLhs, typename RhsScalar, bool ConjugateRhs, int Version>
+struct general_matrix_vector_product<Index,LhsScalar,ColMajor,ConjugateLhs,RhsScalar,ConjugateRhs,Version>
 {
 typedef typename scalar_product_traits<LhsScalar, RhsScalar>::ReturnType ResScalar;
 
@@ -69,6 +56,18 @@ EIGEN_DONT_INLINE static void run(
   #ifdef EIGEN_INTERNAL_DEBUGGING
     resIncr
   #endif
+  , RhsScalar alpha);
+};
+
+template<typename Index, typename LhsScalar, bool ConjugateLhs, typename RhsScalar, bool ConjugateRhs, int Version>
+EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,ColMajor,ConjugateLhs,RhsScalar,ConjugateRhs,Version>::run(
+  Index rows, Index cols,
+  const LhsScalar* lhs, Index lhsStride,
+  const RhsScalar* rhs, Index rhsIncr,
+  ResScalar* res, Index
+  #ifdef EIGEN_INTERNAL_DEBUGGING
+    resIncr
+  #endif
   , RhsScalar alpha)
 {
   eigen_internal_assert(resIncr==1);
@@ -87,21 +86,21 @@ EIGEN_DONT_INLINE static void run(
   conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
   conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
   if(ConjugateRhs)
-    alpha = conj(alpha);
+    alpha = numext::conj(alpha);
 
   enum { AllAligned = 0, EvenAligned, FirstAligned, NoneAligned };
   const Index columnsAtOnce = 4;
   const Index peels = 2;
   const Index LhsPacketAlignedMask = LhsPacketSize-1;
   const Index ResPacketAlignedMask = ResPacketSize-1;
-  const Index PeelAlignedMask = ResPacketSize*peels-1;
+//  const Index PeelAlignedMask = ResPacketSize*peels-1;
   const Index size = rows;
   
   // How many coeffs of the result do we have to skip to be aligned.
   // Here we assume data are at least aligned on the base scalar type.
-  Index alignedStart = first_aligned(res,size);
+  Index alignedStart = internal::first_aligned(res,size);
   Index alignedSize = ResPacketSize>1 ? alignedStart + ((size-alignedStart) & ~ResPacketAlignedMask) : 0;
-  const Index peeledSize  = peels>1 ? alignedStart + ((alignedSize-alignedStart) & ~PeelAlignedMask) : alignedStart;
+  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
 
   const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
   Index alignmentPattern = alignmentStep==0 ? AllAligned
@@ -109,7 +108,7 @@ EIGEN_DONT_INLINE static void run(
                        : FirstAligned;
 
   // we cannot assume the first element is aligned because of sub-matrices
-  const Index lhsAlignmentOffset = first_aligned(lhs,size);
+  const Index lhsAlignmentOffset = internal::first_aligned(lhs,size);
 
   // find how many columns do we have to skip to be aligned with the result (if possible)
   Index skipColumns = 0;
@@ -134,7 +133,7 @@ EIGEN_DONT_INLINE static void run(
     }
     else
     {
-      skipColumns = std::min(skipColumns,cols);
+      skipColumns = (std::min)(skipColumns,cols);
       // note that the skiped columns are processed later.
     }
 
@@ -190,6 +189,8 @@ EIGEN_DONT_INLINE static void run(
               _EIGEN_ACCUMULATE_PACKETS(d,du,d);
             break;
           case FirstAligned:
+          {
+            Index j = alignedStart;
             if(peels>1)
             {
               LhsPacket A00, A01, A02, A03, A10, A11, A12, A13;
@@ -199,7 +200,7 @@ EIGEN_DONT_INLINE static void run(
               A02 = pload<LhsPacket>(&lhs2[alignedStart-2]);
               A03 = pload<LhsPacket>(&lhs3[alignedStart-3]);
 
-              for (Index j = alignedStart; j<peeledSize; j+=peels*ResPacketSize)
+              for (; j<peeledSize; j+=peels*ResPacketSize)
               {
                 A11 = pload<LhsPacket>(&lhs1[j-1+LhsPacketSize]);  palign<1>(A01,A11);
                 A12 = pload<LhsPacket>(&lhs2[j-2+LhsPacketSize]);  palign<2>(A02,A12);
@@ -223,9 +224,10 @@ EIGEN_DONT_INLINE static void run(
                 pstore(&res[j+ResPacketSize],T1);
               }
             }
-            for (Index j = peeledSize; j<alignedSize; j+=ResPacketSize)
+            for (; j<alignedSize; j+=ResPacketSize)
               _EIGEN_ACCUMULATE_PACKETS(d,du,du);
             break;
+          }
           default:
             for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
               _EIGEN_ACCUMULATE_PACKETS(du,du,du);
@@ -284,7 +286,6 @@ EIGEN_DONT_INLINE static void run(
   } while(Vectorizable);
   #undef _EIGEN_ACCUMULATE_PACKETS
 }
-};
 
 /* Optimized row-major matrix * vector product:
  * This algorithm processes 4 rows at onces that allows to both reduce
@@ -296,8 +297,8 @@ EIGEN_DONT_INLINE static void run(
  *  - alpha is always a complex (or converted to a complex)
  *  - no vectorization
  */
-template<typename Index, typename LhsScalar, bool ConjugateLhs, typename RhsScalar, bool ConjugateRhs>
-struct general_matrix_vector_product<Index,LhsScalar,RowMajor,ConjugateLhs,RhsScalar,ConjugateRhs>
+template<typename Index, typename LhsScalar, bool ConjugateLhs, typename RhsScalar, bool ConjugateRhs, int Version>
+struct general_matrix_vector_product<Index,LhsScalar,RowMajor,ConjugateLhs,RhsScalar,ConjugateRhs,Version>
 {
 typedef typename scalar_product_traits<LhsScalar, RhsScalar>::ReturnType ResScalar;
 
@@ -318,6 +319,15 @@ typedef typename conditional<Vectorizable,_RhsPacket,RhsScalar>::type RhsPacket;
 typedef typename conditional<Vectorizable,_ResPacket,ResScalar>::type ResPacket;
   
 EIGEN_DONT_INLINE static void run(
+  Index rows, Index cols,
+  const LhsScalar* lhs, Index lhsStride,
+  const RhsScalar* rhs, Index rhsIncr,
+  ResScalar* res, Index resIncr,
+  ResScalar alpha);
+};
+
+template<typename Index, typename LhsScalar, bool ConjugateLhs, typename RhsScalar, bool ConjugateRhs, int Version>
+EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,RowMajor,ConjugateLhs,RhsScalar,ConjugateRhs,Version>::run(
   Index rows, Index cols,
   const LhsScalar* lhs, Index lhsStride,
   const RhsScalar* rhs, Index rhsIncr,
@@ -345,15 +355,15 @@ EIGEN_DONT_INLINE static void run(
   const Index peels = 2;
   const Index RhsPacketAlignedMask = RhsPacketSize-1;
   const Index LhsPacketAlignedMask = LhsPacketSize-1;
-  const Index PeelAlignedMask = RhsPacketSize*peels-1;
+//   const Index PeelAlignedMask = RhsPacketSize*peels-1;
   const Index depth = cols;
 
   // How many coeffs of the result do we have to skip to be aligned.
   // Here we assume data are at least aligned on the base scalar type
   // if that's not the case then vectorization is discarded, see below.
-  Index alignedStart = first_aligned(rhs, depth);
+  Index alignedStart = internal::first_aligned(rhs, depth);
   Index alignedSize = RhsPacketSize>1 ? alignedStart + ((depth-alignedStart) & ~RhsPacketAlignedMask) : 0;
-  const Index peeledSize  = peels>1 ? alignedStart + ((alignedSize-alignedStart) & ~PeelAlignedMask) : alignedStart;
+  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
 
   const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
   Index alignmentPattern = alignmentStep==0 ? AllAligned
@@ -361,7 +371,7 @@ EIGEN_DONT_INLINE static void run(
                          : FirstAligned;
 
   // we cannot assume the first element is aligned because of sub-matrices
-  const Index lhsAlignmentOffset = first_aligned(lhs,depth);
+  const Index lhsAlignmentOffset = internal::first_aligned(lhs,depth);
 
   // find how many rows do we have to skip to be aligned with rhs (if possible)
   Index skipRows = 0;
@@ -386,7 +396,7 @@ EIGEN_DONT_INLINE static void run(
     }
     else
     {
-      skipRows = std::min(skipRows,Index(rows));
+      skipRows = (std::min)(skipRows,Index(rows));
       // note that the skiped columns are processed later.
     }
     eigen_internal_assert(  alignmentPattern==NoneAligned
@@ -443,10 +453,12 @@ EIGEN_DONT_INLINE static void run(
               _EIGEN_ACCUMULATE_PACKETS(d,du,d);
             break;
           case FirstAligned:
+          {
+            Index j = alignedStart;
             if (peels>1)
             {
               /* Here we proccess 4 rows with with two peeled iterations to hide
-               * tghe overhead of unaligned loads. Moreover unaligned loads are handled
+               * the overhead of unaligned loads. Moreover unaligned loads are handled
                * using special shift/move operations between the two aligned packets
                * overlaping the desired unaligned packet. This is *much* more efficient
                * than basic unaligned loads.
@@ -456,7 +468,7 @@ EIGEN_DONT_INLINE static void run(
               A02 = pload<LhsPacket>(&lhs2[alignedStart-2]);
               A03 = pload<LhsPacket>(&lhs3[alignedStart-3]);
 
-              for (Index j = alignedStart; j<peeledSize; j+=peels*RhsPacketSize)
+              for (; j<peeledSize; j+=peels*RhsPacketSize)
               {
                 RhsPacket b = pload<RhsPacket>(&rhs[j]);
                 A11 = pload<LhsPacket>(&lhs1[j-1+LhsPacketSize]);  palign<1>(A01,A11);
@@ -478,9 +490,10 @@ EIGEN_DONT_INLINE static void run(
                 ptmp3 = pcj.pmadd(A13, b, ptmp3);
               }
             }
-            for (Index j = peeledSize; j<alignedSize; j+=RhsPacketSize)
+            for (; j<alignedSize; j+=RhsPacketSize)
               _EIGEN_ACCUMULATE_PACKETS(d,du,du);
             break;
+          }
           default:
             for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
               _EIGEN_ACCUMULATE_PACKETS(du,du,du);
@@ -552,8 +565,9 @@ EIGEN_DONT_INLINE static void run(
 
   #undef _EIGEN_ACCUMULATE_PACKETS
 }
-};
 
 } // end namespace internal
+
+} // end namespace Eigen
 
 #endif // EIGEN_GENERAL_MATRIX_VECTOR_H

@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2008 Konstantinos Margaritis <markos@codex.gr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_PACKET_MATH_ALTIVEC_H
 #define EIGEN_PACKET_MATH_ALTIVEC_H
+
+namespace Eigen {
 
 namespace internal {
 
@@ -185,6 +172,9 @@ template<> EIGEN_STRONG_INLINE Packet4i psub<Packet4i>(const Packet4i& a, const 
 
 template<> EIGEN_STRONG_INLINE Packet4f pnegate(const Packet4f& a) { return psub<Packet4f>(p4f_ZERO, a); }
 template<> EIGEN_STRONG_INLINE Packet4i pnegate(const Packet4i& a) { return psub<Packet4i>(p4i_ZERO, a); }
+
+template<> EIGEN_STRONG_INLINE Packet4f pconj(const Packet4f& a) { return a; }
+template<> EIGEN_STRONG_INLINE Packet4i pconj(const Packet4i& a) { return a; }
 
 template<> EIGEN_STRONG_INLINE Packet4f pmul<Packet4f>(const Packet4f& a, const Packet4f& b) { return vec_madd(a,b,p4f_ZERO); }
 /* Commented out: it's actually slower than processing it scalar
@@ -487,7 +477,7 @@ template<> EIGEN_STRONG_INLINE int predux_max<Packet4i>(const Packet4i& a)
 template<int Offset>
 struct palign_impl<Offset,Packet4f>
 {
-  EIGEN_STRONG_INLINE static void run(Packet4f& first, const Packet4f& second)
+  static EIGEN_STRONG_INLINE void run(Packet4f& first, const Packet4f& second)
   {
     if (Offset!=0)
       first = vec_sld(first, second, Offset*4);
@@ -497,7 +487,7 @@ struct palign_impl<Offset,Packet4f>
 template<int Offset>
 struct palign_impl<Offset,Packet4i>
 {
-  EIGEN_STRONG_INLINE static void run(Packet4i& first, const Packet4i& second)
+  static EIGEN_STRONG_INLINE void run(Packet4i& first, const Packet4i& second)
   {
     if (Offset!=0)
       first = vec_sld(first, second, Offset*4);
@@ -505,5 +495,7 @@ struct palign_impl<Offset,Packet4i>
 };
 
 } // end namespace internal
+
+} // end namespace Eigen
 
 #endif // EIGEN_PACKET_MATH_ALTIVEC_H

@@ -4,28 +4,14 @@
 // Copyright (C) 2007-2010 Benoit Jacob <jacob.benoit.1@gmail.com>
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_FORWARDDECLARATIONS_H
 #define EIGEN_FORWARDDECLARATIONS_H
 
+namespace Eigen {
 namespace internal {
 
 template<typename T> struct traits;
@@ -92,8 +78,7 @@ template<typename ExpressionType> class NestByValue;
 template<typename ExpressionType> class ForceAlignedAccess;
 template<typename ExpressionType> class SwapWrapper;
 
-template<typename XprType, int BlockRows=Dynamic, int BlockCols=Dynamic, bool InnerPanel = false,
-         bool HasDirectAccess = internal::has_direct_access<XprType>::ret> class Block;
+template<typename XprType, int BlockRows=Dynamic, int BlockCols=Dynamic, bool InnerPanel = false> class Block;
 
 template<typename MatrixType, int Size=Dynamic> class VectorBlock;
 template<typename MatrixType> class Transpose;
@@ -133,6 +118,7 @@ template<typename ExpressionType> class WithFormat;
 template<typename MatrixType> struct CommaInitializer;
 template<typename Derived> class ReturnByValue;
 template<typename ExpressionType> class ArrayWrapper;
+template<typename ExpressionType> class MatrixWrapper;
 
 namespace internal {
 template<typename DecompositionType, typename Rhs> struct solve_retval_base;
@@ -167,7 +153,6 @@ template<typename LhsScalar, typename RhsScalar, bool ConjLhs=false, bool ConjRh
 template<typename Scalar> struct scalar_sum_op;
 template<typename Scalar> struct scalar_difference_op;
 template<typename LhsScalar,typename RhsScalar> struct scalar_conj_product_op;
-template<typename Scalar> struct scalar_quotient_op;
 template<typename Scalar> struct scalar_opposite_op;
 template<typename Scalar> struct scalar_conjugate_op;
 template<typename Scalar> struct scalar_real_op;
@@ -198,6 +183,7 @@ template<typename Scalar> struct scalar_identity_op;
 
 template<typename LhsScalar,typename RhsScalar=LhsScalar> struct scalar_product_op;
 template<typename LhsScalar,typename RhsScalar> struct scalar_multiple2_op;
+template<typename LhsScalar,typename RhsScalar=LhsScalar> struct scalar_quotient_op;
 
 } // end namespace internal
 
@@ -282,6 +268,10 @@ template<typename MatrixType,int Direction> class Homogeneous;
 // MatrixFunctions module
 template<typename Derived> struct MatrixExponentialReturnValue;
 template<typename Derived> class MatrixFunctionReturnValue;
+template<typename Derived> class MatrixSquareRootReturnValue;
+template<typename Derived> class MatrixLogarithmReturnValue;
+template<typename Derived> class MatrixPowerReturnValue;
+template<typename Derived, typename Lhs, typename Rhs> class MatrixPowerProduct;
 
 namespace internal {
 template <typename Scalar>
@@ -303,5 +293,7 @@ namespace internal {
 template<typename MatrixType, unsigned int Mode> struct eigen2_part_return_type;
 }
 #endif
+
+} // end namespace Eigen
 
 #endif // EIGEN_FORWARDDECLARATIONS_H

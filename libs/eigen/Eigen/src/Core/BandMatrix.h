@@ -3,30 +3,16 @@
 //
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_BANDMATRIX_H
 #define EIGEN_BANDMATRIX_H
 
-namespace internal {
+namespace Eigen { 
 
+namespace internal {
 
 template<typename Derived>
 class BandMatrixBase : public EigenBase<Derived>
@@ -87,7 +73,7 @@ class BandMatrixBase : public EigenBase<Derived>
       if (i<=supers())
       {
         start = supers()-i;
-        len = std::min(rows(),std::max<Index>(0,coeffs().rows() - (supers()-i)));
+        len = (std::min)(rows(),std::max<Index>(0,coeffs().rows() - (supers()-i)));
       }
       else if (i>=rows()-subs())
         len = std::max<Index>(0,coeffs().rows() - (i + 1 - rows() + subs()));
@@ -96,11 +82,11 @@ class BandMatrixBase : public EigenBase<Derived>
 
     /** \returns a vector expression of the main diagonal */
     inline Block<CoefficientsType,1,SizeAtCompileTime> diagonal()
-    { return Block<CoefficientsType,1,SizeAtCompileTime>(coeffs(),supers(),0,1,std::min(rows(),cols())); }
+    { return Block<CoefficientsType,1,SizeAtCompileTime>(coeffs(),supers(),0,1,(std::min)(rows(),cols())); }
 
     /** \returns a vector expression of the main diagonal (const version) */
     inline const Block<const CoefficientsType,1,SizeAtCompileTime> diagonal() const
-    { return Block<const CoefficientsType,1,SizeAtCompileTime>(coeffs(),supers(),0,1,std::min(rows(),cols())); }
+    { return Block<const CoefficientsType,1,SizeAtCompileTime>(coeffs(),supers(),0,1,(std::min)(rows(),cols())); }
 
     template<int Index> struct DiagonalIntReturnType {
       enum {
@@ -122,13 +108,13 @@ class BandMatrixBase : public EigenBase<Derived>
     /** \returns a vector expression of the \a N -th sub or super diagonal */
     template<int N> inline typename DiagonalIntReturnType<N>::Type diagonal()
     {
-      return typename DiagonalIntReturnType<N>::BuildType(coeffs(), supers()-N, std::max(0,N), 1, diagonalLength(N));
+      return typename DiagonalIntReturnType<N>::BuildType(coeffs(), supers()-N, (std::max)(0,N), 1, diagonalLength(N));
     }
 
     /** \returns a vector expression of the \a N -th sub or super diagonal */
     template<int N> inline const typename DiagonalIntReturnType<N>::Type diagonal() const
     {
-      return typename DiagonalIntReturnType<N>::BuildType(coeffs(), supers()-N, std::max(0,N), 1, diagonalLength(N));
+      return typename DiagonalIntReturnType<N>::BuildType(coeffs(), supers()-N, (std::max)(0,N), 1, diagonalLength(N));
     }
 
     /** \returns a vector expression of the \a i -th sub or super diagonal */
@@ -166,7 +152,7 @@ class BandMatrixBase : public EigenBase<Derived>
   protected:
 
     inline Index diagonalLength(Index i) const
-    { return i<0 ? std::min(cols(),rows()+i) : std::min(rows(),cols()-i); }
+    { return i<0 ? (std::min)(cols(),rows()+i) : (std::min)(rows(),cols()-i); }
 };
 
 /**
@@ -284,8 +270,8 @@ class BandMatrixWrapper : public BandMatrixBase<BandMatrixWrapper<_CoefficientsT
       : m_coeffs(coeffs),
         m_rows(rows), m_supers(supers), m_subs(subs)
     {
+      EIGEN_UNUSED_VARIABLE(cols);
       //internal::assert(coeffs.cols()==cols() && (supers()+subs()+1)==coeffs.rows());
-        cols=0; //workaround for compiler warning
     }
 
     /** \returns the number of columns */
@@ -342,5 +328,7 @@ class TridiagonalMatrix : public BandMatrix<Scalar,Size,Size,Options&SelfAdjoint
 };
 
 } // end namespace internal
+
+} // end namespace Eigen
 
 #endif // EIGEN_BANDMATRIX_H

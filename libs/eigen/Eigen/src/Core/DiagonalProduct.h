@@ -4,27 +4,14 @@
 // Copyright (C) 2008 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2007-2009 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_DIAGONALPRODUCT_H
 #define EIGEN_DIAGONALPRODUCT_H
+
+namespace Eigen { 
 
 namespace internal {
 template<typename MatrixType, typename DiagonalType, int ProductOrder>
@@ -39,14 +26,15 @@ struct traits<DiagonalProduct<MatrixType, DiagonalType, ProductOrder> >
     MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime,
 
     _StorageOrder = MatrixType::Flags & RowMajorBit ? RowMajor : ColMajor,
-    _PacketOnDiag = !((int(_StorageOrder) == RowMajor && int(ProductOrder) == OnTheLeft)
-                    ||(int(_StorageOrder) == ColMajor && int(ProductOrder) == OnTheRight)),
+    _ScalarAccessOnDiag =  !((int(_StorageOrder) == ColMajor && int(ProductOrder) == OnTheLeft)
+                          ||(int(_StorageOrder) == RowMajor && int(ProductOrder) == OnTheRight)),
     _SameTypes = is_same<typename MatrixType::Scalar, typename DiagonalType::Scalar>::value,
     // FIXME currently we need same types, but in the future the next rule should be the one
-    //_Vectorizable = bool(int(MatrixType::Flags)&PacketAccessBit) && ((!_PacketOnDiag) || (_SameTypes && bool(int(DiagonalType::Flags)&PacketAccessBit))),
-    _Vectorizable = bool(int(MatrixType::Flags)&PacketAccessBit) && _SameTypes && ((!_PacketOnDiag) || (bool(int(DiagonalType::Flags)&PacketAccessBit))),
+    //_Vectorizable = bool(int(MatrixType::Flags)&PacketAccessBit) && ((!_PacketOnDiag) || (_SameTypes && bool(int(DiagonalType::DiagonalVectorType::Flags)&PacketAccessBit))),
+    _Vectorizable = bool(int(MatrixType::Flags)&PacketAccessBit) && _SameTypes && (_ScalarAccessOnDiag || (bool(int(DiagonalType::DiagonalVectorType::Flags)&PacketAccessBit))),
+    _LinearAccessMask = (RowsAtCompileTime==1 || ColsAtCompileTime==1) ? LinearAccessBit : 0,
 
-    Flags = (HereditaryBits & (unsigned int)(MatrixType::Flags)) | (_Vectorizable ? PacketAccessBit : 0),
+    Flags = ((HereditaryBits|_LinearAccessMask) & (unsigned int)(MatrixType::Flags)) | (_Vectorizable ? PacketAccessBit : 0) | AlignedBit,//(int(MatrixType::Flags)&int(DiagonalType::DiagonalVectorType::Flags)&AlignedBit),
     CoeffReadCost = NumTraits<Scalar>::MulCost + MatrixType::CoeffReadCost + DiagonalType::DiagonalVectorType::CoeffReadCost
   };
 };
@@ -67,12 +55,20 @@ class DiagonalProduct : internal::no_assignment_operator,
       eigen_assert(diagonal.diagonal().size() == (ProductOrder == OnTheLeft ? matrix.rows() : matrix.cols()));
     }
 
-    inline Index rows() const { return m_matrix.rows(); }
-    inline Index cols() const { return m_matrix.cols(); }
+    EIGEN_STRONG_INLINE Index rows() const { return m_matrix.rows(); }
+    EIGEN_STRONG_INLINE Index cols() const { return m_matrix.cols(); }
 
-    const Scalar coeff(Index row, Index col) const
+    EIGEN_STRONG_INLINE const Scalar coeff(Index row, Index col) const
     {
       return m_diagonal.diagonal().coeff(ProductOrder == OnTheLeft ? row : col) * m_matrix.coeff(row, col);
+    }
+    
+    EIGEN_STRONG_INLINE const Scalar coeff(Index idx) const
+    {
+      enum {
+        StorageOrder = int(MatrixType::Flags) & RowMajorBit ? RowMajor : ColMajor
+      };
+      return coeff(int(StorageOrder)==ColMajor?idx:0,int(StorageOrder)==ColMajor?0:idx);
     }
 
     template<int LoadMode>
@@ -82,10 +78,18 @@ class DiagonalProduct : internal::no_assignment_operator,
         StorageOrder = Flags & RowMajorBit ? RowMajor : ColMajor
       };
       const Index indexInDiagonalVector = ProductOrder == OnTheLeft ? row : col;
-
       return packet_impl<LoadMode>(row,col,indexInDiagonalVector,typename internal::conditional<
         ((int(StorageOrder) == RowMajor && int(ProductOrder) == OnTheLeft)
        ||(int(StorageOrder) == ColMajor && int(ProductOrder) == OnTheRight)), internal::true_type, internal::false_type>::type());
+    }
+    
+    template<int LoadMode>
+    EIGEN_STRONG_INLINE PacketScalar packet(Index idx) const
+    {
+      enum {
+        StorageOrder = int(MatrixType::Flags) & RowMajorBit ? RowMajor : ColMajor
+      };
+      return packet<LoadMode>(int(StorageOrder)==ColMajor?idx:0,int(StorageOrder)==ColMajor?0:idx);
     }
 
   protected:
@@ -101,14 +105,14 @@ class DiagonalProduct : internal::no_assignment_operator,
     {
       enum {
         InnerSize = (MatrixType::Flags & RowMajorBit) ? MatrixType::ColsAtCompileTime : MatrixType::RowsAtCompileTime,
-        DiagonalVectorPacketLoadMode = (LoadMode == Aligned && ((InnerSize%16) == 0)) ? Aligned : Unaligned
+        DiagonalVectorPacketLoadMode = (LoadMode == Aligned && (((InnerSize%16) == 0) || (int(DiagonalType::DiagonalVectorType::Flags)&AlignedBit)==AlignedBit) ? Aligned : Unaligned)
       };
       return internal::pmul(m_matrix.template packet<LoadMode>(row, col),
                      m_diagonal.diagonal().template packet<DiagonalVectorPacketLoadMode>(id));
     }
 
-    const typename MatrixType::Nested m_matrix;
-    const typename DiagonalType::Nested m_diagonal;
+    typename MatrixType::Nested m_matrix;
+    typename DiagonalType::Nested m_diagonal;
 };
 
 /** \returns the diagonal matrix product of \c *this by the diagonal matrix \a diagonal.
@@ -116,20 +120,11 @@ class DiagonalProduct : internal::no_assignment_operator,
 template<typename Derived>
 template<typename DiagonalDerived>
 inline const DiagonalProduct<Derived, DiagonalDerived, OnTheRight>
-MatrixBase<Derived>::operator*(const DiagonalBase<DiagonalDerived> &diagonal) const
+MatrixBase<Derived>::operator*(const DiagonalBase<DiagonalDerived> &a_diagonal) const
 {
-  return DiagonalProduct<Derived, DiagonalDerived, OnTheRight>(derived(), diagonal.derived());
+  return DiagonalProduct<Derived, DiagonalDerived, OnTheRight>(derived(), a_diagonal.derived());
 }
 
-/** \returns the diagonal matrix product of \c *this by the matrix \a matrix.
-  */
-template<typename DiagonalDerived>
-template<typename MatrixDerived>
-inline const DiagonalProduct<MatrixDerived, DiagonalDerived, OnTheLeft>
-DiagonalBase<DiagonalDerived>::operator*(const MatrixBase<MatrixDerived> &matrix) const
-{
-  return DiagonalProduct<MatrixDerived, DiagonalDerived, OnTheLeft>(matrix.derived(), derived());
-}
-
+} // end namespace Eigen
 
 #endif // EIGEN_DIAGONALPRODUCT_H

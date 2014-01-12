@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2006-2009 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// // WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_LU_H
 #define EIGEN_LU_H
+
+namespace Eigen { 
 
 /** \ingroup LU_Module
   *
@@ -282,6 +269,7 @@ template<typename _MatrixType> class FullPivLU
     FullPivLU& setThreshold(Default_t)
     {
       m_usePrescribedThreshold = false;
+      return *this;
     }
 
     /** Returns the threshold that will be used by certain methods such as rank().
@@ -305,11 +293,12 @@ template<typename _MatrixType> class FullPivLU
       */
     inline Index rank() const
     {
+      using std::abs;
       eigen_assert(m_isInitialized && "LU is not initialized.");
-      RealScalar premultiplied_threshold = internal::abs(m_maxpivot) * threshold();
+      RealScalar premultiplied_threshold = abs(m_maxpivot) * threshold();
       Index result = 0;
       for(Index i = 0; i < m_nonzero_pivots; ++i)
-        result += (internal::abs(m_lu.coeff(i,i)) > premultiplied_threshold);
+        result += (abs(m_lu.coeff(i,i)) > premultiplied_threshold);
       return result;
     }
 
@@ -428,6 +417,9 @@ FullPivLU<MatrixType>::FullPivLU(const MatrixType& matrix)
 template<typename MatrixType>
 FullPivLU<MatrixType>& FullPivLU<MatrixType>::compute(const MatrixType& matrix)
 {
+  // the permutations are stored as int indices, so just to be sure:
+  eigen_assert(matrix.rows()<=NumTraits<int>::highest() && matrix.cols()<=NumTraits<int>::highest());
+  
   m_isInitialized = true;
   m_lu = matrix;
 
@@ -443,7 +435,6 @@ FullPivLU<MatrixType>& FullPivLU<MatrixType>::compute(const MatrixType& matrix)
 
   m_nonzero_pivots = size; // the generic case is that in which all pivots are nonzero (invertible case)
   m_maxpivot = RealScalar(0);
-  RealScalar cutoff(0);
 
   for(Index k = 0; k < size; ++k)
   {
@@ -458,14 +449,7 @@ FullPivLU<MatrixType>& FullPivLU<MatrixType>::compute(const MatrixType& matrix)
     row_of_biggest_in_corner += k; // correct the values! since they were computed in the corner,
     col_of_biggest_in_corner += k; // need to add k to them.
 
-    // when k==0, biggest_in_corner is the biggest coeff absolute value in the original matrix
-    if(k == 0) cutoff = biggest_in_corner * NumTraits<Scalar>::epsilon();
-
-    // if the pivot (hence the corner) is "zero", terminate to avoid generating nan/inf values.
-    // Notice that using an exact comparison (biggest_in_corner==0) here, as Golub-van Loan do in
-    // their pseudo-code, results in numerical instability! The cutoff here has been validated
-    // by running the unit test 'lu' with many repetitions.
-    if(biggest_in_corner < cutoff)
+    if(biggest_in_corner==RealScalar(0))
     {
       // before exiting, make sure to initialize the still uninitialized transpositions
       // in a sane state without destroying what we already have.
@@ -533,7 +517,7 @@ template<typename MatrixType>
 MatrixType FullPivLU<MatrixType>::reconstructedMatrix() const
 {
   eigen_assert(m_isInitialized && "LU is not initialized.");
-  const Index smalldim = std::min(m_lu.rows(), m_lu.cols());
+  const Index smalldim = (std::min)(m_lu.rows(), m_lu.cols());
   // LU
   MatrixType res(m_lu.rows(),m_lu.cols());
   // FIXME the .toDenseMatrix() should not be needed...
@@ -567,6 +551,7 @@ struct kernel_retval<FullPivLU<_MatrixType> >
 
   template<typename Dest> void evalTo(Dest& dst) const
   {
+    using std::abs;
     const Index cols = dec().matrixLU().cols(), dimker = cols - rank();
     if(dimker == 0)
     {
@@ -652,6 +637,7 @@ struct image_retval<FullPivLU<_MatrixType> >
 
   template<typename Dest> void evalTo(Dest& dst) const
   {
+    using std::abs;
     if(rank() == 0)
     {
       // The Image is just {0}, so it doesn't have a basis properly speaking, but let's
@@ -695,7 +681,7 @@ struct solve_retval<FullPivLU<_MatrixType>, Rhs>
     const Index rows = dec().rows(), cols = dec().cols(),
               nonzero_pivots = dec().nonzeroPivots();
     eigen_assert(rhs().rows() == rows);
-    const Index smalldim = std::min(rows, cols);
+    const Index smalldim = (std::min)(rows, cols);
 
     if(nonzero_pivots == 0)
     {
@@ -750,5 +736,7 @@ MatrixBase<Derived>::fullPivLu() const
 {
   return FullPivLU<PlainObject>(eval());
 }
+
+} // end namespace Eigen
 
 #endif // EIGEN_LU_H
