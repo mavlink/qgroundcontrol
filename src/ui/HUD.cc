@@ -117,6 +117,9 @@ HUD::HUD(int width, int height, QWidget* parent)
       imageRequested(false),
       image(NULL)
 {
+    Q_UNUSED(width);
+    Q_UNUSED(height);
+    
     // Set auto fill to false
     setAutoFillBackground(false);
 
@@ -501,11 +504,18 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
  */
 void HUD::setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight)
 {
+    Q_UNUSED(referencePositionX);
+    Q_UNUSED(referencePositionY);
+    Q_UNUSED(referenceWidth);
+    Q_UNUSED(referenceHeight);
+#if 0
+    // code ifdef'ed out but left in to silence warnings
     int pixelWidth  = (int)(referenceWidth * scalingFactor);
     int pixelHeight = (int)(referenceHeight * scalingFactor);
     // Translate and scale the GL view in the virtual reference coordinate units on the screen
     int pixelPositionX = (int)((referencePositionX * scalingFactor) + xCenterOffset);
     int pixelPositionY = this->height() - (referencePositionY * scalingFactor) + yCenterOffset - pixelHeight;
+#endif
 }
 
 void HUD::paintRollPitchStrips()
@@ -515,7 +525,7 @@ void HUD::paintRollPitchStrips()
 
 void HUD::paintEvent(QPaintEvent *event)
 {
-
+    Q_UNUSED(event);
     paintHUD();
 }
 

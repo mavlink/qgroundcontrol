@@ -49,6 +49,7 @@ void BatteryMonitorConfig::activeUASSet(UASInterface *uas)
 }
 void BatteryMonitorConfig::alertOnLowClicked(bool checked)
 {
+    Q_UNUSED(checked);
 }
 
 void BatteryMonitorConfig::calcDividerSet()
@@ -246,6 +247,11 @@ BatteryMonitorConfig::~BatteryMonitorConfig()
 }
 void BatteryMonitorConfig::batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(current);
+    Q_UNUSED(percent);
+    Q_UNUSED(seconds);
+    
     ui.calcVoltsLineEdit->setText(QString::number(voltage,'f',2));
     if (ui.measuredVoltsLineEdit->text() == "")
     {
@@ -255,6 +261,9 @@ void BatteryMonitorConfig::batteryChanged(UASInterface* uas, double voltage, dou
 
 void BatteryMonitorConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "VOLT_DIVIDER")
     {
         ui.calcDividerLineEdit->setText(QString::number(value.toFloat(),'f',4));
