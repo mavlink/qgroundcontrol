@@ -3,40 +3,27 @@
 //
 // Copyright (C) 2010 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN2_MATH_FUNCTIONS_H
 #define EIGEN2_MATH_FUNCTIONS_H
 
-template<typename T> inline typename NumTraits<T>::Real ei_real(const T& x) { return internal::real(x); }
-template<typename T> inline typename NumTraits<T>::Real ei_imag(const T& x) { return internal::imag(x); }
-template<typename T> inline T ei_conj(const T& x) { return internal::conj(x); }
-template<typename T> inline typename NumTraits<T>::Real ei_abs (const T& x) { return internal::abs(x); }
-template<typename T> inline typename NumTraits<T>::Real ei_abs2(const T& x) { return internal::abs2(x); }
-template<typename T> inline T ei_sqrt(const T& x) { return internal::sqrt(x); }
-template<typename T> inline T ei_exp (const T& x) { return internal::exp(x); }
-template<typename T> inline T ei_log (const T& x) { return internal::log(x); }
-template<typename T> inline T ei_sin (const T& x) { return internal::sin(x); }
-template<typename T> inline T ei_cos (const T& x) { return internal::cos(x); }
-template<typename T> inline T ei_atan2(const T& x,const T& y) { return internal::atan2(x,y); }
-template<typename T> inline T ei_pow (const T& x,const T& y) { return internal::pow(x,y); }
+namespace Eigen { 
+
+template<typename T> inline typename NumTraits<T>::Real ei_real(const T& x) { return numext::real(x); }
+template<typename T> inline typename NumTraits<T>::Real ei_imag(const T& x) { return numext::imag(x); }
+template<typename T> inline T ei_conj(const T& x) { return numext::conj(x); }
+template<typename T> inline typename NumTraits<T>::Real ei_abs (const T& x) { using std::abs; return abs(x); }
+template<typename T> inline typename NumTraits<T>::Real ei_abs2(const T& x) { return numext::abs2(x); }
+template<typename T> inline T ei_sqrt(const T& x) { using std::sqrt; return sqrt(x); }
+template<typename T> inline T ei_exp (const T& x) { using std::exp;  return exp(x); }
+template<typename T> inline T ei_log (const T& x) { using std::log;  return log(x); }
+template<typename T> inline T ei_sin (const T& x) { using std::sin;  return sin(x); }
+template<typename T> inline T ei_cos (const T& x) { using std::cos;  return cos(x); }
+template<typename T> inline T ei_atan2(const T& x,const T& y) { using std::atan2; return atan2(x,y); }
+template<typename T> inline T ei_pow (const T& x,const T& y) { return numext::pow(x,y); }
 template<typename T> inline T ei_random () { return internal::random<T>(); }
 template<typename T> inline T ei_random (const T& x, const T& y) { return internal::random(x, y); }
 
@@ -64,5 +51,7 @@ inline bool ei_isApproxOrLessThan(const Scalar& x, const Scalar& y,
 {
   return internal::isApproxOrLessThan(x, y, precision);
 }
+
+} // end namespace Eigen
 
 #endif // EIGEN2_MATH_FUNCTIONS_H

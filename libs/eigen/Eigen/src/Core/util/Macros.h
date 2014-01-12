@@ -4,31 +4,16 @@
 // Copyright (C) 2008-2010 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2006-2008 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_MACROS_H
 #define EIGEN_MACROS_H
 
 #define EIGEN_WORLD_VERSION 3
-#define EIGEN_MAJOR_VERSION 0
-#define EIGEN_MINOR_VERSION 1
+#define EIGEN_MAJOR_VERSION 2
+#define EIGEN_MINOR_VERSION 0
 
 #define EIGEN_VERSION_AT_LEAST(x,y,z) (EIGEN_WORLD_VERSION>x || (EIGEN_WORLD_VERSION>=x && \
                                       (EIGEN_MAJOR_VERSION>y || (EIGEN_MAJOR_VERSION>=y && \
@@ -45,7 +30,7 @@
   #define EIGEN_GNUC_AT_MOST(x,y) 0
 #endif
 
-#if EIGEN_GNUC_AT_MOST(4,3)
+#if EIGEN_GNUC_AT_MOST(4,3) && !defined(__clang__)
   // see bug 89
   #define EIGEN_SAFE_TO_USE_STANDARD_ASSERT_MACRO 0
 #else
@@ -130,29 +115,26 @@
 #define EIGEN_MAKESTRING2(a) #a
 #define EIGEN_MAKESTRING(a) EIGEN_MAKESTRING2(a)
 
-// EIGEN_ALWAYS_INLINE_ATTRIB should be use in the declaration of function
-// which should be inlined even in debug mode.
+// EIGEN_STRONG_INLINE is a stronger version of the inline, using __forceinline on MSVC,
+// but it still doesn't use GCC's always_inline. This is useful in (common) situations where MSVC needs forceinline
+// but GCC is still doing fine with just inline.
+#if (defined _MSC_VER) || (defined __INTEL_COMPILER)
+#define EIGEN_STRONG_INLINE __forceinline
+#else
+#define EIGEN_STRONG_INLINE inline
+#endif
+
+// EIGEN_ALWAYS_INLINE is the stronget, it has the effect of making the function inline and adding every possible
+// attribute to maximize inlining. This should only be used when really necessary: in particular,
+// it uses __attribute__((always_inline)) on GCC, which most of the time is useless and can severely harm compile times.
 // FIXME with the always_inline attribute,
 // gcc 3.4.x reports the following compilation error:
 //   Eval.h:91: sorry, unimplemented: inlining failed in call to 'const Eigen::Eval<Derived> Eigen::MatrixBase<Scalar, Derived>::eval() const'
 //    : function body not available
 #if EIGEN_GNUC_AT_LEAST(4,0)
-#define EIGEN_ALWAYS_INLINE_ATTRIB __attribute__((always_inline))
+#define EIGEN_ALWAYS_INLINE __attribute__((always_inline)) inline
 #else
-#define EIGEN_ALWAYS_INLINE_ATTRIB
-#endif
-
-#if EIGEN_GNUC_AT_LEAST(4,1) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#define EIGEN_FLATTEN_ATTRIB __attribute__((flatten))
-#else
-#define EIGEN_FLATTEN_ATTRIB
-#endif
-
-// EIGEN_FORCE_INLINE means "inline as much as possible"
-#if (defined _MSC_VER) || (defined __INTEL_COMPILER)
-#define EIGEN_STRONG_INLINE __forceinline
-#else
-#define EIGEN_STRONG_INLINE inline
+#define EIGEN_ALWAYS_INLINE EIGEN_STRONG_INLINE
 #endif
 
 #if (defined __GNUC__)
@@ -161,6 +143,12 @@
 #define EIGEN_DONT_INLINE __declspec(noinline)
 #else
 #define EIGEN_DONT_INLINE
+#endif
+
+#if (defined __GNUC__)
+#define EIGEN_PERMISSIVE_EXPR __extension__
+#else
+#define EIGEN_PERMISSIVE_EXPR
 #endif
 
 // this macro allows to get rid of linking errors about multiply defined functions.
@@ -231,12 +219,16 @@
 #define EIGEN_ONLY_USED_FOR_DEBUG(x)
 #endif
 
-#if (defined __GNUC__)
-#define EIGEN_DEPRECATED __attribute__((deprecated))
-#elif (defined _MSC_VER)
-#define EIGEN_DEPRECATED __declspec(deprecated)
+#ifndef EIGEN_NO_DEPRECATED_WARNING
+  #if (defined __GNUC__)
+    #define EIGEN_DEPRECATED __attribute__((deprecated))
+  #elif (defined _MSC_VER)
+    #define EIGEN_DEPRECATED __declspec(deprecated)
+  #else
+    #define EIGEN_DEPRECATED
+  #endif
 #else
-#define EIGEN_DEPRECATED
+  #define EIGEN_DEPRECATED
 #endif
 
 #if (defined __GNUC__)
@@ -248,10 +240,12 @@
 // Suppresses 'unused variable' warnings.
 #define EIGEN_UNUSED_VARIABLE(var) (void)var;
 
-#if (defined __GNUC__)
-#define EIGEN_ASM_COMMENT(X)  asm("#"X)
-#else
-#define EIGEN_ASM_COMMENT(X)
+#if !defined(EIGEN_ASM_COMMENT)
+  #if (defined __GNUC__) && ( defined(__i386__) || defined(__x86_64__) )
+    #define EIGEN_ASM_COMMENT(X)  asm("#" X)
+  #else
+    #define EIGEN_ASM_COMMENT(X)
+  #endif
 #endif
 
 /* EIGEN_ALIGN_TO_BOUNDARY(n) forces data to be n-byte aligned. This is used to satisfy SIMD requirements.
@@ -261,7 +255,7 @@
  * If we made alignment depend on whether or not EIGEN_VECTORIZE is defined, it would be impossible to link
  * vectorized and non-vectorized code.
  */
-#if (defined __GNUC__) || (defined __PGI) || (defined __IBMCPP__)
+#if (defined __GNUC__) || (defined __PGI) || (defined __IBMCPP__) || (defined __ARMCC_VERSION)
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n)))
 #elif (defined _MSC_VER)
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __declspec(align(n))
@@ -309,6 +303,12 @@
 #if defined(_MSC_VER) && (!defined(__INTEL_COMPILER))
 #define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
   using Base::operator =;
+#elif defined(__clang__) // workaround clang bug (see http://forum.kde.org/viewtopic.php?f=74&t=102653)
+#define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
+  using Base::operator =; \
+  EIGEN_STRONG_INLINE Derived& operator=(const Derived& other) { Base::operator=(other); return *this; } \
+  template <typename OtherDerived> \
+  EIGEN_STRONG_INLINE Derived& operator=(const DenseBase<OtherDerived>& other) { Base::operator=(other.derived()); return *this; }
 #else
 #define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
   using Base::operator =; \
@@ -399,7 +399,7 @@
 #define EIGEN_MAKE_CWISE_BINARY_OP(METHOD,FUNCTOR) \
   template<typename OtherDerived> \
   EIGEN_STRONG_INLINE const CwiseBinaryOp<FUNCTOR<Scalar>, const Derived, const OtherDerived> \
-  METHOD(const EIGEN_CURRENT_STORAGE_BASE_CLASS<OtherDerived> &other) const \
+  (METHOD)(const EIGEN_CURRENT_STORAGE_BASE_CLASS<OtherDerived> &other) const \
   { \
     return CwiseBinaryOp<FUNCTOR<Scalar>, const Derived, const OtherDerived>(derived(), other.derived()); \
   }

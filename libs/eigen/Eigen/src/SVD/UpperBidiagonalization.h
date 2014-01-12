@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2010 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_BIDIAGONALIZATION_H
 #define EIGEN_BIDIAGONALIZATION_H
+
+namespace Eigen { 
 
 namespace internal {
 // UpperBidiagonalization will probably be replaced by a Bidiagonalization class, don't want to make it stable API.
@@ -52,7 +39,7 @@ template<typename _MatrixType> class UpperBidiagonalization
               CwiseUnaryOp<internal::scalar_conjugate_op<Scalar>, const Diagonal<const MatrixType,0> >
             > HouseholderUSequenceType;
     typedef HouseholderSequence<
-              const MatrixType,
+              const typename internal::remove_all<typename MatrixType::ConjugateReturnType>::type,
               Diagonal<const MatrixType,1>,
               OnTheRight
             > HouseholderVSequenceType;
@@ -87,7 +74,7 @@ template<typename _MatrixType> class UpperBidiagonalization
     const HouseholderVSequenceType householderV() // const here gives nasty errors and i'm lazy
     {
       eigen_assert(m_isInitialized && "UpperBidiagonalization is not initialized.");
-      return HouseholderVSequenceType(m_householder, m_householder.const_derived().template diagonal<1>())
+      return HouseholderVSequenceType(m_householder.conjugate(), m_householder.const_derived().template diagonal<1>())
              .setLength(m_householder.cols()-1)
              .setShift(1);
     }
@@ -155,5 +142,7 @@ MatrixBase<Derived>::bidiagonalization() const
 #endif
 
 } // end namespace internal
+
+} // end namespace Eigen
 
 #endif // EIGEN_BIDIAGONALIZATION_H

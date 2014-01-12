@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2008 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_ROTATION2D_H
 #define EIGEN_ROTATION2D_H
+
+namespace Eigen { 
 
 /** \geometry_module \ingroup Geometry_Module
   *
@@ -72,7 +59,7 @@ protected:
 public:
 
   /** Construct a 2D counter clock wise rotation from the angle \a a in radian. */
-  inline Rotation2D(Scalar a) : m_angle(a) {}
+  inline Rotation2D(const Scalar& a) : m_angle(a) {}
 
   /** \returns the rotation angle */
   inline Scalar angle() const { return m_angle; }
@@ -89,7 +76,7 @@ public:
 
   /** Concatenates two rotations */
   inline Rotation2D& operator*=(const Rotation2D& other)
-  { return m_angle += other.m_angle; return *this; }
+  { m_angle += other.m_angle; return *this; }
 
   /** Applies the rotation to a 2D vector */
   Vector2 operator* (const Vector2& vec) const
@@ -102,7 +89,7 @@ public:
   /** \returns the spherical interpolation between \c *this and \a other using
     * parameter \a t. It is in fact equivalent to a linear interpolation.
     */
-  inline Rotation2D slerp(Scalar t, const Rotation2D& other) const
+  inline Rotation2D slerp(const Scalar& t, const Rotation2D& other) const
   { return m_angle * (1-t) + other.angle() * t; }
 
   /** \returns \c *this with scalar type casted to \a NewScalarType
@@ -121,13 +108,13 @@ public:
     m_angle = Scalar(other.angle());
   }
 
-  inline static Rotation2D Identity() { return Rotation2D(0); }
+  static inline Rotation2D Identity() { return Rotation2D(0); }
 
   /** \returns \c true if \c *this is approximately equal to \a other, within the precision
     * determined by \a prec.
     *
     * \sa MatrixBase::isApprox() */
-  bool isApprox(const Rotation2D& other, typename NumTraits<Scalar>::Real prec = NumTraits<Scalar>::dummy_precision()) const
+  bool isApprox(const Rotation2D& other, const typename NumTraits<Scalar>::Real& prec = NumTraits<Scalar>::dummy_precision()) const
   { return internal::isApprox(m_angle,other.m_angle, prec); }
 };
 
@@ -146,8 +133,9 @@ template<typename Scalar>
 template<typename Derived>
 Rotation2D<Scalar>& Rotation2D<Scalar>::fromRotationMatrix(const MatrixBase<Derived>& mat)
 {
+  using std::atan2;
   EIGEN_STATIC_ASSERT(Derived::RowsAtCompileTime==2 && Derived::ColsAtCompileTime==2,YOU_MADE_A_PROGRAMMING_MISTAKE)
-  m_angle = internal::atan2(mat.coeff(1,0), mat.coeff(0,0));
+  m_angle = atan2(mat.coeff(1,0), mat.coeff(0,0));
   return *this;
 }
 
@@ -157,9 +145,13 @@ template<typename Scalar>
 typename Rotation2D<Scalar>::Matrix2
 Rotation2D<Scalar>::toRotationMatrix(void) const
 {
-  Scalar sinA = internal::sin(m_angle);
-  Scalar cosA = internal::cos(m_angle);
+  using std::sin;
+  using std::cos;
+  Scalar sinA = sin(m_angle);
+  Scalar cosA = cos(m_angle);
   return (Matrix2() << cosA, -sinA, sinA, cosA).finished();
 }
+
+} // end namespace Eigen
 
 #endif // EIGEN_ROTATION2D_H
