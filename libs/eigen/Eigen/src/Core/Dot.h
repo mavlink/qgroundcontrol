@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2006-2008, 2010 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_DOT_H
 #define EIGEN_DOT_H
+
+namespace Eigen { 
 
 namespace internal {
 
@@ -116,24 +103,29 @@ MatrixBase<Derived>::eigen2_dot(const MatrixBase<OtherDerived>& other) const
 
 //---------- implementation of L2 norm and related functions ----------
 
-/** \returns the squared \em l2 norm of *this, i.e., for vectors, the dot product of *this with itself.
+/** \returns, for vectors, the squared \em l2 norm of \c *this, and for matrices the Frobenius norm.
+  * In both cases, it consists in the sum of the square of all the matrix entries.
+  * For vectors, this is also equals to the dot product of \c *this with itself.
   *
   * \sa dot(), norm()
   */
 template<typename Derived>
 EIGEN_STRONG_INLINE typename NumTraits<typename internal::traits<Derived>::Scalar>::Real MatrixBase<Derived>::squaredNorm() const
 {
-  return internal::real((*this).cwiseAbs2().sum());
+  return numext::real((*this).cwiseAbs2().sum());
 }
 
-/** \returns the \em l2 norm of *this, i.e., for vectors, the square root of the dot product of *this with itself.
+/** \returns, for vectors, the \em l2 norm of \c *this, and for matrices the Frobenius norm.
+  * In both cases, it consists in the square root of the sum of the square of all the matrix entries.
+  * For vectors, this is also equals to the square root of the dot product of \c *this with itself.
   *
   * \sa dot(), squaredNorm()
   */
 template<typename Derived>
 inline typename NumTraits<typename internal::traits<Derived>::Scalar>::Real MatrixBase<Derived>::norm() const
 {
-  return internal::sqrt(squaredNorm());
+  using std::sqrt;
+  return sqrt(squaredNorm());
 }
 
 /** \returns an expression of the quotient of *this by its own norm.
@@ -172,8 +164,9 @@ template<typename Derived, int p>
 struct lpNorm_selector
 {
   typedef typename NumTraits<typename traits<Derived>::Scalar>::Real RealScalar;
-  inline static RealScalar run(const MatrixBase<Derived>& m)
+  static inline RealScalar run(const MatrixBase<Derived>& m)
   {
+    using std::pow;
     return pow(m.cwiseAbs().array().pow(p).sum(), RealScalar(1)/p);
   }
 };
@@ -181,7 +174,7 @@ struct lpNorm_selector
 template<typename Derived>
 struct lpNorm_selector<Derived, 1>
 {
-  inline static typename NumTraits<typename traits<Derived>::Scalar>::Real run(const MatrixBase<Derived>& m)
+  static inline typename NumTraits<typename traits<Derived>::Scalar>::Real run(const MatrixBase<Derived>& m)
   {
     return m.cwiseAbs().sum();
   }
@@ -190,7 +183,7 @@ struct lpNorm_selector<Derived, 1>
 template<typename Derived>
 struct lpNorm_selector<Derived, 2>
 {
-  inline static typename NumTraits<typename traits<Derived>::Scalar>::Real run(const MatrixBase<Derived>& m)
+  static inline typename NumTraits<typename traits<Derived>::Scalar>::Real run(const MatrixBase<Derived>& m)
   {
     return m.norm();
   }
@@ -199,7 +192,7 @@ struct lpNorm_selector<Derived, 2>
 template<typename Derived>
 struct lpNorm_selector<Derived, Infinity>
 {
-  inline static typename NumTraits<typename traits<Derived>::Scalar>::Real run(const MatrixBase<Derived>& m)
+  static inline typename NumTraits<typename traits<Derived>::Scalar>::Real run(const MatrixBase<Derived>& m)
   {
     return m.cwiseAbs().maxCoeff();
   }
@@ -232,11 +225,11 @@ MatrixBase<Derived>::lpNorm() const
 template<typename Derived>
 template<typename OtherDerived>
 bool MatrixBase<Derived>::isOrthogonal
-(const MatrixBase<OtherDerived>& other, RealScalar prec) const
+(const MatrixBase<OtherDerived>& other, const RealScalar& prec) const
 {
   typename internal::nested<Derived,2>::type nested(derived());
   typename internal::nested<OtherDerived,2>::type otherNested(other.derived());
-  return internal::abs2(nested.dot(otherNested)) <= prec * prec * nested.squaredNorm() * otherNested.squaredNorm();
+  return numext::abs2(nested.dot(otherNested)) <= prec * prec * nested.squaredNorm() * otherNested.squaredNorm();
 }
 
 /** \returns true if *this is approximately an unitary matrix,
@@ -251,7 +244,7 @@ bool MatrixBase<Derived>::isOrthogonal
   * Output: \verbinclude MatrixBase_isUnitary.out
   */
 template<typename Derived>
-bool MatrixBase<Derived>::isUnitary(RealScalar prec) const
+bool MatrixBase<Derived>::isUnitary(const RealScalar& prec) const
 {
   typename Derived::Nested nested(derived());
   for(Index i = 0; i < cols(); ++i)
@@ -264,5 +257,7 @@ bool MatrixBase<Derived>::isUnitary(RealScalar prec) const
   }
   return true;
 }
+
+} // end namespace Eigen
 
 #endif // EIGEN_DOT_H

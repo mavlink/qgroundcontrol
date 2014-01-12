@@ -4,27 +4,14 @@
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2006-2008 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_ORTHOMETHODS_H
 #define EIGEN_ORTHOMETHODS_H
+
+namespace Eigen { 
 
 /** \geometry_module
   *
@@ -43,12 +30,12 @@ MatrixBase<Derived>::cross(const MatrixBase<OtherDerived>& other) const
 
   // Note that there is no need for an expression here since the compiler
   // optimize such a small temporary very well (even within a complex expression)
-  const typename internal::nested<Derived,2>::type lhs(derived());
-  const typename internal::nested<OtherDerived,2>::type rhs(other.derived());
+  typename internal::nested<Derived,2>::type lhs(derived());
+  typename internal::nested<OtherDerived,2>::type rhs(other.derived());
   return typename cross_product_return_type<OtherDerived>::type(
-    internal::conj(lhs.coeff(1) * rhs.coeff(2) - lhs.coeff(2) * rhs.coeff(1)),
-    internal::conj(lhs.coeff(2) * rhs.coeff(0) - lhs.coeff(0) * rhs.coeff(2)),
-    internal::conj(lhs.coeff(0) * rhs.coeff(1) - lhs.coeff(1) * rhs.coeff(0))
+    numext::conj(lhs.coeff(1) * rhs.coeff(2) - lhs.coeff(2) * rhs.coeff(1)),
+    numext::conj(lhs.coeff(2) * rhs.coeff(0) - lhs.coeff(0) * rhs.coeff(2)),
+    numext::conj(lhs.coeff(0) * rhs.coeff(1) - lhs.coeff(1) * rhs.coeff(0))
   );
 }
 
@@ -56,15 +43,15 @@ namespace internal {
 
 template< int Arch,typename VectorLhs,typename VectorRhs,
           typename Scalar = typename VectorLhs::Scalar,
-          bool Vectorizable = (VectorLhs::Flags&VectorRhs::Flags)&PacketAccessBit>
+          bool Vectorizable = bool((VectorLhs::Flags&VectorRhs::Flags)&PacketAccessBit)>
 struct cross3_impl {
-  inline static typename internal::plain_matrix_type<VectorLhs>::type
+  static inline typename internal::plain_matrix_type<VectorLhs>::type
   run(const VectorLhs& lhs, const VectorRhs& rhs)
   {
     return typename internal::plain_matrix_type<VectorLhs>::type(
-      internal::conj(lhs.coeff(1) * rhs.coeff(2) - lhs.coeff(2) * rhs.coeff(1)),
-      internal::conj(lhs.coeff(2) * rhs.coeff(0) - lhs.coeff(0) * rhs.coeff(2)),
-      internal::conj(lhs.coeff(0) * rhs.coeff(1) - lhs.coeff(1) * rhs.coeff(0)),
+      numext::conj(lhs.coeff(1) * rhs.coeff(2) - lhs.coeff(2) * rhs.coeff(1)),
+      numext::conj(lhs.coeff(2) * rhs.coeff(0) - lhs.coeff(0) * rhs.coeff(2)),
+      numext::conj(lhs.coeff(0) * rhs.coeff(1) - lhs.coeff(1) * rhs.coeff(0)),
       0
     );
   }
@@ -91,8 +78,8 @@ MatrixBase<Derived>::cross3(const MatrixBase<OtherDerived>& other) const
 
   typedef typename internal::nested<Derived,2>::type DerivedNested;
   typedef typename internal::nested<OtherDerived,2>::type OtherDerivedNested;
-  const DerivedNested lhs(derived());
-  const OtherDerivedNested rhs(other.derived());
+  DerivedNested lhs(derived());
+  OtherDerivedNested rhs(other.derived());
 
   return internal::cross3_impl<Architecture::Target,
                         typename internal::remove_all<DerivedNested>::type,
@@ -145,7 +132,7 @@ struct unitOrthogonal_selector
   typedef typename NumTraits<Scalar>::Real RealScalar;
   typedef typename Derived::Index Index;
   typedef Matrix<Scalar,2,1> Vector2;
-  inline static VectorType run(const Derived& src)
+  static inline VectorType run(const Derived& src)
   {
     VectorType perp = VectorType::Zero(src.size());
     Index maxi = 0;
@@ -154,8 +141,8 @@ struct unitOrthogonal_selector
     if (maxi==0)
       sndi = 1;
     RealScalar invnm = RealScalar(1)/(Vector2() << src.coeff(sndi),src.coeff(maxi)).finished().norm();
-    perp.coeffRef(maxi) = -conj(src.coeff(sndi)) * invnm;
-    perp.coeffRef(sndi) =  conj(src.coeff(maxi)) * invnm;
+    perp.coeffRef(maxi) = -numext::conj(src.coeff(sndi)) * invnm;
+    perp.coeffRef(sndi) =  numext::conj(src.coeff(maxi)) * invnm;
 
     return perp;
    }
@@ -167,7 +154,7 @@ struct unitOrthogonal_selector<Derived,3>
   typedef typename plain_matrix_type<Derived>::type VectorType;
   typedef typename traits<Derived>::Scalar Scalar;
   typedef typename NumTraits<Scalar>::Real RealScalar;
-  inline static VectorType run(const Derived& src)
+  static inline VectorType run(const Derived& src)
   {
     VectorType perp;
     /* Let us compute the crossed product of *this with a vector
@@ -181,8 +168,8 @@ struct unitOrthogonal_selector<Derived,3>
     || (!isMuchSmallerThan(src.y(), src.z())))
     {
       RealScalar invnm = RealScalar(1)/src.template head<2>().norm();
-      perp.coeffRef(0) = -conj(src.y())*invnm;
-      perp.coeffRef(1) = conj(src.x())*invnm;
+      perp.coeffRef(0) = -numext::conj(src.y())*invnm;
+      perp.coeffRef(1) = numext::conj(src.x())*invnm;
       perp.coeffRef(2) = 0;
     }
     /* if both x and y are close to zero, then the vector is close
@@ -193,8 +180,8 @@ struct unitOrthogonal_selector<Derived,3>
     {
       RealScalar invnm = RealScalar(1)/src.template tail<2>().norm();
       perp.coeffRef(0) = 0;
-      perp.coeffRef(1) = -conj(src.z())*invnm;
-      perp.coeffRef(2) = conj(src.y())*invnm;
+      perp.coeffRef(1) = -numext::conj(src.z())*invnm;
+      perp.coeffRef(2) = numext::conj(src.y())*invnm;
     }
 
     return perp;
@@ -205,8 +192,8 @@ template<typename Derived>
 struct unitOrthogonal_selector<Derived,2>
 {
   typedef typename plain_matrix_type<Derived>::type VectorType;
-  inline static VectorType run(const Derived& src)
-  { return VectorType(-conj(src.y()), conj(src.x())).normalized(); }
+  static inline VectorType run(const Derived& src)
+  { return VectorType(-numext::conj(src.y()), numext::conj(src.x())).normalized(); }
 };
 
 } // end namespace internal
@@ -225,5 +212,7 @@ MatrixBase<Derived>::unitOrthogonal() const
   EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
   return internal::unitOrthogonal_selector<Derived>::run(derived());
 }
+
+} // end namespace Eigen
 
 #endif // EIGEN_ORTHOMETHODS_H

@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_SELFADJOINT_MATRIX_VECTOR_H
 #define EIGEN_SELFADJOINT_MATRIX_VECTOR_H
+
+namespace Eigen { 
 
 namespace internal {
 
@@ -32,8 +19,24 @@ namespace internal {
  * the number of load/stores of the result by a factor 2 and to reduce
  * the instruction dependency.
  */
-template<typename Scalar, typename Index, int StorageOrder, int UpLo, bool ConjugateLhs, bool ConjugateRhs>
-static EIGEN_DONT_INLINE void product_selfadjoint_vector(
+
+template<typename Scalar, typename Index, int StorageOrder, int UpLo, bool ConjugateLhs, bool ConjugateRhs, int Version=Specialized>
+struct selfadjoint_matrix_vector_product;
+
+template<typename Scalar, typename Index, int StorageOrder, int UpLo, bool ConjugateLhs, bool ConjugateRhs, int Version>
+struct selfadjoint_matrix_vector_product
+
+{
+static EIGEN_DONT_INLINE void run(
+  Index size,
+  const Scalar*  lhs, Index lhsStride,
+  const Scalar* _rhs, Index rhsIncr,
+  Scalar* res,
+  Scalar alpha);
+};
+
+template<typename Scalar, typename Index, int StorageOrder, int UpLo, bool ConjugateLhs, bool ConjugateRhs, int Version>
+EIGEN_DONT_INLINE void selfadjoint_matrix_vector_product<Scalar,Index,StorageOrder,UpLo,ConjugateLhs,ConjugateRhs,Version>::run(
   Index size,
   const Scalar*  lhs, Index lhsStride,
   const Scalar* _rhs, Index rhsIncr,
@@ -41,7 +44,6 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
   Scalar alpha)
 {
   typedef typename packet_traits<Scalar>::type Packet;
-  typedef typename NumTraits<Scalar>::Real RealScalar;
   const Index PacketSize = sizeof(Packet)/sizeof(Scalar);
 
   enum {
@@ -57,7 +59,7 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
   conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(ConjugateLhs,  IsRowMajor), ConjugateRhs> pcj0;
   conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex && EIGEN_LOGICAL_XOR(ConjugateLhs, !IsRowMajor), ConjugateRhs> pcj1;
 
-  Scalar cjAlpha = ConjugateRhs ? conj(alpha) : alpha;
+  Scalar cjAlpha = ConjugateRhs ? numext::conj(alpha) : alpha;
 
   // FIXME this copy is now handled outside product_selfadjoint_vector, so it could probably be removed.
   // if the rhs is not sequentially stored in memory we copy it to a temporary buffer,
@@ -70,7 +72,7 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
       rhs[i] = *it;
   }
 
-  Index bound = std::max(Index(0),size-8) & 0xfffffffe;
+  Index bound = (std::max)(Index(0),size-8) & 0xfffffffe;
   if (FirstTriangular)
     bound = size - bound;
 
@@ -85,19 +87,19 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
     Scalar t1 = cjAlpha * rhs[j+1];
     Packet ptmp1 = pset1<Packet>(t1);
 
-    Scalar t2 = 0;
+    Scalar t2(0);
     Packet ptmp2 = pset1<Packet>(t2);
-    Scalar t3 = 0;
+    Scalar t3(0);
     Packet ptmp3 = pset1<Packet>(t3);
 
     size_t starti = FirstTriangular ? 0 : j+2;
     size_t endi   = FirstTriangular ? j : size;
-    size_t alignedStart = (starti) + first_aligned(&res[starti], endi-starti);
+    size_t alignedStart = (starti) + internal::first_aligned(&res[starti], endi-starti);
     size_t alignedEnd = alignedStart + ((endi-alignedStart)/(PacketSize))*(PacketSize);
 
     // TODO make sure this product is a real * complex and that the rhs is properly conjugated if needed
-    res[j]   += cjd.pmul(internal::real(A0[j]), t0);
-    res[j+1] += cjd.pmul(internal::real(A1[j+1]), t1);
+    res[j]   += cjd.pmul(numext::real(A0[j]), t0);
+    res[j+1] += cjd.pmul(numext::real(A1[j+1]), t1);
     if(FirstTriangular)
     {
       res[j]   += cj0.pmul(A1[j],   t1);
@@ -112,8 +114,8 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
     for (size_t i=starti; i<alignedStart; ++i)
     {
       res[i] += t0 * A0[i] + t1 * A1[i];
-      t2 += conj(A0[i]) * rhs[i];
-      t3 += conj(A1[i]) * rhs[i];
+      t2 += numext::conj(A0[i]) * rhs[i];
+      t3 += numext::conj(A1[i]) * rhs[i];
     }
     // Yes this an optimization for gcc 4.3 and 4.4 (=> huge speed up)
     // gcc 4.2 does this optimization automatically.
@@ -148,9 +150,9 @@ static EIGEN_DONT_INLINE void product_selfadjoint_vector(
     register const Scalar* EIGEN_RESTRICT A0 = lhs + j*lhsStride;
 
     Scalar t1 = cjAlpha * rhs[j];
-    Scalar t2 = 0;
+    Scalar t2(0);
     // TODO make sure this product is a real * complex and that the rhs is properly conjugated if needed
-    res[j] += cjd.pmul(internal::real(A0[j]), t1);
+    res[j] += cjd.pmul(numext::real(A0[j]), t1);
     for (Index i=FirstTriangular ? 0 : j+1; i<(FirstTriangular ? j : size); i++)
     {
       res[i] += cj0.pmul(A0[i], t1);
@@ -185,7 +187,7 @@ struct SelfadjointProductMatrix<Lhs,LhsMode,false,Rhs,0,true>
 
   SelfadjointProductMatrix(const Lhs& lhs, const Rhs& rhs) : Base(lhs,rhs) {}
 
-  template<typename Dest> void scaleAndAddTo(Dest& dest, Scalar alpha) const
+  template<typename Dest> void scaleAndAddTo(Dest& dest, const Scalar& alpha) const
   {
     typedef typename Dest::Scalar ResScalar;
     typedef typename Base::RhsScalar RhsScalar;
@@ -193,8 +195,8 @@ struct SelfadjointProductMatrix<Lhs,LhsMode,false,Rhs,0,true>
     
     eigen_assert(dest.rows()==m_lhs.rows() && dest.cols()==m_rhs.cols());
 
-    const ActualLhsType lhs = LhsBlasTraits::extract(m_lhs);
-    const ActualRhsType rhs = RhsBlasTraits::extract(m_rhs);
+    typename internal::add_const_on_value_type<ActualLhsType>::type lhs = LhsBlasTraits::extract(m_lhs);
+    typename internal::add_const_on_value_type<ActualRhsType>::type rhs = RhsBlasTraits::extract(m_rhs);
 
     Scalar actualAlpha = alpha * LhsBlasTraits::extractScalarFactor(m_lhs)
                                * RhsBlasTraits::extractScalarFactor(m_rhs);
@@ -232,7 +234,7 @@ struct SelfadjointProductMatrix<Lhs,LhsMode,false,Rhs,0,true>
     }
       
       
-    internal::product_selfadjoint_vector<Scalar, Index, (internal::traits<_ActualLhsType>::Flags&RowMajorBit) ? RowMajor : ColMajor, int(LhsUpLo), bool(LhsBlasTraits::NeedToConjugate), bool(RhsBlasTraits::NeedToConjugate)>
+    internal::selfadjoint_matrix_vector_product<Scalar, Index, (internal::traits<_ActualLhsType>::Flags&RowMajorBit) ? RowMajor : ColMajor, int(LhsUpLo), bool(LhsBlasTraits::NeedToConjugate), bool(RhsBlasTraits::NeedToConjugate)>::run
       (
         lhs.rows(),                             // size
         &lhs.coeffRef(0,0),  lhs.outerStride(), // lhs info
@@ -265,7 +267,7 @@ struct SelfadjointProductMatrix<Lhs,0,true,Rhs,RhsMode,false>
 
   SelfadjointProductMatrix(const Lhs& lhs, const Rhs& rhs) : Base(lhs,rhs) {}
 
-  template<typename Dest> void scaleAndAddTo(Dest& dest, Scalar alpha) const
+  template<typename Dest> void scaleAndAddTo(Dest& dest, const Scalar& alpha) const
   {
     // let's simply transpose the product
     Transpose<Dest> destT(dest);
@@ -274,5 +276,6 @@ struct SelfadjointProductMatrix<Lhs,0,true,Rhs,RhsMode,false>
   }
 };
 
+} // end namespace Eigen
 
 #endif // EIGEN_SELFADJOINT_MATRIX_VECTOR_H

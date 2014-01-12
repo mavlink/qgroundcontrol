@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_GENERAL_MATRIX_MATRIX_H
 #define EIGEN_GENERAL_MATRIX_MATRIX_H
+
+namespace Eigen { 
 
 namespace internal {
 
@@ -63,6 +50,7 @@ template<
   typename RhsScalar, int RhsStorageOrder, bool ConjugateRhs>
 struct general_matrix_matrix_product<Index,LhsScalar,LhsStorageOrder,ConjugateLhs,RhsScalar,RhsStorageOrder,ConjugateRhs,ColMajor>
 {
+
 typedef typename scalar_product_traits<LhsScalar, RhsScalar>::ReturnType ResScalar;
 static void run(Index rows, Index cols, Index depth,
   const LhsScalar* _lhs, Index lhsStride,
@@ -77,8 +65,8 @@ static void run(Index rows, Index cols, Index depth,
 
   typedef gebp_traits<LhsScalar,RhsScalar> Traits;
 
-  Index kc = blocking.kc();                 // cache block size along the K direction
-  Index mc = std::min(rows,blocking.mc());  // cache block size along the M direction
+  Index kc = blocking.kc();                   // cache block size along the K direction
+  Index mc = (std::min)(rows,blocking.mc());  // cache block size along the M direction
   //Index nc = blocking.nc(); // cache block size along the N direction
 
   gemm_pack_lhs<LhsScalar, Index, Traits::mr, Traits::LhsProgress, LhsStorageOrder> pack_lhs;
@@ -103,7 +91,7 @@ static void run(Index rows, Index cols, Index depth,
     // For each horizontal panel of the rhs, and corresponding vertical panel of the lhs...
     for(Index k=0; k<depth; k+=kc)
     {
-      const Index actual_kc = std::min(k+kc,depth)-k; // => rows of B', and cols of the A'
+      const Index actual_kc = (std::min)(k+kc,depth)-k; // => rows of B', and cols of the A'
 
       // In order to reduce the chance that a thread has to wait for the other,
       // let's start by packing A'.
@@ -140,7 +128,7 @@ static void run(Index rows, Index cols, Index depth,
       // Then keep going as usual with the remaining A'
       for(Index i=mc; i<rows; i+=mc)
       {
-        const Index actual_mc = std::min(i+mc,rows)-i;
+        const Index actual_mc = (std::min)(i+mc,rows)-i;
 
         // pack A_i,k to A'
         pack_lhs(blockA, &lhs(i,k), lhsStride, actual_kc, actual_mc);
@@ -174,7 +162,7 @@ static void run(Index rows, Index cols, Index depth,
     // (==GEMM_VAR1)
     for(Index k2=0; k2<depth; k2+=kc)
     {
-      const Index actual_kc = std::min(k2+kc,depth)-k2;
+      const Index actual_kc = (std::min)(k2+kc,depth)-k2;
 
       // OK, here we have selected one horizontal panel of rhs and one vertical panel of lhs.
       // => Pack rhs's panel into a sequential chunk of memory (L2 caching)
@@ -182,12 +170,11 @@ static void run(Index rows, Index cols, Index depth,
       // vertical panel which is, in practice, a very low number.
       pack_rhs(blockB, &rhs(k2,0), rhsStride, actual_kc, cols);
 
-
       // For each mc x kc block of the lhs's vertical panel...
       // (==GEPP_VAR1)
       for(Index i2=0; i2<rows; i2+=mc)
       {
-        const Index actual_mc = std::min(i2+mc,rows)-i2;
+        const Index actual_mc = (std::min)(i2+mc,rows)-i2;
 
         // We pack the lhs's block into a sequential chunk of memory (L1 caching)
         // Note that this block will be read a very high number of times, which is equal to the number of
@@ -196,7 +183,6 @@ static void run(Index rows, Index cols, Index depth,
 
         // Everything is packed, we can now call the block * panel kernel:
         gebp(res+i2, resStride, blockA, blockB, actual_mc, actual_kc, cols, alpha, -1, -1, 0, 0, blockW);
-
       }
     }
   }
@@ -217,7 +203,7 @@ struct traits<GeneralProduct<Lhs,Rhs,GemmProduct> >
 template<typename Scalar, typename Index, typename Gemm, typename Lhs, typename Rhs, typename Dest, typename BlockingType>
 struct gemm_functor
 {
-  gemm_functor(const Lhs& lhs, const Rhs& rhs, Dest& dest, Scalar actualAlpha,
+  gemm_functor(const Lhs& lhs, const Rhs& rhs, Dest& dest, const Scalar& actualAlpha,
                   BlockingType& blocking)
     : m_lhs(lhs), m_rhs(rhs), m_dest(dest), m_actualAlpha(actualAlpha), m_blocking(blocking)
   {}
@@ -247,7 +233,7 @@ struct gemm_functor
     BlockingType& m_blocking;
 };
 
-template<int StorageOrder, typename LhsScalar, typename RhsScalar, int MaxRows, int MaxCols, int MaxDepth,
+template<int StorageOrder, typename LhsScalar, typename RhsScalar, int MaxRows, int MaxCols, int MaxDepth, int KcFactor=1,
 bool FiniteAtCompileTime = MaxRows!=Dynamic && MaxCols!=Dynamic && MaxDepth != Dynamic> class gemm_blocking_space;
 
 template<typename _LhsScalar, typename _RhsScalar>
@@ -280,8 +266,8 @@ class level3_blocking
     inline RhsScalar* blockW() { return m_blockW; }
 };
 
-template<int StorageOrder, typename _LhsScalar, typename _RhsScalar, int MaxRows, int MaxCols, int MaxDepth>
-class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, MaxDepth, true>
+template<int StorageOrder, typename _LhsScalar, typename _RhsScalar, int MaxRows, int MaxCols, int MaxDepth, int KcFactor>
+class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, MaxDepth, KcFactor, true>
   : public level3_blocking<
       typename conditional<StorageOrder==RowMajor,_RhsScalar,_LhsScalar>::type,
       typename conditional<StorageOrder==RowMajor,_LhsScalar,_RhsScalar>::type>
@@ -322,8 +308,8 @@ class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, M
     inline void allocateAll() {}
 };
 
-template<int StorageOrder, typename _LhsScalar, typename _RhsScalar, int MaxRows, int MaxCols, int MaxDepth>
-class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, MaxDepth, false>
+template<int StorageOrder, typename _LhsScalar, typename _RhsScalar, int MaxRows, int MaxCols, int MaxDepth, int KcFactor>
+class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, MaxDepth, KcFactor, false>
   : public level3_blocking<
       typename conditional<StorageOrder==RowMajor,_RhsScalar,_LhsScalar>::type,
       typename conditional<StorageOrder==RowMajor,_LhsScalar,_RhsScalar>::type>
@@ -347,7 +333,7 @@ class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, M
       this->m_nc = Transpose ? rows : cols;
       this->m_kc = depth;
 
-      computeProductBlockingSizes<LhsScalar,RhsScalar>(this->m_kc, this->m_mc, this->m_nc);
+      computeProductBlockingSizes<LhsScalar,RhsScalar,KcFactor>(this->m_kc, this->m_mc, this->m_nc);
       m_sizeA = this->m_mc * this->m_kc;
       m_sizeB = this->m_kc * this->m_nc;
       m_sizeW = this->m_kc*Traits::WorkSpaceFactor;
@@ -408,12 +394,12 @@ class GeneralProduct<Lhs, Rhs, GemmProduct>
       EIGEN_CHECK_BINARY_COMPATIBILIY(BinOp,LhsScalar,RhsScalar);
     }
 
-    template<typename Dest> void scaleAndAddTo(Dest& dst, Scalar alpha) const
+    template<typename Dest> void scaleAndAddTo(Dest& dst, const Scalar& alpha) const
     {
       eigen_assert(dst.rows()==m_lhs.rows() && dst.cols()==m_rhs.cols());
 
-      const ActualLhsType lhs = LhsBlasTraits::extract(m_lhs);
-      const ActualRhsType rhs = RhsBlasTraits::extract(m_rhs);
+      typename internal::add_const_on_value_type<ActualLhsType>::type lhs = LhsBlasTraits::extract(m_lhs);
+      typename internal::add_const_on_value_type<ActualRhsType>::type rhs = RhsBlasTraits::extract(m_rhs);
 
       Scalar actualAlpha = alpha * LhsBlasTraits::extractScalarFactor(m_lhs)
                                  * RhsBlasTraits::extractScalarFactor(m_rhs);
@@ -435,5 +421,7 @@ class GeneralProduct<Lhs, Rhs, GemmProduct>
       internal::parallelize_gemm<(Dest::MaxRowsAtCompileTime>32 || Dest::MaxRowsAtCompileTime==Dynamic)>(GemmFunctor(lhs, rhs, dst, actualAlpha, blocking), this->rows(), this->cols(), Dest::Flags&RowMajorBit);
     }
 };
+
+} // end namespace Eigen
 
 #endif // EIGEN_GENERAL_MATRIX_MATRIX_H

@@ -1,29 +1,16 @@
 // This file is part of Eigen, a lightweight C++ template library
-// for linear algebra. Eigen itself is part of the KDE project.
+// for linear algebra.
 //
 // Copyright (C) 2008 Gael Guennebaud <g.gael@free.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN2_SVD_H
 #define EIGEN2_SVD_H
+
+namespace Eigen {
 
 /** \ingroup SVD_Module
   * \nonstableyet
@@ -64,9 +51,9 @@ template<typename MatrixType> class SVD
     SVD() {} // a user who relied on compiler-generated default compiler reported problems with MSVC in 2.0.7
     
     SVD(const MatrixType& matrix)
-      : m_matU(matrix.rows(), std::min(matrix.rows(), matrix.cols())),
+      : m_matU(matrix.rows(), (std::min)(matrix.rows(), matrix.cols())),
         m_matV(matrix.cols(),matrix.cols()),
-        m_sigma(std::min(matrix.rows(),matrix.cols()))
+        m_sigma((std::min)(matrix.rows(),matrix.cols()))
     {
       compute(matrix);
     }
@@ -108,13 +95,13 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
 {
   const int m = matrix.rows();
   const int n = matrix.cols();
-  const int nu = std::min(m,n);
+  const int nu = (std::min)(m,n);
   ei_assert(m>=n && "In Eigen 2.0, SVD only works for MxN matrices with M>=N. Sorry!");
   ei_assert(m>1 && "In Eigen 2.0, SVD doesn't work on 1x1 matrices");
 
   m_matU.resize(m, nu);
   m_matU.setZero();
-  m_sigma.resize(std::min(m,n));
+  m_sigma.resize((std::min)(m,n));
   m_matV.resize(n,n);
 
   RowVector e(n);
@@ -126,9 +113,9 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
 
   // Reduce A to bidiagonal form, storing the diagonal elements
   // in s and the super-diagonal elements in e.
-  int nct = std::min(m-1,n);
-  int nrt = std::max(0,std::min(n-2,m));
-  for (k = 0; k < std::max(nct,nrt); ++k)
+  int nct = (std::min)(m-1,n);
+  int nrt = (std::max)(0,(std::min)(n-2,m));
+  for (k = 0; k < (std::max)(nct,nrt); ++k)
   {
     if (k < nct)
     {
@@ -193,7 +180,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
 
 
   // Set up the final bidiagonal matrix or order p.
-  int p = std::min(n,m+1);
+  int p = (std::min)(n,m+1);
   if (nct < n)
     m_sigma[nct] = matA(nct,nct);
   if (m < p)
@@ -328,7 +315,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
         e[p-2] = 0.0;
         for (j = p-2; j >= k; --j)
         {
-          Scalar t(internal::hypot(m_sigma[j],f));
+          Scalar t(numext::hypot(m_sigma[j],f));
           Scalar cs(m_sigma[j]/t);
           Scalar sn(f/t);
           m_sigma[j] = t;
@@ -357,7 +344,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
         e[k-1] = 0.0;
         for (j = k; j < p; ++j)
         {
-          Scalar t(internal::hypot(m_sigma[j],f));
+          Scalar t(numext::hypot(m_sigma[j],f));
           Scalar cs( m_sigma[j]/t);
           Scalar sn(f/t);
           m_sigma[j] = t;
@@ -380,7 +367,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
       case 3:
       {
         // Calculate the shift.
-        Scalar scale = std::max(std::max(std::max(std::max(
+        Scalar scale = (std::max)((std::max)((std::max)((std::max)(
                         ei_abs(m_sigma[p-1]),ei_abs(m_sigma[p-2])),ei_abs(e[p-2])),
                         ei_abs(m_sigma[k])),ei_abs(e[k]));
         Scalar sp = m_sigma[p-1]/scale;
@@ -390,7 +377,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
         Scalar ek = e[k]/scale;
         Scalar b = ((spm1 + sp)*(spm1 - sp) + epm1*epm1)/Scalar(2);
         Scalar c = (sp*epm1)*(sp*epm1);
-        Scalar shift = 0.0;
+        Scalar shift(0);
         if ((b != 0.0) || (c != 0.0))
         {
           shift = ei_sqrt(b*b + c);
@@ -405,7 +392,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
 
         for (j = k; j < p-1; ++j)
         {
-          Scalar t = internal::hypot(f,g);
+          Scalar t = numext::hypot(f,g);
           Scalar cs = f/t;
           Scalar sn = g/t;
           if (j != k)
@@ -423,7 +410,7 @@ void SVD<MatrixType>::compute(const MatrixType& matrix)
               m_matV(i,j) = t;
             }
           }
-          t = internal::hypot(f,g);
+          t = numext::hypot(f,g);
           cs = f/t;
           sn = g/t;
           m_sigma[j] = t;
@@ -645,5 +632,7 @@ MatrixBase<Derived>::svd() const
 {
   return SVD<PlainObject>(derived());
 }
+
+} // end namespace Eigen
 
 #endif // EIGEN2_SVD_H
