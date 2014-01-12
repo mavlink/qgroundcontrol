@@ -145,14 +145,14 @@ bool XbeeLink::hardwareConnect()
 	{
 		return false;
 	}
-	if (xbee_setupAPI(this->m_portName,this->m_baudRate,0x2B,0x3E8) == -1) 
+	if (xbee_setup(&xbee, "xbee2", this->m_portName,this->m_baudRate,0x2B,0x3E8) == -1)
 		{
 		  /* oh no... it failed */
 			qDebug() <<"xbee_setup() failed...\n";
 			emit tryConnectEnd(true);
 			return false;
 		}
-	this->m_xbeeCon = xbee_newcon('A',xbee2_data,0x13A200,0x403D0935);
+	xbee_conNew(xbee, &m_xbeeCon, "Local AT", NULL);
 	emit tryConnectEnd(true);
 	this->m_connected = true;
 	emit connected();
@@ -173,7 +173,7 @@ bool XbeeLink::disconnect()
 
 	if(this->m_xbeeCon)
 	{
-		xbee_end();
+	    xbee_conEnd(m_xbeeCon);
 		this->m_xbeeCon = NULL;
 	}
 	this->m_connected = false;
@@ -196,7 +196,8 @@ void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete th
 	{
 		data[i] = bytes[i];
 	}
-	if(!xbee_nsenddata(this->m_xbeeCon,data,length)) // return value of 0 is successful written
+	unsigned char txRet;
+	if(xbee_conTx(this->m_xbeeCon, &txRet, data))// return value of 0 is successful written
 	{
         // Log the amount and time written out for future data rate calculations.
         QMutexLocker dataRateLocker(&dataRateMutex);
@@ -212,11 +213,13 @@ void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete th
 void XbeeLink::readBytes()
 {
 	xbee_pkt *xbeePkt;
-	xbeePkt = xbee_getpacketwait(this->m_xbeeCon);
+	int remainingPackets;
+//	xbeePkt = xbee_getpacketwait(this->m_xbeeCon);
+	xbee_conRxWait(this->m_xbeeCon, &xbeePkt, &remainingPackets);
 	if(!(NULL==xbeePkt))
 	{
 		QByteArray data;
-		for(unsigned int i=0;i<=xbeePkt->datalen;i++)
+		for(unsigned int i=0;i<=xbeePkt->dataLen;i++)
 		{
 			data.push_back(xbeePkt->data[i]);
         }

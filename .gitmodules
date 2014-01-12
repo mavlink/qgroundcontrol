@@ -1,3 +1,6 @@
 [submodule "qupgrade"]
 	path = qupgrade
 	url = https://github.com/LorenzMeier/qupgrade.git
+[submodule "libs/thirdParty/libxbee"]
+	path = libs/thirdParty/libxbee
+	url = https://github.com/thomasgubler/libxbee.git
