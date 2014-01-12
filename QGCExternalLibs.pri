@@ -353,7 +353,6 @@ WindowsBuild | LinuxBuild {
     	system(cd $$BASEDIR/libs/thirdParty/libxbee/; make configure; make)
         LIBS += -L$$BASEDIR/libs/thirdParty/libxbee/lib \
     		-Wl,-Bstatic -lxbee -Wl,-Bdynamic
-    		#-lxbee
     }
 } else {
     message(Skipping support for XBee)
