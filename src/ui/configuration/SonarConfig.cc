@@ -32,6 +32,8 @@ void SonarConfig::checkBoxToggled(bool enabled)
 }
 void SonarConfig::sonarTypeChanged(int index)
 {
+    Q_UNUSED(index);
+    
     if (!m_uas)
     {
         QMessageBox::information(0,tr("Error"),tr("Please connect to a MAV before attempting to set configuration"));
@@ -42,6 +44,9 @@ void SonarConfig::sonarTypeChanged(int index)
 
 void SonarConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "SONAR_ENABLE")
     {
         if (value.toInt() == 0)

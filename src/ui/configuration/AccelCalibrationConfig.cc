@@ -71,6 +71,8 @@ void AccelCalibrationConfig::calibrateButtonClicked()
 }
 void AccelCalibrationConfig::hideEvent(QHideEvent *evt)
 {
+    Q_UNUSED(evt);
+    
     if (!m_uas || !m_accelAckCount)
     {
         return;
@@ -82,6 +84,9 @@ void AccelCalibrationConfig::hideEvent(QHideEvent *evt)
 }
 void AccelCalibrationConfig::uasTextMessageReceived(int uasid, int componentid, int severity, QString text)
 {
+    Q_UNUSED(uasid);
+    Q_UNUSED(componentid);
+    
     //command received: " Severity 1
     //Place APM Level and press any key" severity 5
     if (severity == 5)
