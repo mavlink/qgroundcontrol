@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2006-2008 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_SWAP_H
 #define EIGEN_SWAP_H
+
+namespace Eigen { 
 
 /** \class SwapWrapper
   * \ingroup Core_Module
@@ -52,10 +39,19 @@ template<typename ExpressionType> class SwapWrapper
     inline Index cols() const { return m_expression.cols(); }
     inline Index outerStride() const { return m_expression.outerStride(); }
     inline Index innerStride() const { return m_expression.innerStride(); }
+    
+    typedef typename internal::conditional<
+                       internal::is_lvalue<ExpressionType>::value,
+                       Scalar,
+                       const Scalar
+                     >::type ScalarWithConstIfNotLvalue;
+                     
+    inline ScalarWithConstIfNotLvalue* data() { return m_expression.data(); }
+    inline const Scalar* data() const { return m_expression.data(); }
 
-    inline Scalar& coeffRef(Index row, Index col)
+    inline Scalar& coeffRef(Index rowId, Index colId)
     {
-      return m_expression.const_cast_derived().coeffRef(row, col);
+      return m_expression.const_cast_derived().coeffRef(rowId, colId);
     }
 
     inline Scalar& coeffRef(Index index)
@@ -63,9 +59,9 @@ template<typename ExpressionType> class SwapWrapper
       return m_expression.const_cast_derived().coeffRef(index);
     }
 
-    inline Scalar& coeffRef(Index row, Index col) const
+    inline Scalar& coeffRef(Index rowId, Index colId) const
     {
-      return m_expression.coeffRef(row, col);
+      return m_expression.coeffRef(rowId, colId);
     }
 
     inline Scalar& coeffRef(Index index) const
@@ -74,14 +70,14 @@ template<typename ExpressionType> class SwapWrapper
     }
 
     template<typename OtherDerived>
-    void copyCoeff(Index row, Index col, const DenseBase<OtherDerived>& other)
+    void copyCoeff(Index rowId, Index colId, const DenseBase<OtherDerived>& other)
     {
       OtherDerived& _other = other.const_cast_derived();
-      eigen_internal_assert(row >= 0 && row < rows()
-                         && col >= 0 && col < cols());
-      Scalar tmp = m_expression.coeff(row, col);
-      m_expression.coeffRef(row, col) = _other.coeff(row, col);
-      _other.coeffRef(row, col) = tmp;
+      eigen_internal_assert(rowId >= 0 && rowId < rows()
+                         && colId >= 0 && colId < cols());
+      Scalar tmp = m_expression.coeff(rowId, colId);
+      m_expression.coeffRef(rowId, colId) = _other.coeff(rowId, colId);
+      _other.coeffRef(rowId, colId) = tmp;
     }
 
     template<typename OtherDerived>
@@ -95,16 +91,16 @@ template<typename ExpressionType> class SwapWrapper
     }
 
     template<typename OtherDerived, int StoreMode, int LoadMode>
-    void copyPacket(Index row, Index col, const DenseBase<OtherDerived>& other)
+    void copyPacket(Index rowId, Index colId, const DenseBase<OtherDerived>& other)
     {
       OtherDerived& _other = other.const_cast_derived();
-      eigen_internal_assert(row >= 0 && row < rows()
-                        && col >= 0 && col < cols());
-      Packet tmp = m_expression.template packet<StoreMode>(row, col);
-      m_expression.template writePacket<StoreMode>(row, col,
-        _other.template packet<LoadMode>(row, col)
+      eigen_internal_assert(rowId >= 0 && rowId < rows()
+                        && colId >= 0 && colId < cols());
+      Packet tmp = m_expression.template packet<StoreMode>(rowId, colId);
+      m_expression.template writePacket<StoreMode>(rowId, colId,
+        _other.template packet<LoadMode>(rowId, colId)
       );
-      _other.template writePacket<LoadMode>(row, col, tmp);
+      _other.template writePacket<LoadMode>(rowId, colId, tmp);
     }
 
     template<typename OtherDerived, int StoreMode, int LoadMode>
@@ -119,8 +115,12 @@ template<typename ExpressionType> class SwapWrapper
       _other.template writePacket<LoadMode>(index, tmp);
     }
 
+    ExpressionType& expression() const { return m_expression; }
+
   protected:
     ExpressionType& m_expression;
 };
+
+} // end namespace Eigen
 
 #endif // EIGEN_SWAP_H

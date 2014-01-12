@@ -4,24 +4,9 @@
 // Copyright (C) 2007 Julien Pommier
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /* The sin, cos, exp, and log functions of this file come from
  * Julien Pommier's sse math library: http://gruntthepeon.free.fr/ssemath/
@@ -29,6 +14,8 @@
 
 #ifndef EIGEN_MATH_FUNCTIONS_SSE_H
 #define EIGEN_MATH_FUNCTIONS_SSE_H
+
+namespace Eigen {
 
 namespace internal {
 
@@ -44,7 +31,8 @@ Packet4f plog<Packet4f>(const Packet4f& _x)
 
   /* the smallest non denormalized float number */
   _EIGEN_DECLARE_CONST_Packet4f_FROM_INT(min_norm_pos,  0x00800000);
-
+  _EIGEN_DECLARE_CONST_Packet4f_FROM_INT(minus_inf,     0xff800000);//-1.f/0.f);
+  
   /* natural logarithm computed for 4 simultaneous float
     return NaN for x <= 0
   */
@@ -64,7 +52,8 @@ Packet4f plog<Packet4f>(const Packet4f& _x)
 
   Packet4i emm0;
 
-  Packet4f invalid_mask = _mm_cmple_ps(x, _mm_setzero_ps());
+  Packet4f invalid_mask = _mm_cmplt_ps(x, _mm_setzero_ps());
+  Packet4f iszero_mask = _mm_cmpeq_ps(x, _mm_setzero_ps());
 
   x = pmax(x, p4f_min_norm_pos);  /* cut off denormalized stuff */
   emm0 = _mm_srli_epi32(_mm_castps_si128(x), 23);
@@ -109,7 +98,9 @@ Packet4f plog<Packet4f>(const Packet4f& _x)
   y2 = pmul(e, p4f_cephes_log_q2);
   x = padd(x, y);
   x = padd(x, y2);
-  return _mm_or_ps(x, invalid_mask); // negative arg will be NAN
+  // negative arg will be NAN, 0 will be -INF
+  return _mm_or_ps(_mm_andnot_ps(iszero_mask, _mm_or_ps(x, invalid_mask)),
+                   _mm_and_ps(iszero_mask, p4f_minus_inf));
 }
 
 template<> EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
@@ -121,7 +112,7 @@ Packet4f pexp<Packet4f>(const Packet4f& _x)
   _EIGEN_DECLARE_CONST_Packet4i(0x7f, 0x7f);
 
 
-  _EIGEN_DECLARE_CONST_Packet4f(exp_hi, 88.3762626647949f);
+  _EIGEN_DECLARE_CONST_Packet4f(exp_hi,  88.3762626647950f);
   _EIGEN_DECLARE_CONST_Packet4f(exp_lo, -88.3762626647949f);
 
   _EIGEN_DECLARE_CONST_Packet4f(cephes_LOG2EF, 1.44269504088896341f);
@@ -144,13 +135,16 @@ Packet4f pexp<Packet4f>(const Packet4f& _x)
   /* express exp(x) as exp(g + n*log(2)) */
   fx = pmadd(x, p4f_cephes_LOG2EF, p4f_half);
 
-  /* how to perform a floorf with SSE: just below */
+#ifdef EIGEN_VECTORIZE_SSE4_1
+  fx = _mm_floor_ps(fx);
+#else
   emm0 = _mm_cvttps_epi32(fx);
   tmp  = _mm_cvtepi32_ps(emm0);
   /* if greater, substract 1 */
   Packet4f mask = _mm_cmpgt_ps(tmp, fx);
   mask = _mm_and_ps(mask, p4f_1);
   fx = psub(tmp, mask);
+#endif
 
   tmp = pmul(fx, p4f_cephes_exp_C1);
   Packet4f z = pmul(fx, p4f_cephes_exp_C2);
@@ -168,11 +162,84 @@ Packet4f pexp<Packet4f>(const Packet4f& _x)
   y = pmadd(y, z, x);
   y = padd(y, p4f_1);
 
-  /* build 2^n */
+  // build 2^n
   emm0 = _mm_cvttps_epi32(fx);
   emm0 = _mm_add_epi32(emm0, p4i_0x7f);
   emm0 = _mm_slli_epi32(emm0, 23);
   return pmul(y, _mm_castsi128_ps(emm0));
+}
+template<> EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED
+Packet2d pexp<Packet2d>(const Packet2d& _x)
+{
+  Packet2d x = _x;
+
+  _EIGEN_DECLARE_CONST_Packet2d(1 , 1.0);
+  _EIGEN_DECLARE_CONST_Packet2d(2 , 2.0);
+  _EIGEN_DECLARE_CONST_Packet2d(half, 0.5);
+
+  _EIGEN_DECLARE_CONST_Packet2d(exp_hi,  709.437);
+  _EIGEN_DECLARE_CONST_Packet2d(exp_lo, -709.436139303);
+
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_LOG2EF, 1.4426950408889634073599);
+
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_p0, 1.26177193074810590878e-4);
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_p1, 3.02994407707441961300e-2);
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_p2, 9.99999999999999999910e-1);
+
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_q0, 3.00198505138664455042e-6);
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_q1, 2.52448340349684104192e-3);
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_q2, 2.27265548208155028766e-1);
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_q3, 2.00000000000000000009e0);
+
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_C1, 0.693145751953125);
+  _EIGEN_DECLARE_CONST_Packet2d(cephes_exp_C2, 1.42860682030941723212e-6);
+  static const __m128i p4i_1023_0 = _mm_setr_epi32(1023, 1023, 0, 0);
+
+  Packet2d tmp = _mm_setzero_pd(), fx;
+  Packet4i emm0;
+
+  // clamp x
+  x = pmax(pmin(x, p2d_exp_hi), p2d_exp_lo);
+  /* express exp(x) as exp(g + n*log(2)) */
+  fx = pmadd(p2d_cephes_LOG2EF, x, p2d_half);
+
+#ifdef EIGEN_VECTORIZE_SSE4_1
+  fx = _mm_floor_pd(fx);
+#else
+  emm0 = _mm_cvttpd_epi32(fx);
+  tmp  = _mm_cvtepi32_pd(emm0);
+  /* if greater, substract 1 */
+  Packet2d mask = _mm_cmpgt_pd(tmp, fx);
+  mask = _mm_and_pd(mask, p2d_1);
+  fx = psub(tmp, mask);
+#endif
+
+  tmp = pmul(fx, p2d_cephes_exp_C1);
+  Packet2d z = pmul(fx, p2d_cephes_exp_C2);
+  x = psub(x, tmp);
+  x = psub(x, z);
+
+  Packet2d x2 = pmul(x,x);
+
+  Packet2d px = p2d_cephes_exp_p0;
+  px = pmadd(px, x2, p2d_cephes_exp_p1);
+  px = pmadd(px, x2, p2d_cephes_exp_p2);
+  px = pmul (px, x);
+
+  Packet2d qx = p2d_cephes_exp_q0;
+  qx = pmadd(qx, x2, p2d_cephes_exp_q1);
+  qx = pmadd(qx, x2, p2d_cephes_exp_q2);
+  qx = pmadd(qx, x2, p2d_cephes_exp_q3);
+
+  x = pdiv(px,psub(qx,px));
+  x = pmadd(p2d_2,x,p2d_1);
+
+  // build 2^n
+  emm0 = _mm_cvttpd_epi32(fx);
+  emm0 = _mm_add_epi32(emm0, p4i_1023_0);
+  emm0 = _mm_slli_epi32(emm0, 20);
+  emm0 = _mm_shuffle_epi32(emm0, _MM_SHUFFLE(1,2,0,3));
+  return pmul(x, _mm_castsi128_pd(emm0));
 }
 
 /* evaluation of 4 sines at onces, using SSE2 intrinsics.
@@ -383,7 +450,7 @@ Packet4f psqrt<Packet4f>(const Packet4f& _x)
   Packet4f half = pmul(_x, pset1<Packet4f>(.5f));
 
   /* select only the inverse sqrt of non-zero inputs */
-  Packet4f non_zero_mask = _mm_cmpgt_ps(_x, pset1<Packet4f>(std::numeric_limits<float>::epsilon()));
+  Packet4f non_zero_mask = _mm_cmpge_ps(_x, pset1<Packet4f>((std::numeric_limits<float>::min)()));
   Packet4f x = _mm_and_ps(non_zero_mask, _mm_rsqrt_ps(_x));
 
   x = pmul(x, psub(pset1<Packet4f>(1.5f), pmul(half, pmul(x,x))));
@@ -391,5 +458,7 @@ Packet4f psqrt<Packet4f>(const Packet4f& _x)
 }
 
 } // end namespace internal
+
+} // end namespace Eigen
 
 #endif // EIGEN_MATH_FUNCTIONS_SSE_H

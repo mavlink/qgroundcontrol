@@ -4,36 +4,14 @@
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2009 Hauke Heibel <hauke.heibel@googlemail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_STDVECTOR_H
 #define EIGEN_STDVECTOR_H
 
 #include "Eigen/src/StlSupport/details.h"
-
-// Define the explicit instantiation (e.g. necessary for the Intel compiler)
-#if defined(__INTEL_COMPILER) || defined(__GNUC__)
-  #define EIGEN_EXPLICIT_STL_VECTOR_INSTANTIATION(...) template class std::vector<__VA_ARGS__, EIGEN_ALIGNED_ALLOCATOR<__VA_ARGS__> >;
-#else
-  #define EIGEN_EXPLICIT_STL_VECTOR_INSTANTIATION(...)
-#endif
 
 /**
  * This section contains a convenience MACRO which allows an easy specialization of
@@ -41,19 +19,18 @@
  * is used automatically.
  */
 #define EIGEN_DEFINE_STL_VECTOR_SPECIALIZATION(...) \
-EIGEN_EXPLICIT_STL_VECTOR_INSTANTIATION(__VA_ARGS__) \
 namespace std \
 { \
-  template<typename _Ay> \
-  class vector<__VA_ARGS__, _Ay>  \
+  template<> \
+  class vector<__VA_ARGS__, std::allocator<__VA_ARGS__> >  \
     : public vector<__VA_ARGS__, EIGEN_ALIGNED_ALLOCATOR<__VA_ARGS__> > \
   { \
     typedef vector<__VA_ARGS__, EIGEN_ALIGNED_ALLOCATOR<__VA_ARGS__> > vector_base; \
   public: \
     typedef __VA_ARGS__ value_type; \
-    typedef typename vector_base::allocator_type allocator_type; \
-    typedef typename vector_base::size_type size_type;  \
-    typedef typename vector_base::iterator iterator;  \
+    typedef vector_base::allocator_type allocator_type; \
+    typedef vector_base::size_type size_type;  \
+    typedef vector_base::iterator iterator;  \
     explicit vector(const allocator_type& a = allocator_type()) : vector_base(a) {}  \
     template<typename InputIterator> \
     vector(InputIterator first, InputIterator last, const allocator_type& a = allocator_type()) : vector_base(first, last, a) {} \

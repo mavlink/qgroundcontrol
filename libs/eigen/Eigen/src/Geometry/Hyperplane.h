@@ -4,27 +4,14 @@
 // Copyright (C) 2008 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2008 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_HYPERPLANE_H
 #define EIGEN_HYPERPLANE_H
+
+namespace Eigen { 
 
 /** \geometry_module \ingroup Geometry_Module
   *
@@ -63,7 +50,7 @@ public:
   typedef const Block<const Coefficients,AmbientDimAtCompileTime,1> ConstNormalReturnType;
 
   /** Default constructor without initialization */
-  inline explicit Hyperplane() {}
+  inline Hyperplane() {}
   
   template<int OtherOptions>
   Hyperplane(const Hyperplane<Scalar,AmbientDimAtCompileTime,OtherOptions>& other)
@@ -88,7 +75,7 @@ public:
     * such that the algebraic equation of the plane is \f$ n \cdot x + d = 0 \f$.
     * \warning the vector normal is assumed to be normalized.
     */
-  inline Hyperplane(const VectorType& n, Scalar d)
+  inline Hyperplane(const VectorType& n, const Scalar& d)
     : m_coeffs(n.size()+1)
   {
     normal() = n;
@@ -148,7 +135,7 @@ public:
   /** \returns the absolute distance between the plane \c *this and a point \a p.
     * \sa signedDistance()
     */
-  inline Scalar absDistance(const VectorType& p) const { return internal::abs(signedDistance(p)); }
+  inline Scalar absDistance(const VectorType& p) const { using std::abs; return abs(signedDistance(p)); }
 
   /** \returns the projection of a point \a p onto the plane \c *this.
     */
@@ -189,15 +176,16 @@ public:
     *
     * \note If \a other is approximately parallel to *this, this method will return any point on *this.
     */
-  VectorType intersection(const Hyperplane& other)
+  VectorType intersection(const Hyperplane& other) const
   {
+    using std::abs;
     EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(VectorType, 2)
     Scalar det = coeffs().coeff(0) * other.coeffs().coeff(1) - coeffs().coeff(1) * other.coeffs().coeff(0);
     // since the line equations ax+by=c are normalized with a^2+b^2=1, the following tests
     // whether the two lines are approximately parallel.
     if(internal::isMuchSmallerThan(det, Scalar(1)))
     {   // special case where the two lines are approximately parallel. Pick any point on the first line.
-        if(internal::abs(coeffs().coeff(1))>internal::abs(coeffs().coeff(0)))
+        if(abs(coeffs().coeff(1))>abs(coeffs().coeff(0)))
             return VectorType(coeffs().coeff(1), -coeffs().coeff(2)/coeffs().coeff(1)-coeffs().coeff(0));
         else
             return VectorType(-coeffs().coeff(2)/coeffs().coeff(0)-coeffs().coeff(1), coeffs().coeff(0));
@@ -225,7 +213,7 @@ public:
       normal() = mat * normal();
     else
     {
-      eigen_assert("invalid traits value in Hyperplane::transform()");
+      eigen_assert(0 && "invalid traits value in Hyperplane::transform()");
     }
     return *this;
   }
@@ -269,12 +257,14 @@ public:
     *
     * \sa MatrixBase::isApprox() */
   template<int OtherOptions>
-  bool isApprox(const Hyperplane<Scalar,AmbientDimAtCompileTime,OtherOptions>& other, typename NumTraits<Scalar>::Real prec = NumTraits<Scalar>::dummy_precision()) const
+  bool isApprox(const Hyperplane<Scalar,AmbientDimAtCompileTime,OtherOptions>& other, const typename NumTraits<Scalar>::Real& prec = NumTraits<Scalar>::dummy_precision()) const
   { return m_coeffs.isApprox(other.m_coeffs, prec); }
 
 protected:
 
   Coefficients m_coeffs;
 };
+
+} // end namespace Eigen
 
 #endif // EIGEN_HYPERPLANE_H

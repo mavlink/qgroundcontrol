@@ -4,27 +4,14 @@
 // Copyright (C) 2006-2009 Benoit Jacob <jacob.benoit.1@gmail.com>
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_PARTIALLU_H
 #define EIGEN_PARTIALLU_H
+
+namespace Eigen { 
 
 /** \ingroup LU_Module
   *
@@ -253,9 +240,9 @@ struct partial_lu_impl
   {
     const Index rows = lu.rows();
     const Index cols = lu.cols();
-    const Index size = std::min(rows,cols);
+    const Index size = (std::min)(rows,cols);
     nb_transpositions = 0;
-    int first_zero_pivot = -1;
+    Index first_zero_pivot = -1;
     for(Index k = 0; k < size; ++k)
     {
       Index rrows = rows-k-1;
@@ -266,7 +253,7 @@ struct partial_lu_impl
         = lu.col(k).tail(rows-k).cwiseAbs().maxCoeff(&row_of_biggest_in_col);
       row_of_biggest_in_col += k;
 
-      row_transpositions[k] = row_of_biggest_in_col;
+      row_transpositions[k] = PivIndex(row_of_biggest_in_col);
 
       if(biggest_in_corner != RealScalar(0))
       {
@@ -313,7 +300,7 @@ struct partial_lu_impl
     MapLU lu1(lu_data,StorageOrder==RowMajor?rows:luStride,StorageOrder==RowMajor?luStride:cols);
     MatrixType lu(lu1,0,0,rows,cols);
 
-    const Index size = std::min(rows,cols);
+    const Index size = (std::min)(rows,cols);
 
     // if the matrix is too small, no blocking:
     if(size<=16)
@@ -327,14 +314,14 @@ struct partial_lu_impl
     {
       blockSize = size/8;
       blockSize = (blockSize/16)*16;
-      blockSize = std::min(std::max(blockSize,Index(8)), maxBlockSize);
+      blockSize = (std::min)((std::max)(blockSize,Index(8)), maxBlockSize);
     }
 
     nb_transpositions = 0;
-    int first_zero_pivot = -1;
+    Index first_zero_pivot = -1;
     for(Index k = 0; k < size; k+=blockSize)
     {
-      Index bs = std::min(size-k,blockSize); // actual size of the block
+      Index bs = (std::min)(size-k,blockSize); // actual size of the block
       Index trows = rows - k - bs; // trailing rows
       Index tsize = size - k - bs; // trailing size
 
@@ -399,6 +386,9 @@ void partial_lu_inplace(MatrixType& lu, TranspositionType& row_transpositions, t
 template<typename MatrixType>
 PartialPivLU<MatrixType>& PartialPivLU<MatrixType>::compute(const MatrixType& matrix)
 {
+  // the row permutation is stored as int indices, so just to be sure:
+  eigen_assert(matrix.rows()<NumTraits<int>::highest());
+  
   m_lu = matrix;
 
   eigen_assert(matrix.rows() == matrix.cols() && "PartialPivLU is only for square (and moreover invertible) matrices");
@@ -505,5 +495,7 @@ MatrixBase<Derived>::lu() const
   return PartialPivLU<PlainObject>(eval());
 }
 #endif
+
+} // end namespace Eigen
 
 #endif // EIGEN_PARTIALLU_H

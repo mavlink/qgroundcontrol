@@ -3,27 +3,14 @@
 //
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_TRIANGULAR_MATRIX_MATRIX_H
 #define EIGEN_TRIANGULAR_MATRIX_MATRIX_H
+
+namespace Eigen { 
 
 namespace internal {
 
@@ -58,23 +45,23 @@ template <typename Scalar, typename Index,
           int Mode, bool LhsIsTriangular,
           int LhsStorageOrder, bool ConjugateLhs,
           int RhsStorageOrder, bool ConjugateRhs,
-          int ResStorageOrder>
+          int ResStorageOrder, int Version = Specialized>
 struct product_triangular_matrix_matrix;
 
 template <typename Scalar, typename Index,
           int Mode, bool LhsIsTriangular,
           int LhsStorageOrder, bool ConjugateLhs,
-          int RhsStorageOrder, bool ConjugateRhs>
+          int RhsStorageOrder, bool ConjugateRhs, int Version>
 struct product_triangular_matrix_matrix<Scalar,Index,Mode,LhsIsTriangular,
                                            LhsStorageOrder,ConjugateLhs,
-                                           RhsStorageOrder,ConjugateRhs,RowMajor>
+                                           RhsStorageOrder,ConjugateRhs,RowMajor,Version>
 {
   static EIGEN_STRONG_INLINE void run(
     Index rows, Index cols, Index depth,
     const Scalar* lhs, Index lhsStride,
     const Scalar* rhs, Index rhsStride,
     Scalar* res,       Index resStride,
-    Scalar alpha)
+    const Scalar& alpha, level3_blocking<Scalar,Scalar>& blocking)
   {
     product_triangular_matrix_matrix<Scalar, Index,
       (Mode&(UnitDiag|ZeroDiag)) | ((Mode&Upper) ? Lower : Upper),
@@ -84,22 +71,22 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,LhsIsTriangular,
       LhsStorageOrder==RowMajor ? ColMajor : RowMajor,
       ConjugateLhs,
       ColMajor>
-      ::run(cols, rows, depth, rhs, rhsStride, lhs, lhsStride, res, resStride, alpha);
+      ::run(cols, rows, depth, rhs, rhsStride, lhs, lhsStride, res, resStride, alpha, blocking);
   }
 };
 
 // implements col-major += alpha * op(triangular) * op(general)
 template <typename Scalar, typename Index, int Mode,
           int LhsStorageOrder, bool ConjugateLhs,
-          int RhsStorageOrder, bool ConjugateRhs>
+          int RhsStorageOrder, bool ConjugateRhs, int Version>
 struct product_triangular_matrix_matrix<Scalar,Index,Mode,true,
                                            LhsStorageOrder,ConjugateLhs,
-                                           RhsStorageOrder,ConjugateRhs,ColMajor>
+                                           RhsStorageOrder,ConjugateRhs,ColMajor,Version>
 {
   
   typedef gebp_traits<Scalar,Scalar> Traits;
   enum {
-    SmallPanelWidth   = EIGEN_PLAIN_ENUM_MAX(Traits::mr,Traits::nr),
+    SmallPanelWidth   = 2 * EIGEN_PLAIN_ENUM_MAX(Traits::mr,Traits::nr),
     IsLower = (Mode&Lower) == Lower,
     SetDiag = (Mode&(ZeroDiag|UnitDiag)) ? 0 : 1
   };
@@ -109,10 +96,23 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,true,
     const Scalar* _lhs, Index lhsStride,
     const Scalar* _rhs, Index rhsStride,
     Scalar* res,        Index resStride,
-    Scalar alpha)
+    const Scalar& alpha, level3_blocking<Scalar,Scalar>& blocking);
+};
+
+template <typename Scalar, typename Index, int Mode,
+          int LhsStorageOrder, bool ConjugateLhs,
+          int RhsStorageOrder, bool ConjugateRhs, int Version>
+EIGEN_DONT_INLINE void product_triangular_matrix_matrix<Scalar,Index,Mode,true,
+                                                        LhsStorageOrder,ConjugateLhs,
+                                                        RhsStorageOrder,ConjugateRhs,ColMajor,Version>::run(
+    Index _rows, Index _cols, Index _depth,
+    const Scalar* _lhs, Index lhsStride,
+    const Scalar* _rhs, Index rhsStride,
+    Scalar* res,        Index resStride,
+    const Scalar& alpha, level3_blocking<Scalar,Scalar>& blocking)
   {
     // strip zeros
-    Index diagSize  = std::min(_rows,_depth);
+    Index diagSize  = (std::min)(_rows,_depth);
     Index rows      = IsLower ? _rows : diagSize;
     Index depth     = IsLower ? diagSize : _depth;
     Index cols      = _cols;
@@ -120,15 +120,16 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,true,
     const_blas_data_mapper<Scalar, Index, LhsStorageOrder> lhs(_lhs,lhsStride);
     const_blas_data_mapper<Scalar, Index, RhsStorageOrder> rhs(_rhs,rhsStride);
 
-    Index kc = depth; // cache block size along the K direction
-    Index mc = rows;  // cache block size along the M direction
-    Index nc = cols;  // cache block size along the N direction
-    computeProductBlockingSizes<Scalar,Scalar,4>(kc, mc, nc);
+    Index kc = blocking.kc();                   // cache block size along the K direction
+    Index mc = (std::min)(rows,blocking.mc());  // cache block size along the M direction
+
+    std::size_t sizeA = kc*mc;
+    std::size_t sizeB = kc*cols;
     std::size_t sizeW = kc*Traits::WorkSpaceFactor;
-    std::size_t sizeB = sizeW + kc*cols;
-    ei_declare_aligned_stack_constructed_variable(Scalar, blockA, kc*mc, 0);
-    ei_declare_aligned_stack_constructed_variable(Scalar, allocatedBlockB, sizeB, 0);    
-    Scalar* blockB = allocatedBlockB + sizeW;
+
+    ei_declare_aligned_stack_constructed_variable(Scalar, blockA, sizeA, blocking.blockA());
+    ei_declare_aligned_stack_constructed_variable(Scalar, blockB, sizeB, blocking.blockB());
+    ei_declare_aligned_stack_constructed_variable(Scalar, blockW, sizeW, blocking.blockW());
 
     Matrix<Scalar,SmallPanelWidth,SmallPanelWidth,LhsStorageOrder> triangularBuffer;
     triangularBuffer.setZero();
@@ -145,7 +146,7 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,true,
         IsLower ? k2>0 : k2<depth;
         IsLower ? k2-=kc : k2+=kc)
     {
-      Index actual_kc = std::min(IsLower ? k2 : depth-k2, kc);
+      Index actual_kc = (std::min)(IsLower ? k2 : depth-k2, kc);
       Index actual_k2 = IsLower ? k2-actual_kc : k2;
 
       // align blocks with the end of the triangular part for trapezoidal lhs
@@ -186,7 +187,7 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,true,
           pack_lhs(blockA, triangularBuffer.data(), triangularBuffer.outerStride(), actualPanelWidth, actualPanelWidth);
 
           gebp_kernel(res+startBlock, resStride, blockA, blockB, actualPanelWidth, actualPanelWidth, cols, alpha,
-                      actualPanelWidth, actual_kc, 0, blockBOffset);
+                      actualPanelWidth, actual_kc, 0, blockBOffset, blockW);
 
           // GEBP with remaining micro panel
           if (lengthTarget>0)
@@ -196,34 +197,33 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,true,
             pack_lhs(blockA, &lhs(startTarget,startBlock), lhsStride, actualPanelWidth, lengthTarget);
 
             gebp_kernel(res+startTarget, resStride, blockA, blockB, lengthTarget, actualPanelWidth, cols, alpha,
-                        actualPanelWidth, actual_kc, 0, blockBOffset);
+                        actualPanelWidth, actual_kc, 0, blockBOffset, blockW);
           }
         }
       }
       // the part below (lower case) or above (upper case) the diagonal => GEPP
       {
         Index start = IsLower ? k2 : 0;
-        Index end   = IsLower ? rows : std::min(actual_k2,rows);
+        Index end   = IsLower ? rows : (std::min)(actual_k2,rows);
         for(Index i2=start; i2<end; i2+=mc)
         {
-          const Index actual_mc = std::min(i2+mc,end)-i2;
+          const Index actual_mc = (std::min)(i2+mc,end)-i2;
           gemm_pack_lhs<Scalar, Index, Traits::mr,Traits::LhsProgress, LhsStorageOrder,false>()
             (blockA, &lhs(i2, actual_k2), lhsStride, actual_kc, actual_mc);
 
-          gebp_kernel(res+i2, resStride, blockA, blockB, actual_mc, actual_kc, cols, alpha);
+          gebp_kernel(res+i2, resStride, blockA, blockB, actual_mc, actual_kc, cols, alpha, -1, -1, 0, 0, blockW);
         }
       }
     }
   }
-};
 
 // implements col-major += alpha * op(general) * op(triangular)
 template <typename Scalar, typename Index, int Mode,
           int LhsStorageOrder, bool ConjugateLhs,
-          int RhsStorageOrder, bool ConjugateRhs>
+          int RhsStorageOrder, bool ConjugateRhs, int Version>
 struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
-                                           LhsStorageOrder,ConjugateLhs,
-                                           RhsStorageOrder,ConjugateRhs,ColMajor>
+                                        LhsStorageOrder,ConjugateLhs,
+                                        RhsStorageOrder,ConjugateRhs,ColMajor,Version>
 {
   typedef gebp_traits<Scalar,Scalar> Traits;
   enum {
@@ -237,10 +237,23 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
     const Scalar* _lhs, Index lhsStride,
     const Scalar* _rhs, Index rhsStride,
     Scalar* res,        Index resStride,
-    Scalar alpha)
+    const Scalar& alpha, level3_blocking<Scalar,Scalar>& blocking);
+};
+
+template <typename Scalar, typename Index, int Mode,
+          int LhsStorageOrder, bool ConjugateLhs,
+          int RhsStorageOrder, bool ConjugateRhs, int Version>
+EIGEN_DONT_INLINE void product_triangular_matrix_matrix<Scalar,Index,Mode,false,
+                                                        LhsStorageOrder,ConjugateLhs,
+                                                        RhsStorageOrder,ConjugateRhs,ColMajor,Version>::run(
+    Index _rows, Index _cols, Index _depth,
+    const Scalar* _lhs, Index lhsStride,
+    const Scalar* _rhs, Index rhsStride,
+    Scalar* res,        Index resStride,
+    const Scalar& alpha, level3_blocking<Scalar,Scalar>& blocking)
   {
     // strip zeros
-    Index diagSize  = std::min(_cols,_depth);
+    Index diagSize  = (std::min)(_cols,_depth);
     Index rows      = _rows;
     Index depth     = IsLower ? _depth : diagSize;
     Index cols      = IsLower ? diagSize : _cols;
@@ -248,16 +261,16 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
     const_blas_data_mapper<Scalar, Index, LhsStorageOrder> lhs(_lhs,lhsStride);
     const_blas_data_mapper<Scalar, Index, RhsStorageOrder> rhs(_rhs,rhsStride);
 
-    Index kc = depth; // cache block size along the K direction
-    Index mc = rows;  // cache block size along the M direction
-    Index nc = cols;  // cache block size along the N direction
-    computeProductBlockingSizes<Scalar,Scalar,4>(kc, mc, nc);
+    Index kc = blocking.kc();                   // cache block size along the K direction
+    Index mc = (std::min)(rows,blocking.mc());  // cache block size along the M direction
 
+    std::size_t sizeA = kc*mc;
+    std::size_t sizeB = kc*cols;
     std::size_t sizeW = kc*Traits::WorkSpaceFactor;
-    std::size_t sizeB = sizeW + kc*cols;
-    ei_declare_aligned_stack_constructed_variable(Scalar, blockA, kc*mc, 0);
-    ei_declare_aligned_stack_constructed_variable(Scalar, allocatedBlockB, sizeB, 0);
-    Scalar* blockB = allocatedBlockB + sizeW;
+
+    ei_declare_aligned_stack_constructed_variable(Scalar, blockA, sizeA, blocking.blockA());
+    ei_declare_aligned_stack_constructed_variable(Scalar, blockB, sizeB, blocking.blockB());
+    ei_declare_aligned_stack_constructed_variable(Scalar, blockW, sizeW, blocking.blockW());
 
     Matrix<Scalar,SmallPanelWidth,SmallPanelWidth,RhsStorageOrder> triangularBuffer;
     triangularBuffer.setZero();
@@ -275,7 +288,7 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
         IsLower ? k2<depth  : k2>0;
         IsLower ? k2+=kc   : k2-=kc)
     {
-      Index actual_kc = std::min(IsLower ? depth-k2 : k2, kc);
+      Index actual_kc = (std::min)(IsLower ? depth-k2 : k2, kc);
       Index actual_k2 = IsLower ? k2 : k2-actual_kc;
 
       // align blocks with the end of the triangular part for trapezoidal rhs
@@ -286,7 +299,7 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
       }
 
       // remaining size
-      Index rs = IsLower ? std::min(cols,actual_k2) : cols - k2;
+      Index rs = IsLower ? (std::min)(cols,actual_k2) : cols - k2;
       // size of the triangular part
       Index ts = (IsLower && actual_k2>=cols) ? 0 : actual_kc;
 
@@ -327,7 +340,7 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
 
       for (Index i2=0; i2<rows; i2+=mc)
       {
-        const Index actual_mc = std::min(mc,rows-i2);
+        const Index actual_mc = (std::min)(mc,rows-i2);
         pack_lhs(blockA, &lhs(i2, actual_k2), lhsStride, actual_kc, actual_mc);
 
         // triangular kernel
@@ -345,17 +358,16 @@ struct product_triangular_matrix_matrix<Scalar,Index,Mode,false,
                         alpha,
                         actual_kc, actual_kc,  // strides
                         blockOffset, blockOffset,// offsets
-                        allocatedBlockB); // workspace
+                        blockW); // workspace
           }
         }
         gebp_kernel(res+i2+(IsLower ? 0 : k2)*resStride, resStride,
                     blockA, geb, actual_mc, actual_kc, rs,
                     alpha,
-                    -1, -1, 0, 0, allocatedBlockB);
+                    -1, -1, 0, 0, blockW);
       }
     }
   }
-};
 
 /***************************************************************************
 * Wrapper to product_triangular_matrix_matrix
@@ -376,13 +388,24 @@ struct TriangularProduct<Mode,LhsIsTriangular,Lhs,false,Rhs,false>
 
   TriangularProduct(const Lhs& lhs, const Rhs& rhs) : Base(lhs,rhs) {}
 
-  template<typename Dest> void scaleAndAddTo(Dest& dst, Scalar alpha) const
+  template<typename Dest> void scaleAndAddTo(Dest& dst, const Scalar& alpha) const
   {
-    const ActualLhsType lhs = LhsBlasTraits::extract(m_lhs);
-    const ActualRhsType rhs = RhsBlasTraits::extract(m_rhs);
+    typename internal::add_const_on_value_type<ActualLhsType>::type lhs = LhsBlasTraits::extract(m_lhs);
+    typename internal::add_const_on_value_type<ActualRhsType>::type rhs = RhsBlasTraits::extract(m_rhs);
 
     Scalar actualAlpha = alpha * LhsBlasTraits::extractScalarFactor(m_lhs)
                                * RhsBlasTraits::extractScalarFactor(m_rhs);
+
+    typedef internal::gemm_blocking_space<(Dest::Flags&RowMajorBit) ? RowMajor : ColMajor,Scalar,Scalar,
+              Lhs::MaxRowsAtCompileTime, Rhs::MaxColsAtCompileTime, Lhs::MaxColsAtCompileTime,4> BlockingType;
+
+    enum { IsLower = (Mode&Lower) == Lower };
+    Index stripedRows  = ((!LhsIsTriangular) || (IsLower))  ? lhs.rows() : (std::min)(lhs.rows(),lhs.cols());
+    Index stripedCols  = ((LhsIsTriangular)  || (!IsLower)) ? rhs.cols() : (std::min)(rhs.cols(),rhs.rows());
+    Index stripedDepth = LhsIsTriangular ? ((!IsLower) ? lhs.cols() : (std::min)(lhs.cols(),lhs.rows()))
+                                         : ((IsLower)  ? rhs.rows() : (std::min)(rhs.rows(),rhs.cols()));
+
+    BlockingType blocking(stripedRows, stripedCols, stripedDepth);
 
     internal::product_triangular_matrix_matrix<Scalar, Index,
       Mode, LhsIsTriangular,
@@ -390,14 +413,15 @@ struct TriangularProduct<Mode,LhsIsTriangular,Lhs,false,Rhs,false>
       (internal::traits<_ActualRhsType>::Flags&RowMajorBit) ? RowMajor : ColMajor, RhsBlasTraits::NeedToConjugate,
       (internal::traits<Dest          >::Flags&RowMajorBit) ? RowMajor : ColMajor>
       ::run(
-        lhs.rows(), rhs.cols(), lhs.cols(),// LhsIsTriangular ? rhs.cols() : lhs.rows(),           // sizes
+        stripedRows, stripedCols, stripedDepth,   // sizes
         &lhs.coeffRef(0,0),    lhs.outerStride(), // lhs info
         &rhs.coeffRef(0,0),    rhs.outerStride(), // rhs info
-        &dst.coeffRef(0,0), dst.outerStride(), // result info
-        actualAlpha                            // alpha
+        &dst.coeffRef(0,0), dst.outerStride(),    // result info
+        actualAlpha, blocking
       );
   }
 };
 
+} // end namespace Eigen
 
 #endif // EIGEN_TRIANGULAR_MATRIX_MATRIX_H

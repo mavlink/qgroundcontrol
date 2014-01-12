@@ -4,34 +4,26 @@
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2007-2009 Benoit Jacob <jacob.benoit.1@gmail.com>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_CONSTANTS_H
 #define EIGEN_CONSTANTS_H
 
-/** This value means that a quantity is not known at compile-time, and that instead the value is
+namespace Eigen {
+
+/** This value means that a positive quantity (e.g., a size) is not known at compile-time, and that instead the value is
   * stored in some runtime variable.
   *
   * Changing the value of Dynamic breaks the ABI, as Dynamic is often used as a template parameter for Matrix.
   */
 const int Dynamic = -1;
+
+/** This value means that a signed quantity (e.g., a signed index) is not known at compile-time, and that instead its value
+  * has to be specified at runtime.
+  */
+const int DynamicIndex = 0xffffff;
 
 /** This value means +Infinity; it is currently used only as the p parameter to MatrixBase::lpNorm<int>().
   * The value Infinity there means the L-infinity norm.
@@ -188,7 +180,9 @@ enum {
   /** View matrix as an upper triangular matrix with zeros on the diagonal. */
   StrictlyUpper=ZeroDiag|Upper,
   /** Used in BandMatrix and SelfAdjointView to indicate that the matrix is self-adjoint. */
-  SelfAdjoint=0x10
+  SelfAdjoint=0x10,
+  /** Used to support symmetric, non-selfadjoint, complex matrices. */
+  Symmetric=0x20
 };
 
 /** \ingroup enums
@@ -199,8 +193,6 @@ enum {
   /** Object is aligned for vectorization. */
   Aligned=1 
 };
-
-enum { ConditionalJumpCost = 5 };
 
 /** \ingroup enums
  * Enum used by DenseBase::corner() in Eigen2 compatibility mode. */
@@ -223,8 +215,6 @@ enum DirectionType {
   BothDirections 
 };
 
-enum ProductEvaluationMode { NormalProduct, CacheFriendlyProduct };
-
 /** \internal \ingroup enums
   * Enum to specify how to traverse the entries of a matrix. */
 enum {
@@ -242,7 +232,9 @@ enum {
     * scalar loops to handle the unaligned boundaries */
   SliceVectorizedTraversal,
   /** \internal Special case to properly handle incompatible scalar types or other defecting cases*/
-  InvalidTraversal
+  InvalidTraversal,
+  /** \internal Evaluate all entries at once */
+  AllAtOnceTraversal
 };
 
 /** \internal \ingroup enums
@@ -257,6 +249,13 @@ enum {
   CompleteUnrolling
 };
 
+/** \internal \ingroup enums
+  * Enum to specify whether to use the default (built-in) implementation or the specialization. */
+enum {
+  Specialized,
+  BuiltIn
+};
+
 /** \ingroup enums
   * Enum containing possible values for the \p _Options template parameter of
   * Matrix, Array and BandMatrix. */
@@ -265,9 +264,9 @@ enum {
   ColMajor = 0,
   /** Storage order is row major (see \ref TopicStorageOrders). */
   RowMajor = 0x1,  // it is only a coincidence that this is equal to RowMajorBit -- don't rely on that
-  /** \internal Align the matrix itself if it is vectorizable fixed-size */
+  /** Align the matrix itself if it is vectorizable fixed-size */
   AutoAlign = 0,
-  /** \internal Don't require alignment for the matrix itself (the array of coefficients, if dynamically allocated, may still be requested to be aligned) */ // FIXME --- clarify the situation
+  /** Don't require alignment for the matrix itself (the array of coefficients, if dynamically allocated, may still be requested to be aligned) */ // FIXME --- clarify the situation
   DontAlign = 0x2
 };
 
@@ -280,26 +279,21 @@ enum {
   OnTheRight = 2  
 };
 
-/* the following could as well be written:
- *   enum NoChange_t { NoChange };
- * but it feels dangerous to disambiguate overloaded functions on enum/integer types.
- * If on some platform it is really impossible to get rid of "unused variable" warnings, then
- * we can always come back to that solution.
+/* the following used to be written as:
+ *
+ *   struct NoChange_t {};
+ *   namespace {
+ *     EIGEN_UNUSED NoChange_t NoChange;
+ *   }
+ *
+ * on the ground that it feels dangerous to disambiguate overloaded functions on enum/integer types.  
+ * However, this leads to "variable declared but never referenced" warnings on Intel Composer XE,
+ * and we do not know how to get rid of them (bug 450).
  */
-struct NoChange_t {};
-namespace {
-  EIGEN_UNUSED NoChange_t NoChange;
-}
 
-struct Sequential_t {};
-namespace {
-  EIGEN_UNUSED Sequential_t Sequential;
-}
-
-struct Default_t {};
-namespace {
-  EIGEN_UNUSED Default_t Default;
-}
+enum NoChange_t   { NoChange };
+enum Sequential_t { Sequential };
+enum Default_t    { Default };
 
 /** \internal \ingroup enums
   * Used in AmbiVector. */
@@ -375,7 +369,7 @@ enum QRPreconditioners {
 #error The preprocessor symbol 'Success' is defined, possibly by the X11 header file X.h
 #endif
 
-/** \ingroups enums
+/** \ingroup enums
   * Enum for reporting the status of a computation. */
 enum ComputationInfo {
   /** Computation was successful. */
@@ -383,7 +377,10 @@ enum ComputationInfo {
   /** The provided data did not satisfy the prerequisites. */
   NumericalIssue = 1, 
   /** Iterative procedure did not converge. */
-  NoConvergence = 2
+  NoConvergence = 2,
+  /** The inputs are invalid, or the algorithm has been improperly called.
+    * When assertions are enabled, such errors trigger an assert. */
+  InvalidInput = 3
 };
 
 /** \ingroup enums
@@ -435,5 +432,7 @@ struct MatrixXpr {};
 
 /** The type used to identify an array expression */
 struct ArrayXpr {};
+
+} // end namespace Eigen
 
 #endif // EIGEN_CONSTANTS_H
