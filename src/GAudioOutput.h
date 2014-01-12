@@ -40,7 +40,6 @@ This file is part of the PIXHAWK project
 #include <AudioOutput>
 #endif
 #ifdef Q_OS_LINUX
-//#include <flite/flite.h>
 #include <phonon/MediaObject>
 #include <phonon/AudioOutput>
 #endif

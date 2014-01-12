@@ -51,10 +51,14 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 #ifdef Q_OS_LINUX
-extern "C" {
-#include <flite/flite.h>
-    cst_voice *register_cmu_us_kal(const char *voxdir);
-};
+// Using eSpeak for speech synthesis: following https://github.com/mondhs/espeak-sample/blob/master/sampleSpeak.cpp
+#include <espeak/speak_lib.h>
+espeak_POSITION_TYPE espeak_position_type;
+espeak_AUDIO_OUTPUT espeak_output = AUDIO_OUTPUT_PLAYBACK;
+int espeak_buflength = 500;
+int espeak_options = 0;
+char *espeak_path = NULL;
+unsigned int espeak_flags=espeakCHARS_AUTO;
 #endif
 
 #ifdef _MSC_VER
@@ -97,7 +101,17 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 
 #ifdef Q_OS_LINUX
-    flite_init();
+    espeak_Initialize(espeak_output, espeak_buflength, espeak_path, espeak_options );
+    const char *espeak_langNativeString = "en-uk"; //Default to US English
+    espeak_VOICE espeak_voice;
+    memset(&espeak_voice, 0, sizeof(espeak_VOICE)); // Zero out the voice first
+    espeak_voice.languages = espeak_langNativeString;
+    espeak_voice.name = "klatt";
+    espeak_voice.variant = 0;
+    espeak_voice.gender = 2;
+    espeak_SetVoiceByProperties(&espeak_voice);
+    espeak_PARAMETER rateParam = espeakRATE;
+//  espeak_SetParameter(rateParam , 150, 0);
 #endif
 
 #if _MSC_VER
@@ -206,20 +220,13 @@ bool GAudioOutput::say(QString text, int severity)
 #endif
 
 #ifdef Q_OS_LINUX
-            QTemporaryFile file;
-            file.setFileTemplate("XXXXXX.wav");
-
-            if (file.open())
-            {
-                cst_voice *v = register_cmu_us_kal(NULL);
-                cst_wave *wav = flite_text_to_wave(text.toStdString().c_str(), v);
-                // file.fileName() returns the unique file name
-                cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
-                m_media->setCurrentSource(Phonon::MediaSource(QUrl::fromLocalFile(file.fileName().toStdString().c_str())));
-                m_media->play();
-                res = true;
-            }
-
+            unsigned int espeak_size, espeak_position = 0, espeak_end_position = 0, *espeak_unique_identifier = NULL;
+            void* espeak_user_data = NULL;
+            espeak_size = strlen(text.toStdString().c_str());
+//          qDebug() << "eSpeak: Saying " << text;
+            espeak_Synth( text.toStdString().c_str(), espeak_size, espeak_position, espeak_position_type, espeak_end_position, espeak_flags,
+                    espeak_unique_identifier, espeak_user_data );
+//          qDebug() << "Done talking " << text;
 #endif
 
 #ifdef Q_OS_MAC
