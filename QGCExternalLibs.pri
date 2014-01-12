@@ -461,14 +461,10 @@ WindowsBuild {
 }
 
 #
-# Festival Lite speech synthesis engine
+# eSpeak Speech Synthesizer
 #
-
 LinuxBuild {
 	LIBS += \
-		-lflite_cmu_us_kal \
-		-lflite_usenglish \
-		-lflite_cmulex \
-		-lflite
+		-lespeak
 }
 
