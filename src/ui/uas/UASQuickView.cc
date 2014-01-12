@@ -190,6 +190,7 @@ void UASQuickView::sortItems(int columncount)
 }
 void UASQuickView::resizeEvent(QResizeEvent *evt)
 {
+    Q_UNUSED(evt);
     recalculateItemTextSizing();
 }
 void UASQuickView::recalculateItemTextSizing()
@@ -273,6 +274,8 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
 {
     Q_UNUSED(uasId);
     Q_UNUSED(unit);
+    Q_UNUSED(msec);
+    
     bool ok;
     double value = variant.toDouble(&ok);
     QMetaType::Type metaType = static_cast<QMetaType::Type>(variant.type());

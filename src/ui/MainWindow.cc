@@ -800,6 +800,7 @@ void MainWindow::loadDockWidget(const QString& name)
 
 void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title)
 {
+    Q_UNUSED(viewSection);
     Q_UNUSED(title);
     Q_ASSERT(widget->objectName().length() != 0);
 

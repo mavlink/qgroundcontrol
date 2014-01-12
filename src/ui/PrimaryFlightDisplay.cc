@@ -606,6 +606,8 @@ void PrimaryFlightDisplay::drawPitchScale(
         bool drawNumbersRight
         ) {
 
+    Q_UNUSED(intrusion);
+    
     float displayPitch = this->pitch;
     if (isnan(displayPitch))
         displayPitch = 0;

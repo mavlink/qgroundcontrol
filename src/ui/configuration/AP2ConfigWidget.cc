@@ -25,7 +25,10 @@ void AP2ConfigWidget::activeUASSet(UASInterface *uas)
 
 void AP2ConfigWidget::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    Q_UNUSED(parameterName);
+    Q_UNUSED(value);
 }
 void AP2ConfigWidget::showNullMAVErrorMessageBox()
 {

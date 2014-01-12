@@ -59,6 +59,8 @@ void UASQuickViewItemSelect::addItem(QString item,bool enabled)
 }
 void UASQuickViewItemSelect::resizeEvent(QResizeEvent *event)
 {
+    Q_UNUSED(event);
+    
     /*for (int i=0;i<m_checkBoxList.size();i++)
     {
         ui.gridLayout->removeWidget(m_checkBoxList[i]);
