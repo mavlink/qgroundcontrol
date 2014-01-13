@@ -121,13 +121,13 @@ MainWindow::MainWindow(QWidget *parent):
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
+    mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
     darkStyleFileName(defaultDarkStyle),
     lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
-    mavlink(new MAVLinkProtocol()),
     customMode(CUSTOM_MODE_NONE),
     menuActionHelper(new MenuActionHelper())
 {

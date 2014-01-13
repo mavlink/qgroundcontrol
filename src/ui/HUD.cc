@@ -57,6 +57,7 @@ This file is part of the QGROUNDCONTROL project
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QLabel(parent),
+      image(NULL),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -111,11 +112,10 @@ HUD::HUD(int width, int height, QWidget* parent)
       nextOfflineImage(""),
       HUDInstrumentsEnabled(false),
       videoEnabled(true),
+      imageLoggingEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageLoggingEnabled(false),
-      imageRequested(false),
-      image(NULL)
+      imageRequested(false)
 {
     Q_UNUSED(width);
     Q_UNUSED(height);
