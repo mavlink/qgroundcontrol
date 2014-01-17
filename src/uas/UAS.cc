@@ -115,22 +115,18 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     altitudeAMSL(0.0),
     altitudeRelative(0.0),
 
-    airSpeed(std::numeric_limits<double>::quiet_NaN()),
-    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+    globalEstimatorActive(false),
+
+    latitude_gps(0.0),
+    longitude_gps(0.0),
+    altitude_gps(0.0),
 
     speedX(0.0),
     speedY(0.0),
     speedZ(0.0),
 
-    globalEstimatorActive(false),
-    latitude_gps(0.0),
-    longitude_gps(0.0),
-    altitude_gps(0.0),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
-
-    waypointManager(this),
-    paramMgr(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -140,6 +136,10 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedRGBDImageTimestamp(0.0),
     #endif
 
+    airSpeed(std::numeric_limits<double>::quiet_NaN()),
+    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+    waypointManager(this),
+
     attitudeKnown(false),
     attitudeStamped(false),
     lastAttitude(0),
@@ -148,7 +148,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     pitch(0.0),
     yaw(0.0),
 
+    blockHomePositionChanges(false),
+    receivedMode(false),
+
+
     paramsOnceRequested(false),
+    paramMgr(this),
     simulation(0),
 
     // The protected members.
@@ -159,9 +164,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0),
-    blockHomePositionChanges(false),
-    receivedMode(false)
+    lastSendTimeSensors(0)
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -3070,6 +3073,11 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
+    Q_UNUSED(time_us);
+    Q_UNUSED(xacc);
+    Q_UNUSED(yacc);
+    Q_UNUSED(zacc);
+    
         float q[4];
 
         double cosPhi_2 = cos(double(roll) / 2.0);

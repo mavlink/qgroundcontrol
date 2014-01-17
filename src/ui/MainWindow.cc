@@ -121,13 +121,13 @@ MainWindow::MainWindow(QWidget *parent):
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
+    mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
     darkStyleFileName(defaultDarkStyle),
     lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
-    mavlink(new MAVLinkProtocol()),
     customMode(CUSTOM_MODE_NONE),
     menuActionHelper(new MenuActionHelper())
 {
@@ -800,6 +800,7 @@ void MainWindow::loadDockWidget(const QString& name)
 
 void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title)
 {
+    Q_UNUSED(viewSection);
     Q_UNUSED(title);
     Q_ASSERT(widget->objectName().length() != 0);
 

@@ -11,8 +11,8 @@
 
 QGCBaseParamWidget::QGCBaseParamWidget(QWidget *parent) :
     QWidget(parent),
-    mav(NULL),
     paramMgr(NULL),
+    mav(NULL),
     updatingParamNameLock("")
 {
 }

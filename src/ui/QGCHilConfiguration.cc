@@ -48,7 +48,7 @@ QGCHilConfiguration::~QGCHilConfiguration()
 
 void QGCHilConfiguration::setVersion(QString version)
 {
-
+    Q_UNUSED(version);
 }
 
 void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
