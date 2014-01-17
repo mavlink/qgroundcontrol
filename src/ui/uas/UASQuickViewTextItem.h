@@ -17,7 +17,6 @@ protected:
 private:
     QLabel *titleLabel;
     QLabel *valueLabel;
-    QSpacerItem *spacerItem;
 };
 
 #endif // UASQUICKVIEWTEXTITEM_H

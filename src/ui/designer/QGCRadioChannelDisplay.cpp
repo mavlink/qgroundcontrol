@@ -34,6 +34,8 @@ void QGCRadioChannelDisplay::setOrientation(Qt::Orientation orient)
 
 void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
+    
     //Values range from 0-3000.
     //1500 is the middle, static servo value.
     QPainter painter(this);

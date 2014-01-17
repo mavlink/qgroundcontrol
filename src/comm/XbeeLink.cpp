@@ -7,8 +7,14 @@
 #include "XbeeLink.h"
 
 XbeeLink::XbeeLink(QString portName, int baudRate) : 
-	m_xbeeCon(NULL), m_portName(NULL), m_portNameLength(0), m_baudRate(baudRate), m_connected(false), m_id(-1),
-	m_addrHigh(0), m_addrLow(0)
+	m_xbeeCon(NULL),
+    m_id(-1),
+    m_portName(NULL),
+    m_portNameLength(0),
+    m_baudRate(baudRate),
+    m_connected(false),
+	m_addrHigh(0),
+    m_addrLow(0)
 {
 
 	/* setup the xbee */

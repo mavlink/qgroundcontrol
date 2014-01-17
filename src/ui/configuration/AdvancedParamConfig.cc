@@ -33,6 +33,9 @@ void AdvancedParamConfig::addCombo(QString title,QString description,QString par
 }
 void AdvancedParamConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (m_paramToWidgetMap.contains(parameterName))
     {
         if (value.type() == QVariant::Double)
