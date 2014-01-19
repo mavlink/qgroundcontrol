@@ -38,4 +38,4 @@ linux-g++ | linux-g++-64 {
 
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = libs/qwt src
+SUBDIRS = libs/utils libs/opmapcontrol libs/qwt src

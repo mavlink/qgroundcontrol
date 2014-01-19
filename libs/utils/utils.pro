@@ -1,13 +1,18 @@
 TEMPLATE = lib
+CONFIG += static
 TARGET = Utils
 
 QT += gui \
     network \
     xml
 
-DEFINES += QTCREATOR_UTILS_LIB
+DEFINES += QTCREATOR_UTILS_STATIC_LIB
 
-include(../../openpilotgcslibrary.pri)
+# Prevent some files from compiling since they're not necessary when compiling as a library
+DEFINES += EXTERNAL_USE
+
+# This project relies on the QtConcurrent headers
+INCLUDEPATH += ../
 
 SOURCES += reloadpromptutils.cpp \
     settingsutils.cpp \

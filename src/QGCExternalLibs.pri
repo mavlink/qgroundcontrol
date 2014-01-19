@@ -286,34 +286,40 @@ INCLUDEPATH += ../libs/eigen
 DEFINES += NOMINMAX
 
 #
-# OPMapControl library (from OpenPilot)
+# Utils library (from QtCreator)
+# This is also a dependency for OPMapControl, so it needs to be before it.
 #
-
-include(../libs/utils/utils_external.pri)
-include(../libs/opmapcontrol/opmapcontrol_external.pri)
-
 DEPENDPATH += \
-    ../libs/utils \
-    ../libs/utils/src \
-    ../libs/opmapcontrol \
-    ../libs/opmapcontrol/src \
-    ../libs/opmapcontrol/mapwidget
+    $$BASEDIR/libs/utils \
+    $$BASEDIR/libs/utils/src
 
 INCLUDEPATH += \
-    ../libs/utils \
-    ../libs \
-    ../libs/opmapcontrol
+    $$BASEDIR/libs/utils
+
+#
+# OPMapControl library (from OpenPilot)
+#
+LIBS += -L$$BASEDIR/libs/opmapcontrol/src/build -lmapwidget -linternals -lcore
+
+DEPENDPATH += \
+    $$BASEDIR/libs/opmapcontrol \
+    $$BASEDIR/libs/opmapcontrol/src \
+    $$BASEDIR/libs/opmapcontrol/mapwidget
+
+INCLUDEPATH += \
+    $$BASEDIR/libs \
+    $$BASEDIR/libs/opmapcontrol
 
 #
 # QWT plotting library
 #
 INCLUDEPATH += ../libs/qwt
-LIBS += -L../libs/qwt -lqwt
+LIBS += -L$$BASEDIR/libs/qwt -lqwt
 
 #
 # QSerialPort - serial port library
 #
-include(../libs/serialport/qserialport.pri)
+include($$BASEDIR/libs/serialport/qserialport.pri)
 
 WindowsBuild {
     # Used to enumerate serial ports by QSerialPort
@@ -330,7 +336,7 @@ WindowsBuild | LinuxBuild {
 
     DEFINES += XBEELINK
 
-    INCLUDEPATH += ../libs/thirdParty/libxbee
+    INCLUDEPATH += $$BASEDIR/libs/thirdParty/libxbee
 
     HEADERS += \
         comm/XbeeLinkInterface.h \
@@ -381,14 +387,14 @@ WindowsBuild {
     INCLUDEPATH += ../libs/thirdParty/3DMouse/win
 
     HEADERS += \
-        ../libs/thirdParty/3DMouse/win/I3dMouseParams.h \
-        ../libs/thirdParty/3DMouse/win/MouseParameters.h \
-        ../libs/thirdParty/3DMouse/win/Mouse3DInput.h \
+        $$BASEDIR/libs/thirdParty/3DMouse/win/I3dMouseParams.h \
+        $$BASEDIR/libs/thirdParty/3DMouse/win/MouseParameters.h \
+        $$BASEDIR/libs/thirdParty/3DMouse/win/Mouse3DInput.h \
         input/Mouse6dofInput.h
 
     SOURCES += \
-        ../libs/thirdParty/3DMouse/win/MouseParameters.cpp \
-        ../libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
+        $$BASEDIR/libs/thirdParty/3DMouse/win/MouseParameters.cpp \
+        $$BASEDIR/libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
         input/Mouse6dofInput.cpp
 }
 
@@ -403,7 +409,7 @@ WindowsBuild : win32 : exists(lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.
 
     INCLUDEPATH += 
         lib/opalrt
-        ../libs/lib/opal/include \
+        $$BASEDIR/libs/lib/opal/include \
 
     FORMS += ui/OpalLinkSettings.ui
 
