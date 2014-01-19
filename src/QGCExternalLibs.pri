@@ -22,42 +22,42 @@ LinuxBuild {
 #
 
 WindowsBuild {
-    INCLUDEPATH += libs/lib/msinttypes
+    INCLUDEPATH += ../libs/lib/msinttypes
 }
 
 #
 # QUpgrade
 #
 
-exists(qupgrade) {
+exists(../qupgrade) {
     message(Including support for QUpgrade)
 
     DEFINES += QUPGRADE_SUPPORT
 
-    INCLUDEPATH += qupgrade/src/apps/qupgrade
+    INCLUDEPATH += ../qupgrade/src/apps/qupgrade
 
     FORMS += \
-        qupgrade/src/apps/qupgrade/dialog_bare.ui \
-        qupgrade/src/apps/qupgrade/boardwidget.ui
+        ../qupgrade/src/apps/qupgrade/dialog_bare.ui \
+        ../qupgrade/src/apps/qupgrade/boardwidget.ui
 
     HEADERS += \
-        qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
-        qupgrade/src/apps/qupgrade/uploader.h \
-        qupgrade/src/apps/qupgrade/dialog_bare.h \
-        qupgrade/src/apps/qupgrade/boardwidget.h
+        ../qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.h \
+        ../qupgrade/src/apps/qupgrade/uploader.h \
+        ../qupgrade/src/apps/qupgrade/dialog_bare.h \
+        ../qupgrade/src/apps/qupgrade/boardwidget.h
 
     SOURCES += \
-        qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
-        qupgrade/src/apps/qupgrade/uploader.cpp \
-        qupgrade/src/apps/qupgrade/dialog_bare.cpp \
-        qupgrade/src/apps/qupgrade/boardwidget.cpp
+        ../qupgrade/src/apps/qupgrade/qgcfirmwareupgradeworker.cpp \
+        ../qupgrade/src/apps/qupgrade/uploader.cpp \
+        ../qupgrade/src/apps/qupgrade/dialog_bare.cpp \
+        ../qupgrade/src/apps/qupgrade/boardwidget.cpp
 
     RESOURCES += \
-        qupgrade/qupgrade.qrc
+        ../qupgrade/qupgrade.qrc
 
     LinuxBuild:CONFIG += qesp_linux_udev
 
-    include(qupgrade/libs/qextserialport/src/qextserialport.pri)
+    include(../qupgrade/libs/qextserialport/src/qextserialport.pri)
 } else {
     message(Skipping support for QUpgrade)
 }
@@ -97,14 +97,14 @@ isEmpty(MAVLINK_CONF) {
 #
 
 DEPENDPATH += \
-    src/apps/mavlinkgen
+    apps/mavlinkgen
 
 INCLUDEPATH += \
-    src/apps/mavlinkgen \
-    src/apps/mavlinkgen/ui \
-    src/apps/mavlinkgen/generator
+    apps/mavlinkgen \
+    apps/mavlinkgen/ui \
+    apps/mavlinkgen/generator
 
-include(src/apps/mavlinkgen/mavlinkgen.pri)
+include(apps/mavlinkgen/mavlinkgen.pri)
 
 #
 # OpenSceneGraph
@@ -161,52 +161,52 @@ OSGDependency {
         -lOpenThreads
 
     HEADERS += \
-        src/ui/map3D/gpl.h \
-        src/ui/map3D/CameraParams.h \
-        src/ui/map3D/ViewParamWidget.h \
-        src/ui/map3D/SystemContainer.h \
-        src/ui/map3D/SystemViewParams.h \
-        src/ui/map3D/GlobalViewParams.h \
-        src/ui/map3D/SystemGroupNode.h \
-        src/ui/map3D/Q3DWidget.h \
-        src/ui/map3D/GCManipulator.h \
-        src/ui/map3D/ImageWindowGeode.h \
-        src/ui/map3D/PixhawkCheetahNode.h \
-        src/ui/map3D/Pixhawk3DWidget.h \
-        src/ui/map3D/Q3DWidgetFactory.h \
-        src/ui/map3D/WebImageCache.h \
-        src/ui/map3D/WebImage.h \
-        src/ui/map3D/TextureCache.h \
-        src/ui/map3D/Texture.h \
-        src/ui/map3D/Imagery.h \
-        src/ui/map3D/HUDScaleGeode.h \
-        src/ui/map3D/WaypointGroupNode.h \
-        src/ui/map3D/TerrainParamDialog.h \
-        src/ui/map3D/ImageryParamDialog.h
+        ui/map3D/gpl.h \
+        ui/map3D/CameraParams.h \
+        ui/map3D/ViewParamWidget.h \
+        ui/map3D/SystemContainer.h \
+        ui/map3D/SystemViewParams.h \
+        ui/map3D/GlobalViewParams.h \
+        ui/map3D/SystemGroupNode.h \
+        ui/map3D/Q3DWidget.h \
+        ui/map3D/GCManipulator.h \
+        ui/map3D/ImageWindowGeode.h \
+        ui/map3D/PixhawkCheetahNode.h \
+        ui/map3D/Pixhawk3DWidget.h \
+        ui/map3D/Q3DWidgetFactory.h \
+        ui/map3D/WebImageCache.h \
+        ui/map3D/WebImage.h \
+        ui/map3D/TextureCache.h \
+        ui/map3D/Texture.h \
+        ui/map3D/Imagery.h \
+        ui/map3D/HUDScaleGeode.h \
+        ui/map3D/WaypointGroupNode.h \
+        ui/map3D/TerrainParamDialog.h \
+        ui/map3D/ImageryParamDialog.h
         
     SOURCES += \
-        src/ui/map3D/gpl.cc \
-        src/ui/map3D/CameraParams.cc \
-        src/ui/map3D/ViewParamWidget.cc \
-        src/ui/map3D/SystemContainer.cc \
-        src/ui/map3D/SystemViewParams.cc \
-        src/ui/map3D/GlobalViewParams.cc \
-        src/ui/map3D/SystemGroupNode.cc \
-        src/ui/map3D/Q3DWidget.cc \
-        src/ui/map3D/ImageWindowGeode.cc \
-        src/ui/map3D/GCManipulator.cc \
-        src/ui/map3D/PixhawkCheetahNode.cc \
-        src/ui/map3D/Pixhawk3DWidget.cc \
-        src/ui/map3D/Q3DWidgetFactory.cc \
-        src/ui/map3D/WebImageCache.cc \
-        src/ui/map3D/WebImage.cc \
-        src/ui/map3D/TextureCache.cc \
-        src/ui/map3D/Texture.cc \
-        src/ui/map3D/Imagery.cc \
-        src/ui/map3D/HUDScaleGeode.cc \
-        src/ui/map3D/WaypointGroupNode.cc \
-        src/ui/map3D/TerrainParamDialog.cc \
-        src/ui/map3D/ImageryParamDialog.cc
+        ui/map3D/gpl.cc \
+        ui/map3D/CameraParams.cc \
+        ui/map3D/ViewParamWidget.cc \
+        ui/map3D/SystemContainer.cc \
+        ui/map3D/SystemViewParams.cc \
+        ui/map3D/GlobalViewParams.cc \
+        ui/map3D/SystemGroupNode.cc \
+        ui/map3D/Q3DWidget.cc \
+        ui/map3D/ImageWindowGeode.cc \
+        ui/map3D/GCManipulator.cc \
+        ui/map3D/PixhawkCheetahNode.cc \
+        ui/map3D/Pixhawk3DWidget.cc \
+        ui/map3D/Q3DWidgetFactory.cc \
+        ui/map3D/WebImageCache.cc \
+        ui/map3D/WebImage.cc \
+        ui/map3D/TextureCache.cc \
+        ui/map3D/Texture.cc \
+        ui/map3D/Imagery.cc \
+        ui/map3D/HUDScaleGeode.cc \
+        ui/map3D/WaypointGroupNode.cc \
+        ui/map3D/TerrainParamDialog.cc \
+        ui/map3D/ImageryParamDialog.cc
 } else {
     message("Skipping support for OpenSceneGraph")
 }
@@ -218,8 +218,8 @@ OSGDependency {
 MacBuild | WindowsBuild {
     message(Including support for Google Earth)
 
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+    HEADERS += ui/map3D/QGCGoogleEarthView.h
+    SOURCES += ui/map3D/QGCGoogleEarthView.cc
     WindowsBuild {
         CONFIG += qaxcontainer
     }
@@ -243,14 +243,14 @@ LinuxBuild : contains(MAVLINK_CONF, pixhawk) {
             -lprotoc
 
         HEADERS += \
-            libs/mavlink/include/mavlink/v1.0/pixhawk/pixhawk.pb.h \
-            src/ui/map3D/ObstacleGroupNode.h \
-            src/ui/map3D/GLOverlayGeode.h
+            ../libs/mavlink/include/mavlink/v1.0/pixhawk/pixhawk.pb.h \
+            ui/map3D/ObstacleGroupNode.h \
+            ui/map3D/GLOverlayGeode.h
 
         SOURCES += \
-            libs/mavlink/share/mavlink/src/v1.0/pixhawk/pixhawk.pb.cc \
-            src/ui/map3D/ObstacleGroupNode.cc \
-            src/ui/map3D/GLOverlayGeode.cc
+            ../libs/mavlink/share/mavlink/v1.0/pixhawk/pixhawk.pb.cc \
+            ui/map3D/ObstacleGroupNode.cc \
+            ui/map3D/GLOverlayGeode.cc
     } else {
         message("Skipping support for Protocol Buffers")
     }
@@ -269,8 +269,8 @@ MacBuild | LinuxBuild {
         #INCLUDEPATH += /usr/include/libusb-1.0
         DEFINES += QGC_LIBFREENECT_ENABLED
         LIBS += -lfreenect
-        HEADERS += src/input/Freenect.h
-        SOURCES += src/input/Freenect.cc
+        HEADERS += input/Freenect.h
+        SOURCES += input/Freenect.cc
     } else {
         message("Skipping support for libfreenect")
     }
@@ -282,43 +282,42 @@ MacBuild | LinuxBuild {
 # EIGEN matrix library (NOMINMAX needed to make internal min/max work)
 #
 
-INCLUDEPATH += libs/eigen
+INCLUDEPATH += ../libs/eigen
 DEFINES += NOMINMAX
 
 #
 # OPMapControl library (from OpenPilot)
 #
 
-include(libs/utils/utils_external.pri)
-include(libs/opmapcontrol/opmapcontrol_external.pri)
+include(../libs/utils/utils_external.pri)
+include(../libs/opmapcontrol/opmapcontrol_external.pri)
 
 DEPENDPATH += \
-    libs/utils \
-    libs/utils/src \
-    libs/opmapcontrol \
-    libs/opmapcontrol/src \
-    libs/opmapcontrol/src/mapwidget
+    ../libs/utils \
+    ../libs/utils/src \
+    ../libs/opmapcontrol \
+    ../libs/opmapcontrol/src \
+    ../libs/opmapcontrol/mapwidget
 
 INCLUDEPATH += \
-    libs/utils \
-    libs \
-    libs/opmapcontrol
+    ../libs/utils \
+    ../libs \
+    ../libs/opmapcontrol
 
 #
 # QWT plotting library
 #
-
-include(libs/qwt/qwt.pri)
+INCLUDEPATH += ../libs/qwt
+include(../libs/qwt/qwt.pri)
 
 #
 # QSerialPort - serial port library
 #
-
-include(libs/serialport/qserialport.pri)
+include(../libs/serialport/qserialport.pri)
 
 WindowsBuild {
     # Used to enumerate serial ports by QSerialPort
-	LIBS += -lsetupapi
+    LIBS += -lsetupapi
 }
 
 
@@ -331,19 +330,19 @@ WindowsBuild | LinuxBuild {
 
     DEFINES += XBEELINK
 
-    INCLUDEPATH += libs/thirdParty/libxbee
+    INCLUDEPATH += ../libs/thirdParty/libxbee
 
     HEADERS += \
-        src/comm/XbeeLinkInterface.h \
-        src/comm/XbeeLink.h \
-        src/comm/HexSpinBox.h \
-        src/ui/XbeeConfigurationWindow.h \
-        src/comm/CallConv.h
+        comm/XbeeLinkInterface.h \
+        comm/XbeeLink.h \
+        comm/HexSpinBox.h \
+        ui/XbeeConfigurationWindow.h \
+        comm/CallConv.h
 
     SOURCES += \
-        src/comm/XbeeLink.cpp \
-        src/comm/HexSpinBox.cpp \
-        src/ui/XbeeConfigurationWindow.cpp
+        comm/XbeeLink.cpp \
+        comm/HexSpinBox.cpp \
+        ui/XbeeConfigurationWindow.cpp
 
     WindowsBuild {
         LIBS += -l$$BASEDIR/libs/thirdParty/libxbee/lib/libxbee
@@ -369,8 +368,8 @@ LinuxBuild : exists(/usr/local/lib/libxdrvlib.so) {
         ParameterCheck                      # Hack: Has to be defined for magellan usage
 
     INCLUDEPATH *= /usr/local/include
-    HEADERS += src/input/Mouse6dofInput.h
-    SOURCES += src/input/Mouse6dofInput.cpp
+    HEADERS += input/Mouse6dofInput.h
+    SOURCES += input/Mouse6dofInput.cpp
     LIBS += -L/usr/local/lib/ -lxdrvlib
 }
 
@@ -379,50 +378,50 @@ WindowsBuild {
 
     DEFINES += MOUSE_ENABLED_WIN
 
-    INCLUDEPATH += libs/thirdParty/3DMouse/win
+    INCLUDEPATH += ../libs/thirdParty/3DMouse/win
 
     HEADERS += \
-        libs/thirdParty/3DMouse/win/I3dMouseParams.h \
-        libs/thirdParty/3DMouse/win/MouseParameters.h \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.h \
-        src/input/Mouse6dofInput.h
+        ../libs/thirdParty/3DMouse/win/I3dMouseParams.h \
+        ../libs/thirdParty/3DMouse/win/MouseParameters.h \
+        ../libs/thirdParty/3DMouse/win/Mouse3DInput.h \
+        input/Mouse6dofInput.h
 
     SOURCES += \
-        libs/thirdParty/3DMouse/win/MouseParameters.cpp \
-        libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
-        src/input/Mouse6dofInput.cpp
+        ../libs/thirdParty/3DMouse/win/MouseParameters.cpp \
+        ../libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
+        input/Mouse6dofInput.cpp
 }
 
 #
 # Opal RT-LAB Library
 #
 
-WindowsBuild : win32 : exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
+WindowsBuild : win32 : exists(lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
     message("Including support for Opal-RT")
 
     DEFINES += OPAL_RT
 
     INCLUDEPATH += 
-        src/lib/opalrt
-        libs/lib/opal/include \
+        lib/opalrt
+        ../libs/lib/opal/include \
 
-    FORMS += src/ui/OpalLinkSettings.ui
+    FORMS += ui/OpalLinkSettings.ui
 
     HEADERS += \
-        src/comm/OpalRT.h \
-        src/comm/OpalLink.h \
-        src/comm/Parameter.h \
-        src/comm/QGCParamID.h \
-        src/comm/ParameterList.h \
-        src/ui/OpalLinkConfigurationWindow.h
+        comm/OpalRT.h \
+        comm/OpalLink.h \
+        comm/Parameter.h \
+        comm/QGCParamID.h \
+        comm/ParameterList.h \
+        ui/OpalLinkConfigurationWindow.h
 
     SOURCES += \
-        src/comm/OpalRT.cc \
-        src/comm/OpalLink.cc \
-        src/comm/Parameter.cc \
-        src/comm/QGCParamID.cc \
-        src/comm/ParameterList.cc \
-        src/ui/OpalLinkConfigurationWindow.cc
+        comm/OpalRT.cc \
+        comm/OpalLink.cc \
+        comm/Parameter.cc \
+        comm/QGCParamID.cc \
+        comm/ParameterList.cc \
+        ui/OpalLinkConfigurationWindow.cc
 
     LIBS += \
         -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
