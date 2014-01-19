@@ -57,3 +57,12 @@ GeneratedFiles/
 
 *.autosave
 .settings/
+
+# Generated files
+moc_*
+ui_*
+*.o
+*.a
+*.so*
+*.moc
+*.prl
