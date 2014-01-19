@@ -70,10 +70,11 @@ Execute the following commands from the location where you will want to put the 
 
 * Go to `libs/thirdParty/libxbee` 
   * Install libxbee: `sudo make install`
-* Either build from the command line
-  * `qmake;make -j4`
-* Or build within Qt Creator
-  * Launch it via the command line `qtcreator` or in Ubuntu's Unity desktop at Ubuntu Application Menu -> Development -> Qt Creator
+* Either build from the command line:
+  * `qmake qgroundcontrol.pro;make -j4`
+  * To run after compilation: `./src/release/qgroundcontrol` 
+* Or build within Qt Creator:
+  * Launch it from the command line by running `qtcreator` or in Ubuntu's Unity desktop at Ubuntu Application Menu -> Development -> Qt Creator
   * Open the `/qgroundcontrol.pro` project using QtCreator Menu File -> Open File or Project..
   * Build by pressing the green play button in the bottom left.
 
