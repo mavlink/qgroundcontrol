@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
 
 
-SUBDIRS = src \
+SUBDIRS = ../utils src

@@ -59,20 +59,24 @@ To build on Mac OSX (10.6 or later):
 
 # Build on Linux 
 
-
-To build on Linux:
+To build on Linux (directions specific to Ubuntu derivatives):
+Execute the following commands from the location where you will want to put the qgroundcontrol source code
 - - -
-    sudo apt-get install phonon libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential libopenscenegraph-dev
-    cd directory
-    git clone https://github.com/mavlink/qgroundcontrol.git
+    $ sudo apt-get install phonon libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential libopenscenegraph-dev libudev-dev
+    $ git clone https://github.com/mavlink/qgroundcontrol.git
+    $ cd qgroundcontrol
+    $ git submodule init
+    $ git submodule update
 
-* go to `libs/thirdParty -> libxbee` 
-* Create Library -> Readme file in folder
-* Ubuntu Application Menu -> Development -> Qt Creator
-* QtCreator Menu File -> Open File or Project..
-* Open `directory/qgroundcontrol/qgroundcontrol.pro`
-* Hit the green play button to compile and launch it
-
+* Go to `libs/thirdParty/libxbee` 
+  * Install libxbee: `sudo make install`
+* Either build from the command line:
+  * `qmake qgroundcontrol.pro;make -j4`
+  * To run after compilation: `./src/release/qgroundcontrol` 
+* Or build within Qt Creator:
+  * Launch it from the command line by running `qtcreator` or in Ubuntu's Unity desktop at Ubuntu Application Menu -> Development -> Qt Creator
+  * Open the `/qgroundcontrol.pro` project using QtCreator Menu File -> Open File or Project..
+  * Build by pressing the green play button in the bottom left.
 
 # Build on Windows
 - - -

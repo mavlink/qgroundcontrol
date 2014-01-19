@@ -22,7 +22,7 @@ LIBS += -L../build \
     -lcore
 
 # order of linking matters
-include(../../../utils/utils.pri)
+LIBS += -L../../../utils -lUtils
 
 POST_TARGETDEPS  += ../build/libcore.a
 POST_TARGETDEPS  += ../build/libinternals.a
