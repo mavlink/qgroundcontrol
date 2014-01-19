@@ -308,7 +308,7 @@ INCLUDEPATH += \
 # QWT plotting library
 #
 INCLUDEPATH += ../libs/qwt
-include(../libs/qwt/qwt.pri)
+LIBS += -L../libs/qwt -lqwt
 
 #
 # QSerialPort - serial port library

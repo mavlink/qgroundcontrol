@@ -38,4 +38,4 @@ linux-g++ | linux-g++-64 {
 
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = src
+SUBDIRS = libs/qwt src
