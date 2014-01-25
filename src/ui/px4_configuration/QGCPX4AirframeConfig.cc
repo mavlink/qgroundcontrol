@@ -25,7 +25,11 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     // Fill the lists here manually in accordance with the list from:
     // https://github.com/PX4/Firmware/blob/master/ROMFS/px4fmu_common/init.d/rcS
 
-    ui->simComboBox->addItem(tr("HilStar (SIMULATION)"), 1000);
+    ui->simComboBox->addItem(tr("Plane Sensor (HilStar, X-Plane)"), 1000);
+    ui->simComboBox->addItem(tr("Plane Sensor (Rascal, FlightGear)"), 1004);
+    ui->simComboBox->addItem(tr("Plane State (HilStar, X-Plane)"), 1002);
+    ui->simComboBox->addItem(tr("Quad X HIL"), 1001);
+    ui->simComboBox->addItem(tr("Quad + HIL"), 1003);
 
     connect(ui->simPushButton, SIGNAL(clicked()), this, SLOT(simSelected()));
     connect(ui->simComboBox, SIGNAL(activated(int)), this, SLOT(simSelected(int)));
