@@ -1,5 +1,5 @@
 #!/bin/sh
-cp -r ../../qgroundcontrol-build-desktop-Desktop_Qt_4_8_1_for_GCC__Qt_SDK__Release/qgroundcontrol.app .
+cp -r ../../build-qgroundcontrol-Qt_4_8_1-Release/release/qgroundcontrol.app .
 
 
 cp -r ../files/audio qgroundcontrol.app/Contents/MacOs/.
