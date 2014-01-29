@@ -460,15 +460,35 @@ WindowsBuild {
         -lSDL
 }
 
+##
+# Speech synthesis library support.
+# Can be forcibly disabled by adding a `DEFINES+=DISABLE_SPEECH` argument to qmake.
+# Linux support requires the Festival Lite speech synthesis engine (flite).
+# Mac support is provided in Snow Leopard and newer (10.6+)
+# Windows support is non-existent.
 #
-# Festival Lite speech synthesis engine
-#
-
-LinuxBuild {
-	LIBS += \
-		-lflite_cmu_us_kal \
-		-lflite_usenglish \
-		-lflite_cmulex \
-		-lflite
+contains (DEFINES, DISABLE_SPEECH) {
+	message("Skipping support for speech output (manually forced)")
+} else:LinuxBuild {
+	exists(/usr/include/flite) | exists(/usr/local/include/flite) {
+		message("Enabling support for speech output")
+		LIBS += \
+			-lflite_cmu_us_kal \
+			-lflite_usenglish \
+			-lflite_cmulex \
+			-lflite
+	} else {
+		DEFINES += DISABLE_SPEECH
+		message("Skipping support for speech output (missing flite libraries)")
+	}
+}
+# Mac support is built into OS 10.6+.
+else:MacBuild {
+	message("Enabling support for speech output")
+}
+# Windows support for speech synthesis is currently incomplete.
+else:WindowsBuild {
+	DEFINES += DISABLE_SPEECH
+	message("Skipping support for speech output (code disabled)")
 }
 
