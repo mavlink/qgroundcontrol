@@ -40,7 +40,9 @@ This file is part of the PIXHAWK project
 #include <AudioOutput>
 #endif
 #ifdef Q_OS_LINUX
+#if !defined DISABLE_SPEECH
 //#include <flite/flite.h>
+#endif
 #include <phonon/MediaObject>
 #include <phonon/AudioOutput>
 #endif
@@ -50,12 +52,12 @@ This file is part of the PIXHAWK project
 #endif
 
 /* For Snow leopard and later
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC & !defined DISABLE_SPEECH
 #include <NSSpeechSynthesizer.h>
 #endif
    */
 
-#ifdef Q_OS_LINUX2
+#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
 extern "C" {
     cst_voice *REGISTER_VOX(const char *voxdir);
     void UNREGISTER_VOX(cst_voice *vox);
@@ -63,7 +65,7 @@ extern "C" {
 }
 #endif
 
-#if _MSC_VER
+#if defined _MSC_VER && !defined DISABLE_SPEECH
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
 #endif
@@ -116,13 +118,13 @@ signals:
     void mutedChanged(bool);
 
 protected:
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC && !defined DISABLE_SPEECH
     //NSSpeechSynthesizer
 #endif
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
     //cst_voice* voice; ///< The flite voice object
 #endif
-#ifdef _MSC_VER
+#if defined _MSC_VER && !defined DISABLE_SPEECH
     static ISpVoice *pVoice;
 #endif
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
