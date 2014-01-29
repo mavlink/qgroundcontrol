@@ -460,11 +460,12 @@ WindowsBuild {
         -lSDL
 }
 
-#
-# Festival Lite speech synthesis engine
+##
+# Speech synthesis library support.
 # Can be forcibly disabled by adding a `DEFINES+=DISABLE_SPEECH` argument to qmake.
 #
 
+# Festival Lite speech synthesis engine
 LinuxBuild {
 	contains (DEFINES, DISABLE_SPEECH) {
 		message("Skipping support for speech output (manually forced)")
@@ -481,13 +482,15 @@ LinuxBuild {
 	}
 }
 
-# Mac support for seech synthesis is currently broken.
+# Mac support for speech synthesis is currently broken.
+# Library support is built into Mac OS X
 MacBuild {
 	DEFINES += DISABLE_SPEECH
 	message("Skipping support for speech output (code disabled)")
 }
 
 # Windows support for speech synthesis is currently broken
+# Library support is built into Windows
 WindowsBuild {
 	DEFINES += DISABLE_SPEECH
 	message("Skipping support for speech output (code disabled)")
