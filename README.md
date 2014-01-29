@@ -62,19 +62,39 @@ To build on Mac OSX (10.6 or later):
 
 To build on Linux:
 - - -
-    sudo apt-get install phonon libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential libopenscenegraph-dev
-    cd directory
-    git clone https://github.com/mavlink/qgroundcontrol.git
-    git submodule init
-    git submodule update
+    1. Install base dependencies (QT + phonon/webkit, SDL)
+      * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential`
+      * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
 
-* go to `libs/thirdParty -> libxbee` 
-* Create Library -> Readme file in folder
-* Ubuntu Application Menu -> Development -> Qt Creator
-* QtCreator Menu File -> Open File or Project..
-* Open `directory/qgroundcontrol/qgroundcontrol.pro`
-* Hit the green play button to compile and launch it
+    2. Install optional libraries
+        * For text-to-speech (flite)
+        * For Ubuntu: `sudo apt-get install libflite1 flite1-dev`
+        * For Fedora: `sudo yum install flite-devel`
+	  * For 3D flight view (openscenegraph)
+        * For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
+        * For Fedora: `sudo yum install OpenSceneGraph-qt-devel`
+    
+    3. Clone the repository
+      1. `cd PROJECTS_DIRECTORY`
+      2. git clone https://github.com/mavlink/qgroundcontrol.git
+      3. [OPTIONAL] For QUpgrade integration:
+        1. `cd qgroundcontrol`
+        2. `git submodule init`
+        3. `git submodule update`
+	
+    4. [OPTIONAL] Build and install XBee support:
+      1. ` cd libs/thirdParty/libxbee` 
+      2. `make`
+      3. `sudo make install`
 
+	5. Build QGroundControl:
+      1. Go back to root qgroundcontrol directory
+      2. `qmake`
+      3. `make` 
+	    * To enable parallel compilation add the `-j` argument with the number of cores you have. So on a quad-core processor: `make -j4`
+		
+	6. Run qgroundcontrol
+	  1. `./release/qgroundcontrol`
 
 # Build on Windows
 - - -
