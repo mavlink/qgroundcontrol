@@ -323,38 +323,47 @@ WindowsBuild {
 
 
 #
-# XBee wireless
+# XBee wireless support. This is not necessary for basic serial/UART communications.
+# It's only required for speaking directly to the Xbee using their proprietary API.
+# Unsupported on Mac.
+# Installation on Windows is unnecessary, as we just link to our included .dlls directly.
+# Installing on Linux involves running `make;sudo make install` in `libs/thirdParty/libxbee`
+# Uninstalling from Linux can be done with `sudo make uninstall`.
 #
+XBEE_DEPENDENT_HEADERS += \
+	src/comm/XbeeLinkInterface.h \
+	src/comm/XbeeLink.h \
+	src/comm/HexSpinBox.h \
+	src/ui/XbeeConfigurationWindow.h \
+	src/comm/CallConv.h
+XBEE_DEPENDENT_SOURCES += \
+	src/comm/XbeeLink.cpp \
+	src/comm/HexSpinBox.cpp \
+	src/ui/XbeeConfigurationWindow.cpp
+XBEE_DEFINES = XBEELINK
 
-WindowsBuild | LinuxBuild {
-    message(Including support for XBee)
+contains(DEFINES, DISABLE_XBEE) {
+	message("Skipping support for native XBee API (manual override)")
+} else:LinuxBuild {
+	exists(/usr/include/xbee.h) {
+		message("Including support for XBee API")
 
-    DEFINES += XBEELINK
-
-    INCLUDEPATH += libs/thirdParty/libxbee
-
-    HEADERS += \
-        src/comm/XbeeLinkInterface.h \
-        src/comm/XbeeLink.h \
-        src/comm/HexSpinBox.h \
-        src/ui/XbeeConfigurationWindow.h \
-        src/comm/CallConv.h
-
-    SOURCES += \
-        src/comm/XbeeLink.cpp \
-        src/comm/HexSpinBox.cpp \
-        src/ui/XbeeConfigurationWindow.cpp
-
-    WindowsBuild {
+		HEADERS += $$XBEE_DEPENDENT_HEADERS
+		SOURCES += $$XBEE_DEPENDENT_SOURCES
+		DEFINES += $$XBEE_DEFINES
+		LIBS += -lxbee
+	} else {
+		message("Skipping support for XBee API (missing library, see README)")
+	}
+} else:WindowsBuild {
+	message("Including support for XBee API")
+	HEADERS += $$XBEE_DEPENDENT_HEADERS
+	SOURCES += $$XBEE_DEPENDENT_SOURCES
+	DEFINES += $$XBEE_DEFINES
+	INCLUDEPATH += libs/thirdParty/libxbee
         LIBS += -l$$BASEDIR/libs/thirdParty/libxbee/lib/libxbee
-    }
-
-    LinuxBuild {
-        LIBS += -L$$BASEDIR/libs/thirdParty/libxbee/lib \
-    		-lxbee
-    }
 } else {
-    message(Skipping support for XBee)
+	message("Skipping support for XBee API (unsupported platform)")
 }
 
 #
