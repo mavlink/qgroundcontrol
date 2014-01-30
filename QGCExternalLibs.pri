@@ -63,33 +63,41 @@ exists(qupgrade) {
 }
 
 #
-# MAVLink
+# Add support for MAVLink. This is a required dependency for QGC.
+# Some logic is involved here in selecting the proper dialect for
+# the selected autopilot system.
 #
 
-MAVLINK_CONF = ""
 MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
 DEFINES += MAVLINK_NO_DATA
 
 # If the user config file exists, it will be included.
-# if the variable MAVLINK_CONF contains the name of an
+# if the variable MAVLINK_DIALECT contains the name of an
 # additional project, QGroundControl includes the support
 # of custom MAVLink messages of this project. It will also
 # create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use
 # within the actual code.
+# First we select the dialect, if any.
 exists(user_config.pri) {
     include(user_config.pri)
-    message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
-    message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
-    message("------------------------------------------------------------------------")
-} else {
-    MAVLINK_CONF += ardupilotmega
+    !isEmpty(MAVLINK_CONF) {
+	MAVLINK_DIALECT = $$MAVLINK_CONF
+        message("Using MAVLink dialect specified in user_config.pri")
+    }
+} else:exists($$MAVLINKPATH/ardupilotmega) {
+    message("No MAVLink dialect specified, selecting default.")
+    MAVLINK_DIALECT = ardupilotmega
 }
+
 INCLUDEPATH += $$MAVLINKPATH
-isEmpty(MAVLINK_CONF) {
-    INCLUDEPATH += $$MAVLINKPATH/common
+# Then we add dialect-specific include paths.
+!isEmpty(MAVLINK_DIALECT) {
+    message($$sprintf("Using MAVLink dialect '%1'", $$MAVLINK_DIALECT))
+    INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_DIALECT
+    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_DIALECT))
 } else {
-    INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
+    message("No dialect specified for MAVLink, only common messages supported.")
+    INCLUDEPATH += $$MAVLINKPATH/common
 }
 
 #
@@ -231,7 +239,7 @@ MacBuild | WindowsBuild {
 # Protcol Buffers for PixHawk
 #
 
-LinuxBuild : contains(MAVLINK_CONF, pixhawk) {
+LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
     exists(/usr/local/include/google/protobuf) | exists(/usr/include/google/protobuf) {
         message("Including support for Protocol Buffers")
 
