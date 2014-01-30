@@ -76,19 +76,27 @@ exists(qupgrade) {
 MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
 DEFINES += MAVLINK_NO_DATA
 
-# First we select the dialect, checking for user selection and choosing
-# a sane default if available.
+# First we select the dialect, checking for valid user selection 
 exists(user_config.pri) {
     include(user_config.pri)
     !isEmpty(MAVLINK_CONF) {
-	MAVLINK_DIALECT = $$MAVLINK_CONF
-        message("Using MAVLink dialect specified in user_config.pri")
+	exists($$MAVLINKPATH/$$MAVLINK_CONF) {
+	    MAVLINK_DIALECT = $$MAVLINK_CONF
+	    message("Using MAVLink dialect specified in user_config.pri")
+	} else {
+	    message($$sprintf("MAVLink dialect '%1' specified in user_config.pri does not exist!", $$MAVLINK_CONF))
+	}
     }
-} else:exists($$MAVLINKPATH/ardupilotmega) {
-    message("No MAVLink dialect specified, selecting default.")
-    MAVLINK_DIALECT = ardupilotmega
 }
-
+# If no valid user selection is found, default to the ardupilotmega if it's available.
+isEmpty(MAVLINK_DIALECT) {
+    exists($$MAVLINKPATH/ardupilotmega) {
+	message("No MAVLink dialect specified, using default.")
+	 MAVLINK_DIALECT = ardupilotmega
+    } else {
+	message("Default MAVLink dialect 'ardupilotmega' does not exist!")
+    }
+}
 # Then we add the proper include paths dependent on the dialects and notify
 # the user of the current dialect.
 INCLUDEPATH += $$MAVLINKPATH
