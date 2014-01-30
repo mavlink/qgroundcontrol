@@ -51,20 +51,6 @@ This file is part of the PIXHAWK project
 #include <Phonon/AudioOutput>
 #endif
 
-/* For Snow leopard and later
-#if defined Q_OS_MAC & !defined DISABLE_SPEECH
-#include <NSSpeechSynthesizer.h>
-#endif
-   */
-
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
-extern "C" {
-    cst_voice *REGISTER_VOX(const char *voxdir);
-    void UNREGISTER_VOX(cst_voice *vox);
-    cst_voice *register_cmu_us_kal16(const char *voxdir);
-}
-#endif
-
 #if defined _MSC_VER && !defined DISABLE_SPEECH
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>

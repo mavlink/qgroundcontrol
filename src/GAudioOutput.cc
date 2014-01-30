@@ -362,26 +362,5 @@ void GAudioOutput::selectNeutralVoice()
 QStringList GAudioOutput::listVoices(void)
 {
     QStringList l;
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH 
-    cst_voice *voice;
-    const cst_val *v;
-
-
-
-    printf("Voices available: ");
-
-    for (v = flite_voice_list; v; v = val_cdr(v))
-    {
-        voice = val_voice(val_car(v));
-        QString s;
-        s.sprintf("%s", voice->name);
-        printf("%s", voice->name);
-        l.append(s);
-    }
-
-    printf("\n");
-
-#endif
     return l;
-
 }
