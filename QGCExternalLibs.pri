@@ -67,17 +67,17 @@ exists(qupgrade) {
 # Some logic is involved here in selecting the proper dialect for
 # the selected autopilot system.
 #
-
+# If the user config file exists, it will be included. If this file
+# specifies the MAVLINK_CONF variable with the name of a MAVLink
+# dialect, this support will be compiled in to QGC. It will  also
+# create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use within
+# the actual code.
+#
 MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
 DEFINES += MAVLINK_NO_DATA
 
-# If the user config file exists, it will be included.
-# if the variable MAVLINK_DIALECT contains the name of an
-# additional project, QGroundControl includes the support
-# of custom MAVLink messages of this project. It will also
-# create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use
-# within the actual code.
-# First we select the dialect, if any.
+# First we select the dialect, checking for user selection and choosing
+# a sane default if available.
 exists(user_config.pri) {
     include(user_config.pri)
     !isEmpty(MAVLINK_CONF) {
@@ -89,8 +89,9 @@ exists(user_config.pri) {
     MAVLINK_DIALECT = ardupilotmega
 }
 
+# Then we add the proper include paths dependent on the dialects and notify
+# the user of the current dialect.
 INCLUDEPATH += $$MAVLINKPATH
-# Then we add dialect-specific include paths.
 !isEmpty(MAVLINK_DIALECT) {
     message($$sprintf("Using MAVLink dialect '%1'", $$MAVLINK_DIALECT))
     INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_DIALECT
