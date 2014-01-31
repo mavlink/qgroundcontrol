@@ -119,6 +119,7 @@ else {
 	    MAVLINK_DIALECTS += $$dialect
 	    message($$sprintf("Using default MAVLink dialect '%1'.", $$dialect))
 	} else {
+
 	    warning($$sprintf("Default MAVLink dialect '%1' does not exist at '%2'!", $$dialect, $$MAVLINKPATH_REL))
 	}
     }
