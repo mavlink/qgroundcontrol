@@ -66,7 +66,7 @@ else:exists(qupgrade/.git) {
 }
 # Otherwise notify the user and don't compile it.
 else {
-    message("Skipping support for QUpgrade (missing submodule, see README)")
+    warning("Skipping support for QUpgrade (missing submodule, see README)")
 }
 
 #
@@ -119,7 +119,6 @@ else {
 	    MAVLINK_DIALECTS += $$dialect
 	    message($$sprintf("Using default MAVLink dialect '%1'.", $$dialect))
 	} else {
-
 	    warning($$sprintf("Default MAVLink dialect '%1' does not exist at '%2'!", $$dialect, $$MAVLINKPATH_REL))
 	}
     }
@@ -133,7 +132,7 @@ INCLUDEPATH += $$MAVLINKPATH
 	    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$dialect))
     }
 } else {
-    message("No valid MAVLink dialects found, only common messages supported.")
+    warning("No valid MAVLink dialects found, only common messages supported.")
     INCLUDEPATH += $$MAVLINKPATH/common
 }
 
