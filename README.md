@@ -20,19 +20,14 @@ Please make sure to delete your build folder before re-building. Independent of 
 build system you use (this is not related to Qt or your OS) the dependency checking and 
 cleaning is based on the current project revision. So if you change the project and don't remove the build folder before your next build, incremental building can leave you with stale object files.
 
-## QGC2.0 Tech Preview
-Developers: In order to build the tech preview branch you need to:
+### QUpgrade
+QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying the DISABLE_QUPGRADE definition when calling qmake `qmake DEFINES=DISABLE_QUPGRADE`.
 
-    git clone https://github.com/mavlink/qgroundcontrol -b config qgc2
-    git submodule init
-    git submodule update
+To include QUpgrade functionality run the following (only needs to be done once after cloning the qggroundcontrol git repository):
+  * `git submodule init`
+  * `git submodule update`
 
-This procedure:
-
-* Clones the config branch (which contains QGC2) from github into your qgc2 directory
-* initializes all the submodules required for QGC, such as qupdate, the firmware installer
-* gets the latest code for all submodules
-
+The QUpgrade module relies on `libudev` on Linux platforms.
 
 # Build on Mac OSX
 
