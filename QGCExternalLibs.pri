@@ -26,11 +26,16 @@ WindowsBuild {
 }
 
 #
-# QUpgrade
+# QUpgrade support.
 #
-
-exists(qupgrade) {
-    message(Including support for QUpgrade)
+# Allow the user to override QUpgrade compilation through a DISABLE_QUPGRADE
+# define like: `qmake DEFINES=DISABLE_QUPGRADE`
+contains(DEFINES, DISABLE_QUPGRADE) {
+    message("Skipping support for QUpgrade (manual override)")
+}
+# If the QUpgrade submodule has been initialized, build in support by default.
+else:exists(qupgrade/.git) {
+    message("Including support for QUpgrade")
 
     DEFINES += QUPGRADE_SUPPORT
 
@@ -58,8 +63,10 @@ exists(qupgrade) {
     LinuxBuild:CONFIG += qesp_linux_udev
 
     include(qupgrade/libs/qextserialport/src/qextserialport.pri)
-} else {
-    message(Skipping support for QUpgrade)
+}
+# Otherwise notify the user and don't compile it.
+else {
+    message("Skipping support for QUpgrade (missing submodule, see README)")
 }
 
 #
