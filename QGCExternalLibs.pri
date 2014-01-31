@@ -70,33 +70,70 @@ else {
 }
 
 #
-# MAVLink
+# Add support for MAVLink. This is a required dependency for QGC.
+# Some logic is involved here in selecting the proper dialect for
+# the selected autopilot system.
 #
-
-MAVLINK_CONF = ""
-MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
+# If the user config file exists, it will be included. If this file
+# specifies the MAVLINK_CONF variable with a list of MAVLink
+# dialects, support for them will be compiled in to QGC. It will also
+# create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use within
+# the actual code.
+#
+MAVLINKPATH_REL = libs/mavlink/include/mavlink/v1.0
+MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
 DEFINES += MAVLINK_NO_DATA
 
-# If the user config file exists, it will be included.
-# if the variable MAVLINK_CONF contains the name of an
-# additional project, QGroundControl includes the support
-# of custom MAVLink messages of this project. It will also
-# create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use
-# within the actual code.
-exists(user_config.pri) {
-    include(user_config.pri)
-    message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
-    message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
-    message("------------------------------------------------------------------------")
-} else {
-    MAVLINK_CONF += ardupilotmega
+# First we select the dialect, checking for valid user selection
+# Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake
+!isEmpty(MAVLINK_CONF) {
+    for(dialect, MAVLINK_CONF) {
+	    exists($$MAVLINKPATH/$$dialect) {
+		MAVLINK_DIALECTS += $$dialect
+		message($$sprintf("Using MAVLink dialect '%1' specified at the command line.", $$dialect))
+	    } else {
+		error($$sprintf("MAVLink dialect '%1' specified at the command line does not exist at '%2'!", $$dialect, $$MAVLINKPATH_REL))
+	    }
+    }
 }
+# Otherwise they can specify MAVLINK_CONF within user_config.pri
+else:exists(user_config.pri) {
+    include(user_config.pri)
+    !isEmpty(MAVLINK_CONF) {
+	for(dialect, MAVLINK_CONF) {
+		exists($$MAVLINKPATH/$$dialect) {
+		    MAVLINK_DIALECTS += $$dialect
+		    message($$sprintf("Using MAVLink dialect '%1' specified in user_config.pri", $$dialect))
+		} else {
+		    error($$sprintf("MAVLink dialect '%1' specified in user_config.pri does not exist at '%2'!", $$dialect, $$MAVLINKPATH_REL))
+		}
+	}
+    }
+}
+# If no valid user selection is found, default to the ardupilotmega if it's available.
+# Note: This can be a list of several dialects.
+else {
+    DEFAULT_MAVLINK_DIALECTS=ardupilotmega
+    for(dialect, DEFAULT_MAVLINK_DIALECTS) {
+	exists($$MAVLINKPATH/$$dialect) {
+	    MAVLINK_DIALECTS += $$dialect
+	    message($$sprintf("Using default MAVLink dialect '%1'.", $$dialect))
+	} else {
+	    warning($$sprintf("Default MAVLink dialect '%1' does not exist at '%2'!", $$dialect, $$MAVLINKPATH_REL))
+	}
+    }
+}
+# Then we add the proper include paths dependent on the dialects and notify
+# the user of the current dialect.
 INCLUDEPATH += $$MAVLINKPATH
-isEmpty(MAVLINK_CONF) {
-    INCLUDEPATH += $$MAVLINKPATH/common
+!isEmpty(MAVLINK_DIALECTS) {
+    for(dialect, MAVLINK_DIALECTS) {
+	    INCLUDEPATH += $$MAVLINKPATH/$$dialect
+	    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$dialect))
+    }
 } else {
-    INCLUDEPATH += $$MAVLINKPATH/$$MAVLINK_CONF
-    DEFINES += $$sprintf('QGC_USE_%1_MESSAGES', $$upper($$MAVLINK_CONF))
+    message("No valid MAVLink dialects found, only common messages supported.")
+    INCLUDEPATH += $$MAVLINKPATH/common
 }
 
 #
@@ -238,7 +275,7 @@ MacBuild | WindowsBuild {
 # Protcol Buffers for PixHawk
 #
 
-LinuxBuild : contains(MAVLINK_CONF, pixhawk) {
+LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
     exists(/usr/local/include/google/protobuf) | exists(/usr/include/google/protobuf) {
         message("Including support for Protocol Buffers")
 

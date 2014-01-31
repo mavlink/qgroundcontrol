@@ -29,6 +29,11 @@ To include QUpgrade functionality run the following (only needs to be done once 
 
 The QUpgrade module relies on `libudev` on Linux platforms.
 
+### Specifying MAVLink dialects
+The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. To override this create a `user_config.pri` file in the root directory and set the `MAVLINK_CONF` variable using qmake's variable notation syntax: `MAVLINK_CONF=sensesoar`. This variable can be a list of dialects that should all be supported like `MAVLINK_CONF=sensesoar ardupilotmega`. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
+
+The `MAVLINK_CONF` variable can also be specified at the command line as an argument to qmake to allow for easy one-off compilations: `qmake MAVLINK_CONF="sensesoar ardupilotmega"`
+
 # Build on Mac OSX
 
 To build on Mac OSX (10.6 or later):
