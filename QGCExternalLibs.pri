@@ -73,11 +73,26 @@ exists(qupgrade) {
 # create a QGC_USE_{AUTOPILOT_NAME}_MESSAGES macro for use within
 # the actual code.
 #
-MAVLINKPATH = $$BASEDIR/libs/mavlink/include/mavlink/v1.0
+MAVLINKPATH_REL = libs/mavlink/include/mavlink/v1.0
+MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
 DEFINES += MAVLINK_NO_DATA
 
 # First we select the dialect, checking for valid user selection 
-exists(user_config.pri) {
+# Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake
+!isEmpty(MAVLINK_CONF) {
+    !isEmpty(MAVLINK_CONF) {
+	for(dialect, MAVLINK_CONF) {
+		exists($$MAVLINKPATH/$$dialect) {
+		    MAVLINK_DIALECTS += $$dialect
+		    message($$sprintf("Using MAVLink dialect '%1' specified at the command line.", $$dialect))
+		} else {
+		    message($$sprintf("MAVLink dialect '%1' specified at the command line does not exist at '%2', ignoring!", $$dialect, $$MAVLINKPATH_REL))
+		}
+	}
+    }
+}
+# Otherwise they can specify MAVLINK_CONF within user_config.pri
+else:exists(user_config.pri) {
     include(user_config.pri)
     !isEmpty(MAVLINK_CONF) {
 	for(dialect, MAVLINK_CONF) {
@@ -85,19 +100,22 @@ exists(user_config.pri) {
 		    MAVLINK_DIALECTS += $$dialect
 		    message($$sprintf("Using MAVLink dialect '%1' specified in user_config.pri", $$dialect))
 		} else {
-		    message($$sprintf("MAVLink dialect '%1' specified in user_config.pri does not exist, ignoring!", $$dialect))
+		    message($$sprintf("MAVLink dialect '%1' specified in user_config.pri does not exist at '%2', ignoring!", $$dialect, $$MAVLINKPATH_REL))
 		}
 	}
     }
 }
 # If no valid user selection is found, default to the ardupilotmega if it's available.
+# Note: This can be a list of several dialects.
 isEmpty(MAVLINK_DIALECTS) {
-    DEFAULT_MAVLINK_DIALECT=ardupilotmega
-    exists($$MAVLINKPATH/$$DEFAULT_MAVLINK_DIALECT) {
-	message($$sprintf("No MAVLink dialect specified, using default of '%1'.", $$DEFAULT_MAVLINK_DIALECT))
-	 MAVLINK_DIALECTS = $$DEFAULT_MAVLINK_DIALECT
-    } else {
-	message($$sprintf("Default MAVLink dialect '%1' does not exist, ignoring!", $$DEFAULT_MAVLINK_DIALECT))
+    DEFAULT_MAVLINK_DIALECTS=ardupilotmega
+    for(dialect, DEFAULT_MAVLINK_DIALECTS) {
+	exists($$MAVLINKPATH/$$dialect) {
+	    MAVLINK_DIALECTS += $$dialect
+	    message($$sprintf("Using default MAVLink dialect '%1'.", $$dialect))
+	} else {
+	    message($$sprintf("Default MAVLink dialect '%1' does not exist at '%2', ignoring!", $$dialect, $$MAVLINKPATH_REL))
+	}
     }
 }
 # Then we add the proper include paths dependent on the dialects and notify
