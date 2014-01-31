@@ -20,8 +20,11 @@ Please make sure to delete your build folder before re-building. Independent of 
 build system you use (this is not related to Qt or your OS) the dependency checking and 
 cleaning is based on the current project revision. So if you change the project and don't remove the build folder before your next build, incremental building can leave you with stale object files.
 
+## Additional functionality
+QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process.
+
 ### QUpgrade
-QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying the DISABLE_QUPGRADE definition when calling qmake `qmake DEFINES=DISABLE_QUPGRADE`.
+QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying the DISABLE_QUPGRADE definition when calling qmake `qmake DEFINES=DISABLE_QUPGRADE`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
 
 To include QUpgrade functionality run the following (only needs to be done once after cloning the qggroundcontrol git repository):
   * `git submodule init`
@@ -33,6 +36,9 @@ The QUpgrade module relies on `libudev` on Linux platforms.
 The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. To override this create a `user_config.pri` file in the root directory and set the `MAVLINK_CONF` variable using qmake's variable notation syntax: `MAVLINK_CONF=sensesoar`. This variable can be a list of dialects that should all be supported like `MAVLINK_CONF=sensesoar ardupilotmega`. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
 
 The `MAVLINK_CONF` variable can also be specified at the command line as an argument to qmake to allow for easy one-off compilations: `qmake MAVLINK_CONF="sensesoar ardupilotmega"`
+
+### Speech syntehsis
+QGroundcontrol can notify the controller of information via speech synthesis on the Mac and Linux platforms. This requires the `flite` library on Linux while on Mac text-to-speech support is built in starting with OS 10.6+ (Snow Leopard). This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
 
 # Build on Mac OSX
 
