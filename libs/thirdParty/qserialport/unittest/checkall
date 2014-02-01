@@ -1,3 +1,0 @@
-#!/bin/sh
-export LD_LIBRARY_PATH="../../lib:$LD_LIBRARY_PATH"
-cd qserialportunittest && make test && cd ..
