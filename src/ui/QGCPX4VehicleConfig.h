@@ -62,6 +62,8 @@ public slots:
     void toggleCalibrationRC(bool enabled);
     /** Start/stop the Spektrum pair routine */
     void toggleSpektrumPairing(bool enabled);
+    /** Set the current trim values as attitude trim values */
+    void copyAttitudeTrim();
     /** Set trim positions */
     void setTrimPositions();
     /** Detect which channels need to be inverted */
