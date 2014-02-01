@@ -370,7 +370,7 @@ public slots:
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
 
-    virtual void startRadioControlCalibration() = 0;
+    virtual void startRadioControlCalibration(int param=1) = 0;
     virtual void endRadioControlCalibration() = 0;
     virtual void startMagnetometerCalibration() = 0;
     virtual void startGyroscopeCalibration() = 0;
