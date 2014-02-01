@@ -912,6 +912,7 @@ public slots:
     void setLocalPositionOffset(float x, float y, float z, float yaw);
 
     void startRadioControlCalibration();
+    void endRadioControlCalibration();
     void startMagnetometerCalibration();
     void startGyroscopeCalibration();
     void startPressureCalibration();

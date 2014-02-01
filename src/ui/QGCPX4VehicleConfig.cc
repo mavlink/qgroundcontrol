@@ -481,6 +481,8 @@ void QGCPX4VehicleConfig::startCalibrationRC()
         return;
     }
 
+    mav->startRadioControlCalibration();
+
     // reset all channel mappings above Ch 5 to invalid/unused value before starting calibration
     for (unsigned int j= 5; j < chanMappedMax; j++) {
         rcMapping[j] = -1;
@@ -528,6 +530,8 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
 {
     if (!calibrationEnabled)
         return;
+
+    mav->endRadioControlCalibration();
 
     // Try to identify inverted channels, but only for R/P/Y/T
     for (int i = 0; i < 4; i++) {
