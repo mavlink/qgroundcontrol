@@ -1460,14 +1460,15 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         rcYaw = normalized;
     }
     else if (chan == rcMapping[3]) {
-        if (rcRev[chan]) {
-            rcThrottle = 1.0f + normalized;
-        }
-        else {
-            rcThrottle = normalized;
-        }
+        rcThrottle = normalized;
+//        if (rcRev[chan]) {
+//            rcThrottle = 1.0f + normalized;
+//        }
+//        else {
+//            rcThrottle = normalized;
+//        }
 
-        rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
+//        rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
     }
     else if (chan == rcMapping[4]) {
         rcMode = normalized; // MODE SWITCH
