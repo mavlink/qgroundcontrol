@@ -1423,6 +1423,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         }
     }
 
+    // Reverse raw value
     rcValueReversed[chan] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
 
     // Normalized value
@@ -1441,7 +1442,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     normalized = (rcRev[chan]) ? -1.0f*normalized : normalized;
 
     // Find correct mapped channel
-    rcMappedValueRev[rcToFunctionMapping[chan]] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
+    rcMappedValueRev[rcToFunctionMapping[chan]] = rcValueReversed[chan];
     rcMappedValue[rcToFunctionMapping[chan]] = fval;
 
     // Copy min / max
