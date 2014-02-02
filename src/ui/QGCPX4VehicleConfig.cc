@@ -1896,10 +1896,10 @@ void QGCPX4VehicleConfig::checktimeOuts()
 
 void QGCPX4VehicleConfig::updateRcWidgetValues()
 {
-    ui->rollWidget->setValueAndRange(rcMappedValue[0],rcMappedMin[0],rcMappedMax[0]);
-    ui->pitchWidget->setValueAndRange(rcMappedValue[1],rcMappedMin[1],rcMappedMax[1]);
-    ui->yawWidget->setValueAndRange(rcMappedValue[2],rcMappedMin[2],rcMappedMax[2]);
-    ui->throttleWidget->setValueAndRange(rcMappedValue[3],rcMappedMin[3],rcMappedMax[3]);
+    ui->rollWidget->setValueAndRange(rcMappedValueRev[0],rcMappedMin[0],rcMappedMax[0]);
+    ui->pitchWidget->setValueAndRange(rcMappedValueRev[1],rcMappedMin[1],rcMappedMax[1]);
+    ui->yawWidget->setValueAndRange(rcMappedValueRev[2],rcMappedMin[2],rcMappedMax[2]);
+    ui->throttleWidget->setValueAndRange(rcMappedValueRev[3],rcMappedMin[3],rcMappedMax[3]);
 
     ui->radio5Widget->setValueAndRange(rcValueReversed[4],rcMin[4],rcMax[4]);
     ui->radio6Widget->setValueAndRange(rcValueReversed[5],rcMin[5],rcMax[5]);
