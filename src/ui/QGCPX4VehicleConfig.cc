@@ -422,22 +422,31 @@ void QGCPX4VehicleConfig::setTrimPositions()
         rcTrim[i] = 1500;
     }
 
-    // Set trim to min if stick is close to min
-    if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
-        rcTrim[throttleMap] = rcMin[throttleMap];   // throttle
-    }
-    // Set trim to max if stick is close to max
-    else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 100) {
-        rcTrim[throttleMap] = rcMax[throttleMap];   // throttle
-    }
-    else  {
-        // Reject
-        QMessageBox warnMsgBox;
-        warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
-        warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the minimum value"));
-        warnMsgBox.setStandardButtons(QMessageBox::Ok);
-        warnMsgBox.setDefaultButton(QMessageBox::Ok);
-        (void)warnMsgBox.exec();
+    bool throttleDone = false;
+
+    while (!throttleDone) {
+        // Set trim to min if stick is close to min
+        if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
+            rcTrim[throttleMap] = rcMin[throttleMap];   // throttle
+            throttleDone = true;
+        }
+        // Set trim to max if stick is close to max
+        else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 100) {
+            rcTrim[throttleMap] = rcMax[throttleMap];   // throttle
+            throttleDone = true;
+        }
+        else
+        {
+            // Reject
+            QMessageBox warnMsgBox;
+            warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
+            warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the zero throttle position and then click OK."));
+            warnMsgBox.setStandardButtons(QMessageBox::Ok);
+            warnMsgBox.setDefaultButton(QMessageBox::Ok);
+            (void)warnMsgBox.exec();
+            // wait long enough to get some data
+            QGC::SLEEP::msleep(500);
+        }
     }
 
     // Set trim for roll, pitch, yaw, throttle
