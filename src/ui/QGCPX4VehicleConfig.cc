@@ -623,14 +623,14 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     qDebug() << "SETTING TRIM";
     setTrimPositions();
 
-    QString statusstr;
-    statusstr = tr("This is the RC calibration information that will be sent to the autopilot if you click OK. To prevent transmission, click Cancel.");
-    statusstr += tr("  Normal values range from 1000 to 2000, with disconnected channels reading 1000, 1500, 2000\n\n");
-    statusstr += tr("Channel\tMin\tCenter\tMax\n");
-    statusstr += "-------\t---\t------\t---\n";
-    for (unsigned int i=0; i < chanCount; i++) {
-        statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
-    }
+    QString statusstr = tr("The calibration has been finished. Please click OK to upload it to the autopilot.");
+//    statusstr = tr("This is the RC calibration information that will be sent to the autopilot if you click OK. To prevent transmission, click Cancel.");
+//    statusstr += tr("  Normal values range from 1000 to 2000, with disconnected channels reading 1000, 1500, 2000\n\n");
+//    statusstr += tr("Channel\tMin\tCenter\tMax\n");
+//    statusstr += "-------\t---\t------\t---\n";
+//    for (unsigned int i=0; i < chanCount; i++) {
+//        statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
+//    }
 
     msgBox.setText(tr("Confirm Calibration"));
     msgBox.setInformativeText(statusstr);
