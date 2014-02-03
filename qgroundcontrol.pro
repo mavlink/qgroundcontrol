@@ -29,7 +29,7 @@ linux-g++ | linux-g++-64 {
 } else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 {
     message(Windows build)
     CONFIG += WindowsBuild
-} else : macx-clang {
+} else : macx-clang | macx-llvm {
     message(Mac build)
     CONFIG += MacBuild
 } else {
