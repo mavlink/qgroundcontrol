@@ -365,16 +365,9 @@ INCLUDEPATH += \
 include(libs/qwt/qwt.pri)
 
 #
-# QSerialPort - serial port library
+# [REQUIRED] QSerialPort library. Provides serial port wrapper library.
 #
-
 include(libs/serialport/qserialport.pri)
-
-WindowsBuild {
-    # Used to enumerate serial ports by QSerialPort
-	LIBS += -lsetupapi
-}
-
 
 #
 # XBee wireless support. This is not necessary for basic serial/UART communications.
