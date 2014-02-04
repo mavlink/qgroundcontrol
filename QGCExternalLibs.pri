@@ -517,37 +517,32 @@ MacBuild {
 }
 
 ##
-# Speech synthesis library support.
+# [OPTIONAL] Speech synthesis library support.
 # Can be forcibly disabled by adding a `DEFINES+=DISABLE_SPEECH` argument to qmake.
+# Linux support requires the Festival Lite speech synthesis engine (flite).
+# Mac support is provided in Snow Leopard and newer (10.6+)
+# Windows is supported as of Windows 7
 #
-
-# Festival Lite speech synthesis engine
-LinuxBuild {
-	contains (DEFINES, DISABLE_SPEECH) {
-		message("Skipping support for speech synthesis (manual override)")
-	} else:exists(/usr/include/flite) | exists(/usr/local/include/flite) {
-		message(Enabling support for speech output)
+contains (DEFINES, DISABLE_SPEECH) {
+	message("Skipping support for speech output (manual override)")
+} else:LinuxBuild {
+	exists(/usr/include/flite) | exists(/usr/local/include/flite) {
+		message("Including support for speech output")
 		LIBS += \
-			-lflite_cmu_us_kal \
-			-lflite_usenglish \
-			-lflite_cmulex \
-			-lflite
+		-lflite_cmu_us_kal \
+		-lflite_usenglish \
+		-lflite_cmulex \
+		-lflite
 	} else {
 		DEFINES += DISABLE_SPEECH
-		warning("Skipping support for speech synthesis (missing flite libraries, see README)")
+		warning("Skipping support for speech output (missing libraries, see README)")
 	}
 }
-
-# Mac support for speech synthesis is currently broken.
-# Library support is built into Mac OS X
-MacBuild {
-	message("Including support for speech synthesis.")
+# Mac support is built into OS 10.6+.
+else:MacBuild {
+	message("Including support for speech output")
 }
-
-# Windows support for speech synthesis is currently broken
-# Library support is built into Windows
-WindowsBuild {
-	DEFINES += DISABLE_SPEECH
-	message("Skipping support for speech synthesis (unsupported on Windows)")
+# Windows supports speech through native API.
+else:WindowsBuild {
+	message("Including support for speech output")
 }
-
