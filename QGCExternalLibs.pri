@@ -414,24 +414,26 @@ contains(DEFINES, DISABLE_XBEE) {
 }
 
 #
-# 3DConnexion 3d Mice support
+# [OPTIONAL] Magellan 3DxWare library. Provides support for 3DConnexion's 3D mice.
 #
+contains(DEFINES, DISABLE_3DMOUSE) {
+	message("Skipping support for 3DConnexion mice (manual override)")
+} else:LinuxBuild {
+	exists(/usr/local/lib/libxdrvlib.so) {
+		message("Including support for 3DConnexion mice")
 
-LinuxBuild : exists(/usr/local/lib/libxdrvlib.so) {
-    message("Including support for Magellan 3DxWare")
+		DEFINES +=
+		MOUSE_ENABLED_LINUX \
+		ParameterCheck                      # Hack: Has to be defined for magellan usage
 
-    DEFINES +=
-        MOUSE_ENABLED_LINUX \
-        ParameterCheck                      # Hack: Has to be defined for magellan usage
-
-    INCLUDEPATH *= /usr/local/include
-    HEADERS += src/input/Mouse6dofInput.h
-    SOURCES += src/input/Mouse6dofInput.cpp
-    LIBS += -L/usr/local/lib/ -lxdrvlib
-}
-
-WindowsBuild {
-    message("Including support for Magellan 3DxWare")
+		HEADERS += src/input/Mouse6dofInput.h
+		SOURCES += src/input/Mouse6dofInput.cpp
+		LIBS += -L/usr/local/lib/ -lxdrvlib
+	} else {
+		warning("Skipping support for 3DConnexion mice (missing libraries, see README)")
+	}
+} else:WindowsBuild {
+    message("Including support for 3DConnexion mice")
 
     DEFINES += MOUSE_ENABLED_WIN
 
@@ -447,6 +449,8 @@ WindowsBuild {
         libs/thirdParty/3DMouse/win/MouseParameters.cpp \
         libs/thirdParty/3DMouse/win/Mouse3DInput.cpp \
         src/input/Mouse6dofInput.cpp
+} else {
+	message("Skipping support for 3DConnexion mice (unsupported platform)")
 }
 
 #
