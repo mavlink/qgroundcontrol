@@ -27,7 +27,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     ui->simComboBox->addItem(tr("Plane Sensor (HilStar, X-Plane)"), 1000);
     ui->simComboBox->addItem(tr("Plane Sensor (Rascal, FlightGear)"), 1004);
-    ui->simComboBox->addItem(tr("Plane State (HilStar, X-Plane)"), 1002);
+    //ui->simComboBox->addItem(tr("Plane State (HilStar, X-Plane)"), 1002);
     ui->simComboBox->addItem(tr("Quad X HIL"), 1001);
     ui->simComboBox->addItem(tr("Quad + HIL"), 1003);
 
@@ -55,8 +55,8 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 4010);
     ui->quadXComboBox->addItem(tr("DJI F450 10\" Quad"), 4011);
     ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 4012);
-    ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 4008);
-    ui->quadXComboBox->addItem(tr("AR.Drone Quad (w. PX4FLOW)"), 4009);
+    //ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 4008);
+    //ui->quadXComboBox->addItem(tr("AR.Drone Quad (w. PX4FLOW)"), 4009);
     ui->quadXComboBox->addItem(tr("DJI F330 with MK BLCTRL"), 4017);
     ui->quadXComboBox->addItem(tr("Mikrokopter X frame"), 4019);
 
@@ -64,20 +64,20 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     connect(ui->quadXComboBox, SIGNAL(activated(int)), this, SLOT(quadXSelected(int)));
     ui->quadXPushButton->setEnabled(ui->quadXComboBox->count() > 0);
 
-    ui->quadPlusComboBox->addItem(tr("DJI F330 8\" Quad"), 4010);
+    ui->quadPlusComboBox->addItem(tr("Generic 10\" Quad +"), 5001);
     ui->quadXComboBox->addItem(tr("Mikrokopter + frame"), 5020);
 
     connect(ui->quadPlusPushButton, SIGNAL(clicked()), this, SLOT(quadPlusSelected()));
     connect(ui->quadPlusComboBox, SIGNAL(activated(int)), this, SLOT(quadPlusSelected(int)));
     ui->quadPlusPushButton->setEnabled(ui->quadPlusComboBox->count() > 0);
 
-    ui->hexaPlusComboBox->addItem(tr("DJI F550 10\" Hexa"), 6012);
+    ui->hexaPlusComboBox->addItem(tr("DJI F550 10\" Hexa"), 6001);
 
     connect(ui->hexaXPushButton, SIGNAL(clicked()), this, SLOT(hexaXSelected()));
     connect(ui->hexaXComboBox, SIGNAL(activated(int)), this, SLOT(hexaXSelected(int)));
     ui->hexaXPushButton->setEnabled(ui->hexaXComboBox->count() > 0);
 
-    ui->hexaPlusComboBox->addItem(tr("DJI F550 10\" Hexa"), 7013);
+    ui->hexaPlusComboBox->addItem(tr("DJI F550 10\" Hexa"), 7001);
 
     connect(ui->hexaPlusPushButton, SIGNAL(clicked()), this, SLOT(hexaPlusSelected()));
     connect(ui->hexaPlusComboBox, SIGNAL(activated(int)), this, SLOT(hexaPlusSelected(int)));
