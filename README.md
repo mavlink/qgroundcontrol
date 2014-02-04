@@ -42,6 +42,11 @@ An add-on is available for QGC that provides a UI for generating MAVLink dialect
 
 This is not built by default as it is deprecated functionality that will removed in a forthcoming version of QGC. You can enable it by specifying the ENABLE_MAVGEN constant as an argument to qmake like `qmake DEFINES=ENABLE_MAVGEN`.
 
+### Opal-RT's RT-LAB simulator
+Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. Thallows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed.
+
+This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by defining DISABLE_RTLAB when running qmake.
+
 ### Speech syntehsis
 QGroundcontrol can notify the controller of information via speech synthesis on the Mac and Linux platforms. This requires the `flite` library on Linux while on Mac text-to-speech support is built in starting with OS 10.6+ (Snow Leopard). This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
 

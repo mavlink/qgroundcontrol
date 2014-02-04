@@ -454,41 +454,46 @@ contains(DEFINES, DISABLE_3DMOUSE) {
 }
 
 #
-# Opal RT-LAB Library
+# [OPTIONAL] Opal RT-LAB Library. Provides integration with Opal-RT's RT-LAB simulator.
 #
+contains(DEFINES, DISABLE_RTLAB) {
+	message("Skipping support for RT-LAB (manual override)")
+} else:WindowsBuild {
+	exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
+		message("Including support for Opal-RT")
 
-WindowsBuild : win32 : exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
-    message("Including support for Opal-RT")
+		DEFINES += OPAL_RT
 
-    DEFINES += OPAL_RT
+		INCLUDEPATH +=
+			src/lib/opalrt
+			libs/lib/opal/include \
 
-    INCLUDEPATH += 
-        src/lib/opalrt
-        libs/lib/opal/include \
+		FORMS += src/ui/OpalLinkSettings.ui
 
-    FORMS += src/ui/OpalLinkSettings.ui
+		HEADERS += \
+			src/comm/OpalRT.h \
+			src/comm/OpalLink.h \
+			src/comm/Parameter.h \
+			src/comm/QGCParamID.h \
+			src/comm/ParameterList.h \
+			src/ui/OpalLinkConfigurationWindow.h
 
-    HEADERS += \
-        src/comm/OpalRT.h \
-        src/comm/OpalLink.h \
-        src/comm/Parameter.h \
-        src/comm/QGCParamID.h \
-        src/comm/ParameterList.h \
-        src/ui/OpalLinkConfigurationWindow.h
+		SOURCES += \
+			src/comm/OpalRT.cc \
+			src/comm/OpalLink.cc \
+			src/comm/Parameter.cc \
+			src/comm/QGCParamID.cc \
+			src/comm/ParameterList.cc \
+			src/ui/OpalLinkConfigurationWindow.cc
 
-    SOURCES += \
-        src/comm/OpalRT.cc \
-        src/comm/OpalLink.cc \
-        src/comm/Parameter.cc \
-        src/comm/QGCParamID.cc \
-        src/comm/ParameterList.cc \
-        src/ui/OpalLinkConfigurationWindow.cc
-
-    LIBS += \
-        -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
-        -lOpalApi
+		LIBS += \
+			-LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
+			-lOpalApi
+	} else {
+		warning("Skipping support for RT-LAB (missing libraries, see README)")
+	}
 } else {
-    message("Skipping support for Opal-RT")
+    message("Skipping support for RT-LAB (unsupported platform)")
 }
 
 #
