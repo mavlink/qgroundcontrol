@@ -55,6 +55,11 @@ Microsoft's Kinect can be used by some autopilots for additional functionality. 
 
 This support is enabled by default and built-in when the appropriate libraries exist. To disable this behavior set the DISABLE_KINECT define when running qmake.
 
+### 3D mouse support
+Connexion's 3D mice are supported through the 3DxWARE driver available on Linux and Windows. Download and install the driver from 3DConnexion to enable support.
+
+This support is enabled by default with driver installation. To disable define DISABLE_3DMOUSE when running qmake.
+
 ### XBee support
 QGroundControl can talk to XBee wireless devices using their proprietary protocol directly on Windows and Linux platforms. This support is not necessary if you're not using XBee devices or aren't using their proprietary protocol. On Windows, the necessary dependencies are included in this repository and no additional steps are required. For Linux, change to the `libs/thirdParty/libxbee` folder and run `make;sudo make install` to install libxbee on your system (uninstalling can be done with a `sudo make uninstall`). qmake will automatically detect the library on Linux, so no other work is necessary.
 
