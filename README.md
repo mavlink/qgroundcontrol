@@ -48,7 +48,7 @@ Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by install
 This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by defining DISABLE_RTLAB when running qmake.
 
 ### Speech syntehsis
-QGroundcontrol can notify the controller of information via speech synthesis on the Mac and Linux platforms. This requires the `flite` library on Linux while on Mac text-to-speech support is built in starting with OS 10.6+ (Snow Leopard). This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
+QGroundcontrol can notify the controller of information via speech synthesis. This requires the `flite` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
 
 ### 3D view
 The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC can provide.
