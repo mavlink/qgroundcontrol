@@ -156,11 +156,11 @@ contains(DEFINES, ENABLE_MAVGEN) {
 }
 
 #
-# OpenSceneGraph
+# [OPTIONAL] OpenSceneGraph
 #
-
 MacBuild {
     # GLUT and OpenSceneGraph are part of standard install on Mac
+	message("Including support for OpenSceneGraph")
 	CONFIG += OSGDependency
 
     INCLUDEPATH += \
@@ -169,23 +169,23 @@ MacBuild {
 	LIBS += \
         -L$$BASEDIR/libs/lib/mac64/lib \
         -losgWidget
-}
-
-LinuxBuild {
+} else:LinuxBuild {
 	exists(/usr/include/osg) | exists(/usr/local/include/osg) {
+		message("Including support for OpenSceneGraph")
         CONFIG += OSGDependency
         exists(/usr/include/osg/osgQt) | exists(/usr/include/osgQt) | exists(/usr/local/include/osg/osgQt) | exists(/usr/local/include/osgQt) {
             message("Including support for Linux OpenSceneGraph Qt")
             LIBS += -losgQt
             DEFINES += QGC_OSG_QT_ENABLED
         } else {
-            message("Skipping support for Linux OpenSceneGraph Qt")
+            warning("Skipping support for Linux OpenSceneGraph Qt (missing libraries, see README)")
         }
+	} else {
+		warning("Skipping support for OpenSceneGraph (missing libraries, see README)")
 	}
-}
-
-WindowsBuild {
+} else:WindowsBuild {
 	exists($$BASEDIR/libs/lib/osg123) {
+		message("Including support for OpenSceneGraph")
         CONFIG += OSGDependency
 
 		INCLUDEPATH += \
@@ -193,12 +193,14 @@ WindowsBuild {
 			$$BASEDIR/libs/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
 
 		LIBS += -L$$BASEDIR/libs/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib
+	} else {
+		warning("Skipping support for OpenSceneGraph (missing libraries, see README)")
 	}
+} else {
+    message("Skipping support for OpenSceneGraph (unsupported platform)")
 }
 
 OSGDependency {
-    message("Including support for OpenSceneGraph")
-
 	DEFINES += QGC_OSG_ENABLED
     
     LIBS += \
@@ -256,24 +258,26 @@ OSGDependency {
         src/ui/map3D/WaypointGroupNode.cc \
         src/ui/map3D/TerrainParamDialog.cc \
         src/ui/map3D/ImageryParamDialog.cc
-} else {
-    message("Skipping support for OpenSceneGraph")
 }
 
 #
-# Google Earth
+# [OPTIONAL] Google Earth dependency. Provides Google Earth view to supplement 2D map view.
+# Only supported on Mac and Windows where Google Earth can be installed.
 #
-
-MacBuild | WindowsBuild {
-    message(Including support for Google Earth)
+contains(DEFINES, DISABLE_GOOGLE_EARTH) {
+	message("Skipping support for Google Earth view (manual override)")
+} else:MacBuild {
+    message("Including support for Google Earth view")
+    HEADERS += src/ui/map3D/QGCGoogleEarthView.h
+    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+} else:WindowsBuild {
+    message("Including support for Google Earth view")
 
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-    WindowsBuild {
-        CONFIG += qaxcontainer
-    }
+    CONFIG += qaxcontainer
 } else {
-    message(Skipping support for Google Earth)
+    message("Skipping support for Google Earth view (unsupported platform)")
 }
 
 #

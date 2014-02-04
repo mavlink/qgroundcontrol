@@ -45,6 +45,11 @@ This is not built by default as it is deprecated functionality that will removed
 ### Speech syntehsis
 QGroundcontrol can notify the controller of information via speech synthesis on the Mac and Linux platforms. This requires the `flite` library on Linux while on Mac text-to-speech support is built in starting with OS 10.6+ (Snow Leopard). This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
 
+### 3D view
+The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC can provide.
+
+OpenSceneGraph support is built-in to Mac OS X. On Linux it is commonly available through the libopenscenegraph and libopenscenegraph-qt developer packages. Windows support does not currently exist. This functionality with be automatically built if the proper libraries are installed.
+
 ### XBee support
 QGroundControl can talk to XBee wireless devices using their proprietary protocol directly on Windows and Linux platforms. This support is not necessary if you're not using XBee devices or aren't using their proprietary protocol. On Windows, the necessary dependencies are included in this repository and no additional steps are required. For Linux, change to the `libs/thirdParty/libxbee` folder and run `make;sudo make install` to install libxbee on your system (uninstalling can be done with a `sudo make uninstall`). qmake will automatically detect the library on Linux, so no other work is necessary.
 

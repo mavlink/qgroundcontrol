@@ -679,11 +679,11 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if (defined _MSC_VER) /*| (defined Q_OS_MAC) mac os doesn't support gearth right now */
+#ifndef DISABLE_GOOGLE_EARTH
     if (!earthWidget)
     {
         earthWidget = new QGCGoogleEarthView(this);
-        addToCentralStackedWidget(earthWidget,VIEW_GOOGLEEARTH, tr("Google Earth"));
+        addToCentralStackedWidget(earthWidget, VIEW_GOOGLEEARTH, tr("Google Earth"));
     }
 #endif
 }
