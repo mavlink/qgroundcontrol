@@ -312,12 +312,13 @@ LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
 }
 
 #
-# libfreenect Kinect support
+# [OPTIONAL] Kinect support using libfreenect on POSIX systems.
 #
-
-MacBuild | LinuxBuild {
+contains(DEFINES, DISABLE_KINECT) {
+	message("Skipping support for the Kinect (manual override)")
+} else:MacBuild | LinuxBuild {
     exists(/opt/local/include/libfreenect) | exists(/usr/local/include/libfreenect) {
-        message("Including support for libfreenect")
+        message("Including support for the Kinect")
 
         #INCLUDEPATH += /usr/include/libusb-1.0
         DEFINES += QGC_LIBFREENECT_ENABLED
@@ -325,10 +326,10 @@ MacBuild | LinuxBuild {
         HEADERS += src/input/Freenect.h
         SOURCES += src/input/Freenect.cc
     } else {
-        message("Skipping support for libfreenect")
+        warning("Skipping support for the Kinect (missing libraries, see README)")
     }
 } else {
-    message("Skipping support for libfreenect")
+    message("Skipping support for the Kinect (unsupported platform)")
 }
 
 #
