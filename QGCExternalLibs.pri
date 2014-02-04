@@ -1,7 +1,6 @@
 #
-# Tell the Linux build to look in a few additional places for libs
+# [REQUIRED] Tell the Linux build to look in a few additional places for libs
 #
-
 LinuxBuild {
 	INCLUDEPATH += \
         /usr/include \
@@ -18,15 +17,14 @@ LinuxBuild {
 }
 
 #
-# Add in a few missing headers to windows
+# [REQUIRED] Add support for <inttypes.h> to Windows.
 #
-
 WindowsBuild {
     INCLUDEPATH += libs/lib/msinttypes
 }
 
 #
-# QUpgrade support.
+# [OPTIONAL] QUpgrade support.
 #
 # Allow the user to override QUpgrade compilation through a DISABLE_QUPGRADE
 # define like: `qmake DEFINES=DISABLE_QUPGRADE`
@@ -70,7 +68,7 @@ else {
 }
 
 #
-# Add support for MAVLink. This is a required dependency for QGC.
+# [REQUIRED] Add support for the MAVLink communications protocol.
 # Some logic is involved here in selecting the proper dialect for
 # the selected autopilot system.
 #
@@ -281,9 +279,8 @@ contains(DEFINES, DISABLE_GOOGLE_EARTH) {
 }
 
 #
-# Protcol Buffers for PixHawk
+# [OPTIONAL] Protcol Buffers for PixHawk
 #
-
 LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
     exists(/usr/local/include/google/protobuf) | exists(/usr/include/google/protobuf) {
         message("Including support for Protocol Buffers")
@@ -305,10 +302,10 @@ LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
             src/ui/map3D/ObstacleGroupNode.cc \
             src/ui/map3D/GLOverlayGeode.cc
     } else {
-        message("Skipping support for Protocol Buffers")
+        warning("Skipping support for Protocol Buffers (missing libraries, see README)")
     }
 } else {
-    message("Skipping support for Protocol Buffers")
+    message("Skipping support for Protocol Buffers (unsupported platform)")
 }
 
 #
@@ -333,16 +330,14 @@ contains(DEFINES, DISABLE_KINECT) {
 }
 
 #
-# EIGEN matrix library (NOMINMAX needed to make internal min/max work)
+# [REQUIRED] EIGEN matrix library (NOMINMAX needed to make internal min/max work)
 #
-
 INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
-# OPMapControl library (from OpenPilot)
+# [REQUIRED] OPMapControl library from OpenPilot. Provides 2D mapping functionality.
 #
-
 include(libs/utils/utils_external.pri)
 include(libs/opmapcontrol/opmapcontrol_external.pri)
 
@@ -359,9 +354,8 @@ INCLUDEPATH += \
     libs/opmapcontrol
 
 #
-# QWT plotting library
+# [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
-
 include(libs/qwt/qwt.pri)
 
 #
@@ -370,7 +364,7 @@ include(libs/qwt/qwt.pri)
 include(libs/serialport/qserialport.pri)
 
 #
-# XBee wireless support. This is not necessary for basic serial/UART communications.
+# [OPTIONAL] XBee wireless support. This is not necessary for basic serial/UART communications.
 # It's only required for speaking directly to the Xbee using their proprietary API.
 # Unsupported on Mac.
 # Installation on Windows is unnecessary, as we just link to our included .dlls directly.
@@ -400,7 +394,7 @@ contains(DEFINES, DISABLE_XBEE) {
 		DEFINES += $$XBEE_DEFINES
 		LIBS += -lxbee
 	} else {
-		warning("Skipping support for XBee API (missing library, see README)")
+		warning("Skipping support for XBee API (missing libraries, see README)")
 	}
 } else:WindowsBuild {
 	message("Including support for XBee API")
@@ -497,9 +491,10 @@ contains(DEFINES, DISABLE_RTLAB) {
 }
 
 #
-# SDL
+# [REQUIRED] SDL dependency. Provides joystick/gamepad support.
+# The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
+# library (development libraries and static binaries).
 #
-
 MacBuild {
     INCLUDEPATH += \
         $$BASEDIR/libs/lib/Frameworks/SDL.framework/Headers
@@ -507,15 +502,11 @@ MacBuild {
     LIBS += \
         -F$$BASEDIR/libs/lib/Frameworks \
         -framework SDL
-}
-
-LinuxBuild {
+} else:LinuxBuild {
 	LIBS += \
 		-lSDL \
 		-lSDLmain
-}
-
-WindowsBuild {
+} else:WindowsBuild {
 	INCLUDEPATH += \
         $$BASEDIR/libs/lib/sdl/msvc/include \
 
