@@ -137,18 +137,23 @@ INCLUDEPATH += $$MAVLINKPATH
 }
 
 #
-# MAVLink generator (deprecated)
+# [DEPRECATED] MAVLink generator UI. Provides a GUI interface for generating MAVLink dialects.
+# Replaced by mavgenerator.py within the MAVLink project.
 #
+contains(DEFINES, ENABLE_MAVGEN) {
+	warning("Including support for MAVLink generator GUI (caution: deprecated)")
+	DEPENDPATH += \
+		src/apps/mavlinkgen
 
-DEPENDPATH += \
-    src/apps/mavlinkgen
+	INCLUDEPATH += \
+		src/apps/mavlinkgen \
+		src/apps/mavlinkgen/ui \
+		src/apps/mavlinkgen/generator
 
-INCLUDEPATH += \
-    src/apps/mavlinkgen \
-    src/apps/mavlinkgen/ui \
-    src/apps/mavlinkgen/generator
-
-include(src/apps/mavlinkgen/mavlinkgen.pri)
+	include(src/apps/mavlinkgen/mavlinkgen.pri)
+} else {
+	message("Skipping support for MAVLink generator GUI (deprecated, see README)")
+}
 
 #
 # OpenSceneGraph
