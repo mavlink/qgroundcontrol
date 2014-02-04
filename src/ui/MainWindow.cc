@@ -72,6 +72,11 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 
+// Add support for the MAVLink generator UI if it's been requested.
+#ifdef ENABLE_MAVGEN
+#include "XMLCommProtocolWidget.h"
+#endif
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -547,6 +552,8 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
 
+// Add the MAVLink generator UI if it's been requested.
+#ifdef ENABLE_MAVGEN
     if (!mavlinkView)
     {
         mavlinkView = new SubMainWindow(this);
@@ -554,6 +561,7 @@ void MainWindow::buildCommonWidgets()
         mavlinkView->setCentralWidget(new XMLCommProtocolWidget(this));
         addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
     }
+#endif
 
     if (!simView)
     {

@@ -37,6 +37,11 @@ The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This wi
 
 The `MAVLINK_CONF` variable can also be specified at the command line as an argument to qmake to allow for easy one-off compilations: `qmake MAVLINK_CONF="sensesoar ardupilotmega"`
 
+### MAVLink dialect generator
+An add-on is available for QGC that provides a UI for generating MAVLink dialects from within QGC. This feature has been deprecated since identical functionality now exists within the MAVLink project itself.
+
+This is not built by default as it is deprecated functionality that will removed in a forthcoming version of QGC. You can enable it by specifying the ENABLE_MAVGEN constant as an argument to qmake like `qmake DEFINES=ENABLE_MAVGEN`.
+
 ### Speech syntehsis
 QGroundcontrol can notify the controller of information via speech synthesis on the Mac and Linux platforms. This requires the `flite` library on Linux while on Mac text-to-speech support is built in starting with OS 10.6+ (Snow Leopard). This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
 

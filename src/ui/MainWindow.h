@@ -56,7 +56,6 @@ This file is part of the QGROUNDCONTROL project
 #endif // MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
-#include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
