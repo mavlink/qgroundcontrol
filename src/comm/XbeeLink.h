@@ -53,6 +53,7 @@ public:
 	void run(); // initiating the thread
 
 protected:
+	struct xbee *xbee;
 	xbee_con *m_xbeeCon;
 	int m_id;
 	char *m_portName;
