@@ -532,24 +532,27 @@ MacBuild {
 #
 contains (DEFINES, DISABLE_SPEECH) {
 	message("Skipping support for speech output (manual override)")
+	DEFINES -= DISABLE_SPEECH
 } else:LinuxBuild {
 	exists(/usr/include/flite) | exists(/usr/local/include/flite) {
 		message("Including support for speech output")
+		DEFINES += QGC_SPEECH_ENABLED
 		LIBS += \
 		-lflite_cmu_us_kal \
 		-lflite_usenglish \
 		-lflite_cmulex \
 		-lflite
 	} else {
-		DEFINES += DISABLE_SPEECH
 		warning("Skipping support for speech output (missing libraries, see README)")
 	}
 }
 # Mac support is built into OS 10.6+.
 else:MacBuild {
 	message("Including support for speech output")
+	DEFINES += QGC_SPEECH_ENABLED
 }
 # Windows supports speech through native API.
 else:WindowsBuild {
 	message("Including support for speech output")
+	DEFINES += QGC_SPEECH_ENABLED
 }

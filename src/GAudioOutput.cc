@@ -37,12 +37,12 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QDebug>
 
-#if defined Q_OS_MAC && !defined DISABLE_SPEECH
+#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
 
@@ -50,14 +50,14 @@ This file is part of the QGROUNDCONTROL project
 //using System.Speech.Synthesis;
 #endif
 
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
 extern "C" {
 #include <flite/flite.h>
     cst_voice *register_cmu_us_kal(const char *voxdir);
 };
 #endif
 
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 ISpVoice *GAudioOutput::pVoice = NULL;
 #endif
 
@@ -96,11 +96,11 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
     muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
 
 
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     flite_init();
 #endif
 
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice = NULL;
 
     if (FAILED(::CoInitialize(NULL)))
@@ -145,7 +145,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 GAudioOutput::~GAudioOutput()
 {
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice->Release();
     pVoice = NULL;
     ::CoUninitialize();
@@ -182,7 +182,7 @@ bool GAudioOutput::say(QString text, int severity)
         {
 
             // Speech synthesis is only supported with MSVC compiler
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
             /*SpeechSynthesizer synth = new SpeechSynthesizer();
             synth.SelectVoice("Microsoft Anna");
             synth.SpeakText(text.toStdString().c_str());
@@ -205,7 +205,7 @@ bool GAudioOutput::say(QString text, int severity)
             }*/
 #endif
 
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
             QTemporaryFile file;
             file.setFileTemplate("XXXXXX.wav");
 
@@ -222,7 +222,7 @@ bool GAudioOutput::say(QString text, int severity)
 
 #endif
 
-#if defined Q_OS_MAC && !defined DISABLE_SPEECH
+#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
             // Slashes necessary to have the right start to the sentence
             // copying data prevents SpeakString from reading additional chars
             text = "\\" + text;
@@ -339,14 +339,14 @@ void GAudioOutput::beep()
 
 void GAudioOutput::selectFemaleVoice()
 {
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     //this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void GAudioOutput::selectMaleVoice()
 {
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     //this->voice = register_cmu_us_rms(NULL);
 #endif
 }
@@ -354,7 +354,7 @@ void GAudioOutput::selectMaleVoice()
 /*
 void GAudioOutput::selectNeutralVoice()
 {
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     this->voice = register_cmu_us_awb(NULL);
 #endif
 }*/
