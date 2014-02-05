@@ -30,12 +30,13 @@ WindowsBuild {
 # define like: `qmake DEFINES=DISABLE_QUPGRADE`
 contains(DEFINES, DISABLE_QUPGRADE) {
     message("Skipping support for QUpgrade (manual override)")
+    DEFINES -= DISABLE_QUPGRADE
 }
 # If the QUpgrade submodule has been initialized, build in support by default.
 else:exists(qupgrade/.git) {
     message("Including support for QUpgrade")
 
-    DEFINES += QUPGRADE_SUPPORT
+    DEFINES += QGC_QUPGRADE_ENABLED
 
     INCLUDEPATH += qupgrade/src/apps/qupgrade
 
