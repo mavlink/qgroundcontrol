@@ -40,7 +40,7 @@ This file is part of the PIXHAWK project
 #include <AudioOutput>
 #endif
 #ifdef Q_OS_LINUX
-#if !defined DISABLE_SPEECH
+#if defined QGC_SPEECH_ENABLED
 //#include <flite/flite.h>
 #endif
 #include <phonon/MediaObject>
@@ -52,13 +52,13 @@ This file is part of the PIXHAWK project
 #endif
 
 /* For Snow leopard and later
-#if defined Q_OS_MAC & !defined DISABLE_SPEECH
+#if defined Q_OS_MAC & defined QGC_SPEECH_ENABLED
 #include <NSSpeechSynthesizer.h>
 #endif
    */
 
 
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
 #endif
@@ -111,13 +111,13 @@ signals:
     void mutedChanged(bool);
 
 protected:
-#if defined Q_OS_MAC && !defined DISABLE_SPEECH
+#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
     //NSSpeechSynthesizer
 #endif
-#if defined Q_OS_LINUX && !defined DISABLE_SPEECH
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     //cst_voice* voice; ///< The flite voice object
 #endif
-#if defined _MSC_VER && !defined DISABLE_SPEECH
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     static ISpVoice *pVoice;
 #endif
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
