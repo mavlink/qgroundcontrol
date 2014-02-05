@@ -679,7 +679,7 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#ifndef DISABLE_GOOGLE_EARTH
+#ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!earthWidget)
     {
         earthWidget = new QGCGoogleEarthView(this);

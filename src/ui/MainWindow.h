@@ -61,7 +61,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
-#ifndef DISABLE_GOOGLE_EARTH
+#ifdef QGC_GOOGLE_EARTH_ENABLED
 #include "QGCGoogleEarthView.h"
 #endif
 #include "QGCToolBar.h"
@@ -416,7 +416,7 @@ protected:
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> q3DWidget;
 #endif
-#ifndef DISABLE_GOOGLE_EARTH
+#ifdef QGC_GOOGLE_EARTH_ENABLED
 	QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;

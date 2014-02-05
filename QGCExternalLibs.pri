@@ -267,14 +267,16 @@ OSGDependency {
 # Only supported on Mac and Windows where Google Earth can be installed.
 #
 contains(DEFINES, DISABLE_GOOGLE_EARTH) {
-	message("Skipping support for Google Earth view (manual override)")
+    message("Skipping support for Google Earth view (manual override)")
+    DEFINES -= DISABLE_GOOGLE_EARTH
 } else:MacBuild {
     message("Including support for Google Earth view")
+    DEFINES += QGC_GOOGLE_EARTH_ENABLED
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 } else:WindowsBuild {
     message("Including support for Google Earth view")
-
+    DEFINES += QGC_GOOGLE_EARTH_ENABLED
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
     CONFIG += qaxcontainer
