@@ -71,13 +71,13 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     connect(ui->quadPlusComboBox, SIGNAL(activated(int)), this, SLOT(quadPlusSelected(int)));
     ui->quadPlusPushButton->setEnabled(ui->quadPlusComboBox->count() > 0);
 
-    ui->hexaPlusComboBox->addItem(tr("DJI F550 10\" Hexa"), 6001);
+    ui->hexaXComboBox->addItem(tr("Standard 10\" Hexa"), 6001);
 
     connect(ui->hexaXPushButton, SIGNAL(clicked()), this, SLOT(hexaXSelected()));
     connect(ui->hexaXComboBox, SIGNAL(activated(int)), this, SLOT(hexaXSelected(int)));
     ui->hexaXPushButton->setEnabled(ui->hexaXComboBox->count() > 0);
 
-    ui->hexaPlusComboBox->addItem(tr("DJI F550 10\" Hexa"), 7001);
+    ui->hexaPlusComboBox->addItem(tr("Standard 10\" Hexa"), 7001);
 
     connect(ui->hexaPlusPushButton, SIGNAL(clicked()), this, SLOT(hexaPlusSelected()));
     connect(ui->hexaPlusComboBox, SIGNAL(activated(int)), this, SLOT(hexaPlusSelected(int)));
