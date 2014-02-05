@@ -319,11 +319,11 @@ LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
 #
 contains(DEFINES, DISABLE_KINECT) {
 	message("Skipping support for the Kinect (manual override)")
+	DEFINES -= DISABLE_KINECT
 } else:MacBuild | LinuxBuild {
     exists(/opt/local/include/libfreenect) | exists(/usr/local/include/libfreenect) {
         message("Including support for the Kinect")
 
-        #INCLUDEPATH += /usr/include/libusb-1.0
         DEFINES += QGC_LIBFREENECT_ENABLED
         LIBS += -lfreenect
         HEADERS += src/input/Freenect.h
@@ -387,10 +387,11 @@ XBEE_DEPENDENT_SOURCES += \
 	src/comm/XbeeLink.cpp \
 	src/comm/HexSpinBox.cpp \
 	src/ui/XbeeConfigurationWindow.cpp
-XBEE_DEFINES = XBEELINK
+XBEE_DEFINES = QGC_XBEE_ENABLED
 
 contains(DEFINES, DISABLE_XBEE) {
 	message("Skipping support for native XBee API (manual override)")
+	DEFINES -= DISABLE_XBEE
 } else:LinuxBuild {
 	exists(/usr/include/xbee.h) {
 		message("Including support for XBee API")
