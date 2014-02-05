@@ -45,8 +45,8 @@ enum qgc_link_t {
     QGC_LINK_TCP,
     QGC_LINK_SIMULATION,
     QGC_LINK_FORWARDING,
-#ifdef XBEELINK
-	QGC_LINK_XBEE,
+#ifdef QGC_XBEE_ENABLED
+    QGC_LINK_XBEE,
 #endif
 #ifdef OPAL_RT
     QGC_LINK_OPAL
