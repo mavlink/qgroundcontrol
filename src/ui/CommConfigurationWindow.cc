@@ -46,7 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include "XbeeLink.h"
 #include "XbeeConfigurationWindow.h"
 #endif // QGC_XBEE_ENABLED
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #include "OpalLinkConfigurationWindow.h"
 #endif
@@ -90,7 +90,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
     }
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
     ui.linkType->addItem(tr("Opal-RT Link"), QGC_LINK_OPAL);
 #endif
 #ifdef QGC_XBEE_ENABLED
@@ -164,7 +164,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkType->setEnabled(false); //Don't allow the user to change to a non-simulation
         ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
     }
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
     OpalLink* opal = dynamic_cast<OpalLink*>(link);
     if (opal != 0) {
         QWidget* conf = new OpalLinkConfigurationWindow(opal, this);
@@ -188,7 +188,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 	}
 #endif // QGC_XBEE_ENABLED
     if (serial == 0 && udp == 0 && sim == 0 && tcp == 0
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
             && opal == 0
 #endif
 #ifdef QGC_XBEE_ENABLED
@@ -274,7 +274,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
             break;
             }
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
         case QGC_LINK_OPAL:
 			{
 				OpalLink* opal = new OpalLink();
@@ -282,7 +282,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
-#endif // OPAL_RT
+#endif // QGC_RTLAB_ENABLED
 		default:
 			{
 			}

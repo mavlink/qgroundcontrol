@@ -48,7 +48,7 @@ enum qgc_link_t {
 #ifdef QGC_XBEE_ENABLED
     QGC_LINK_XBEE,
 #endif
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
     QGC_LINK_OPAL
 #endif
 };
@@ -58,7 +58,7 @@ enum qgc_protocol_t {
 };
 
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
 

@@ -459,11 +459,12 @@ contains(DEFINES, DISABLE_3DMOUSE) {
 #
 contains(DEFINES, DISABLE_RTLAB) {
 	message("Skipping support for RT-LAB (manual override)")
+	DEFINES -= DISABLE_RTLAB
 } else:WindowsBuild {
 	exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
-		message("Including support for Opal-RT")
+		message("Including support for RT-LAB")
 
-		DEFINES += OPAL_RT
+		DEFINES += QGC_RTLAB_ENABLED
 
 		INCLUDEPATH +=
 			src/lib/opalrt
