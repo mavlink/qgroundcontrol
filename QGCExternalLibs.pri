@@ -544,6 +544,10 @@ contains (DEFINES, DISABLE_SPEECH) {
 		-lflite_usenglish \
 		-lflite_cmulex \
 		-lflite
+
+		# We need to add the alsa asound library as well for some Linux platforms
+		# (like Arch)
+		LIBS += -lasound
 	} else {
 		warning("Skipping support for speech output (missing libraries, see README)")
 	}
