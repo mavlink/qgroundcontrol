@@ -73,7 +73,7 @@ This file is part of the QGROUNDCONTROL project
 #include "menuactionhelper.h"
 
 // Add support for the MAVLink generator UI if it's been requested.
-#ifdef ENABLE_MAVGEN
+#ifdef QGC_MAVGEN_ENABLED
 #include "XMLCommProtocolWidget.h"
 #endif
 
@@ -553,7 +553,7 @@ void MainWindow::buildCommonWidgets()
     }
 
 // Add the MAVLink generator UI if it's been requested.
-#ifdef ENABLE_MAVGEN
+#ifdef QGC_MAVGEN_ENABLED
     if (!mavlinkView)
     {
         mavlinkView = new SubMainWindow(this);
