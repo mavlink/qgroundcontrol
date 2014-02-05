@@ -141,6 +141,9 @@ INCLUDEPATH += $$MAVLINKPATH
 #
 contains(DEFINES, ENABLE_MAVGEN) {
 	warning("Including support for MAVLink generator GUI (caution: deprecated)")
+	# Rename the macro to be consistent with other QGC feature existance macros.
+	DEFINES -= ENABLE_MAVGEN
+	DEFINES += QGC_MAVGEN_ENABLED
 	DEPENDPATH += \
 		src/apps/mavlinkgen
 
