@@ -419,12 +419,13 @@ contains(DEFINES, DISABLE_XBEE) {
 #
 contains(DEFINES, DISABLE_3DMOUSE) {
 	message("Skipping support for 3DConnexion mice (manual override)")
+	DEFINES -= DISABLE_3DMOUSE
 } else:LinuxBuild {
 	exists(/usr/local/lib/libxdrvlib.so) {
 		message("Including support for 3DConnexion mice")
 
 		DEFINES +=
-		MOUSE_ENABLED_LINUX \
+		QGC_MOUSE_ENABLED_LINUX \
 		ParameterCheck                      # Hack: Has to be defined for magellan usage
 
 		HEADERS += src/input/Mouse6dofInput.h
@@ -436,7 +437,7 @@ contains(DEFINES, DISABLE_3DMOUSE) {
 } else:WindowsBuild {
     message("Including support for 3DConnexion mice")
 
-    DEFINES += MOUSE_ENABLED_WIN
+    DEFINES += QGC_MOUSE_ENABLED_WIN
 
     INCLUDEPATH += libs/thirdParty/3DMouse/win
 
