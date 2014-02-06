@@ -21,54 +21,46 @@ build system you use (this is not related to Qt or your OS) the dependency check
 cleaning is based on the current project revision. So if you change the project and don't remove the build folder before your next build, incremental building can leave you with stale object files.
 
 ## Additional functionality
-QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process.
+QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values for variables either at the command line when calling `qmake` or in the `user_config.pri`. When calling `qmake` additional variables can be set using the syntax `VARIABLE="SPACE_SEPARATED_VALUES"`, which can be repeated for multiple variables. For example: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH" MAVLINK_CONF="sensesoar"` disables the QUpgrade widget, speech functionality, and sets the MAVLink dialect to sensesoar. These values can be more permanently specified by setting them in the `user_config.pri` file in the root directly. Copy the `user_config.pri.dist` file and name the copy `user_config.pri`, uncommenting the lines with the variables to modify and set their values as you desire.
+
+**NOTE:** Any variables specified at the command line call to `qmake` will override those set in `user_config.pri`.
 
 ### QUpgrade
-QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying the DISABLE_QUPGRADE definition when calling qmake `qmake DEFINES=DISABLE_QUPGRADE`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
+QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying `DISABLE_QUPGRADE` in the `DEFINES` variable.
 
 To include QUpgrade functionality run the following (only needs to be done once after cloning the qggroundcontrol git repository):
   * `git submodule init`
   * `git submodule update`
 
-The QUpgrade module relies on `libudev` on Linux platforms.
+The QUpgrade module relies on `libudev` on Linux platforms, so be sure to install the development version of that package.
 
 ### Specifying MAVLink dialects
-The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. To override this create a `user_config.pri` file in the root directory and set the `MAVLINK_CONF` variable using qmake's variable notation syntax: `MAVLINK_CONF=sensesoar`. This variable can be a list of dialects that should all be supported like `MAVLINK_CONF=sensesoar ardupilotmega`. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
-
-The `MAVLINK_CONF` variable can also be specified at the command line as an argument to qmake to allow for easy one-off compilations: `qmake MAVLINK_CONF="sensesoar ardupilotmega"`
+The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. Setting the `MAVLINK_CONF` variable sets the dialects, with more than one specified in a space-separated list. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
 
 ### MAVLink dialect generator
-An add-on is available for QGC that provides a UI for generating MAVLink dialects from within QGC. This feature has been deprecated since identical functionality now exists within the MAVLink project itself.
-
-This is not built by default as it is deprecated functionality that will removed in a forthcoming version of QGC. You can enable it by specifying the ENABLE_MAVGEN constant as an argument to qmake like `qmake DEFINES=ENABLE_MAVGEN`.
+An add-on is available for QGC that provides a UI for generating MAVLink dialects from within QGC. This feature has been deprecated since identical functionality now exists within the MAVLink project itself. Enable this functionality by specifying the `DEFINES` variable `ENABLE_MAVGEN`.
 
 ### Opal-RT's RT-LAB simulator
-Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. Thallows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed.
-
-This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by defining DISABLE_RTLAB when running qmake.
+Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DISABLE_RTLAB` to the `DEFINES` variable.
 
 ### Speech syntehsis
-QGroundcontrol can notify the controller of information via speech synthesis. This requires the `flite` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding the `DISABLE_SPEECH` define when running `qmake` like: `qmake DEFINES=DISABLE_SPEECH`. Note that multiple defines can be specified like this: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH"`.
+QGroundcontrol can notify the controller of information via speech synthesis. This requires the `flite` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding `DISABLE_SPEECH` to the `DEFINES` variable.
 
 ### 3D view
 The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC can provide.
 
-OpenSceneGraph support is built-in to Mac OS X. On Linux it is commonly available through the libopenscenegraph and libopenscenegraph-qt developer packages. Windows support does not currently exist. This functionality with be automatically built if the proper libraries are installed.
+OpenSceneGraph support is built-in to Mac OS X. On Linux it is commonly available through the libopenscenegraph and libopenscenegraph-qt developer packages. Windows support does not currently exist. This functionality with be automatically built if the proper libraries are installed. Disabling this feature can be done by adding `DISABLE_OPEN_SCENE_GRAPH` to the `DEFINES` variable.
 
 ### Kinect support
-Microsoft's Kinect can be used by some autopilots for additional functionality. This is provided by the libfreenect libraries available on the Mac and Linux platforms.
-
-This support is enabled by default and built-in when the appropriate libraries exist. To disable this behavior set the DISABLE_KINECT define when running qmake.
+Microsoft's Kinect can be used by some autopilots for additional functionality. This is provided by the libfreenect libraries available on the Mac and Linux platforms. This support is enabled by default and built-in when the appropriate libraries exist. To disable this behavior add `DISABLE_KINECT` to the `DEFINES` variable.
 
 ### 3D mouse support
-Connexion's 3D mice are supported through the 3DxWARE driver available on Linux and Windows. Download and install the driver from 3DConnexion to enable support.
-
-This support is enabled by default with driver installation. To disable define DISABLE_3DMOUSE when running qmake.
+Connexion's 3D mice are supported through the 3DxWARE driver available on Linux and Windows. Download and install the driver from 3DConnexion to enable support. This support is enabled by default with driver installation. To disable add `DISABLE_3DMOUSE` to the `DEFINES` variable.
 
 ### XBee support
-QGroundControl can talk to XBee wireless devices using their proprietary protocol directly on Windows and Linux platforms. This support is not necessary if you're not using XBee devices or aren't using their proprietary protocol. On Windows, the necessary dependencies are included in this repository and no additional steps are required. For Linux, change to the `libs/thirdParty/libxbee` folder and run `make;sudo make install` to install libxbee on your system (uninstalling can be done with a `sudo make uninstall`). qmake will automatically detect the library on Linux, so no other work is necessary.
+QGroundControl can talk to XBee wireless devices using their proprietary protocol directly on Windows and Linux platforms. This support is not necessary if you're not using XBee devices or aren't using their proprietary protocol. On Windows, the necessary dependencies are included in this repository and no additional steps are required. For Linux, change to the `libs/thirdParty/libxbee` folder and run `make;sudo make install` to install libxbee on your system (uninstalling can be done with a `sudo make uninstall`). `qmake` will automatically detect the library on Linux, so no other work is necessary.
 
-To disable XBee support you may specify `DISABLE_XBEE` in the DEFINES argument to qmake like `qmake DEFINES=DISABLE_XBEE`. Multiple options may be specified for `DEFINES` like: `qmake DEFINES="DISABLE_XBEE DISABLE_SPEECH".
+To disable XBee support you may add `DISABLE_XBEE` to the DEFINES argument.
 
 # Build on Mac OSX
 

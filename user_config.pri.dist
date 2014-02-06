@@ -23,11 +23,14 @@
 #
 #-------------------------------------------------
 
-# Add or remove custom message specs here. The matching mavlink headers are
-# included in the main qgroundcontrol.pro file.
+# Specify MAVLink dialects to compile support for here. This variable is processed
+# by QGCExternalLibs.pri, which handles MAVLink configuration.
+# To specify dialects to include set MAVLINK_CONF to a space-separated list of dialects.
+# Each dialect should correspond to an include folder under `libs/mavlink/include`
+#MAVLINK_CONF = pixhawk
 
-MAVLINK_CONF += pixhawk
-
-# slugs \
-# ualberta
-
+# Override compilation of QGroundControl's features in your build. This overrides the default
+# options for QGroundControl. To see what those are, refer to README.md.
+# This should be a space-separated list of the constants specified in README.md.
+# Uncomment the following line and replace DISABLE_XBEE with any features to override.
+#DEFINES = DISABLE_XBEE
