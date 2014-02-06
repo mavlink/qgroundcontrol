@@ -29,8 +29,12 @@ WindowsBuild {
 # Allow the user to override QUpgrade compilation through a DISABLE_QUPGRADE
 # define like: `qmake DEFINES=DISABLE_QUPGRADE`
 contains(DEFINES, DISABLE_QUPGRADE) {
-    message("Skipping support for QUpgrade (manual override)")
+    message("Skipping support for QUpgrade (manual override from command line)")
     DEFINES -= DISABLE_QUPGRADE
+}
+# Otherwise the user can still disable this feature in the user_config.pri file.
+else:infile(user_config.pri, DEFINES, DISABLE_QUPGRADE) {
+    message("Skipping support for QUpgrade (manual override from user_config.pri)")
 }
 # If the QUpgrade submodule has been initialized, build in support by default.
 else:exists(qupgrade/.git) {
@@ -96,8 +100,8 @@ DEFINES += MAVLINK_NO_DATA
     }
 }
 # Otherwise they can specify MAVLINK_CONF within user_config.pri
-else:exists(user_config.pri) {
-    include(user_config.pri)
+else:infile(user_config.pri, MAVLINK_CONF) {
+    MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
     !isEmpty(MAVLINK_CONF) {
 	for(dialect, MAVLINK_CONF) {
 		exists($$MAVLINKPATH/$$dialect) {
@@ -140,7 +144,13 @@ INCLUDEPATH += $$MAVLINKPATH
 # Replaced by mavgenerator.py within the MAVLink project.
 #
 contains(DEFINES, ENABLE_MAVGEN) {
-	warning("Including support for MAVLink generator GUI (caution: deprecated)")
+	warning("Including support for MAVLink generator GUI (manual override from command line, CAUTION: deprecated)")
+} else:infile(user_config.pri, DEFINES, ENABLE_MAVGEN) {
+	DEFINES += ENABLE_MAVGEN # infile doesn't automatically include everything in the specified file
+	warning("Including support for MAVLink generator GUI (manual override from user_config.pri, CAUTION: deprecated)")
+}
+
+contains(DEFINES, ENABLE_MAVGEN) {
 	# Rename the macro to be consistent with other QGC feature existance macros.
 	DEFINES -= ENABLE_MAVGEN
 	DEFINES += QGC_MAVGEN_ENABLED
@@ -159,8 +169,17 @@ contains(DEFINES, ENABLE_MAVGEN) {
 
 #
 # [OPTIONAL] OpenSceneGraph
-#
-MacBuild {
+# Allow the user to override OpenSceneGraph compilation through a DISABLE_OPEN_SCENE_GRAPH
+# define like: `qmake DEFINES=DISABLE_OPEN_SCENE_GRAPH`
+contains(DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
+    message("Skipping support for OpenSceneGraph (manual override from command line)")
+    DEFINES -= DISABLE_OPEN_SCENE_GRAPH
+}
+# Otherwise the user can still disable this feature in the user_config.pri file.
+else:infile(user_config.pri, DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
+    message("Skipping support for OpenSceneGraph (manual override from user_config.pri)")
+}
+else:MacBuild {
     # GLUT and OpenSceneGraph are part of standard install on Mac
 	message("Including support for OpenSceneGraph")
 	CONFIG += OSGDependency
@@ -267,8 +286,12 @@ OSGDependency {
 # Only supported on Mac and Windows where Google Earth can be installed.
 #
 contains(DEFINES, DISABLE_GOOGLE_EARTH) {
-    message("Skipping support for Google Earth view (manual override)")
+    message("Skipping support for Google Earth view (manual override from command line)")
     DEFINES -= DISABLE_GOOGLE_EARTH
+}
+# Otherwise the user can still disable this feature in the user_config.pri file.
+else:infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
+    message("Skipping support for Google Earth view (manual override from user_config.pri)")
 } else:MacBuild {
     message("Including support for Google Earth view")
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
@@ -318,8 +341,11 @@ LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
 # [OPTIONAL] Kinect support using libfreenect on POSIX systems.
 #
 contains(DEFINES, DISABLE_KINECT) {
-	message("Skipping support for the Kinect (manual override)")
+	message("Skipping support for the Kinect (manual override from command line)")
 	DEFINES -= DISABLE_KINECT
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:infile(user_config.pri, DEFINES, DISABLE_KINECT) {
+    message("Skipping support for the Kinext (manual override from user_config.pri)")
 } else:MacBuild | LinuxBuild {
     exists(/opt/local/include/libfreenect) | exists(/usr/local/include/libfreenect) {
         message("Including support for the Kinect")
@@ -390,8 +416,11 @@ XBEE_DEPENDENT_SOURCES += \
 XBEE_DEFINES = QGC_XBEE_ENABLED
 
 contains(DEFINES, DISABLE_XBEE) {
-	message("Skipping support for native XBee API (manual override)")
+	message("Skipping support for native XBee API (manual override from command line)")
 	DEFINES -= DISABLE_XBEE
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:infile(user_config.pri, DEFINES, DISABLE_XBEE) {
+    message("Skipping support for native XBee API (manual override from user_config.pri)")
 } else:LinuxBuild {
 	exists(/usr/include/xbee.h) {
 		message("Including support for XBee API")
@@ -418,8 +447,11 @@ contains(DEFINES, DISABLE_XBEE) {
 # [OPTIONAL] Magellan 3DxWare library. Provides support for 3DConnexion's 3D mice.
 #
 contains(DEFINES, DISABLE_3DMOUSE) {
-	message("Skipping support for 3DConnexion mice (manual override)")
+	message("Skipping support for 3DConnexion mice (manual override from command line)")
 	DEFINES -= DISABLE_3DMOUSE
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:infile(user_config.pri, DEFINES, DISABLE_3DMOUSE) {
+    message("Skipping support for 3DConnexion mice (manual override from user_config.pri)")
 } else:LinuxBuild {
 	exists(/usr/local/lib/libxdrvlib.so) {
 		message("Including support for 3DConnexion mice")
@@ -459,8 +491,11 @@ contains(DEFINES, DISABLE_3DMOUSE) {
 # [OPTIONAL] Opal RT-LAB Library. Provides integration with Opal-RT's RT-LAB simulator.
 #
 contains(DEFINES, DISABLE_RTLAB) {
-	message("Skipping support for RT-LAB (manual override)")
+	message("Skipping support for RT-LAB (manual override from command line)")
 	DEFINES -= DISABLE_RTLAB
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:infile(user_config.pri, DEFINES, DISABLE_RTLAB) {
+    message("Skipping support for RT-LAB (manual override from user_config.pri)")
 } else:WindowsBuild {
 	exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
 		message("Including support for RT-LAB")
@@ -533,8 +568,11 @@ MacBuild {
 # Windows is supported as of Windows 7
 #
 contains (DEFINES, DISABLE_SPEECH) {
-	message("Skipping support for speech output (manual override)")
+	message("Skipping support for speech output (manual override from command line)")
 	DEFINES -= DISABLE_SPEECH
+# Otherwise the user can still disable this feature in the user_config.pri file.
+} else:infile(user_config.pri, DEFINES, DISABLE_SPEECH) {
+    message("Skipping support for speech output (manual override from user_config.pri)")
 } else:LinuxBuild {
 	exists(/usr/include/flite) | exists(/usr/local/include/flite) {
 		message("Including support for speech output")
