@@ -222,7 +222,7 @@ DebugBuild {
 include(QGCExternalLibs.pri)
 
 #
-# Post link configuration
+# Post link configuratio
 #
 
 include(QGCSetup.pri)
