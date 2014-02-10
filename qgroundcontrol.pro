@@ -263,6 +263,7 @@ INCLUDEPATH += \
     src/ui/configuration \
     src/ui/main
 
+LinuxBuild {
 FORMS += \
     src/ui/MainWindow.ui \
     src/ui/CommSettings.ui \
@@ -755,3 +756,4 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
+}
