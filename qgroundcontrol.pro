@@ -262,6 +262,7 @@ INCLUDEPATH += \
     src/ui/designer \
     src/ui/configuration \
     src/ui/main
+    
 
 FORMS += \
     src/ui/MainWindow.ui \
