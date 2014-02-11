@@ -601,7 +601,7 @@ void HUD::paintHUD()
 
             xImageFactor = width() / (float)glImage.width();
             yImageFactor = height() / (float)glImage.height();
-            float imageFactor = qMin(xImageFactor, yImageFactor);
+            //float imageFactor = qMin(xImageFactor, yImageFactor);
             // Resize to correct size and fill with image
             // FIXME
 
