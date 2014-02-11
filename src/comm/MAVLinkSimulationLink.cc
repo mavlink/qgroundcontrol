@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
  * @param writeFile The received messages are written to that file
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
-MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) :
+MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate) :
     readyBytes(0),
     timeOffset(0)
 {
