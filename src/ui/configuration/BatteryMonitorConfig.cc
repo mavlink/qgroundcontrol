@@ -149,39 +149,39 @@ void BatteryMonitorConfig::monitorCurrentIndexChanged(int index)
 }
 void BatteryMonitorConfig::sensorCurrentIndexChanged(int index)
 {
-    float maxvolt = 0.0;
-    float maxamps = 0.0;
-    float mvpervolt = 0.0;
-    float mvperamp = 0.0;
-    float topvolt = 0.0;
-    float topamps = 0.0;
+    float maxvolt = 0.0f;
+    float maxamps = 0.0f;
+    float mvpervolt = 0.0f;
+    float mvperamp = 0.0f;
+    float topvolt = 0.0f;
+    float topamps = 0.0f;
 
     if (index == 1)
     {
         //atto 45 see https://www.sparkfun.com/products/10643
-        maxvolt = 13.6;
-        maxamps = 44.7;
+        maxvolt = 13.6f;
+        maxamps = 44.7f;
     }
     else if (index == 2)
     {
         //atto 90 see https://www.sparkfun.com/products/9028
-        maxvolt = 51.8;
-        maxamps = 89.4;
+        maxvolt = 51.8f;
+        maxamps = 89.4f;
     }
     else if (index == 3)
     {
         //atto 180 see https://www.sparkfun.com/products/10644
-        maxvolt = 51.8;
-        maxamps = 178.8;
+        maxvolt = 51.8f;
+        maxamps = 178.8f;
     }
     else if (index == 4)
     {
         //3dr
-        maxvolt = 50.0;
-        maxamps = 90.0;
+        maxvolt = 50.0f;
+        maxamps = 90.0f;
     }
-    mvpervolt = calculatemVPerVolt(3.3,maxvolt);
-    mvperamp = calculatemVPerAmp(3.3,maxamps);
+    mvpervolt = calculatemVPerVolt(3.3f, maxvolt);
+    mvperamp = calculatemVPerAmp(3.3f, maxamps);
     if (index == 0)
     {
         //Other

@@ -353,8 +353,8 @@ void QGCFlightGearLink::readBytes()
 
 //        qDebug()  << "sensorHilRawImuChanged " << xacc  << yacc << zacc  << rollspeed << pitchspeed << yawspeed << xmag << ymag << zmag << abs_pressure << diff_pressure << pressure_alt << temperature;
         int gps_fix_type = 3;
-        float eph = 0.3;
-        float epv = 0.6;
+        float eph = 0.3f;
+        float epv = 0.6f;
         float vel = sqrt(vx*vx + vy*vy + vz*vz);
         float cog = yaw;
         int satellites = 8;
