@@ -303,6 +303,11 @@ void MAVLinkSimulationMAV::mainloop()
     timer25Hz--;
 }
 
+// Uncomment to turn on debug message printing
+//#define DEBUG_PRINT_MESSAGE
+
+#ifdef DEBUG_PRINT_MESSAGE
+
 //static unsigned chan_counts[MAVLINK_COMM_NUM_BUFFERS];
 
 static const unsigned message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
@@ -376,17 +381,22 @@ static void print_field(const mavlink_message_t *msg, const mavlink_field_info_t
     }
     qDebug(" ");
 }
+#endif
 
 static void print_message(const mavlink_message_t *msg)
 {
+#ifdef DEBUG_PRINT_MESSAGE
     const mavlink_message_info_t *m = &message_info[msg->msgid];
     const mavlink_field_info_t *f = m->fields;
     unsigned i;
-//    qDebug("%s { ", m->name);
-//    for (i=0; i<m->num_fields; i++) {
-//        print_field(msg, &f[i]);
-//    }
-//    qDebug("}\n");
+    qDebug("%s { ", m->name);
+    for (i=0; i<m->num_fields; i++) {
+        print_field(msg, &f[i]);
+    }
+    qDebug("}\n");
+#else
+    Q_UNUSED(msg);
+#endif
 }
 
 void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)

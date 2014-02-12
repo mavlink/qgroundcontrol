@@ -117,56 +117,16 @@ WindowsBuild {
 }
 
 #
-# Warnings cleanup. Plan of attack is to turn off all existing warnings and turn on warnings as errors.
-# Then we will clean up the warnings one type at a time, removing the override for that specific warning
-# from the lists below. Eventually we will be left with no overlooked warnings and all future warnings
-# generating an error and breaking the build.
-#
-# NEW WARNINGS SHOULD NOT BE ADDED TO THIS LIST. IF YOU GET AN ERROR, FIX IT BEFORE COMMITING.
+# Warnings cleanup. Plan of attack is to turn on warnings as error once all warnings are fixed. Please
+# do no change the warning level from what they are currently set to below.
 #
 
 MacBuild | LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wall \
-        -Wno-unused-parameter \
-        -Wno-unused-variable \
-        -Wno-narrowing \
-        -Wno-unused-function
- }
-
-LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-unused-but-set-variable \
-        -Wno-unused-local-typedefs
-}
-
-MacBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-overloaded-virtual \
-        -Wno-unused-private-field
+	QMAKE_CXXFLAGS_WARN_ON += -Wall
 }
 
 WindowsBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        /W4 \
-        /WX \
-        /wd4005 \ # macro redefinition
-        /wd4100 \ # unrefernced formal parameter
-        /wd4101 \ # unreference local variable
-        /wd4127 \ # conditional expression constant
-        /wd4146 \ # unary minus operator applied to unsigned type
-        /wd4189 \ # local variable initialized but not used
-        /wd4201 \ # non standard extension: nameless struct/union
-        /wd4245 \ # signed/unsigned mismtach
-        /wd4290 \ # function declared using exception specification, but not supported
-        /wd4305 \ # truncation from double to float
-        /wd4309 \ # truncation of constant value
-        /wd4389 \ # == signed/unsigned mismatch
-        /wd4505 \ # unreferenced local function
-        /wd4512 \ # assignment operation could not be generated
-        /wd4701 \ # potentially uninitialized local variable
-        /wd4702 \ # unreachable code
-        /wd4996   # deprecated function
+	QMAKE_CXXFLAGS_WARN_ON += /W3
 }
 
 #

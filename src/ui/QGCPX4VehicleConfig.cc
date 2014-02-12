@@ -1836,13 +1836,13 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
     else {
         //Param recieved that we have no metadata for. Search to see if it belongs in a
         //group with some other params
-        bool found = false;
+        //bool found = false;
         for (int i=0;i<toolWidgets.size();i++) {
             if (parameterName.startsWith(toolWidgets[i]->objectName())) {
                 //It should be grouped with this one, add it.
                 toolWidgets[i]->addParam(uas,component,parameterName,value);
                 libParamToWidgetMap.insert(parameterName,toolWidgets[i]);
-                found  = true;
+                //found  = true;
                 break;
             }
         }
