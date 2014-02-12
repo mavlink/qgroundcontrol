@@ -242,6 +242,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     // Initial signals
     emit disarmed();
     emit armingChanged(false);
+    
+    // Set up the Fact System
+    _factMavShim.setup(this);
+    _factHandler.setup(this);
+    _factRuleHandler.setup(this);
 }
 
 /**
@@ -2670,7 +2675,7 @@ void UAS::requestParameter(int component, const QString& parameter)
     {
         emit textMessageReceived(uasId, 0, 255, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
     }
-    memcpy(read.param_id, parameter.toStdString().c_str(), qMax(parameter.length(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
+    memcpy(read.param_id, parameter.toStdString().c_str(), qMin(parameter.length()+1, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
     read.param_id[15] = '\0'; // Enforce null termination
     read.target_system = uasId;
     read.target_component = component;

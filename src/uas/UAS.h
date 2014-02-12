@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 #include "QGCUASParamManager.h"
-
+#include "FactSystem.h"
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
@@ -994,6 +994,18 @@ protected slots:
 
 private:
 //    unsigned int mode;          ///< The current mode of the MAV
+    
+// Each UAS has a seperate instance of the fact system associated with it
+public:
+    virtual FactHandler&            getFactHandler(void) { return _factHandler; }
+    virtual FactRuleHandler&        getFactRuleHandler(void) { return _factRuleHandler; }
+    virtual FactMavShim&            getFactMavShim(void) { return _factMavShim; }
+    virtual MAVLinkProtocol*        getMavlink(void) { return mavlink; }
+    
+private:
+    FactRuleHandler     _factRuleHandler;
+    FactMavShim         _factMavShim;
+    FactHandler         _factHandler;
 };
 
 

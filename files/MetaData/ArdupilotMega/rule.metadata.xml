@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paramfile>
+    <vehicles>
+        <parameters name="VEHICLE_">
+        </parameters>
+    </vehicles>
+    <libraries>
+        <parameters name="ARMING_">
+        </parameters>
+        <parameters name="ARSPD_">
+        </parameters>
+        <parameters name="CAM_">
+        </parameters>
+        <parameters name="GND_">
+        </parameters>
+        <parameters name="RELAY_">
+        </parameters>
+        <parameters name="SONAR_">
+        </parameters>
+        <parameters name="RC_">
+            <param humanName="Calibration state" name="RC_CALIBRATED" documentation="Specifies whether the radio control has been calibrated">
+                <values>
+                    <value code="0">Needs calibration</value>
+                    <value code="1">Calibrated</value>
+                </values>
+                
+            </param>
+        </parameters>
+        <parameters name="RC1_">
+        </parameters>
+        <parameters name="RC2_">
+        </parameters>
+        <parameters name="RC3_">
+        </parameters>
+        <parameters name="RC4_">
+        </parameters>
+        <parameters name="RC5_">
+        </parameters>
+        <parameters name="RC6_">
+        </parameters>
+        <parameters name="RC7_">
+        </parameters>
+        <parameters name="RC8_">
+        </parameters>
+        <parameters name="RC9_">
+        </parameters>
+        <parameters name="RC10_">
+        </parameters>
+        <parameters name="RC11_">
+        </parameters>
+        <parameters name="RC12_">
+        </parameters>
+        <parameters name="RLL2SRV_">
+        </parameters>
+        <parameters name="PTCH2SRV_">
+        </parameters>
+        <parameters name="YAW2SRV_">
+        </parameters>
+        <parameters name="STEER2SRV_">
+        </parameters>
+        <parameters name="COMPASS_">
+            <param humanName="Calibration state" name="COMPASS_CALIBRATED" documentation="Specifies whether the compass has been calibrated">
+                <values>
+                    <value code="0">Needs calibration</value>
+                    <value code="1">Calibrated</value>
+                </values>
+
+            </param>
+        </parameters>
+        <parameters name="SCHED_">
+        </parameters>
+        <parameters name="RCMAP_">
+        </parameters>
+        <parameters name="SR0_">
+        </parameters>
+        <parameters name="SR1_">
+        </parameters>
+        <parameters name="SR2_">
+        </parameters>
+        <parameters name="INS_">
+        </parameters>
+        <parameters name="AHRS_">
+        </parameters>
+        <parameters name="NAVL1_">
+        </parameters>
+        <parameters name="TECS_">
+        </parameters>
+        <parameters name="MNT_">
+        </parameters>
+        <parameters name="MNT2_">
+        </parameters>
+        <parameters name="BATT_">
+        </parameters>
+    </libraries>
+</paramfile>

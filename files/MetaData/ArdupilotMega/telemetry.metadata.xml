@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paramfile>
+    <vehicles>
+        <parameters name="VEHICLE_">
+            <param humanName="VEHICLE_MAVTYPE" name="VEHICLE_MAVTYPE" documentation="VEHICLE_MAVTYPE">
+            </param>
+            <param humanName="VEHICLE_AUTOPILOT" name="VEHICLE_AUTOPILOT" documentation="VEHICLE_AUTOPILOT">
+            </param>
+            <param humanName="VEHICLE_MAVLINK_VERSION" name="VEHICLE_MAVLINK_VERSION" documentation="VEHICLE_MAVLINK_VERSION">
+            </param>
+            <param humanName="VEHICLE_CUSTOMMODE" name="VEHICLE_CUSTOMMODE" documentation="VEHICLE_CUSTOMMODE">
+            </param>
+            <param humanName="VEHICLE_BASEMODE" name="VEHICLE_BASEMODE" documentation="VEHICLE_BASEMODE">
+            </param>
+            <param humanName="VEHICLE_STATUS" name="VEHICLE_STATUS" documentation="VEHICLE_STATUS">
+            </param>
+        </parameters>
+    </vehicles>
+    <libraries>
+        <parameters name="TBD_">
+            <param humanName="Altitude" name="TBD_ALTITUDE" documentation="Altitude from VFR_HUD">
+                <field name="Units">meters</field>
+            </param>
+            <param humanName="Climb Rate" name="TBD_CLIMB" documentation="Climb Rate">
+                <field name="Units">meters/sec</field>
+            </param>
+            <param humanName="Throttle percent" name="TBD_THROTTLE" documentation="Current throttle setting">
+                <field name="Range">0 100</field>
+                <field name="Units">percent</field>
+            </param>
+        </parameters>
+        <parameters name="GPS_">
+            <param humanName="Latitude" name="GPS_LAT" documentation="GPS latitude as integer">
+                <field name="Units">1e7</field>
+            </param>
+            <param humanName="Longitude" name="GPS_LONG" documentation="GPS longitude as integer">
+                <field name="Units">1e7</field>
+            </param>
+            <param humanName="Altitude" name="GPS_ALTITUDE" documentation="GPS altitude above mean sea level">
+                <field name="Units">mm</field>
+            </param>
+            <param humanName="Relative altitude" name="GPS_ALTITUDE_REL" documentation="GPS altitude above ground">
+                <field name="Units">mm</field>
+            </param>
+            <param humanName="Ground speed x" name="GPS_GROUNDSPD_LAT" documentation="GPS ground speed in latitude axis">
+                <field name="Units">cm/sec</field>
+            </param>
+            <param humanName="Ground speed y" name="GPS_GROUNDSPD_LONG" documentation="GPS ground speed in longitude axis">
+                <field name="Units">cm/sec</field>
+            </param>
+            <param humanName="Ground speed z" name="GPS_GROUNDSPD_ALT" documentation="GPS ground speed in altitude axis">
+                <field name="Units">cm/sec</field>
+            </param>
+            <param humanName="Compass heading" name="GPS_COMPASS_HEADING" documentation="GPS compass heading">
+                <field name="Units">degrees*100</field>
+            </param>
+        </parameters>
+        <parameters name="ARMING_">
+        </parameters>
+        <parameters name="ARSPD_">
+            <param humanName="Wind direction" name="ARSPD_DIR" documentation="Direction the wind is coming from">
+                <field name="Units">degrees</field>
+            </param>
+            <param humanName="Wind speed (ground)" name="ARSPD_SPEED" documentation="Wind speed in ground plan">
+                <field name="Units">m/s</field>
+            </param>
+            <param humanName="Wind speed (vertical)" name="ARSPD_SPEEDZ" documentation="Vertical wind speed">
+                <field name="Units">m/s</field>
+            </param>
+        </parameters>
+        <parameters name="CAM_">
+        </parameters>
+        <parameters name="GND_">
+            <param humanName="Absolute pressure" name="GND_ABS_PRESS" documentation="TBD">
+                <field name="Units">hectopascal</field>
+            </param>
+            <param humanName="Differential pressure" name="GND_DIFF_PRESS" documentation="TBD">
+                <field name="Units">hectopascal</field>
+            </param>
+            <param humanName="Temperature" name="GND_TEMP" documentation="TBD">
+                <field name="Units">0.01 degrees C</field>
+            </param>
+        </parameters>
+        <parameters name="RELAY_">
+        </parameters>
+        <parameters name="SONAR_">
+        </parameters>
+        <parameters name="RC1_">
+        </parameters>
+        <parameters name="RC2_">
+        </parameters>
+        <parameters name="RC3_">
+        </parameters>
+        <parameters name="RC4_">
+        </parameters>
+        <parameters name="RC5_">
+        </parameters>
+        <parameters name="RC6_">
+        </parameters>
+        <parameters name="RC7_">
+        </parameters>
+        <parameters name="RC8_">
+        </parameters>
+        <parameters name="RC9_">
+        </parameters>
+        <parameters name="RC10_">
+        </parameters>
+        <parameters name="RC11_">
+        </parameters>
+        <parameters name="RC12_">
+        </parameters>
+        <parameters name="RLL2SRV_">
+        </parameters>
+        <parameters name="PTCH2SRV_">
+        </parameters>
+        <parameters name="YAW2SRV_">
+        </parameters>
+        <parameters name="STEER2SRV_">
+        </parameters>
+        <parameters name="COMPASS_">
+            <param humanName="Heading" name="COMPASS_HEADING" documentation="Current heading in degrees, in compass units (0..360, 0=north)">
+                <field name="Units">degrees</field>
+            </param>
+        </parameters>
+        <parameters name="SCHED_">
+        </parameters>
+        <parameters name="RCMAP_">
+        </parameters>
+        <parameters name="SR0_">
+        </parameters>
+        <parameters name="SR1_">
+        </parameters>
+        <parameters name="SR2_">
+        </parameters>
+        <parameters name="INS_">
+            <param humanName="Roll angle" name="INS_ROLL" documentation="TBD">
+                <field name="Units">Radians</field>
+            </param>
+            <param humanName="Pitch angle" name="INS_PITCH" documentation="TBD">
+                <field name="Units">Radians</field>
+            </param>
+            <param humanName="Yaw angle" name="INS_YAW" documentation="TBD">
+                <field name="Units">Radians</field>
+            </param>
+            <param humanName="Roll speed" name="INS_ROLLSPEED" documentation="TBD">
+                <field name="Units">Radians</field>
+            </param>
+            <param humanName="Pitch speed" name="INS_PITCHSPEED" documentation="TBD">
+                <field name="Units">Radians</field>
+            </param>
+            <param humanName="Yaw speed" name="INS_YAWSPEED" documentation="TBD">
+                <field name="Units">Radians</field>
+            </param>
+            <param humanName="X acceleration" name="INS_XACC_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Y acceleration" name="INS_YACC_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Z acceleration" name="INS_ZACC_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Angular speed around X axis" name="INS_XGYRO_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Angular speed around Y axis" name="INS_YGYRO_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Angular speed around Z axis" name="INS_ZGYRO_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="X Magnetic Field" name="INS_XMAG_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Y Magnetic Field" name="INS_YMAG_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="Z Magnetic Field" name="INS_ZMAG_RAW" documentation="TBD">
+                <field name="Units">raw</field>
+            </param>
+            <param humanName="X acceleration" name="INS_XACC_SCALED" documentation="TBD">
+                <field name="Units">milli g</field>
+            </param>
+            <param humanName="Y acceleration" name="INS_YACC_SCALED" documentation="TBD">
+                <field name="Units">milli g</field>
+            </param>
+            <param humanName="Z acceleration" name="INS_ZACC_SCALED" documentation="TBD">
+                <field name="Units">milli g</field>
+            </param>
+            <param humanName="Angular speed around X axis" name="INS_XGYRO_SCALED" documentation="TBD">
+                <field name="Units">milliradians/sec</field>
+            </param>
+            <param humanName="Angular speed around Y axis" name="INS_YGYRO_SCALED" documentation="TBD">
+                <field name="Units">milliradians/sec</field>
+            </param>
+            <param humanName="Angular speed around Z axis" name="INS_ZGYRO_SCALED" documentation="TBD">
+                <field name="Units">milliradians/sec</field>
+            </param>
+            <param humanName="X Magnetic Field" name="INS_XMAG_SCALED" documentation="TBD">
+                <field name="Units">milli tesla</field>
+            </param>
+            <param humanName="Y Magnetic Field" name="INS_YMAG_SCALED" documentation="TBD">
+                <field name="Units">milli tesla</field>
+            </param>
+            <param humanName="Z Magnetic Field" name="INS_ZMAG_SCALED" documentation="TBD">
+                <field name="Units">milli tesla</field>
+            </param>
+        </parameters>
+        <parameters name="AHRS_">
+        </parameters>
+        <parameters name="NAVL1_">
+        </parameters>
+        <parameters name="TECS_">
+        </parameters>
+        <parameters name="MNT_">
+        </parameters>
+        <parameters name="MNT2_">
+        </parameters>
+        <parameters name="BATT_">
+        </parameters>
+    </libraries>
+</paramfile>
