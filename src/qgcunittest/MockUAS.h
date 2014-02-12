@@ -154,7 +154,7 @@ public slots:
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw)
         { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
-    virtual void startRadioControlCalibration(int param) { Q_ASSERT(false); };
+    virtual void startRadioControlCalibration(int param) { Q_UNUSED(param); Q_ASSERT(false); };
     virtual void endRadioControlCalibration() { Q_ASSERT(false); };
     virtual void startMagnetometerCalibration() { Q_ASSERT(false); };
     virtual void startGyroscopeCalibration() { Q_ASSERT(false); };
