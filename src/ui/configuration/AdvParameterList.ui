@@ -22,10 +22,399 @@
     </widget>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget"/>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string>Parameters</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="FactTableWidget" name="tableWidget">
+         <column>
+          <property name="text">
+           <string>=name:P.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=group:P.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=id:P.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=value:P.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=description:P.</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string>Telemetry</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="FactTableWidget" name="tableWidget_2">
+         <column>
+          <property name="text">
+           <string>=group:T.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=name:T.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=value:T.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=description:T.</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>PIDs</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>Servo Roll Pid</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="FactTableWidget" name="tableWidget_5">
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+              <item row="0" column="0">
+               <property name="text">
+                <string>P</string>
+               </property>
+              </item>
+              <item row="0" column="1">
+               <property name="text">
+                <string>=value:P.RLL2SRV_P</string>
+               </property>
+              </item>
+              <item row="1" column="0">
+               <property name="text">
+                <string>I</string>
+               </property>
+              </item>
+              <item row="1" column="1">
+               <property name="text">
+                <string>=value:P.RLL2SRV_I</string>
+               </property>
+              </item>
+              <item row="2" column="0">
+               <property name="text">
+                <string>D</string>
+               </property>
+              </item>
+              <item row="2" column="1">
+               <property name="text">
+                <string>=value:P.RLL2SRV_D</string>
+               </property>
+              </item>
+              <item row="3" column="0">
+               <property name="text">
+                <string>INT_MAX</string>
+               </property>
+              </item>
+              <item row="3" column="1">
+               <property name="text">
+                <string>=value:P.RLL2SRV_IMAX</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>Servo Pitch Pid</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="FactTableWidget" name="tableWidget_3">
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+              <item row="0" column="0">
+               <property name="text">
+                <string>P</string>
+               </property>
+              </item>
+              <item row="0" column="1">
+               <property name="text">
+                <string>=value:P.PTCH2SRV_P</string>
+               </property>
+              </item>
+              <item row="1" column="0">
+               <property name="text">
+                <string>I</string>
+               </property>
+              </item>
+              <item row="1" column="1">
+               <property name="text">
+                <string>=value:P.PTCH2SRV_I</string>
+               </property>
+              </item>
+              <item row="2" column="0">
+               <property name="text">
+                <string>D</string>
+               </property>
+              </item>
+              <item row="2" column="1">
+               <property name="text">
+                <string>=value:P.PTCH2SRV_D</string>
+               </property>
+              </item>
+              <item row="3" column="0">
+               <property name="text">
+                <string>INT_MAX</string>
+               </property>
+              </item>
+              <item row="3" column="1">
+               <property name="text">
+                <string>=value:P.PTCH2SRV_IMAX</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string>Servo Yaw Pid</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <widget class="FactTableWidget" name="tableWidget_4">
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string/>
+               </property>
+              </row>
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Value</string>
+               </property>
+              </column>
+              <item row="0" column="0">
+               <property name="text">
+                <string>P</string>
+               </property>
+              </item>
+              <item row="0" column="1">
+               <property name="text">
+                <string>=value:P.STEER2SRV_P</string>
+               </property>
+              </item>
+              <item row="1" column="0">
+               <property name="text">
+                <string>I</string>
+               </property>
+              </item>
+              <item row="1" column="1">
+               <property name="text">
+                <string>=value:P.STEER2SRV_I</string>
+               </property>
+              </item>
+              <item row="2" column="0">
+               <property name="text">
+                <string>D</string>
+               </property>
+              </item>
+              <item row="2" column="1">
+               <property name="text">
+                <string>=value:P.STEER2SRV_D</string>
+               </property>
+              </item>
+              <item row="3" column="0">
+               <property name="text">
+                <string>INT_MAX</string>
+               </property>
+              </item>
+              <item row="3" column="1">
+               <property name="text">
+                <string>=value:P.STEER2SRV_IMAX</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2"/>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string>Rules</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_9">
+       <item>
+        <widget class="FactTableWidget" name="tableWidget_6">
+         <column>
+          <property name="text">
+           <string>=name:R.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=group:R.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=id:R.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=value:R.</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>=description:R.</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FactTableWidget</class>
+   <extends>QTableWidget</extends>
+   <header>facttablewidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

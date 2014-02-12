@@ -755,3 +755,43 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp
+    
+# Fact System code
+
+INCLUDEPATH += \
+    src/factsystem
+
+HEADERS += \
+    src/factsystem/Fact.h \
+    src/factsystem/FactHandler.h \
+    src/factsystem/FactRuleHandler.h \
+    src/factsystem/FactMavShim.h \
+    src/factsystem/FactTableWidget.h \
+    src/factsystem/FactTableModel.h \
+    src/factsystem/FactItemDelegate.h
+
+SOURCES += \
+    src/factsystem/Fact.cc \
+    src/factsystem/FactHandler.cc \
+    src/factsystem/FactRuleHandler.cc \
+    src/factsystem/FactMavShim.cc \
+    src/factsystem/FactTableWidget.cc \
+    src/factsystem/FactTableModel.cc \
+    src/factsystem/FactItemDelegate.cc
+
+# Temporary Lua hacks
+LinuxBuild {
+    INCLUDEPATH += $$BASEDIR/libs/thirdParty/Lua/linux/include
+    LIBS += -L$$BASEDIR/libs/thirdParty/Lua/linux -llua52
+}
+
+MacBuild {
+    INCLUDEPATH += $$BASEDIR/libs/thirdParty/Lua/osx/include
+    LIBS += -L$$BASEDIR/libs/thirdParty/Lua/osx -llua52
+}
+
+WindowsBuild {
+    INCLUDEPATH += $$BASEDIR/libs/thirdParty/Lua/windows/include
+    LIBS += -L$$BASEDIR/libs/thirdParty/Lua/windows -llua52
+}
+

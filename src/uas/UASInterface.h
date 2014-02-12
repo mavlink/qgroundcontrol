@@ -44,6 +44,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include "QGCUASParamManagerInterface.h"
 #include "RadioCalibration/RadioCalibrationData.h"
+#include "FactSystem.h"
+#include "MAVLinkProtocol.h"
 
 #ifdef QGC_PROTOBUF_ENABLED
 #include <tr1/memory>
@@ -641,6 +643,12 @@ protected:
     // TIMEOUT CONSTANTS
     static const unsigned int timeoutIntervalHeartbeat = 3500 * 1000; ///< Heartbeat timeout is 2.5 seconds
 
+// Fact System
+public:
+    virtual FactHandler&            getFactHandler(void) = 0;
+    virtual FactRuleHandler&        getFactRuleHandler(void) = 0;
+    virtual FactMavShim&            getFactMavShim(void) = 0;
+    virtual MAVLinkProtocol*        getMavlink(void) = 0;
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")

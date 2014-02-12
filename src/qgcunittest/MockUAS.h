@@ -180,6 +180,18 @@ private:
     QMap<int, QString>  _bogusMapIntQString;
     QList<QAction*>     _bogusQListQActionPointer;
     QList<int>          _bogusQListInt;
+    
+    // Each UAS has a seperate instance of the fact system associated with it
+public:
+    virtual FactHandler&            getFactHandler(void) { return _factHandler; }
+    virtual FactRuleHandler&        getFactRuleHandler(void) { return _factRuleHandler; }
+    virtual FactMavShim&            getFactMavShim(void) { return _factMavShim; }
+    virtual MAVLinkProtocol*        getMavlink(void) { return NULL; }
+    
+private:
+    FactRuleHandler     _factRuleHandler;
+    FactMavShim         _factMavShim;
+    FactHandler         _factHandler;
 };
 
 #endif
