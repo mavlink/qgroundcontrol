@@ -62,7 +62,7 @@ To build on Mac OSX (10.6 or later):
 
 To build on Linux:
 - - -
-    sudo apt-get install phonon libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential libopenscenegraph-dev
+    sudo apt-get install phonon libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev libudev-dev libflite1 flite1-dev build-essential libopenscenegraph-dev
     cd directory
     git clone https://github.com/mavlink/qgroundcontrol.git
     git submodule init
