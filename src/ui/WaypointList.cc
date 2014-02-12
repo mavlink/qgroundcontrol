@@ -272,11 +272,11 @@ void WaypointList::addEditable(bool onCurrentPosition)
         if (uas)
         {
             if (uas->isRotaryWing()) {
-                wp->setAcceptanceRadius(UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING);
+                wp->setAcceptanceRadius(UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING);
             }
             else if (uas->isFixedWing())
             {
-                wp->setAcceptanceRadius(UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING);
+                wp->setAcceptanceRadius(UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING);
             }
         }
 //        wp->blockSignals(true);
