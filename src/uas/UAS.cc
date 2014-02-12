@@ -3198,7 +3198,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
         float course = cog;
         // map to 0..2pi
         if (course < 0)
-            course += 2.0f * M_PI;
+            course += 2.0f * static_cast<float>(M_PI);
         // scale from radians to degrees
         course = (course / M_PI) * 180.0f;
 
