@@ -222,7 +222,7 @@ void FlightModeConfig::remoteControlChannelRawChanged(int chan, float val)
     if (chan == _modeSwitchRCChannel)
     {
         qDebug() << chan << val;
-        size_t highlightIndex;
+        size_t highlightIndex = _cModes; // initialize to unreachable index
         
         for (size_t i=0; i<_cModes; i++) {
             if (val < _rgModePWMBoundary[i]) {

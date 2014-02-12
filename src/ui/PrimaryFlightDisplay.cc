@@ -33,7 +33,7 @@ static const float PITCHTRANSLATION = 65;
 // 5 degrees for each line
 static const int PITCH_SCALE_RESOLUTION = 5;
 static const float PITCH_SCALE_MAJORWIDTH = 0.1f;
-static const float PITCH_SCALE_MINORWIDTH = 0.066;
+static const float PITCH_SCALE_MINORWIDTH = 0.066f;
 
 // Beginning from PITCH_SCALE_WIDTHREDUCTION_FROM degrees of +/- pitch, the
 // width of the lines is reduced, down to PITCH_SCALE_WIDTHREDUCTION times
@@ -49,18 +49,18 @@ static const int PITCH_SCALE_HALFRANGE = 15;
 
 static const int  COMPASS_DISK_MAJORTICK = 10;
 static const int  COMPASS_DISK_ARROWTICK = 45;
-static const float COMPASS_DISK_MAJORLINEWIDTH = 0.006;
-static const float COMPASS_DISK_MINORLINEWIDTH = 0.004;
+static const float COMPASS_DISK_MAJORLINEWIDTH = 0.006f;
+static const float COMPASS_DISK_MINORLINEWIDTH = 0.004f;
 static const int  COMPASS_DISK_RESOLUTION = 10;
-static const float COMPASS_SEPARATE_DISK_RESOLUTION = 5;
-static const float COMPASS_DISK_MARKERWIDTH = 0.2;
-static const float COMPASS_DISK_MARKERHEIGHT = 0.133;
+static const float COMPASS_SEPARATE_DISK_RESOLUTION = 5.0f;
+static const float COMPASS_DISK_MARKERWIDTH = 0.2f;
+static const float COMPASS_DISK_MARKERHEIGHT = 0.133f;
 
 static const int  CROSSTRACK_MAX = 1000;
-static const float CROSSTRACK_RADIUS = 0.6;
+static const float CROSSTRACK_RADIUS = 0.6f;
 
-static const float TAPE_GAUGES_TICKWIDTH_MAJOR = 0.25;
-static const float TAPE_GAUGES_TICKWIDTH_MINOR = 0.15;
+static const float TAPE_GAUGES_TICKWIDTH_MAJOR = 0.25f;
+static const float TAPE_GAUGES_TICKWIDTH_MINOR = 0.15f;
 
 // The altitude difference between top and bottom of scale
 static const int ALTIMETER_LINEAR_SPAN = 50;
