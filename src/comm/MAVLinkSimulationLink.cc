@@ -677,6 +677,9 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
     int streampointer = 0;
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     int bufferlength = 0;
+    
+    // Initialize drop count to 0 so it isn't referenced uninitialized when returned at the bottom of this function
+    comm.packet_rx_drop_count = 0;
 
     // Output all bytes as hex digits
     for (int i=0; i<size; i++)
