@@ -489,7 +489,7 @@ bool QGCFlightGearLink::connectSimulation()
 #ifdef Q_OS_WIN32
     processFgfs = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
     //fgRoot = "C:\\Program Files (x86)\\FlightGear\\data";
-    fgScenery = "C:\\Program Files (x86)\\FlightGear\\data\\Scenery"
+    fgScenery = "C:\\Program Files (x86)\\FlightGear\\data\\Scenery";
     terraSyncScenery = "C:\\Program Files (x86)\\FlightGear\\data\\Scenery-Terrasync";
 #endif
 
