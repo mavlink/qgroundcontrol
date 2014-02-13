@@ -1071,12 +1071,12 @@ float UASWaypointManager::getAcceptanceRadiusRecommendation()
     {
         if (uas->isRotaryWing())
         {
-                return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
-            }
-            else if (uas->isFixedWing())
-            {
-                return UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING;
-            }
+            return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
+        }
+        else if (uas->isFixedWing())
+        {
+            return UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING;
+        }
     }
 
     return 10.0f;
