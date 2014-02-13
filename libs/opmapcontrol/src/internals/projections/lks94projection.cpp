@@ -28,6 +28,11 @@
 #include <qmath.h>
 
 
+// These pragmas are local modifications to this third party library to silence warnings
+#ifdef Q_OS_LINUX
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
  
 namespace projections {
 LKS94Projection::LKS94Projection():MinLatitude  (53.33 ), MaxLatitude  (56.55 ), MinLongitude  (20.22 ),
@@ -787,3 +792,8 @@ Size LKS94Projection::GetTileMatrixMaxXY(int const& zoom)
 }
 
 }
+
+#ifdef Q_OS_LINUX
+#pragma GCC diagnostic pop
+#endif
+
