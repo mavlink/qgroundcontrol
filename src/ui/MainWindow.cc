@@ -555,6 +555,29 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
     }
 
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (!googleEarthView)
+    {
+        googleEarthView = new SubMainWindow(this);
+        googleEarthView->setObjectName("VIEW_GOOGLEEARTH");
+        googleEarthView->setCentralWidget(new QGCGoogleEarthView(this));
+        addToCentralStackedWidget(googleEarthView, VIEW_GOOGLEEARTH, tr("Google Earth View"));
+    }
+#endif
+
+#ifdef QGC_OSG_ENABLED
+    if (q3DWidget)
+    {
+        q3DWidget = Q3DWidgetFactory::get("PIXHAWK", this);
+        q3DWidget->setObjectName("VIEW_3DWIDGET");
+
+        local3DView = new SubMainWindow(this);
+        local3DView->setObjectName("VIEW_LOCAL3D");
+        local3DView->setCentralWidget(q3DWidget);
+        addToCentralStackedWidget(local3DView, VIEW_LOCAL3D, tr("Local 3D View"));
+    }
+#endif
+
     if (!simView)
     {
         simView = new SubMainWindow(this);
@@ -660,24 +683,6 @@ void MainWindow::buildCommonWidgets()
         dataplotWidget    = new QGCDataPlot2D(this);
         addCentralWidget(dataplotWidget, tr("Logfile Plot"));
     }*/
-
-#ifdef QGC_OSG_ENABLED
-    if (q3DWidget)
-    {
-        q3DWidget = Q3DWidgetFactory::get("PIXHAWK", this);
-        q3DWidget->setObjectName("VIEW_3DWIDGET");
-
-        addToCentralStackedWidget(q3DWidget, VIEW_3DWIDGET, tr("Local 3D"));
-    }
-#endif
-
-#if (defined _MSC_VER) /*| (defined Q_OS_MAC) mac os doesn't support gearth right now */
-    if (!earthWidget)
-    {
-        earthWidget = new QGCGoogleEarthView(this);
-        addToCentralStackedWidget(earthWidget,VIEW_GOOGLEEARTH, tr("Google Earth"));
-    }
-#endif
 }
 
 void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
@@ -1265,6 +1270,16 @@ void MainWindow::connectCommonActions()
         ui.actionTerminalView->setChecked(true);
         ui.actionTerminalView->activate(QAction::Trigger);
     }
+    if (currentView == VIEW_GOOGLEEARTH)
+    {
+        ui.actionGoogleEarthView->setChecked(true);
+        ui.actionGoogleEarthView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_LOCAL3D)
+    {
+        ui.actionLocal3DView->setChecked(true);
+        ui.actionLocal3DView->activate(QAction::Trigger);
+    }
     if (currentView == VIEW_UNCONNECTED)
     {
         ui.actionUnconnectedView->setChecked(true);
@@ -1302,6 +1317,8 @@ void MainWindow::connectCommonActions()
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
+    connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
+    connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
 
     if (getCustomMode() == CUSTOM_MODE_APM) {
         connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
@@ -1840,7 +1857,12 @@ void MainWindow::loadViewState()
         case VIEW_TERMINAL:
             centerStack->setCurrentWidget(terminalView);
             break;
-
+        case VIEW_GOOGLEEARTH:
+            centerStack->setCurrentWidget(googleEarthView);
+            break;
+        case VIEW_LOCAL3D:
+            centerStack->setCurrentWidget(local3DView);
+            break;
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
@@ -1939,6 +1961,27 @@ void MainWindow::loadTerminalView()
     }
 }
 
+void MainWindow::loadGoogleEarthView()
+{
+    if (currentView != VIEW_GOOGLEEARTH)
+    {
+        storeViewState();
+        currentView = VIEW_GOOGLEEARTH;
+        ui.actionGoogleEarthView->setChecked(true);
+        loadViewState();
+    }
+}
+
+void MainWindow::loadLocal3DView()
+{
+    if (currentView != VIEW_LOCAL3D)
+    {
+        storeViewState();
+        currentView = VIEW_LOCAL3D;
+        ui.actionLocal3DView->setChecked(true);
+        loadViewState();
+    }
+}
 
 void MainWindow::loadUnconnectedView()
 {
