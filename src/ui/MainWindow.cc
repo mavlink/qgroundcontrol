@@ -463,6 +463,12 @@ void MainWindow::buildCustomWidget()
             case VIEW_MAVLINK:
                 dock = createDockWidget(mavlinkView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
+            case VIEW_GOOGLEEARTH:
+                dock = createDockWidget(googleEarthView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            case VIEW_LOCAL3D:
+                dock = createDockWidget(local3DView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
             default:
                 dock = createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
@@ -1227,6 +1233,8 @@ void MainWindow::connectCommonActions()
     }
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionUnconnectedView);
+    perspectives->addAction(ui.actionGoogleEarthView);
+    perspectives->addAction(ui.actionLocal3DView);
     perspectives->setExclusive(true);
 
     // Mark the right one as selected
