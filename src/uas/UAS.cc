@@ -2180,7 +2180,7 @@ void UAS::readParametersFromStorage()
 
 bool UAS::isRotaryWing()
 {
-    switch (airframe) {
+    switch (type) {
         case MAV_TYPE_QUADROTOR:
         /* fallthrough */
         case MAV_TYPE_COAXIAL:
@@ -2196,7 +2196,7 @@ bool UAS::isRotaryWing()
 
 bool UAS::isFixedWing()
 {
-    switch (airframe) {
+    switch (type) {
         case MAV_TYPE_FIXED_WING:
             return true;
         default:
