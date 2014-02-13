@@ -1063,11 +1063,23 @@ int UASWaypointManager::getFrameRecommendation()
 
 float UASWaypointManager::getAcceptanceRadiusRecommendation()
 {
-    if (waypointsEditable.count() > 0) {
+    if (waypointsEditable.count() > 0)
+    {
         return waypointsEditable.last()->getAcceptanceRadius();
-    } else {
-        return 10.0f;
     }
+    else
+    {
+        if (uas->isRotaryWing())
+        {
+                return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
+            }
+            else if (uas->isFixedWing())
+            {
+                return UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING;
+            }
+    }
+
+    return 10.0f;
 }
 
 float UASWaypointManager::getHomeAltitudeOffsetDefault()
