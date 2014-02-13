@@ -269,16 +269,6 @@ void WaypointList::addEditable(bool onCurrentPosition)
         // Create waypoint with last frame
         Waypoint *last = waypoints.last();
         wp = WPM->createWaypoint();
-        if (uas)
-        {
-            if (uas->isRotaryWing()) {
-                wp->setAcceptanceRadius(UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING);
-            }
-            else if (uas->isFixedWing())
-            {
-                wp->setAcceptanceRadius(UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING);
-            }
-        }
 //        wp->blockSignals(true);
         MAV_FRAME frame = (MAV_FRAME)last->getFrame();
         wp->setFrame(frame);
