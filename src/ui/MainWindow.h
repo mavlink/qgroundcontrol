@@ -240,6 +240,10 @@ public slots:
     void loadMAVLinkView();
     /** @brief Load Terminal Console views */
     void loadTerminalView();
+    /** @brief Load Google Earth View */
+    void loadGoogleEarthView();
+    /** @brief Load local 3D view */
+    void loadLocal3DView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -333,7 +337,7 @@ protected:
         VIEW_HARDWARE_CONFIG,
         VIEW_SOFTWARE_CONFIG,
         VIEW_TERMINAL,
-        VIEW_3DWIDGET,
+        VIEW_LOCAL3D,
         VIEW_GOOGLEEARTH,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
@@ -406,6 +410,8 @@ protected:
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
     QPointer<SubMainWindow> terminalView;
+    QPointer<SubMainWindow> googleEarthView;
+    QPointer<SubMainWindow> local3DView;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
