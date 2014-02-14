@@ -581,30 +581,12 @@ void HUD::paintHUD()
         scalingFactor = this->width()/vwidth;
         double scalingFactorH = this->height()/vheight;
         if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
-        // Fill with black background
-        if (videoEnabled) {
-            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
-                qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
-                QImage fill = QImage(nextOfflineImage);
-
-                glImage = fill;
-
-                // Reset to save load efforts
-                nextOfflineImage = "";
-            }
-
-        }
 
         // And if either video or the data stream is enabled, draw the next frame.
-        if (dataStreamEnabled || videoEnabled)
+        if (videoEnabled)
         {
-
             xImageFactor = width() / (float)glImage.width();
             yImageFactor = height() / (float)glImage.height();
-            //float imageFactor = qMin(xImageFactor, yImageFactor);
-            // Resize to correct size and fill with image
-            // FIXME
-
         }
 
         QPainter painter;
@@ -1329,14 +1311,6 @@ void HUD::saveImage()
     //Bring up popup
     QString fileName = "output.png";
     saveImage(fileName);
-}
-
-void HUD::startImage(quint64 timestamp)
-{
-    if (videoEnabled && offlineDirectory != "") {
-        // Load and diplay image file
-        nextOfflineImage = QString(offlineDirectory + "/%1.bmp").arg(timestamp);
-    }
 }
 
 void HUD::selectOfflineDirectory()
