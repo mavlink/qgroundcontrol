@@ -1377,6 +1377,7 @@ void HUD::copyImage()
     if (u)
     {
         this->glImage = u->getImage();
+        qDebug() << "IMG:" << &this->glImage;
 
         // Save to directory if logging is enabled
         if (imageLoggingEnabled)
