@@ -1242,7 +1242,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
         break;
 #endif
-#ifdef MAVLINK_ENABLED_PIXHAWK
+
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
             mavlink_data_transmission_handshake_t p;
@@ -1296,8 +1296,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 
-
-#endif
             //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
             //        {
             //            mavlink_object_detection_event_t event;
