@@ -292,8 +292,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Try to disconnect the image link
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u) {
-            disconnect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
-            disconnect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
+            disconnect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage(UASInterface*)));
         }
     }
 
@@ -313,10 +312,9 @@ void HUD::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
         // Try to connect the image link
-        UAS* u = dynamic_cast<UAS*>(uas);
+        UAS* u = qobject_cast<UAS*>(uas);
         if (u) {
-            connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
-            connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
+            connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage(UASInterface*)));
         }
     }
 
@@ -1371,13 +1369,12 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
     }
 }
 
-void HUD::copyImage()
+void HUD::copyImage(UASInterface* uas)
 {
-    UAS* u = dynamic_cast<UAS*>(this->uas);
+    UAS* u = qobject_cast<UAS*>(uas);
     if (u)
     {
         this->glImage = u->getImage();
-        qDebug() << "IMG:" << &this->glImage;
 
         // Save to directory if logging is enabled
         if (imageLoggingEnabled)
