@@ -126,7 +126,6 @@ protected:
     static const int8_t systemId = 220;
     static const uint8_t componentId = 200;
     static const uint16_t version = 1000;
-    static const unsigned int barometerOffsetkPa = 2;
 
 signals:
     void valueChanged(int uasId, QString curve, double value, quint64 usec);
