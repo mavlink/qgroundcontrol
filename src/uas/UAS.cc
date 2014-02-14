@@ -2059,7 +2059,6 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 
 QImage UAS::getImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
 
 //    qDebug() << "IMAGE TYPE:" << imageType;
 
@@ -2105,9 +2104,6 @@ QImage UAS::getImage()
     imagePacketsArrived = 0;
     //imageRecBuffer.clear();
     return image;
-#else
-    return QImage();
-#endif
 
 }
 
