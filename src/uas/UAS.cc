@@ -2982,7 +2982,7 @@ bool UAS::emergencyKILL()
 /**
 * If enabled, connect the flight gear link.
 */
-void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil)
+void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
 {
     QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
     if (!link || !simulation) {
@@ -2997,6 +2997,7 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil)
     link = dynamic_cast<QGCFlightGearLink*>(simulation);
     link->setStartupArguments(options);
     link->sensorHilEnabled(sensorHil);
+    QObject::connect(configuration, SIGNAL(barometerOffsetChanged(float)), link, SLOT(setBarometerOffset(float)));
     if (enable)
     {
         startHil();

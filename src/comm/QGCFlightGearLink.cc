@@ -46,7 +46,8 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     terraSync(NULL),
     flightGearVersion(0),
     startupArguments(startupArguments),
-    _sensorHilEnabled(true)
+    _sensorHilEnabled(true),
+    barometerOffsetkPa(0.0)
 {
     this->host = host;
     this->port = port+mav->getUASID();
@@ -279,7 +280,8 @@ void QGCFlightGearLink::readBytes()
     mag_dip = values.at(18).toFloat();
 
     temperature = values.at(19).toFloat();
-    abs_pressure = values.at(20).toFloat()*1e2; //convert to Pa from hPa
+    abs_pressure = values.at(20).toFloat() * 1e2f; //convert to Pa from hPa
+    abs_pressure += barometerOffsetkPa * 1e3f; //add offset, convert from kPa to Pa
 
     //calculate differential pressure
     const float air_gas_constant = 287.1f; // J/(kg * K)
@@ -735,4 +737,9 @@ void QGCFlightGearLink::setName(QString name)
 {
     this->name = name;
     //    emit nameChanged(this->name);
+}
+
+void QGCFlightGearLink::setBarometerOffset(float barometerOffsetkPa)
+{
+    this->barometerOffsetkPa = barometerOffsetkPa;
 }
