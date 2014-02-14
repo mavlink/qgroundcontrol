@@ -25,9 +25,13 @@ protected:
 private slots:
     void on_startButton_clicked();
     void on_stopButton_clicked();
+    void on_barometerOffsetLineEdit_textChanged(const QString& baroOffset);
 
 private:
     Ui::QGCHilFlightGearConfiguration *ui;
+
+signals:
+     void barometerOffsetChanged(float barometerOffsetkPa);
 };
 
 #endif // QGCHILFLIGHTGEARCONFIGURATION_H

@@ -64,7 +64,7 @@ void QGCHilConfiguration::on_simComboBox_currentIndexChanged(int index)
     if(1 == index)
     {
         // Ensure the sim exists and is disabled
-        mav->enableHilFlightGear(false, "", true);
+        mav->enableHilFlightGear(false, "", true, this);
         QGCHilFlightGearConfiguration* hfgconf = new QGCHilFlightGearConfiguration(mav, this);
         hfgconf->show();
         ui->simulatorConfigurationLayout->addWidget(hfgconf);
