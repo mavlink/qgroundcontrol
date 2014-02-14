@@ -2109,7 +2109,6 @@ QImage UAS::getImage()
 
 void UAS::requestImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
@@ -2119,7 +2118,6 @@ void UAS::requestImage()
         mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
-#endif
 }
 
 
