@@ -17,7 +17,7 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-error(Fail the build for testing)
+error(Fail the build for testing again)
 
 message(Qt version $$[QT_VERSION])
 
