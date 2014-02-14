@@ -94,7 +94,7 @@ public slots:
     /** @brief Enable Video */
     void enableVideo(bool enabled);
     /** @brief Copy an image from the current active UAS */
-    void copyImage();
+    void copyImage(UASInterface* uas);
 
 
 protected slots:
