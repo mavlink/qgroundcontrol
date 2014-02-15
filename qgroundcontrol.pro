@@ -17,6 +17,7 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
+
 message(Qt version $$[QT_VERSION])
 
 # Setup our supported build types. We do this once here and then use the defined config scopes
@@ -47,6 +48,12 @@ CONFIG(debug, debug|release) {
 } else {
     error(Unsupported build flavor)
 }
+
+MacBuild {
+} else {
+    error(fail all builds)
+}
+
 
 # Setup our build directories
 
