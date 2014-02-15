@@ -2170,6 +2170,32 @@ void UAS::readParametersFromStorage()
     sendMessage(msg);
 }
 
+bool UAS::isRotaryWing()
+{
+    switch (type) {
+        case MAV_TYPE_QUADROTOR:
+        /* fallthrough */
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool UAS::isFixedWing()
+{
+    switch (type) {
+        case MAV_TYPE_FIXED_WING:
+            return true;
+        default:
+            return false;
+    }
+}
+
 /**
 * @param rate The update rate in Hz the message should be sent
 */
