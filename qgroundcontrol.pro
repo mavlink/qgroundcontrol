@@ -117,16 +117,23 @@ WindowsBuild {
 }
 
 #
-# Warnings cleanup. Plan of attack is to turn on warnings as error once all warnings are fixed. Please
-# do no change the warning level from what they are currently set to below.
+# We treat all warnings as errors which must be fixed before proceeding. If you run into a problem you can't fix
+# you can always use local pragmas to work around the warning. This should be used sparingly and only in cases where
+# the problem absolultey can't be fixed.
 #
 
 MacBuild | LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += -Wall
 }
 
+MacBuild {
+	QMAKE_CXXFLAGS_WARN_ON += -Werror
+}
+
 WindowsBuild {
-	QMAKE_CXXFLAGS_WARN_ON += /W3
+	QMAKE_CXXFLAGS_WARN_ON += /W3 \
+        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
+        /wd4290     # ignore exception specifications
 }
 
 #
