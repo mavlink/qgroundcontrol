@@ -1242,7 +1242,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
         break;
 #endif
-#ifdef MAVLINK_ENABLED_PIXHAWK
+
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
             mavlink_data_transmission_handshake_t p;
@@ -1296,8 +1296,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 
-
-#endif
             //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
             //        {
             //            mavlink_object_detection_event_t event;
@@ -2061,7 +2059,6 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 
 QImage UAS::getImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
 
 //    qDebug() << "IMAGE TYPE:" << imageType;
 
@@ -2107,15 +2104,11 @@ QImage UAS::getImage()
     imagePacketsArrived = 0;
     //imageRecBuffer.clear();
     return image;
-#else
-    return QImage();
-#endif
 
 }
 
 void UAS::requestImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
@@ -2125,7 +2118,6 @@ void UAS::requestImage()
         mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
-#endif
 }
 
 
