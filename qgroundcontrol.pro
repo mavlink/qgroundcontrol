@@ -17,6 +17,8 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
+error(fail all builds)
+
 message(Qt version $$[QT_VERSION])
 
 # Setup our supported build types. We do this once here and then use the defined config scopes
