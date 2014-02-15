@@ -92,6 +92,11 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_frame->addItem("Local(NED)",MAV_FRAME_LOCAL_NED);
     m_ui->comboBox_frame->addItem("Mission",MAV_FRAME_MISSION);
 
+    // We do not want users to mess with the current waypoint in missions -
+    // they have to use the one downloaded from the MAV to change the current WP.
+    m_ui->selectedBox->setVisible(false);
+    connect(m_ui->selectedBox, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
+
     // Initialize view correctly
     int actionID = wp->getAction();
     initializeActionView(actionID);
@@ -109,7 +114,6 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->removeButton, SIGNAL(clicked()), this, SLOT(remove()));
 
     connect(m_ui->autoContinue, SIGNAL(stateChanged(int)), this, SLOT(changedAutoContinue(int)));
-    connect(m_ui->selectedBox, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
     connect(m_ui->comboBox_action, SIGNAL(activated(int)), this, SLOT(changedAction(int)));
     connect(m_ui->comboBox_frame, SIGNAL(activated(int)), this, SLOT(changedFrame(int)));
 
