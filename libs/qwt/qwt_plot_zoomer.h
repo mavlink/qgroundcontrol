@@ -85,7 +85,18 @@ public:
 
 public slots:
     void moveBy(double x, double y);
+
+// These pragmas are local modifications to this third party library to silence warnings
+#ifndef Q_OS_WIN
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+#endif
+    
     virtual void move(double x, double y);
+
+#ifndef Q_OS_WIN
+#pragma GCC diagnostic pop
+#endif
 
     virtual void zoom(const QwtDoubleRect &);
     virtual void zoom(int up);

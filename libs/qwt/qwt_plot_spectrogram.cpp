@@ -533,6 +533,15 @@ QwtRasterData::ContourLines QwtPlotSpectrogram::renderContourLines(
                                       d_data->contourLevels, d_data->conrecAttributes );
 }
 
+// These pragmas are local modifications to this third party library to silence warnings
+#ifdef Q_OS_LINUX
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#elif defined(Q_OS_MAC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+
 /*!
    Paint the contour lines
 
@@ -577,6 +586,10 @@ void QwtPlotSpectrogram::drawContourLines(QPainter *painter,
         }
     }
 }
+
+#ifndef Q_OS_WIN
+#pragma GCC diagnostic pop
+#endif
 
 /*!
   \brief Draw the spectrogram

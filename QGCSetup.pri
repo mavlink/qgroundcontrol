@@ -186,10 +186,13 @@ WindowsBuild {
 	ReleaseBuild {
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\$${TARGET}.exp")
 
+        # This next xcopy does not always work because the files are not there by default, so disabling for now while 
+        # we figure out the right way to do it
+
 		# Copy Visual Studio DLLs
 		# Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
 		# I'm not certain of the path for VS2008, so this only works for VS2010.
-		win32-msvc2010 {
+		win32-msvc2010_NotWorkingButKeepingIn {
 			QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(xcopy /D /Y "\"C:\\Program Files \(x86\)\\Microsoft Visual Studio 10.0\\VC\\redist\\x86\\Microsoft.VC100.CRT\\*.dll\""  "$$DESTDIR_WIN\\")
 		}
 	}
