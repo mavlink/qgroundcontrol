@@ -17,7 +17,6 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-error(fail all builds)
 
 message(Qt version $$[QT_VERSION])
 
@@ -49,6 +48,12 @@ CONFIG(debug, debug|release) {
 } else {
     error(Unsupported build flavor)
 }
+
+MacBuild {
+} else {
+    error(fail all builds)
+}
+
 
 # Setup our build directories
 
