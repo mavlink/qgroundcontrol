@@ -103,14 +103,14 @@ void QGCRGBDView::contextMenuEvent(QContextMenuEvent* event)
 void QGCRGBDView::enableRGB(bool enabled)
 {
     rgbEnabled = enabled;
-    dataStreamEnabled = rgbEnabled | depthEnabled;
+    videoEnabled = rgbEnabled | depthEnabled;
     QWidget::resize(size().width(), size().height());
 }
 
 void QGCRGBDView::enableDepth(bool enabled)
 {
     depthEnabled = enabled;
-    dataStreamEnabled = rgbEnabled | depthEnabled;
+    videoEnabled = rgbEnabled | depthEnabled;
     QWidget::resize(size().width(), size().height());
 }
 
