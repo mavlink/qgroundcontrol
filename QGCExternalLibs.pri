@@ -338,30 +338,6 @@ LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
 }
 
 #
-# [OPTIONAL] Kinect support using libfreenect on POSIX systems.
-#
-contains(DEFINES, DISABLE_KINECT) {
-	message("Skipping support for the Kinect (manual override from command line)")
-	DEFINES -= DISABLE_KINECT
-# Otherwise the user can still disable this feature in the user_config.pri file.
-} else:infile(user_config.pri, DEFINES, DISABLE_KINECT) {
-    message("Skipping support for the Kinext (manual override from user_config.pri)")
-} else:MacBuild | LinuxBuild {
-    exists(/opt/local/include/libfreenect) | exists(/usr/local/include/libfreenect) {
-        message("Including support for the Kinect")
-
-        DEFINES += QGC_LIBFREENECT_ENABLED
-        LIBS += -lfreenect
-        HEADERS += src/input/Freenect.h
-        SOURCES += src/input/Freenect.cc
-    } else {
-        warning("Skipping support for the Kinect (missing libraries, see README)")
-    }
-} else {
-    message("Skipping support for the Kinect (unsupported platform)")
-}
-
-#
 # [REQUIRED] EIGEN matrix library
 # NOMINMAX constant required to make internal min/max work.
 INCLUDEPATH += libs/eigen
