@@ -115,7 +115,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
         if (SUCCEEDED(hr))
         {
-            hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
+            //hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
             //pVoice->Release();
             //pVoice = NULL;
         }

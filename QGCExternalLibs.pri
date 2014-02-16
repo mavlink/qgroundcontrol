@@ -362,8 +362,8 @@ contains(DEFINES, DISABLE_KINECT) {
 }
 
 #
-# [REQUIRED] EIGEN matrix library (NOMINMAX needed to make internal min/max work)
-#
+# [REQUIRED] EIGEN matrix library
+# NOMINMAX constant required to make internal min/max work.
 INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 

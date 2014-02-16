@@ -57,6 +57,16 @@ Point MercatorProjectionYandex::FromLatLngToPixel(double lat, double lng, const 
     return ret;
 
 }
+
+// These pragmas are local modifications to this third party library to silence warnings
+#ifdef Q_OS_LINUX
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#elif defined(Q_OS_MAC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+    
 internals::PointLatLng MercatorProjectionYandex::FromPixelToLatLng(const int &x, const int &y, const int &zoom)
 {
     Size s = GetTileMatrixSizePixel(zoom);
@@ -82,6 +92,11 @@ internals::PointLatLng MercatorProjectionYandex::FromPixelToLatLng(const int &x,
 
     return ret;
 }
+
+#ifndef Q_OS_WIN
+#pragma GCC diagnostic pop
+#endif
+
 double MercatorProjectionYandex::Clip(const double &n, const double &minValue, const double &maxValue) const
 {
     return qMin(qMax(n, minValue), maxValue);

@@ -1242,7 +1242,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
         break;
 #endif
-#ifdef MAVLINK_ENABLED_PIXHAWK
+
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
             mavlink_data_transmission_handshake_t p;
@@ -1296,8 +1296,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 
-
-#endif
             //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
             //        {
             //            mavlink_object_detection_event_t event;
@@ -2061,7 +2059,6 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 
 QImage UAS::getImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
 
 //    qDebug() << "IMAGE TYPE:" << imageType;
 
@@ -2107,25 +2104,20 @@ QImage UAS::getImage()
     imagePacketsArrived = 0;
     //imageRecBuffer.clear();
     return image;
-#else
-    return QImage();
-#endif
 
 }
 
 void UAS::requestImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
     if (imagePacketsArrived == 0)
     {
         mavlink_message_t msg;
-        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, MAVLINK_DATA_STREAM_IMG_JPEG, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
-#endif
 }
 
 
@@ -2176,6 +2168,32 @@ void UAS::readParametersFromStorage()
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1, 0, 0, 0);
     sendMessage(msg);
+}
+
+bool UAS::isRotaryWing()
+{
+    switch (type) {
+        case MAV_TYPE_QUADROTOR:
+        /* fallthrough */
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool UAS::isFixedWing()
+{
+    switch (type) {
+        case MAV_TYPE_FIXED_WING:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /**

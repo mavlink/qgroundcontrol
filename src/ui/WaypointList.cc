@@ -405,6 +405,9 @@ void WaypointList::currentWaypointEditableChanged(quint16 seq)
 // Update waypointViews to correctly indicate the new current waypoint
 void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
 {
+    // First update the edit list
+    currentWaypointEditableChanged(seq);
+
     const QList<Waypoint *> &waypoints = WPM->getWaypointViewOnlyList();
 
     if (seq < waypoints.count())
@@ -423,6 +426,7 @@ void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
             }
         }
     }
+    m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
 }
 
 void WaypointList::updateWaypointEditable(int uas, Waypoint* wp)
@@ -430,6 +434,7 @@ void WaypointList::updateWaypointEditable(int uas, Waypoint* wp)
     Q_UNUSED(uas);
     WaypointEditableView *wpv = wpEditableViews.value(wp);
     wpv->updateValues();
+    m_ui->tabWidget->setCurrentIndex(0); // XXX magic number
 }
 
 void WaypointList::updateWaypointViewOnly(int uas, Waypoint* wp)
@@ -437,6 +442,7 @@ void WaypointList::updateWaypointViewOnly(int uas, Waypoint* wp)
     Q_UNUSED(uas);
     WaypointViewOnlyView *wpv = wpViewOnlyViews.value(wp);
     wpv->updateValues();
+    m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
 }
 
 void WaypointList::waypointViewOnlyListChanged()
@@ -487,6 +493,8 @@ void WaypointList::waypointViewOnlyListChanged()
     }
     this->setUpdatesEnabled(true);
     loadFileGlobalWP = false;
+
+    m_ui->tabWidget->setCurrentIndex(1);
 
 }
 
@@ -543,7 +551,6 @@ void WaypointList::waypointEditableListChanged()
     }
     this->setUpdatesEnabled(true);
     loadFileGlobalWP = false;
-
 
 }
 
