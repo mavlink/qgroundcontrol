@@ -36,6 +36,14 @@ linux-g++ | linux-g++-64 {
     error(Unsupported build type)
 }
 
+# Installer configuration
+
+installer {
+    CONFIG -= debug
+    CONFIG -= debug_and_release
+    CONFIG += release
+}
+
 # Setup our supported build flavors
 
 CONFIG(debug, debug|release) {
@@ -193,6 +201,12 @@ include(QGCExternalLibs.pri)
 #
 
 include(QGCSetup.pri)
+
+#
+# Installer targets
+#
+
+include(QGCInstaller.pri)
 
 #
 # Main QGroundControl portion of project file
