@@ -51,9 +51,6 @@ The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC c
 
 OpenSceneGraph support is built-in to Mac OS X. On Linux it is commonly available through the libopenscenegraph and libopenscenegraph-qt developer packages. Windows support does not currently exist. This functionality with be automatically built if the proper libraries are installed. Disabling this feature can be done by adding `DISABLE_OPEN_SCENE_GRAPH` to the `DEFINES` variable.
 
-### Kinect support
-Microsoft's Kinect can be used by some autopilots for additional functionality. This is provided by the libfreenect libraries available on the Mac and Linux platforms. This support is enabled by default and built-in when the appropriate libraries exist. To disable this behavior add `DISABLE_KINECT` to the `DEFINES` variable.
-
 ### 3D mouse support
 Connexion's 3D mice are supported through the 3DxWARE driver available on Linux and Windows. Download and install the driver from 3DConnexion to enable support. This support is enabled by default with driver installation. To disable add `DISABLE_3DMOUSE` to the `DEFINES` variable.
 
