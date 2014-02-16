@@ -20,6 +20,7 @@ qrc_*.cpp
 tmp
 debug
 release
+installer
 /qgroundcontrol
 mavlinkgen-build-desktop
 qgroundcontrol.xcodeproj/**
