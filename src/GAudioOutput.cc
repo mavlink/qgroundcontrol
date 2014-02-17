@@ -110,8 +110,10 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
     espeak_voice.variant = 0;
     espeak_voice.gender = 2;
     espeak_SetVoiceByProperties(&espeak_voice);
-    espeak_PARAMETER rateParam = espeakRATE;
+    // Rate of eSpeak can be changed if needed:
+//    espeak_PARAMETER rateParam = espeakRATE;
 //  espeak_SetParameter(rateParam , 150, 0);
+#endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice = NULL;
