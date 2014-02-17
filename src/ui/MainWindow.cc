@@ -72,6 +72,11 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 
+// Add support for the MAVLink generator UI if it's been requested.
+#ifdef QGC_MAVGEN_ENABLED
+#include "XMLCommProtocolWidget.h"
+#endif
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -274,19 +279,19 @@ void MainWindow::init()
     joystickWidget = 0;
     joystick = new JoystickInput();
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouseInput = new Mouse3DInput(this);
     mouse = new Mouse6dofInput(mouseInput);
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
-#if MOUSE_ENABLED_LINUX
+#if QGC_MOUSE_ENABLED_LINUX
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
     // Connect link
     if (autoReconnect)
@@ -547,6 +552,8 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
 
+// Add the MAVLink generator UI if it's been requested.
+#ifdef QGC_MAVGEN_ENABLED
     if (!mavlinkView)
     {
         mavlinkView = new SubMainWindow(this);
@@ -554,6 +561,7 @@ void MainWindow::buildCommonWidgets()
         mavlinkView->setCentralWidget(new XMLCommProtocolWidget(this));
         addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
     }
+#endif
 
     if (!simView)
     {
@@ -669,11 +677,11 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if (defined _MSC_VER) /*| (defined Q_OS_MAC) mac os doesn't support gearth right now */
+#ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!earthWidget)
     {
         earthWidget = new QGCGoogleEarthView(this);
-        addToCentralStackedWidget(earthWidget,VIEW_GOOGLEEARTH, tr("Google Earth"));
+        addToCentralStackedWidget(earthWidget, VIEW_GOOGLEEARTH, tr("Google Earth"));
     }
 #endif
 }
@@ -2017,11 +2025,11 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
     return menuActionHelper->dockWidgetTitleBarsEnabled();
 }
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
 bool MainWindow::x11Event(XEvent *event)
 {
     emit x11EventOccured(event);
     //qDebug("XEvent occured...");
     return false;
 }
-#endif // MOUSE_ENABLED_LINUX
+#endif // QGC_MOUSE_ENABLED_LINUX

@@ -28,12 +28,14 @@ This file is part of the QGROUNDCONTROL project
 
 #include "ArduPilotMegaMAV.h"
 
+#ifdef QGC_USE_ARDUPILOTMEGA_MESSAGES
 #ifndef MAVLINK_MSG_ID_MOUNT_CONFIGURE
 #include "ardupilotmega/mavlink_msg_mount_configure.h"
 #endif
 
 #ifndef MAVLINK_MSG_ID_MOUNT_CONTROL
 #include "ardupilotmega/mavlink_msg_mount_control.h"
+#endif
 #endif
 
 ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
@@ -96,13 +98,16 @@ void ArduPilotMegaMAV::receiveMessage(LinkInterface* link, mavlink_message_t mes
 }
 void ArduPilotMegaMAV::setMountConfigure(unsigned char mode, bool stabilize_roll,bool stabilize_pitch,bool stabilize_yaw)
 {
+#ifdef QGC_USE_ARDUPILOTMEGA_MESSAGES
     //Only supported by APM
     mavlink_message_t msg;
     mavlink_msg_mount_configure_pack(255,1,&msg,this->uasId,1,mode,stabilize_roll,stabilize_pitch,stabilize_yaw);
     sendMessage(msg);
+#endif
 }
 void ArduPilotMegaMAV::setMountControl(double pa,double pb,double pc,bool islatlong)
 {
+#ifdef QGC_USE_ARDUPILOTMEGA_MESSAGES
     mavlink_message_t msg;
     if (islatlong)
     {
@@ -113,4 +118,5 @@ void ArduPilotMegaMAV::setMountControl(double pa,double pb,double pc,bool islatl
         mavlink_msg_mount_control_pack(255,1,&msg,this->uasId,1,pa,pb,pc,0);
     }
     sendMessage(msg);
+#endif
 }
