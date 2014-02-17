@@ -2071,7 +2071,7 @@ QImage UAS::getImage()
         QString header("P5\n%1 %2\n%3\n");
         header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
-        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size() - 1);
+        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
         tmpImage.append(imageRecBuffer);
 
         //qDebug() << "IMAGE SIZE:" << tmpImage.size() << "HEADER SIZE: (15):" << header.size() << "HEADER: " << header;
