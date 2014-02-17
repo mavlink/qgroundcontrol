@@ -306,6 +306,9 @@ public:
         return nedAttGlobalOffset;
     }
 
+    bool isRotaryWing();
+    bool isFixedWing();
+
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay getOverlay()
     {
