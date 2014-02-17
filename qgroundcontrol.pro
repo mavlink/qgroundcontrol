@@ -110,6 +110,10 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
+	# Specify that the Unicode versions of string functions should be used in the Windows API.
+	# Without this the utils and qserialport libraries crash.
+	DEFINES += UNICODE
+
 	# QWebkit is not needed on MS-Windows compilation environment
 	CONFIG -= webkit
 

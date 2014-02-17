@@ -48,7 +48,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCWelcomeMainWindow.h"
 #include "GAudioOutput.h"
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #endif
 #include "UDPLink.h"
@@ -180,7 +180,7 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
         LinkManager::instance()->add(slink);
     }
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
     // Add OpalRT Link, but do not connect
     OpalLink* opalLink = new OpalLink();
     MainWindow::instance()->addLink(opalLink);

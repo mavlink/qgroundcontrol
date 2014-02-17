@@ -40,7 +40,9 @@ This file is part of the PIXHAWK project
 #include <AudioOutput>
 #endif
 #ifdef Q_OS_LINUX
+#if defined QGC_SPEECH_ENABLED
 //#include <flite/flite.h>
+#endif
 #include <phonon/MediaObject>
 #include <phonon/AudioOutput>
 #endif
@@ -50,20 +52,13 @@ This file is part of the PIXHAWK project
 #endif
 
 /* For Snow leopard and later
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC & defined QGC_SPEECH_ENABLED
 #include <NSSpeechSynthesizer.h>
 #endif
    */
 
-#ifdef Q_OS_LINUX2
-extern "C" {
-    cst_voice *REGISTER_VOX(const char *voxdir);
-    void UNREGISTER_VOX(cst_voice *vox);
-    cst_voice *register_cmu_us_kal16(const char *voxdir);
-}
-#endif
 
-#if _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
 #endif
@@ -116,13 +111,13 @@ signals:
     void mutedChanged(bool);
 
 protected:
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
     //NSSpeechSynthesizer
 #endif
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     //cst_voice* voice; ///< The flite voice object
 #endif
-#ifdef _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     static ISpVoice *pVoice;
 #endif
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)

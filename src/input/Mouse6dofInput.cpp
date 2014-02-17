@@ -11,7 +11,7 @@
 #include "UASManager.h"
 #include "QMessageBox"
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
 #include <QX11Info>
 #include <X11/Xlib.h>
 #ifdef Success
@@ -21,9 +21,9 @@ extern "C"
 {
 #include "xdrvlib.h"
 }
-#endif // MOUSE_ENABLED_LINUX
+#endif // QGC_MOUSE_ENABLED_LINUX
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
 Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     mouse3DMax(0.075),   // TODO: check maximum value fot plugged device
     uas(NULL),
@@ -45,9 +45,9 @@ Mouse6dofInput::Mouse6dofInput(Mouse3DInput* mouseInput) :
     //connect(mouseInput, SIGNAL(On3dmouseKeyUp(int)), this, SLOT(FUNCTION(int)));
 
 }
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
 Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
     mouse3DMax(350.0),   // TODO: check maximum value fot plugged device
     uas(NULL),
@@ -109,7 +109,7 @@ Mouse6dofInput::Mouse6dofInput(QWidget* parent) :
     }
 
 }
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
 
 Mouse6dofInput::~Mouse6dofInput()
@@ -191,7 +191,7 @@ void Mouse6dofInput::run()
     }
 }
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
 void Mouse6dofInput::motion3DMouse(std::vector<float> &motionData)
 {
     if (motionData.size() < 6) return;
@@ -220,9 +220,9 @@ void Mouse6dofInput::motion3DMouse(std::vector<float> &motionData)
 
     //qDebug() << "NEW 3D MOUSE VALUES -- X" << xValue << " -- Y" << yValue << " -- Z" << zValue << " -- A" << aValue << " -- B" << bValue << " -- C" << cValue;
 }
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
 void Mouse6dofInput::button3DMouseDown(int button)
 {
     switch(button)
@@ -245,9 +245,9 @@ void Mouse6dofInput::button3DMouseDown(int button)
         break;
     }
 }
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
 void Mouse6dofInput::handleX11Event(XEvent *event)
 {
     //qDebug("XEvent occured...");
@@ -327,4 +327,4 @@ void Mouse6dofInput::handleX11Event(XEvent *event)
         }
     }
 }
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
