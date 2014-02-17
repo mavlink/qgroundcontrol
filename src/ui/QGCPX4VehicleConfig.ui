@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1272</width>
+    <width>1293</width>
     <height>1132</height>
    </rect>
   </property>
@@ -20,7 +20,16 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item row="1" column="1">
@@ -619,7 +628,7 @@
           </spacer>
          </item>
          <item row="0" column="0">
-          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0,0,0">
+          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="0,0,0">
            <item row="0" column="1">
             <widget class="QGCRadioChannelDisplay" name="throttleWidget" native="true">
              <property name="minimumSize">
@@ -696,6 +705,16 @@
               <widget class="QPushButton" name="rcCalibrationButton">
                <property name="text">
                 <string>Start Calibration</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="rcCopyTrimButton">
+               <property name="toolTip">
+                <string>Copy the trim values from roll / pitch / yaw from manual flight to the autonomous flight modes.</string>
+               </property>
+               <property name="text">
+                <string>Copy Attitude Trims</string>
                </property>
               </widget>
              </item>
@@ -986,7 +1005,16 @@
               <string>Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_3">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
                <number>0</number>
               </property>
               <item>
@@ -999,12 +1027,21 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1023,7 +1060,16 @@
               <string>Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
                <number>0</number>
               </property>
               <item>
@@ -1036,12 +1082,21 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1074,7 +1129,16 @@
               <string>Onboard Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
                <number>0</number>
               </property>
               <item>
@@ -1087,12 +1151,21 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>98</width>
+                   <height>28</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1198,7 +1271,16 @@
    <item row="0" column="0" rowspan="3">
     <widget class="QWidget" name="navBarWidget" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>

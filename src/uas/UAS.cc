@@ -115,22 +115,18 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     altitudeAMSL(0.0),
     altitudeRelative(0.0),
 
-    airSpeed(std::numeric_limits<double>::quiet_NaN()),
-    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+    globalEstimatorActive(false),
+
+    latitude_gps(0.0),
+    longitude_gps(0.0),
+    altitude_gps(0.0),
 
     speedX(0.0),
     speedY(0.0),
     speedZ(0.0),
 
-    globalEstimatorActive(false),
-    latitude_gps(0.0),
-    longitude_gps(0.0),
-    altitude_gps(0.0),
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
-
-    waypointManager(this),
-    paramMgr(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -140,6 +136,10 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedRGBDImageTimestamp(0.0),
     #endif
 
+    airSpeed(std::numeric_limits<double>::quiet_NaN()),
+    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+    waypointManager(this),
+
     attitudeKnown(false),
     attitudeStamped(false),
     lastAttitude(0),
@@ -148,7 +148,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     pitch(0.0),
     yaw(0.0),
 
+    blockHomePositionChanges(false),
+    receivedMode(false),
+
+
     paramsOnceRequested(false),
+    paramMgr(this),
     simulation(0),
 
     // The protected members.
@@ -159,9 +164,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0),
-    blockHomePositionChanges(false),
-    receivedMode(false)
+    lastSendTimeSensors(0)
 {
     for (unsigned int i = 0; i<255;++i)
     {
@@ -1239,7 +1242,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
         break;
 #endif
-#ifdef MAVLINK_ENABLED_PIXHAWK
+
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
             mavlink_data_transmission_handshake_t p;
@@ -1293,8 +1296,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 
-
-#endif
             //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
             //        {
             //            mavlink_object_detection_event_t event;
@@ -1654,11 +1655,19 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 #endif
 }
 
-void UAS::startRadioControlCalibration()
+void UAS::startRadioControlCalibration(int param)
 {
     mavlink_message_t msg;
     // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 1, 0, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, param, 0, 0, 0);
+    sendMessage(msg);
+}
+
+void UAS::endRadioControlCalibration()
+{
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -2050,7 +2059,6 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 
 QImage UAS::getImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
 
 //    qDebug() << "IMAGE TYPE:" << imageType;
 
@@ -2063,7 +2071,7 @@ QImage UAS::getImage()
         QString header("P5\n%1 %2\n%3\n");
         header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
-        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size() - 1);
+        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
         tmpImage.append(imageRecBuffer);
 
         //qDebug() << "IMAGE SIZE:" << tmpImage.size() << "HEADER SIZE: (15):" << header.size() << "HEADER: " << header;
@@ -2096,25 +2104,20 @@ QImage UAS::getImage()
     imagePacketsArrived = 0;
     //imageRecBuffer.clear();
     return image;
-#else
-    return QImage();
-#endif
 
 }
 
 void UAS::requestImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
     if (imagePacketsArrived == 0)
     {
         mavlink_message_t msg;
-        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, MAVLINK_DATA_STREAM_IMG_JPEG, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
-#endif
 }
 
 
@@ -2165,6 +2168,32 @@ void UAS::readParametersFromStorage()
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1, 0, 0, 0);
     sendMessage(msg);
+}
+
+bool UAS::isRotaryWing()
+{
+    switch (type) {
+        case MAV_TYPE_QUADROTOR:
+        /* fallthrough */
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool UAS::isFixedWing()
+{
+    switch (type) {
+        case MAV_TYPE_FIXED_WING:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /**
@@ -3070,23 +3099,11 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
-        float q[4];
-
-        double cosPhi_2 = cos(double(roll) / 2.0);
-        double sinPhi_2 = sin(double(roll) / 2.0);
-        double cosTheta_2 = cos(double(pitch) / 2.0);
-        double sinTheta_2 = sin(double(pitch) / 2.0);
-        double cosPsi_2 = cos(double(yaw) / 2.0);
-        double sinPsi_2 = sin(double(yaw) / 2.0);
-        q[0] = (cosPhi_2 * cosTheta_2 * cosPsi_2 +
-                sinPhi_2 * sinTheta_2 * sinPsi_2);
-        q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 -
-                cosPhi_2 * sinTheta_2 * sinPsi_2);
-        q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 +
-                sinPhi_2 * cosTheta_2 * sinPsi_2);
-        q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 -
-                sinPhi_2 * sinTheta_2 * cosPsi_2);
-
+    Q_UNUSED(time_us);
+    Q_UNUSED(xacc);
+    Q_UNUSED(yacc);
+    Q_UNUSED(zacc);
+    
         // Emit attitude for cross-check
         emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
         emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
@@ -3199,7 +3216,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
         float course = cog;
         // map to 0..2pi
         if (course < 0)
-            course += 2.0f * M_PI;
+            course += 2.0f * static_cast<float>(M_PI);
         // scale from radians to degrees
         course = (course / M_PI) * 180.0f;
 

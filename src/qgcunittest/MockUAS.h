@@ -154,7 +154,8 @@ public slots:
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw)
         { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) { Q_UNUSED(x); Q_UNUSED(y); Q_UNUSED(z); Q_UNUSED(yaw); Q_ASSERT(false); };
-    virtual void startRadioControlCalibration() { Q_ASSERT(false); };
+    virtual void startRadioControlCalibration(int param) { Q_UNUSED(param); Q_ASSERT(false); };
+    virtual void endRadioControlCalibration() { Q_ASSERT(false); };
     virtual void startMagnetometerCalibration() { Q_ASSERT(false); };
     virtual void startGyroscopeCalibration() { Q_ASSERT(false); };
     virtual void startPressureCalibration() { Q_ASSERT(false); };
@@ -167,6 +168,9 @@ public slots:
     virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites)
         { Q_UNUSED(time_us); Q_UNUSED(lat); Q_UNUSED(lon); Q_UNUSED(alt); Q_UNUSED(fix_type); Q_UNUSED(eph); Q_UNUSED(epv); Q_UNUSED(vel); Q_UNUSED(vn); Q_UNUSED(ve); Q_UNUSED(vd); Q_UNUSED(cog); Q_UNUSED(satellites); Q_ASSERT(false); };
     
+    virtual bool isRotaryWing() { Q_ASSERT(false); return false; }
+    virtual bool isFixedWing() { Q_ASSERT(false); return false; }
+
 private:
     int                 _systemType;
     int                 _systemId;

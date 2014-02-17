@@ -306,6 +306,9 @@ public:
         return nedAttGlobalOffset;
     }
 
+    bool isRotaryWing();
+    bool isFixedWing();
+
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay getOverlay()
     {
@@ -911,7 +914,8 @@ public slots:
     /** @brief Add an offset in body frame to the setpoint */
     void setLocalPositionOffset(float x, float y, float z, float yaw);
 
-    void startRadioControlCalibration();
+    void startRadioControlCalibration(int param=1);
+    void endRadioControlCalibration();
     void startMagnetometerCalibration();
     void startGyroscopeCalibration();
     void startPressureCalibration();

@@ -20,19 +20,44 @@ Please make sure to delete your build folder before re-building. Independent of 
 build system you use (this is not related to Qt or your OS) the dependency checking and 
 cleaning is based on the current project revision. So if you change the project and don't remove the build folder before your next build, incremental building can leave you with stale object files.
 
-## QGC2.0 Tech Preview
-Developers: In order to build the tech preview branch you need to:
+## Additional functionality
+QGroundcontrol has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values for variables either at the command line when calling `qmake` or in the `user_config.pri`. When calling `qmake` additional variables can be set using the syntax `VARIABLE="SPACE_SEPARATED_VALUES"`, which can be repeated for multiple variables. For example: `qmake DEFINES="DISABLE_QUPGRADE DISABLE_SPEECH" MAVLINK_CONF="sensesoar"` disables the QUpgrade widget, speech functionality, and sets the MAVLink dialect to sensesoar. These values can be more permanently specified by setting them in the `user_config.pri` file in the root directly. Copy the `user_config.pri.dist` file and name the copy `user_config.pri`, uncommenting the lines with the variables to modify and set their values as you desire.
 
-    git clone https://github.com/mavlink/qgroundcontrol -b config qgc2
-    git submodule init
-    git submodule update
+**NOTE:** Any variables specified at the command line call to `qmake` will override those set in `user_config.pri`.
 
-This procedure:
+### QUpgrade
+QUpgrade is a submodule (a Git feature like a sub-repository) that contains extra functionality. It is compiled in by default if it has initialized and updated. It can be disabled by specifying `DISABLE_QUPGRADE` in the `DEFINES` variable.
 
-* Clones the config branch (which contains QGC2) from github into your qgc2 directory
-* initializes all the submodules required for QGC, such as qupdate, the firmware installer
-* gets the latest code for all submodules
+To include QUpgrade functionality run the following (only needs to be done once after cloning the qggroundcontrol git repository):
+  * `git submodule init`
+  * `git submodule update`
 
+The QUpgrade module relies on `libudev` on Linux platforms, so be sure to install the development version of that package.
+
+### Specifying MAVLink dialects
+The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. Setting the `MAVLINK_CONF` variable sets the dialects, with more than one specified in a space-separated list. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
+
+### MAVLink dialect generator
+An add-on is available for QGC that provides a UI for generating MAVLink dialects from within QGC. This feature has been deprecated since identical functionality now exists within the MAVLink project itself. Enable this functionality by specifying the `DEFINES` variable `ENABLE_MAVGEN`.
+
+### Opal-RT's RT-LAB simulator
+Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DISABLE_RTLAB` to the `DEFINES` variable.
+
+### Speech syntehsis
+QGroundcontrol can notify the controller of information via speech synthesis. This requires the `flite` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding `DISABLE_SPEECH` to the `DEFINES` variable.
+
+### 3D view
+The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC can provide.
+
+OpenSceneGraph support is built-in to Mac OS X. On Linux it is commonly available through the libopenscenegraph and libopenscenegraph-qt developer packages. Windows support does not currently exist. This functionality with be automatically built if the proper libraries are installed. Disabling this feature can be done by adding `DISABLE_OPEN_SCENE_GRAPH` to the `DEFINES` variable.
+
+### 3D mouse support
+Connexion's 3D mice are supported through the 3DxWARE driver available on Linux and Windows. Download and install the driver from 3DConnexion to enable support. This support is enabled by default with driver installation. To disable add `DISABLE_3DMOUSE` to the `DEFINES` variable.
+
+### XBee support
+QGroundControl can talk to XBee wireless devices using their proprietary protocol directly on Windows and Linux platforms. This support is not necessary if you're not using XBee devices or aren't using their proprietary protocol. On Windows, the necessary dependencies are included in this repository and no additional steps are required. For Linux, change to the `libs/thirdParty/libxbee` folder and run `make;sudo make install` to install libxbee on your system (uninstalling can be done with a `sudo make uninstall`). `qmake` will automatically detect the library on Linux, so no other work is necessary.
+
+To disable XBee support you may add `DISABLE_XBEE` to the DEFINES argument.
 
 # Build on Mac OSX
 
@@ -62,17 +87,39 @@ To build on Mac OSX (10.6 or later):
 
 To build on Linux:
 - - -
-    sudo apt-get install phonon libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential libopenscenegraph-dev
-    cd directory
-    git clone https://github.com/mavlink/qgroundcontrol.git
+1. Install base dependencies (QT + phonon/webkit, SDL)
+  * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential`
+  * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
 
-* go to `libs/thirdParty -> libxbee` 
-* Create Library -> Readme file in folder
-* Ubuntu Application Menu -> Development -> Qt Creator
-* QtCreator Menu File -> Open File or Project..
-* Open `directory/qgroundcontrol/qgroundcontrol.pro`
-* Hit the green play button to compile and launch it
+2. **[OPTIONAL]** Install additional libraries
+  * For text-to-speech (flite)
+	* For Ubuntu: `sudo apt-get install libflite1 flite1-dev`
+	* For Fedora: `sudo yum install flite-devel`
+  * For 3D flight view (openscenegraph)
+	* For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
+	* For Fedora: `sudo yum install OpenSceneGraph-qt-devel`
 
+3. Clone the repository
+  1. `cd PROJECTS_DIRECTORY`
+  2. git clone https://github.com/mavlink/qgroundcontrol.git
+  3. **[OPTIONAL]** For QUpgrade integration:
+	1. `cd qgroundcontrol`
+	2. `git submodule init`
+	3. `git submodule update`
+
+4. **[OPTIONAL]** Build and install XBee support:
+  1. ` cd libs/thirdParty/libxbee`
+  2. `make`
+  3. `sudo make install`
+
+5. Build QGroundControl:
+  1. Go back to root qgroundcontrol directory
+  2. `qmake`
+  3. `make`
+	* To enable parallel compilation add the `-j` argument with the number of cores you have. So on a quad-core processor: `make -j4`
+
+6. Run qgroundcontrol
+  1. `./release/qgroundcontrol`
 
 # Build on Windows
 - - -
@@ -98,82 +145,22 @@ Windows XP/7:
 
 
 ## Repository Layout
-    qgroundcontrol:
-	    demo-log.txt
-	    license.txt 
-	    qgcunittest.pro - For the unit tests.
-	    qgcunittest.pro.user
-	    qgcvideo.pro
-	    qgroundcontrol.pri - Used by qgroundcontrol.pro
-	    qgroundcontrol.pro - Project opened in QT to run qgc.
-	    qgroundcontrol.pro.user 
-	    qgroundcontrol.qrc - Holds many images.
-	    qgroundcontrol.rc - line of code to point toward the images
-	    qserialport.pri - generated by qmake.
-	    testlog.txt - sample log file
-	    testlog2.txt - sample log file
-	    user_config.pri.dist - Custom message specs to be added here. 
-    data: 
-	    Maps from yahoo and kinect and earth. 
-    deploy: 
-	    Install and uninstall for win32.
-	    Create a debian packet.
-	    Create .DMG file for publishing for mac.
-	    Audio test on mac.	
-    doc: 
-	    Doxyfile is in this directory and information for creating html documentation for qgc.
-    files: 
-	    Has the audio for the vehicle and data output. 
-		    ardupilotmega: 
-			    widgets and tool tips for pilot heading for the fixed wing.
-			    tooltips for quadrotor
-		    flightgear:
-			    Aircraft: 
-				    Different types of planes and one jeep. 
-			    Protocol: 
-				    The protocol for the fixed_wings and quadrotor and quadhil.holds info about the fixed wing yaw, roll etc. 	
-			    Quadrotor:
-			        Again holds info about yaw, roll etc.
-			    Pixhawk:
-			        Widgets for hexarotor. Widgets and tooltips for quadrotor.
-			    vehicles: 
-			        different vehicles. Seems to hold the different kinds of aircrafts as well as files for audio and the hexarotor and quadrotor.
-			    widgets: 
-			        Has a lot of widgets defined for buttons and sliders.
+The following describes the directory structure and important files in the QGroundControl repository
 
-    images: 
-	    For the UI. Has a bunch of different images such as images for applications or actions or buttons.
-    lib: 
-	    SDL is located in this direcotry. 
-	Msinttypes: 
-	    Defines intteger types for microsoft visual studio. 
-	sdl:
-	    Information about the library and to run the library on different platforms. 
-    mavlink: 
-	    The files for the library mavlink. 
-    qgcunittest: 
-	    Has the unittests for qgc
-    settings: 
-	    Parameter lists for alpha, bravo and charlie. Data for stereo, waypoints and radio calibration. 
-    src:
-	    Code for QGCCore, audio output, configuration, waypoints, main and log compressor.
-	apps
-	    Code for mavlink generation and for a video application.
-	comm
-	    Code for linking to simulation, mavlink, udp, xbee, opal, flight gear and interface.
-	Has other libraries. Qwt is in directory named lib. The other libraries are in libs.
-	lib
-	    qwt library
-	libs
-	    eigen, opmapcontrol, qestserialport, qtconcurrent, utils.
-	input
-	    joystick and freenect code.
-	plugins
-	    Qt project for PIXHAWK plugins.
-	uas
-	    Ardu pilot, UAS, mavlink factory, uas manager, interface, waypoint manager and slugs.
-	ui
-	    Has code for data plots, waypoint lists and window congfiguration. All of the ui code.
-thirdParty: 
-	    Library called lxbee.
-	    Library called QSerialPort.
+Folders:
+
+  * data     - Miscellaneous support files.
+  * deploy   - Contains scripts for packaging QGC for all supported systems.
+  * doc      - Output directory for generated Doxygen documentation. See README contained within for details.
+  * files    - Contains miscellaneous data including vehicle models and autopilot-specific data files.
+  * images   - UI images.
+  * libs     - Library dependencies for QGC.
+  * qupgrade - Source file for the qupgrade, a firmware flashing utility for the APM. Compiled into QGC by default.
+  * qml      - QML source files for the project.
+  * src      - Source code for QGroundControl. Split into subfolders for communications, user interface, autopilot-specific files, etc.
+  * tools    - Additional tools for developers.
+
+Important files:
+
+  * qgroundcontrol.pro - Primary project file for building QGC. Open this in qtcreator or pass this to qmake on the command line to build QGC.
+  * qgcvideo.pro       - Builds a standalone executable for viewing UDP video streams from a vehicle.

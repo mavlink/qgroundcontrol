@@ -1,7 +1,7 @@
 #include "MAVLinkSwarmSimulationLink.h"
 
-MAVLinkSwarmSimulationLink::MAVLinkSwarmSimulationLink(QString readFile, QString writeFile, int rate, QObject *parent) :
-    MAVLinkSimulationLink(readFile, writeFile, rate, parent)
+MAVLinkSwarmSimulationLink::MAVLinkSwarmSimulationLink(QString readFile, QString writeFile, int rate) :
+    MAVLinkSimulationLink(readFile, writeFile, rate)
 {
 }
 

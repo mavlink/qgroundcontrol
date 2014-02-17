@@ -42,11 +42,11 @@ This file is part of the QGROUNDCONTROL project
 #include "UDPLink.h"
 #include "TCPLink.h"
 #include "MAVLinkSimulationLink.h"
-#ifdef XBEELINK
+#ifdef QGC_XBEE_ENABLED
 #include "XbeeLink.h"
 #include "XbeeConfigurationWindow.h"
-#endif // XBEELINK
-#ifdef OPAL_RT
+#endif // QGC_XBEE_ENABLED
+#ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
 #include "OpalLinkConfigurationWindow.h"
 #endif
@@ -90,12 +90,12 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
     }
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
     ui.linkType->addItem(tr("Opal-RT Link"), QGC_LINK_OPAL);
 #endif
-#ifdef XBEELINK
+#ifdef QGC_XBEE_ENABLED
 	ui.linkType->addItem(tr("Xbee API"),QGC_LINK_XBEE);
-#endif // XBEELINK
+#endif // QGC_XBEE_ENABLED
     ui.linkType->setEditable(false);
 
     ui.connectionType->addItem("MAVLink", QGC_PROTOCOL_MAVLINK);
@@ -164,7 +164,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkType->setEnabled(false); //Don't allow the user to change to a non-simulation
         ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
     }
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
     OpalLink* opal = dynamic_cast<OpalLink*>(link);
     if (opal != 0) {
         QWidget* conf = new OpalLinkConfigurationWindow(opal, this);
@@ -175,7 +175,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
     }
 #endif
-#ifdef XBEELINK
+#ifdef QGC_XBEE_ENABLED
 	XbeeLink* xbee = dynamic_cast<XbeeLink*>(link); // new Konrad
 	if(xbee != 0)
 	{
@@ -186,14 +186,14 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		connect(xbee,SIGNAL(tryConnectBegin(bool)),ui.actionConnect,SLOT(setDisabled(bool)));
 		connect(xbee,SIGNAL(tryConnectEnd(bool)),ui.actionConnect,SLOT(setEnabled(bool)));
 	}
-#endif // XBEELINK
+#endif // QGC_XBEE_ENABLED
     if (serial == 0 && udp == 0 && sim == 0 && tcp == 0
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
             && opal == 0
 #endif
-#ifdef XBEELINK
+#ifdef QGC_XBEE_ENABLED
 			&& xbee == 0
-#endif // XBEELINK
+#endif // QGC_XBEE_ENABLED
        ) {
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
@@ -249,7 +249,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 	LinkInterface *tmpLink(NULL);
 	switch(linktype)
 	{
-#ifdef XBEELINK
+#ifdef QGC_XBEE_ENABLED
         case QGC_LINK_XBEE:
 			{
 				XbeeLink *xbee = new XbeeLink();
@@ -257,7 +257,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
-#endif // XBEELINK
+#endif // QGC_XBEE_ENABLED
         case QGC_LINK_UDP:
 			{
 				UDPLink *udp = new UDPLink();
@@ -274,7 +274,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
             break;
             }
 
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
         case QGC_LINK_OPAL:
 			{
 				OpalLink* opal = new OpalLink();
@@ -282,7 +282,7 @@ void CommConfigurationWindow::setLinkType(qgc_link_t linktype)
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
-#endif // OPAL_RT
+#endif // QGC_RTLAB_ENABLED
 		default:
 			{
 			}

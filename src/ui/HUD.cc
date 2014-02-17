@@ -57,6 +57,7 @@ This file is part of the QGROUNDCONTROL project
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QLabel(parent),
+      image(NULL),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -111,12 +112,14 @@ HUD::HUD(int width, int height, QWidget* parent)
       nextOfflineImage(""),
       HUDInstrumentsEnabled(false),
       videoEnabled(true),
+      imageLoggingEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageLoggingEnabled(false),
-      imageRequested(false),
-      image(NULL)
+      imageRequested(false)
 {
+    Q_UNUSED(width);
+    Q_UNUSED(height);
+    
     // Set auto fill to false
     setAutoFillBackground(false);
 
@@ -289,8 +292,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Try to disconnect the image link
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u) {
-            disconnect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
-            disconnect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
+            disconnect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage(UASInterface*)));
         }
     }
 
@@ -310,10 +312,9 @@ void HUD::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
         // Try to connect the image link
-        UAS* u = dynamic_cast<UAS*>(uas);
+        UAS* u = qobject_cast<UAS*>(uas);
         if (u) {
-            connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
-            connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
+            connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage(UASInterface*)));
         }
     }
 
@@ -501,11 +502,18 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
  */
 void HUD::setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight)
 {
+    Q_UNUSED(referencePositionX);
+    Q_UNUSED(referencePositionY);
+    Q_UNUSED(referenceWidth);
+    Q_UNUSED(referenceHeight);
+#if 0
+    // code ifdef'ed out but left in to silence warnings
     int pixelWidth  = (int)(referenceWidth * scalingFactor);
     int pixelHeight = (int)(referenceHeight * scalingFactor);
     // Translate and scale the GL view in the virtual reference coordinate units on the screen
     int pixelPositionX = (int)((referencePositionX * scalingFactor) + xCenterOffset);
     int pixelPositionY = this->height() - (referencePositionY * scalingFactor) + yCenterOffset - pixelHeight;
+#endif
 }
 
 void HUD::paintRollPitchStrips()
@@ -515,7 +523,7 @@ void HUD::paintRollPitchStrips()
 
 void HUD::paintEvent(QPaintEvent *event)
 {
-
+    Q_UNUSED(event);
     paintHUD();
 }
 
@@ -571,30 +579,12 @@ void HUD::paintHUD()
         scalingFactor = this->width()/vwidth;
         double scalingFactorH = this->height()/vheight;
         if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
-        // Fill with black background
-        if (videoEnabled) {
-            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
-                qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
-                QImage fill = QImage(nextOfflineImage);
-
-                glImage = fill;
-
-                // Reset to save load efforts
-                nextOfflineImage = "";
-            }
-
-        }
 
         // And if either video or the data stream is enabled, draw the next frame.
-        if (dataStreamEnabled || videoEnabled)
+        if (videoEnabled)
         {
-
             xImageFactor = width() / (float)glImage.width();
             yImageFactor = height() / (float)glImage.height();
-            float imageFactor = qMin(xImageFactor, yImageFactor);
-            // Resize to correct size and fill with image
-            // FIXME
-
         }
 
         QPainter painter;
@@ -1321,14 +1311,6 @@ void HUD::saveImage()
     saveImage(fileName);
 }
 
-void HUD::startImage(quint64 timestamp)
-{
-    if (videoEnabled && offlineDirectory != "") {
-        // Load and diplay image file
-        nextOfflineImage = QString(offlineDirectory + "/%1.bmp").arg(timestamp);
-    }
-}
-
 void HUD::selectOfflineDirectory()
 {
     QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
@@ -1387,9 +1369,9 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
     }
 }
 
-void HUD::copyImage()
+void HUD::copyImage(UASInterface* uas)
 {
-    UAS* u = dynamic_cast<UAS*>(this->uas);
+    UAS* u = qobject_cast<UAS*>(uas);
     if (u)
     {
         this->glImage = u->getImage();

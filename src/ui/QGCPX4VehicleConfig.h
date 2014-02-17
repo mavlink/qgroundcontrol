@@ -15,7 +15,6 @@
 #include "px4_configuration/QGCPX4AirframeConfig.h"
 
 class UASParameterCommsMgr;
-class DialogBare;
 class QGCPX4SensorCalibration;
 
 namespace Ui {
@@ -62,6 +61,8 @@ public slots:
     void toggleCalibrationRC(bool enabled);
     /** Start/stop the Spektrum pair routine */
     void toggleSpektrumPairing(bool enabled);
+    /** Set the current trim values as attitude trim values */
+    void copyAttitudeTrim();
     /** Set trim positions */
     void setTrimPositions();
     /** Detect which channels need to be inverted */
@@ -326,7 +327,6 @@ protected:
     QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
 
     QGCPX4AirframeConfig* px4AirframeConfig;
-    DialogBare* firmwareDialog;
     QPixmap planeBack;
     QPixmap planeSide;
     QGCPX4SensorCalibration* px4SensorCalibration;

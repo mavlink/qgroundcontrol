@@ -192,6 +192,10 @@ QList<QString> QGCToolWidget::getParamList()
 }
 void QGCToolWidget::setParameterValue(int uas, int component, QString parameterName, const QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    Q_UNUSED(value);
+    
     QString widgetName = getTitle();
     int size = settingsMap["count"].toInt();
     if (paramToItemMap.contains(parameterName))

@@ -37,12 +37,12 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QDebug>
 
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
-#if _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
 
@@ -50,7 +50,7 @@ This file is part of the QGROUNDCONTROL project
 //using System.Speech.Synthesis;
 #endif
 
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
 // Using eSpeak for speech synthesis: following https://github.com/mondhs/espeak-sample/blob/master/sampleSpeak.cpp
 #include <espeak/speak_lib.h>
 espeak_POSITION_TYPE espeak_position_type;
@@ -61,7 +61,7 @@ char *espeak_path = NULL;
 unsigned int espeak_flags=espeakCHARS_AUTO;
 #endif
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 ISpVoice *GAudioOutput::pVoice = NULL;
 #endif
 
@@ -100,7 +100,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
     muted = settings.value(QGC_GAUDIOOUTPUT_KEY + "muted", muted).toBool();
 
 
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     espeak_Initialize(espeak_output, espeak_buflength, espeak_path, espeak_options );
     const char *espeak_langNativeString = "en-uk"; //Default to US English
     espeak_VOICE espeak_voice;
@@ -112,9 +112,8 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
     espeak_SetVoiceByProperties(&espeak_voice);
     espeak_PARAMETER rateParam = espeakRATE;
 //  espeak_SetParameter(rateParam , 150, 0);
-#endif
 
-#if _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice = NULL;
 
     if (FAILED(::CoInitialize(NULL)))
@@ -129,7 +128,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
         if (SUCCEEDED(hr))
         {
-            hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
+            //hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
             //pVoice->Release();
             //pVoice = NULL;
         }
@@ -159,7 +158,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 GAudioOutput::~GAudioOutput()
 {
-#ifdef _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
     pVoice->Release();
     pVoice = NULL;
     ::CoUninitialize();
@@ -196,7 +195,7 @@ bool GAudioOutput::say(QString text, int severity)
         {
 
             // Speech synthesis is only supported with MSVC compiler
-#ifdef _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
             /*SpeechSynthesizer synth = new SpeechSynthesizer();
             synth.SelectVoice("Microsoft Anna");
             synth.SpeakText(text.toStdString().c_str());
@@ -219,7 +218,7 @@ bool GAudioOutput::say(QString text, int severity)
             }*/
 #endif
 
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
             unsigned int espeak_size, espeak_position = 0, espeak_end_position = 0, *espeak_unique_identifier = NULL;
             void* espeak_user_data = NULL;
             espeak_size = strlen(text.toStdString().c_str());
@@ -229,7 +228,7 @@ bool GAudioOutput::say(QString text, int severity)
 //          qDebug() << "Done talking " << text;
 #endif
 
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
             // Slashes necessary to have the right start to the sentence
             // copying data prevents SpeakString from reading additional chars
             text = "\\" + text;
@@ -346,14 +345,14 @@ void GAudioOutput::beep()
 
 void GAudioOutput::selectFemaleVoice()
 {
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     //this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void GAudioOutput::selectMaleVoice()
 {
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     //this->voice = register_cmu_us_rms(NULL);
 #endif
 }
@@ -361,7 +360,7 @@ void GAudioOutput::selectMaleVoice()
 /*
 void GAudioOutput::selectNeutralVoice()
 {
-#ifdef Q_OS_LINUX
+#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     this->voice = register_cmu_us_awb(NULL);
 #endif
 }*/
@@ -369,26 +368,5 @@ void GAudioOutput::selectNeutralVoice()
 QStringList GAudioOutput::listVoices(void)
 {
     QStringList l;
-#ifdef Q_OS_LINUX2
-    cst_voice *voice;
-    const cst_val *v;
-
-
-
-    printf("Voices available: ");
-
-    for (v = flite_voice_list; v; v = val_cdr(v))
-    {
-        voice = val_voice(val_car(v));
-        QString s;
-        s.sprintf("%s", voice->name);
-        printf("%s", voice->name);
-        l.append(s);
-    }
-
-    printf("\n");
-
-#endif
     return l;
-
 }
