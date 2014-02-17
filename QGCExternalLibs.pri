@@ -555,10 +555,6 @@ contains (DEFINES, DISABLE_SPEECH) {
 		DEFINES += QGC_SPEECH_ENABLED
 		LIBS += \
 		-lespeak
-
-		# We need to add the alsa asound library as well for some Linux platforms
-		# (like Arch)
-		# LIBS += -lasound
 	} else {
 		warning("Skipping support for speech output (missing libraries, see README)")
 	}
