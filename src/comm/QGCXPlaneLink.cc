@@ -518,19 +518,19 @@ void QGCXPlaneLink::readBytes()
 
                 // X-Plane expresses yaw as 0..2 PI
                 if (yaw > M_PI) {
-                    yaw -= 2.0 * M_PI;
+                    yaw -= 2.0f * static_cast<float>(M_PI);
                 }
                 if (yaw < -M_PI) {
-                    yaw += 2.0 * M_PI;
+                    yaw += 2.0f * static_cast<float>(M_PI);
                 }
 
                 float yawmag = p.f[3] / 180.0f * M_PI;
 
                 if (yawmag > M_PI) {
-                    yawmag -= 2.0 * M_PI;
+                    yawmag -= 2.0f * static_cast<float>(M_PI);
                 }
                 if (yawmag < -M_PI) {
-                    yawmag += 2.0 * M_PI;
+                    yawmag += 2.0f * static_cast<float>(M_PI);
                 }
 
                 // Normal rotation matrix, but since we rotate the
@@ -689,8 +689,8 @@ void QGCXPlaneLink::readBytes()
 
             // XXX make these GUI-configurable and add randomness
             int gps_fix_type = 3;
-            float eph = 0.3;
-            float epv = 0.6;
+            float eph = 0.3f;
+            float epv = 0.6f;
             float vel = sqrt(vx*vx + vy*vy + vz*vz);
             float cog = atan2(vy, vx);
             int satellites = 8;

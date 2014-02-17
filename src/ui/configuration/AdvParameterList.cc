@@ -25,7 +25,9 @@ void AdvParameterList::setParameterMetaData(QString name,QString humanname,QStri
 
 void AdvParameterList::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (!m_paramValueMap.contains(parameterName))
     {
         ui.tableWidget->setRowCount(ui.tableWidget->rowCount()+1);

@@ -23,7 +23,10 @@
 #include "ui_QGCPX4VehicleConfig.h"
 #include "px4_configuration/QGCPX4AirframeConfig.h"
 #include "px4_configuration/QGCPX4SensorCalibration.h"
+
+#ifdef QGC_QUPGRADE_ENABLED
 #include <dialog_bare.h>
+#endif
 
 #define WIDGET_INDEX_FIRMWARE 0
 #define WIDGET_INDEX_RC 1
@@ -56,9 +59,6 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     calibrationEnabled(false),
     configEnabled(false),
     px4AirframeConfig(NULL),
-    #ifdef QUPGRADE_SUPPORT
-    firmwareDialog(NULL),
-    #endif
     planeBack(":/files/images/px4/rc/cessna_back.png"),
     planeSide(":/files/images/px4/rc/cessna_side.png"),
     px4SensorCalibration(NULL),
@@ -99,14 +99,13 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     px4SensorCalibration = new QGCPX4SensorCalibration(this);
     ui->sensorLayout->addWidget(px4SensorCalibration);
 
-#ifdef QUPGRADE_SUPPORT
-    firmwareDialog = new DialogBare(this);
+#ifdef QGC_QUPGRADE_ENABLED
+    DialogBare *firmwareDialog = new DialogBare(this);
     ui->firmwareLayout->addWidget(firmwareDialog);
 
     connect(firmwareDialog, SIGNAL(connectLinks()), LinkManager::instance(), SLOT(connectAll()));
     connect(firmwareDialog, SIGNAL(disconnectLinks()), LinkManager::instance(), SLOT(disconnectAll()));
 #else
-#error Please check out QUpgrade from http://github.com/LorenzMeier/qupgrade/ into the QGroundControl folder.
 
     QLabel* label = new QLabel(this);
     label->setText("THIS VERSION OF QGROUNDCONTROL WAS BUILT WITHOUT QUPGRADE. To enable firmware upload support, checkout QUpgrade WITHIN the QGroundControl folder");
@@ -150,6 +149,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
 
     connect(ui->rcMenuButton,SIGNAL(clicked()),
             this,SLOT(rcMenuButtonClicked()));
+    connect(ui->rcCopyTrimButton, SIGNAL(clicked()),
+            this, SLOT(copyAttitudeTrim()));
     connect(ui->sensorMenuButton,SIGNAL(clicked()),
             this,SLOT(sensorMenuButtonClicked()));
     connect(ui->generalMenuButton,SIGNAL(clicked()),
@@ -355,6 +356,8 @@ void QGCPX4VehicleConfig::toggleCalibrationRC(bool enabled)
 
 void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
 {
+    Q_UNUSED(enabled);
+    
     if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton && !ui->dsmx8RadioButton) {
         // Reject
         QMessageBox warnMsgBox;
@@ -379,6 +382,33 @@ void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
     }
 }
 
+void QGCPX4VehicleConfig::copyAttitudeTrim() {
+    if (configEnabled) {
+
+        QMessageBox warnMsgBox;
+        warnMsgBox.setText(tr("Attitude trim denied during RC calibration"));
+        warnMsgBox.setInformativeText(tr("Please end the RC calibration before doing attitude trim."));
+        warnMsgBox.setStandardButtons(QMessageBox::Ok);
+        warnMsgBox.setDefaultButton(QMessageBox::Ok);
+        (void)warnMsgBox.exec();
+    }
+
+    // Not aborted, but warn user
+
+    msgBox.setText(tr("Confirm Attitude Trim"));
+    msgBox.setInformativeText(tr("On clicking OK, the current Roll / Pitch / Yaw stick positions will be set as trim values in auto flight. Do NOT reset your trim values after this step."));
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);//allow user to cancel upload after reviewing values
+    int msgBoxResult = msgBox.exec();
+    if (QMessageBox::Cancel == msgBoxResult) {
+        return;
+        // do not execute
+    }
+
+    mav->startRadioControlCalibration(2);
+    QGC::SLEEP::msleep(100);
+    mav->endRadioControlCalibration();
+}
+
 void QGCPX4VehicleConfig::setTrimPositions()
 {
     int rollMap = rcMapping[0];
@@ -391,22 +421,31 @@ void QGCPX4VehicleConfig::setTrimPositions()
         rcTrim[i] = 1500;
     }
 
-    // Set trim to min if stick is close to min
-    if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
-        rcTrim[throttleMap] = rcMin[throttleMap];   // throttle
-    }
-    // Set trim to max if stick is close to max
-    else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 100) {
-        rcTrim[throttleMap] = rcMax[throttleMap];   // throttle
-    }
-    else  {
-        // Reject
-        QMessageBox warnMsgBox;
-        warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
-        warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the minimum value"));
-        warnMsgBox.setStandardButtons(QMessageBox::Ok);
-        warnMsgBox.setDefaultButton(QMessageBox::Ok);
-        (void)warnMsgBox.exec();
+    bool throttleDone = false;
+
+    while (!throttleDone) {
+        // Set trim to min if stick is close to min
+        if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
+            rcTrim[throttleMap] = rcMin[throttleMap];   // throttle
+            throttleDone = true;
+        }
+        // Set trim to max if stick is close to max
+        else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 100) {
+            rcTrim[throttleMap] = rcMax[throttleMap];   // throttle
+            throttleDone = true;
+        }
+        else
+        {
+            // Reject
+            QMessageBox warnMsgBox;
+            warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
+            warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the zero throttle position and then click OK."));
+            warnMsgBox.setStandardButtons(QMessageBox::Ok);
+            warnMsgBox.setDefaultButton(QMessageBox::Ok);
+            (void)warnMsgBox.exec();
+            // wait long enough to get some data
+            QGC::SLEEP::msleep(500);
+        }
     }
 
     // Set trim for roll, pitch, yaw, throttle
@@ -471,13 +510,16 @@ void QGCPX4VehicleConfig::detectChannelInversion(int aert_index)
 
 void QGCPX4VehicleConfig::startCalibrationRC()
 {
-    if (chanCount < 5) {
+    if (chanCount < 5 && !mav) {
         QMessageBox::warning(0,
                              tr("RC not Connected"),
                              tr("Is the RC receiver connected and transmitter turned on? Detected %1 radio channels. To operate PX4, you need at least 5 channels. ").arg(chanCount));
         ui->rcCalibrationButton->setChecked(false);
         return;
     }
+
+    // XXX magic number: Set to 1 for radio input disable
+    mav->startRadioControlCalibration(1);
 
     // reset all channel mappings above Ch 5 to invalid/unused value before starting calibration
     for (unsigned int j= 5; j < chanMappedMax; j++) {
@@ -496,7 +538,6 @@ void QGCPX4VehicleConfig::startCalibrationRC()
 
     //QMessageBox::information(0,"Information","Additional channels have not been mapped, but can be mapped in the channel table below.");
     configEnabled = false;
-    QMessageBox::information(0, tr("Information"),tr("Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches"));
     ui->rcCalibrationButton->setText(tr("Finish RC Calibration"));
     resetCalibrationRC();
     calibrationEnabled = true;
@@ -519,7 +560,15 @@ void QGCPX4VehicleConfig::startCalibrationRC()
     ui->radio17Widget->showMinMax();
     ui->radio18Widget->showMinMax();
 
-    QMessageBox::information(0, tr("Information"), tr("Please click on the <Finish RC Calibration> button once finished"));
+    msgBox.setText(tr("Information"));
+    msgBox.setInformativeText(tr("Please move the sticks to their extreme positions, including all switches. Then click on the OK button once finished"));
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.show();
+    msgBox.move((frameGeometry().width() - msgBox.width()) / 4.0f,(frameGeometry().height() - msgBox.height()) / 1.5f);
+    int msgBoxResult = msgBox.exec();
+    if (QMessageBox::Ok == msgBoxResult) {
+        stopCalibrationRC();
+    }
 }
 
 void QGCPX4VehicleConfig::stopCalibrationRC()
@@ -532,11 +581,14 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
         detectChannelInversion(i);
     }
 
-    QMessageBox::information(0,"Trims","Ensure all controls are centered and throttle is in the lowest position. Click OK to continue");
+    QMessageBox::information(0,"Trims","Ensure THROTTLE is in the LOWEST position and roll / pitch / yaw are CENTERED. Click OK to continue");
 
     calibrationEnabled = false;
     configEnabled = false;
     ui->rcCalibrationButton->setText(tr("Start RC Calibration"));
+    ui->rcCalibrationButton->blockSignals(true);
+    ui->rcCalibrationButton->setChecked(false);
+    ui->rcCalibrationButton->blockSignals(false);
 
     ui->rollWidget->hideMinMax();
     ui->pitchWidget->hideMinMax();
@@ -570,26 +622,29 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     qDebug() << "SETTING TRIM";
     setTrimPositions();
 
-    QString statusstr;
-    statusstr = tr("This is the RC calibration information that will be sent to the autopilot if you click OK. To prevent transmission, click Cancel.");
-    statusstr += tr("  Normal values range from 1000 to 2000, with disconnected channels reading 1000, 1500, 2000\n\n");
-    statusstr += tr("Channel\tMin\tCenter\tMax\n");
-    statusstr += "-------\t---\t------\t---\n";
-    for (unsigned int i=0; i < chanCount; i++) {
-        statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
-    }
-
+    QString statusstr = tr("The calibration has been finished. Please click OK to upload it to the autopilot.");
+//    statusstr = tr("This is the RC calibration information that will be sent to the autopilot if you click OK. To prevent transmission, click Cancel.");
+//    statusstr += tr("  Normal values range from 1000 to 2000, with disconnected channels reading 1000, 1500, 2000\n\n");
+//    statusstr += tr("Channel\tMin\tCenter\tMax\n");
+//    statusstr += "-------\t---\t------\t---\n";
+//    for (unsigned int i=0; i < chanCount; i++) {
+//        statusstr += QString::number(i) +"\t"+ QString::number(rcMin[i]) +"\t"+ QString::number(rcValue[i]) +"\t"+ QString::number(rcMax[i]) +"\n";
+//    }
 
     msgBox.setText(tr("Confirm Calibration"));
     msgBox.setInformativeText(statusstr);
     msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);//allow user to cancel upload after reviewing values
     int msgBoxResult = msgBox.exec();
-    if (QMessageBox::Cancel == msgBoxResult) {
-        return;//don't commit these values
-    }
 
-    QMessageBox::information(0,"Uploading the RC Calibration","The configuration will now be uploaded and permanently stored.");
-    writeCalibrationRC();
+    // Done, exit calibration mode now
+    mav->endRadioControlCalibration();
+
+    if (QMessageBox::Cancel == msgBoxResult) {
+        return; //don't commit these values
+    } else {
+        QMessageBox::information(0,"Uploading the RC Calibration","The configuration will now be uploaded and permanently stored.");
+        writeCalibrationRC();
+    }
 }
 
 void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
@@ -1367,6 +1422,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         }
     }
 
+    // Reverse raw value
     rcValueReversed[chan] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
 
     // Normalized value
@@ -1385,7 +1441,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
     normalized = (rcRev[chan]) ? -1.0f*normalized : normalized;
 
     // Find correct mapped channel
-    rcMappedValueRev[rcToFunctionMapping[chan]] = (rcRev[chan]) ? rcMax[chan] - (fval - rcMin[chan]) : fval;
+    rcMappedValueRev[rcToFunctionMapping[chan]] = rcValueReversed[chan];
     rcMappedValue[rcToFunctionMapping[chan]] = fval;
 
     // Copy min / max
@@ -1403,14 +1459,15 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         rcYaw = normalized;
     }
     else if (chan == rcMapping[3]) {
-        if (rcRev[chan]) {
-            rcThrottle = 1.0f + normalized;
-        }
-        else {
-            rcThrottle = normalized;
-        }
+        rcThrottle = normalized;
+//        if (rcRev[chan]) {
+//            rcThrottle = 1.0f + normalized;
+//        }
+//        else {
+//            rcThrottle = normalized;
+//        }
 
-        rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
+//        rcThrottle = qBound(0.0f, rcThrottle, 1.0f);
     }
     else if (chan == rcMapping[4]) {
         rcMode = normalized; // MODE SWITCH
@@ -1778,13 +1835,13 @@ void QGCPX4VehicleConfig::parameterChanged(int uas, int component, QString param
     else {
         //Param recieved that we have no metadata for. Search to see if it belongs in a
         //group with some other params
-        bool found = false;
+        //bool found = false;
         for (int i=0;i<toolWidgets.size();i++) {
             if (parameterName.startsWith(toolWidgets[i]->objectName())) {
                 //It should be grouped with this one, add it.
                 toolWidgets[i]->addParam(uas,component,parameterName,value);
                 libParamToWidgetMap.insert(parameterName,toolWidgets[i]);
-                found  = true;
+                //found  = true;
                 break;
             }
         }
@@ -1839,10 +1896,10 @@ void QGCPX4VehicleConfig::checktimeOuts()
 
 void QGCPX4VehicleConfig::updateRcWidgetValues()
 {
-    ui->rollWidget->setValueAndRange(rcMappedValue[0],rcMappedMin[0],rcMappedMax[0]);
-    ui->pitchWidget->setValueAndRange(rcMappedValue[1],rcMappedMin[1],rcMappedMax[1]);
-    ui->yawWidget->setValueAndRange(rcMappedValue[2],rcMappedMin[2],rcMappedMax[2]);
-    ui->throttleWidget->setValueAndRange(rcMappedValue[3],rcMappedMin[3],rcMappedMax[3]);
+    ui->rollWidget->setValueAndRange(rcMappedValueRev[0],rcMappedMin[0],rcMappedMax[0]);
+    ui->pitchWidget->setValueAndRange(rcMappedValueRev[1],rcMappedMin[1],rcMappedMax[1]);
+    ui->yawWidget->setValueAndRange(rcMappedValueRev[2],rcMappedMin[2],rcMappedMax[2]);
+    ui->throttleWidget->setValueAndRange(rcMappedValueRev[3],rcMappedMin[3],rcMappedMax[3]);
 
     ui->radio5Widget->setValueAndRange(rcValueReversed[4],rcMin[4],rcMax[4]);
     ui->radio6Widget->setValueAndRange(rcValueReversed[5],rcMin[5],rcMax[5]);

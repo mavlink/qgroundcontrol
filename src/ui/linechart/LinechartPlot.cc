@@ -412,7 +412,7 @@ void LinechartPlot::setScaling(int scaling)
  * @param id The string id of the curve
  * @param visible The visibility: True to make it visible
  **/
-void LinechartPlot::setVisible(QString id, bool visible)
+void LinechartPlot::setVisibleById(QString id, bool visible)
 {
     if(curves.contains(id)) {
         curves.value(id)->setVisible(visible);
@@ -437,7 +437,7 @@ void LinechartPlot::setVisible(QString id, bool visible)
  **/
 void LinechartPlot::hideCurve(QString id)
 {
-    setVisible(id, false);
+    setVisibleById(id, false);
 }
 
 /**
@@ -450,7 +450,7 @@ void LinechartPlot::hideCurve(QString id)
  **/
 void LinechartPlot::showCurve(QString id)
 {
-    setVisible(id, true);
+    setVisibleById(id, true);
 }
 
 //void LinechartPlot::showCurve(QString id, int position)

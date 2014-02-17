@@ -29,11 +29,19 @@ linux-g++ | linux-g++-64 {
 } else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 {
     message(Windows build)
     CONFIG += WindowsBuild
-} else : macx-clang {
+} else : macx-clang | macx-llvm {
     message(Mac build)
     CONFIG += MacBuild
 } else {
     error(Unsupported build type)
+}
+
+# Installer configuration
+
+installer {
+    CONFIG -= debug
+    CONFIG -= debug_and_release
+    CONFIG += release
 }
 
 # Setup our supported build flavors
@@ -110,6 +118,10 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
+	# Specify that the Unicode versions of string functions should be used in the Windows API.
+	# Without this the utils and qserialport libraries crash.
+	DEFINES += UNICODE
+
 	# QWebkit is not needed on MS-Windows compilation environment
 	CONFIG -= webkit
 
@@ -117,57 +129,21 @@ WindowsBuild {
 }
 
 #
-# Warnings cleanup. Plan of attack is to turn off all existing warnings and turn on warnings as errors.
-# Then we will clean up the warnings one type at a time, removing the override for that specific warning
-# from the lists below. Eventually we will be left with no overlooked warnings and all future warnings
-# generating an error and breaking the build.
-#
-# NEW WARNINGS SHOULD NOT BE ADDED TO THIS LIST. IF YOU GET AN ERROR, FIX IT BEFORE COMMITING.
+# We treat all warnings as errors which must be fixed before proceeding. If you run into a problem you can't fix
+# you can always use local pragmas to work around the warning. This should be used sparingly and only in cases where
+# the problem absolultey can't be fixed.
 #
 
 MacBuild | LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wall \
-        -Wno-unused-parameter \
-        -Wno-reorder \
-        -Wno-unused-variable \
-        -Wno-narrowing \
-        -Wno-unused-function
- }
-
-LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-unused-but-set-variable \
-        -Wno-unused-local-typedefs
-}
-
-MacBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        -Wno-overloaded-virtual \
-        -Wno-unused-private-field
+	QMAKE_CXXFLAGS_WARN_ON += -Wall \
+        -Werror
 }
 
 WindowsBuild {
-	QMAKE_CXXFLAGS_WARN_ON += \
-        /W4 \
+	QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /WX \
-        /wd4005 \ # macro redefinition
-        /wd4100 \ # unrefernced formal parameter
-        /wd4101 \ # unreference local variable
-        /wd4127 \ # conditional expression constant
-        /wd4146 \ # unary minus operator applied to unsigned type
-        /wd4189 \ # local variable initialized but not used
-        /wd4201 \ # non standard extension: nameless struct/union
-        /wd4245 \ # signed/unsigned mismtach
-        /wd4290 \ # function declared using exception specification, but not supported
-        /wd4305 \ # truncation from double to float
-        /wd4309 \ # truncation of constant value
-        /wd4389 \ # == signed/unsigned mismatch
-        /wd4505 \ # unreferenced local function
-        /wd4512 \ # assignment operation could not be generated
-        /wd4701 \ # potentially uninitialized local variable
-        /wd4702 \ # unreachable code
-        /wd4996   # deprecated function
+        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
+        /wd4290     # ignore exception specifications
 }
 
 #
@@ -227,6 +203,12 @@ include(QGCExternalLibs.pri)
 #
 
 include(QGCSetup.pri)
+
+#
+# Installer targets
+#
+
+include(QGCInstaller.pri)
 
 #
 # Main QGroundControl portion of project file

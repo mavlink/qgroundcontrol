@@ -5,8 +5,8 @@
 
 QGCViewModeSelection::QGCViewModeSelection(QWidget *parent) :
     QWidget(parent),
-    selected(false),
-    ui(new Ui::QGCViewModeSelection)
+    ui(new Ui::QGCViewModeSelection),
+    selected(false)
 {
     ui->setupUi(this);
 

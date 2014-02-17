@@ -72,6 +72,11 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 
+// Add support for the MAVLink generator UI if it's been requested.
+#ifdef QGC_MAVGEN_ENABLED
+#include "XMLCommProtocolWidget.h"
+#endif
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -121,13 +126,13 @@ MainWindow::MainWindow(QWidget *parent):
     currentStyle(QGC_MAINWINDOW_STYLE_DARK),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
+    mavlink(new MAVLinkProtocol()),
     centerStackActionGroup(new QActionGroup(this)),
     darkStyleFileName(defaultDarkStyle),
     lightStyleFileName(defaultLightStyle),
     autoReconnect(false),
     simulationLink(NULL),
     lowPowerMode(false),
-    mavlink(new MAVLinkProtocol()),
     customMode(CUSTOM_MODE_NONE),
     menuActionHelper(new MenuActionHelper())
 {
@@ -274,19 +279,19 @@ void MainWindow::init()
     joystickWidget = 0;
     joystick = new JoystickInput();
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouseInput = new Mouse3DInput(this);
     mouse = new Mouse6dofInput(mouseInput);
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
-#if MOUSE_ENABLED_LINUX
+#if QGC_MOUSE_ENABLED_LINUX
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
     // Connect link
     if (autoReconnect)
@@ -547,6 +552,8 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
 
+// Add the MAVLink generator UI if it's been requested.
+#ifdef QGC_MAVGEN_ENABLED
     if (!mavlinkView)
     {
         mavlinkView = new SubMainWindow(this);
@@ -554,6 +561,7 @@ void MainWindow::buildCommonWidgets()
         mavlinkView->setCentralWidget(new XMLCommProtocolWidget(this));
         addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
     }
+#endif
 
     if (!simView)
     {
@@ -593,8 +601,6 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Radio Control"));
-
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
 
     createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
 
@@ -671,11 +677,11 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if (defined _MSC_VER) /*| (defined Q_OS_MAC) mac os doesn't support gearth right now */
+#ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!earthWidget)
     {
         earthWidget = new QGCGoogleEarthView(this);
-        addToCentralStackedWidget(earthWidget,VIEW_GOOGLEEARTH, tr("Google Earth"));
+        addToCentralStackedWidget(earthWidget, VIEW_GOOGLEEARTH, tr("Google Earth"));
     }
 #endif
 }
@@ -778,7 +784,11 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
+    else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
@@ -800,6 +810,7 @@ void MainWindow::loadDockWidget(const QString& name)
 
 void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSection, const QString& title)
 {
+    Q_UNUSED(viewSection);
     Q_UNUSED(title);
     Q_ASSERT(widget->objectName().length() != 0);
 
@@ -2014,11 +2025,11 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
     return menuActionHelper->dockWidgetTitleBarsEnabled();
 }
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
 bool MainWindow::x11Event(XEvent *event)
 {
     emit x11EventOccured(event);
     //qDebug("XEvent occured...");
     return false;
 }
-#endif // MOUSE_ENABLED_LINUX
+#endif // QGC_MOUSE_ENABLED_LINUX

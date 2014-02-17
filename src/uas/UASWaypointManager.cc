@@ -225,6 +225,17 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             current_state = WP_IDLE;
             readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
             emit updateStatusString("done.");
+        } else if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && wpa->type != 0) {
+            //give up transmitting if a WP is rejected
+            if (wpa->type == 1) {
+                emit updateStatusString("upload failed: general error");
+            } else if (wpa->type == 2) {
+                emit updateStatusString("upload failed: coordinate frame unsupported.");
+            } else {
+                emit updateStatusString("upload failed: other error.");
+            }
+            protocol_timer.stop();
+            current_state = WP_IDLE;
         } else if(current_state == WP_CLEARLIST) {
             protocol_timer.stop();
             current_state = WP_IDLE;
@@ -905,7 +916,7 @@ void UASWaypointManager::writeWaypoints()
             sendWaypointCount();
         } else if (waypointsEditable.count() == 0)
         {
-            sendWaypointClearAll();
+            clearWaypointList();
         }
     }
     else
@@ -1063,11 +1074,23 @@ int UASWaypointManager::getFrameRecommendation()
 
 float UASWaypointManager::getAcceptanceRadiusRecommendation()
 {
-    if (waypointsEditable.count() > 0) {
+    if (waypointsEditable.count() > 0)
+    {
         return waypointsEditable.last()->getAcceptanceRadius();
-    } else {
-        return 10.0f;
     }
+    else
+    {
+        if (uas->isRotaryWing())
+        {
+            return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
+        }
+        else if (uas->isFixedWing())
+        {
+            return UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING;
+        }
+    }
+
+    return 10.0f;
 }
 
 float UASWaypointManager::getHomeAltitudeOffsetDefault()

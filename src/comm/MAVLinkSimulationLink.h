@@ -48,7 +48,7 @@ class MAVLinkSimulationLink : public LinkInterface
 {
     Q_OBJECT
 public:
-    MAVLinkSimulationLink(QString readFile="", QString writeFile="", int rate=5, QObject* parent = 0);
+    MAVLinkSimulationLink(QString readFile="", QString writeFile="", int rate=5);
     ~MAVLinkSimulationLink();
     bool isConnected() const;
     qint64 bytesAvailable();
