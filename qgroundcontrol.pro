@@ -123,15 +123,13 @@ WindowsBuild {
 #
 
 MacBuild | LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += -Wall
-}
-
-MacBuild {
-	QMAKE_CXXFLAGS_WARN_ON += -Werror
+	QMAKE_CXXFLAGS_WARN_ON += -Wall \
+        -Werror
 }
 
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += /W3 \
+        /WX \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4290     # ignore exception specifications
 }
