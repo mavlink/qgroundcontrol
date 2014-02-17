@@ -259,26 +259,6 @@ LinuxBuild : contains(MAVLINK_CONF, pixhawk) {
 }
 
 #
-# libfreenect Kinect support
-#
-
-MacBuild | LinuxBuild {
-    exists(/opt/local/include/libfreenect) | exists(/usr/local/include/libfreenect) {
-        message("Including support for libfreenect")
-
-        #INCLUDEPATH += /usr/include/libusb-1.0
-        DEFINES += QGC_LIBFREENECT_ENABLED
-        LIBS += -lfreenect
-        HEADERS += src/input/Freenect.h
-        SOURCES += src/input/Freenect.cc
-    } else {
-        message("Skipping support for libfreenect")
-    }
-} else {
-    message("Skipping support for libfreenect")
-}
-
-#
 # EIGEN matrix library (NOMINMAX needed to make internal min/max work)
 #
 
