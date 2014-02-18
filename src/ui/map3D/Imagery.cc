@@ -552,8 +552,7 @@ Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
 
     std::istringstream iss(utmZone.toStdString());
     iss >> ZoneNumber >> ZoneLetter;
-    if ((ZoneLetter - 'N') >= 0) {
-    } else {
+    if ((ZoneLetter - 'N') < 0) {
         y -= 10000000.0;//remove 10,000,000 meter offset used for southern hemisphere
     }
 
