@@ -135,8 +135,13 @@ WindowsBuild {
 #
 
 MacBuild | LinuxBuild {
-	QMAKE_CXXFLAGS_WARN_ON += -Wall \
-        -Werror
+	QMAKE_CXXFLAGS_WARN_ON += -Wall
+}
+
+# Note: -Werror is currently not turned on for Linux due to unfixed problems with release builds
+
+MacBuild {
+	QMAKE_CXXFLAGS_WARN_ON += -Werror
 }
 
 WindowsBuild {
