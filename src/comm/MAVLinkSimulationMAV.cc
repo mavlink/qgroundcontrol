@@ -86,6 +86,7 @@ void MAVLinkSimulationMAV::mainloop()
         servos.servo6_raw = 1500;
         servos.servo7_raw = 1500;
         servos.servo8_raw = 2000;
+        servos.port = 1;    // set a fake port number
 
         mavlink_msg_servo_output_raw_encode(systemid, MAV_COMP_ID_IMU, &msg, &servos);
         link->sendMAVLinkMessage(&msg);
@@ -164,15 +165,25 @@ void MAVLinkSimulationMAV::mainloop()
 
         mavlink_msg_attitude_encode(systemid, MAV_COMP_ID_IMU, &msg, &attitude);
         link->sendMAVLinkMessage(&msg);
-
+        
         // SYSTEM STATUS
         mavlink_sys_status_t status;
+        status.onboard_control_sensors_present = MAV_SYS_STATUS_SENSOR_3D_GYRO |
+                                                    MAV_SYS_STATUS_SENSOR_3D_ACCEL |
+                                                    MAV_SYS_STATUS_SENSOR_3D_MAG |
+                                                    MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE |
+                                                    MAV_SYS_STATUS_SENSOR_GPS;
+        status.onboard_control_sensors_enabled = status.onboard_control_sensors_present;
+        status.onboard_control_sensors_health = status.onboard_control_sensors_present;
         status.load = 300;
-        //        status.mode = sys_mode;
-        //        status.nav_mode = nav_mode;
-        status.errors_comm = 0;
         status.voltage_battery = 10500;
-        //        status.status = sys_state;
+        status.current_battery = -1;  // -1: autopilot does not measure the current
+        status.drop_rate_comm = 0;
+        status.errors_comm = 0;
+        status.errors_count1 = 0;
+        status.errors_count2 = 0;
+        status.errors_count3 = 0;
+        status.errors_count4 = 0;
         status.battery_remaining = 90;
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         link->sendMAVLinkMessage(&msg);
@@ -225,6 +236,13 @@ void MAVLinkSimulationMAV::mainloop()
             hil.pitch_elevator = 0.05f;
             hil.yaw_rudder = 0.05f;
             hil.throttle = 0.6f;
+            hil.aux1 = 0.0f;
+            hil.aux2 = 0.0f;
+            hil.aux3 = 0.0f;
+            hil.aux4 = 0.0f;
+            hil.mode = MAV_MODE_FLAG_HIL_ENABLED;
+            hil.nav_mode = 0;   // not currently used by any HIL consumers
+            
             // Encode the data (adding header and checksums, etc.)
             mavlink_msg_hil_controls_encode(systemid, MAV_COMP_ID_IMU, &ret, &hil);
             // And send it
