@@ -103,6 +103,11 @@ void ArduPilotMegaMAV::setMountConfigure(unsigned char mode, bool stabilize_roll
     mavlink_message_t msg;
     mavlink_msg_mount_configure_pack(255,1,&msg,this->uasId,1,mode,stabilize_roll,stabilize_pitch,stabilize_yaw);
     sendMessage(msg);
+#else
+    Q_UNUSED(mode);
+    Q_UNUSED(stabilize_roll);
+    Q_UNUSED(stabilize_pitch);
+    Q_UNUSED(stabilize_yaw);
 #endif
 }
 void ArduPilotMegaMAV::setMountControl(double pa,double pb,double pc,bool islatlong)
@@ -118,5 +123,10 @@ void ArduPilotMegaMAV::setMountControl(double pa,double pb,double pc,bool islatl
         mavlink_msg_mount_control_pack(255,1,&msg,this->uasId,1,pa,pb,pc,0);
     }
     sendMessage(msg);
+#else
+    Q_UNUSED(pa);
+    Q_UNUSED(pb);
+    Q_UNUSED(pc);
+    Q_UNUSED(islatlong);
 #endif
 }
