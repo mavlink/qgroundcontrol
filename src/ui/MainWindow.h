@@ -51,18 +51,17 @@ This file is part of the QGROUNDCONTROL project
 #include "ObjectDetectionView.h"
 #include "submainwindow.h"
 #include "input/JoystickInput.h"
-#if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
+#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
-#endif // MOUSE_ENABLED_WIN
+#endif // QGC_MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
-#include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
-#if (defined Q_OS_MAC) | (defined _MSC_VER)
+#ifdef QGC_GOOGLE_EARTH_ENABLED
 #include "QGCGoogleEarthView.h"
 #endif
 #include "QGCToolBar.h"
@@ -308,10 +307,10 @@ signals:
     /** Emitted when any value changes from any source */
     void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
@@ -423,8 +422,8 @@ protected:
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> q3DWidget;
 #endif
-#if (defined _MSC_VER) || (defined Q_OS_MAC)
-    QPointer<QGCGoogleEarthView> earthWidget;
+#ifdef QGC_GOOGLE_EARTH_ENABLED
+	QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
@@ -472,17 +471,17 @@ protected:
 
     JoystickInput* joystick;
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
     Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
-#endif // MOUSE_ENABLED_WIN
+#endif // QGC_MOUSE_ENABLED_WIN
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Reimplementation of X11Event to handle 3dMouse Events (magellan) */
     bool x11Event(XEvent *event);
     Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
-#endif // MOUSE_ENABLED_LINUX
+#endif // QGC_MOUSE_ENABLED_LINUX
 
     /** User interface actions **/
     QAction* connectUASAct;

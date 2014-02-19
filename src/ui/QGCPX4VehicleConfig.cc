@@ -23,7 +23,10 @@
 #include "ui_QGCPX4VehicleConfig.h"
 #include "px4_configuration/QGCPX4AirframeConfig.h"
 #include "px4_configuration/QGCPX4SensorCalibration.h"
+
+#ifdef QGC_QUPGRADE_ENABLED
 #include <dialog_bare.h>
+#endif
 
 #define WIDGET_INDEX_FIRMWARE 0
 #define WIDGET_INDEX_RC 1
@@ -56,9 +59,6 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     calibrationEnabled(false),
     configEnabled(false),
     px4AirframeConfig(NULL),
-    #ifdef QUPGRADE_SUPPORT
-    firmwareDialog(NULL),
-    #endif
     planeBack(":/files/images/px4/rc/cessna_back.png"),
     planeSide(":/files/images/px4/rc/cessna_side.png"),
     px4SensorCalibration(NULL),
@@ -99,14 +99,13 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     px4SensorCalibration = new QGCPX4SensorCalibration(this);
     ui->sensorLayout->addWidget(px4SensorCalibration);
 
-#ifdef QUPGRADE_SUPPORT
-    firmwareDialog = new DialogBare(this);
+#ifdef QGC_QUPGRADE_ENABLED
+    DialogBare *firmwareDialog = new DialogBare(this);
     ui->firmwareLayout->addWidget(firmwareDialog);
 
     connect(firmwareDialog, SIGNAL(connectLinks()), LinkManager::instance(), SLOT(connectAll()));
     connect(firmwareDialog, SIGNAL(disconnectLinks()), LinkManager::instance(), SLOT(disconnectAll()));
 #else
-#error Please check out QUpgrade from http://github.com/LorenzMeier/qupgrade/ into the QGroundControl folder.
 
     QLabel* label = new QLabel(this);
     label->setText("THIS VERSION OF QGROUNDCONTROL WAS BUILT WITHOUT QUPGRADE. To enable firmware upload support, checkout QUpgrade WITHIN the QGroundControl folder");

@@ -542,21 +542,17 @@ Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
     double e1 = (1.0 - sqrt(1.0 - WGS84_ECCSQ)) / (1.0 + sqrt(1.0 - WGS84_ECCSQ));
     double N1, T1, C1, R1, D, M;
     double LongOrigin;
-    double mu, phi1, phi1Rad;
+    double mu, phi1Rad;
     double x, y;
     int ZoneNumber;
     char ZoneLetter;
-    bool NorthernHemisphere;
 
     x = utmEasting - 500000.0; //remove 500,000 meter offset for longitude
     y = utmNorthing;
 
     std::istringstream iss(utmZone.toStdString());
     iss >> ZoneNumber >> ZoneLetter;
-    if ((ZoneLetter - 'N') >= 0) {
-        NorthernHemisphere = true;//point is in northern hemisphere
-    } else {
-        NorthernHemisphere = false;//point is in southern hemisphere
+    if ((ZoneLetter - 'N') < 0) {
         y -= 10000000.0;//remove 10,000,000 meter offset used for southern hemisphere
     }
 
@@ -573,7 +569,6 @@ Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
               + (21.0 * e1 * e1 / 16.0 - 55.0 * e1 * e1 * e1 * e1 / 32.0)
               * sin(4.0 * mu)
               + (151.0 * e1 * e1 * e1 / 96.0) * sin(6.0 * mu);
-    phi1 = phi1Rad / M_PI * 180.0;
 
     N1 = WGS84_A / sqrt(1.0 - WGS84_ECCSQ * sin(phi1Rad) * sin(phi1Rad));
     T1 = tan(phi1Rad) * tan(phi1Rad);

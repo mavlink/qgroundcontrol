@@ -196,15 +196,7 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
             // Start NSH
             const char init[] = {0x0d, 0x0d, 0x0d};
             link->writeBytes(init, sizeof(init));
-
-            // Stop any running mavlink instance
-            const char* cmd = "mavlink stop\n";
-            link->writeBytes(cmd, strlen(cmd));
-            link->writeBytes(init, 2);
-            cmd = "uorb start";
-            link->writeBytes(cmd, strlen(cmd));
-            link->writeBytes(init, 2);
-            cmd = "sh /etc/init.d/rc.usb\n";
+            const char* cmd = "sh /etc/init.d/rc.usb\n";
             link->writeBytes(cmd, strlen(cmd));
             link->writeBytes(init, 4);
         }
