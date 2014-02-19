@@ -36,6 +36,14 @@ linux-g++ | linux-g++-64 {
     error(Unsupported build type)
 }
 
+# Installer configuration
+
+installer {
+    CONFIG -= debug
+    CONFIG -= debug_and_release
+    CONFIG += release
+}
+
 # Setup our supported build flavors
 
 CONFIG(debug, debug|release) {
@@ -110,6 +118,10 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
+	# Specify that the Unicode versions of string functions should be used in the Windows API.
+	# Without this the utils and qserialport libraries crash.
+	DEFINES += UNICODE
+
 	# QWebkit is not needed on MS-Windows compilation environment
 	CONFIG -= webkit
 
@@ -117,16 +129,26 @@ WindowsBuild {
 }
 
 #
-# Warnings cleanup. Plan of attack is to turn on warnings as error once all warnings are fixed. Please
-# do no change the warning level from what they are currently set to below.
+# We treat all warnings as errors which must be fixed before proceeding. If you run into a problem you can't fix
+# you can always use local pragmas to work around the warning. This should be used sparingly and only in cases where
+# the problem absolultey can't be fixed.
 #
 
 MacBuild | LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += -Wall
 }
 
+# Note: -Werror is currently not turned on for Linux due to unfixed problems with release builds
+
+MacBuild {
+	QMAKE_CXXFLAGS_WARN_ON += -Werror
+}
+
 WindowsBuild {
-	QMAKE_CXXFLAGS_WARN_ON += /W3
+	QMAKE_CXXFLAGS_WARN_ON += /W3 \
+        /WX \
+        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
+        /wd4290     # ignore exception specifications
 }
 
 #
@@ -186,6 +208,12 @@ include(QGCExternalLibs.pri)
 #
 
 include(QGCSetup.pri)
+
+#
+# Installer targets
+#
+
+include(QGCInstaller.pri)
 
 #
 # Main QGroundControl portion of project file

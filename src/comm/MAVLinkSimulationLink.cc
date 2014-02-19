@@ -483,6 +483,7 @@ void MAVLinkSimulationLink::mainloop()
 #ifdef MAVLINK_ENABLED_PIXHAWK
             mavlink_pattern_detected_t detected;
             detected.confidence = 5.0f;
+            detected.type = 0;  // compiler confused into thinking type is used unitialized, bogus init to silence
 
             if (detectionCounter == 10) {
                 char fileName[] = "patterns/face5.png";

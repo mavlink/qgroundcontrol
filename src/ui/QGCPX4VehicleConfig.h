@@ -15,7 +15,6 @@
 #include "px4_configuration/QGCPX4AirframeConfig.h"
 
 class UASParameterCommsMgr;
-class DialogBare;
 class QGCPX4SensorCalibration;
 
 namespace Ui {
@@ -328,7 +327,6 @@ protected:
     QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
 
     QGCPX4AirframeConfig* px4AirframeConfig;
-    DialogBare* firmwareDialog;
     QPixmap planeBack;
     QPixmap planeSide;
     QGCPX4SensorCalibration* px4SensorCalibration;
