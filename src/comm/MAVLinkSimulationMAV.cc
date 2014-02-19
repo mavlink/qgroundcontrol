@@ -168,11 +168,16 @@ void MAVLinkSimulationMAV::mainloop()
         
         // SYSTEM STATUS
         mavlink_sys_status_t status;
+        
+        // Since the simulation outputs global position, attiude and raw pressure we specify that the
+        // sensors that would be collecting this information are present, enabled and healthy.
+        
         status.onboard_control_sensors_present = MAV_SYS_STATUS_SENSOR_3D_GYRO |
                                                     MAV_SYS_STATUS_SENSOR_3D_ACCEL |
                                                     MAV_SYS_STATUS_SENSOR_3D_MAG |
                                                     MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE |
                                                     MAV_SYS_STATUS_SENSOR_GPS;
+        
         status.onboard_control_sensors_enabled = status.onboard_control_sensors_present;
         status.onboard_control_sensors_health = status.onboard_control_sensors_present;
         status.load = 300;
