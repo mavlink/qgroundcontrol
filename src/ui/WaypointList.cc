@@ -426,7 +426,6 @@ void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
             }
         }
     }
-    m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
 }
 
 void WaypointList::updateWaypointEditable(int uas, Waypoint* wp)
