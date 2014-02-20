@@ -1212,18 +1212,39 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Ensure NUL-termination
             b[b.length()-1] = '\0';
             QString text = QString(b);
-            int severity = mavlink_msg_statustext_get_severity(&message);
+            uint8_t severity = mavlink_msg_statustext_get_severity(&message);
 
             if (text.startsWith("#audio:"))
             {
                 text.remove("#audio:");
-                emit textMessageReceived(uasId, message.compid, severity, QString("Audio message: ") + text);
+                emit textMessageReceived(uasId, message.compid, (int)severity, QString("Audio message: ") + text);
                 GAudioOutput::instance()->say(text, severity);
             }
             else
             {
-                emit textMessageReceived(uasId, message.compid, severity, text);
+                emit textMessageReceived(uasId, message.compid, (int)severity, text);
             }
+
+			// We should also log these messages to standard output. This makes logging of notable events rather easy.
+			// Output which UAS the message is from along with the severity and the message itself.
+			if (severity < MAV_SEVERITY_ENUM_END)
+			{
+				const char *severityLabels[MAV_SEVERITY_ENUM_END] = {
+					"EMERGENCY",
+					"ALERT",
+					"CRITICAL",
+					"ERROR",
+					"Warning",
+					"Notice",
+					"Info",
+					"Debug"
+				};
+				std::cout << QString("UAS %1:STATUSTEXT - Severity: %3, Text: \"%2\"").arg(message.sysid).arg(text).arg(severityLabels[severity]).toUtf8().constData() << std::endl;
+			}
+			else
+			{
+				std::cout << QString("UAS %1:STATUSTEXT - Severity: UNKNOWN, Text: \"%2\"").arg(message.sysid).arg(text).toUtf8().constData() << std::endl;
+			}
         }
             break;
 #if 0
