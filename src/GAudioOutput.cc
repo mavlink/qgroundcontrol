@@ -329,9 +329,10 @@ void GAudioOutput::beep()
 {
     if (!muted)
     {
+        // TODO: Re-enable audio beeps
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
-        qDebug() << "FILE:" << f.fileName();
+        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
+        //qDebug() << "FILE:" << f.fileName();
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
