@@ -1225,26 +1225,26 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, (int)severity, text);
             }
 
-			// We should also log these messages to standard output. This makes logging of notable events rather easy.
-			// Output which UAS the message is from along with the severity and the message itself.
-			if (severity < MAV_SEVERITY_ENUM_END)
-			{
-				const char *severityLabels[MAV_SEVERITY_ENUM_END] = {
-					"EMERGENCY",
-					"ALERT",
-					"CRITICAL",
-					"ERROR",
-					"Warning",
-					"Notice",
-					"Info",
-					"Debug"
-				};
-				std::cout << QString("UAS %1:STATUSTEXT - Severity: %3, Text: \"%2\"").arg(message.sysid).arg(text).arg(severityLabels[severity]).toUtf8().constData() << std::endl;
-			}
-			else
-			{
-				std::cout << QString("UAS %1:STATUSTEXT - Severity: UNKNOWN, Text: \"%2\"").arg(message.sysid).arg(text).toUtf8().constData() << std::endl;
-			}
+            // We should also log these messages to standard output. This makes logging of notable events rather easy.
+            // Output which UAS the message is from along with the severity and the message itself.
+            if (severity < MAV_SEVERITY_ENUM_END)
+            {
+                const char *severityLabels[MAV_SEVERITY_ENUM_END] = {
+                    "EMERGENCY",
+                    "ALERT",
+                    "CRITICAL",
+                    "ERROR",
+                    "Warning",
+                    "Notice",
+                    "Info",
+                    "Debug"
+                };
+                std::cout << QString("UAS %1:STATUSTEXT - Severity: %3, Text: \"%2\"").arg(message.sysid).arg(text).arg(severityLabels[severity]).toUtf8().constData() << std::endl;
+            }
+            else
+            {
+                std::cout << QString("UAS %1:STATUSTEXT - Severity: UNKNOWN, Text: \"%2\"").arg(message.sysid).arg(text).toUtf8().constData() << std::endl;
+            }
         }
             break;
 #if 0
