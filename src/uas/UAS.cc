@@ -1226,7 +1226,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // We should also log these messages to standard output. This makes logging of notable events rather easy.
-            // Output which UAS the message is from along with the severity and the message itself.
+            // Output the current time along with the originating UAS and the message data. Also account for invalid
+            // severity values.
+            QString dateString = QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate);
+            QString outputString;
             if (severity < MAV_SEVERITY_ENUM_END)
             {
                 const char *severityLabels[MAV_SEVERITY_ENUM_END] = {
@@ -1239,12 +1242,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     "Info",
                     "Debug"
                 };
-                std::cout << QString("UAS %1:STATUSTEXT - Severity: %3, Text: \"%2\"").arg(message.sysid).arg(text).arg(severityLabels[severity]).toUtf8().constData() << std::endl;
+                outputString = QString("[%1] UAS %2:STATUSTEXT - Severity: %4, Text: \"%3\"").arg(dateString).arg(message.sysid).arg(text).arg(severityLabels[severity]);
             }
             else
             {
-                std::cout << QString("UAS %1:STATUSTEXT - Severity: UNKNOWN, Text: \"%2\"").arg(message.sysid).arg(text).toUtf8().constData() << std::endl;
+                outputString = QString("[%1] UAS %2:STATUSTEXT - Severity: UNKNOWN, Text: \"%3\"").arg(dateString).arg(message.sysid).arg(text);
             }
+            std::cout << outputString.toUtf8().constData() << std::endl;
         }
             break;
 #if 0
