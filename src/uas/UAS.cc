@@ -1212,18 +1212,43 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Ensure NUL-termination
             b[b.length()-1] = '\0';
             QString text = QString(b);
-            int severity = mavlink_msg_statustext_get_severity(&message);
+            uint8_t severity = mavlink_msg_statustext_get_severity(&message);
 
             if (text.startsWith("#audio:"))
             {
                 text.remove("#audio:");
-                emit textMessageReceived(uasId, message.compid, severity, QString("Audio message: ") + text);
+                emit textMessageReceived(uasId, message.compid, (int)severity, QString("Audio message: ") + text);
                 GAudioOutput::instance()->say(text, severity);
             }
             else
             {
-                emit textMessageReceived(uasId, message.compid, severity, text);
+                emit textMessageReceived(uasId, message.compid, (int)severity, text);
             }
+
+            // We should also log these messages to standard output. This makes logging of notable events rather easy.
+            // Output the current time along with the originating UAS and the message data. Also account for invalid
+            // severity values.
+            QString dateString = QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate);
+            QString outputString;
+            if (severity < MAV_SEVERITY_ENUM_END)
+            {
+                const char *severityLabels[MAV_SEVERITY_ENUM_END] = {
+                    "EMERGENCY",
+                    "ALERT",
+                    "CRITICAL",
+                    "ERROR",
+                    "Warning",
+                    "Notice",
+                    "Info",
+                    "Debug"
+                };
+                outputString = QString("[%1] UAS %2:STATUSTEXT - Severity: %4, Text: \"%3\"").arg(dateString).arg(message.sysid).arg(text).arg(severityLabels[severity]);
+            }
+            else
+            {
+                outputString = QString("[%1] UAS %2:STATUSTEXT - Severity: UNKNOWN, Text: \"%3\"").arg(dateString).arg(message.sysid).arg(text);
+            }
+            std::cout << outputString.toUtf8().constData() << std::endl;
         }
             break;
 #if 0
