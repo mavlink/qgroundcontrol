@@ -39,11 +39,12 @@ class MockUASManager : public UASManagerInterface
     Q_OBJECT
     
 signals:
-    // The following signals from UASManager interface are supported
-    void activeUASSet(UASInterface* UAS);
-    void activeUASSet(int systemId);
-    void activeUASStatusChanged(UASInterface* UAS, bool active);
-    void activeUASStatusChanged(int systemId, bool active);
+    // The following UASManagerInterface signals are supported. These are here for informational purposes only. Hence
+    // commented out.
+    //void activeUASSet(UASInterface* UAS);
+    //void activeUASSet(int systemId);
+    //void activeUASStatusChanged(UASInterface* UAS, bool active);
+    //void activeUASStatusChanged(int systemId, bool active);
     
 public:
     // Implemented UASManagerInterface overrides
