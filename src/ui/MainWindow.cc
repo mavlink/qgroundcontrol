@@ -569,7 +569,7 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
+#if QGC_GOOGLE_EARTH_ENABLED
     if (!googleEarthView)
     {
         googleEarthView = new SubMainWindow(this);
