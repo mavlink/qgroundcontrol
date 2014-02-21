@@ -44,7 +44,7 @@ installer {
     CONFIG += release
 }
 
-# Setup our supported build flavors
+# Setup our supported buid flavors
 
 CONFIG(debug, debug|release) {
     message(Debug flavor)
