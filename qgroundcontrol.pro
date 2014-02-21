@@ -19,7 +19,7 @@
 
 message(Qt version $$[QT_VERSION])
 
-# Setup our supported build types. We do this once here and then use the defined config scopes
+# Setup our supported build typs. We do this once here and then use the defined config scopes
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
