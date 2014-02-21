@@ -104,11 +104,11 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     case MAV_SEVERITY_ERROR:
         // TODO: Move this audio output to UAS.cc, as it doesn't make sense to put audio output in a message logger widget.
         GAudioOutput::instance()->say(text.toLower());
-        style = QString("color:#DC143C;font-size:large;font-weight:bold");
+        style = QString("color:#DC143C;");
         break;
     case MAV_SEVERITY_WARNING:
     case MAV_SEVERITY_NOTICE:
-        style = QString("color:%1;font-weight:bold").arg(colorName);
+        style = QString("color:%1;").arg(colorName);
         break;
     default:
         style = QString("color:%1;").arg(colorName);
