@@ -104,14 +104,14 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     case MAV_SEVERITY_ERROR:
         // TODO: Move this audio output to UAS.cc, as it doesn't make sense to put audio output in a message logger widget.
         GAudioOutput::instance()->say(text.toLower());
-        style = QString("color:#DC143C;");
+        style = QString("color:#DC143C; font-weight:bold");
         break;
     case MAV_SEVERITY_WARNING:
     case MAV_SEVERITY_NOTICE:
-        style = QString("color:%1;").arg(colorName);
+        style = QString("color:%1; font-weight:bold").arg(colorName);
         break;
     default:
-        style = QString("color:%1;").arg(colorName);
+        style = QString("color:%1; font-weight:bold").arg(colorName);
         break;
     }
 
@@ -120,37 +120,37 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     switch (severity)
     {
     case MAV_SEVERITY_EMERGENCY:
-        severityText = QString(tr("EMERGENCY"));
+        severityText = QString(tr(" EMERGENCY:"));
         break;
     case MAV_SEVERITY_ALERT:
-        severityText = QString(tr("ALERT"));
+        severityText = QString(tr(" ALERT:"));
         break;
     case MAV_SEVERITY_CRITICAL:
-        severityText = QString(tr("Critical"));
+        severityText = QString(tr(" Critical:"));
         break;
     case MAV_SEVERITY_ERROR:
-        severityText = QString(tr("Error"));
+        severityText = QString(tr(" Error:"));
         break;
     case MAV_SEVERITY_WARNING:
-        severityText = QString(tr("Warning"));
+        severityText = QString(tr(" Warning:"));
         break;
     case MAV_SEVERITY_NOTICE:
-        severityText = QString(tr("Notice"));
+        severityText = QString(tr(" Notice:"));
         break;
     case MAV_SEVERITY_INFO:
-        severityText = QString(tr("Info"));
+        severityText = QString(tr(" Info:"));
         break;
     case MAV_SEVERITY_DEBUG:
-        severityText = QString(tr("Debug"));
+        severityText = QString(tr(" Debug:"));
         break;
     default:
-        severityText = QString(tr("Unknown"));
+        severityText = QString(tr(""));
         break;
     }
 
     // Finally append the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate);
-    msgWidget->appendHtml(QString("<p style=\"%1\">[%2][%3:%4] %5 - %6</p>").arg(style).arg(dateString).arg(uasName).arg(compId).arg(severityText).arg(text));
+    msgWidget->appendHtml(QString("<p style=\"color:#CCCCCC\">[%2 - %3:%4]<font style=\"%1\">%5 %6</font></p>").arg(style).arg(dateString).arg(uasName).arg(compId).arg(severityText).arg(text));
 
     // Ensure text area scrolls correctly
     scroller->setValue(scroller->maximum());
