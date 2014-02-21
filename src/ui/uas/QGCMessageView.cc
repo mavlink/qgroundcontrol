@@ -151,7 +151,6 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     // Finally append the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate);
     msgWidget->appendHtml(QString("<p style=\"%1\">[%2][%3:%4] %5 - %6</p>").arg(style).arg(dateString).arg(uasName).arg(compId).arg(severityText).arg(text));
-    qDebug() << msgWidget->document()->toHtml();
 
     // Ensure text area scrolls correctly
     scroller->setValue(scroller->maximum());
