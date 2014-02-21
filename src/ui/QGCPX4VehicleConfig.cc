@@ -165,14 +165,18 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->advancedGroupBox, SLOT(setVisible(bool)));
     ui->advancedGroupBox->setVisible(false);
 
+#if 0
+    // XXX WIP don't connect signal until completed, otherwise view will show after advanced is turned on and then off
     connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->graphicsView, SLOT(setHidden(bool)));
+    ui->graphicsView->setVisible(true);
     ui->graphicsView->setScene(&scene);
 
     scene.addPixmap(planeBack);
     scene.addPixmap(planeSide);
-
+#else
     // XXX hide while WIP
     ui->graphicsView->hide();
+#endif
 
     ui->rcCalibrationButton->setCheckable(true);
     ui->rcCalibrationButton->setEnabled(false);
