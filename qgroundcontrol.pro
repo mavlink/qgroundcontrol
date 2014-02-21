@@ -129,26 +129,45 @@ WindowsBuild {
 }
 
 #
-# We treat all warnings as errors which must be fixed before proceeding. If you run into a problem you can't fix
-# you can always use local pragmas to work around the warning. This should be used sparingly and only in cases where
-# the problem absolultey can't be fixed.
+# We treat all warnings as errors which must be fixed before pull requests are approved. If you run into a problem 
+# you can't fix you can always use local pragmas to work around the warning. This should be used sparingly and only 
+# in cases where the problem absolultey can't be fixed.
 #
+# If you run into problems in code which is not yours, please lend a hand and fix the issues. If you don't have time
+# for that post an Issue with your OS and compiler information as well as the pertinent output from the build log. If it's
+# a problem that will take longer to fix, we will temporarily turn off warnings as errors for that specific config until
+# the Issue is taken care of. Once that is completed we will turn warnings as errors back in for the config. You can use
+# CONFIG+=WarningsAsErrorsOff in your private builds for a quick local override.
+#
+# Please report any problems you run into with warnings as errors so we can gather information on its effectiveness as well
+# as its annoyance level.
+#
+
+# Note: -Werror is currently not turned on for Linux due to unfixed problems with release builds. See Issue 535. This will 
+# be removed once the Issue is taken care of.
+
+LinuxBuild {
+    CONFIG += WarningsAsErrorsOff
+}
 
 MacBuild | LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += -Wall
 }
 
-# Note: -Werror is currently not turned on for Linux due to unfixed problems with release builds
-
-MacBuild {
-	QMAKE_CXXFLAGS_WARN_ON += -Werror
+MacBuild | LinuxBuild {
+    !WarningsAsErrorsOff {
+        QMAKE_CXXFLAGS_WARN_ON += -Werror
+    }
 }
 
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += /W3 \
-        /WX \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4290     # ignore exception specifications
+}
+
+WindowsBuild : !WarningsAsErrorsOff {
+	QMAKE_CXXFLAGS_WARN_ON += /WX
 }
 
 #
