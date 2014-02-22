@@ -105,9 +105,6 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(showStatusText(int, int, int, QString)));
     connect(uas, SIGNAL(navModeChanged(int, int, QString)), this, SLOT(updateNavMode(int, int, QString)));
 
-    // Setup UAS selection
-    connect(this, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
-
     // Setup user interaction
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(m_ui->haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
