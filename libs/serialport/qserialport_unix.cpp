@@ -429,7 +429,8 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
         bool timedOut = false;
         if (!waitForReadOrWrite(&readyToRead, &readyToWrite, true, !writeBuffer.isEmpty(),
                                 timeoutValue(msecs, stopWatch.elapsed()), &timedOut)) {
-            q_ptr->setError(decodeSystemError());
+            if (!timedOut)
+                q_ptr->setError(decodeSystemError());
             return false;
         }
 
@@ -460,7 +461,8 @@ bool QSerialPortPrivate::waitForBytesWritten(int msecs)
         bool timedOut = false;
         if (!waitForReadOrWrite(&readyToRead, &readyToWrite, true, !writeBuffer.isEmpty(),
                                 timeoutValue(msecs, stopWatch.elapsed()), &timedOut)) {
-            q_ptr->setError(decodeSystemError());
+            if (!timedOut)
+                q_ptr->setError(decodeSystemError());
             return false;
         }
 
