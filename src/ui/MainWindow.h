@@ -281,9 +281,6 @@ public slots:
 
     void closeEvent(QCloseEvent* event);
 
-    /** @brief Load data view, allowing to plot flight data */
-//    void loadDataView(QString fileName);
-
     /**
      * @brief Shows a Widget from the center stack based on the action sender
      *
