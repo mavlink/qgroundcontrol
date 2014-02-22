@@ -195,11 +195,6 @@ void UASListWidget::addUAS(UASInterface* uas)
             uasViews.insert(uas, newView);
             uasToBoxMapping[uas] = newBox;
             newBox->layout()->addWidget(newView);
-
-            // Watch for when this widget is destroyed so that we can clean up the
-            // groupbox if necessary.
-            connect(newView, SIGNAL(destroyed(QObject*)),
-                    this, SLOT(removeUASView(QObject*)));
         }
     }
 }
@@ -243,6 +238,7 @@ void UASListWidget::removeUAS(UASInterface* uas)
             if (i.value() == box)
             {
                 linkToBoxMapping.remove(i.key());
+                break;
             }
             ++i;
         }
