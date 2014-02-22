@@ -216,12 +216,12 @@ void FlightModeConfig::saveButtonClicked(void)
 // rc channel value.
 void FlightModeConfig::remoteControlChannelRawChanged(int chan, float val)
 {
-    qDebug() << chan << val << _modeSwitchRCChannel;
+    //qDebug() << chan << val << _modeSwitchRCChannel;
     // Until we get the _modeSwitchRCChannel value from a parameter it will be set
     // to -1, which is an invalid channel thus the labels won't update
     if (chan == _modeSwitchRCChannel)
     {
-        qDebug() << chan << val;
+        //qDebug() << chan << val;
         size_t highlightIndex = _cModes; // initialize to unreachable index
         
         for (size_t i=0; i<_cModes; i++) {
