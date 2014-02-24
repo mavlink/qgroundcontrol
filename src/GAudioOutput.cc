@@ -211,7 +211,7 @@ bool GAudioOutput::say(QString text, int severity)
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
             unsigned int espeak_size = strlen(text.toStdString().c_str());
-            espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL); // see the documentation in speak_lib.h for the description of the arguments
+            espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
 #endif
 
 #if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
