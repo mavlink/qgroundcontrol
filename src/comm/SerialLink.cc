@@ -27,7 +27,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_reqReset(false)
 {
     // We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
-    static int idMetaType = qRegisterMetaType<QSerialPort::SerialPortError>();
+    static const int idMetaType = qRegisterMetaType<QSerialPort::SerialPortError>();
     Q_UNUSED(idMetaType);
 
     // Get the name of the current port in use.
