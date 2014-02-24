@@ -46,7 +46,7 @@ TCPLink::TCPLink(QHostAddress hostAddress, quint16 socketPort) :
     // Even though QAbstractSocket::SocketError is used in a signal by Qt, Qt doesn't declare it as a meta type.
     // This in turn causes debug output to be kicked out about not being able to queue the signal. We register it
     // as a meta type to silence that.
-    static int idMetaType = qRegisterMetaType<QAbstractSocket::SocketError>();
+    static const int idMetaType = qRegisterMetaType<QAbstractSocket::SocketError>();
     Q_UNUSED(idMetaType);
     
     _linkId = getNextLinkId();
