@@ -11,6 +11,11 @@
 *.cpp text
 *.h   text
 
+# Some files are used by the Windows installer and so should always have Windows
+# line endings.
+*.nsi       text eol=crlf
+license.txt text eol=crlf
+
 # Denote all files that are truly binary and should not be modified.
 # This is really just images for us.
 *.png binary
