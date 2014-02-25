@@ -1,0 +1,17 @@
+# This file sets some Git options for this repository. It overrides any
+# user-specified Git settings.
+
+# Set default behaviour, in case users don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files we want to always be normalized and converted 
+# to native line endings on checkout.
+# We set all of our source code files here.
+*.cc  text
+*.cpp text
+*.h   text
+
+# Denote all files that are truly binary and should not be modified.
+# This is really just images for us.
+*.png binary
+*.jpg binary
