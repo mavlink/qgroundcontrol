@@ -26,10 +26,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
-    // We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
-    static const int idMetaType = qRegisterMetaType<QSerialPort::SerialPortError>();
-    Q_UNUSED(idMetaType);
-
     // Get the name of the current port in use.
     m_portName = portname.trimmed();
     if (m_portName == "" && getCurrentPorts().size() > 0)
@@ -449,7 +445,11 @@ bool SerialLink::hardwareConnect()
 void SerialLink::linkError(QSerialPort::SerialPortError error)
 {
     if (error != QSerialPort::NoError) {
-        qDebug() << "SerialLink::linkError" << error;
+        // You can use the following qDebug output as needed during development. Make sure to comment it back out
+        // when you are done. The reason for this is that this signal is very noisy. For example if you try to
+        // connect to a PixHawk before it is ready to accept the connection it will output a continuous stream
+        // of errors until the Pixhawk responds.
+        //qDebug() << "SerialLink::linkError" << error;
     }
 }
 
