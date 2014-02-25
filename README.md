@@ -93,8 +93,9 @@ To build on Linux:
 
 2. **[OPTIONAL]** Install additional libraries
   * For text-to-speech (espeak)
-	* For Ubuntu: `sudo apt-get install espeak`
-	* For Fedora: `sudo yum install espeak`
+	* For Ubuntu: `sudo apt-get install espeak libespeak-dev`
+	* For Fedora: `sudo yum install espeak espeak-devel`
+	* For Arch Linux: `pacman -Sy espeak`
   * For 3D flight view (openscenegraph)
 	* For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
 	* For Fedora: `sudo yum install OpenSceneGraph-qt-devel`
