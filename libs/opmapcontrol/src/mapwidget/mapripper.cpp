@@ -25,6 +25,9 @@
 * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "mapripper.h"
+
+#include <qtimer.h>
+
 namespace mapcontrol
 {
 
@@ -53,12 +56,15 @@ namespace mapcontrol
         {
          ++zoom;
          QMessageBox msgBox;
-         msgBox.setText(QString("Continue Ripping at zoom level %1?").arg(zoom));
+         msgBox.setText(QString("Continue Ripping at zoom level %1? (Continuing automatically after 3s)").arg(zoom));
         // msgBox.setInformativeText("Do you want to save your changes?");
          msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
          msgBox.setDefaultButton(QMessageBox::Yes);
-         int ret = msgBox.exec();
-         if(ret==QMessageBox::Yes)
+         QTimer::singleShot(3000, &msgBox, SLOT(accept()));
+         msgBox.exec();
+         int ret  = msgBox.result();
+
+         if(ret==QMessageBox::Yes || ret == 1)
          {
              points.clear();
              points=core->Projection()->GetAreaTileList(area,zoom,0);
