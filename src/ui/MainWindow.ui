@@ -51,8 +51,11 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
+   </property>
+   <property name="nativeMenuBar">
+    <bool>false</bool>
    </property>
    <widget class="QMenu" name="menuMGround">
     <property name="title">
