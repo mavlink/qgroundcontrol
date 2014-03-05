@@ -2045,27 +2045,6 @@ void MainWindow::loadMAVLinkView()
     }
 }
 
-//void MainWindow::loadDataView(QString fileName)
-//{
-//    // Plot is now selected, now load data from file
-//    if (dataView)
-//    {
-//        //dataView->setCentralWidget(new QGCDataPlot2D(this));
-//        QGCDataPlot2D *plot = qobject_cast<QGCDataPlot2D*>(dataView->centralWidget());
-//        if (plot)
-//        {
-//            plot->loadFile(fileName);
-//        }
-//    }
-//    /*QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-//    if (centerStack)
-//    {
-//        centerStack->setCurrentWidget(dataView);
-//        dataplotWidget->loadFile(fileName);
-//    }*/
-//}
-
-
 QList<QAction*> MainWindow::listLinkMenuActions()
 {
     return ui.menuNetwork->actions();
