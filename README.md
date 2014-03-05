@@ -70,8 +70,8 @@ To build on Mac OSX (10.6 or later):
 
 ### Install QT
 - - -
-1. Download Qt 4.8+ from <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-mac-opensource-4.8.5.dmg > 
-2. Double click the package installer and follow instructions: <http://qt-project.org/doc/qt-4.8/install-mac.html>
+1. Download Qt 4.8+ from: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-mac-opensource-4.8.5.dmg>
+2. Double click the package installer and follow instructions.
 
 ### Build QGroundControl
 - - -
@@ -88,7 +88,7 @@ To build on Mac OSX (10.6 or later):
 To build on Linux:
 - - -
 1. Install base dependencies (QT + phonon/webkit, SDL)
-  * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential`
+  * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential libudev-dev`
   * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
 
 2. **[OPTIONAL]** Install additional libraries
@@ -124,24 +124,21 @@ To build on Linux:
 # Build on Windows
 - - -
 
-__GNU GCC / MINGW IS UNTESTED, COULD WORK WITH
-VISUAL STUDIO 2008 / 2010 EXPRESS EDITION (FREE!)__
+Steps for Visual Studio 2010:
 
-Steps for Visual Studio 2008 / 2010:
+1. Download and install Visual Studio 2010 Express Edition (free) from here: <http://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx>. Make sure to install VS 2010 SP1 as well to fix a linking error. Download from here: <http://www.microsoft.com/en-us/download/details.aspx?id=23691>.
 
-Windows XP/7:
-
-1. Download and install the Qt libraries for Windows from https://qt.nokia.com/downloads/ (the Visual Studio 2008 or 2010 version as appropriate)
-
-2. Download and install Visual Studio 2008 or 2010 Express Edition (free) from https://www.microsoft.com/visualstudio. If using Visual Studio 2010, make sure you are running at least SP1. There is a linking error you'll encounter otherwise that will prevent compilation.
+2. Download and install the Qt libraries for Windows (VS 2010 version) from here: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-win-opensource-4.8.5-vs2010.exe>
 
 3. Go to the QGroundControl folder and then to thirdParty/libxbee and build it following the instructions in win32.README
 
 4. Open the Qt Command Prompt program (should be in the Start Menu), navigate to the source folder of QGroundControl and create the Visual Studio project by typing `qmake -tp vc qgroundcontrol.pro`
 
-5. Now start Visual Studio and load the qgroundcontrol.vcproj if using Visual Studio 2008 or qgroundcontrol.vcxproj if using Visual Studio 2010
+5. Now start Visual Studio 2010 and load qgroundcontrol.vcxproj.
 
 6. Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run `qmake -tp vc qgroundcontrol.pro`
+
+7. If you already have VS 2008 that works as well. Download the appropriate Qt from here: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-win-opensource-4.8.5-vs2008.exe>. And use qgroundcontrol.vcproj instead.
 
 
 ## Repository Layout
