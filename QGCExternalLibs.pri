@@ -113,10 +113,10 @@ else:infile(user_config.pri, MAVLINK_CONF) {
 	}
     }
 }
-# If no valid user selection is found, default to the ardupilotmega if it's available.
+# If no valid user selection is found, default to the pixhawk if it's available.
 # Note: This can be a list of several dialects.
 else {
-    DEFAULT_MAVLINK_DIALECTS=ardupilotmega
+    DEFAULT_MAVLINK_DIALECTS=pixhawk
     for(dialect, DEFAULT_MAVLINK_DIALECTS) {
 	exists($$MAVLINKPATH/$$dialect) {
 	    MAVLINK_DIALECTS += $$dialect
