@@ -56,7 +56,7 @@ namespace mapcontrol
         {
          ++zoom;
          QMessageBox msgBox;
-         msgBox.setText(QString("Continue Ripping at zoom level %1? (Continuing automatically after 3s)").arg(zoom));
+         msgBox.setText(tr("Continue Ripping at zoom level %1? (Continuing automatically after 3s)").arg(zoom));
         // msgBox.setInformativeText("Do you want to save your changes?");
          msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
          msgBox.setDefaultButton(QMessageBox::Yes);
