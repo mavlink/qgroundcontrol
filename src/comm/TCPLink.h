@@ -34,9 +34,15 @@
 #include <QMap>
 #include <QMutex>
 #include <QHostAddress>
-#include <QTcpSocket>
 #include <LinkInterface.h>
 #include <configuration.h>
+
+// Even though QAbstractSocket::SocketError is used in a signal by Qt, Qt doesn't declare it as a meta type.
+// This in turn causes debug output to be kicked out about not being able to queue the signal. We declare it
+// as a meta type to silence that.
+#include <QMetaType>
+#include <QTcpSocket>
+Q_DECLARE_METATYPE(QAbstractSocket::SocketError)
 
 //#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
 

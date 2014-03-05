@@ -32,6 +32,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
+#include "SerialLink.h"
+#include "TCPLink.h"
 #ifdef QT_DEBUG
 #include "AutoTest.h"
 #endif
@@ -70,6 +72,13 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_WIN
     qInstallMsgHandler( msgHandler );
 #endif
+
+    // The following calls to qRegisterMetaType are done to silence debug output which warns
+    // that we use these types in signals, and without calling qRegisterMetaType we can't queue
+    // these signals. In general we don't queue these signals, but we do what the warning says
+    // anyway to silence the debug output.
+    qRegisterMetaType<QSerialPort::SerialPortError>();
+    qRegisterMetaType<QAbstractSocket::SocketError>();
     
 #ifdef QT_DEBUG
     if (argc > 1 && QString(argv[1]).compare("--unittest", Qt::CaseInsensitive) == 0) {
