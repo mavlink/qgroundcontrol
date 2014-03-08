@@ -146,8 +146,9 @@ WindowsBuild {
 
 # Note: -Werror is currently not turned on for Linux due to unfixed problems with release builds. See Issue 535. This will 
 # be removed once the Issue is taken care of.
+# Note: -Werror is also not turned on for Mac because Qt Core throws unused variable warnings for Mac from multiple header files.
 
-LinuxBuild {
+MacBuild | LinuxBuild {
     CONFIG += WarningsAsErrorsOff
 }
 
