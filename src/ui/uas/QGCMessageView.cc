@@ -23,7 +23,7 @@ QGCMessageView::QGCMessageView(QWidget *parent) :
     ui->plainTextEdit->hide();
 
     // Enable the right-click menu for the text editor. This works because the plainTextEdit
-    // widget has its context menu policy set to its actions list. So we any actions we add
+    // widget has its context menu policy set to its actions list. So any actions we add
     // to this widget's action list will be automatically displayed.
     // We only have the clear action right now.
     QAction* clearAction = new QAction(tr("Clear Text"), this);
@@ -86,7 +86,7 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
 
     // Get all the UAS info.
     UASInterface *uas = UASManager::instance()->getUASForId(uasid);
-    QString uasName(uas->getUASName());
+    //QString uasName(uas->getUASName());
     QString colorName(uas->getColor().name());
 
     // Color the output depending on the message severity. We have 3 distinct cases:
@@ -106,12 +106,12 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
         GAudioOutput::instance()->say(text.toLower());
         style = QString("color:#DC143C; font-weight:bold");
         break;
-    case MAV_SEVERITY_WARNING:
     case MAV_SEVERITY_NOTICE:
+    case MAV_SEVERITY_WARNING:
         style = QString("color:%1; font-weight:bold").arg(colorName);
         break;
     default:
-        style = QString("color:%1; font-weight:bold").arg(colorName);
+        style = QString("color:white; font-weight:bold").arg(colorName);
         break;
     }
 
@@ -149,8 +149,8 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     }
 
     // Finally append the properly-styled text with a timestamp.
-    QString dateString = QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate);
-    msgWidget->appendHtml(QString("<p style=\"color:#CCCCCC\">[%2 - %3:%4]<font style=\"%1\">%5 %6</font></p>").arg(style).arg(dateString).arg(uasName).arg(compId).arg(severityText).arg(text));
+    QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    msgWidget->appendHtml(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%4]<font style=\"%1\">%5 %6</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
 
     // Ensure text area scrolls correctly
     scroller->setValue(scroller->maximum());
