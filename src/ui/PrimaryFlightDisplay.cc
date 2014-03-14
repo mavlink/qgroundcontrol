@@ -12,7 +12,10 @@
 #include <QtCore/qmath.h>
 //#include <cmath>
 
+#if 0
+// Left in but ifdef'ed out since there is commented out code below that uses it
 static const float SEPARATE_COMPASS_ASPECTRATIO = 3.0f/4.0f;
+#endif
 static const float LINEWIDTH = 0.0036f;
 static const float SMALL_TEXT_SIZE = 0.028f;
 static const float MEDIUM_TEXT_SIZE = SMALL_TEXT_SIZE*1.2f;
@@ -49,10 +52,7 @@ static const int PITCH_SCALE_HALFRANGE = 15;
 
 static const int  COMPASS_DISK_MAJORTICK = 10;
 static const int  COMPASS_DISK_ARROWTICK = 45;
-static const float COMPASS_DISK_MAJORLINEWIDTH = 0.006f;
-static const float COMPASS_DISK_MINORLINEWIDTH = 0.004f;
 static const int  COMPASS_DISK_RESOLUTION = 10;
-static const float COMPASS_SEPARATE_DISK_RESOLUTION = 5.0f;
 static const float COMPASS_DISK_MARKERWIDTH = 0.2f;
 static const float COMPASS_DISK_MARKERHEIGHT = 0.133f;
 
@@ -68,15 +68,6 @@ static const int ALTIMETER_LINEAR_SPAN = 50;
 static const int ALTIMETER_LINEAR_RESOLUTION = 5;
 // every 10 meters there is a number
 static const int ALTIMETER_LINEAR_MAJOR_RESOLUTION = 10;
-
-// Projected: An experiment. Make tape appear projected from a cylinder, like a French "drum" style gauge.
-// The altitude difference between top and bottom of scale
-static const int ALTIMETER_PROJECTED_SPAN = 50;
-// every 5 meters there is a tick mark
-static const int ALTIMETER_PROJECTED_RESOLUTION = 5;
-// every 10 meters there is a number
-static const int ALTIMETER_PROJECTED_MAJOR_RESOLUTION = 10;
-// min. and max. vertical velocity
 
 // min. and max. vertical velocity
 static const int ALTIMETER_VVI_SPAN = 5;
