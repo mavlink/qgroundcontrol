@@ -79,20 +79,15 @@ void QGCMessageView::setActiveUAS(UASInterface* uas)
 void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QString text)
 {
     QPlainTextEdit *msgWidget = ui->plainTextEdit;
-
+    (void)uasid; // Unused variable voided.
     // Turn off updates while we're appending content to avoid breaking the autoscroll behavior
     msgWidget->setUpdatesEnabled(false);
     QScrollBar *scroller = msgWidget->verticalScrollBar();
 
-    // Get all the UAS info.
-    UASInterface *uas = UASManager::instance()->getUASForId(uasid);
-    //QString uasName(uas->getUASName());
-    QString colorName(uas->getColor().name());
-
     // Color the output depending on the message severity. We have 3 distinct cases:
-    // 1: If we have an ERROR or worse, make it bigger, bolder, and highlight it.
-    // 2: If we have a warning or notice, just make it bold.
-    // 3: Otherwise color it the standard color.
+    // 1: If we have an ERROR or worse, make it bigger, bolder, and highlight it red.
+    // 2: If we have a warning or notice, just make it bold and color it orange.
+    // 3: Otherwise color it the standard color, white.
 
     // So first deteremine the styling based on the severity.
     QString style;
@@ -104,18 +99,19 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
     case MAV_SEVERITY_ERROR:
         // TODO: Move this audio output to UAS.cc, as it doesn't make sense to put audio output in a message logger widget.
         GAudioOutput::instance()->say(text.toLower());
-        style = QString("color:#DC143C; font-weight:bold");
+        //Use set RGB values from given color from QGC
+        style = QString("color: rgb(%1, %2, %3); font-weight:bold").arg(QGC::colorRed.red()).arg(QGC::colorRed.green()).arg(QGC::colorRed.blue());
         break;
     case MAV_SEVERITY_NOTICE:
     case MAV_SEVERITY_WARNING:
-        style = QString("color:%1; font-weight:bold").arg(colorName);
+        style = QString("color: rgb(%1, %2, %3); font-weight:bold").arg(QGC::colorOrange.red()).arg(QGC::colorOrange.green()).arg(QGC::colorOrange.blue());
         break;
     default:
-        style = QString("color:white; font-weight:bold").arg(colorName);
+        style = QString("color:white; font-weight:bold");
         break;
     }
 
-    // And determine the text for the severities.
+    // And determine the text for the severitie
     QString severityText("");
     switch (severity)
     {
@@ -150,7 +146,7 @@ void QGCMessageView::handleTextMessage(int uasid, int compId, int severity, QStr
 
     // Finally append the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
-    msgWidget->appendHtml(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%4]<font style=\"%1\">%5 %6</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
+    msgWidget->appendHtml(QString("<p style=\"color:#CCCCCC\">[%2 - COMP:%3]<font style=\"%1\">%4 %5</font></p>").arg(style).arg(dateString).arg(compId).arg(severityText).arg(text));
 
     // Ensure text area scrolls correctly
     scroller->setValue(scroller->maximum());
