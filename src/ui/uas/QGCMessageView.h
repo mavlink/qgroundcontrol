@@ -34,17 +34,11 @@ public slots:
      */
     void handleTextMessage(int uasid, int componentid, int severity, QString text);
 
-    /**
-     * @brief Hand context menu event
-     * @param event
-     */
-    virtual void contextMenuEvent(QContextMenuEvent* event);
-
 protected:
+    // Stores the UAS that we're currently receiving messages from.
     UASInterface* activeUAS;
-    QVBoxLayout* initialLayout;
-    QGCUnconnectedInfoWidget *connectWidget;
-    QAction* clearAction;
+    // Stores the connect widget that is displayed when no UAS is active.
+    QGCUnconnectedInfoWidget* connectWidget;
     
 private:
     Ui::QGCMessageView *ui;

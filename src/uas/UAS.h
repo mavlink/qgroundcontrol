@@ -760,7 +760,7 @@ public slots:
     void go();
 
     /** @brief Enable / disable HIL */
-    void enableHilFlightGear(bool enable, QString options, bool sensorHil);
+    void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
