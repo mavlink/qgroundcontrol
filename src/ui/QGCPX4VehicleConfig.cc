@@ -649,6 +649,9 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
         QMessageBox::information(0,"Uploading the RC Calibration","The configuration will now be uploaded and permanently stored.");
         writeCalibrationRC();
     }
+
+    // Read calibration back to update widget states and validate
+    paramMgr->requestParameterList();
 }
 
 void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
