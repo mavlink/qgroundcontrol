@@ -102,6 +102,8 @@
     <addaction name="actionTerminalView"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionSimulationView"/>
+    <addaction name="actionGoogleEarthView"/>
+    <addaction name="actionLocal3DView"/>
     <addaction name="separator"/>
     <addaction name="actionFirmwareUpdateView"/>
     <addaction name="actionMavlinkView"/>
@@ -500,6 +502,16 @@
    </property>
    <property name="text">
     <string>Terminal</string>
+   </property>
+  </action>
+  <action name="actionGoogleEarthView">
+   <property name="text">
+    <string>Google Earth</string>
+   </property>
+  </action>
+  <action name="actionLocal3DView">
+   <property name="text">
+    <string>Local 3D View</string>
    </property>
   </action>
  </widget>

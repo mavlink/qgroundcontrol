@@ -32,7 +32,7 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
         valueEnabled("altitudeAMSL");
         valueEnabled("altitudeRelative");
         valueEnabled("groundSpeed");
-        valueEnabled("distToWP");
+        valueEnabled("distToWaypoint");
     }
 
     QAction *action = new QAction("Add/Remove Items",this);
