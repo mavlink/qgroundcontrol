@@ -43,8 +43,9 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     connect(ui->planeComboBox, SIGNAL(activated(int)), this, SLOT(planeSelected(int)));
     ui->planePushButton->setEnabled(ui->planeComboBox->count() > 0);
 
-    ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q (800 mm)"), 3030);
     ui->flyingWingComboBox->addItem(tr("Z-84 Wing Wing (845 mm)"), 3033);
+    ui->flyingWingComboBox->addItem(tr("TBS Caipirinha (850 mm)"), 3100);
+    ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q (800 mm)"), 3030);
     ui->flyingWingComboBox->addItem(tr("FX-61 Phantom FPV (1550 mm)"), 3031);
     ui->flyingWingComboBox->addItem(tr("FX-79 Buffalo (2000 mm)"), 3034);
     ui->flyingWingComboBox->addItem(tr("Skywalker X5 (1180 mm)"), 3032);
