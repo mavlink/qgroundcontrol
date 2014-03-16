@@ -154,6 +154,7 @@ protected:
     QMutex m_dataMutex;       // Mutex for reading data from m_port
     QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
     QList<QString> m_ports;
+    QString type;
 
 private:
     volatile bool m_stopp;
@@ -161,7 +162,7 @@ private:
     QMutex m_stoppMutex; // Mutex for accessing m_stopp
     QByteArray m_transmitBuffer; // An internal buffer for receiving data from member functions and actually transmitting them via the serial port.
 
-    bool hardwareConnect();
+    bool hardwareConnect(QString &type);
 
 signals:
     void aboutToCloseFlag();
