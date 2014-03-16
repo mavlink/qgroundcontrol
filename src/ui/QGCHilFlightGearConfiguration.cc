@@ -40,10 +40,16 @@ void QGCHilFlightGearConfiguration::on_startButton_clicked()
     //XXX check validity of inputs
     QString options = ui->optionsPlainTextEdit->toPlainText();
     options.append(" --aircraft=" + ui->aircraftComboBox->currentText());
-    mav->enableHilFlightGear(true,  options, ui->sensorHilCheckBox->isChecked());
+    mav->enableHilFlightGear(true,  options, ui->sensorHilCheckBox->isChecked(), this);
 }
 
 void QGCHilFlightGearConfiguration::on_stopButton_clicked()
 {
     mav->stopHil();
 }
+
+void QGCHilFlightGearConfiguration::on_barometerOffsetLineEdit_textChanged(const QString& baroOffset)
+{
+    emit barometerOffsetChanged(baroOffset.toFloat());
+}
+
