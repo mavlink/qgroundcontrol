@@ -359,7 +359,8 @@ void QGCPX4VehicleConfig::toggleSpektrumPairing(bool enabled)
 {
     Q_UNUSED(enabled);
     
-    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton && !ui->dsmx8RadioButton) {
+    if (!ui->dsm2RadioButton->isChecked() && !ui->dsmxRadioButton->isChecked()
+            && !ui->dsmx8RadioButton->isChecked()) {
         // Reject
         QMessageBox warnMsgBox;
         warnMsgBox.setText(tr("Please select a Spektrum Protocol Version"));
