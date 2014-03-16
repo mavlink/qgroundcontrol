@@ -137,8 +137,35 @@ void SerialLink::writeSettings()
  **/
 void SerialLink::run()
 {
+
+    QString description = "X";
+    foreach (QSerialPortInfo info,QSerialPortInfo::availablePorts())
+    {
+        qDebug() << m_portName << "portname == info" << info.portName();
+        if (m_portName == info.portName())
+        {
+            description = info.description();
+            break;
+        }
+    }
+    if (description.toLower().contains("mega") && description.contains("2560"))
+    {
+        type = "apm";
+        qDebug() << "Attempting connection to an APM, with description:" << description;
+    }
+    else if (description.toLower().contains("px4"))
+    {
+        type = "px4";
+        qDebug() << "Attempting connection to a PX4 unit with description:" << description;
+    }
+    else
+    {
+        type = "other";
+        qDebug() << "Attempting connection to something unknown with description:" << description;
+    }
+
     // Initialize the connection
-    if (!hardwareConnect()) {
+    if (!hardwareConnect(type)) {
         //Need to error out here.
         emit communicationError(getName(),"Error connecting: " + m_port->errorString());
         disconnect(); // This tidies up and sends the necessary signals
@@ -395,7 +422,7 @@ bool SerialLink::connect()
  * @return True if the connection could be established, false otherwise
  * @see connect() For the right function to establish the connection.
  **/
-bool SerialLink::hardwareConnect()
+bool SerialLink::hardwareConnect(QString &type)
 {
     if(m_port) {
         qDebug() << "SerialLink:" << QString::number((long)this, 16) << "closing port";
@@ -425,11 +452,13 @@ bool SerialLink::hardwareConnect()
     emit communicationUpdate(getName(),"Opened port!");
 
     // Need to configure the port
-    m_port->setBaudRate(m_baud);
-    m_port->setDataBits(static_cast<QSerialPort::DataBits>(m_dataBits));
-    m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(m_flowControl));
-    m_port->setStopBits(static_cast<QSerialPort::StopBits>(m_stopBits));
-    m_port->setParity(static_cast<QSerialPort::Parity>(m_parity));
+    if (type != "px4") {
+        m_port->setBaudRate(m_baud);
+        m_port->setDataBits(static_cast<QSerialPort::DataBits>(m_dataBits));
+        m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(m_flowControl));
+        m_port->setStopBits(static_cast<QSerialPort::StopBits>(m_stopBits));
+        m_port->setParity(static_cast<QSerialPort::Parity>(m_parity));
+    }
 
     emit connected();
     emit connected(true);
