@@ -667,8 +667,8 @@ void QGCXPlaneLink::readBytes()
             /* current pressure at MSL in kPa */
             double p1 = 1013.25 / 10.0;
 
-            /* measured pressure in hPa */
-            double p = abs_pressure / 10.0;
+            /* measured pressure in hPa, plus offset to simulate weather effects / offsets */
+            double p = abs_pressure / 10.0 + barometerOffsetkPa;
 
             /*
              * Solve:
