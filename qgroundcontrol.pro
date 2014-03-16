@@ -36,6 +36,15 @@ linux-g++ | linux-g++-64 {
     error(Unsupported build type)
 }
 
+# Installer configuration
+
+installer {
+    CONFIG -= debug
+    CONFIG -= debug_and_release
+    CONFIG += release
+    message(Build Installer)
+}
+
 # Setup our supported build flavors
 
 CONFIG(debug, debug|release) {
@@ -110,6 +119,10 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
+	# Specify that the Unicode versions of string functions should be used in the Windows API.
+	# Without this the utils and qserialport libraries crash.
+	DEFINES += UNICODE
+
 	# QWebkit is not needed on MS-Windows compilation environment
 	CONFIG -= webkit
 
@@ -117,23 +130,27 @@ WindowsBuild {
 }
 
 #
-# We treat all warnings as errors which must be fixed before proceeding. If you run into a problem you can't fix
-# you can always use local pragmas to work around the warning. This should be used sparingly and only in cases where
-# the problem absolultey can't be fixed.
+# By default warnings as errors are turned off. Even so, in order for a pull request 
+# to be accepted you must compile cleanly with warnings as errors turned on the default 
+# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details. 
+# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your 
+# own builds.
 #
 
 MacBuild | LinuxBuild {
 	QMAKE_CXXFLAGS_WARN_ON += -Wall
-}
-
-MacBuild {
-	QMAKE_CXXFLAGS_WARN_ON += -Werror
+    WarningsAsErrorsOn {
+        QMAKE_CXXFLAGS_WARN_ON += -Werror
+    }
 }
 
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
         /wd4290     # ignore exception specifications
+    WarningsAsErrorsOn {
+        QMAKE_CXXFLAGS_WARN_ON += /WX
+    }
 }
 
 #
@@ -193,6 +210,12 @@ include(QGCExternalLibs.pri)
 #
 
 include(QGCSetup.pri)
+
+#
+# Installer targets
+#
+
+include(QGCInstaller.pri)
 
 #
 # Main QGroundControl portion of project file

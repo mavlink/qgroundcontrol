@@ -26,7 +26,6 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
-
     // Get the name of the current port in use.
     m_portName = portname.trimmed();
     if (m_portName == "" && getCurrentPorts().size() > 0)
@@ -445,7 +444,13 @@ bool SerialLink::hardwareConnect()
 
 void SerialLink::linkError(QSerialPort::SerialPortError error)
 {
-    qDebug() << error;
+    if (error != QSerialPort::NoError) {
+        // You can use the following qDebug output as needed during development. Make sure to comment it back out
+        // when you are done. The reason for this is that this signal is very noisy. For example if you try to
+        // connect to a PixHawk before it is ready to accept the connection it will output a continuous stream
+        // of errors until the Pixhawk responds.
+        //qDebug() << "SerialLink::linkError" << error;
+    }
 }
 
 

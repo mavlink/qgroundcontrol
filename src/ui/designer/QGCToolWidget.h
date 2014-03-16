@@ -48,6 +48,7 @@ public slots:
     void importWidget();
     /** @brief Store all widgets of this type to QSettings */
     void storeWidgetsToSettings() { QSettings settings; QGCToolWidget::storeWidgetsToSettings(settings); }
+    void showLabel(QString name,int num);
 
 public:
     void loadSettings(QVariantMap& settings);
@@ -61,7 +62,6 @@ public:
     QList<QString> getParamList();
     void setParameterValue(int uas, int component, QString parameterName, const QVariant value);
     bool fromMetaData() const { return isFromMetaData; }
-    void showLabel(QString name,int num);
 
 signals:
     void titleChanged(const QString &title);

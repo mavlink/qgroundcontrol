@@ -40,7 +40,7 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "LinkManager.h"
 /*#include "ViconTarsusProtocol.h" */
-#ifdef OPAL_RT
+#ifdef QGC_RTLAB_ENABLED
 
 #include "OpalLink.h"
 

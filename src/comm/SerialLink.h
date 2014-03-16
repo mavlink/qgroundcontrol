@@ -36,9 +36,13 @@ This file is part of the QGROUNDCONTROL project
 #include <QThread>
 #include <QMutex>
 #include <QString>
-#include <qserialport.h>
 #include <configuration.h>
 #include "SerialLinkInterface.h"
+
+// We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
+#include <qserialport.h>
+#include <QMetaType>
+Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
 
 /**
  * @brief The SerialLink class provides cross-platform access to serial links.

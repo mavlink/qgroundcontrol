@@ -72,6 +72,11 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 
+// Add support for the MAVLink generator UI if it's been requested.
+#ifdef QGC_MAVGEN_ENABLED
+#include "XMLCommProtocolWidget.h"
+#endif
+
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -182,6 +187,11 @@ void MainWindow::init()
     ui.setupUi(this);
     hide();
     menuActionHelper->setMenu(ui.menuTools);
+    
+    // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
+#ifdef Q_OS_LINUX
+    menuBar()->setNativeMenuBar(false);
+#endif
 
     // We only need this menu if we have more than one system
     //    ui.menuConnected_Systems->setEnabled(false);
@@ -274,19 +284,19 @@ void MainWindow::init()
     joystickWidget = 0;
     joystick = new JoystickInput();
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouseInput = new Mouse3DInput(this);
     mouse = new Mouse6dofInput(mouseInput);
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
-#if MOUSE_ENABLED_LINUX
+#if QGC_MOUSE_ENABLED_LINUX
     emit initStatusChanged(tr("Initializing 3D mouse interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     mouse = new Mouse6dofInput(this);
     connect(this, SIGNAL(x11EventOccured(XEvent*)), mouse, SLOT(handleX11Event(XEvent*)));
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
     // Connect link
     if (autoReconnect)
@@ -463,6 +473,12 @@ void MainWindow::buildCustomWidget()
             case VIEW_MAVLINK:
                 dock = createDockWidget(mavlinkView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
+            case VIEW_GOOGLEEARTH:
+                dock = createDockWidget(googleEarthView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
+            case VIEW_LOCAL3D:
+                dock = createDockWidget(local3DView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
+                break;
             default:
                 dock = createDockWidget(centerStack->currentWidget(),tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
@@ -547,6 +563,8 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
 
+// Add the MAVLink generator UI if it's been requested.
+#ifdef QGC_MAVGEN_ENABLED
     if (!mavlinkView)
     {
         mavlinkView = new SubMainWindow(this);
@@ -554,6 +572,30 @@ void MainWindow::buildCommonWidgets()
         mavlinkView->setCentralWidget(new XMLCommProtocolWidget(this));
         addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
     }
+#endif
+
+#if QGC_GOOGLE_EARTH_ENABLED
+    if (!googleEarthView)
+    {
+        googleEarthView = new SubMainWindow(this);
+        googleEarthView->setObjectName("VIEW_GOOGLEEARTH");
+        googleEarthView->setCentralWidget(new QGCGoogleEarthView(this));
+        addToCentralStackedWidget(googleEarthView, VIEW_GOOGLEEARTH, tr("Google Earth View"));
+    }
+#endif
+
+#ifdef QGC_OSG_ENABLED
+    if (!local3DView)
+    {
+        q3DWidget = Q3DWidgetFactory::get("PIXHAWK", this);
+        q3DWidget->setObjectName("VIEW_3DWIDGET");
+
+        local3DView = new SubMainWindow(this);
+        local3DView->setObjectName("VIEW_LOCAL3D");
+        local3DView->setCentralWidget(q3DWidget);
+        addToCentralStackedWidget(local3DView, VIEW_LOCAL3D, tr("Local 3D View"));
+    }
+#endif
 
     if (!simView)
     {
@@ -658,24 +700,6 @@ void MainWindow::buildCommonWidgets()
         dataplotWidget    = new QGCDataPlot2D(this);
         addCentralWidget(dataplotWidget, tr("Logfile Plot"));
     }*/
-
-#ifdef QGC_OSG_ENABLED
-    if (q3DWidget)
-    {
-        q3DWidget = Q3DWidgetFactory::get("PIXHAWK", this);
-        q3DWidget->setObjectName("VIEW_3DWIDGET");
-
-        addToCentralStackedWidget(q3DWidget, VIEW_3DWIDGET, tr("Local 3D"));
-    }
-#endif
-
-#if (defined _MSC_VER) /*| (defined Q_OS_MAC) mac os doesn't support gearth right now */
-    if (!earthWidget)
-    {
-        earthWidget = new QGCGoogleEarthView(this);
-        addToCentralStackedWidget(earthWidget,VIEW_GOOGLEEARTH, tr("Google Earth"));
-    }
-#endif
 }
 
 void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
@@ -1224,6 +1248,8 @@ void MainWindow::connectCommonActions()
     }
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionUnconnectedView);
+    perspectives->addAction(ui.actionGoogleEarthView);
+    perspectives->addAction(ui.actionLocal3DView);
     perspectives->setExclusive(true);
 
     // Mark the right one as selected
@@ -1267,6 +1293,16 @@ void MainWindow::connectCommonActions()
         ui.actionTerminalView->setChecked(true);
         ui.actionTerminalView->activate(QAction::Trigger);
     }
+    if (currentView == VIEW_GOOGLEEARTH)
+    {
+        ui.actionGoogleEarthView->setChecked(true);
+        ui.actionGoogleEarthView->activate(QAction::Trigger);
+    }
+    if (currentView == VIEW_LOCAL3D)
+    {
+        ui.actionLocal3DView->setChecked(true);
+        ui.actionLocal3DView->activate(QAction::Trigger);
+    }
     if (currentView == VIEW_UNCONNECTED)
     {
         ui.actionUnconnectedView->setChecked(true);
@@ -1304,6 +1340,8 @@ void MainWindow::connectCommonActions()
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
+    connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
+    connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
 
     if (getCustomMode() == CUSTOM_MODE_APM) {
         connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
@@ -1842,7 +1880,12 @@ void MainWindow::loadViewState()
         case VIEW_TERMINAL:
             centerStack->setCurrentWidget(terminalView);
             break;
-
+        case VIEW_GOOGLEEARTH:
+            centerStack->setCurrentWidget(googleEarthView);
+            break;
+        case VIEW_LOCAL3D:
+            centerStack->setCurrentWidget(local3DView);
+            break;
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
@@ -1941,6 +1984,27 @@ void MainWindow::loadTerminalView()
     }
 }
 
+void MainWindow::loadGoogleEarthView()
+{
+    if (currentView != VIEW_GOOGLEEARTH)
+    {
+        storeViewState();
+        currentView = VIEW_GOOGLEEARTH;
+        ui.actionGoogleEarthView->setChecked(true);
+        loadViewState();
+    }
+}
+
+void MainWindow::loadLocal3DView()
+{
+    if (currentView != VIEW_LOCAL3D)
+    {
+        storeViewState();
+        currentView = VIEW_LOCAL3D;
+        ui.actionLocal3DView->setChecked(true);
+        loadViewState();
+    }
+}
 
 void MainWindow::loadUnconnectedView()
 {
@@ -1986,27 +2050,6 @@ void MainWindow::loadMAVLinkView()
     }
 }
 
-//void MainWindow::loadDataView(QString fileName)
-//{
-//    // Plot is now selected, now load data from file
-//    if (dataView)
-//    {
-//        //dataView->setCentralWidget(new QGCDataPlot2D(this));
-//        QGCDataPlot2D *plot = qobject_cast<QGCDataPlot2D*>(dataView->centralWidget());
-//        if (plot)
-//        {
-//            plot->loadFile(fileName);
-//        }
-//    }
-//    /*QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-//    if (centerStack)
-//    {
-//        centerStack->setCurrentWidget(dataView);
-//        dataplotWidget->loadFile(fileName);
-//    }*/
-//}
-
-
 QList<QAction*> MainWindow::listLinkMenuActions()
 {
     return ui.menuNetwork->actions();
@@ -2017,11 +2060,11 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
     return menuActionHelper->dockWidgetTitleBarsEnabled();
 }
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
 bool MainWindow::x11Event(XEvent *event)
 {
     emit x11EventOccured(event);
     //qDebug("XEvent occured...");
     return false;
 }
-#endif // MOUSE_ENABLED_LINUX
+#endif // QGC_MOUSE_ENABLED_LINUX
