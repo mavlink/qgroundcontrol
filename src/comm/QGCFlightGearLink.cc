@@ -47,7 +47,7 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     flightGearVersion(0),
     startupArguments(startupArguments),
     _sensorHilEnabled(true),
-    barometerOffsetkPa(0.0)
+    barometerOffsetkPa(0.0f)
 {
     this->host = host;
     this->port = port+mav->getUASID();

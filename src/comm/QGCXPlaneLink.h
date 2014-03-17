@@ -197,6 +197,7 @@ protected:
     float true_airspeed;
     float groundspeed;
     float xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature;
+    float barometerOffsetkPa;
 
     float man_roll, man_pitch, man_yaw;
     QString airframeName;
@@ -204,6 +205,7 @@ protected:
     bool xPlaneConnected;
     unsigned int xPlaneVersion;
     quint64 simUpdateLast;
+    quint64 simUpdateFirst;
     quint64 simUpdateLastText;
     float simUpdateHz;
     bool _sensorHilEnabled;
