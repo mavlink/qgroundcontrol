@@ -155,6 +155,7 @@ protected:
     QMutex m_writeMutex;      // Mutex for accessing the m_transmitBuffer.
     QList<QString> m_ports;
     QString type;
+    bool m_is_cdc;
 
 private:
     volatile bool m_stopp;
