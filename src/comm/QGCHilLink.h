@@ -72,8 +72,6 @@ public slots:
 protected:
     virtual void setName(QString name) = 0;
 
-    static const unsigned int barometerOffsetkPa = 2;
-
 signals:
     /**
      * @brief This signal is emitted instantly when the link is connected
