@@ -91,6 +91,7 @@ DEFINES += MAVLINK_NO_DATA
 !isEmpty(MAVLINK_CONF) {
     message($$sprintf("Using MAVLink dialect '%1' specified at the command line.", $$MAVLINK_CONF))
 }
+# Otherwise they can specify MAVLINK_CONF within user_config.pri
 else:infile(user_config.pri, MAVLINK_CONF) {
     MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
     !isEmpty(MAVLINK_CONF) {
