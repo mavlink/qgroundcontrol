@@ -103,6 +103,8 @@ public:
     void loadSettings();
     void writeSettings();
 
+    void checkIfCDC();
+
     void run();
     void run2();
 
