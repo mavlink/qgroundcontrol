@@ -23,10 +23,10 @@
 #
 #-------------------------------------------------
 
-# Specify MAVLink dialects to compile support for here. This variable is processed
-# by QGCExternalLibs.pri, which handles MAVLink configuration.
-# To specify dialects to include set MAVLINK_CONF to a space-separated list of dialects.
-# Each dialect should correspond to an include folder under `libs/mavlink/include`
+# Specify the MAVLink dialect to compile support for here. This variable is processed
+# by QGCExternalLibs.pri, which handles MAVLink configuration. The dialect should 
+# correspond to an include folder under `libs/mavlink/include/mavlink/v1.0`. You can
+# also force a build to use only common mavlink message by setting MAVLINK_CONF to empty here.
 #MAVLINK_CONF = pixhawk
 
 # Override compilation of QGroundControl's features in your build. This overrides the default
