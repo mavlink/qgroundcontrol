@@ -407,7 +407,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
 #if (defined Q_OS_MAC)
         webViewMac->setPage(new QGCWebPage(webViewMac));
         webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-        webViewMac->load(QUrl(QCoreApplication::applicationDirPath()+"/earth.html"));
+        webViewMac->load(QUrl(QCoreApplication::applicationDirPath()+"/files/images/earth.html"));
 #endif
 
 #ifdef _MSC_VER
