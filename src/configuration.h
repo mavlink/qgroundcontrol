@@ -4,7 +4,7 @@
 #include <QString>
 
 /** @brief Polling interval in ms */
-#define SERIAL_POLL_INTERVAL 9
+#define SERIAL_POLL_INTERVAL 5
 
 /** @brief Heartbeat emission rate, in Hertz (times per second) */
 #define MAVLINK_HEARTBEAT_DEFAULT_RATE 1
