@@ -40,9 +40,6 @@ This file is part of the PIXHAWK project
 #include <AudioOutput>
 #endif
 #ifdef Q_OS_LINUX
-#if defined QGC_SPEECH_ENABLED
-//#include <flite/flite.h>
-#endif
 #include <phonon/MediaObject>
 #include <phonon/AudioOutput>
 #endif
