@@ -26,6 +26,7 @@ This file is part of the QGROUNDCONTROL project
  *   @brief Implementation of audio output
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   @author Thomas Gubler <thomasgubler@gmail.com>
  *
  */
 
@@ -51,10 +52,8 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-extern "C" {
-#include <flite/flite.h>
-    cst_voice *register_cmu_us_kal(const char *voxdir);
-};
+// Using eSpeak for speech synthesis: following https://github.com/mondhs/espeak-sample/blob/master/sampleSpeak.cpp
+#include <espeak/speak_lib.h>
 #endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
@@ -97,7 +96,12 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    flite_init();
+    espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
+    espeak_VOICE espeak_voice = {};
+    espeak_voice.languages = "en-uk"; // Default to British English
+    espeak_voice.name = "klatt"; // espeak voice name
+    espeak_voice.gender = 2; // Female
+    espeak_SetVoiceByProperties(&espeak_voice);
 #endif
 
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
@@ -206,20 +210,8 @@ bool GAudioOutput::say(QString text, int severity)
 #endif
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-            QTemporaryFile file;
-            file.setFileTemplate("XXXXXX.wav");
-
-            if (file.open())
-            {
-                cst_voice *v = register_cmu_us_kal(NULL);
-                cst_wave *wav = flite_text_to_wave(text.toStdString().c_str(), v);
-                // file.fileName() returns the unique file name
-                cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
-                m_media->setCurrentSource(Phonon::MediaSource(QUrl::fromLocalFile(file.fileName().toStdString().c_str())));
-                m_media->play();
-                res = true;
-            }
-
+            unsigned int espeak_size = strlen(text.toStdString().c_str());
+            espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
 #endif
 
 #if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED

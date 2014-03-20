@@ -523,7 +523,7 @@ MacBuild {
 ##
 # [OPTIONAL] Speech synthesis library support.
 # Can be forcibly disabled by adding a `DEFINES+=DISABLE_SPEECH` argument to qmake.
-# Linux support requires the Festival Lite speech synthesis engine (flite).
+# Linux support requires the eSpeak speech synthesizer (espeak).
 # Mac support is provided in Snow Leopard and newer (10.6+)
 # Windows is supported as of Windows 7
 #
@@ -534,18 +534,11 @@ contains (DEFINES, DISABLE_SPEECH) {
 } else:infile(user_config.pri, DEFINES, DISABLE_SPEECH) {
     message("Skipping support for speech output (manual override from user_config.pri)")
 } else:LinuxBuild {
-	exists(/usr/include/flite) | exists(/usr/local/include/flite) {
+	exists(/usr/include/espeak) | exists(/usr/local/include/espeak) {
 		message("Including support for speech output")
 		DEFINES += QGC_SPEECH_ENABLED
 		LIBS += \
-		-lflite_cmu_us_kal \
-		-lflite_usenglish \
-		-lflite_cmulex \
-		-lflite
-
-		# We need to add the alsa asound library as well for some Linux platforms
-		# (like Arch)
-		LIBS += -lasound
+		-lespeak
 	} else {
 		warning("Skipping support for speech output (missing libraries, see README)")
 	}

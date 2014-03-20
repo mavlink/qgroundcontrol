@@ -44,7 +44,7 @@ An add-on is available for QGC that provides a UI for generating MAVLink dialect
 Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DISABLE_RTLAB` to the `DEFINES` variable.
 
 ### Speech syntehsis
-QGroundcontrol can notify the controller of information via speech synthesis. This requires the `flite` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding `DISABLE_SPEECH` to the `DEFINES` variable.
+QGroundcontrol can notify the controller of information via speech synthesis. This requires the `espeak` library on Linux. On Mac and Windows support is built in to the OS as of OS X 10.6 (Snow Leopard) and Windows Vista. This support is enabled by default on all platforms if the dependencies are met. Disabling this functionality can be done by adding `DISABLE_SPEECH` to the `DEFINES` variable.
 
 ### 3D view
 The OpenSceneGraph libraries provide 3D rendering to the map overlays that QGC can provide.
@@ -92,9 +92,10 @@ To build on Linux:
   * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
 
 2. **[OPTIONAL]** Install additional libraries
-  * For text-to-speech (flite)
-	* For Ubuntu: `sudo apt-get install libflite1 flite1-dev`
-	* For Fedora: `sudo yum install flite-devel`
+  * For text-to-speech (espeak)
+	* For Ubuntu: `sudo apt-get install espeak libespeak-dev`
+	* For Fedora: `sudo yum install espeak espeak-devel`
+	* For Arch Linux: `pacman -Sy espeak`
   * For 3D flight view (openscenegraph)
 	* For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
 	* For Fedora: `sudo yum install OpenSceneGraph-qt-devel`
