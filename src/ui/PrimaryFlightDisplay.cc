@@ -1037,8 +1037,7 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     float markerTip = (tickmarkLeftMajor+tickmarkRight*2)/3;
 
     // Select between air and ground speed:
-
-    float speed = (isAirplane() && isnan(airSpeed)) ? airSpeed : groundSpeed;
+    float speed = (isAirplane() && !isnan(airSpeed)) ? airSpeed : groundSpeed;
     float centerScaleSpeed = isnan(speed) ? 0 : speed;
 
     float start = centerScaleSpeed - AIRSPEED_LINEAR_SPAN/2;
