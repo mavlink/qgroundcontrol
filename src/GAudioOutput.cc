@@ -97,14 +97,12 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-    // Even though the following is legal, GCC still complains about it
-    espeak_VOICE espeak_voice = {};
-#pragma GCC diagnostic pop
+    espeak_VOICE espeak_voice;
     espeak_voice.languages = "en-uk"; // Default to British English
+    espeak_voice.identifier = NULL; // no specific voice file specified
     espeak_voice.name = "klatt"; // espeak voice name
     espeak_voice.gender = 2; // Female
+    espeak_voice.age = 0; // age not specified
     espeak_SetVoiceByProperties(&espeak_voice);
 #endif
 
