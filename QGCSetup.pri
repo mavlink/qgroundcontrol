@@ -23,28 +23,30 @@ QMAKE_POST_LINK += $$quote(echo "Copying files")
 # Copy the application resources to the associated place alongside the application
 #
 
-COPY_RESOURCE_LIST = \
-    $$BASEDIR/files \
-    $$BASEDIR/qml \
-    $$BASEDIR/data
-    
-WindowsBuild {
-	DESTDIR_COPY_RESOURCE_LIST = $$replace(DESTDIR,"/","\\")
-    COPY_RESOURCE_LIST = $$replace(COPY_RESOURCE_LIST, "/","\\")
-    CONCATCMD = $$escape_expand(\\n)
-}
-
 LinuxBuild {
     DESTDIR_COPY_RESOURCE_LIST = $$DESTDIR
-    CONCATCMD = &&
 }
 
 MacBuild {
     DESTDIR_COPY_RESOURCE_LIST = $$DESTDIR/$${TARGET}.app/Contents/MacOS
-    CONCATCMD = &&
 }
-    
-for(COPY_DIR, COPY_RESOURCE_LIST):QMAKE_POST_LINK += $$CONCATCMD $$QMAKE_COPY_DIR $${COPY_DIR} $$DESTDIR_COPY_RESOURCE_LIST
+
+# Windows version of QMAKE_COPY_DIR of course doesn't work the same as Mac/Linux. It will only
+# copy the contents of the source directory. It doesn't create the top level source directory
+# in the target.
+WindowsBuild {
+    # Make sure to keep both side of this if using the same set of directories
+	DESTDIR_COPY_RESOURCE_LIST = $$replace(DESTDIR,"/","\\")
+	BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$BASEDIR_COPY_RESOURCE_LIST\\files $$DESTDIR_COPY_RESOURCE_LIST\\files
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$BASEDIR_COPY_RESOURCE_LIST\\qml $$DESTDIR_COPY_RESOURCE_LIST\\qml
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$BASEDIR_COPY_RESOURCE_LIST\\data $$DESTDIR_COPY_RESOURCE_LIST\\data
+} else {
+    # Make sure to keep both side of this if using the same set of directories
+    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/files $$DESTDIR_COPY_RESOURCE_LIST
+    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/qml $$DESTDIR_COPY_RESOURCE_LIST
+    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/data $$DESTDIR_COPY_RESOURCE_LIST
+}
 
 #
 # Perform platform specific setup
@@ -185,8 +187,6 @@ WindowsBuild {
     }
 
 	ReleaseBuild {
-		QMAKE_POST_LINK += $$escape_expand(\\n) $$quote(del /F "$$DESTDIR_WIN\\$${TARGET}.exp")
-
 		# Copy Visual Studio DLLs
 		# Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
 		# This currently only works for VS2010.
