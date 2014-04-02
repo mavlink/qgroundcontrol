@@ -309,6 +309,9 @@ void UASParameterDataModel::readUpdateParamsFromStream( QTextStream& stream)
                     case MAV_PARAM_TYPE_INT32:
                         updatePendingParamWithValue(componentId,key,QVariant(valStr.toInt()));
                         break;
+                    case MAV_PARAM_TYPE_INT8:
+                        updatePendingParamWithValue(componentId,key,QVariant((unsigned char) valStr.toUInt()));
+                        break;
                     default:
                         qDebug() << "FAILED LOADING PARAM" << key << "UNKNOWN DATA TYPE";
                     }
@@ -355,8 +358,14 @@ void UASParameterDataModel::writeOnboardParamsToStream( QTextStream &stream, con
                     paramValue = paramValue.arg((double)j.value().toFloat(), 25, 'g', 6);
                     paramType = paramType.arg(MAV_PARAM_TYPE_REAL32);
                     break;
+                case QMetaType::QChar:
+                case QMetaType::Char:
+                    // see UAS::setParameter()
+                    paramValue = paramValue.arg((unsigned char)j.value().toUInt());
+                    paramType = paramType.arg(MAV_PARAM_TYPE_INT8);
+                    break;
                 default:
-                    qCritical() << "ABORTED PARAM WRITE TO FILE, NO VALID QVARIANT TYPE" << j.value();
+                    qCritical() << "ABORTED PARAM WRITE TO FILE, PARAM '" << j.key() << "' NO VALID QVARIANT TYPE" << j.value();
                     return;
                 }
                 stream << this->uasId << "\t" << compid << "\t" << j.key() << "\t" << paramValue << "\t" << paramType << "\n";
