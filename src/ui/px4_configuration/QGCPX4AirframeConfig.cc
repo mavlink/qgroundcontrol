@@ -38,6 +38,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 2100);
     ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 2101);
     ui->planeComboBox->addItem(tr("3DR Skywalker"), 2102);
+    ui->planeComboBox->addItem(tr("Skyhunter (1800 mm)"), 2103);
 
     connect(ui->planePushButton, SIGNAL(clicked()), this, SLOT(planeSelected()));
     connect(ui->planeComboBox, SIGNAL(activated(int)), this, SLOT(planeSelected(int)));
