@@ -474,18 +474,32 @@ void QGCXPlaneLink::readBytes()
             }
             if (p.index == 4)
             {
-                // Do not actually use the XPlane value, but calculate our own
-                Eigen::Vector3f g(0, 0, -9.81f);
 
-                Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
+                const float one_g = 9.80665f;
 
-                Eigen::Vector3f gr = R.transpose().eval() * g;
+//                if (fabsf(groundspeed) < 2.0f) {
 
-                // TODO Add centrip. accel
+                    // Do not actually use the XPlane value, but calculate our own
+                    Eigen::Vector3f g(0.0f, 0.0f, -one_g);
 
-                xacc = gr[0];
-                yacc = gr[1];
-                zacc = gr[2];
+                    Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
+
+                    Eigen::Vector3f gr = R.transpose().eval() * g;
+
+
+                    xacc = gr[0];
+                    yacc = gr[1];
+                    zacc = gr[2];
+
+//                    qDebug() << "Calculated values" << gr[0] << gr[1] << gr[2];
+
+//                } else {
+//                    xacc = p.f[5] * one_g;
+//                    yacc = p.f[6] * one_g;
+//                    zacc = p.f[4] * -one_g;
+
+//                    qDebug() << "X-Plane values" << xacc << yacc << zacc;
+//                }
 
                 fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
