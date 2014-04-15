@@ -224,7 +224,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -246,7 +246,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -268,7 +268,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -290,7 +290,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -312,7 +312,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -334,9 +334,9 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
-                string += tmp.arg(nums[j]);
+               string += tmp.arg(nums[j]);
             }
             item->setData(2, Qt::DisplayRole, QString("float[%1]").arg(messageInfo[msgid].fields[fieldid].array_length));
             item->setData(1, Qt::DisplayRole, string);
@@ -356,7 +356,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -378,7 +378,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
@@ -400,7 +400,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Enforce null termination
             QString tmp("%1, ");
             QString string;
-            for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
+            for (unsigned int j = 0; j < messageInfo[msgid].fields[fieldid].array_length; ++j)
             {
                 string += tmp.arg(nums[j]);
             }
