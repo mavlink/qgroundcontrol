@@ -42,6 +42,9 @@ This file is part of the QGROUNDCONTROL project
 UDPLink::UDPLink(QHostAddress host, quint16 port) :
     socket(NULL)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
 
     this->host = host;
     this->port = port;
