@@ -49,6 +49,10 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     _sensorHilEnabled(true),
     barometerOffsetkPa(0.0f)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     this->host = host;
     this->port = port+mav->getUASID();
     this->connectState = false;

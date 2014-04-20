@@ -58,6 +58,10 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateHz(0),
     _sensorHilEnabled(true)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
     this->connectState = false;

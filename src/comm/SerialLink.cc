@@ -28,6 +28,10 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     // Get the name of the current port in use.
     m_portName = portname.trimmed();
     if (m_portName == "" && getCurrentPorts().size() > 0)
