@@ -147,6 +147,7 @@ MacBuild | LinuxBuild {
 WindowsBuild {
 	QMAKE_CXXFLAGS_WARN_ON += /W3 \
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot
+        /wd4005 \   # silence warnings about macro redefinition
         /wd4290     # ignore exception specifications
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
