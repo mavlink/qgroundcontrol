@@ -69,7 +69,9 @@ UDPLink::~UDPLink()
  **/
 void UDPLink::run()
 {
-	exec();
+    forever {
+        QGC::SLEEP::usleep(500000);
+    }
 }
 
 void UDPLink::setAddress(QHostAddress host)

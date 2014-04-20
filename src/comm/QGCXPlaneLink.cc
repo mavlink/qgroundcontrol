@@ -144,7 +144,9 @@ void QGCXPlaneLink::setVersion(unsigned int version)
  **/
 void QGCXPlaneLink::run()
 {
-    exec();
+    forever {
+        QGC::SLEEP::usleep(500000);
+    }
 }
 
 void QGCXPlaneLink::setPort(int localPort)
