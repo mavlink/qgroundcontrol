@@ -72,6 +72,7 @@ To build on Mac OSX (10.6 or later):
 - - -
 1. Download Qt 4.8+ from: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-mac-opensource-4.8.5.dmg>
 2. Double click the package installer and follow instructions.
+3. If you are building on Mavericks or later you will need to modify /Library/Frameworks/QtCore.framework/Versions/4/Headers/qglobal.h to add the new 10.9 os version number. Search for MAC_OS_X_VERSION_10_8 to find the right spot.
 
 ### Build QGroundControl
 - - -
