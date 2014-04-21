@@ -428,7 +428,7 @@ bool SerialLink::connect()
         m_stopp = false;
     }
 
-    start(LowPriority);
+    start(HighPriority);
     return true;
 }
 
