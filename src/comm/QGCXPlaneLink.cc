@@ -144,9 +144,72 @@ void QGCXPlaneLink::setVersion(unsigned int version)
  **/
 void QGCXPlaneLink::run()
 {
-    forever {
-        QGC::SLEEP::usleep(500000);
+    if (!mav) return;
+    if (connectState) return;
+
+    socket = new QUdpSocket(this);
+    connectState = socket->bind(localHost, localPort);
+    if (!connectState) return;
+
+    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+
+    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
+
+    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
+    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+
+    UAS* uas = dynamic_cast<UAS*>(mav);
+    if (uas)
+    {
+        uas->startHil();
     }
+
+#pragma pack(push, 1)
+    struct iset_struct
+    {
+        char b[5];
+        int index; // (0->20 in the lsit below)
+        char str_ipad_them[16];
+        char str_port_them[6];
+        char padding[2];
+        int use_ip;
+    } ip; // to use this option, 0 not to.
+#pragma pack(pop)
+
+    ip.b[0] = 'I';
+    ip.b[1] = 'S';
+    ip.b[2] = 'E';
+    ip.b[3] = 'T';
+    ip.b[4] = '0';
+
+    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
+
+    QString localAddrStr;
+    QString localPortStr = QString("%1").arg(localPort);
+
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
+        // Exclude loopback IPv4 and all IPv6 addresses
+        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        {
+            localAddrStr = hostAddresses.at(i).toString();
+            break;
+        }
+    }
+
+    //qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
+
+    ip.index = 0;
+    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
+    strncpy(ip.str_port_them, localPortStr.toAscii(), qMin((int)sizeof(ip.str_port_them), 6));
+    ip.use_ip = 1;
+
+    writeBytes((const char*)&ip, sizeof(ip));
+
+    exec();
 }
 
 void QGCXPlaneLink::setPort(int localPort)
@@ -945,73 +1008,9 @@ bool QGCXPlaneLink::connectSimulation()
     // XXX Hack
     storeSettings();
 
-    start(LowPriority);
+    start(HighPriority);
 
-    if (!mav) return false;
-    if (connectState) return false;
-
-    socket = new QUdpSocket(this);
-    connectState = socket->bind(localHost, localPort);
-    if (!connectState) return false;
-
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
-
-    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-
-    UAS* uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        uas->startHil();
-    }
-
-#pragma pack(push, 1)
-    struct iset_struct
-    {
-        char b[5];
-        int index; // (0->20 in the lsit below)
-        char str_ipad_them[16];
-        char str_port_them[6];
-        char padding[2];
-        int use_ip;
-    } ip; // to use this option, 0 not to.
-#pragma pack(pop)
-
-    ip.b[0] = 'I';
-    ip.b[1] = 'S';
-    ip.b[2] = 'E';
-    ip.b[3] = 'T';
-    ip.b[4] = '0';
-
-    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-
-    QString localAddrStr;
-    QString localPortStr = QString("%1").arg(localPort);
-
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-        {
-            localAddrStr = hostAddresses.at(i).toString();
-            break;
-        }
-    }
-
-    //qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
-
-    ip.index = 0;
-    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
-    strncpy(ip.str_port_them, localPortStr.toAscii(), qMin((int)sizeof(ip.str_port_them), 6));
-    ip.use_ip = 1;
-
-    writeBytes((const char*)&ip, sizeof(ip));
-    return connectState;
+    return true;
 }
 
 /**

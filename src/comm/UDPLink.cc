@@ -69,9 +69,9 @@ UDPLink::~UDPLink()
  **/
 void UDPLink::run()
 {
-    forever {
-        QGC::SLEEP::usleep(500000);
-    }
+    hardwareConnect();
+
+    exec();
 }
 
 void UDPLink::setAddress(QHostAddress host)
@@ -307,7 +307,7 @@ bool UDPLink::connect()
 		this->quit();
 		this->wait();
 	}
-    bool connected = this->hardwareConnect();
+    bool connected = true;
     start(HighPriority);
     return connected;
 }
