@@ -61,6 +61,8 @@ TCPLink::~TCPLink()
 
 void TCPLink::run()
 {
+    _hardwareConnect();
+
 	exec();
 }
 
@@ -214,11 +216,10 @@ bool TCPLink::connect()
 		quit();
 		wait();
 	}
-    bool connected = _hardwareConnect();
-    if (connected) {
-        start(HighPriority);
-    }
-    return connected;
+
+    start(HighPriority);
+
+    return true;
 }
 
 bool TCPLink::_hardwareConnect(void)

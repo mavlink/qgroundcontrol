@@ -71,6 +71,89 @@ QGCJSBSimLink::~QGCJSBSimLink()
  **/
 void QGCJSBSimLink::run()
 {
+    qDebug() << "STARTING FLIGHTGEAR LINK";
+
+    if (!mav) return;
+    socket = new QUdpSocket(this);
+    connectState = socket->bind(host, port);
+
+    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+
+    process = new QProcess(this);
+
+    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+
+
+    UAS* uas = dynamic_cast<UAS*>(mav);
+    if (uas)
+    {
+        uas->startHil();
+    }
+
+    //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
+    // Catch process error
+    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
+                      this, SLOT(processError(QProcess::ProcessError)));
+
+    // Start Flightgear
+    QStringList arguments;
+    QString processJSB;
+    QString rootJSB;
+
+#ifdef Q_OS_MACX
+    processJSB = "/usr/local/bin/JSBSim";
+    rootJSB = "/Applications/FlightGear.app/Contents/Resources/data";
+#endif
+
+#ifdef Q_OS_WIN32
+    processJSB = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
+    rootJSB = "C:\\Program Files (x86)\\FlightGear\\data";
+#endif
+
+#ifdef Q_OS_LINUX
+    processJSB = "/usr/games/fgfs";
+    rootJSB = "/usr/share/games/flightgear";
+#endif
+
+    // Sanity checks
+    bool sane = true;
+    QFileInfo executable(processJSB);
+    if (!executable.isExecutable())
+    {
+        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim was not found at %1").arg(processJSB));
+        sane = false;
+    }
+
+    QFileInfo root(rootJSB);
+    if (!root.isDir())
+    {
+        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim data directory was not found at %1").arg(rootJSB));
+        sane = false;
+    }
+
+    if (!sane) return;
+
+    /*Prepare JSBSim Arguments */
+
+    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+    }
+    else
+    {
+        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+    }
+
+    process->start(processJSB, arguments);
+
+    emit simulationConnected(connectState);
+    if (connectState) {
+        emit simulationConnected();
+        connectionStartTime = QGC::groundTimeUsecs()/1000;
+    }
+    qDebug() << "STARTING SIM";
+
     exec();
 }
 
@@ -303,91 +386,8 @@ bool QGCJSBSimLink::disconnectSimulation()
  **/
 bool QGCJSBSimLink::connectSimulation()
 {
-    qDebug() << "STARTING FLIGHTGEAR LINK";
-
-    if (!mav) return false;
-    socket = new QUdpSocket(this);
-    connectState = socket->bind(host, port);
-
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-
-    process = new QProcess(this);
-
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-
-
-    UAS* uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        uas->startHil();
-    }
-
-    //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
-    // Catch process error
-    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
-                      this, SLOT(processError(QProcess::ProcessError)));
-
-    // Start Flightgear
-    QStringList arguments;
-    QString processJSB;
-    QString rootJSB;
-
-#ifdef Q_OS_MACX
-    processJSB = "/usr/local/bin/JSBSim";
-    rootJSB = "/Applications/FlightGear.app/Contents/Resources/data";
-#endif
-
-#ifdef Q_OS_WIN32
-    processJSB = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
-    rootJSB = "C:\\Program Files (x86)\\FlightGear\\data";
-#endif
-
-#ifdef Q_OS_LINUX
-    processJSB = "/usr/games/fgfs";
-    rootJSB = "/usr/share/games/flightgear";
-#endif
-
-    // Sanity checks
-    bool sane = true;
-    QFileInfo executable(processJSB);
-    if (!executable.isExecutable())
-    {
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim was not found at %1").arg(processJSB));
-        sane = false;
-    }
-
-    QFileInfo root(rootJSB);
-    if (!root.isDir())
-    {
-        MainWindow::instance()->showCriticalMessage(tr("JSBSim Failed to Start"), tr("JSBSim data directory was not found at %1").arg(rootJSB));
-        sane = false;
-    }
-
-    if (!sane) return false;
-
-    /*Prepare JSBSim Arguments */
-
-    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-    {
-        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
-    }
-    else
-    {
-        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
-    }
-
-    process->start(processJSB, arguments);
-
-    emit simulationConnected(connectState);
-    if (connectState) {
-        emit simulationConnected();
-        connectionStartTime = QGC::groundTimeUsecs()/1000;
-    }
-    qDebug() << "STARTING SIM";
-
-    start(LowPriority);
-    return connectState;
+    start(HighPriority);
+    return true;
 }
 
 /**
