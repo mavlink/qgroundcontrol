@@ -230,8 +230,8 @@ void UASControlWidget::setMode(int mode)
 
 void UASControlWidget::transmitMode()
 {
-    UASInterface* uas = UASManager::instance()->getUASForId(this->uasID);
-    if (uas) {
+    UASInterface* uas_iface = UASManager::instance()->getUASForId(this->uasID);
+    if (uas_iface) {
         if (modeIdx >= 0 && modeIdx < modesNum) {
             struct full_mode_s mode = modesList[modeIdx];
             // include armed state
@@ -239,6 +239,14 @@ void UASControlWidget::transmitMode()
                 mode.baseMode |= MAV_MODE_FLAG_SAFETY_ARMED;
             } else {
                 mode.baseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+            }
+
+            UAS* uas = dynamic_cast<UAS*>(uas_iface);
+
+            if (uas->isHilEnabled()) {
+                mode.baseMode |= MAV_MODE_FLAG_HIL_ENABLED;
+            } else {
+                mode.baseMode &= ~MAV_MODE_FLAG_HIL_ENABLED;
             }
 
             uas->setMode(mode.baseMode, mode.customMode);
