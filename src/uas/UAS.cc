@@ -2000,7 +2000,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
  */
 float UAS::filterVoltage(float value) const
 {
-    return lpVoltage * 0.7f + value * 0.3f;
+    return lpVoltage * 0.6f + value * 0.4f;
 }
 
 /**
