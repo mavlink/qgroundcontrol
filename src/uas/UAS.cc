@@ -1872,10 +1872,10 @@ void UAS::setMode(uint8_t newBaseMode, uint32_t newCustomMode)
         // Now set current state (request no change)
         newBaseMode |= this->base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 
-        // Strip HIL part, replace it with current system state
-        newBaseMode &= (~MAV_MODE_FLAG_HIL_ENABLED);
-        // Now set current state (request no change)
-        newBaseMode |= this->base_mode & MAV_MODE_FLAG_HIL_ENABLED;
+//        // Strip HIL part, replace it with current system state
+//        newBaseMode &= (~MAV_MODE_FLAG_HIL_ENABLED);
+//        // Now set current state (request no change)
+//        newBaseMode |= this->base_mode & MAV_MODE_FLAG_HIL_ENABLED;
 
         setModeArm(newBaseMode, newCustomMode);
     }
