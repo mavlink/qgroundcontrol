@@ -539,6 +539,8 @@ public:
     bool isAuto();
     /** @brief Check if vehicle is armed */
     bool isArmed() const { return systemIsArmed; }
+    /** @brief Check if vehicle is in HIL mode */
+    bool isHilEnabled() const { return hilEnabled; }
 
     /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
