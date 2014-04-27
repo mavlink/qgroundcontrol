@@ -48,7 +48,7 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     socket(NULL),
     process(NULL),
     terraSync(NULL),
-    barometerOffsetkPa(15.0f),
+    barometerOffsetkPa(-8.0f),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
     xPlaneVersion(0),
