@@ -38,10 +38,10 @@ public:
             ymin = ymax = data.y();
             minMaxSet = true;
         } else if(m_autoScale) {
-            xmin = qMin(xmin, data.x());
-            xmax = qMax(xmax, data.x());
-            ymin = qMin(ymin, data.y());
-            ymax = qMax(ymax, data.y());
+            xmin = qMin(qreal(xmin), data.x());
+            xmax = qMax(qreal(xmax), data.x());
+            ymin = qMin(qreal(ymin), data.y());
+            ymax = qMax(qreal(ymax), data.y());
         }
 
         m_data.append(data);
@@ -73,10 +73,10 @@ public:
             xmax = xmin = m_data.at(0).x();
             ymax = ymin = m_data.at(0).y();
             for(int i = 1; i < m_data.size(); i++) {
-                xmin = qMin(xmin, m_data.at(i).x());
-                xmax = qMax(xmax, m_data.at(i).x());
-                ymin = qMin(ymin, m_data.at(i).y());
-                ymax = qMax(ymax, m_data.at(i).y());
+                xmin = qMin(qreal(xmin), m_data.at(i).x());
+                xmax = qMax(qreal(xmax), m_data.at(i).x());
+                ymin = qMin(qreal(ymin), m_data.at(i).y());
+                ymax = qMax(qreal(ymax), m_data.at(i).y());
             }
         }
     }
