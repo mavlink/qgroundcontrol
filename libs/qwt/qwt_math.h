@@ -23,8 +23,8 @@
 
 #else // QT_VERSION >= 0x040000
 
-#define qwtMax qMax
-#define qwtMin qMin
+#define qwtMax(x,y) qMax(qreal(x),qreal(y))
+#define qwtMin(x,y) qMin(qreal(x),qreal(y))
 #define qwtAbs qAbs
 
 #endif
