@@ -33,22 +33,27 @@ public:
 
     /** Append data, returning the number of removed items */
     int appendData(const QPointF &data) {
-        if(!minMaxSet) {
+        m_data.append(data);
+        int removed = 0;
+        while (m_data.size() > m_maxShowPoints) {
+            ++removed;
+            m_data.removeFirst();
+        }
+        if (!minMaxSet) {
             xmin = xmax = data.x();
             ymin = ymax = data.y();
             minMaxSet = true;
-        } else if(m_autoScale) {
-            xmin = qMin(qreal(xmin), data.x());
+            previousTime =xmin;
+        } else if (m_autoScale) {
+            if (m_autoScaleTime) {
+                xmin += removed * (data.x() - previousTime);
+                previousTime = data.x();
+            } else {
+                xmin = qMin(qreal(xmin), data.x());
+            }
             xmax = qMax(qreal(xmax), data.x());
             ymin = qMin(qreal(ymin), data.y());
             ymax = qMax(qreal(ymax), data.y());
-        }
-
-        m_data.append(data);
-        int removed = 0;
-        while(m_data.size() > m_maxStorePoints) {
-            ++removed;
-            m_data.removeFirst();
         }
         itemChanged();
         return removed;
@@ -61,6 +66,10 @@ public:
     void setColor(const QColor &color) {
         m_color = color;
     }
+    void setTimeSerie(bool state) {
+         clear();
+         m_autoScaleTime = state;
+    }
     void unsetMinMax() {
         if(m_autoScale)
             return;
@@ -70,7 +79,7 @@ public:
             minMaxSet = false;
         else {
             minMaxSet = true;
-            xmax = xmin = m_data.at(0).x();
+            previousTime = xmax = xmin = m_data.at(0).x();
             ymax = ymin = m_data.at(0).y();
             for(int i = 1; i < m_data.size(); i++) {
                 xmin = qMin(qreal(xmin), m_data.at(i).x());
@@ -164,12 +173,14 @@ private:
     int m_smoothPoints; /** Number of points to average across */
     mutable QColor m_color;
 
+    double previousTime;
     double xmin;
     double xmax;
     double ymin;
     double ymax;
     bool minMaxSet;
     bool m_autoScale;
+    bool m_autoScaleTime;
     int m_startIndex;
 };
 
@@ -220,6 +231,7 @@ QGCXYPlot::QGCXYPlot(QWidget *parent) :
     connect(ui->minY, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxY, SIGNAL(valueChanged(double)),this, SLOT(updateMinMaxSettings()));
     connect(ui->automaticAxisRange, SIGNAL(toggled(bool)),this, SLOT(updateMinMaxSettings()));
+    connect(ui->timeAxisRange, SIGNAL(toggled(bool)),this, SLOT(setTimeAxis()));
     connect(ui->maxDataShowSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
     connect(ui->maxDataStoreSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
     connect(ui->smoothSpinBox, SIGNAL(valueChanged(int)),this, SLOT(updateMinMaxSettings()));
@@ -261,6 +273,7 @@ void QGCXYPlot::setEditMode(bool editMode)
     ui->maxDataShowSpinBox->setVisible(editMode);
     ui->maxDataStoreSpinBox->setVisible(editMode);
     ui->automaticAxisRange->setVisible(editMode);
+    ui->timeAxisRange->setVisible(editMode);
     ui->lblSmooth->setVisible(editMode);
     ui->smoothSpinBox->setVisible(editMode);
 
@@ -286,7 +299,7 @@ void QGCXYPlot::writeSettings(QSettings& settings)
     settings.setValue("QGC_XYPLOT_MAXDATA_SHOW", ui->maxDataShowSpinBox->value());
     settings.setValue("QGC_XYPLOT_AUTO", ui->automaticAxisRange->isChecked());
     settings.setValue("QGC_XYPLOT_SMOOTH", ui->smoothSpinBox->value());
-
+    settings.setValue("QGC_XYPLOT_TIME", ui->timeAxisRange->isChecked());
     settings.sync();
 }
 void QGCXYPlot::readSettings(const QString& pre,const QVariantMap& settings)
@@ -301,6 +314,7 @@ void QGCXYPlot::readSettings(const QString& pre,const QVariantMap& settings)
     ui->maxDataStoreSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA_STORE", 10000).toInt());
     ui->maxDataShowSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_MAXDATA_SHOW", 15).toInt());
     ui->smoothSpinBox->setValue(settings.value(pre + "QGC_XYPLOT_SMOOTH", 1).toInt());
+    ui->timeAxisRange->setChecked(settings.value(pre + "QGC_XYPLOT_TIME", true).toBool());
     plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
     plot->setAxisTitle(QwtPlot::yLeft, ui->editYParam->currentText());
     updateMinMaxSettings();
@@ -318,6 +332,7 @@ void QGCXYPlot::readSettings(const QSettings& settings)
     ui->maxDataStoreSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA_STORE", 10000).toInt());
     ui->maxDataShowSpinBox->setValue(settings.value("QGC_XYPLOT_MAXDATA_SHOW", 15).toInt());
     ui->smoothSpinBox->setValue(settings.value("QGC_XYPLOT_SMOOTH", 1).toInt());
+    ui->timeAxisRange->setChecked(settings.value("QGC_XYPLOT_TIME", true).toBool());
     plot->setAxisTitle(QwtPlot::xBottom, ui->editXParam->currentText());
     plot->setAxisTitle(QwtPlot::yLeft, ui->editYParam->currentText());
     updateMinMaxSettings();
@@ -410,6 +425,11 @@ void QGCXYPlot::updateMinMaxSettings()
     xycurve->setMaxDataStorePoints(ui->maxDataStoreSpinBox->value());
     xycurve->setMaxDataShowPoints(ui->maxDataShowSpinBox->value());
     xycurve->setSmoothPoints(ui->smoothSpinBox->value());
+}
+
+void QGCXYPlot::setTimeAxis()
+{
+    xycurve->setTimeSerie(ui->timeAxisRange->isChecked());
 }
 
 void QGCXYPlot::on_maxDataShowSpinBox_valueChanged(int value)
