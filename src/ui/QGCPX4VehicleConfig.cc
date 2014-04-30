@@ -50,7 +50,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     rcThrottle(0.0f),
     rcMode(0.0f),
     rcAssist(0.0f),
-    rcMission(0.0f),
+    rcLoiter(0.0f),
     rcReturn(0.0f),
     rcFlaps(0.0f),
     rcAux1(0.0f),
@@ -72,7 +72,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     channelNames << "Throttle";
     channelNames << "Main Mode Switch";
     channelNames << "Assist Switch";
-    channelNames << "Mission Switch";
+    channelNames << "Loiter Switch";
     channelNames << "Return Switch";
     channelNames << "Flaps";
     channelNames << "Aux1";
@@ -1484,7 +1484,7 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
         rcAssist = normalized; // ASSIST SWITCH
     }
     else if (chan == rcMapping[6]) {
-        rcMission = normalized; // MISSION SWITCH
+        rcLoiter = normalized; // LOITER SWITCH
     }
     else if (chan == rcMapping[7]) {
         rcReturn = normalized; // RETURN SWITCH
@@ -1948,7 +1948,7 @@ void QGCPX4VehicleConfig::updateRcChanLabels()
     }
 
     if (rcValue[rcMapping[6]] != UINT16_MAX) {
-        ui->missionSwChanLabel->setText(labelForRcValue(rcMission));
+        ui->missionSwChanLabel->setText(labelForRcValue(rcLoiter));
     }
     else {
         ui->missionSwChanLabel->setText(blankLabel);

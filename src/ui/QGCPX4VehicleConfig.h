@@ -306,7 +306,7 @@ protected:
     float rcThrottle;                   ///< PPM input channel used as throttle control input
     float rcMode;                       ///< PPM input channel used as mode switch control input
     float rcAssist;                     ///< PPM input channel used as assist switch control input
-    float rcMission;                    ///< PPM input channel used as mission switch control input
+    float rcLoiter;                     ///< PPM input channel used as loiter switch control input
     float rcReturn;                     ///< PPM input channel used as return switch control input
     float rcFlaps;                      ///< PPM input channel used as flaps control input
     float rcAux1;                       ///< PPM input channel used as aux 1 input

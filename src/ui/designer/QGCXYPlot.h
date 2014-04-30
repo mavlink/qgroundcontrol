@@ -31,10 +31,11 @@ public slots:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style);
     void updateMinMaxSettings();
 
+
 private slots:
     void on_maxDataShowSpinBox_valueChanged(int value);
     void on_stopStartButton_toggled(bool checked);
-
+    void setTimeAxis();
     void on_timeScrollBar_valueChanged(int value);
 
 private:
@@ -42,6 +43,7 @@ private:
     QwtPlot *plot;
     XYPlotCurve* xycurve;
 
+    bool autoScaleTime;
     double x; /**< Last unused value for the x-coordinate */
     quint64 x_timestamp_us; /**< Timestamp that we last recieved a value for x */
     bool x_valid; /**< Whether we have recieved an x value but so far no corresponding y value */
