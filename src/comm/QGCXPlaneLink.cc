@@ -599,7 +599,7 @@ void QGCXPlaneLink::readBytes()
                 lon = p.f[1];
                 alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
             }
-            else if (p.index == 21 && xPlaneVersion == 10)
+            else if ((p.index == 21 && xPlaneVersion == 10) || (p.index == 21 && xPlaneVersion == 9))
             {
                 vy = p.f[3];
                 vx = -p.f[5];
