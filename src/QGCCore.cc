@@ -82,12 +82,36 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
-
-    // Check application settings
-    // clear them if they mismatch
-    // QGC then falls back to default
+    
+    // Parse command line options
+    
+    bool fClearSettingsOptions = false; // Clear stored settings
+    
+    typedef struct {
+        const char* optionStr;
+        bool*       flag;
+    } CmdLineOpt_t;
+    
+    CmdLineOpt_t rgCmdLineOptions[] = {
+        { "--clearsettings",    &fClearSettingsOptions },
+        // Add additional command line option flags here
+    };
+    
+    for (int iArg=1; iArg<argc; iArg++) {
+        for (size_t iOption=0; iOption<sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]); iOption++) {
+            if (QString(argv[iArg]).compare(rgCmdLineOptions[iOption].optionStr, Qt::CaseInsensitive) == 0) {
+                *rgCmdLineOptions[iOption].flag = true;
+            }
+        }
+    }
+    
     QSettings settings;
 
+    if (fClearSettingsOptions) {
+        // User requested settings to be cleared on command line
+        settings.clear();
+    }
+    
     // Show user an upgrade message if QGC got upgraded (see code below, after splash screen)
     bool upgraded = false;
     enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_NONE;
@@ -98,7 +122,7 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
         if (qgcVersion != QGC_APPLICATION_VERSION)
         {
             lastApplicationVersion = qgcVersion;
-            settings.clear();
+            settings.clear(); // Clear settings from different version
             // Write current application version
             settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
             upgraded = true;

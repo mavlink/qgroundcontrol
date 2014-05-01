@@ -73,8 +73,7 @@ void UASUnitTest::getCommunicationStatus_test()
 void UASUnitTest::filterVoltage_test()
 {
     float verificar=uas->filterVoltage(0.4f);
-    // Verify that upon construction the Comm status is disconnected
-    QCOMPARE(verificar, 8.52f);
+    QCOMPARE(verificar, 7.36f);
 }
 void UASUnitTest:: getAutopilotType_test()
 {
