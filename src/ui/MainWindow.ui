@@ -162,7 +162,7 @@
     <string>Emergency Land</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E</string>
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="actionEmergency_Kill">
@@ -284,9 +284,6 @@
    <property name="text">
     <string>Mission</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+O</string>
-   </property>
   </action>
   <action name="actionEngineersView">
    <property name="checkable">
@@ -298,9 +295,6 @@
    </property>
    <property name="text">
     <string>Plot</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+E</string>
    </property>
   </action>
   <action name="actionMavlinkView">
@@ -314,9 +308,6 @@
    <property name="text">
     <string>Mavlink</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+M</string>
-   </property>
   </action>
   <action name="actionFlightView">
    <property name="checkable">
@@ -328,9 +319,6 @@
    </property>
    <property name="text">
     <string>Flight</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+P</string>
    </property>
   </action>
   <action name="actionNewCustomWidget">
@@ -369,9 +357,6 @@
    <property name="text">
     <string>Unconnected</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+U</string>
-   </property>
   </action>
   <action name="actionShutdownMAV">
    <property name="icon">
@@ -396,9 +381,6 @@
   <action name="actionFullscreen">
    <property name="text">
     <string>Fullscreen</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+Return</string>
    </property>
   </action>
   <action name="actionNormal">
