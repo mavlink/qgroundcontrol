@@ -76,6 +76,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGCVehicleConfig.h"
 #include "MAVLinkDecoder.h"
+#include "QGCUASFileViewMulti.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -86,6 +87,7 @@ class Linecharts;
 class QGCDataPlot2D;
 class JoystickWidget;
 class MenuActionHelper;
+class QGCUASFileViewMulti;
 
 /**
  * @brief Main Application Window
@@ -462,6 +464,8 @@ protected:
     QPointer<QDockWidget> mavlinkSenderWidget;
     QGCMAVLinkLogPlayer* logPlayer;
     QMap<int, QDockWidget*> hilDocks;
+
+    QPointer<QGCUASFileViewMulti> fileWidget;
 
     // Popup widgets
     JoystickWidget* joystickWidget;

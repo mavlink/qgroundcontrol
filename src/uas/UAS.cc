@@ -139,6 +139,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
     waypointManager(this),
+    fileManager(this, this),
 
     attitudeKnown(false),
     attitudeStamped(false),

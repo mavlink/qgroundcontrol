@@ -52,6 +52,8 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #endif
 
+class QGCUASFileManager;
+
 enum BatteryType
 {
     NICD = 0,
@@ -157,6 +159,13 @@ public:
 
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManagerInterface* getParamManager() = 0;
+
+    virtual QGCUASFileManager* getFileManager() = 0;
+
+    /** @brief Send a message over this link (to this or to all UAS on this link) */
+    virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
+    /** @brief Send a message over all links this UAS can be reached with (!= all links) */
+    virtual void sendMessage(mavlink_message_t message) = 0;
 
     /* COMMUNICATION FLAGS */
 
