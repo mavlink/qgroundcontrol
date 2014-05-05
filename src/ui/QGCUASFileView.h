@@ -16,6 +16,10 @@ public:
     explicit QGCUASFileView(QWidget *parent, QGCUASFileManager *manager);
     ~QGCUASFileView();
 
+public slots:
+    void listFiles();
+    void downloadFiles();
+
 protected:
     QGCUASFileManager* _manager;
 
