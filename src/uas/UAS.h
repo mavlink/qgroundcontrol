@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 #include "QGCUASParamManager.h"
+#include "QGCUASFileManager.h"
 
 
 /**
@@ -369,6 +370,7 @@ public:
 #endif
 
     friend class UASWaypointManager;
+    friend class QGCUASFileManager;
 
 protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
@@ -471,6 +473,7 @@ protected: //COMMENTS FOR TEST UNIT
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
     UASWaypointManager waypointManager;
+    QGCUASFileManager   fileManager;
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -550,6 +553,10 @@ public:
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManagerInterface* getParamManager()  {
         return &paramMgr;
+    }
+
+    virtual QGCUASFileManager* getFileManager() {
+        return &fileManager;
     }
 
     /** @brief Get the HIL simulation */
