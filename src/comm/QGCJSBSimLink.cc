@@ -81,7 +81,7 @@ void QGCJSBSimLink::run()
 
     process = new QProcess(this);
 
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
 
 
@@ -230,7 +230,7 @@ void QGCJSBSimLink::setRemoteHost(const QString& host)
 
 }
 
-void QGCJSBSimLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
+void QGCJSBSimLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
     Q_UNUSED(time);
     Q_UNUSED(act1);
@@ -243,7 +243,7 @@ void QGCJSBSimLink::updateActuators(uint64_t time, float act1, float act2, float
     Q_UNUSED(act8);
 }
 
-void QGCJSBSimLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
+void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     // magnetos,aileron,elevator,rudder,throttle\n
 
@@ -356,7 +356,7 @@ bool QGCJSBSimLink::disconnectSimulation()
 {
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
 
     if (process)

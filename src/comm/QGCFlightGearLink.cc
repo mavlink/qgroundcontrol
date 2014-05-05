@@ -87,7 +87,7 @@ void QGCFlightGearLink::run()
     process = new QProcess(this);
     terraSync = new QProcess(this);
 
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     connect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     connect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
@@ -363,7 +363,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
 
 }
 
-void QGCFlightGearLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
+void QGCFlightGearLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
     Q_UNUSED(time);
     Q_UNUSED(act1);
@@ -376,7 +376,7 @@ void QGCFlightGearLink::updateActuators(uint64_t time, float act1, float act2, f
     Q_UNUSED(act8);
 }
 
-void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
+void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     // magnetos,aileron,elevator,rudder,throttle\n
 
@@ -585,7 +585,7 @@ void QGCFlightGearLink::readBytes()
                          vx, vy, vz,
                          ind_airspeed, true_airspeed,
                          xacc, yacc, zacc);
-        //qDebug()  << "hilStateChanged " << (int32_t)lat << (int32_t)lon << (int32_t)alt;
+        //qDebug()  << "hilStateChanged " << (qint32)lat << (qint32)lon << (qint32)alt;
     }
 
     //    // Echo data for debugging purposes
@@ -619,7 +619,7 @@ bool QGCFlightGearLink::disconnectSimulation()
 {
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
