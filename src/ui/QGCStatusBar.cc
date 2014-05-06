@@ -37,7 +37,7 @@ QGCStatusBar::QGCStatusBar(QWidget *parent) :
 {
     setObjectName("QGC_STATUSBAR");
 
-    toggleLoggingButton = new QPushButton("Logging", this);
+    toggleLoggingButton = new QPushButton(tr("Log to file"), this);
     toggleLoggingButton->setCheckable(true);
 
     addPermanentWidget(toggleLoggingButton);
