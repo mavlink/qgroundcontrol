@@ -207,6 +207,7 @@ protected:
     quint64 simUpdateLast;
     quint64 simUpdateFirst;
     quint64 simUpdateLastText;
+    quint64 simUpdateLastGroundTruth;
     float simUpdateHz;
     bool _sensorHilEnabled;
 

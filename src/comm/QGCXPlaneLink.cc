@@ -55,6 +55,7 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLast(QGC::groundTimeMilliseconds()),
     simUpdateFirst(0),
     simUpdateLastText(QGC::groundTimeMilliseconds()),
+    simUpdateLastGroundTruth(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
     _sensorHilEnabled(true)
 {
@@ -714,13 +715,13 @@ void QGCXPlaneLink::readBytes()
         }
 
         // Limit ground truth to 25 Hz
-        if (QGC::groundTimeMilliseconds() - simUpdateLast > 40) {
+        if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40) {
             emit hilGroundTruthChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                                        pitchspeed, yawspeed, lat, lon, alt,
                                        vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
-        }
 
-        simUpdateLast = QGC::groundTimeMilliseconds();
+            simUpdateLastGroundTruth = QGC::groundTimeMilliseconds();
+        }
     }
 
     if (!oldConnectionState && xPlaneConnected)
