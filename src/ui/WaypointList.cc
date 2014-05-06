@@ -390,13 +390,15 @@ void WaypointList::currentWaypointEditableChanged(quint16 seq)
             {
                 WaypointEditableView* widget = wpEditableViews.find(waypoints[i]).value();
 
-                if (waypoints[i]->getId() == seq)
-                {
-                    widget->setCurrent(true);
-                }
-                else
-                {
-                    widget->setCurrent(false);
+                if (widget) {
+                    if (waypoints[i]->getId() == seq)
+                    {
+                        widget->setCurrent(true);
+                    }
+                    else
+                    {
+                        widget->setCurrent(false);
+                    }
                 }
             }
         }
