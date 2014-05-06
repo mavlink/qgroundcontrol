@@ -52,10 +52,10 @@ public slots:
     void playPause(bool play);
     /** @brief Replay the logfile */
     void play();
-    /** @brief Pause the logfile */
+    /** @brief Pause the log player. */
     void pause();
-    /** @brief Reset the logfile */
-    bool reset(int packetIndex=0);
+    /** @brief Reset the internal log player state, including the UI */
+    void reset();
     /** @brief Select logfile */
     bool selectLogFile(const QString startDirectory);
     /** @brief Select logfile */
@@ -72,21 +72,22 @@ public slots:
 signals:
     /** @brief Send ready bytes */
     void bytesReady(LinkInterface* link, const QByteArray& bytes);
+    void logFileEndReached();
 
 protected:
-    int lineCounter;
-    int totalLines;
-    quint64 startTime;
-    quint64 endTime;
-    quint64 currentStartTime;
+    quint64 playbackStartTime;     ///< The time when the logfile was first played back. This is used to pace out replaying the messages to fix long-term drift/skew. 0 indicates that the player hasn't initiated playback of this log file. In units of milliseconds since epoch UTC.
+    quint64 logCurrentTime;        ///< The timestamp of the next message in the log file. In units of microseconds since epoch UTC.
+    quint64 logStartTime;          ///< The first timestamp in the current log file. In units of microseconds since epoch UTC.
+    quint64 logEndTime;            ///< The last timestamp in the current log file. In units of microseconds since epoch UTC.
     float accelerationFactor;
     MAVLinkProtocol* mavlink;
     MAVLinkSimulationLink* logLink;
     QFile logFile;
     QTimer loopTimer;
     int loopCounter;
-    bool mavlinkLogFormat;
+    bool mavlinkLogFormat; ///< If the logfile is stored in the timestamped MAVLink log format
     int binaryBaudRate;
+    static const int defaultBinaryBaudRate = 57600;
     bool isPlaying;
     unsigned int currPacketCount;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
@@ -100,6 +101,35 @@ protected:
 private:
     Ui::QGCMAVLinkLogPlayer *ui;
 	virtual void paintEvent(QPaintEvent *);
+
+    /** @brief Parse out a quint64 timestamp in microseconds in the proper endianness. */
+    quint64 parseTimestamp(const QByteArray &data);
+
+    /**
+     * This function parses out the next MAVLink message and its corresponding timestamp.
+     *
+     * It makes no assumptions about where in the file we currently are. It leaves the file right
+     * at the beginning of the successfully parsed message. Note that this function will not attempt to
+     * correct for any MAVLink parsing failures, so it always returns the next successfully-parsed
+     * message.
+     *
+     * @param msg[output] Where the final parsed message output will go.
+     * @return A Unix timestamp in microseconds UTC or 0 if parsing failed
+     */
+    quint64 findNextMavlinkMessage(mavlink_message_t *msg);
+
+    /**
+     * Updates the QSlider UI to be at the given percentage.
+     * @param percent A percentage value between 0.0% and 100.0%.
+     */
+    void updatePositionSliderUi(float percent);
+
+    /**
+     * Jumps to a new position in the current playback file as a percentage.
+     * @param percentage The position of the file to jump to as a percentage.
+     * @return True if the new file position was successfully jumped to, false otherwise
+     */
+    bool jumpToPlaybackLocation(float percentage);
 };
 
 #endif // QGCMAVLINKLOGPLAYER_H

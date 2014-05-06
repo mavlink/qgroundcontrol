@@ -16,6 +16,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QDesktopServices>
+#include <QtEndian>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -358,19 +359,26 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled && m_logfile)
             {
-                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)] = {0};
-                quint64 time = QGC::groundTimeUsecs();
-                memcpy(buf, (void*)&time, sizeof(quint64));
-                // Write message to buffer
-                mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
-                //we need to write the maximum package length for having a
-                //consistent file structure and beeing able to parse it again
-                int len = MAVLINK_MAX_PACKET_LEN + sizeof(quint64);
+                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
+
+                // Write the uint64 time in microseconds in big endian format before the message.
+                // This timestamp is saved in UTC time. We are only saving in ms precision because
+                // getting more than this isn't possible with Qt without a ton of extra code.
+                quint64 time = (quint64)QDateTime::currentMSecsSinceEpoch() * 1000;
+                qToBigEndian(time, buf);
+
+                // Then write the message to the buffer
+                int len = mavlink_msg_to_send_buffer(buf + sizeof(quint64), &message);
+
+                // Determine how many bytes were written by adding the timestamp size to the message size
+                len += sizeof(quint64);
+
+                // Now write this timestamp/message pair to the log.
                 QByteArray b((const char*)buf, len);
                 if(m_logfile->write(b) != len)
                 {
+                    // If there's an error logging data, raise an alert and stop logging.
                     emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, disabling logging.").arg(m_logfile->fileName()));
-                    // Stop logging
                     enableLogging(false);
                 }
             }
