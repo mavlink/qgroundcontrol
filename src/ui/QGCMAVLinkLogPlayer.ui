@@ -29,7 +29,7 @@
    <item>
     <widget class="QLabel" name="logStatsLabel">
      <property name="text">
-      <string>No logfile selected..</string>
+      <string/>
      </property>
     </widget>
    </item>
@@ -53,6 +53,16 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="timeLabel">
+     <property name="text">
+      <string>Time</string>
      </property>
     </widget>
    </item>
@@ -119,7 +129,7 @@
    <item>
     <widget class="QLabel" name="logFileNameLabel">
      <property name="text">
-      <string>-</string>
+      <string>No logfile selected..</string>
      </property>
     </widget>
    </item>
