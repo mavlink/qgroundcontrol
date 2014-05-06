@@ -60,11 +60,12 @@ void QGCUASFileManager::nothingMessage()
 {
     mavlink_message_t message;
 
-    unsigned crcstate = 0;
     RequestHeader hdr;
-    hdr.magic = 9;
-    crcstate = crc32((uint8_t*)&hdr, 4, crcstate);
-    hdr.crc32 = crcstate;
+    hdr.magic = 'f';
+    hdr.session = 0;
+    hdr.crc32 = 0;
+    hdr.size = 0;
+    hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
 
     mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr);
 
