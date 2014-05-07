@@ -2,8 +2,12 @@
 #include "UASManager.h"
 
 MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
-    QObject(parent)
+    QThread(parent)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
     memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
@@ -46,6 +50,17 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
 //    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
 
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+
+    start(LowPriority);
+}
+
+/**
+ * @brief Runs the thread
+ *
+ **/
+void MAVLinkDecoder::run()
+{
+    exec();
 }
 
 void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t message)
