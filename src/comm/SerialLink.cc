@@ -73,6 +73,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     qDebug() << "m_portName " << m_portName;
 
     LinkManager::instance()->add(this);
+    qDebug() << "link added to link manager";
 }
 
 void SerialLink::requestReset()
@@ -191,6 +192,7 @@ void SerialLink::run()
 //        disconnect(); // This tidies up and sends the necessary signals
         return;
     }
+    qDebug() << "connected";
 
     // Qt way to make clear what a while(1) loop does
     qint64 msecs = QDateTime::currentMSecsSinceEpoch();
@@ -314,7 +316,8 @@ void SerialLink::run()
 //                }
             }
         }
-        MG::SLEEP::msleep(SerialLink::poll_interval);
+        //MG::SLEEP::msleep(SerialLink::poll_interval);
+        QGC::SLEEP::msleep(2);
     } // end of forever
     
     if (m_port) { // [TODO][BB] Not sure we need to close the port here
