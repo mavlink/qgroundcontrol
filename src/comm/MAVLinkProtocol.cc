@@ -17,6 +17,7 @@
 #include <QSettings>
 #include <QDesktopServices>
 #include <QtEndian>
+#include <QMetaType>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -36,6 +37,7 @@
 #include <google/protobuf/descriptor.h>
 #endif
 
+Q_DECLARE_METATYPE(mavlink_message_t)
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -58,6 +60,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
     versionMismatchIgnore(false),
     systemId(QGC::defaultSystemId)
 {
+    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
+
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
     //start(QThread::LowPriority);
