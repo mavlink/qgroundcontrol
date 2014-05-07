@@ -735,6 +735,8 @@ void QGCXPlaneLink::readBytes()
             simUpdateLastText = QGC::groundTimeMilliseconds();
         }
 
+        simUpdateLast = QGC::groundTimeMilliseconds();
+
         if (_sensorHilEnabled)
         {
             diff_pressure = (ind_airspeed * ind_airspeed * 1.225f) / 2.0f;
