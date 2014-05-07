@@ -1111,58 +1111,100 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_MISSION_COUNT:
         {
-            mavlink_mission_count_t wpc;
-            mavlink_msg_mission_count_decode(&message, &wpc);
-            if(wpc.target_system == mavlink->getSystemId() || wpc.target_system == 0)
+            mavlink_mission_count_t mc;
+            mavlink_msg_mission_count_decode(&message, &mc);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (mc.target_system == 0) {
+                mc.target_system = mavlink->getSystemId();
+            }
+            if (mc.target_component == 0) {
+                mc.target_component = mavlink->getComponentId();
+            }
+
+            // Check that this message applies to the UAS.
+            if(mc.target_system == mavlink->getSystemId() && mc.target_component == mavlink->getComponentId())
             {
-                waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
+                waypointManager.handleWaypointCount(message.sysid, message.compid, mc.count);
             }
             else
             {
-                qDebug() << "Got waypoint message, but was wrong system id" << wpc.target_system;
+                qDebug() << tr("Received mission count message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mc.target_system);
             }
         }
             break;
 
         case MAVLINK_MSG_ID_MISSION_ITEM:
         {
-            mavlink_mission_item_t wp;
-            mavlink_msg_mission_item_decode(&message, &wp);
-            //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
-            if(wp.target_system == mavlink->getSystemId() || wp.target_system == 0)
+            mavlink_mission_item_t mi;
+            mavlink_msg_mission_item_decode(&message, &mi);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (mi.target_system == 0) {
+                mi.target_system = mavlink->getSystemId();
+            }
+            if (mi.target_component == 0) {
+                mi.target_component = mavlink->getComponentId();
+            }
+
+            // Check that the item pertains to this UAS.
+            if(mi.target_system == mavlink->getSystemId() && mi.target_component == mavlink->getComponentId())
             {
-                waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
+                waypointManager.handleWaypoint(message.sysid, message.compid, &mi);
             }
             else
             {
-                qDebug() << "Got waypoint message, but was wrong system id" << wp.target_system;
+                qDebug() << tr("Received mission item message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mi.target_system);
             }
         }
             break;
 
         case MAVLINK_MSG_ID_MISSION_ACK:
         {
-            mavlink_mission_ack_t wpa;
-            mavlink_msg_mission_ack_decode(&message, &wpa);
-            if((wpa.target_system == mavlink->getSystemId() || wpa.target_system == 0) &&
-                    (wpa.target_component == mavlink->getComponentId() || wpa.target_component == 0))
+            mavlink_mission_ack_t ma;
+            mavlink_msg_mission_ack_decode(&message, &ma);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (ma.target_system == 0) {
+                ma.target_system = mavlink->getSystemId();
+            }
+            if (ma.target_component == 0) {
+                ma.target_component = mavlink->getComponentId();
+            }
+
+            // Check that the ack pertains to this UAS.
+            if(ma.target_system == mavlink->getSystemId() && ma.target_component == mavlink->getComponentId())
             {
-                waypointManager.handleWaypointAck(message.sysid, message.compid, &wpa);
+                waypointManager.handleWaypointAck(message.sysid, message.compid, &ma);
+            }
+            else
+            {
+                qDebug() << tr("Received mission ack message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(ma.target_system);
             }
         }
             break;
 
         case MAVLINK_MSG_ID_MISSION_REQUEST:
         {
-            mavlink_mission_request_t wpr;
-            mavlink_msg_mission_request_decode(&message, &wpr);
-            if(wpr.target_system == mavlink->getSystemId() || wpr.target_system == 0)
+            mavlink_mission_request_t mr;
+            mavlink_msg_mission_request_decode(&message, &mr);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (mr.target_system == 0) {
+                mr.target_system = mavlink->getSystemId();
+            }
+            if (mr.target_component == 0) {
+                mr.target_component = mavlink->getComponentId();
+            }
+
+            // Check that the request pertains to this UAS.
+            if(mr.target_system == mavlink->getSystemId() && mr.target_component == mavlink->getComponentId())
             {
-                waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
+                waypointManager.handleWaypointRequest(message.sysid, message.compid, &mr);
             }
             else
             {
-                qDebug() << "Got waypoint message, but was wrong system id" << wpr.target_system;
+                qDebug() << tr("Received mission request message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mr.target_system);
             }
         }
             break;
