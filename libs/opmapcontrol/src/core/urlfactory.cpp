@@ -54,24 +54,19 @@ namespace core {
     UrlFactory::~UrlFactory()
     {
     }
-
     QString UrlFactory::TileXYToQuadKey(const int &tileX,const int &tileY,const int &levelOfDetail) const
     {
         QString quadKey;
         for(int i = levelOfDetail; i > 0; i--)
         {
-
-
             char digit = '0';
             int mask = 1 << (i - 1);
             if((tileX & mask) != 0)
             {
-
                 digit++;
             }
             if((tileY & mask) != 0)
             {
-
                 digit++;
                 digit++;
             }
@@ -98,16 +93,12 @@ namespace core {
     static bool versionRetrieved = false;
 
     if (versionRetrieved) 
-	{
-
+    {
         return;
     }
         QMutexLocker locker(&mutex);
         if(CorrectGoogleVersions && !IsCorrectGoogleVersions())
         {
-
-
-
             QNetworkReply *reply;
             QNetworkRequest qheader;
             QNetworkAccessManager network;
@@ -131,7 +122,6 @@ namespace core {
             q.exec();
             if(!tT.isActive())
                 return;
-
             tT.stop();
             if( (reply->error()!=QNetworkReply::NoError))
             {
@@ -159,7 +149,6 @@ namespace core {
                 QStringList gc=reg.capturedTexts();
                 VersionGoogleLabels = QString("h@%1").arg(gc[1]);
                 VersionGoogleLabelsChina = VersionGoogleLabels;
-
 #ifdef DEBUG_URLFACTORY
                 qDebug()<<"TryCorrectGoogleVersions, VersionGoogleLabels: "<<VersionGoogleLabels;
 #endif //DEBUG_URLFACTORY
@@ -171,7 +160,6 @@ namespace core {
                 VersionGoogleSatellite = gc[1];
                 VersionGoogleSatelliteKorea = VersionGoogleSatellite;
                 VersionGoogleSatelliteChina = "s@" + VersionGoogleSatellite;
-
                 qDebug()<<"TryCorrectGoogleVersions, VersionGoogleSatellite: "<<VersionGoogleSatellite;
 
             }
@@ -181,14 +169,12 @@ namespace core {
                 QStringList gc=reg.capturedTexts();
                 VersionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
                 VersionGoogleTerrainChina = VersionGoogleTerrain;
-
 #ifdef DEBUG_URLFACTORY
                 qDebug()<<"TryCorrectGoogleVersions, VersionGoogleTerrain: "<<VersionGoogleTerrain;
 #endif //DEBUG_URLFACTORY
             }
             reply->deleteLater();
-
-
+            
         }
 
     }
@@ -200,7 +186,6 @@ namespace core {
 #endif //DEBUG_URLFACTORY
         switch(type)
         {
-
         case MapType::GoogleMap:
             {
                 QString server = "mts";
@@ -209,7 +194,7 @@ namespace core {
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
-
+                
                 return QString("https://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleMap).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
             }
             break;
@@ -221,7 +206,7 @@ namespace core {
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
-
+                
                 return QString("https://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleSatellite).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
             }
             break;
@@ -233,7 +218,7 @@ namespace core {
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
-
+                
                 return QString("https://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleLabels).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
             }
             break;
@@ -245,6 +230,7 @@ namespace core {
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
+                
                 return QString("https://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleTerrain).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
             }
             break;
@@ -257,7 +243,7 @@ namespace core {
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
                 // http://mt0.google.cn/vt/v=w2.101&hl=zh-CN&gl=cn&x=12&y=6&z=4&s=Ga
-
+                
                 return QString("http://%1%2.google.cn/%3/lyrs=%4&hl=%5&gl=cn&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleMapChina).arg("zh-CN").arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
             }
             break;
@@ -295,6 +281,7 @@ namespace core {
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
+                
                 // http://mt0.google.cn/vt/v=w2p.110&hl=zh-CN&gl=cn&x=12&y=6&z=4&s=Ga
 
                 return QString("http://%1%2.google.com/%3/lyrs=%4&hl=%5&gl=cn&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleTerrainChina).arg("zh-CN").arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
@@ -307,12 +294,8 @@ namespace core {
                 QString sec1 = ""; // after &x=...
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
-
-
-
-
+                
                 //http://mt3.gmaptiles.co.kr/mt/v=kr1.11&hl=lt&x=109&y=49&z=7&s=
-
 
                 QString ret = QString("https://%1%2.gmaptiles.co.kr/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleMapKorea).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
                 return ret;
@@ -325,8 +308,7 @@ namespace core {
                 QString sec1 = ""; // after &x=...
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
-
-
+                
                 //   http://khm1.google.co.kr/kh/v=54&x=109&y=49&z=7&s=
 
                 return QString("http://%1%2.google.co.kr/%3/v=%4&x=%5%6&y=%7&z=%8&s=%9").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleSatelliteKorea).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
@@ -339,7 +321,6 @@ namespace core {
                 QString sec1 = ""; // after &x=...
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
-
 
                 //  http://mt1.gmaptiles.co.kr/mt/v=kr1t.11&hl=lt&x=109&y=50&z=7&s=G
 
@@ -515,14 +496,12 @@ namespace core {
         sec2 = SecGoogleWord.left(seclen);
         if(pos.Y() >= 10000 && pos.Y() < 100000)
         {
-
             sec1 = "&s=";
         }
     }
     QString UrlFactory::MakeGeocoderUrl(QString keywords)
     {
         QString key = keywords.replace(' ', '+');
-
         return QString("http://maps.google.com/maps/geo?q=%1&output=csv&key=%2").arg(key).arg(GoogleMapsAPIKey);
     }
     QString UrlFactory::MakeReverseGeocoderUrl(internals::PointLatLng &pt,const QString &language)
@@ -572,9 +551,7 @@ namespace core {
 #endif //DEBUG_URLFACTORY
             QTime time;
             time.start();
-
             while( (!(reply->isFinished()) || (time.elapsed()>(6*Timeout))) ){QCoreApplication::processEvents(QEventLoop::AllEvents);}
-
 #ifdef DEBUG_URLFACTORY
             qDebug()<<"Finished?"<<reply->error()<<" abort?"<<(time.elapsed()>Timeout*6);
 #endif //DEBUG_URLFACTORY
@@ -595,7 +572,6 @@ namespace core {
                 // cache geocoding
                 if(useCache && geo.startsWith("200"))
                 {
-
                     Cache::Instance()->CacheGeocoder(urlEnd, geo);
                 }
             }
@@ -610,11 +586,9 @@ namespace core {
             QStringList values = geo.split(',');
             if(values.count() == 4)
             {
-
                 status = (GeoCoderStatusCode::Types) QString(values[0]).toInt();
                 if(status == GeoCoderStatusCode::G_GEO_SUCCESS)
                 {
-
                     double lat = QString(values[2]).toDouble();
                     double lng = QString(values[3]).toDouble();
 
@@ -637,7 +611,6 @@ namespace core {
     {
 
         Placemark ret("");
-
 #ifdef DEBUG_URLFACTORY
         qDebug()<<"Entered GetPlacemarkFromReverseGeocoderUrl:";
 #endif //DEBUG_URLFACTORY
@@ -672,9 +645,7 @@ namespace core {
 #endif //DEBUG_URLFACTORY
             QTime time;
             time.start();
-
             while( (!(reply->isFinished()) || (time.elapsed()>(6*Timeout))) ){QCoreApplication::processEvents(QEventLoop::AllEvents);}
-
 #ifdef DEBUG_URLFACTORY
             qDebug()<<"Finished?"<<reply->error()<<" abort?"<<(time.elapsed()>Timeout*6);
 #endif //DEBUG_URLFACTORY
@@ -698,7 +669,6 @@ namespace core {
                 // cache geocoding
                 if(useCache && reverse.startsWith("200"))
                 {
-
                     Cache::Instance()->CachePlacemark(urlEnd, reverse);
                 }
             }
@@ -711,7 +681,6 @@ namespace core {
         // false: 602,0,0,0
         if(reverse.startsWith("200"))
         {
-
             QString acc = reverse.left(reverse.indexOf('\"'));
             ret = Placemark(reverse.remove(reverse.indexOf('\"')));
             ret.SetAccuracy ((int)  (( (QString) acc.split(',')[1]).toInt())    );
@@ -730,7 +699,6 @@ namespace core {
         double a = pow(sin(dLatitude / 2), 2) + cos(dLat1InRad) * cos(dLat2InRad) * pow(sin(dLongitude / 2), 2);
         double c = 2 * atan2(sqrt(a), sqrt(1 - a));
         double dDistance = EarthRadiusKm * c;
-
         return dDistance;
     }
 }
