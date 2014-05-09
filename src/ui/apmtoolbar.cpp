@@ -14,6 +14,7 @@ APMToolBar::APMToolBar(QWidget *parent):
     // Hack to fix QTBUG 34300 on OSX where QDir::currentPath has changed behavior. This causes
     // relative paths to inside the .app package to fail.
 #ifdef Q_OS_MAC
+    bool test123;
     QString qmlFile = QApplication::applicationDirPath();
     qmlFile.append("/qml/ApmToolBar.qml");
     setSource(QUrl::fromLocalFile(qmlFile));
