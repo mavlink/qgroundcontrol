@@ -639,9 +639,9 @@ void UASView::refresh()
             // Filter output to get a higher stability
             filterTime = static_cast<int>(this->timeRemaining);
             filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
-            int sec = static_cast<int>(filterTime - static_cast<int>(filterTime / 60.0f) * 60);
-            int min = static_cast<int>(filterTime / 60);
-            int hours = static_cast<int>(filterTime - min * 60 - sec);
+            int hours = static_cast<int>(filterTime / 3600);
+            int min = static_cast<int>((filterTime - 3600 * hours) / 60);
+            int sec = static_cast<int>(filterTime - 60 * min - 3600 * hours);
 
             QString timeText;
             timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
@@ -656,9 +656,9 @@ void UASView::refresh()
         //QDateTime time = MG::TIME::msecToQDateTime(uas->getUptime());
 
         quint64 filterTime = uas->getUptime() / 1000;
-        int sec = static_cast<int>(filterTime - static_cast<int>(filterTime / 60) * 60);
-        int min = static_cast<int>(filterTime / 60);
-        int hours = static_cast<int>(filterTime - min * 60 - sec);
+        int hours = static_cast<int>(filterTime / 3600);
+        int min = static_cast<int>((filterTime - 3600 * hours) / 60);
+        int sec = static_cast<int>(filterTime - 60 * min - 3600 * hours);
         QString timeText;
         timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
         m_ui->timeElapsedLabel->setText(timeText);
