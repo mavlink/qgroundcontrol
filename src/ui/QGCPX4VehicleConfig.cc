@@ -492,8 +492,8 @@ void QGCPX4VehicleConfig::detectChannelInversion(int aert_index)
     instructions << "YAW: Move stick left";
     instructions << "THROTTLE: Move stick down";
     instructions << "MODE SWITCH: Push down / towards you";
-    instructions << "ASSISTED SWITCH: Push down / towards you";
-    instructions << "MISSION SWITCH: Push down / towards you";
+    instructions << "POSITION CONTROL SWITCH: Push down / towards you";
+    instructions << "LOITER SWITCH: Push down / towards you";
     instructions << "RETURN SWITCH: Push down / towards you";
     instructions << "FLAPS: Push down / towards you or turn dial to the leftmost position";
     instructions << "AUX1: Push down / towards you or turn dial to the leftmost position";
@@ -1315,8 +1315,8 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     paramMgr->setPendingParam(0, "RC_MAP_YAW", (int32_t)(rcMapping[2]+1));
     paramMgr->setPendingParam(0, "RC_MAP_THROTTLE", (int32_t)(rcMapping[3]+1));
     paramMgr->setPendingParam(0, "RC_MAP_MODE_SW", (int32_t)(rcMapping[4]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_ASSIST_SW", (int32_t)(rcMapping[5]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_MISSIO_SW", (int32_t)(rcMapping[6]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_POSCTL_SW", (int32_t)(rcMapping[5]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_LOITER_SW", (int32_t)(rcMapping[6]+1));
     paramMgr->setPendingParam(0, "RC_MAP_RETURN_SW", (int32_t)(rcMapping[7]+1));
     paramMgr->setPendingParam(0, "RC_MAP_FLAPS", (int32_t)(rcMapping[8]+1));
     paramMgr->setPendingParam(0, "RC_MAP_AUX1", (int32_t)(rcMapping[9]+1));
@@ -1690,12 +1690,12 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
                 ui->modeSpinBox->setValue(rcMapping[4]+1);
                 ui->modeSpinBox->setEnabled(true);
             }
-            else if (parameterName.startsWith("RC_MAP_ASSIST_SW")) {
+            else if (parameterName.startsWith("RC_MAP_POSCTL_SW")) {
                 setChannelToFunctionMapping(5, intValue);
                 ui->assistSwSpinBox->setValue(rcMapping[5]+1);
                 ui->assistSwSpinBox->setEnabled(true);
             }
-            else if (parameterName.startsWith("RC_MAP_MISSIO_SW")) {
+            else if (parameterName.startsWith("RC_MAP_LOITER_SW")) {
                 setChannelToFunctionMapping(6, intValue);
                 ui->missionSwSpinBox->setValue(rcMapping[6]+1);
                 ui->missionSwSpinBox->setEnabled(true);
