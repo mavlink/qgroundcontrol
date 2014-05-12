@@ -2584,7 +2584,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant(QChar((unsigned char)paramValue.param_float));
         }
         else {
-            param = QVariant(QChar((uint8_t)paramValue.param_float));
+            param = QVariant(QChar((unsigned char)paramValue.param_uint8));
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2599,7 +2599,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant(QChar((char)paramValue.param_float));
         }
         else  {
-            param = QVariant(QChar((int8_t)paramValue.param_float));
+            param = QVariant(QChar((char)paramValue.param_int8));
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2614,7 +2614,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant((short)paramValue.param_float);
         }
         else {
-            param = QVariant((int16_t)paramValue.param_float);
+            param = QVariant(paramValue.param_int16);
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2623,28 +2623,13 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
         //qDebug() << "RECEIVED PARAM:" << param;
     }
         break;
-    case MAV_PARAM_TYPE_UINT16:
-       {
-           if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-               param = QVariant((unsigned short)paramValue.param_float);
-           }
-           else {
-               param = QVariant((uint16_t)paramValue.param_float);
-           }
-           parameters.value(compId)->insert(paramName, param);
-           // Emit change
-           emit parameterChanged(uasId, compId, paramName, param);
-           emit parameterChanged(uasId, compId, rawValue.param_count, rawValue.param_index, paramName, param);
-           //qDebug() << "RECEIVED PARAM:" << param;
-       }
-           break;
     case MAV_PARAM_TYPE_UINT32:
     {
         if (getAutopilotType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
             param = QVariant((unsigned int)paramValue.param_float);
         }
         else {
-            param = QVariant((uint32_t)paramValue.param_float);
+            param = QVariant(paramValue.param_uint32);
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2658,7 +2643,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant((int)paramValue.param_float);
         }
         else {
-            param = QVariant((int32_t)paramValue.param_float);
+            param = QVariant(paramValue.param_int32);
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
