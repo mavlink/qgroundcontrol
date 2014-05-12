@@ -99,6 +99,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     ui->hComboBox->addItem(tr("3DR Iris"), 10016);
     ui->hComboBox->addItem(tr("TBS Discovery"), 10015);
+    ui->hComboBox->addItem(tr("SteadiDrone QU4D"), 10017);
 
     connect(ui->hPushButton, SIGNAL(clicked()), this, SLOT(hSelected()));
     connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));
