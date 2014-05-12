@@ -80,10 +80,10 @@ void UASControlWidget::updateModesList()
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
     modes_list_px4[0].customMode = px4_cm.data;
     modes_list_px4[1].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_SEATBELT;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_ALTCTL;
     modes_list_px4[1].customMode = px4_cm.data;
     modes_list_px4[2].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
-    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_EASY;
+    px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_POSCTL;
     modes_list_px4[2].customMode = px4_cm.data;
     modes_list_px4[3].baseMode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED;
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_AUTO;
