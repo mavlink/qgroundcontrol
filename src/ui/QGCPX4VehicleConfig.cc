@@ -71,7 +71,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     channelNames << "Yaw / Rudder";
     channelNames << "Throttle";
     channelNames << "Main Mode Switch";
-    channelNames << "Assist Switch";
+    channelNames << "Posctl Switch";
     channelNames << "Loiter Switch";
     channelNames << "Return Switch";
     channelNames << "Flaps";
@@ -202,8 +202,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->yawSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setYawChan(int)));
     connect(ui->throttleSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setThrottleChan(int)));
     connect(ui->modeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setModeChan(int)));
-    connect(ui->assistSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAssistChan(int)));
-    connect(ui->missionSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setMissionChan(int)));
+    connect(ui->posctlSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAssistChan(int)));
+    connect(ui->loiterSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setMissionChan(int)));
     connect(ui->returnSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setReturnChan(int)));
     connect(ui->flapsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setFlapsChan(int)));
     connect(ui->aux1SpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAux1Chan(int)));
@@ -215,8 +215,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->invertCheckBox_3, SIGNAL(clicked(bool)), this, SLOT(setYawInverted(bool)));
     connect(ui->invertCheckBox_4, SIGNAL(clicked(bool)), this, SLOT(setThrottleInverted(bool)));
     connect(ui->invertCheckBox_5, SIGNAL(clicked(bool)), this, SLOT(setModeInverted(bool)));
-    connect(ui->assistSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAssistInverted(bool)));
-    connect(ui->missionSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setMissionInverted(bool)));
+    connect(ui->posctlSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAssistInverted(bool)));
+    connect(ui->loiterSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setMissionInverted(bool)));
     connect(ui->returnSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setReturnInverted(bool)));
     connect(ui->flapsInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setFlapsInverted(bool)));
     connect(ui->aux1InvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAux1Inverted(bool)));
@@ -227,8 +227,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->yawButton, SIGNAL(clicked()), this, SLOT(identifyYawChannel()));
     connect(ui->throttleButton, SIGNAL(clicked()), this, SLOT(identifyThrottleChannel()));
     connect(ui->modeButton, SIGNAL(clicked()), this, SLOT(identifyModeChannel()));
-    connect(ui->assistSwButton, SIGNAL(clicked()), this, SLOT(identifyAssistChannel()));
-    connect(ui->missionSwButton, SIGNAL(clicked()), this, SLOT(identifyMissionChannel()));
+    connect(ui->posctlSwButton, SIGNAL(clicked()), this, SLOT(identifyAssistChannel()));
+    connect(ui->loiterSwButton, SIGNAL(clicked()), this, SLOT(identifyMissionChannel()));
     connect(ui->returnSwButton, SIGNAL(clicked()), this, SLOT(identifyReturnChannel()));
     connect(ui->flapsButton, SIGNAL(clicked()), this, SLOT(identifyFlapsChannel()));
     connect(ui->aux1Button, SIGNAL(clicked()), this, SLOT(identifyAux1Channel()));
@@ -1409,10 +1409,10 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
                 ui->modeSpinBox->setValue(chan + 1);
                 break;
             case 5:
-                ui->assistSwSpinBox->setValue(chan + 1);
+                ui->posctlSwSpinBox->setValue(chan + 1);
                 break;
             case 6:
-                ui->missionSwSpinBox->setValue(chan + 1);
+                ui->loiterSwSpinBox->setValue(chan + 1);
                 break;
             case 7:
                 ui->returnSwSpinBox->setValue(chan + 1);
@@ -1565,10 +1565,10 @@ void QGCPX4VehicleConfig::updateAllInvertedCheckboxes()
             //ui->radio5Widget->setName(tr("Mode Switch (#%1)").arg(rcMapping[4] + 1));
             break;
         case 5:
-            ui->assistSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            ui->posctlSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
             break;
         case 6:
-            ui->missionSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            ui->loiterSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
             break;
         case 7:
             ui->returnSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
@@ -1692,13 +1692,13 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
             }
             else if (parameterName.startsWith("RC_MAP_POSCTL_SW")) {
                 setChannelToFunctionMapping(5, intValue);
-                ui->assistSwSpinBox->setValue(rcMapping[5]+1);
-                ui->assistSwSpinBox->setEnabled(true);
+                ui->posctlSwSpinBox->setValue(rcMapping[5]+1);
+                ui->posctlSwSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_LOITER_SW")) {
                 setChannelToFunctionMapping(6, intValue);
-                ui->missionSwSpinBox->setValue(rcMapping[6]+1);
-                ui->missionSwSpinBox->setEnabled(true);
+                ui->loiterSwSpinBox->setValue(rcMapping[6]+1);
+                ui->loiterSwSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_RETURN_SW")) {
                 setChannelToFunctionMapping(7, intValue);
@@ -1941,17 +1941,17 @@ void QGCPX4VehicleConfig::updateRcChanLabels()
     }
 
     if (rcValue[rcMapping[5]] != UINT16_MAX) {
-        ui->assistSwChanLabel->setText(labelForRcValue(rcAssist));
+        ui->posctlSwChanLabel->setText(labelForRcValue(rcAssist));
     }
     else {
-        ui->assistSwChanLabel->setText(blankLabel);
+        ui->posctlSwChanLabel->setText(blankLabel);
     }
 
     if (rcValue[rcMapping[6]] != UINT16_MAX) {
-        ui->missionSwChanLabel->setText(labelForRcValue(rcLoiter));
+        ui->loiterSwChanLabel->setText(labelForRcValue(rcLoiter));
     }
     else {
-        ui->missionSwChanLabel->setText(blankLabel);
+        ui->loiterSwChanLabel->setText(blankLabel);
     }
 
     if (rcValue[rcMapping[7]] != UINT16_MAX) {
