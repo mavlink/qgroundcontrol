@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
         {
             argv[i] = argv[i+1];
         }
+        argc--;
         
         // Run the test
         int failures = AutoTest::run(argc-1, argv);
