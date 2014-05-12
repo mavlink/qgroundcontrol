@@ -2584,7 +2584,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant(QChar((unsigned char)paramValue.param_float));
         }
         else {
-            param = QVariant(QChar((quint8)paramValue.param_float));
+            param = QVariant(QChar((uint8_t)paramValue.param_float));
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2599,7 +2599,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant(QChar((char)paramValue.param_float));
         }
         else  {
-            param = QVariant(QChar((qint8)paramValue.param_float));
+            param = QVariant(QChar((int8_t)paramValue.param_float));
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2614,7 +2614,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant((short)paramValue.param_float);
         }
         else {
-            param = QVariant((qint16)paramValue.param_float);
+            param = QVariant((int16_t)paramValue.param_float);
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2629,7 +2629,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
                param = QVariant((unsigned short)paramValue.param_float);
            }
            else {
-               param = QVariant((quint16)paramValue.param_float);
+               param = QVariant((uint16_t)paramValue.param_float);
            }
            parameters.value(compId)->insert(paramName, param);
            // Emit change
@@ -2644,7 +2644,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant((unsigned int)paramValue.param_float);
         }
         else {
-            param = QVariant((quint32)paramValue.param_float);
+            param = QVariant((uint32_t)paramValue.param_float);
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
@@ -2658,7 +2658,7 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
             param = QVariant((int)paramValue.param_float);
         }
         else {
-            param = QVariant((qint32)paramValue.param_float);
+            param = QVariant((int32_t)paramValue.param_float);
         }
         parameters.value(compId)->insert(paramName, param);
         // Emit change
