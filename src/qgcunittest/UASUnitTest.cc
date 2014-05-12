@@ -73,15 +73,20 @@ void UASUnitTest::getCommunicationStatus_test()
 void UASUnitTest::filterVoltage_test()
 {
     float verificar=uas->filterVoltage(0.4f);
-    // Verify that upon construction the Comm status is disconnected
-    QCOMPARE(verificar, 8.52f);
+
+    // We allow the voltage returned to be within a small delta
+    const float allowedDelta = 0.05f;
+    const float desiredVoltage = 7.36f;
+    QVERIFY(verificar > (desiredVoltage - allowedDelta) && verificar < (desiredVoltage + allowedDelta));
 }
+
 void UASUnitTest:: getAutopilotType_test()
 {
     int type = uas->getAutopilotType();
     // Verify that upon construction the autopilot is set to -1
     QCOMPARE(type, -1);
 }
+
 void UASUnitTest::setAutopilotType_test()
 {
     uas->setAutopilotType(2);
