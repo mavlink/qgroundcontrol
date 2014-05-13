@@ -20,16 +20,7 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <property name="leftMargin">
-    <number>0</number>
-   </property>
-   <property name="topMargin">
-    <number>0</number>
-   </property>
-   <property name="rightMargin">
-    <number>0</number>
-   </property>
-   <property name="bottomMargin">
+   <property name="margin">
     <number>0</number>
    </property>
    <item row="1" column="1">
@@ -67,9 +58,9 @@
             <item>
              <layout class="QGridLayout" name="gridLayout_2">
               <item row="6" column="0">
-               <widget class="QLabel" name="chanNameAssistSw">
+               <widget class="QLabel" name="posctlSwChanName">
                 <property name="text">
-                 <string>Assist Switch</string>
+                 <string>Posctl Switch</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -121,7 +112,7 @@
                </widget>
               </item>
               <item row="8" column="0">
-               <widget class="QLabel" name="label_7">
+               <widget class="QLabel" name="returnChanName">
                 <property name="text">
                  <string>Return Switch</string>
                 </property>
@@ -141,7 +132,7 @@
                </widget>
               </item>
               <item row="10" column="0">
-               <widget class="QLabel" name="chanNameAux2_2">
+               <widget class="QLabel" name="aux1ChanName">
                 <property name="text">
                  <string>Aux 1</string>
                 </property>
@@ -188,7 +179,7 @@
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QLabel" name="chanName_2">
+               <widget class="QLabel" name="pitchChanName">
                 <property name="text">
                  <string>Pitch / Elevator</string>
                 </property>
@@ -205,7 +196,7 @@
                </widget>
               </item>
               <item row="3" column="0">
-               <widget class="QLabel" name="chanName_3">
+               <widget class="QLabel" name="yawChanName">
                 <property name="text">
                  <string>Yaw / Rudder</string>
                 </property>
@@ -288,7 +279,7 @@
                </widget>
               </item>
               <item row="7" column="1">
-               <widget class="QLabel" name="missionSwChanLabel">
+               <widget class="QLabel" name="loiterSwChanLabel">
                 <property name="text">
                  <string>0000</string>
                 </property>
@@ -298,7 +289,7 @@
                </widget>
               </item>
               <item row="5" column="0">
-               <widget class="QLabel" name="chanName_5">
+               <widget class="QLabel" name="modeSwChanName">
                 <property name="text">
                  <string>Mode Switch</string>
                 </property>
@@ -328,7 +319,7 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QLabel" name="chanName">
+               <widget class="QLabel" name="rollChanName">
                 <property name="text">
                  <string>Roll / Ailerons</string>
                 </property>
@@ -355,7 +346,7 @@
                </widget>
               </item>
               <item row="6" column="2">
-               <widget class="QCheckBox" name="assistSwInvertCheckBox">
+               <widget class="QCheckBox" name="posctlSwInvertCheckBox">
                 <property name="text">
                  <string>Reverse</string>
                 </property>
@@ -372,14 +363,14 @@
                </widget>
               </item>
               <item row="6" column="4">
-               <widget class="QPushButton" name="assistSwButton">
+               <widget class="QPushButton" name="posctlSwButton">
                 <property name="text">
-                 <string>Identify Assist Switch</string>
+                 <string>Identify Posctl Switch</string>
                 </property>
                </widget>
               </item>
               <item row="11" column="0">
-               <widget class="QLabel" name="chanNameAux2">
+               <widget class="QLabel" name="aux2ChanName">
                 <property name="text">
                  <string>Aux 2</string>
                 </property>
@@ -396,7 +387,7 @@
                </widget>
               </item>
               <item row="6" column="3">
-               <widget class="QSpinBox" name="assistSwSpinBox">
+               <widget class="QSpinBox" name="posctlSwSpinBox">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -457,7 +448,7 @@
                </widget>
               </item>
               <item row="6" column="1">
-               <widget class="QLabel" name="assistSwChanLabel">
+               <widget class="QLabel" name="posctlSwChanLabel">
                 <property name="text">
                  <string>0000</string>
                 </property>
@@ -487,9 +478,9 @@
                </widget>
               </item>
               <item row="7" column="0">
-               <widget class="QLabel" name="label_6">
+               <widget class="QLabel" name="loiterSwChanName">
                 <property name="text">
-                 <string>Mission Switch</string>
+                 <string>Loiter Switch</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -507,7 +498,7 @@
                </widget>
               </item>
               <item row="4" column="0">
-               <widget class="QLabel" name="chanName_4">
+               <widget class="QLabel" name="throttleChanName">
                 <property name="text">
                  <string>Throttle</string>
                 </property>
@@ -517,7 +508,7 @@
                </widget>
               </item>
               <item row="9" column="0">
-               <widget class="QLabel" name="label_10">
+               <widget class="QLabel" name="flapsChanName">
                 <property name="text">
                  <string>Flaps</string>
                 </property>
@@ -537,7 +528,7 @@
                </widget>
               </item>
               <item row="7" column="2">
-               <widget class="QCheckBox" name="missionSwInvertCheckBox">
+               <widget class="QCheckBox" name="loiterSwInvertCheckBox">
                 <property name="text">
                  <string>Reverse</string>
                 </property>
@@ -558,7 +549,7 @@
                </widget>
               </item>
               <item row="7" column="3">
-               <widget class="QSpinBox" name="missionSwSpinBox">
+               <widget class="QSpinBox" name="loiterSwSpinBox">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -582,9 +573,9 @@
                </widget>
               </item>
               <item row="7" column="4">
-               <widget class="QPushButton" name="missionSwButton">
+               <widget class="QPushButton" name="loiterSwButton">
                 <property name="text">
-                 <string>Identify Mission Switch</string>
+                 <string>Identify Loiter Switch</string>
                 </property>
                </widget>
               </item>
@@ -1005,16 +996,7 @@
               <string>Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_3">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <item>
@@ -1032,16 +1014,7 @@
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
+                  <property name="margin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1060,16 +1033,7 @@
               <string>Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <item>
@@ -1087,16 +1051,7 @@
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
+                  <property name="margin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1129,16 +1084,7 @@
               <string>Onboard Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <item>
@@ -1156,16 +1102,7 @@
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
+                  <property name="margin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1271,16 +1208,7 @@
    <item row="0" column="0" rowspan="3">
     <widget class="QWidget" name="navBarWidget" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
+      <property name="margin">
        <number>0</number>
       </property>
       <item>
