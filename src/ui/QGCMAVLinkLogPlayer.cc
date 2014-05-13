@@ -575,6 +575,7 @@ void QGCMAVLinkLogPlayer::logLoop()
         // have at least 3ms until the next one.
         int nextExecutionTime = 0;
         mavlink_message_t msg;
+        msg.len = 0;    // FIXME: Hack remove
         while (nextExecutionTime < 3) {
 
             // Now we're sitting at the start of a MAVLink message, so read it all into a byte array for feeding to our parser.
