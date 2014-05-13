@@ -3396,10 +3396,10 @@ QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int au
             px4_mode.data = custom_mode;
             if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
                 mode += "|MANUAL";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_SEATBELT) {
-                mode += "|SEATBELT";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_EASY) {
-                mode += "|EASY";
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ALTCTL) {
+                mode += "|ALTCTL";
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
+                mode += "|POSCTL";
             } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_AUTO) {
                 mode += "|AUTO";
                 if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_READY) {
