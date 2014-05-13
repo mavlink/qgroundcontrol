@@ -47,6 +47,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "QGCWelcomeMainWindow.h"
 #include "GAudioOutput.h"
+#include "CmdLineOptParser.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -82,12 +83,25 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
+    
+    // Parse command line options
+    
+    bool fClearSettingsOptions = false; // Clear stored settings
+    
+    CmdLineOpt_t rgCmdLineOptions[] = {
+        { "--clearsettings",    &fClearSettingsOptions },
+        // Add additional command line option flags here
+    };
 
-    // Check application settings
-    // clear them if they mismatch
-    // QGC then falls back to default
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
+    
     QSettings settings;
 
+    if (fClearSettingsOptions) {
+        // User requested settings to be cleared on command line
+        settings.clear();
+    }
+    
     // Show user an upgrade message if QGC got upgraded (see code below, after splash screen)
     bool upgraded = false;
     enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_NONE;
@@ -98,7 +112,7 @@ QGCCore::QGCCore(bool firstStart, int &argc, char* argv[]) : QApplication(argc, 
         if (qgcVersion != QGC_APPLICATION_VERSION)
         {
             lastApplicationVersion = qgcVersion;
-            settings.clear();
+            settings.clear(); // Clear settings from different version
             // Write current application version
             settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
             upgraded = true;
