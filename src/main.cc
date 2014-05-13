@@ -36,6 +36,10 @@ This file is part of the QGROUNDCONTROL project
 #include "TCPLink.h"
 #ifdef QT_DEBUG
 #include "AutoTest.h"
+#include "CmdLineOptParser.h"
+#ifdef Q_OS_WIN
+#include <crtdbg.h>
+#endif
 #endif
 
 /* SDL does ugly things to main() */
@@ -44,16 +48,29 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 
-// Install a message handler so you do not need
-// the MSFT debug tools installed to se
-// qDebug(), qWarning(), qCritical and qAbort
 #ifdef Q_OS_WIN
+
+/// @brief Message handler which is installed using qInstallMsgHandler so you do not need
+/// the MSFT debug tools installed to see qDebug(), qWarning(), qCritical and qAbort
 void msgHandler( QtMsgType type, const char* msg )
 {
     const char symbols[] = { 'I', 'E', '!', 'X' };
     QString output = QString("[%1] %2").arg( symbols[type] ).arg( msg );
     std::cerr << output.toStdString() << std::endl;
     if( type == QtFatalMsg ) abort();
+}
+
+/// @brief CRT Report Hook installed using _CrtSetReportHook. We install this hook when
+/// we don't want asserts to pop a dialog on windows.
+int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
+{
+    if (reportType == _CRT_ASSERT) {
+        std::cerr << message << std::endl;  // Output message to stderr
+        *returnValue = 0;                   // Don't break into debugger
+        return true;                        // We handled this fully ourselves
+    } else {
+        return false;   // Let Windows handle it
+    }
 }
 
 #endif
@@ -81,13 +98,24 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QAbstractSocket::SocketError>();
     
 #ifdef QT_DEBUG
-    if (argc > 1 && QString(argv[1]).compare("--unittest", Qt::CaseInsensitive) == 0) {
-        // Strip off extra command line args so QTest doesn't complain
-        for (int i=1; i<argc-1; i++)
-        {
-            argv[i] = argv[i+1];
-        }
-        
+    bool runUnitTests = false;  // run unit test
+    bool quietAsserts = false;  // don't let asserts pop dialog boxes
+    
+    CmdLineOpt_t rgCmdLineOptions[] = {
+        { "--unittest",     &runUnitTests },
+        { "--quietAsserts", &quietAsserts },
+        // Add additional command line option flags here
+    };
+    
+    ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), true);
+    
+#ifdef Q_OS_WIN
+    if (quietAsserts) {
+        _CrtSetReportHook(WindowsCrtReportHook);
+    }
+#endif
+    
+    if (runUnitTests) {
         // Run the test
         int failures = AutoTest::run(argc-1, argv);
         if (failures == 0)

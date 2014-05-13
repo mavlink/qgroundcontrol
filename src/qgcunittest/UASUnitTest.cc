@@ -23,6 +23,8 @@ void UASUnitTest::cleanup()
 
 void UASUnitTest::getUASID_test()
 {
+    QVERIFY(false);
+    
     // Test a default ID of zero is assigned
     UAS* uas2 = new UAS(mav);
     QCOMPARE(uas2->getUASID(), 0);

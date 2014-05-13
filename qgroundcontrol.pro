@@ -562,7 +562,8 @@ HEADERS += \
     src/ui/designer/QGCXYPlot.h \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
-    src/uas/QGCUASParamManagerInterface.h
+    src/uas/QGCUASParamManagerInterface.h \
+    src/CmdLineOptParser.h
 
 SOURCES += \
     src/main.cc \
@@ -745,4 +746,6 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
-    src/ui/menuactionhelper.cpp
+    src/ui/menuactionhelper.cpp \
+    src/CmdLineOptParser.cc
+
