@@ -349,23 +349,23 @@ void MainWindow::init()
 
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+O", 0, QApplication::UnicodeUTF8));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0, QApplication::UnicodeUTF8));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0, QApplication::UnicodeUTF8));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0, QApplication::UnicodeUTF8));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0, QApplication::UnicodeUTF8));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0, QApplication::UnicodeUTF8));
     ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0, QApplication::UnicodeUTF8));
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+P", 0, QApplication::UnicodeUTF8));
     ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0, QApplication::UnicodeUTF8));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0, QApplication::UnicodeUTF8));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+E", 0, QApplication::UnicodeUTF8));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+I", 0, QApplication::UnicodeUTF8));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+H", 0, QApplication::UnicodeUTF8));
 #else
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+O", 0, QApplication::UnicodeUTF8));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0, QApplication::UnicodeUTF8));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0, QApplication::UnicodeUTF8));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0, QApplication::UnicodeUTF8));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0, QApplication::UnicodeUTF8));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0, QApplication::UnicodeUTF8));
     ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0, QApplication::UnicodeUTF8));
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+P", 0, QApplication::UnicodeUTF8));
     ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0, QApplication::UnicodeUTF8));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0, QApplication::UnicodeUTF8));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+E", 0, QApplication::UnicodeUTF8));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+I", 0, QApplication::UnicodeUTF8));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+H", 0, QApplication::UnicodeUTF8));
 #endif
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
