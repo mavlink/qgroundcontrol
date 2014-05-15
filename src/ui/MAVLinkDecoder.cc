@@ -2,7 +2,7 @@
 #include "UASManager.h"
 
 MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
-    QThread(parent)
+    QThread()
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/

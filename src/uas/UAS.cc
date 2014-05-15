@@ -172,7 +172,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentMulti[i] = false;
     }
 
-
     // Store a list of available actions for this UAS.
     // Basically everything exposted as a SLOT with no return value or arguments.
 
