@@ -132,6 +132,7 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
     UASManager::instance()->addUAS(uas);
 
     worker->start(QThread::HighPriority);
+    connect(uas, SIGNAL(destroyed()), worker, SLOT(quit()));
 
     return uas;
 }

@@ -60,6 +60,12 @@ UDPLink::UDPLink(QHostAddress host, quint16 port) :
 UDPLink::~UDPLink()
 {
     disconnect();
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
+
 	this->deleteLater();
 }
 

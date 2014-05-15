@@ -150,6 +150,8 @@ public:
      */
     virtual void resetMetadataForLink(const LinkInterface *link);
 
+    void run();
+
 public slots:
     /** @brief Receive bytes from a communication interface */
     void receiveBytes(LinkInterface* link, QByteArray b);

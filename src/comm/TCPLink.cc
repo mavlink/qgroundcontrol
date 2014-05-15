@@ -56,6 +56,12 @@ TCPLink::TCPLink(QHostAddress hostAddress, quint16 socketPort) :
 TCPLink::~TCPLink()
 {
     disconnect();
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
+
 	deleteLater();
 }
 

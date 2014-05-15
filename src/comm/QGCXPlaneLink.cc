@@ -74,6 +74,11 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
 QGCXPlaneLink::~QGCXPlaneLink()
 {
     storeSettings();
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
+
 //    if(connectState) {
 //       disconnectSimulation();
 //    }

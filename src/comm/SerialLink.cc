@@ -87,6 +87,11 @@ SerialLink::~SerialLink()
     disconnect();
     if(m_port) delete m_port;
     m_port = NULL;
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
 }
 
 QList<QString> SerialLink::getCurrentPorts()
@@ -455,6 +460,7 @@ bool SerialLink::hardwareConnect(QString &type)
 
     qDebug() << "SerialLink: hardwareConnect to " << m_portName;
     m_port = new QSerialPort(m_portName);
+    m_port->moveToThread(this);
 
     if (!m_port) {
         emit communicationUpdate(getName(),"Error opening port: " + m_portName);
