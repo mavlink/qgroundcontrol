@@ -430,12 +430,12 @@ void QGCPX4VehicleConfig::setTrimPositions()
 
     while (!throttleDone) {
         // Set trim to min if stick is close to min
-        if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
+        if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 200) {
             rcTrim[throttleMap] = rcMin[throttleMap];   // throttle
             throttleDone = true;
         }
         // Set trim to max if stick is close to max
-        else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 100) {
+        else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 200) {
             rcTrim[throttleMap] = rcMax[throttleMap];   // throttle
             throttleDone = true;
         }
@@ -445,9 +445,11 @@ void QGCPX4VehicleConfig::setTrimPositions()
             QMessageBox warnMsgBox;
             warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
             warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the zero throttle position and then click OK."));
-            warnMsgBox.setStandardButtons(QMessageBox::Ok);
+            warnMsgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Abort);
             warnMsgBox.setDefaultButton(QMessageBox::Ok);
-            (void)warnMsgBox.exec();
+            if (warnMsgBox.exec() == QMessageBox::Abort) {
+                return;
+            }
             // wait long enough to get some data
             QGC::SLEEP::msleep(500);
         }
@@ -534,7 +536,7 @@ void QGCPX4VehicleConfig::startCalibrationRC()
     configEnabled = true;
 
     QMessageBox::warning(0,tr("Safety Warning"),
-                         tr("Starting RC calibration.\n\nEnsure that motor power is disconnected, all props are removed, RC transmitter and receiver are powered and connected.\n\nReset transmitter trims to center, then click OK to continue"));
+                         tr("Starting RC calibration.\n\nEnsure RC transmitter and receiver are powered and connected. It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\nReset transmitter trims to center, then click OK to continue"));
 
     //go ahead and try to map first 8 channels, now that user can skip channels
     for (int i = 0; i < 8; i++) {
@@ -581,12 +583,25 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     if (!calibrationEnabled)
         return;
 
+    // Check where the throttle is
+    while (rcValue[rcMapping[3]] < 1300 || rcValue[rcMapping[3]] > 1700) {
+        // Force user to center the throttle
+        msgBox.setText(tr("Please center the throttle stick"));
+        msgBox.setInformativeText(tr("The stick should be roughly centered - the exact position is not relevant."));
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);//allow user to cancel upload after reviewing values
+        int msgBoxResult = msgBox.exec();
+
+        if (QMessageBox::Cancel == msgBoxResult) {
+            return; // abort
+        }
+    }
+
     // Try to identify inverted channels, but only for R/P/Y/T
     for (int i = 0; i < 4; i++) {
         detectChannelInversion(i);
     }
 
-    QMessageBox::information(0,"Trims","Ensure THROTTLE is in the LOWEST position and roll / pitch / yaw are CENTERED. Click OK to continue");
+    QMessageBox::information(0,"Trims","Ensure THROTTLE is in the LOW THROTTLE / MOTOR OFF position and roll / pitch / yaw are CENTERED. Click OK to continue");
 
     calibrationEnabled = false;
     configEnabled = false;
