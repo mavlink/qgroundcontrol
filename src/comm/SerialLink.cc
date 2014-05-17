@@ -28,6 +28,10 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     m_stopp(false),
     m_reqReset(false)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     // Get the name of the current port in use.
     m_portName = portname.trimmed();
     if (m_portName == "" && getCurrentPorts().size() > 0)
@@ -69,6 +73,7 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     qDebug() << "m_portName " << m_portName;
 
     LinkManager::instance()->add(this);
+    qDebug() << "link added to link manager";
 }
 
 void SerialLink::requestReset()
@@ -82,6 +87,11 @@ SerialLink::~SerialLink()
     disconnect();
     if(m_port) delete m_port;
     m_port = NULL;
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
 }
 
 QList<QString> SerialLink::getCurrentPorts()
@@ -187,6 +197,7 @@ void SerialLink::run()
 //        disconnect(); // This tidies up and sends the necessary signals
         return;
     }
+    qDebug() << "connected";
 
     // Qt way to make clear what a while(1) loop does
     qint64 msecs = QDateTime::currentMSecsSinceEpoch();
@@ -310,7 +321,8 @@ void SerialLink::run()
 //                }
             }
         }
-        MG::SLEEP::msleep(SerialLink::poll_interval);
+        //MG::SLEEP::msleep(SerialLink::poll_interval);
+        QGC::SLEEP::msleep(2);
     } // end of forever
     
     if (m_port) { // [TODO][BB] Not sure we need to close the port here
@@ -424,7 +436,7 @@ bool SerialLink::connect()
         m_stopp = false;
     }
 
-    start(LowPriority);
+    start(HighPriority);
     return true;
 }
 
@@ -448,6 +460,7 @@ bool SerialLink::hardwareConnect(QString &type)
 
     qDebug() << "SerialLink: hardwareConnect to " << m_portName;
     m_port = new QSerialPort(m_portName);
+    m_port->moveToThread(this);
 
     if (!m_port) {
         emit communicationUpdate(getName(),"Error opening port: " + m_portName);

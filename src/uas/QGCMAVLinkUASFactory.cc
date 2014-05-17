@@ -21,6 +21,8 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 
     UASInterface* uas;
 
+    QThread* worker = new QThread();
+
     switch (heartbeat->autopilot)
     {
     case MAV_AUTOPILOT_GENERIC:
@@ -28,6 +30,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         UAS* mav = new UAS(mavlink, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
+
+        mav->moveToThread(worker);
+
         // Connect this robot to the UAS object
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
 #ifdef QGC_PROTOBUF_ENABLED
@@ -41,6 +46,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         PxQuadMAV* mav = new PxQuadMAV(mavlink, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
+
+        mav->moveToThread(worker);
+
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
         // else the slot of the parent object is called (and thus the special
@@ -57,6 +65,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         SlugsMAV* mav = new SlugsMAV(mavlink, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
+
+        mav->moveToThread(worker);
+
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
         // else the slot of the parent object is called (and thus the special
@@ -70,6 +81,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
+
+        mav->moveToThread(worker);
+
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
         // else the slot of the parent object is called (and thus the special
@@ -83,6 +97,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 		{
 			senseSoarMAV* mav = new senseSoarMAV(mavlink,sysid);
 			mav->setSystemType((int)heartbeat->type);
+
+            mav->moveToThread(worker);
+
 			connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
 			uas = mav;
 			break;
@@ -92,6 +109,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
     {
         UAS* mav = new UAS(mavlink, sysid);
         mav->setSystemType((int)heartbeat->type);
+
+        mav->moveToThread(worker);
+
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
         // else the slot of the parent object is called (and thus the special
@@ -110,6 +130,9 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 
     // Now add UAS to "official" list, which makes the whole application aware of it
     UASManager::instance()->addUAS(uas);
+
+    worker->start(QThread::HighPriority);
+    connect(uas, SIGNAL(destroyed()), worker, SLOT(quit()));
 
     return uas;
 }

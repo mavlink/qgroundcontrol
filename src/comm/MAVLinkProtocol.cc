@@ -17,6 +17,7 @@
 #include <QSettings>
 #include <QDesktopServices>
 #include <QtEndian>
+#include <QMetaType>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -36,6 +37,7 @@
 #include <google/protobuf/descriptor.h>
 #endif
 
+Q_DECLARE_METATYPE(mavlink_message_t)
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -58,9 +60,11 @@ MAVLinkProtocol::MAVLinkProtocol() :
     versionMismatchIgnore(false),
     systemId(QGC::defaultSystemId)
 {
+    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
+
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
-    //start(QThread::LowPriority);
+    moveToThread(this);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer->start(1000/heartbeatRate);
@@ -76,6 +80,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
             lastIndex[i][j] = -1;
         }
     }
+
+    start(QThread::HighPriority);
 
     emit versionCheckChanged(m_enable_version_check);
 }
@@ -162,6 +168,20 @@ MAVLinkProtocol::~MAVLinkProtocol()
         delete m_logfile;
         m_logfile = NULL;
     }
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
+}
+
+/**
+ * @brief Runs the thread
+ *
+ **/
+void MAVLinkProtocol::run()
+{
+    exec();
 }
 
 QString MAVLinkProtocol::getLogfileName()

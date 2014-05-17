@@ -172,7 +172,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         componentMulti[i] = false;
     }
 
-
     // Store a list of available actions for this UAS.
     // Basically everything exposted as a SLOT with no return value or arguments.
 
@@ -594,7 +593,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (this->base_mode != state.base_mode || this->custom_mode != state.custom_mode)
             {
                 modechanged = true;
-                receivedMode = true;
                 this->base_mode = state.base_mode;
                 this->custom_mode = state.custom_mode;
                 shortModeText = getShortModeTextFor(this->base_mode, this->custom_mode, this->autopilot);
@@ -603,6 +601,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 modeAudio = " is now in " + audiomodeText;
             }
+
+            // We got the mode
+            receivedMode = true;
 
             // AUDIO
             if (modechanged && statechanged)

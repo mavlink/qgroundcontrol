@@ -418,13 +418,15 @@ void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
         {
             WaypointViewOnlyView* widget = wpViewOnlyViews.find(waypoints[i]).value();
 
-            if (waypoints[i]->getId() == seq)
-            {
-                widget->setCurrent(true);
-            }
-            else
-            {
-                widget->setCurrent(false);
+            if (widget) {
+                if (waypoints[i]->getId() == seq)
+                {
+                    widget->setCurrent(true);
+                }
+                else
+                {
+                    widget->setCurrent(false);
+                }
             }
         }
     }
@@ -466,9 +468,11 @@ void WaypointList::waypointViewOnlyListChanged()
             }
             if (i == waypoints.count()) {
                 WaypointViewOnlyView* widget = wpViewOnlyViews.find(cur).value();
-                widget->hide();
-                viewOnlyListLayout->removeWidget(widget);
-                wpViewOnlyViews.remove(cur);
+                if (widget) {
+                    widget->hide();
+                    viewOnlyListLayout->removeWidget(widget);
+                    wpViewOnlyViews.remove(cur);
+                }
             }
         }
     }
@@ -520,9 +524,12 @@ void WaypointList::waypointEditableListChanged()
             }
             if (i == waypoints.count()) {
                 WaypointEditableView* widget = wpEditableViews.find(cur).value();
-                widget->hide();
-                editableListLayout->removeWidget(widget);
-                wpEditableViews.remove(cur);
+
+                if (widget) {
+                    widget->hide();
+                    editableListLayout->removeWidget(widget);
+                    wpEditableViews.remove(cur);
+                }
             }
         }
     }
@@ -614,7 +621,9 @@ void WaypointList::on_clearWPListButton_clicked()
         const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
         while(!waypoints.isEmpty()) {
             WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
-            widget->remove();
+            if (widget) {
+                widget->remove();
+            }
         }
     }
 }
@@ -630,6 +639,8 @@ void WaypointList::clearWPWidget()
         // Clear UI elements
         while(!waypoints.isEmpty()) {
             WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
-            widget->remove();
+            if (widget) {
+                widget->remove();
+            }
         }
 }
