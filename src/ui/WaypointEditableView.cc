@@ -38,8 +38,8 @@
 
 WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     QWidget(parent),
-    viewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT),
     wp(wp),
+    viewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT),
     m_ui(new Ui::WaypointEditableView)
 {
     m_ui->setupUi(this);
