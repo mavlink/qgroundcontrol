@@ -202,7 +202,7 @@ void QGCMapToolBar::setUpdateInterval()
         if (ok)
         {
             map->setUpdateRateLimit(time);
-            ui->posLabel->setText(tr("Map update rate limit: %1 second%2").arg(time).arg((time != 1.0f) ? "s" : ""));
+            ui->posLabel->setText(tr("Limit: %1 second%2").arg(time).arg((time != 1.0f) ? "s" : ""));
         }
     }
 }
@@ -219,14 +219,14 @@ void QGCMapToolBar::setMapType()
         if (ok)
         {
             map->SetMapType((MapType::Types)mapType);
-            ui->posLabel->setText(tr("Map type: %1").arg(mapType));
+            ui->posLabel->setText(tr("Map: %1").arg(mapType));
         }
     }
 }
 
 void QGCMapToolBar::tileLoadStart()
 {
-    ui->posLabel->setText(tr("Starting to load tiles.."));
+    ui->posLabel->setText(tr("Loading.."));
 }
 
 void QGCMapToolBar::tileLoadEnd()
@@ -238,11 +238,11 @@ void QGCMapToolBar::tileLoadProgress(int progress)
 {
     if (progress == 1)
     {
-        ui->posLabel->setText(tr("1 tile to load.."));
+        ui->posLabel->setText(tr("1 tile"));
     }
     else if (progress > 0)
     {
-        ui->posLabel->setText(tr("%1 tiles to load..").arg(progress));
+        ui->posLabel->setText(tr("%1 tile").arg(progress));
     }
     else
     {
