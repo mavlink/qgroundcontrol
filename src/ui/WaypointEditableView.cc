@@ -39,11 +39,10 @@
 WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     QWidget(parent),
     viewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DEFAULT),
+    wp(wp),
     m_ui(new Ui::WaypointEditableView)
 {
     m_ui->setupUi(this);
-
-    this->wp = wp;
     connect(wp, SIGNAL(destroyed(QObject*)), this, SLOT(deleted(QObject*)));
 
     // CUSTOM COMMAND WIDGET
