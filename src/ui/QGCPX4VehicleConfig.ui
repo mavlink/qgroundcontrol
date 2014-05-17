@@ -20,7 +20,16 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item row="1" column="1">
@@ -996,7 +1005,16 @@
               <string>Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_3">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
                <number>0</number>
               </property>
               <item>
@@ -1009,12 +1027,21 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>21</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1033,7 +1060,16 @@
               <string>Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
                <number>0</number>
               </property>
               <item>
@@ -1046,12 +1082,21 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>21</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1084,7 +1129,16 @@
               <string>Onboard Configuration</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_2">
-              <property name="margin">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
                <number>0</number>
               </property>
               <item>
@@ -1097,12 +1151,21 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>28</height>
+                   <width>16</width>
+                   <height>16</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>0</number>
                   </property>
                   <item>
@@ -1208,7 +1271,16 @@
    <item row="0" column="0" rowspan="3">
     <widget class="QWidget" name="navBarWidget" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
@@ -1247,26 +1319,14 @@ Upgrade</string>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="rcMenuButton">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>75</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
+         <widget class="QPushButton" name="airframeMenuButton">
           <property name="text">
-           <string>Radio
-Calibration</string>
+           <string>Airframe
+Config</string>
           </property>
           <property name="icon">
            <iconset resource="../../qgroundcontrol.qrc">
-            <normaloff>:/files/images/px4/menu/remote.png</normaloff>:/files/images/px4/menu/remote.png</iconset>
+            <normaloff>:/files/images/px4/menu/plane.png</normaloff>:/files/images/px4/menu/plane.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -1301,14 +1361,26 @@ Calibration</string>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="airframeMenuButton">
+         <widget class="QPushButton" name="rcMenuButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
-           <string>Airframe
-Config</string>
+           <string>Radio
+Calibration</string>
           </property>
           <property name="icon">
            <iconset resource="../../qgroundcontrol.qrc">
-            <normaloff>:/files/images/px4/menu/plane.png</normaloff>:/files/images/px4/menu/plane.png</iconset>
+            <normaloff>:/files/images/px4/menu/remote.png</normaloff>:/files/images/px4/menu/remote.png</iconset>
           </property>
           <property name="iconSize">
            <size>
