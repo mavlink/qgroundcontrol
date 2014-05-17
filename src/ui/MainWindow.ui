@@ -12,8 +12,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>1024</width>
-    <height>600</height>
+    <width>640</width>
+    <height>400</height>
    </size>
   </property>
   <property name="baseSize">
