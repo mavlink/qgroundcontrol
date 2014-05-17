@@ -921,94 +921,91 @@ void UASWaypointManager::writeWaypoints()
     }
     else
     {
-        //we're in another transaction, ignore command
-        qDebug() << "UASWaypointManager::sendWaypoints() doing something else ignoring command";
+        // We're in another transaction, ignore command
+        qDebug() << tr("UASWaypointManager::sendWaypoints() doing something else. Ignoring command");
     }
 }
 
 void UASWaypointManager::sendWaypointClearAll()
 {
     if (!uas) return;
+
+    // Send the message.
     mavlink_message_t message;
-    mavlink_mission_clear_all_t wpca;
-
-    wpca.target_system = uasid;
-    wpca.target_component = MAV_COMP_ID_MISSIONPLANNER;
-
-    emit updateStatusString(QString("Clearing waypoint list..."));
-
+    mavlink_mission_clear_all_t wpca = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_clear_all_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpca);
-
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Clearing waypoint list..."));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 {
     if (!uas) return;
+
+    // Send the message.
     mavlink_message_t message;
-    mavlink_mission_set_current_t wpsc;
-
-    wpsc.target_system = uasid;
-    wpsc.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpsc.seq = seq;
-
-    emit updateStatusString(QString("Updating target waypoint..."));
-
+    mavlink_mission_set_current_t wpsc = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_set_current_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpsc);
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Updating target waypoint..."));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointCount()
 {
     if (!uas) return;
+
+
+    // Tell the UAS how many missions we'll sending.
     mavlink_message_t message;
-    mavlink_mission_count_t wpc;
-
-    wpc.target_system = uasid;
-    wpc.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpc.count = current_count;
-
-    emit updateStatusString(QString("Starting to transmit waypoints..."));
-
+    mavlink_mission_count_t wpc = {current_count, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_count_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpc);
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Starting to transmit waypoints..."));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointRequestList()
 {
     if (!uas) return;
+
+    // Send a MISSION_REQUEST message to the uas for this mission manager, using the MISSIONPLANNER component.
     mavlink_message_t message;
-    mavlink_mission_request_list_t wprl;
+    mavlink_mission_request_list_t wprl = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
+    uas->sendMessage(message);
 
-    wprl.target_system = uasid;
-    wprl.target_component = MAV_COMP_ID_MISSIONPLANNER;
-
+    // And update the UI.
     QString statusMsg(tr("Requesting waypoint list..."));
     qDebug() << __FILE__ << __LINE__ << statusMsg;
     emit updateStatusString(statusMsg);
 
-    mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
-    uas->sendMessage(message);
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointRequest(quint16 seq)
 {
     if (!uas) return;
+
+    // Send a MISSION_REQUEST message to the UAS's MISSIONPLANNER component.
     mavlink_message_t message;
-    mavlink_mission_request_t wpr;
-
-    wpr.target_system = uasid;
-    wpr.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpr.seq = seq;
-
-    emit updateStatusString(QString("Retrieving waypoint ID %1 of %2 total").arg(wpr.seq).arg(current_count));
-
+    mavlink_mission_request_t wpr = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_request_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpr);
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Retrieving waypoint ID %1 of %2").arg(wpr.seq).arg(current_count));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
@@ -1019,18 +1016,18 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 
     if (seq < waypoint_buffer.count()) {
 
-        mavlink_mission_item_t *wp;
-
-
-        wp = waypoint_buffer.at(seq);
+        // Fetch the current mission to send, and set it to apply to the curent UAS.
+        mavlink_mission_item_t *wp = waypoint_buffer.at(seq);
         wp->target_system = uasid;
         wp->target_component = MAV_COMP_ID_MISSIONPLANNER;
 
-        emit updateStatusString(QString("Sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
-
-
+        // Transmit the new mission
         mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, wp);
         uas->sendMessage(message);
+
+        // And update the UI.
+        emit updateStatusString(tr("Sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
+
         QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
     }
 }
@@ -1038,15 +1035,13 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 void UASWaypointManager::sendWaypointAck(quint8 type)
 {
     if (!uas) return;
+
+    // Send the message.
     mavlink_message_t message;
-    mavlink_mission_ack_t wpa;
-
-    wpa.target_system = uasid;
-    wpa.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpa.type = type;
-
+    mavlink_mission_ack_t wpa = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER, type};
     mavlink_msg_mission_ack_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpa);
     uas->sendMessage(message);
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
