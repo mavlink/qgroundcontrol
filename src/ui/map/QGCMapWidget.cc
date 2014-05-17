@@ -169,6 +169,12 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     mousePressPos = event->pos();
     mapcontrol::OPMapWidget::mouseReleaseEvent(event);
+
+    // If the mouse is released, we can't be dragging
+    if (firingWaypointChange) {
+        firingWaypointChange = NULL;
+    }
+    qDebug() << "MOUSE RELEASED";
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -620,10 +626,11 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
         WPDelete(waypoint);
 
     // Protect from vicious double update cycle
-    if (firingWaypointChange == wp) return;
+    if (firingWaypointChange == wp) {
+        return;
+    }
     // Not in cycle, block now from entering it
     firingWaypointChange = wp;
-    // // qDebug() << "UPDATING WP FROM MAP";
 
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
@@ -632,19 +639,14 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     wp->blockSignals(true);
     wp->setLatitude(pos.Lat());
     wp->setLongitude(pos.Lng());
-    // XXX Magic values
-//    wp->setAltitude(homeAltitude + 50.0f);
-//    wp->setAcceptanceRadius(10.0f);
     wp->blockSignals(false);
 
 
-    internals::PointLatLng coord = waypoint->Coord();
-    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
-    // // qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
-    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
-    // // qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
-
-    firingWaypointChange = NULL;
+//    internals::PointLatLng coord = waypoint->Coord();
+//    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
+//    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
+//    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
+//    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
 
     emit waypointChanged(wp);
 }

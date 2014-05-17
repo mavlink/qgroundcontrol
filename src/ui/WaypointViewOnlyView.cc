@@ -6,10 +6,10 @@
 
 WaypointViewOnlyView::WaypointViewOnlyView(Waypoint* wp, QWidget *parent) :
     QWidget(parent),
+    wp(wp),
     m_ui(new Ui::WaypointViewOnlyView)
 {
     m_ui->setupUi(this);
-    this->wp = wp;
     updateValues();
 
     connect(m_ui->current, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
@@ -60,6 +60,10 @@ void WaypointViewOnlyView::changedCurrent(int state)
 void WaypointViewOnlyView::setCurrent(bool state)
 //This is a slot receiving signals from UASWaypointManager. The state given here is the true representation of what the "current" waypoint on UAV is.
 {
+    if (!wp) {
+        return;
+    }
+
     m_ui->current->blockSignals(true);
     if (state == true)
     {
