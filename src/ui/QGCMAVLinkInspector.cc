@@ -95,19 +95,6 @@ void QGCMAVLinkInspector::rebuildComponentList()
     components.clear();
 
     ui->componentComboBox->addItem(tr("All"), 0);
-
-//    // Fill
-//    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
-//    if (uas)
-//    {
-//        QMap<int, QString> components = uas->getComponents();
-
-//        foreach (int id, components.keys())
-//        {
-//            QString name = components.value(id);
-//            ui->componentComboBox->addItem(name, id);
-//        }
-//    }
 }
 
 void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& name)
