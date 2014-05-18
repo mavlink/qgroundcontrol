@@ -202,7 +202,6 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    qDebug() << "LINK COUNT" << LinkManager::instance()->getLinks().count();
     // Update label if required
     if (LinkManager::instance()->getSerialLinks().count() < 1) {
         connectButton->setText(tr("New Serial Link"));
