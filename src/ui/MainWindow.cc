@@ -1516,21 +1516,11 @@ bool MainWindow::configLink(LinkInterface *link)
 
 void MainWindow::addLink(LinkInterface *link)
 {
-
-    qDebug() << "ADD LINK CALLED FROM SOMEWHERE";
-
     // IMPORTANT! KEEP THESE TWO LINES
     // THEY MAKE SURE THE LINK IS PROPERLY REGISTERED
     // BEFORE LINKING THE UI AGAINST IT
     // Register (does nothing if already registered)
     LinkManager::instance()->add(link);
-
-    if (mavlink) {
-        qDebug() << "MAVLINK OK";
-    } else {
-        qDebug() << "MAVLINK FAIL";
-    }
-
     LinkManager::instance()->addProtocol(link, mavlink);
 
     // Go fishing for this link's configuration window
