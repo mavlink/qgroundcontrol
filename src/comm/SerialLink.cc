@@ -194,43 +194,54 @@ void SerialLink::run()
             err = m_port->errorString();
         }
         emit communicationError(getName(),"Error connecting: " + err);
-//        disconnect(); // This tidies up and sends the necessary signals
         return;
     }
-    qDebug() << "connected";
 
-    // Qt way to make clear what a while(1) loop does
     qint64 msecs = QDateTime::currentMSecsSinceEpoch();
     qint64 initialmsecs = QDateTime::currentMSecsSinceEpoch();
     quint64 bytes = 0;
-//    bool triedreset = false;
-//    bool triedDTR = false;
     qint64 timeout = 5000;
     int linkErrorCount = 0;
 
+    // Qt way to make clear what a while(1) loop does
     forever {
         {
             QMutexLocker locker(&this->m_stoppMutex);
-            if(m_stopp) {
+            if (m_stopp) {
                 m_stopp = false;
                 break; // exit the thread
-            }
-
-            if (m_reqReset) {
-                m_reqReset = false;
-                emit communicationUpdate(getName(),"Reset requested via DTR signal");
-                m_port->setDataTerminalReady(true);
-                msleep(250);
-                m_port->setDataTerminalReady(false);
             }
         }
 
         // If there are too many errors on this link, disconnect.
-        if (isConnected() && (linkErrorCount > 1000)) {
-            qDebug() << "linkErrorCount too high: disconnecting!";
+        if (isConnected() && (linkErrorCount > 100)) {
+            qDebug() << "linkErrorCount too high: re-connecting!";
             linkErrorCount = 0;
-            emit communicationUpdate(getName(), tr("Disconnecting on too many link errors"));
-            disconnect();
+            emit communicationUpdate(getName(), tr("Reconnecting on too many link errors"));
+
+            if (m_port) {
+                m_port->close();
+                delete m_port;
+                m_port = NULL;
+
+                emit disconnected();
+                emit connected(false);
+            }
+
+            QGC::SLEEP::msleep(500);
+
+            unsigned tries = 0;
+            const unsigned tries_max = 15;
+            while (!hardwareConnect(type) && tries < tries_max) {
+                tries++;
+                QGC::SLEEP::msleep(500);
+            }
+
+            // Give up
+            if (tries == tries_max) {
+                break;
+            }
+
         }
 
         // Write all our buffered data out the serial port.
@@ -301,31 +312,13 @@ void SerialLink::run()
                     //TODO ^^
                     timeout = 30000;
                 }
-//                if (!triedDTR && triedreset) {
-//                    triedDTR = true;
-//                    emit communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
-//                    qDebug() << "No data!!! Attempting reset via DTR.";
-//                    m_port->setDataTerminalReady(true);
-//                    msleep(250);
-//                    m_port->setDataTerminalReady(false);
-//                }
-//                else if (!triedreset) {
-//                    qDebug() << "No data!!! Attempting reset via reboot command.";
-//                    emit communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
-//                    m_port->write("reboot\r\n",8);
-//                    triedreset = true;
-//                }
-//                else {
-//                    emit communicationUpdate(getName(),"No data to receive on COM port....");
-//                    qDebug() << "No data!!!";
-//                }
             }
         }
         //MG::SLEEP::msleep(SerialLink::poll_interval);
         QGC::SLEEP::msleep(2);
     } // end of forever
     
-    if (m_port) { // [TODO][BB] Not sure we need to close the port here
+    if (m_port) {
         qDebug() << "Closing Port #"<< __LINE__ << m_port->portName();
         m_port->close();
         delete m_port;
@@ -345,7 +338,6 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         m_transmitBuffer.append(byteArray);
         m_writeMutex.unlock();
     } else {
-        disconnect();
         // Error occured
         emit communicationError(getName(), tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
@@ -399,10 +391,6 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    qDebug() << "disconnect";
-    if (m_port)
-        qDebug() << m_port->portName();
-
     if (isRunning())
     {
         {
@@ -411,8 +399,6 @@ bool SerialLink::disconnect()
         }
         wait(); // This will terminate the thread and close the serial port
 
-        emit disconnected(); // [TODO] There are signals from QSerialPort we should use
-        emit connected(false);
         return true;
     }
 
@@ -429,6 +415,7 @@ bool SerialLink::disconnect()
  **/
 bool SerialLink::connect()
 {   
+    qDebug() << "CONNECT CALLED";
     if (isRunning())
         disconnect();
     {
