@@ -46,7 +46,7 @@ Q_DECLARE_METATYPE(mavlink_message_t)
 MAVLinkProtocol::MAVLinkProtocol() :
     heartbeatTimer(new QTimer(this)),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-    m_heartbeatsEnabled(false),
+    m_heartbeatsEnabled(true),
     m_multiplexingEnabled(false),
     m_authEnabled(false),
     m_loggingEnabled(false),
