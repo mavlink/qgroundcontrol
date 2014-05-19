@@ -44,7 +44,7 @@ Q_DECLARE_METATYPE(mavlink_message_t)
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
 MAVLinkProtocol::MAVLinkProtocol() :
-    heartbeatTimer(new QTimer(this)),
+    heartbeatTimer(),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     m_heartbeatsEnabled(true),
     m_multiplexingEnabled(false),
@@ -66,8 +66,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
     loadSettings();
     moveToThread(this);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
-    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
-    heartbeatTimer->start(1000/heartbeatRate);
+    connect(&heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
+    heartbeatTimer.start(1000/heartbeatRate);
 
     // All the *Counter variables are not initialized here, as they should be initialized
     // on a per-link basis before those links are used. @see resetMetadataForLink().
@@ -781,7 +781,7 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 void MAVLinkProtocol::setHeartbeatRate(int rate)
 {
     heartbeatRate = rate;
-    heartbeatTimer->setInterval(1000/heartbeatRate);
+    heartbeatTimer.setInterval(1000/heartbeatRate);
 }
 
 /** @return heartbeat rate in Hertz */

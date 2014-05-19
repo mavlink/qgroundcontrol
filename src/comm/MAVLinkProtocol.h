@@ -214,7 +214,7 @@ public slots:
     void storeSettings();
 
 protected:
-    QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
+    QTimer heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
