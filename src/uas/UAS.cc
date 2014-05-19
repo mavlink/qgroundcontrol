@@ -2851,17 +2851,17 @@ void UAS::armSystem()
  */
 void UAS::disarmSystem()
 {
-    setModeArm(base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+    setModeArm(base_mode & ~(MAV_MODE_FLAG_SAFETY_ARMED), custom_mode);
 }
 
 void UAS::toggleArmedState()
 {
-    setModeArm(base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
+    setModeArm(base_mode ^ (MAV_MODE_FLAG_SAFETY_ARMED), custom_mode);
 }
 
 void UAS::goAutonomous()
 {
-    setMode((base_mode & ~MAV_MODE_FLAG_MANUAL_INPUT_ENABLED) | (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED), 0);
+    setMode((base_mode & ~(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)) | (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED), 0);
 }
 
 void UAS::goManual()
