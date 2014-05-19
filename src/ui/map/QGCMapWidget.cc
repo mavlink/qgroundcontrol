@@ -16,6 +16,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     trailInterval(2.0f),
     followUAVID(0),
     mapInitialized(false),
+    mapPositionInitialized(false),
     homeAltitude(0),
     uas(NULL)
 {
@@ -174,7 +175,6 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
     if (firingWaypointChange) {
         firingWaypointChange = NULL;
     }
-    qDebug() << "MOUSE RELEASED";
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -191,6 +191,9 @@ void QGCMapWidget::showEvent(QShowEvent* event)
 
     // Pass on to parent widget
     OPMapWidget::showEvent(event);
+
+    // Connect map updates to the adapter slots
+    connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
@@ -217,16 +220,15 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         setFrameStyle(QFrame::NoFrame);      // no border frame
         setBackgroundBrush(QBrush(Qt::black)); // tile background
 
-        // Set current home position
+        if (!UASManager::instance()->getActiveUAS()) {
+            SetCurrentPosition(pos_lat_lon);         // set the map position to default
+        }
+
+        // Set home
         updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
 
         // Set currently selected system
         activeUASSet(UASManager::instance()->getActiveUAS());
-
-        // Connect map updates to the adapter slots
-        connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
-
-        SetCurrentPosition(pos_lat_lon);         // set the map position
         setFocus();
 
         // Start timer
@@ -387,6 +389,16 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+
+        if (!mapPositionInitialized) {
+            internals::PointLatLng pos_lat_lon = internals::PointLatLng(uas->getLatitude(), uas->getLongitude());
+            SetCurrentPosition(pos_lat_lon);
+
+            // Zoom in
+            SetZoom(13);
+
+            mapPositionInitialized = true;
+        }
     }
     else
     {
@@ -568,6 +580,7 @@ void QGCMapWidget::showGoToDialog()
 
 void QGCMapWidget::updateHomePosition(double latitude, double longitude, double altitude)
 {
+    qDebug() << "HOME SET TO: " << latitude << longitude << altitude;
     Home->SetCoord(internals::PointLatLng(latitude, longitude));
     Home->SetAltitude(altitude);
     homeAltitude = altitude;
@@ -578,7 +591,7 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
 void QGCMapWidget::goHome()
 {
     SetCurrentPosition(Home->Coord());
-    SetZoom(18); //zoom to "large RC park" size
+    SetZoom(17);
 }
 
 /**
