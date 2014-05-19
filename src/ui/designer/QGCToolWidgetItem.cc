@@ -15,14 +15,19 @@ QGCToolWidgetItem::QGCToolWidgetItem(const QString& name, QWidget *parent) :
     _component(-1)
 {
     startEditAction = new QAction(tr("Edit %1").arg(qgcToolWidgetItemName), this);
-    connect(startEditAction, SIGNAL(triggered()), this, SLOT(startEditMode()));
     stopEditAction = new QAction(tr("Finish Editing %1").arg(qgcToolWidgetItemName), this);
-    connect(stopEditAction, SIGNAL(triggered()), this, SLOT(endEditMode()));
     deleteAction = new QAction(tr("Delete %1").arg(qgcToolWidgetItemName), this);
+}
+
+void QGCToolWidgetItem::init()
+{
+    connect(startEditAction, SIGNAL(triggered()), this, SLOT(startEditMode()));
+    connect(stopEditAction, SIGNAL(triggered()), this, SLOT(endEditMode()));
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
+
     // Set first UAS if it exists
     setActiveUAS(UASManager::instance()->getActiveUAS());
 }

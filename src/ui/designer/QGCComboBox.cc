@@ -23,7 +23,6 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     ui->setupUi(this);
     uas = NULL;
 
-
     ui->editInfoCheckBox->hide();
     ui->editDoneButton->hide();
     ui->editNameLabel->hide();
@@ -60,10 +59,8 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     connect(ui->editInfoCheckBox, SIGNAL(clicked(bool)), this, SLOT(showInfo(bool)));
     // connect to self
     connect(ui->infoLabel, SIGNAL(released()), this, SLOT(showTooltip()));
-    // Set the current UAS if present
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
+    init();
 }
 
 QGCComboBox::~QGCComboBox()
