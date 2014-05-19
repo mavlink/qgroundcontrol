@@ -369,7 +369,10 @@ void WaypointEditableView::changedCurrent(int state)
     else
     {
         wp->setCurrent(true);
-        emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
+        // At this point we do not consider this signal
+        // to be valid / the edit check boxes should not change the view state
+        //emit changeCurrentWaypoint(wp->getId());
+        //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
 }
 
@@ -485,7 +488,10 @@ void WaypointEditableView::updateValues()
 
     if (m_ui->selectedBox->isChecked() != wp->getCurrent())
     {
+        // This is never a reason to emit a changed signal
+        m_ui->selectedBox->blockSignals(true);
         m_ui->selectedBox->setChecked(wp->getCurrent());
+        m_ui->selectedBox->blockSignals(false);
     }
     if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
     {
@@ -578,9 +584,12 @@ void WaypointEditableView::updateValues()
 
 void WaypointEditableView::setCurrent(bool state)
 {
-    m_ui->selectedBox->blockSignals(true);
-    m_ui->selectedBox->setChecked(state);
-    m_ui->selectedBox->blockSignals(false);
+    if (m_ui->selectedBox->isChecked() != state)
+    {
+        m_ui->selectedBox->blockSignals(true);
+        m_ui->selectedBox->setChecked(state);
+        m_ui->selectedBox->blockSignals(false);
+    }
 }
 
 

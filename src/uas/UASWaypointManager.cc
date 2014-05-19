@@ -347,7 +347,7 @@ int UASWaypointManager::setCurrentEditable(quint16 seq)
     if (seq < waypointsEditable.count()) {
         if(current_state == WP_IDLE) {
             //update local main storage
-            for(int i = 0; i < waypointsEditable.count(); i++) {
+            for (int i = 0; i < waypointsEditable.count(); i++) {
                 if (waypointsEditable[i]->getId() == seq) {
                     waypointsEditable[i]->setCurrent(true);
                 } else {

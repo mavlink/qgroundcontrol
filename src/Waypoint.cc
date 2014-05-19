@@ -216,7 +216,8 @@ void Waypoint::setCurrent(bool current)
     if (this->current != current)
     {
         this->current = current;
-        emit changed(this);
+        // The current waypoint index is handled by the list
+        // and not part of the individual waypoint update state
     }
 }
 
