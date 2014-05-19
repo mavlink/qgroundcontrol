@@ -24,6 +24,8 @@ QGCTextLabel::QGCTextLabel(QWidget *parent) :
     ui->editLine2->hide();
     ui->isMavCommand->hide();
     ui->textLabel->setText(QString());
+
+    init();
 }
 
 QGCTextLabel::~QGCTextLabel()
