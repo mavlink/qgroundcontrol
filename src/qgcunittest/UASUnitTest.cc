@@ -80,6 +80,7 @@ void UASUnitTest::filterVoltage_test()
     const float allowedDelta = 0.05f;
     const float desiredVoltage = 7.36f;
     QVERIFY(verificar > (desiredVoltage - allowedDelta) && verificar < (desiredVoltage + allowedDelta));
+    QCOMPARE(verificar, 5.0f);
 }
 
 void UASUnitTest:: getAutopilotType_test()
