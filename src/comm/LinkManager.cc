@@ -63,20 +63,26 @@ LinkManager::LinkManager()
 LinkManager::~LinkManager()
 {
     disconnectAll();
+    dataMutex.lock();
     foreach (LinkInterface* link, links)
     {
         if(link) link->deleteLater();
     }
+    dataMutex.unlock();
 }
 
 void LinkManager::add(LinkInterface* link)
 {
+    dataMutex.lock();
     if (!links.contains(link))
     {
         if(!link) return;
         connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeObj(QObject*)));
         links.append(link);
+        dataMutex.unlock();
         emit newLink(link);
+    } else {
+        dataMutex.unlock();
     }
 }
 
@@ -86,6 +92,7 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
     // the protocol will receive new bytes from the link
     if (!link || !protocol) return;
 
+    dataMutex.lock();
     QList<LinkInterface*> linkList = protocolLinks.values(protocol);
 
     // If protocol has not been added before (list length == 0)
@@ -98,31 +105,42 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
         connect(link, SIGNAL(connected(bool)), protocol, SLOT(linkStatusChanged(bool)));
         // Store the connection information in the protocol links map
         protocolLinks.insertMulti(protocol, link);
+        dataMutex.unlock();
         // Make sure the protocol clears its metadata for this link.
         protocol->resetMetadataForLink(link);
+    } else {
+        dataMutex.unlock();
     }
     //qDebug() << __FILE__ << __LINE__ << "ADDED LINK TO PROTOCOL" << link->getName() << protocol->getName() << "NEW SIZE OF LINK LIST:" << protocolLinks.size();
 }
 
 QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protocol)
 {
-    return protocolLinks.values(protocol);
+    dataMutex.lock();
+    QList<LinkInterface*> links = protocolLinks.values(protocol);
+    dataMutex.unlock();
+    return links;
 }
 
 ProtocolInterface* LinkManager::getProtocolForLink(LinkInterface* link)
 {
-    return protocolLinks.key(link);
+    dataMutex.lock();
+    ProtocolInterface* interface = protocolLinks.key(link);
+    dataMutex.unlock();
+    return interface;
 }
 
 bool LinkManager::connectAll()
 {
     bool allConnected = true;
 
+    dataMutex.lock();
     foreach (LinkInterface* link, links)
     {
         if(!link) {}
         else if(!link->connect()) allConnected = false;
     }
+    dataMutex.unlock();
 
     return allConnected;
 }
@@ -131,12 +149,14 @@ bool LinkManager::disconnectAll()
 {
     bool allDisconnected = true;
 
+    dataMutex.lock();
     foreach (LinkInterface* link, links)
     {
         //static int i=0;
         if(!link) {}
         else if(!link->disconnect()) allDisconnected = false;
     }
+    dataMutex.unlock();
 
     return allDisconnected;
 }
@@ -166,6 +186,7 @@ bool LinkManager::removeLink(LinkInterface* link)
 {
     if(link)
     {
+        dataMutex.lock();
         for (int i=0; i < QList<LinkInterface*>(links).size(); i++)
         {
             if(link==links.at(i))
@@ -179,6 +200,7 @@ bool LinkManager::removeLink(LinkInterface* link)
         {
             protocolLinks.remove(proto, link);
         }
+        dataMutex.unlock();
 
         // Emit removal of link
         emit linkRemoved(link);
@@ -196,11 +218,17 @@ bool LinkManager::removeLink(LinkInterface* link)
  */
 LinkInterface* LinkManager::getLinkForId(int id)
 {
+    dataMutex.lock();
+    LinkInterface* linkret = NULL;
     foreach (LinkInterface* link, links)
     {
-        if (link->getId() == id) return link;
+        if (link->getId() == id)
+        {
+            linkret = link;
+        }
     }
-    return NULL;
+    dataMutex.unlock();
+    return linkret;
 }
 
 /**
@@ -208,11 +236,15 @@ LinkInterface* LinkManager::getLinkForId(int id)
  */
 const QList<LinkInterface*> LinkManager::getLinks()
 {
-    return QList<LinkInterface*>(links);
+    dataMutex.lock();
+    QList<LinkInterface*> ret(links);
+    dataMutex.unlock();
+    return ret;
 }
 
 const QList<SerialLink*> LinkManager::getSerialLinks()
 {
+    dataMutex.lock();
     QList<SerialLink*> s;
 
     foreach (LinkInterface* i, links)
@@ -222,6 +254,7 @@ const QList<SerialLink*> LinkManager::getSerialLinks()
         if (link)
             s.append(link);
     }
+    dataMutex.unlock();
 
     return s;
 }
