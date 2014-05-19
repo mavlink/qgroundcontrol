@@ -167,6 +167,7 @@ protected:
     float trailInterval;                ///< Time or distance between trail items
     int followUAVID;                    ///< Which UAV should be tracked?
     bool mapInitialized;                ///< Map initialized?
+    bool mapPositionInitialized;        ///< The position on the map has a reasonable value?
     float homeAltitude;                 ///< Home altitude
     QPoint mousePressPos;               ///< Mouse position when the button is released.
     QPoint contextMousePressPos;        ///< Mouse position when context menu activated.
