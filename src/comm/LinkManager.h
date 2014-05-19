@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 #include <QThread>
 #include <QList>
 #include <QMultiMap>
+#include <QMutex>
 #include <LinkInterface.h>
 #include <SerialLink.h>
 #include <ProtocolInterface.h>
@@ -91,6 +92,7 @@ protected:
     LinkManager();
     QList<LinkInterface*> links;
     QMultiMap<ProtocolInterface*,LinkInterface*> protocolLinks;
+    QMutex dataMutex;
 
 private:
     static LinkManager* _instance;
