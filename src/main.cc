@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     
 #ifdef QT_DEBUG
     bool runUnitTests = false;  // Run unit test
-    bool quietAsserts = false;  // Don't let asserts pop dialog boxes
+    bool quietAsserts = false;  // Don't let asserts pop dialog boxes 
     
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",     &runUnitTests },
