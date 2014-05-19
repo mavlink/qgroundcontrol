@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QAbstractSocket::SocketError>();
     
 #ifdef QT_DEBUG
-    bool runUnitTests = false;  // run unit test
-    bool quietAsserts = false;  // don't let asserts pop dialog boxes
+    bool runUnitTests = false;  // Run unit test
+    bool quietAsserts = false;  // Don't let asserts pop dialog boxes
     
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",     &runUnitTests },
