@@ -64,13 +64,13 @@ void msgHandler( QtMsgType type, const char* msg )
 /// we don't want asserts to pop a dialog on windows.
 int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
-    if (reportType == _CRT_ASSERT) {
+//    if (reportType == _CRT_ASSERT) {
         std::cerr << message << std::endl;  // Output message to stderr
         *returnValue = 0;                   // Don't break into debugger
         return true;                        // We handled this fully ourselves
-    } else {
-        return false;   // Let Windows handle it
-    }
+//    } else {
+//        return false;   // Let Windows handle it
+//    }
 }
 
 #endif
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",     &runUnitTests },
-        { "--quietAsserts", &quietAsserts },
+        { "--quiet-asserts", &quietAsserts },
         // Add additional command line option flags here
     };
     
