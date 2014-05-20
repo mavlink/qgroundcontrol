@@ -95,6 +95,8 @@ QT += testlib
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
+#error fail the build
+
 #
 # OS Specific settings
 #
