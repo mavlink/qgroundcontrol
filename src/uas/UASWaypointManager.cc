@@ -153,7 +153,8 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             sendWaypointRequest(current_wp_id);
         } else {
             protocol_timer.stop();
-            emit updateStatusString("done.");
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
             current_state = WP_IDLE;
             current_count = 0;
             current_wp_id = 0;
@@ -204,8 +205,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
                 QTime time = QTime::currentTime();
-                QString timeString = time.toString();
-                emit updateStatusString(tr("done. (updated at %1)").arg(timeString));
+                emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
 
             }
         } else {
@@ -223,8 +223,9 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             //all waypoints sent and ack received
             protocol_timer.stop();
             current_state = WP_IDLE;
-            readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
-            emit updateStatusString("done.");
+            readWaypoints(false); //Update "Onboard Waypoints"-tab immediately after the waypoint list has been sent.
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
         } else if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && wpa->type != 0) {
             //give up transmitting if a WP is rejected
             switch (wpa->type)
@@ -264,7 +265,8 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
         } else if(current_state == WP_CLEARLIST) {
             protocol_timer.stop();
             current_state = WP_IDLE;
-            emit updateStatusString("done.");
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
         }
     }
 }
