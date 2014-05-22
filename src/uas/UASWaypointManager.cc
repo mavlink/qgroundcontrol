@@ -294,7 +294,7 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
 	Q_UNUSED(compId);
     if (!uas) return;
     if (systemId == uasid) {
-        emit updateStatusString(QString("Reached waypoint %1").arg(wpr->seq));
+        emit updateStatusString(tr("Reached waypoint %1").arg(wpr->seq));
     }
 }
 
@@ -319,7 +319,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 }
             }
         }
-        emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
+        emit updateStatusString(tr("New current waypoint %1").arg(wpc->seq));
         //emit update to UI widgets
         emit currentWaypointChanged(wpc->seq);
     }
