@@ -227,12 +227,37 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             emit updateStatusString("done.");
         } else if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && wpa->type != 0) {
             //give up transmitting if a WP is rejected
-            if (wpa->type == 1) {
-                emit updateStatusString("upload failed: general error");
-            } else if (wpa->type == 2) {
-                emit updateStatusString("upload failed: coordinate frame unsupported.");
-            } else {
-                emit updateStatusString("upload failed: other error.");
+            switch (wpa->type)
+            {
+            case MAV_MISSION_UNSUPPORTED_FRAME:
+                emit updateStatusString(tr("ERROR: Coordinate frame unsupported."));
+                break;
+            case MAV_MISSION_UNSUPPORTED:
+                emit updateStatusString(tr("ERROR: Unsupported command."));
+                break;
+            case MAV_MISSION_NO_SPACE:
+                emit updateStatusString(tr("ERROR: Mission count exceeds storage."));
+                break;
+            case MAV_MISSION_INVALID:
+            case MAV_MISSION_INVALID_PARAM1:
+            case MAV_MISSION_INVALID_PARAM2:
+            case MAV_MISSION_INVALID_PARAM3:
+            case MAV_MISSION_INVALID_PARAM4:
+            case MAV_MISSION_INVALID_PARAM5_X:
+            case MAV_MISSION_INVALID_PARAM6_Y:
+            case MAV_MISSION_INVALID_PARAM7:
+                emit updateStatusString(tr("ERROR: A specified parameter was invalid."));
+                break;
+            case MAV_MISSION_INVALID_SEQUENCE:
+                emit updateStatusString(tr("ERROR: Mission received out of sequence."));
+                break;
+            case MAV_MISSION_DENIED:
+                emit updateStatusString(tr("ERROR: UAS not accepting missions."));
+                break;
+            case MAV_MISSION_ERROR:
+            default:
+                emit updateStatusString(tr("ERROR: Unspecified error"));
+                break;
             }
             protocol_timer.stop();
             current_state = WP_IDLE;
