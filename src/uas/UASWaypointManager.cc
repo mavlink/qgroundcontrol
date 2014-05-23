@@ -153,7 +153,8 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             sendWaypointRequest(current_wp_id);
         } else {
             protocol_timer.stop();
-            emit updateStatusString("done.");
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
             current_state = WP_IDLE;
             current_count = 0;
             current_wp_id = 0;
@@ -163,7 +164,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 
 
     } else {
-        qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+        qDebug("Rejecting waypoint count message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -204,15 +205,14 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
                 QTime time = QTime::currentTime();
-                QString timeString = time.toString();
-                emit updateStatusString(tr("done. (updated at %1)").arg(timeString));
+                emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
 
             }
         } else {
             emit updateStatusString(tr("Waypoint ID mismatch, rejecting waypoint"));
         }
     } else {
-        qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+        qDebug("Rejecting waypoint message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST_GETWPS, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -223,23 +223,50 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             //all waypoints sent and ack received
             protocol_timer.stop();
             current_state = WP_IDLE;
-            readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
-            emit updateStatusString("done.");
+            readWaypoints(false); //Update "Onboard Waypoints"-tab immediately after the waypoint list has been sent.
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
         } else if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && wpa->type != 0) {
             //give up transmitting if a WP is rejected
-            if (wpa->type == 1) {
-                emit updateStatusString("upload failed: general error");
-            } else if (wpa->type == 2) {
-                emit updateStatusString("upload failed: coordinate frame unsupported.");
-            } else {
-                emit updateStatusString("upload failed: other error.");
+            switch (wpa->type)
+            {
+            case MAV_MISSION_UNSUPPORTED_FRAME:
+                emit updateStatusString(tr("ERROR: Coordinate frame unsupported."));
+                break;
+            case MAV_MISSION_UNSUPPORTED:
+                emit updateStatusString(tr("ERROR: Unsupported command."));
+                break;
+            case MAV_MISSION_NO_SPACE:
+                emit updateStatusString(tr("ERROR: Mission count exceeds storage."));
+                break;
+            case MAV_MISSION_INVALID:
+            case MAV_MISSION_INVALID_PARAM1:
+            case MAV_MISSION_INVALID_PARAM2:
+            case MAV_MISSION_INVALID_PARAM3:
+            case MAV_MISSION_INVALID_PARAM4:
+            case MAV_MISSION_INVALID_PARAM5_X:
+            case MAV_MISSION_INVALID_PARAM6_Y:
+            case MAV_MISSION_INVALID_PARAM7:
+                emit updateStatusString(tr("ERROR: A specified parameter was invalid."));
+                break;
+            case MAV_MISSION_INVALID_SEQUENCE:
+                emit updateStatusString(tr("ERROR: Mission received out of sequence."));
+                break;
+            case MAV_MISSION_DENIED:
+                emit updateStatusString(tr("ERROR: UAS not accepting missions."));
+                break;
+            case MAV_MISSION_ERROR:
+            default:
+                emit updateStatusString(tr("ERROR: Unspecified error"));
+                break;
             }
             protocol_timer.stop();
             current_state = WP_IDLE;
         } else if(current_state == WP_CLEARLIST) {
             protocol_timer.stop();
             current_state = WP_IDLE;
-            emit updateStatusString("done.");
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
         }
     }
 }
@@ -258,7 +285,7 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
             //TODO: Error message or something
         }
     } else {
-        qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+        qDebug("Rejecting waypoint request message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_SENDLIST_SENDWPS, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -267,7 +294,7 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
 	Q_UNUSED(compId);
     if (!uas) return;
     if (systemId == uasid) {
-        emit updateStatusString(QString("Reached waypoint %1").arg(wpr->seq));
+        emit updateStatusString(tr("Reached waypoint %1").arg(wpr->seq));
     }
 }
 
@@ -292,7 +319,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 }
             }
         }
-        emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
+        emit updateStatusString(tr("New current waypoint %1").arg(wpc->seq));
         //emit update to UI widgets
         emit currentWaypointChanged(wpc->seq);
     }
