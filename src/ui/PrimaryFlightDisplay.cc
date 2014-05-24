@@ -110,6 +110,9 @@ const QString PrimaryFlightDisplay::compassWindNames[] = {
 PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *parent) :
     QWidget(parent),
 
+    _valuesChanged(false),
+    _valuesLastPainted(QGC::groundTimeMilliseconds()),
+
     uas(NULL),
 
     roll(0),
@@ -141,9 +144,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     instrumentOpagueBackground(QColor::fromHsvF(0, 0, 0.3, 1.0)),
 
     font("Bitstream Vera Sans"),
-    refreshTimer(new QTimer(this)),
-    _valuesChanged(false),
-    _valuesLastPainted(QGC::groundTimeMilliseconds())
+    refreshTimer(new QTimer(this))
 {
     Q_UNUSED(width);
     Q_UNUSED(height);
