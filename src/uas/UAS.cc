@@ -41,7 +41,7 @@
 * creating the UAS.
 */
 
-UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
+UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(id),
@@ -166,6 +166,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     lastSendTimeGPS(0),
     lastSendTimeSensors(0)
 {
+    moveToThread(thread);
+    waypointManager.moveToThread(thread);
+    paramMgr.moveToThread(thread);
+    statusTimeout->moveToThread(thread);
+
     for (unsigned int i = 0; i<255;++i)
     {
         componentID[i] = -1;
@@ -173,7 +178,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     }
 
     // Store a list of available actions for this UAS.
-    // Basically everything exposted as a SLOT with no return value or arguments.
+    // Basically everything exposed as a SLOT with no return value or arguments.
 
     QAction* newAction = new QAction(tr("Arm"), this);
     newAction->setToolTip(tr("Enable the UAS so that all actuators are online"));
@@ -364,34 +369,6 @@ void UAS::updateState()
             GAudioOutput::instance()->notifyNegative();
         }
     }
-
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_NONE 0
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_RATES 1
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_ATTITUDE 2
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_VELOCITY 3
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_POSITION 4
-//#define MAVLINK_OFFBOARD_CONTROL_FLAG_ARMED 0x10
-
-//#warning THIS IS A HUGE HACK AND SHOULD NEVER SHOW UP IN ANY GIT REPOSITORY
-//    mavlink_message_t message;
-
-//            mavlink_set_quad_swarm_roll_pitch_yaw_thrust_t sp;
-
-//            sp.group = 0;
-
-//            /* set rate mode, set zero rates and 20% throttle */
-//            sp.mode = MAVLINK_OFFBOARD_CONTROL_MODE_RATES | MAVLINK_OFFBOARD_CONTROL_FLAG_ARMED;
-
-//            sp.roll[0] = INT16_MAX * 0.0f;
-//            sp.pitch[0] = INT16_MAX * 0.0f;
-//            sp.yaw[0] = INT16_MAX * 0.0f;
-//            sp.thrust[0] = UINT16_MAX * 0.3f;
-
-
-//            /* send from system 200 and component 0 */
-//            mavlink_msg_set_quad_swarm_roll_pitch_yaw_thrust_encode(200, 0, &message, &sp);
-
-//            sendMessage(message);
 }
 
 /**

@@ -2,8 +2,8 @@
 
 #include <QDebug>
 
-SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
-    UAS(mavlink, id)
+SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, QThread* thread, int id) :
+    UAS(mavlink, thread, id)
 {
     widgetTimer = new QTimer (this);
     widgetTimer->setInterval(SLUGS_UPDATE_RATE);

@@ -31,7 +31,7 @@ class PxQuadMAV : public UAS
     Q_OBJECT
     Q_INTERFACES(UASInterface)
 public:
-    PxQuadMAV(MAVLinkProtocol* mavlink, int id);
+    PxQuadMAV(MAVLinkProtocol* mavlink, QThread* thread, int id);
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);

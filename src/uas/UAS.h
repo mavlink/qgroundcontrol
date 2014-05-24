@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UAS_H_
 #define _UAS_H_
 
+#include <QThread>
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
@@ -55,7 +56,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id = 0);
+    UAS(MAVLinkProtocol* protocol, QThread* thread, int id = 0);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
