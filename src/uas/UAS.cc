@@ -51,7 +51,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
-    statusTimeout(new QTimer(this)),
+    statusTimeout(new QTimer()),
 
     name(""),
     type(MAV_TYPE_GENERIC),
@@ -138,7 +138,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
-    waypointManager(this),
+    waypointManager(),
 
     attitudeKnown(false),
     attitudeStamped(false),
@@ -153,7 +153,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 
 
     paramsOnceRequested(false),
-    paramMgr(this),
+    paramMgr(),
     simulation(0),
 
     // The protected members.
@@ -180,17 +180,17 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     // Store a list of available actions for this UAS.
     // Basically everything exposed as a SLOT with no return value or arguments.
 
-    QAction* newAction = new QAction(tr("Arm"), this);
+    QAction* newAction = new QAction(tr("Arm"), thread);
     newAction->setToolTip(tr("Enable the UAS so that all actuators are online"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(armSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Disarm"), this);
+    newAction = new QAction(tr("Disarm"), thread);
     newAction->setToolTip(tr("Disable the UAS so that all actuators are offline"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(disarmSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle armed"), this);
+    newAction = new QAction(tr("Toggle armed"), thread);
     newAction->setToolTip(tr("Toggle between armed and disarmed"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
