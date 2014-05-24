@@ -314,8 +314,7 @@ void SerialLink::run()
                 }
             }
         }
-        //MG::SLEEP::msleep(SerialLink::poll_interval);
-        QGC::SLEEP::msleep(2);
+        QGC::SLEEP::msleep(SerialLink::poll_interval);
     } // end of forever
     
     if (m_port) {
