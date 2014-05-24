@@ -75,6 +75,7 @@ void QGCJSBSimLink::run()
 
     if (!mav) return;
     socket = new QUdpSocket(this);
+    socket->moveToThread(this);
     connectState = socket->bind(host, port);
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));

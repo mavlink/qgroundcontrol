@@ -65,6 +65,7 @@ MAVLinkProtocol::MAVLinkProtocol() :
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
     moveToThread(this);
+    heartbeatTimer.moveToThread(this);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(&heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer.start(1000/heartbeatRate);
