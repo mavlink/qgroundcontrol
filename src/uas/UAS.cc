@@ -138,7 +138,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
-    waypointManager(),
+    waypointManager(this),
 
     attitudeKnown(false),
     attitudeStamped(false),
@@ -153,7 +153,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 
 
     paramsOnceRequested(false),
-    paramMgr(),
+    paramMgr(this),
     simulation(0),
 
     // The protected members.
@@ -168,9 +168,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     _thread(thread)
 {
     moveToThread(thread);
-    waypointManager.moveToThread(thread);
-    paramMgr.moveToThread(thread);
-    statusTimeout.moveToThread(thread);
 
     for (unsigned int i = 0; i<255;++i)
     {
@@ -196,42 +193,42 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go home"), this);
+    newAction = new QAction(tr("Go home"), thread);
     newAction->setToolTip(tr("Command the UAS to return to its home position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(home()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Land"), this);
+    newAction = new QAction(tr("Land"), thread);
     newAction->setToolTip(tr("Command the UAS to land"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(land()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Launch"), this);
+    newAction = new QAction(tr("Launch"), thread);
     newAction->setToolTip(tr("Command the UAS to launch itself and begin its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(launch()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Resume"), this);
+    newAction = new QAction(tr("Resume"), thread);
     newAction->setToolTip(tr("Command the UAS to continue its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(go()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Stop"), this);
+    newAction = new QAction(tr("Stop"), thread);
     newAction->setToolTip(tr("Command the UAS to halt and hold position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(halt()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go autonomous"), this);
+    newAction = new QAction(tr("Go autonomous"), thread);
     newAction->setToolTip(tr("Set the UAS into an autonomous control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goAutonomous()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go manual"), this);
+    newAction = new QAction(tr("Go manual"), thread);
     newAction->setToolTip(tr("Set the UAS into a manual control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goManual()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle autonomy"), this);
+    newAction = new QAction(tr("Toggle autonomy"), thread);
     newAction->setToolTip(tr("Toggle between manual and full-autonomy"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
@@ -373,7 +370,6 @@ void UAS::updateState()
             GAudioOutput::instance()->notifyNegative();
         }
     }
-    qDebug() << "UPDATE STATE:" << (heartbeatInterval / 1000) << "milliseconds, LOST:" << connectionLost;
 }
 
 /**
