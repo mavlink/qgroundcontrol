@@ -44,7 +44,7 @@ Q_DECLARE_METATYPE(mavlink_message_t)
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
 MAVLinkProtocol::MAVLinkProtocol() :
-    heartbeatTimer(),
+    heartbeatTimer(NULL),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
     m_heartbeatsEnabled(true),
     m_multiplexingEnabled(false),
@@ -58,17 +58,14 @@ MAVLinkProtocol::MAVLinkProtocol() :
     m_actionGuardEnabled(false),
     m_actionRetransmissionTimeout(100),
     versionMismatchIgnore(false),
-    systemId(QGC::defaultSystemId)
+    systemId(QGC::defaultSystemId),
+    _should_exit(false)
 {
     qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
     moveToThread(this);
-    heartbeatTimer.moveToThread(this);
-    // Start heartbeat timer, emitting a heartbeat at the configured rate
-    connect(&heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
-    heartbeatTimer.start(1000/heartbeatRate);
 
     // All the *Counter variables are not initialized here, as they should be initialized
     // on a per-link basis before those links are used. @see resetMetadataForLink().
@@ -171,7 +168,7 @@ MAVLinkProtocol::~MAVLinkProtocol()
     }
 
     // Tell the thread to exit
-    quit();
+    _should_exit = true;
     // Wait for it to exit
     wait();
 }
@@ -182,7 +179,22 @@ MAVLinkProtocol::~MAVLinkProtocol()
  **/
 void MAVLinkProtocol::run()
 {
-    exec();
+    heartbeatTimer = new QTimer();
+    heartbeatTimer->moveToThread(this);
+    // Start heartbeat timer, emitting a heartbeat at the configured rate
+    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
+    heartbeatTimer->start(1000/heartbeatRate);
+
+    while(!_should_exit) {
+
+        if (isFinished()) {
+            qDebug() << "MAVLINK WORKER DONE!";
+            return;
+        }
+
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(2);
+    }
 }
 
 QString MAVLinkProtocol::getLogfileName()
@@ -782,7 +794,7 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 void MAVLinkProtocol::setHeartbeatRate(int rate)
 {
     heartbeatRate = rate;
-    heartbeatTimer.setInterval(1000/heartbeatRate);
+    heartbeatTimer->setInterval(1000/heartbeatRate);
 }
 
 /** @return heartbeat rate in Hertz */
