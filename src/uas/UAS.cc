@@ -51,7 +51,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
-    statusTimeout(new QTimer()),
+    statusTimeout(thread),
 
     name(""),
     type(MAV_TYPE_GENERIC),
@@ -164,12 +164,13 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0)
+    lastSendTimeSensors(0),
+    _thread(thread)
 {
     moveToThread(thread);
     waypointManager.moveToThread(thread);
     paramMgr.moveToThread(thread);
-    statusTimeout->moveToThread(thread);
+    statusTimeout.moveToThread(thread);
 
     for (unsigned int i = 0; i<255;++i)
     {
@@ -237,9 +238,9 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 
     color = UASInterface::getNextColor();
     setBatterySpecs(QString(""));
-    connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
+    connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
-    statusTimeout->start(500);
+    statusTimeout.start(500);
     readSettings();
     //need to init paramMgr after readSettings have been loaded, to properly set autopilot and so forth
     paramMgr.initWithUAS(this);
@@ -255,8 +256,11 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 UAS::~UAS()
 {
     writeSettings();
+
+    _thread->quit();
+    _thread->wait();
+
     delete links;
-    delete statusTimeout;
     delete simulation;
 }
 
@@ -369,6 +373,7 @@ void UAS::updateState()
             GAudioOutput::instance()->notifyNegative();
         }
     }
+    qDebug() << "UPDATE STATE:" << (heartbeatInterval / 1000) << "milliseconds, LOST:" << connectionLost;
 }
 
 /**

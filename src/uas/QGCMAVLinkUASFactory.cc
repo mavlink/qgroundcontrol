@@ -32,8 +32,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
 
-        mav->moveToThread(worker);
-
         // Connect this robot to the UAS object
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
 #ifdef QGC_PROTOBUF_ENABLED
@@ -47,8 +45,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         PxQuadMAV* mav = new PxQuadMAV(mavlink, worker, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
-
-        mav->moveToThread(worker);
 
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
@@ -67,8 +63,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
 
-        mav->moveToThread(worker);
-
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
         // else the slot of the parent object is called (and thus the special
@@ -82,8 +76,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, worker, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
-
-        mav->moveToThread(worker);
 
         // Connect this robot to the UAS object
         // it is IMPORTANT here to use the right object type,
@@ -121,6 +113,10 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
     break;
     }
 
+    // Get the UAS ready
+    worker->start(QThread::HighPriority);
+    connect(uas, SIGNAL(destroyed()), worker, SLOT(quit()));
+
     // Set the autopilot type
     uas->setAutopilotType((int)heartbeat->autopilot);
 
@@ -129,9 +125,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 
     // Now add UAS to "official" list, which makes the whole application aware of it
     UASManager::instance()->addUAS(uas);
-
-    worker->start(QThread::HighPriority);
-    connect(uas, SIGNAL(destroyed()), worker, SLOT(quit()));
 
     return uas;
 }

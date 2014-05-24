@@ -1,12 +1,24 @@
 #include "QGCUASWorker.h"
 
 #include <QGC.h>
+#include <QCoreApplication>
+#include <QDebug>
 
-QGCUASWorker::QGCUASWorker() : QThread()
+QGCUASWorker::QGCUASWorker() : QThread(),
+    _should_exit(false)
 {
+}
+
+void QGCUASWorker::quit()
+{
+    _should_exit = true;
 }
 
 void QGCUASWorker::run()
 {
-    QGC::SLEEP::msleep(100);
+    while(!_should_exit) {
+
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(2);
+    }
 }
