@@ -80,12 +80,15 @@ void QGCFlightGearLink::run()
 
     if (!mav) return;
     socket = new QUdpSocket(this);
+    socket->moveToThread(this);
     connectState = socket->bind(host, port);
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     process = new QProcess(this);
+    process->moveToThread(this);
     terraSync = new QProcess(this);
+    terraSync->moveToThread(this);
 
     connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     connect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
