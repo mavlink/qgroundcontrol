@@ -141,7 +141,9 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     instrumentOpagueBackground(QColor::fromHsvF(0, 0, 0.3, 1.0)),
 
     font("Bitstream Vera Sans"),
-    refreshTimer(new QTimer(this))
+    refreshTimer(new QTimer(this)),
+    _valuesChanged(false),
+    _valuesLastPainted(QGC::groundTimeMilliseconds())
 {
     Q_UNUSED(width);
     Q_UNUSED(height);
@@ -159,7 +161,7 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
     //    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(checkUpdate()));
 }
 
 PrimaryFlightDisplay::~PrimaryFlightDisplay()
@@ -224,6 +226,15 @@ void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
     doPaint();
 }
 
+void PrimaryFlightDisplay::checkUpdate()
+{
+    if (uas && (_valuesChanged || (QGC::groundTimeMilliseconds() - _valuesLastPainted) > 260)) {
+        update();
+        _valuesChanged = false;
+        _valuesLastPainted = QGC::groundTimeMilliseconds();
+    }
+}
+
 ///*
 // * Interface towards qgroundcontrol
 // */
@@ -280,24 +291,45 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
+
         // Called from UAS.cc l. 616
         if (isinf(roll)) {
             this->roll = std::numeric_limits<double>::quiet_NaN();
         } else {
-            this->roll = roll * (180.0 / M_PI);
+
+            float rolldeg = roll * (180.0 / M_PI);
+
+            if (fabsf(roll - rolldeg) > 2.5f) {
+                _valuesChanged = true;
+            }
+
+            this->roll = rolldeg;
         }
 
         if (isinf(pitch)) {
             this->pitch = std::numeric_limits<double>::quiet_NaN();
         } else {
-            this->pitch = pitch * (180.0 / M_PI);
+
+            float pitchdeg = pitch * (180.0 / M_PI);
+
+            if (fabsf(pitch - pitchdeg) > 2.5f) {
+                _valuesChanged = true;
+            }
+
+            this->pitch = pitchdeg;
         }
 
         if (isinf(yaw)) {
             this->heading = std::numeric_limits<double>::quiet_NaN();
         } else {
+
             yaw = yaw * (180.0 / M_PI);
             if (yaw<0) yaw+=360;
+
+            if (fabsf(heading - yaw) > 10.0f) {
+                _valuesChanged = true;
+            }
+
             this->heading = yaw;
         }
 
@@ -314,6 +346,14 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
 
+    if (fabsf(groundSpeed - _groundSpeed) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(airSpeed - _airSpeed) > 1.0f) {
+        _valuesChanged = true;
+    }
+
     groundSpeed = _groundSpeed;
     airSpeed = _airSpeed;
 }
@@ -321,6 +361,19 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
 void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp) {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
+
+    if (fabsf(altitudeAMSL - _altitudeAMSL) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(altitudeRelative - _altitudeRelative) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(climbRate - _climbRate) > 0.5f) {
+        _valuesChanged = true;
+    }
+
     altitudeAMSL = _altitudeAMSL;
     altitudeRelative = _altitudeRelative;
     climbRate = _climbRate;

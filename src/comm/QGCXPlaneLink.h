@@ -210,6 +210,7 @@ protected:
     quint64 simUpdateLastGroundTruth;
     float simUpdateHz;
     bool _sensorHilEnabled;
+    bool _should_exit;
 
     void setName(QString name);
 };
