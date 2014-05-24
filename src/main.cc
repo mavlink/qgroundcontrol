@@ -64,6 +64,8 @@ void msgHandler( QtMsgType type, const char* msg )
 /// we don't want asserts to pop a dialog on windows.
 int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
+    Q_UNUSED(reportType);
+    
     std::cerr << message << std::endl;  // Output message to stderr
     *returnValue = 0;                   // Don't break into debugger
     return true;                        // We handled this fully ourselves
