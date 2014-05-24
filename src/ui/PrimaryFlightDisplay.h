@@ -27,7 +27,13 @@ public slots:
     void forgetUAS(UASInterface* uas);
     void setActiveUAS(UASInterface* uas);
 
+    void checkUpdate();
+
 protected:
+
+    bool _valuesChanged;
+    quint64 _valuesLastPainted;
+
     enum Layout {
         COMPASS_INTEGRATED,
         COMPASS_SEPARATED               // For a very high container. Feature panels are at bottom.
