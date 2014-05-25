@@ -182,6 +182,7 @@ DebugBuild {
 
     HEADERS += \
         src/qgcunittest/AutoTest.h \
+        src/qgcunittest/UASUnitTest.h \
         src/qgcunittest/MockUASManager.h \
         src/qgcunittest/MockUAS.h \
         src/qgcunittest/MockQGCUASParamManager.h \
@@ -189,6 +190,7 @@ DebugBuild {
         src/qgcunittest/FlightModeConfigTest.h
 
     SOURCES += \
+        src/qgcunittest/UASUnitTest.cc \
         src/qgcunittest/MockUASManager.cc \
         src/qgcunittest/MockUAS.cc \
         src/qgcunittest/MockQGCUASParamManager.cc \
