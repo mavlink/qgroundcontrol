@@ -760,6 +760,7 @@ void MainWindow::loadDockWidget(const QString& name)
 {
     if(menuActionHelper->containsDockWidget(currentView, name))
         return;
+
     if (name.startsWith("HIL_CONFIG"))
     {
         //It's a HIL widget.
@@ -826,7 +827,7 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
