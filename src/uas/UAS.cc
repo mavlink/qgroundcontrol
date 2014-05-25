@@ -155,6 +155,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     paramsOnceRequested(false),
     paramMgr(this),
     simulation(0),
+    _thread(thread),
 
     // The protected members.
     connectionLost(false),
@@ -164,8 +165,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0),
-    _thread(thread)
+    lastSendTimeSensors(0)
 {
     moveToThread(thread);
 

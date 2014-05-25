@@ -187,7 +187,6 @@ DebugBuild {
         src/qgcunittest/MockUAS.h \
         src/qgcunittest/MockQGCUASParamManager.h \
         src/qgcunittest/MultiSignalSpy.h \
-        src/qgcunittest/TCPLinkTest.h \
         src/qgcunittest/FlightModeConfigTest.h
 
     SOURCES += \
@@ -196,7 +195,6 @@ DebugBuild {
         src/qgcunittest/MockUAS.cc \
         src/qgcunittest/MockQGCUASParamManager.cc \
         src/qgcunittest/MultiSignalSpy.cc \
-        src/qgcunittest/TCPLinkTest.cc \
         src/qgcunittest/FlightModeConfigTest.cc
 }
 
@@ -563,7 +561,8 @@ HEADERS += \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
-    src/uas/QGCUASWorker.h
+    src/uas/QGCUASWorker.h \
+    src/CmdLineOptParser.h
 
 SOURCES += \
     src/main.cc \
@@ -747,4 +746,5 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp \
-    src/uas/QGCUASWorker.cc
+    src/uas/QGCUASWorker.cc \
+    src/CmdLineOptParser.cc
