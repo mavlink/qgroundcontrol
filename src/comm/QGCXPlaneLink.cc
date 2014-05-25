@@ -57,7 +57,8 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLastText(QGC::groundTimeMilliseconds()),
     simUpdateLastGroundTruth(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    _sensorHilEnabled(true)
+    _sensorHilEnabled(true),
+    _should_exit(false)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
@@ -75,7 +76,7 @@ QGCXPlaneLink::~QGCXPlaneLink()
 {
     storeSettings();
     // Tell the thread to exit
-    quit();
+    _should_exit = true;
     // Wait for it to exit
     wait();
 
@@ -216,7 +217,10 @@ void QGCXPlaneLink::run()
 
     writeBytes((const char*)&ip, sizeof(ip));
 
-    exec();
+    while(!_should_exit) {
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(5);
+    }
 }
 
 void QGCXPlaneLink::setPort(int localPort)
