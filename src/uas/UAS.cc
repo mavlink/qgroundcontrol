@@ -1102,13 +1102,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // Check that this message applies to the UAS.
-            if(mc.target_system == mavlink->getSystemId() && mc.target_component == mavlink->getComponentId())
+            if(mc.target_system == mavlink->getSystemId())
             {
+
+                if (mc.target_component != mavlink->getComponentId()) {
+                    qDebug() << "The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.";
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << mc.target_component;
+                }
+
                 waypointManager.handleWaypointCount(message.sysid, message.compid, mc.count);
             }
             else
             {
-                qDebug() << tr("Received mission count message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mc.target_system);
+                qDebug() << QString("Received mission count message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mc.target_system);
             }
         }
             break;
@@ -1127,13 +1133,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // Check that the item pertains to this UAS.
-            if(mi.target_system == mavlink->getSystemId() && mi.target_component == mavlink->getComponentId())
+            if(mi.target_system == mavlink->getSystemId())
             {
+
+                if (mi.target_component != mavlink->getComponentId()) {
+                    qDebug() << "The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.";
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << mi.target_component;
+                }
+
                 waypointManager.handleWaypoint(message.sysid, message.compid, &mi);
             }
             else
             {
-                qDebug() << tr("Received mission item message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mi.target_system);
+                qDebug() << QString("Received mission item message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mi.target_system);
             }
         }
             break;
@@ -1152,13 +1164,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // Check that the ack pertains to this UAS.
-            if(ma.target_system == mavlink->getSystemId() && ma.target_component == mavlink->getComponentId())
+            if(ma.target_system == mavlink->getSystemId())
             {
+
+                if (ma.target_component != mavlink->getComponentId()) {
+                    qDebug() << tr("The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.");
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << ma.target_component;
+                }
+
                 waypointManager.handleWaypointAck(message.sysid, message.compid, &ma);
             }
             else
             {
-                qDebug() << tr("Received mission ack message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(ma.target_system);
+                qDebug() << QString("Received mission ack message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(ma.target_system);
             }
         }
             break;
@@ -1177,13 +1195,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             // Check that the request pertains to this UAS.
-            if(mr.target_system == mavlink->getSystemId() && mr.target_component == mavlink->getComponentId())
+            if(mr.target_system == mavlink->getSystemId())
             {
+
+                if (mr.target_component != mavlink->getComponentId()) {
+                    qDebug() << QString("The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.");
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << mr.target_component;
+                }
+
                 waypointManager.handleWaypointRequest(message.sysid, message.compid, &mr);
             }
             else
             {
-                qDebug() << tr("Received mission request message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mr.target_system);
+                qDebug() << QString("Received mission request message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mr.target_system);
             }
         }
             break;
