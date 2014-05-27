@@ -17,6 +17,7 @@
 #include <QSettings>
 #include <QDesktopServices>
 #include <QtEndian>
+#include <QMetaType>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -36,15 +37,16 @@
 #include <google/protobuf/descriptor.h>
 #endif
 
+Q_DECLARE_METATYPE(mavlink_message_t)
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
 MAVLinkProtocol::MAVLinkProtocol() :
-    heartbeatTimer(new QTimer(this)),
+    heartbeatTimer(NULL),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-    m_heartbeatsEnabled(false),
+    m_heartbeatsEnabled(true),
     m_multiplexingEnabled(false),
     m_authEnabled(false),
     m_loggingEnabled(false),
@@ -56,14 +58,14 @@ MAVLinkProtocol::MAVLinkProtocol() :
     m_actionGuardEnabled(false),
     m_actionRetransmissionTimeout(100),
     versionMismatchIgnore(false),
-    systemId(QGC::defaultSystemId)
+    systemId(QGC::defaultSystemId),
+    _should_exit(false)
 {
+    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
+
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
-    //start(QThread::LowPriority);
-    // Start heartbeat timer, emitting a heartbeat at the configured rate
-    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
-    heartbeatTimer->start(1000/heartbeatRate);
+    moveToThread(this);
 
     // All the *Counter variables are not initialized here, as they should be initialized
     // on a per-link basis before those links are used. @see resetMetadataForLink().
@@ -76,6 +78,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
             lastIndex[i][j] = -1;
         }
     }
+
+    start(QThread::HighPriority);
 
     emit versionCheckChanged(m_enable_version_check);
 }
@@ -161,6 +165,35 @@ MAVLinkProtocol::~MAVLinkProtocol()
         }
         delete m_logfile;
         m_logfile = NULL;
+    }
+
+    // Tell the thread to exit
+    _should_exit = true;
+    // Wait for it to exit
+    wait();
+}
+
+/**
+ * @brief Runs the thread
+ *
+ **/
+void MAVLinkProtocol::run()
+{
+    heartbeatTimer = new QTimer();
+    heartbeatTimer->moveToThread(this);
+    // Start heartbeat timer, emitting a heartbeat at the configured rate
+    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
+    heartbeatTimer->start(1000/heartbeatRate);
+
+    while(!_should_exit) {
+
+        if (isFinished()) {
+            qDebug() << "MAVLINK WORKER DONE!";
+            return;
+        }
+
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(2);
     }
 }
 

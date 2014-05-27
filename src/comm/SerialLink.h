@@ -72,6 +72,9 @@ public:
     /** @brief Get a list of the currently available ports */
     QList<QString> getCurrentPorts();
 
+    /** @brief Check if the current port is a bootloader */
+    bool isBootloader();
+
     void requestReset();
 
     bool isConnected() const;

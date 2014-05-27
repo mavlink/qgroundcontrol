@@ -52,7 +52,7 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         // Create action to open this menu
         // Create configuration action for this link
         // Connect the current UAS
-        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", link);
+        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
         setLinkName(link->getName());
 
         setupPortList();
@@ -170,7 +170,6 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 
         ui.dataBitsSpinBox->setValue(this->link->getDataBits());
         ui.stopBitsSpinBox->setValue(this->link->getStopBits());
-
         portCheckTimer = new QTimer(this);
         portCheckTimer->setInterval(1000);
         connect(portCheckTimer, SIGNAL(timeout()), this, SLOT(setupPortList()));

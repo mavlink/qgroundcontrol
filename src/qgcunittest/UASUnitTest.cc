@@ -1,6 +1,8 @@
 #include "UASUnitTest.h"
 #include <stdio.h>
 #include <QObject>
+#include <QThread>
+
 UASUnitTest::UASUnitTest()
 {
 }
@@ -8,7 +10,7 @@ UASUnitTest::UASUnitTest()
 void UASUnitTest::init()
 {
     mav = new MAVLinkProtocol();
-    uas = new UAS(mav, UASID);
+    uas = new UAS(mav, QThread::currentThread(), UASID);
     uas->deleteSettings();
 }
 //this function is called after every test
@@ -24,7 +26,7 @@ void UASUnitTest::cleanup()
 void UASUnitTest::getUASID_test()
 {
     // Test a default ID of zero is assigned
-    UAS* uas2 = new UAS(mav);
+    UAS* uas2 = new UAS(mav, QThread::currentThread());
     QCOMPARE(uas2->getUASID(), 0);
     delete uas2;
 
@@ -49,7 +51,7 @@ void UASUnitTest::getUASName_test()
 
 void UASUnitTest::getUpTime_test()
 {
-    UAS* uas2 = new UAS(mav);
+    UAS* uas2 = new UAS(mav, QThread::currentThread());
     // Test that the uptime starts at zero to a
     // precision of seconds
     QCOMPARE(floor(uas2->getUptime()/1000.0), 0.0);
@@ -73,15 +75,20 @@ void UASUnitTest::getCommunicationStatus_test()
 void UASUnitTest::filterVoltage_test()
 {
     float verificar=uas->filterVoltage(0.4f);
-    // Verify that upon construction the Comm status is disconnected
-    QCOMPARE(verificar, 8.52f);
+
+    // We allow the voltage returned to be within a small delta
+    const float allowedDelta = 0.05f;
+    const float desiredVoltage = 7.36f;
+    QVERIFY(verificar > (desiredVoltage - allowedDelta) && verificar < (desiredVoltage + allowedDelta));
 }
+
 void UASUnitTest:: getAutopilotType_test()
 {
     int type = uas->getAutopilotType();
     // Verify that upon construction the autopilot is set to -1
     QCOMPARE(type, -1);
 }
+
 void UASUnitTest::setAutopilotType_test()
 {
     uas->setAutopilotType(2);
@@ -276,7 +283,7 @@ void UASUnitTest::signalWayPoint_test()
     delete uas;// delete(destroyed) uas for validating
     uas = NULL;
     QCOMPARE(spyDestroyed.count(), 1);// count destroyed uas should are 1
-    uas = new UAS(mav,UASID);
+    uas = new UAS(mav, QThread::currentThread(), UASID);
     QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged()));
     QCOMPARE(spy2.count(), 0);
     Waypoint* wp2 = new Waypoint(0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,false, false, MAV_FRAME_GLOBAL, MAV_CMD_MISSION_START, "blah");

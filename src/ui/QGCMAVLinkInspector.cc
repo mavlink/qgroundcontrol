@@ -12,6 +12,7 @@ const unsigned int QGCMAVLinkInspector::updateInterval = 1000U;
 
 QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *parent) :
     QWidget(parent),
+    _protocol(protocol),
     selectedSystemID(0),
     selectedComponentID(0),
     ui(new Ui::QGCMAVLinkInspector)
@@ -36,13 +37,23 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     header << tr("Type");
     ui->treeWidget->setHeaderLabels(header);
 
+    // Set up the column headers for the rate listing
+    QStringList rateHeader;
+    rateHeader << tr("Name");
+    rateHeader << tr("#ID");
+    rateHeader << tr("Rate");
+    ui->rateTreeWidget->setHeaderLabels(rateHeader);
+    connect(ui->rateTreeWidget, SIGNAL(itemChanged(QTreeWidgetItem*,int)),
+            this, SLOT(rateTreeItemChanged(QTreeWidgetItem*,int)));
+    ui->rateTreeWidget->hide();
+
     // Connect the UI
     connect(ui->systemComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuSystem(int)));
     connect(ui->componentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(selectDropDownMenuComponent(int)));
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clearView()));
 
     // Connect external connections
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
+//    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addSystem(UASInterface*)));
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 
     // Attach the UI's refresh rate to a timer.
@@ -59,29 +70,31 @@ void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
 {
     selectedSystemID = ui->systemComboBox->itemData(dropdownid).toInt();
     rebuildComponentList();
+
+    if (selectedSystemID != 0 && selectedComponentID != 0) {
+        ui->rateTreeWidget->show();
+    } else {
+        ui->rateTreeWidget->hide();
+    }
 }
 
 void QGCMAVLinkInspector::selectDropDownMenuComponent(int dropdownid)
 {
     selectedComponentID = ui->componentComboBox->itemData(dropdownid).toInt();
+
+    if (selectedSystemID != 0 && selectedComponentID != 0) {
+        ui->rateTreeWidget->show();
+    } else {
+        ui->rateTreeWidget->hide();
+    }
 }
 
 void QGCMAVLinkInspector::rebuildComponentList()
 {
     ui->componentComboBox->clear();
+    components.clear();
 
-    // Fill
-    UASInterface* uas = UASManager::instance()->getUASForId(selectedSystemID);
-    if (uas)
-    {
-        QMap<int, QString> components = uas->getComponents();
-
-        foreach (int id, components.keys())
-        {
-            QString name = components.value(id);
-            ui->componentComboBox->addItem(name, id);
-        }
-    }
+    ui->componentComboBox->addItem(tr("All"), 0);
 }
 
 void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& name)
@@ -100,10 +113,12 @@ void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& na
 void QGCMAVLinkInspector::clearView()
 {
     memset(receivedMessages, 0xFF, sizeof(mavlink_message_t)*256);
+    onboardMessageInterval.clear();
 	lastMessageUpdate.clear();
 	messagesHz.clear();
     treeWidgetItems.clear();
     ui->treeWidget->clear();
+    ui->rateTreeWidget->clear();
 }
 
 void QGCMAVLinkInspector::refreshView()
@@ -145,6 +160,45 @@ void QGCMAVLinkInspector::refreshView()
             updateField(msg->msgid, i, message->child(i));
         }
     }
+
+    if (selectedSystemID == 0 || selectedComponentID == 0)
+    {
+        return;
+    }
+
+    for (int i = 0; i < 256; ++i)//mavlink_message_t msg, receivedMessages)
+    {
+        const char* msgname = messageInfo[i].name;
+
+        int namelen = strnlen(msgname, 5);
+
+        if (namelen < 3) {
+            continue;
+        }
+
+        if (!strcmp(msgname, "EMPTY")) {
+            continue;
+        }
+
+        // Update the tree view
+        QString messageName("%1");
+        messageName = messageName.arg(msgname);
+        if (!rateTreeWidgetItems.contains(i))
+        {
+            QStringList fields;
+            fields << messageName;
+            fields << QString("%1").arg(i);
+            fields << "OFF / --- Hz";
+            QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
+            widget->setFlags(widget->flags() | Qt::ItemIsEditable);
+            rateTreeWidgetItems.insert(i, widget);
+            ui->rateTreeWidget->addTopLevelItem(widget);
+        }
+
+        // Set Hz
+        //QTreeWidgetItem* message = rateTreeWidgetItems.value(i);
+        //message->setData(0, Qt::DisplayRole, QVariant(messageName));
+    }
 }
 
 void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t message)
@@ -155,6 +209,17 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
     // Only overwrite if system filter is set
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
+    // Add not yet seen systems / components
+    if (!systems.contains(message.sysid)) {
+        systems.insert(message.sysid, message.sysid);
+        ui->systemComboBox->addItem(tr("MAV%1").arg(message.sysid), message.sysid);
+    }
+
+    if (!components.contains(message.compid)) {
+        components.insert(message.compid, message.compid);
+        ui->componentComboBox->addItem(tr("COMP%1").arg(message.compid), message.compid);
+    }
+
     quint64 receiveTime = QGC::groundTimeMilliseconds();
     if (lastMessageUpdate.contains(message.msgid))
     {
@@ -163,6 +228,54 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
     }
 
     lastMessageUpdate.insert(message.msgid, receiveTime);
+
+    if (selectedSystemID == 0 || selectedComponentID == 0) {
+        return;
+    }
+
+    switch (message.msgid) {
+        case MAVLINK_MSG_ID_DATA_STREAM:
+            {
+                mavlink_data_stream_t stream;
+                mavlink_msg_data_stream_decode(&message, &stream);
+                onboardMessageInterval.insert(stream.stream_id, stream.message_rate);
+            }
+            break;
+
+    }
+}
+
+void QGCMAVLinkInspector::changeStreamInterval(int msgid, int interval) {
+    //REQUEST_DATA_STREAM
+    if (selectedSystemID == 0 || selectedComponentID == 0) {
+        return;
+    }
+
+    mavlink_request_data_stream_t stream;
+    stream.target_system = selectedSystemID;
+    stream.target_component = selectedComponentID;
+    stream.req_stream_id = msgid;
+    stream.req_message_rate = interval;
+    stream.start_stop = (interval > 0);
+
+    mavlink_message_t msg;
+    mavlink_msg_request_data_stream_encode(_protocol->getSystemId(), _protocol->getComponentId(), &msg, &stream);
+
+    _protocol->sendMessage(msg);
+}
+
+void QGCMAVLinkInspector::rateTreeItemChanged(QTreeWidgetItem* paramItem, int column)
+{
+    if (paramItem && column > 0) {
+
+        int key = paramItem->data(1, Qt::DisplayRole).toInt();
+        QVariant value = paramItem->data(2, Qt::DisplayRole);
+        float interval = 1000 / value.toFloat();
+
+        qDebug() << "Stream " << key << "interval" << interval;
+
+        changeStreamInterval(key, interval);
+    }
 }
 
 QGCMAVLinkInspector::~QGCMAVLinkInspector()

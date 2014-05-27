@@ -71,7 +71,7 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     channelNames << "Yaw / Rudder";
     channelNames << "Throttle";
     channelNames << "Main Mode Switch";
-    channelNames << "Assist Switch";
+    channelNames << "Posctl Switch";
     channelNames << "Loiter Switch";
     channelNames << "Return Switch";
     channelNames << "Flaps";
@@ -202,8 +202,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->yawSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setYawChan(int)));
     connect(ui->throttleSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setThrottleChan(int)));
     connect(ui->modeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setModeChan(int)));
-    connect(ui->assistSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAssistChan(int)));
-    connect(ui->missionSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setMissionChan(int)));
+    connect(ui->posctlSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAssistChan(int)));
+    connect(ui->loiterSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setMissionChan(int)));
     connect(ui->returnSwSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setReturnChan(int)));
     connect(ui->flapsSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setFlapsChan(int)));
     connect(ui->aux1SpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAux1Chan(int)));
@@ -215,8 +215,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->invertCheckBox_3, SIGNAL(clicked(bool)), this, SLOT(setYawInverted(bool)));
     connect(ui->invertCheckBox_4, SIGNAL(clicked(bool)), this, SLOT(setThrottleInverted(bool)));
     connect(ui->invertCheckBox_5, SIGNAL(clicked(bool)), this, SLOT(setModeInverted(bool)));
-    connect(ui->assistSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAssistInverted(bool)));
-    connect(ui->missionSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setMissionInverted(bool)));
+    connect(ui->posctlSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAssistInverted(bool)));
+    connect(ui->loiterSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setMissionInverted(bool)));
     connect(ui->returnSwInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setReturnInverted(bool)));
     connect(ui->flapsInvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setFlapsInverted(bool)));
     connect(ui->aux1InvertCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAux1Inverted(bool)));
@@ -227,8 +227,8 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->yawButton, SIGNAL(clicked()), this, SLOT(identifyYawChannel()));
     connect(ui->throttleButton, SIGNAL(clicked()), this, SLOT(identifyThrottleChannel()));
     connect(ui->modeButton, SIGNAL(clicked()), this, SLOT(identifyModeChannel()));
-    connect(ui->assistSwButton, SIGNAL(clicked()), this, SLOT(identifyAssistChannel()));
-    connect(ui->missionSwButton, SIGNAL(clicked()), this, SLOT(identifyMissionChannel()));
+    connect(ui->posctlSwButton, SIGNAL(clicked()), this, SLOT(identifyAssistChannel()));
+    connect(ui->loiterSwButton, SIGNAL(clicked()), this, SLOT(identifyMissionChannel()));
     connect(ui->returnSwButton, SIGNAL(clicked()), this, SLOT(identifyReturnChannel()));
     connect(ui->flapsButton, SIGNAL(clicked()), this, SLOT(identifyFlapsChannel()));
     connect(ui->aux1Button, SIGNAL(clicked()), this, SLOT(identifyAux1Channel()));
@@ -430,12 +430,12 @@ void QGCPX4VehicleConfig::setTrimPositions()
 
     while (!throttleDone) {
         // Set trim to min if stick is close to min
-        if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 100) {
+        if (abs(rcValue[throttleMap] - rcMin[throttleMap]) < 200) {
             rcTrim[throttleMap] = rcMin[throttleMap];   // throttle
             throttleDone = true;
         }
         // Set trim to max if stick is close to max
-        else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 100) {
+        else if (abs(rcValue[throttleMap] - rcMax[throttleMap]) < 200) {
             rcTrim[throttleMap] = rcMax[throttleMap];   // throttle
             throttleDone = true;
         }
@@ -445,9 +445,11 @@ void QGCPX4VehicleConfig::setTrimPositions()
             QMessageBox warnMsgBox;
             warnMsgBox.setText(tr("Throttle Stick Trim Position Invalid"));
             warnMsgBox.setInformativeText(tr("The throttle stick is not in the min position. Please set it to the zero throttle position and then click OK."));
-            warnMsgBox.setStandardButtons(QMessageBox::Ok);
+            warnMsgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Abort);
             warnMsgBox.setDefaultButton(QMessageBox::Ok);
-            (void)warnMsgBox.exec();
+            if (warnMsgBox.exec() == QMessageBox::Abort) {
+                return;
+            }
             // wait long enough to get some data
             QGC::SLEEP::msleep(500);
         }
@@ -492,8 +494,8 @@ void QGCPX4VehicleConfig::detectChannelInversion(int aert_index)
     instructions << "YAW: Move stick left";
     instructions << "THROTTLE: Move stick down";
     instructions << "MODE SWITCH: Push down / towards you";
-    instructions << "ASSISTED SWITCH: Push down / towards you";
-    instructions << "MISSION SWITCH: Push down / towards you";
+    instructions << "POSITION CONTROL SWITCH: Push down / towards you";
+    instructions << "LOITER SWITCH: Push down / towards you";
     instructions << "RETURN SWITCH: Push down / towards you";
     instructions << "FLAPS: Push down / towards you or turn dial to the leftmost position";
     instructions << "AUX1: Push down / towards you or turn dial to the leftmost position";
@@ -534,7 +536,7 @@ void QGCPX4VehicleConfig::startCalibrationRC()
     configEnabled = true;
 
     QMessageBox::warning(0,tr("Safety Warning"),
-                         tr("Starting RC calibration.\n\nEnsure that motor power is disconnected, all props are removed, RC transmitter and receiver are powered and connected.\n\nReset transmitter trims to center, then click OK to continue"));
+                         tr("Starting RC calibration.\n\nEnsure RC transmitter and receiver are powered and connected. It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\nReset transmitter trims to center, then click OK to continue"));
 
     //go ahead and try to map first 8 channels, now that user can skip channels
     for (int i = 0; i < 8; i++) {
@@ -581,12 +583,25 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     if (!calibrationEnabled)
         return;
 
+    // Check where the throttle is
+    while (rcValue[rcMapping[3]] < 1300 || rcValue[rcMapping[3]] > 1700) {
+        // Force user to center the throttle
+        msgBox.setText(tr("Please center the throttle stick"));
+        msgBox.setInformativeText(tr("The stick should be roughly centered - the exact position is not relevant."));
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);//allow user to cancel upload after reviewing values
+        int msgBoxResult = msgBox.exec();
+
+        if (QMessageBox::Cancel == msgBoxResult) {
+            return; // abort
+        }
+    }
+
     // Try to identify inverted channels, but only for R/P/Y/T
     for (int i = 0; i < 4; i++) {
         detectChannelInversion(i);
     }
 
-    QMessageBox::information(0,"Trims","Ensure THROTTLE is in the LOWEST position and roll / pitch / yaw are CENTERED. Click OK to continue");
+    QMessageBox::information(0,"Trims","Ensure THROTTLE is in the LOW THROTTLE / MOTOR OFF position and roll / pitch / yaw are CENTERED. Click OK to continue");
 
     calibrationEnabled = false;
     configEnabled = false;
@@ -1315,8 +1330,8 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     paramMgr->setPendingParam(0, "RC_MAP_YAW", (int32_t)(rcMapping[2]+1));
     paramMgr->setPendingParam(0, "RC_MAP_THROTTLE", (int32_t)(rcMapping[3]+1));
     paramMgr->setPendingParam(0, "RC_MAP_MODE_SW", (int32_t)(rcMapping[4]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_ASSIST_SW", (int32_t)(rcMapping[5]+1));
-    paramMgr->setPendingParam(0, "RC_MAP_MISSIO_SW", (int32_t)(rcMapping[6]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_POSCTL_SW", (int32_t)(rcMapping[5]+1));
+    paramMgr->setPendingParam(0, "RC_MAP_LOITER_SW", (int32_t)(rcMapping[6]+1));
     paramMgr->setPendingParam(0, "RC_MAP_RETURN_SW", (int32_t)(rcMapping[7]+1));
     paramMgr->setPendingParam(0, "RC_MAP_FLAPS", (int32_t)(rcMapping[8]+1));
     paramMgr->setPendingParam(0, "RC_MAP_AUX1", (int32_t)(rcMapping[9]+1));
@@ -1409,10 +1424,10 @@ void QGCPX4VehicleConfig::remoteControlChannelRawChanged(int chan, float fval)
                 ui->modeSpinBox->setValue(chan + 1);
                 break;
             case 5:
-                ui->assistSwSpinBox->setValue(chan + 1);
+                ui->posctlSwSpinBox->setValue(chan + 1);
                 break;
             case 6:
-                ui->missionSwSpinBox->setValue(chan + 1);
+                ui->loiterSwSpinBox->setValue(chan + 1);
                 break;
             case 7:
                 ui->returnSwSpinBox->setValue(chan + 1);
@@ -1565,10 +1580,10 @@ void QGCPX4VehicleConfig::updateAllInvertedCheckboxes()
             //ui->radio5Widget->setName(tr("Mode Switch (#%1)").arg(rcMapping[4] + 1));
             break;
         case 5:
-            ui->assistSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            ui->posctlSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
             break;
         case 6:
-            ui->missionSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
+            ui->loiterSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
             break;
         case 7:
             ui->returnSwInvertCheckBox->setChecked(rcRev[rc_input_index]);
@@ -1690,15 +1705,15 @@ void QGCPX4VehicleConfig::handleRcParameterChange(QString parameterName, QVarian
                 ui->modeSpinBox->setValue(rcMapping[4]+1);
                 ui->modeSpinBox->setEnabled(true);
             }
-            else if (parameterName.startsWith("RC_MAP_ASSIST_SW")) {
+            else if (parameterName.startsWith("RC_MAP_POSCTL_SW")) {
                 setChannelToFunctionMapping(5, intValue);
-                ui->assistSwSpinBox->setValue(rcMapping[5]+1);
-                ui->assistSwSpinBox->setEnabled(true);
+                ui->posctlSwSpinBox->setValue(rcMapping[5]+1);
+                ui->posctlSwSpinBox->setEnabled(true);
             }
-            else if (parameterName.startsWith("RC_MAP_MISSIO_SW")) {
+            else if (parameterName.startsWith("RC_MAP_LOITER_SW")) {
                 setChannelToFunctionMapping(6, intValue);
-                ui->missionSwSpinBox->setValue(rcMapping[6]+1);
-                ui->missionSwSpinBox->setEnabled(true);
+                ui->loiterSwSpinBox->setValue(rcMapping[6]+1);
+                ui->loiterSwSpinBox->setEnabled(true);
             }
             else if (parameterName.startsWith("RC_MAP_RETURN_SW")) {
                 setChannelToFunctionMapping(7, intValue);
@@ -1941,17 +1956,17 @@ void QGCPX4VehicleConfig::updateRcChanLabels()
     }
 
     if (rcValue[rcMapping[5]] != UINT16_MAX) {
-        ui->assistSwChanLabel->setText(labelForRcValue(rcAssist));
+        ui->posctlSwChanLabel->setText(labelForRcValue(rcAssist));
     }
     else {
-        ui->assistSwChanLabel->setText(blankLabel);
+        ui->posctlSwChanLabel->setText(blankLabel);
     }
 
     if (rcValue[rcMapping[6]] != UINT16_MAX) {
-        ui->missionSwChanLabel->setText(labelForRcValue(rcLoiter));
+        ui->loiterSwChanLabel->setText(labelForRcValue(rcLoiter));
     }
     else {
-        ui->missionSwChanLabel->setText(blankLabel);
+        ui->loiterSwChanLabel->setText(blankLabel);
     }
 
     if (rcValue[rcMapping[7]] != UINT16_MAX) {

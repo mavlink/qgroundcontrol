@@ -16,6 +16,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     trailInterval(2.0f),
     followUAVID(0),
     mapInitialized(false),
+    mapPositionInitialized(false),
     homeAltitude(0),
     uas(NULL)
 {
@@ -169,6 +170,11 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     mousePressPos = event->pos();
     mapcontrol::OPMapWidget::mouseReleaseEvent(event);
+
+    // If the mouse is released, we can't be dragging
+    if (firingWaypointChange) {
+        firingWaypointChange = NULL;
+    }
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -185,6 +191,9 @@ void QGCMapWidget::showEvent(QShowEvent* event)
 
     // Pass on to parent widget
     OPMapWidget::showEvent(event);
+
+    // Connect map updates to the adapter slots
+    connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
@@ -211,16 +220,15 @@ void QGCMapWidget::showEvent(QShowEvent* event)
         setFrameStyle(QFrame::NoFrame);      // no border frame
         setBackgroundBrush(QBrush(Qt::black)); // tile background
 
-        // Set current home position
+        if (!UASManager::instance()->getActiveUAS()) {
+            SetCurrentPosition(pos_lat_lon);         // set the map position to default
+        }
+
+        // Set home
         updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
 
         // Set currently selected system
         activeUASSet(UASManager::instance()->getActiveUAS());
-
-        // Connect map updates to the adapter slots
-        connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
-
-        SetCurrentPosition(pos_lat_lon);         // set the map position
         setFocus();
 
         // Start timer
@@ -381,6 +389,16 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
+
+        if (!mapPositionInitialized) {
+            internals::PointLatLng pos_lat_lon = internals::PointLatLng(uas->getLatitude(), uas->getLongitude());
+            SetCurrentPosition(pos_lat_lon);
+
+            // Zoom in
+            SetZoom(13);
+
+            mapPositionInitialized = true;
+        }
     }
     else
     {
@@ -562,6 +580,7 @@ void QGCMapWidget::showGoToDialog()
 
 void QGCMapWidget::updateHomePosition(double latitude, double longitude, double altitude)
 {
+    qDebug() << "HOME SET TO: " << latitude << longitude << altitude;
     Home->SetCoord(internals::PointLatLng(latitude, longitude));
     Home->SetAltitude(altitude);
     homeAltitude = altitude;
@@ -572,7 +591,7 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
 void QGCMapWidget::goHome()
 {
     SetCurrentPosition(Home->Coord());
-    SetZoom(18); //zoom to "large RC park" size
+    SetZoom(17);
 }
 
 /**
@@ -620,10 +639,11 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
         WPDelete(waypoint);
 
     // Protect from vicious double update cycle
-    if (firingWaypointChange == wp) return;
+    if (firingWaypointChange == wp) {
+        return;
+    }
     // Not in cycle, block now from entering it
     firingWaypointChange = wp;
-    // // qDebug() << "UPDATING WP FROM MAP";
 
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
@@ -632,19 +652,14 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     wp->blockSignals(true);
     wp->setLatitude(pos.Lat());
     wp->setLongitude(pos.Lng());
-    // XXX Magic values
-//    wp->setAltitude(homeAltitude + 50.0f);
-//    wp->setAcceptanceRadius(10.0f);
     wp->blockSignals(false);
 
 
-    internals::PointLatLng coord = waypoint->Coord();
-    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
-    // // qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
-    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
-    // // qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
-
-    firingWaypointChange = NULL;
+//    internals::PointLatLng coord = waypoint->Coord();
+//    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
+//    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
+//    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
+//    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
 
     emit waypointChanged(wp);
 }

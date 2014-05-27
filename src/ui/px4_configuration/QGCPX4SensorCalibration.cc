@@ -337,6 +337,15 @@ void QGCPX4SensorCalibration::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
     connect(uas, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
     activeUAS = uas;
+
+    if (activeUAS->isRotaryWing()) {
+        // Users are confused by the config button
+        ui->diffPressureButton->hide();
+        ui->diffPressureLabel->hide();
+    } else {
+        ui->diffPressureButton->show();
+        ui->diffPressureLabel->show();
+    }
 }
 
 void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int severity, QString text)

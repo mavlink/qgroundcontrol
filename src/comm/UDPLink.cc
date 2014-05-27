@@ -42,6 +42,9 @@ This file is part of the QGROUNDCONTROL project
 UDPLink::UDPLink(QHostAddress host, quint16 port) :
     socket(NULL)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
 
     this->host = host;
     this->port = port;
@@ -57,6 +60,12 @@ UDPLink::UDPLink(QHostAddress host, quint16 port) :
 UDPLink::~UDPLink()
 {
     disconnect();
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
+
 	this->deleteLater();
 }
 
@@ -66,7 +75,9 @@ UDPLink::~UDPLink()
  **/
 void UDPLink::run()
 {
-	exec();
+    hardwareConnect();
+
+    exec();
 }
 
 void UDPLink::setAddress(QHostAddress host)
@@ -302,7 +313,7 @@ bool UDPLink::connect()
 		this->quit();
 		this->wait();
 	}
-    bool connected = this->hardwareConnect();
+    bool connected = true;
     start(HighPriority);
     return connected;
 }
