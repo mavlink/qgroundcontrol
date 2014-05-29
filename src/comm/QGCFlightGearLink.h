@@ -87,6 +87,8 @@ public:
     void sensorHilEnabled(bool sensorHilEnabled) {
         _sensorHilEnabled = sensorHilEnabled;
     }
+    
+    static bool parseUIArguments(QString uiArgs, QStringList& argList);
 
     void run();
 
@@ -130,8 +132,6 @@ public slots:
     bool connectSimulation();
     bool disconnectSimulation();
 
-    void printTerraSyncOutput();
-    void printTerraSyncError();
     void printFgfsOutput();
     void printFgfsError();
     void setStartupArguments(QString startupArguments);
@@ -147,19 +147,8 @@ protected:
     QUdpSocket* socket;
     bool connectState;
 
-    quint64 bitsSentTotal;
-    quint64 bitsSentCurrent;
-    quint64 bitsSentMax;
-    quint64 bitsReceivedTotal;
-    quint64 bitsReceivedCurrent;
-    quint64 bitsReceivedMax;
-    quint64 connectionStartTime;
-    QMutex statisticsMutex;
-    QMutex dataMutex;
-    QTimer refreshTimer;
     UASInterface* mav;
     QProcess* process;
-    QProcess* terraSync;
     unsigned int flightGearVersion;
     QString startupArguments;
     bool _sensorHilEnabled;
