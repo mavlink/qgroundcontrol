@@ -40,11 +40,14 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 #include "MainWindow.h"
 
+// FlightGear process start and connection is quite fragile. Uncomment the define below to get higher level of debug output
+// for tracking down problems.
+#define DEBUG_FLIGHTGEAR_CONNECT
+
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     socket(NULL),
     process(NULL),
-    terraSync(NULL),
-    flightGearVersion(0),
+    flightGearVersion(3),
     startupArguments(startupArguments),
     _sensorHilEnabled(true),
     barometerOffsetkPa(0.0f)
@@ -58,7 +61,7 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     this->connectState = false;
     this->currentPort = 49000+mav->getUASID();
     this->mav = mav;
-    this->name = tr("FlightGear Link (port:%1)").arg(port);
+    this->name = tr("FlightGear 3.0+ Link (port:%1)").arg(port);
     setRemoteHost(remoteHost);
 }
 
@@ -74,6 +77,7 @@ QGCFlightGearLink::~QGCFlightGearLink()
  * @brief Runs the thread
  *
  **/
+
 void QGCFlightGearLink::run()
 {
     qDebug() << "STARTING FLIGHTGEAR LINK";
@@ -305,23 +309,23 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Failed to Start"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::Crashed:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
         break;
     case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Start Timed Out"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Start Timed Out"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear/TerraSync"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear/TerraSync"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
     default:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear/TerraSync Error"), tr("Please check if the path and command is correct."));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
         break;
     }
 }
@@ -633,12 +637,6 @@ bool QGCFlightGearLink::disconnectSimulation()
         delete process;
         process = NULL;
     }
-    if (terraSync)
-    {
-        terraSync->close();
-        delete terraSync;
-        terraSync = NULL;
-    }
     if (socket)
     {
         socket->close();
@@ -651,6 +649,79 @@ bool QGCFlightGearLink::disconnectSimulation()
     emit simulationDisconnected();
     emit simulationConnected(false);
     return !connectState;
+}
+
+/// @brief Splits a space seperated set of command line arguments into a QStringList.
+///         Quoted strings are allowed and handled correctly.
+/// @param uiArgs Arguments to parse
+/// @param argList Returned argument list
+/// @return Returns false if the argument list has mistmatced quotes within in.
+
+bool QGCFlightGearLink::parseUIArguments(QString uiArgs, QStringList& argList)
+{
+
+	// This is not as easy as it seams since some options can be quoted to preserve spaces within things like
+    // directories. There is likely some crazed regular expression which can do this. But after trying that
+    // route I gave up and instead here is the code which does it the hard way. Another thing to be aware of
+    // is that the QStringList passed to QProces::start is similar to what you would get in argv after the
+    // command line is processed. This means that quoted strings have the quotes removed before making it to argv.
+    
+	bool inQuotedString = false;
+	bool previousSpace = false;
+	QString currentArg;
+	for (int i=0; i<uiArgs.size(); i++) {
+		const QChar chr = uiArgs[i];
+        
+		if (chr == ' ') {
+			if (inQuotedString) {
+				// Space is inside quoted string leave it in
+				currentArg += chr;
+				continue;
+			} else {
+				if (previousSpace) {
+					// Disregard multiple spaces
+					continue;
+				} else {
+					// We have a space that is finishing an argument
+					previousSpace = true;
+					if (inQuotedString) {
+						MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Mismatched quotes in specified command line options"));
+						return false;
+					}
+					if (!currentArg.isEmpty()) {
+						argList += currentArg;
+						currentArg.clear();
+					}
+				}
+			}
+		} else if (chr == '\"') {
+			// Flip the state of being in a quoted string. Note that we specifically do not add the
+			// quote to the string. This replicates standards command line parsing behaviour.
+			if (chr == '\"') {
+				inQuotedString = !inQuotedString;
+			}
+			previousSpace = false;
+		} else {
+			// Flip the state of being in a quoted string
+			if (chr == '\"') {
+				inQuotedString = !inQuotedString;
+			}
+			previousSpace = false;
+			currentArg += chr;
+		}
+	}
+	// We should never end parsing on an unterminated quote
+	if (inQuotedString) {
+		return false;
+	}
+    
+	// Finish up last arg
+	if (!currentArg.isEmpty()) {
+		argList += currentArg;
+		currentArg.clear();
+	}
+    
+    return true;
 }
 
 /**
