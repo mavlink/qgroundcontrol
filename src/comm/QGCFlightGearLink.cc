@@ -623,7 +623,7 @@ bool QGCFlightGearLink::connectSimulation()
     _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/Resources/";
     fgRootPath = "/Applications/FlightGear.app/Contents/Resources/data/";
 #elif defined Q_OS_WIN32
-    fgProcessName = "fgfs.exe";
+    _fgProcessName = "fgfs.exe";
     //fgProcessWorkingDir = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32";
     
     // Windows installs are not as easy to determine. Default installation is to
@@ -672,7 +672,7 @@ bool QGCFlightGearLink::connectSimulation()
                     regExp.setPattern("(.*)\\\\fgfs.exe");
                     if (regExp.indexIn(fgExeLocationFullQualified) == 0 && regExp.captureCount() == 1) {
                         fgAppDir.setPath(regExp.cap(1));
-                        fgProcessWorkingDirPath = fgAppDir.absolutePath();
+                        _fgProcessWorkingDirPath = fgAppDir.absolutePath();
                         qDebug() << "fg_exe" << fgAppDir.absolutePath();
                     }
                     continue;
