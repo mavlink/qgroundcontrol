@@ -155,10 +155,11 @@ protected:
     float barometerOffsetkPa;
 
     void setName(QString name);
-
-signals:
-
-
+    
+private:
+    QString     _fgProcessName;             ///< FlightGear process to start
+    QString     _fgProcessWorkingDirPath;   ///< Working directory to start FG process in, empty for none
+    QStringList _fgArgList;                 ///< Arguments passed to FlightGear process
 };
 
 #endif // QGCFLIGHTGEARLINK_H
