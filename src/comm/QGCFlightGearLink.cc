@@ -127,20 +127,11 @@ void QGCFlightGearLink::run()
 	_fgProcessName = fgProcessFullyQualified.absoluteFilePath(_fgProcessName);
 #endif
     
-    // FIXME: Need to clean up this debug arg list stuff
-	QStringList debugArgList;
-    debugArgList << "--log-level=debug";
-    //debugArgList += "--fg-scenery=" + fgSceneryPath + "";
-    //debugArgList += "--fg-root=" + fgRootPath + "";
-    
-	debugArgList += "--fg-root=\"c:\\Flight Gear\\data\"";
-	debugArgList += "--fg-scenery=\"c:\\Flight Gear\\data\\Scenery;c:\\Flight Gear\\scenery;C:\\Flight Gear\\terrasync\"";
 #ifdef DEBUG_FLIGHTGEAR_CONNECT
     qDebug() << "Starting FlightGear" << _fgProcessWorkingDirPath << _fgProcessName << _fgArgList;
-	qDebug() << "Debug args" << debugArgList;
 #endif
     
-	process->start(_fgProcessName, /*debugArgList*/ _fgArgList);
+    process->start(_fgProcessName, _fgArgList);
     connectState = true;
     
     emit simulationConnected(connectState);
