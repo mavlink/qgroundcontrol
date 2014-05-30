@@ -691,7 +691,7 @@ bool QGCFlightGearLink::connectSimulation()
 #elif defined Q_OS_LINUX
     // Linux installs to a location on the path so we don't need a directory to run the executable
     fgAppName = "fgfs";
-    fgProcessName = "fgfs";
+    _fgProcessName = "fgfs";
     fgRootPath = "/usr/share/games/flightgear/";   // Default Ubuntu location as best guess
 #else
 #error Unknown OS build flavor
@@ -786,6 +786,8 @@ bool QGCFlightGearLink::connectSimulation()
         MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), errMsg);
         return false;
     }
+#else
+    Q_UNUSED(fgSceneryDirOverride);
 #endif
     
     // Check that we have a good fgRootDir set before we use it to check communication protocol files.
