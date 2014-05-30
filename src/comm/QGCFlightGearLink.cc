@@ -808,7 +808,7 @@ bool QGCFlightGearLink::connectSimulation()
     
     // Setup protocol we will be using to communicate with FlightGear
     QString fgProtocol(mav->getSystemType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
-    QString fgProtocolArg("--generic=socket,%1,50,127.0.0.1,%2,udp,%3");
+    QString fgProtocolArg("--generic=socket,%1,300,127.0.0.1,%2,udp,%3");
     _fgArgList << fgProtocolArg.arg("out").arg(port).arg(fgProtocol);
     _fgArgList << fgProtocolArg.arg("in").arg(currentPort).arg(fgProtocol);
     
