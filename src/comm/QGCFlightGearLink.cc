@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 
 // FlightGear process start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
-#define DEBUG_FLIGHTGEAR_CONNECT
+//#define DEBUG_FLIGHTGEAR_CONNECT
 
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
     socket(NULL),
@@ -152,7 +152,7 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        emit showCriticalMessageFromThread(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        emit showCriticalMessageFromThread(tr("FlightGear Failed to Start"), process->errorString());
         break;
     case QProcess::Crashed:
         emit showCriticalMessageFromThread(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
@@ -808,7 +808,7 @@ bool QGCFlightGearLink::connectSimulation()
     
     // Setup protocol we will be using to communicate with FlightGear
     QString fgProtocol(mav->getSystemType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
-    QString fgProtocolArg("--generic=socket,%1,300,127.0.0.1,%2,udp,%3");
+    QString fgProtocolArg("--generic=socket,%1,50,127.0.0.1,%2,udp,%3");
     _fgArgList << fgProtocolArg.arg("out").arg(port).arg(fgProtocol);
     _fgArgList << fgProtocolArg.arg("in").arg(currentPort).arg(fgProtocol);
     
