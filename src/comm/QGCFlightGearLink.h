@@ -91,6 +91,9 @@ public:
     static bool parseUIArguments(QString uiArgs, QStringList& argList);
 
     void run();
+    
+signals:
+    void showCriticalMessageFromThread(const QString& title, const QString& message);
 
 public slots:
 //    void setAddress(QString address);

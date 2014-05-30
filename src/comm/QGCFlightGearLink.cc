@@ -63,6 +63,9 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
     this->mav = mav;
     this->name = tr("FlightGear 3.0+ Link (port:%1)").arg(port);
     setRemoteHost(remoteHost);
+    
+    // We need a mechanism so show error message from our FGLink thread on the UI thread. This signal connection will do that for us.
+    connect(this, SIGNAL(showCriticalMessageFromThread(const QString&, const QString&)), MainWindow::instance(), SLOT(showCriticalMessage(const QString&, const QString&)));
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
@@ -158,23 +161,23 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        emit showCriticalMessageFromThread(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::Crashed:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
+        emit showCriticalMessageFromThread(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
         break;
     case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Start Timed Out"), tr("Please check if the path and command is correct"));
+        emit showCriticalMessageFromThread(tr("FlightGear Start Timed Out"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
+        emit showCriticalMessageFromThread(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
+        emit showCriticalMessageFromThread(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
     default:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
+        emit showCriticalMessageFromThread(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
         break;
     }
 }
