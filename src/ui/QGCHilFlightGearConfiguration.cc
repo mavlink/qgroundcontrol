@@ -13,7 +13,7 @@ const char* QGCHilFlightGearConfiguration::_sensorHilKey =                  "SEN
 
 // Default set of optional command line parameters. If FlightGear won't run HIL without it it should go into
 // the QGCFlightGearLink code instead.
-const char* QGCHilFlightGearConfiguration::_defaultOptions = "--roll=0 --pitch=0 --vc=0 --heading=300 --timeofday=noon --disable-hud-3d --disable-fullscreen --geometry=400x300 --disable-anti-alias-hud --wind=0@0 --turbulence=0.0 --prop:/sim/frame-rate-throttle-hz=30 --control=mouse --disable-sound --disable-random-objects --disable-ai-traffic --shading-flat --fog-disable --disable-specular-highlight --disable-random-objects --disable-panel --disable-clouds --fdm=jsb --units-meters --enable-terrasync --atlas=socket,out,1,localhost,5505,udp";
+const char* QGCHilFlightGearConfiguration::_defaultOptions = "--roll=0 --pitch=0 --vc=0 --heading=300 --timeofday=noon --disable-hud-3d --disable-fullscreen --geometry=400x300 --disable-anti-alias-hud --wind=0@0 --turbulence=0.0 --control=mouse --disable-sound --disable-random-objects --disable-ai-traffic --shading-flat --fog-disable --disable-specular-highlight --disable-random-objects --disable-panel --disable-clouds --fdm=jsb --units-meters --enable-terrasync";
 
 QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav, QWidget *parent) :
     QWidget(parent),

@@ -98,16 +98,6 @@ void QGCFlightGearLink::run()
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)),
             mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
     
-    // FIXME: Does this need to be called from the new thread
-    
-    // FIXME: Why the need for dynamic cast. Missing virtual in interface?
-    // Wait until we know we can actually start FlightGear?
-    UAS* uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        uas->startHil();
-    }
-    
     // Start a new process to run FlightGear in
     process = new QProcess(this);
     Q_CHECK_PTR(process);
@@ -148,11 +138,10 @@ void QGCFlightGearLink::run()
 #endif
     
 	process->start(_fgProcessName, /*debugArgList*/ _fgArgList);
+    connectState = true;
     
     emit simulationConnected(connectState);
-    if (connectState) {
-        emit simulationConnected();
-    }
+    emit simulationConnected();
 
     exec();
 }
@@ -257,13 +246,13 @@ void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float p
         QString state("%1\t%2\t%3\t%4\t%5\n");
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
         writeBytes(state.toAscii().constData(), state.length());
-//        qDebug() << "updated controls" << rollAilerons << pitchElevator << yawRudder << throttle;
+        //qDebug() << "Updated controls" << rollAilerons << pitchElevator << yawRudder << throttle;
+        //qDebug() << "Updated controls" << state;
     }
     else
     {
         qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << isnan(rollAilerons) << ", pitch: " << isnan(pitchElevator) << ", yaw: " << isnan(yawRudder) << ", throttle: " << isnan(throttle);
     }
-    //qDebug() << "Updated controls" << state;
 }
 
 void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
@@ -313,7 +302,7 @@ void QGCFlightGearLink::readBytes()
 
     // Print string
     QString state(b);
-//    qDebug() << "FG LINK GOT:" << state;
+    //qDebug() << "FG LINK GOT:" << state;
 
     QStringList values = state.split("\t");
 
@@ -508,6 +497,10 @@ bool QGCFlightGearLink::disconnectSimulation()
 
     emit simulationDisconnected();
     emit simulationConnected(false);
+
+    // Exit the thread
+    quit();
+
     return !connectState;
 }
 
@@ -819,7 +812,7 @@ bool QGCFlightGearLink::connectSimulation()
     
     // Setup protocol we will be using to communicate with FlightGear
     QString fgProtocol(mav->getSystemType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
-    QString fgProtocolArg("--generic=socket,%1,50,127.0.0.1,%2,udp,%3");
+    QString fgProtocolArg("--generic=socket,%1,300,127.0.0.1,%2,udp,%3");
     _fgArgList << fgProtocolArg.arg("out").arg(port).arg(fgProtocol);
     _fgArgList << fgProtocolArg.arg("in").arg(currentPort).arg(fgProtocol);
     
