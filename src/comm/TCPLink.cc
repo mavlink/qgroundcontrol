@@ -43,6 +43,10 @@ TCPLink::TCPLink(QHostAddress hostAddress, quint16 socketPort) :
     _socket(NULL),
     _socketIsConnected(false)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     _linkId = getNextLinkId();
     _resetName();
     
@@ -52,11 +56,19 @@ TCPLink::TCPLink(QHostAddress hostAddress, quint16 socketPort) :
 TCPLink::~TCPLink()
 {
     disconnect();
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
+
 	deleteLater();
 }
 
 void TCPLink::run()
 {
+    _hardwareConnect();
+
 	exec();
 }
 
@@ -210,11 +222,10 @@ bool TCPLink::connect()
 		quit();
 		wait();
 	}
-    bool connected = _hardwareConnect();
-    if (connected) {
-        start(HighPriority);
-    }
-    return connected;
+
+    start(HighPriority);
+
+    return true;
 }
 
 bool TCPLink::_hardwareConnect(void)

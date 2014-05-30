@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UAS_H_
 #define _UAS_H_
 
+#include <QThread>
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
@@ -55,7 +56,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id = 0);
+    UAS(MAVLinkProtocol* protocol, QThread* thread, int id = 0);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -381,7 +382,7 @@ protected: //COMMENTS FOR TEST UNIT
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
     quint64 lastHeartbeat;        ///< Time of the last heartbeat message
-    QTimer* statusTimeout;        ///< Timer for various status timeouts
+    QTimer statusTimeout;       ///< Timer for various status timeouts
 
     /// BASIC UAS TYPE, NAME AND STATE
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
@@ -525,6 +526,7 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
+    QThread* _thread;
 
 public:
     /** @brief Set the current battery type */
@@ -944,9 +946,9 @@ signals:
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
     /** @brief HIL controls have changed */
-    void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
+    void hilControlsChanged(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
     /** @brief HIL actuator outputs have changed */
-    void hilActuatorsChanged(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+    void hilActuatorsChanged(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
 
     void localXChanged(double val,QString name);
     void localYChanged(double val,QString name);

@@ -25,9 +25,8 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     // Fill the lists here manually in accordance with the list from:
     // https://github.com/PX4/Firmware/blob/master/ROMFS/px4fmu_common/init.d/rcS
 
-    ui->simComboBox->addItem(tr("Plane Sensor (HilStar, X-Plane)"), 1000);
-    ui->simComboBox->addItem(tr("Plane Sensor (Rascal, FlightGear)"), 1004);
-    //ui->simComboBox->addItem(tr("Plane State (HilStar, X-Plane)"), 1002);
+    ui->simComboBox->addItem(tr("Plane (HilStar, X-Plane)"), 1000);
+    ui->simComboBox->addItem(tr("Plane (Rascal, FlightGear)"), 1004);
     ui->simComboBox->addItem(tr("Quad X HIL"), 1001);
     ui->simComboBox->addItem(tr("Quad + HIL"), 1003);
 
@@ -57,8 +56,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 4010);
     ui->quadXComboBox->addItem(tr("DJI F450 10\" Quad"), 4011);
     ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 4012);
-    //ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 4008);
-    //ui->quadXComboBox->addItem(tr("AR.Drone Quad (w. PX4FLOW)"), 4009);
+    ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 4008);
     ui->quadXComboBox->addItem(tr("DJI F330 with MK BLCTRL"), 4017);
     ui->quadXComboBox->addItem(tr("Mikrokopter X frame"), 4019);
 
@@ -99,6 +97,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     ui->hComboBox->addItem(tr("3DR Iris"), 10016);
     ui->hComboBox->addItem(tr("TBS Discovery"), 10015);
+    ui->hComboBox->addItem(tr("SteadiDrone QU4D"), 10017);
 
     connect(ui->hPushButton, SIGNAL(clicked()), this, SLOT(hSelected()));
     connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));

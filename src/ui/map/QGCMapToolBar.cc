@@ -12,7 +12,8 @@ QGCMapToolBar::QGCMapToolBar(QWidget *parent) :
     mapTypesMenu(this),
     trailSettingsGroup(new QActionGroup(this)),
     updateTimesGroup(new QActionGroup(this)),
-    mapTypesGroup(new QActionGroup(this))
+    mapTypesGroup(new QActionGroup(this)),
+    statusMaxLen(15)
 {
     ui->setupUi(this);
 }
@@ -168,9 +169,14 @@ void QGCMapToolBar::setUAVTrailTime()
         if (ok)
         {
             (map->setTrailModeTimed(trailTime));
-            ui->posLabel->setText(tr("Trail mode: Every %1 second%2").arg(trailTime).arg((trailTime > 1) ? "s" : ""));
+            setStatusLabelText(tr("Trail mode: Every %1 second%2").arg(trailTime).arg((trailTime > 1) ? "s" : ""));
         }
     }
+}
+
+void QGCMapToolBar::setStatusLabelText(const QString &text)
+{
+    ui->posLabel->setText(text.leftJustified(statusMaxLen, QChar('.'), true));
 }
 
 void QGCMapToolBar::setUAVTrailDistance()
@@ -185,7 +191,7 @@ void QGCMapToolBar::setUAVTrailDistance()
         if (ok)
         {
             map->setTrailModeDistance(trailDistance);
-            ui->posLabel->setText(tr("Trail mode: Every %1 meter%2").arg(trailDistance).arg((trailDistance == 1) ? "s" : ""));
+            setStatusLabelText(tr("Trail mode: Every %1 meter%2").arg(trailDistance).arg((trailDistance == 1) ? "s" : ""));
         }
     }
 }
@@ -202,7 +208,7 @@ void QGCMapToolBar::setUpdateInterval()
         if (ok)
         {
             map->setUpdateRateLimit(time);
-            ui->posLabel->setText(tr("Map update rate limit: %1 second%2").arg(time).arg((time != 1.0f) ? "s" : ""));
+            setStatusLabelText(tr("Limit: %1 second%2").arg(time).arg((time != 1.0f) ? "s" : ""));
         }
     }
 }
@@ -219,30 +225,30 @@ void QGCMapToolBar::setMapType()
         if (ok)
         {
             map->SetMapType((MapType::Types)mapType);
-            ui->posLabel->setText(tr("Map type: %1").arg(mapType));
+            setStatusLabelText(tr("Map: %1").arg(mapType));
         }
     }
 }
 
 void QGCMapToolBar::tileLoadStart()
 {
-    ui->posLabel->setText(tr("Starting to load tiles.."));
+    setStatusLabelText(tr("Loading"));
 }
 
 void QGCMapToolBar::tileLoadEnd()
 {
-    ui->posLabel->setText(tr("Finished"));
+    setStatusLabelText(tr("Finished"));
 }
 
 void QGCMapToolBar::tileLoadProgress(int progress)
 {
     if (progress == 1)
     {
-        ui->posLabel->setText(tr("1 tile to load.."));
+        setStatusLabelText(tr("1 tile"));
     }
     else if (progress > 0)
     {
-        ui->posLabel->setText(tr("%1 tiles to load..").arg(progress));
+        setStatusLabelText(tr("%1 tile").arg(progress));
     }
     else
     {

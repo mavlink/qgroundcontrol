@@ -187,8 +187,8 @@ bool GAudioOutput::say(QString text, int severity)
         if (!emergency)
         {
 
-            // Speech synthesis is only supported with MSVC compiler
-#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
+#if defined QGC_SPEECH_ENABLED
+#if defined _MSC_VER
             /*SpeechSynthesizer synth = new SpeechSynthesizer();
             synth.SelectVoice("Microsoft Anna");
             synth.SpeakText(text.toStdString().c_str());
@@ -209,14 +209,14 @@ bool GAudioOutput::say(QString text, int severity)
             pVoice = NULL;
             }
             }*/
-#endif
+#endif // _MSC_VER
 
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+#if defined Q_OS_LINUX
             unsigned int espeak_size = strlen(text.toStdString().c_str());
             espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
-#endif
+#endif // Q_OS_LINUX
 
-#if defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
+#if defined Q_OS_MAC
             // Slashes necessary to have the right start to the sentence
             // copying data prevents SpeakString from reading additional chars
             text = "\\" + text;
@@ -225,7 +225,11 @@ bool GAudioOutput::say(QString text, int severity)
             memcpy(str2, text.toAscii().data(), str.length());
             SpeakString(str2);
             res = true;
-#endif
+#endif // Q_OS_MAC
+
+#else
+            Q_UNUSED(text);
+#endif // QGC_SPEECH_ENABLED
         }
 
         return res;
