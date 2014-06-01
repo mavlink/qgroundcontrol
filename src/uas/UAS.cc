@@ -1219,7 +1219,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
             QString text = QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq);
             GAudioOutput::instance()->say(text);
-            emit textMessageReceived(message.sysid, message.compid, 0, text);
+            emit textMessageReceived(message.sysid, message.compid, MAV_SEVERITY_INFO, text);
         }
             break;
 
@@ -3150,7 +3150,7 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
     Q_UNUSED(xacc);
     Q_UNUSED(yacc);
     Q_UNUSED(zacc);
-    
+
         // Emit attitude for cross-check
         emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
         emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
