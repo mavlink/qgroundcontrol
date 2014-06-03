@@ -216,8 +216,6 @@ void MainWindow::init()
         toolBar = new QGCToolBar(this);
         this->addToolBar(toolBar);
 
-        ui.actionHardwareConfig->setText(tr("Config"));
-
         // Add actions for average users (displayed next to each other)
         QList<QAction*> actions;
         actions << ui.actionFlightView;
@@ -232,6 +230,8 @@ void MainWindow::init()
         advancedActions << ui.actionEngineersView;
 
         toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
+    } else {
+        ui.actionHardwareConfig->setText(tr("Hardware"));
     }
 
     customStatusBar = new QGCStatusBar(this);
