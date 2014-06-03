@@ -173,6 +173,7 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
 
     // If the mouse is released, we can't be dragging
     if (firingWaypointChange) {
+        firingWaypointChange->setChanged();
         firingWaypointChange = NULL;
     }
 }
@@ -638,13 +639,6 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     if (!wp)
         WPDelete(waypoint);
 
-    // Protect from vicious double update cycle
-    if (firingWaypointChange == wp) {
-        return;
-    }
-    // Not in cycle, block now from entering it
-    firingWaypointChange = wp;
-
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
 
@@ -660,6 +654,13 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 //    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
 //    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
 //    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
+
+    // Protect from vicious double update cycle
+    if (firingWaypointChange == wp) {
+        return;
+    }
+    // Not in cycle, block now from entering it
+    firingWaypointChange = wp;
 
     emit waypointChanged(wp);
 }
