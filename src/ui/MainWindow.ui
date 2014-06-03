@@ -401,6 +401,9 @@
    </property>
   </action>
   <action name="actionFirmwareUpdateView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
@@ -472,11 +475,17 @@
    </property>
   </action>
   <action name="actionGoogleEarthView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Google Earth</string>
    </property>
   </action>
   <action name="actionLocal3DView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Local 3D View</string>
    </property>
