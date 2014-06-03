@@ -95,13 +95,13 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
-    <addaction name="actionMissionView"/>
     <addaction name="actionFlightView"/>
+    <addaction name="actionMissionView"/>
     <addaction name="actionHardwareConfig"/>
     <addaction name="actionSoftwareConfig"/>
     <addaction name="actionTerminalView"/>
-    <addaction name="actionEngineersView"/>
     <addaction name="actionSimulationView"/>
+    <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
     <addaction name="separator"/>
@@ -436,7 +436,7 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Hardware</string>
+    <string>Config</string>
    </property>
    <property name="toolTip">
     <string>Configuration options of the vehicle.</string>
