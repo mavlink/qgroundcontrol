@@ -435,10 +435,10 @@ QString MainWindow::getWindowStateKey()
 {
     if (UASManager::instance()->getActiveUAS())
     {
-        return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
+        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode()) + "_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
     }
     else
-        return QString::number(currentView)+"_windowstate";
+        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode());
 }
 
 QString MainWindow::getWindowGeometryKey()
