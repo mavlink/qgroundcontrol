@@ -308,7 +308,7 @@ namespace mapcontrol
     }
     void WayPointItem::RefreshToolTip()
     {
-        QString coord_str = QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
+        QString coord_str = QString::number(coord.Lat(), 'f', 7) + "   " + QString::number(coord.Lng(), 'f', 7);
         setToolTip(QString("WayPoint Number: %1\nDescription: %2\nCoordinate: %4\nAltitude: %5 m (MSL)\nHeading: %6 deg").arg(QString::number(WayPointItem::number)).arg(description).arg(coord_str).arg(QString::number(altitude)).arg(QString::number(heading)));
     }
 
