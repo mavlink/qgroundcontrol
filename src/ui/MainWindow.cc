@@ -596,7 +596,7 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if QGC_GOOGLE_EARTH_ENABLED
+#ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!googleEarthView)
     {
         googleEarthView = new SubMainWindow(this);
@@ -1274,6 +1274,16 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionGoogleEarthView);
     perspectives->addAction(ui.actionLocal3DView);
     perspectives->setExclusive(true);
+
+#ifndef QGC_MAVGEN_ENABLED
+    ui.actionMavlinkView->setVisible(false);
+#endif
+#ifndef QGC_GOOGLE_EARTH_ENABLED
+    ui.actionGoogleEarthView->setVisible(false);
+#endif
+#ifndef QGC_OSG_ENABLED
+    ui.actionLocal3DView->setVisible(false);
+#endif
 
     // Mark the right one as selected
     if (currentView == VIEW_ENGINEER)
