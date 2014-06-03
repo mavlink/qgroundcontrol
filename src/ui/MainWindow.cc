@@ -543,6 +543,15 @@ void MainWindow::buildCommonWidgets()
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
     }
 
+    if (!terminalView)
+    {
+        terminalView = new SubMainWindow(this);
+        terminalView->setObjectName("VIEW_TERMINAL");
+        TerminalConsole *terminalConsole = new TerminalConsole(this);
+        terminalView->setCentralWidget(terminalConsole);
+        addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
+    }
+
     if (getCustomMode() == CUSTOM_MODE_APM) {
         if (!configView)
         {
@@ -559,14 +568,7 @@ void MainWindow::buildCommonWidgets()
             softwareConfigView->setCentralWidget(new ApmSoftwareConfig(this));
             addToCentralStackedWidget(softwareConfigView, VIEW_SOFTWARE_CONFIG, "Software");
         }
-        if (!terminalView)
-        {
-            terminalView = new SubMainWindow(this);
-            terminalView->setObjectName("VIEW_TERMINAL");
-            TerminalConsole *terminalConsole = new TerminalConsole(this);
-            terminalView->setCentralWidget(terminalConsole);
-            addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
-        }
+
     } else {
         if (!configView)
         {
@@ -1275,7 +1277,6 @@ void MainWindow::connectCommonActions()
 
     /* Hide the actions that are not relevant */
     ui.actionSoftwareConfig->setVisible(getCustomMode() == CUSTOM_MODE_APM);
-    ui.actionTerminalView->setVisible(getCustomMode() == CUSTOM_MODE_APM);
 #ifndef QGC_MAVGEN_ENABLED
     ui.actionMavlinkView->setVisible(false);
 #endif
