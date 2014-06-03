@@ -360,7 +360,7 @@ namespace internals {
                     {
                         SetProjection(new MercatorProjection());
                     }
-                    maxzoom=19;
+                    maxzoom=21;
                 }
                 break;
 
