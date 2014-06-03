@@ -1266,15 +1266,16 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionMissionView);
     //perspectives->addAction(ui.actionConfiguration_2);
     perspectives->addAction(ui.actionHardwareConfig);
-    if (getCustomMode() == CUSTOM_MODE_APM) {
-        perspectives->addAction(ui.actionSoftwareConfig);
-    }
+    perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->addAction(ui.actionGoogleEarthView);
     perspectives->addAction(ui.actionLocal3DView);
     perspectives->setExclusive(true);
 
+    /* Hide the actions that are not relevant */
+    ui.actionSoftwareConfig->setVisible(getCustomMode() == CUSTOM_MODE_APM);
+    ui.actionTerminalView->setVisible(getCustomMode() == CUSTOM_MODE_APM);
 #ifndef QGC_MAVGEN_ENABLED
     ui.actionMavlinkView->setVisible(false);
 #endif
@@ -1376,12 +1377,8 @@ void MainWindow::connectCommonActions()
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
     connect(ui.actionHardwareConfig, SIGNAL(triggered()), this, SLOT(loadHardwareConfigView()));
-
-    if (getCustomMode() == CUSTOM_MODE_APM) {
-        connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
-        connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
-    }
-
+    connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
+    connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
 
     // Help Actions
