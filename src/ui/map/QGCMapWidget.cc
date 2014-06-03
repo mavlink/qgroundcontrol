@@ -18,6 +18,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapInitialized(false),
     mapPositionInitialized(false),
     homeAltitude(0),
+    zoomBlocked(false),
     uas(NULL)
 {
     currWPManager = UASManager::instance()->getActiveUASWaypointManager();
@@ -249,6 +250,13 @@ void QGCMapWidget::hideEvent(QHideEvent* event)
     OPMapWidget::hideEvent(event);
 }
 
+void QGCMapWidget::wheelEvent ( QWheelEvent * event )
+{
+    if (!zoomBlocked) {
+        OPMapWidget::wheelEvent(event);
+    }
+}
+
 /**
  * @param changePosition Load also the last position from settings and update the map position.
  */
@@ -328,14 +336,10 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
         // Create new waypoint
         internals::PointLatLng pos = map->FromLocalToLatLng(event->pos().x(), event->pos().y());
         Waypoint* wp = currWPManager->createWaypoint();
-        //            wp->blockSignals(true);
-        //            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         wp->setLatitude(pos.Lat());
         wp->setLongitude(pos.Lng());
         wp->setFrame((MAV_FRAME)currWPManager->getFrameRecommendation());
         wp->setAltitude(currWPManager->getAltitudeRecommendation());
-        //            wp->blockSignals(false);
-        //            currWPManager->notifyOfChangeEditable(wp);
     }
 
     OPMapWidget::mouseDoubleClickEvent(event);
