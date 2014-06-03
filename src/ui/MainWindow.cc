@@ -226,7 +226,7 @@ void MainWindow::init()
 
         // Add actions for advanced users (displayed in dropdown under "advanced")
         QList<QAction*> advancedActions;
-        advancedActions << ui.actionSimulation_View;
+        advancedActions << ui.actionSimulationView;
         advancedActions << ui.actionEngineersView;
 
         toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
@@ -266,7 +266,7 @@ void MainWindow::init()
         apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
         apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
         apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
-        apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+        apmToolBar->setSimulationViewAction(ui.actionSimulationView);
         apmToolBar->setTerminalViewAction(ui.actionTerminalView);
 
         QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
@@ -1262,7 +1262,7 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionEngineersView);
     perspectives->addAction(ui.actionMavlinkView);
     perspectives->addAction(ui.actionFlightView);
-    perspectives->addAction(ui.actionSimulation_View);
+    perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
     //perspectives->addAction(ui.actionConfiguration_2);
     perspectives->addAction(ui.actionHardwareConfig);
@@ -1293,8 +1293,8 @@ void MainWindow::connectCommonActions()
     }
     if (currentView == VIEW_SIMULATION)
     {
-        ui.actionSimulation_View->setChecked(true);
-        ui.actionSimulation_View->activate(QAction::Trigger);
+        ui.actionSimulationView->setChecked(true);
+        ui.actionSimulationView->activate(QAction::Trigger);
     }
     if (currentView == VIEW_MISSION)
     {
@@ -1358,14 +1358,13 @@ void MainWindow::connectCommonActions()
 
     // Views actions
     connect(ui.actionFlightView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
-    connect(ui.actionSimulation_View, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
+    connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
-    connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionHardwareConfig, SIGNAL(triggered()), this, SLOT(loadHardwareConfigView()));
 
     if (getCustomMode() == CUSTOM_MODE_APM) {
@@ -2049,7 +2048,7 @@ void MainWindow::loadSimulationView()
     {
         storeViewState();
         currentView = VIEW_SIMULATION;
-        ui.actionSimulation_View->setChecked(true);
+        ui.actionSimulationView->setChecked(true);
         loadViewState();
     }
 }

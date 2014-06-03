@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -410,21 +410,6 @@
    </property>
    <property name="toolTip">
     <string>Update the firmware of one of the connected autopilots</string>
-   </property>
-  </action>
-  <action name="actionSimulation_View">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Simulation</string>
-   </property>
-   <property name="toolTip">
-    <string>Open the simulation view</string>
    </property>
   </action>
   <action name="actionHardwareConfig">
