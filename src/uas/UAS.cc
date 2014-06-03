@@ -690,6 +690,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             // control_sensors_enabled:
             // relevant bits: 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control
+			emit gyroStatusChanged(state.onboard_control_sensors_health & (1 << 1),state.onboard_control_sensors_enabled & (1 << 1),true);
+			emit accelStatusChanged(state.onboard_control_sensors_health & (1 << 2),state.onboard_control_sensors_enabled & (1 << 2),true);
+			emit magSensorStatusChanged(state.onboard_control_sensors_health & (1 << 3),state.onboard_control_sensors_enabled & (1 << 3),true);
+			emit baroStatusChanged(state.onboard_control_sensors_health & (1 << 4),state.onboard_control_sensors_enabled & (1 << 4),true);
+			emit airspeedStatusChanged(state.onboard_control_sensors_health & (1 << 5),state.onboard_control_sensors_enabled & (1 << 5),true);
             emit attitudeControlEnabled(state.onboard_control_sensors_enabled & (1 << 11));
             emit positionYawControlEnabled(state.onboard_control_sensors_enabled & (1 << 12));
             emit positionZControlEnabled(state.onboard_control_sensors_enabled & (1 << 13));
@@ -738,6 +743,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             double b = attitude.q2;
             double c = attitude.q3;
             double d = attitude.q4;
+			double e = sqrt(a*a + b*b + c*c + d*d);
+
+			a /= e;
+			b /= e;
+			c /= e;
+			d /= e;
 
             double aSq = a * a;
             double bSq = b * b;

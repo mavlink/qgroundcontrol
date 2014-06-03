@@ -677,15 +677,15 @@ void QGCXPlaneLink::readBytes()
                 //qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
                 lat = p.f[0];
                 lon = p.f[1];
-                alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
+                alt = p.f[2] * 0.3048f;// + rand()%4 - 2; // convert feet (MSL) to meters
             }
-            else if (p.index == 21 && xPlaneVersion == 10)
+            else if ((p.index == 21 && xPlaneVersion == 10) || (p.index == 21 && xPlaneVersion == 9))
             {
-                vy = p.f[3];
-                vx = -p.f[5];
+                vy = p.f[3];//+ rand()%4 - 2;
+                vx = -p.f[5];//+ rand()%4 - 2;
                 // moving 'up' in XPlane is positive, but its negative in NED
                 // for us.
-                vz = -p.f[4];
+                vz = -p.f[4];//+ rand()%4 - 2;
             }
             else if (p.index == 12)
             {

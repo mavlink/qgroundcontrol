@@ -61,6 +61,8 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
 {
     this->rate = rate;
     _isConnected = false;
+	
+	//doing somthing on the map or on something else.......................
 
     onboardParams = QMap<QString, float>();
     onboardParams.insert("PID_ROLL_K_P", 0.5f);
@@ -276,15 +278,18 @@ void MAVLinkSimulationLink::mainloop()
                     double d = QString(parts.at(i)).toDouble(&res);
                     if (!res) d = 0;
 
-                    if (keys.value(i, "") == "Accel._X") {
+					// name changed Accel._x -> MyAccel._x
+                    if (keys.value(i, "") == "MyAccel._X") {
                         rawImuValues.xacc = d;
                     }
 
-                    if (keys.value(i, "") == "Accel._Y") {
+					// name changed Accel._y -> MyAccel._y
+                    if (keys.value(i, "") == "MyAccel._Y") {
                         rawImuValues.yacc = d;
                     }
 
-                    if (keys.value(i, "") == "Accel._Z") {
+					// name changed Accel._z -> MyAccel._z
+                    if (keys.value(i, "") == "MyAccel._Z") {
                         rawImuValues.zacc = d;
                     }
                     if (keys.value(i, "") == "Gyro_Phi") {
@@ -321,6 +326,19 @@ void MAVLinkSimulationLink::mainloop()
                     if (keys.value(i, "") == "yaw_IMU") {
                         attitude.yaw = d;
                     }
+
+					// TEST TEST SENDING SIMULATED LOCATION	TO AN ACTUAL UAS
+					if (keys.value(i, "") == "CoorX") {
+                        // Somehow Prepare MAVLink msg
+                    }
+					if (keys.value(i, "") == "CoorY") {
+                        // Somehow Prepare MAVLink msg
+                    }
+					if (keys.value(i, "") == "CoorZ") {
+                        // Somehow Prepare MAVLink msg
+                    }
+
+
 
                     //Accel._X	Accel._Y	Accel._Z	Battery	Bottom_Rotor	CPU_Load	Ground_Dist.	Gyro_Phi	Gyro_Psi	Gyro_Theta	Left_Servo	Mag._X	Mag._Y	Mag._Z	Pressure	Right_Servo	Temperature	Top_Rotor	pitch_IMU	roll_IMU	yaw_IMU
 
@@ -417,15 +435,26 @@ void MAVLinkSimulationLink::mainloop()
 //        streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_int_pack(systemId, componentId, &ret, 0, (473780.28137103+(x))*1E3, (85489.9892510421+(y))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
+        //mavlink_msg_global_position_int_pack(systemId, componentId, &ret, 0, (473780.28137103+(x))*1E3, (85489.9892510421+(y))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
+
+		// =========================== TEST TEST TEST =============================================================
+		// OSU Scott Lab GPS Location: lattitude(x) = 40.002293 longitude(y): -83.01412
+		// OSU Airport: 40.077425, -83.075823
+		double customX,customY;
+		customX=40.002293;
+		customY=-83.01422;
+		
+		mavlink_msg_global_position_int_pack(systemId, componentId, &ret, 0, (customX*10000+(x))*1E3, (customY*10000+(y))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
         // GLOBAL POSITION VEHICLE 2
-        mavlink_msg_global_position_int_pack(systemId+1, componentId+1, &ret, 0, (473780.28137103+(x+0.00001))*1E3, (85489.9892510421+((y/2)+0.00001))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //mavlink_msg_global_position_int_pack(systemId+1, componentId+1, &ret, 0, (473780.28137103+(x+0.00001))*1E3, (85489.9892510421+((y/2)+0.00001))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
+// =========================== TEST TEST TEST    ==========================================================    
+		mavlink_msg_global_position_int_pack(systemId+1, componentId+1, &ret, 0, (customX*10000+(x+0.00001))*1E3, (customY*10000+((y*5)+0.00001))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
+		bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
@@ -435,15 +464,16 @@ void MAVLinkSimulationLink::mainloop()
 //        sendMAVLinkMessage(&ret);
 
 
-//        // GLOBAL POSITION VEHICLE 3
-//        mavlink_msg_global_position_int_pack(60, componentId, &ret, 0, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
-//        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
-//        //add data into datastream
-//        memcpy(stream+streampointer,buffer, bufferlength);
-//        streampointer += bufferlength;
+        // GLOBAL POSITION VEHICLE 3
+        //mavlink_msg_global_position_int_pack(60, componentId, &ret, 0, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
+		mavlink_msg_global_position_int_pack(systemId+2, componentId+2, &ret, 0, (customX*10000+(x+0.00003))*1E3, (customY*10000+((y*3)+0.00001))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
+		bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
 
         static int rcCounter = 0;
-        if (rcCounter == 2) {
+        if (rcCounter == 3) {
             mavlink_rc_channels_raw_t chan;
             chan.time_boot_ms = 0;
             chan.port = 0;
@@ -584,6 +614,14 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
+  // Pack message and get size of encoded byte string
+        mavlink_msg_heartbeat_pack(systemId+2, componentId+2, &msg, mavType, MAV_AUTOPILOT_GENERIC, system.base_mode, system.custom_mode, system.system_status);
+        // Allocate buffer with packet data
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+        //qDebug() << "CRC:" << msg.ck_a << msg.ck_b;
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
 
         // Send controller states
 
@@ -596,17 +634,17 @@ void MAVLinkSimulationLink::mainloop()
 //        // HEARTBEAT VEHICLE 2
 
 //        // Pack message and get size of encoded byte string
-//        mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_HELICOPTER, MAV_AUTOPILOT_ARDUPILOTMEGA);
+        mavlink_msg_heartbeat_pack(systemId, componentId, &msg, mavType, MAV_AUTOPILOT_PIXHAWK, system.base_mode, system.custom_mode, system.system_status);
 //        // Allocate buffer with packet data
-//        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
 //        //add data into datastream
-//        memcpy(stream+streampointer,buffer, bufferlength);
-//        streampointer += bufferlength;
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
 
 //        // HEARTBEAT VEHICLE 3
 
 //        // Pack message and get size of encoded byte string
-//        mavlink_msg_heartbeat_pack(60, componentId, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
+//        mavlink_msg_heartbeat_pack(systemId, componentId, &msg, mavType, MAV_AUTOPILOT_PIXHAWK, system.base_mode, system.custom_mode, system.system_status);
 //        // Allocate buffer with packet data
 //        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
 //        //add data into datastream
@@ -939,7 +977,8 @@ bool MAVLinkSimulationLink::connect()
     emit connected(true);
 
     start(LowPriority);
-    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 37.480391, -122.282883);
+    //MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 37.480391, -122.282883); //stanfrod university
+	MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 40.002293, -83.01412); //OSU
     Q_UNUSED(mav1);
 //    MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2, 47.375, 8.548, 1);
 //    Q_UNUSED(mav2);
