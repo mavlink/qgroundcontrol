@@ -192,13 +192,13 @@ void QGCFlightGearLink::run()
     flightGearArguments << QString("--fg-aircraft=%1").arg(fgAircraft);
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
-        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(port);
-        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,300,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(port);
+        flightGearArguments << QString("--generic=socket,in,300,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(currentPort);
     }
     else
     {
-        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(port);
-        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,300,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(port);
+        flightGearArguments << QString("--generic=socket,in,300,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(currentPort);
     }
     flightGearArguments << "--atlas=socket,out,1,localhost,5505,udp";
 //    flightGearArguments << "--in-air";
@@ -464,7 +464,7 @@ void QGCFlightGearLink::readBytes()
 
     // Parse string
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
-    double lat, lon, alt;   
+    double lat, lon, alt;
     float ind_airspeed;
     float true_airspeed;
     float vx, vy, vz, xacc, yacc, zacc;
@@ -507,7 +507,7 @@ void QGCFlightGearLink::readBytes()
     float density = abs_pressure / (air_gas_constant * (temperature - absolute_null_celsius));
     diff_pressure = true_airspeed * true_airspeed * density / 2.0f;
     //qDebug() << "diff_pressure: " << diff_pressure << "abs_pressure: " << abs_pressure;
-    
+
     /* Calculate indicated airspeed */
     const float air_density_sea_level_15C  = 1.225f; //kg/m^3
     if (diff_pressure > 0)
@@ -517,9 +517,9 @@ void QGCFlightGearLink::readBytes()
     {
         ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
     }
-    
+
     //qDebug() << "ind_airspeed: " << ind_airspeed << "true_airspeed: " << true_airspeed;
-    
+
     // Send updated state
     //qDebug()  << "sensorHilEnabled: " << sensorHilEnabled;
     if (_sensorHilEnabled)
