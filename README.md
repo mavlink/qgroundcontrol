@@ -1,4 +1,4 @@
-# QGroundControl 
+# QGroundControl
 ## Open Source Micro Air Vehicle Ground Control Station
 
 
@@ -16,8 +16,8 @@
 For generating documentation, refer to /doc/README.
 
 ## Notes
-Please make sure to delete your build folder before re-building. Independent of which 
-build system you use (this is not related to Qt or your OS) the dependency checking and 
+Please make sure to delete your build folder before re-building. Independent of which
+build system you use (this is not related to Qt or your OS) the dependency checking and
 cleaning is based on the current project revision. So if you change the project and don't remove the build folder before your next build, incremental building can leave you with stale object files.
 
 ## Additional functionality
@@ -83,7 +83,7 @@ To build on Mac OSX (10.6 or later):
 3. Run `make -j4`
 
 
-# Build on Linux 
+# Build on Linux
 
 
 To build on Linux:
@@ -91,6 +91,7 @@ To build on Linux:
 1. Install base dependencies (QT + phonon/webkit, SDL)
   * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential libudev-dev`
   * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
+  * For Arch Linux: `pacman -Sy qtwebkit phonon-qt4`
 
 2. **[OPTIONAL]** Install additional libraries
   * For text-to-speech (espeak)
