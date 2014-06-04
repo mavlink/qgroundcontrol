@@ -91,13 +91,13 @@ To build on Linux:
 1. Install base dependencies (QT + phonon/webkit, SDL)
   * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential libudev-dev`
   * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
-  * For Arch Linux: `sudo pacman -S qtwebkit phonon-qt4`
+  * For Arch Linux: `pacman -Sy qtwebkit phonon-qt4`
 
 2. **[OPTIONAL]** Install additional libraries
   * For text-to-speech (espeak)
 	* For Ubuntu: `sudo apt-get install espeak libespeak-dev`
 	* For Fedora: `sudo yum install espeak espeak-devel`
-	* For Arch Linux: `sudo pacman -Sy espeak`
+	* For Arch Linux: `pacman -Sy espeak`
   * For 3D flight view (openscenegraph)
 	* For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
 	* For Fedora: `sudo yum install OpenSceneGraph-qt-devel`
