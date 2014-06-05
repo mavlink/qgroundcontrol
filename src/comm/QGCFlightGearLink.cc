@@ -40,17 +40,17 @@ This file is part of the QGROUNDCONTROL project
 #include <QHostInfo>
 #include "MainWindow.h"
 
-// FlightGear process start and connection is quite fragile. Uncomment the define below to get higher level of debug output
+// FlightGear _fgProcess start and connection is quite fragile. Uncomment the define below to get higher level of debug output
 // for tracking down problems.
 //#define DEBUG_FLIGHTGEAR_CONNECT
 
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port) :
-    socket(NULL),
-    process(NULL),
     flightGearVersion(3),
     startupArguments(startupArguments),
     _sensorHilEnabled(true),
-    barometerOffsetkPa(0.0f)
+    barometerOffsetkPa(0.0f),
+    _udpCommSocket(NULL),
+    _fgProcess(NULL)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
@@ -70,7 +70,7 @@ QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString startupArguments
 
 QGCFlightGearLink::~QGCFlightGearLink()
 {   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and socket
+    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and _udpCommSocket
     if(connectState){
        disconnectSimulation();
     }
@@ -82,13 +82,12 @@ void QGCFlightGearLink::run()
     Q_ASSERT(mav);
     Q_ASSERT(!_fgProcessName.isEmpty());
         
-    // We communicate with FlightGear over a UDP socket
-    socket = new QUdpSocket(this);
-    Q_CHECK_PTR(socket);
-    socket->moveToThread(this);
-    // FIXME: How do we deal with a failed bind. Signal?
-    socket->bind(host, port);
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+    // We communicate with FlightGear over a UDP _udpCommSocket
+    _udpCommSocket = new QUdpSocket(this);
+    Q_CHECK_PTR(_udpCommSocket);
+    _udpCommSocket->moveToThread(this);
+    _udpCommSocket->bind(host, port);
+    QObject::connect(_udpCommSocket, SIGNAL(readyRead()), this, SLOT(readBytes()));
     
     
     // Connect to the various HIL signals that we use to then send information across the UDP protocol to FlightGear.
@@ -101,27 +100,25 @@ void QGCFlightGearLink::run()
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)),
             mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
     
-    // Start a new process to run FlightGear in
-    process = new QProcess(this);
-    Q_CHECK_PTR(process);
-    process->moveToThread(this);
+    // Start a new QProcess to run FlightGear in
+    _fgProcess = new QProcess(this);
+    Q_CHECK_PTR(_fgProcess);
+    _fgProcess->moveToThread(this);
     
-    // Catch process error
-    // FIXME: What happens if you quit FG from app side? Shouldn't that be the norm, instead of exiting process?
-    connect(process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(processError(QProcess::ProcessError)));
+    connect(_fgProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(processError(QProcess::ProcessError)));
 #ifdef DEBUG_FLIGHTGEAR_CONNECT
-    connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(printFgfsOutput()));
-    connect(process, SIGNAL(readyReadStandardError()), this, SLOT(printFgfsError()));
+    connect(_fgProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(_printFgfsOutput()));
+    connect(_fgProcess, SIGNAL(readyReadStandardError()), this, SLOT(_printFgfsError()));
 #endif
     
     if (!_fgProcessWorkingDirPath.isEmpty()) {
-        process->setWorkingDirectory(_fgProcessWorkingDirPath);
-		qDebug() << "Working directory" << process->workingDirectory();
+        _fgProcess->setWorkingDirectory(_fgProcessWorkingDirPath);
+		qDebug() << "Working directory" << _fgProcess->workingDirectory();
     }
     
 #ifdef Q_OS_WIN32
 	// On Windows we need to full qualify the location of the excecutable. The call to setWorkingDirectory only
-	// sets the process context, not the QProcess::start context. For some strange reason this is not the case on
+	// sets the QProcess context, not the QProcess::start context. For some strange reason this is not the case on
 	// OSX.
 	QDir fgProcessFullyQualified(_fgProcessWorkingDirPath);
 	_fgProcessName = fgProcessFullyQualified.absoluteFilePath(_fgProcessName);
@@ -131,7 +128,7 @@ void QGCFlightGearLink::run()
     qDebug() << "Starting FlightGear" << _fgProcessWorkingDirPath << _fgProcessName << _fgArgList;
 #endif
     
-    process->start(_fgProcessName, _fgArgList);
+    _fgProcess->start(_fgProcessName, _fgArgList);
     connectState = true;
     
     emit simulationConnected(connectState);
@@ -152,7 +149,7 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
     switch(err)
     {
     case QProcess::FailedToStart:
-        emit showCriticalMessageFromThread(tr("FlightGear Failed to Start"), process->errorString());
+        emit showCriticalMessageFromThread(tr("FlightGear Failed to Start"), _fgProcess->errorString());
         break;
     case QProcess::Crashed:
         emit showCriticalMessageFromThread(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
@@ -272,7 +269,7 @@ void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    if (connectState && socket) socket->writeDatagram(data, size, currentHost, currentPort);
+    if (connectState && _udpCommSocket) _udpCommSocket->writeDatagram(data, size, currentHost, currentPort);
 }
 
 /**
@@ -288,9 +285,9 @@ void QGCFlightGearLink::readBytes()
     QHostAddress sender;
     quint16 senderPort;
 
-    unsigned int s = socket->pendingDatagramSize();
+    unsigned int s = _udpCommSocket->pendingDatagramSize();
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
-    socket->readDatagram(data, maxLength, &sender, &senderPort);
+    _udpCommSocket->readDatagram(data, maxLength, &sender, &senderPort);
 
     QByteArray b(data, s);
 
@@ -457,7 +454,7 @@ void QGCFlightGearLink::readBytes()
  **/
 qint64 QGCFlightGearLink::bytesAvailable()
 {
-    return socket->pendingDatagramSize();
+    return _udpCommSocket->pendingDatagramSize();
 }
 
 /**
@@ -467,24 +464,24 @@ qint64 QGCFlightGearLink::bytesAvailable()
  **/
 bool QGCFlightGearLink::disconnectSimulation()
 {
-    disconnect(process, SIGNAL(error(QProcess::ProcessError)),
+    disconnect(_fgProcess, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
     disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
 
-    if (process)
+    if (_fgProcess)
     {
-        process->close();
-        delete process;
-        process = NULL;
+        _fgProcess->close();
+        delete _fgProcess;
+        _fgProcess = NULL;
     }
-    if (socket)
+    if (_udpCommSocket)
     {
-        socket->close();
-        delete socket;
-        socket = NULL;
+        _udpCommSocket->close();
+        delete _udpCommSocket;
+        _udpCommSocket = NULL;
     }
 
     connectState = false;
@@ -500,12 +497,13 @@ bool QGCFlightGearLink::disconnectSimulation()
 
 /// @brief Splits a space seperated set of command line arguments into a QStringList.
 ///         Quoted strings are allowed and handled correctly.
-/// @param uiArgs Arguments to parse
-/// @param argList Returned argument list
+///     @param uiArgs Arguments to parse
+///     @param argList Returned argument list
 /// @return Returns false if the argument list has mistmatced quotes within in.
 
 bool QGCFlightGearLink::parseUIArguments(QString uiArgs, QStringList& argList)
 {
+    // FYI: The only reason this routine is public is so that we can reference it from a unit test.
 
 	// This is not as easy as it seams since some options can be quoted to preserve spaces within things like
     // directories. There is likely some crazed regular expression which can do this. But after trying that
@@ -571,6 +569,26 @@ bool QGCFlightGearLink::parseUIArguments(QString uiArgs, QStringList& argList)
     return true;
 }
 
+/// @brief Locates the specified argument in the argument list, returning the value for it.
+///     @param uiArgList Argument list to search through
+///     @param argLabel Argument label to search for
+///     @param argValue Returned argument value if found
+/// @return Returns true if argument found and argValue returned
+bool QGCFlightGearLink::_findUIArgument(const QStringList& uiArgList, const QString& argLabel, QString& argValue)
+{
+    QString regExpStr = argLabel + "=(.*)";
+    int index = uiArgList.indexOf(QRegExp(regExpStr, Qt::CaseInsensitive));
+    if (index != -1) {
+        QRegExp regExp(regExpStr);
+        index = regExp.indexIn(uiArgList[index]);
+        Q_ASSERT(index != -1);
+        argValue = regExp.cap(1);
+        return true;
+    } else {
+        return false;
+    }
+}
+
 /**
  * @brief Connect the connection.
  *
@@ -583,23 +601,17 @@ bool QGCFlightGearLink::connectSimulation()
     // have that information setup we start the thread which will call run, which will in turn
     // start the various FG processes on the seperate thread.
     
-    // FixMe: Does returning false out of here leave in inconsistent state?
-    
-    qDebug() << "STARTING FLIGHTGEAR LINK";
-    
-    // FIXME: !mav is failure isn't it?
     if (!mav) {
         return false;
     }
     
-    // FIXME: Pull previous information from settings
-    
-    QString fgAppName;
-    QString fgRootPath;						// FlightGear root data directory as specified by --fg-root
-	bool	fgRootDirOverride = false;		// true: User has specified --fg-root from ui options
-	QString fgSceneryPath;					// FlightGear scenery path as specified by --fg-scenery
-	bool	fgSceneryDirOverride = false;	// true: User has specified --fg-scenery from ui options
-    QDir    fgAppDir;						// Location of main FlightGear application
+    QString     fgAppName;
+    QString     fgRootPath;						// FlightGear root data directory as specified by --fg-root
+    QStringList fgRootPathProposedList;         // Directories we will attempt to search for --fg-root
+	bool        fgRootDirOverride = false;		// true: User has specified --fg-root from ui options
+	QString     fgSceneryPath;					// FlightGear scenery path as specified by --fg-scenery
+	bool        fgSceneryDirOverride = false;	// true: User has specified --fg-scenery from ui options
+    QDir        fgAppDir;						// Location of main FlightGear application
     
 #if defined Q_OS_MACX
     // Mac installs will default to the /Applications folder 99% of the time. Anything other than
@@ -608,10 +620,9 @@ bool QGCFlightGearLink::connectSimulation()
     fgAppName = "FlightGear.app";
     _fgProcessName = "./fgfs.sh";
     _fgProcessWorkingDirPath = "/Applications/FlightGear.app/Contents/Resources/";
-    fgRootPath = "/Applications/FlightGear.app/Contents/Resources/data/";
+    fgRootPathProposedList += "/Applications/FlightGear.app/Contents/Resources/data/";
 #elif defined Q_OS_WIN32
     _fgProcessName = "fgfs.exe";
-    //fgProcessWorkingDir = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32";
     
     // Windows installs are not as easy to determine. Default installation is to
     // C:\Program Files\FlightGear, but that can be easily changed. That also doesn't
@@ -667,8 +678,8 @@ bool QGCFlightGearLink::connectSimulation()
                 
                 regExp.setPattern("^fg_root:(.*)");
                 if (regExp.indexIn(line) == 0 && regExp.captureCount() == 1) {
-                    fgRootPath = QDir(regExp.cap(1)).absolutePath();
-                    qDebug() << "fg_root" << fgRootPath;
+                    fgRootPathProposedList += QDir(regExp.cap(1)).absolutePath();
+                    qDebug() << "fg_root" << fgRootPathProposedList[0];
                     continue;
                 }
                 
@@ -686,7 +697,8 @@ bool QGCFlightGearLink::connectSimulation()
     // Linux installs to a location on the path so we don't need a directory to run the executable
     fgAppName = "fgfs";
     _fgProcessName = "fgfs";
-    fgRootPath = "/usr/share/games/flightgear/";   // Default Ubuntu location as best guess
+    fgRootPathProposedList += "/usr/share/flightgear/data/";    // Default Archlinux location
+    fgRootPathProposedList += "/usr/share/games/flightgear/";   // Default Ubuntu location
 #else
 #error Unknown OS build flavor
 #endif
@@ -708,7 +720,11 @@ bool QGCFlightGearLink::connectSimulation()
         }
         
         // Let the user pick the right directory
-        fgAppDir.setPath(QFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName));
+        QString dirPath = QFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
+        if (dirPath.isEmpty()) {
+            return false;
+        }
+        fgAppDir.setPath(dirPath);
         fgAppFullyQualified = fgAppDir.absoluteFilePath(fgAppName);
     }
 #endif
@@ -718,7 +734,7 @@ bool QGCFlightGearLink::connectSimulation()
 	QStringList uiArgList;
     bool mismatchedQuotes = parseUIArguments(startupArguments, uiArgList);
     if (!mismatchedQuotes) {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Mismatched quotes in specified command line options"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), tr("Mismatched quotes in specified command line options"));
         return false;
     }
     
@@ -728,41 +744,50 @@ bool QGCFlightGearLink::connectSimulation()
 #endif
     _fgArgList += uiArgList;
     
-    // Add --fg-root command line arg. If --fg-root is specified from the ui we use that instead.
-    // We need to know what --fg-root is set to because we are going to use it to validate
-    // communication protocols.
-    if (startupArguments.contains("--fg-root=", Qt::CaseInsensitive)) {
-		// FIXME: Won't handle missing quotes
-        const char* regExpStr = "--fg-root=(.*)";
-        int index = _fgArgList.indexOf(QRegExp(regExpStr, Qt::CaseInsensitive));
-        Q_ASSERT(index != -1);
-        QString rootArg(_fgArgList[index]);
-        QRegExp regExp(regExpStr);
-        index = regExp.indexIn(rootArg);
-        Q_ASSERT(index != -1);
-        fgRootPath = regExp.cap(1);
-        qDebug() << "--fg-root override" << fgRootPath;
-        fgRootDirOverride = true;
-    } else {
-		_fgArgList += "--fg-root=" + fgRootPath;
-	}
+    // If we have an --fg-root coming in from the ui options that overrides any internal searching of
+    // proposed locations.
+    QString argValue;
+    fgRootDirOverride = _findUIArgument(_fgArgList, "--fg-root", argValue);
+    if (fgRootDirOverride) {
+        fgRootPathProposedList.clear();
+        fgRootPathProposedList += argValue;
+        qDebug() << "--fg-root override" << argValue;
+    }
+
+    // See if we can find an --fg-root directory from the proposed list.
+    Q_ASSERT(fgRootPath.isEmpty());
+    for (int i=0; i<fgRootPathProposedList.count(); i++) {
+        fgRootPath = fgRootPathProposedList[i];
+        if (QFileInfo(fgRootPath).isDir()) {
+            // We found it
+            break;
+        } else {
+            fgRootPath.clear();
+        }
+    }
     
+    // Alert the user if we couldn't find an --fg-root
+    if (fgRootPath.isEmpty()) {
+        QString errMsg;
+        if (fgRootDirOverride) {
+            errMsg = tr("--fg-root directory specified from ui option not found: %1").arg(fgRootPath);
+        } else if (fgRootPath.isEmpty()) {
+            errMsg = tr("Unable to automatically determine --fg-root directory location. You will need to specify --fg-root=<directory> as an additional command line parameter from ui.");
+        }
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), errMsg);
+        return false;
+    }
+
+    if (!fgRootDirOverride) {
+        _fgArgList += "--fg-root=" + fgRootPath;
+    }
+
     // Add --fg-scenery command line arg. If --fg-scenery is specified from the ui we use that instead.
     // On Windows --fg-scenery is required on the command line otherwise FlightGear won't boot.
-	// FIXME: Use single routine for both overrides
-    if (startupArguments.contains("--fg-scenery=", Qt::CaseInsensitive)) {
-		// FIXME: Won't handle missing quotes
-        const char* regExpStr = "--fg-scenery=(.*)";
-        int index = _fgArgList.indexOf(QRegExp(regExpStr, Qt::CaseInsensitive));
-        Q_ASSERT(index != -1);
-        QString rootArg(_fgArgList[index]);
-        QRegExp regExp(regExpStr);
-        index = regExp.indexIn(rootArg);
-        Q_ASSERT(index != -1);
-		Q_ASSERT(regExp.captureCount() == 1);
-        fgSceneryPath = regExp.cap(1);
-        qDebug() << "--fg-scenery override" << fgSceneryPath;
-        fgSceneryDirOverride = true;
+    fgSceneryDirOverride = _findUIArgument(_fgArgList, "--fg-scenery", argValue);
+    if (fgSceneryDirOverride) {
+        fgSceneryPath = argValue;
+        qDebug() << "--fg-scenery override" << argValue;
     } else if (!fgSceneryPath.isEmpty()) {
 		_fgArgList += "--fg-scenery=" + fgSceneryPath;
 	}
@@ -777,26 +802,12 @@ bool QGCFlightGearLink::connectSimulation()
         } else {
             errMsg = tr("Unable to automatically determine --fg-scenery directory location. You will need to specify --fg-scenery=directory as an additional command line parameter from ui.");
         }
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), errMsg);
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), errMsg);
         return false;
     }
 #else
     Q_UNUSED(fgSceneryDirOverride);
 #endif
-    
-    // Check that we have a good fgRootDir set before we use it to check communication protocol files.
-    if (fgRootPath.isEmpty() || !QFileInfo(fgRootPath).isDir()) {
-        QString errMsg;
-        if (fgRootDirOverride) {
-            errMsg = tr("--fg-root directory specified from ui option not found: %1").arg(fgRootPath);
-        } else if (fgRootPath.isEmpty()) {
-            errMsg = tr("Unable to automatically determine --fg-root directory location. You will need to specify --fg-root=<directory> as an additional command line parameter from ui.");
-        } else {
-            errMsg = tr("Unable to automatically determine --fg-root directory location. Attempted directory '%1', which does not exist. You will need to specify --fg-root=<directory> as an additional command line parameter from ui.").arg(fgRootPath);
-        }
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), errMsg);
-        return false;
-    }
     
     // Setup and verify directory which contains QGC provided aircraft files
     QString qgcAircraftDir(QApplication::applicationDirPath() + "/files/flightgear/Aircraft");
@@ -808,7 +819,7 @@ bool QGCFlightGearLink::connectSimulation()
     
     // Setup protocol we will be using to communicate with FlightGear
     QString fgProtocol(mav->getSystemType() == MAV_TYPE_QUADROTOR ? "qgroundcontrol-quadrotor" : "qgroundcontrol-fixed-wing");
-    QString fgProtocolArg("--generic=socket,%1,300,127.0.0.1,%2,udp,%3");
+    QString fgProtocolArg("--generic=_udpCommSocket,%1,300,127.0.0.1,%2,udp,%3");
     _fgArgList << fgProtocolArg.arg("out").arg(port).arg(fgProtocol);
     _fgArgList << fgProtocolArg.arg("in").arg(currentPort).arg(fgProtocol);
     
@@ -908,10 +919,10 @@ bool QGCFlightGearLink::connectSimulation()
     return true;
 }
 
-void QGCFlightGearLink::printFgfsOutput()
+void QGCFlightGearLink::_printFgfsOutput(void)
 {
    qDebug() << "fgfs stdout:";
-   QByteArray byteArray = process->readAllStandardOutput();
+   QByteArray byteArray = _fgProcess->readAllStandardOutput();
    QStringList strLines = QString(byteArray).split("\n");
 
    foreach (QString line, strLines){
@@ -919,11 +930,11 @@ void QGCFlightGearLink::printFgfsOutput()
    }
 }
 
-void QGCFlightGearLink::printFgfsError()
+void QGCFlightGearLink::_printFgfsError(void)
 {
    qDebug() << "fgfs stderr:";
 
-   QByteArray byteArray = process->readAllStandardError();
+   QByteArray byteArray = _fgProcess->readAllStandardError();
    QStringList strLines = QString(byteArray).split("\n");
 
    foreach (QString line, strLines){
