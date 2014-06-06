@@ -574,6 +574,7 @@ bool QGCFlightGearLink::parseUIArguments(QString uiArgs, QStringList& argList)
 ///     @param argLabel Argument label to search for
 ///     @param argValue Returned argument value if found
 /// @return Returns true if argument found and argValue returned
+
 bool QGCFlightGearLink::_findUIArgument(const QStringList& uiArgList, const QString& argLabel, QString& argValue)
 {
     QString regExpStr = argLabel + "=(.*)";
@@ -703,8 +704,8 @@ bool QGCFlightGearLink::connectSimulation()
 #error Unknown OS build flavor
 #endif
     
-    // Validate the FlightGear application directory location. Linux runs from path so we don't validate on that OS.
 #ifndef Q_OS_LINUX
+    // Validate the FlightGear application directory location. Linux runs from path so we don't validate on that OS.
     Q_ASSERT(!fgAppName.isEmpty());
     QString fgAppFullyQualified = fgAppDir.absoluteFilePath(fgAppName);
     while (!QFileInfo(fgAppFullyQualified).exists()) {
@@ -744,7 +745,7 @@ bool QGCFlightGearLink::connectSimulation()
 #endif
     _fgArgList += uiArgList;
     
-    // If we have an --fg-root coming in from the ui options that overrides any internal searching of
+    // If we have an --fg-root coming in from the ui options, that setting overrides any internal searching of
     // proposed locations.
     QString argValue;
     fgRootDirOverride = _findUIArgument(_fgArgList, "--fg-root", argValue);
