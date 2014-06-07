@@ -69,9 +69,9 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     // connect to self
     connect(ui->infoLabel, SIGNAL(released()),
             this, SLOT(showTooltip()));
-    // Set the current UAS if present
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-            this, SLOT(setActiveUAS(UASInterface*)));
+
+    init();
+    requestParameter();
 }
 
 QGCParamSlider::~QGCParamSlider()
@@ -220,6 +220,8 @@ void QGCParamSlider::setEditMode(bool editMode)
         parameterMin = ui->editMinSpinBox->value();
         parameterMax = ui->editMaxSpinBox->value();
 
+        requestParameter();
+
         switch ((int)parameterValue.type())
         {
         case QVariant::Char:
@@ -264,6 +266,7 @@ void QGCParamSlider::setParamPending()
 {
     if (uas)  {
         uas->getParamManager()->setPendingParam(componentId, parameterName, parameterValue);
+        uas->getParamManager()->sendPendingParameters(true, true);
     }
     else {
         qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";

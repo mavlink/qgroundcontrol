@@ -80,14 +80,17 @@ void QGCFlightGearLink::run()
 
     if (!mav) return;
     socket = new QUdpSocket(this);
+    socket->moveToThread(this);
     connectState = socket->bind(host, port);
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     process = new QProcess(this);
+    process->moveToThread(this);
     terraSync = new QProcess(this);
+    terraSync->moveToThread(this);
 
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     connect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     connect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
@@ -189,13 +192,13 @@ void QGCFlightGearLink::run()
     flightGearArguments << QString("--fg-aircraft=%1").arg(fgAircraft);
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     {
-        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(port);
-        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,300,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(port);
+        flightGearArguments << QString("--generic=socket,in,300,127.0.0.1,%1,udp,qgroundcontrol-quadrotor").arg(currentPort);
     }
     else
     {
-        flightGearArguments << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(port);
-        flightGearArguments << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(currentPort);
+        flightGearArguments << QString("--generic=socket,out,300,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(port);
+        flightGearArguments << QString("--generic=socket,in,300,127.0.0.1,%1,udp,qgroundcontrol-fixed-wing").arg(currentPort);
     }
     flightGearArguments << "--atlas=socket,out,1,localhost,5505,udp";
 //    flightGearArguments << "--in-air";
@@ -363,7 +366,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
 
 }
 
-void QGCFlightGearLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
+void QGCFlightGearLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
     Q_UNUSED(time);
     Q_UNUSED(act1);
@@ -376,7 +379,7 @@ void QGCFlightGearLink::updateActuators(uint64_t time, float act1, float act2, f
     Q_UNUSED(act8);
 }
 
-void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
+void QGCFlightGearLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     // magnetos,aileron,elevator,rudder,throttle\n
 
@@ -461,7 +464,7 @@ void QGCFlightGearLink::readBytes()
 
     // Parse string
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
-    double lat, lon, alt;   
+    double lat, lon, alt;
     float ind_airspeed;
     float true_airspeed;
     float vx, vy, vz, xacc, yacc, zacc;
@@ -504,7 +507,7 @@ void QGCFlightGearLink::readBytes()
     float density = abs_pressure / (air_gas_constant * (temperature - absolute_null_celsius));
     diff_pressure = true_airspeed * true_airspeed * density / 2.0f;
     //qDebug() << "diff_pressure: " << diff_pressure << "abs_pressure: " << abs_pressure;
-    
+
     /* Calculate indicated airspeed */
     const float air_density_sea_level_15C  = 1.225f; //kg/m^3
     if (diff_pressure > 0)
@@ -514,9 +517,9 @@ void QGCFlightGearLink::readBytes()
     {
         ind_airspeed =  -sqrtf((2.0f*fabsf(diff_pressure)) / air_density_sea_level_15C);
     }
-    
+
     //qDebug() << "ind_airspeed: " << ind_airspeed << "true_airspeed: " << true_airspeed;
-    
+
     // Send updated state
     //qDebug()  << "sensorHilEnabled: " << sensorHilEnabled;
     if (_sensorHilEnabled)
@@ -585,7 +588,7 @@ void QGCFlightGearLink::readBytes()
                          vx, vy, vz,
                          ind_airspeed, true_airspeed,
                          xacc, yacc, zacc);
-        //qDebug()  << "hilStateChanged " << (int32_t)lat << (int32_t)lon << (int32_t)alt;
+        //qDebug()  << "hilStateChanged " << (qint32)lat << (qint32)lon << (qint32)alt;
     }
 
     //    // Echo data for debugging purposes
@@ -619,7 +622,7 @@ bool QGCFlightGearLink::disconnectSimulation()
 {
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
                this, SLOT(processError(QProcess::ProcessError)));
-    disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
     disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));

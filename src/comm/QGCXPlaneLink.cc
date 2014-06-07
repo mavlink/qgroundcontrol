@@ -55,8 +55,10 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLast(QGC::groundTimeMilliseconds()),
     simUpdateFirst(0),
     simUpdateLastText(QGC::groundTimeMilliseconds()),
+    simUpdateLastGroundTruth(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    _sensorHilEnabled(true)
+    _sensorHilEnabled(true),
+    _should_exit(false)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
@@ -73,6 +75,11 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
 QGCXPlaneLink::~QGCXPlaneLink()
 {
     storeSettings();
+    // Tell the thread to exit
+    _should_exit = true;
+    // Wait for it to exit
+    wait();
+
 //    if(connectState) {
 //       disconnectSimulation();
 //    }
@@ -148,18 +155,19 @@ void QGCXPlaneLink::run()
     if (connectState) return;
 
     socket = new QUdpSocket(this);
+    socket->moveToThread(this);
     connectState = socket->bind(localHost, localPort);
     if (!connectState) return;
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
-    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
+    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)), Qt::QueuedConnection);
+    connect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
 
     UAS* uas = dynamic_cast<UAS*>(mav);
     if (uas)
@@ -209,7 +217,10 @@ void QGCXPlaneLink::run()
 
     writeBytes((const char*)&ip, sizeof(ip));
 
-    exec();
+    while(!_should_exit) {
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(5);
+    }
 }
 
 void QGCXPlaneLink::setPort(int localPort)
@@ -734,6 +745,8 @@ void QGCXPlaneLink::readBytes()
             simUpdateLastText = QGC::groundTimeMilliseconds();
         }
 
+        simUpdateLast = QGC::groundTimeMilliseconds();
+
         if (_sensorHilEnabled)
         {
             diff_pressure = (ind_airspeed * ind_airspeed * 1.225f) / 2.0f;
@@ -783,13 +796,13 @@ void QGCXPlaneLink::readBytes()
         }
 
         // Limit ground truth to 25 Hz
-        if (QGC::groundTimeMilliseconds() - simUpdateLast > 40) {
+        if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40) {
             emit hilGroundTruthChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                                        pitchspeed, yawspeed, lat, lon, alt,
                                        vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
-        }
 
-        simUpdateLast = QGC::groundTimeMilliseconds();
+            simUpdateLastGroundTruth = QGC::groundTimeMilliseconds();
+        }
     }
 
     if (!oldConnectionState && xPlaneConnected)
@@ -834,8 +847,8 @@ bool QGCXPlaneLink::disconnectSimulation()
                this, SLOT(processError(QProcess::ProcessError)));
     if (mav)
     {
-        disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-        disconnect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
+        disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+        disconnect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
 
         disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
         disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));

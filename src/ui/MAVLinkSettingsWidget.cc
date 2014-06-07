@@ -47,6 +47,12 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
 
     m_ui->gridLayout->setAlignment(Qt::AlignTop);
 
+    // AUTH
+    m_ui->droneOSCheckBox->setChecked(protocol->getAuthEnabled());
+    QSettings settings;
+    m_ui->droneOSComboBox->setCurrentIndex(m_ui->droneOSComboBox->findText(settings.value("DRONEOS_HOST", "droneos.com:14555").toString()));
+    m_ui->droneOSLineEdit->setText(protocol->getAuthKey());
+
     // Initialize state
     m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
     m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
@@ -60,12 +66,6 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
 
     m_ui->actionGuardCheckBox->setChecked(protocol->actionGuardEnabled());
     m_ui->actionRetransmissionSpinBox->setValue(protocol->getActionRetransmissionTimeout());
-
-    // AUTH
-    m_ui->droneOSCheckBox->setChecked(protocol->getAuthEnabled());
-    QSettings settings;
-    m_ui->droneOSComboBox->setCurrentIndex(m_ui->droneOSComboBox->findText(settings.value("DRONEOS_HOST", "droneos.com:14555").toString()));
-    m_ui->droneOSLineEdit->setText(protocol->getAuthKey());
 
     // Connect actions
     // Heartbeat
@@ -144,11 +144,6 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     // and then remove these two lines
     m_ui->multiplexingFilterCheckBox->setVisible(false);
     m_ui->multiplexingFilterLineEdit->setVisible(false);
-
-//    // Update settings
-//    m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
-//    m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
-//    m_ui->versionCheckBox->setChecked(protocol->versionCheckEnabled());
 }
 
 void MAVLinkSettingsWidget::updateLogfileName(const QString& fileName)

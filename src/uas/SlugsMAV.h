@@ -53,7 +53,7 @@ class SlugsMAV : public UAS
 
 
 public:
-    SlugsMAV(MAVLinkProtocol* mavlink, int id = 0);
+    SlugsMAV(MAVLinkProtocol* mavlink, QThread* thread, int id = 0);
 
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
