@@ -188,7 +188,7 @@ void MainWindow::init()
     ui.setupUi(this);
     hide();
     menuActionHelper->setMenu(ui.menuTools);
-    
+
     // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
 #ifdef Q_OS_LINUX
     menuBar()->setNativeMenuBar(false);
@@ -224,6 +224,7 @@ void MainWindow::init()
         actions << ui.actionFlightView;
         actions << ui.actionMissionView;
         actions << ui.actionHardwareConfig;
+
         toolBar->setPerspectiveChangeActions(actions);
 
         // Add actions for advanced users (displayed in dropdown under "advanced")
@@ -346,6 +347,27 @@ void MainWindow::init()
         }
 
     }
+
+    // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
+#ifdef Q_OS_MACX
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0, QApplication::UnicodeUTF8));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0, QApplication::UnicodeUTF8));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0, QApplication::UnicodeUTF8));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0, QApplication::UnicodeUTF8));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0, QApplication::UnicodeUTF8));
+    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0, QApplication::UnicodeUTF8));
+    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0, QApplication::UnicodeUTF8));
+    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0, QApplication::UnicodeUTF8));
+#else
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0, QApplication::UnicodeUTF8));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0, QApplication::UnicodeUTF8));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0, QApplication::UnicodeUTF8));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0, QApplication::UnicodeUTF8));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0, QApplication::UnicodeUTF8));
+    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0, QApplication::UnicodeUTF8));
+    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0, QApplication::UnicodeUTF8));
+    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0, QApplication::UnicodeUTF8));
+#endif
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
@@ -740,6 +762,7 @@ void MainWindow::loadDockWidget(const QString& name)
 {
     if(menuActionHelper->containsDockWidget(currentView, name))
         return;
+
     if (name.startsWith("HIL_CONFIG"))
     {
         //It's a HIL widget.
@@ -806,7 +829,7 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
@@ -1344,6 +1367,8 @@ void MainWindow::connectCommonActions()
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
+    connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
+    connect(ui.actionHardwareConfig, SIGNAL(triggered()), this, SLOT(loadHardwareConfigView()));
 
     if (getCustomMode() == CUSTOM_MODE_APM) {
         connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
@@ -1494,21 +1519,11 @@ bool MainWindow::configLink(LinkInterface *link)
 
 void MainWindow::addLink(LinkInterface *link)
 {
-
-    qDebug() << "ADD LINK CALLED FROM SOMEWHERE";
-
     // IMPORTANT! KEEP THESE TWO LINES
     // THEY MAKE SURE THE LINK IS PROPERLY REGISTERED
     // BEFORE LINKING THE UI AGAINST IT
     // Register (does nothing if already registered)
     LinkManager::instance()->add(link);
-
-    if (mavlink) {
-        qDebug() << "MAVLINK OK";
-    } else {
-        qDebug() << "MAVLINK FAIL";
-    }
-
     LinkManager::instance()->addProtocol(link, mavlink);
 
     // Go fishing for this link's configuration window

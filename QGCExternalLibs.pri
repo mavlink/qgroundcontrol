@@ -416,9 +416,10 @@ contains(DEFINES, DISABLE_3DMOUSE) {
 	exists(/usr/local/lib/libxdrvlib.so) {
 		message("Including support for 3DConnexion mice")
 
-		DEFINES +=
+                DEFINES += \
 		QGC_MOUSE_ENABLED_LINUX \
-		ParameterCheck                      # Hack: Has to be defined for magellan usage
+                ParameterCheck
+                # Hack: Has to be defined for magellan usage
 
 		HEADERS += src/input/Mouse6dofInput.h
 		SOURCES += src/input/Mouse6dofInput.cpp

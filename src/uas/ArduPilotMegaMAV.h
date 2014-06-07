@@ -29,7 +29,7 @@ class ArduPilotMegaMAV : public UAS
 {
     Q_OBJECT
 public:
-    ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id = 0);
+    ArduPilotMegaMAV(MAVLinkProtocol* mavlink, QThread* thread, int id = 0);
     /** @brief Set camera mount stabilization modes */
     void setMountConfigure(unsigned char mode, bool stabilize_roll,bool stabilize_pitch,bool stabilize_yaw);
     /** @brief Set camera mount control */

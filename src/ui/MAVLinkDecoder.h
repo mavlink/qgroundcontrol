@@ -4,11 +4,13 @@
 #include <QObject>
 #include "MAVLinkProtocol.h"
 
-class MAVLinkDecoder : public QObject
+class MAVLinkDecoder : public QThread
 {
     Q_OBJECT
 public:
     MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent = 0);
+
+    void run();
 
 signals:
     void textMessageReceived(int uasid, int componentid, int severity, const QString& text);

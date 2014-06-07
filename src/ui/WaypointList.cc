@@ -382,21 +382,23 @@ void WaypointList::changeCurrentWaypoint(quint16 seq)
 void WaypointList::currentWaypointEditableChanged(quint16 seq)
 {
         WPM->setCurrentEditable(seq);
-        const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+        const QList<Waypoint *> waypoints = WPM->getWaypointEditableList();
 
         if (seq < waypoints.count())
         {
             for(int i = 0; i < waypoints.count(); i++)
             {
-                WaypointEditableView* widget = wpEditableViews.find(waypoints[i]).value();
+                WaypointEditableView* widget = wpEditableViews.value(waypoints[i], NULL);
 
-                if (waypoints[i]->getId() == seq)
-                {
-                    widget->setCurrent(true);
-                }
-                else
-                {
-                    widget->setCurrent(false);
+                if (widget) {
+                    if (waypoints[i]->getId() == seq)
+                    {
+                        widget->setCurrent(true);
+                    }
+                    else
+                    {
+                        widget->setCurrent(false);
+                    }
                 }
             }
         }
@@ -408,21 +410,23 @@ void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
     // First update the edit list
     currentWaypointEditableChanged(seq);
 
-    const QList<Waypoint *> &waypoints = WPM->getWaypointViewOnlyList();
+    const QList<Waypoint *> waypoints = WPM->getWaypointViewOnlyList();
 
     if (seq < waypoints.count())
     {
         for(int i = 0; i < waypoints.count(); i++)
         {
-            WaypointViewOnlyView* widget = wpViewOnlyViews.find(waypoints[i]).value();
+            WaypointViewOnlyView* widget = wpViewOnlyViews.value(waypoints[i], NULL);
 
-            if (waypoints[i]->getId() == seq)
-            {
-                widget->setCurrent(true);
-            }
-            else
-            {
-                widget->setCurrent(false);
+            if (widget) {
+                if (waypoints[i]->getId() == seq)
+                {
+                    widget->setCurrent(true);
+                }
+                else
+                {
+                    widget->setCurrent(false);
+                }
             }
         }
     }
@@ -431,17 +435,21 @@ void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
 void WaypointList::updateWaypointEditable(int uas, Waypoint* wp)
 {
     Q_UNUSED(uas);
-    WaypointEditableView *wpv = wpEditableViews.value(wp);
-    wpv->updateValues();
-    m_ui->tabWidget->setCurrentIndex(0); // XXX magic number
+    WaypointEditableView *wpv = wpEditableViews.value(wp, NULL);
+    if (wpv) {
+        wpv->updateValues();
+    }
+        m_ui->tabWidget->setCurrentIndex(0); // XXX magic number
 }
 
 void WaypointList::updateWaypointViewOnly(int uas, Waypoint* wp)
 {
     Q_UNUSED(uas);
-    WaypointViewOnlyView *wpv = wpViewOnlyViews.value(wp);
-    wpv->updateValues();
-    m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
+    WaypointViewOnlyView *wpv = wpViewOnlyViews.value(wp, NULL);
+   if (wpv) {
+       wpv->updateValues();
+   }
+   m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
 }
 
 void WaypointList::waypointViewOnlyListChanged()
@@ -463,10 +471,12 @@ void WaypointList::waypointViewOnlyListChanged()
                 }
             }
             if (i == waypoints.count()) {
-                WaypointViewOnlyView* widget = wpViewOnlyViews.find(cur).value();
-                widget->hide();
-                viewOnlyListLayout->removeWidget(widget);
-                wpViewOnlyViews.remove(cur);
+                WaypointViewOnlyView* widget = wpViewOnlyViews.value(cur, NULL);
+                if (widget) {
+                    widget->hide();
+                    viewOnlyListLayout->removeWidget(widget);
+                    wpViewOnlyViews.remove(cur);
+                }
             }
         }
     }
@@ -517,10 +527,13 @@ void WaypointList::waypointEditableListChanged()
                 }
             }
             if (i == waypoints.count()) {
-                WaypointEditableView* widget = wpEditableViews.find(cur).value();
-                widget->hide();
-                editableListLayout->removeWidget(widget);
-                wpEditableViews.remove(cur);
+                WaypointEditableView* widget = wpEditableViews.value(cur, NULL);
+
+                if (widget) {
+                    widget->hide();
+                    editableListLayout->removeWidget(widget);
+                    wpEditableViews.remove(cur);
+                }
             }
         }
     }
@@ -611,8 +624,10 @@ void WaypointList::on_clearWPListButton_clicked()
         emit clearPathclicked();
         const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
         while(!waypoints.isEmpty()) {
-            WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
-            widget->remove();
+            WaypointEditableView* widget = wpEditableViews.value(waypoints[0], NULL);
+            if (widget) {
+                widget->remove();
+            }
         }
     }
 }
@@ -620,14 +635,16 @@ void WaypointList::on_clearWPListButton_clicked()
 void WaypointList::clearWPWidget()
 {    
         // Get list
-        const QList<Waypoint *> &waypoints = WPM->getWaypointEditableList();
+        const QList<Waypoint *> waypoints = WPM->getWaypointEditableList();
 
 
         // XXX delete wps as well
 
         // Clear UI elements
         while(!waypoints.isEmpty()) {
-            WaypointEditableView* widget = wpEditableViews.find(waypoints[0]).value();
-            widget->remove();
+            WaypointEditableView* widget = wpEditableViews.value(waypoints[0], NULL);
+            if (widget) {
+                widget->remove();
+            }
         }
 }

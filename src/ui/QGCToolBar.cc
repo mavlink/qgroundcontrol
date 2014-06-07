@@ -202,7 +202,6 @@ void QGCToolBar::createUI()
     // Configure the toolbar for the current default UAS
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    qDebug() << "LINK COUNT" << LinkManager::instance()->getLinks().count();
     // Update label if required
     if (LinkManager::instance()->getSerialLinks().count() < 1) {
         connectButton->setText(tr("New Serial Link"));
@@ -471,7 +470,9 @@ void QGCToolBar::updateView()
 
 
 //    toolBarStateLabel->setText(QString("%1").arg(state));
-    toolBarModeLabel->setText(QString("%1").arg(mode));
+    if (mode.size() > 0) {
+        toolBarModeLabel->setText(QString("%1").arg(mode));
+    }
     toolBarNameLabel->setText(systemName);
     // expire after 15 seconds
 
@@ -542,8 +543,16 @@ void QGCToolBar::updateMode(int system, QString name, QString description)
 {
     Q_UNUSED(system);
     Q_UNUSED(description);
-    if (mode != name) changed = true;
-    mode = name;
+    if (name.size() == 0) {
+        qDebug() << "EMPTY MODE, RETURN";
+    }
+
+    QString shortMode = name;
+    shortMode = shortMode.replace("D|", "");
+    shortMode = shortMode.replace("A|", "");
+
+    if (mode != shortMode) changed = true;
+    mode = shortMode;
     /* important, immediately update */
     updateView();
 }

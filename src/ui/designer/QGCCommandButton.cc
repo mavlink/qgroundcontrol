@@ -84,6 +84,8 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("MAV_CMD_MISSION_START", MAV_CMD_MISSION_START);
     ui->editCommandComboBox->addItem("MAV_CMD_COMPONENT_ARM_DISARM", MAV_CMD_COMPONENT_ARM_DISARM);
     ui->editCommandComboBox->setEditable(true);
+
+    init();
 }
 
 QGCCommandButton::~QGCCommandButton()

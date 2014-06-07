@@ -230,21 +230,22 @@ void UASManager::nedToWgs84(const double& x, const double& y, const double& z, d
  */
 void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double alt)
 {
-    // FIXME: Accept any home position change for now from the active UAS
-    // this means that the currently select UAS can change the home location
-    // of the whole swarm. This makes sense, but more control might be needed
+    // Accept home position changes from the active UAS
     if (uav == activeUAS->getUASID())
     {
         if (setHomePosition(lat, lon, alt))
         {
-            foreach (UASInterface* mav, systems)
-            {
-                // Only update the other systems, not the original source
-                if (mav->getUASID() != uav)
-                {
-                    mav->setHomePosition(homeLat, homeLon, homeAlt);
-                }
-            }
+            // XXX DO NOT UPDATE THE WHOLE FLEET
+
+
+//            foreach (UASInterface* mav, systems)
+//            {
+//                // Only update the other systems, not the original source
+//                if (mav->getUASID() != uav)
+//                {
+//                    mav->setHomePosition(homeLat, homeLon, homeAlt);
+//                }
+//            }
         }
     }
 }

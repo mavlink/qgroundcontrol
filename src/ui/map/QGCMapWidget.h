@@ -124,6 +124,11 @@ public slots:
         }
     }
 
+    void setZoomBlocked(bool blocked)
+    {
+        zoomBlocked = blocked;
+    }
+
     /** @brief Load the settings for this widget from disk */
     void loadSettings(bool changePosition=true);
     /** @brief Store the settings for this widget to disk */
@@ -139,6 +144,7 @@ protected:
     /** @brief Initialize */
     void showEvent(QShowEvent* event);
     void hideEvent(QHideEvent* event);
+    void wheelEvent(QWheelEvent* event);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent* event);
@@ -167,10 +173,12 @@ protected:
     float trailInterval;                ///< Time or distance between trail items
     int followUAVID;                    ///< Which UAV should be tracked?
     bool mapInitialized;                ///< Map initialized?
+    bool mapPositionInitialized;        ///< The position on the map has a reasonable value?
     float homeAltitude;                 ///< Home altitude
     QPoint mousePressPos;               ///< Mouse position when the button is released.
     QPoint contextMousePressPos;        ///< Mouse position when context menu activated.
     int defaultGuidedAlt;               ///< Default altitude for guided mode
+    bool zoomBlocked;                   ///< Wether zooming is blocked
     UASInterface *uas;                  ///< Currently selected UAS.
 
 };

@@ -37,6 +37,7 @@ signals:
 
 protected:
     void contextMenuEvent (QContextMenuEvent* event);
+    void init();
     UASInterface* uas;
 
 private:
