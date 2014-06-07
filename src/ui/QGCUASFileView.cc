@@ -17,6 +17,7 @@ QGCUASFileView::QGCUASFileView(QWidget *parent, QGCUASFileManager *manager) :
     connect(ui->downloadButton, SIGNAL(clicked()), this, SLOT(downloadFiles()));
 
     connect(_manager, SIGNAL(statusMessage(QString)), ui->messageArea, SLOT(appendPlainText(QString)));
+    connect(_manager, SIGNAL(resetStatusMessages()), ui->messageArea, SLOT(clear()));
 }
 
 QGCUASFileView::~QGCUASFileView()

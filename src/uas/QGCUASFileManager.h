@@ -12,6 +12,7 @@ public:
 
 signals:
     void statusMessage(const QString& msg);
+    void resetStatusMessages();
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
