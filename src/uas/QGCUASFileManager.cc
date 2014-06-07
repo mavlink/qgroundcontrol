@@ -76,13 +76,15 @@ void QGCUASFileManager::nothingMessage()
 
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
-    emit statusMessage("msg");
+    Q_UNUSED(link);
 
     if (message.msgid != MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
-        emit statusMessage("not encap data");
         // wtf, not for us
         return;
     }
+
+    emit statusMessage("msg");
+    qDebug() << "FTP GOT MESSAGE";
 
     mavlink_encapsulated_data_t data;
     mavlink_msg_encapsulated_data_decode(&message, &data);

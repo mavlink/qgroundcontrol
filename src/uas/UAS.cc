@@ -176,6 +176,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
         componentMulti[i] = false;
     }
 
+    connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), &fileManager, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+
     // Store a list of available actions for this UAS.
     // Basically everything exposed as a SLOT with no return value or arguments.
 
