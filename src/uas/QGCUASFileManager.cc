@@ -76,7 +76,10 @@ void QGCUASFileManager::nothingMessage()
 
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
+    emit statusMessage("msg");
+
     if (message.msgid != MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
+        emit statusMessage("not encap data");
         // wtf, not for us
         return;
     }
@@ -89,14 +92,20 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     switch (_current_operation) {
     case kCOIdle:
         // we should not be seeing anything here.. shut the other guy up
+        emit statusMessage("resetting file transfer session");
         sendReset();
         break;
 
     case kCOList:
-        if (hdr->opcode == kCmdList) {
+        if (hdr->opcode == kRspAck) {
             listDecode(&hdr->data[0], hdr->size);
+        } else {
+            emit statusMessage("unexpected opcode in List mode");
         }
         break;
+
+    default:
+        emit statusMessage("message in unexpected state");
     }
 }
 
@@ -106,8 +115,8 @@ void QGCUASFileManager::listRecursively(const QString &from)
         // XXX beep and don't do anything
     }
 
-    // XXX clear the text widget
-    emit statusMessage("requesting list...");
+    // clear the text widget
+    emit resetStatusMessages();
 
     // initialise the lister
     _list_path = from;
@@ -188,6 +197,8 @@ void QGCUASFileManager::sendList()
     hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
 
     mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr); // XXX 250 is a magic length
+
+    emit statusMessage("sending List request...");
 
     _mav->sendMessage(message);
 }
