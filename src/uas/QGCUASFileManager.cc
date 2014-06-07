@@ -4,6 +4,7 @@
 
 #include <QFile>
 #include <QDir>
+#include <string>
 
 static const quint32 crctab[] =
 {
@@ -75,20 +76,120 @@ void QGCUASFileManager::nothingMessage()
 
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
-    switch (message.msgid) {
-        case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
-            emit statusMessage("GOT ENC DATA");
-            break;
+    if (message.msgid != MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
+        // wtf, not for us
+        return;
+    }
+
+    mavlink_encapsulated_data_t data;
+    mavlink_msg_encapsulated_data_decode(&message, &data);
+    const RequestHeader *hdr = (const RequestHeader *)&data.data[0];
+    unsigned seqnr = data.seqnr;
+
+    switch (_current_operation) {
+    case kCOIdle:
+        // we should not be seeing anything here.. shut the other guy up
+        sendReset();
+        break;
+
+    case kCOList:
+        if (hdr->opcode == kCmdList) {
+            listDecode(&hdr->data[0], hdr->size);
+        }
+        break;
     }
 }
 
 void QGCUASFileManager::listRecursively(const QString &from)
 {
-    // This sends out one line to the text area
-    emit statusMessage("/");
-    emit statusMessage("  fs/");
-    emit statusMessage("    microsd/");
-    emit statusMessage("      log001.bin");
+    if (_current_operation != kCOIdle) {
+        // XXX beep and don't do anything
+    }
+
+    // XXX clear the text widget
+    emit statusMessage("requesting list...");
+
+    // initialise the lister
+    _list_path = from;
+    _list_offset = 0;
+    _current_operation = kCOList;
+
+    // and send the initial request
+    sendList();
+}
+
+void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
+{
+    unsigned offset = 0;
+    unsigned files = 0;
+
+    // parse filenames out of the buffer
+    while (offset < len) {
+
+        // get the length of the name
+        unsigned nlen = strnlen((const char *)data + offset, len - offset);
+        if (nlen == 0) {
+            break;
+        }
+
+        // put it in the view
+        emit statusMessage(QString((const char *)data + offset));
+
+        // account for the name + NUL
+        offset += nlen + 1;
+
+        // account for the file
+        files++;
+    }
+
+    // we have run out of files to list
+    if (files == 0) {
+        _current_operation = kCOIdle;
+    } else {
+        // update our state
+        _list_offset += files;
+
+        // and send another request
+        sendList();
+    }
+}
+
+void QGCUASFileManager::sendReset()
+{
+    mavlink_message_t message;
+
+    RequestHeader hdr;
+    hdr.magic = 'f';
+    hdr.session = 0;
+    hdr.opcode = kCmdReset;
+    hdr.crc32 = 0;
+    hdr.offset = 0;
+    hdr.size = 0;
+    hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
+
+    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr); // XXX 250 is a magic length
+
+    _mav->sendMessage(message);
+}
+
+void QGCUASFileManager::sendList()
+{
+    mavlink_message_t message;
+
+    RequestHeader hdr;
+    hdr.magic = 'f';
+    hdr.session = 0;
+    hdr.opcode = kCmdList;
+    hdr.crc32 = 0;
+    hdr.offset = _list_offset;
+    strncpy((char *)&hdr.data[0], _list_path.toStdString().c_str(), 200); // XXX should have a real limit here
+    hdr.size = strlen((const char *)&hdr.data[0]);
+
+    hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
+
+    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr); // XXX 250 is a magic length
+
+    _mav->sendMessage(message);
 }
 
 void QGCUASFileManager::downloadPath(const QString &from, const QString &to)
