@@ -89,6 +89,7 @@ protected:
     void listDecode(const uint8_t *data, unsigned len);
 
     static quint32 crc32(const uint8_t *src, unsigned len, unsigned state);
+    static QString errorString(uint8_t errorCode);
 
 };
 
