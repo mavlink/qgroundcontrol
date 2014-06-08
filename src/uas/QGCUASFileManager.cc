@@ -83,26 +83,25 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         return;
     }
 
-    emit statusMessage("msg");
-    qDebug() << "FTP GOT MESSAGE";
-
     mavlink_encapsulated_data_t data;
     mavlink_msg_encapsulated_data_decode(&message, &data);
     const RequestHeader *hdr = (const RequestHeader *)&data.data[0];
     unsigned seqnr = data.seqnr;
 
+    // XXX VALIDATE MESSAGE
+
     switch (_current_operation) {
     case kCOIdle:
         // we should not be seeing anything here.. shut the other guy up
-        emit statusMessage("resetting file transfer session");
+        qDebug() << "FTP resetting file transfer session";
         sendReset();
         break;
 
     case kCOList:
         if (hdr->opcode == kRspAck) {
             listDecode(&hdr->data[0], hdr->size);
-        } else {
-            emit statusMessage("unexpected opcode in List mode");
+        } else if (hdr->opcode == kRspNak) {
+            emit statusMessage(QString("error: ").append(errorString(hdr->data[0])));
         }
         break;
 
@@ -139,12 +138,17 @@ void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
 
         // get the length of the name
         unsigned nlen = strnlen((const char *)data + offset, len - offset);
-        if (nlen == 0) {
+        if (nlen < 2) {
             break;
         }
 
+        QString s((const char *)data + offset + 1);
+        if (data[0] == 'D') {
+            s.append('/');
+        }
+
         // put it in the view
-        emit statusMessage(QString((const char *)data + offset));
+        emit statusMessage(s);
 
         // account for the name + NUL
         offset += nlen + 1;
@@ -200,8 +204,6 @@ void QGCUASFileManager::sendList()
 
     mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr); // XXX 250 is a magic length
 
-    emit statusMessage("sending List request...");
-
     _mav->sendMessage(message);
 }
 
@@ -224,4 +226,34 @@ void QGCUASFileManager::downloadPath(const QString &from, const QString &to)
     file.close();
 
     emit statusMessage(QString("Downloaded: %1 to directory %2").arg(filename).arg(to));
+}
+
+QString QGCUASFileManager::errorString(uint8_t errorCode)
+{
+    switch(errorCode) {
+    case kErrNone:
+        return QString("no error");
+    case kErrNoRequest:
+        return QString("bad request");
+    case kErrNoSession:
+        return QString("bad session");
+    case kErrSequence:
+        return QString("bad sequence number");
+    case kErrNotDir:
+        return QString("not a directory");
+    case kErrNotFile:
+        return QString("not a file");
+    case kErrEOF:
+        return QString("read beyond end of file");
+    case kErrNotAppend:
+        return QString("write not at end of file");
+    case kErrTooBig:
+        return QString("file too big");
+    case kErrIO:
+        return QString("device I/O error");
+    case kErrPerm:
+        return QString("permission denied");
+    default:
+        return QString("bad error code");
+    }
 }
