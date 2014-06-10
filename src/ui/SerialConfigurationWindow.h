@@ -60,7 +60,7 @@ public slots:
     void setParityEven(bool accept);
     void setPortName(QString port);
     void setLinkName(QString name);
-    void setupPortList();
+    bool setupPortList();
 
 protected:
     void showEvent(QShowEvent* event);
