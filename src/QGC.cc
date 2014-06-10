@@ -30,29 +30,17 @@ namespace QGC
 
 quint64 groundTimeUsecs()
 {
-    QDateTime time = QDateTime::currentDateTime();
-    time = time.toUTC();
-    /* Return seconds and milliseconds, in milliseconds unit */
-    quint64 microseconds = time.toTime_t() * static_cast<quint64>(1000000);
-    return static_cast<quint64>(microseconds + (time.time().msec()*1000));
+    return groundTimeMilliseconds() * 1000;
 }
 
 quint64 groundTimeMilliseconds()
 {
-    QDateTime time = QDateTime::currentDateTime();
-    time = time.toUTC();
-    /* Return seconds and milliseconds, in milliseconds unit */
-    quint64 seconds = time.toTime_t() * static_cast<quint64>(1000);
-    return static_cast<quint64>(seconds + (time.time().msec()));
+    return static_cast<quint64>(QDateTime::currentMSecsSinceEpoch());
 }
 
 qreal groundTimeSeconds()
 {
-    QDateTime time = QDateTime::currentDateTime();
-    time = time.toUTC();
-    /* Return time in seconds unit */
-    quint64 seconds = time.toTime_t();
-    return static_cast<qreal>(seconds + (time.time().msec() / 1000.0));
+    return static_cast<qreal>(groundTimeMilliseconds()) / 1000.0f;
 }
 
 float limitAngleToPMPIf(float angle)
