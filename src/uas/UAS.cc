@@ -955,7 +955,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         setGroundSpeed(vel);
                         emit speedChanged(this, groundSpeed, airSpeed, time);
                     } else {
-                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                        emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }
             }
@@ -1055,27 +1055,27 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
             case MAV_RESULT_ACCEPTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_TEMPORARILY_REJECTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_DENIED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Denied CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Denied CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_UNSUPPORTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_FAILED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Failed CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Failed CMD: %1").arg(ack.command));
             }
                 break;
             }
@@ -2732,7 +2732,7 @@ void UAS::requestParameter(int component, const QString& parameter)
     // Copy full param name or maximum max field size
     if (parameter.length() > MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)
     {
-        emit textMessageReceived(uasId, 0, 255, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
+        emit textMessageReceived(uasId, 0, MAV_SEVERITY_WARNING, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
     }
     memcpy(read.param_id, parameter.toStdString().c_str(), qMax(parameter.length(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
     read.param_id[15] = '\0'; // Enforce null termination
@@ -3595,7 +3595,7 @@ void UAS::setBatterySpecs(const QString& specs)
         }
         else
         {
-            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
         }
     }
     else
@@ -3621,7 +3621,7 @@ void UAS::setBatterySpecs(const QString& specs)
         }
         else
         {
-            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
         }
     }
 }
