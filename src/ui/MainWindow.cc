@@ -347,6 +347,23 @@ void MainWindow::init()
 
     }
 
+    // Make sure the proper fullscreen/normal menu item is checked properly.
+    if (isFullScreen())
+    {
+        ui.actionFullscreen->setChecked(true);
+        ui.actionNormal->setChecked(false);
+    }
+    else
+    {
+        ui.actionFullscreen->setChecked(false);
+        ui.actionNormal->setChecked(true);
+    }
+
+    // And that they will stay checked properly after user input
+    QObject::connect(ui.actionFullscreen, SIGNAL(triggered()), this, SLOT(fullScreenActionItemCallback()));
+    QObject::connect(ui.actionNormal, SIGNAL(triggered()), this,SLOT(normalActionItemCallback()));
+
+
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
     ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0, QApplication::UnicodeUTF8));
@@ -756,6 +773,16 @@ void MainWindow::showDockWidget(const QString& name, bool show)
         dockWidget->setVisible(show);
     else if (show)
         loadDockWidget(name);
+}
+
+void MainWindow::fullScreenActionItemCallback()
+{
+    ui.actionNormal->setChecked(false);
+}
+
+void MainWindow::normalActionItemCallback()
+{
+    ui.actionFullscreen->setChecked(false);
 }
 
 void MainWindow::loadDockWidget(const QString& name)
