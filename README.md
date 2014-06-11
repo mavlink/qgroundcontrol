@@ -90,7 +90,7 @@ To build on Linux:
 - - -
 1. Install base dependencies (QT + phonon/webkit, SDL)
   * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential libudev-dev`
-  * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
+  * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel phonon-devel SDL-devel SDL-static systemd-devel`
   * For Arch Linux: `pacman -Sy qtwebkit phonon-qt4`
 
 2. **[OPTIONAL]** Install additional libraries
