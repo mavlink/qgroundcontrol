@@ -107,7 +107,7 @@ const QString PrimaryFlightDisplay::compassWindNames[] = {
     QString("NW")
 };
 
-PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *parent) :
+PrimaryFlightDisplay::PrimaryFlightDisplay(QWidget *parent) :
     QWidget(parent),
 
     _valuesChanged(false),
@@ -146,9 +146,6 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     font("Bitstream Vera Sans"),
     refreshTimer(new QTimer(this))
 {
-    Q_UNUSED(width);
-    Q_UNUSED(height);
-
     setMinimumSize(120, 80);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
