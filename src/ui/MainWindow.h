@@ -297,6 +297,18 @@ public slots:
 
 protected slots:
     void showDockWidget(const QString &name, bool show);
+    /**
+     * @brief Unchecks the normalActionItem.
+     * Used as a triggered() callback by the fullScreenAction to make sure only one of it or the
+     * normalAction are checked at a time, as they're mutually exclusive.
+     */
+    void fullScreenActionItemCallback();
+    /**
+     * @brief Unchecks the fullScreenActionItem.
+     * Used as a triggered() callback by the normalAction to make sure only one of it or the
+     * fullScreenAction are checked at a time, as they're mutually exclusive.
+     */
+    void normalActionItemCallback();
 
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
