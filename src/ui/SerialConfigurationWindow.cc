@@ -55,7 +55,10 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
         setLinkName(link->getName());
 
-        setupPortList();
+        // Scan for serial ports. Let the user know if none were found for debugging purposes
+        if (!setupPortList()) {
+            qDebug() << "No serial ports found.";
+        }
 
         // Set up baud rates
         ui.baudRate->clear();
@@ -213,9 +216,9 @@ void SerialConfigurationWindow::configureCommunication()
     this->show();
 }
 
-void SerialConfigurationWindow::setupPortList()
+bool SerialConfigurationWindow::setupPortList()
 {
-    if (!link) return;
+    if (!link) return false;
 
     // Get the ports available on this system
     QList<QString> ports = link->getCurrentPorts();
@@ -240,6 +243,8 @@ void SerialConfigurationWindow::setupPortList()
 
     if (storedFound)
         ui.portName->setEditText(storedName);
+
+    return (ports.count() > 0);
 }
 
 void SerialConfigurationWindow::enableFlowControl(bool flow)

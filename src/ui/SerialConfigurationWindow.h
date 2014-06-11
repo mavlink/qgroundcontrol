@@ -60,7 +60,13 @@ public slots:
     void setParityEven(bool accept);
     void setPortName(QString port);
     void setLinkName(QString name);
-    void setupPortList();
+    /**
+     * @brief setupPortList Populates the dropdown with the list of available serial ports.
+     * This function is called at 1s intervals to check that the serial port still exists and to see if
+     * any new ones have been attached.
+     * @return True if any ports were found, false otherwise.
+     */
+    bool setupPortList();
 
 protected:
     void showEvent(QShowEvent* event);
