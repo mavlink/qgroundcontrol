@@ -124,34 +124,6 @@ INCLUDEPATH += $$MAVLINKPATH
 }
 
 #
-# [DEPRECATED] MAVLink generator UI. Provides a GUI interface for generating MAVLink dialects.
-# Replaced by mavgenerator.py within the MAVLink project.
-#
-contains(DEFINES, ENABLE_MAVGEN) {
-	warning("Including support for MAVLink generator GUI (manual override from command line, CAUTION: deprecated)")
-} else:infile(user_config.pri, DEFINES, ENABLE_MAVGEN) {
-	DEFINES += ENABLE_MAVGEN # infile doesn't automatically include everything in the specified file
-	warning("Including support for MAVLink generator GUI (manual override from user_config.pri, CAUTION: deprecated)")
-}
-
-contains(DEFINES, ENABLE_MAVGEN) {
-	# Rename the macro to be consistent with other QGC feature existance macros.
-	DEFINES -= ENABLE_MAVGEN
-	DEFINES += QGC_MAVGEN_ENABLED
-	DEPENDPATH += \
-		src/apps/mavlinkgen
-
-	INCLUDEPATH += \
-		src/apps/mavlinkgen \
-		src/apps/mavlinkgen/ui \
-		src/apps/mavlinkgen/generator
-
-	include(src/apps/mavlinkgen/mavlinkgen.pri)
-} else {
-	message("Skipping support for MAVLink generator GUI (deprecated, see README)")
-}
-
-#
 # [OPTIONAL] OpenSceneGraph
 # Allow the user to override OpenSceneGraph compilation through a DISABLE_OPEN_SCENE_GRAPH
 # define like: `qmake DEFINES=DISABLE_OPEN_SCENE_GRAPH`
