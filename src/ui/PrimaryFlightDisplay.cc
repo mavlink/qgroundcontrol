@@ -170,11 +170,11 @@ PrimaryFlightDisplay::~PrimaryFlightDisplay()
     refreshTimer->stop();
 }
 
-
 QSize PrimaryFlightDisplay::sizeHint() const
 {
-    return QSize(width(), (width()*3.0f)/4);
+    return QSize(width(), (int)(width() * 3.0f / 4.0f));
 }
+
 
 void PrimaryFlightDisplay::showEvent(QShowEvent* event)
 {
