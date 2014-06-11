@@ -23,7 +23,6 @@ public slots:
     void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
 
     /** @brief Set the currently monitored UAS */
-    //void addUAS(UASInterface* uas);
     void forgetUAS(UASInterface* uas);
     void setActiveUAS(UASInterface* uas);
 
@@ -57,34 +56,10 @@ protected:
     /** @brief Stop updating widget */
     void hideEvent(QHideEvent* event);
 
-    // dongfang: We have no context menu. Viewonly.
-    // void contextMenuEvent (QContextMenuEvent* event);
-
-    // dongfang: What is that?
-    // dongfang: OK it's for UI interaction. Presently, there is none.
-    void createActions();
-
 signals:
     void visibilityChanged(bool visible);
 
 private:
-    /*
-    enum AltimeterMode {
-        PRIMARY_MAIN_GPS_SUB,   // Show the primary alt. on tape and GPS as extra info
-        GPS_MAIN                // Show GPS on tape and no extra info
-    };
-
-    enum AltimeterFrame {
-        ASL,                    // Show ASL altitudes (plane pilots' normal preference)
-        RELATIVE_TO_HOME        // Show relative-to-home altitude (copter pilots)
-    };
-
-    enum SpeedMode {
-        PRIMARY_MAIN_GROUND_SUB,// Show primary speed (often airspeed) on tape and groundspeed as extra
-        GROUND_MAIN             // Show groundspeed on tape and no extra info
-    };
-    */
-
     /*
      * There are at least these differences between airplane and copter PDF view:
      * - Airplane show absolute altutude in altimeter, copter shows relative to home
@@ -121,12 +96,6 @@ private:
     void doPaint();
 
     UASInterface* uas;          ///< The uas currently monitored
-
-    /*
-    AltimeterMode altimeterMode;
-    AltimeterFrame altimeterFrame;
-    SpeedMode speedMode;
-    */
 
     bool didReceiveSpeed;
 
