@@ -658,7 +658,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
     createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
 
-    createDockWidget(pilotView,new QGCMapTool(this),tr("Map view"),"MAP_VIEW_DOCKWIDGET",VIEW_MISSION,Qt::RightDockWidgetArea);
+    menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
 
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
