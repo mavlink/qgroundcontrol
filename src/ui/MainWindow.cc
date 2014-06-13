@@ -556,7 +556,7 @@ void MainWindow::buildCommonWidgets()
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
-        pilotView->setCentralWidget(new HUD(640,480,this));
+        pilotView->setCentralWidget(new PrimaryFlightDisplay(this));
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
     }
 
