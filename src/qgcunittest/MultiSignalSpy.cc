@@ -218,7 +218,7 @@ bool MultiSignalSpy::waitForSignalByIndex(
     Q_ASSERT(spy);
     
     while (spy->count() == 0 && !_timeout) {
-        QCoreApplication::processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+        QCoreApplication::processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents, 500);
     }
     
     // Clean up and return status
