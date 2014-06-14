@@ -865,8 +865,6 @@ bool QGCFlightGearLink::connectSimulation()
         // Now that we made it this far, we should be able to try to copy the protocol file to FlightGear.
         bool succeeded = QFile::copy(qgcProtocolFileFullyQualified, fgProtocolFileFullyQualified);
         if (!succeeded) {
-            MainWindow::instance()->showCriticalMessage(tr("Copy failed"), tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually.").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified));
-            
 #ifdef Q_OS_WIN32
             QString copyCmd = QString("copy \"%1\" \"%2\"").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified);
             copyCmd.replace("/", "\\");
@@ -877,9 +875,9 @@ bool QGCFlightGearLink::connectSimulation()
             QMessageBox msgBox(QMessageBox::Critical,
                                tr("Copy failed"),
 #ifdef Q_OS_WIN32
-                               tr("Try pasting the following command into a Command Prompt which was started with Run as Administrator: ") + copyCmd,
+                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a Command Prompt which was started with Run as Administrator:\n\n").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified) + copyCmd,
 #else
-                               tr("Try pasting the following command into a shell: ") + copyCmd,
+                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a shell:\n\n").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified) + copyCmd,
 #endif
                                QMessageBox::Cancel,
                                MainWindow::instance());
