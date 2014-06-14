@@ -111,7 +111,9 @@ void TCPLinkUnitTest::_connectFail_test(void)
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
-    QCOMPARE(_link->connect(), false);
+    // With the new threading model connect will always succeed. We only get an error signal
+    // for a failed connected.
+    QCOMPARE(_link->connect(), true);
 
     // Make sure we get a linkError signal with the right link name
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
@@ -119,10 +121,12 @@ void TCPLinkUnitTest::_connectFail_test(void)
     QList<QVariant> arguments = _multiSpy->getSpyByIndex(communicationErrorSignalIndex)->takeFirst();
     QCOMPARE(arguments.at(0).toString(), _link->getName());
     _multiSpy->clearSignalByIndex(communicationErrorSignalIndex);
+    
+    _link->disconnect();
 
     // Try to connect again to make sure everything was cleaned up correctly from previous failed connection
     
-    QCOMPARE(_link->connect(), false);
+    QCOMPARE(_link->connect(), true);
     
     // Make sure we get a linkError signal with the right link name
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
