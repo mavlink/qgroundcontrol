@@ -199,7 +199,7 @@ bool TCPLink::disconnect()
     if (_socket)
 	{
         _socketIsConnected = false;
-		delete _socket;
+		_socket->deleteLater(); // Make sure delete happens on correct thread
 		_socket = NULL;
 
         emit disconnected();
