@@ -503,7 +503,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 lastIndex[message.sysid][message.compid] = expectedSeq;
 
                 // Update on every 32th packet
-                if (totalReceiveCounter[linkId] % 32 == 0)
+                if ((totalReceiveCounter[linkId] & 0x1F) == 0)
                 {
                     // Calculate new loss ratio
                     // Receive loss
