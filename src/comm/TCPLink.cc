@@ -198,7 +198,6 @@ bool TCPLink::disconnect()
     
     if (_socket)
 	{
-        _socket->disconnectFromHost();
         _socketIsConnected = false;
 		delete _socket;
 		_socket = NULL;
