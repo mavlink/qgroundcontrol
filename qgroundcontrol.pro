@@ -188,7 +188,8 @@ DebugBuild {
         src/qgcunittest/MockQGCUASParamManager.h \
         src/qgcunittest/MultiSignalSpy.h \
         src/qgcunittest/FlightModeConfigTest.h \
-        src/qgcunittest/TCPLinkTest.h
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/TCPLoopBackServer.h
 
     SOURCES += \
         src/qgcunittest/UASUnitTest.cc \
@@ -197,7 +198,8 @@ DebugBuild {
         src/qgcunittest/MockQGCUASParamManager.cc \
         src/qgcunittest/MultiSignalSpy.cc \
         src/qgcunittest/FlightModeConfigTest.cc \
-        src/qgcunittest/TCPLinkTest.cc
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/TCPLoopBackServer.cc
 }
 
 #

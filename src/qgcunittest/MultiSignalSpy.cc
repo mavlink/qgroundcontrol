@@ -25,6 +25,7 @@
 #include <QEventLoop>
 #include <QCoreApplication>
 #include <QDebug>
+#include <QTest>
 
 /// @file
 ///     @brief This class allows you to keep track of signal counts on a set of signals associated with an object.
@@ -218,7 +219,10 @@ bool MultiSignalSpy::waitForSignalByIndex(
     Q_ASSERT(spy);
     
     while (spy->count() == 0 && !_timeout) {
-        QCoreApplication::processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents, 500);
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+        QCoreApplication::flush();
+        QTest::qSleep(100);
     }
     
     // Clean up and return status
