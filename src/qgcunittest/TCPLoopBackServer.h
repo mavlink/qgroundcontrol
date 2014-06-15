@@ -28,6 +28,11 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 
+/// @file
+///     @brief Simple TCP loop back server
+///
+///     @author Don Gagne <don@thegagnes.com>
+
 class TCPLoopBackServer : public QThread
 {
     Q_OBJECT

@@ -23,6 +23,11 @@
 
 #include "TCPLoopBackServer.h"
 
+/// @file
+///     @brief Simple TCP loop back server
+///
+///     @author Don Gagne <don@thegagnes.com>
+
 TCPLoopBackServer::TCPLoopBackServer(QHostAddress hostAddress, quint16 port) :
     _hostAddress(hostAddress),
     _port(port),
