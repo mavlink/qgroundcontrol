@@ -2880,18 +2880,18 @@ void UAS::toggleAutonomy()
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons)
+void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons)
 {
     Q_UNUSED(xHat);
     Q_UNUSED(yHat);
 
     // Store the previous manual commands
-    static double manualRollAngle = 0.0;
-    static double manualPitchAngle = 0.0;
-    static double manualYawAngle = 0.0;
-    static double manualThrust = 0.0;
-    static int manualButtons = 0; //FIXME: Change buttons to a uint16_t, as it is defined by MAVLink
-    static int countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
+    static float manualRollAngle = 0.0;
+    static float manualPitchAngle = 0.0;
+    static float manualYawAngle = 0.0;
+    static float manualThrust = 0.0;
+    static quint16 manualButtons = 0;
+    static quint8 countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
 
     // We only transmit manual command messages if the system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
@@ -2928,17 +2928,17 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
             manualButtons = buttons;
 
             // Store scaling values for all 3 axes
-            const double axesScaling = 1.0 * 1000.0;
+            const float axesScaling = 1.0 * 1000.0;
 
             // Calculate the new commands for roll, pitch, yaw, and thrust
-            const double newRollCommand = roll * axesScaling;
-            const double newPitchCommand = pitch * axesScaling;
-            const double newYawCommand = yaw * axesScaling;
-            const double newThrustCommand = thrust * axesScaling;
+            const float newRollCommand = roll * axesScaling;
+            const float newPitchCommand = pitch * axesScaling;
+            const float newYawCommand = yaw * axesScaling;
+            const float newThrustCommand = thrust * axesScaling;
 
             // Send the MANUAL_COMMAND message
             mavlink_message_t message;
-            mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)newPitchCommand, (float)newRollCommand, (float)newThrustCommand, (float)newYawCommand, buttons);
+            mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
             sendMessage(message);
 
             // Emit an update in control values to other UI elements, like the HSI display
