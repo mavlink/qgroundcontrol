@@ -25,7 +25,7 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(joystickButtonPressed(int)));
     connect(this->joystick, SIGNAL(buttonReleased(int)), this, SLOT(joystickButtonReleased(int)));
     connect(this->joystick, SIGNAL(axisValueChanged(int,float)), this, SLOT(updateAxisValue(int,float)));
-    connect(this->joystick, SIGNAL(hatDirectionChanged(int,int)), this, SLOT(setHat(int,int)));
+    connect(this->joystick, SIGNAL(hatDirectionChanged(qint8,qint8)), this, SLOT(setHat(qint8,qint8)));
 
     // Also watch for when new settings were loaded for the current joystick to do a mass UI refresh.
     connect(this->joystick, SIGNAL(joystickSettingsChanged()), this, SLOT(updateUI()));
@@ -238,7 +238,7 @@ void JoystickWidget::updateAxisValue(int axis, float value)
     }
 }
 
-void JoystickWidget::setHat(int x, int y)
+void JoystickWidget::setHat(qint8 x, qint8 y)
 {
     m_ui->statusLabel->setText(tr("Hat position: x: %1, y: %2").arg(x).arg(y));
 }
