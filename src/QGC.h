@@ -75,11 +75,17 @@ const QColor colorDarkYellow(180, 180, 0);
 const QColor colorBackground("#050508");
 const QColor colorBlack(0, 0, 0);
 
-/** @brief Get the current ground time in microseconds */
+/**
+ * @brief Get the current ground time in microseconds.
+ * @note This does not have microsecond precision, it is limited to millisecond precision.
+ */
 quint64 groundTimeUsecs();
 /** @brief Get the current ground time in milliseconds */
 quint64 groundTimeMilliseconds();
-/** @brief Get the current ground time in seconds */
+/** 
+ * @brief Get the current ground time in fractional seconds
+ * @note Precision is limited to milliseconds.
+ */
 qreal groundTimeSeconds();
 /** @brief Returns the angle limited to -pi - pi */
 float limitAngleToPMPIf(float angle);

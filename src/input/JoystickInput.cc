@@ -272,7 +272,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         tmp = dynamic_cast<UAS*>(this->uas);
         if(tmp)
         {
-            disconnect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
+            disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16)), tmp, SLOT(setManualControlCommands(float,float,float,float,qint8,qint8,quint16)));
             disconnect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
         }
         uasCanReverse = false;
@@ -288,7 +288,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 
     if (this->uas && (tmp = dynamic_cast<UAS*>(this->uas)))
     {
-        connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double,int,int,int)));
+        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16)), tmp, SLOT(setManualControlCommands(float,float,float,float,qint8,qint8,quint16)));
         connect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
         uasCanReverse = tmp->systemCanReverse();
 
@@ -439,10 +439,10 @@ void JoystickInput::run()
 
         // Build up vectors describing the hat position
         int hatPosition = SDL_JoystickGetHat(joystick, 0);
-        int newYHat = 0;
+        qint8 newYHat = 0;
         if ((SDL_HAT_UP & hatPosition) > 0) newYHat = 1;
         if ((SDL_HAT_DOWN & hatPosition) > 0) newYHat = -1;
-        int newXHat = 0;
+        qint8 newXHat = 0;
         if ((SDL_HAT_LEFT & hatPosition) > 0) newXHat = -1;
         if ((SDL_HAT_RIGHT & hatPosition) > 0) newXHat = 1;
         if (newYHat != yHat || newXHat != xHat)

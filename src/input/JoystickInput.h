@@ -205,7 +205,7 @@ protected:
     // Track the last state of the axes, buttons, and hats for only emitting change signals.
     QList<float> joystickAxes; ///< The values of every axes during the last sample.
     quint16 joystickButtons;   ///< The state of every button. Bitfield supporting 16 buttons with 1s indicating that the button is down.
-    int xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
+    qint8 xHat, yHat;            ///< The horizontal/vertical hat directions. Values are -1, 0, 1, with (-1,-1) indicating bottom-left.
 
     /**
      * @brief Called before main run() event loop starts. Waits for joysticks to be connected.
@@ -224,7 +224,7 @@ signals:
      * @param xHat hat vector in forward-backward direction, +1 forward, 0 center, -1 backward
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
      */
-    void joystickChanged(double roll, double pitch, double yaw, double throttle, int xHat, int yHat, int buttons);
+    void joystickChanged(float roll, float pitch, float yaw, float throttle, qint8 xHat, qint8 yHat, quint16 buttons);
 
     /**
       * @brief Emit a new value for an axis
@@ -267,7 +267,7 @@ signals:
       * @param x vector in left-right direction
       * @param y vector in forward-backward direction
       */
-    void hatDirectionChanged(int x, int y);
+    void hatDirectionChanged(qint8 x, qint8 y);
 
     /** @brief Signal that the UAS has been updated for this JoystickInput
      * Note that any UI updates should NOT query this object for joystick details. That should be done in response to the joystickSettingsChanged signal.
