@@ -2864,16 +2864,19 @@ void UAS::toggleArmedState()
 void UAS::goAutonomous()
 {
     setMode((base_mode & ~(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)) | (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED), 0);
+    qDebug() << __FILE__ << __LINE__ << "Going autonomous";
 }
 
 void UAS::goManual()
 {
     setMode((base_mode & ~(MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED))  | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
+    qDebug() << __FILE__ << __LINE__ << "Going manual";
 }
 
 void UAS::toggleAutonomy()
 {
     setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED ^ MAV_MODE_FLAG_GUIDED_ENABLED ^ MAV_MODE_FLAG_STABILIZE_ENABLED, 0);
+    qDebug() << __FILE__ << __LINE__ << "Toggling autonomy";
 }
 
 /**
@@ -3291,6 +3294,7 @@ void UAS::startHil()
     hilEnabled = true;
     sensorHil = false;
     setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+    qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     // Connect HIL simulation link
     simulation->connectSimulation();
 }
@@ -3300,8 +3304,11 @@ void UAS::startHil()
 */
 void UAS::stopHil()
 {
-    if (simulation) simulation->disconnectSimulation();
-    setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+    if (simulation && simulation->isConnected()) {
+        simulation->disconnectSimulation();
+        setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to disable.";
+    }
     hilEnabled = false;
     sensorHil = false;
 }
