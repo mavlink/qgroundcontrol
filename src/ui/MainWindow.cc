@@ -348,6 +348,23 @@ void MainWindow::init()
 
     }
 
+    // Make sure the proper fullscreen/normal menu item is checked properly.
+    if (isFullScreen())
+    {
+        ui.actionFullscreen->setChecked(true);
+        ui.actionNormal->setChecked(false);
+    }
+    else
+    {
+        ui.actionFullscreen->setChecked(false);
+        ui.actionNormal->setChecked(true);
+    }
+
+    // And that they will stay checked properly after user input
+    QObject::connect(ui.actionFullscreen, SIGNAL(triggered()), this, SLOT(fullScreenActionItemCallback()));
+    QObject::connect(ui.actionNormal, SIGNAL(triggered()), this,SLOT(normalActionItemCallback()));
+
+
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
     ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0, QApplication::UnicodeUTF8));
@@ -662,10 +679,10 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Radio Control"));
 
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
 
-    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
-    createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,QSize(this->width()/1.8,0));
+    createDockWidget(simView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
+    createDockWidget(pilotView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
@@ -760,6 +777,16 @@ void MainWindow::showDockWidget(const QString& name, bool show)
         loadDockWidget(name);
 }
 
+void MainWindow::fullScreenActionItemCallback()
+{
+    ui.actionNormal->setChecked(false);
+}
+
+void MainWindow::normalActionItemCallback()
+{
+    ui.actionFullscreen->setChecked(false);
+}
+
 void MainWindow::loadDockWidget(const QString& name)
 {
     if(menuActionHelper->containsDockWidget(currentView, name))
@@ -827,7 +854,7 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
     {

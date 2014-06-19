@@ -126,19 +126,19 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             switch (mlAction.actionId) {
             case SLUGS_ACTION_EEPROM:
                 if (mlAction.actionVal == SLUGS_ACTION_FAIL) {
-                    emit textMessageReceived(message.sysid, message.compid, 255, "EEPROM Write Fail, Data was not saved in Memory!");
+                    emit textMessageReceived(message.sysid, message.compid, MAV_SEVERITY_ERROR, "EEPROM Write Fail, Data was not saved in Memory!");
                 }
                 break;
 
             case SLUGS_ACTION_PT_CHANGE:
                 if (mlAction.actionVal == SLUGS_ACTION_SUCCESS) {
-                    emit textMessageReceived(message.sysid, message.compid, 0, "Passthrough Succesfully Changed");
+                    emit textMessageReceived(message.sysid, message.compid, MAV_SEVERITY_INFO, "Passthrough Succesfully Changed");
                 }
                 break;
 
             case SLUGS_ACTION_MLC_CHANGE:
                 if (mlAction.actionVal == SLUGS_ACTION_SUCCESS) {
-                    emit textMessageReceived(message.sysid, message.compid, 0, "Mid-level Commands Succesfully Changed");
+                    emit textMessageReceived(message.sysid, message.compid, MAV_SEVERITY_INFO, "Mid-level Commands Succesfully Changed");
                 }
                 break;
             }
