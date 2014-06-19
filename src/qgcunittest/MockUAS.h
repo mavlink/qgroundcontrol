@@ -112,9 +112,9 @@ public:
     virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
-    virtual void sendMessage(LinkInterface* link, mavlink_message_t message){Q_ASSERT(false);}
+    virtual void sendMessage(LinkInterface* link, mavlink_message_t message){ Q_UNUSED(link); Q_UNUSED(message); Q_ASSERT(false); }
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
-    virtual void sendMessage(mavlink_message_t message) {Q_ASSERT(false);}
+    virtual void sendMessage(mavlink_message_t message) { Q_UNUSED(link); Q_UNUSED(message); Q_ASSERT(false); }
     virtual QString getAutopilotTypeName() { Q_ASSERT(false); return _bogusString; };
     virtual void setAutopilotType(int apType) { Q_UNUSED(apType); Q_ASSERT(false); };
     virtual QMap<int, QString> getComponents() { Q_ASSERT(false); return _bogusMapIntQString; };
