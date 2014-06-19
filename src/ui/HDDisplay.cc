@@ -27,7 +27,7 @@
 #include "MainWindow.h"
 #include <QDebug>
 
-HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
+HDDisplay::HDDisplay(const QStringList &plotList, QString title, QWidget *parent) :
     QGraphicsView(parent),
     uas(NULL),
     xCenterOffset(0.0f),
@@ -60,11 +60,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     setAutoFillBackground(true);
 
     // Add all items in accept list to gauge
-    if (plotList) {
-        for(int i = 0; i < plotList->length(); ++i) {
-            addGauge(plotList->at(i));
-        }
-    }
+    for(int i = 0; i < plotList.length(); ++i)
+        addGauge(plotList.at(i));
 
     restoreState();
     // Set preferred size

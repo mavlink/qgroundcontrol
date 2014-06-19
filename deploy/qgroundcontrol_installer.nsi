@@ -1,7 +1,5 @@
 Name "QGroundcontrol"
 
-OutFile "qgroundcontrol-installer-win32.exe"
-
 InstallDir $PROGRAMFILES\qgroundcontrol
 
 Page license 
@@ -11,12 +9,12 @@ Page instfiles
 UninstPage uninstConfirm
 UninstPage instfiles
 
-LicenseData ..\license.txt
+LicenseData license.txt
 
 Section ""
 
   SetOutPath $INSTDIR
-  File /r ..\release\*.*
+  File /r release\*.*
   WriteUninstaller $INSTDIR\QGroundControl_uninstall.exe
 SectionEnd 
 

@@ -10,7 +10,6 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
 
     // Create the title label. Scale the font based on available size.
     titleLabel = new QLabel(this);
-// <<<<<<< HEAD
      titleLabel->setAlignment(Qt::AlignHCenter);
      titleLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
      titleLabel->setObjectName(QString::fromUtf8("title"));
@@ -25,18 +24,6 @@ UASQuickViewTextItem::UASQuickViewTextItem(QWidget *parent) : UASQuickViewItem(p
      valueLabel->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::Minimum);
      valueLabel->setObjectName(QString::fromUtf8("value"));
      valueLabel->setText("0.00");
-// =======
-//    titleLabel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
-//    titleLabel->setAlignment(Qt::AlignHCenter | Qt::AlignBottom);
-//    this->layout()->addWidget(titleLabel);
-//    valueLabel = new QLabel(this);
-//    valueLabel->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
-//    valueLabel->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
-//    valueLabel->setText("0.00");
-//    this->layout()->addWidget(valueLabel);
-//    //spacerItem = new QSpacerItem(20,40,QSizePolicy::Minimum,QSizePolicy::Ignored);
-//    //layout->addSpacerItem(spacerItem);
-// >>>>>>> 34eaf1fb422146f5df3b01fad4d756343b3127c9
     QFont valuefont = valueLabel->font();
     valuefont.setPixelSize(this->height() / 2.0);
     valueLabel->setFont(valuefont);
@@ -64,7 +51,7 @@ void UASQuickViewTextItem::setValue(double value)
     {
         valueLabel->setText(QString::number(value,'f',1));
     }
-    else if (value >= 100000 || value <= -100000)
+    else 
     {
         valueLabel->setText(QString::number(value,'f',0));
     }
@@ -132,7 +119,10 @@ void UASQuickViewTextItem::setValuePixelSize(int size)
 
 void UASQuickViewTextItem::resizeEvent(QResizeEvent *event)
 {
+    Q_UNUSED(event);
     return;
+#if 0
+    // code ifdef'ed out to silence warnings
     QFont valuefont = valueLabel->font();
     QFont titlefont = titleLabel->font();
     valuefont.setPixelSize(this->height());
@@ -171,4 +161,5 @@ titlefont.setPixelSize(valuefont.pixelSize() / 2.0);
     valueLabel->setFont(valuefont);
     titleLabel->setFont(titlefont);
     update();
+#endif
 }

@@ -61,8 +61,6 @@ private:
     int d_count;
     QwtArray<double> d_x;
     QwtArray<double> d_y;
-    QTimer *d_timer;
-    int d_timerCount;
 };
 
 /**
@@ -81,7 +79,7 @@ public:
     virtual ~IncrementalPlot();
 
     /** @brief Get the state of the grid */
-    bool gridEnabled();
+    bool gridEnabled() const;
 
     /** @brief Read out data from a curve */
     int data(const QString &key, double* r_x, double* r_y, int maxSize);
@@ -125,10 +123,12 @@ protected:
     double xmax;           ///< Maximum x value seen
     double ymin;           ///< Minimum y value seen
     double ymax;           ///< Maximum y value seen
-
+    QString styleText;     ///< Curve style set by setStyleText
 
 private:
     QMap<QString, CurveData* > d_data;      ///< Data points
+    /** Helper function to apply styleText style to the given curve */
+    void updateStyle(QwtPlotCurve *curve);
 };
 
 #endif /* INCREMENTALPLOT_H */

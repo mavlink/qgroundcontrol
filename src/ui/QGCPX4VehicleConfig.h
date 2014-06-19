@@ -15,7 +15,6 @@
 #include "px4_configuration/QGCPX4AirframeConfig.h"
 
 class UASParameterCommsMgr;
-class DialogBare;
 class QGCPX4SensorCalibration;
 
 namespace Ui {
@@ -62,6 +61,8 @@ public slots:
     void toggleCalibrationRC(bool enabled);
     /** Start/stop the Spektrum pair routine */
     void toggleSpektrumPairing(bool enabled);
+    /** Set the current trim values as attitude trim values */
+    void copyAttitudeTrim();
     /** Set trim positions */
     void setTrimPositions();
     /** Detect which channels need to be inverted */
@@ -276,9 +277,9 @@ protected:
 
     bool doneLoadingConfig;
     UASInterface* mav;                  ///< The current MAV
-    QGCUASParamManager* paramMgr;       ///< params mgr for the mav
-    static const unsigned int chanMax = 14;    ///< Maximum number of channels
-    static const unsigned int chanMappedMax = 16; ///< Maximum number of mapped channels (can be higher than input channel count)
+    QGCUASParamManagerInterface* paramMgr;       ///< params mgr for the mav
+    static const unsigned int chanMax = 18;    ///< Maximum number of channels
+    static const unsigned int chanMappedMax = 18; ///< Maximum number of mapped channels (can be higher than input channel count)
     unsigned int chanCount;               ///< Actual channels
     float rcMin[chanMax];                 ///< Minimum values
     float rcMax[chanMax];                 ///< Maximum values
@@ -305,7 +306,7 @@ protected:
     float rcThrottle;                   ///< PPM input channel used as throttle control input
     float rcMode;                       ///< PPM input channel used as mode switch control input
     float rcAssist;                     ///< PPM input channel used as assist switch control input
-    float rcMission;                    ///< PPM input channel used as mission switch control input
+    float rcLoiter;                     ///< PPM input channel used as loiter switch control input
     float rcReturn;                     ///< PPM input channel used as return switch control input
     float rcFlaps;                      ///< PPM input channel used as flaps control input
     float rcAux1;                       ///< PPM input channel used as aux 1 input
@@ -326,7 +327,6 @@ protected:
     QMap<QString,QString> paramTooltips;                                ///< Tooltips for the ? button next to a parameter.
 
     QGCPX4AirframeConfig* px4AirframeConfig;
-    DialogBare* firmwareDialog;
     QPixmap planeBack;
     QPixmap planeSide;
     QGCPX4SensorCalibration* px4SensorCalibration;

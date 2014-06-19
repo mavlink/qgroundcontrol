@@ -19,22 +19,27 @@
 #include "QGC.h"
 #include <MG.h>
 
-
-
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
     m_bytesRead(0),
     m_port(NULL),
+    type(""),
+    m_is_cdc(true),
     m_stopp(false),
     m_reqReset(false)
 {
-    // Setup settings
-    m_portName = portname.trimmed();
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
 
+    // Get the name of the current port in use.
+    m_portName = portname.trimmed();
     if (m_portName == "" && getCurrentPorts().size() > 0)
     {
         m_portName = m_ports.first().trimmed();
     }
+
+    checkIfCDC();
 
     // Set unique ID and add link to the list of links
     m_id = getNextLinkId();
@@ -68,7 +73,9 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
     qDebug() << "m_portName " << m_portName;
 
     LinkManager::instance()->add(this);
+    qDebug() << "link added to link manager";
 }
+
 void SerialLink::requestReset()
 {
     QMutexLocker locker(&this->m_stoppMutex);
@@ -80,6 +87,11 @@ SerialLink::~SerialLink()
     disconnect();
     if(m_port) delete m_port;
     m_port = NULL;
+
+    // Tell the thread to exit
+    quit();
+    // Wait for it to exit
+    wait();
 }
 
 QList<QString> SerialLink::getCurrentPorts()
@@ -87,9 +99,20 @@ QList<QString> SerialLink::getCurrentPorts()
     m_ports.clear();
 
     QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
+    foreach (const QSerialPortInfo &info, portList)
+    {
+        m_ports.append(info.portName());
+    }
+
+    return m_ports;
+}
+
+bool SerialLink::isBootloader()
+{
+    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
 
     if( portList.count() == 0){
-        qDebug() << "No Ports Found" << m_ports;
+        return false;
     }
 
     foreach (const QSerialPortInfo &info, portList)
@@ -98,9 +121,16 @@ QList<QString> SerialLink::getCurrentPorts()
 //                 << "Description : " << info.description();
 //        qDebug() << "Manufacturer: " << info.manufacturer();
 
-        m_ports.append(info.portName());
+       if (info.portName().trimmed() == this->m_portName.trimmed() &&
+               (info.description().toLower().contains("bootloader") ||
+                info.description().toLower().contains("px4 bl"))) {
+           qDebug() << "BOOTLOADER FOUND";
+           return true;
+       }
     }
-    return m_ports;
+
+    // Not found
+    return false;
 }
 
 void SerialLink::loadSettings()
@@ -111,6 +141,8 @@ void SerialLink::loadSettings()
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
         m_portName = settings.value("SERIALLINK_COMM_PORT").toString();
+        checkIfCDC();
+
         m_baud = settings.value("SERIALLINK_COMM_BAUD").toInt();
         m_parity = settings.value("SERIALLINK_COMM_PARITY").toInt();
         m_stopBits = settings.value("SERIALLINK_COMM_STOPBITS").toInt();
@@ -132,6 +164,37 @@ void SerialLink::writeSettings()
     settings.sync();
 }
 
+void SerialLink::checkIfCDC()
+{
+    QString description = "X";
+    foreach (QSerialPortInfo info,QSerialPortInfo::availablePorts())
+    {
+        if (m_portName == info.portName())
+        {
+            description = info.description();
+            break;
+        }
+    }
+    if (description.toLower().contains("mega") && description.contains("2560"))
+    {
+        type = "apm";
+        m_is_cdc = false;
+        qDebug() << "Attempting connection to an APM, with description:" << description;
+    }
+    else if (description.toLower().contains("px4"))
+    {
+        type = "px4";
+        m_is_cdc = true;
+        qDebug() << "Attempting connection to a PX4 unit with description:" << description;
+    }
+    else
+    {
+        type = "other";
+        m_is_cdc = false;
+        qDebug() << "Attempting connection to something unknown with description:" << description;
+    }
+}
+
 
 /**
  * @brief Runs the thread
@@ -139,50 +202,69 @@ void SerialLink::writeSettings()
  **/
 void SerialLink::run()
 {
+    checkIfCDC();
+
     // Initialize the connection
-    if (!hardwareConnect()) {
+    if (!hardwareConnect(type)) {
         //Need to error out here.
-        emit communicationError(getName(),"Error connecting: " + m_port->errorString());
-        disconnect(); // This tidies up and sends the necessary signals
-        emit communicationError(tr("Serial Port %1").arg(getPortName()), tr("Cannot read / write data - check physical USB and cable connections."));
+        QString err("Could not create port.");
+        if (m_port) {
+            err = m_port->errorString();
+        }
+        emit communicationError(getName(),"Error connecting: " + err);
         return;
     }
 
-    // Qt way to make clear what a while(1) loop does
     qint64 msecs = QDateTime::currentMSecsSinceEpoch();
     qint64 initialmsecs = QDateTime::currentMSecsSinceEpoch();
     quint64 bytes = 0;
-    bool triedreset = false;
-    bool triedDTR = false;
     qint64 timeout = 5000;
     int linkErrorCount = 0;
 
-    forever  {
+    // Qt way to make clear what a while(1) loop does
+    forever {
         {
-        QMutexLocker locker(&this->m_stoppMutex);
-            if(m_stopp) {
+            QMutexLocker locker(&this->m_stoppMutex);
+            if (m_stopp) {
                 m_stopp = false;
                 break; // exit the thread
             }
-
-            if (m_reqReset) {
-                m_reqReset = false;
-                emit communicationUpdate(getName(),"Reset requested via DTR signal");
-                m_port->setDataTerminalReady(true);
-                msleep(250);
-                m_port->setDataTerminalReady(false);
-            }
         }
 
-        if (isConnected() && (linkErrorCount > 1000)) {
-            qDebug() << "linkErrorCount too high: disconnecting!";
+        // If there are too many errors on this link, disconnect.
+        if (isConnected() && (linkErrorCount > 100)) {
+            qDebug() << "linkErrorCount too high: re-connecting!";
             linkErrorCount = 0;
-            emit communicationUpdate(getName(), tr("Disconnecting on too many link errors"));
-            disconnect();
+            emit communicationUpdate(getName(), tr("Reconnecting on too many link errors"));
+
+            if (m_port) {
+                m_port->close();
+                delete m_port;
+                m_port = NULL;
+
+                emit disconnected();
+                emit connected(false);
+            }
+
+            QGC::SLEEP::msleep(500);
+
+            unsigned tries = 0;
+            const unsigned tries_max = 15;
+            while (!hardwareConnect(type) && tries < tries_max) {
+                tries++;
+                QGC::SLEEP::msleep(500);
+            }
+
+            // Give up
+            if (tries == tries_max) {
+                break;
+            }
+
         }
 
+        // Write all our buffered data out the serial port.
         if (m_transmitBuffer.count() > 0) {
-            QMutexLocker writeLocker(&m_writeMutex);
+            m_writeMutex.lock();
             int numWritten = m_port->write(m_transmitBuffer);
             bool txSuccess = m_port->waitForBytesWritten(5);
             if (!txSuccess || (numWritten != m_transmitBuffer.count())) {
@@ -190,31 +272,46 @@ void SerialLink::run()
                 qDebug() << "TX Error! wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";
             }
             else {
+
+                // Since we were successful, reset out error counter.
                 linkErrorCount = 0;
             }
-            m_transmitBuffer =  m_transmitBuffer.remove(0, numWritten);
+
+            // Now that we transmit all of the data in the transmit buffer, flush it.
+            m_transmitBuffer = m_transmitBuffer.remove(0, numWritten);
+            m_writeMutex.unlock();
+
+            // Log this written data for this timestep. If this value ends up being 0 due to
+            // write() failing, that's what we want as well.
+            QMutexLocker dataRateLocker(&dataRateMutex);
+            logDataRateToBuffer(outDataWriteAmounts, outDataWriteTimes, &outDataIndex, numWritten, QDateTime::currentMSecsSinceEpoch());
         }
 
         //wait n msecs for data to be ready
         //[TODO][BB] lower to SerialLink::poll_interval?
+        m_dataMutex.lock();
         bool success = m_port->waitForReadyRead(10);
 
         if (success) {
             QByteArray readData = m_port->readAll();
             while (m_port->waitForReadyRead(10))
                 readData += m_port->readAll();
+            m_dataMutex.unlock();
             if (readData.length() > 0) {
                 emit bytesReceived(this, readData);
-//                qDebug() << "rx of length " << QString::number(readData.length());
 
+                // Log this data reception for this timestep
+                QMutexLocker dataRateLocker(&dataRateMutex);
+                logDataRateToBuffer(inDataWriteAmounts, inDataWriteTimes, &inDataIndex, readData.length(), QDateTime::currentMSecsSinceEpoch());
+
+                // Track the total amount of data read.
                 m_bytesRead += readData.length();
-                m_bitsReceivedTotal += readData.length() * 8;
                 linkErrorCount = 0;
             }
         }
         else {
+            m_dataMutex.unlock();
             linkErrorCount++;
-            //qDebug() << "Wait read response timeout" << QTime::currentTime().toString();
         }
 
         if (bytes != m_bytesRead) { // i.e things are good and data is being read.
@@ -233,30 +330,12 @@ void SerialLink::run()
                     //TODO ^^
                     timeout = 30000;
                 }
-                if (!triedDTR && triedreset) {
-                    triedDTR = true;
-                    emit communicationUpdate(getName(),"No data to receive on COM port. Attempting to reset via DTR signal");
-                    qDebug() << "No data!!! Attempting reset via DTR.";
-                    m_port->setDataTerminalReady(true);
-                    msleep(250);
-                    m_port->setDataTerminalReady(false);
-                }
-                else if (!triedreset) {
-                    qDebug() << "No data!!! Attempting reset via reboot command.";
-                    emit communicationUpdate(getName(),"No data to receive on COM port. Assuming possible terminal mode, attempting to reset via \"reboot\" command");
-                    m_port->write("reboot\r\n",8);
-                    triedreset = true;
-                }
-                else {
-                    emit communicationUpdate(getName(),"No data to receive on COM port....");
-                    qDebug() << "No data!!!";
-                }
             }
         }
-        MG::SLEEP::msleep(SerialLink::poll_interval);
+        QGC::SLEEP::msleep(SerialLink::poll_interval);
     } // end of forever
     
-    if (m_port) { // [TODO][BB] Not sure we need to close the port here
+    if (m_port) {
         qDebug() << "Closing Port #"<< __LINE__ << m_port->portName();
         m_port->close();
         delete m_port;
@@ -270,21 +349,12 @@ void SerialLink::run()
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
     if(m_port && m_port->isOpen()) {
-//        qDebug() << "writeBytes" << m_portName << "attempting to tx " << size << "bytes.";
 
         QByteArray byteArray(data, size);
-        {
-            QMutexLocker writeLocker(&m_writeMutex);
-            m_transmitBuffer.append(byteArray);
-        }
-
-        // Increase write counter
-        m_bitsSentTotal += size * 8;
-
-        // Extra debug logging
-//            qDebug() << byteArray->toHex();
+        m_writeMutex.lock();
+        m_transmitBuffer.append(byteArray);
+        m_writeMutex.unlock();
     } else {
-        disconnect();
         // Error occured
         emit communicationError(getName(), tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
@@ -298,12 +368,11 @@ void SerialLink::writeBytes(const char* data, qint64 size)
  **/
 void SerialLink::readBytes()
 {
-    m_dataMutex.lock();
     if(m_port && m_port->isOpen()) {
         const qint64 maxLength = 2048;
         char data[maxLength];
+        m_dataMutex.lock();
         qint64 numBytes = m_port->bytesAvailable();
-        //qDebug() << "numBytes: " << numBytes;
 
         if(numBytes > 0) {
             /* Read as much data in buffer as possible without overflow */
@@ -312,19 +381,9 @@ void SerialLink::readBytes()
             m_port->read(data, numBytes);
             QByteArray b(data, numBytes);
             emit bytesReceived(this, b);
-
-            //qDebug() << "SerialLink::readBytes()" << std::hex << data;
-            //            int i;
-            //            for (i=0; i<numBytes; i++){
-            //                unsigned int v=data[i];
-            //
-            //                fprintf(stderr,"%02x ", v);
-            //            }
-            //            fprintf(stderr,"\n");
-            m_bitsReceivedTotal += numBytes * 8;
         }
+        m_dataMutex.unlock();
     }
-    m_dataMutex.unlock();
 }
 
 
@@ -349,21 +408,14 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    qDebug() << "disconnect";
-    if (m_port)
-        qDebug() << m_port->portName();
-
     if (isRunning())
     {
-        qDebug() << "running so disconnect" << m_port->portName();
         {
             QMutexLocker locker(&m_stoppMutex);
             m_stopp = true;
         }
         wait(); // This will terminate the thread and close the serial port
 
-        emit disconnected(); // [TODO] There are signals from QSerialPort we should use
-        emit connected(false);
         return true;
     }
 
@@ -380,6 +432,7 @@ bool SerialLink::disconnect()
  **/
 bool SerialLink::connect()
 {   
+    qDebug() << "CONNECT CALLED";
     if (isRunning())
         disconnect();
     {
@@ -387,7 +440,7 @@ bool SerialLink::connect()
         m_stopp = false;
     }
 
-    start(LowPriority);
+    start(HighPriority);
     return true;
 }
 
@@ -399,28 +452,53 @@ bool SerialLink::connect()
  * @return True if the connection could be established, false otherwise
  * @see connect() For the right function to establish the connection.
  **/
-bool SerialLink::hardwareConnect()
+bool SerialLink::hardwareConnect(QString &type)
 {
-    if(m_port) {
+    if (m_port) {
         qDebug() << "SerialLink:" << QString::number((long)this, 16) << "closing port";
         m_port->close();
+        QGC::SLEEP::usleep(50000);
         delete m_port;
         m_port = NULL;
     }
-    qDebug() << "SerialLink: hardwareConnect to " << m_portName;
-    m_port = new QSerialPort(m_portName);
 
-    if (m_port == NULL) {
-        emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
+    qDebug() << "SerialLink: hardwareConnect to " << m_portName;
+
+    if (isBootloader()) {
+        qDebug() << "Not connecting to a bootloader, waiting for 2nd chance";
+
+        const unsigned retry_limit = 12;
+        unsigned retries;
+
+        for (retries = 0; retries < retry_limit; retries++) {
+            if (!isBootloader()) {
+                break;
+            }
+            QGC::SLEEP::msleep(500);
+        }
+
+        // Check limit
+        if (retries == retry_limit) {
+
+            // bail out
+            return false;
+        }
+    }
+
+    m_port = new QSerialPort(m_portName);
+    m_port->moveToThread(this);
+
+    if (!m_port) {
+        emit communicationUpdate(getName(),"Error opening port: " + m_portName);
         return false; // couldn't create serial port.
     }
 
     QObject::connect(m_port,SIGNAL(aboutToClose()),this,SIGNAL(disconnected()));
-    QObject::connect(m_port, SIGNAL(error(SerialLinkPortError_t)),
-                     this, SLOT(linkError(SerialLinkPortError_t)));
+    QObject::connect(m_port, SIGNAL(error(QSerialPort::SerialPortError)), this, SLOT(linkError(QSerialPort::SerialPortError)));
 
-//    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
-    m_connectionStartTime = MG::TIME::getGroundTimeNow();
+    checkIfCDC();
+
+    //    port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
 
     if (!m_port->open(QIODevice::ReadWrite)) {
         emit communicationUpdate(getName(),"Error opening port: " + m_port->errorString());
@@ -428,19 +506,23 @@ bool SerialLink::hardwareConnect()
         return false; // couldn't open serial port
     }
 
-    emit communicationUpdate(getName(),"Opened port!");
-
     // Need to configure the port
-    m_port->setBaudRate(m_baud);
-    m_port->setDataBits(static_cast<QSerialPort::DataBits>(m_dataBits));
-    m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(m_flowControl));
-    m_port->setStopBits(static_cast<QSerialPort::StopBits>(m_stopBits));
-    m_port->setParity(static_cast<QSerialPort::Parity>(m_parity));
+    // NOTE: THE PORT NEEDS TO BE OPEN!
+    if (!m_is_cdc) {
+        qDebug() << "Configuring port";
+        m_port->setBaudRate(m_baud);
+        m_port->setDataBits(static_cast<QSerialPort::DataBits>(m_dataBits));
+        m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(m_flowControl));
+        m_port->setStopBits(static_cast<QSerialPort::StopBits>(m_stopBits));
+        m_port->setParity(static_cast<QSerialPort::Parity>(m_parity));
+    }
+
+    emit communicationUpdate(getName(),"Opened port!");
 
     emit connected();
     emit connected(true);
 
-    qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << m_port->portName()
+    qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "type:" << type << "with settings" << m_port->portName()
              << getBaudRate() << getDataBits() << getParityType() << getStopBits();
 
     writeSettings();
@@ -448,9 +530,15 @@ bool SerialLink::hardwareConnect()
     return true; // successful connection
 }
 
-void SerialLink::linkError(SerialLinkPortError_t error)
+void SerialLink::linkError(QSerialPort::SerialPortError error)
 {
-    qDebug() << error;
+    if (error != QSerialPort::NoError) {
+        // You can use the following qDebug output as needed during development. Make sure to comment it back out
+        // when you are done. The reason for this is that this signal is very noisy. For example if you try to
+        // connect to a PixHawk before it is ready to accept the connection it will output a continuous stream
+        // of errors until the Pixhawk responds.
+        //qDebug() << "SerialLink::linkError" << error;
+    }
 }
 
 
@@ -488,10 +576,10 @@ QString SerialLink::getName() const
   * This function maps baud rate constants to numerical equivalents.
   * It relies on the mapping given in qportsettings.h from the QSerialPort library.
   */
-qint64 SerialLink::getNominalDataRate() const
+qint64 SerialLink::getConnectionSpeed() const
 {
     int baudRate;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         baudRate = m_port->baudRate();
     } else {
         baudRate = m_baud;
@@ -532,62 +620,6 @@ qint64 SerialLink::getNominalDataRate() const
     return dataRate;
 }
 
-qint64 SerialLink::getTotalUpstream()
-{
-    m_statisticsMutex.lock();
-    return m_bitsSentTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
-    m_statisticsMutex.unlock();
-}
-
-qint64 SerialLink::getCurrentUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getBitsSent() const
-{
-    return m_bitsSentTotal;
-}
-
-qint64 SerialLink::getBitsReceived() const
-{
-    return m_bitsReceivedTotal;
-}
-
-qint64 SerialLink::getTotalDownstream()
-{
-    m_statisticsMutex.lock();
-    return m_bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - m_connectionStartTime) / 1000);
-    m_statisticsMutex.unlock();
-}
-
-qint64 SerialLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 SerialLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool SerialLink::isFullDuplex() const
-{
-    /* Serial connections are always half duplex */
-    return false;
-}
-
-int SerialLink::getLinkQuality() const
-{
-    /* This feature is not supported with this interface */
-    return -1;
-}
-
 QString SerialLink::getPortName() const
 {
     return m_portName;
@@ -597,13 +629,13 @@ QString SerialLink::getPortName() const
 
 int SerialLink::getBaudRate() const
 {
-    return getNominalDataRate();
+    return getConnectionSpeed();
 }
 
 int SerialLink::getBaudRateType() const
 {
     int baudRate;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         baudRate = m_port->baudRate();
     } else {
         baudRate = m_baud;
@@ -613,8 +645,9 @@ int SerialLink::getBaudRateType() const
 
 int SerialLink::getFlowType() const
 {
+
     int flowControl;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         flowControl = m_port->flowControl();
     } else {
         flowControl = m_flowControl;
@@ -624,8 +657,9 @@ int SerialLink::getFlowType() const
 
 int SerialLink::getParityType() const
 {
+
     int parity;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         parity = m_port->parity();
     } else {
         parity = m_parity;
@@ -635,8 +669,9 @@ int SerialLink::getParityType() const
 
 int SerialLink::getDataBitsType() const
 {
+
     int dataBits;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         dataBits = m_port->dataBits();
     } else {
         dataBits = m_dataBits;
@@ -646,8 +681,9 @@ int SerialLink::getDataBitsType() const
 
 int SerialLink::getStopBitsType() const
 {
+
     int stopBits;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         stopBits = m_port->stopBits();
     } else {
         stopBits = m_stopBits;
@@ -657,9 +693,10 @@ int SerialLink::getStopBitsType() const
 
 int SerialLink::getDataBits() const
 {
+
     int ret;
     int dataBits;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         dataBits = m_port->dataBits();
     } else {
         dataBits = m_dataBits;
@@ -687,8 +724,9 @@ int SerialLink::getDataBits() const
 
 int SerialLink::getStopBits() const
 {
+
     int stopBits;
-    if (m_port) {
+    if (m_port && !m_is_cdc) {
         stopBits = m_port->stopBits();
     } else {
         stopBits = m_stopBits;
@@ -712,11 +750,13 @@ bool SerialLink::setPortName(QString portName)
 {
     qDebug() << "current portName " << m_portName;
     qDebug() << "setPortName to " << portName;
-    bool accepted = false;
+    bool accepted = true;
     if ((portName != m_portName)
             && (portName.trimmed().length() > 0)) {
         m_portName = portName.trimmed();
-//        m_name = tr("serial port ") + portName.trimmed(); // [TODO] Do we need this?
+
+        checkIfCDC();
+
         if(m_port)
             m_port->setPortName(portName);
 
@@ -730,20 +770,27 @@ bool SerialLink::setPortName(QString portName)
 
 bool SerialLink::setBaudRateType(int rateIndex)
 {
-    Q_ASSERT_X(m_port != NULL, "setBaudRateType", "m_port is NULL");
-    // These minimum and maximum baud rates were based on those enumerated in qserialport.h
+
+  // These minimum and maximum baud rates were based on those enumerated in qserialport.h
     bool result;
     const int minBaud = (int)QSerialPort::Baud1200;
     const int maxBaud = (int)QSerialPort::Baud115200;
 
-    if (m_port && (rateIndex >= minBaud && rateIndex <= maxBaud))
+    if ((rateIndex >= minBaud && rateIndex <= maxBaud))
     {
-        result = m_port->setBaudRate(static_cast<QSerialPort::BaudRate>(rateIndex));
-        emit updateLink(this);
-        return result;
+        if (!m_is_cdc && m_port)
+        {
+            result = m_port->setBaudRate(static_cast<QSerialPort::BaudRate>(rateIndex));
+            emit updateLink(this);
+        } else {
+            m_baud = (int)rateIndex;
+            result = true;
+        }
+    } else {
+        result = false;
     }
 
-    return false;
+    return result;
 }
 
 bool SerialLink::setBaudRateString(const QString& rate)
@@ -756,12 +803,14 @@ bool SerialLink::setBaudRateString(const QString& rate)
 
 bool SerialLink::setBaudRate(int rate)
 {
+
     bool accepted = false;
     if (rate != m_baud) {
         m_baud = rate;
         accepted = true;
-        if (m_port)
+        if (m_port && !m_is_cdc) {
             accepted = m_port->setBaudRate(rate);
+        }
         emit updateLink(this);
     }
     return accepted;
@@ -769,11 +818,12 @@ bool SerialLink::setBaudRate(int rate)
 
 bool SerialLink::setFlowType(int flow)
 {
+
     bool accepted = false;
     if (flow != m_flowControl) {
         m_flowControl = static_cast<QSerialPort::FlowControl>(flow);
         accepted = true;
-        if (m_port)
+        if (m_port && !m_is_cdc)
             accepted = m_port->setFlowControl(static_cast<QSerialPort::FlowControl>(flow));
         emit updateLink(this);
     }
@@ -782,11 +832,12 @@ bool SerialLink::setFlowType(int flow)
 
 bool SerialLink::setParityType(int parity)
 {
+
     bool accepted = false;
     if (parity != m_parity) {
         m_parity = static_cast<QSerialPort::Parity>(parity);
         accepted = true;
-        if (m_port) {
+        if (m_port && !m_is_cdc) {
             switch (parity) {
                 case QSerialPort::NoParity:
                 accepted = m_port->setParity(QSerialPort::NoParity);
@@ -814,11 +865,13 @@ bool SerialLink::setParityType(int parity)
 
 bool SerialLink::setDataBits(int dataBits)
 {
+
+    qDebug("SET DATA BITS");
     bool accepted = false;
     if (dataBits != m_dataBits) {
         m_dataBits = static_cast<QSerialPort::DataBits>(dataBits);
         accepted = true;
-        if (m_port)
+        if (m_port && !m_is_cdc)
             accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
         emit updateLink(this);
     }
@@ -827,12 +880,13 @@ bool SerialLink::setDataBits(int dataBits)
 
 bool SerialLink::setStopBits(int stopBits)
 {
+
     // Note 3 is OneAndAHalf stopbits.
     bool accepted = false;
     if (stopBits != m_stopBits) {
         m_stopBits = static_cast<QSerialPort::StopBits>(stopBits);
         accepted = true;
-        if (m_port)
+        if (m_port && !m_is_cdc)
             accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
         emit updateLink(this);
     }
@@ -841,11 +895,12 @@ bool SerialLink::setStopBits(int stopBits)
 
 bool SerialLink::setDataBitsType(int dataBits)
 {
+
     bool accepted = false;
     if (dataBits != m_dataBits) {
         m_dataBits = static_cast<QSerialPort::DataBits>(dataBits);
         accepted = true;
-        if (m_port)
+        if (m_port && !m_is_cdc)
             accepted = m_port->setDataBits(static_cast<QSerialPort::DataBits>(dataBits));
         emit updateLink(this);
     }
@@ -854,11 +909,12 @@ bool SerialLink::setDataBitsType(int dataBits)
 
 bool SerialLink::setStopBitsType(int stopBits)
 {
+
     bool accepted = false;
     if (stopBits != m_stopBits) {
         m_stopBits = static_cast<QSerialPort::StopBits>(stopBits);
         accepted = true;
-        if (m_port)
+        if (m_port && !m_is_cdc)
             accepted = m_port->setStopBits(static_cast<QSerialPort::StopBits>(stopBits));
         emit updateLink(this);
     }

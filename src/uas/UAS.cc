@@ -41,7 +41,7 @@
 * creating the UAS.
 */
 
-UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
+UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(id),
@@ -51,7 +51,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     commStatus(COMM_DISCONNECTED),
     receiveDropRate(0),
     sendDropRate(0),
-    statusTimeout(new QTimer(this)),
+    statusTimeout(thread),
 
     name(""),
     type(MAV_TYPE_GENERIC),
@@ -85,7 +85,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     currentVoltage(12.6f),
     lpVoltage(12.0f),
     currentCurrent(0.4f),
-    batteryRemainingEstimateEnabled(true),
+    batteryRemainingEstimateEnabled(false),
     // chargeLevel not initialized
     // timeRemaining  not initialized
     lowBattAlarm(false),
@@ -109,15 +109,24 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     localX(0.0),
     localY(0.0),
     localZ(0.0),
+
+    latitude(0.0),
+    longitude(0.0),
+    altitudeAMSL(0.0),
+    altitudeRelative(0.0),
+
     globalEstimatorActive(false),
+
     latitude_gps(0.0),
     longitude_gps(0.0),
     altitude_gps(0.0),
+
+    speedX(0.0),
+    speedY(0.0),
+    speedZ(0.0),
+
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
-
-    waypointManager(this),
-    paramMgr(this),
 
     #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     receivedOverlayTimestamp(0.0),
@@ -127,12 +136,26 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     receivedRGBDImageTimestamp(0.0),
     #endif
 
+    airSpeed(std::numeric_limits<double>::quiet_NaN()),
+    groundSpeed(std::numeric_limits<double>::quiet_NaN()),
+    waypointManager(this),
+
     attitudeKnown(false),
     attitudeStamped(false),
     lastAttitude(0),
 
+    roll(0.0),
+    pitch(0.0),
+    yaw(0.0),
+
+    blockHomePositionChanges(false),
+    receivedMode(false),
+
+
     paramsOnceRequested(false),
+    paramMgr(this),
     simulation(0),
+    _thread(thread),
 
     // The protected members.
     connectionLost(false),
@@ -142,79 +165,79 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0),
-    blockHomePositionChanges(false)
+    lastSendTimeSensors(0)
 {
+    moveToThread(thread);
+
     for (unsigned int i = 0; i<255;++i)
     {
         componentID[i] = -1;
         componentMulti[i] = false;
     }
 
-
     // Store a list of available actions for this UAS.
-    // Basically everything exposted as a SLOT with no return value or arguments.
+    // Basically everything exposed as a SLOT with no return value or arguments.
 
-    QAction* newAction = new QAction(tr("Arm"), this);
+    QAction* newAction = new QAction(tr("Arm"), thread);
     newAction->setToolTip(tr("Enable the UAS so that all actuators are online"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(armSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Disarm"), this);
+    newAction = new QAction(tr("Disarm"), thread);
     newAction->setToolTip(tr("Disable the UAS so that all actuators are offline"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(disarmSystem()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle armed"), this);
+    newAction = new QAction(tr("Toggle armed"), thread);
     newAction->setToolTip(tr("Toggle between armed and disarmed"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go home"), this);
+    newAction = new QAction(tr("Go home"), thread);
     newAction->setToolTip(tr("Command the UAS to return to its home position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(home()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Land"), this);
+    newAction = new QAction(tr("Land"), thread);
     newAction->setToolTip(tr("Command the UAS to land"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(land()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Launch"), this);
+    newAction = new QAction(tr("Launch"), thread);
     newAction->setToolTip(tr("Command the UAS to launch itself and begin its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(launch()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Resume"), this);
+    newAction = new QAction(tr("Resume"), thread);
     newAction->setToolTip(tr("Command the UAS to continue its mission"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(go()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Stop"), this);
+    newAction = new QAction(tr("Stop"), thread);
     newAction->setToolTip(tr("Command the UAS to halt and hold position"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(halt()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go autonomous"), this);
+    newAction = new QAction(tr("Go autonomous"), thread);
     newAction->setToolTip(tr("Set the UAS into an autonomous control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goAutonomous()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Go manual"), this);
+    newAction = new QAction(tr("Go manual"), thread);
     newAction->setToolTip(tr("Set the UAS into a manual control mode"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(goManual()));
     actions.append(newAction);
 
-    newAction = new QAction(tr("Toggle autonomy"), this);
+    newAction = new QAction(tr("Toggle autonomy"), thread);
     newAction->setToolTip(tr("Toggle between manual and full-autonomy"));
     connect(newAction, SIGNAL(triggered()), this, SLOT(toggleAutonomy()));
     actions.append(newAction);
 
     color = UASInterface::getNextColor();
-    setBatterySpecs(QString("9V,9.5V,12.6V"));
-    connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
+    setBatterySpecs(QString(""));
+    connect(&statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
-    statusTimeout->start(500);
+    statusTimeout.start(500);
     readSettings();
     //need to init paramMgr after readSettings have been loaded, to properly set autopilot and so forth
     paramMgr.initWithUAS(this);
@@ -230,8 +253,11 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 UAS::~UAS()
 {
     writeSettings();
+
+    _thread->quit();
+    _thread->wait();
+
     delete links;
-    delete statusTimeout;
     delete simulation;
 }
 
@@ -309,6 +335,7 @@ void UAS::updateState()
     if (!connectionLost && (heartbeatInterval > timeoutIntervalHeartbeat))
     {
         connectionLost = true;
+        receivedMode = false;
         QString audiostring = QString("Link lost to system %1").arg(this->getUASID());
         GAudioOutput::instance()->say(audiostring.toLower());
     }
@@ -323,7 +350,7 @@ void UAS::updateState()
     // Connection gained
     if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
     {
-        QString audiostring = QString("Link regained to system %1 after %2 seconds").arg(this->getUASID()).arg((int)(connectionLossTime/1000000));
+        QString audiostring = QString("Link regained to system %1").arg(this->getUASID());
         GAudioOutput::instance()->say(audiostring.toLower());
         connectionLost = false;
         connectionLossTime = 0;
@@ -343,34 +370,6 @@ void UAS::updateState()
             GAudioOutput::instance()->notifyNegative();
         }
     }
-
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_NONE 0
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_RATES 1
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_ATTITUDE 2
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_VELOCITY 3
-//#define MAVLINK_OFFBOARD_CONTROL_MODE_POSITION 4
-//#define MAVLINK_OFFBOARD_CONTROL_FLAG_ARMED 0x10
-
-//#warning THIS IS A HUGE HACK AND SHOULD NEVER SHOW UP IN ANY GIT REPOSITORY
-//    mavlink_message_t message;
-
-//            mavlink_set_quad_swarm_roll_pitch_yaw_thrust_t sp;
-
-//            sp.group = 0;
-
-//            /* set rate mode, set zero rates and 20% throttle */
-//            sp.mode = MAVLINK_OFFBOARD_CONTROL_MODE_RATES | MAVLINK_OFFBOARD_CONTROL_FLAG_ARMED;
-
-//            sp.roll[0] = INT16_MAX * 0.0f;
-//            sp.pitch[0] = INT16_MAX * 0.0f;
-//            sp.yaw[0] = INT16_MAX * 0.0f;
-//            sp.thrust[0] = UINT16_MAX * 0.3f;
-
-
-//            /* send from system 200 and component 0 */
-//            mavlink_msg_set_quad_swarm_roll_pitch_yaw_thrust_encode(200, 0, &message, &sp);
-
-//            sendMessage(message);
 }
 
 /**
@@ -580,6 +579,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 modeAudio = " is now in " + audiomodeText;
             }
+
+            // We got the mode
+            receivedMode = true;
 
             // AUDIO
             if (modechanged && statechanged)
@@ -816,18 +818,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (!attitudeKnown)
             {
-                //yaw = QGC::limitAngleToPMPId((((double)hud.heading-180.0)/360.0)*M_PI);
-                setYaw(QGC::limitAngleToPMPId((((double)hud.heading-180.0)/360.0)*M_PI));
+                setYaw(QGC::limitAngleToPMPId((((double)hud.heading)/180.0)*M_PI));
                 emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
             }
 
-            // The primary altitude is the one that the UAV uses for navigation.
-            // We assume! that the HUD message reports that as altitude.
-            emit primaryAltitudeChanged(this, hud.alt, time);
-
-            emit primarySpeedChanged(this, hud.airspeed, time);
-            emit gpsSpeedChanged(this, hud.groundspeed, time);
-            emit climbRateChanged(this, hud.climb, time);
+            setAltitudeAMSL(hud.alt);
+            setGroundSpeed(hud.groundspeed);
+            if (!isnan(hud.airspeed))
+                setAirSpeed(hud.airspeed);
+            speedZ = -hud.climb;
+            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
+            emit speedChanged(this, groundSpeed, airSpeed, time);
         }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
@@ -843,13 +844,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (!wrongComponent)
             {
-                localX = pos.x;
-                localY = pos.y;
-                localZ = pos.z;
+                setLocalX(pos.x);
+                setLocalY(pos.y);
+                setLocalZ(pos.z);
+
+                speedX = pos.vx;
+                speedY = pos.vy;
+                speedZ = pos.vz;
 
                 // Emit
-                emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                emit velocityChanged_NED(this, pos.vx, pos.vy, pos.vz, time);
+                emit localPositionChanged(this, localX, localY, localZ, time);
+                emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
 
                 // Set internal state
                 if (!positionLock) {
@@ -876,15 +881,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         {
             mavlink_global_position_int_t pos;
             mavlink_msg_global_position_int_decode(&message, &pos);
+
             quint64 time = getUnixTime();
+
             setLatitude(pos.lat/(double)1E7);
             setLongitude(pos.lon/(double)1E7);
-
-            // dongfang: Beware. There are 2 altitudes in this message; neither is the primary.
-            // pos.alt is GPS altitude and pos.relative_alt is above-home altitude.
-            // It would be nice if APM could be modified to present the primary (mix) alt. instead
-            // of the GPS alt. in this message.
-            setAltitude(pos.alt/1000.0);
+            setAltitudeAMSL(pos.alt/1000.0);
+            setAltitudeRelative(pos.relative_alt/1000.0);
 
             globalEstimatorActive = true;
 
@@ -892,14 +895,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             speedY = pos.vy/100.0;
             speedZ = pos.vz/100.0;
 
-            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
-            // dongfang: The altitude is GPS altitude. Bugger. It needs to be changed to primary.
-            emit gpsAltitudeChanged(this, getAltitude(), time);
+            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
+            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
             // We had some frame mess here, global and local axes were mixed.
             emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
 
-            double groundspeed = qSqrt(speedX*speedX+speedY*speedY);
-            emit gpsSpeedChanged(this, groundspeed, time);
+            setGroundSpeed(qSqrt(speedX*speedX+speedY*speedY));
+            emit speedChanged(this, groundSpeed, airSpeed, time);
 
             // Set internal state
             if (!positionLock)
@@ -918,9 +920,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_gps_raw_int_t pos;
             mavlink_msg_gps_raw_int_decode(&message, &pos);
 
-            // SANITY CHECK
-            // only accept values in a realistic range
-            // quint64 time = getUnixTime(pos.time_usec);
             quint64 time = getUnixTime(pos.time_usec);
 
             emit gpsLocalizationChanged(this, pos.fix_type);
@@ -935,6 +934,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             if (pos.fix_type > 2)
             {
+                positionLock = true;
+                isGlobalPositionKnown = true;
 
                 latitude_gps = pos.lat/(double)1E7;
                 longitude_gps = pos.lon/(double)1E7;
@@ -944,30 +945,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (!globalEstimatorActive) {
                     setLatitude(latitude_gps);
                     setLongitude(longitude_gps);
-                    setAltitude(altitude_gps);
-                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitude(), time);
-                    emit gpsAltitudeChanged(this, getAltitude(), time);
-                }
+                    setAltitudeAMSL(altitude_gps);
+                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
+                    emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
 
-                positionLock = true;
-                isGlobalPositionKnown = true;
-
-                // Smaller than threshold and not NaN
-
-                float vel = pos.vel/100.0f;
-
-                // If no GLOBAL_POSITION_INT messages ever received, use these raw GPS values instead.
-                if (!globalEstimatorActive) {
-                    if ((vel < 1000000) && !isnan(vel) && !isinf(vel))
-                    {
-                        //emit speedChanged(this, vel, 0.0, 0.0, time);
+                    float vel = pos.vel/100.0f;
+                    // Smaller than threshold and not NaN
+                    if ((vel < 1000000) && !isnan(vel) && !isinf(vel)) {
                         setGroundSpeed(vel);
-                        // TODO: Other sources also? Actually this condition does not quite belong here.
-                        emit gpsSpeedChanged(this, vel, time);
-                    }
-                    else
-                    {
-                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                        emit speedChanged(this, groundSpeed, airSpeed, time);
+                    } else {
+                        emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }
             }
@@ -995,30 +983,52 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         {
             mavlink_rc_channels_raw_t channels;
             mavlink_msg_rc_channels_raw_decode(&message, &channels);
+
+            const unsigned int portWidth = 8; // XXX magic number
+
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            emit remoteControlChannelRawChanged(0, channels.chan1_raw);
-            emit remoteControlChannelRawChanged(1, channels.chan2_raw);
-            emit remoteControlChannelRawChanged(2, channels.chan3_raw);
-            emit remoteControlChannelRawChanged(3, channels.chan4_raw);
-            emit remoteControlChannelRawChanged(4, channels.chan5_raw);
-            emit remoteControlChannelRawChanged(5, channels.chan6_raw);
-            emit remoteControlChannelRawChanged(6, channels.chan7_raw);
-            emit remoteControlChannelRawChanged(7, channels.chan8_raw);
+            if (channels.chan1_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 0, channels.chan1_raw);
+            if (channels.chan2_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 1, channels.chan2_raw);
+            if (channels.chan3_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 2, channels.chan3_raw);
+            if (channels.chan4_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 3, channels.chan4_raw);
+            if (channels.chan5_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 4, channels.chan5_raw);
+            if (channels.chan6_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 5, channels.chan6_raw);
+            if (channels.chan7_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 6, channels.chan7_raw);
+            if (channels.chan8_raw != UINT16_MAX)
+                emit remoteControlChannelRawChanged(channels.port * portWidth + 7, channels.chan8_raw);
         }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
         {
             mavlink_rc_channels_scaled_t channels;
             mavlink_msg_rc_channels_scaled_decode(&message, &channels);
+
+            const unsigned int portWidth = 8; // XXX magic number
+
             emit remoteControlRSSIChanged(channels.rssi/255.0f);
-            emit remoteControlChannelScaledChanged(0, channels.chan1_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(1, channels.chan2_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(2, channels.chan3_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(3, channels.chan4_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(4, channels.chan5_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(5, channels.chan6_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(6, channels.chan7_scaled/10000.0f);
-            emit remoteControlChannelScaledChanged(7, channels.chan8_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan1_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 0, channels.chan1_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan2_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 1, channels.chan2_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan3_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 2, channels.chan3_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan4_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 3, channels.chan4_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan5_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 4, channels.chan5_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan6_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 5, channels.chan6_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan7_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 6, channels.chan7_scaled/10000.0f);
+            if (static_cast<uint16_t>(channels.chan8_scaled) != UINT16_MAX)
+                emit remoteControlChannelScaledChanged(channels.port * portWidth + 7, channels.chan8_scaled/10000.0f);
         }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
@@ -1045,27 +1055,27 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
             case MAV_RESULT_ACCEPTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_TEMPORARILY_REJECTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_DENIED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Denied CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Denied CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_UNSUPPORTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_FAILED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Failed CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Failed CMD: %1").arg(ack.command));
             }
                 break;
             }
@@ -1080,58 +1090,124 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_MISSION_COUNT:
         {
-            mavlink_mission_count_t wpc;
-            mavlink_msg_mission_count_decode(&message, &wpc);
-            if(wpc.target_system == mavlink->getSystemId() || wpc.target_system == 0)
+            mavlink_mission_count_t mc;
+            mavlink_msg_mission_count_decode(&message, &mc);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (mc.target_system == 0) {
+                mc.target_system = mavlink->getSystemId();
+            }
+            if (mc.target_component == 0) {
+                mc.target_component = mavlink->getComponentId();
+            }
+
+            // Check that this message applies to the UAS.
+            if(mc.target_system == mavlink->getSystemId())
             {
-                waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
+
+                if (mc.target_component != mavlink->getComponentId()) {
+                    qDebug() << "The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.";
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << mc.target_component;
+                }
+
+                waypointManager.handleWaypointCount(message.sysid, message.compid, mc.count);
             }
             else
             {
-                qDebug() << "Got waypoint message, but was wrong system id" << wpc.target_system;
+                qDebug() << QString("Received mission count message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mc.target_system);
             }
         }
             break;
 
         case MAVLINK_MSG_ID_MISSION_ITEM:
         {
-            mavlink_mission_item_t wp;
-            mavlink_msg_mission_item_decode(&message, &wp);
-            //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
-            if(wp.target_system == mavlink->getSystemId() || wp.target_system == 0)
+            mavlink_mission_item_t mi;
+            mavlink_msg_mission_item_decode(&message, &mi);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (mi.target_system == 0) {
+                mi.target_system = mavlink->getSystemId();
+            }
+            if (mi.target_component == 0) {
+                mi.target_component = mavlink->getComponentId();
+            }
+
+            // Check that the item pertains to this UAS.
+            if(mi.target_system == mavlink->getSystemId())
             {
-                waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
+
+                if (mi.target_component != mavlink->getComponentId()) {
+                    qDebug() << "The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.";
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << mi.target_component;
+                }
+
+                waypointManager.handleWaypoint(message.sysid, message.compid, &mi);
             }
             else
             {
-                qDebug() << "Got waypoint message, but was wrong system id" << wp.target_system;
+                qDebug() << QString("Received mission item message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mi.target_system);
             }
         }
             break;
 
         case MAVLINK_MSG_ID_MISSION_ACK:
         {
-            mavlink_mission_ack_t wpa;
-            mavlink_msg_mission_ack_decode(&message, &wpa);
-            if((wpa.target_system == mavlink->getSystemId() || wpa.target_system == 0) &&
-                    (wpa.target_component == mavlink->getComponentId() || wpa.target_component == 0))
+            mavlink_mission_ack_t ma;
+            mavlink_msg_mission_ack_decode(&message, &ma);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (ma.target_system == 0) {
+                ma.target_system = mavlink->getSystemId();
+            }
+            if (ma.target_component == 0) {
+                ma.target_component = mavlink->getComponentId();
+            }
+
+            // Check that the ack pertains to this UAS.
+            if(ma.target_system == mavlink->getSystemId())
             {
-                waypointManager.handleWaypointAck(message.sysid, message.compid, &wpa);
+
+                if (ma.target_component != mavlink->getComponentId()) {
+                    qDebug() << tr("The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.");
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << ma.target_component;
+                }
+
+                waypointManager.handleWaypointAck(message.sysid, message.compid, &ma);
+            }
+            else
+            {
+                qDebug() << QString("Received mission ack message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(ma.target_system);
             }
         }
             break;
 
         case MAVLINK_MSG_ID_MISSION_REQUEST:
         {
-            mavlink_mission_request_t wpr;
-            mavlink_msg_mission_request_decode(&message, &wpr);
-            if(wpr.target_system == mavlink->getSystemId() || wpr.target_system == 0)
+            mavlink_mission_request_t mr;
+            mavlink_msg_mission_request_decode(&message, &mr);
+
+            // Special case a 0 for the target system or component, it means that anyone is the target, so we should process this.
+            if (mr.target_system == 0) {
+                mr.target_system = mavlink->getSystemId();
+            }
+            if (mr.target_component == 0) {
+                mr.target_component = mavlink->getComponentId();
+            }
+
+            // Check that the request pertains to this UAS.
+            if(mr.target_system == mavlink->getSystemId())
             {
-                waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
+
+                if (mr.target_component != mavlink->getComponentId()) {
+                    qDebug() << QString("The target component ID is not set correctly. This is currently only a warning, but will be turned into an error.");
+                    qDebug() << "Expecting" << mavlink->getComponentId() << "but got" << mr.target_component;
+                }
+
+                waypointManager.handleWaypointRequest(message.sysid, message.compid, &mr);
             }
             else
             {
-                qDebug() << "Got waypoint message, but was wrong system id" << wpr.target_system;
+                qDebug() << QString("Received mission request message, but was wrong system id. Expected %1, received %2").arg(mavlink->getSystemId()).arg(mr.target_system);
             }
         }
             break;
@@ -1143,7 +1219,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
             QString text = QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq);
             GAudioOutput::instance()->say(text);
-            emit textMessageReceived(message.sysid, message.compid, 0, text);
+            emit textMessageReceived(message.sysid, message.compid, MAV_SEVERITY_INFO, text);
         }
             break;
 
@@ -1201,7 +1277,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_servo_output_raw_t raw;
             mavlink_msg_servo_output_raw_decode(&message, &raw);
 
-            if (hilEnabled)
+            if (hilEnabled && raw.port == 0)
             {
                 emit hilActuatorsChanged(static_cast<uint64_t>(getUnixTimeFromMs(raw.time_usec)), static_cast<float>(raw.servo1_raw),
                                      static_cast<float>(raw.servo2_raw), static_cast<float>(raw.servo3_raw),
@@ -1211,7 +1287,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
         break;
 #endif
-#ifdef MAVLINK_ENABLED_PIXHAWK
+
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
             mavlink_data_transmission_handshake_t p;
@@ -1265,8 +1341,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 
-
-#endif
             //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
             //        {
             //            mavlink_object_detection_event_t event;
@@ -1396,6 +1470,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_NAMED_VALUE_INT:
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
         case MAVLINK_MSG_ID_HIGHRES_IMU:
+        case MAVLINK_MSG_ID_DISTANCE_SENSOR:
             break;
         default:
         {
@@ -1626,11 +1701,19 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 #endif
 }
 
-void UAS::startRadioControlCalibration()
+void UAS::startRadioControlCalibration(int param)
 {
     mavlink_message_t msg;
     // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 1, 0, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, param, 0, 0, 0);
+    sendMessage(msg);
+}
+
+void UAS::endRadioControlCalibration()
+{
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -1821,26 +1904,51 @@ QList<int> UAS::getComponentIds()
 }
 
 /**
-* @param mode that UAS is to be set to.
+* @param newBaseMode that UAS is to be set to.
+* @param newCustomMode that UAS is to be set to.
 */
 void UAS::setMode(uint8_t newBaseMode, uint32_t newCustomMode)
 {
-    //this->mode = mode; //no call assignament, update receive message from UAS
+    if (receivedMode)
+    {
+        //this->mode = mode; //no call assignament, update receive message from UAS
 
-    // Strip armed / disarmed call, this is not relevant for setting the mode
-    newBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
-    // Now set current state (request no change)
-    newBaseMode |= this->base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
+        // Strip armed / disarmed call for safety reasons, this is not relevant for setting the mode
+        newBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+        // Now set current state (request no change)
+        newBaseMode |= this->base_mode & MAV_MODE_FLAG_SAFETY_ARMED;
 
-    // Strip HIL part, replace it with current system state
-    newBaseMode &= (~MAV_MODE_FLAG_HIL_ENABLED);
-    // Now set current state (request no change)
-    newBaseMode |= this->base_mode & MAV_MODE_FLAG_HIL_ENABLED;
+//        // Strip HIL part, replace it with current system state
+//        newBaseMode &= (~MAV_MODE_FLAG_HIL_ENABLED);
+//        // Now set current state (request no change)
+//        newBaseMode |= this->base_mode & MAV_MODE_FLAG_HIL_ENABLED;
 
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newBaseMode, newCustomMode);
-    sendMessage(msg);
-    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", MODE " << newBaseMode << " " << newCustomMode;
+        setModeArm(newBaseMode, newCustomMode);
+    }
+    else
+    {
+        qDebug() << "WARNING: setMode called before base_mode bitmask was received from UAS, new mode was not sent to system";
+    }
+}
+
+/**
+* @param newBaseMode that UAS is to be set to.
+* @param newCustomMode that UAS is to be set to.
+*/
+void UAS::setModeArm(uint8_t newBaseMode, uint32_t newCustomMode)
+{
+    if (receivedMode)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, newBaseMode, newCustomMode);
+        qDebug() << "mavlink_msg_set_mode_pack 1";
+        sendMessage(msg);
+        qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", MODE " << newBaseMode << " " << newCustomMode;
+    }
+    else
+    {
+        qDebug() << "WARNING: setModeArm called before base_mode bitmask was received from UAS, new mode was not sent to system";
+    }
 }
 
 /**
@@ -1938,7 +2046,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
  */
 float UAS::filterVoltage(float value) const
 {
-    return lpVoltage * 0.7f + value * 0.3f;
+    return lpVoltage * 0.6f + value * 0.4f;
 }
 
 /**
@@ -1997,7 +2105,6 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 
 QImage UAS::getImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
 
 //    qDebug() << "IMAGE TYPE:" << imageType;
 
@@ -2010,7 +2117,7 @@ QImage UAS::getImage()
         QString header("P5\n%1 %2\n%3\n");
         header = header.arg(imageWidth).arg(imageHeight).arg(imgColors);
 
-        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size() - 1);
+        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
         tmpImage.append(imageRecBuffer);
 
         //qDebug() << "IMAGE SIZE:" << tmpImage.size() << "HEADER SIZE: (15):" << header.size() << "HEADER: " << header;
@@ -2043,25 +2150,20 @@ QImage UAS::getImage()
     imagePacketsArrived = 0;
     //imageRecBuffer.clear();
     return image;
-#else
-    return QImage();
-#endif
 
 }
 
 void UAS::requestImage()
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
     if (imagePacketsArrived == 0)
     {
         mavlink_message_t msg;
-        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 0, 0, 50);
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, MAVLINK_DATA_STREAM_IMG_JPEG, 0, 0, 0, 0, 0, 50);
         sendMessage(msg);
     }
-#endif
 }
 
 
@@ -2112,6 +2214,32 @@ void UAS::readParametersFromStorage()
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1, 0, 0, 0);
     sendMessage(msg);
+}
+
+bool UAS::isRotaryWing()
+{
+    switch (type) {
+        case MAV_TYPE_QUADROTOR:
+        /* fallthrough */
+        case MAV_TYPE_COAXIAL:
+        case MAV_TYPE_HELICOPTER:
+        case MAV_TYPE_HEXAROTOR:
+        case MAV_TYPE_OCTOROTOR:
+        case MAV_TYPE_TRICOPTER:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool UAS::isFixedWing()
+{
+    switch (type) {
+        case MAV_TYPE_FIXED_WING:
+            return true;
+        default:
+            return false;
+    }
 }
 
 /**
@@ -2604,7 +2732,7 @@ void UAS::requestParameter(int component, const QString& parameter)
     // Copy full param name or maximum max field size
     if (parameter.length() > MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)
     {
-        emit textMessageReceived(uasId, 0, 255, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
+        emit textMessageReceived(uasId, 0, MAV_SEVERITY_WARNING, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
     }
     memcpy(read.param_id, parameter.toStdString().c_str(), qMax(parameter.length(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
     read.param_id[15] = '\0'; // Enforce null termination
@@ -2716,9 +2844,7 @@ void UAS::launch()
  */
 void UAS::armSystem()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-    sendMessage(msg);
+    setModeArm(base_mode | MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
 }
 
 /**
@@ -2727,37 +2853,27 @@ void UAS::armSystem()
  */
 void UAS::disarmSystem()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & ~MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-    sendMessage(msg);
+    setModeArm(base_mode & ~(MAV_MODE_FLAG_SAFETY_ARMED), custom_mode);
 }
 
 void UAS::toggleArmedState()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_SAFETY_ARMED, custom_mode);
-    sendMessage(msg);
+    setModeArm(base_mode ^ (MAV_MODE_FLAG_SAFETY_ARMED), custom_mode);
 }
 
 void UAS::goAutonomous()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_AUTO_ENABLED, 0);
-    sendMessage(msg);
+    setMode((base_mode & ~(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)) | (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED), 0);
 }
 
 void UAS::goManual()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
-    sendMessage(msg);
+    setMode((base_mode & ~(MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED))  | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
 }
 
 void UAS::toggleAutonomy()
 {
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
-    sendMessage(msg);
+    setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED ^ MAV_MODE_FLAG_GUIDED_ENABLED ^ MAV_MODE_FLAG_STABILIZE_ENABLED, 0);
 }
 
 /**
@@ -2930,7 +3046,7 @@ bool UAS::emergencyKILL()
 /**
 * If enabled, connect the flight gear link.
 */
-void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil)
+void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
 {
     QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
     if (!link || !simulation) {
@@ -2945,6 +3061,7 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil)
     link = dynamic_cast<QGCFlightGearLink*>(simulation);
     link->setStartupArguments(options);
     link->sensorHilEnabled(sensorHil);
+    QObject::connect(configuration, SIGNAL(barometerOffsetChanged(float)), link, SLOT(setBarometerOffset(float)));
     if (enable)
     {
         startHil();
@@ -3029,22 +3146,10 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc)
 {
-        float q[4];
-
-        double cosPhi_2 = cos(double(roll) / 2.0);
-        double sinPhi_2 = sin(double(roll) / 2.0);
-        double cosTheta_2 = cos(double(pitch) / 2.0);
-        double sinTheta_2 = sin(double(pitch) / 2.0);
-        double cosPsi_2 = cos(double(yaw) / 2.0);
-        double sinPsi_2 = sin(double(yaw) / 2.0);
-        q[0] = (cosPhi_2 * cosTheta_2 * cosPsi_2 +
-                sinPhi_2 * sinTheta_2 * sinPsi_2);
-        q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 -
-                cosPhi_2 * sinTheta_2 * sinPsi_2);
-        q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 +
-                sinPhi_2 * cosTheta_2 * sinPsi_2);
-        q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 -
-                sinPhi_2 * sinTheta_2 * cosPsi_2);
+    Q_UNUSED(time_us);
+    Q_UNUSED(xacc);
+    Q_UNUSED(yacc);
+    Q_UNUSED(zacc);
 
         // Emit attitude for cross-check
         emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
@@ -3117,13 +3222,15 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
     else
     {
         // Attempt to set HIL mode
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-        sendMessage(msg);
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
 
+/*
+* @param abs_pressure Absolute Pressure (hPa)
+* @param diff_pressure Differential Pressure  (hPa)
+*/
 void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                                     float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed)
 {
@@ -3140,9 +3247,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
     else
     {
         // Attempt to set HIL mode
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-        sendMessage(msg);
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3158,7 +3263,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
         float course = cog;
         // map to 0..2pi
         if (course < 0)
-            course += 2.0f * M_PI;
+            course += 2.0f * static_cast<float>(M_PI);
         // scale from radians to degrees
         course = (course / M_PI) * 180.0f;
 
@@ -3171,9 +3276,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
     else
     {
         // Attempt to set HIL mode
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-        sendMessage(msg);
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
 }
@@ -3187,9 +3290,7 @@ void UAS::startHil()
     if (hilEnabled) return;
     hilEnabled = true;
     sensorHil = false;
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-    sendMessage(msg);
+    setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
     // Connect HIL simulation link
     simulation->connectSimulation();
 }
@@ -3200,9 +3301,7 @@ void UAS::startHil()
 void UAS::stopHil()
 {
     if (simulation) simulation->disconnectSimulation();
-    mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), base_mode & !MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
-    sendMessage(msg);
+    setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
     hilEnabled = false;
     sensorHil = false;
 }
@@ -3340,10 +3439,10 @@ QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int au
             px4_mode.data = custom_mode;
             if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_MANUAL) {
                 mode += "|MANUAL";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_SEATBELT) {
-                mode += "|SEATBELT";
-            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_EASY) {
-                mode += "|EASY";
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_ALTCTL) {
+                mode += "|ALTCTL";
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
+                mode += "|POSCTL";
             } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_AUTO) {
                 mode += "|AUTO";
                 if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_READY) {
@@ -3496,7 +3595,7 @@ void UAS::setBatterySpecs(const QString& specs)
         }
         else
         {
-            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
         }
     }
     else
@@ -3522,7 +3621,7 @@ void UAS::setBatterySpecs(const QString& specs)
         }
         else
         {
-            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
         }
     }
 }

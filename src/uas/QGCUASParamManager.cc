@@ -8,7 +8,7 @@
 #include "UASParameterCommsMgr.h"
 
 QGCUASParamManager::QGCUASParamManager(QObject *parent) :
-    QObject(parent),
+    QGCUASParamManagerInterface(parent),
     mav(NULL),
     paramDataModel(this),
     paramCommsMgr(NULL)

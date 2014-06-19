@@ -52,10 +52,13 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         // Create action to open this menu
         // Create configuration action for this link
         // Connect the current UAS
-        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", link);
+        action = new QAction(QIcon(":/files/images/devices/network-wireless.svg"), "", this);
         setLinkName(link->getName());
 
-        setupPortList();
+        // Scan for serial ports. Let the user know if none were found for debugging purposes
+        if (!setupPortList()) {
+            qDebug() << "No serial ports found.";
+        }
 
         // Set up baud rates
         ui.baudRate->clear();
@@ -170,7 +173,6 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 
         ui.dataBitsSpinBox->setValue(this->link->getDataBits());
         ui.stopBitsSpinBox->setValue(this->link->getStopBits());
-
         portCheckTimer = new QTimer(this);
         portCheckTimer->setInterval(1000);
         connect(portCheckTimer, SIGNAL(timeout()), this, SLOT(setupPortList()));
@@ -214,9 +216,9 @@ void SerialConfigurationWindow::configureCommunication()
     this->show();
 }
 
-void SerialConfigurationWindow::setupPortList()
+bool SerialConfigurationWindow::setupPortList()
 {
-    if (!link) return;
+    if (!link) return false;
 
     // Get the ports available on this system
     QList<QString> ports = link->getCurrentPorts();
@@ -241,6 +243,8 @@ void SerialConfigurationWindow::setupPortList()
 
     if (storedFound)
         ui.portName->setEditText(storedName);
+
+    return (ports.count() > 0);
 }
 
 void SerialConfigurationWindow::enableFlowControl(bool flow)

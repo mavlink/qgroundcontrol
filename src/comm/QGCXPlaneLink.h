@@ -111,9 +111,9 @@ public slots:
     /** @brief Add a new host to broadcast messages to */
     void setRemoteHost(const QString& host);
     /** @brief Send new control states to the simulation */
-    void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
+    void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
     /** @brief Send new motor control states to the simulation */
-    void updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+    void updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
     /** @brief Set the simulator version as text string */
     void setVersion(const QString& version);
     /** @brief Set the simulator version as integer */
@@ -197,6 +197,7 @@ protected:
     float true_airspeed;
     float groundspeed;
     float xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature;
+    float barometerOffsetkPa;
 
     float man_roll, man_pitch, man_yaw;
     QString airframeName;
@@ -204,9 +205,12 @@ protected:
     bool xPlaneConnected;
     unsigned int xPlaneVersion;
     quint64 simUpdateLast;
+    quint64 simUpdateFirst;
     quint64 simUpdateLastText;
+    quint64 simUpdateLastGroundTruth;
     float simUpdateHz;
     bool _sensorHilEnabled;
+    bool _should_exit;
 
     void setName(QString name);
 };

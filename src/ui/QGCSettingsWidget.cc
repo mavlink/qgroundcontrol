@@ -13,8 +13,8 @@
 
 QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     QDialog(parent, flags),
-    ui(new Ui::QGCSettingsWidget),
-    mainWindow((MainWindow*)parent)
+    mainWindow((MainWindow*)parent),
+    ui(new Ui::QGCSettingsWidget)
 {
     ui->setupUi(this);
 
@@ -34,6 +34,9 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     }
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
+
+    // Settings reset
+    connect(ui->resetSettingsButton, SIGNAL(clicked()), this, SLOT(resetSettings()));
 
     // Audio preferences
     ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
@@ -192,4 +195,14 @@ void QGCSettingsWidget::selectCustomMode(int mode)
 {
     MainWindow::instance()->setCustomMode(static_cast<enum MainWindow::CUSTOM_MODE>(ui->customModeComboBox->itemData(mode).toInt()));
     MainWindow::instance()->showInfoMessage(tr("Please restart QGroundControl"), tr("The optimization selection was changed. The application needs to be closed and restarted to put all optimizations into effect."));
+}
+
+void QGCSettingsWidget::resetSettings()
+{
+    QSettings settings;
+    settings.sync();
+    settings.clear();
+    // Write current application version
+    settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
+    settings.sync();
 }

@@ -95,9 +95,11 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
         }
     }
     else {
-        //restore waiting label if we no longer have a connection
-        ui->gridLayout->addWidget(ui->waitingLabel);
-        ui->waitingLabel->setVisible(true);
+        if (ui->waitingLabel) {
+            //restore waiting label if we no longer have a connection
+            ui->gridLayout->addWidget(ui->waitingLabel);
+            ui->waitingLabel->setVisible(true);
+        }
     }
 
 }

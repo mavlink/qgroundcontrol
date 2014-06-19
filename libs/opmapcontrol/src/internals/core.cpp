@@ -352,13 +352,25 @@ namespace internals {
                 }
                 break;
 
+            case MapType::BingHybrid:
+            case MapType::BingMap:
+            case MapType::BingSatellite:
+                {
+                    if(Projection()->Type()!="MercatorProjection")
+                    {
+                        SetProjection(new MercatorProjection());
+                    }
+                    maxzoom=21;
+                }
+                break;
+
             default:
                 {
                     if(Projection()->Type()!="MercatorProjection")
                     {
                         SetProjection(new MercatorProjection());
-                        maxzoom=21;
                     }
+                    maxzoom=21;
                 }
                 break;
             }

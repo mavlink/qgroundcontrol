@@ -123,6 +123,7 @@ public:
     const QString& getDescription() const {
         return description;
     }
+
     /** @brief Returns true if x, y, z contain reasonable navigation data */
     bool isNavigationType();
 
@@ -185,6 +186,9 @@ public slots:
     bool isReached() { return (reachedTime > 0); }
     /** @brief Get the time this waypoint was reached */
     quint64 getReachedTime() { return reachedTime; }
+    void setChanged() {
+        emit changed(this);
+    }
 
 signals:
     /** @brief Announces a change to the waypoint data */

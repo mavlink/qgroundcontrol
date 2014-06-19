@@ -47,6 +47,7 @@ void UASRawStatusView::valueChanged(const int uasId, const QString& name, const 
 }
 void UASRawStatusView::resizeEvent(QResizeEvent *event)
 {
+    Q_UNUSED(event);
     m_tableDirty = true;
 }
 

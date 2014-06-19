@@ -63,8 +63,32 @@ dynamics model, and external 3D model.
     <line>Approach speed: 15-25 mph</line>
     <line>Stall speed (Vs): 10 mph</line>
   </help>
+	<menubar>
+	  <default>
+      <menu n="10">
+      <label>Malolo</label>
+      <enabled type="bool">true</enabled>
+			<item>
+		    <label>Operate catapult</label>
+		    <binding>
+		      <command>nasal</command>
+		      <script>
+		        malolo1.launchCatapult();
+		      </script>
+		    </binding>
+      </item>
+
+      </menu>
+	  </default>
+	</menubar>
 
  </sim>
+
+<nasal>
+	<malolo1>
+		<file>Aircraft/Malolo1/Nasal/catapult.nas</file>
+	</malolo1>
+</nasal>
 
  <controls>
   <flight>
@@ -99,5 +123,7 @@ dynamics model, and external 3D model.
      <zero-pitch-trim-full-throttle type="float">0.001</zero-pitch-trim-full-throttle>
    </config>
  </autopilot>
+
+
 
 </PropertyList>

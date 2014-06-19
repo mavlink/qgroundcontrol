@@ -23,8 +23,8 @@ This file is part of the QGROUNDCONTROL project
 #include "PxQuadMAV.h"
 #include "GAudioOutput.h"
 
-PxQuadMAV::PxQuadMAV(MAVLinkProtocol* mavlink, int id) :
-    UAS(mavlink, id)
+PxQuadMAV::PxQuadMAV(MAVLinkProtocol* mavlink, QThread* thread, int id) :
+    UAS(mavlink, thread, id)
 {
 }
 

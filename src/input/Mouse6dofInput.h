@@ -11,9 +11,9 @@
 
 #include <QThread>
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
 #include "Mouse3DInput.h"
-#endif //MOUSE_ENABLED_WIN
+#endif //QGC_MOUSE_ENABLED_WIN
 
 #include "UASInterface.h"
 
@@ -22,12 +22,12 @@ class Mouse6dofInput : public QThread
     Q_OBJECT
 
 public:
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     Mouse6dofInput(Mouse3DInput* mouseInput);
-#endif //MOUSE_ENABLED_WIN
-#ifdef MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_LINUX
     Mouse6dofInput(QWidget* parent);
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
     ~Mouse6dofInput();
     void run();
@@ -78,16 +78,16 @@ signals:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief Get a motion input from 3DMouse */
     void motion3DMouse(std::vector<float> &motionData);
     /** @brief Get a button input from 3DMouse */
     void button3DMouseDown(int button);
-#endif //MOUSE_ENABLED_WIN
-#ifdef MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Get an XEvent to check it for an 3DMouse event (motion or button) */
     void handleX11Event(XEvent* event);
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
 };
 

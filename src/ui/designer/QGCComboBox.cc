@@ -23,7 +23,6 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     ui->setupUi(this);
     uas = NULL;
 
-
     ui->editInfoCheckBox->hide();
     ui->editDoneButton->hide();
     ui->editNameLabel->hide();
@@ -60,10 +59,8 @@ QGCComboBox::QGCComboBox(QWidget *parent) :
     connect(ui->editInfoCheckBox, SIGNAL(clicked(bool)), this, SLOT(showInfo(bool)));
     // connect to self
     connect(ui->infoLabel, SIGNAL(released()), this, SLOT(showTooltip()));
-    // Set the current UAS if present
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
+    init();
 }
 
 QGCComboBox::~QGCComboBox()
@@ -167,70 +164,42 @@ void QGCComboBox::selectParameter(int paramIndex)
     }
 }
 
-void QGCComboBox::startEditMode()
+void QGCComboBox::setEditMode(bool editMode)
 {
-    ui->nameLabel->hide();
-    ui->writeButton->hide();
-    ui->readButton->hide();
+    if(!editMode) {
+        // Store component id
+        selectComponent(ui->editSelectComponentComboBox->currentIndex());
+        // Store parameter name and id
+        selectParameter(ui->editSelectParamComboBox->currentIndex());
+    }
 
-    ui->editInfoCheckBox->show();
-    ui->editDoneButton->show();
-    ui->editNameLabel->show();
-    ui->editRefreshParamsButton->show();
-    ui->editSelectParamComboBox->show();
-    ui->editSelectComponentComboBox->show();
-    ui->editStatusLabel->show();
-    ui->writeButton->hide();
-    ui->readButton->hide();
-    ui->editLine1->show();
-    ui->editLine2->show();
-    ui->editAddItemButton->show();
-    ui->editRemoveItemButton->show();
-    ui->editItemValueSpinBox->show();
-    ui->editItemNameLabel->show();
-    ui->itemValueLabel->show();
-    ui->itemNameLabel->show();
+    ui->nameLabel->setVisible(!editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+
+    ui->editInfoCheckBox->setVisible(editMode);
+    ui->editDoneButton->setVisible(editMode);
+    ui->editNameLabel->setVisible(editMode);
+    ui->editRefreshParamsButton->setVisible(editMode);
+    ui->editSelectParamComboBox->setVisible(editMode);
+    ui->editSelectComponentComboBox->setVisible(editMode);
+    ui->editStatusLabel->setVisible(editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+    ui->editLine1->setVisible(editMode);
+    ui->editLine2->setVisible(editMode);
+    ui->editAddItemButton->setVisible(editMode);
+    ui->editRemoveItemButton->setVisible(editMode);
+    ui->editItemValueSpinBox->setVisible(editMode);
+    ui->editItemNameLabel->setVisible(editMode);
+    ui->itemValueLabel->setVisible(editMode);
+    ui->itemNameLabel->setVisible(editMode);
     if (isDisabled)
     {
-        ui->editOptionComboBox->setEnabled(true);
+        ui->editOptionComboBox->setEnabled(editMode);
     }
-    isInEditMode = true;
-}
 
-void QGCComboBox::endEditMode()
-{
-    // Store component id
-    selectComponent(ui->editSelectComponentComboBox->currentIndex());
-
-    // Store parameter name and id
-    selectParameter(ui->editSelectParamComboBox->currentIndex());
-
-    // Min/max
-
-    ui->editInfoCheckBox->hide();
-    ui->editDoneButton->hide();
-    ui->editNameLabel->hide();
-    ui->editRefreshParamsButton->hide();
-    ui->editSelectParamComboBox->hide();
-    ui->editSelectComponentComboBox->hide();
-    ui->editStatusLabel->hide();
-    ui->editLine1->hide();
-    ui->editLine2->hide();
-    ui->writeButton->show();
-    ui->readButton->show();
-    ui->editAddItemButton->hide();
-    ui->editRemoveItemButton->hide();
-    ui->editItemValueSpinBox->hide();
-    ui->editItemNameLabel->hide();
-    ui->itemValueLabel->hide();
-    ui->itemNameLabel->hide();
-    ui->nameLabel->show();
-    if (isDisabled)
-    {
-        ui->editOptionComboBox->setEnabled(false);
-    }
-    isInEditMode = false;
-    emit editingFinished();
+    QGCToolWidgetItem::setEditMode(editMode);
 }
 
 void QGCComboBox::setParamPending()
@@ -459,7 +428,7 @@ void QGCComboBox::comboBoxIndexChanged(QString val)
     {
         parameterName = comboBoxTextToParamMap.value(ui->editOptionComboBox->currentText());
     }
-    switch (parameterValue.type())
+    switch (static_cast<int>(parameterValue.type()))
     {
     case QVariant::Char:
         parameterValue = QVariant(QChar((unsigned char)comboBoxTextToValMap[val]));

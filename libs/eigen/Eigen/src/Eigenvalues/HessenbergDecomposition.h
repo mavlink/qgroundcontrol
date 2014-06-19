@@ -4,27 +4,14 @@
 // Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
 // Copyright (C) 2010 Jitse Niesen <jitse@maths.leeds.ac.uk>
 //
-// Eigen is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-//
-// Alternatively, you can redistribute it and/or
-// modify it under the terms of the GNU General Public License as
-// published by the Free Software Foundation; either version 2 of
-// the License, or (at your option) any later version.
-//
-// Eigen is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-// FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License or the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License and a copy of the GNU General Public License along with
-// Eigen. If not, see <http://www.gnu.org/licenses/>.
+// This Source Code Form is subject to the terms of the Mozilla
+// Public License v. 2.0. If a copy of the MPL was not distributed
+// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_HESSENBERGDECOMPOSITION_H
 #define EIGEN_HESSENBERGDECOMPOSITION_H
+
+namespace Eigen { 
 
 namespace internal {
   
@@ -95,7 +82,7 @@ template<typename _MatrixType> class HessenbergDecomposition
     typedef Matrix<Scalar, SizeMinusOne, 1, Options & ~RowMajor, MaxSizeMinusOne, 1> CoeffVectorType;
 
     /** \brief Return type of matrixQ() */
-    typedef typename HouseholderSequence<MatrixType,CoeffVectorType>::ConjugateReturnType HouseholderSequenceType;
+    typedef HouseholderSequence<MatrixType,typename internal::remove_all<typename CoeffVectorType::ConjugateReturnType>::type> HouseholderSequenceType;
     
     typedef internal::HessenbergDecompositionMatrixHReturnType<MatrixType> MatrixHReturnType;
 
@@ -304,7 +291,7 @@ template<typename _MatrixType> class HessenbergDecomposition
 template<typename MatrixType>
 void HessenbergDecomposition<MatrixType>::_compute(MatrixType& matA, CoeffVectorType& hCoeffs, VectorType& temp)
 {
-  assert(matA.rows()==matA.cols());
+  eigen_assert(matA.rows()==matA.cols());
   Index n = matA.rows();
   temp.resize(n);
   for (Index i = 0; i<n-1; ++i)
@@ -326,7 +313,7 @@ void HessenbergDecomposition<MatrixType>::_compute(MatrixType& matA, CoeffVector
 
     // A = A H'
     matA.rightCols(remainingSize)
-        .applyHouseholderOnTheRight(matA.col(i).tail(remainingSize-1).conjugate(), internal::conj(h), &temp.coeffRef(0));
+        .applyHouseholderOnTheRight(matA.col(i).tail(remainingSize-1).conjugate(), numext::conj(h), &temp.coeffRef(0));
   }
 }
 
@@ -379,6 +366,8 @@ template<typename MatrixType> struct HessenbergDecompositionMatrixHReturnType
     const HessenbergDecomposition<MatrixType>& m_hess;
 };
 
-}
+} // end namespace internal
+
+} // end namespace Eigen
 
 #endif // EIGEN_HESSENBERGDECOMPOSITION_H

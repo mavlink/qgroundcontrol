@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UAS_H_
 #define _UAS_H_
 
+#include <QThread>
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
@@ -40,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
+#include "QGCUASParamManager.h"
 
 
 /**
@@ -54,7 +56,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id = 0);
+    UAS(MAVLinkProtocol* protocol, QThread* thread, int id = 0);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -103,7 +105,11 @@ public:
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY pitchChanged)
     Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY yawChanged)
     Q_PROPERTY(double distToWaypoint READ getDistToWaypoint WRITE setDistToWaypoint NOTIFY distToWaypointChanged)
+    Q_PROPERTY(double airSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY airSpeedChanged)
     Q_PROPERTY(double groundSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY groundSpeedChanged)
+    Q_PROPERTY(double bearingToWaypoint READ getBearingToWaypoint WRITE setBearingToWaypoint NOTIFY bearingToWaypointChanged)
+    Q_PROPERTY(double altitudeAMSL READ getAltitudeAMSL WRITE setAltitudeAMSL NOTIFY altitudeAMSLChanged)
+    Q_PROPERTY(double altitudeRelative READ getAltitudeRelative WRITE setAltitudeRelative NOTIFY altitudeRelativeChanged)
 
     void setGroundSpeed(double val)
     {
@@ -115,17 +121,24 @@ public:
     {
         return groundSpeed;
     }
-    Q_PROPERTY(double bearingToWaypoint READ getBearingToWaypoint WRITE setBearingToWaypoint NOTIFY bearingToWaypointChanged)
 
-    // dongfang: There is not only one altitude; there are at least (APM) GPS altitude, mix altitude and mix-altitude relative to home.
-    // I have made this property refer to the mix-altitude ASL as this is the one actually used in navigation by APM.
-    Q_PROPERTY(double altitude READ getAltitude WRITE setAltitude NOTIFY altitudeChanged)
+    void setAirSpeed(double val)
+    {
+        airSpeed = val;
+        emit airSpeedChanged(val,"airSpeed");
+        emit valueChanged(this->uasId,"airSpeed","m/s",QVariant(val),getUnixTime());
+    }
+
+    double getAirSpeed() const
+    {
+        return airSpeed;
+    }
 
     void setLocalX(double val)
     {
         localX = val;
         emit localXChanged(val,"localX");
-        emit valueChanged(this->uasId,"localX","M",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"localX","m",QVariant(val),getUnixTime());
     }
 
     double getLocalX() const
@@ -137,7 +150,7 @@ public:
     {
         localY = val;
         emit localYChanged(val,"localY");
-        emit valueChanged(this->uasId,"localY","M",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"localY","m",QVariant(val),getUnixTime());
     }
     double getLocalY() const
     {
@@ -148,7 +161,7 @@ public:
     {
         localZ = val;
         emit localZChanged(val,"localZ");
-        emit valueChanged(this->uasId,"localZ","M",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"localZ","m",QVariant(val),getUnixTime());
     }
     double getLocalZ() const
     {
@@ -179,23 +192,35 @@ public:
         return longitude;
     }
 
-    void setAltitude(double val)
+    void setAltitudeAMSL(double val)
     {
-        altitude = val;
-        emit altitudeChanged(val, "altitude");
-        emit valueChanged(this->uasId,"altitude","M",QVariant(val),getUnixTime());
+        altitudeAMSL = val;
+        emit altitudeAMSLChanged(val, "altitudeAMSL");
+        emit valueChanged(this->uasId,"altitudeAMSL","m",QVariant(val),getUnixTime());
     }
 
-    double getAltitude() const
+    double getAltitudeAMSL() const
     {
-        return altitude;
+        return altitudeAMSL;
+    }
+
+    void setAltitudeRelative(double val)
+    {
+        altitudeRelative = val;
+        emit altitudeRelativeChanged(val, "altitudeRelative");
+        emit valueChanged(this->uasId,"altitudeRelative","m",QVariant(val),getUnixTime());
+    }
+
+    double getAltitudeRelative() const
+    {
+        return altitudeRelative;
     }
 
     void setSatelliteCount(double val)
     {
         satelliteCount = val;
         emit satelliteCountChanged(val,"satelliteCount");
-        emit valueChanged(this->uasId,"satelliteCount","M",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"satelliteCount","",QVariant(val),getUnixTime());
     }
 
     double getSatelliteCount() const
@@ -217,7 +242,7 @@ public:
     {
         distToWaypoint = val;
         emit distToWaypointChanged(val,"distToWaypoint");
-        emit valueChanged(this->uasId,"distToWaypoint","M",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"distToWaypoint","m",QVariant(val),getUnixTime());
     }
 
     double getDistToWaypoint() const
@@ -229,7 +254,7 @@ public:
     {
         bearingToWaypoint = val;
         emit bearingToWaypointChanged(val,"bearingToWaypoint");
-        emit valueChanged(this->uasId,"bearingToWaypoint","M",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"bearingToWaypoint","deg",QVariant(val),getUnixTime());
     }
 
     double getBearingToWaypoint() const
@@ -281,6 +306,9 @@ public:
     {
         return nedAttGlobalOffset;
     }
+
+    bool isRotaryWing();
+    bool isFixedWing();
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay getOverlay()
@@ -354,7 +382,7 @@ protected: //COMMENTS FOR TEST UNIT
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
     quint64 lastHeartbeat;        ///< Time of the last heartbeat message
-    QTimer* statusTimeout;        ///< Timer for various status timeouts
+    QTimer statusTimeout;       ///< Timer for various status timeouts
 
     /// BASIC UAS TYPE, NAME AND STATE
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
@@ -414,8 +442,8 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// POSITION
     bool positionLock;          ///< Status if position information is available or not
-    bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
-    bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
+    bool isLocalPositionKnown;  ///< If the local position has been received for this MAV
+    bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
 
     double localX;
     double localY;
@@ -423,7 +451,8 @@ protected: //COMMENTS FOR TEST UNIT
 
     double latitude;            ///< Global latitude as estimated by position estimator
     double longitude;           ///< Global longitude as estimated by position estimator
-    double altitude;            ///< Global altitude as estimated by position estimator
+    double altitudeAMSL;        ///< Global altitude as estimated by position estimator
+    double altitudeRelative;    ///< Altitude above home as estimated by position estimator
 
     double satelliteCount;      ///< Number of satellites visible to raw GPS
     bool globalEstimatorActive; ///< Global position estimator present, do not fall back to GPS raw for position
@@ -439,7 +468,8 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// WAYPOINT NAVIGATION
     double distToWaypoint;       ///< Distance to next waypoint
-    double groundSpeed;         ///< GPS Groundspeed
+    double airSpeed;             ///< Airspeed
+    double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
     UASWaypointManager waypointManager;
 
@@ -465,6 +495,7 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
+    bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     px::GLOverlay overlay;
@@ -495,6 +526,7 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
+    QThread* _thread;
 
 public:
     /** @brief Set the current battery type */
@@ -509,6 +541,8 @@ public:
     bool isAuto();
     /** @brief Check if vehicle is armed */
     bool isArmed() const { return systemIsArmed; }
+    /** @brief Check if vehicle is in HIL mode */
+    bool isHilEnabled() const { return hilEnabled; }
 
     /** @brief Get reference to the waypoint manager **/
     UASWaypointManager* getWaypointManager() {
@@ -516,7 +550,7 @@ public:
     }
 
     /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManager* getParamManager()  {
+    virtual QGCUASParamManagerInterface* getParamManager()  {
         return &paramMgr;
     }
 
@@ -730,7 +764,7 @@ public slots:
     void go();
 
     /** @brief Enable / disable HIL */
-    void enableHilFlightGear(bool enable, QString options, bool sensorHil);
+    void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 
@@ -833,8 +867,11 @@ public slots:
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
-    /** @brief Set current mode of operation, e.g. auto or manual */
+    /** @brief Set current mode of operation, e.g. auto or manual, always uses the current arming status for safety reason */
     void setMode(uint8_t newBaseMode, uint32_t newCustomMode);
+
+    /** @brief Set current mode of operation, e.g. auto or manual, does not check the arming status, for anything else than arming/disarming operations use setMode instead */
+    void setModeArm(uint8_t newBaseMode, uint32_t newCustomMode);
 
     /** @brief Request all parameters */
     void requestParameters();
@@ -881,7 +918,8 @@ public slots:
     /** @brief Add an offset in body frame to the setpoint */
     void setLocalPositionOffset(float x, float y, float z, float yaw);
 
-    void startRadioControlCalibration();
+    void startRadioControlCalibration(int param=1);
+    void endRadioControlCalibration();
     void startMagnetometerCalibration();
     void startGyroscopeCalibration();
     void startPressureCalibration();
@@ -908,27 +946,25 @@ signals:
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
     /** @brief HIL controls have changed */
-    void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
+    void hilControlsChanged(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
     /** @brief HIL actuator outputs have changed */
-    void hilActuatorsChanged(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
+    void hilActuatorsChanged(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
 
     void localXChanged(double val,QString name);
     void localYChanged(double val,QString name);
     void localZChanged(double val,QString name);
     void longitudeChanged(double val,QString name);
     void latitudeChanged(double val,QString name);
-    void altitudeChanged(double val,QString name);
+    void altitudeAMSLChanged(double val,QString name);
+    void altitudeRelativeChanged(double val,QString name);
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
     void yawChanged(double val,QString name);
     void satelliteCountChanged(double val,QString name);
     void distToWaypointChanged(double val,QString name);
     void groundSpeedChanged(double val, QString name);
+    void airSpeedChanged(double val, QString name);
     void bearingToWaypointChanged(double val,QString name);
-
-    //void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
-    //void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
-    //void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 protected:
     /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);

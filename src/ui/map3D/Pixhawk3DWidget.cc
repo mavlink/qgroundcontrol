@@ -682,7 +682,7 @@ Pixhawk3DWidget::selectTargetHeading(void)
 
     if (mGlobalViewParams->frame() == MAV_FRAME_GLOBAL)
     {
-        double altitude = mActiveUAS->getAltitude();
+        double altitude = mActiveUAS->getAltitudeAMSL();
 
         QPointF cursorWorldCoords =
             m3DWidget->worldCursorPosition(m3DWidget->mouseCursorCoords(), altitude);
@@ -722,7 +722,7 @@ Pixhawk3DWidget::selectTarget(void)
 
     if (mGlobalViewParams->frame() == MAV_FRAME_GLOBAL)
     {
-        double altitude = mActiveUAS->getAltitude();
+        double altitude = mActiveUAS->getAltitudeAMSL();
 
         QPointF cursorWorldCoords =
             m3DWidget->worldCursorPosition(mCachedMousePos, altitude);
@@ -789,7 +789,7 @@ Pixhawk3DWidget::insertWaypoint(void)
     {
         double latitude = mActiveUAS->getLatitude();
         double longitude = mActiveUAS->getLongitude();
-        double altitude = mActiveUAS->getAltitude();
+        double altitude = mActiveUAS->getAltitudeAMSL();
         double x, y;
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
@@ -845,7 +845,7 @@ Pixhawk3DWidget::moveWaypointPosition(void)
     {
         double latitude = mActiveUAS->getLatitude();
         double longitude = mActiveUAS->getLongitude();
-        double altitude = mActiveUAS->getAltitude();
+        double altitude = mActiveUAS->getAltitudeAMSL();
         double x, y;
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
@@ -1700,7 +1700,7 @@ Pixhawk3DWidget::getPose(UASInterface* uas,
     {
         double latitude = uas->getLatitude();
         double longitude = uas->getLongitude();
-        double altitude = uas->getAltitude();
+        double altitude = uas->getAltitudeAMSL();
 
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
         z = -altitude;
@@ -1742,7 +1742,7 @@ Pixhawk3DWidget::getPosition(UASInterface* uas,
     {
         double latitude = uas->getLatitude();
         double longitude = uas->getLongitude();
-        double altitude = uas->getAltitude();
+        double altitude = uas->getAltitudeAMSL();
 
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
         z = -altitude;

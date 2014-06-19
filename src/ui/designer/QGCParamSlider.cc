@@ -69,9 +69,9 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     // connect to self
     connect(ui->infoLabel, SIGNAL(released()),
             this, SLOT(showTooltip()));
-    // Set the current UAS if present
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-            this, SLOT(setActiveUAS(UASInterface*)));
+
+    init();
+    requestParameter();
 }
 
 QGCParamSlider::~QGCParamSlider()
@@ -207,80 +207,66 @@ void QGCParamSlider::selectParameter(int paramIndex)
     }
 }
 
-void QGCParamSlider::startEditMode()
+void QGCParamSlider::setEditMode(bool editMode)
 {
-    ui->valueSlider->hide();
-    ui->doubleValueSpinBox->hide();
-    ui->intValueSpinBox->hide();
-    ui->nameLabel->hide();
-    ui->writeButton->hide();
-    ui->readButton->hide();
+    if(!editMode) {
+        // Store component id
+        selectComponent(ui->editSelectComponentComboBox->currentIndex());
 
-    ui->editInfoCheckBox->show();
-    ui->editDoneButton->show();
-    ui->editNameLabel->show();
-    ui->editRefreshParamsButton->show();
-    ui->editSelectParamComboBox->show();
-    ui->editSelectComponentComboBox->show();
-    ui->editStatusLabel->show();
-    ui->editMinSpinBox->show();
-    ui->editMaxSpinBox->show();
-    ui->writeButton->hide();
-    ui->readButton->hide();
-    ui->editLine1->show();
-    ui->editLine2->show();
-    isInEditMode = true;
-}
+        // Store parameter name and id
+        selectParameter(ui->editSelectParamComboBox->currentIndex());
 
-void QGCParamSlider::endEditMode()
-{
-    // Store component id
-    selectComponent(ui->editSelectComponentComboBox->currentIndex());
+        // Min/max
+        parameterMin = ui->editMinSpinBox->value();
+        parameterMax = ui->editMaxSpinBox->value();
 
-    // Store parameter name and id
-    selectParameter(ui->editSelectParamComboBox->currentIndex());
+        requestParameter();
 
-    // Min/max
-    parameterMin = ui->editMinSpinBox->value();
-    parameterMax = ui->editMaxSpinBox->value();
-
-    ui->editInfoCheckBox->hide();
-    ui->editDoneButton->hide();
-    ui->editNameLabel->hide();
-    ui->editRefreshParamsButton->hide();
-    ui->editSelectParamComboBox->hide();
-    ui->editSelectComponentComboBox->hide();
-    ui->editStatusLabel->hide();
-    ui->editMinSpinBox->hide();
-    ui->editMaxSpinBox->hide();
-    ui->editLine1->hide();
-    ui->editLine2->hide();
-    ui->writeButton->show();
-    ui->readButton->show();
-    ui->valueSlider->show();
-    switch ((int)parameterValue.type())
-    {
-    case QVariant::Char:
-    case QVariant::Int:
-    case QVariant::UInt:
-        ui->intValueSpinBox->show();
-        break;
-    case QMetaType::Float:
-        ui->doubleValueSpinBox->show();
-        break;
-    default:
-        qCritical() << "ERROR: NO VALID PARAM TYPE";
-        return;
+        switch ((int)parameterValue.type())
+        {
+        case QVariant::Char:
+        case QVariant::Int:
+        case QVariant::UInt:
+            ui->intValueSpinBox->show();
+            break;
+        case QMetaType::Float:
+            ui->doubleValueSpinBox->show();
+            break;
+        default:
+            qCritical() << "ERROR: NO VALID PARAM TYPE";
+            return;
+        }
+    } else {
+        ui->doubleValueSpinBox->hide();
+        ui->intValueSpinBox->hide();
     }
-    ui->nameLabel->show();
-    isInEditMode = false;
-    emit editingFinished();
+    ui->valueSlider->setVisible(!editMode);
+    ui->nameLabel->setVisible(!editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+
+    ui->editInfoCheckBox->setVisible(editMode);
+    ui->editDoneButton->setVisible(editMode);
+    ui->editNameLabel->setVisible(editMode);
+    ui->editRefreshParamsButton->setVisible(editMode);
+    ui->editSelectParamComboBox->setVisible(editMode);
+    ui->editSelectComponentComboBox->setVisible(editMode);
+    ui->editStatusLabel->setVisible(editMode);
+    ui->editMinSpinBox->setVisible(editMode);
+    ui->editMaxSpinBox->setVisible(editMode);
+    ui->writeButton->setVisible(!editMode);
+    ui->readButton->setVisible(!editMode);
+    ui->editLine1->setVisible(editMode);
+    ui->editLine2->setVisible(editMode);
+
+    QGCToolWidgetItem::setEditMode(editMode);
 }
 
 void QGCParamSlider::setParamPending()
 {
     if (uas)  {
         uas->getParamManager()->setPendingParam(componentId, parameterName, parameterValue);
+        uas->getParamManager()->sendPendingParameters(true, true);
     }
     else {
         qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
