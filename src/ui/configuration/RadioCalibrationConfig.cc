@@ -119,7 +119,10 @@ void RadioCalibrationConfig::remoteControlChannelRawChanged(int chan,float val)
 
 void RadioCalibrationConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
-
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    Q_UNUSED(parameterName);
+    Q_UNUSED(value);
 }
 void RadioCalibrationConfig::guiUpdateTimerTick()
 {
@@ -153,10 +156,12 @@ void RadioCalibrationConfig::guiUpdateTimerTick()
 }
 void RadioCalibrationConfig::showEvent(QShowEvent *event)
 {
+    Q_UNUSED(event);
     guiUpdateTimer->start(100);
 }
 void RadioCalibrationConfig::hideEvent(QHideEvent *event)
 {
+    Q_UNUSED(event);
     guiUpdateTimer->stop();
 }
 void RadioCalibrationConfig::calibrateButtonClicked()

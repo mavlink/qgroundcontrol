@@ -3,16 +3,16 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QVariant>
-#include <QTextStream>>
+#include <QTextStream>
 
-#include "QGCUASParamManager.h"
+#include "QGCUASParamManagerInterface.h"
 #include "UASInterface.h"
 
 
 QGCBaseParamWidget::QGCBaseParamWidget(QWidget *parent) :
     QWidget(parent),
-    mav(NULL),
     paramMgr(NULL),
+    mav(NULL),
     updatingParamNameLock("")
 {
 }

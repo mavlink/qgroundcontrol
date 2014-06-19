@@ -25,51 +25,79 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     // Fill the lists here manually in accordance with the list from:
     // https://github.com/PX4/Firmware/blob/master/ROMFS/px4fmu_common/init.d/rcS
 
-    ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 100);
-    ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 101);
-    ui->planeComboBox->addItem(tr("HilStar (SIMULATION)"), 1000);
+    ui->simComboBox->addItem(tr("Plane (HilStar, X-Plane)"), 1000);
+    ui->simComboBox->addItem(tr("Plane (Rascal, FlightGear)"), 1004);
+    ui->simComboBox->addItem(tr("Quad X HIL"), 1001);
+    ui->simComboBox->addItem(tr("Quad + HIL"), 1003);
+
+    connect(ui->simPushButton, SIGNAL(clicked()), this, SLOT(simSelected()));
+    connect(ui->simComboBox, SIGNAL(activated(int)), this, SLOT(simSelected(int)));
+    ui->simPushButton->setEnabled(ui->simComboBox->count() > 0);
+
+    ui->planeComboBox->addItem(tr("Multiplex Easystar 1/2"), 2100);
+    ui->planeComboBox->addItem(tr("Hobbyking Bixler 1/2"), 2101);
+    ui->planeComboBox->addItem(tr("3DR Skywalker"), 2102);
+    ui->planeComboBox->addItem(tr("Skyhunter (1800 mm)"), 2103);
 
     connect(ui->planePushButton, SIGNAL(clicked()), this, SLOT(planeSelected()));
     connect(ui->planeComboBox, SIGNAL(activated(int)), this, SLOT(planeSelected(int)));
     ui->planePushButton->setEnabled(ui->planeComboBox->count() > 0);
 
-    ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q"), 30);
-    ui->flyingWingComboBox->addItem(tr("Phantom FPV"), 31);
+    ui->flyingWingComboBox->addItem(tr("Z-84 Wing Wing (845 mm)"), 3033);
+    ui->flyingWingComboBox->addItem(tr("TBS Caipirinha (850 mm)"), 3100);
+    ui->flyingWingComboBox->addItem(tr("Bormatec Camflyer Q (800 mm)"), 3030);
+    ui->flyingWingComboBox->addItem(tr("FX-61 Phantom FPV (1550 mm)"), 3031);
+    ui->flyingWingComboBox->addItem(tr("FX-79 Buffalo (2000 mm)"), 3034);
+    ui->flyingWingComboBox->addItem(tr("Skywalker X5 (1180 mm)"), 3032);
 
     connect(ui->flyingWingPushButton, SIGNAL(clicked()), this, SLOT(flyingWingSelected()));
     connect(ui->flyingWingComboBox, SIGNAL(activated(int)), this, SLOT(flyingWingSelected(int)));
 
-    ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 10);
-    ui->quadXComboBox->addItem(tr("DJI F450 10\" Quad"), 11);
-    ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 666);
-    ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 8);
-    ui->quadXComboBox->addItem(tr("AR.Drone Quad (w. PX4FLOW)"), 9);
+    ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 4010);
+    ui->quadXComboBox->addItem(tr("DJI F450 10\" Quad"), 4011);
+    ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 4012);
+    ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 4008);
+    ui->quadXComboBox->addItem(tr("DJI F330 with MK BLCTRL"), 4017);
+    ui->quadXComboBox->addItem(tr("Mikrokopter X frame"), 4019);
 
     connect(ui->quadXPushButton, SIGNAL(clicked()), this, SLOT(quadXSelected()));
     connect(ui->quadXComboBox, SIGNAL(activated(int)), this, SLOT(quadXSelected(int)));
+    ui->quadXPushButton->setEnabled(ui->quadXComboBox->count() > 0);
+
+    ui->quadPlusComboBox->addItem(tr("Generic 10\" Quad +"), 5001);
+    ui->quadXComboBox->addItem(tr("Mikrokopter + frame"), 5020);
 
     connect(ui->quadPlusPushButton, SIGNAL(clicked()), this, SLOT(quadPlusSelected()));
     connect(ui->quadPlusComboBox, SIGNAL(activated(int)), this, SLOT(quadPlusSelected(int)));
     ui->quadPlusPushButton->setEnabled(ui->quadPlusComboBox->count() > 0);
 
+    ui->hexaXComboBox->addItem(tr("Standard 10\" Hexa"), 6001);
+
     connect(ui->hexaXPushButton, SIGNAL(clicked()), this, SLOT(hexaXSelected()));
     connect(ui->hexaXComboBox, SIGNAL(activated(int)), this, SLOT(hexaXSelected(int)));
     ui->hexaXPushButton->setEnabled(ui->hexaXComboBox->count() > 0);
+
+    ui->hexaPlusComboBox->addItem(tr("Standard 10\" Hexa"), 7001);
 
     connect(ui->hexaPlusPushButton, SIGNAL(clicked()), this, SLOT(hexaPlusSelected()));
     connect(ui->hexaPlusComboBox, SIGNAL(activated(int)), this, SLOT(hexaPlusSelected(int)));
     ui->hexaPlusPushButton->setEnabled(ui->hexaPlusComboBox->count() > 0);
 
+    ui->octoXComboBox->addItem(tr("Standard 10\" Octo"), 8001);
+
     connect(ui->octoXPushButton, SIGNAL(clicked()), this, SLOT(octoXSelected()));
     connect(ui->octoXComboBox, SIGNAL(activated(int)), this, SLOT(octoXSelected(int)));
     ui->octoXPushButton->setEnabled(ui->octoXComboBox->count() > 0);
+
+    ui->octoPlusComboBox->addItem(tr("Standard 10\" Octo"), 9001);
 
     connect(ui->octoPlusPushButton, SIGNAL(clicked()), this, SLOT(octoPlusSelected()));
     connect(ui->octoPlusComboBox, SIGNAL(activated(int)), this, SLOT(octoPlusSelected(int)));
     ui->octoPlusPushButton->setEnabled(ui->octoPlusComboBox->count() > 0);
 
-    ui->hComboBox->addItem(tr("3DR Iris"), 16);
-    ui->hComboBox->addItem(tr("TBS Discovery"), 15);
+    ui->hComboBox->addItem(tr("3DR Iris"), 10016);
+    ui->hComboBox->addItem(tr("TBS Discovery"), 10015);
+    ui->hComboBox->addItem(tr("SteadiDrone QU4D"), 10017);
 
     connect(ui->hPushButton, SIGNAL(clicked()), this, SLOT(hSelected()));
     connect(ui->hComboBox, SIGNAL(activated(int)), this, SLOT(hSelected(int)));
@@ -144,29 +172,62 @@ void QGCPX4AirframeConfig::setAirframeID(int id)
     // a quick hack to get started
     uncheckAll();
 
-    if (id > 0 && id < 15) {
-        ui->quadXPushButton->setChecked(true);
-        ui->quadXComboBox->setCurrentIndex(ui->quadXComboBox->findData(id));
-        ui->statusLabel->setText(tr("Selected quad X (ID: #%1)").arg(selectedId));
-    }
-    else if (id >= 15 && id < 20)
+    if (id >= 1000 && id < 2000)
     {
-        ui->hPushButton->setChecked(true);
-        ui->hComboBox->setCurrentIndex(ui->hComboBox->findData(id));
-        ui->statusLabel->setText(tr("Selected H Frame (ID: #%1)").arg(selectedId));
+        ui->simPushButton->setChecked(true);
+        ui->simComboBox->setCurrentIndex(ui->simComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected simulation (ID: #%1)").arg(selectedId));
     }
-    else if (id >= 30 && id < 50)
-    {
-        ui->flyingWingPushButton->setChecked(true);
-        ui->flyingWingComboBox->setCurrentIndex(ui->flyingWingComboBox->findData(id));
-        ui->statusLabel->setText(tr("Selected flying wing (ID: #%1)").arg(selectedId));
-    }
-    else if (id >= 100 && id < 150 || id >= 1000 <= 2000)
+    else if (id >= 2000 && id < 3000)
     {
         ui->planePushButton->setChecked(true);
         ui->planeComboBox->setCurrentIndex(ui->planeComboBox->findData(id));
         ui->statusLabel->setText(tr("Selected plane (ID: #%1)").arg(selectedId));
     }
+    else if (id >= 3000 && id < 4000)
+    {
+        ui->flyingWingPushButton->setChecked(true);
+        ui->flyingWingComboBox->setCurrentIndex(ui->flyingWingComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected flying wing (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 4000 && id < 5000) {
+        ui->quadXPushButton->setChecked(true);
+        ui->quadXComboBox->setCurrentIndex(ui->quadXComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected quadrotor in X config (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 5000 && id < 6000) {
+        ui->quadPlusPushButton->setChecked(true);
+        ui->quadPlusComboBox->setCurrentIndex(ui->quadPlusComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected quadrotor in + config (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 6000 && id < 7000) {
+        ui->hexaXPushButton->setChecked(true);
+        ui->hexaXComboBox->setCurrentIndex(ui->hexaXComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected hexarotor in X config (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 7000 && id < 8000) {
+        ui->hexaPlusPushButton->setChecked(true);
+        ui->hexaPlusComboBox->setCurrentIndex(ui->hexaPlusComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected hexarotor in + config (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 8000 && id < 9000) {
+        ui->octoXPushButton->setChecked(true);
+        ui->octoXComboBox->setCurrentIndex(ui->octoXComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected octorotor in X config (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 9000 && id < 10000) {
+        ui->octoPlusPushButton->setChecked(true);
+        ui->octoPlusComboBox->setCurrentIndex(ui->octoPlusComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected octorotor in + config (ID: #%1)").arg(selectedId));
+    }
+    else if (id >= 10000 && id < 11000)
+    {
+        ui->hPushButton->setChecked(true);
+        ui->hComboBox->setCurrentIndex(ui->hComboBox->findData(id));
+        ui->statusLabel->setText(tr("Selected H frame multirotor (ID: #%1)").arg(selectedId));
+    }
+
+
 }
 
 void QGCPX4AirframeConfig::applyAndReboot()
@@ -363,6 +424,17 @@ void QGCPX4AirframeConfig::setAutoConfig(bool enabled)
     paramMgr->setPendingParam(0, "SYS_AUTOCONFIG", (qint32) ((enabled) ? 1 : 0));
 }
 
+void QGCPX4AirframeConfig::simSelected()
+{
+    simSelected(ui->simComboBox->currentIndex());
+}
+
+void QGCPX4AirframeConfig::simSelected(int index)
+{
+    int system_index = ui->simComboBox->itemData(index).toInt();
+    setAirframeID(system_index);
+}
+
 void QGCPX4AirframeConfig::flyingWingSelected()
 {
     flyingWingSelected(ui->flyingWingComboBox->currentIndex());
@@ -384,7 +456,6 @@ void QGCPX4AirframeConfig::planeSelected(int index)
     int system_index = ui->planeComboBox->itemData(index).toInt();
     setAirframeID(system_index);
 }
-
 
 void QGCPX4AirframeConfig::quadXSelected()
 {

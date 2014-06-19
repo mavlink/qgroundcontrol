@@ -52,6 +52,17 @@ user_config.pri
 thirdParty/qserialport-build-desktop/
 thirdParty/qserialport/bin/
 thirdParty/qserialport/lib/
+libs/thirdParty/libxbee/lib/
 GeneratedFiles/
 
 *.autosave
+.settings/
+
+# Generated files
+moc_*
+ui_*
+*.o
+*.a
+*.so*
+*.moc
+*.prl

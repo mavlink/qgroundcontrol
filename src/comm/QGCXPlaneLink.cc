@@ -48,14 +48,22 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     socket(NULL),
     process(NULL),
     terraSync(NULL),
+    barometerOffsetkPa(-8.0f),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
     xPlaneVersion(0),
     simUpdateLast(QGC::groundTimeMilliseconds()),
+    simUpdateFirst(0),
     simUpdateLastText(QGC::groundTimeMilliseconds()),
+    simUpdateLastGroundTruth(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    _sensorHilEnabled(true)
+    _sensorHilEnabled(true),
+    _should_exit(false)
 {
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
     this->connectState = false;
@@ -67,6 +75,11 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
 QGCXPlaneLink::~QGCXPlaneLink()
 {
     storeSettings();
+    // Tell the thread to exit
+    _should_exit = true;
+    // Wait for it to exit
+    wait();
+
 //    if(connectState) {
 //       disconnectSimulation();
 //    }
@@ -138,7 +151,76 @@ void QGCXPlaneLink::setVersion(unsigned int version)
  **/
 void QGCXPlaneLink::run()
 {
-    exec();
+    if (!mav) return;
+    if (connectState) return;
+
+    socket = new QUdpSocket(this);
+    socket->moveToThread(this);
+    connectState = socket->bind(localHost, localPort);
+    if (!connectState) return;
+
+    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
+
+    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)), Qt::QueuedConnection);
+    connect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+
+    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
+
+    UAS* uas = dynamic_cast<UAS*>(mav);
+    if (uas)
+    {
+        uas->startHil();
+    }
+
+#pragma pack(push, 1)
+    struct iset_struct
+    {
+        char b[5];
+        int index; // (0->20 in the lsit below)
+        char str_ipad_them[16];
+        char str_port_them[6];
+        char padding[2];
+        int use_ip;
+    } ip; // to use this option, 0 not to.
+#pragma pack(pop)
+
+    ip.b[0] = 'I';
+    ip.b[1] = 'S';
+    ip.b[2] = 'E';
+    ip.b[3] = 'T';
+    ip.b[4] = '0';
+
+    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
+
+    QString localAddrStr;
+    QString localPortStr = QString("%1").arg(localPort);
+
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
+        // Exclude loopback IPv4 and all IPv6 addresses
+        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        {
+            localAddrStr = hostAddresses.at(i).toString();
+            break;
+        }
+    }
+
+    //qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
+
+    ip.index = 0;
+    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
+    strncpy(ip.str_port_them, localPortStr.toAscii(), qMin((int)sizeof(ip.str_port_them), 6));
+    ip.use_ip = 1;
+
+    writeBytes((const char*)&ip, sizeof(ip));
+
+    while(!_should_exit) {
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(5);
+    }
 }
 
 void QGCXPlaneLink::setPort(int localPort)
@@ -228,7 +310,7 @@ void QGCXPlaneLink::setRemoteHost(const QString& newHost)
     emit remoteChanged(QString("%1:%2").arg(remoteHost.toString()).arg(remotePort));
 }
 
-void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
+void QGCXPlaneLink::updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8)
 {
     if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     // Only update this for multirotors
@@ -290,7 +372,7 @@ void QGCXPlaneLink::updateActuators(uint64_t time, float act1, float act2, float
     }
 }
 
-void QGCXPlaneLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
+void QGCXPlaneLink::updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode)
 {
     #pragma pack(push, 1)
     struct payload {
@@ -404,35 +486,16 @@ Eigen::Matrix3f euler_to_wRo(double yaw, double pitch, double roll) {
 void QGCXPlaneLink::writeBytes(const char* data, qint64 size)
 {
     if (!data) return;
-    //#define QGCXPlaneLink_DEBUG
-#if 1
-    QString bytes;
-    QString ascii;
-    for (int i=0; i<size; i++)
+
+    // If socket exists and is connected, transmit the data
+    if (socket && connectState)
     {
-        unsigned char v = data[i];
-        bytes.append(QString().sprintf("%02x ", v));
-        if (data[i] > 31 && data[i] < 127)
-        {
-            ascii.append(data[i]);
-        }
-        else
-        {
-            ascii.append(219);
-        }
+        socket->writeDatagram(data, size, remoteHost, remotePort);
     }
-    //qDebug() << "Sent" << size << "bytes to" << remoteHost.toString() << ":" << remotePort << "data:";
-    //qDebug() << bytes;
-    //qDebug() << "ASCII:" << ascii;
-#endif
-    if (connectState && socket) socket->writeDatagram(data, size, remoteHost, remotePort);
 }
 
 /**
- * @brief Read a number of bytes from the interface.
- *
- * @param data Pointer to the data byte array to write the bytes to
- * @param maxLength The maximum number of bytes to write
+ * @brief Read all pending packets from the interface.
  **/
 void QGCXPlaneLink::readBytes()
 {
@@ -448,11 +511,6 @@ void QGCXPlaneLink::readBytes()
     unsigned int s = socket->pendingDatagramSize();
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
-
-    QByteArray b(data, s);
-
-    /*// Print string
-    QString state(b)*/;
 
     // Calculate the number of data segments a 36 bytes
     // XPlane always has 5 bytes header: 'DATA@'
@@ -475,6 +533,10 @@ void QGCXPlaneLink::readBytes()
             data[3] == 'A')
     {
         xPlaneConnected = true;
+
+        if (oldConnectionState != xPlaneConnected) {
+            simUpdateFirst = QGC::groundTimeMilliseconds();
+        }
 
         for (unsigned i = 0; i < nsegs; i++)
         {
@@ -542,19 +604,19 @@ void QGCXPlaneLink::readBytes()
 
                 // X-Plane expresses yaw as 0..2 PI
                 if (yaw > M_PI) {
-                    yaw -= 2.0 * M_PI;
+                    yaw -= 2.0f * static_cast<float>(M_PI);
                 }
                 if (yaw < -M_PI) {
-                    yaw += 2.0 * M_PI;
+                    yaw += 2.0f * static_cast<float>(M_PI);
                 }
 
                 float yawmag = p.f[3] / 180.0f * M_PI;
 
                 if (yawmag > M_PI) {
-                    yawmag -= 2.0 * M_PI;
+                    yawmag -= 2.0f * static_cast<float>(M_PI);
                 }
                 if (yawmag < -M_PI) {
-                    yawmag += 2.0 * M_PI;
+                    yawmag += 2.0f * static_cast<float>(M_PI);
                 }
 
                 // Normal rotation matrix, but since we rotate the
@@ -666,6 +728,11 @@ void QGCXPlaneLink::readBytes()
         qDebug() << "UNKNOWN PACKET:" << data;
     }
 
+    // Wait for 0.5s before actually using the data, so that all fields are filled
+    if (QGC::groundTimeMilliseconds() - simUpdateFirst < 500) {
+        return;
+    }
+
     // Send updated state
     if (emitUpdate && (QGC::groundTimeMilliseconds() - simUpdateLast) > 3)
     {
@@ -677,6 +744,8 @@ void QGCXPlaneLink::readBytes()
             // Set state
             simUpdateLastText = QGC::groundTimeMilliseconds();
         }
+
+        simUpdateLast = QGC::groundTimeMilliseconds();
 
         if (_sensorHilEnabled)
         {
@@ -691,8 +760,8 @@ void QGCXPlaneLink::readBytes()
             /* current pressure at MSL in kPa */
             double p1 = 1013.25 / 10.0;
 
-            /* measured pressure in hPa */
-            double p = abs_pressure / 10.0;
+            /* measured pressure in hPa, plus offset to simulate weather effects / offsets */
+            double p = abs_pressure / 10.0 + barometerOffsetkPa;
 
             /*
              * Solve:
@@ -709,12 +778,12 @@ void QGCXPlaneLink::readBytes()
             fields_changed |= (1 << 11);
 
             emit sensorHilRawImuChanged(QGC::groundTimeUsecs(), xacc, yacc, zacc, rollspeed, pitchspeed, yawspeed,
-                                        xmag, ymag, zmag, abs_pressure, diff_pressure, pressure_alt, temperature, fields_changed);
+                                        xmag, ymag, zmag, abs_pressure, diff_pressure / 100.0, pressure_alt, temperature, fields_changed);
 
             // XXX make these GUI-configurable and add randomness
             int gps_fix_type = 3;
-            float eph = 0.3;
-            float epv = 0.6;
+            float eph = 0.3f;
+            float epv = 0.6f;
             float vel = sqrt(vx*vx + vy*vy + vz*vz);
             float cog = atan2(vy, vx);
             int satellites = 8;
@@ -727,13 +796,13 @@ void QGCXPlaneLink::readBytes()
         }
 
         // Limit ground truth to 25 Hz
-        if (QGC::groundTimeMilliseconds() - simUpdateLast > 40) {
+        if (QGC::groundTimeMilliseconds() - simUpdateLastGroundTruth > 40) {
             emit hilGroundTruthChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                                        pitchspeed, yawspeed, lat, lon, alt,
                                        vx, vy, vz, ind_airspeed, true_airspeed, xacc, yacc, zacc);
-        }
 
-        simUpdateLast = QGC::groundTimeMilliseconds();
+            simUpdateLastGroundTruth = QGC::groundTimeMilliseconds();
+        }
     }
 
     if (!oldConnectionState && xPlaneConnected)
@@ -778,8 +847,8 @@ bool QGCXPlaneLink::disconnectSimulation()
                this, SLOT(processError(QProcess::ProcessError)));
     if (mav)
     {
-        disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-        disconnect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
+        disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+        disconnect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
 
         disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
         disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
@@ -911,14 +980,14 @@ void QGCXPlaneLink::setRandomPosition()
     double offLon = rand() / static_cast<double>(RAND_MAX) / 500.0 + 1.0/500.0;
     double offAlt = rand() / static_cast<double>(RAND_MAX) * 200.0 + 100.0;
 
-    if (mav->getAltitude() + offAlt < 0)
+    if (mav->getAltitudeAMSL() + offAlt < 0)
     {
         offAlt *= -1.0;
     }
 
     setPositionAttitude(mav->getLatitude() + offLat,
                         mav->getLongitude() + offLon,
-                        mav->getAltitude() + offAlt,
+                        mav->getAltitudeAMSL() + offAlt,
                         mav->getRoll(),
                         mav->getPitch(),
                         mav->getYaw());
@@ -935,7 +1004,7 @@ void QGCXPlaneLink::setRandomAttitude()
 
     setPositionAttitude(mav->getLatitude(),
                         mav->getLongitude(),
-                        mav->getAltitude(),
+                        mav->getAltitudeAMSL(),
                         roll,
                         pitch,
                         yaw);
@@ -952,73 +1021,9 @@ bool QGCXPlaneLink::connectSimulation()
     // XXX Hack
     storeSettings();
 
-    start(LowPriority);
+    start(HighPriority);
 
-    if (!mav) return false;
-    if (connectState) return false;
-
-    socket = new QUdpSocket(this);
-    connectState = socket->bind(localHost, localPort);
-    if (!connectState) return false;
-
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    connect(mav, SIGNAL(hilActuatorsChanged(uint64_t, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(uint64_t,float,float,float,float,float,float,float,float)));
-
-    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-
-    UAS* uas = dynamic_cast<UAS*>(mav);
-    if (uas)
-    {
-        uas->startHil();
-    }
-
-#pragma pack(push, 1)
-    struct iset_struct
-    {
-        char b[5];
-        int index; // (0->20 in the lsit below)
-        char str_ipad_them[16];
-        char str_port_them[6];
-        char padding[2];
-        int use_ip;
-    } ip; // to use this option, 0 not to.
-#pragma pack(pop)
-
-    ip.b[0] = 'I';
-    ip.b[1] = 'S';
-    ip.b[2] = 'E';
-    ip.b[3] = 'T';
-    ip.b[4] = '0';
-
-    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-
-    QString localAddrStr;
-    QString localPortStr = QString("%1").arg(localPort);
-
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-        {
-            localAddrStr = hostAddresses.at(i).toString();
-            break;
-        }
-    }
-
-    //qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
-
-    ip.index = 0;
-    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
-    strncpy(ip.str_port_them, localPortStr.toAscii(), qMin((int)sizeof(ip.str_port_them), 6));
-    ip.use_ip = 1;
-
-    writeBytes((const char*)&ip, sizeof(ip));
-    return connectState;
+    return true;
 }
 
 /**

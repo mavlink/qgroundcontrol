@@ -29,11 +29,10 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
     //If we don't have any predefined settings, set some defaults.
     if (uasPropertyValueMap.size() == 0)
     {
-        valueEnabled("altitude");
+        valueEnabled("altitudeAMSL");
+        valueEnabled("altitudeRelative");
         valueEnabled("groundSpeed");
-        valueEnabled("distToWP");
-        valueEnabled("yaw");
-        valueEnabled("roll");
+        valueEnabled("distToWaypoint");
     }
 
     QAction *action = new QAction("Add/Remove Items",this);
@@ -191,6 +190,7 @@ void UASQuickView::sortItems(int columncount)
 }
 void UASQuickView::resizeEvent(QResizeEvent *evt)
 {
+    Q_UNUSED(evt);
     recalculateItemTextSizing();
 }
 void UASQuickView::recalculateItemTextSizing()
@@ -274,9 +274,12 @@ void UASQuickView::valueChanged(const int uasId, const QString& name, const QStr
 {
     Q_UNUSED(uasId);
     Q_UNUSED(unit);
+    Q_UNUSED(msec);
+    
     bool ok;
     double value = variant.toDouble(&ok);
-    if(!ok || variant.type() == QMetaType::QString || variant.type() == QMetaType::QByteArray)
+    QMetaType::Type metaType = static_cast<QMetaType::Type>(variant.type());
+    if(!ok || metaType == QMetaType::QString || metaType == QMetaType::QByteArray)
         return;
 
     if (!uasPropertyValueMap.contains(name))

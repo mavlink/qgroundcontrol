@@ -51,18 +51,17 @@ This file is part of the QGROUNDCONTROL project
 #include "ObjectDetectionView.h"
 #include "submainwindow.h"
 #include "input/JoystickInput.h"
-#if (defined MOUSE_ENABLED_WIN) | (defined MOUSE_ENABLED_LINUX)
+#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
 #include "Mouse6dofInput.h"
-#endif // MOUSE_ENABLED_WIN
+#endif // QGC_MOUSE_ENABLED_WIN
 #include "DebugConsole.h"
 #include "ParameterInterface.h"
-#include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
 #include "QGCRemoteControlView.h"
 #include "opmapcontrol.h"
-#if (defined Q_OS_MAC) | (defined _MSC_VER)
+#ifdef QGC_GOOGLE_EARTH_ENABLED
 #include "QGCGoogleEarthView.h"
 #endif
 #include "QGCToolBar.h"
@@ -86,6 +85,7 @@ class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
 class JoystickWidget;
+class MenuActionHelper;
 
 /**
  * @brief Main Application Window
@@ -142,41 +142,38 @@ public:
     static const QString defaultLightStyle;
 
     /** @brief Get current visual style */
-    QGC_MAINWINDOW_STYLE getStyle()
+    QGC_MAINWINDOW_STYLE getStyle() const
     {
         return currentStyle;
     }
 
     /** @brief Get current light visual stylesheet */
-    QString getLightStyleSheet()
+    QString getLightStyleSheet() const
     {
         return lightStyleFileName;
     }
 
     /** @brief Get current dark visual stylesheet */
-    QString getDarkStyleSheet()
+    QString getDarkStyleSheet() const
     {
         return darkStyleFileName;
     }
     /** @brief Get auto link reconnect setting */
-    bool autoReconnectEnabled()
+    bool autoReconnectEnabled() const
     {
         return autoReconnect;
     }
 
     /** @brief Get title bar mode setting */
-    bool dockWidgetTitleBarsEnabled()
-    {
-        return dockWidgetTitleBarEnabled;
-    }
+    bool dockWidgetTitleBarsEnabled() const;
 
     /** @brief Get low power mode setting */
-    bool lowPowerModeEnabled()
+    bool lowPowerModeEnabled() const
     {
         return lowPowerMode;
     }
 
-    void setCustomMode(enum MainWindow::CUSTOM_MODE mode)
+    void setCustomMode(MainWindow::CUSTOM_MODE mode)
     {
         if (mode != CUSTOM_MODE_UNCHANGED)
         {
@@ -184,12 +181,12 @@ public:
         }
     }
 
-    enum MainWindow::CUSTOM_MODE getCustomMode()
+    MainWindow::CUSTOM_MODE getCustomMode() const
     {
         return customMode;
     }
 
-    QList<QAction*> listLinkMenuActions(void);
+    QList<QAction*> listLinkMenuActions();
 
 public slots:
     /** @brief Shows a status message on the bottom status bar */
@@ -224,7 +221,7 @@ public slots:
     void saveScreen();
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
-    void setAdvancedMode();
+    void setAdvancedMode(bool isAdvancedMode);
     /** @brief Load configuration views */
     void loadHardwareConfigView();
     void loadSoftwareConfigView();
@@ -242,6 +239,10 @@ public slots:
     void loadMAVLinkView();
     /** @brief Load Terminal Console views */
     void loadTerminalView();
+    /** @brief Load Google Earth View */
+    void loadGoogleEarthView();
+    /** @brief Load local 3D view */
+    void loadLocal3DView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -280,19 +281,6 @@ public slots:
 
     void closeEvent(QCloseEvent* event);
 
-    /** @brief Load data view, allowing to plot flight data */
-//    void loadDataView(QString fileName);
-
-    /**
-     * @brief Shows a Docked Widget based on the action sender
-     *
-     * This slot is written to be used in conjunction with the addTool() function
-     * It shows the QDockedWidget based on the action sender
-     *
-     */
-    void showTool(bool visible);
-
-
     /**
      * @brief Shows a Widget from the center stack based on the action sender
      *
@@ -308,17 +296,30 @@ public slots:
     void commsWidgetDestroyed(QObject *obj);
 
 protected slots:
-    /** @brief Called by a dock widget when it is has been deleted */
-    void dockWidgetDestroyed();
+    void showDockWidget(const QString &name, bool show);
+    /**
+     * @brief Unchecks the normalActionItem.
+     * Used as a triggered() callback by the fullScreenAction to make sure only one of it or the
+     * normalAction are checked at a time, as they're mutually exclusive.
+     */
+    void fullScreenActionItemCallback();
+    /**
+     * @brief Unchecks the fullScreenActionItem.
+     * Used as a triggered() callback by the normalAction to make sure only one of it or the
+     * fullScreenAction are checked at a time, as they're mutually exclusive.
+     */
+    void normalActionItemCallback();
 
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
-    void styleChanged();
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
-#ifdef MOUSE_ENABLED_LINUX
+    /** Emitted when any value changes from any source */
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+
+#ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Forward X11Event to catch 3DMouse inputs */
     void x11EventOccured(XEvent *event);
-#endif //MOUSE_ENABLED_LINUX
+#endif //QGC_MOUSE_ENABLED_LINUX
 
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
@@ -344,7 +345,7 @@ protected:
         VIEW_HARDWARE_CONFIG,
         VIEW_SOFTWARE_CONFIG,
         VIEW_TERMINAL,
-        VIEW_3DWIDGET,
+        VIEW_LOCAL3D,
         VIEW_GOOGLEEARTH,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
         VIEW_FULL            ///< All widgets shown at once
@@ -362,8 +363,9 @@ protected:
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
     void addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area);
-    void loadDockWidget(QString name);
-    QDockWidget* createDockWidget(QWidget *parent,QWidget *child,QString title,QString objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,int minwidth=0,int minheight=0);
+    void loadDockWidget(const QString &name);
+
+    QDockWidget* createDockWidget(QWidget *subMainWindowParent,QWidget *child,const QString& title,const QString& objectname,VIEW_SECTIONS view,Qt::DockWidgetArea area,const QSize& minSize = QSize());
     /**
      * @brief Adds an already instantiated QWidget to the center stack
      *
@@ -416,6 +418,8 @@ protected:
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
     QPointer<SubMainWindow> terminalView;
+    QPointer<SubMainWindow> googleEarthView;
+    QPointer<SubMainWindow> local3DView;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
@@ -427,8 +431,8 @@ protected:
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> q3DWidget;
 #endif
-#if (defined _MSC_VER) || (defined Q_OS_MAC)
-    QPointer<QGCGoogleEarthView> earthWidget;
+#ifdef QGC_GOOGLE_EARTH_ENABLED
+	QPointer<QGCGoogleEarthView> earthWidget;
 #endif
     QPointer<QGCFirmwareUpdate> firmwareUpdateWidget;
 
@@ -476,17 +480,17 @@ protected:
 
     JoystickInput* joystick;
 
-#ifdef MOUSE_ENABLED_WIN
+#ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
     Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
-#endif // MOUSE_ENABLED_WIN
+#endif // QGC_MOUSE_ENABLED_WIN
 
-#ifdef MOUSE_ENABLED_LINUX
+#ifdef QGC_MOUSE_ENABLED_LINUX
     /** @brief Reimplementation of X11Event to handle 3dMouse Events (magellan) */
     bool x11Event(XEvent *event);
     Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
-#endif // MOUSE_ENABLED_LINUX
+#endif // QGC_MOUSE_ENABLED_LINUX
 
     /** User interface actions **/
     QAction* connectUASAct;
@@ -514,11 +518,7 @@ protected:
 private:
     QList<QObject*> commsWidgetList;
     QMap<QString,QString> customWidgetNameToFilenameMap;
-    QMap<QAction*,QString > menuToDockNameMap;
-    QList<QDockWidget*> dockWidgets;
-    QMap<VIEW_SECTIONS,QMap<QString,QWidget*> > centralWidgetToDockWidgetsMap;
-    bool isAdvancedMode; ///< If enabled dock widgets can be moved and floated.
-    bool dockWidgetTitleBarEnabled; ///< If enabled, dock widget titlebars are displayed when NOT in advanced mode.
+    MenuActionHelper *menuActionHelper;
     Ui::MainWindow ui;
 
     /** @brief Set the appropriate titlebar for a given dock widget.
@@ -529,6 +529,7 @@ private:
     QString getWindowStateKey();
     QString getWindowGeometryKey();
 
+    friend class MenuActionHelper; //For VIEW_SECTIONS
 };
 
 #endif /* _MAINWINDOW_H_ */

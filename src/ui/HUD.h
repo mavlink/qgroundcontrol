@@ -81,7 +81,6 @@ public slots:
     void updateLoad(UASInterface*, double);
     void selectWaypoint(int uasId, int id);
 
-    void startImage(quint64 timestamp);
     void startImage(int imgid, int width, int height, int depth, int channels);
     void setPixels(int imgid, const unsigned char* imageData, int length, int startIndex);
     void finishImage();
@@ -95,7 +94,7 @@ public slots:
     /** @brief Enable Video */
     void enableVideo(bool enabled);
     /** @brief Copy an image from the current active UAS */
-    void copyImage();
+    void copyImage(UASInterface* uas);
 
 
 protected slots:
@@ -220,7 +219,6 @@ protected:
     QString nextOfflineImage;
     bool HUDInstrumentsEnabled;
     bool videoEnabled;
-    bool dataStreamEnabled;
     bool imageLoggingEnabled;
     float xImageFactor;
     float yImageFactor;

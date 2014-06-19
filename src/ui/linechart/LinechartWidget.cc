@@ -26,7 +26,7 @@ This file is part of the PIXHAWK project
  *   @brief Line chart plot widget
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
+ *   @author Thomas Gubler <thomasgubler@student.ethz.ch>
  */
 
 #include <QDebug>
@@ -105,6 +105,8 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 
     connect(ui.recolorButton, SIGNAL(clicked()), this, SLOT(recolor()));
     connect(ui.shortNameCheckBox, SIGNAL(clicked(bool)), this, SLOT(setShortNames(bool)));
+    connect(ui.plotFilterLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(filterCurves(const QString&)));
+    new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, SLOT(setPlotFilterLineEditFocus()));
 
     int labelRow = curvesWidgetLayout->rowCount();
 
@@ -138,7 +140,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     createLayout();
 
     // And make sure we're listening for future style changes
-    connect(MainWindow::instance(), SIGNAL(styleChanged()), this, SLOT(recolor()));
+    connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(recolor()));
 
     updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -169,7 +171,7 @@ void LinechartWidget::selectAllCurves(bool all)
 {
     QMap<QString, QLabel*>::iterator i;
     for (i = curveLabels->begin(); i != curveLabels->end(); ++i) {
-        activePlot->setVisible(i.key(), all);
+        activePlot->setVisibleById(i.key(), all);
     }
 }
 
@@ -564,6 +566,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     checkBox->setObjectName(curve+unit);
     checkBox->setToolTip(tr("Enable the curve in the graph window"));
     checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
+    checkBoxes.insert(curve+unit, checkBox);
     curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
     // Icon
@@ -593,6 +596,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     unitLabel->setText(unit);
     unitLabel->setToolTip(tr("Unit of ") + curve);
     unitLabel->setWhatsThis(tr("Unit of ") + curve);
+    curveUnits.insert(curve+unit, unitLabel);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
     unitLabel->setVisible(ui.showUnitsCheckBox->isChecked());
     connect(ui.showUnitsCheckBox, SIGNAL(clicked(bool)), unitLabel, SLOT(setVisible(bool)));
@@ -639,11 +643,11 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Connect actions
     connect(selectAllCheckBox, SIGNAL(clicked(bool)), checkBox, SLOT(setChecked(bool)));
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
-    QObject::connect(this, SIGNAL(curveVisible(QString, bool)), plot, SLOT(setVisible(QString, bool)));
+    QObject::connect(this, SIGNAL(curveVisible(QString, bool)), plot, SLOT(setVisibleById(QString, bool)));
 
     // Set UI components to initial state
     checkBox->setChecked(false);
-    plot->setVisible(curve+unit, false);
+    plot->setVisibleById(curve+unit, false);
 }
 
 /**
@@ -669,9 +673,19 @@ void LinechartWidget::removeCurve(QString curve)
     widget = curveVariances->take(curve);
     curvesWidgetLayout->removeWidget(widget);
     widget->deleteLater();
-//    widget = colorIcons->take(curve);
-//    curvesWidgetLayout->removeWidget(colorIcons->take(curve));
+    widget = colorIcons.take(curve);
+    curvesWidgetLayout->removeWidget(widget);
     widget->deleteLater();
+    widget = curveNameLabels.take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    widget = curveUnits.take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    QCheckBox* checkbox;
+    checkbox = checkBoxes.take(curve);
+    curvesWidgetLayout->removeWidget(checkbox);
+    checkbox->deleteLater();
 //    intData->remove(curve);
 }
 
@@ -687,6 +701,55 @@ void LinechartWidget::recolor()
             QColor color = activePlot->getColorForCurve(key);
             colorstyle = colorstyle.sprintf("QWidget { background-color: #%02X%02X%02X; }", color.red(), color.green(), color.blue());
             colorIcon->setStyleSheet(colorstyle);
+        }
+    }
+}
+
+void LinechartWidget::setPlotFilterLineEditFocus()
+{
+    ui.plotFilterLineEdit->setFocus(Qt::ShortcutFocusReason);
+}
+
+void LinechartWidget::filterCurve(const QString &key, bool match)
+{
+        if (!checkBoxes[key]->isChecked())
+        {
+            colorIcons[key]->setVisible(match);
+            curveNameLabels[key]->setVisible(match);
+            (*curveLabels)[key]->setVisible(match);
+            (*curveMeans)[key]->setVisible(match);
+            (*curveVariances)[key]->setVisible(match);
+            curveUnits[key]->setVisible(match);
+            checkBoxes[key]->setVisible(match);
+        }
+}
+
+void LinechartWidget::filterCurves(const QString &filter)
+{
+    //qDebug() << "filterCurves: filter: " << filter;
+
+    if (filter != "")
+    {
+        /* Hide Elements which do not match the filter pattern */
+        QStringMatcher stringMatcher(filter, Qt::CaseInsensitive);
+        foreach (QString key, colorIcons.keys())
+        {
+            if (stringMatcher.indexIn(key) < 0)
+            {
+                filterCurve(key, false);
+            }
+            else
+            {
+                filterCurve(key, true);
+            }
+        }
+    }
+    else
+    {
+        /* Show all Elements */
+        foreach (QString key, colorIcons.keys())
+        {
+            filterCurve(key, true);
         }
     }
 }
@@ -889,7 +952,7 @@ void LinechartWidget::takeButtonClick(bool checked)
 
     if(button != NULL)
     {
-        activePlot->setVisible(button->objectName(), checked);
+        activePlot->setVisibleById(button->objectName(), checked);
         QWidget* colorIcon = colorIcons.value(button->objectName(), 0);
         if (colorIcon)
         {

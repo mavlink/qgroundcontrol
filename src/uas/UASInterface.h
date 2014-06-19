@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "UASParameterDataModel.h"
 #include "UASWaypointManager.h"
-#include "QGCUASParamManager.h"
+#include "QGCUASParamManagerInterface.h"
 #include "RadioCalibration/RadioCalibrationData.h"
 
 #ifdef QGC_PROTOBUF_ENABLED
@@ -124,7 +124,8 @@ public:
 
     virtual double getLatitude() const = 0;
     virtual double getLongitude() const = 0;
-    virtual double getAltitude() const = 0;
+    virtual double getAltitudeAMSL() const = 0;
+    virtual double getAltitudeRelative() const = 0;
     virtual bool globalPositionKnown() const = 0;
 
     virtual double getRoll() const = 0;
@@ -155,7 +156,7 @@ public:
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
     /** @brief Get reference to the param manager **/
-    virtual QGCUASParamManager* getParamManager() = 0;
+    virtual QGCUASParamManagerInterface* getParamManager() = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -266,6 +267,9 @@ public:
      */
     virtual QList<QAction*> getActions() const = 0;
 
+    static const unsigned int WAYPOINT_RADIUS_DEFAULT_FIXED_WING = 25;
+    static const unsigned int WAYPOINT_RADIUS_DEFAULT_ROTARY_WING = 5;
+
 public slots:
 
     /** @brief Set a new name for the system */
@@ -369,10 +373,16 @@ public slots:
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
 
-    virtual void startRadioControlCalibration() = 0;
+    virtual void startRadioControlCalibration(int param=1) = 0;
+    virtual void endRadioControlCalibration() = 0;
     virtual void startMagnetometerCalibration() = 0;
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
+
+    /** @brief Return if this a rotary wing */
+    virtual bool isRotaryWing() = 0;
+    /** @brief Return if this is a fixed wing */
+    virtual bool isFixedWing() = 0;
 
     /** @brief Set the current battery type and voltages */
     virtual void setBatterySpecs(const QString& specs) = 0;
@@ -390,7 +400,6 @@ public slots:
 
     /** @brief Send raw GPS for sensor HIL */
     virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites) = 0;
-
 
 protected:
     QColor color;
@@ -523,16 +532,12 @@ signals:
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void localPositionChanged(UASInterface*, int component, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
-    void primaryAltitudeChanged(UASInterface*, double altitude, quint64 usec);
-    void gpsAltitudeChanged(UASInterface*, double altitude, quint64 usec);
+    void altitudeChanged(UASInterface*, double altitudeAMSL, double altitudeRelative, double climbRate, quint64 usec);
     /** @brief Update the status of one satellite used for localization */
     void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
 
     // The horizontal speed (a scalar)
-    void primarySpeedChanged(UASInterface*, double speed, quint64 usec);
-    void gpsSpeedChanged(UASInterface*, double speed, quint64 usec);
-    // The vertical speed (a scalar)
-    void climbRateChanged(UASInterface*, double climb, quint64 usec);
+    void speedChanged(UASInterface* uas, double groundSpeed, double airSpeed, quint64 usec);
     // Consider adding a MAV_FRAME parameter to this; could help specifying what the 3 scalars are.
     void velocityChanged_NED(UASInterface*, double vx, double vy, double vz, quint64 usec);
 
@@ -641,7 +646,7 @@ signals:
 protected:
 
     // TIMEOUT CONSTANTS
-    static const unsigned int timeoutIntervalHeartbeat = 3500 * 1000; ///< Heartbeat timeout is 2.5 seconds
+    static const unsigned int timeoutIntervalHeartbeat = 3500 * 1000; ///< Heartbeat timeout is 3.5 seconds
 
 };
 

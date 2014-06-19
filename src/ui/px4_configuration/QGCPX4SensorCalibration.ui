@@ -25,7 +25,7 @@
     border: 2px solid #465158;
 }
 
-QPushButton#gyroButton, QPushButton#accelButton {
+QPushButton#gyroButton, QPushButton#accelButton, QPushButton#diffPressureButton {
    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #D3795D, stop: 1 #A81154);
     border-radius: 8px;
     min-height: 25px;
@@ -118,6 +118,27 @@ QPushButton#gyroButton, QPushButton#accelButton {
        <property name="icon">
         <iconset resource="../../../qgroundcontrol.qrc">
          <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="diffPressureButton">
+       <property name="text">
+        <string>Diff. pressure</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/px4/calibration/arrows.png</normaloff>:/files/images/px4/calibration/arrows.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QLabel" name="diffPressureLabel">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>

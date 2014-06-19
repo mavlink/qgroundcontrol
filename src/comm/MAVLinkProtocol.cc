@@ -16,6 +16,8 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QDesktopServices>
+#include <QtEndian>
+#include <QMetaType>
 
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -35,15 +37,16 @@
 #include <google/protobuf/descriptor.h>
 #endif
 
+Q_DECLARE_METATYPE(mavlink_message_t)
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
  */
 MAVLinkProtocol::MAVLinkProtocol() :
-    heartbeatTimer(new QTimer(this)),
+    heartbeatTimer(NULL),
     heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-    m_heartbeatsEnabled(false),
+    m_heartbeatsEnabled(true),
     m_multiplexingEnabled(false),
     m_authEnabled(false),
     m_loggingEnabled(false),
@@ -55,14 +58,14 @@ MAVLinkProtocol::MAVLinkProtocol() :
     m_actionGuardEnabled(false),
     m_actionRetransmissionTimeout(100),
     versionMismatchIgnore(false),
-    systemId(QGC::defaultSystemId)
+    systemId(QGC::defaultSystemId),
+    _should_exit(false)
 {
+    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
+
     m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
-    //start(QThread::LowPriority);
-    // Start heartbeat timer, emitting a heartbeat at the configured rate
-    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
-    heartbeatTimer->start(1000/heartbeatRate);
+    moveToThread(this);
 
     // All the *Counter variables are not initialized here, as they should be initialized
     // on a per-link basis before those links are used. @see resetMetadataForLink().
@@ -75,6 +78,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
             lastIndex[i][j] = -1;
         }
     }
+
+    start(QThread::HighPriority);
 
     emit versionCheckChanged(m_enable_version_check);
 }
@@ -161,6 +166,35 @@ MAVLinkProtocol::~MAVLinkProtocol()
         delete m_logfile;
         m_logfile = NULL;
     }
+
+    // Tell the thread to exit
+    _should_exit = true;
+    // Wait for it to exit
+    wait();
+}
+
+/**
+ * @brief Runs the thread
+ *
+ **/
+void MAVLinkProtocol::run()
+{
+    heartbeatTimer = new QTimer();
+    heartbeatTimer->moveToThread(this);
+    // Start heartbeat timer, emitting a heartbeat at the configured rate
+    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
+    heartbeatTimer->start(1000/heartbeatRate);
+
+    while(!_should_exit) {
+
+        if (isFinished()) {
+            qDebug() << "MAVLINK WORKER DONE!";
+            return;
+        }
+
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(2);
+    }
 }
 
 QString MAVLinkProtocol::getLogfileName()
@@ -196,15 +230,7 @@ void MAVLinkProtocol::linkStatusChanged(bool connected)
             // Start NSH
             const char init[] = {0x0d, 0x0d, 0x0d};
             link->writeBytes(init, sizeof(init));
-
-            // Stop any running mavlink instance
-            const char* cmd = "mavlink stop\n";
-            link->writeBytes(cmd, strlen(cmd));
-            link->writeBytes(init, 2);
-            cmd = "uorb start";
-            link->writeBytes(cmd, strlen(cmd));
-            link->writeBytes(init, 2);
-            cmd = "sh /etc/init.d/rc.usb\n";
+            const char* cmd = "sh /etc/init.d/rc.usb\n";
             link->writeBytes(cmd, strlen(cmd));
             link->writeBytes(init, 4);
         }
@@ -268,6 +294,20 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 1)
         {
             decodedFirstPacket = true;
+
+            if(message.msgid == MAVLINK_MSG_ID_PING)
+            {
+                // process ping requests (tgt_system and tgt_comp must be zero)
+                mavlink_ping_t ping;
+                mavlink_msg_ping_decode(&message, &ping);
+                if(!ping.target_system && !ping.target_component)
+                {
+                    mavlink_message_t msg;
+                    mavlink_msg_ping_pack(getSystemId(), getComponentId(), &msg, ping.time_usec, ping.seq, message.sysid, message.compid);
+                    sendMessage(msg);
+                }
+            }
+
 #if defined(QGC_PROTOBUF_ENABLED)
 
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
@@ -352,19 +392,26 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled && m_logfile)
             {
-                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)] = {0};
-                quint64 time = QGC::groundTimeUsecs();
-                memcpy(buf, (void*)&time, sizeof(quint64));
-                // Write message to buffer
-                mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
-                //we need to write the maximum package length for having a
-                //consistent file structure and beeing able to parse it again
-                int len = MAVLINK_MAX_PACKET_LEN + sizeof(quint64);
+                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
+
+                // Write the uint64 time in microseconds in big endian format before the message.
+                // This timestamp is saved in UTC time. We are only saving in ms precision because
+                // getting more than this isn't possible with Qt without a ton of extra code.
+                quint64 time = (quint64)QDateTime::currentMSecsSinceEpoch() * 1000;
+                qToBigEndian(time, buf);
+
+                // Then write the message to the buffer
+                int len = mavlink_msg_to_send_buffer(buf + sizeof(quint64), &message);
+
+                // Determine how many bytes were written by adding the timestamp size to the message size
+                len += sizeof(quint64);
+
+                // Now write this timestamp/message pair to the log.
                 QByteArray b((const char*)buf, len);
                 if(m_logfile->write(b) != len)
                 {
+                    // If there's an error logging data, raise an alert and stop logging.
                     emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, disabling logging.").arg(m_logfile->fileName()));
-                    // Stop logging
                     enableLogging(false);
                 }
             }

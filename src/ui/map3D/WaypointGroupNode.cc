@@ -65,7 +65,7 @@ WaypointGroupNode::update(UASInterface* uas, MAV_FRAME frame)
     {
         double latitude = uas->getLatitude();
         double longitude = uas->getLongitude();
-        double altitude = uas->getAltitude();
+        double altitude = uas->getAltitudeAMSL();
 
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
@@ -75,7 +75,7 @@ WaypointGroupNode::update(UASInterface* uas, MAV_FRAME frame)
     {
         double latitude = uas->getLatitude();
         double longitude = uas->getLongitude();
-        double altitude = uas->getAltitude() + UASManager::instance()->getHomeAltitude();
+        double altitude = uas->getAltitudeRelative();
 
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);

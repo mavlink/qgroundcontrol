@@ -42,7 +42,8 @@ private slots:
   void getLocalZ_test();
   void getLatitude_test();
   void getLongitude_test();
-  void getAltitude_test();
+  void getAltitudeAMSL_test();
+  void getAltitudeRelative_test();
   void getRoll_test();
   void getPitch_test();
   void getYaw_test();

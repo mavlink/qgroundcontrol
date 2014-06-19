@@ -7,7 +7,7 @@
 
 #include "QGCToolWidgetItem.h"
 
-class QGCUASParamManager;
+class QGCUASParamManagerInterface;
 
 namespace Ui
 {
@@ -22,9 +22,9 @@ public:
     explicit QGCComboBox(QWidget *parent = 0);
     ~QGCComboBox();
 
+    virtual void setEditMode(bool editMode);
+
 public slots:
-    void startEditMode();
-    void endEditMode();
     /** @brief Queue parameter for sending to the MAV (add to pending list)*/
     void setParamPending();
     /** @brief Update the UI with the new parameter value */
@@ -52,7 +52,7 @@ protected slots:
     /** @brief Updates current parameter based on new combobox value */
     void comboBoxIndexChanged(QString val);
 protected:
-    QGCUASParamManager *paramMgr; ///< Access to parameter manager
+    QGCUASParamManagerInterface *paramMgr; ///< Access to parameter manager
     bool visibleEnabled;
     QString visibleParam;
     int visibleVal;

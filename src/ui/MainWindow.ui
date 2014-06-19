@@ -12,8 +12,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>1024</width>
-    <height>600</height>
+    <width>640</width>
+    <height>400</height>
    </size>
   </property>
   <property name="baseSize">
@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -95,13 +95,15 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
-    <addaction name="actionMissionView"/>
     <addaction name="actionFlightView"/>
+    <addaction name="actionMissionView"/>
     <addaction name="actionHardwareConfig"/>
     <addaction name="actionSoftwareConfig"/>
     <addaction name="actionTerminalView"/>
-    <addaction name="actionEngineersView"/>
     <addaction name="actionSimulationView"/>
+    <addaction name="actionEngineersView"/>
+    <addaction name="actionGoogleEarthView"/>
+    <addaction name="actionLocal3DView"/>
     <addaction name="separator"/>
     <addaction name="actionFirmwareUpdateView"/>
     <addaction name="actionMavlinkView"/>
@@ -160,7 +162,7 @@
     <string>Emergency Land</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E</string>
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="actionEmergency_Kill">
@@ -282,9 +284,6 @@
    <property name="text">
     <string>Mission</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+O</string>
-   </property>
   </action>
   <action name="actionEngineersView">
    <property name="checkable">
@@ -296,9 +295,6 @@
    </property>
    <property name="text">
     <string>Plot</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+E</string>
    </property>
   </action>
   <action name="actionMavlinkView">
@@ -312,9 +308,6 @@
    <property name="text">
     <string>Mavlink</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+M</string>
-   </property>
   </action>
   <action name="actionFlightView">
    <property name="checkable">
@@ -326,9 +319,6 @@
    </property>
    <property name="text">
     <string>Flight</string>
-   </property>
-   <property name="shortcut">
-    <string>Meta+P</string>
    </property>
   </action>
   <action name="actionNewCustomWidget">
@@ -367,9 +357,6 @@
    <property name="text">
     <string>Unconnected</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+U</string>
-   </property>
   </action>
   <action name="actionShutdownMAV">
    <property name="icon">
@@ -392,14 +379,23 @@
    </property>
   </action>
   <action name="actionFullscreen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Fullscreen</string>
    </property>
-   <property name="shortcut">
-    <string>Meta+Return</string>
-   </property>
   </action>
   <action name="actionNormal">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Normal</string>
    </property>
@@ -417,6 +413,12 @@
    </property>
   </action>
   <action name="actionFirmwareUpdateView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
@@ -428,21 +430,6 @@
     <string>Update the firmware of one of the connected autopilots</string>
    </property>
   </action>
-  <action name="actionSimulation_View">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../qgroundcontrol.qrc">
-     <normaloff>:/files/images/control/launch.svg</normaloff>:/files/images/control/launch.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Simulation</string>
-   </property>
-   <property name="toolTip">
-    <string>Open the simulation view</string>
-   </property>
-  </action>
   <action name="actionHardwareConfig">
    <property name="checkable">
     <bool>true</bool>
@@ -452,7 +439,7 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Hardware</string>
+    <string>Config</string>
    </property>
    <property name="toolTip">
     <string>Configuration options of the vehicle.</string>
@@ -500,6 +487,22 @@
    </property>
    <property name="text">
     <string>Terminal</string>
+   </property>
+  </action>
+  <action name="actionGoogleEarthView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Google Earth</string>
+   </property>
+  </action>
+  <action name="actionLocal3DView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Local 3D View</string>
    </property>
   </action>
  </widget>

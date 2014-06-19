@@ -2,8 +2,13 @@
 #include "UASManager.h"
 
 MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
-    QObject(parent)
+    QThread()
 {
+    Q_UNUSED(parent);
+    // We're doing it wrong - because the Qt folks got the API wrong:
+    // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
+    moveToThread(this);
+
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
     memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
@@ -30,6 +35,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
     messageFilter.insert(MAVLINK_MSG_ID_DATA_STREAM, false);
     messageFilter.insert(MAVLINK_MSG_ID_GPS_STATUS, false);
+    messageFilter.insert(MAVLINK_MSG_ID_RC_CHANNELS_RAW, false);
     #ifdef MAVLINK_MSG_ID_ENCAPSULATED_DATA
     messageFilter.insert(MAVLINK_MSG_ID_ENCAPSULATED_DATA, false);
     #endif
@@ -45,6 +51,17 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
 //    textMessageFilter.insert(MAVLINK_MSG_ID_HIGHRES_IMU, false);
 
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
+
+    start(LowPriority);
+}
+
+/**
+ * @brief Runs the thread
+ *
+ **/
+void MAVLinkDecoder::run()
+{
+    exec();
 }
 
 void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t message)
@@ -54,7 +71,10 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 
     uint8_t msgid = message.msgid;
 
-    // Handle time sync message
+    // Store an arrival time for this message. This value ends up being calculated later.
+    quint64 time = 0;
+    
+    // The SYSTEM_TIME message is special, in that it's handled here for synchronizing the QGC time with the remote time.
     if (message.msgid == MAVLINK_MSG_ID_SYSTEM_TIME)
     {
         mavlink_system_time_t timebase;
@@ -65,11 +85,7 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     else
     {
 
-        QString messageName("%1 (#%2)");
-        messageName = messageName.arg(messageInfo[msgid].name).arg(msgid);
-
-        // See if first value is a time value
-        quint64 time = 0;
+        // See if first value is a time value and if it is, use that as the arrival time for this data.
         uint8_t fieldid = 0;
         uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
         if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_boot_ms") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
@@ -81,20 +97,15 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
             time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             time = (time+500)/1000; // Scale to milliseconds, round up/down correctly
         }
-        else
-        {
-            // First value is not time, send out value 0
-            emitFieldValue(&message, fieldid, getUnixTimeFromMs(message.sysid, 0));
-        }
+    }
 
-        // Align time to global time
-        time = getUnixTimeFromMs(message.sysid, time);
+    // Align UAS time to global time
+    time = getUnixTimeFromMs(message.sysid, time);
 
-        // Send out field values from 1..n
-        for (unsigned int i = 1; i < messageInfo[msgid].num_fields; ++i)
-        {
-            emitFieldValue(&message, i, time);
-        }
+    // Send out all field values for this message
+    for (unsigned int i = 0; i < messageInfo[msgid].num_fields; ++i)
+    {
+        emitFieldValue(&message, i, time);
     }
 
     // Send out combined math expressions
@@ -246,6 +257,30 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         name = QString(buf);
         time = getUnixTimeFromMs(msg->sysid, debug.time_boot_ms);
     }
+    else if (msgid == MAVLINK_MSG_ID_RC_CHANNELS_RAW)
+    {
+        // XXX this is really ugly, but we do not know a better way to do this
+        mavlink_rc_channels_raw_t raw;
+        mavlink_msg_rc_channels_raw_decode(msg, &raw);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
+        name.prepend(QString("port%1_").arg(raw.port));
+    }
+    else if (msgid == MAVLINK_MSG_ID_RC_CHANNELS_SCALED)
+    {
+        // XXX this is really ugly, but we do not know a better way to do this
+        mavlink_rc_channels_scaled_t scaled;
+        mavlink_msg_rc_channels_scaled_decode(msg, &scaled);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
+        name.prepend(QString("port%1_").arg(scaled.port));
+    }
+    else if (msgid == MAVLINK_MSG_ID_SERVO_OUTPUT_RAW)
+    {
+        // XXX this is really ugly, but we do not know a better way to do this
+        mavlink_servo_output_raw_t servo;
+        mavlink_msg_servo_output_raw_decode(msg, &servo);
+        name = name.arg(messageInfo[msgid].name).arg(fieldName);
+        name.prepend(QString("port%1_").arg(servo.port));
+    }
     else
     {
         name = name.arg(messageInfo[msgid].name).arg(fieldName);
@@ -267,7 +302,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             // Enforce null termination
             str[messageInfo[msgid].fields[fieldid].array_length-1] = '\0';
             QString string(name + ": " + str);
-            if (!textMessageFilter.contains(msgid)) emit textMessageReceived(msg->sysid, msg->compid, 0, string);
+            if (!textMessageFilter.contains(msgid)) emit textMessageReceived(msg->sysid, msg->compid, MAV_SEVERITY_INFO, string);
         }
         else
         {

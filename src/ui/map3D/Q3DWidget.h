@@ -39,7 +39,19 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/PositionAttitudeTransform>
 #include <osgGA/TrackballManipulator>
 #include <osgText/Font>
+
+// OpenSceneGraph has overloaded virtuals defined, since third party code we silence the warnings when the
+// headers are used.
+#ifndef Q_OS_WIN
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+#endif
+
 #include <osgViewer/Viewer>
+
+#ifndef Q_OS_WIN
+#pragma GCC diagnostic pop
+#endif
 
 #include "CameraParams.h"
 #include "GCManipulator.h"

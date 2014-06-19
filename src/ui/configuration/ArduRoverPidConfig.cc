@@ -73,6 +73,9 @@ void ArduRoverPidConfig::refreshButtonClicked()
 
 void ArduRoverPidConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (nameToBoxMap.contains(parameterName))
     {
         nameToBoxMap[parameterName]->setValue(value.toFloat());

@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UASMANAGER_H_
 #define _UASMANAGER_H_
 
+#include "UASManagerInterface.h"
 #include <QThread>
 #include <QList>
 #include <QMutex>
@@ -44,13 +45,18 @@ This file is part of the QGROUNDCONTROL project
  * This class keeps a list of all connected / configured UASs. It also stores which
  * UAS is currently select with respect to user input or manual controls.
  **/
-class UASManager : public QObject
+class UASManager : public UASManagerInterface
 {
     Q_OBJECT
 
 public:
-    static UASManager* instance();
+    static UASManagerInterface* instance();
     ~UASManager();
+    
+    /**
+     * @brief Sets a mock UASManager to be returned when a call is made to instance()
+     **/
+    static void setMockUASManager(UASManagerInterface* mockUASManager);
 
     /**
      * @brief Get the currently selected UAS
@@ -265,6 +271,9 @@ protected:
     Eigen::Vector3d nedSafetyLimitPosition2;
 
     void initReference(const double & latitude, const double & longitude, const double & altitude);
+    
+private:
+    static UASManagerInterface* _mockUASManager;
 
 signals:
 

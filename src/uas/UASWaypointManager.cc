@@ -153,7 +153,8 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             sendWaypointRequest(current_wp_id);
         } else {
             protocol_timer.stop();
-            emit updateStatusString("done.");
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
             current_state = WP_IDLE;
             current_count = 0;
             current_wp_id = 0;
@@ -163,7 +164,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 
 
     } else {
-        qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+        qDebug("Rejecting waypoint count message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -204,15 +205,14 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
                 QTime time = QTime::currentTime();
-                QString timeString = time.toString();
-                emit updateStatusString(tr("done. (updated at %1)").arg(timeString));
+                emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
 
             }
         } else {
             emit updateStatusString(tr("Waypoint ID mismatch, rejecting waypoint"));
         }
     } else {
-        qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+        qDebug("Rejecting waypoint message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST_GETWPS, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -223,12 +223,50 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
             //all waypoints sent and ack received
             protocol_timer.stop();
             current_state = WP_IDLE;
-            readWaypoints(false); //Update "Onboard Waypoints"-tab immidiately after the waypoint list has been sent.
-            emit updateStatusString("done.");
+            readWaypoints(false); //Update "Onboard Waypoints"-tab immediately after the waypoint list has been sent.
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
+        } else if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && wpa->type != 0) {
+            //give up transmitting if a WP is rejected
+            switch (wpa->type)
+            {
+            case MAV_MISSION_UNSUPPORTED_FRAME:
+                emit updateStatusString(tr("ERROR: Coordinate frame unsupported."));
+                break;
+            case MAV_MISSION_UNSUPPORTED:
+                emit updateStatusString(tr("ERROR: Unsupported command."));
+                break;
+            case MAV_MISSION_NO_SPACE:
+                emit updateStatusString(tr("ERROR: Mission count exceeds storage."));
+                break;
+            case MAV_MISSION_INVALID:
+            case MAV_MISSION_INVALID_PARAM1:
+            case MAV_MISSION_INVALID_PARAM2:
+            case MAV_MISSION_INVALID_PARAM3:
+            case MAV_MISSION_INVALID_PARAM4:
+            case MAV_MISSION_INVALID_PARAM5_X:
+            case MAV_MISSION_INVALID_PARAM6_Y:
+            case MAV_MISSION_INVALID_PARAM7:
+                emit updateStatusString(tr("ERROR: A specified parameter was invalid."));
+                break;
+            case MAV_MISSION_INVALID_SEQUENCE:
+                emit updateStatusString(tr("ERROR: Mission received out of sequence."));
+                break;
+            case MAV_MISSION_DENIED:
+                emit updateStatusString(tr("ERROR: UAS not accepting missions."));
+                break;
+            case MAV_MISSION_ERROR:
+            default:
+                emit updateStatusString(tr("ERROR: Unspecified error"));
+                break;
+            }
+            protocol_timer.stop();
+            current_state = WP_IDLE;
         } else if(current_state == WP_CLEARLIST) {
             protocol_timer.stop();
             current_state = WP_IDLE;
-            emit updateStatusString("done.");
+            QTime time = QTime::currentTime();
+            emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
         }
     }
 }
@@ -247,7 +285,7 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
             //TODO: Error message or something
         }
     } else {
-        qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+        qDebug("Rejecting waypoint request message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_SENDLIST_SENDWPS, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -256,7 +294,7 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
 	Q_UNUSED(compId);
     if (!uas) return;
     if (systemId == uasid) {
-        emit updateStatusString(QString("Reached waypoint %1").arg(wpr->seq));
+        emit updateStatusString(tr("Reached waypoint %1").arg(wpr->seq));
     }
 }
 
@@ -281,7 +319,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 }
             }
         }
-        emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
+        emit updateStatusString(tr("New current waypoint %1").arg(wpc->seq));
         //emit update to UI widgets
         emit currentWaypointChanged(wpc->seq);
     }
@@ -336,7 +374,7 @@ int UASWaypointManager::setCurrentEditable(quint16 seq)
     if (seq < waypointsEditable.count()) {
         if(current_state == WP_IDLE) {
             //update local main storage
-            for(int i = 0; i < waypointsEditable.count(); i++) {
+            for (int i = 0; i < waypointsEditable.count(); i++) {
                 if (waypointsEditable[i]->getId() == seq) {
                     waypointsEditable[i]->setCurrent(true);
                 } else {
@@ -905,99 +943,96 @@ void UASWaypointManager::writeWaypoints()
             sendWaypointCount();
         } else if (waypointsEditable.count() == 0)
         {
-            sendWaypointClearAll();
+            clearWaypointList();
         }
     }
     else
     {
-        //we're in another transaction, ignore command
-        qDebug() << "UASWaypointManager::sendWaypoints() doing something else ignoring command";
+        // We're in another transaction, ignore command
+        qDebug() << tr("UASWaypointManager::sendWaypoints() doing something else. Ignoring command");
     }
 }
 
 void UASWaypointManager::sendWaypointClearAll()
 {
     if (!uas) return;
+
+    // Send the message.
     mavlink_message_t message;
-    mavlink_mission_clear_all_t wpca;
-
-    wpca.target_system = uasid;
-    wpca.target_component = MAV_COMP_ID_MISSIONPLANNER;
-
-    emit updateStatusString(QString("Clearing waypoint list..."));
-
+    mavlink_mission_clear_all_t wpca = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_clear_all_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpca);
-
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Clearing waypoint list..."));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 {
     if (!uas) return;
+
+    // Send the message.
     mavlink_message_t message;
-    mavlink_mission_set_current_t wpsc;
-
-    wpsc.target_system = uasid;
-    wpsc.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpsc.seq = seq;
-
-    emit updateStatusString(QString("Updating target waypoint..."));
-
+    mavlink_mission_set_current_t wpsc = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_set_current_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpsc);
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Updating target waypoint..."));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointCount()
 {
     if (!uas) return;
+
+
+    // Tell the UAS how many missions we'll sending.
     mavlink_message_t message;
-    mavlink_mission_count_t wpc;
-
-    wpc.target_system = uasid;
-    wpc.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpc.count = current_count;
-
-    emit updateStatusString(QString("Starting to transmit waypoints..."));
-
+    mavlink_mission_count_t wpc = {current_count, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_count_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpc);
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Starting to transmit waypoints..."));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointRequestList()
 {
     if (!uas) return;
+
+    // Send a MISSION_REQUEST message to the uas for this mission manager, using the MISSIONPLANNER component.
     mavlink_message_t message;
-    mavlink_mission_request_list_t wprl;
+    mavlink_mission_request_list_t wprl = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
+    uas->sendMessage(message);
 
-    wprl.target_system = uasid;
-    wprl.target_component = MAV_COMP_ID_MISSIONPLANNER;
-
+    // And update the UI.
     QString statusMsg(tr("Requesting waypoint list..."));
     qDebug() << __FILE__ << __LINE__ << statusMsg;
     emit updateStatusString(statusMsg);
 
-    mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
-    uas->sendMessage(message);
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
 void UASWaypointManager::sendWaypointRequest(quint16 seq)
 {
     if (!uas) return;
+
+    // Send a MISSION_REQUEST message to the UAS's MISSIONPLANNER component.
     mavlink_message_t message;
-    mavlink_mission_request_t wpr;
-
-    wpr.target_system = uasid;
-    wpr.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpr.seq = seq;
-
-    emit updateStatusString(QString("Retrieving waypoint ID %1 of %2 total").arg(wpr.seq).arg(current_count));
-
+    mavlink_mission_request_t wpr = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
     mavlink_msg_mission_request_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpr);
     uas->sendMessage(message);
+
+    // And update the UI.
+    emit updateStatusString(tr("Retrieving waypoint ID %1 of %2").arg(wpr.seq).arg(current_count));
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
@@ -1008,18 +1043,18 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 
     if (seq < waypoint_buffer.count()) {
 
-        mavlink_mission_item_t *wp;
-
-
-        wp = waypoint_buffer.at(seq);
+        // Fetch the current mission to send, and set it to apply to the curent UAS.
+        mavlink_mission_item_t *wp = waypoint_buffer.at(seq);
         wp->target_system = uasid;
         wp->target_component = MAV_COMP_ID_MISSIONPLANNER;
 
-        emit updateStatusString(QString("Sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
-
-
+        // Transmit the new mission
         mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, wp);
         uas->sendMessage(message);
+
+        // And update the UI.
+        emit updateStatusString(tr("Sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
+
         QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
     }
 }
@@ -1027,15 +1062,13 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 void UASWaypointManager::sendWaypointAck(quint8 type)
 {
     if (!uas) return;
+
+    // Send the message.
     mavlink_message_t message;
-    mavlink_mission_ack_t wpa;
-
-    wpa.target_system = uasid;
-    wpa.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    wpa.type = type;
-
+    mavlink_mission_ack_t wpa = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER, type};
     mavlink_msg_mission_ack_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpa);
     uas->sendMessage(message);
+
     QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 }
 
@@ -1063,11 +1096,23 @@ int UASWaypointManager::getFrameRecommendation()
 
 float UASWaypointManager::getAcceptanceRadiusRecommendation()
 {
-    if (waypointsEditable.count() > 0) {
+    if (waypointsEditable.count() > 0)
+    {
         return waypointsEditable.last()->getAcceptanceRadius();
-    } else {
-        return 10.0f;
     }
+    else
+    {
+        if (uas->isRotaryWing())
+        {
+            return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
+        }
+        else if (uas->isFixedWing())
+        {
+            return UASInterface::WAYPOINT_RADIUS_DEFAULT_FIXED_WING;
+        }
+    }
+
+    return 10.0f;
 }
 
 float UASWaypointManager::getHomeAltitudeOffsetDefault()

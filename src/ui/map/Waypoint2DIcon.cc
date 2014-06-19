@@ -291,17 +291,20 @@ void Waypoint2DIcon::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         redPen.setWidth(1);
         painter->setPen(redPen);
         const int acceptance = map->metersToPixels(waypoint->getAcceptanceRadius(), Coord());
-        painter->setPen(penBlack);
-        painter->drawEllipse(QPointF(0, 0), acceptance, acceptance);
-        painter->setPen(redPen);
-        painter->drawEllipse(QPointF(0, 0), acceptance, acceptance);
+        if (acceptance > 0) {
+            painter->setPen(penBlack);
+            painter->drawEllipse(QPointF(0, 0), acceptance, acceptance);
+            painter->setPen(redPen);
+            painter->drawEllipse(QPointF(0, 0), acceptance, acceptance);
+        }
     }
     if ((waypoint) && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
     {
         QPen penDash(color);
         penDash.setWidth(1);
         //penDash.setStyle(Qt::DotLine);
-        const int loiter = map->metersToPixels(waypoint->getLoiterOrbit(), Coord());
+        // A negative radius indicates counter-clockwise rotation, but we still want to draw it positive
+        const int loiter = map->metersToPixels(fabsf(waypoint->getLoiterOrbit()), Coord());
         if (loiter > picture.width()/2)
         {
             painter->setPen(penBlack);

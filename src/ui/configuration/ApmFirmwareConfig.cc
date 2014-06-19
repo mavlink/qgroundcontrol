@@ -387,6 +387,7 @@ void ApmFirmwareConfig::flashButtonClicked()
 
 void ApmFirmwareConfig::firmwareListError(QNetworkReply::NetworkError error)
 {
+    Q_UNUSED(error);
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     qDebug() << "Error!" << reply->errorString();
 }

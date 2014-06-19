@@ -29,6 +29,7 @@ public slots:
     void setUAVTrailDistance();
     void setUpdateInterval();
     void setMapType();
+    void setStatusLabelText(const QString &text);
 
 private:
     Ui::QGCMapToolBar *ui;
@@ -43,6 +44,8 @@ protected:
     QActionGroup* trailSettingsGroup;
     QActionGroup* updateTimesGroup;
     QActionGroup* mapTypesGroup;
+
+    unsigned statusMaxLen;
 };
 
 #endif // QGCMAPTOOLBAR_H

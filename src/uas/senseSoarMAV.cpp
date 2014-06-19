@@ -2,8 +2,8 @@
 #include <cmath>
 #include <qmath.h>
 
-senseSoarMAV::senseSoarMAV(MAVLinkProtocol* mavlink, int id)
-	: UAS(mavlink, id), senseSoarState(0)
+senseSoarMAV::senseSoarMAV(MAVLinkProtocol* mavlink, QThread* thread, int id)
+    : UAS(mavlink, thread, id), senseSoarState(0)
 {
 }
 

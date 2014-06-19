@@ -9,7 +9,7 @@ class PrimaryFlightDisplay : public QWidget
 {
     Q_OBJECT
 public:
-    PrimaryFlightDisplay(int width = 640, int height = 480, QWidget* parent = NULL);
+    PrimaryFlightDisplay(QWidget* parent = NULL);
     ~PrimaryFlightDisplay();
 
 public slots:
@@ -18,19 +18,21 @@ public slots:
     /** @brief Attitude from one specific component / redundant autopilot */
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 
-    void updatePrimarySpeed(UASInterface* uas, double speed, quint64 timstamp);
-    void updateGPSSpeed(UASInterface* uas, double speed, quint64 timstamp);
-    void updateClimbRate(UASInterface* uas, double altitude, quint64 timestamp);
-    void updatePrimaryAltitude(UASInterface* uas, double altitude, quint64 timestamp);
-    void updateGPSAltitude(UASInterface* uas, double altitude, quint64 timestamp);
+    void updateSpeed(UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
+    void updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
 
     /** @brief Set the currently monitored UAS */
-    //void addUAS(UASInterface* uas);
     void forgetUAS(UASInterface* uas);
     void setActiveUAS(UASInterface* uas);
 
+    void checkUpdate();
+
 protected:
+
+    bool _valuesChanged;
+    quint64 _valuesLastPainted;
+
     enum Layout {
         COMPASS_INTEGRATED,
         COMPASS_SEPARATED               // For a very high container. Feature panels are at bottom.
@@ -54,34 +56,10 @@ protected:
     /** @brief Stop updating widget */
     void hideEvent(QHideEvent* event);
 
-    // dongfang: We have no context menu. Viewonly.
-    // void contextMenuEvent (QContextMenuEvent* event);
-
-    // dongfang: What is that?
-    // dongfang: OK it's for UI interaction. Presently, there is none.
-    void createActions();
-
 signals:
     void visibilityChanged(bool visible);
 
 private:
-    /*
-    enum AltimeterMode {
-        PRIMARY_MAIN_GPS_SUB,   // Show the primary alt. on tape and GPS as extra info
-        GPS_MAIN                // Show GPS on tape and no extra info
-    };
-
-    enum AltimeterFrame {
-        ASL,                    // Show ASL altitudes (plane pilots' normal preference)
-        RELATIVE_TO_HOME        // Show relative-to-home altitude (copter pilots)
-    };
-
-    enum SpeedMode {
-        PRIMARY_MAIN_GROUND_SUB,// Show primary speed (often airspeed) on tape and groundspeed as extra
-        GROUND_MAIN             // Show groundspeed on tape and no extra info
-    };
-    */
-
     /*
      * There are at least these differences between airplane and copter PDF view:
      * - Airplane show absolute altutude in altimeter, copter shows relative to home
@@ -102,8 +80,8 @@ private:
     void drawAICompassDisk(QPainter& painter, QRectF area, float halfspan);
     void drawSeparateCompassDisk(QPainter& painter, QRectF area);
 
-    void drawAltimeter(QPainter& painter, QRectF area, float altitude, float secondaryAltitude, float vv);
-    void drawVelocityMeter(QPainter& painter, QRectF area, float speed, float secondarySpeed);
+    void drawAltimeter(QPainter& painter, QRectF area);
+    void drawVelocityMeter(QPainter& painter, QRectF area);
     void fillInstrumentBackground(QPainter& painter, QRectF edge);
     void fillInstrumentOpagueBackground(QPainter& painter, QRectF edge);
     void drawInstrumentBackground(QPainter& painter, QRectF edge);
@@ -119,30 +97,23 @@ private:
 
     UASInterface* uas;          ///< The uas currently monitored
 
-    /*
-    AltimeterMode altimeterMode;
-    AltimeterFrame altimeterFrame;
-    SpeedMode speedMode;
-    */
-
-    bool didReceivePrimaryAltitude;
-    bool didReceivePrimarySpeed;
+    bool didReceiveSpeed;
 
     float roll;
     float pitch;
     float heading;
 
-    float primaryAltitude;
-    float GPSAltitude;
+    float altitudeAMSL;
+    float altitudeRelative;
 
     // APM: GPS and baro mix above home (GPS) altitude. This value comes from the GLOBAL_POSITION_INT message.
     // Do !!!NOT!!! ever do altitude calculations at the ground station. There are enough pitfalls already.
     // If the MP "set home altitude" button is migrated to here, it must set the UAS home altitude, not a GS-local one.
     float aboveHomeAltitude;
 
-    float primarySpeed;
-    float groundspeed;
-    float verticalVelocity;
+    float groundSpeed;
+    float airSpeed;
+    float climbRate;
 
     float navigationAltitudeError;
     float navigationSpeedError;
@@ -176,7 +147,7 @@ private:
     static const int tickValues[];
     static const QString compassWindNames[];
 
-    static const int updateInterval = 40;   
+    static const int updateInterval = 50;
 };
 
 #endif // PRIMARYFLIGHTDISPLAY_H

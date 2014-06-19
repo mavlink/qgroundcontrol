@@ -35,6 +35,7 @@ public slots:
     void gyroButtonClicked();
     void magButtonClicked();
     void accelButtonClicked();
+    void diffPressureButtonClicked();
 
     /**
      * @brief Hand context menu event
@@ -64,17 +65,13 @@ protected:
     QPixmap instructionIcon;
     QPixmap autopilotIcon;
     QPixmap gpsIcon;
-    bool accelStarted;
-    bool accelDone[6];
-    bool gyroStarted;
-    bool magStarted;
-    QStringList accelAxes;
 
     virtual void resizeEvent(QResizeEvent* event);
 
     void setMagCalibrated(bool calibrated);
     void setGyroCalibrated(bool calibrated);
     void setAccelCalibrated(bool calibrated);
+    void setDiffPressureCalibrated(bool calibrated);
 
     void updateIcons();
     

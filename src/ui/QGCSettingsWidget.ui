@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>528</width>
-    <height>455</height>
+    <width>534</width>
+    <height>517</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -159,10 +159,33 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>0</height>
+           <height>20</height>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>Danger Zone</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout" columnstretch="10,0">
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Delete all settings, layouts and restore defaults</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="resetSettingsButton">
+            <property name="text">
+             <string>Reset Settings</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </item>
       </layout>
      </widget>

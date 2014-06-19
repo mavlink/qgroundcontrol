@@ -265,6 +265,9 @@ CameraGimbalConfig::~CameraGimbalConfig()
 
 void CameraGimbalConfig::parameterChanged(int uas, int component, QString parameterName, QVariant value)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(component);
+    
     if (parameterName == "MNT_ANGMIN_TIL") //TILT
     {
         ui.tiltAngleMinSpinBox->setValue(value.toInt() / 100.0);

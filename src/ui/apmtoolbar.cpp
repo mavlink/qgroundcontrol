@@ -10,7 +10,16 @@ APMToolBar::APMToolBar(QWidget *parent):
     QDeclarativeView(parent), m_uas(0)
 {
     // Configure our QML object
+    
+    // Hack to fix QTBUG 34300 on OSX where QDir::currentPath has changed behavior. This causes
+    // relative paths to inside the .app package to fail.
+#ifdef Q_OS_MAC
+    QString qmlFile = QApplication::applicationDirPath();
+    qmlFile.append("/qml/ApmToolBar.qml");
+    setSource(QUrl::fromLocalFile(qmlFile));
+#else
     setSource(QUrl::fromLocalFile("qml/ApmToolBar.qml"));
+#endif
     setResizeMode(QDeclarativeView::SizeRootObjectToView);
     this->rootContext()->setContextProperty("globalObj", this);
     connect(LinkManager::instance(),SIGNAL(newLink(LinkInterface*)),
@@ -127,29 +136,26 @@ void APMToolBar::connectMAV()
 {
     qDebug() << "APMToolBar: connectMAV ";
 
-    bool connected = false;
-    if (LinkManager::instance()->getSerialLinks().count() > 0)
-        connected = LinkManager::instance()->getSerialLinks().last()->isConnected();
-    bool result;
+    if (LinkManager::instance()->getSerialLinks().count() > 0) {
+        bool result;
+        bool connected = LinkManager::instance()->getSerialLinks().last()->isConnected();
+        if (connected) {
+            // result need to be the opposite of success.
+            result = !LinkManager::instance()->getSerialLinks().last()->disconnect();
+        } else {
+            // Need to Connect Link
+            result = LinkManager::instance()->getSerialLinks().last()->connect();
+        }
+        qDebug() << "result = " << result;
 
-    if (!connected && LinkManager::instance()->getSerialLinks().count() == 0)
-    {
+        // Change the image to represent the state
+        setConnection(result);
+        
+        emit MAVConnected(result);
+    } else {
         // No Link so prompt to connect one
         MainWindow::instance()->addLink();
-    } else if (!connected) {
-        // Need to Connect Link
-        result = LinkManager::instance()->getSerialLinks().last()->connect();
-
-    } else if (connected && LinkManager::instance()->getSerialLinks().count() > 0) {
-        // result need to be the opposite of success.
-        result = !LinkManager::instance()->getSerialLinks().last()->disconnect();
     }
-    qDebug() << "result = " << result;
-
-    // Change the image to represent the state
-    setConnection(result);
-
-    emit MAVConnected(result);
 }
 
 void APMToolBar::setConnection(bool connection)
@@ -195,7 +201,7 @@ void APMToolBar::updateLinkDisplay(LinkInterface* newLink)
     QObject *object = rootObject();
 
     if (newLink && object){
-        qint64 baudrate = newLink->getNominalDataRate();
+        qint64 baudrate = newLink->getConnectionSpeed();
         object->setProperty("baudrateLabel", QString::number(baudrate));
 
         QString linkName = newLink->getName();

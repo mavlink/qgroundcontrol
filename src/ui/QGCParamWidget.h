@@ -83,9 +83,11 @@ public slots:
     virtual void clearOnboardParamDisplay();
     virtual void clearPendingParamDisplay();
 
+    /** @brief Adds parameter at the correct location by a alphapetical comparison of the parameter names */
+    void insertParamAlphabetical(int indexLowerBound, int indexUpperBound, QTreeWidgetItem* parentItem, QTreeWidgetItem* paramItem);
+
     /** @brief Ensure that view of parameter matches data in the model */
     QTreeWidgetItem* updateParameterDisplay(int component, QString parameterName, QVariant value);
-
 
     /** @brief Update when user changes parameters */
     void parameterItemChanged(QTreeWidgetItem* prev, int column);
