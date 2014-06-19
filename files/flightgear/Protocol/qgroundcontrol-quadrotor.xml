@@ -6,7 +6,7 @@
   <output>
    <line_separator>newline</line_separator>
    <var_separator>tab</var_separator>
-   
+
    <chunk>
     <name>time (sec)</name>
     <type>float</type>
@@ -46,7 +46,7 @@
     <node>/orientation/roll-deg</node>
     <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
    </chunk>
-   
+
    <chunk>
     <name>pitch angle (rad)</name>
     <type>float</type>
@@ -54,7 +54,7 @@
     <node>/orientation/pitch-deg</node>
     <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
    </chunk>
-   
+
    <chunk>
     <name>yaw angle</name>
     <type>float</type>
@@ -109,7 +109,7 @@
    </chunk>
 
    <!-- Velocities -->
-   
+
    <chunk>
     <name>Velocity North ("vn" mps)</name>
     <type>float</type>
@@ -139,14 +139,6 @@
      <type>float</type>
      <format>%.8f</format>
      <node>/velocities/airspeed-kt</node>
-     <factor>0.514444444444444</factor>      <!-- knots to mps -->
-   </chunk>
-
-   <chunk>
-     <name>airspeed-indicated-mps</name>
-     <type>float</type>
-     <format>%.8f</format>
-     <node>/instrumentation/indicated-speed-kt</node>
      <factor>0.514444444444444</factor>      <!-- knots to mps -->
    </chunk>
 
@@ -184,7 +176,7 @@
     <node>/environment/pressure-inhg</node>
     <factor>33.86389</factor>                  <!-- inhg to hpa -->
    </chunk>
-   
+
   </output>
 
   <input>
@@ -197,12 +189,12 @@
        <name>throttle0</name>
        <type>float</type>
        <node>/controls/engines/engine[0]/throttle</node>
-     </chunk> 
+     </chunk>
      <chunk>
        <name>throttle1</name>
        <type>float</type>
        <node>/controls/engines/engine[1]/throttle</node>
-     </chunk> 
+     </chunk>
      <chunk>
        <name>throttle2</name>
        <type>float</type>
@@ -212,13 +204,13 @@
        <name>running</name>
        <type>bool</type>
        <node>/engines/engine/running</node>
-     </chunk> 
+     </chunk>
      <chunk>
        <name>throttle3</name>
        <type>float</type>
        <node>/controls/engines/engine[3]/throttle</node>
-     </chunk> 
-   
+     </chunk>
+
 
  </input>
 
