@@ -106,7 +106,7 @@
 <engine file="a2830-12" name="right">
       <location unit="M">
         <x>   0.000 </x>
-        <y>  -0.283 </y>
+        <y>   0.283 </y>
         <z>   0.000 </z>
       </location>
       <orient unit="DEG">
@@ -118,7 +118,7 @@
       <thruster file="prop10x4.5">
         <location unit="M">
           <x>   0.000 </x>
-          <y>  -0.283 </y>
+          <y>   0.283 </y>
           <z>   0.125 </z>
         </location>
         <orient unit="DEG">
@@ -133,7 +133,7 @@
     <engine file="a2830-12" name="left">
       <location unit="M">
         <x>   0.00 </x>
-        <y>   0.283 </y>
+        <y>  -0.283 </y>
         <z>   0.00 </z>
       </location>
       <orient unit="DEG">
@@ -145,7 +145,7 @@
       <thruster file="prop10x4.5">
         <location unit="M">
           <x>   0.00 </x>
-          <y>   0.283 </y>
+          <y>  -0.283 </y>
           <z>   0.125 </z>
         </location>
         <orient unit="DEG">
@@ -212,8 +212,8 @@
         <p_factor> 10 </p_factor>
       </thruster>
     </engine>
-    
-    
+
+
     <tank type="FUEL" number="0">
       <location unit="M">
         <x>   0.00 </x>
