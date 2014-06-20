@@ -2894,9 +2894,11 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
     static quint8 countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
 
     // We only transmit manual command messages if the system has manual inputs enabled and is armed
-    if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
-    {
+    //if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
 
+    // Lets always send velocity commands for now
+    if (true)
+    {
         // Transmit the manual commands only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
         // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
         // if no command inputs have changed.
