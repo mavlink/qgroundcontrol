@@ -224,6 +224,7 @@ public slots:
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
     void setAdvancedMode(bool isAdvancedMode);
+    void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
     void loadHardwareConfigView();
     void loadSoftwareConfigView();
