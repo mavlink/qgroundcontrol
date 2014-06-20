@@ -350,7 +350,7 @@ void UAS::updateState()
     // Connection gained
     if (connectionLost && (heartbeatInterval < timeoutIntervalHeartbeat))
     {
-        QString audiostring = QString("Link regained to system %1 after %2 seconds").arg(this->getUASID()).arg((int)(connectionLossTime/1000000));
+        QString audiostring = QString("Link regained to system %1").arg(this->getUASID());
         GAudioOutput::instance()->say(audiostring.toLower());
         connectionLost = false;
         connectionLossTime = 0;
@@ -955,7 +955,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         setGroundSpeed(vel);
                         emit speedChanged(this, groundSpeed, airSpeed, time);
                     } else {
-                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
+                        emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_NOTICE, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }
             }
@@ -1056,27 +1056,27 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
             case MAV_RESULT_ACCEPTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_INFO, tr("SUCCESS: Executed CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_TEMPORARILY_REJECTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Temporarily rejected CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_DENIED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Denied CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Denied CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_UNSUPPORTED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_WARNING, tr("FAILURE: Unsupported CMD: %1").arg(ack.command));
             }
                 break;
             case MAV_RESULT_FAILED:
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Failed CMD: %1").arg(ack.command));
+                emit textMessageReceived(uasId, message.compid, MAV_SEVERITY_ERROR, tr("FAILURE: Failed CMD: %1").arg(ack.command));
             }
                 break;
             }
@@ -2733,7 +2733,7 @@ void UAS::requestParameter(int component, const QString& parameter)
     // Copy full param name or maximum max field size
     if (parameter.length() > MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)
     {
-        emit textMessageReceived(uasId, 0, 255, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
+        emit textMessageReceived(uasId, 0, MAV_SEVERITY_WARNING, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
     }
     memcpy(read.param_id, parameter.toStdString().c_str(), qMax(parameter.length(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
     read.param_id[15] = '\0'; // Enforce null termination
@@ -2884,34 +2884,70 @@ void UAS::toggleAutonomy()
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons)
+void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons)
 {
     Q_UNUSED(xHat);
     Q_UNUSED(yHat);
 
-    // Scale values
-    double rollPitchScaling = 1.0f * 1000.0f;
-    double yawScaling = 1.0f * 1000.0f;
-    double thrustScaling = 1.0f * 1000.0f;
+    // Store the previous manual commands
+    static float manualRollAngle = 0.0;
+    static float manualPitchAngle = 0.0;
+    static float manualYawAngle = 0.0;
+    static float manualThrust = 0.0;
+    static quint16 manualButtons = 0;
+    static quint8 countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
 
-    manualRollAngle = roll * rollPitchScaling;
-    manualPitchAngle = pitch * rollPitchScaling;
-    manualYawAngle = yaw * yawScaling;
-    manualThrust = thrust * thrustScaling;
-
-    // If system has manual inputs enabled and is armed
+    // We only transmit manual command messages if the system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
-        mavlink_message_t message;
-        mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualPitchAngle, (float)manualRollAngle, (float)manualThrust, (float)manualYawAngle, buttons);
-        sendMessage(message);
-        //qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
-        emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
-    }
-    else
-    {
-        //qDebug() << "JOYSTICK/MANUAL CONTROL: IGNORING COMMANDS: Set mode to MANUAL to send joystick commands first";
+        // Transmit the manual commands only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
+        // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
+        // if no command inputs have changed.
+        // The default transmission rate is 50Hz, but when no inputs have changed it drops down to 5Hz.
+        bool sendCommand = false;
+        if (countSinceLastTransmission++ >= 10)
+        {
+            sendCommand = true;
+            countSinceLastTransmission = 0;
+        }
+        else if ((!isnan(roll) && roll != manualRollAngle) || (!isnan(pitch) && pitch != manualPitchAngle) ||
+                   (!isnan(yaw) && yaw != manualYawAngle) || (!isnan(thrust) && thrust != manualThrust) ||
+                   buttons != manualButtons)
+        {
+            sendCommand = true;
+
+            // Ensure that another message will be sent the next time this function is called
+            countSinceLastTransmission = 10;
+        }
+
+        // Now if we should trigger an update, let's do that
+        if (sendCommand)
+        {
+            // Save the new manual control inputs
+            manualRollAngle = roll;
+            manualPitchAngle = pitch;
+            manualYawAngle = yaw;
+            manualThrust = thrust;
+            manualButtons = buttons;
+
+            // Store scaling values for all 3 axes
+            const float axesScaling = 1.0 * 1000.0;
+
+            // Calculate the new commands for roll, pitch, yaw, and thrust
+            const float newRollCommand = roll * axesScaling;
+            const float newPitchCommand = pitch * axesScaling;
+            const float newYawCommand = yaw * axesScaling;
+            const float newThrustCommand = thrust * axesScaling;
+
+            // Send the MANUAL_COMMAND message
+            mavlink_message_t message;
+            mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            sendMessage(message);
+
+            // Emit an update in control values to other UI elements, like the HSI display
+            emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
+        }
     }
 }
 
@@ -3603,7 +3639,7 @@ void UAS::setBatterySpecs(const QString& specs)
         }
         else
         {
-            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
         }
     }
     else
@@ -3629,7 +3665,7 @@ void UAS::setBatterySpecs(const QString& specs)
         }
         else
         {
-            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+            emit textMessageReceived(0, 0, MAV_SEVERITY_WARNING, "Could not set battery options, format is wrong");
         }
     }
 }

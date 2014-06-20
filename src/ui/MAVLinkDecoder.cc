@@ -302,7 +302,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             // Enforce null termination
             str[messageInfo[msgid].fields[fieldid].array_length-1] = '\0';
             QString string(name + ": " + str);
-            if (!textMessageFilter.contains(msgid)) emit textMessageReceived(msg->sysid, msg->compid, 0, string);
+            if (!textMessageFilter.contains(msgid)) emit textMessageReceived(msg->sysid, msg->compid, MAV_SEVERITY_INFO, string);
         }
         else
         {

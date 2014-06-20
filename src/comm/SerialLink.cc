@@ -99,19 +99,11 @@ QList<QString> SerialLink::getCurrentPorts()
     m_ports.clear();
 
     QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
-
-    if( portList.count() == 0){
-        qDebug() << "No Ports Found" << m_ports;
-    }
-
     foreach (const QSerialPortInfo &info, portList)
     {
-//        qDebug() << "PortName    : " << info.portName()
-//                 << "Description : " << info.description();
-//        qDebug() << "Manufacturer: " << info.manufacturer();
-
         m_ports.append(info.portName());
     }
+
     return m_ports;
 }
 
