@@ -1700,6 +1700,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
     connect(uas, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
+    connect(uas, SIGNAL(misconfigurationDetected(UASInterface*)), this, SLOT(handleMisconfiguration(UASInterface*)));
 
     // HIL
     showHILConfigurationWidget(uas);
@@ -1943,6 +1944,26 @@ void MainWindow::setAdvancedMode(bool isAdvancedMode)
     menuActionHelper->setAdvancedMode(isAdvancedMode);
     ui.actionAdvanced_Mode->setChecked(isAdvancedMode);
     settings.setValue("ADVANCED_MODE",isAdvancedMode);
+}
+
+void MainWindow::handleMisconfiguration(UASInterface* uas) {
+
+    // Ask user if he wants to handle this now
+    QMessageBox msgBox(this);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setText(tr("Missing or Invalid Onboard Configuration"));
+    msgBox.setInformativeText(tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"));
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    int val = msgBox.exec();
+
+    if (val == QMessageBox::Ok) {
+        // He wants to handle it, make sure this system is selected
+        UASManager::instance()->setActiveUAS(uas);
+
+        // Flick to config view
+        loadHardwareConfigView();
+    }
 }
 
 void MainWindow::loadEngineerView()
