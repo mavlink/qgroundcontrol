@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
  *
  * @author Lorenz Meier <mavteam@student.ethz.ch>
  * @author Andreas Romer <mavteam@student.ethz.ch>
+ * @author Julian Oes <julian@oes.ch>
  */
 
 #ifndef _JOYSTICKINPUT_H_
@@ -56,6 +57,8 @@ This file is part of the PIXHAWK project
 struct JoystickSettings {
     QMap<int, bool> axesInverted; ///< Whether each axis should be used inverted from what was reported.
     QMap<int, bool> axesLimited; ///< Whether each axis should be limited to only the positive range. Currently this only applies to the throttle axis, but is kept generic here to possibly support other axes.
+    QMap<int, float> axesMaxRange; ///< The maximum values per axis
+    QMap<int, float> axesMinRange; ///< The minimum values per axis
     QMap<int, int> buttonActions; ///< The index of the action associated with every button.
 };
 Q_DECLARE_METATYPE(JoystickSettings)
@@ -107,6 +110,11 @@ public:
     bool enabled() const
     {
         return isEnabled;
+    }
+
+    bool calibrating() const
+    {
+        return isCalibrating;
     }
 
     int getMappingThrottleAxis() const
@@ -162,16 +170,17 @@ public:
     float getCurrentValueForAxis(int axis) const;
     bool getInvertedForAxis(int axis) const;
     bool getRangeLimitForAxis(int axis) const;
+    float getAxisRangeLimitMinForAxis(int axis) const;
+    float getAxisRangeLimitMaxForAxis(int axis) const;
     int getActionForButton(int button) const;
 
     const double sdlJoystickMin;
     const double sdlJoystickMax;
 
 protected:
-    double calibrationPositive[10];
-    double calibrationNegative[10];
 
     bool isEnabled; ///< Track whether the system should emit the higher-level signals: joystickChanged & actionTriggered.
+    bool isCalibrating; ///< Track if calibration in progress
     bool done;
 
     SDL_Joystick* joystick;
@@ -287,6 +296,8 @@ public slots:
     void setActiveUAS(UASInterface* uas);
     /** @brief Switch to a new joystick by ID number. Both buttons and axes are updated with the proper signals emitted. */
     void setActiveJoystick(int id);
+    /** @brief Switch calibration mode active */
+    void setCalibrating(bool active);
     /**
      * @brief Change the control mapping for a given joystick axis.
      * @param axisID The axis to modify (0-indexed)
@@ -300,12 +311,28 @@ public slots:
      * @param inverted True indicates inverted from normal. Varies by controller.
      */
     void setAxisInversion(int axis, bool inverted);
+
     /**
      * @brief Specify that an axis should only transmit the positive values. Useful for controlling throttle from auto-centering axes.
      * @param axis Which axis has its range limited.
      * @param limitRange If true only the positive half of this axis will be read.
      */
     void setAxisRangeLimit(int axis, bool limitRange);
+
+    /**
+     * @brief Specify minimum value for axis.
+     * @param axis Which axis should be set.
+     * @param min Value to be set.
+     */
+    void setAxisRangeLimitMin(int axis, float min);
+
+    /**
+     * @brief Specify maximum value for axis.
+     * @param axis Which axis should be set.
+     * @param max Value to be set.
+     */
+    void setAxisRangeLimitMax(int axis, float max);
+
     /**
      * @brief Specify a button->action mapping for the given uas.
      * This mapping is applied based on UAS autopilot type and UAS system type.

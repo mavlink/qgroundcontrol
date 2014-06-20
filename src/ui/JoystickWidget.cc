@@ -228,6 +228,8 @@ void JoystickWidget::createUIForJoystick()
     {
         m_ui->axesBox->hide();
     }
+
+    connect(m_ui->calibrationButton, SIGNAL(clicked()), this, SLOT(cycleCalibrationButton()));
 }
 
 void JoystickWidget::updateAxisValue(int axis, float value)
@@ -252,4 +254,15 @@ void JoystickWidget::joystickButtonPressed(int key)
 void JoystickWidget::joystickButtonReleased(int key)
 {
     buttons.at(key)->setStyleSheet("");
+}
+
+void JoystickWidget::cycleCalibrationButton()
+{
+    if (this->joystick->calibrating()) {
+        this->joystick->setCalibrating(false);
+        m_ui->calibrationButton->setText("Calibrate range");
+    } else {
+        this->joystick->setCalibrating(true);
+        m_ui->calibrationButton->setText("End calibration");
+    }
 }
