@@ -788,6 +788,10 @@ void MainWindow::loadDockWidget(const QString& name)
     {
         createDockWidget(centerStack->currentWidget(),new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
+    else if (name == "FILE_VIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
+    }
     else if (name == "UAS_STATUS_DETAILS_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new UASInfoWidget(this),tr("Status Details"),"UAS_STATUS_DETAILS_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);

@@ -86,7 +86,6 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     mavlink_encapsulated_data_t data;
     mavlink_msg_encapsulated_data_decode(&message, &data);
     const RequestHeader *hdr = (const RequestHeader *)&data.data[0];
-    unsigned seqnr = data.seqnr;
 
     // XXX VALIDATE MESSAGE
 
@@ -209,7 +208,8 @@ void QGCUASFileManager::sendList()
 
 void QGCUASFileManager::downloadPath(const QString &from, const QString &to)
 {
-
+    Q_UNUSED(from);
+    
     // Send path, e.g. /fs/microsd and download content
     // recursively into a local directory
 

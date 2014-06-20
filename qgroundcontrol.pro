@@ -186,6 +186,8 @@ DebugBuild {
         src/qgcunittest/MockUASManager.h \
         src/qgcunittest/MockUAS.h \
         src/qgcunittest/MockQGCUASParamManager.h \
+        src/qgcunittest/MockMavlinkInterface.h \
+        src/qgcunittest/MockMavlinkFileServer.h \
         src/qgcunittest/MultiSignalSpy.h \
         src/qgcunittest/FlightModeConfigTest.h
 
@@ -194,6 +196,7 @@ DebugBuild {
         src/qgcunittest/MockUASManager.cc \
         src/qgcunittest/MockUAS.cc \
         src/qgcunittest/MockQGCUASParamManager.cc \
+        src/qgcunittest/MockMavlinkFileServer.cc \
         src/qgcunittest/MultiSignalSpy.cc \
         src/qgcunittest/FlightModeConfigTest.cc
 }
