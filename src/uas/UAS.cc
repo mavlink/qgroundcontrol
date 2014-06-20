@@ -1047,6 +1047,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             paramVal.type = rawValue.param_type;
 
             processParamValueMsg(message, parameterName,rawValue,paramVal);
+            processParamValueMsgHook(message, parameterName,rawValue,paramVal);
 
          }
             break;
