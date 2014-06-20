@@ -974,6 +974,7 @@ protected:
     quint64 getUnixReferenceTime(quint64 time);
 
     virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
+    virtual void processParamValueMsgHook(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue) {};
 
     int componentID[256];
     bool componentMulti[256];
