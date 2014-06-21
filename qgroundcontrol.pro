@@ -189,6 +189,8 @@ DebugBuild {
         src/qgcunittest/MultiSignalSpy.h \
         src/qgcunittest/FlightModeConfigTest.h \
         src/qgcunittest/FlightGearTest.h
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/TCPLoopBackServer.h
 
     SOURCES += \
         src/qgcunittest/UASUnitTest.cc \
@@ -198,6 +200,8 @@ DebugBuild {
         src/qgcunittest/MultiSignalSpy.cc \
         src/qgcunittest/FlightModeConfigTest.cc \
         src/qgcunittest/FlightGearTest.cc
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/TCPLoopBackServer.cc
 }
 
 #
