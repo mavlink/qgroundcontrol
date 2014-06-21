@@ -43,6 +43,10 @@ class TCPLinkUnitTest : public QObject
 
 public:
     TCPLinkUnitTest(void);
+    
+signals:
+    void waitForBytesWritten(int msecs);
+    void waitForReadyRead(int msecs);
 
 private slots:
     void init(void);

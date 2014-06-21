@@ -22,7 +22,7 @@
  ======================================================================*/
 
 #include "TCPLinkTest.h"
-#include <QTcpServer>
+#include "TCPLoopBackServer.h"
 
 /// @file
 ///     @brief TCPLink class unit test
@@ -111,7 +111,9 @@ void TCPLinkUnitTest::_connectFail_test(void)
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
-    QCOMPARE(_link->connect(), false);
+    // With the new threading model connect will always succeed. We only get an error signal
+    // for a failed connected.
+    QCOMPARE(_link->connect(), true);
 
     // Make sure we get a linkError signal with the right link name
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
@@ -119,10 +121,12 @@ void TCPLinkUnitTest::_connectFail_test(void)
     QList<QVariant> arguments = _multiSpy->getSpyByIndex(communicationErrorSignalIndex)->takeFirst();
     QCOMPARE(arguments.at(0).toString(), _link->getName());
     _multiSpy->clearSignalByIndex(communicationErrorSignalIndex);
+    
+    _link->disconnect();
 
     // Try to connect again to make sure everything was cleaned up correctly from previous failed connection
     
-    QCOMPARE(_link->connect(), false);
+    QCOMPARE(_link->connect(), true);
     
     // Make sure we get a linkError signal with the right link name
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
@@ -139,51 +143,46 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
 
     // Start the server side
-    QTcpServer* server = new QTcpServer(this);
-    QCOMPARE(server->listen(_hostAddress, _port), true);
+    TCPLoopBackServer* server = new TCPLoopBackServer(_hostAddress, _port);
+    Q_CHECK_PTR(server);
     
     // Connect to the server
     QCOMPARE(_link->connect(), true);
-    
-    // Wait for the connection to come through on server side
-    QCOMPARE(server->waitForNewConnection(1000), true);
-    QTcpSocket* serverSocket = server->nextPendingConnection();
-    Q_ASSERT(serverSocket);
     
     // Make sure we get the two different connected signals
     QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 1000), true);
     QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask | connected2SignalMask), true);
     QList<QVariant> arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
     QCOMPARE(arguments.at(0).toBool(), true);
-    _multiSpy->clearSignalsByMask(connectedSignalMask);
-    
-    // Test server->link data path
-
-    QByteArray bytesOut("test");
-    
-    // Write data from server to link
-    serverSocket->write(bytesOut);
-    
-    // Make sure we get the bytesReceived signal, with the correct data
-    QCOMPARE(_multiSpy->waitForSignalByIndex(bytesReceivedSignalIndex, 1000), true);
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(bytesReceivedSignalMask), true);
-    arguments = _multiSpy->getSpyByIndex(bytesReceivedSignalIndex)->takeFirst();
-    QCOMPARE(arguments.at(1), QVariant(bytesOut));
-    _multiSpy->clearSignalByIndex(bytesReceivedSignalIndex);
+    _multiSpy->clearAllSignals();
     
     // Test link->server data path
     
+    QByteArray bytesOut("test");
+
     // Write data from link to server
+    const char* bytesWrittenSignal = SIGNAL(bytesWritten(qint64));
+    MultiSignalSpy bytesWrittenSpy;
+    QCOMPARE(bytesWrittenSpy.init(_link->getSocket(), &bytesWrittenSignal, 1), true);
     _link->writeBytes(bytesOut.data(), bytesOut.size());
-    QCOMPARE(_link->getSocket()->waitForBytesWritten(1000), true);
-
-    // Make sure we get readyRead on server
-    QCOMPARE(serverSocket->waitForReadyRead(1000), true);
-
-    // Read the data and make sure it matches
-    QByteArray bytesIn = serverSocket->read(bytesOut.size() + 100);
-    QCOMPARE(bytesIn, bytesOut);
+    _multiSpy->clearAllSignals();
     
+    // We emit this signal such that it will be queued and run on the TCPLink thread. This in turn
+    // allows the TCPLink object to pump the bytes through.
+    connect(this, SIGNAL(waitForBytesWritten(int)), _link, SLOT(waitForBytesWritten(int)));
+    emit waitForBytesWritten(1000);
+
+    // Check for loopback, both from signal received and actual bytes returned
+
+    QCOMPARE(_multiSpy->waitForSignalByIndex(bytesReceivedSignalIndex, 1000), true);
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(bytesReceivedSignalMask), true);
+    
+    // Read the data and make sure it matches
+    arguments = _multiSpy->getSpyByIndex(bytesReceivedSignalIndex)->takeFirst();
+    QVERIFY(arguments.at(1).toByteArray() == bytesOut);
+    
+    _multiSpy->clearAllSignals();
+
     // Disconnect the link
     _link->disconnect();
     
@@ -192,27 +191,21 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     QCOMPARE(_multiSpy->checkOnlySignalByMask(disconnectedSignalMask | connected2SignalMask), true);
     arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
     QCOMPARE(arguments.at(0).toBool(), false);
-    _multiSpy->clearSignalsByMask(disconnectedSignalMask);
-    
-    // Make sure we get disconnected signals from the server side
-    QCOMPARE(serverSocket->waitForDisconnected(1000), true  );
+    _multiSpy->clearAllSignals();
     
     // Try to connect again to make sure everything was cleaned up correctly from previous connection
     
     // Connect to the server
     QCOMPARE(_link->connect(), true);
     
-    // Wait for the connection to come through on server side
-    QCOMPARE(server->waitForNewConnection(1000), true);
-    serverSocket = server->nextPendingConnection();
-    Q_ASSERT(serverSocket);
-    
     // Make sure we get the two different connected signals
     QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 1000), true);
     QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask | connected2SignalMask), true);
     arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
     QCOMPARE(arguments.at(0).toBool(), true);
-    _multiSpy->clearSignalsByMask(connectedSignalMask);
-
+    _multiSpy->clearAllSignals();
+    
+    server->quit();
+    QTest::qWait(500);  // Wait a little for server thread to terminate
     delete server;
 }
