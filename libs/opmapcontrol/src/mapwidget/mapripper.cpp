@@ -52,31 +52,37 @@ namespace mapcontrol
     }
     void MapRipper::finish()
     {
-         if(zoom<maxzoom)
+        if(zoom<maxzoom)
         {
-         ++zoom;
-         QMessageBox msgBox;
-         msgBox.setText(tr("Continue Ripping at zoom level %1? (Continuing automatically after 3s)").arg(zoom));
-        // msgBox.setInformativeText("Do you want to save your changes?");
-         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-         msgBox.setDefaultButton(QMessageBox::Yes);
-         QTimer::singleShot(3000, &msgBox, SLOT(accept()));
-         msgBox.exec();
-         int ret  = msgBox.result();
+            ++zoom;
+            QMessageBox msgBox;
+            msgBox.setText(tr("Continue Ripping at zoom level %1? (Continuing automatically after 3s)").arg(zoom));
+            // msgBox.setInformativeText("Do you want to save your changes?");
+            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+            msgBox.setDefaultButton(QMessageBox::Yes);
+            QTimer::singleShot(3000, &msgBox, SLOT(accept()));
+            msgBox.exec();
+            int ret  = msgBox.result();
 
-         if(ret==QMessageBox::Yes || ret == 1)
-         {
-             points.clear();
-             points=core->Projection()->GetAreaTileList(area,zoom,0);
-             this->start();
-         }
-         else
-         {
-             progressForm->close();
-             delete progressForm;
-             this->deleteLater();
-         }
-     }
+            if(ret==QMessageBox::Yes || ret == 1)
+            {
+                points.clear();
+                points=core->Projection()->GetAreaTileList(area,zoom,0);
+                this->start();
+            }
+            else
+            {
+                progressForm->close();
+                delete progressForm;
+                this->deleteLater();
+            }
+        }
+        else
+        {
+            progressForm->close();
+            delete progressForm;
+            this->deleteLater();
+        }
     }
 
 
