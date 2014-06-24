@@ -2943,7 +2943,7 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
             const uint16_t thrustCommand = (uint16_t)(thrust * axesScaling);
 
 
-            uint8_t mode = 4; // for position setpoint (OFFBOARD_CONTROL_MODE_DIRECT_POSITION)
+            uint8_t mode = 3; // for velocity setpoint (OFFBOARD_CONTROL_MODE_DIRECT_VELOCITY)
 
             // Send the MANUAL_COMMAND message
             mavlink_message_t message;
