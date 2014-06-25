@@ -1185,7 +1185,7 @@ void MainWindow::saveScreen()
 
     if (!screenFileName.isEmpty())
     {
-        window.save(screenFileName, format.toAscii());
+        window.save(screenFileName, format.toLatin1());
     }
 }
 void MainWindow::enableDockWidgetTitleBars(bool enabled)
