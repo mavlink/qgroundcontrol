@@ -899,7 +899,7 @@ void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSe
 void MainWindow::showCentralWidget()
 {
     QAction* act = qobject_cast<QAction *>(sender());
-    QWidget* widget = qVariantValue<QWidget *>(act->data());
+    QWidget* widget = act->data().value<QWidget *>();
     centerStack->setCurrentWidget(widget);
 }
 
