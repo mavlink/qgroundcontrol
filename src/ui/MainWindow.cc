@@ -71,6 +71,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialSettingsDialog.h"
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
+#include <QDesktopWidget>
 
 // Add support for the MAVLink generator UI if it's been requested.
 #ifdef QGC_MAVGEN_ENABLED
