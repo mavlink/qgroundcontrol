@@ -320,7 +320,9 @@ INCLUDEPATH += \
 #
 # [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
-include(libs/qwt/qwt.pri)
+include(libs/qwt.pri)
+DEPENDPATH += libs/qwt
+INCLUDEPATH += libs/qwt
 
 #
 # [REQUIRED] QSerialPort library. Provides serial port wrapper library.
