@@ -20,7 +20,7 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
 
     // Center the window on the screen.
     QRect position = frameGeometry();
-    position.moveCenter(QDesktopWidget().availableGeometry().center());
+    position.moveCenter(QApplication::desktop()->availableGeometry().center());
     move(position.topLeft());
 
     // Add all protocols
