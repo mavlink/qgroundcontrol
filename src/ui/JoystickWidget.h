@@ -65,7 +65,7 @@ public slots:
     /** @brief Update the UI with new values for the hat.
      *  @see JoystickInput::hatDirectionChanged
      */
-    void setHat(int x, int y);
+    void setHat(qint8 x, qint8 y);
     /** @brief Trigger a UI change based on a button being pressed */
     void joystickButtonPressed(int key);
     /** @brief Trigger a UI change based on a button being released */

@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>images/categories/applications-system.svg</file>
-        <file>images/status/folder-open.svg</file>
-    </qresource>
-</RCC>

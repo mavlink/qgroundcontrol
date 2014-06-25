@@ -556,7 +556,7 @@ void MainWindow::buildCommonWidgets()
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
-        pilotView->setCentralWidget(new QGCMapTool(this));
+        pilotView->setCentralWidget(new PrimaryFlightDisplay(this));
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
     }
 
@@ -658,6 +658,8 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
     createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
 
+    menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
+
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
     {
@@ -677,7 +679,7 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Radio Control"));
 
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
     createDockWidget(simView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
     createDockWidget(pilotView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
@@ -818,6 +820,10 @@ void MainWindow::loadDockWidget(const QString& name)
     else if (name == "UAS_STATUS_DETAILS_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new UASInfoWidget(this),tr("Status Details"),"UAS_STATUS_DETAILS_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
+    else if (name == "MAP_VIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new QGCMapTool(this),tr("Map view"),"MAP_VIEW_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET")
     {
@@ -1734,6 +1740,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
     connect(uas, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
+    connect(uas, SIGNAL(misconfigurationDetected(UASInterface*)), this, SLOT(handleMisconfiguration(UASInterface*)));
 
     // HIL
     showHILConfigurationWidget(uas);
@@ -1977,6 +1984,26 @@ void MainWindow::setAdvancedMode(bool isAdvancedMode)
     menuActionHelper->setAdvancedMode(isAdvancedMode);
     ui.actionAdvanced_Mode->setChecked(isAdvancedMode);
     settings.setValue("ADVANCED_MODE",isAdvancedMode);
+}
+
+void MainWindow::handleMisconfiguration(UASInterface* uas) {
+
+    // Ask user if he wants to handle this now
+    QMessageBox msgBox(this);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setText(tr("Missing or Invalid Onboard Configuration"));
+    msgBox.setInformativeText(tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"));
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    int val = msgBox.exec();
+
+    if (val == QMessageBox::Ok) {
+        // He wants to handle it, make sure this system is selected
+        UASManager::instance()->setActiveUAS(uas);
+
+        // Flick to config view
+        loadHardwareConfigView();
+    }
 }
 
 void MainWindow::loadEngineerView()
