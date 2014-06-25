@@ -223,7 +223,7 @@ bool GAudioOutput::say(QString text, int severity)
             text = "\\" + text;
             QStdWString str = text.toStdWString();
             unsigned char str2[1024] = {};
-            memcpy(str2, text.toAscii().data(), str.length());
+            memcpy(str2, text.toLatin1().data(), str.length());
             SpeakString(str2);
             res = true;
 #endif // Q_OS_MAC
