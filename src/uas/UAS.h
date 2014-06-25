@@ -838,7 +838,7 @@ public slots:
     void toggleAutonomy();
 
     /** @brief Set the values for the manual control of the vehicle */
-    void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
+    void setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
@@ -974,6 +974,7 @@ protected:
     quint64 getUnixReferenceTime(quint64 time);
 
     virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
+    virtual void processParamValueMsgHook(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue) {};
 
     int componentID[256];
     bool componentMulti[256];

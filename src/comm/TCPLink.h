@@ -60,6 +60,8 @@ public:
     quint16 getPort(void) const { return _port; }
     QTcpSocket* getSocket(void) { return _socket; }
     
+    void signalBytesWritten(void);
+
     // LinkInterface methods
     virtual int     getId(void) const;
     virtual QString getName(void) const;
@@ -80,6 +82,9 @@ public slots:
     
     // From LinkInterface
     virtual void writeBytes(const char* data, qint64 length);
+    
+    void waitForBytesWritten(int msecs);
+    void waitForReadyRead(int msecs);
 
 protected slots:
     void _socketError(QAbstractSocket::SocketError socketError);
@@ -90,7 +95,7 @@ protected slots:
 protected:
     // From LinkInterface->QThread
     virtual void run(void);
-
+    
 private:
     void _resetName(void);
 	bool _hardwareConnect(void);

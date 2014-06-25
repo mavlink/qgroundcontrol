@@ -1005,6 +1005,55 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit remoteControlChannelRawChanged(channels.port * portWidth + 7, channels.chan8_raw);
         }
             break;
+        case MAVLINK_MSG_ID_RC_CHANNELS:
+        {
+            mavlink_rc_channels_t channels;
+            mavlink_msg_rc_channels_decode(&message, &channels);
+
+            // UINT8_MAX indicates this value is unknown
+            if (channels.rssi != UINT8_MAX) {
+                emit remoteControlRSSIChanged(channels.rssi/100.0f);
+            }
+
+            if (channels.chan1_raw != UINT16_MAX && channels.chancount > 0)
+                emit remoteControlChannelRawChanged(0, channels.chan1_raw);
+            if (channels.chan2_raw != UINT16_MAX && channels.chancount > 1)
+                emit remoteControlChannelRawChanged(1, channels.chan2_raw);
+            if (channels.chan3_raw != UINT16_MAX && channels.chancount > 2)
+                emit remoteControlChannelRawChanged(2, channels.chan3_raw);
+            if (channels.chan4_raw != UINT16_MAX && channels.chancount > 3)
+                emit remoteControlChannelRawChanged(3, channels.chan4_raw);
+            if (channels.chan5_raw != UINT16_MAX && channels.chancount > 4)
+                emit remoteControlChannelRawChanged(4, channels.chan5_raw);
+            if (channels.chan6_raw != UINT16_MAX && channels.chancount > 5)
+                emit remoteControlChannelRawChanged(5, channels.chan6_raw);
+            if (channels.chan7_raw != UINT16_MAX && channels.chancount > 6)
+                emit remoteControlChannelRawChanged(6, channels.chan7_raw);
+            if (channels.chan8_raw != UINT16_MAX && channels.chancount > 7)
+                emit remoteControlChannelRawChanged(7, channels.chan8_raw);
+            if (channels.chan9_raw != UINT16_MAX && channels.chancount > 8)
+                emit remoteControlChannelRawChanged(8, channels.chan9_raw);
+            if (channels.chan10_raw != UINT16_MAX && channels.chancount > 9)
+                emit remoteControlChannelRawChanged(9, channels.chan10_raw);
+            if (channels.chan11_raw != UINT16_MAX && channels.chancount > 10)
+                emit remoteControlChannelRawChanged(10, channels.chan11_raw);
+            if (channels.chan12_raw != UINT16_MAX && channels.chancount > 11)
+                emit remoteControlChannelRawChanged(11, channels.chan12_raw);
+            if (channels.chan13_raw != UINT16_MAX && channels.chancount > 12)
+                emit remoteControlChannelRawChanged(12, channels.chan13_raw);
+            if (channels.chan14_raw != UINT16_MAX && channels.chancount > 13)
+                emit remoteControlChannelRawChanged(13, channels.chan14_raw);
+            if (channels.chan15_raw != UINT16_MAX && channels.chancount > 14)
+                emit remoteControlChannelRawChanged(14, channels.chan15_raw);
+            if (channels.chan16_raw != UINT16_MAX && channels.chancount > 15)
+                emit remoteControlChannelRawChanged(15, channels.chan16_raw);
+            if (channels.chan17_raw != UINT16_MAX && channels.chancount > 16)
+                emit remoteControlChannelRawChanged(16, channels.chan17_raw);
+            if (channels.chan18_raw != UINT16_MAX && channels.chancount > 17)
+                emit remoteControlChannelRawChanged(17, channels.chan18_raw);
+
+        }
+            break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
         {
             mavlink_rc_channels_scaled_t channels;
@@ -1044,6 +1093,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             paramVal.type = rawValue.param_type;
 
             processParamValueMsg(message, parameterName,rawValue,paramVal);
+            processParamValueMsgHook(message, parameterName,rawValue,paramVal);
 
          }
             break;
@@ -1443,9 +1493,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 #endif
-            // Messages to ignore
-        case MAVLINK_MSG_ID_RAW_IMU:
-        case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         {
             //mavlink_set_local_position_setpoint_t p;
@@ -1461,6 +1508,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit navigationControllerErrorsChanged(this, p.alt_error, p.aspd_error, p.xtrack_error);
         }
             break;
+        // Messages to ignore
+        case MAVLINK_MSG_ID_RAW_IMU:
+        case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_RAW_PRESSURE:
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
@@ -2864,50 +2914,89 @@ void UAS::toggleArmedState()
 void UAS::goAutonomous()
 {
     setMode((base_mode & ~(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)) | (MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED), 0);
+    qDebug() << __FILE__ << __LINE__ << "Going autonomous";
 }
 
 void UAS::goManual()
 {
     setMode((base_mode & ~(MAV_MODE_FLAG_AUTO_ENABLED | MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED))  | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, 0);
+    qDebug() << __FILE__ << __LINE__ << "Going manual";
 }
 
 void UAS::toggleAutonomy()
 {
     setMode(base_mode ^ MAV_MODE_FLAG_AUTO_ENABLED ^ MAV_MODE_FLAG_MANUAL_INPUT_ENABLED ^ MAV_MODE_FLAG_GUIDED_ENABLED ^ MAV_MODE_FLAG_STABILIZE_ENABLED, 0);
+    qDebug() << __FILE__ << __LINE__ << "Toggling autonomy";
 }
 
 /**
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons)
+void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons)
 {
     Q_UNUSED(xHat);
     Q_UNUSED(yHat);
 
-    // Scale values
-    double rollPitchScaling = 1.0f * 1000.0f;
-    double yawScaling = 1.0f * 1000.0f;
-    double thrustScaling = 1.0f * 1000.0f;
+    // Store the previous manual commands
+    static float manualRollAngle = 0.0;
+    static float manualPitchAngle = 0.0;
+    static float manualYawAngle = 0.0;
+    static float manualThrust = 0.0;
+    static quint16 manualButtons = 0;
+    static quint8 countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
 
-    manualRollAngle = roll * rollPitchScaling;
-    manualPitchAngle = pitch * rollPitchScaling;
-    manualYawAngle = yaw * yawScaling;
-    manualThrust = thrust * thrustScaling;
-
-    // If system has manual inputs enabled and is armed
+    // We only transmit manual command messages if the system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
-        mavlink_message_t message;
-        mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualPitchAngle, (float)manualRollAngle, (float)manualThrust, (float)manualYawAngle, buttons);
-        sendMessage(message);
-        //qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
-        emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
-    }
-    else
-    {
-        //qDebug() << "JOYSTICK/MANUAL CONTROL: IGNORING COMMANDS: Set mode to MANUAL to send joystick commands first";
+        // Transmit the manual commands only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
+        // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
+        // if no command inputs have changed.
+        // The default transmission rate is 50Hz, but when no inputs have changed it drops down to 5Hz.
+        bool sendCommand = false;
+        if (countSinceLastTransmission++ >= 10)
+        {
+            sendCommand = true;
+            countSinceLastTransmission = 0;
+        }
+        else if ((!isnan(roll) && roll != manualRollAngle) || (!isnan(pitch) && pitch != manualPitchAngle) ||
+                   (!isnan(yaw) && yaw != manualYawAngle) || (!isnan(thrust) && thrust != manualThrust) ||
+                   buttons != manualButtons)
+        {
+            sendCommand = true;
+
+            // Ensure that another message will be sent the next time this function is called
+            countSinceLastTransmission = 10;
+        }
+
+        // Now if we should trigger an update, let's do that
+        if (sendCommand)
+        {
+            // Save the new manual control inputs
+            manualRollAngle = roll;
+            manualPitchAngle = pitch;
+            manualYawAngle = yaw;
+            manualThrust = thrust;
+            manualButtons = buttons;
+
+            // Store scaling values for all 3 axes
+            const float axesScaling = 1.0 * 1000.0;
+
+            // Calculate the new commands for roll, pitch, yaw, and thrust
+            const float newRollCommand = roll * axesScaling;
+            const float newPitchCommand = pitch * axesScaling;
+            const float newYawCommand = yaw * axesScaling;
+            const float newThrustCommand = thrust * axesScaling;
+
+            // Send the MANUAL_COMMAND message
+            mavlink_message_t message;
+            mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            sendMessage(message);
+
+            // Emit an update in control values to other UI elements, like the HSI display
+            emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
+        }
     }
 }
 
@@ -3291,6 +3380,7 @@ void UAS::startHil()
     hilEnabled = true;
     sensorHil = false;
     setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+    qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     // Connect HIL simulation link
     simulation->connectSimulation();
 }
@@ -3300,8 +3390,11 @@ void UAS::startHil()
 */
 void UAS::stopHil()
 {
-    if (simulation) simulation->disconnectSimulation();
-    setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+    if (simulation && simulation->isConnected()) {
+        simulation->disconnectSimulation();
+        setMode(base_mode & ~MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to disable.";
+    }
     hilEnabled = false;
     sensorHil = false;
 }
