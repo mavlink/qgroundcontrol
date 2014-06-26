@@ -36,9 +36,12 @@
    </item>
    <item row="0" column="5" colspan="2">
     <widget class="QComboBox" name="style">
+     <property name="toolTip">
+      <string>Set line style</string>
+     </property>
      <item>
       <property name="text">
-       <string>Style..</string>
+       <string>Only lines</string>
       </property>
      </item>
      <item>
@@ -58,11 +61,6 @@
      </item>
      <item>
       <property name="text">
-       <string>Only symbols</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
        <string>Lines and crosses</string>
       </property>
      </item>
@@ -74,11 +72,6 @@
      <item>
       <property name="text">
        <string>Lines and rects</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Lines and symbols</string>
       </property>
      </item>
      <item>

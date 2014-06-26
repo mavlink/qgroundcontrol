@@ -476,44 +476,34 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 totalReceiveCounter[linkId]++;
                 currReceiveCounter[linkId]++;
 
-                // Update last message sequence ID
-                uint8_t expectedIndex;
-                if (lastIndex[message.sysid][message.compid] == -1)
-                {
-                    lastIndex[message.sysid][message.compid] = message.seq;
-                    expectedIndex = message.seq;
-                }
-                else
-                {
-                    // NOTE: Using uint8_t here auto-wraps the number around to 0.
-                    expectedIndex = lastIndex[message.sysid][message.compid] + 1;
-                }
+                // Determine what the next expected sequence number is, accounting for
+                // never having seen a message for this system/component pair.
+                int lastSeq = lastIndex[message.sysid][message.compid];
+                int expectedSeq = (lastSeq == -1) ? message.seq : (lastSeq + 1);
 
-                // Make some noise if a message was skipped
-                //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "EXPECTED INDEX:" << expectedIndex << "SEQ" << message.seq;
-                if (message.seq != expectedIndex)
+                // And if we didn't encounter that sequence number, record the error
+                if (message.seq != expectedSeq)
                 {
-                    // Determine how many messages were skipped accounting for 0-wraparound
-                    int16_t lostMessages = message.seq - expectedIndex;
+
+                    // Determine how many messages were skipped
+                    int lostMessages = message.seq - expectedSeq;
+
+                    // Out of order messages or wraparound can cause this, but we just ignore these conditions for simplicity
                     if (lostMessages < 0)
                     {
-                        // Usually, this happens in the case of an out-of order packet
                         lostMessages = 0;
                     }
-                    else
-                    {
-                        // Console generates excessive load at high loss rates, needs better GUI visualization
-                        //qDebug() << QString("Lost %1 messages for comp %4: expected sequence ID %2 but received %3.").arg(lostMessages).arg(expectedIndex).arg(message.seq).arg(message.compid);
-                    }
+
+                    // And log how many were lost for all time and just this timestep
                     totalLossCounter[linkId] += lostMessages;
                     currLossCounter[linkId] += lostMessages;
                 }
 
-                // Update the last sequence ID
-                lastIndex[message.sysid][message.compid] = message.seq;
+                // And update the last sequence number for this system/component pair
+                lastIndex[message.sysid][message.compid] = expectedSeq;
 
                 // Update on every 32th packet
-                if (totalReceiveCounter[linkId] % 32 == 0)
+                if ((totalReceiveCounter[linkId] & 0x1F) == 0)
                 {
                     // Calculate new loss ratio
                     // Receive loss

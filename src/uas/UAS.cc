@@ -1008,6 +1008,55 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit remoteControlChannelRawChanged(channels.port * portWidth + 7, channels.chan8_raw);
         }
             break;
+        case MAVLINK_MSG_ID_RC_CHANNELS:
+        {
+            mavlink_rc_channels_t channels;
+            mavlink_msg_rc_channels_decode(&message, &channels);
+
+            // UINT8_MAX indicates this value is unknown
+            if (channels.rssi != UINT8_MAX) {
+                emit remoteControlRSSIChanged(channels.rssi/100.0f);
+            }
+
+            if (channels.chan1_raw != UINT16_MAX && channels.chancount > 0)
+                emit remoteControlChannelRawChanged(0, channels.chan1_raw);
+            if (channels.chan2_raw != UINT16_MAX && channels.chancount > 1)
+                emit remoteControlChannelRawChanged(1, channels.chan2_raw);
+            if (channels.chan3_raw != UINT16_MAX && channels.chancount > 2)
+                emit remoteControlChannelRawChanged(2, channels.chan3_raw);
+            if (channels.chan4_raw != UINT16_MAX && channels.chancount > 3)
+                emit remoteControlChannelRawChanged(3, channels.chan4_raw);
+            if (channels.chan5_raw != UINT16_MAX && channels.chancount > 4)
+                emit remoteControlChannelRawChanged(4, channels.chan5_raw);
+            if (channels.chan6_raw != UINT16_MAX && channels.chancount > 5)
+                emit remoteControlChannelRawChanged(5, channels.chan6_raw);
+            if (channels.chan7_raw != UINT16_MAX && channels.chancount > 6)
+                emit remoteControlChannelRawChanged(6, channels.chan7_raw);
+            if (channels.chan8_raw != UINT16_MAX && channels.chancount > 7)
+                emit remoteControlChannelRawChanged(7, channels.chan8_raw);
+            if (channels.chan9_raw != UINT16_MAX && channels.chancount > 8)
+                emit remoteControlChannelRawChanged(8, channels.chan9_raw);
+            if (channels.chan10_raw != UINT16_MAX && channels.chancount > 9)
+                emit remoteControlChannelRawChanged(9, channels.chan10_raw);
+            if (channels.chan11_raw != UINT16_MAX && channels.chancount > 10)
+                emit remoteControlChannelRawChanged(10, channels.chan11_raw);
+            if (channels.chan12_raw != UINT16_MAX && channels.chancount > 11)
+                emit remoteControlChannelRawChanged(11, channels.chan12_raw);
+            if (channels.chan13_raw != UINT16_MAX && channels.chancount > 12)
+                emit remoteControlChannelRawChanged(12, channels.chan13_raw);
+            if (channels.chan14_raw != UINT16_MAX && channels.chancount > 13)
+                emit remoteControlChannelRawChanged(13, channels.chan14_raw);
+            if (channels.chan15_raw != UINT16_MAX && channels.chancount > 14)
+                emit remoteControlChannelRawChanged(14, channels.chan15_raw);
+            if (channels.chan16_raw != UINT16_MAX && channels.chancount > 15)
+                emit remoteControlChannelRawChanged(15, channels.chan16_raw);
+            if (channels.chan17_raw != UINT16_MAX && channels.chancount > 16)
+                emit remoteControlChannelRawChanged(16, channels.chan17_raw);
+            if (channels.chan18_raw != UINT16_MAX && channels.chancount > 17)
+                emit remoteControlChannelRawChanged(17, channels.chan18_raw);
+
+        }
+            break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
         {
             mavlink_rc_channels_scaled_t channels;
@@ -1447,9 +1496,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 #endif
-            // Messages to ignore
-        case MAVLINK_MSG_ID_RAW_IMU:
-        case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         {
             //mavlink_set_local_position_setpoint_t p;
@@ -1465,6 +1511,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit navigationControllerErrorsChanged(this, p.alt_error, p.aspd_error, p.xtrack_error);
         }
             break;
+        // Messages to ignore
+        case MAVLINK_MSG_ID_RAW_IMU:
+        case MAVLINK_MSG_ID_SCALED_IMU:
         case MAVLINK_MSG_ID_RAW_PRESSURE:
         case MAVLINK_MSG_ID_SCALED_PRESSURE:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
@@ -2517,7 +2566,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
             switch ((int)value.type())
             {
             case QVariant::Char:
-                union_value.param_float = (unsigned char)value.toChar().toAscii();
+                union_value.param_float = (unsigned char)value.toChar().toLatin1();
                 p.param_type = MAV_PARAM_TYPE_INT8;
                 break;
             case QVariant::Int:
@@ -2542,7 +2591,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
             switch ((int)value.type())
             {
             case QVariant::Char:
-                union_value.param_int8 = (unsigned char)value.toChar().toAscii();
+                union_value.param_int8 = (unsigned char)value.toChar().toLatin1();
                 p.param_type = MAV_PARAM_TYPE_INT8;
                 break;
             case QVariant::Int:
@@ -2575,7 +2624,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
             // String characters
             if ((int)i < paramId.length())
             {
-                p.param_id[i] = paramId.toAscii()[i];
+                p.param_id[i] = paramId.toLatin1()[i];
             }
             else
             {
