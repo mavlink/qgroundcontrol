@@ -7,117 +7,111 @@
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
 
-// vim: expandtab
-
 #ifndef QWT_LEGEND_H
 #define QWT_LEGEND_H
 
-#include <qframe.h>
 #include "qwt_global.h"
-#if QT_VERSION < 0x040000
-#include <qvaluelist.h>
-#else
-#include <qlist.h>
-#endif
+#include "qwt_abstract_legend.h"
+#include <qvariant.h>
 
 class QScrollBar;
-class QwtLegendItemManager;
 
 /*!
   \brief The legend widget
 
   The QwtLegend widget is a tabular arrangement of legend items. Legend
   items might be any type of widget, but in general they will be
-  a QwtLegendItem.
+  a QwtLegendLabel.
 
-  \sa QwtLegendItem, QwtLegendItemManager QwtPlot
+  \sa QwtLegendLabel, QwtPlotItem, QwtPlot
 */
 
-class QWT_EXPORT QwtLegend : public QFrame
+class QWT_EXPORT QwtLegend : public QwtAbstractLegend
 {
     Q_OBJECT
 
 public:
-    /*!
-      \brief Display policy
-
-       - NoIdentifier\n
-         The client code is responsible how to display of each legend item.
-         The Qwt library will not interfere.
-
-       - FixedIdentifier\n
-         All legend items are displayed with the QwtLegendItem::IdentifierMode
-         to be passed in 'mode'.
-
-       - AutoIdentifier\n
-         Each legend item is displayed with a mode that is a bitwise or of
-         - QwtLegendItem::ShowLine (if its curve is drawn with a line) and
-         - QwtLegendItem::ShowSymbol (if its curve is drawn with symbols) and
-         - QwtLegendItem::ShowText (if the has a title).
-
-       Default is AutoIdentifier.
-       \sa setDisplayPolicy(), displayPolicy(), QwtLegendItem::IdentifierMode
-     */
-
-    enum LegendDisplayPolicy {
-        NoIdentifier = 0,
-        FixedIdentifier = 1,
-        AutoIdentifier = 2
-    };
-
-    //!  Interaction mode for the legend items
-    enum LegendItemMode {
-        ReadOnlyItem,
-        ClickableItem,
-        CheckableItem
-    };
-
-    explicit QwtLegend(QWidget *parent = NULL);
+    explicit QwtLegend( QWidget *parent = NULL );
     virtual ~QwtLegend();
 
-    void setDisplayPolicy(LegendDisplayPolicy policy, int mode);
-    LegendDisplayPolicy displayPolicy() const;
+    void setMaxColumns( uint numColums );
+    uint maxColumns() const;
 
-    void setItemMode(LegendItemMode);
-    LegendItemMode itemMode() const;
-
-    int identifierMode() const;
+    void setDefaultItemMode( QwtLegendData::Mode );
+    QwtLegendData::Mode defaultItemMode() const;
 
     QWidget *contentsWidget();
     const QWidget *contentsWidget() const;
 
-    void insert(const QwtLegendItemManager *, QWidget *);
-    void remove(const QwtLegendItemManager *);
+    QWidget *legendWidget( const QVariant &  ) const;
+    QList<QWidget *> legendWidgets( const QVariant & ) const;
 
-    QWidget *find(const QwtLegendItemManager *) const;
-    QwtLegendItemManager *find(const QWidget *) const;
+    QVariant itemInfo( const QWidget * ) const;
 
-#if QT_VERSION < 0x040000
-    virtual QValueList<QWidget *> legendItems() const;
-#else
-    virtual QList<QWidget *> legendItems() const;
-#endif
-
-    void clear();
-
-    bool isEmpty() const;
-    uint itemCount() const;
-
-    virtual bool eventFilter(QObject *, QEvent *);
+    virtual bool eventFilter( QObject *, QEvent * );
 
     virtual QSize sizeHint() const;
-    virtual int heightForWidth(int w) const;
+    virtual int heightForWidth( int w ) const;
 
     QScrollBar *horizontalScrollBar() const;
     QScrollBar *verticalScrollBar() const;
 
+    virtual void renderLegend( QPainter *, 
+        const QRectF &, bool fillBackground ) const;
+
+    virtual void renderItem( QPainter *, 
+        const QWidget *, const QRectF &, bool fillBackground ) const;
+
+    virtual bool isEmpty() const;
+    virtual int scrollExtent( Qt::Orientation ) const;
+
+Q_SIGNALS:
+    /*!
+      A signal which is emitted when the user has clicked on
+      a legend label, which is in QwtLegendData::Clickable mode.
+
+      \param itemInfo Info for the item item of the
+                      selected legend item
+      \param index Index of the legend label in the list of widgets
+                   that are associated with the plot item
+
+      \note clicks are disabled as default
+      \sa setDefaultItemMode(), defaultItemMode(), QwtPlot::itemToInfo()
+     */
+    void clicked( const QVariant &itemInfo, int index );
+
+    /*!
+      A signal which is emitted when the user has clicked on
+      a legend label, which is in QwtLegendData::Checkable mode
+
+      \param itemInfo Info for the item of the
+                      selected legend label
+      \param index Index of the legend label in the list of widgets
+                   that are associated with the plot item
+      \param on True when the legend label is checked
+
+      \note clicks are disabled as default
+      \sa setDefaultItemMode(), defaultItemMode(), QwtPlot::itemToInfo()
+     */
+    void checked( const QVariant &itemInfo, bool on, int index );
+
+public Q_SLOTS:
+    virtual void updateLegend( const QVariant &,
+        const QList<QwtLegendData> & );
+
+protected Q_SLOTS:
+    void itemClicked();
+    void itemChecked( bool );
+
 protected:
-    virtual void resizeEvent(QResizeEvent *);
-    virtual void layoutContents();
+    virtual QWidget *createWidget( const QwtLegendData & ) const;
+    virtual void updateWidget( QWidget *widget, const QwtLegendData &data );
 
 private:
+    void updateTabOrder();
+
     class PrivateData;
     PrivateData *d_data;
 };
 
-#endif // QWT_LEGEND_H
+#endif 

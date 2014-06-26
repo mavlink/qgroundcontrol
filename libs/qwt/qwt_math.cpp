@@ -7,8 +7,6 @@
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
 
-// vim: expandtab
-
 #include "qwt_math.h"
 
 /*!
@@ -16,14 +14,14 @@
   \param array Pointer to an array
   \param size Array size
 */
-double qwtGetMin(const double *array, int size)
+double qwtGetMin( const double *array, int size )
 {
-    if (size <= 0)
+    if ( size <= 0 )
         return 0.0;
 
     double rv = array[0];
-    for (int i = 1; i < size; i++)
-        rv = qwtMin(rv, array[i]);
+    for ( int i = 1; i < size; i++ )
+        rv = qMin( rv, array[i] );
 
     return rv;
 }
@@ -34,14 +32,43 @@ double qwtGetMin(const double *array, int size)
   \param array Pointer to an array
   \param size Array size
 */
-double qwtGetMax(const double *array, int size)
+double qwtGetMax( const double *array, int size )
 {
-    if (size <= 0)
+    if ( size <= 0 )
         return 0.0;
 
     double rv = array[0];
-    for (int i = 1; i < size; i++)
-        rv = qwtMax(rv, array[i]);
+    for ( int i = 1; i < size; i++ )
+        rv = qMax( rv, array[i] );
 
     return rv;
+}
+
+/*!
+  \brief Normalize an angle to be int the range [0.0, 2 * PI[
+  \param radians Angle in radians
+  \return Normalized angle in radians
+*/
+double qwtNormalizeRadians( double radians )
+{
+    double a = ::fmod( radians, 2.0 * M_PI );
+    if ( a < 0.0 )
+        a += 2.0 * M_PI;
+
+    return a;
+
+}
+
+/*!
+  \brief Normalize an angle to be int the range [0.0, 360.0[
+  \param radians Angle in degrees
+  \return Normalized angle in degrees
+*/
+double qwtNormalizeDegrees( double degrees )
+{
+    double a = ::fmod( degrees, 360.0 );
+    if ( a < 0.0 )
+        a += 360.0;
+
+    return a;
 }

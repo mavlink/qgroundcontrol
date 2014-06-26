@@ -116,9 +116,8 @@ public:
         return QwtDoubleRect(xmin,ymin,xmax-xmin,ymax-ymin);
     }
 
-protected:
     /* From QwtPlotItem.  Draw the complete series */
-    virtual void draw (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &canvasRect) const
+    virtual void draw (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect) const
     {
         Q_UNUSED(canvasRect);
         QPointF lastPoint;
@@ -151,7 +150,7 @@ protected:
                     ++smoothCount;
                 point = smoothTotal/smoothCount;
             }
-            QPointF paintCoord = QPointF(xMap.xTransform(point.x()), yMap.xTransform(point.y()));
+            QPointF paintCoord = QPointF(xMap.transform(point.x()), yMap.transform(point.y()));
             m_color.setAlpha((m_maxShowPoints - count + i)*255/m_maxShowPoints);
             p->setPen(m_color);
             if(i != 0)
@@ -246,7 +245,7 @@ QGCXYPlot::~QGCXYPlot()
 void QGCXYPlot::clearPlot()
 {
     xycurve->clear();
-    plot->clear();
+    plot->detachItems();
     ui->timeScrollBar->setMaximum(xycurve->dataSize());
     ui->timeScrollBar->setValue(ui->timeScrollBar->maximum());
 }
