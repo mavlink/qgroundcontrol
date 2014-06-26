@@ -25,63 +25,124 @@
 
 void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
 {
+    QGCUASFileManager::Request  ackResponse;
+    QString                     path;
+
     Q_ASSERT(message.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA);
 
-    mavlink_encapsulated_data_t data;
-    mavlink_msg_encapsulated_data_decode(&message, &data);
-    const RequestHeader *hdr = (const RequestHeader *)&data.data[0];
+    mavlink_encapsulated_data_t requestEncapsulatedData;
+    mavlink_msg_encapsulated_data_decode(&message, &requestEncapsulatedData);
+    QGCUASFileManager::Request* request = (QGCUASFileManager::Request*)&requestEncapsulatedData.data[0];
     
-    // FIXME: Check CRC
+    // Validate CRC
+    if (request->hdr.crc32 != QGCUASFileManager::crc32(request)) {
+        _sendNak(QGCUASFileManager::kErrCrc);
+    }
 
-    switch (hdr->opcode) {
-        case kCmdNone:
+    switch (request->hdr.opcode) {
+        case QGCUASFileManager::kCmdTestNoAck:
+            // ignored, ack not sent back, for testing only
+            break;
+            
+        case QGCUASFileManager::kCmdReset:
+            // terminates all sessions
+            // Fall through to send back Ack
+
+        case QGCUASFileManager::kCmdNone:
             // ignored, always acked
-            
-            RequestHeader ackHdr;
-            ackHdr.magic = 'f';
-            ackHdr.opcode = kRspAck;
-            ackHdr.session = 0;
-            ackHdr.crc32 = 0;
-            ackHdr.size = 0;
-            // FIXME: Add CRC
-            //ackHdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
-            
-            mavlink_message_t ackMessage;
-            mavlink_msg_encapsulated_data_pack(250, 0, &ackMessage, 0 /*_encdata_seq*/, (uint8_t*)&ackHdr);
-            emit messageReceived(NULL, ackMessage);
+            ackResponse.hdr.magic = 'f';
+            ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
+            ackResponse.hdr.session = 0;
+            ackResponse.hdr.crc32 = 0;
+            ackResponse.hdr.size = 0;
+            _emitResponse(&ackResponse);
             break;
 
-        case kCmdTerminate:
+        case QGCUASFileManager::kCmdList:
+            // We only support root path
+            path = (char *)&request->data[0];
+            if (!path.isEmpty() && path != "/") {
+                _sendNak(QGCUASFileManager::kErrNotDir);
+                break;
+            }
+            
+            if (request->hdr.offset > (uint32_t)_fileList.size()) {
+                _sendNak(QGCUASFileManager::kErrEOF);
+                break;
+            }
+            
+            ackResponse.hdr.magic = 'f';
+            ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
+            ackResponse.hdr.session = 0;
+            ackResponse.hdr.size = 0;
+            
+            if (request->hdr.offset == 0) {
+                // Requesting first batch of file names
+                Q_ASSERT(_fileList.size());
+                char *bufPtr = (char *)&ackResponse.data[0];
+                for (int i=0; i<_fileList.size(); i++) {
+                    const char *filename = _fileList[i].toStdString().c_str();
+                    size_t cchFilename = strlen(filename);
+                    strcpy(bufPtr, filename);
+                    ackResponse.hdr.size += cchFilename + 1;
+                    bufPtr += cchFilename + 1;
+                }
+                
+                // Final double termination
+                *bufPtr = 0;
+                ackResponse.hdr.size++;
+
+            } else {
+                // All filenames fit in first ack, send final null terminated ack
+                ackResponse.data[0] = 0;
+                ackResponse.hdr.size = 1;
+            }
+            
+            _emitResponse(&ackResponse);
+
+            break;
+            
+        // Remainder of commands are NYI
+
+        case QGCUASFileManager::kCmdTerminate:
             // releases sessionID, closes file
-        case kCmdReset:
-            // terminates all sessions
-        case kCmdList:
-            // list files in <path> from <offset>
-        case kCmdOpen:
+        case QGCUASFileManager::kCmdOpen:
             // opens <path> for reading, returns <session>
-        case kCmdRead:
+        case QGCUASFileManager::kCmdRead:
             // reads <size> bytes from <offset> in <session>
-        case kCmdCreate:
+        case QGCUASFileManager::kCmdCreate:
             // creates <path> for writing, returns <session>
-        case kCmdWrite:
+        case QGCUASFileManager::kCmdWrite:
             // appends <size> bytes at <offset> in <session>
-        case kCmdRemove:
+        case QGCUASFileManager::kCmdRemove:
             // remove file (only if created by server?)
         default:
             // nack for all NYI opcodes
-            
-            RequestHeader nakHdr;
-            nakHdr.opcode = kRspNak;
-            nakHdr.magic = 'f';
-            nakHdr.session = 0;
-            nakHdr.crc32 = 0;
-            nakHdr.size = 0;
-            // FIXME: Add CRC
-            //ackHdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
-            
-            mavlink_message_t nakMessage;
-            mavlink_msg_encapsulated_data_pack(250, 0, &nakMessage, 0 /*_encdata_seq*/, (uint8_t*)&nakHdr);
-            emit messageReceived(NULL, nakMessage);
+            _sendNak(QGCUASFileManager::kErrUnknownCommand);
             break;
     }
+}
+
+void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error)
+{
+    QGCUASFileManager::Request nakResponse;
+
+    nakResponse.hdr.magic = 'f';
+    nakResponse.hdr.opcode = QGCUASFileManager::kRspNak;
+    nakResponse.hdr.session = 0;
+    nakResponse.hdr.size = sizeof(nakResponse.data[0]);
+    nakResponse.data[0] = error;
+    
+    _emitResponse(&nakResponse);
+}
+
+void MockMavlinkFileServer::_emitResponse(QGCUASFileManager::Request* request)
+{
+    mavlink_message_t   mavlinkMessage;
+    
+    request->hdr.crc32 = QGCUASFileManager::crc32(request);
+    
+    mavlink_msg_encapsulated_data_pack(250, 0, &mavlinkMessage, 0 /*_encdata_seq*/, (uint8_t*)request);
+    
+    emit messageReceived(NULL, mavlinkMessage);
 }
