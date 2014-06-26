@@ -1,3 +1,26 @@
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
+
 #include "QGCUASFileManager.h"
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
@@ -44,86 +67,106 @@ static const quint32 crctab[] =
 
 QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
     QObject(parent),
+    _currentOperation(kCOIdle),
     _mav(uas),
     _encdata_seq(0)
 {
+    bool connected = connect(&_ackTimer, SIGNAL(timeout()), this, SLOT(_ackTimeout()));
+    Q_ASSERT(connected);
 }
 
-quint32
-QGCUASFileManager::crc32(const uint8_t *src, unsigned len, unsigned state)
+/// @brief Calculates a 32 bit CRC for the specified request.
+///     @param request Request to calculate CRC for. request->size must be set correctly.
+///     @param state previous crc state
+/// @return Calculated CRC
+quint32 QGCUASFileManager::crc32(Request* request, unsigned state)
 {
-    for (unsigned i = 0; i < len; i++)
-        state = crctab[(state ^ src[i]) & 0xff] ^ (state >> 8);
+    uint8_t* data = (uint8_t*)request;
+    size_t cbData = sizeof(RequestHeader) + request->hdr.size;
+    
+    // Always calculate CRC with 0 initial CRC value
+    quint32 crcSave = request->hdr.crc32;
+    request->hdr.crc32 = 0;
+    
+    for (size_t i=0; i < cbData; i++)
+        state = crctab[(state ^ data[i]) & 0xff] ^ (state >> 8);
+    
+    request->hdr.crc32 = crcSave;
+
     return state;
 }
 
 void QGCUASFileManager::nothingMessage()
 {
-    mavlink_message_t message;
-
-    RequestHeader hdr;
-    hdr.magic = 'f';
-    hdr.session = 0;
-    hdr.crc32 = 0;
-    hdr.size = 0;
-    hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
-
-    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr);
-
-    _mav->sendMessage(message);
-    qDebug() << "Sent message!";
+    // FIXME: Connect ui correctly
 }
 
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
-
+    
     if (message.msgid != MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
         // wtf, not for us
         return;
     }
-
-    emit statusMessage("msg");
-    qDebug() << "FTP GOT MESSAGE";
-
+    
     mavlink_encapsulated_data_t data;
     mavlink_msg_encapsulated_data_decode(&message, &data);
-    const RequestHeader *hdr = (const RequestHeader *)&data.data[0];
-    unsigned seqnr = data.seqnr;
+    Request* request = (Request*)&data.data[0];
 
-    switch (_current_operation) {
-    case kCOIdle:
-        // we should not be seeing anything here.. shut the other guy up
-        emit statusMessage("resetting file transfer session");
-        sendReset();
-        break;
-
-    case kCOList:
-        if (hdr->opcode == kRspAck) {
-            listDecode(&hdr->data[0], hdr->size);
-        } else {
-            emit statusMessage("unexpected opcode in List mode");
+    qDebug() << "FTP: opcode:" << request->hdr.opcode;
+    
+    // FIXME: Check CRC
+    
+    if (request->hdr.opcode == kRspAck) {
+        _clearAckTimeout();
+        
+        switch (_currentOperation) {
+            case kCOIdle:
+                // we should not be seeing anything here.. shut the other guy up
+                qDebug() << "FTP resetting file transfer session";
+                _sendCmdReset();
+                break;
+                
+            case kCOAck:
+                // We are expecting an ack back
+                _clearAckTimeout();
+                _currentOperation = kCOIdle;
+                break;
+                
+            case kCOList:
+                listDecode(&request->data[0], request->hdr.size);
+                break;
+                
+            default:
+                _emitErrorMessage("Ack received in unexpected state");
+                break;
         }
-        break;
-
-    default:
-        emit statusMessage("message in unexpected state");
+    } else if (request->hdr.opcode == kRspNak) {
+        _clearAckTimeout();
+        _emitErrorMessage(QString("Nak received, error: ").append(errorString(request->data[0])));
+        _currentOperation = kCOIdle;
+    } else {
+        // Note that we don't change our operation state. If something goes wrong beyond this, the operation
+        // will time out.
+        _emitErrorMessage(tr("Unknown opcode returned server: %1").arg(request->hdr.opcode));
     }
 }
 
 void QGCUASFileManager::listRecursively(const QString &from)
 {
-    if (_current_operation != kCOIdle) {
-        // XXX beep and don't do anything
+    if (_currentOperation != kCOIdle) {
+        _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
+        return;
     }
 
     // clear the text widget
     emit resetStatusMessages();
 
     // initialise the lister
-    _list_path = from;
-    _list_offset = 0;
-    _current_operation = kCOList;
+    _listPath = from;
+    _listOffset = 0;
+    _currentOperation = kCOList;
 
     // and send the initial request
     sendList();
@@ -136,15 +179,22 @@ void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
 
     // parse filenames out of the buffer
     while (offset < len) {
-
+        const char * ptr = (const char *)data + offset;
+        
         // get the length of the name
-        unsigned nlen = strnlen((const char *)data + offset, len - offset);
-        if (nlen == 0) {
+        unsigned nlen = strnlen(ptr, len - offset);
+        if (nlen < 2) {
             break;
         }
 
+        // Returned names are prepended with D for directory or F for file
+        QString s(ptr + 1);
+        if (*ptr == 'D') {
+            s.append('/');
+        }
+
         // put it in the view
-        emit statusMessage(QString((const char *)data + offset));
+        emit statusMessage(s);
 
         // account for the name + NUL
         offset += nlen + 1;
@@ -155,59 +205,35 @@ void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
 
     // we have run out of files to list
     if (files == 0) {
-        _current_operation = kCOIdle;
+        _currentOperation = kCOIdle;
     } else {
         // update our state
-        _list_offset += files;
+        _listOffset += files;
 
         // and send another request
         sendList();
     }
 }
 
-void QGCUASFileManager::sendReset()
-{
-    mavlink_message_t message;
-
-    RequestHeader hdr;
-    hdr.magic = 'f';
-    hdr.session = 0;
-    hdr.opcode = kCmdReset;
-    hdr.crc32 = 0;
-    hdr.offset = 0;
-    hdr.size = 0;
-    hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
-
-    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr); // XXX 250 is a magic length
-
-    _mav->sendMessage(message);
-}
-
 void QGCUASFileManager::sendList()
 {
-    mavlink_message_t message;
+    Request request;
 
-    RequestHeader hdr;
-    hdr.magic = 'f';
-    hdr.session = 0;
-    hdr.opcode = kCmdList;
-    hdr.crc32 = 0;
-    hdr.offset = _list_offset;
-    strncpy((char *)&hdr.data[0], _list_path.toStdString().c_str(), 200); // XXX should have a real limit here
-    hdr.size = strlen((const char *)&hdr.data[0]);
-
-    hdr.crc32 = crc32((uint8_t*)&hdr, sizeof(hdr) + hdr.size, 0);
-
-    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)&hdr); // XXX 250 is a magic length
-
-    emit statusMessage("sending List request...");
-
-    _mav->sendMessage(message);
+    request.hdr.magic = 'f';
+    request.hdr.session = 0;
+    request.hdr.opcode = kCmdList;
+    request.hdr.offset = _listOffset;
+    
+    strncpy((char *)&request.data[0], _listPath.toStdString().c_str(), sizeof(request.data));
+    request.hdr.size = strnlen((const char *)&request.data[0], sizeof(request.data));
+    
+    _sendRequest(&request);
 }
 
 void QGCUASFileManager::downloadPath(const QString &from, const QString &to)
 {
-
+    Q_UNUSED(from);
+    
     // Send path, e.g. /fs/microsd and download content
     // recursively into a local directory
 
@@ -224,4 +250,111 @@ void QGCUASFileManager::downloadPath(const QString &from, const QString &to)
     file.close();
 
     emit statusMessage(QString("Downloaded: %1 to directory %2").arg(filename).arg(to));
+}
+
+QString QGCUASFileManager::errorString(uint8_t errorCode)
+{
+    switch(errorCode) {
+    case kErrNone:
+        return QString("no error");
+    case kErrNoRequest:
+        return QString("bad request");
+    case kErrNoSession:
+        return QString("bad session");
+    case kErrSequence:
+        return QString("bad sequence number");
+    case kErrNotDir:
+        return QString("not a directory");
+    case kErrNotFile:
+        return QString("not a file");
+    case kErrEOF:
+        return QString("read beyond end of file");
+    case kErrNotAppend:
+        return QString("write not at end of file");
+    case kErrTooBig:
+        return QString("file too big");
+    case kErrIO:
+        return QString("device I/O error");
+    case kErrPerm:
+        return QString("permission denied");
+    case kErrUnknownCommand:
+        return QString("unknown command");
+    case kErrCrc:
+        return QString("bad crc");
+    default:
+        return QString("unknown error code");
+    }
+}
+
+/// @brief Sends a command which only requires an opcode and no additional data
+///     @param opcode Opcode to send
+///     @param newOpState State to put state machine into
+/// @return TRUE: command sent, FALSE: command not sent, waiting for previous command to finish
+bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpState)
+{
+    if (_currentOperation != kCOIdle) {
+        // Can't have multiple commands in play at the same time
+        return false;
+    }
+    
+    Request request;
+    request.hdr.magic = 'f';
+    request.hdr.session = 0;
+    request.hdr.opcode = opcode;
+    request.hdr.offset = 0;
+    request.hdr.size = 0;
+    
+    _currentOperation = newOpState;
+    _setupAckTimeout();
+    
+    _sendRequest(&request);
+    
+    return TRUE;
+}
+
+/// @brief Starts the ack timeout timer
+void QGCUASFileManager::_setupAckTimeout(void)
+{
+    qDebug() << "Setting Ack";
+    
+    Q_ASSERT(!_ackTimer.isActive());
+    
+    _ackTimer.setSingleShot(true);
+    _ackTimer.start(_ackTimerTimeoutMsecs);
+}
+
+/// @brief Clears the ack timeout timer
+void QGCUASFileManager::_clearAckTimeout(void)
+{
+    qDebug() << "Clearing Ack";
+
+    Q_ASSERT(_ackTimer.isActive());
+    
+    _ackTimer.stop();
+}
+
+/// @brief Called when ack timeout timer fires
+void QGCUASFileManager::_ackTimeout(void)
+{
+    _currentOperation = kCOIdle;
+    _emitErrorMessage(tr("Timeout waiting for ack"));
+}
+
+void QGCUASFileManager::_emitErrorMessage(const QString& msg)
+{
+    qDebug() << "QGCUASFileManager:" << msg;
+    emit errorMessage(msg);
+}
+
+/// @brief Sends the specified Request out to the UAS.
+void QGCUASFileManager::_sendRequest(Request* request)
+{
+    mavlink_message_t message;
+    
+    _setupAckTimeout();
+
+    request->hdr.crc32 = crc32(request);
+    // FIXME: Send correct system id instead of harcoded 250
+    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)request);
+    _mav->sendMessage(message);
 }

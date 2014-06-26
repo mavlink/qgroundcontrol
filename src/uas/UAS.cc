@@ -149,6 +149,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     pitch(0.0),
     yaw(0.0),
 
+    imagePackets(0),    // We must initialize to 0, otherwise extended data packets maybe incorrectly thought to be images
+
     blockHomePositionChanges(false),
     receivedMode(false),
 
@@ -1371,6 +1373,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // NO VALID TRANSACTION - ABORT
                 // Restart statemachine
                 imagePacketsArrived = 0;
+                break;
             }
 
             for (int i = 0; i < imagePayload; ++i)
@@ -1387,6 +1390,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if ((imagePacketsArrived >= imagePackets))
             {
                 // Restart statemachine
+                imagePackets = 0;
+                imagePacketsArrived = 0;
                 emit imageReady(this);
                 //qDebug() << "imageReady emitted. all packets arrived";
             }
