@@ -151,7 +151,7 @@ QGCVideoWidget::QGCVideoWidget(QWidget* parent)
 
     // Fill with black background
     QImage fill = QImage(640, 480, QImage::Format_Indexed8);
-    fill.setNumColors(3);
+    fill.setColorCount(3);
     fill.setColor(0, qRgb(0, 0, 0));
     fill.setColor(1, qRgb(0, 0, 0));
     fill.setColor(2, qRgb(0, 0, 0));
@@ -1136,7 +1136,7 @@ void QGCVideoWidget::commitRawDataToGL()
         QImage* newImage = new QImage(rawImage, receivedWidth, receivedHeight, format);
         if (format == QImage::Format_Indexed8) {
             // Create matching color table
-            newImage->setNumColors(256);
+            newImage->setColorCount(256);
             for (int i = 0; i < 256; i++) {
                 newImage->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;
