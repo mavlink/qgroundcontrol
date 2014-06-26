@@ -37,6 +37,7 @@ public:
     virtual void sendMessage(mavlink_message_t message) = 0;
     
 signals:
+    // link argument will always be NULL
     void messageReceived(LinkInterface* link, mavlink_message_t message);
 };
 

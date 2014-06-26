@@ -25,6 +25,10 @@
 #define MOCKMAVLINKFILESERVER_H
 
 #include "MockMavlinkInterface.h"
+#include "QGCUASFileManager.h"
+
+
+#include <QStringList>
 
 class MockMavlinkFileServer : public MockMavlinkInterface
 {
@@ -32,54 +36,17 @@ class MockMavlinkFileServer : public MockMavlinkInterface
     
 public:
     MockMavlinkFileServer(void) { };
+    
+    void setFileList(QStringList& fileList) { _fileList = fileList; }
+    
+    // From MockMavlinkInterface
     virtual void sendMessage(mavlink_message_t message);
     
 private:
-    // FIXME: These should be in a mavlink header somewhere shouldn't they?
+    void _sendNak(QGCUASFileManager::ErrorCode error);
+    void _emitResponse(QGCUASFileManager::Request* request);
     
-    struct RequestHeader
-    {
-        uint8_t		magic;
-        uint8_t		session;
-        uint8_t		opcode;
-        uint8_t		size;
-        uint32_t	crc32;
-        uint32_t	offset;
-        uint8_t		data[];
-    };
-    
-    enum Opcode
-    {
-        kCmdNone,	// ignored, always acked
-        kCmdTerminate,	// releases sessionID, closes file
-        kCmdReset,	// terminates all sessions
-        kCmdList,	// list files in <path> from <offset>
-        kCmdOpen,	// opens <path> for reading, returns <session>
-        kCmdRead,	// reads <size> bytes from <offset> in <session>
-        kCmdCreate,	// creates <path> for writing, returns <session>
-        kCmdWrite,	// appends <size> bytes at <offset> in <session>
-        kCmdRemove,	// remove file (only if created by server?)
-        
-        kRspAck,
-        kRspNak
-    };
-    
-    enum ErrorCode
-    {
-        kErrNone,
-        kErrNoRequest,
-        kErrNoSession,
-        kErrSequence,
-        kErrNotDir,
-        kErrNotFile,
-        kErrEOF,
-        kErrNotAppend,
-        kErrTooBig,
-        kErrIO,
-        kErrPerm
-    };
-    
-
+    QStringList _fileList;
 };
 
 #endif
