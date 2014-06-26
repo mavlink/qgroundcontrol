@@ -21,7 +21,6 @@ tmp
 debug
 release
 /qgroundcontrol
-mavlinkgen-build-desktop
 qgroundcontrol.xcodeproj/**
 doc/html
 doc/doxy.log

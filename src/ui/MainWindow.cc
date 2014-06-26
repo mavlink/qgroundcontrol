@@ -72,6 +72,7 @@ This file is part of the QGROUNDCONTROL project
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
 #include "QGCUASFileViewMulti.h"
+#include <QDesktopWidget>
 
 // Add support for the MAVLink generator UI if it's been requested.
 #ifdef QGC_MAVGEN_ENABLED
@@ -367,23 +368,23 @@ void MainWindow::init()
 
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0, QApplication::UnicodeUTF8));
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0, QApplication::UnicodeUTF8));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0, QApplication::UnicodeUTF8));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0, QApplication::UnicodeUTF8));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0, QApplication::UnicodeUTF8));
-    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0, QApplication::UnicodeUTF8));
-    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0, QApplication::UnicodeUTF8));
-    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0, QApplication::UnicodeUTF8));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
+    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0));
+    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0));
+    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0, QApplication::UnicodeUTF8));
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0, QApplication::UnicodeUTF8));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0, QApplication::UnicodeUTF8));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0, QApplication::UnicodeUTF8));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0, QApplication::UnicodeUTF8));
-    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0, QApplication::UnicodeUTF8));
-    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0, QApplication::UnicodeUTF8));
-    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0, QApplication::UnicodeUTF8));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
+    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0));
+    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0));
+    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
@@ -557,7 +558,7 @@ void MainWindow::buildCommonWidgets()
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
-        pilotView->setCentralWidget(new QGCMapTool(this));
+        pilotView->setCentralWidget(new PrimaryFlightDisplay(this));
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
     }
 
@@ -660,6 +661,8 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
     createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
 
+    menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
+
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
     {
@@ -679,7 +682,7 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Radio Control"));
 
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
     createDockWidget(simView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
     createDockWidget(pilotView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
@@ -821,6 +824,10 @@ void MainWindow::loadDockWidget(const QString& name)
     {
         createDockWidget(centerStack->currentWidget(),new UASInfoWidget(this),tr("Status Details"),"UAS_STATUS_DETAILS_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
+    else if (name == "MAP_VIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new QGCMapTool(this),tr("Map view"),"MAP_VIEW_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
     else if (name == "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET")
     {
         //This is now a permanently detached window.
@@ -895,7 +902,7 @@ void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSe
 void MainWindow::showCentralWidget()
 {
     QAction* act = qobject_cast<QAction *>(sender());
-    QWidget* widget = qVariantValue<QWidget *>(act->data());
+    QWidget* widget = act->data().value<QWidget *>();
     centerStack->setCurrentWidget(widget);
 }
 
@@ -1181,7 +1188,7 @@ void MainWindow::saveScreen()
 
     if (!screenFileName.isEmpty())
     {
-        window.save(screenFileName, format.toAscii());
+        window.save(screenFileName, format.toLatin1());
     }
 }
 void MainWindow::enableDockWidgetTitleBars(bool enabled)
