@@ -45,7 +45,7 @@ This file is part of the PIXHAWK project
 #include <qwt_scale_draw.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_engine.h>
-#include <qwt_array.h>
+#include <qwt_compat.h>
 #include <qwt_plot.h>
 #include "ChartPlot.h"
 #include "MG.h"
