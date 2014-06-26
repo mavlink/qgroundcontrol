@@ -69,7 +69,8 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
     QObject(parent),
     _currentOperation(kCOIdle),
     _mav(uas),
-    _encdata_seq(0)
+    _encdata_seq(0),
+    _activeSession(0)
 {
     bool connected = connect(&_ackTimer, SIGNAL(timeout()), this, SLOT(_ackTimeout()));
     Q_ASSERT(connected);
@@ -103,6 +104,81 @@ void QGCUASFileManager::nothingMessage()
     // FIXME: Connect ui correctly
 }
 
+/// @brief Respond to the Ack associated with the Open command.
+void QGCUASFileManager::_openResponse(Request* openAck)
+{
+    _currentOperation = kCORead;
+    _activeSession = openAck->hdr.session;
+    _readOffset = 0;
+    _readFileAccumulator.clear();
+    
+    Request request;
+    request.hdr.magic = 'f';
+    request.hdr.session = _activeSession;
+    request.hdr.opcode = kCmdRead;
+    request.hdr.offset = _readOffset;
+    request.hdr.size = sizeof(request.data);
+    
+    _sendRequest(&request);
+}
+
+/// @brief Respond to the Ack associated with the Read command.
+void QGCUASFileManager::_readResponse(Request* readAck)
+{
+    if (readAck->hdr.session != _activeSession) {
+        _currentOperation = kCOIdle;
+        _readFileAccumulator.clear();
+        _emitErrorMessage(tr("Read: Incorrect session returned"));
+        return;
+    }
+    
+    if (readAck->hdr.offset != _readOffset) {
+        _currentOperation = kCOIdle;
+        _readFileAccumulator.clear();
+        _emitErrorMessage(tr("Read: Offset returned (%1) differs from offset requested (%2)").arg(readAck->hdr.offset).arg(_readOffset));
+        return;
+    }
+
+    qDebug() << "Accumulator size" << readAck->hdr.size;
+    _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
+    
+    if (readAck->hdr.size == sizeof(readAck->data)) {
+        // Still more data to read
+        _currentOperation = kCORead;
+        
+        _readOffset += sizeof(readAck->data);
+        
+        Request request;
+        request.hdr.magic = 'f';
+        request.hdr.session = _activeSession;
+        request.hdr.opcode = kCmdRead;
+        request.hdr.offset = _readOffset;
+        request.hdr.size = sizeof(request.data);
+        
+        _sendRequest(&request);
+    } else {
+        _currentOperation = kCOIdle;
+        
+        QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
+        
+        QFile file(downloadFilePath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            _emitErrorMessage(tr("Unable to open local file for writing (%1)").arg(downloadFilePath));
+            return;
+        }
+        
+        qint64 bytesWritten = file.write((const char *)_readFileAccumulator, _readFileAccumulator.length());
+        if (bytesWritten != _readFileAccumulator.length()) {
+            file.close();
+            _emitErrorMessage(tr("Unable to write data to local file (%1)").arg(downloadFilePath));
+            return;
+        }
+        file.close();
+
+        _emitStatusMessage(tr("Download complete '%1'").arg(downloadFilePath));
+    }
+}
+
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
@@ -116,8 +192,6 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     mavlink_msg_encapsulated_data_decode(&message, &data);
     Request* request = (Request*)&data.data[0];
 
-    qDebug() << "FTP: opcode:" << request->hdr.opcode;
-    
     // FIXME: Check CRC
     
     if (request->hdr.opcode == kRspAck) {
@@ -132,14 +206,21 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
                 
             case kCOAck:
                 // We are expecting an ack back
-                _clearAckTimeout();
                 _currentOperation = kCOIdle;
                 break;
                 
             case kCOList:
                 listDecode(&request->data[0], request->hdr.size);
                 break;
+            
+            case kCOOpen:
+                _openResponse(request);
+                break;
                 
+            case kCORead:
+                _readResponse(request);
+                break;
+
             default:
                 _emitErrorMessage("Ack received in unexpected state");
                 break;
@@ -196,7 +277,7 @@ void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
         }
 
         // put it in the view
-        emit statusMessage(s);
+        _emitStatusMessage(s);
 
         // account for the name + NUL
         offset += nlen + 1;
@@ -217,6 +298,12 @@ void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
     }
 }
 
+void QGCUASFileManager::_fillRequestWithString(Request* request, const QString& str)
+{
+    strncpy((char *)&request->data[0], str.toStdString().c_str(), sizeof(request->data));
+    request->hdr.size = strnlen((const char *)&request->data[0], sizeof(request->data));
+}
+
 void QGCUASFileManager::sendList()
 {
     Request request;
@@ -226,32 +313,44 @@ void QGCUASFileManager::sendList()
     request.hdr.opcode = kCmdList;
     request.hdr.offset = _listOffset;
     
-    strncpy((char *)&request.data[0], _listPath.toStdString().c_str(), sizeof(request.data));
-    request.hdr.size = strnlen((const char *)&request.data[0], sizeof(request.data));
+    _fillRequestWithString(&request, _listPath);
     
     _sendRequest(&request);
 }
 
-void QGCUASFileManager::downloadPath(const QString &from, const QString &to)
+/// @brief Downloads the specified file.
+///     @param from File to download from UAS, fully qualified path
+///     @param downloadDir Local directory to download file to
+void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDir)
 {
-    Q_UNUSED(from);
+    if (from.isEmpty()) {
+        return;
+    }
     
-    // Send path, e.g. /fs/microsd and download content
-    // recursively into a local directory
+    _readFileDownloadDir.setPath(downloadDir.absolutePath());
+    
+    // We need to strip off the file name from the fully qualified path. We can't use the usual QDir
+    // routines because this path does not exist locally.
+    int i;
+    for (i=from.size()-1; i>=0; i--) {
+        if (from[i] == '/') {
+            break;
+        }
+    }
+    i++; // move past slash
+    _readFileDownloadFilename = from.right(from.size() - i);
+    
+    emit resetStatusMessages();
+    
+    _currentOperation = kCOOpen;
 
-    char buf[255];
-    unsigned len = 10;
-
-    QByteArray data(buf, len);
-    QString filename = "log001.bin"; // XXX get this from onboard
-
-    // Qt takes care of slash conversions in paths
-    QFile file(to + QDir::separator() + filename);
-    file.open(QIODevice::WriteOnly);
-    file.write(data);
-    file.close();
-
-    emit statusMessage(QString("Downloaded: %1 to directory %2").arg(filename).arg(to));
+    Request request;
+    request.hdr.magic = 'f';
+    request.hdr.session = 0;
+    request.hdr.opcode = kCmdOpen;
+    request.hdr.offset = 0;
+    _fillRequestWithString(&request, from);
+    _sendRequest(&request);
 }
 
 QString QGCUASFileManager::errorString(uint8_t errorCode)
@@ -307,7 +406,6 @@ bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpS
     request.hdr.size = 0;
     
     _currentOperation = newOpState;
-    _setupAckTimeout();
     
     _sendRequest(&request);
     
@@ -317,8 +415,6 @@ bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpS
 /// @brief Starts the ack timeout timer
 void QGCUASFileManager::_setupAckTimeout(void)
 {
-    qDebug() << "Setting Ack";
-    
     Q_ASSERT(!_ackTimer.isActive());
     
     _ackTimer.setSingleShot(true);
@@ -328,8 +424,6 @@ void QGCUASFileManager::_setupAckTimeout(void)
 /// @brief Clears the ack timeout timer
 void QGCUASFileManager::_clearAckTimeout(void)
 {
-    qDebug() << "Clearing Ack";
-
     Q_ASSERT(_ackTimer.isActive());
     
     _ackTimer.stop();
@@ -344,8 +438,14 @@ void QGCUASFileManager::_ackTimeout(void)
 
 void QGCUASFileManager::_emitErrorMessage(const QString& msg)
 {
-    qDebug() << "QGCUASFileManager:" << msg;
+    qDebug() << "QGCUASFileManager: Error" << msg;
     emit errorMessage(msg);
+}
+
+void QGCUASFileManager::_emitStatusMessage(const QString& msg)
+{
+    qDebug() << "QGCUASFileManager: Status" << msg;
+    emit statusMessage(msg);
 }
 
 /// @brief Sends the specified Request out to the UAS.

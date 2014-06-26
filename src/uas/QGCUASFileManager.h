@@ -25,6 +25,7 @@
 #define QGCUASFILEMANAGER_H
 
 #include <QObject>
+#include <QDir>
 
 #include "UASInterface.h"
 
@@ -48,7 +49,7 @@ public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
     void nothingMessage();
     void listRecursively(const QString &from);
-    void downloadPath(const QString& from, const QString& to);
+    void downloadPath(const QString& from, const QDir& downloadDir);
 
 protected:
     struct RequestHeader
@@ -109,7 +110,9 @@ protected:
         {
             kCOIdle,    // not doing anything
             kCOAck,     // waiting for an Ack
-            kCOList,    // waiting for a List response
+            kCOList,    // waiting for List response
+            kCOOpen,    // waiting for Open response
+            kCORead,    // waiting for Read response
         };
     
     
@@ -121,7 +124,11 @@ protected:
     void _setupAckTimeout(void);
     void _clearAckTimeout(void);
     void _emitErrorMessage(const QString& msg);
+    void _emitStatusMessage(const QString& msg);
     void _sendRequest(Request* request);
+    void _fillRequestWithString(Request* request, const QString& str);
+    void _openResponse(Request* openAck);
+    void _readResponse(Request* readAck);
 
     void sendList();
     void listDecode(const uint8_t *data, unsigned len);
@@ -136,8 +143,14 @@ protected:
     UASInterface* _mav;
     quint16 _encdata_seq;
 
-    unsigned    _listOffset;    // offset for the current List operation
-    QString     _listPath;      // path for the current List operation
+    unsigned    _listOffset;    ///> offset for the current List operation
+    QString     _listPath;      ///> path for the current List operation
+    
+    uint8_t     _activeSession;             ///> currently active session, 0 for none
+    uint32_t    _readOffset;                ///> current read offset
+    QByteArray  _readFileAccumulator;       ///> Holds file being downloaded
+    QDir        _readFileDownloadDir;       ///> Directory to download file to
+    QString     _readFileDownloadFilename;  ///> Filename (no path) for download file
     
     // We give MockMavlinkFileServer friend access so that it can use the data structures and opcodes
     // to build a mock mavlink file server for testing.
