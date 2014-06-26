@@ -77,6 +77,7 @@ QGCHilFlightGearConfiguration::QGCHilFlightGearConfiguration(UAS* mav, QWidget *
     Q_ASSERT(success);
     success = connect(_ui.optionsPlainTextEdit, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(_showContextMenu(const QPoint &)));
     Q_ASSERT(success);
+    Q_UNUSED(success);  // Silence release build unused variable warning
 }
 
 QGCHilFlightGearConfiguration::~QGCHilFlightGearConfiguration()
