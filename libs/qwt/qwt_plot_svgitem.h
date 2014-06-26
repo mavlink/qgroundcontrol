@@ -10,16 +10,12 @@
 #ifndef QWT_PLOT_SVGITEM_H
 #define QWT_PLOT_SVGITEM_H
 
-#include <qglobal.h>
-
-#include <qstring.h>
-#include "qwt_double_rect.h"
+#include "qwt_global.h"
 #include "qwt_plot_item.h"
+#include <qstring.h>
 
-#if QT_VERSION >= 0x040100
 class QSvgRenderer;
 class QByteArray;
-#endif
 
 /*!
   \brief A plot item, which displays
@@ -31,30 +27,29 @@ class QByteArray;
 class QWT_EXPORT QwtPlotSvgItem: public QwtPlotItem
 {
 public:
-    explicit QwtPlotSvgItem(const QString& title = QString::null );
-    explicit QwtPlotSvgItem(const QwtText& title );
+    explicit QwtPlotSvgItem( const QString& title = QString::null );
+    explicit QwtPlotSvgItem( const QwtText& title );
     virtual ~QwtPlotSvgItem();
 
-    bool loadFile(const QwtDoubleRect&, const QString &fileName);
-    bool loadData(const QwtDoubleRect&, const QByteArray &);
+    bool loadFile( const QRectF&, const QString &fileName );
+    bool loadData( const QRectF&, const QByteArray & );
 
-    virtual QwtDoubleRect boundingRect() const;
+    virtual QRectF boundingRect() const;
 
-    virtual void draw(QPainter *p,
-                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-                      const QRect &rect) const;
+    virtual void draw( QPainter *p,
+        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+        const QRectF &rect ) const;
 
     virtual int rtti() const;
 
 protected:
-#if QT_VERSION >= 0x040100
     const QSvgRenderer &renderer() const;
     QSvgRenderer &renderer();
-#endif
 
-    void render(QPainter *painter,
-                const QwtDoubleRect &viewBox, const QRect &rect) const;
-    QwtDoubleRect viewBox(const QwtDoubleRect &area) const;
+    void render( QPainter *painter,
+        const QRectF &viewBox, const QRectF &rect ) const;
+
+    QRectF viewBox( const QRectF &area ) const;
 
 private:
     void init();

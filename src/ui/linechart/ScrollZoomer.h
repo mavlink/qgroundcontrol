@@ -6,6 +6,7 @@
 #include <qscrollview.h>
 #endif
 #include <qwt_plot_zoomer.h>
+#include <qwt_plot_canvas.h>
 
 class ScrollData;
 class ScrollBar;
