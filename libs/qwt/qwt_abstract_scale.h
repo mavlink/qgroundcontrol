@@ -11,50 +11,85 @@
 #define QWT_ABSTRACT_SCALE_H
 
 #include "qwt_global.h"
+#include <qwidget.h>
 
 class QwtScaleEngine;
 class QwtAbstractScaleDraw;
 class QwtScaleDiv;
 class QwtScaleMap;
-class QwtDoubleInterval;
+class QwtInterval;
 
 /*!
-  \brief An abstract base class for classes containing a scale
+  \brief An abstract base class for widgets having a scale
 
-  QwtAbstractScale is used to provide classes with a QwtScaleDraw,
-  and a QwtScaleDiv. The QwtScaleDiv might be set explicitely
-  or calculated by a QwtScaleEngine.
+  The scale of an QwtAbstractScale is determined by a QwtScaleDiv
+  definition, that contains the boundaries and the ticks of the scale.
+  The scale is painted using a QwtScaleDraw object.
+
+  The scale division might be assigned explicitly - but usually
+  it is calculated from the boundaries using a QwtScaleEngine. 
+
+  The scale engine also decides the type of transformation of the scale 
+  ( linear, logarithmic ... ).
 */
 
-class QWT_EXPORT QwtAbstractScale
+class QWT_EXPORT QwtAbstractScale: public QWidget
 {
+    Q_OBJECT
+
+    Q_PROPERTY( double lowerBound READ lowerBound WRITE setLowerBound )
+    Q_PROPERTY( double upperBound READ upperBound WRITE setUpperBound )
+
+    Q_PROPERTY( int scaleMaxMajor READ scaleMaxMajor WRITE setScaleMaxMajor )
+    Q_PROPERTY( int scaleMaxMinor READ scaleMaxMinor WRITE setScaleMaxMinor )
+
+    Q_PROPERTY( double scaleStepSize READ scaleStepSize WRITE setScaleStepSize )
+
 public:
-    QwtAbstractScale();
+    QwtAbstractScale( QWidget *parent = NULL );
     virtual ~QwtAbstractScale();
 
-    void setScale(double vmin, double vmax, double step = 0.0);
-    void setScale(const QwtDoubleInterval &, double step = 0.0);
-    void setScale(const QwtScaleDiv &s);
+    void setScale( double lowerBound, double upperBound );
+    void setScale( const QwtInterval & );
+    void setScale( const QwtScaleDiv & );
 
-    void setAutoScale();
-    bool autoScale() const;
+    const QwtScaleDiv& scaleDiv() const;
 
-    void setScaleMaxMajor( int ticks);
+    void setLowerBound( double value );
+    double lowerBound() const;
+
+    void setUpperBound( double value );
+    double upperBound() const;
+
+    void setScaleStepSize( double stepSize );
+    double scaleStepSize() const;
+
+    void setScaleMaxMajor( int ticks );
     int scaleMaxMinor() const;
 
-    void setScaleMaxMinor( int ticks);
+    void setScaleMaxMinor( int ticks );
     int scaleMaxMajor() const;
 
-    void setScaleEngine(QwtScaleEngine *);
+    void setScaleEngine( QwtScaleEngine * );
     const QwtScaleEngine *scaleEngine() const;
     QwtScaleEngine *scaleEngine();
+
+    int transform( double ) const;
+    double invTransform( int ) const;
+
+    bool isInverted() const;
+
+    double minimum() const;
+    double maximum() const;
 
     const QwtScaleMap &scaleMap() const;
 
 protected:
-    void rescale(double vmin, double vmax, double step = 0.0);
+    void rescale( double lowerBound, 
+        double upperBound, double stepSize );
 
-    void setAbstractScaleDraw(QwtAbstractScaleDraw *);
+    void setAbstractScaleDraw( QwtAbstractScaleDraw * );
+
     const QwtAbstractScaleDraw *abstractScaleDraw() const;
     QwtAbstractScaleDraw *abstractScaleDraw();
 
