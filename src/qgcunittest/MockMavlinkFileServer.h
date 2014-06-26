@@ -21,36 +21,32 @@
  
  ======================================================================*/
 
-#include "MockUAS.h"
+#ifndef MOCKMAVLINKFILESERVER_H
+#define MOCKMAVLINKFILESERVER_H
 
-QString MockUAS::_bogusStaticString;
+#include "MockMavlinkInterface.h"
+#include "QGCUASFileManager.h"
 
-MockUAS::MockUAS(void) :
-    _systemType(MAV_TYPE_QUADROTOR),
-    _systemId(1),
-    _mavlinkPlugin(NULL)
+
+#include <QStringList>
+
+class MockMavlinkFileServer : public MockMavlinkInterface
 {
+    Q_OBJECT
     
-}
+public:
+    MockMavlinkFileServer(void) { };
+    
+    void setFileList(QStringList& fileList) { _fileList = fileList; }
+    
+    // From MockMavlinkInterface
+    virtual void sendMessage(mavlink_message_t message);
+    
+private:
+    void _sendNak(QGCUASFileManager::ErrorCode error);
+    void _emitResponse(QGCUASFileManager::Request* request);
+    
+    QStringList _fileList;
+};
 
-void MockUAS::setMockParametersAndSignal(MockQGCUASParamManager::ParamMap_t& map)
-{
-    _paramManager.setMockParameters(map);
-    
-    QMapIterator<QString, QVariant> i(map);
-    while (i.hasNext()) {
-        i.next();
-        emit parameterChanged(_systemId, 0, i.key(), i.value());
-    }
-}
-
-void MockUAS::sendMessage(mavlink_message_t message)
-{
-    Q_UNUSED(link);
-    
-    if (!_mavlinkPlugin) {
-        Q_ASSERT(false);
-    }
-    
-    _mavlinkPlugin->sendMessage(message);
-}
+#endif
