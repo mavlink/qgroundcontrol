@@ -73,6 +73,8 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
 {
     bool connected = connect(&_ackTimer, SIGNAL(timeout()), this, SLOT(_ackTimeout()));
     Q_ASSERT(connected);
+
+    Q_UNUSED(connected);
 }
 
 /// @brief Calculates a 32 bit CRC for the specified request.
