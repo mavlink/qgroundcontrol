@@ -130,7 +130,7 @@ WindowsBuild {
 }
 
 #
-# By default warnings as errors are turned off. Even so, in order for a pull request 
+# By default warnings as errors are turned off. Even so, in order for a pull reques 
 # to be accepted you must compile cleanly with warnings as errors turned on the default 
 # set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details. 
 # You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your 
