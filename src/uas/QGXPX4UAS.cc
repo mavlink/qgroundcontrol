@@ -20,6 +20,9 @@ void QGXPX4UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 void QGXPX4UAS::processParamValueMsgHook(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue)
 {
+    Q_UNUSED(rawValue);
+    Q_UNUSED(paramValue);
+
     int compId = msg.compid;
     if (paramName == "SYS_AUTOSTART") {
 
