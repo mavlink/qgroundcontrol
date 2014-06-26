@@ -7,685 +7,1260 @@
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
 
-// vim: expandtab
-
+#include "qwt_painter.h"
+#include "qwt_math.h"
+#include "qwt_clipper.h"
+#include "qwt_color_map.h"
+#include "qwt_scale_map.h"
 #include <qwindowdefs.h>
 #include <qwidget.h>
+#include <qframe.h>
 #include <qrect.h>
 #include <qpainter.h>
 #include <qpalette.h>
 #include <qpaintdevice.h>
 #include <qpixmap.h>
 #include <qstyle.h>
-#if QT_VERSION < 0x040000
-#include <qsimplerichtext.h>
-#else
 #include <qtextdocument.h>
 #include <qabstracttextdocumentlayout.h>
 #include <qstyleoption.h>
 #include <qpaintengine.h>
+#include <qapplication.h>
+#include <qdesktopwidget.h>
+
+#if QT_VERSION >= 0x050000
+#include <qwindow.h>
 #endif
 
-#include "qwt_clipper.h"
-#include "qwt_math.h"
-#include "qwt_color_map.h"
-#include "qwt_scale_map.h"
-#include "qwt_painter.h"
+#if QT_VERSION < 0x050000 
 
-QwtMetricsMap QwtPainter::d_metricsMap;
-
-#if defined(Q_WS_X11)
-bool QwtPainter::d_deviceClipping = true;
-#else
-bool QwtPainter::d_deviceClipping = false;
+#ifdef Q_WS_X11
+#include <qx11info_x11.h>
 #endif
 
-#if QT_VERSION < 0x040000
-bool QwtPainter::d_SVGMode = false;
 #endif
 
-static inline bool needDeviceClipping(
-    const QPainter *painter, bool deviceClipping)
+bool QwtPainter::d_polylineSplitting = true;
+bool QwtPainter::d_roundingAlignment = true;
+
+static inline bool qwtIsClippingNeeded( 
+    const QPainter *painter, QRectF &clipRect )
 {
-    return deviceClipping &&
-           (painter->device()->devType() == QInternal::Widget ||
-            painter->device()->devType() == QInternal::Pixmap );
-}
+    bool doClipping = false;
+    const QPaintEngine *pe = painter->paintEngine();
+    if ( pe && pe->type() == QPaintEngine::SVG )
+    {
+        // The SVG paint engine ignores any clipping,
 
-/*!
-  \brief En/Disable device clipping.
-
-  On X11 the default for device clipping is enabled,
-  otherwise it is disabled.
-  \sa QwtPainter::deviceClipping()
-*/
-void QwtPainter::setDeviceClipping(bool enable)
-{
-    d_deviceClipping = enable;
-}
-
-/*!
-  Returns whether device clipping is enabled. On X11 the default
-  is enabled, otherwise it is disabled.
-  \sa QwtPainter::setDeviceClipping()
-*/
-
-bool QwtPainter::deviceClipping()
-{
-    return d_deviceClipping;
-}
-
-/*!
-  Returns rect for device clipping
-  \sa QwtPainter::setDeviceClipping()
-*/
-const QRect &QwtPainter::deviceClipRect()
-{
-    static QRect clip;
-
-    if ( !clip.isValid() ) {
-        clip.setCoords(QWT_COORD_MIN, QWT_COORD_MIN,
-                       QWT_COORD_MAX, QWT_COORD_MAX);
+        if ( painter->hasClipping() )
+        {
+            doClipping = true;
+            clipRect = painter->clipRegion().boundingRect();
+        }
     }
-    return clip;
+
+    return doClipping;
 }
 
-//! Clip a point array
-QwtPolygon QwtPainter::clip(const QwtPolygon &pa)
+template <class T>
+static inline void qwtDrawPolyline( QPainter *painter,
+    const T *points, int pointCount, bool polylineSplitting )
 {
-    return QwtClipper::clipPolygon(deviceClipRect(), pa);
+    bool doSplit = false;
+    if ( polylineSplitting )
+    {
+        const QPaintEngine *pe = painter->paintEngine();
+        if ( pe && pe->type() == QPaintEngine::Raster )
+        {
+            /*
+                The raster paint engine seems to use some algo with O(n*n).
+                ( Qt 4.3 is better than Qt 4.2, but remains unacceptable)
+                To work around this problem, we have to split the polygon into
+                smaller pieces.
+             */
+            doSplit = true;
+        }
+    }
+
+    if ( doSplit )
+    {
+        const int splitSize = 20;
+        for ( int i = 0; i < pointCount; i += splitSize )
+        {
+            const int n = qMin( splitSize + 1, pointCount - i );
+            painter->drawPolyline( points + i, n );
+        }
+    }
+    else
+        painter->drawPolyline( points, pointCount );
 }
 
-#if QT_VERSION < 0x040000
-
-/*!
-  \brief En/Disable SVG mode.
-
-  When saving a QPicture to a SVG some texts are misaligned.
-  In SVGMode QwtPainter tries to fix them.
-
-  \sa QwtPainter::isSVGMode()
-  \note A QPicture that is created in SVG mode and saved to the
-        native format, will be misaligned. Also it is not possible to
-        reload and play a SVG document, that was created in SVG mode.
-*/
-void QwtPainter::setSVGMode(bool on)
+static inline void qwtUnscaleFont( QPainter *painter )
 {
-    d_SVGMode = on;
-}
+    if ( painter->font().pixelSize() >= 0 )
+        return;
 
-bool QwtPainter::isSVGMode()
-{
-    return d_SVGMode;
-}
+    static QSize screenResolution;
+    if ( !screenResolution.isValid() )
+    {
+        QDesktopWidget *desktop = QApplication::desktop();
+        if ( desktop )
+        {
+            screenResolution.setWidth( desktop->logicalDpiX() );
+            screenResolution.setHeight( desktop->logicalDpiY() );
+        }
+    }
 
-#endif // QT_VERSION < 0x040000
+    const QPaintDevice *pd = painter->device();
+    if ( pd->logicalDpiX() != screenResolution.width() ||
+        pd->logicalDpiY() != screenResolution.height() )
+    {
+        QFont pixelFont( painter->font(), QApplication::desktop() );
+        pixelFont.setPixelSize( QFontInfo( pixelFont ).pixelSize() );
 
-/*!
-  Scale all QwtPainter drawing operations using the ratio
-  QwtPaintMetrics(from).logicalDpiX() / QwtPaintMetrics(to).logicalDpiX()
-  and QwtPaintMetrics(from).logicalDpiY() / QwtPaintMetrics(to).logicalDpiY()
-
-  \sa QwtPainter::resetScaleMetrics(), QwtPainter::scaleMetricsX,
-        QwtPainter::scaleMetricsY()
-*/
-void QwtPainter::setMetricsMap(const QPaintDevice *layout,
-                               const QPaintDevice *device)
-{
-    d_metricsMap.setMetrics(layout, device);
-}
-
-/*!
-  Change the metrics map
-  \sa QwtPainter::resetMetricsMap, QwtPainter::metricsMap
-*/
-void QwtPainter::setMetricsMap(const QwtMetricsMap &map)
-{
-    d_metricsMap = map;
-}
-
-/*!
-   Reset the metrics map to the ratio 1:1
-   \sa QwtPainter::setMetricsMap, QwtPainter::resetMetricsMap
-*/
-void QwtPainter::resetMetricsMap()
-{
-    d_metricsMap = QwtMetricsMap();
-}
-
-/*!
-  \return Metrics map
-*/
-const QwtMetricsMap &QwtPainter::metricsMap()
-{
-    return d_metricsMap;
+        painter->setFont( pixelFont );
+    }
 }
 
 /*!
-    Wrapper for QPainter::setClipRect()
+  Check is the application is running with the X11 graphics system
+  that has some special capabilities that can be used for incremental
+  painting to a widget.
+
+  \return True, when the graphics system is X11
 */
-void QwtPainter::setClipRect(QPainter *painter, const QRect &rect)
+bool QwtPainter::isX11GraphicsSystem()
 {
-    painter->setClipRect(d_metricsMap.layoutToDevice(rect, painter));
+    static int onX11 = -1;
+    if ( onX11 < 0 )
+    {
+        QPixmap pm( 1, 1 );
+        QPainter painter( &pm );
+
+        onX11 = ( painter.paintEngine()->type() == QPaintEngine::X11 ) ? 1 : 0;
+    }
+
+    return onX11 == 1;
 }
 
 /*!
-    Wrapper for QPainter::drawRect()
+  Check if the painter is using a paint engine, that aligns
+  coordinates to integers. Today these are all paint engines
+  beside QPaintEngine::Pdf and QPaintEngine::SVG.
+
+  If we have an integer based paint engine it is also
+  checked if the painter has a transformation matrix,
+  that rotates or scales.
+
+  \param  painter Painter
+  \return true, when the painter is aligning
+
+  \sa setRoundingAlignment()
 */
-void QwtPainter::drawRect(QPainter *painter, int x, int y, int w, int h)
+bool QwtPainter::isAligning( QPainter *painter )
 {
-    drawRect(painter, QRect(x, y, w, h));
+    if ( painter && painter->isActive() )
+    {
+        switch ( painter->paintEngine()->type() )
+        {
+            case QPaintEngine::Pdf:
+            case QPaintEngine::SVG:
+                return false;
+
+            default:;
+        }
+
+        const QTransform tr = painter->transform();
+        if ( tr.isRotating() || tr.isScaling() )
+        {
+            // we might have to check translations too
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /*!
-    Wrapper for QPainter::drawRect()
+  Enable whether coordinates should be rounded, before they are painted
+  to a paint engine that floors to integer values. For other paint engines
+  this ( PDF, SVG ), this flag has no effect.
+  QwtPainter stores this flag only, the rounding itself is done in 
+  the painting code ( f.e the plot items ).
+
+  The default setting is true. 
+
+  \sa roundingAlignment(), isAligning()
 */
-void QwtPainter::drawRect(QPainter *painter, const QRect &rect)
+void QwtPainter::setRoundingAlignment( bool enable )
 {
-    const QRect r = d_metricsMap.layoutToDevice(rect, painter);
+    d_roundingAlignment = enable;
+}
 
-    QRect clipRect;
+/*!
+  \brief En/Disable line splitting for the raster paint engine
 
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
+  In some Qt versions the raster paint engine paints polylines of many points
+  much faster when they are split in smaller chunks: f.e all supported Qt versions
+  >= Qt 5.0 when drawing an antialiased polyline with a pen width >=2.
+
+  The default setting is true.
+
+  \sa polylineSplitting()
+*/
+void QwtPainter::setPolylineSplitting( bool enable )
+{
+    d_polylineSplitting = enable;
+}
+
+//! Wrapper for QPainter::drawPath()
+void QwtPainter::drawPath( QPainter *painter, const QPainterPath &path )
+{
+    painter->drawPath( path );
+}
+
+//! Wrapper for QPainter::drawRect()
+void QwtPainter::drawRect( QPainter *painter, double x, double y, double w, double h )
+{
+    drawRect( painter, QRectF( x, y, w, h ) );
+}
+
+//! Wrapper for QPainter::drawRect()
+void QwtPainter::drawRect( QPainter *painter, const QRectF &rect )
+{
+    const QRectF r = rect;
+
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
     if ( deviceClipping )
-        clipRect = deviceClipRect();
-
-    if ( clipRect.isValid() ) {
-        if ( !clipRect.intersects(r) )
+    {
+        if ( !clipRect.intersects( r ) )
             return;
 
-        if ( !clipRect.contains(r) ) {
-            fillRect(painter, r & clipRect, painter->brush());
-
-            int pw = painter->pen().width();
-            pw = pw % 2 + pw / 2;
-
-            QwtPolygon pa(5);
-            pa.setPoint(0, r.left(), r.top());
-            pa.setPoint(1, r.right() - pw, r.top());
-            pa.setPoint(2, r.right() - pw, r.bottom() - pw);
-            pa.setPoint(3, r.left(), r.bottom() - pw);
-            pa.setPoint(4, r.left(), r.top());
+        if ( !clipRect.contains( r ) )
+        {
+            fillRect( painter, r & clipRect, painter->brush() );
 
             painter->save();
-            painter->setBrush(Qt::NoBrush);
-            drawPolyline(painter, pa);
+            painter->setBrush( Qt::NoBrush );
+            drawPolyline( painter, QPolygonF( r ) );
             painter->restore();
 
             return;
         }
     }
 
-    painter->drawRect(r);
+    painter->drawRect( r );
 }
 
-/*!
-    Wrapper for QPainter::fillRect()
-*/
-void QwtPainter::fillRect(QPainter *painter,
-                          const QRect &rect, const QBrush &brush)
+//! Wrapper for QPainter::fillRect()
+void QwtPainter::fillRect( QPainter *painter,
+    const QRectF &rect, const QBrush &brush )
 {
     if ( !rect.isValid() )
         return;
 
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
-
-    QRect clipRect;
-#if QT_VERSION >= 0x040000
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
 
     /*
-      Performance of Qt4 is horrible for non trivial brushs. Without
-      clipping expect minutes or hours for repainting large rects
+      Performance of Qt4 is horrible for a non trivial brush. Without
+      clipping expect minutes or hours for repainting large rectangles
       (might result from zooming)
     */
 
-    clipRect = painter->window();
+    if ( deviceClipping )
+        clipRect &= painter->window();
+    else
+        clipRect = painter->window();
+
     if ( painter->hasClipping() )
         clipRect &= painter->clipRegion().boundingRect();
-    if ( deviceClipping )
-        clipRect &= deviceClipRect();
-#else
-    if ( deviceClipping )
-        clipRect = deviceClipRect();
-#endif
 
-    QRect r = d_metricsMap.layoutToDevice(rect, painter);
-    if ( clipRect.isValid() )
-        r = r.intersect(clipRect);
+    QRectF r = rect;
+    if ( deviceClipping )
+        r = r.intersected( clipRect );
 
     if ( r.isValid() )
-        painter->fillRect(r, brush);
+        painter->fillRect( r, brush );
 }
 
-/*!
-    Wrapper for QPainter::drawPie()
-*/
-void QwtPainter::drawPie(QPainter *painter, const QRect &rect,
-                         int a, int alen)
+//! Wrapper for QPainter::drawPie()
+void QwtPainter::drawPie( QPainter *painter, const QRectF &rect,
+    int a, int alen )
 {
-    QRect r = d_metricsMap.layoutToDevice(rect, painter);
-
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
-    if ( deviceClipping && !deviceClipRect().contains(rect) )
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+    if ( deviceClipping && !clipRect.contains( rect ) )
         return;
 
-    painter->drawPie(r, a, alen);
+    painter->drawPie( rect, a, alen );
 }
 
-/*!
-    Wrapper for QPainter::drawEllipse()
-*/
-void QwtPainter::drawEllipse(QPainter *painter, const QRect &rect)
+//! Wrapper for QPainter::drawEllipse()
+void QwtPainter::drawEllipse( QPainter *painter, const QRectF &rect )
 {
-    QRect r = d_metricsMap.layoutToDevice(rect, painter);
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
 
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
-
-    if ( deviceClipping && !deviceClipRect().contains(rect) )
+    if ( deviceClipping && !clipRect.contains( rect ) )
         return;
 
-#if QT_VERSION >= 0x040000
-    if ( painter->pen().style() != Qt::NoPen &&
-            painter->pen().color().isValid() ) {
-        // Qt4 adds the pen to the rect, Qt3 not.
-        int pw = painter->pen().width();
-        if ( pw == 0 )
-            pw = 1;
-
-        r.setWidth(r.width() - pw);
-        r.setHeight(r.height() - pw);
-    }
-#endif
-
-    painter->drawEllipse(r);
+    painter->drawEllipse( rect );
 }
 
-/*!
-    Wrapper for QPainter::drawText()
-*/
-void QwtPainter::drawText(QPainter *painter, int x, int y,
-                          const QString &text)
+//! Wrapper for QPainter::drawText()
+void QwtPainter::drawText( QPainter *painter, double x, double y,
+        const QString &text )
 {
-    drawText(painter, QPoint(x, y), text);
+    drawText( painter, QPointF( x, y ), text );
 }
 
-/*!
-    Wrapper for QPainter::drawText()
-*/
-void QwtPainter::drawText(QPainter *painter, const QPoint &pos,
-                          const QString &text)
+//! Wrapper for QPainter::drawText()
+void QwtPainter::drawText( QPainter *painter, const QPointF &pos,
+        const QString &text )
 {
-    const QPoint p = d_metricsMap.layoutToDevice(pos, painter);
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
 
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
-
-    if ( deviceClipping && !deviceClipRect().contains(p) )
+    if ( deviceClipping && !clipRect.contains( pos ) )
         return;
 
-    painter->drawText(p, text);
+
+    painter->save();
+    qwtUnscaleFont( painter );
+    painter->drawText( pos, text );
+    painter->restore();
 }
 
-/*!
-    Wrapper for QPainter::drawText()
-*/
-void QwtPainter::drawText(QPainter *painter, int x, int y, int w, int h,
-                          int flags, const QString &text)
+//! Wrapper for QPainter::drawText()
+void QwtPainter::drawText( QPainter *painter,
+    double x, double y, double w, double h,
+    int flags, const QString &text )
 {
-    drawText(painter, QRect(x, y, w, h), flags, text);
+    drawText( painter, QRectF( x, y, w, h ), flags, text );
 }
 
-/*!
-    Wrapper for QPainter::drawText()
-*/
-void QwtPainter::drawText(QPainter *painter, const QRect &rect,
-                          int flags, const QString &text)
+//! Wrapper for QPainter::drawText()
+void QwtPainter::drawText( QPainter *painter, const QRectF &rect,
+        int flags, const QString &text )
 {
-    QRect textRect = d_metricsMap.layoutToDevice(rect, painter);
-#if QT_VERSION < 0x040000
-    if ( d_SVGMode &&
-            ( flags == 0 || flags & Qt::AlignVCenter )
-            && painter->device()->devType() == QInternal::Picture ) {
-        /*
-            Qt3 misalignes texts, when saving a text
-            to a SVG image.
-         */
-        textRect.setY(textRect.y() - painter->fontMetrics().height() / 4);
-    }
-#endif
-    painter->drawText(textRect, flags, text);
+    painter->save();
+    qwtUnscaleFont( painter );
+    painter->drawText( rect, flags, text );
+    painter->restore();
 }
 
 #ifndef QT_NO_RICHTEXT
 
 /*!
-  Wrapper for QSimpleRichText::draw()
+  Draw a text document into a rectangle
+
+  \param painter Painter
+  \param rect Traget rectangle
+  \param flags Alignments/Text flags, see QPainter::drawText()
+  \param text Text document
 */
-#if QT_VERSION < 0x040000
-
-void QwtPainter::drawSimpleRichText(QPainter *painter, const QRect &rect,
-                                    int flags, QSimpleRichText &text)
+void QwtPainter::drawSimpleRichText( QPainter *painter, const QRectF &rect,
+    int flags, const QTextDocument &text )
 {
-    QColorGroup cg;
-    cg.setColor(QColorGroup::Text, painter->pen().color());
-
-    const QRect scaledRect = d_metricsMap.layoutToDevice(rect, painter);
-
-    text.setWidth(painter, scaledRect.width());
-
-    // QSimpleRichText is Qt::AlignTop by default
-
-    int y = scaledRect.y();
-    if (flags & Qt::AlignBottom)
-        y += (scaledRect.height() - text.height());
-    else if (flags & Qt::AlignVCenter)
-        y += (scaledRect.height() - text.height())/2;
-
-    text.draw(painter, scaledRect.x(), y, scaledRect, cg);
-}
-#else
-void QwtPainter::drawSimpleRichText(QPainter *painter, const QRect &rect,
-                                    int flags, QTextDocument &text)
-{
-    const QRect scaledRect = d_metricsMap.layoutToDevice(rect, painter);
-    text.setPageSize(QSize(scaledRect.width(), QWIDGETSIZE_MAX));
-
-    QAbstractTextDocumentLayout* layout = text.documentLayout();
-
-    const int height = qRound(layout->documentSize().height());
-    int y = scaledRect.y();
-    if (flags & Qt::AlignBottom)
-        y += (scaledRect.height() - height);
-    else if (flags & Qt::AlignVCenter)
-        y += (scaledRect.height() - height)/2;
-
-    QAbstractTextDocumentLayout::PaintContext context;
-    context.palette.setColor(QPalette::Text, painter->pen().color());
+    QTextDocument *txt = text.clone();
 
     painter->save();
 
-    painter->translate(scaledRect.x(), y);
-    layout->draw(painter, context);
+    painter->setFont( txt->defaultFont() );
+    qwtUnscaleFont( painter );
+
+    txt->setDefaultFont( painter->font() );
+    txt->setPageSize( QSizeF( rect.width(), QWIDGETSIZE_MAX ) );
+
+    QAbstractTextDocumentLayout* layout = txt->documentLayout();
+
+    const double height = layout->documentSize().height();
+    double y = rect.y();
+    if ( flags & Qt::AlignBottom )
+        y += ( rect.height() - height );
+    else if ( flags & Qt::AlignVCenter )
+        y += ( rect.height() - height ) / 2;
+
+    QAbstractTextDocumentLayout::PaintContext context;
+    context.palette.setColor( QPalette::Text, painter->pen().color() );
+
+    painter->translate( rect.x(), y );
+    layout->draw( painter, context );
 
     painter->restore();
+    delete txt;
 }
-#endif
 
 #endif // !QT_NO_RICHTEXT
 
 
-/*!
-  Wrapper for QPainter::drawLine()
-*/
-void QwtPainter::drawLine(QPainter *painter, int x1, int y1, int x2, int y2)
+//! Wrapper for QPainter::drawLine()
+void QwtPainter::drawLine( QPainter *painter,
+    const QPointF &p1, const QPointF &p2 )
 {
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
 
     if ( deviceClipping &&
-            !(deviceClipRect().contains(x1, y1) && deviceClipRect().contains(x2, y2)) ) {
-        QwtPolygon pa(2);
-        pa.setPoint(0, x1, y1);
-        pa.setPoint(1, x2, y2);
-        drawPolyline(painter, pa);
+        !( clipRect.contains( p1 ) && clipRect.contains( p2 ) ) )
+    {
+        QPolygonF polygon;
+        polygon += p1;
+        polygon += p2;
+        drawPolyline( painter, polygon );
         return;
     }
 
-    if ( d_metricsMap.isIdentity() ) {
-#if QT_VERSION >= 0x030200 && QT_VERSION < 0x040000
-        if ( !painter->device()->isExtDev() )
-#endif
+    painter->drawLine( p1, p2 );
+}
+
+//! Wrapper for QPainter::drawPolygon()
+void QwtPainter::drawPolygon( QPainter *painter, const QPolygonF &polygon )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    QPolygonF cpa = polygon;
+    if ( deviceClipping )
+        cpa = QwtClipper::clipPolygonF( clipRect, polygon );
+
+    painter->drawPolygon( cpa );
+}
+
+//! Wrapper for QPainter::drawPolyline()
+void QwtPainter::drawPolyline( QPainter *painter, const QPolygonF &polygon )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    QPolygonF cpa = polygon;
+    if ( deviceClipping )
+        cpa = QwtClipper::clipPolygonF( clipRect, cpa );
+
+    qwtDrawPolyline<QPointF>( painter,
+        cpa.constData(), cpa.size(), d_polylineSplitting );
+}
+
+//! Wrapper for QPainter::drawPolyline()
+void QwtPainter::drawPolyline( QPainter *painter,
+    const QPointF *points, int pointCount )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    if ( deviceClipping )
+    {
+        QPolygonF polygon( pointCount );
+        ::memcpy( polygon.data(), points, pointCount * sizeof( QPointF ) );
+
+        polygon = QwtClipper::clipPolygonF( clipRect, polygon );
+        qwtDrawPolyline<QPointF>( painter,
+            polygon.constData(), polygon.size(), d_polylineSplitting );
+    }
+    else
+    {
+        qwtDrawPolyline<QPointF>( painter, points, pointCount, d_polylineSplitting );
+    }
+}
+
+//! Wrapper for QPainter::drawPolygon()
+void QwtPainter::drawPolygon( QPainter *painter, const QPolygon &polygon )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    QPolygon cpa = polygon;
+    if ( deviceClipping )
+        cpa = QwtClipper::clipPolygon( clipRect, polygon );
+
+    painter->drawPolygon( cpa );
+}
+
+//! Wrapper for QPainter::drawPolyline()
+void QwtPainter::drawPolyline( QPainter *painter, const QPolygon &polygon )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    QPolygon cpa = polygon;
+    if ( deviceClipping )
+        cpa = QwtClipper::clipPolygon( clipRect, cpa );
+
+    qwtDrawPolyline<QPoint>( painter,
+        cpa.constData(), cpa.size(), d_polylineSplitting );
+}
+
+//! Wrapper for QPainter::drawPolyline()
+void QwtPainter::drawPolyline( QPainter *painter,
+    const QPoint *points, int pointCount )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    if ( deviceClipping )
+    {
+        QPolygon polygon( pointCount );
+        ::memcpy( polygon.data(), points, pointCount * sizeof( QPoint ) );
+
+        polygon = QwtClipper::clipPolygon( clipRect, polygon );
+        qwtDrawPolyline<QPoint>( painter,
+            polygon.constData(), polygon.size(), d_polylineSplitting );
+    }
+    else
+        qwtDrawPolyline<QPoint>( painter, points, pointCount, d_polylineSplitting );
+}
+
+//! Wrapper for QPainter::drawPoint()
+void QwtPainter::drawPoint( QPainter *painter, const QPointF &pos )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    if ( deviceClipping && !clipRect.contains( pos ) )
+        return;
+
+    painter->drawPoint( pos );
+}
+
+//! Wrapper for QPainter::drawPoint()
+void QwtPainter::drawPoint( QPainter *painter, const QPoint &pos )
+{
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    if ( deviceClipping )
+    {
+        const int minX = qCeil( clipRect.left() );
+        const int maxX = qFloor( clipRect.right() );
+        const int minY = qCeil( clipRect.top() );
+        const int maxY = qFloor( clipRect.bottom() );
+
+        if ( pos.x() < minX || pos.x() > maxX 
+            || pos.y() < minY || pos.y() > maxY )
         {
-            painter->drawLine(x1, y1, x2, y2);
             return;
         }
     }
 
-    const QPoint p1 = d_metricsMap.layoutToDevice(QPoint(x1, y1));
-    const QPoint p2 = d_metricsMap.layoutToDevice(QPoint(x2, y2));
-
-#if QT_VERSION >= 0x030200 && QT_VERSION < 0x040000
-    if ( painter->device()->isExtDev() ) {
-        // Strange: the postscript driver of QPrinter adds an offset
-        // of 0.5 to the start/endpoint when using drawLine, but not
-        // for lines painted with drawLineSegments.
-
-        QwtPolygon pa(2);
-        pa.setPoint(0, p1);
-        pa.setPoint(1, p2);
-        painter->drawLineSegments(pa);
-    } else
-        painter->drawLine(p1, p2);
-#else
-    painter->drawLine(p1, p2);
-#endif
+    painter->drawPoint( pos );
 }
 
-/*!
-  Wrapper for QPainter::drawPolygon()
-*/
-void QwtPainter::drawPolygon(QPainter *painter, const QwtPolygon &pa)
+//! Wrapper for QPainter::drawPoints()
+void QwtPainter::drawPoints( QPainter *painter, 
+    const QPoint *points, int pointCount )
 {
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
 
-    QwtPolygon cpa = d_metricsMap.layoutToDevice(pa);
-    if ( deviceClipping ) {
-#ifdef __GNUC__
-#endif
-        cpa = clip(cpa);
-    }
-    painter->drawPolygon(cpa);
-}
-
-/*!
-    Wrapper for QPainter::drawPolyline()
-*/
-void QwtPainter::drawPolyline(QPainter *painter, const QwtPolygon &pa)
-{
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
-
-    QwtPolygon cpa = d_metricsMap.layoutToDevice(pa);
     if ( deviceClipping )
-        cpa = clip(cpa);
+    {
+        const int minX = qCeil( clipRect.left() );
+        const int maxX = qFloor( clipRect.right() );
+        const int minY = qCeil( clipRect.top() );
+        const int maxY = qFloor( clipRect.bottom() );
 
-#if QT_VERSION >= 0x040000 && QT_VERSION < 0x040400
-    bool doSplit = false;
-    if ( painter->paintEngine()->type() == QPaintEngine::Raster &&
-            painter->pen().width() >= 2 ) {
-        /*
-            The raster paint engine seems to use some algo with O(n*n).
-            ( Qt 4.3 is better than Qt 4.2, but remains unacceptable)
-            To work around this problem, we have to split the polygon into
-            smaller pieces.
-         */
-        doSplit = true;
-    }
+        const QRect r( minX, minY, maxX - minX, maxY - minY );
 
-    if ( doSplit ) {
-        const int numPoints = cpa.size();
-        const QPoint *points = cpa.data();
+        QPolygon clippedPolygon( pointCount );
+        QPoint *clippedData = clippedPolygon.data();
 
-        const int splitSize = 20;
-        for ( int i = 0; i < numPoints; i += splitSize ) {
-            const int n = qwtMin(splitSize + 1, cpa.size() - i);
-            painter->drawPolyline(points + i, n);
+        int numClippedPoints = 0;
+        for ( int i = 0; i < pointCount; i++ )
+        {
+            if ( r.contains( points[i] ) )
+                clippedData[ numClippedPoints++ ] = points[i];
         }
-    } else
-#endif
-        painter->drawPolyline(cpa);
-}
-
-/*!
-    Wrapper for QPainter::drawPoint()
-*/
-
-void QwtPainter::drawPoint(QPainter *painter, int x, int y)
-{
-    const bool deviceClipping = needDeviceClipping(painter, d_deviceClipping);
-
-    const QPoint pos = d_metricsMap.layoutToDevice(QPoint(x, y));
-
-    if ( deviceClipping && !deviceClipRect().contains(pos) )
-        return;
-
-    painter->drawPoint(pos);
-}
-
-void QwtPainter::drawColoredArc(QPainter *painter, const QRect &rect,
-                                int peak, int arc, int interval, const QColor &c1, const QColor &c2)
-{
-    int h1, s1, v1;
-    int h2, s2, v2;
-
-#if QT_VERSION < 0x040000
-    c1.hsv(&h1, &s1, &v1);
-    c2.hsv(&h2, &s2, &v2);
-#else
-    c1.getHsv(&h1, &s1, &v1);
-    c2.getHsv(&h2, &s2, &v2);
-#endif
-
-    arc /= 2;
-    for ( int angle = -arc; angle < arc; angle += interval) {
-        double ratio;
-        if ( angle >= 0 )
-            ratio = 1.0 - angle / double(arc);
-        else
-            ratio = 1.0 + angle / double(arc);
-
-
-        QColor c;
-        c.setHsv( h1 + qRound(ratio * (h2 - h1)),
-                  s1 + qRound(ratio * (s2 - s1)),
-                  v1 + qRound(ratio * (v2 - v1)) );
-
-        painter->setPen(QPen(c, painter->pen().width()));
-        painter->drawArc(rect, (peak + angle) * 16, interval * 16);
+        painter->drawPoints( clippedData, numClippedPoints );
+    }
+    else
+    {
+        painter->drawPoints( points, pointCount );
     }
 }
 
-void QwtPainter::drawFocusRect(QPainter *painter, QWidget *widget)
+//! Wrapper for QPainter::drawPoints()
+void QwtPainter::drawPoints( QPainter *painter, 
+    const QPointF *points, int pointCount )
 {
-    drawFocusRect(painter, widget, widget->rect());
+    QRectF clipRect;
+    const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
+
+    if ( deviceClipping )
+    {
+        QPolygonF clippedPolygon( pointCount );
+        QPointF *clippedData = clippedPolygon.data();
+
+        int numClippedPoints = 0;
+        for ( int i = 0; i < pointCount; i++ )
+        {
+            if ( clipRect.contains( points[i] ) )
+                clippedData[ numClippedPoints++ ] = points[i];
+        }
+        painter->drawPoints( clippedData, numClippedPoints );
+    }
+    else
+    {
+        painter->drawPoints( points, pointCount );
+    }
 }
 
-void QwtPainter::drawFocusRect(QPainter *painter, QWidget *widget,
-                               const QRect &rect)
+//! Wrapper for QPainter::drawImage()
+void QwtPainter::drawImage( QPainter *painter,
+    const QRectF &rect, const QImage &image )
 {
-#if QT_VERSION < 0x040000
-    widget->style().drawPrimitive(QStyle::PE_FocusRect, painter,
-                                  rect, widget->colorGroup());
-#else
+    const QRect alignedRect = rect.toAlignedRect();
+
+    if ( alignedRect != rect )
+    {
+        const QRectF clipRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+
+        painter->save();
+        painter->setClipRect( clipRect, Qt::IntersectClip );
+        painter->drawImage( alignedRect, image );
+        painter->restore();
+    }
+    else
+    {
+        painter->drawImage( alignedRect, image );
+    }
+}
+
+//! Wrapper for QPainter::drawPixmap()
+void QwtPainter::drawPixmap( QPainter *painter,
+    const QRectF &rect, const QPixmap &pixmap )
+{
+    const QRect alignedRect = rect.toAlignedRect();
+
+    if ( alignedRect != rect )
+    {
+        const QRectF clipRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+
+        painter->save();
+        painter->setClipRect( clipRect, Qt::IntersectClip );
+        painter->drawPixmap( alignedRect, pixmap );
+        painter->restore();
+    }
+    else
+    {
+        painter->drawPixmap( alignedRect, pixmap );
+    }
+}
+
+//! Draw a focus rectangle on a widget using its style.
+void QwtPainter::drawFocusRect( QPainter *painter, const QWidget *widget )
+{
+    drawFocusRect( painter, widget, widget->rect() );
+}
+
+//! Draw a focus rectangle on a widget using its style.
+void QwtPainter::drawFocusRect( QPainter *painter, const QWidget *widget,
+    const QRect &rect )
+{
     QStyleOptionFocusRect opt;
-    opt.init(widget);
+    opt.init( widget );
     opt.rect = rect;
     opt.state |= QStyle::State_HasFocus;
 
-    widget->style()->drawPrimitive(QStyle::PE_FrameFocusRect,
-                                   &opt, painter, widget);
-#endif
-
+    widget->style()->drawPrimitive( QStyle::PE_FrameFocusRect,
+        &opt, painter, widget );
 }
 
-//!  Draw a round frame
-#if QT_VERSION < 0x040000
-void QwtPainter::drawRoundFrame(QPainter *painter, const QRect &rect,
-                                int width, const QColorGroup &cg, bool sunken)
-#else
-void QwtPainter::drawRoundFrame(QPainter *painter, const QRect &rect,
-                                int width, const QPalette &palette, bool sunken)
-#endif
+/*!
+  Draw a round frame 
+
+  \param painter Painter
+  \param rect Frame rectangle
+  \param palette QPalette::WindowText is used for plain borders
+                 QPalette::Dark and QPalette::Light for raised
+                 or sunken borders
+  \param lineWidth Line width
+  \param frameStyle bitwise OR´ed value of QFrame::Shape and QFrame::Shadow
+*/
+void QwtPainter::drawRoundFrame( QPainter *painter,
+    const QRectF &rect, const QPalette &palette, 
+    int lineWidth, int frameStyle )
 {
+    enum Style
+    {
+        Plain,
+        Sunken,
+        Raised
+    };
 
-#if QT_VERSION < 0x040000
-    QColor c0 = cg.mid();
-    QColor c1, c2;
-    if ( sunken ) {
-        c1 = cg.dark();
-        c2 = cg.light();
-    } else {
-        c1 = cg.light();
-        c2 = cg.dark();
-    }
-#else
-    QColor c0 = palette.color(QPalette::Mid);
-    QColor c1, c2;
-    if ( sunken ) {
-        c1 = palette.color(QPalette::Dark);
-        c2 = palette.color(QPalette::Light);
-    } else {
-        c1 = palette.color(QPalette::Light);
-        c2 = palette.color(QPalette::Dark);
-    }
+    Style style = Plain;
+    if ( (frameStyle & QFrame::Sunken) == QFrame::Sunken )
+        style = Sunken;
+    else if ( (frameStyle & QFrame::Raised) == QFrame::Raised )
+        style = Raised;
+
+    const double lw2 = 0.5 * lineWidth;
+    QRectF r = rect.adjusted( lw2, lw2, -lw2, -lw2 );
+
+    QBrush brush;
+
+    if ( style != Plain )
+    {
+        QColor c1 = palette.color( QPalette::Light );
+        QColor c2 = palette.color( QPalette::Dark );
+
+        if ( style == Sunken )
+            qSwap( c1, c2 );
+
+        QLinearGradient gradient( r.topLeft(), r.bottomRight() );
+        gradient.setColorAt( 0.0, c1 );
+#if 0
+        gradient.setColorAt( 0.3, c1 );
+        gradient.setColorAt( 0.7, c2 );
 #endif
+        gradient.setColorAt( 1.0, c2 );
 
-    painter->setPen(QPen(c0, width));
-    painter->drawArc(rect, 0, 360 * 16); // full
+        brush = QBrush( gradient );
+    }
+    else // Plain
+    {
+        brush = palette.brush( QPalette::WindowText );
+    }
 
-    const int peak = 150;
-    const int interval = 2;
+    painter->save();
 
-    if ( c0 != c1 )
-        drawColoredArc(painter, rect, peak, 160, interval, c0, c1);
-    if ( c0 != c2 )
-        drawColoredArc(painter, rect, peak + 180, 120, interval, c0, c2);
+    painter->setPen( QPen( brush, lineWidth ) );
+    painter->setBrush( Qt::NoBrush );
+
+    painter->drawEllipse( r );
+
+    painter->restore();
 }
 
-void QwtPainter::drawColorBar(QPainter *painter,
-                              const QwtColorMap &colorMap, const QwtDoubleInterval &interval,
-                              const QwtScaleMap &scaleMap, Qt::Orientation orientation,
-                              const QRect &rect)
+/*!
+  Draw a rectangular frame
+
+  \param painter Painter
+  \param rect Frame rectangle
+  \param palette Palette
+  \param foregroundRole Foreground role used for QFrame::Plain
+  \param frameWidth Frame width
+  \param midLineWidth Used for QFrame::Box
+  \param frameStyle bitwise OR´ed value of QFrame::Shape and QFrame::Shadow
+*/
+void QwtPainter::drawFrame( QPainter *painter, const QRectF &rect,
+    const QPalette &palette, QPalette::ColorRole foregroundRole,
+    int frameWidth, int midLineWidth, int frameStyle )
 {
-#if QT_VERSION < 0x040000
-    QValueVector<QRgb> colorTable;
-#else
+    if ( frameWidth <= 0 || rect.isEmpty() )
+        return;
+
+    const int shadow = frameStyle & QFrame::Shadow_Mask;
+
+    painter->save();
+
+    if ( shadow == QFrame::Plain )
+    {
+        const QRectF outerRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+        const QRectF innerRect = outerRect.adjusted( 
+            frameWidth, frameWidth, -frameWidth, -frameWidth );
+
+        QPainterPath path;
+        path.addRect( outerRect );
+        path.addRect( innerRect );
+
+        painter->setPen( Qt::NoPen );
+        painter->setBrush( palette.color( foregroundRole ) );
+
+        painter->drawPath( path );
+    }
+    else
+    {
+        const int shape = frameStyle & QFrame::Shape_Mask;
+
+        if ( shape == QFrame::Box )
+        {
+            const QRectF outerRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+            const QRectF midRect1 = outerRect.adjusted( 
+                frameWidth, frameWidth, -frameWidth, -frameWidth );
+            const QRectF midRect2 = midRect1.adjusted( 
+                midLineWidth, midLineWidth, -midLineWidth, -midLineWidth );
+
+            const QRectF innerRect = midRect2.adjusted( 
+                frameWidth, frameWidth, -frameWidth, -frameWidth );
+
+            QPainterPath path1;
+            path1.moveTo( outerRect.bottomLeft() );
+            path1.lineTo( outerRect.topLeft() );
+            path1.lineTo( outerRect.topRight() );
+            path1.lineTo( midRect1.topRight() );
+            path1.lineTo( midRect1.topLeft() );
+            path1.lineTo( midRect1.bottomLeft() );
+
+            QPainterPath path2;
+            path2.moveTo( outerRect.bottomLeft() );
+            path2.lineTo( outerRect.bottomRight() );
+            path2.lineTo( outerRect.topRight() );
+            path2.lineTo( midRect1.topRight() );
+            path2.lineTo( midRect1.bottomRight() );
+            path2.lineTo( midRect1.bottomLeft() );
+
+            QPainterPath path3;
+            path3.moveTo( midRect2.bottomLeft() );
+            path3.lineTo( midRect2.topLeft() );
+            path3.lineTo( midRect2.topRight() );
+            path3.lineTo( innerRect.topRight() );
+            path3.lineTo( innerRect.topLeft() );
+            path3.lineTo( innerRect.bottomLeft() );
+
+            QPainterPath path4;
+            path4.moveTo( midRect2.bottomLeft() );
+            path4.lineTo( midRect2.bottomRight() );
+            path4.lineTo( midRect2.topRight() );
+            path4.lineTo( innerRect.topRight() );
+            path4.lineTo( innerRect.bottomRight() );
+            path4.lineTo( innerRect.bottomLeft() );
+
+            QPainterPath path5;
+            path5.addRect( midRect1 );
+            path5.addRect( midRect2 );
+
+            painter->setPen( Qt::NoPen );
+
+            QBrush brush1 = palette.dark().color();
+            QBrush brush2 = palette.light().color();
+
+            if ( shadow == QFrame::Raised )
+                qSwap( brush1, brush2 );
+
+            painter->setBrush( brush1 );
+            painter->drawPath( path1 );
+            painter->drawPath( path4 );
+
+            painter->setBrush( brush2 );
+            painter->drawPath( path2 );
+            painter->drawPath( path3 );
+
+            painter->setBrush( palette.mid() );
+            painter->drawPath( path5 );
+        }
+#if 0
+        // qDrawWinPanel doesn't result in something nice
+        // on a scalable document like PDF. Better draw a
+        // Panel.
+
+        else if ( shape == QFrame::WinPanel )
+        {
+            painter->setRenderHint( QPainter::NonCosmeticDefaultPen, true );
+            qDrawWinPanel ( painter, rect.toRect(), palette,
+                frameStyle & QFrame::Sunken );
+        }
+        else if ( shape == QFrame::StyledPanel )
+        {
+        }
+#endif
+        else
+        {
+            const QRectF outerRect = rect.adjusted( 0.0, 0.0, -1.0, -1.0 );
+            const QRectF innerRect = outerRect.adjusted( 
+                frameWidth - 1.0, frameWidth - 1.0, 
+                -( frameWidth - 1.0 ), -( frameWidth - 1.0 ) );
+
+            QPainterPath path1;
+            path1.moveTo( outerRect.bottomLeft() );
+            path1.lineTo( outerRect.topLeft() );
+            path1.lineTo( outerRect.topRight() );
+            path1.lineTo( innerRect.topRight() );
+            path1.lineTo( innerRect.topLeft() );
+            path1.lineTo( innerRect.bottomLeft() );
+
+
+            QPainterPath path2;
+            path2.moveTo( outerRect.bottomLeft() );
+            path2.lineTo( outerRect.bottomRight() );
+            path2.lineTo( outerRect.topRight() );
+            path2.lineTo( innerRect.topRight() );
+            path2.lineTo( innerRect.bottomRight() );
+            path2.lineTo( innerRect.bottomLeft() );
+
+            painter->setPen( Qt::NoPen );
+
+            QBrush brush1 = palette.dark().color();
+            QBrush brush2 = palette.light().color();
+
+            if ( shadow == QFrame::Raised )
+                qSwap( brush1, brush2 );
+
+            painter->setBrush( brush1 );
+            painter->drawPath( path1 );
+
+            painter->setBrush( brush2 );
+            painter->drawPath( path2 );
+        }
+
+    }
+
+    painter->restore();
+}
+
+/*!
+  Draw a rectangular frame with rounded borders
+
+  \param painter Painter
+  \param rect Frame rectangle
+  \param xRadius x-radius of the ellipses defining the corners
+  \param yRadius y-radius of the ellipses defining the corners
+  \param palette QPalette::WindowText is used for plain borders
+                 QPalette::Dark and QPalette::Light for raised
+                 or sunken borders
+  \param lineWidth Line width
+  \param frameStyle bitwise OR´ed value of QFrame::Shape and QFrame::Shadow
+*/
+
+void QwtPainter::drawRoundedFrame( QPainter *painter, 
+    const QRectF &rect, double xRadius, double yRadius, 
+    const QPalette &palette, int lineWidth, int frameStyle )
+{
+    painter->save();
+    painter->setRenderHint( QPainter::Antialiasing, true );
+    painter->setBrush( Qt::NoBrush );
+
+    double lw2 = lineWidth * 0.5;
+    QRectF r = rect.adjusted( lw2, lw2, -lw2, -lw2 );
+
+    QPainterPath path;
+    path.addRoundedRect( r, xRadius, yRadius );
+
+    enum Style
+    {
+        Plain,
+        Sunken,
+        Raised
+    };
+
+    Style style = Plain;
+    if ( (frameStyle & QFrame::Sunken) == QFrame::Sunken )
+        style = Sunken;
+    else if ( (frameStyle & QFrame::Raised) == QFrame::Raised )
+        style = Raised;
+
+    if ( style != Plain && path.elementCount() == 17 )
+    {
+        // move + 4 * ( cubicTo + lineTo )
+        QPainterPath pathList[8];
+        
+        for ( int i = 0; i < 4; i++ )
+        {
+            const int j = i * 4 + 1;
+            
+            pathList[ 2 * i ].moveTo(
+                path.elementAt(j - 1).x, path.elementAt( j - 1 ).y
+            );  
+            
+            pathList[ 2 * i ].cubicTo(
+                path.elementAt(j + 0).x, path.elementAt(j + 0).y,
+                path.elementAt(j + 1).x, path.elementAt(j + 1).y,
+                path.elementAt(j + 2).x, path.elementAt(j + 2).y );
+                
+            pathList[ 2 * i + 1 ].moveTo(
+                path.elementAt(j + 2).x, path.elementAt(j + 2).y
+            );  
+            pathList[ 2 * i + 1 ].lineTo(
+                path.elementAt(j + 3).x, path.elementAt(j + 3).y
+            );  
+        }   
+
+        QColor c1( palette.color( QPalette::Dark ) );
+        QColor c2( palette.color( QPalette::Light ) );
+
+        if ( style == Raised )
+            qSwap( c1, c2 );
+
+        for ( int i = 0; i < 4; i++ )
+        {
+            QRectF r = pathList[2 * i].controlPointRect();
+
+            QPen arcPen;
+            arcPen.setCapStyle( Qt::FlatCap );
+            arcPen.setWidth( lineWidth );
+
+            QPen linePen;
+            linePen.setCapStyle( Qt::FlatCap );
+            linePen.setWidth( lineWidth );
+
+            switch( i )
+            {
+                case 0:
+                {
+                    arcPen.setColor( c1 );
+                    linePen.setColor( c1 );
+                    break;
+                }
+                case 1:
+                {
+                    QLinearGradient gradient;
+                    gradient.setStart( r.topLeft() );
+                    gradient.setFinalStop( r.bottomRight() );
+                    gradient.setColorAt( 0.0, c1 );
+                    gradient.setColorAt( 1.0, c2 );
+
+                    arcPen.setBrush( gradient );
+                    linePen.setColor( c2 );
+                    break;
+                }
+                case 2:
+                {
+                    arcPen.setColor( c2 );
+                    linePen.setColor( c2 );
+                    break;
+                }
+                case 3:
+                {
+                    QLinearGradient gradient;
+
+                    gradient.setStart( r.bottomRight() );
+                    gradient.setFinalStop( r.topLeft() );
+                    gradient.setColorAt( 0.0, c2 );
+                    gradient.setColorAt( 1.0, c1 );
+
+                    arcPen.setBrush( gradient );
+                    linePen.setColor( c1 );
+                    break;
+                }
+            }
+
+
+            painter->setPen( arcPen );
+            painter->drawPath( pathList[ 2 * i] );
+
+            painter->setPen( linePen );
+            painter->drawPath( pathList[ 2 * i + 1] );
+        }
+    }
+    else
+    {
+        QPen pen( palette.color( QPalette::WindowText ), lineWidth );
+        painter->setPen( pen );
+        painter->drawPath( path );
+    }
+
+    painter->restore();
+}
+
+/*!
+  Draw a color bar into a rectangle
+
+  \param painter Painter
+  \param colorMap Color map
+  \param interval Value range
+  \param scaleMap Scale map
+  \param orientation Orientation
+  \param rect Traget rectangle
+*/
+void QwtPainter::drawColorBar( QPainter *painter,
+        const QwtColorMap &colorMap, const QwtInterval &interval,
+        const QwtScaleMap &scaleMap, Qt::Orientation orientation,
+        const QRectF &rect )
+{
     QVector<QRgb> colorTable;
-#endif
     if ( colorMap.format() == QwtColorMap::Indexed )
-        colorTable = colorMap.colorTable(interval);
+        colorTable = colorMap.colorTable( interval );
 
     QColor c;
 
-    const QRect devRect = d_metricsMap.layoutToDevice(rect);
+    const QRect devRect = rect.toAlignedRect();
 
     /*
       We paint to a pixmap first to have something scalable for printing
       ( f.e. in a Pdf document )
      */
 
-    QPixmap pixmap(devRect.size());
-    QPainter pmPainter(&pixmap);
-    pmPainter.translate(-devRect.x(), -devRect.y());
+    QPixmap pixmap( devRect.size() );
+    QPainter pmPainter( &pixmap );
+    pmPainter.translate( -devRect.x(), -devRect.y() );
 
-    if ( orientation == Qt::Horizontal ) {
+    if ( orientation == Qt::Horizontal )
+    {
         QwtScaleMap sMap = scaleMap;
-        sMap.setPaintInterval(devRect.left(), devRect.right());
+        sMap.setPaintInterval( rect.left(), rect.right() );
 
-        for ( int x = devRect.left(); x <= devRect.right(); x++ ) {
-            const double value = sMap.invTransform(x);
+        for ( int x = devRect.left(); x <= devRect.right(); x++ )
+        {
+            const double value = sMap.invTransform( x );
 
             if ( colorMap.format() == QwtColorMap::RGB )
-                c.setRgb(colorMap.rgb(interval, value));
+                c.setRgba( colorMap.rgb( interval, value ) );
             else
-                c = colorTable[colorMap.colorIndex(interval, value)];
+                c = colorTable[colorMap.colorIndex( interval, value )];
 
-            pmPainter.setPen(c);
-            pmPainter.drawLine(x, devRect.top(), x, devRect.bottom());
+            pmPainter.setPen( c );
+            pmPainter.drawLine( x, devRect.top(), x, devRect.bottom() );
         }
-    } else { // Vertical
+    }
+    else // Vertical
+    {
         QwtScaleMap sMap = scaleMap;
-        sMap.setPaintInterval(devRect.bottom(), devRect.top());
+        sMap.setPaintInterval( rect.bottom(), rect.top() );
 
-        for ( int y = devRect.top(); y <= devRect.bottom(); y++ ) {
-            const double value = sMap.invTransform(y);
+        for ( int y = devRect.top(); y <= devRect.bottom(); y++ )
+        {
+            const double value = sMap.invTransform( y );
 
             if ( colorMap.format() == QwtColorMap::RGB )
-                c.setRgb(colorMap.rgb(interval, value));
+                c.setRgb( colorMap.rgb( interval, value ) );
             else
-                c = colorTable[colorMap.colorIndex(interval, value)];
+                c = colorTable[colorMap.colorIndex( interval, value )];
 
-            pmPainter.setPen(c);
-            pmPainter.drawLine(devRect.left(), y, devRect.right(), y);
+            pmPainter.setPen( c );
+            pmPainter.drawLine( devRect.left(), y, devRect.right(), y );
         }
     }
     pmPainter.end();
-    painter->drawPixmap(devRect, pixmap);
+
+    drawPixmap( painter, rect, pixmap );
 }
+
+static inline void qwtFillRect( const QWidget *widget, QPainter *painter, 
+    const QRect &rect, const QBrush &brush)
+{
+    if ( brush.style() == Qt::TexturePattern ) 
+    {
+        painter->save();
+
+        painter->setClipRect( rect );
+        painter->drawTiledPixmap(rect, brush.texture(), rect.topLeft());
+
+        painter->restore();
+    } 
+    else if ( brush.gradient() )
+    {
+        painter->save();
+
+        painter->setClipRect( rect );
+        painter->fillRect(0, 0, widget->width(), 
+            widget->height(), brush);
+
+        painter->restore();
+    } 
+    else 
+    {
+        painter->fillRect(rect, brush);
+    }
+}
+
+/*!
+  Fill a pixmap with the content of a widget
+
+  In Qt >= 5.0 QPixmap::fill() is a nop, in Qt 4.x it is buggy
+  for backgrounds with gradients. Thus fillPixmap() offers 
+  an alternative implementation.
+
+  \param widget Widget
+  \param pixmap Pixmap to be filled
+  \param offset Offset 
+
+  \sa QPixmap::fill()
+ */
+void QwtPainter::fillPixmap( const QWidget *widget, 
+    QPixmap &pixmap, const QPoint &offset )
+{
+    const QRect rect( offset, pixmap.size() );
+
+    QPainter painter( &pixmap );
+    painter.translate( -offset );
+
+    const QBrush autoFillBrush = 
+        widget->palette().brush( widget->backgroundRole() );
+
+    if ( !( widget->autoFillBackground() && autoFillBrush.isOpaque() ) ) 
+    {
+        const QBrush bg = widget->palette().brush( QPalette::Window );
+        qwtFillRect( widget, &painter, rect, bg);
+    }
+
+    if ( widget->autoFillBackground() )
+        qwtFillRect( widget, &painter, rect, autoFillBrush);
+
+    if ( widget->testAttribute(Qt::WA_StyledBackground) ) 
+    {
+        painter.setClipRegion( rect );
+
+        QStyleOption opt;
+        opt.initFrom( widget );
+        widget->style()->drawPrimitive( QStyle::PE_Widget, 
+            &opt, &painter, widget );
+    }
+}
+
+/*!
+  Fill rect with the background of a widget
+
+  \param painter Painter
+  \param rect Rectangle to be filled
+  \param widget Widget
+
+  \sa QStyle::PE_Widget, QWidget::backgroundRole()
+ */
+void QwtPainter::drawBackgound( QPainter *painter,
+    const QRectF &rect, const QWidget *widget )
+{
+    if ( widget->testAttribute( Qt::WA_StyledBackground ) )
+    {
+        QStyleOption opt;
+        opt.initFrom( widget );
+        opt.rect = rect.toAlignedRect();
+
+        widget->style()->drawPrimitive(
+            QStyle::PE_Widget, &opt, painter, widget);
+    }
+    else
+    {
+        const QBrush brush =
+            widget->palette().brush( widget->backgroundRole() );
+
+        painter->fillRect( rect, brush );
+    }
+}
+
+/*!
+  \return A pixmap that can be used as backing store
+
+  \param widget Widget, for which the backinstore is intended
+  \param size Size of the pixmap
+ */
+QPixmap QwtPainter::backingStore( QWidget *widget, const QSize &size )
+{
+    QPixmap pm;
+
+#define QWT_HIGH_DPI 1
+
+#if QT_VERSION >= 0x050000 && QWT_HIGH_DPI
+    qreal pixelRatio = 1.0;
+
+    if ( widget && widget->windowHandle() )
+    {
+        pixelRatio = widget->windowHandle()->devicePixelRatio();
+    }
+    else
+    {
+        if ( qApp )
+            pixelRatio = qApp->devicePixelRatio();
+    }
+
+    pm = QPixmap( size * pixelRatio );
+    pm.setDevicePixelRatio( pixelRatio );
+#else
+    Q_UNUSED( widget )
+    pm = QPixmap( size );
+#endif
+
+#if QT_VERSION < 0x050000 
+#ifdef Q_WS_X11
+    if ( widget && isX11GraphicsSystem() )
+    {
+        if ( pm.x11Info().screen() != widget->x11Info().screen() )
+            pm.x11SetScreen( widget->x11Info().screen() );
+    }
+#endif
+#endif
+
+    return pm;
+}
+
