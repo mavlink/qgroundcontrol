@@ -27,7 +27,8 @@ QString MockUAS::_bogusStaticString;
 
 MockUAS::MockUAS(void) :
     _systemType(MAV_TYPE_QUADROTOR),
-    _systemId(1)
+    _systemId(1),
+    _mavlinkPlugin(NULL)
 {
     
 }
@@ -41,4 +42,15 @@ void MockUAS::setMockParametersAndSignal(MockQGCUASParamManager::ParamMap_t& map
         i.next();
         emit parameterChanged(_systemId, 0, i.key(), i.value());
     }
+}
+
+void MockUAS::sendMessage(mavlink_message_t message)
+{
+    Q_UNUSED(link);
+    
+    if (!_mavlinkPlugin) {
+        Q_ASSERT(false);
+    }
+    
+    _mavlinkPlugin->sendMessage(message);
 }
