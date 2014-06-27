@@ -325,11 +325,6 @@ DEPENDPATH += libs/qwt
 INCLUDEPATH += libs/qwt
 
 #
-# [REQUIRED] QSerialPort library. Provides serial port wrapper library.
-#
-include(libs/serialport/qserialport.pri)
-
-#
 # [OPTIONAL] XBee wireless support. This is not necessary for basic serial/UART communications.
 # It's only required for speaking directly to the Xbee using their proprietary API.
 # Unsupported on Mac.
