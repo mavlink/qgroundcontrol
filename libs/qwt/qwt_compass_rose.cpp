@@ -7,48 +7,40 @@
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
 
-#include <math.h>
-#include <qpainter.h>
-#include "qwt_math.h"
-#include "qwt_painter.h"
 #include "qwt_compass_rose.h"
+#include "qwt_point_polar.h"
+#include "qwt_painter.h"
+#include <qpainter.h>
 
-static QPoint cutPoint(QPoint p11, QPoint p12, QPoint p21, QPoint p22)
+static QPointF qwtIntersection( 
+    QPointF p11, QPointF p12, QPointF p21, QPointF p22 )
 {
-    double dx1 = p12.x() - p11.x();
-    double dy1 = p12.y() - p11.y();
-    double dx2 = p22.x() - p21.x();
-    double dy2 = p22.y() - p21.y();
+    const QLineF line1( p11, p12 );
+    const QLineF line2( p21, p22 );
 
-    if ( dx1 == 0.0 && dx2 == 0.0 )
-        return QPoint();
+    QPointF pos;
+    if ( line1.intersect( line2, &pos ) == QLineF::NoIntersection )
+        return QPointF();
 
-    if ( dx1 == 0.0 ) {
-        const double m = dy2 / dx2;
-        const double t = p21.y() - m * p21.x();
-        return QPoint(p11.x(), qRound(m * p11.x() + t));
-    }
-
-    if ( dx2 == 0 ) {
-        const double m = dy1 / dx1;
-        const double t = p11.y() - m * p11.x();
-        return QPoint(p21.x(), qRound(m * p21.x() + t));
-    }
-
-    const double m1 = dy1 / dx1;
-    const double t1 = p11.y() - m1 * p11.x();
-
-    const double m2 = dy2 / dx2;
-    const double t2 = p21.y() - m2 * p21.x();
-
-    if ( m1 == m2 )
-        return QPoint();
-
-    const double x = ( t2 - t1 ) / ( m1 - m2 );
-    const double y = t1 + m1 * x;
-
-    return QPoint(qRound(x), qRound(y));
+    return pos;
 }
+
+class QwtSimpleCompassRose::PrivateData
+{
+public:
+    PrivateData():
+        width( 0.2 ),
+        numThorns( 8 ),
+        numThornLevels( -1 ),
+        shrinkFactor( 0.9 )
+    {
+    }
+
+    double width;
+    int numThorns;
+    int numThornLevels;
+    double shrinkFactor;
+};
 
 /*!
    Constructor
@@ -56,31 +48,48 @@ static QPoint cutPoint(QPoint p11, QPoint p12, QPoint p21, QPoint p22)
    \param numThorns Number of thorns
    \param numThornLevels Number of thorn levels
 */
-QwtSimpleCompassRose::QwtSimpleCompassRose(int numThorns, int numThornLevels):
-    d_width(0.2),
-    d_numThorns(numThorns),
-    d_numThornLevels(numThornLevels),
-    d_shrinkFactor(0.9)
+QwtSimpleCompassRose::QwtSimpleCompassRose(
+    int numThorns, int numThornLevels )
 {
-    const QColor dark(128,128,255);
-    const QColor light(192,255,255);
+    d_data = new PrivateData();
+    d_data->numThorns = numThorns;
+    d_data->numThornLevels = numThornLevels;
+
+    const QColor dark( 128, 128, 255 );
+    const QColor light( 192, 255, 255 );
 
     QPalette palette;
-    for ( int i = 0; i < QPalette::NColorGroups; i++ ) {
-#if QT_VERSION < 0x040000
-        palette.setColor((QPalette::ColorGroup)i,
-                         QColorGroup::Dark, dark);
-        palette.setColor((QPalette::ColorGroup)i,
-                         QColorGroup::Light, light);
-#else
-        palette.setColor((QPalette::ColorGroup)i,
-                         QPalette::Dark, dark);
-        palette.setColor((QPalette::ColorGroup)i,
-                         QPalette::Light, light);
-#endif
-    }
+    palette.setColor( QPalette::Dark, dark );
+    palette.setColor( QPalette::Light, light );
 
-    setPalette(palette);
+    setPalette( palette );
+}
+
+//! Destructor
+QwtSimpleCompassRose::~QwtSimpleCompassRose()
+{
+    delete d_data;
+}
+
+/*!
+  Set the Factor how to shrink the thorns with each level
+  The default value is 0.9.
+
+  \param factor Shrink factor
+  \sa shrinkFactor()
+*/
+void QwtSimpleCompassRose::setShrinkFactor( double factor )
+{
+    d_data->shrinkFactor = factor;
+}
+
+/*!
+  \return Factor how to shrink the thorns with each level
+  \sa setShrinkFactor()
+*/
+double QwtSimpleCompassRose::shrinkFactor() const
+{
+    return d_data->shrinkFactor;
 }
 
 /*!
@@ -92,28 +101,14 @@ QwtSimpleCompassRose::QwtSimpleCompassRose(int numThorns, int numThornLevels):
    \param north Position
    \param cg Color group
 */
-void QwtSimpleCompassRose::draw(QPainter *painter, const QPoint &center,
-                                int radius, double north, QPalette::ColorGroup cg) const
+void QwtSimpleCompassRose::draw( QPainter *painter, const QPointF &center,
+    double radius, double north, QPalette::ColorGroup cg ) const
 {
-#if QT_VERSION < 0x040000
-    QColorGroup colorGroup;
-    switch(cg) {
-    case QPalette::Disabled:
-        colorGroup = palette().disabled();
-    case QPalette::Inactive:
-        colorGroup = palette().inactive();
-    default:
-        colorGroup = palette().active();
-    }
-
-    drawRose(painter, colorGroup, center, radius, north, d_width,
-             d_numThorns, d_numThornLevels, d_shrinkFactor);
-#else
     QPalette pal = palette();
-    pal.setCurrentColorGroup(cg);
-    drawRose(painter, pal, center, radius, north, d_width,
-             d_numThorns, d_numThornLevels, d_shrinkFactor);
-#endif
+    pal.setCurrentColorGroup( cg );
+
+    drawRose( painter, pal, center, radius, north, d_data->width,
+        d_data->numThorns, d_data->numThornLevels, d_data->shrinkFactor );
 }
 
 /*!
@@ -131,13 +126,9 @@ void QwtSimpleCompassRose::draw(QPainter *painter, const QPoint &center,
 */
 void QwtSimpleCompassRose::drawRose(
     QPainter *painter,
-#if QT_VERSION < 0x040000
-    const QColorGroup &cg,
-#else
     const QPalette &palette,
-#endif
-    const QPoint &center, int radius, double north, double width,
-    int numThorns, int numThornLevels, double shrinkFactor)
+    const QPointF &center, double radius, double north, double width,
+    int numThorns, int numThornLevels, double shrinkFactor )
 {
     if ( numThorns < 4 )
         numThorns = 4;
@@ -156,15 +147,17 @@ void QwtSimpleCompassRose::drawRose(
 
     painter->save();
 
-    painter->setPen(Qt::NoPen);
+    painter->setPen( Qt::NoPen );
 
-    for ( int j = 1; j <= numThornLevels; j++ ) {
-        double step =  pow(2.0, j) * M_PI / (double)numThorns;
+    for ( int j = 1; j <= numThornLevels; j++ )
+    {
+        double step =  qPow( 2.0, j ) * M_PI / numThorns;
         if ( step > M_PI_2 )
             break;
 
         double r = radius;
-        for ( int k = 0; k < 3; k++ ) {
+        for ( int k = 0; k < 3; k++ )
+        {
             if ( j + k < numThornLevels )
                 r *= shrinkFactor;
         }
@@ -173,37 +166,31 @@ void QwtSimpleCompassRose::drawRose(
         if ( 2.0 * M_PI / step > 32 )
             leafWidth = 16;
 
-        const double origin = north / 180.0 * M_PI;
+        const double origin = qwtRadians( north );
         for ( double angle = origin;
-                angle < 2.0 * M_PI + origin; angle += step) {
-            const QPoint p = qwtPolar2Pos(center, r, angle);
-            QPoint p1 = qwtPolar2Pos(center, leafWidth, angle + M_PI_2);
-            QPoint p2 = qwtPolar2Pos(center, leafWidth, angle - M_PI_2);
+            angle < 2.0 * M_PI + origin; angle += step )
+        {
+            const QPointF p = qwtPolar2Pos( center, r, angle );
+            const QPointF p1 = qwtPolar2Pos( center, leafWidth, angle + M_PI_2 );
+            const QPointF p2 = qwtPolar2Pos( center, leafWidth, angle - M_PI_2 );
+            const QPointF p3 = qwtPolar2Pos( center, r, angle + step / 2.0 );
+            const QPointF p4 = qwtPolar2Pos( center, r, angle - step / 2.0 );
 
-            QwtPolygon pa(3);
-            pa.setPoint(0, center);
-            pa.setPoint(1, p);
+            QPainterPath darkPath;
+            darkPath.moveTo( center );
+            darkPath.lineTo( p );
+            darkPath.lineTo( qwtIntersection( center, p3, p1, p ) );
 
-            QPoint p3 = qwtPolar2Pos(center, r, angle + step / 2.0);
-            p1 = cutPoint(center, p3, p1, p);
-            pa.setPoint(2, p1);
-#if QT_VERSION < 0x040000
-            painter->setBrush(cg.brush(QColorGroup::Dark));
-#else
-            painter->setBrush(palette.brush(QPalette::Dark));
-#endif
-            painter->drawPolygon(pa);
+            painter->setBrush( palette.brush( QPalette::Dark ) );
+            painter->drawPath( darkPath );
 
-            QPoint p4 = qwtPolar2Pos(center, r, angle - step / 2.0);
-            p2 = cutPoint(center, p4, p2, p);
+            QPainterPath lightPath;
+            lightPath.moveTo( center );
+            lightPath.lineTo( p );
+            lightPath.lineTo( qwtIntersection( center, p4, p2, p ) );
 
-            pa.setPoint(2, p2);
-#if QT_VERSION < 0x040000
-            painter->setBrush(cg.brush(QColorGroup::Light));
-#else
-            painter->setBrush(palette.brush(QPalette::Light));
-#endif
-            painter->drawPolygon(pa);
+            painter->setBrush( palette.brush( QPalette::Light ) );
+            painter->drawPath( lightPath );
         }
     }
     painter->restore();
@@ -215,15 +202,23 @@ void QwtSimpleCompassRose::drawRose(
 
    \param width Width
 */
-
-void QwtSimpleCompassRose::setWidth(double width)
+void QwtSimpleCompassRose::setWidth( double width )
 {
-    d_width = width;
-    if (d_width < 0.03)
-        d_width = 0.03;
+    d_data->width = width;
+    if ( d_data->width < 0.03 )
+        d_data->width = 0.03;
 
-    if (d_width > 0.4)
-        d_width = 0.4;
+    if ( d_data->width > 0.4 )
+        d_data->width = 0.4;
+}
+
+/*! 
+  \return Width of the rose
+  \sa setWidth()
+ */
+double QwtSimpleCompassRose::width() const
+{
+    return d_data->width;
 }
 
 /*!
@@ -233,7 +228,7 @@ void QwtSimpleCompassRose::setWidth(double width)
   \param numThorns Number of thorns
   \sa numThorns(), setNumThornLevels()
 */
-void QwtSimpleCompassRose::setNumThorns(int numThorns)
+void QwtSimpleCompassRose::setNumThorns( int numThorns )
 {
     if ( numThorns < 4 )
         numThorns = 4;
@@ -241,7 +236,7 @@ void QwtSimpleCompassRose::setNumThorns(int numThorns)
     if ( numThorns % 4 )
         numThorns += 4 - numThorns % 4;
 
-    d_numThorns = numThorns;
+    d_data->numThorns = numThorns;
 }
 
 /*!
@@ -250,7 +245,7 @@ void QwtSimpleCompassRose::setNumThorns(int numThorns)
 */
 int QwtSimpleCompassRose::numThorns() const
 {
-    return d_numThorns;
+    return d_data->numThorns;
 }
 
 /*!
@@ -259,9 +254,9 @@ int QwtSimpleCompassRose::numThorns() const
   \param numThornLevels Number of thorns levels
   \sa setNumThorns(), numThornLevels()
 */
-void QwtSimpleCompassRose::setNumThornLevels(int numThornLevels)
+void QwtSimpleCompassRose::setNumThornLevels( int numThornLevels )
 {
-    d_numThornLevels = numThornLevels;
+    d_data->numThornLevels = numThornLevels;
 }
 
 /*!
@@ -270,5 +265,5 @@ void QwtSimpleCompassRose::setNumThornLevels(int numThornLevels)
 */
 int QwtSimpleCompassRose::numThornLevels() const
 {
-    return d_numThornLevels;
+    return d_data->numThornLevels;
 }

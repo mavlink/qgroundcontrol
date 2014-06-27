@@ -34,7 +34,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QVector>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
-//#include <qwt_array.h>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>

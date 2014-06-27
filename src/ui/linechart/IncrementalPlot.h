@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #define INCREMENTALPLOT_H
 
 #include <QTimer>
-#include <qwt_array.h>
 #include <qwt_plot.h>
 #include <qwt_legend.h>
 #include <QMap>
@@ -59,8 +58,8 @@ public:
 
 private:
     int d_count;
-    QwtArray<double> d_x;
-    QwtArray<double> d_y;
+    QVector<double> d_x;
+    QVector<double> d_y;
 };
 
 /**

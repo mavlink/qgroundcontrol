@@ -11,28 +11,8 @@
 #define QWT_SPLINE_H
 
 #include "qwt_global.h"
-#include "qwt_double_rect.h"
-
-#if QT_VERSION >= 0x040000
-#include <QPolygonF>
-#else
-#include "qwt_array.h"
-#endif
-
-// MOC_SKIP_BEGIN
-
-#if defined(QWT_TEMPLATEDLL)
-
-#if QT_VERSION < 0x040000
-#ifndef QWTARRAY_TEMPLATE_QWTDOUBLEPOINT // by mjo3
-#define QWTARRAY_TEMPLATE_QWTDOUBLEPOINT
-template class QWT_EXPORT QwtArray<QwtDoublePoint>;
-#endif //end of QWTARRAY_TEMPLATE_QWTDOUBLEPOINT
-#endif
-
-#endif
-
-// MOC_SKIP_END
+#include <qpolygon.h>
+#include <qvector.h>
 
 /*!
   \brief A class for spline interpolation
@@ -77,8 +57,13 @@ QPolygonF interpolate(const QPolygonF& points, int numValues)
 class QWT_EXPORT QwtSpline
 {
 public:
-    enum SplineType {
+    //! Spline type
+    enum SplineType
+    {
+        //! A natural spline
         Natural,
+
+        //! A periodic spline
         Periodic
     };
 
@@ -89,34 +74,26 @@ public:
 
     QwtSpline &operator=( const QwtSpline & );
 
-    void setSplineType(SplineType);
+    void setSplineType( SplineType );
     SplineType splineType() const;
 
-#if QT_VERSION < 0x040000
-    bool setPoints(const QwtArray<QwtDoublePoint>& points);
-    QwtArray<QwtDoublePoint> points() const;
-#else
-    bool setPoints(const QPolygonF& points);
+    bool setPoints( const QPolygonF& points );
     QPolygonF points() const;
-#endif
 
     void reset();
 
     bool isValid() const;
-    double value(double x) const;
+    double value( double x ) const;
+
+    const QVector<double> &coefficientsA() const;
+    const QVector<double> &coefficientsB() const;
+    const QVector<double> &coefficientsC() const;
 
 protected:
+    bool buildNaturalSpline( const QPolygonF & );
+    bool buildPeriodicSpline( const QPolygonF & );
 
-#if QT_VERSION < 0x040000
-    bool buildNaturalSpline(
-        const QwtArray<QwtDoublePoint> &);
-    bool buildPeriodicSpline(
-        const QwtArray<QwtDoublePoint> &);
-#else
-    bool buildNaturalSpline(const QPolygonF &);
-    bool buildPeriodicSpline(const QPolygonF &);
-#endif
-
+private:
     class PrivateData;
     PrivateData *d_data;
 };
