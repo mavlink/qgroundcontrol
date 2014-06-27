@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QShowEvent>
 #include <QContextMenuEvent>
 #include <QMenu>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include <QFileDialog>
 #include <QPaintEvent>
 #include <QDebug>
@@ -1313,7 +1313,7 @@ void HUD::saveImage()
 
 void HUD::selectOfflineDirectory()
 {
-    QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
     if (fileName != "") {
         offlineDirectory = fileName;
     }
@@ -1392,7 +1392,7 @@ void HUD::saveImages(bool save)
         QFileDialog dialog(this);
         dialog.setFileMode(QFileDialog::DirectoryOnly);
 
-        imageLogDirectory = QFileDialog::getExistingDirectory(this, tr("Select image log directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+        imageLogDirectory = QFileDialog::getExistingDirectory(this, tr("Select image log directory"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
 
         qDebug() << "Logging to:" << imageLogDirectory;
 

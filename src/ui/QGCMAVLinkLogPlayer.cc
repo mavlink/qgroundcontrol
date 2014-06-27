@@ -1,6 +1,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include <QtEndian>
 
 #include "MainWindow.h"
@@ -22,7 +22,7 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     binaryBaudRate(defaultBinaryBaudRate),
     isPlaying(false),
     currPacketCount(0),
-    lastLogDirectory(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation)),
+    lastLogDirectory(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)),
     ui(new Ui::QGCMAVLinkLogPlayer)
 {
     ui->setupUi(this);

@@ -970,7 +970,7 @@ void MainWindow::createCustomWidget()
 void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     if (fileName != "") loadCustomWidget(fileName);
 }
 void MainWindow::loadCustomWidget(const QString& fileName, int view)
