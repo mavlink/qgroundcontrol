@@ -48,18 +48,19 @@ signals:
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
     void nothingMessage();
-    void listRecursively(const QString &from);
+    void listDirectory(const QString& dirPath);
     void downloadPath(const QString& from, const QDir& downloadDir);
 
 protected:
     struct RequestHeader
         {
-            uint8_t		magic;
-            uint8_t		session;
-            uint8_t		opcode;
-            uint8_t		size;
-            uint32_t	crc32;
-            uint32_t	offset;
+            uint8_t		magic;      ///> Magic byte 'f' to idenitfy FTP protocol
+            uint8_t		session;    ///> Session id for read and write commands
+            uint8_t		opcode;     ///> Command opcode
+            uint8_t		size;       ///> Size of data
+            uint32_t	crc32;      ///> CRC for entire Request structure, with crc32 set to 0
+            uint32_t	offset;     ///> Offsets for List and Read commands
+            uint8_t     errCode;    ///> Error code from Ack and Naks (ignored for commands)
         };
 
     struct Request
@@ -72,25 +73,29 @@ protected:
 
     enum Opcode
         {
-            kCmdNone,       // ignored, always acked
-            kCmdTerminate,	// releases sessionID, closes file
-            kCmdReset,      // terminates all sessions
-            kCmdList,       // list files in <path> from <offset>
-            kCmdOpen,       // opens <path> for reading, returns <session>
-            kCmdRead,       // reads <size> bytes from <offset> in <session>
-            kCmdCreate,     // creates <path> for writing, returns <session>
-            kCmdWrite,      // appends <size> bytes at <offset> in <session>
-            kCmdRemove,     // remove file (only if created by server?)
+            // Commands
+            kCmdNone,       ///> ignored, always acked
+            kCmdTerminate,	///> releases sessionID, closes file
+            kCmdReset,      ///> terminates all sessions
+            kCmdList,       ///> list files in <path> from <offset>
+            kCmdOpen,       ///> opens <path> for reading, returns <session>
+            kCmdRead,       ///> reads <size> bytes from <offset> in <session>
+            kCmdCreate,     ///> creates <path> for writing, returns <session>
+            kCmdWrite,      ///> appends <size> bytes at <offset> in <session>
+            kCmdRemove,     ///> remove file (only if created by server?)
 
-            kRspAck,
-            kRspNak,
+            // Responses
+            kRspAck,        ///> positive acknowledgement of previous command
+            kRspNak,        ///> negative acknowledgement of previous command
             
-            kCmdTestNoAck,  // ignored, ack not sent back, for testing only, should timeout waiting for ack
+            // Used for testing only, not part of protocol
+            kCmdTestNoAck,  // ignored, ack not sent back, should timeout waiting for ack
         };
 
     enum ErrorCode
         {
             kErrNone,
+            kErrMore,
             kErrNoRequest,
             kErrNoSession,
             kErrSequence,
@@ -127,12 +132,12 @@ protected:
     void _emitStatusMessage(const QString& msg);
     void _sendRequest(Request* request);
     void _fillRequestWithString(Request* request, const QString& str);
-    void _openResponse(Request* openAck);
-    void _readResponse(Request* readAck);
-
-    void sendList();
-    void listDecode(const uint8_t *data, unsigned len);
-
+    void _openAckResponse(Request* openAck);
+    void _readAckResponse(Request* readAck);
+    void _listAckResponse(Request* listAck);
+    void _sendListCommand(void);
+    void _sendTerminateCommand(void);
+    
     static quint32 crc32(Request* request, unsigned state = 0);
     static QString errorString(uint8_t errorCode);
 

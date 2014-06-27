@@ -23,20 +23,31 @@
 
 #include "MockMavlinkFileServer.h"
 
-const char* MockMavlinkFileServer::smallFilename = "small";
-const char* MockMavlinkFileServer::largeFilename = "large";
+const MockMavlinkFileServer::FileTestCase MockMavlinkFileServer::rgFileTestCases[MockMavlinkFileServer::cFileTestCases] = {
+    // File fits one Read Ack packet, partially filling data
+    { "partial.qgc",    sizeof(((QGCUASFileManager::Request*)0)->data) - 1 },
+    // File fits one Read Ack packet, exactly filling all data
+    { "exact.qgc",      sizeof(((QGCUASFileManager::Request*)0)->data) },
+    // File is larger than a single Read Ack packets, requires multiple Reads
+    { "multi.qgc",      sizeof(((QGCUASFileManager::Request*)0)->data) + 1 },
+};
 
-// FIXME: -2 to avoid eof on full packet
-const uint8_t MockMavlinkFileServer::smallFileLength = sizeof(((QGCUASFileManager::Request*)0)->data) - 2;
-const uint8_t MockMavlinkFileServer::largeFileLength = sizeof(((QGCUASFileManager::Request*)0)->data) + 1;
-
+// We only support a single fixed session
 const uint8_t MockMavlinkFileServer::_sessionId = 1;
+
+MockMavlinkFileServer::MockMavlinkFileServer(void)
+{
+
+}
+
 
 
 /// @brief Handles List command requests. Only supports root folder paths.
 ///         File list returned is set using the setFileList method.
 void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
 {
+    // FIXME: Does not support directories that span multiple packets
+    
     QGCUASFileManager::Request  ackResponse;
     QString                     path;
 
@@ -56,7 +67,9 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
     ackResponse.hdr.magic = 'f';
     ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
     ackResponse.hdr.session = 0;
+    ackResponse.hdr.offset = request->hdr.offset;
     ackResponse.hdr.size = 0;
+    ackResponse.hdr.errCode = QGCUASFileManager::kErrNone;
     
     if (request->hdr.offset == 0) {
         // Requesting first batch of file names
@@ -69,42 +82,35 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
             ackResponse.hdr.size += cchFilename + 1;
             bufPtr += cchFilename + 1;
         }
-        
-        // Final double termination
-        *bufPtr = 0;
-        ackResponse.hdr.size++;
-        
     } else {
-        // All filenames fit in first ack, send final null terminated ack
-        ackResponse.data[0] = 0;
-        ackResponse.hdr.size = 1;
+        // FIXME: Does not support directories that span multiple packets
+        _sendNak(QGCUASFileManager::kErrEOF);
     }
     
     _emitResponse(&ackResponse);
 }
 
-/// @brief Handles Open command requests. Two filenames are supported:
-///         '/small' - file fits in a single packet
-///         '/large' - file requires multiple packets to be sent
-/// In all cases file contents are one byte data length, followed by a single
-/// byte repeating increasing sequence (0x00, 0x01, .. 0xFF) for specified
-/// number of bytes.
+/// @brief Handles Open command requests.
 void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
 {
     QGCUASFileManager::Request  response;
     QString                     path;
     
-    // Make sure one byte of length is enough to overflow into two packets.
-    Q_ASSERT((sizeof(request->data) & 0xFF) == sizeof(request->data));
+    size_t cchPath = strnlen((char *)request->data, sizeof(request->data));
+    Q_ASSERT(cchPath != sizeof(request->data));
+    path = (char *)request->data;
+    
+    // Check path against one of our known test cases
 
-    path = (char *)&request->data[0];
-    if (path == smallFilename) {
-        _readFileLength = smallFileLength;
-        qDebug() << "Reading file length" << smallFileLength;
-    } else if (path == largeFilename) {
-        _readFileLength = largeFileLength;
-        qDebug() << "Reading file length" << largeFileLength;
-    } else {
+    bool found = false;
+    for (size_t i=0; i<cFileTestCases; i++) {
+        if (path == rgFileTestCases[i].filename) {
+            found = true;
+            _readFileLength = rgFileTestCases[i].length;
+            break;
+        }
+    }
+    if (!found) {
         _sendNak(QGCUASFileManager::kErrNotFile);
         return;
     }
@@ -113,6 +119,7 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
     response.hdr.opcode = QGCUASFileManager::kRspAck;
     response.hdr.session = _sessionId;
     response.hdr.size = 0;
+    response.hdr.errCode = QGCUASFileManager::kErrNone;
     
     _emitResponse(&response);
 }
@@ -120,8 +127,6 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
 /// @brief Handles Read command requests.
 void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
 {
-    qDebug() << "Read command:" << request->hdr.offset;
-    
     QGCUASFileManager::Request response;
 
     if (request->hdr.session != _sessionId) {
@@ -129,53 +134,70 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
         return;
     }
     
-    if (request->hdr.size > sizeof(response.data)) {
-        _sendNak(QGCUASFileManager::kErrPerm);
-        return;
-    }
-
-    uint8_t size = 0;
-    uint32_t offset = request->hdr.offset;
+    uint32_t readOffset = request->hdr.offset;  // offset into file for reading
+    uint8_t cDataBytes = 0;                     // current number of data bytes used
     
-    // Offset check is > instead of >= to take into accoutn extra length byte at beginning of file
-    if (offset > _readFileLength) {
-        _sendNak(QGCUASFileManager::kErrIO);
-        return;
-    }
-    
-    // Write length byte if needed
-    if (offset == 0) {
-        response.data[0] = _readFileLength;
-        offset++;
-        size++;
-    }
-    
-    // Write file bytes. Data is a repeating sequence of 0x00, 0x01, .. 0xFF.
-    for (; size < sizeof(response.data) && offset <= _readFileLength; offset++, size++) {
-        response.data[size] = (offset - 1) & 0xFF;
-    }
-    
-    qDebug() << "_readCommand bytes written" << size;
-    
-    // If we didn't write any bytes it was a bad request
-    if (size == 0) {
+    if (readOffset > _readFileLength) {
         _sendNak(QGCUASFileManager::kErrEOF);
         return;
     }
     
+    // Write length byte if needed
+    if (readOffset == 0) {
+        response.data[0] = _readFileLength;
+        readOffset++;
+        cDataBytes++;
+    }
+    
+    // Write file bytes. Data is a repeating sequence of 0x00, 0x01, .. 0xFF.
+    for (; cDataBytes < sizeof(response.data) && readOffset < _readFileLength; readOffset++, cDataBytes++) {
+        // Subtract one from readOffset to take into account length byte and start file data a 0x00
+        response.data[cDataBytes] = (readOffset - 1) & 0xFF;
+    }
+    
+    // We should always have written something, otherwise there is something wrong with the code above
+    Q_ASSERT(cDataBytes);
+    
     response.hdr.magic = 'f';
     response.hdr.opcode = QGCUASFileManager::kRspAck;
     response.hdr.session = _sessionId;
-    response.hdr.size = size;
+    response.hdr.size = cDataBytes;
     response.hdr.offset = request->hdr.offset;
     
+    if (readOffset >= _readFileLength) {
+        // Something wrong with the reading code, should not have gone past last byte
+        Q_ASSERT(readOffset == _readFileLength);
+
+        // We have read all the bytes in the file
+        response.hdr.errCode = QGCUASFileManager::kErrNone;
+        
+    } else {
+        // There are still more bytes left to read in the file
+        response.hdr.errCode = QGCUASFileManager::kErrMore;
+    }
+    
     _emitResponse(&response);
+}
+
+/// @brief Handles Terminate commands
+void MockMavlinkFileServer::_terminateCommand(QGCUASFileManager::Request* request)
+{
+    if (request->hdr.session != _sessionId) {
+        _sendNak(QGCUASFileManager::kErrNoSession);
+        return;
+    }
+    
+    _sendAck();
+    
+    // Let our test harness know that we got a terminate command. This is used to validate the a Terminate is correctly
+    // sent after an Open.
+    emit terminateCommandReceived();
 }
 
 /// @brief Handles messages sent to the FTP server.
 void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
 {
-    QGCUASFileManager::Request  ackResponse;
+    QGCUASFileManager::Request ackResponse;
 
     Q_ASSERT(message.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA);
 
@@ -204,6 +226,7 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             ackResponse.hdr.session = 0;
             ackResponse.hdr.crc32 = 0;
             ackResponse.hdr.size = 0;
+            ackResponse.hdr.errCode = QGCUASFileManager::kErrNone;
             _emitResponse(&ackResponse);
             break;
 
@@ -219,10 +242,12 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             _readCommand(request);
             break;
 
+        case QGCUASFileManager::kCmdTerminate:
+            _terminateCommand(request);
+            break;
+
         // Remainder of commands are NYI
 
-        case QGCUASFileManager::kCmdTerminate:
-            // releases sessionID, closes file
         case QGCUASFileManager::kCmdCreate:
             // creates <path> for writing, returns <session>
         case QGCUASFileManager::kCmdWrite:
@@ -236,6 +261,20 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
     }
 }
 
+/// @brief Sends an Ack
+void MockMavlinkFileServer::_sendAck(void)
+{
+    QGCUASFileManager::Request ackResponse;
+    
+    ackResponse.hdr.magic = 'f';
+    ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
+    ackResponse.hdr.session = 0;
+    ackResponse.hdr.size = 0;
+    ackResponse.hdr.errCode = QGCUASFileManager::kErrNone;
+    
+    _emitResponse(&ackResponse);
+}
+
 /// @brief Sends a Nak with the specified error code.
 void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error)
 {
@@ -244,8 +283,8 @@ void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error)
     nakResponse.hdr.magic = 'f';
     nakResponse.hdr.opcode = QGCUASFileManager::kRspNak;
     nakResponse.hdr.session = 0;
-    nakResponse.hdr.size = sizeof(nakResponse.data[0]);
-    nakResponse.data[0] = error;
+    nakResponse.hdr.size = 0;
+    nakResponse.hdr.errCode = error;
     
     _emitResponse(&nakResponse);
 }
