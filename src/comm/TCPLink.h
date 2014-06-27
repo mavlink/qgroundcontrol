@@ -42,7 +42,6 @@
 // as a meta type to silence that.
 #include <QMetaType>
 #include <QTcpSocket>
-Q_DECLARE_METATYPE(QAbstractSocket::SocketError)
 
 //#define TCPLINK_READWRITE_DEBUG   // Use to debug data reads/writes
 
