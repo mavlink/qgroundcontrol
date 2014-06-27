@@ -110,10 +110,10 @@ public:
     double yMin() const { return ymin; }
     double yMax() const { return ymax; }
 
-    virtual QwtDoubleRect boundingRect() const {
+    virtual QRectF boundingRect() const {
         if(!minMaxSet)
-            return QwtDoubleRect(1,1,-2,-2);
-        return QwtDoubleRect(xmin,ymin,xmax-xmin,ymax-ymin);
+            return QRectF(1,1,-2,-2);
+        return QRectF(xmin,ymin,xmax-xmin,ymax-ymin);
     }
 
     /* From QwtPlotItem.  Draw the complete series */
