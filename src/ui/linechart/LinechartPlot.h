@@ -45,7 +45,6 @@ This file is part of the PIXHAWK project
 #include <qwt_scale_draw.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_engine.h>
-#include <qwt_array.h>
 #include <qwt_plot.h>
 #include "ChartPlot.h"
 #include "MG.h"
@@ -134,14 +133,14 @@ protected:
 
 private:
     quint64 count;
-    QwtArray<double> ms;
-    QwtArray<double> value;
+    QVector<double> ms;
+    QVector<double> value;
     double mean;
     double median;
     double variance;
     unsigned int averageWindow;
-    QwtArray<double> outputMs;
-    QwtArray<double> outputValue;
+    QVector<double> outputMs;
+    QVector<double> outputValue;
 };
 
 

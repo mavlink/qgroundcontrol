@@ -11,112 +11,100 @@
 #define QWT_SCALE_DIV_H
 
 #include "qwt_global.h"
-#include "qwt_valuelist.h"
-#include "qwt_double_interval.h"
+#include "qwt_interval.h"
+#include <qlist.h>
 
-class QwtDoubleInterval;
+#ifndef QT_NO_DEBUG_STREAM
+#include <qdebug.h>
+#endif
 
 /*!
   \brief A class representing a scale division
 
-  A scale division consists of its limits and 3 list
-  of tick values qualified as major, medium and minor ticks.
+  A Qwt scale is defined by its boundaries and 3 list
+  for the positions of the major, medium and minor ticks.
 
-  In most cases scale divisions are calculated by a QwtScaleEngine.
+  The upperLimit() might be smaller than the lowerLimit()
+  to indicate inverted scales.
 
-  \sa QwtScaleEngine::subDivideInto, QwtScaleEngine::subDivide
+  Scale divisions can be calculated from a QwtScaleEngine.
+
+  \sa QwtScaleEngine::divideScale(), QwtPlot::setAxisScaleDiv(),
+      QwtAbstractSlider::setScaleDiv()
 */
 
 class QWT_EXPORT QwtScaleDiv
 {
 public:
-    enum TickType {
+    //! Scale tick types
+    enum TickType
+    {
+        //! No ticks
         NoTick = -1,
 
+        //! Minor ticks
         MinorTick,
+
+        //! Medium ticks
         MediumTick,
+
+        //! Major ticks
         MajorTick,
 
+        //! Number of valid tick types
         NTickTypes
     };
 
-    explicit QwtScaleDiv();
-    explicit QwtScaleDiv(const QwtDoubleInterval &,
-                         QwtValueList[NTickTypes]);
-    explicit QwtScaleDiv(double lBound, double rBound,
-                         QwtValueList[NTickTypes]);
+    explicit QwtScaleDiv( double lowerBound = 0.0, 
+        double upperBound = 0.0 );
 
-    int operator==(const QwtScaleDiv &s) const;
-    int operator!=(const QwtScaleDiv &s) const;
+    explicit QwtScaleDiv( const QwtInterval &, QList<double>[NTickTypes] );
 
-    void setInterval(double lBound, double rBound);
-    void setInterval(const QwtDoubleInterval &);
-    QwtDoubleInterval interval() const;
+    explicit QwtScaleDiv( double lowerBound, double upperBound,
+        QList<double>[NTickTypes] );
 
-    inline double lBound() const;
-    inline double hBound() const;
-    inline double range() const;
+    explicit QwtScaleDiv( double lowerBound, double upperBound, 
+        const QList<double> &minorTicks, const QList<double> &mediumTicks,
+        const QList<double> &majorTicks );
 
-    bool contains(double v) const;
+    bool operator==( const QwtScaleDiv & ) const;
+    bool operator!=( const QwtScaleDiv & ) const;
 
-    void setTicks(int type, const QwtValueList &);
-    const QwtValueList &ticks(int type) const;
+    void setInterval( double lowerBound, double upperBound );
+    void setInterval( const QwtInterval & );
+    QwtInterval interval() const;
 
-    void invalidate();
-    bool isValid() const;
+    void setLowerBound( double );
+    double lowerBound() const;
+
+    void setUpperBound( double );
+    double upperBound() const;
+
+    double range() const;
+
+    bool contains( double value ) const;
+
+    void setTicks( int tickType, const QList<double> & );
+    QList<double> ticks( int tickType ) const;
+
+    bool isEmpty() const;
+    bool isIncreasing() const;
 
     void invert();
+    QwtScaleDiv inverted() const;
+
+    QwtScaleDiv bounded( double lowerBound, double upperBound ) const;
 
 private:
-    double d_lBound;
-    double d_hBound;
-    QwtValueList d_ticks[NTickTypes];
-
-    bool d_isValid;
+    double d_lowerBound;
+    double d_upperBound;
+    QList<double> d_ticks[NTickTypes];
 };
 
-/*!
-   Change the interval
-   \lBound left bound
-   \rBound right bound
-*/
-inline void QwtScaleDiv::setInterval(double lBound, double hBound)
-{
-    d_lBound = lBound;
-    d_hBound = hBound;
-}
+Q_DECLARE_TYPEINFO( QwtScaleDiv, Q_MOVABLE_TYPE );
 
-/*!
-  \return lBound -> hBound
-*/
-inline QwtDoubleInterval QwtScaleDiv::interval() const
-{
-    return QwtDoubleInterval(d_lBound, d_hBound);
-}
+#ifndef QT_NO_DEBUG_STREAM
+QWT_EXPORT QDebug operator<<( QDebug, const QwtScaleDiv & );
+#endif
 
-/*!
-  \return left bound
-  \sa QwtScaleDiv::hBound
-*/
-inline double QwtScaleDiv::lBound() const
-{
-    return d_lBound;
-}
-
-/*!
-  \return right bound
-  \sa QwtScaleDiv::lBound
-*/
-inline double QwtScaleDiv::hBound() const
-{
-    return d_hBound;
-}
-
-/*!
-  \return hBound() - lBound()
-*/
-inline double QwtScaleDiv::range() const
-{
-    return d_hBound - d_lBound;
-}
 #endif

@@ -81,7 +81,7 @@ bool QGCMAVLinkMessageSender::sendMessage(unsigned int msgid)
                 {
                     // Single char
                     char* b = ((char*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
-                    *b = field->data(1, Qt::DisplayRole).toChar().toAscii();
+                    *b = field->data(1, Qt::DisplayRole).toChar().toLatin1();
                 }
                 break;
             case MAVLINK_TYPE_UINT8_T:
@@ -100,7 +100,7 @@ bool QGCMAVLinkMessageSender::sendMessage(unsigned int msgid)
                 {
                     // Single value
                     uint8_t* u = (m+messageInfo[msgid].fields[fieldid].wire_offset);
-                    *u = field->data(1, Qt::DisplayRole).toChar().toAscii();
+                    *u = field->data(1, Qt::DisplayRole).toChar().toLatin1();
                 }
                 break;
             case MAVLINK_TYPE_INT8_T:
@@ -119,7 +119,7 @@ bool QGCMAVLinkMessageSender::sendMessage(unsigned int msgid)
                 {
                     // Single value
                     int8_t* u = reinterpret_cast<int8_t*>(m+messageInfo[msgid].fields[fieldid].wire_offset);
-                    *u = field->data(1, Qt::DisplayRole).toChar().toAscii();
+                    *u = field->data(1, Qt::DisplayRole).toChar().toLatin1();
                 }
                 break;
             case MAVLINK_TYPE_INT16_T:
