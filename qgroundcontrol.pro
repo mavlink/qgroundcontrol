@@ -85,8 +85,13 @@ QT += network \
     svg \
     xml \
     webkit \
+    concurrent \
+    widgets \
+    gui \
     serialport \
     sql \
+    printsupport \
+    webkitwidgets \
     declarative
         
 #  testlib is needed even in release flavor for QSignalSpy support
