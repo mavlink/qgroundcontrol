@@ -56,11 +56,14 @@ private slots:
     void _noAckTest(void);
     void _resetTest(void);
     void _listTest(void);
+    void _openTest(void);
     
     // Connected to QGCUASFileManager statusMessage signal
     void statusMessage(const QString&);
     
 private:
+    void _validateFileContents(const QString& filePath, uint8_t length);
+
     enum {
         statusMessageSignalIndex = 0,
         errorMessageSignalIndex,

@@ -28,15 +28,15 @@ QGCUASFileView::~QGCUASFileView()
 
 void QGCUASFileView::listFiles()
 {
-    _manager->listRecursively(ui->pathLineEdit->text());
+    _manager->listDirectory(ui->pathLineEdit->text());
 }
 
 void QGCUASFileView::downloadFiles()
 {
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Download Directory"),
                                                      QDir::homePath(),
                                                      QFileDialog::ShowDirsOnly
                                                      | QFileDialog::DontResolveSymlinks);
     // And now download to this location
-    _manager->downloadPath(ui->pathLineEdit->text(), dir);
+    _manager->downloadPath(ui->pathLineEdit->text(), QDir(dir));
 }

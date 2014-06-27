@@ -24,7 +24,9 @@
 #include "QGCUASFileManagerTest.h"
 
 /// @file
-///     @brief QGCUASFileManager unit test
+///     @brief QGCUASFileManager unit test. Note: All code here assumes all work between
+///             the unit test, mack mavlink file server and file manager is happening on
+///             the same thread.
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
@@ -130,7 +132,7 @@ void QGCUASFileManagerUnitTest::_listTest(void)
     // Send a bogus path
     //  We should get a single resetStatusMessages signal
     //  We should get a single errorMessage signal
-    _fileManager->listRecursively("/bogus");
+    _fileManager->listDirectory("/bogus");
     QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
     _multiSpy->clearAllSignals();
 
@@ -149,8 +151,74 @@ void QGCUASFileManagerUnitTest::_listTest(void)
     
     _fileListReceived.clear();
     
-    _fileManager->listRecursively("/");
+    _fileManager->listDirectory("/");
     QCOMPARE(_multiSpy->checkSignalByMask(resetStatusMessagesSignalMask), true);  // We should be told to reset status messages
     QCOMPARE(_multiSpy->checkNoSignalByMask(errorMessageSignalMask), true);  // We should not get an error signals
     QVERIFY(_fileListReceived == fileListExpected);
+}
+
+void QGCUASFileManagerUnitTest::_validateFileContents(const QString& filePath, uint8_t length)
+{
+    QFile file(filePath);
+
+    // Make sure file size is correct
+    QCOMPARE(file.size(), (qint64)length);
+
+    // Read data
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QByteArray bytes = file.readAll();
+    file.close();
+    
+    // Validate length byte
+    QCOMPARE((uint8_t)bytes[0], length);
+    
+    // Validate file contents:
+    //      Repeating 0x00, 0x01 .. 0xFF until file is full
+    for (uint8_t i=1; i<bytes.length(); i++) {
+        QCOMPARE((uint8_t)bytes[i], (uint8_t)((i-1) & 0xFF));
+    }
+}
+
+void QGCUASFileManagerUnitTest::_openTest(void)
+{
+    Q_ASSERT(_fileManager);
+    Q_ASSERT(_multiSpy);
+    Q_ASSERT(_multiSpy->checkNoSignals() == true);
+    
+    // Send a bogus path
+    //  We should get a single resetStatusMessages signal
+    //  We should get a single errorMessage signal
+    _fileManager->downloadPath("bogus", QDir::temp());
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+    _multiSpy->clearAllSignals();
+    
+    // Clean previous downloads
+    for (size_t i=0; i<MockMavlinkFileServer::cFileTestCases; i++) {
+        QString filePath = QDir::temp().absoluteFilePath(MockMavlinkFileServer::rgFileTestCases[i].filename);
+        if (QFile::exists(filePath)) {
+            Q_ASSERT(QFile::remove(filePath));
+        }
+    }
+
+    // Run through the set of file test cases
+    
+    // We setup a spy on the terminate command signal so that we can determine that a Terminate command was
+    // correctly sent after the Open/Read commands complete.
+    QSignalSpy terminateSpy(&_mockFileServer, SIGNAL(terminateCommandReceived()));
+    
+    for (size_t i=0; i<MockMavlinkFileServer::cFileTestCases; i++) {
+        _fileManager->downloadPath(MockMavlinkFileServer::rgFileTestCases[i].filename, QDir::temp());
+
+        //  We should get a single resetStatusMessages signal
+        //  We should get a single statusMessage signal, which indicated download completion
+        QCOMPARE(_multiSpy->checkOnlySignalByMask(statusMessageSignalMask | resetStatusMessagesSignalMask), true);
+        _multiSpy->clearAllSignals();
+        
+        // We should get a single Terminate command
+        QCOMPARE(terminateSpy.count(), 1);
+        terminateSpy.clear();
+        
+        QString filePath = QDir::temp().absoluteFilePath(MockMavlinkFileServer::rgFileTestCases[i].filename);
+        _validateFileContents(filePath, MockMavlinkFileServer::rgFileTestCases[i].length);
+    }
 }
