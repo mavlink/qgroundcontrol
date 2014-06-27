@@ -45,6 +45,7 @@ This file is part of the PIXHAWK project
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QMessageBox>
+#include <QShortcut>
 
 #include "LinechartWidget.h"
 #include "LinechartPlot.h"
