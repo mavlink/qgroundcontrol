@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QHBoxLayout>
 #include <QSvgGenerator>
 #include <QPrinter>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include "QGCDataPlot2D.h"
 #include "ui_QGCDataPlot2D.h"
 #include "MG.h"
@@ -118,7 +118,7 @@ void QGCDataPlot2D::savePlot()
 {
     QString fileName = "plot.svg";
     fileName = QFileDialog::getSaveFileName(
-                   this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                   this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                    "PDF Documents (*.pdf);;SVG Images (*.svg)");
     if (fileName.isEmpty())
         return;
@@ -138,7 +138,7 @@ void QGCDataPlot2D::savePlot()
         // Abort if cancelled
         if(msgBox.exec() == QMessageBox::Cancel) return;
         fileName = QFileDialog::getSaveFileName(
-                       this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                       this, "Export File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                        "PDF Documents (*.pdf);;SVG Images (*.svg)");
         if (fileName.isEmpty())
             return; //Abort if cancelled
@@ -694,7 +694,7 @@ void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = "export.csv";
     fileName = QFileDialog::getSaveFileName(
-                   this, "Export CSV File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                   this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                    "CSV file (*.csv);;Text file (*.txt)");
     if (fileName.isEmpty())
         return; //User cancelled
@@ -720,7 +720,7 @@ void QGCDataPlot2D::saveCsvLog()
     //        msgBox.setDefaultButton(QMessageBox::Ok);
     //        if(msgBox.exec() == QMessageBox::Cancel) break;
     //        fileName = QFileDialog::getSaveFileName(
-    //                this, "Export CSV File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+    //                this, "Export CSV File Name", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
     //            "CSV file (*.csv);;Text file (*.txt)");
     //    }
 
