@@ -41,7 +41,8 @@ ChartPlot::ChartPlot(QWidget *parent):
     grid->attach(this);
 
     // Enable zooming
-    zoomer = new ScrollZoomer(canvas());
+    QwtPlotCanvas *c = static_cast<QwtPlotCanvas*>(canvas());
+    zoomer = new ScrollZoomer(c);
 
     colors = QList<QColor>();
 
@@ -113,8 +114,8 @@ void ChartPlot::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style)
         setCanvasBackground(QColor(0xFF, 0xFF, 0xFF));
 
         // Configure the plot grid.
-        grid->setMinPen(QPen(QColor(0x55, 0x55, 0x55), gridWidth, Qt::DotLine));
-        grid->setMajPen(QPen(QColor(0x22, 0x22, 0x22), gridWidth, Qt::DotLine));
+        grid->setMinorPen(QPen(QColor(0x55, 0x55, 0x55), gridWidth, Qt::DotLine));
+        grid->setMajorPen(QPen(QColor(0x22, 0x22, 0x22), gridWidth, Qt::DotLine));
     }
     else
     {
@@ -126,8 +127,8 @@ void ChartPlot::styleChanged(MainWindow::QGC_MAINWINDOW_STYLE style)
         setCanvasBackground(QColor(0, 0, 0));
 
         // Configure the plot grid.
-        grid->setMinPen(QPen(QColor(0xAA, 0xAA, 0xAA), gridWidth, Qt::DotLine));
-        grid->setMajPen(QPen(QColor(0xDD, 0xDD, 0xDD), gridWidth, Qt::DotLine));
+        grid->setMinorPen(QPen(QColor(0xAA, 0xAA, 0xAA), gridWidth, Qt::DotLine));
+        grid->setMajorPen(QPen(QColor(0xDD, 0xDD, 0xDD), gridWidth, Qt::DotLine));
     }
 
     // And finally refresh the widget to make sure all color changes are redrawn.
