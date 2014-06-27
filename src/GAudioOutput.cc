@@ -129,9 +129,9 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 #endif
     // Initialize audio output
-    m_media = new Phonon::MediaObject(this);
-    Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-    createPath(m_media, audioOutput);
+    //m_media = new Phonon::MediaObject(this);
+    //Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
+    //createPath(m_media, audioOutput);
 
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();

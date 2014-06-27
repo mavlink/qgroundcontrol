@@ -84,7 +84,6 @@ QT += network \
     opengl \
     svg \
     xml \
-    phonon \
     webkit \
     serialport \
     sql \
