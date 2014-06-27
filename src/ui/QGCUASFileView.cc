@@ -28,7 +28,7 @@ QGCUASFileView::~QGCUASFileView()
 
 void QGCUASFileView::listFiles()
 {
-    _manager->listRecursively(ui->pathLineEdit->text());
+    _manager->listDirectory(ui->pathLineEdit->text());
 }
 
 void QGCUASFileView::downloadFiles()

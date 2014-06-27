@@ -40,7 +40,7 @@ class MockMavlinkFileServer : public MockMavlinkInterface
     Q_OBJECT
     
 public:
-    MockMavlinkFileServer(void) { };
+    MockMavlinkFileServer(void);
     
     /// @brief Sets the list of files returned by the List command. Prepend names with F or D
     /// to indicate (F)ile or (D)irectory.
@@ -49,17 +49,25 @@ public:
     // From MockMavlinkInterface
     virtual void sendMessage(mavlink_message_t message);
     
-    static const char*      smallFilename;
-    static const char*      largeFilename;
-    static const uint8_t    smallFileLength;
-    static const uint8_t    largeFileLength;
+    struct FileTestCase {
+        const char* filename;
+        uint8_t     length;
+    };
+    
+    static const size_t cFileTestCases = 3;
+    static const FileTestCase rgFileTestCases[cFileTestCases];
+    
+signals:
+    void terminateCommandReceived(void);
     
 private:
+    void _sendAck(void);
     void _sendNak(QGCUASFileManager::ErrorCode error);
     void _emitResponse(QGCUASFileManager::Request* request);
     void _listCommand(QGCUASFileManager::Request* request);
     void _openCommand(QGCUASFileManager::Request* request);
     void _readCommand(QGCUASFileManager::Request* request);
+    void _terminateCommand(QGCUASFileManager::Request* request);
     
     QStringList _fileList;  ///< List of files returned by List command
     

@@ -104,13 +104,14 @@ void QGCUASFileManager::nothingMessage()
     // FIXME: Connect ui correctly
 }
 
-/// @brief Respond to the Ack associated with the Open command.
-void QGCUASFileManager::_openResponse(Request* openAck)
+/// @brief Respond to the Ack associated with the Open command with the next Read command.
+void QGCUASFileManager::_openAckResponse(Request* openAck)
 {
     _currentOperation = kCORead;
     _activeSession = openAck->hdr.session;
-    _readOffset = 0;
-    _readFileAccumulator.clear();
+    
+    _readOffset = 0;                // Start reading at beginning of file
+    _readFileAccumulator.clear();   // Start with an empty file
     
     Request request;
     request.hdr.magic = 'f';
@@ -123,7 +124,7 @@ void QGCUASFileManager::_openResponse(Request* openAck)
 }
 
 /// @brief Respond to the Ack associated with the Read command.
-void QGCUASFileManager::_readResponse(Request* readAck)
+void QGCUASFileManager::_readAckResponse(Request* readAck)
 {
     if (readAck->hdr.session != _activeSession) {
         _currentOperation = kCOIdle;
@@ -139,24 +140,27 @@ void QGCUASFileManager::_readResponse(Request* readAck)
         return;
     }
 
-    qDebug() << "Accumulator size" << readAck->hdr.size;
     _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
     
-    if (readAck->hdr.size == sizeof(readAck->data)) {
-        // Still more data to read
+    if (readAck->hdr.errCode == kErrMore) {
+        // Still more data to read, send next read request
+        
         _currentOperation = kCORead;
         
-        _readOffset += sizeof(readAck->data);
+        _readOffset += readAck->hdr.size;
         
         Request request;
         request.hdr.magic = 'f';
         request.hdr.session = _activeSession;
         request.hdr.opcode = kCmdRead;
         request.hdr.offset = _readOffset;
-        request.hdr.size = sizeof(request.data);
         
         _sendRequest(&request);
     } else {
+        // We're at the end of the file, we can write it out now
+        
+        Q_ASSERT(readAck->hdr.errCode == kErrNone);
+        
         _currentOperation = kCOIdle;
         
         QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
@@ -176,6 +180,70 @@ void QGCUASFileManager::_readResponse(Request* readAck)
         file.close();
 
         _emitStatusMessage(tr("Download complete '%1'").arg(downloadFilePath));
+        
+        // Close the open session
+        _sendTerminateCommand();
+    }
+}
+
+/// @brief Respond to the Ack associated with the List command.
+void QGCUASFileManager::_listAckResponse(Request* listAck)
+{
+    if (listAck->hdr.offset != _listOffset) {
+        _currentOperation = kCOIdle;
+        _emitErrorMessage(tr("List: Offset returned (%1) differs from offset requested (%2)").arg(listAck->hdr.offset).arg(_listOffset));
+        return;
+    }
+    
+    uint8_t offset = 0;
+    uint8_t cListEntries = 0;
+    uint8_t cBytes = listAck->hdr.size;
+    
+    // parse filenames out of the buffer
+    while (offset < cBytes) {
+        const char * ptr = ((const char *)listAck->data) + offset;
+        
+        // get the length of the name
+        uint8_t cBytesLeft = cBytes - offset;
+        size_t nlen = strnlen(ptr, cBytesLeft);
+        if (nlen < 2) {
+            _currentOperation = kCOIdle;
+            _emitErrorMessage(tr("Incorrectly formed list entry: '%1'").arg(ptr));
+            return;
+        } else if (nlen == cBytesLeft) {
+            _currentOperation = kCOIdle;
+            _emitErrorMessage(tr("Missing NULL termination in list entry"));
+            return;
+        }
+        
+        // Returned names are prepended with D for directory or F for file
+        QString s(ptr + 1);
+        if (*ptr == 'D') {
+            s.append('/');
+        } else if (*ptr != 'F') {
+            _currentOperation = kCOIdle;
+            _emitErrorMessage(tr("Unknown prefix list entry: '%1'").arg(ptr));
+            return;
+        }
+        
+        // put it in the view
+        _emitStatusMessage(s);
+        
+        // account for the name + NUL
+        offset += nlen + 1;
+        
+        cListEntries++;
+    }
+
+    if (listAck->hdr.errCode == kErrMore) {
+        // Still more data to read, send next list request
+        _currentOperation = kCOList;
+        _listOffset += cListEntries;
+        _sendListCommand();
+    } else {
+        // We've gotten the last list entries we can go back to idle
+        Q_ASSERT(listAck->hdr.errCode == kErrNone);
+        _currentOperation = kCOIdle;
     }
 }
 
@@ -200,7 +268,6 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         switch (_currentOperation) {
             case kCOIdle:
                 // we should not be seeing anything here.. shut the other guy up
-                qDebug() << "FTP resetting file transfer session";
                 _sendCmdReset();
                 break;
                 
@@ -210,15 +277,15 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
                 break;
                 
             case kCOList:
-                listDecode(&request->data[0], request->hdr.size);
+                _listAckResponse(request);
                 break;
             
             case kCOOpen:
-                _openResponse(request);
+                _openAckResponse(request);
                 break;
                 
             case kCORead:
-                _readResponse(request);
+                _readAckResponse(request);
                 break;
 
             default:
@@ -227,7 +294,7 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         }
     } else if (request->hdr.opcode == kRspNak) {
         _clearAckTimeout();
-        _emitErrorMessage(QString("Nak received, error: ").append(errorString(request->data[0])));
+        _emitErrorMessage(tr("Nak received, error: %1").arg(request->hdr.errCode));
         _currentOperation = kCOIdle;
     } else {
         // Note that we don't change our operation state. If something goes wrong beyond this, the operation
@@ -236,7 +303,7 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     }
 }
 
-void QGCUASFileManager::listRecursively(const QString &from)
+void QGCUASFileManager::listDirectory(const QString& dirPath)
 {
     if (_currentOperation != kCOIdle) {
         _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
@@ -247,55 +314,12 @@ void QGCUASFileManager::listRecursively(const QString &from)
     emit resetStatusMessages();
 
     // initialise the lister
-    _listPath = from;
+    _listPath = dirPath;
     _listOffset = 0;
     _currentOperation = kCOList;
 
     // and send the initial request
-    sendList();
-}
-
-void QGCUASFileManager::listDecode(const uint8_t *data, unsigned len)
-{
-    unsigned offset = 0;
-    unsigned files = 0;
-
-    // parse filenames out of the buffer
-    while (offset < len) {
-        const char * ptr = (const char *)data + offset;
-        
-        // get the length of the name
-        unsigned nlen = strnlen(ptr, len - offset);
-        if (nlen < 2) {
-            break;
-        }
-
-        // Returned names are prepended with D for directory or F for file
-        QString s(ptr + 1);
-        if (*ptr == 'D') {
-            s.append('/');
-        }
-
-        // put it in the view
-        _emitStatusMessage(s);
-
-        // account for the name + NUL
-        offset += nlen + 1;
-
-        // account for the file
-        files++;
-    }
-
-    // we have run out of files to list
-    if (files == 0) {
-        _currentOperation = kCOIdle;
-    } else {
-        // update our state
-        _listOffset += files;
-
-        // and send another request
-        sendList();
-    }
+    _sendListCommand();
 }
 
 void QGCUASFileManager::_fillRequestWithString(Request* request, const QString& str)
@@ -304,7 +328,7 @@ void QGCUASFileManager::_fillRequestWithString(Request* request, const QString& 
     request->hdr.size = strnlen((const char *)&request->data[0], sizeof(request->data));
 }
 
-void QGCUASFileManager::sendList()
+void QGCUASFileManager::_sendListCommand(void)
 {
     Request request;
 
@@ -432,8 +456,26 @@ void QGCUASFileManager::_clearAckTimeout(void)
 /// @brief Called when ack timeout timer fires
 void QGCUASFileManager::_ackTimeout(void)
 {
-    _currentOperation = kCOIdle;
     _emitErrorMessage(tr("Timeout waiting for ack"));
+
+    switch (_currentOperation) {
+        case kCORead:
+            _currentOperation = kCOAck;
+            _sendTerminateCommand();
+            break;
+        default:
+            _currentOperation = kCOIdle;
+            break;
+    }
+}
+
+void QGCUASFileManager::_sendTerminateCommand(void)
+{
+    Request request;
+    request.hdr.magic = 'f';
+    request.hdr.session = _activeSession;
+    request.hdr.opcode = kCmdTerminate;
+    _sendRequest(&request);
 }
 
 void QGCUASFileManager::_emitErrorMessage(const QString& msg)
