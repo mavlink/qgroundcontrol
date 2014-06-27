@@ -86,6 +86,7 @@ QT += network \
     xml \
     phonon \
     webkit \
+    serialport \
     sql \
     declarative
         
