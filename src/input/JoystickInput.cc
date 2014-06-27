@@ -480,15 +480,18 @@ void JoystickInput::run()
             axisValue = 1.0f - axisValue;
 
             // For non-throttle axes or if the UAS can reverse, go ahead and convert this into the range [-1:1].
-            if (uasCanReverse || throttleAxis != i)
+
+            //if (uasCanReverse || throttleAxis != i)
+            // don't take into account if UAS can reverse. This means to reverse position but not throttle
+            // therefore deactivated for now
+            if (throttleAxis != i)
             {
                 axisValue = axisValue * 2.0f - 1.0f;
             }
-            // Otherwise if this vehicle can only go forward, but the axis is limited to only the positive range,
-            // scale this so the negative values are ignored for this axis and it's clamped to [0:1].
+            // Otherwise if this vehicle can only go forward, scale it to [0:1].
             else if (throttleAxis == i && joystickSettings[autopilotType][systemType].axesLimited.value(i))
             {
-                axisValue = axisValue * 2.0f - 1.0f;
+                axisValue = (axisValue);
                 if (axisValue < 0.0f)
                 {
                     axisValue = 0.0f;
