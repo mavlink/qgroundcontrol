@@ -1,3 +1,4 @@
+#include <QInputDialog>
 #include "QGCMapWidget.h"
 #include "QGCMapToolBar.h"
 #include "UASInterface.h"
