@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -318,7 +318,7 @@
      <normaloff>:/files/images/status/network-wireless-encrypted.svg</normaloff>:/files/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
-    <string>Flight</string>
+    <string>Instruments</string>
    </property>
   </action>
   <action name="actionNewCustomWidget">
@@ -416,9 +416,6 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
    <property name="icon">
     <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/files/images/status/software-update-available.svg</normaloff>:/files/images/status/software-update-available.svg</iconset>
@@ -428,6 +425,9 @@
    </property>
    <property name="toolTip">
     <string>Update the firmware of one of the connected autopilots</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
   <action name="actionHardwareConfig">

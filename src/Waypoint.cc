@@ -191,6 +191,14 @@ void Waypoint::setAction(MAV_CMD action)
 {
     if (this->action != action) {
         this->action = action;
+
+        // Flick defaults according to WP type
+
+        if (this->action == MAV_CMD_NAV_TAKEOFF) {
+            // We default to 15 degrees minimum takeoff pitch
+            this->param1 = 15.0;
+        }
+
         emit changed(this);
     }
 }

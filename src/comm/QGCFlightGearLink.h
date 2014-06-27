@@ -47,7 +47,6 @@ This file is part of the QGROUNDCONTROL project
 class QGCFlightGearLink : public QGCHilLink
 {
     Q_OBJECT
-    //Q_INTERFACES(QGCFlightGearLinkInterface:LinkInterface)
 
 public:
     QGCFlightGearLink(UASInterface* mav, QString startupArguments, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
@@ -87,8 +86,13 @@ public:
     void sensorHilEnabled(bool sensorHilEnabled) {
         _sensorHilEnabled = sensorHilEnabled;
     }
+    
+    static bool parseUIArguments(QString uiArgs, QStringList& argList);
 
     void run();
+    
+signals:
+    void showCriticalMessageFromThread(const QString& title, const QString& message);
 
 public slots:
 //    void setAddress(QString address);
@@ -98,10 +102,6 @@ public slots:
     /** @brief Send new control states to the simulation */
     void updateControls(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
     void updateActuators(quint64 time, float act1, float act2, float act3, float act4, float act5, float act6, float act7, float act8);
-//    /** @brief Remove a host from broadcasting messages to */
-//    void removeHost(const QString& host);
-    //    void readPendingDatagrams();
-    void processError(QProcess::ProcessError err);
     /** @brief Set the simulator version as text string */
     void setVersion(const QString& version)
     {
@@ -130,12 +130,9 @@ public slots:
     bool connectSimulation();
     bool disconnectSimulation();
 
-    void printTerraSyncOutput();
-    void printTerraSyncError();
-    void printFgfsOutput();
-    void printFgfsError();
     void setStartupArguments(QString startupArguments);
     void setBarometerOffset(float barometerOffsetkPa);
+    void processError(QProcess::ProcessError err);
 
 protected:
     QString name;
@@ -144,32 +141,29 @@ protected:
     quint16 currentPort;
     quint16 port;
     int id;
-    QUdpSocket* socket;
     bool connectState;
 
-    quint64 bitsSentTotal;
-    quint64 bitsSentCurrent;
-    quint64 bitsSentMax;
-    quint64 bitsReceivedTotal;
-    quint64 bitsReceivedCurrent;
-    quint64 bitsReceivedMax;
-    quint64 connectionStartTime;
-    QMutex statisticsMutex;
-    QMutex dataMutex;
-    QTimer refreshTimer;
     UASInterface* mav;
-    QProcess* process;
-    QProcess* terraSync;
     unsigned int flightGearVersion;
     QString startupArguments;
     bool _sensorHilEnabled;
     float barometerOffsetkPa;
 
     void setName(QString name);
+    
+private slots:
+    void _printFgfsOutput(void);
+    void _printFgfsError(void);
+    
+private:
+    static bool _findUIArgument(const QStringList& uiArgList, const QString& argLabel, QString& argValue);
 
-signals:
+    QString     _fgProcessName;             ///< FlightGear process to start
+    QString     _fgProcessWorkingDirPath;   ///< Working directory to start FG process in, empty for none
+    QStringList _fgArgList;                 ///< Arguments passed to FlightGear process
 
-
+    QUdpSocket* _udpCommSocket;             ///< UDP communication sockect between FG and QGC
+    QProcess*   _fgProcess;                 ///< FlightGear process
 };
 
 #endif // QGCFLIGHTGEARLINK_H
