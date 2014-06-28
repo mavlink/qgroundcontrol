@@ -46,8 +46,6 @@ void MockUAS::setMockParametersAndSignal(MockQGCUASParamManager::ParamMap_t& map
 
 void MockUAS::sendMessage(mavlink_message_t message)
 {
-    Q_UNUSED(link);
-    
     if (!_mavlinkPlugin) {
         Q_ASSERT(false);
     }
