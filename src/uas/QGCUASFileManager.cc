@@ -65,6 +65,7 @@ static const quint32 crctab[] =
     0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+
 QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
     QObject(parent),
     _currentOperation(kCOIdle),
@@ -74,8 +75,7 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
 {
     bool connected = connect(&_ackTimer, SIGNAL(timeout()), this, SLOT(_ackTimeout()));
     Q_ASSERT(connected);
-
-    Q_UNUSED(connected);
+    Q_UNUSED(connected);    // Silence retail unused variable error
 }
 
 /// @brief Calculates a 32 bit CRC for the specified request.
@@ -123,6 +123,34 @@ void QGCUASFileManager::_openAckResponse(Request* openAck)
     _sendRequest(&request);
 }
 
+/// @brief Closes out a read session by writing the file and doing cleanup.
+///     @param success true: successful download completion, false: error during download
+void QGCUASFileManager::_closeReadSession(bool success)
+{
+    if (success) {
+        QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
+        
+        QFile file(downloadFilePath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            _emitErrorMessage(tr("Unable to open local file for writing (%1)").arg(downloadFilePath));
+            return;
+        }
+        
+        qint64 bytesWritten = file.write((const char *)_readFileAccumulator, _readFileAccumulator.length());
+        if (bytesWritten != _readFileAccumulator.length()) {
+            file.close();
+            _emitErrorMessage(tr("Unable to write data to local file (%1)").arg(downloadFilePath));
+            return;
+        }
+        file.close();
+        
+        _emitStatusMessage(tr("Download complete '%1'").arg(downloadFilePath));
+    }
+    
+    // Close the open session
+    _sendTerminateCommand();
+}
+
 /// @brief Respond to the Ack associated with the Read command.
 void QGCUASFileManager::_readAckResponse(Request* readAck)
 {
@@ -142,8 +170,8 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
 
     _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
     
-    if (readAck->hdr.errCode == kErrMore) {
-        // Still more data to read, send next read request
+    if (readAck->hdr.size == sizeof(readAck->data)) {
+        // Possibly still more data to read, send next read request
         
         _currentOperation = kCORead;
         
@@ -157,32 +185,9 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
         
         _sendRequest(&request);
     } else {
-        // We're at the end of the file, we can write it out now
-        
-        Q_ASSERT(readAck->hdr.errCode == kErrNone);
-        
+        // We only receieved a partial buffer back. These means we are at EOF
         _currentOperation = kCOIdle;
-        
-        QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
-        
-        QFile file(downloadFilePath);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            _emitErrorMessage(tr("Unable to open local file for writing (%1)").arg(downloadFilePath));
-            return;
-        }
-        
-        qint64 bytesWritten = file.write((const char *)_readFileAccumulator, _readFileAccumulator.length());
-        if (bytesWritten != _readFileAccumulator.length()) {
-            file.close();
-            _emitErrorMessage(tr("Unable to write data to local file (%1)").arg(downloadFilePath));
-            return;
-        }
-        file.close();
-
-        _emitStatusMessage(tr("Download complete '%1'").arg(downloadFilePath));
-        
-        // Close the open session
-        _sendTerminateCommand();
+        _closeReadSession(true /* success */);
     }
 }
 
@@ -216,34 +221,33 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
             return;
         }
         
-        // Returned names are prepended with D for directory or F for file
+        // Returned names are prepended with D for directory, F for file, U for unknown
+
         QString s(ptr + 1);
         if (*ptr == 'D') {
             s.append('/');
-        } else if (*ptr != 'F') {
-            _currentOperation = kCOIdle;
-            _emitErrorMessage(tr("Unknown prefix list entry: '%1'").arg(ptr));
-            return;
         }
         
-        // put it in the view
-        _emitStatusMessage(s);
-        
+        if (*ptr == 'F' || *ptr == 'D') {
+            // put it in the view
+            _emitStatusMessage(s);
+        }
+    
         // account for the name + NUL
         offset += nlen + 1;
         
         cListEntries++;
     }
 
-    if (listAck->hdr.errCode == kErrMore) {
-        // Still more data to read, send next list request
+    if (listAck->hdr.size == 0) {
+        // Directory is empty, we're done
+        Q_ASSERT(listAck->hdr.opcode == kRspAck);
+        _currentOperation = kCOIdle;
+    } else {
+        // Possibly more entries to come, need to keep trying till we get EOF
         _currentOperation = kCOList;
         _listOffset += cListEntries;
         _sendListCommand();
-    } else {
-        // We've gotten the last list entries we can go back to idle
-        Q_ASSERT(listAck->hdr.errCode == kErrNone);
-        _currentOperation = kCOIdle;
     }
 }
 
@@ -256,6 +260,8 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         return;
     }
     
+    _clearAckTimeout();
+
     mavlink_encapsulated_data_t data;
     mavlink_msg_encapsulated_data_decode(&message, &data);
     Request* request = (Request*)&data.data[0];
@@ -263,7 +269,6 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     // FIXME: Check CRC
     
     if (request->hdr.opcode == kRspAck) {
-        _clearAckTimeout();
         
         switch (_currentOperation) {
             case kCOIdle:
@@ -293,13 +298,32 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
                 break;
         }
     } else if (request->hdr.opcode == kRspNak) {
-        _clearAckTimeout();
-        _emitErrorMessage(tr("Nak received, error: %1").arg(request->hdr.errCode));
+        Q_ASSERT(request->hdr.size == 1); // Should only have one byte of error code
+        
+        OperationState previousOperation = _currentOperation;
+        uint8_t errorCode = request->data[0];
+        
         _currentOperation = kCOIdle;
+        
+        if (previousOperation == kCOList && errorCode == kErrEOF) {
+            // This is not an error, just the end of the read loop
+            return;
+        } else if (previousOperation == kCORead && errorCode == kErrEOF) {
+            // This is not an error, just the end of the read loop
+            _closeReadSession(true /* success */);
+            return;
+        } else {
+            // Generic Nak handling
+            if (previousOperation == kCORead) {
+                // Nak error during read loop, download failed
+                _closeReadSession(false /* failure */);
+            }
+            _emitErrorMessage(tr("Nak received, error: %1").arg(errorString(request->data[0])));
+        }
     } else {
         // Note that we don't change our operation state. If something goes wrong beyond this, the operation
         // will time out.
-        _emitErrorMessage(tr("Unknown opcode returned server: %1").arg(request->hdr.opcode));
+        _emitErrorMessage(tr("Unknown opcode returned from server: %1").arg(request->hdr.opcode));
     }
 }
 
