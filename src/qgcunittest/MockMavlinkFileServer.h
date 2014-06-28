@@ -27,6 +27,11 @@
 #include "MockMavlinkInterface.h"
 #include "QGCUASFileManager.h"
 
+/// @file
+///     @brief Mock implementation of Mavlink FTP server. Used as mavlink plugin to MockUAS.
+///             Only root directory access is supported.
+///
+///     @author Don Gagne <don@thegagnes.com>
 
 #include <QStringList>
 
@@ -35,18 +40,39 @@ class MockMavlinkFileServer : public MockMavlinkInterface
     Q_OBJECT
     
 public:
-    MockMavlinkFileServer(void) { };
+    MockMavlinkFileServer(void);
     
+    /// @brief Sets the list of files returned by the List command. Prepend names with F or D
+    /// to indicate (F)ile or (D)irectory.
     void setFileList(QStringList& fileList) { _fileList = fileList; }
     
     // From MockMavlinkInterface
     virtual void sendMessage(mavlink_message_t message);
     
+    struct FileTestCase {
+        const char* filename;
+        uint8_t     length;
+    };
+    
+    static const size_t cFileTestCases = 3;
+    static const FileTestCase rgFileTestCases[cFileTestCases];
+    
+signals:
+    void terminateCommandReceived(void);
+    
 private:
+    void _sendAck(void);
     void _sendNak(QGCUASFileManager::ErrorCode error);
     void _emitResponse(QGCUASFileManager::Request* request);
+    void _listCommand(QGCUASFileManager::Request* request);
+    void _openCommand(QGCUASFileManager::Request* request);
+    void _readCommand(QGCUASFileManager::Request* request);
+    void _terminateCommand(QGCUASFileManager::Request* request);
     
-    QStringList _fileList;
+    QStringList _fileList;  ///< List of files returned by List command
+    
+    static const uint8_t    _sessionId;
+    uint8_t                 _readFileLength; ///< Length of active file being read
 };
 
 #endif

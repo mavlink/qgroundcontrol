@@ -25,6 +25,7 @@
 #define QGCUASFILEMANAGER_H
 
 #include <QObject>
+#include <QDir>
 
 #include "UASInterface.h"
 
@@ -47,18 +48,18 @@ signals:
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
     void nothingMessage();
-    void listRecursively(const QString &from);
-    void downloadPath(const QString& from, const QString& to);
+    void listDirectory(const QString& dirPath);
+    void downloadPath(const QString& from, const QDir& downloadDir);
 
 protected:
     struct RequestHeader
         {
-            uint8_t		magic;
-            uint8_t		session;
-            uint8_t		opcode;
-            uint8_t		size;
-            uint32_t	crc32;
-            uint32_t	offset;
+            uint8_t		magic;      ///> Magic byte 'f' to idenitfy FTP protocol
+            uint8_t		session;    ///> Session id for read and write commands
+            uint8_t		opcode;     ///> Command opcode
+            uint8_t		size;       ///> Size of data
+            uint32_t	crc32;      ///> CRC for entire Request structure, with crc32 set to 0
+            uint32_t	offset;     ///> Offsets for List and Read commands
         };
 
     struct Request
@@ -71,20 +72,23 @@ protected:
 
     enum Opcode
         {
-            kCmdNone,       // ignored, always acked
-            kCmdTerminate,	// releases sessionID, closes file
-            kCmdReset,      // terminates all sessions
-            kCmdList,       // list files in <path> from <offset>
-            kCmdOpen,       // opens <path> for reading, returns <session>
-            kCmdRead,       // reads <size> bytes from <offset> in <session>
-            kCmdCreate,     // creates <path> for writing, returns <session>
-            kCmdWrite,      // appends <size> bytes at <offset> in <session>
-            kCmdRemove,     // remove file (only if created by server?)
+            // Commands
+            kCmdNone,       ///> ignored, always acked
+            kCmdTerminate,	///> releases sessionID, closes file
+            kCmdReset,      ///> terminates all sessions
+            kCmdList,       ///> list files in <path> from <offset>
+            kCmdOpen,       ///> opens <path> for reading, returns <session>
+            kCmdRead,       ///> reads <size> bytes from <offset> in <session>
+            kCmdCreate,     ///> creates <path> for writing, returns <session>
+            kCmdWrite,      ///> appends <size> bytes at <offset> in <session>
+            kCmdRemove,     ///> remove file (only if created by server?)
 
-            kRspAck,
-            kRspNak,
+            // Responses
+            kRspAck,        ///> positive acknowledgement of previous command
+            kRspNak,        ///> negative acknowledgement of previous command
             
-            kCmdTestNoAck,  // ignored, ack not sent back, for testing only, should timeout waiting for ack
+            // Used for testing only, not part of protocol
+            kCmdTestNoAck,  // ignored, ack not sent back, should timeout waiting for ack
         };
 
     enum ErrorCode
@@ -109,7 +113,9 @@ protected:
         {
             kCOIdle,    // not doing anything
             kCOAck,     // waiting for an Ack
-            kCOList,    // waiting for a List response
+            kCOList,    // waiting for List response
+            kCOOpen,    // waiting for Open response
+            kCORead,    // waiting for Read response
         };
     
     
@@ -121,11 +127,16 @@ protected:
     void _setupAckTimeout(void);
     void _clearAckTimeout(void);
     void _emitErrorMessage(const QString& msg);
+    void _emitStatusMessage(const QString& msg);
     void _sendRequest(Request* request);
-
-    void sendList();
-    void listDecode(const uint8_t *data, unsigned len);
-
+    void _fillRequestWithString(Request* request, const QString& str);
+    void _openAckResponse(Request* openAck);
+    void _readAckResponse(Request* readAck);
+    void _listAckResponse(Request* listAck);
+    void _sendListCommand(void);
+    void _sendTerminateCommand(void);
+    void _closeReadSession(bool success);
+    
     static quint32 crc32(Request* request, unsigned state = 0);
     static QString errorString(uint8_t errorCode);
 
@@ -136,8 +147,14 @@ protected:
     UASInterface* _mav;
     quint16 _encdata_seq;
 
-    unsigned    _listOffset;    // offset for the current List operation
-    QString     _listPath;      // path for the current List operation
+    unsigned    _listOffset;    ///> offset for the current List operation
+    QString     _listPath;      ///> path for the current List operation
+    
+    uint8_t     _activeSession;             ///> currently active session, 0 for none
+    uint32_t    _readOffset;                ///> current read offset
+    QByteArray  _readFileAccumulator;       ///> Holds file being downloaded
+    QDir        _readFileDownloadDir;       ///> Directory to download file to
+    QString     _readFileDownloadFilename;  ///> Filename (no path) for download file
     
     // We give MockMavlinkFileServer friend access so that it can use the data structures and opcodes
     // to build a mock mavlink file server for testing.
