@@ -69,15 +69,17 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
     ackResponse.hdr.session = 0;
     ackResponse.hdr.offset = request->hdr.offset;
     ackResponse.hdr.size = 0;
+
+	qDebug() << _fileList;
     
     if (request->hdr.offset == 0) {
         // Requesting first batch of file names
         Q_ASSERT(_fileList.size());
         char *bufPtr = (char *)&ackResponse.data[0];
         for (int i=0; i<_fileList.size(); i++) {
-            const char *filename = _fileList[i].toStdString().c_str();
-            size_t cchFilename = strlen(filename);
-            strcpy(bufPtr, filename);
+            strcpy(bufPtr, _fileList[i].toStdString().c_str());
+            size_t cchFilename = strlen(bufPtr);
+			Q_ASSERT(cchFilename);
             ackResponse.hdr.size += cchFilename + 1;
             bufPtr += cchFilename + 1;
         }
