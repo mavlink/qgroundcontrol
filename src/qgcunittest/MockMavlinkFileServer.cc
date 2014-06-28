@@ -69,7 +69,6 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
     ackResponse.hdr.session = 0;
     ackResponse.hdr.offset = request->hdr.offset;
     ackResponse.hdr.size = 0;
-    ackResponse.hdr.errCode = QGCUASFileManager::kErrNone;
     
     if (request->hdr.offset == 0) {
         // Requesting first batch of file names
@@ -82,12 +81,12 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
             ackResponse.hdr.size += cchFilename + 1;
             bufPtr += cchFilename + 1;
         }
+
+        _emitResponse(&ackResponse);
     } else {
         // FIXME: Does not support directories that span multiple packets
         _sendNak(QGCUASFileManager::kErrEOF);
     }
-    
-    _emitResponse(&ackResponse);
 }
 
 /// @brief Handles Open command requests.
@@ -119,7 +118,6 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
     response.hdr.opcode = QGCUASFileManager::kRspAck;
     response.hdr.session = _sessionId;
     response.hdr.size = 0;
-    response.hdr.errCode = QGCUASFileManager::kErrNone;
     
     _emitResponse(&response);
 }
@@ -137,7 +135,7 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
     uint32_t readOffset = request->hdr.offset;  // offset into file for reading
     uint8_t cDataBytes = 0;                     // current number of data bytes used
     
-    if (readOffset > _readFileLength) {
+    if (readOffset >= _readFileLength) {
         _sendNak(QGCUASFileManager::kErrEOF);
         return;
     }
@@ -159,22 +157,10 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
     Q_ASSERT(cDataBytes);
     
     response.hdr.magic = 'f';
-    response.hdr.opcode = QGCUASFileManager::kRspAck;
     response.hdr.session = _sessionId;
     response.hdr.size = cDataBytes;
     response.hdr.offset = request->hdr.offset;
-    
-    if (readOffset >= _readFileLength) {
-        // Something wrong with the reading code, should not have gone past last byte
-        Q_ASSERT(readOffset == _readFileLength);
-
-        // We have read all the bytes in the file
-        response.hdr.errCode = QGCUASFileManager::kErrNone;
-        
-    } else {
-        // There are still more bytes left to read in the file
-        response.hdr.errCode = QGCUASFileManager::kErrMore;
-    }
+    response.hdr.opcode = QGCUASFileManager::kRspAck;
     
     _emitResponse(&response);
 }
@@ -226,7 +212,6 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             ackResponse.hdr.session = 0;
             ackResponse.hdr.crc32 = 0;
             ackResponse.hdr.size = 0;
-            ackResponse.hdr.errCode = QGCUASFileManager::kErrNone;
             _emitResponse(&ackResponse);
             break;
 
@@ -270,7 +255,6 @@ void MockMavlinkFileServer::_sendAck(void)
     ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
     ackResponse.hdr.session = 0;
     ackResponse.hdr.size = 0;
-    ackResponse.hdr.errCode = QGCUASFileManager::kErrNone;
     
     _emitResponse(&ackResponse);
 }
@@ -283,8 +267,8 @@ void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error)
     nakResponse.hdr.magic = 'f';
     nakResponse.hdr.opcode = QGCUASFileManager::kRspNak;
     nakResponse.hdr.session = 0;
-    nakResponse.hdr.size = 0;
-    nakResponse.hdr.errCode = error;
+    nakResponse.hdr.size = 1;
+    nakResponse.data[0] = error;
     
     _emitResponse(&nakResponse);
 }
