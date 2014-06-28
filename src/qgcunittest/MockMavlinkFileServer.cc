@@ -70,8 +70,6 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
     ackResponse.hdr.offset = request->hdr.offset;
     ackResponse.hdr.size = 0;
 
-	qDebug() << _fileList;
-    
     if (request->hdr.offset == 0) {
         // Requesting first batch of file names
         Q_ASSERT(_fileList.size());
