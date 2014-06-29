@@ -37,9 +37,6 @@ The QUpgrade module relies on `libudev` on Linux platforms, so be sure to instal
 ### Specifying MAVLink dialects
 The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. Setting the `MAVLINK_CONF` variable sets the dialects, with more than one specified in a space-separated list. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
 
-### MAVLink dialect generator
-An add-on is available for QGC that provides a UI for generating MAVLink dialects from within QGC. This feature has been deprecated since identical functionality now exists within the MAVLink project itself. Enable this functionality by specifying the `DEFINES` variable `ENABLE_MAVGEN`.
-
 ### Opal-RT's RT-LAB simulator
 Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DISABLE_RTLAB` to the `DEFINES` variable.
 
