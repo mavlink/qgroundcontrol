@@ -6,8 +6,8 @@
 #include "../../../libs/opmapcontrol/opmapcontrol.h"
 
 // Choose one default map type
-#define MAP_DEFAULT_TYPE_BING
-//#define MAP_DEFAULT_TYPE_GOOGLE
+//#define MAP_DEFAULT_TYPE_BING
+#define MAP_DEFAULT_TYPE_GOOGLE
 //#define MAP_DEFAULT_TYPE_OSM
 
 class UASInterface;

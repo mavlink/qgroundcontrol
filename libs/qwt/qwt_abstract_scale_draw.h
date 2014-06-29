@@ -14,15 +14,10 @@
 #include "qwt_scale_div.h"
 #include "qwt_text.h"
 
-
-#if QT_VERSION < 0x040000
-class QColorGroup;
-#else
 class QPalette;
-#endif
 class QPainter;
 class QFont;
-class QwtScaleTransformation;
+class QwtTransform;
 class QwtScaleMap;
 
 /*!
@@ -31,8 +26,7 @@ class QwtScaleMap;
   QwtAbstractScaleDraw can be used to draw linear or logarithmic scales.
 
   After a scale division has been specified as a QwtScaleDiv object
-  using QwtAbstractScaleDraw::setScaleDiv(const QwtScaleDiv &s),
-  the scale can be drawn with the QwtAbstractScaleDraw::draw() member.
+  using setScaleDiv(), the scale can be drawn with the draw() member.
 */
 class QWT_EXPORT QwtAbstractScaleDraw
 {
@@ -40,66 +34,66 @@ public:
 
     /*!
        Components of a scale
+       \sa enableComponent(), hasComponent
+    */
+    enum ScaleComponent
+    {
+        //! Backbone = the line where the ticks are located
+        Backbone = 0x01,
 
-       - Backbone
-       - Ticks
-       - Labels
+        //! Ticks
+        Ticks = 0x02,
 
-       \sa QwtAbstractScaleDraw::enableComponent,
-           QwtAbstractScaleDraw::hasComponent
-        */
-
-    enum ScaleComponent {
-        Backbone = 1,
-        Ticks = 2,
-        Labels = 4
+        //! Labels
+        Labels = 0x04
     };
 
+    //! Scale components
+    typedef QFlags<ScaleComponent> ScaleComponents;
+
     QwtAbstractScaleDraw();
-    QwtAbstractScaleDraw( const QwtAbstractScaleDraw & );
     virtual ~QwtAbstractScaleDraw();
 
-    QwtAbstractScaleDraw &operator=(const QwtAbstractScaleDraw &);
-
-    void setScaleDiv(const QwtScaleDiv &s);
+    void setScaleDiv( const QwtScaleDiv &s );
     const QwtScaleDiv& scaleDiv() const;
 
-    void setTransformation(QwtScaleTransformation *);
-    const QwtScaleMap &map() const;
+    void setTransformation( QwtTransform * );
+    const QwtScaleMap &scaleMap() const;
+    QwtScaleMap &scaleMap();
 
-    void enableComponent(ScaleComponent, bool enable = true);
-    bool hasComponent(ScaleComponent) const;
+    void enableComponent( ScaleComponent, bool enable = true );
+    bool hasComponent( ScaleComponent ) const;
 
-    void setTickLength(QwtScaleDiv::TickType, int length);
-    int tickLength(QwtScaleDiv::TickType) const;
-    int majTickLength() const;
+    void setTickLength( QwtScaleDiv::TickType, double length );
+    double tickLength( QwtScaleDiv::TickType ) const;
+    double maxTickLength() const;
 
-    void setSpacing(int margin);
-    int spacing() const;
+    void setSpacing( double margin );
+    double spacing() const;
 
-#if QT_VERSION < 0x040000
-    virtual void draw(QPainter *, const QColorGroup &) const;
-#else
-    virtual void draw(QPainter *, const QPalette &) const;
-#endif
+    void setPenWidth( int width );
+    int penWidth() const;
 
-    virtual QwtText label(double) const;
+    virtual void draw( QPainter *, const QPalette & ) const;
+
+    virtual QwtText label( double ) const;
 
     /*!
       Calculate the extent
 
-      The extent is the distcance from the baseline to the outermost
+      The extent is the distance from the baseline to the outermost
       pixel of the scale draw in opposite to its orientation.
       It is at least minimumExtent() pixels.
 
+      \param font Font used for drawing the tick labels
+      \return Number of pixels
+
       \sa setMinimumExtent(), minimumExtent()
     */
-    virtual int extent(const QPen &, const QFont &) const = 0;
+    virtual double extent( const QFont &font ) const = 0;
 
-    void setMinimumExtent(int);
-    int minimumExtent() const;
-
-    QwtScaleMap &scaleMap();
+    void setMinimumExtent( double );
+    double minimumExtent() const;
 
 protected:
     /*!
@@ -107,11 +101,11 @@ protected:
 
        \param painter Painter
        \param value Value of the tick
-       \param len Lenght of the tick
+       \param len Length of the tick
 
        \sa drawBackbone(), drawLabel()
     */
-    virtual void drawTick(QPainter *painter, double value, int len) const = 0;
+    virtual void drawTick( QPainter *painter, double value, double len ) const = 0;
 
     /*!
       Draws the baseline of the scale
@@ -119,7 +113,7 @@ protected:
 
       \sa drawTick(), drawLabel()
     */
-    virtual void drawBackbone(QPainter *painter) const = 0;
+    virtual void drawBackbone( QPainter *painter ) const = 0;
 
     /*!
         Draws the label for a major scale tick
@@ -127,19 +121,21 @@ protected:
         \param painter Painter
         \param value Value
 
-        \sa drawTick, drawBackbone
+        \sa drawTick(), drawBackbone()
     */
-    virtual void drawLabel(QPainter *painter, double value) const = 0;
+    virtual void drawLabel( QPainter *painter, double value ) const = 0;
 
     void invalidateCache();
-    const QwtText &tickLabel(const QFont &, double value) const;
+    const QwtText &tickLabel( const QFont &, double value ) const;
 
 private:
-    int operator==(const QwtAbstractScaleDraw &) const;
-    int operator!=(const QwtAbstractScaleDraw &) const;
+    QwtAbstractScaleDraw( const QwtAbstractScaleDraw & );
+    QwtAbstractScaleDraw &operator=( const QwtAbstractScaleDraw & );
 
     class PrivateData;
     PrivateData *d_data;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS( QwtAbstractScaleDraw::ScaleComponents )
 
 #endif

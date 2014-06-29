@@ -12,87 +12,165 @@
 
 #include "qwt_global.h"
 #include "qwt_abstract_slider.h"
-#include "qwt_abstract_scale.h"
 
 class QwtRoundScaleDraw;
 
 /*!
   \brief The Knob Widget
 
-  The QwtKnob widget imitates look and behaviour of a volume knob on a radio.
-  It contains a scale around the knob which is set up automatically or can
-  be configured manually (see QwtAbstractScale).
-  Automatic scrolling is enabled when the user presses a mouse
-  button on the scale. For a description of signals, slots and other
-  members, see QwtAbstractSlider.
+  The QwtKnob widget imitates look and behavior of a volume knob on a radio.
+  It looks similar to QDial - not to QwtDial.
 
+  The value range of a knob might be divided into several turns.
+
+  The layout of the knob depends on the knobWidth().
+
+  - width > 0 
+    The diameter of the knob is fixed and the knob is aligned
+    according to the alignment() flags inside of the contentsRect(). 
+
+  - width <= 0
+    The knob is extended to the minimum of width/height of the contentsRect()
+    and aligned in the other direction according to alignment().
+
+  Setting a fixed knobWidth() is helpful to align several knobs with different
+  scale labels.
+  
   \image html knob.png
-  \sa   QwtAbstractSlider and QwtAbstractScale for the descriptions
-    of the inherited members.
 */
 
-class QWT_EXPORT QwtKnob : public QwtAbstractSlider, public QwtAbstractScale
+class QWT_EXPORT QwtKnob: public QwtAbstractSlider
 {
     Q_OBJECT
-    Q_ENUMS (Symbol)
+
+    Q_ENUMS ( KnobStyle MarkerStyle )
+
+    Q_PROPERTY( KnobStyle knobStyle READ knobStyle WRITE setKnobStyle )
     Q_PROPERTY( int knobWidth READ knobWidth WRITE setKnobWidth )
-    Q_PROPERTY( int borderWidth READ borderWidth WRITE setBorderWidth )
+    Q_PROPERTY( Qt::Alignment alignment READ alignment WRITE setAlignment )
     Q_PROPERTY( double totalAngle READ totalAngle WRITE setTotalAngle )
-    Q_PROPERTY( Symbol symbol READ symbol WRITE setSymbol )
+    Q_PROPERTY( int numTurns READ numTurns WRITE setNumTurns )
+    Q_PROPERTY( MarkerStyle markerStyle READ markerStyle WRITE setMarkerStyle )
+    Q_PROPERTY( int markerSize READ markerSize WRITE setMarkerSize )
+    Q_PROPERTY( int borderWidth READ borderWidth WRITE setBorderWidth )
 
 public:
+    /*! 
+       \brief Style of the knob surface
+
+       Depending on the KnobStyle the surface of the knob is
+       filled from the brushes of the widget palette().
+
+       \sa setKnobStyle(), knobStyle()
+     */
+    enum KnobStyle
+    {
+        //! Fill the knob with a brush from QPalette::Button.
+        Flat,
+
+        //! Build a gradient from QPalette::Midlight and QPalette::Button
+        Raised,
+
+        /*! 
+          Build a gradient from QPalette::Midlight, QPalette::Button
+          and QPalette::Midlight
+         */
+        Sunken,
+
+        /*! 
+          Build a radial gradient from QPalette::Button
+          like it is used for QDial in various Qt styles.
+         */
+        Styled
+    };
+
     /*!
-        Symbol
-        \sa QwtKnob::QwtKnob()
+        \brief Marker type
+ 
+        The marker indicates the current value on the knob
+        The default setting is a Notch marker.
+
+        \sa setMarkerStyle(), setMarkerSize()
     */
+    enum MarkerStyle 
+    { 
+        //! Don't paint any marker
+        NoMarker = -1,
 
-    enum Symbol { Line, Dot };
+        //! Paint a single tick in QPalette::ButtonText color
+        Tick, 
 
-    explicit QwtKnob(QWidget* parent = NULL);
-#if QT_VERSION < 0x040000
-    explicit QwtKnob(QWidget* parent, const char *name);
-#endif
+        //! Paint a triangle in QPalette::ButtonText color
+        Triangle, 
+
+        //! Paint a circle in QPalette::ButtonText color
+        Dot, 
+
+        /*! 
+          Draw a raised ellipse with a gradient build from
+          QPalette::Light and QPalette::Mid
+         */ 
+        Nub, 
+
+        /*! 
+          Draw a sunken ellipse with a gradient build from
+          QPalette::Light and QPalette::Mid
+         */ 
+        Notch 
+    };
+
+    explicit QwtKnob( QWidget* parent = NULL );
     virtual ~QwtKnob();
 
-    void setKnobWidth(int w);
+    void setAlignment( Qt::Alignment );
+    Qt::Alignment alignment() const;
+
+    void setKnobWidth( int );
     int knobWidth() const;
 
-    void setTotalAngle (double angle);
+    void setNumTurns( int );
+    int numTurns() const;
+
+    void setTotalAngle ( double angle );
     double totalAngle() const;
 
-    void setBorderWidth(int bw);
+    void setKnobStyle( KnobStyle );
+    KnobStyle knobStyle() const;
+
+    void setBorderWidth( int bw );
     int borderWidth() const;
 
-    void setSymbol(Symbol);
-    Symbol symbol() const;
+    void setMarkerStyle( MarkerStyle );
+    MarkerStyle markerStyle() const;
+
+    void setMarkerSize( int );
+    int markerSize() const;
 
     virtual QSize sizeHint() const;
     virtual QSize minimumSizeHint() const;
 
-    void setScaleDraw(QwtRoundScaleDraw *);
+    void setScaleDraw( QwtRoundScaleDraw * );
+
     const QwtRoundScaleDraw *scaleDraw() const;
     QwtRoundScaleDraw *scaleDraw();
 
-protected:
-    virtual void paintEvent(QPaintEvent *e);
-    virtual void resizeEvent(QResizeEvent *e);
+    QRect knobRect() const;
 
-    void draw(QPainter *p, const QRect& ur);
-    void drawKnob(QPainter *p, const QRect &r);
-    void drawMarker(QPainter *p, double arc, const QColor &c);
+protected:
+    virtual void paintEvent( QPaintEvent * );
+    virtual void changeEvent( QEvent * );
+
+    virtual void drawKnob( QPainter *, const QRectF & ) const;
+
+    virtual void drawFocusIndicator( QPainter * ) const;
+
+    virtual void drawMarker( QPainter *, 
+        const QRectF &, double arc ) const;
+
+    virtual double scrolledTo( const QPoint & ) const;
+    virtual bool isScrollPosition( const QPoint & ) const;
 
 private:
-    void initKnob();
-    void layoutKnob( bool update = true );
-    double getValue(const QPoint &p);
-    void getScrollMode( const QPoint &p, int &scrollMode, int &direction );
-    void recalcAngle();
-
-    virtual void valueChange();
-    virtual void rangeChange();
-    virtual void scaleChange();
-    virtual void fontChange(const QFont &oldFont);
-
     class PrivateData;
     PrivateData *d_data;
 };

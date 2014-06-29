@@ -55,7 +55,7 @@ public slots:
     /** @brief Set the width in meters this widget shows from top */
     void setMetricWidth(double width);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
-    void updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+    void updateAttitudeSetpoints(UASInterface*, float rollDesired, float pitchDesired, float yawDesired, float thrustDesired, quint64 usec);
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
     void updateUserPositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired);
     void updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
