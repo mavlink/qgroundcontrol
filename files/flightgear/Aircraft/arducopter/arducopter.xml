@@ -130,6 +130,7 @@
         <p_factor> 10 </p_factor>
       </thruster>
     </engine>
+
     <engine file="a2830-12" name="left">
       <location unit="M">
         <x>   0.00 </x>
@@ -185,6 +186,7 @@
         <p_factor> 10 </p_factor>
       </thruster>
     </engine>
+
     <engine file="a2830-12" name="rear">
       <location unit="M">
         <x>   0.283 </x>
@@ -212,7 +214,6 @@
         <p_factor> 10 </p_factor>
       </thruster>
     </engine>
-
 
     <tank type="FUEL" number="0">
       <location unit="M">
