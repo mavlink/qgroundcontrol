@@ -103,7 +103,7 @@
   </ground_reactions>
   <!-- the front and rear motors spin clockwise, and the left and right motors spin counter-clockwise. -->
   <propulsion>
-<engine file="a2830-12" name="right">
+    <engine file="a2830-12" name="right">
       <location unit="M">
         <x>   0.000 </x>
         <y>   0.283 </y>
