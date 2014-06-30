@@ -554,8 +554,8 @@ void JoystickInput::run()
             emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, joystickButtons);
         }
 
-        // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
-        QGC::SLEEP::msleep(20);
+        // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
+        QGC::SLEEP::msleep(40);
     }
 }
 
