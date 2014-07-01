@@ -11,15 +11,15 @@
 #define LINECHART_H
 
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
-#include <QtGui/QApplication>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QGroupBox>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QHeaderView>
-#include <QtGui/QScrollArea>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QWidget>
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QScrollArea>
+#include <QVBoxLayout>
+#include <QWidget>
 
 QT_BEGIN_NAMESPACE
 

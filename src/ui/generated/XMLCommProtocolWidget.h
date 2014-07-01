@@ -11,17 +11,17 @@
 #define XMLCOMMPROTOCOLWIDGET_H
 
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
-#include <QtGui/QApplication>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QGridLayout>
-#include <QtGui/QHeaderView>
-#include <QtGui/QLabel>
-#include <QtGui/QPlainTextEdit>
-#include <QtGui/QPushButton>
-#include <QtGui/QTextEdit>
-#include <QtGui/QTreeView>
-#include <QtGui/QWidget>
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QGridLayout>
+#include <QHeaderView>
+#include <QLabel>
+#include <QPlainTextEdit>
+#include <QPushButton>
+#include <QTextEdit>
+#include <QTreeView>
+#include <QWidget>
 
 QT_BEGIN_NAMESPACE
 
