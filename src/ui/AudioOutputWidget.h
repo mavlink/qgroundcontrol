@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef AUDIOOUTPUTWIDGET_H
 #define AUDIOOUTPUTWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 
 namespace Ui
 {

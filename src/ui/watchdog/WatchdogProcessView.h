@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef WATCHDOGPROCESSVIEW_H
 #define WATCHDOGPROCESSVIEW_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QMap>
 
 namespace Ui

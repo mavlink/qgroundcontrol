@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef UASVIEW_H
 #define UASVIEW_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QString>
 #include <QTimer>
 #include <QMouseEvent>

@@ -34,7 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef WAYPOINTLIST_H
 #define WAYPOINTLIST_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QMap>
 #include <QVBoxLayout>
 #include <QTimer>

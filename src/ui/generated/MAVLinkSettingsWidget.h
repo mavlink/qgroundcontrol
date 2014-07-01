@@ -11,14 +11,14 @@
 #define MAVLINKSETTINGSWIDGET_H
 
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
-#include <QtGui/QApplication>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QCheckBox>
-#include <QtGui/QHeaderView>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QWidget>
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QCheckBox>
+#include <QHeaderView>
+#include <QSpacerItem>
+#include <QVBoxLayout>
+#include <QWidget>
 
 QT_BEGIN_NAMESPACE
 
