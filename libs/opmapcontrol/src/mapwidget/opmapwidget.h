@@ -161,7 +161,7 @@ namespace mapcontrol
                 Q_PROPERTY(double Zoom READ ZoomTotal WRITE SetZoom)
                 Q_PROPERTY(qreal Rotate READ Rotate WRITE SetRotate)
                 Q_ENUMS(internals::MouseWheelZoomType::Types)
-                Q_ENUMS(internals::GeoCoderStatusCode::Types)
+                Q_ENUMS(core::GeoCoderStatusCode::Types)
 
     public:
                 QSize sizeHint() const;
