@@ -152,7 +152,7 @@ void FlightModeConfigUnitTest::_modeSwitchParam_test(void)
         
         // Make sure the text for the current selection doesn't contain the text Unknown
         // which means that it received an unsupported mode
-        QCOMPARE(combo->currentText().contains("unknown", Qt::CaseInsensitive), QBool(false));
+        QCOMPARE(combo->currentText().contains("unknown", Qt::CaseInsensitive), false);
 
         // Check that the right simple mode check boxes are checked
         QCOMPARE(_rgSimpleModeCheckBox[i]->isChecked(), !!((1 << i) & simpleModeBitMask));
@@ -283,7 +283,7 @@ void FlightModeConfigUnitTest::_unknownMode_test(void)
     QCOMPARE(_rgCombo[0]->itemData(_rgCombo[0]->currentIndex()), mapParams["FLTMODE1"]);
     
     // Make sure the text for the current selection contains the text Unknown
-    QCOMPARE(_rgCombo[0]->currentText().contains("unknown", Qt::CaseInsensitive), QBool(true));
+    QCOMPARE(_rgCombo[0]->currentText().contains("unknown", Qt::CaseInsensitive), true);
 }
 
 void FlightModeConfigUnitTest::_findControls(QObject* fmc)
