@@ -61,6 +61,7 @@ namespace core {
         Placemark GetPlacemarkFromGeocoder(internals::PointLatLng location);
         int Timeout;
     private:
+        int Random(int low, int high);
         void GetSecGoogleWords(const core::Point &pos,  QString &sec1, QString &sec2);
         int GetServerNum(const core::Point &pos,const int &max) const;
         void TryCorrectGoogleVersions();
