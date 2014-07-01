@@ -44,7 +44,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "MG.h"
 #include "QGCMAVLink.h"
-#include "configuration.h"
+#include "QGCConfig.h"
 #include "OpalRT.h"
 #include "ParameterList.h"
 #include "Parameter.h"

@@ -406,7 +406,7 @@ HEADERS += \
     src/ui/linechart/LinechartPlot.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
-    src/configuration.h \
+    src/QGCConfig.h \
     src/ui/uas/UASView.h \
     src/ui/CameraView.h \
     src/comm/MAVLinkSimulationLink.h \
