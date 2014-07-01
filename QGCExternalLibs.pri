@@ -302,15 +302,7 @@ DEFINES += NOMINMAX
 #
 # [REQUIRED] OPMapControl library from OpenPilot. Provides 2D mapping functionality.
 #
-include(libs/utils/utils_external.pri)
 include(libs/opmapcontrol/opmapcontrol_external.pri)
-
-DEPENDPATH += \
-    libs/utils \
-    libs/utils/src \
-    libs/opmapcontrol \
-    libs/opmapcontrol/src \
-    libs/opmapcontrol/src/mapwidget
 
 INCLUDEPATH += \
     libs/utils \
