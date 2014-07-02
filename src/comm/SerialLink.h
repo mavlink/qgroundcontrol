@@ -40,7 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialLinkInterface.h"
 
 // We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
-#include <qserialport.h>
+#include <QSerialPort>
 #include <QMetaType>
 Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
 

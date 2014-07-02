@@ -45,8 +45,8 @@ This file is part of the APM_PLANNER project
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QComboBox>
-#include <qserialportinfo.h>
-#include <qserialport.h>
+#include <QSerialPort>
+#include <QSerialPortInfo>
 
 TerminalConsole::TerminalConsole(QWidget *parent) :
     QWidget(parent),
