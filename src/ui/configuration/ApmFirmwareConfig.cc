@@ -2,8 +2,8 @@
 
 #include "LinkManager.h"
 #include "LinkInterface.h"
-#include "qserialport.h"
-#include "qserialportinfo.h"
+#include <QSerialPort>
+#include <QSerialPortInfo>
 #include "SerialLink.h"
 
 #include "ApmFirmwareConfig.h"
