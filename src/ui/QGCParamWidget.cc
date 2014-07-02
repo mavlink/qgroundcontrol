@@ -238,6 +238,7 @@ void QGCParamWidget::handleOnboardParameterListUpToDate()
 {
     //turn off updates while we refresh the entire list
     tree->setUpdatesEnabled(false);
+    qDebug() << "WARN: LIST UPDATE";
 
     //rewrite the component item tree after receiving the full list
     QMap<int, QMap<QString, QVariant>*>::iterator i;

@@ -198,6 +198,7 @@
         <file>files/images/px4/calibration/3dr_gps/gps_01.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_24.png</file>
         <file>files/images/px4/calibration/3dr_gps/gps_00.png</file>
+        <file>files/images/px4/menu/toggle_switch.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">files/styles/Vera.ttf</file>
