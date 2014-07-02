@@ -595,7 +595,7 @@ void
 Pixhawk3DWidget::loadTerrainModel(void)
 {
     QString filename = QFileDialog::getOpenFileName(this, "Load Terrain Model",
-                                                    QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                                                    QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),
                                                     tr("Collada (*.dae)"));
 
     if (filename.isNull())
