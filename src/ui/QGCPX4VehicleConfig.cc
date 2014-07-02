@@ -91,10 +91,18 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     ui->airframeMenuButton->setEnabled(false);
     ui->sensorMenuButton->setEnabled(false);
     ui->rcMenuButton->setEnabled(false);
-    ui->generalMenuButton->hide();
 
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
+
+    px4SafetyConfig = new QGCPX4SafetyConfig(this);
+    ui->safetyConfigLayout->addWidget(px4SafetyConfig);
+
+    px4TuningConfig = new QGCPX4TuningConfig(this);
+    ui->tuningLayout->addWidget(px4TuningConfig);
+
+    px4FlightModeConfig = new QGCPX4FlightModeConfig(this);
+    ui->flightModeLayout->addWidget(px4FlightModeConfig);
 
     px4SensorCalibration = new QGCPX4SensorCalibration(this);
     ui->sensorLayout->addWidget(px4SensorCalibration);
@@ -153,8 +161,12 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
             this, SLOT(copyAttitudeTrim()));
     connect(ui->sensorMenuButton,SIGNAL(clicked()),
             this,SLOT(sensorMenuButtonClicked()));
-    connect(ui->generalMenuButton,SIGNAL(clicked()),
-            this,SLOT(generalMenuButtonClicked()));
+    connect(ui->flightModeMenuButton, SIGNAL(clicked()),
+            this, SLOT(flightModeMenuButtonClicked()));
+    connect(ui->safetyConfigButton, SIGNAL(clicked()),
+            this, SLOT(safetyConfigMenuButtonClicked()));
+    connect(ui->tuningMenuButton,SIGNAL(clicked()),
+            this,SLOT(tuningMenuButtonClicked()));
     connect(ui->advancedMenuButton,SIGNAL(clicked()),
             this,SLOT(advancedMenuButtonClicked()));
     connect(ui->airframeMenuButton, SIGNAL(clicked()),
@@ -279,38 +291,49 @@ QGCPX4VehicleConfig::~QGCPX4VehicleConfig()
 
 void QGCPX4VehicleConfig::rcMenuButtonClicked()
 {
-    //TODO eg ui->stackedWidget->findChild("rcConfig");
-    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_RC);
+    ui->stackedWidget->setCurrentWidget(ui->rcTab);
     ui->tabTitleLabel->setText(tr("Radio Calibration"));
 }
 
 void QGCPX4VehicleConfig::sensorMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_SENSOR_CAL);
+    ui->stackedWidget->setCurrentWidget(ui->sensorTab);
     ui->tabTitleLabel->setText(tr("Sensor Calibration"));
 }
 
-void QGCPX4VehicleConfig::generalMenuButtonClicked()
+void QGCPX4VehicleConfig::tuningMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_GENERAL_CONFIG);
-    ui->tabTitleLabel->setText(tr("General Configuration Options"));
+    ui->stackedWidget->setCurrentWidget(ui->generalTab);
+    ui->tabTitleLabel->setText(tr("Controller Tuning"));
+}
+
+void QGCPX4VehicleConfig::flightModeMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->flightModeTab);
+    ui->tabTitleLabel->setText(tr("Flight Mode Configuration"));
+}
+
+void QGCPX4VehicleConfig::safetyConfigMenuButtonClicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->safetyConfigTab);
+    ui->tabTitleLabel->setText(tr("Safety Feature Configuration"));
 }
 
 void QGCPX4VehicleConfig::advancedMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_ADV_CONFIG);
+    ui->stackedWidget->setCurrentWidget(ui->advancedTab);
     ui->tabTitleLabel->setText(tr("Advanced Configuration Options"));
 }
 
 void QGCPX4VehicleConfig::airframeMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_AIRFRAME_CONFIG);
+    ui->stackedWidget->setCurrentWidget(ui->airframeTab);
     ui->tabTitleLabel->setText(tr("Airframe Configuration"));
 }
 
 void QGCPX4VehicleConfig::firmwareMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentIndex(WIDGET_INDEX_FIRMWARE);
+    ui->stackedWidget->setCurrentWidget(ui->firmwareTab);
     ui->tabTitleLabel->setText(tr("Firmware Upgrade"));
 }
 
