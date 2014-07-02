@@ -28,7 +28,7 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include <QtGui/QApplication>
+#include <QApplication>
 #include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
