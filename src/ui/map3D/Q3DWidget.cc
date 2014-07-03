@@ -35,9 +35,6 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/Geometry>
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
-#ifdef QGC_OSG_QT_ENABLED
-#include <osgQt/QFontImplementation>
-#endif
 #ifdef Q_OS_MACX
 #include <Carbon/Carbon.h>
 #endif
@@ -50,14 +47,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     , mHudProjectionMatrix(new osg::Projection)
     , mFps(30.0f)
 {
-#ifdef QGC_OSG_QT_ENABLED
-    osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
-    fontImpl = new osgQt::QFontImplementation(QFont(":/general/vera.ttf"));
-#else
-    osg::ref_ptr<osgText::Font::FontImplementation> fontImpl;
-    fontImpl = 0;//new osgText::Font::Font("files/styles/Vera.ttf");
-#endif
-    mFont = new osgText::Font(fontImpl);
+    mFont = NULL;
 
     mOsgGW = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
 
