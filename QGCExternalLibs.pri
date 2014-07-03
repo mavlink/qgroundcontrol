@@ -150,13 +150,6 @@ else:MacBuild {
 	exists(/usr/include/osg) | exists(/usr/local/include/osg) {
 		message("Including support for OpenSceneGraph")
         CONFIG += OSGDependency
-        exists(/usr/include/osg/osgQt) | exists(/usr/include/osgQt) | exists(/usr/local/include/osg/osgQt) | exists(/usr/local/include/osgQt) {
-            message("Including support for Linux OpenSceneGraph Qt")
-            LIBS += -losgQt
-            DEFINES += QGC_OSG_QT_ENABLED
-        } else {
-            warning("Skipping support for Linux OpenSceneGraph Qt (missing libraries, see README)")
-        }
 	} else {
 		warning("Skipping support for OpenSceneGraph (missing libraries, see README)")
 	}
