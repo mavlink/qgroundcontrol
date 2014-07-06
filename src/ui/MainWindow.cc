@@ -822,7 +822,7 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "FILE_VIEW_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_STATUS_DETAILS_DOCKWIDGET")
     {
@@ -1993,8 +1993,19 @@ void MainWindow::setAdvancedMode(bool isAdvancedMode)
     settings.setValue("ADVANCED_MODE",isAdvancedMode);
 }
 
-void MainWindow::handleMisconfiguration(UASInterface* uas) {
-
+void MainWindow::handleMisconfiguration(UASInterface* uas)
+{
+    static QTime lastTime;
+    
+    // We have to debounce this signal
+    if (!lastTime.isValid()) {
+        lastTime.start();
+    } else {
+        if (lastTime.elapsed() < 10000) {
+            lastTime.start();
+            return;
+        }
+    }
     // Ask user if he wants to handle this now
     QMessageBox msgBox(this);
     msgBox.setIcon(QMessageBox::Information);
