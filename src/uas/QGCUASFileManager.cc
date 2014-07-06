@@ -99,11 +99,6 @@ quint32 QGCUASFileManager::crc32(Request* request, unsigned state)
     return state;
 }
 
-void QGCUASFileManager::nothingMessage()
-{
-    // FIXME: Connect ui correctly
-}
-
 /// @brief Respond to the Ack associated with the Open command with the next Read command.
 void QGCUASFileManager::_openAckResponse(Request* openAck)
 {
@@ -220,17 +215,11 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
             _emitErrorMessage(tr("Missing NULL termination in list entry"));
             return;
         }
-        
-        // Returned names are prepended with D for directory, F for file, U for unknown
 
-        QString s(ptr + 1);
-        if (*ptr == 'D') {
-            s.append('/');
-        }
-        
+        // Returned names are prepended with D for directory, F for file, U for unknown
         if (*ptr == 'F' || *ptr == 'D') {
             // put it in the view
-            _emitStatusMessage(s);
+            _emitStatusMessage(ptr);
         }
     
         // account for the name + NUL
@@ -243,6 +232,7 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
         // Directory is empty, we're done
         Q_ASSERT(listAck->hdr.opcode == kRspAck);
         _currentOperation = kCOIdle;
+        emit listComplete();
     } else {
         // Possibly more entries to come, need to keep trying till we get EOF
         _currentOperation = kCOList;
@@ -307,6 +297,7 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         
         if (previousOperation == kCOList && errorCode == kErrEOF) {
             // This is not an error, just the end of the read loop
+            emit listComplete();
             return;
         } else if (previousOperation == kCORead && errorCode == kErrEOF) {
             // This is not an error, just the end of the read loop
