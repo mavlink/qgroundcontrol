@@ -146,15 +146,12 @@ void QGCUASFileManagerUnitTest::_listTest(void)
     fileList << "Ddir" << "Ffoo" << "Fbar";
     _mockFileServer.setFileList(fileList);
     
-    QStringList fileListExpected;
-    fileListExpected << "dir/" << "foo" << "bar";
-    
     _fileListReceived.clear();
     
     _fileManager->listDirectory("/");
     QCOMPARE(_multiSpy->checkSignalByMask(resetStatusMessagesSignalMask), true);  // We should be told to reset status messages
     QCOMPARE(_multiSpy->checkNoSignalByMask(errorMessageSignalMask), true);  // We should not get an error signals
-    QVERIFY(_fileListReceived == fileListExpected);
+    QVERIFY(_fileListReceived == fileList);
 }
 
 void QGCUASFileManagerUnitTest::_validateFileContents(const QString& filePath, uint8_t length)
