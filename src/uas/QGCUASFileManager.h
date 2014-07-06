@@ -43,11 +43,11 @@ public:
 signals:
     void statusMessage(const QString& msg);
     void resetStatusMessages();
-    void errorMessage(const QString& ms);
+    void errorMessage(const QString& msg);
+    void listComplete(void);
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
-    void nothingMessage();
     void listDirectory(const QString& dirPath);
     void downloadPath(const QString& from, const QDir& downloadDir);
 
