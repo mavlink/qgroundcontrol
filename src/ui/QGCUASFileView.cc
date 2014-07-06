@@ -196,5 +196,5 @@ void QGCUASFileView::_downloadStatusMessage(const QString& msg)
 void QGCUASFileView::_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
     Q_UNUSED(previous);
-    _ui.downloadButton->setEnabled(current->type() == _typeFile);
+    _ui.downloadButton->setEnabled(current ? (current->type() == _typeFile) : false);
 }
