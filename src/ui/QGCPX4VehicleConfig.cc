@@ -174,7 +174,10 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     connect(ui->firmwareMenuButton, SIGNAL(clicked()),
             this, SLOT(firmwareMenuButtonClicked()));
 
-    connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->advancedGroupBox, SLOT(setVisible(bool)));
+    // HIDE THE ADVANCED RC CONFIG MENUS
+    // TOO MANY USERS FOOL THEMSELVES WITH IT
+    ui->advancedCheckBox->setVisible(false);
+    //connect(ui->advancedCheckBox, SIGNAL(clicked(bool)), ui->advancedGroupBox, SLOT(setVisible(bool)));
     ui->advancedGroupBox->setVisible(false);
 
 #if 0
