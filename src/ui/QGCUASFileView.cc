@@ -70,12 +70,7 @@ void QGCUASFileView::_downloadFiles(void)
 
 void QGCUASFileView::_refreshTree(void)
 {
-    QTreeWidgetItem* item;
-    
-    for (int i=_ui.treeWidget->invisibleRootItem()->childCount(); i>=0; i--) {
-        item = _ui.treeWidget->takeTopLevelItem(i);
-        delete item;
-    }
+    _ui.treeWidget->clear();
 
     _walkIndexStack.clear();
     _walkItemStack.clear();
@@ -89,6 +84,9 @@ void QGCUASFileView::_refreshTree(void)
     success = connect(_manager, SIGNAL(listComplete(void)), this, SLOT(_listComplete(void)));
     Q_ASSERT(success);
     Q_UNUSED(success);
+    
+    // Don't queue up more than once
+    _ui.listFilesButton->setEnabled(false);
 
     qDebug() << "List: /";
     _manager->listDirectory("/");
@@ -110,11 +108,7 @@ void QGCUASFileView::_treeStatusMessage(const QString& msg)
     }
 
     QTreeWidgetItem* item;
-    if (_walkItemStack.count() == 0) {
-        item = new QTreeWidgetItem(_ui.treeWidget, type);
-    } else {
-        item = new QTreeWidgetItem(_walkItemStack.last(), type);
-    }
+    item = new QTreeWidgetItem(_walkItemStack.last(), type);
     Q_CHECK_PTR(item);
     
     item->setText(0, msg.right(msg.size() - 1));
@@ -123,14 +117,13 @@ void QGCUASFileView::_treeStatusMessage(const QString& msg)
 void QGCUASFileView::_treeErrorMessage(const QString& msg)
 {
     QTreeWidgetItem* item;
-    if (_walkItemStack.count() == 0) {
-        item = new QTreeWidgetItem(_ui.treeWidget, _typeError);
-    } else {
-        item = new QTreeWidgetItem(_walkItemStack.last(), _typeError);
-    }
+    item = new QTreeWidgetItem(_walkItemStack.last(), _typeError);
     Q_CHECK_PTR(item);
     
     item->setText(0, tr("Error: ") + msg);
+    
+    // Fake listComplete signal after an error
+    _listComplete();
 }
 
 void QGCUASFileView::_listComplete(void)
@@ -178,6 +171,7 @@ Again:
             disconnect(_manager, SIGNAL(statusMessage(QString)), this, SLOT(_treeStatusMessage(QString)));
             disconnect(_manager, SIGNAL(errorMessage(QString)), this, SLOT(_treeErrorMessage(QString)));
             disconnect(_manager, SIGNAL(listComplete(void)), this, SLOT(_listComplete(void)));
+            _ui.listFilesButton->setEnabled(true);
         }
     }
 }
@@ -196,5 +190,5 @@ void QGCUASFileView::_downloadStatusMessage(const QString& msg)
 void QGCUASFileView::_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
     Q_UNUSED(previous);
-    _ui.downloadButton->setEnabled(current->type() == _typeFile);
+    _ui.downloadButton->setEnabled(current ? (current->type() == _typeFile) : false);
 }
