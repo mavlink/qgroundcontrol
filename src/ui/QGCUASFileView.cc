@@ -106,6 +106,7 @@ void QGCUASFileView::_treeStatusMessage(const QString& msg)
         }
     } else {
         Q_ASSERT(false);
+        return; // Silence maybe-unitialized on type below
     }
 
     QTreeWidgetItem* item;
