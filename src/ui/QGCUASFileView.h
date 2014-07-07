@@ -48,11 +48,19 @@ private slots:
     void _listComplete(void);
     void _downloadStatusMessage(const QString& msg);
     void _currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
+    void _listCompleteTimeout(void);
 
 private:
+    void _setupListCompleteTimeout(void);
+    void _clearListCompleteTimeout(void);
+    void _requestDirectoryList(const QString& dir);
+
     static const int        _typeFile = QTreeWidgetItem::UserType + 1;
     static const int        _typeDir = QTreeWidgetItem::UserType + 2;
     static const int        _typeError = QTreeWidgetItem::UserType + 3;
+    
+    QTimer                  _listCompleteTimer;                     ///> Used to signal a timeout waiting for a listComplete signal
+    static const int        _listCompleteTimerTimeoutMsecs = 5000;  ///> Timeout in msecs for listComplete timer
     
     QList<int>              _walkIndexStack;
     QList<QTreeWidgetItem*> _walkItemStack;
