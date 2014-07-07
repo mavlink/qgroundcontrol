@@ -221,7 +221,7 @@ bool GAudioOutput::say(QString text, int severity)
             // Slashes necessary to have the right start to the sentence
             // copying data prevents SpeakString from reading additional chars
             text = "\\" + text;
-            QStdWString str = text.toStdWString();
+            std::wstring str = text.toStdWString();
             unsigned char str2[1024] = {};
             memcpy(str2, text.toLatin1().data(), str.length());
             SpeakString(str2);
