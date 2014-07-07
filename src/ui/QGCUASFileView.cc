@@ -40,7 +40,9 @@ QGCUASFileView::QGCUASFileView(QWidget *parent, QGCUASFileManager *manager) :
     Q_ASSERT(success);
     success = connect(_ui.treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), this, SLOT(_currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)));
     Q_ASSERT(success);
-    Q_UNUSED(success);
+    success = connect(&_listCompleteTimer, SIGNAL(timeout()), this, SLOT(_listCompleteTimeout()));
+    Q_ASSERT(success);
+    Q_UNUSED(success);    // Silence retail unused variable error
 }
 
 void QGCUASFileView::_downloadFiles(void)
@@ -88,8 +90,7 @@ void QGCUASFileView::_refreshTree(void)
     // Don't queue up more than once
     _ui.listFilesButton->setEnabled(false);
 
-    qDebug() << "List: /";
-    _manager->listDirectory("/");
+    _requestDirectoryList("/");
 }
 
 void QGCUASFileView::_treeStatusMessage(const QString& msg)
@@ -128,6 +129,8 @@ void QGCUASFileView::_treeErrorMessage(const QString& msg)
 
 void QGCUASFileView::_listComplete(void)
 {
+    _clearListCompleteTimeout();
+    
     // Walk the current items, traversing down into directories
     
 Again:
@@ -159,8 +162,7 @@ Again:
             QTreeWidgetItem* item = _walkItemStack[i];
             dir.append("/" + item->text(0));
         }
-        qDebug() << "List:" << dir;
-        _manager->listDirectory(dir);
+        _requestDirectoryList(dir);
     } else {
         // We have run out of items at the this level, pop the stack and keep going at that level
         _walkIndexStack.removeLast();
@@ -191,4 +193,31 @@ void QGCUASFileView::_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetIt
 {
     Q_UNUSED(previous);
     _ui.downloadButton->setEnabled(current ? (current->type() == _typeFile) : false);
+}
+
+void QGCUASFileView::_setupListCompleteTimeout(void)
+{
+    Q_ASSERT(!_listCompleteTimer.isActive());
+    
+    _listCompleteTimer.setSingleShot(true);
+    _listCompleteTimer.start(_listCompleteTimerTimeoutMsecs);
+}
+
+void QGCUASFileView::_clearListCompleteTimeout(void)
+{
+    Q_ASSERT(_listCompleteTimer.isActive());
+    
+    _listCompleteTimer.stop();
+}
+
+void QGCUASFileView::_listCompleteTimeout(void)
+{
+    _treeErrorMessage(tr("Timeout waiting for listComplete signal"));
+}
+
+void QGCUASFileView::_requestDirectoryList(const QString& dir)
+{
+    qDebug() << "List:" << dir;
+    _setupListCompleteTimeout();
+    _manager->listDirectory(dir);
 }
