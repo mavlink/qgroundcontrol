@@ -471,15 +471,19 @@ void QGCUASFileManager::_clearAckTimeout(void)
 /// @brief Called when ack timeout timer fires
 void QGCUASFileManager::_ackTimeout(void)
 {
-    _emitErrorMessage(tr("Timeout waiting for ack"));
+    // Make sure to set _currentOperation state before emitting error message. Code may respond
+    // to error message signal by sending another command, which will fail if state is not back
+    // to idle. FileView UI works this way with the List command.
 
     switch (_currentOperation) {
         case kCORead:
             _currentOperation = kCOAck;
+            _emitErrorMessage(tr("Timeout waiting for ack: Sending Terminate command"));
             _sendTerminateCommand();
             break;
         default:
             _currentOperation = kCOIdle;
+            _emitErrorMessage(tr("Timeout waiting for ack"));
             break;
     }
 }
