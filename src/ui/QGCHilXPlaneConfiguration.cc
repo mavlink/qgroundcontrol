@@ -50,6 +50,10 @@ void QGCHilXPlaneConfiguration::setVersion(int version)
 
 void QGCHilXPlaneConfiguration::toggleSimulation(bool connect)
 {
+    if (!link) {
+        return;
+    }
+
     Q_UNUSED(connect);
     if (!link->isConnected())
     {

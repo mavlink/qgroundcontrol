@@ -139,6 +139,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
     waypointManager(this),
+    fileManager(this, this),
 
     attitudeKnown(false),
     attitudeStamped(false),
@@ -147,6 +148,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     roll(0.0),
     pitch(0.0),
     yaw(0.0),
+
+    imagePackets(0),    // We must initialize to 0, otherwise extended data packets maybe incorrectly thought to be images
 
     blockHomePositionChanges(false),
     receivedMode(false),
@@ -174,6 +177,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
         componentID[i] = -1;
         componentMulti[i] = false;
     }
+
+    connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), &fileManager, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 
     // Store a list of available actions for this UAS.
     // Basically everything exposed as a SLOT with no return value or arguments.
@@ -1368,6 +1373,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // NO VALID TRANSACTION - ABORT
                 // Restart statemachine
                 imagePacketsArrived = 0;
+                break;
             }
 
             for (int i = 0; i < imagePayload; ++i)
@@ -1384,6 +1390,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if ((imagePacketsArrived >= imagePackets))
             {
                 // Restart statemachine
+                imagePackets = 0;
+                imagePacketsArrived = 0;
                 emit imageReady(this);
                 //qDebug() << "imageReady emitted. all packets arrived";
             }

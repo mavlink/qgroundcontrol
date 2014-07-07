@@ -71,6 +71,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialSettingsDialog.h"
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
+#include "QGCUASFileViewMulti.h"
 #include <QDesktopWidget>
 
 // Add support for the MAVLink generator UI if it's been requested.
@@ -657,6 +658,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new QGCMAVLinkInspector(mavlink,this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
 
     createDockWidget(engineeringView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView,new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
     createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
 
     menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
@@ -817,6 +819,10 @@ void MainWindow::loadDockWidget(const QString& name)
     else if (name == "PARAMETER_INTERFACE_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
+    else if (name == "FILE_VIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_STATUS_DETAILS_DOCKWIDGET")
     {
@@ -1987,8 +1993,19 @@ void MainWindow::setAdvancedMode(bool isAdvancedMode)
     settings.setValue("ADVANCED_MODE",isAdvancedMode);
 }
 
-void MainWindow::handleMisconfiguration(UASInterface* uas) {
-
+void MainWindow::handleMisconfiguration(UASInterface* uas)
+{
+    static QTime lastTime;
+    
+    // We have to debounce this signal
+    if (!lastTime.isValid()) {
+        lastTime.start();
+    } else {
+        if (lastTime.elapsed() < 10000) {
+            lastTime.start();
+            return;
+        }
+    }
     // Ask user if he wants to handle this now
     QMessageBox msgBox(this);
     msgBox.setIcon(QMessageBox::Information);
