@@ -130,7 +130,7 @@ void QGCUASFileView::_listComplete(void)
 {
     // Walk the current items, traversing down into directories
     
-Again:
+Again: 
     int walkIndex = _walkIndexStack.last();
     QTreeWidgetItem* parentItem = _walkItemStack.last();
     QTreeWidgetItem* childItem = parentItem->child(walkIndex);
