@@ -84,8 +84,8 @@ To build on Mac OSX (10.6 or later):
 To build on Linux:
 - - -
 1. Install base dependencies (QT5.1+, SDL1.2)
-  * For Ubuntu: `sudo apt-get install qtcreator qtbase5-dev qt5-default libqt5declarative5-dev libqt5serialport5-dev libqt5svg5-dev libqt5webkit5-dev libsdl1.2-dev build-essential libudev-dev`
-  * For Fedora: `sudo yum install qt-creator qt5-qtbase qt5-qtdeclarative qt5-qtserialport qt5-qtsvg qt5-qtwebkit SDL-devel SDL-static systemd-devel`
+  * For Ubuntu: `sudo apt-get install qtcreator qtbase5-dev qt5-default qtdeclarative5-dev libqt5serialport5-dev libqt5svg5-dev libqt5webkit5-dev libsdl1.2-dev build-essential libudev-dev`
+  * For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel`
   * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 
 2. **[OPTIONAL]** Install additional libraries
