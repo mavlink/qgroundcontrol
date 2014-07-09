@@ -251,7 +251,7 @@ else:infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-    CONFIG += qaxcontainer
+    QT += axcontainer
 } else {
     message("Skipping support for Google Earth view (unsupported platform)")
 }
