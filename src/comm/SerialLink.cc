@@ -612,7 +612,6 @@ qint64 SerialLink::getConnectionSpeed() const
             dataRate = 115200;
             break;
             // Otherwise do nothing.
-        case QSerialPort::UnknownBaud:
         default:
             dataRate = -1;
             break;
