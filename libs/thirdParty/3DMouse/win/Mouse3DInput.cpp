@@ -146,7 +146,7 @@ Mouse3DInput::Mouse3DInput(QWidget* widget) :
 	InitializeRawInput((HWND)widget->winId());
 
 	gMouseInput = this;
-	qApp->setEventFilter(Mouse3DInput::RawInputEventFilter);
+	qApp->installNativeEventFilter(Mouse3DInput::RawInputEventFilter);
 }
 
 Mouse3DInput::~Mouse3DInput()
