@@ -143,7 +143,7 @@ Mouse3DInput::Mouse3DInput(QWidget* widget) :
 {
 	fLast3dmouseInputTime = 0;
 
-	InitializeRawInput(widget->winId());
+	InitializeRawInput((HWND)widget->winId());
 
 	gMouseInput = this;
 	qApp->setEventFilter(Mouse3DInput::RawInputEventFilter);
