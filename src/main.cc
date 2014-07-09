@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 
     // install the message handler
 #ifdef Q_OS_WIN
-    qInstallMsgHandler( msgHandler );
+    qInstallMessageHandler( msgHandler );
 #endif
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns
