@@ -1387,15 +1387,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             ++imagePacketsArrived;
 
             // emit signal if all packets arrived
-            // && seq >= imagePackets-1
-            if ((imagePacketsArrived >= imagePackets))
+            if (imagePacketsArrived >= imagePackets)
             {
                 // Restart statemachine
                 imagePackets = 0;
                 imagePacketsArrived = 0;
                 emit imageReady(this);
-                //imagePacketsArrived = 0;
-                //imagePackets = 0;
                 //qDebug() << "imageReady emitted. all packets arrived";
             }
         }
@@ -2205,8 +2202,6 @@ QImage UAS::getImage()
         if (!image.loadFromData(imageRecBuffer))
         {
             qDebug() << __FILE__ << __LINE__ << "Loading data from image buffer failed!";
-            //imagePacketsArrived = 0;
-            //imagePackets = 0;
             return QImage();
         }
     }
@@ -2216,7 +2211,6 @@ QImage UAS::getImage()
     imagePackets = 0;
     imageRecBuffer.clear();
     return image;
-
 }
 
 void UAS::requestImage()
