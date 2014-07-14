@@ -1,4 +1,4 @@
-# QGroundControl 
+# QGroundControl
 ## Open Source Micro Air Vehicle Ground Control Station
 
 
@@ -16,8 +16,8 @@
 For generating documentation, refer to /doc/README.
 
 ## Notes
-Please make sure to delete your build folder before re-building. Independent of which 
-build system you use (this is not related to Qt or your OS) the dependency checking and 
+Please make sure to delete your build folder before re-building. Independent of which
+build system you use (this is not related to Qt or your OS) the dependency checking and
 cleaning is based on the current project revision. So if you change the project and don't remove the build folder before your next build, incremental building can leave you with stale object files.
 
 ## Additional functionality
@@ -36,9 +36,6 @@ The QUpgrade module relies on `libudev` on Linux platforms, so be sure to instal
 
 ### Specifying MAVLink dialects
 The MAVLink dialect compiled by default by QGC is for the ardupilotmega. This will happen if no other dialects are specified. Setting the `MAVLINK_CONF` variable sets the dialects, with more than one specified in a space-separated list. Note that doing this may result in compilation errors as certain dialects may conflict with each other!
-
-### MAVLink dialect generator
-An add-on is available for QGC that provides a UI for generating MAVLink dialects from within QGC. This feature has been deprecated since identical functionality now exists within the MAVLink project itself. Enable this functionality by specifying the `DEFINES` variable `ENABLE_MAVGEN`.
 
 ### Opal-RT's RT-LAB simulator
 Integration with Opal-RT's RT-LAB simulator can be enabled on Windows by installing RT-LAB 7.2.4. This allows vehicles to be simulated in RT-LAB and communicate directly with QGC on the same computer as if the UAS was actually deployed. This support is enabled by default once the requisite RT-LAB software is installed. Disabling this can be done by adding `DISABLE_RTLAB` to the `DEFINES` variable.
@@ -83,14 +80,15 @@ To build on Mac OSX (10.6 or later):
 3. Run `make -j4`
 
 
-# Build on Linux 
+# Build on Linux
 
 
 To build on Linux:
 - - -
 1. Install base dependencies (QT + phonon/webkit, SDL)
   * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential libudev-dev`
-  * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel SDL-devel SDL-static systemd-devel`
+  * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel phonon-devel SDL-devel SDL-static systemd-devel`
+  * For Arch Linux: `pacman -Sy qtwebkit phonon-qt4`
 
 2. **[OPTIONAL]** Install additional libraries
   * For text-to-speech (espeak)

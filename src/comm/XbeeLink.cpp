@@ -73,7 +73,7 @@ bool XbeeLink::setPortName(QString portName)
 		m_portName = new char[this->m_portNameLength];
 		for(int i=0;i<list[0].size();i++)
 		{
-			this->m_portName[i]=list[0][i].toAscii();
+			this->m_portName[i]=list[0][i].toLatin1();
 		}
 		this->m_portName[list[0].size()] = '\0';
 	}

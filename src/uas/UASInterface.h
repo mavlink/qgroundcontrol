@@ -52,6 +52,8 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #endif
 
+class QGCUASFileManager;
+
 enum BatteryType
 {
     NICD = 0,
@@ -157,6 +159,13 @@ public:
 
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManagerInterface* getParamManager() = 0;
+
+    virtual QGCUASFileManager* getFileManager() = 0;
+
+    /** @brief Send a message over this link (to this or to all UAS on this link) */
+    virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
+    /** @brief Send a message over all links this UAS can be reached with (!= all links) */
+    virtual void sendMessage(mavlink_message_t message) = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -430,6 +439,11 @@ signals:
     void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
     void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
 
+    /**
+     * @brief A misconfiguration has been detected by the UAS
+     */
+    void misconfigurationDetected(UASInterface* uas);
+
     /** @brief A text message from the system has been received */
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
 
@@ -524,7 +538,7 @@ signals:
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
     void attitudeChanged(UASInterface*, int component, double roll, double pitch, double yaw, quint64 usec);
     void attitudeRotationRatesChanged(int uas, double rollrate, double pitchrate, double yawrate, quint64 usec);
-    void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+    void attitudeThrustSetPointChanged(UASInterface*, float rollDesired, float pitchDesired, float yawDesired, float thrustDesired, quint64 usec);
     /** @brief The MAV set a new setpoint in the local (not body) NED X, Y, Z frame */
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     /** @brief A user (or an autonomous mission or obstacle avoidance planner) requested to set a new setpoint */

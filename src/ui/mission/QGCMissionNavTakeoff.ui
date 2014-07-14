@@ -32,7 +32,16 @@
    <property name="spacing">
     <number>5</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -296,7 +305,7 @@
       <bool>false</bool>
      </property>
      <property name="prefix">
-      <string/>
+      <string>heading </string>
      </property>
      <property name="suffix">
       <string>°</string>
@@ -328,6 +337,9 @@
      </property>
      <property name="keyboardTracking">
       <bool>false</bool>
+     </property>
+     <property name="prefix">
+      <string>min. pitch </string>
      </property>
      <property name="suffix">
       <string>°</string>

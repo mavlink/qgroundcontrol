@@ -214,7 +214,7 @@ public slots:
     void storeSettings();
 
 protected:
-    QTimer heartbeatTimer;    ///< Timer to emit heartbeats
+    QTimer *heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
@@ -237,6 +237,8 @@ protected:
     int currLossCounter[MAVLINK_COMM_NUM_BUFFERS];        ///< Lost messages during this sample time window. Used for calculating loss %.
     bool versionMismatchIgnore;
     int systemId;
+    bool _should_exit;
+
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     mavlink::ProtobufManager protobufManager;
 #endif

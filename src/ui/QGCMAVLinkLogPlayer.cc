@@ -572,9 +572,18 @@ void QGCMAVLinkLogPlayer::logLoop()
     if (mavlinkLogFormat)
     {
         // Now parse MAVLink messages, grabbing their timestamps as we go. We stop once we
-        // have at least 3ms until the next one.
+        // have at least 3ms until the next one. 
+
+        // We track what the next execution time should be in milliseconds, which we use to set
+        // the next timer interrupt.
         int nextExecutionTime = 0;
+
+        // We use the `findNextMavlinkMessage()` function to scan ahead for MAVLink messages. This
+        // is necessary because we don't know how big each MAVLink message is until we finish parsing
+        // one, and since we only output arrays of bytes, we need to know the size of that array.
         mavlink_message_t msg;
+        findNextMavlinkMessage(&msg);
+
         while (nextExecutionTime < 3) {
 
             // Now we're sitting at the start of a MAVLink message, so read it all into a byte array for feeding to our parser.

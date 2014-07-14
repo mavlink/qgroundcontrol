@@ -921,7 +921,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,float,float,float,float,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,float,float,float,float,quint64)));
         disconnect(this->uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
         disconnect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)), this, SLOT(updateUserPositionSetpoints(int,float,float,float,float)));
         disconnect(this->uas, SIGNAL(velocityChanged_NED(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
@@ -957,8 +957,8 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
                 this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)),
                 this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)),
-                this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,float,float,float,float,quint64)),
+                this, SLOT(updateAttitudeSetpoints(UASInterface*,float,float,float,float,quint64)));
         connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)),
                 this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
         connect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)),
@@ -1100,7 +1100,7 @@ void HSIDisplay::sendBodySetPointCoordinates()
     }
 }
 
-void HSIDisplay::updateAttitudeSetpoints(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec)
+void HSIDisplay::updateAttitudeSetpoints(UASInterface* uas, float rollDesired, float pitchDesired, float yawDesired, float thrustDesired, quint64 usec)
 {
     Q_UNUSED(uas);
     Q_UNUSED(usec);

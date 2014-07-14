@@ -1212,7 +1212,7 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
         if (depth <= 8 && channels == 1) {
             image = new QImage(receivedWidth, receivedHeight, QImage::Format_Indexed8);
             // Create matching color table
-            image->setNumColors(256);
+            image->setColorCount(256);
             for (int i = 0; i < 256; i++) {
                 image->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;
@@ -1277,7 +1277,7 @@ void HUD::commitRawDataToGL()
         QImage* newImage = new QImage(rawImage, receivedWidth, receivedHeight, format);
         if (format == QImage::Format_Indexed8) {
             // Create matching color table
-            newImage->setNumColors(256);
+            newImage->setColorCount(256);
             for (int i = 0; i < 256; i++) {
                 newImage->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;

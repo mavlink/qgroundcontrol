@@ -76,6 +76,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGCVehicleConfig.h"
 #include "MAVLinkDecoder.h"
+#include "QGCUASFileViewMulti.h"
 
 class QGCMapTool;
 class QGCMAVLinkMessageSender;
@@ -86,6 +87,7 @@ class Linecharts;
 class QGCDataPlot2D;
 class JoystickWidget;
 class MenuActionHelper;
+class QGCUASFileViewMulti;
 
 /**
  * @brief Main Application Window
@@ -222,6 +224,7 @@ public slots:
 
     /** @brief Sets advanced mode, allowing for editing of tool widget locations */
     void setAdvancedMode(bool isAdvancedMode);
+    void handleMisconfiguration(UASInterface* uas);
     /** @brief Load configuration views */
     void loadHardwareConfigView();
     void loadSoftwareConfigView();
@@ -297,6 +300,18 @@ public slots:
 
 protected slots:
     void showDockWidget(const QString &name, bool show);
+    /**
+     * @brief Unchecks the normalActionItem.
+     * Used as a triggered() callback by the fullScreenAction to make sure only one of it or the
+     * normalAction are checked at a time, as they're mutually exclusive.
+     */
+    void fullScreenActionItemCallback();
+    /**
+     * @brief Unchecks the fullScreenActionItem.
+     * Used as a triggered() callback by the normalAction to make sure only one of it or the
+     * fullScreenAction are checked at a time, as they're mutually exclusive.
+     */
+    void normalActionItemCallback();
 
 signals:
     void styleChanged(MainWindow::QGC_MAINWINDOW_STYLE newTheme);
@@ -462,6 +477,8 @@ protected:
     QPointer<QDockWidget> mavlinkSenderWidget;
     QGCMAVLinkLogPlayer* logPlayer;
     QMap<int, QDockWidget*> hilDocks;
+
+    QPointer<QGCUASFileViewMulti> fileWidget;
 
     // Popup widgets
     JoystickWidget* joystickWidget;

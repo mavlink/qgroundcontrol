@@ -72,7 +72,7 @@ public:
         return static_cast<const QString>(data);
     }
     int8_t* toInt8_t() const {
-        return (int8_t*)data.toAscii().data();
+        return (int8_t*)data.toLatin1().data();
     }
 
 protected:

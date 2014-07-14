@@ -71,6 +71,8 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialSettingsDialog.h"
 #include "terminalconsole.h"
 #include "menuactionhelper.h"
+#include "QGCUASFileViewMulti.h"
+#include <QDesktopWidget>
 
 // Add support for the MAVLink generator UI if it's been requested.
 #ifdef QGC_MAVGEN_ENABLED
@@ -216,8 +218,6 @@ void MainWindow::init()
         toolBar = new QGCToolBar(this);
         this->addToolBar(toolBar);
 
-        ui.actionHardwareConfig->setText(tr("Config"));
-
         // Add actions for average users (displayed next to each other)
         QList<QAction*> actions;
         actions << ui.actionFlightView;
@@ -228,10 +228,12 @@ void MainWindow::init()
 
         // Add actions for advanced users (displayed in dropdown under "advanced")
         QList<QAction*> advancedActions;
-        advancedActions << ui.actionSimulation_View;
+        advancedActions << ui.actionSimulationView;
         advancedActions << ui.actionEngineersView;
 
         toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
+    } else {
+        ui.actionHardwareConfig->setText(tr("Hardware"));
     }
 
     customStatusBar = new QGCStatusBar(this);
@@ -266,7 +268,7 @@ void MainWindow::init()
         apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
         apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
         apmToolBar->setSoftwareViewAction(ui.actionSoftwareConfig);
-        apmToolBar->setSimulationViewAction(ui.actionSimulation_View);
+        apmToolBar->setSimulationViewAction(ui.actionSimulationView);
         apmToolBar->setTerminalViewAction(ui.actionTerminalView);
 
         QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
@@ -347,25 +349,42 @@ void MainWindow::init()
 
     }
 
+    // Make sure the proper fullscreen/normal menu item is checked properly.
+    if (isFullScreen())
+    {
+        ui.actionFullscreen->setChecked(true);
+        ui.actionNormal->setChecked(false);
+    }
+    else
+    {
+        ui.actionFullscreen->setChecked(false);
+        ui.actionNormal->setChecked(true);
+    }
+
+    // And that they will stay checked properly after user input
+    QObject::connect(ui.actionFullscreen, SIGNAL(triggered()), this, SLOT(fullScreenActionItemCallback()));
+    QObject::connect(ui.actionNormal, SIGNAL(triggered()), this,SLOT(normalActionItemCallback()));
+
+
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0, QApplication::UnicodeUTF8));
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0, QApplication::UnicodeUTF8));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0, QApplication::UnicodeUTF8));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0, QApplication::UnicodeUTF8));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0, QApplication::UnicodeUTF8));
-    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0, QApplication::UnicodeUTF8));
-    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0, QApplication::UnicodeUTF8));
-    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0, QApplication::UnicodeUTF8));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
+    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0));
+    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0));
+    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0, QApplication::UnicodeUTF8));
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0, QApplication::UnicodeUTF8));
-    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0, QApplication::UnicodeUTF8));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0, QApplication::UnicodeUTF8));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0, QApplication::UnicodeUTF8));
-    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0, QApplication::UnicodeUTF8));
-    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0, QApplication::UnicodeUTF8));
-    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0, QApplication::UnicodeUTF8));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
+    ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
+    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0));
+    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0));
+    ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
@@ -435,10 +454,10 @@ QString MainWindow::getWindowStateKey()
 {
     if (UASManager::instance()->getActiveUAS())
     {
-        return QString::number(currentView)+"_windowstate_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
+        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode()) + "_" + UASManager::instance()->getActiveUAS()->getAutopilotTypeName();
     }
     else
-        return QString::number(currentView)+"_windowstate";
+        return QString::number(currentView)+"_windowstate_" + QString::number(getCustomMode());
 }
 
 QString MainWindow::getWindowGeometryKey()
@@ -539,8 +558,17 @@ void MainWindow::buildCommonWidgets()
     {
         pilotView = new SubMainWindow(this);
         pilotView->setObjectName("VIEW_FLIGHT");
-        pilotView->setCentralWidget(new QGCMapTool(this));
+        pilotView->setCentralWidget(new PrimaryFlightDisplay(this));
         addToCentralStackedWidget(pilotView, VIEW_FLIGHT, "Pilot");
+    }
+
+    if (!terminalView)
+    {
+        terminalView = new SubMainWindow(this);
+        terminalView->setObjectName("VIEW_TERMINAL");
+        TerminalConsole *terminalConsole = new TerminalConsole(this);
+        terminalView->setCentralWidget(terminalConsole);
+        addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
     }
 
     if (getCustomMode() == CUSTOM_MODE_APM) {
@@ -559,14 +587,7 @@ void MainWindow::buildCommonWidgets()
             softwareConfigView->setCentralWidget(new ApmSoftwareConfig(this));
             addToCentralStackedWidget(softwareConfigView, VIEW_SOFTWARE_CONFIG, "Software");
         }
-        if (!terminalView)
-        {
-            terminalView = new SubMainWindow(this);
-            terminalView->setObjectName("VIEW_TERMINAL");
-            TerminalConsole *terminalConsole = new TerminalConsole(this);
-            terminalView->setCentralWidget(terminalConsole);
-            addToCentralStackedWidget(terminalView, VIEW_TERMINAL, tr("Terminal View"));
-        }
+
     } else {
         if (!configView)
         {
@@ -596,7 +617,7 @@ void MainWindow::buildCommonWidgets()
     }
 #endif
 
-#if QGC_GOOGLE_EARTH_ENABLED
+#ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!googleEarthView)
     {
         googleEarthView = new SubMainWindow(this);
@@ -637,7 +658,10 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new QGCMAVLinkInspector(mavlink,this),tr("MAVLink Inspector"),"MAVLINK_INSPECTOR_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
 
     createDockWidget(engineeringView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
+    createDockWidget(engineeringView,new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea);
     createDockWidget(simView,new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
+
+    menuActionHelper->createToolAction(tr("Map View"), "MAP_VIEW_DOCKWIDGET");
 
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
@@ -658,10 +682,10 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Radio Control"));
 
-    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_ENGINEER,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
+    createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
-    createDockWidget(simView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea,QSize(this->width()/1.5,0));
-    createDockWidget(pilotView,new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,QSize(this->width()/1.8,0));
+    createDockWidget(simView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
+    createDockWidget(pilotView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
@@ -756,10 +780,21 @@ void MainWindow::showDockWidget(const QString& name, bool show)
         loadDockWidget(name);
 }
 
+void MainWindow::fullScreenActionItemCallback()
+{
+    ui.actionNormal->setChecked(false);
+}
+
+void MainWindow::normalActionItemCallback()
+{
+    ui.actionFullscreen->setChecked(false);
+}
+
 void MainWindow::loadDockWidget(const QString& name)
 {
     if(menuActionHelper->containsDockWidget(currentView, name))
         return;
+
     if (name.startsWith("HIL_CONFIG"))
     {
         //It's a HIL widget.
@@ -785,9 +820,17 @@ void MainWindow::loadDockWidget(const QString& name)
     {
         createDockWidget(centerStack->currentWidget(),new ParameterInterface(this),tr("Onboard Parameters"),"PARAMETER_INTERFACE_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
+    else if (name == "FILE_VIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new QGCUASFileViewMulti(this),tr("Onboard Files"),"FILE_VIEW_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
     else if (name == "UAS_STATUS_DETAILS_DOCKWIDGET")
     {
         createDockWidget(centerStack->currentWidget(),new UASInfoWidget(this),tr("Status Details"),"UAS_STATUS_DETAILS_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+    }
+    else if (name == "MAP_VIEW_DOCKWIDGET")
+    {
+        createDockWidget(centerStack->currentWidget(),new QGCMapTool(this),tr("Map view"),"MAP_VIEW_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET")
     {
@@ -822,11 +865,11 @@ void MainWindow::loadDockWidget(const QString& name)
     }
     else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(320,240,this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "HEAD_UP_DISPLAY_DOCKWIDGET")
     {
-        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
+        createDockWidget(centerStack->currentWidget(),new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "UAS_INFO_QUICKVIEW_DOCKWIDGET")
     {
@@ -863,7 +906,7 @@ void MainWindow::addToCentralStackedWidget(QWidget* widget, VIEW_SECTIONS viewSe
 void MainWindow::showCentralWidget()
 {
     QAction* act = qobject_cast<QAction *>(sender());
-    QWidget* widget = qVariantValue<QWidget *>(act->data());
+    QWidget* widget = act->data().value<QWidget *>();
     centerStack->setCurrentWidget(widget);
 }
 
@@ -1149,7 +1192,7 @@ void MainWindow::saveScreen()
 
     if (!screenFileName.isEmpty())
     {
-        window.save(screenFileName, format.toAscii());
+        window.save(screenFileName, format.toLatin1());
     }
 }
 void MainWindow::enableDockWidgetTitleBars(bool enabled)
@@ -1261,18 +1304,28 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionEngineersView);
     perspectives->addAction(ui.actionMavlinkView);
     perspectives->addAction(ui.actionFlightView);
-    perspectives->addAction(ui.actionSimulation_View);
+    perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
     //perspectives->addAction(ui.actionConfiguration_2);
     perspectives->addAction(ui.actionHardwareConfig);
-    if (getCustomMode() == CUSTOM_MODE_APM) {
-        perspectives->addAction(ui.actionSoftwareConfig);
-    }
+    perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionTerminalView);
     perspectives->addAction(ui.actionUnconnectedView);
     perspectives->addAction(ui.actionGoogleEarthView);
     perspectives->addAction(ui.actionLocal3DView);
     perspectives->setExclusive(true);
+
+    /* Hide the actions that are not relevant */
+    ui.actionSoftwareConfig->setVisible(getCustomMode() == CUSTOM_MODE_APM);
+#ifndef QGC_MAVGEN_ENABLED
+    ui.actionMavlinkView->setVisible(false);
+#endif
+#ifndef QGC_GOOGLE_EARTH_ENABLED
+    ui.actionGoogleEarthView->setVisible(false);
+#endif
+#ifndef QGC_OSG_ENABLED
+    ui.actionLocal3DView->setVisible(false);
+#endif
 
     // Mark the right one as selected
     if (currentView == VIEW_ENGINEER)
@@ -1292,8 +1345,8 @@ void MainWindow::connectCommonActions()
     }
     if (currentView == VIEW_SIMULATION)
     {
-        ui.actionSimulation_View->setChecked(true);
-        ui.actionSimulation_View->activate(QAction::Trigger);
+        ui.actionSimulationView->setChecked(true);
+        ui.actionSimulationView->activate(QAction::Trigger);
     }
     if (currentView == VIEW_MISSION)
     {
@@ -1357,21 +1410,16 @@ void MainWindow::connectCommonActions()
 
     // Views actions
     connect(ui.actionFlightView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
-    connect(ui.actionSimulation_View, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
+    connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
-    connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionHardwareConfig, SIGNAL(triggered()), this, SLOT(loadHardwareConfigView()));
-
-    if (getCustomMode() == CUSTOM_MODE_APM) {
-        connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
-        connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
-    }
-
+    connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
+    connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
 
     // Help Actions
@@ -1699,6 +1747,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
     connect(uas, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)), this, SIGNAL(valueChanged(int,QString,QString,QVariant,quint64)));
+    connect(uas, SIGNAL(misconfigurationDetected(UASInterface*)), this, SLOT(handleMisconfiguration(UASInterface*)));
 
     // HIL
     showHILConfigurationWidget(uas);
@@ -1944,6 +1993,37 @@ void MainWindow::setAdvancedMode(bool isAdvancedMode)
     settings.setValue("ADVANCED_MODE",isAdvancedMode);
 }
 
+void MainWindow::handleMisconfiguration(UASInterface* uas)
+{
+    static QTime lastTime;
+    
+    // We have to debounce this signal
+    if (!lastTime.isValid()) {
+        lastTime.start();
+    } else {
+        if (lastTime.elapsed() < 10000) {
+            lastTime.start();
+            return;
+        }
+    }
+    // Ask user if he wants to handle this now
+    QMessageBox msgBox(this);
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.setText(tr("Missing or Invalid Onboard Configuration"));
+    msgBox.setInformativeText(tr("The onboard system configuration is missing or incomplete. Do you want to resolve this now?"));
+    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    int val = msgBox.exec();
+
+    if (val == QMessageBox::Ok) {
+        // He wants to handle it, make sure this system is selected
+        UASManager::instance()->setActiveUAS(uas);
+
+        // Flick to config view
+        loadHardwareConfigView();
+    }
+}
+
 void MainWindow::loadEngineerView()
 {
     if (currentView != VIEW_ENGINEER)
@@ -2048,7 +2128,7 @@ void MainWindow::loadSimulationView()
     {
         storeViewState();
         currentView = VIEW_SIMULATION;
-        ui.actionSimulation_View->setChecked(true);
+        ui.actionSimulationView->setChecked(true);
         loadViewState();
     }
 }
