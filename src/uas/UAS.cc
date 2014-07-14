@@ -1329,10 +1329,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             ++imagePacketsArrived;
 
             // emit signal if all packets arrived
+            // && seq >= imagePackets-1
             if ((imagePacketsArrived >= imagePackets))
             {
                 // Restart statemachine
                 emit imageReady(this);
+                //imagePacketsArrived = 0;
+                //imagePackets = 0;
                 //qDebug() << "imageReady emitted. all packets arrived";
             }
         }
@@ -2142,11 +2145,16 @@ QImage UAS::getImage()
         if (!image.loadFromData(imageRecBuffer))
         {
             qDebug() << __FILE__ << __LINE__ << "Loading data from image buffer failed!";
+            //imagePacketsArrived = 0;
+            //imagePackets = 0;
+            return QImage();
         }
     }
+
     // Restart statemachine
     imagePacketsArrived = 0;
-    //imageRecBuffer.clear();
+    imagePackets = 0;
+    imageRecBuffer.clear();
     return image;
 
 }
@@ -3148,7 +3156,7 @@ void UAS::sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw
     Q_UNUSED(xacc);
     Q_UNUSED(yacc);
     Q_UNUSED(zacc);
-    
+
         // Emit attitude for cross-check
         emit valueChanged(uasId, "roll sim", "rad", roll, getUnixTime());
         emit valueChanged(uasId, "pitch sim", "rad", pitch, getUnixTime());
