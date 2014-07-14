@@ -1387,7 +1387,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             ++imagePacketsArrived;
 
             // emit signal if all packets arrived
-            if ((imagePacketsArrived >= imagePackets))
+            if (imagePacketsArrived >= imagePackets)
             {
                 // Restart statemachine
                 imagePackets = 0;
@@ -2202,13 +2202,15 @@ QImage UAS::getImage()
         if (!image.loadFromData(imageRecBuffer))
         {
             qDebug() << __FILE__ << __LINE__ << "Loading data from image buffer failed!";
+            return QImage();
         }
     }
+
     // Restart statemachine
     imagePacketsArrived = 0;
-    //imageRecBuffer.clear();
+    imagePackets = 0;
+    imageRecBuffer.clear();
     return image;
-
 }
 
 void UAS::requestImage()
