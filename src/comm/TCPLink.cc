@@ -198,9 +198,8 @@ bool TCPLink::disconnect()
     
     if (_socket)
 	{
-        _socket->disconnectFromHost();
         _socketIsConnected = false;
-		delete _socket;
+		_socket->deleteLater(); // Make sure delete happens on correct thread
 		_socket = NULL;
 
         emit disconnected();
@@ -305,4 +304,16 @@ void TCPLink::_resetName(void)
 {
     _name = QString("TCP Link (host:%1 port:%2)").arg(_hostAddress.toString()).arg(_port);
     emit nameChanged(_name);
+}
+
+void TCPLink::waitForBytesWritten(int msecs)
+{
+    Q_ASSERT(_socket);
+    _socket->waitForBytesWritten(msecs);
+}
+
+void TCPLink::waitForReadyRead(int msecs)
+{
+    Q_ASSERT(_socket);
+    _socket->waitForReadyRead(msecs);
 }

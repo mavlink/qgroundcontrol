@@ -10,29 +10,38 @@
 #ifndef QWT_COMPASS_H
 #define QWT_COMPASS_H 1
 
+#include "qwt_global.h"
+#include "qwt_dial.h"
+#include "qwt_round_scale_draw.h"
 #include <qstring.h>
 #include <qmap.h>
-#include "qwt_dial.h"
-
-#if defined(QWT_TEMPLATEDLL)
-
-#if defined(QT_NO_STL) || QT_VERSION < 0x040000 || QT_VERSION > 0x040001
-/*
-  Unfortunately Qt 4.0.0/Qt 4.0.1 contains uncompilable
-  code in the STL adaptors of qmap.h. The declaration below
-  instantiates this code resulting in compiler errors.
-  If you really need the map to be exported, remove the condition above
-  and fix the qmap.h
-*/
-// MOC_SKIP_BEGIN
-template class QWT_EXPORT QMap<double, QString>;
-// MOC_SKIP_END
-#endif
-
-#endif
-
 
 class QwtCompassRose;
+
+/*!
+  \brief A special scale draw made for QwtCompass
+
+  QwtCompassScaleDraw maps values to strings using
+  a special map, that can be modified by the application
+
+  The default map consists of the labels N, NE, E, SE, S, SW, W, NW.
+
+  \sa QwtCompass
+*/
+class QWT_EXPORT QwtCompassScaleDraw: public QwtRoundScaleDraw
+{
+public:
+    explicit QwtCompassScaleDraw();
+    explicit QwtCompassScaleDraw( const QMap<double, QString> &map );
+
+    void setLabelMap( const QMap<double, QString> &map );
+    QMap<double, QString> labelMap() const;
+
+    virtual QwtText label( double value ) const;
+
+private:
+    QMap<double, QString> d_labelMap;
+};
 
 /*!
   \brief A Compass Widget
@@ -50,34 +59,23 @@ class QWT_EXPORT QwtCompass: public QwtDial
     Q_OBJECT
 
 public:
-    explicit QwtCompass( QWidget* parent = NULL);
-#if QT_VERSION < 0x040000
-    explicit QwtCompass(QWidget* parent, const char *name);
-#endif
+    explicit QwtCompass( QWidget* parent = NULL );
     virtual ~QwtCompass();
 
-    void setRose(QwtCompassRose *rose);
+    void setRose( QwtCompassRose *rose );
     const QwtCompassRose *rose() const;
     QwtCompassRose *rose();
 
-    const QMap<double, QString> &labelMap() const;
-    QMap<double, QString> &labelMap();
-    void setLabelMap(const QMap<double, QString> &map);
-
 protected:
-    virtual QwtText scaleLabel(double value) const;
+    virtual void drawRose( QPainter *, const QPointF &center,
+        double radius, double north, QPalette::ColorGroup ) const;
 
-    virtual void drawRose(QPainter *, const QPoint &center,
-                          int radius, double north, QPalette::ColorGroup) const;
+    virtual void drawScaleContents( QPainter *,
+        const QPointF &center, double radius ) const;
 
-    virtual void drawScaleContents(QPainter *,
-                                   const QPoint &center, int radius) const;
-
-    virtual void keyPressEvent(QKeyEvent *);
+    virtual void keyPressEvent( QKeyEvent * );
 
 private:
-    void initCompass();
-
     class PrivateData;
     PrivateData *d_data;
 };

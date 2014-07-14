@@ -435,17 +435,21 @@ void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
 void WaypointList::updateWaypointEditable(int uas, Waypoint* wp)
 {
     Q_UNUSED(uas);
-    WaypointEditableView *wpv = wpEditableViews.value(wp);
-    wpv->updateValues();
-    m_ui->tabWidget->setCurrentIndex(0); // XXX magic number
+    WaypointEditableView *wpv = wpEditableViews.value(wp, NULL);
+    if (wpv) {
+        wpv->updateValues();
+    }
+        m_ui->tabWidget->setCurrentIndex(0); // XXX magic number
 }
 
 void WaypointList::updateWaypointViewOnly(int uas, Waypoint* wp)
 {
     Q_UNUSED(uas);
-    WaypointViewOnlyView *wpv = wpViewOnlyViews.value(wp);
-    wpv->updateValues();
-    m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
+    WaypointViewOnlyView *wpv = wpViewOnlyViews.value(wp, NULL);
+   if (wpv) {
+       wpv->updateValues();
+   }
+   m_ui->tabWidget->setCurrentIndex(1); // XXX magic number
 }
 
 void WaypointList::waypointViewOnlyListChanged()

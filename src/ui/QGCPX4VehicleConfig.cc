@@ -660,14 +660,12 @@ void QGCPX4VehicleConfig::stopCalibrationRC()
     mav->endRadioControlCalibration();
 
     if (QMessageBox::Cancel == msgBoxResult) {
+        QMessageBox::information(0,"Aborting Calibration","Aborted writing configuration.");
         return; //don't commit these values
     } else {
         QMessageBox::information(0,"Uploading the RC Calibration","The configuration will now be uploaded and permanently stored.");
         writeCalibrationRC();
     }
-
-    // Read calibration back to update widget states and validate
-    paramMgr->requestParameterList();
 }
 
 void QGCPX4VehicleConfig::loadQgcConfig(bool primary)
@@ -1338,7 +1336,7 @@ void QGCPX4VehicleConfig::writeCalibrationRC()
     paramMgr->setPendingParam(0, "RC_MAP_AUX2", (int32_t)(rcMapping[10]+1));
 
     //let the param mgr manage sending all the pending RC_foo updates and persisting after
-    paramMgr->sendPendingParameters(true);
+    paramMgr->sendPendingParameters(true, true);
 
 }
 

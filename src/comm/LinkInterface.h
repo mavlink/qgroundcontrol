@@ -36,6 +36,7 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QMetaType>
 
 /**
 * The link interface defines the interface for all links used to communicate
@@ -62,6 +63,7 @@ public:
             outDataWriteTimes[i] = 0;
         }
 
+        qRegisterMetaType<LinkInterface*>("LinkInterface*");
     }
 
     virtual ~LinkInterface() {

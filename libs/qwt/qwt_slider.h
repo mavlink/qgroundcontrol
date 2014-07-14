@@ -7,13 +7,10 @@
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
 
-// vim: expandtab
-
 #ifndef QWT_SLIDER_H
 #define QWT_SLIDER_H
 
 #include "qwt_global.h"
-#include "qwt_abstract_scale.h"
 #include "qwt_abstract_slider.h"
 
 class QwtScaleDraw;
@@ -22,112 +19,109 @@ class QwtScaleDraw;
   \brief The Slider Widget
 
   QwtSlider is a slider widget which operates on an interval
-  of type double. QwtSlider supports different layouts as
-  well as a scale.
+  of type double. Its position is related to a scale showing
+  the current value.
+
+  The slider can be customized by having a through, a groove - or both.
 
   \image html sliders.png
-
-  \sa QwtAbstractSlider and QwtAbstractScale for the descriptions
-      of the inherited members.
 */
 
-class QWT_EXPORT QwtSlider : public QwtAbstractSlider, public QwtAbstractScale
+class QWT_EXPORT QwtSlider: public QwtAbstractSlider
 {
     Q_OBJECT
-    Q_ENUMS( ScalePos )
-    Q_ENUMS( BGSTYLE )
-    Q_PROPERTY( ScalePos scalePosition READ scalePosition
-                WRITE setScalePosition )
-    Q_PROPERTY( BGSTYLE bgStyle READ bgStyle WRITE setBgStyle )
-    Q_PROPERTY( int thumbLength READ thumbLength WRITE setThumbLength )
-    Q_PROPERTY( int thumbWidth READ thumbWidth WRITE setThumbWidth )
+
+    Q_ENUMS( ScalePosition BackgroundStyle )
+
+    Q_PROPERTY( Qt::Orientation orientation
+                READ orientation WRITE setOrientation )
+    Q_PROPERTY( ScalePosition scalePosition READ scalePosition
+        WRITE setScalePosition )
+
+    Q_PROPERTY( bool trough READ hasTrough WRITE setTrough )
+    Q_PROPERTY( bool groove READ hasGroove WRITE setGroove )
+
+    Q_PROPERTY( QSize handleSize READ handleSize WRITE setHandleSize )
     Q_PROPERTY( int borderWidth READ borderWidth WRITE setBorderWidth )
+    Q_PROPERTY( int spacing READ spacing WRITE setSpacing )
 
 public:
 
     /*!
-      Scale position. QwtSlider tries to enforce valid combinations of its
-      orientation and scale position:
-      - Qt::Horizonal combines with NoScale, TopScale and BottomScale
-      - Qt::Vertical combines with NoScale, LeftScale and RightScale
-
-      \sa QwtSlider::QwtSlider
+      Position of the scale
+      \sa QwtSlider(), setScalePosition(), setOrientation()
      */
-    enum ScalePos {
+    enum ScalePosition
+    {
+        //! The slider has no scale
         NoScale,
 
-        LeftScale,
-        RightScale,
-        TopScale,
-        BottomScale
+        //! The scale is right of a vertical or below a horizontal slider
+        LeadingScale,
+
+        //! The scale is left of a vertical or above a horizontal slider
+        TrailingScale
     };
 
-    /*!
-      Background style.
-      \sa QwtSlider::QwtSlider
-     */
-    enum BGSTYLE {
-        BgTrough = 0x1,
-        BgSlot = 0x2,
-        BgBoth = BgTrough | BgSlot
-    };
-
-    explicit QwtSlider(QWidget *parent,
-                       Qt::Orientation = Qt::Horizontal,
-                       ScalePos = NoScale, BGSTYLE bgStyle = BgTrough);
-#if QT_VERSION < 0x040000
-    explicit QwtSlider(QWidget *parent, const char *name);
-#endif
+    explicit QwtSlider( QWidget *parent = NULL );
+    explicit QwtSlider( Qt::Orientation, QWidget *parent = NULL );
 
     virtual ~QwtSlider();
 
-    virtual void setOrientation(Qt::Orientation);
+    void setOrientation( Qt::Orientation );
+    Qt::Orientation orientation() const;
 
-    void setBgStyle(BGSTYLE);
-    BGSTYLE bgStyle() const;
+    void setScalePosition( ScalePosition );
+    ScalePosition scalePosition() const;
 
-    void setScalePosition(ScalePos s);
-    ScalePos scalePosition() const;
+    void setTrough( bool );
+    bool hasTrough() const;
 
-    int thumbLength() const;
-    int thumbWidth() const;
+    void setGroove( bool );
+    bool hasGroove() const;
+
+    void setHandleSize( const QSize & );
+    QSize handleSize() const;
+
+    void setBorderWidth( int bw );
     int borderWidth() const;
 
-    void setThumbLength(int l);
-    void setThumbWidth(int w);
-    void setBorderWidth(int bw);
-    void setMargins(int x, int y);
+    void setSpacing( int );
+    int spacing() const;
 
     virtual QSize sizeHint() const;
     virtual QSize minimumSizeHint() const;
 
-    void setScaleDraw(QwtScaleDraw *);
+    void setScaleDraw( QwtScaleDraw * );
     const QwtScaleDraw *scaleDraw() const;
 
+    void setUpdateInterval( int );
+    int updateInterval() const;
+
 protected:
-    virtual double getValue(const QPoint &p);
-    virtual void getScrollMode(const QPoint &p,
-                               int &scrollMode, int &direction);
+    virtual double scrolledTo( const QPoint & ) const;
+    virtual bool isScrollPosition( const QPoint & ) const;
 
-    void draw(QPainter *p, const QRect& update_rect);
-    virtual void drawSlider (QPainter *p, const QRect &r);
-    virtual void drawThumb(QPainter *p, const QRect &, int pos);
+    virtual void drawSlider ( QPainter *, const QRect & ) const;
+    virtual void drawHandle( QPainter *, const QRect &, int pos ) const;
 
-    virtual void resizeEvent(QResizeEvent *e);
-    virtual void paintEvent (QPaintEvent *e);
+    virtual void mousePressEvent( QMouseEvent * );
+    virtual void mouseReleaseEvent( QMouseEvent * );
+    virtual void resizeEvent( QResizeEvent * );
+    virtual void paintEvent ( QPaintEvent * );
+    virtual void changeEvent( QEvent * );
+    virtual void timerEvent( QTimerEvent * );
 
-    virtual void valueChange();
-    virtual void rangeChange();
     virtual void scaleChange();
-    virtual void fontChange(const QFont &oldFont);
 
-    void layoutSlider( bool update = true );
-    int xyPosition(double v) const;
-
-    QwtScaleDraw *scaleDraw();
+    QRect sliderRect() const;
+    QRect handleRect() const;
 
 private:
-    void initSlider(Qt::Orientation, ScalePos scalePos, BGSTYLE bgStyle);
+    QwtScaleDraw *scaleDraw();
+
+    void layoutSlider( bool );
+    void initSlider( Qt::Orientation );
 
     class PrivateData;
     PrivateData *d_data;

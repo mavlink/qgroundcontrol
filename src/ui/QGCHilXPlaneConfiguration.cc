@@ -25,8 +25,9 @@ QGCHilXPlaneConfiguration::QGCHilXPlaneConfiguration(QGCHilLink* link, QWidget *
     {
 //        connect(ui->randomAttitudeButton, SIGNAL(clicked()), link, SLOT(setRandomAttitude()));
 //        connect(ui->randomPositionButton, SIGNAL(clicked()), link, SLOT(setRandomPosition()));
-        connect(ui->airframeComboBox, SIGNAL(activated(QString)), link, SLOT(selectAirframe(QString)));
+
         ui->airframeComboBox->setCurrentIndex(link->getAirFrameIndex());
+        connect(ui->airframeComboBox, SIGNAL(activated(QString)), link, SLOT(selectAirframe(QString)));
         // XXX not implemented yet
         ui->airframeComboBox->hide();
         ui->sensorHilCheckBox->setChecked(xplane->sensorHilEnabled());
@@ -49,6 +50,10 @@ void QGCHilXPlaneConfiguration::setVersion(int version)
 
 void QGCHilXPlaneConfiguration::toggleSimulation(bool connect)
 {
+    if (!link) {
+        return;
+    }
+
     Q_UNUSED(connect);
     if (!link->isConnected())
     {

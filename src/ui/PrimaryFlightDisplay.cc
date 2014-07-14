@@ -1,7 +1,6 @@
 #include "PrimaryFlightDisplay.h"
 #include "UASManager.h"
 
-//#include "ui_primaryflightdisplay.h"
 #include <QDebug>
 #include <QRectF>
 #include <cmath>
@@ -10,12 +9,7 @@
 #include <QPainterPath>
 #include <QResizeEvent>
 #include <QtCore/qmath.h>
-//#include <cmath>
 
-#if 0
-// Left in but ifdef'ed out since there is commented out code below that uses it
-static const float SEPARATE_COMPASS_ASPECTRATIO = 3.0f/4.0f;
-#endif
 static const float LINEWIDTH = 0.0036f;
 static const float SMALL_TEXT_SIZE = 0.028f;
 static const float MEDIUM_TEXT_SIZE = SMALL_TEXT_SIZE*1.2f;
@@ -107,8 +101,11 @@ const QString PrimaryFlightDisplay::compassWindNames[] = {
     QString("NW")
 };
 
-PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *parent) :
+PrimaryFlightDisplay::PrimaryFlightDisplay(QWidget *parent) :
     QWidget(parent),
+
+    _valuesChanged(false),
+    _valuesLastPainted(QGC::groundTimeMilliseconds()),
 
     uas(NULL),
 
@@ -143,23 +140,18 @@ PrimaryFlightDisplay::PrimaryFlightDisplay(int width, int height, QWidget *paren
     font("Bitstream Vera Sans"),
     refreshTimer(new QTimer(this))
 {
-    Q_UNUSED(width);
-    Q_UNUSED(height);
-
     setMinimumSize(120, 80);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
     // Connect with UAS signal
-    //connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(UASDeleted(UASInterface*)), this, SLOT(forgetUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    //    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(checkUpdate()));
 }
 
 PrimaryFlightDisplay::~PrimaryFlightDisplay()
@@ -167,16 +159,15 @@ PrimaryFlightDisplay::~PrimaryFlightDisplay()
     refreshTimer->stop();
 }
 
-
 QSize PrimaryFlightDisplay::sizeHint() const
 {
-    return QSize(width(), (width()*3.0f)/4);
+    return QSize(width(), (int)(width() * 3.0f / 4.0f));
 }
+
 
 void PrimaryFlightDisplay::showEvent(QShowEvent* event)
 {
-    // React only to internal (pre-display)
-    // events
+    // React only to internal (pre-display) events
     QWidget::showEvent(event);
     refreshTimer->start(updateInterval);
     emit visibilityChanged(true);
@@ -184,8 +175,7 @@ void PrimaryFlightDisplay::showEvent(QShowEvent* event)
 
 void PrimaryFlightDisplay::hideEvent(QHideEvent* event)
 {
-    // React only to internal (pre-display)
-    // events
+    // React only to internal (pre-display) events
     refreshTimer->stop();
     QWidget::hideEvent(event);
     emit visibilityChanged(false);
@@ -195,27 +185,15 @@ void PrimaryFlightDisplay::resizeEvent(QResizeEvent *e) {
     QWidget::resizeEvent(e);
 
     qreal size = e->size().width();
-    //if(e->size().height()<size) size = e->size().height();
 
     lineWidth = PrimaryFlightDisplay_constrain(size*LINEWIDTH, 1, 6);
     fineLineWidth = PrimaryFlightDisplay_constrain(size*LINEWIDTH*2/3, 1, 2);
 
     instrumentEdgePen.setWidthF(fineLineWidth);
-    //AIEdgePen.setWidthF(fineLineWidth);
 
     smallTextSize = size * SMALL_TEXT_SIZE;
     mediumTextSize = size * MEDIUM_TEXT_SIZE;
     largeTextSize = size * LARGE_TEXT_SIZE;
-
-    /*
-     * Try without layout Change-O-Matic. It was too complicated.
-    qreal aspect = e->size().width() / e->size().height();
-    if (aspect <= SEPARATE_COMPASS_ASPECTRATIO)
-        layout = COMPASS_SEPARATED;
-    else
-        layout = COMPASS_INTEGRATED;
-    */
-    // qDebug("Width %d height %d decision %d", e->size().width(), e->size().height(), layout);
 }
 
 void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
@@ -224,19 +202,14 @@ void PrimaryFlightDisplay::paintEvent(QPaintEvent *event)
     doPaint();
 }
 
-///*
-// * Interface towards qgroundcontrol
-// */
-//void PrimaryFlightDisplay::addUAS(UASInterface* uas)
-//{
-//    if (uas)
-//    {
-//        if (!this->uas)
-//        {
-//            setActiveUAS(uas);
-//        }
-//    }
-//}
+void PrimaryFlightDisplay::checkUpdate()
+{
+    if (uas && (_valuesChanged || (QGC::groundTimeMilliseconds() - _valuesLastPainted) > 260)) {
+        update();
+        _valuesChanged = false;
+        _valuesLastPainted = QGC::groundTimeMilliseconds();
+    }
+}
 
 void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
 {
@@ -280,24 +253,44 @@ void PrimaryFlightDisplay::updateAttitude(UASInterface* uas, double roll, double
 {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-        // Called from UAS.cc l. 616
+
         if (isinf(roll)) {
             this->roll = std::numeric_limits<double>::quiet_NaN();
         } else {
-            this->roll = roll * (180.0 / M_PI);
+
+            float rolldeg = roll * (180.0 / M_PI);
+
+            if (fabsf(roll - rolldeg) > 2.5f) {
+                _valuesChanged = true;
+            }
+
+            this->roll = rolldeg;
         }
 
         if (isinf(pitch)) {
             this->pitch = std::numeric_limits<double>::quiet_NaN();
         } else {
-            this->pitch = pitch * (180.0 / M_PI);
+
+            float pitchdeg = pitch * (180.0 / M_PI);
+
+            if (fabsf(pitch - pitchdeg) > 2.5f) {
+                _valuesChanged = true;
+            }
+
+            this->pitch = pitchdeg;
         }
 
         if (isinf(yaw)) {
             this->heading = std::numeric_limits<double>::quiet_NaN();
         } else {
+
             yaw = yaw * (180.0 / M_PI);
             if (yaw<0) yaw+=360;
+
+            if (fabsf(heading - yaw) > 10.0f) {
+                _valuesChanged = true;
+            }
+
             this->heading = yaw;
         }
 
@@ -314,6 +307,14 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
 
+    if (fabsf(groundSpeed - _groundSpeed) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(airSpeed - _airSpeed) > 1.0f) {
+        _valuesChanged = true;
+    }
+
     groundSpeed = _groundSpeed;
     airSpeed = _airSpeed;
 }
@@ -321,6 +322,19 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
 void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp) {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
+
+    if (fabsf(altitudeAMSL - _altitudeAMSL) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(altitudeRelative - _altitudeRelative) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(climbRate - _climbRate) > 0.5f) {
+        _valuesChanged = true;
+    }
+
     altitudeAMSL = _altitudeAMSL;
     altitudeRelative = _altitudeRelative;
     climbRate = _climbRate;
@@ -373,7 +387,7 @@ void PrimaryFlightDisplay::drawTextCenter (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter |  Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x - bounds.width()/2, y - bounds.height()/2, bounds.width(), bounds.height(), flags, text);
 }
 
 void PrimaryFlightDisplay::drawTextLeftCenter (
@@ -389,7 +403,7 @@ void PrimaryFlightDisplay::drawTextLeftCenter (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignLeft | Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/, y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x, y - bounds.height()/2, bounds.width(), bounds.height(), flags, text);
 }
 
 void PrimaryFlightDisplay::drawTextRightCenter (
@@ -405,7 +419,7 @@ void PrimaryFlightDisplay::drawTextRightCenter (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignRight | Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/ -bounds.width(), y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x - bounds.width(), y - bounds.height()/2, bounds.width(), bounds.height(), flags, text);
 }
 
 void PrimaryFlightDisplay::drawTextCenterTop (
@@ -421,7 +435,7 @@ void PrimaryFlightDisplay::drawTextCenterTop (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter | Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y+bounds.height() /*+bounds.y()*/, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x - bounds.width()/2, y+bounds.height(), bounds.width(), bounds.height(), flags, text);
 }
 
 void PrimaryFlightDisplay::drawTextCenterBottom (
@@ -437,7 +451,7 @@ void PrimaryFlightDisplay::drawTextCenterBottom (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter;
-    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y /*+bounds.y()*/, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x - bounds.width()/2, y, bounds.width(), bounds.height(), flags, text);
 }
 
 void PrimaryFlightDisplay::drawInstrumentBackground(QPainter& painter, QRectF edge) {
@@ -531,11 +545,6 @@ void PrimaryFlightDisplay::drawAIGlobalFeatures(
     qreal pitchPixels = pitchAngleToTranslation(mainArea.height(), pitch);
     qreal gradientEnd = pitchAngleToTranslation(mainArea.height(), 60);
 
-    //painter.rotate(-roll);
-    //painter.translate(0, pitchPixels);
-
-    //    QTransform forwardTransform;
-    //forwardTransform.translate(mainArea.center().x(), mainArea.center().y());
     painter.rotate(-displayRoll);
     painter.translate(0, pitchPixels);
 
@@ -546,6 +555,7 @@ void PrimaryFlightDisplay::drawAIGlobalFeatures(
     QPointF topRight = rtx.map(paintArea.topRight());
     QPointF bottomLeft = rtx.map(paintArea.bottomLeft());
     QPointF bottomRight = rtx.map(paintArea.bottomRight());
+
     // Just KISS... make a rectangluar basis.
     qreal minx = min4(topLeft.x(), topRight.x(), bottomLeft.x(), bottomRight.x());
     qreal maxx = max4(topLeft.x(), topRight.x(), bottomLeft.x(), bottomRight.x());
@@ -676,7 +686,7 @@ void PrimaryFlightDisplay::drawRollScale(
     pen.setColor(Qt::white);
     painter.setPen(pen);
 
-    // We should really do these transforms but they are assumed done by caller.
+    // We should really do these transforms but they are assumed done by caller:
     // painter.resetTransform();
     // painter.translate(area.center());
     // painter.rotate(roll);
@@ -684,13 +694,11 @@ void PrimaryFlightDisplay::drawRollScale(
     qreal _size = w * ROLL_SCALE_RADIUS*2;
     QRectF arcArea(-_size/2, - _size/2, _size, _size);
     painter.drawArc(arcArea, (90-ROLL_SCALE_RANGE)*16, ROLL_SCALE_RANGE*2*16);
-    // painter.drawEllipse(QPoint(0,0),200,200);
     if (drawTicks) {
         int length = sizeof(tickValues)/sizeof(int);
         qreal previousRotation = 0;
         for (int i=0; i<length*2+1; i++) {
             int degrees = (i==length) ? 0 : (i>length) ?-tickValues[i-length-1] : tickValues[i];
-            //degrees = 180 - degrees;
             painter.rotate(degrees - previousRotation);
             previousRotation = degrees;
 
@@ -699,7 +707,7 @@ void PrimaryFlightDisplay::drawRollScale(
 
             painter.drawLine(start, end);
 
-            QString s_number; //= QString("%d").arg(degrees);
+            QString s_number;
             if (SHOW_ZERO_ON_SCALES || degrees)
                 s_number.sprintf("%d", abs(degrees));
 
@@ -758,7 +766,7 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area, flo
 
         // yaw is in center.
         float off = tickYaw - displayHeading;
-        // wrap that to ]-180..180]
+        // wrap that to [-180..180]
         if (off<=-180) off+= 360; else if (off>180) off -= 360;
 
         painter.translate(area.center());
@@ -811,7 +819,6 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area, flo
     }
 
     painter.setPen(scalePen);
-    //painter.setBrush(Qt::SolidPattern);
     painter.translate(area.center());
     QPainterPath markerPath(QPointF(0, -radius-2));
     markerPath.lineTo(radius*COMPASS_DISK_MARKERWIDTH/2,  -radius-radius*COMPASS_DISK_MARKERHEIGHT-2);
@@ -847,10 +854,6 @@ void PrimaryFlightDisplay::drawAICompassDisk(QPainter& painter, QRectF area, flo
     painter.setPen(pen);
 
     drawTextCenter(painter, s_digitalCompass, largeTextSize, 0, -radius*0.38-digitalCompassUpshift);
-
-//  dummy
-//  navigationTargetBearing = 10;
-//  navigationCrosstrackError = 500;
 
     // The CDI
     if (shouldDisplayNavigationData() && !isnan(navigationTargetBearing) && !isinf(navigationCrosstrackError)) {
@@ -909,7 +912,7 @@ void PrimaryFlightDisplay::drawAltimeter(
 
     // not yet implemented: Display of secondary altitude.
     if (!isnan(secondaryAltitude)) {
-        effectiveHalfHeight-= secondaryAltitudeBoxHeight;
+        effectiveHalfHeight -= secondaryAltitudeBoxHeight;
     }
 
     float markerHalfHeight = mediumTextSize*0.8;
@@ -983,12 +986,11 @@ void PrimaryFlightDisplay::drawAltimeter(
 
         float vvSign = vvPixHeight>0 ? 1 : -1; // reverse y sign
 
-        // QRectF vvRect(rightEdge - w*ALTIMETER_VVI_WIDTH, markerHalfHeight*vvSign, w*ALTIMETER_VVI_WIDTH, abs(vvPixHeight)*vvSign);
         QPointF vvArrowBegin(rightEdge - w*ALTIMETER_VVI_WIDTH/2, markerHalfHeight*vvSign);
         QPointF vvArrowEnd(rightEdge - w*ALTIMETER_VVI_WIDTH/2, vvPixHeight);
         painter.drawLine(vvArrowBegin, vvArrowEnd);
 
-        // Yeah this is a repitition of above code but we are goigd to trash it all anyway, so no fix.
+        // Yeah this is a repetition of above code but we are going to trash it all anyway, so no fix.
         float vvArowHeadSize = abs(vvPixHeight - markerHalfHeight*vvSign);
         if (vvArowHeadSize > w*ALTIMETER_VVI_WIDTH/3) vvArowHeadSize = w*ALTIMETER_VVI_WIDTH/3;
 
@@ -1010,8 +1012,6 @@ void PrimaryFlightDisplay::drawAltimeter(
         s_salt.sprintf("%3.0f", secondaryAltitude);
         drawTextCenter(painter, s_salt, mediumTextSize, 0, 0);
     }
-
-    // print target altitude (if applicable)
 }
 
 void PrimaryFlightDisplay::drawVelocityMeter(
@@ -1091,7 +1091,7 @@ void PrimaryFlightDisplay::drawVelocityMeter(
     else
         s_alt.sprintf("%3.1f", speed);
     float xCenter = (markerTip+leftEdge)/2;
-    drawTextCenter(painter, s_alt, /* TAPES_TEXT_SIZE*width()*/ mediumTextSize, xCenter, 0);
+    drawTextCenter(painter, s_alt, mediumTextSize, xCenter, 0);
 }
 
 static const int TOP = (1<<0);
@@ -1192,90 +1192,6 @@ void PrimaryFlightDisplay::doPaint() {
     float compassAIIntrusion = 0;
 
     switch(layout) {
-    /*
-    case FEATUREPANELS_IN_CORNERS: {
-        tapeGaugeWidth = tapesGaugeWidthFor(width(), height());
-
-        // A layout optimal for a container wider than it is high.
-        // The AI gets full height and if tapes are transparent, also full width. If tapes are opague, then
-        // the AI gets a width to be perfectly square.
-        AIMainArea = QRectF(
-                    style == NO_OVERLAYS ? tapeGaugeWidth : 0,
-                    0,
-                    style == NO_OVERLAYS ? width() - tapeGaugeWidth * 2: width(),
-                    height());
-
-        AIPaintArea = AIMainArea;
-
-        // Tape gauges get so much width that the AI area not covered by them is perfectly square.
-
-        qreal sidePanelsHeight = height();
-
-        altimeterArea = QRectF(AIMainArea.right(), height()/5, tapeGaugeWidth, sidePanelsHeight*3/5);
-        velocityMeterArea = QRectF (0, height()/5, tapeGaugeWidth, sidePanelsHeight*3/5);
-
-        sensorsStatsArea = QRectF(0, 0, tapeGaugeWidth, sidePanelsHeight/5);
-        linkStatsArea = QRectF(AIMainArea.right(), 0, tapeGaugeWidth, sidePanelsHeight/5);
-        sysStatsArea = QRectF(0, sidePanelsHeight*4/5, tapeGaugeWidth, sidePanelsHeight/5);
-        missionStatsArea =QRectF(AIMainArea.right(), sidePanelsHeight*4/5, tapeGaugeWidth, sidePanelsHeight/5);
-
-        if (style == NO_OVERLAYS) {
-            applyMargin(AIMainArea, margin, TOP|BOTTOM);
-            applyMargin(altimeterArea, margin, TOP|BOTTOM|RIGHT);
-            applyMargin(velocityMeterArea, margin, TOP|BOTTOM|LEFT);
-            setMarginsForCornerLayout(margin, sensorsStatsArea, linkStatsArea, sysStatsArea, missionStatsArea);
-        }
-
-        // Compass is inside the AI ans within its margins also.
-        compassArea = QRectF(AIMainArea.x()+AIMainArea.width()*0.60, AIMainArea.y()+AIMainArea.height()*0.80,
-                             AIMainArea.width()/2, AIMainArea.width()/2);
-        break;
-    }
-
-    case FEATUREPANELS_AT_BOTTOM: {
-        // A layout for containers with about the same width and height.
-        // qreal minor = min(width(), height());
-        // qreal major = max(width(), height());
-
-        qreal aiheight = height()*4.0f/5;
-
-        tapeGaugeWidth = tapesGaugeWidthFor(width(), aiheight);
-
-        AIMainArea = QRectF(
-                    style == NO_OVERLAYS ? tapeGaugeWidth : 0,
-                    0,
-                    style == NO_OVERLAYS ? width() - tapeGaugeWidth*2 : width(),
-                    aiheight);
-
-        AIPaintArea = AIMainArea;
-
-        // Tape gauges get so much width that the AI area not covered by them is perfectly square.
-        altimeterArea = QRectF(AIMainArea.right(), 0, tapeGaugeWidth, aiheight);
-        velocityMeterArea = QRectF (0, 0, tapeGaugeWidth, aiheight);
-
-        qreal panelsHeight = height() / 5.0f;
-        qreal panelsWidth = width() / 4.0f;
-
-        sensorsStatsArea = QRectF(0, AIMainArea.bottom(), panelsWidth, panelsHeight);
-        linkStatsArea = QRectF(panelsWidth, AIMainArea.bottom(), panelsWidth, panelsHeight);
-        sysStatsArea = QRectF(panelsWidth*2, AIMainArea.bottom(), panelsWidth, panelsHeight);
-        missionStatsArea =QRectF(panelsWidth*3, AIMainArea.bottom(), panelsWidth, panelsHeight);
-
-        if (style == NO_OVERLAYS) {
-            applyMargin(AIMainArea, margin, TOP|BOTTOM);
-            applyMargin(altimeterArea, margin, TOP|BOTTOM|RIGHT);
-            applyMargin(velocityMeterArea, margin, TOP|BOTTOM|LEFT);
-            setMarginsForInlineLayout(margin, sensorsStatsArea, linkStatsArea, sysStatsArea, missionStatsArea);
-        }
-
-        // Compass is inside the AI ans within its margins also.
-        compassArea = QRectF(AIMainArea.x()+AIMainArea.width()*0.60, AIMainArea.y()+AIMainArea.height()*0.80,
-                             AIMainArea.width()/2, AIMainArea.width()/2);
-        break;
-    }
-
-    */
-
     case COMPASS_INTEGRATED: {
         tapeGaugeWidth = tapesGaugeWidthFor(width(), width());
         qreal aiheight = height();
@@ -1311,7 +1227,6 @@ void PrimaryFlightDisplay::doPaint() {
         qreal compassSize = compassRelativeWidth  * AIMainArea.width();  // Diameter is this times the width.
 
         qreal compassCenterY;
-        //if (heightSurplus >= 0) compassCenterY =  AIMainArea.bottom() + compassSize/2;
         compassCenterY = AIMainArea.bottom() + compassSize / 4;
 
         if (height() - compassCenterY > AIMainArea.width()/2*compassBottomMargin)
@@ -1358,50 +1273,6 @@ void PrimaryFlightDisplay::doPaint() {
         velocityMeterArea = QRectF (0, 0, tapeGaugeWidth, aiheight);
         altimeterArea = QRectF(AIMainArea.right(), 0, tapeGaugeWidth, aiheight);
 
-        /*
-        qreal panelsWidth = width() / 4.0f;
-        if(remainingHeight > width()) {
-            // very tall layout, place panels below compass.
-            sensorsStatsArea = QRectF(0, height()-panelsHeight, panelsWidth, panelsHeight);
-            linkStatsArea = QRectF(panelsWidth, height()-panelsHeight, panelsWidth, panelsHeight);
-            sysStatsArea = QRectF(panelsWidth*2, height()-panelsHeight, panelsWidth, panelsHeight);
-            missionStatsArea =QRectF(panelsWidth*3, height()-panelsHeight, panelsWidth, panelsHeight);
-            if (style == OPAGUE_TAPES) {
-                setMarginsForInlineLayout(margin, sensorsStatsArea, linkStatsArea, sysStatsArea, missionStatsArea);
-            }
-            compassCenter = QPoint(width()/2, (AIArea.bottom()+height()-panelsHeight)/2);
-            maxCompassDiam = fmin(width(), height()-AIArea.height()-panelsHeight);
-        } else {
-            // Remaining part is wider than high; place panels in corners around compass
-            // Naaah it is really ugly, do not do that.
-            sensorsStatsArea = QRectF(0, AIArea.bottom(), panelsWidth, panelsHeight);
-            linkStatsArea = QRectF(width()-panelsWidth, AIArea.bottom(), panelsWidth, panelsHeight);
-            sysStatsArea = QRectF(0, height()-panelsHeight, panelsWidth, panelsHeight);
-            missionStatsArea =QRectF(width()-panelsWidth, height()-panelsHeight, panelsWidth, panelsHeight);
-            if (style == OPAGUE_TAPES) {
-                setMarginsForCornerLayout(margin, sensorsStatsArea, linkStatsArea, sysStatsArea, missionStatsArea);
-            }
-            compassCenter = QPoint(width()/2, (AIArea.bottom()+height())/2);
-            // diagonal between 2 panel corners
-            qreal xd = width()-panelsWidth*2;
-            qreal yd = height()-panelsHeight - AIArea.bottom();
-            maxCompassDiam = qSqrt(xd*xd + yd*yd);
-            if (maxCompassDiam > remainingHeight) {
-                maxCompassDiam = width() - panelsWidth*2;
-                if (maxCompassDiam > remainingHeight) {
-                    // If still too large, lower.
-                    // compassCenter.setY();
-                }
-            }
-        }
-        */
-        /*
-        sensorsStatsArea = QRectF(0, height()-panelsHeight, panelsWidth, panelsHeight);
-        linkStatsArea = QRectF(panelsWidth, height()-panelsHeight, panelsWidth, panelsHeight);
-        sysStatsArea = QRectF(panelsWidth*2, height()-panelsHeight, panelsWidth, panelsHeight);
-        missionStatsArea =QRectF(panelsWidth*3, height()-panelsHeight, panelsWidth, panelsHeight);
-        */
-
         QPoint compassCenter = QPoint(width()/2, AIMainArea.bottom()+width()/2);
         qreal compassDiam = width() * 0.8;
         compassArea = QRectF(compassCenter.x()-compassDiam/2, compassCenter.y()-compassDiam/2, compassDiam, compassDiam);
@@ -1418,10 +1289,7 @@ void PrimaryFlightDisplay::doPaint() {
     drawAIAttitudeScales(painter, AIMainArea, compassAIIntrusion);
     drawAIAirframeFixedFeatures(painter, AIMainArea);
 
-   // if(layout ==COMPASS_SEPARATED)
-        //drawSeparateCompassDisk(painter, compassArea);
-   // else
-        drawAICompassDisk(painter, compassArea, compassHalfSpan);
+    drawAICompassDisk(painter, compassArea, compassHalfSpan);
 
     painter.setClipping(hadClip);
 
@@ -1429,19 +1297,5 @@ void PrimaryFlightDisplay::doPaint() {
 
     drawVelocityMeter(painter, velocityMeterArea);
 
-    /*
-    drawSensorsStatsPanel(painter, sensorsStatsArea);
-    drawLinkStatsPanel(painter, linkStatsArea);
-    drawSysStatsPanel(painter, sysStatsArea);
-    drawMissionStatsPanel(painter, missionStatsArea);
-    */
-    /*
-    if (style == OPAGUE_TAPES) {
-        drawInstrumentBackground(painter, AIArea);
-    }
-    */
-
     painter.end();
 }
-
-void PrimaryFlightDisplay:: createActions() {}

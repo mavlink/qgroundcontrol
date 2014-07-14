@@ -99,9 +99,20 @@ QList<QString> SerialLink::getCurrentPorts()
     m_ports.clear();
 
     QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
+    foreach (const QSerialPortInfo &info, portList)
+    {
+        m_ports.append(info.portName());
+    }
+
+    return m_ports;
+}
+
+bool SerialLink::isBootloader()
+{
+    QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
 
     if( portList.count() == 0){
-        qDebug() << "No Ports Found" << m_ports;
+        return false;
     }
 
     foreach (const QSerialPortInfo &info, portList)
@@ -110,9 +121,16 @@ QList<QString> SerialLink::getCurrentPorts()
 //                 << "Description : " << info.description();
 //        qDebug() << "Manufacturer: " << info.manufacturer();
 
-        m_ports.append(info.portName());
+       if (info.portName().trimmed() == this->m_portName.trimmed() &&
+               (info.description().toLower().contains("bootloader") ||
+                info.description().toLower().contains("px4 bl"))) {
+           qDebug() << "BOOTLOADER FOUND";
+           return true;
+       }
     }
-    return m_ports;
+
+    // Not found
+    return false;
 }
 
 void SerialLink::loadSettings()
@@ -314,8 +332,7 @@ void SerialLink::run()
                 }
             }
         }
-        //MG::SLEEP::msleep(SerialLink::poll_interval);
-        QGC::SLEEP::msleep(2);
+        QGC::SLEEP::msleep(SerialLink::poll_interval);
     } // end of forever
     
     if (m_port) {
@@ -446,6 +463,28 @@ bool SerialLink::hardwareConnect(QString &type)
     }
 
     qDebug() << "SerialLink: hardwareConnect to " << m_portName;
+
+    if (isBootloader()) {
+        qDebug() << "Not connecting to a bootloader, waiting for 2nd chance";
+
+        const unsigned retry_limit = 12;
+        unsigned retries;
+
+        for (retries = 0; retries < retry_limit; retries++) {
+            if (!isBootloader()) {
+                break;
+            }
+            QGC::SLEEP::msleep(500);
+        }
+
+        // Check limit
+        if (retries == retry_limit) {
+
+            // bail out
+            return false;
+        }
+    }
+
     m_port = new QSerialPort(m_portName);
     m_port->moveToThread(this);
 

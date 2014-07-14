@@ -18,6 +18,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapInitialized(false),
     mapPositionInitialized(false),
     homeAltitude(0),
+    zoomBlocked(false),
     uas(NULL)
 {
     currWPManager = UASManager::instance()->getActiveUASWaypointManager();
@@ -173,6 +174,7 @@ void QGCMapWidget::mouseReleaseEvent(QMouseEvent *event)
 
     // If the mouse is released, we can't be dragging
     if (firingWaypointChange) {
+        firingWaypointChange->setChanged();
         firingWaypointChange = NULL;
     }
 }
@@ -246,6 +248,13 @@ void QGCMapWidget::hideEvent(QHideEvent* event)
     updateTimer.stop();
     storeSettings();
     OPMapWidget::hideEvent(event);
+}
+
+void QGCMapWidget::wheelEvent ( QWheelEvent * event )
+{
+    if (!zoomBlocked) {
+        OPMapWidget::wheelEvent(event);
+    }
 }
 
 /**
@@ -327,14 +336,10 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
         // Create new waypoint
         internals::PointLatLng pos = map->FromLocalToLatLng(event->pos().x(), event->pos().y());
         Waypoint* wp = currWPManager->createWaypoint();
-        //            wp->blockSignals(true);
-        //            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         wp->setLatitude(pos.Lat());
         wp->setLongitude(pos.Lng());
         wp->setFrame((MAV_FRAME)currWPManager->getFrameRecommendation());
         wp->setAltitude(currWPManager->getAltitudeRecommendation());
-        //            wp->blockSignals(false);
-        //            currWPManager->notifyOfChangeEditable(wp);
     }
 
     OPMapWidget::mouseDoubleClickEvent(event);
@@ -638,13 +643,6 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     if (!wp)
         WPDelete(waypoint);
 
-    // Protect from vicious double update cycle
-    if (firingWaypointChange == wp) {
-        return;
-    }
-    // Not in cycle, block now from entering it
-    firingWaypointChange = wp;
-
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
 
@@ -660,6 +658,13 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 //    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
 //    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
 //    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
+
+    // Protect from vicious double update cycle
+    if (firingWaypointChange == wp) {
+        return;
+    }
+    // Not in cycle, block now from entering it
+    firingWaypointChange = wp;
 
     emit waypointChanged(wp);
 }

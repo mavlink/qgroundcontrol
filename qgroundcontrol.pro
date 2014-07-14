@@ -186,18 +186,27 @@ DebugBuild {
         src/qgcunittest/MockUASManager.h \
         src/qgcunittest/MockUAS.h \
         src/qgcunittest/MockQGCUASParamManager.h \
+        src/qgcunittest/MockMavlinkInterface.h \
+        src/qgcunittest/MockMavlinkFileServer.h \
         src/qgcunittest/MultiSignalSpy.h \
+        src/qgcunittest/FlightModeConfigTest.h \
+        src/qgcunittest/FlightGearTest.h \
         src/qgcunittest/TCPLinkTest.h \
-        src/qgcunittest/FlightModeConfigTest.h
+        src/qgcunittest/TCPLoopBackServer.h \
+        src/qgcunittest/QGCUASFileManagerTest.h
 
     SOURCES += \
         src/qgcunittest/UASUnitTest.cc \
         src/qgcunittest/MockUASManager.cc \
         src/qgcunittest/MockUAS.cc \
         src/qgcunittest/MockQGCUASParamManager.cc \
+        src/qgcunittest/MockMavlinkFileServer.cc \
         src/qgcunittest/MultiSignalSpy.cc \
+        src/qgcunittest/FlightModeConfigTest.cc \
+        src/qgcunittest/FlightGearTest.cc \
         src/qgcunittest/TCPLinkTest.cc \
-        src/qgcunittest/FlightModeConfigTest.cc
+        src/qgcunittest/TCPLoopBackServer.cc \
+        src/qgcunittest/QGCUASFileManagerTest.cc
 }
 
 #
@@ -292,6 +301,7 @@ FORMS += \
     src/ui/designer/QGCCommandButton.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
+    src/ui/QGCUASFileViewMulti.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCTCPLinkConfiguration.ui \
     src/ui/QGCSettingsWidget.ui \
@@ -369,7 +379,8 @@ FORMS += \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
-    src/ui/designer/QGCXYPlot.ui
+    src/ui/designer/QGCXYPlot.ui \
+    src/ui/QGCUASFileView.ui
 
 HEADERS += \
     src/MG.h \
@@ -457,6 +468,7 @@ HEADERS += \
     src/comm/MAVLinkSimulationMAV.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/ui/QGCWaypointListMulti.h \
+    src/ui/QGCUASFileViewMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCTCPLinkConfiguration.h \
     src/ui/QGCSettingsWidget.h \
@@ -562,7 +574,12 @@ HEADERS += \
     src/ui/designer/QGCXYPlot.h \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
-    src/uas/QGCUASParamManagerInterface.h
+    src/uas/QGCUASParamManagerInterface.h \
+    src/uas/QGCUASFileManager.h \
+    src/ui/QGCUASFileView.h \
+    src/uas/QGCUASWorker.h \
+    src/CmdLineOptParser.h \
+    src/uas/QGXPX4UAS.h
 
 SOURCES += \
     src/main.cc \
@@ -644,6 +661,7 @@ SOURCES += \
     src/comm/MAVLinkSimulationMAV.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/ui/QGCWaypointListMulti.cc \
+    src/ui/QGCUASFileViewMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCTCPLinkConfiguration.cc \
     src/ui/QGCSettingsWidget.cc \
@@ -745,4 +763,9 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
-    src/ui/menuactionhelper.cpp
+    src/ui/menuactionhelper.cpp \
+    src/uas/QGCUASFileManager.cc \
+    src/ui/QGCUASFileView.cc \
+    src/uas/QGCUASWorker.cc \
+    src/CmdLineOptParser.cc \
+    src/uas/QGXPX4UAS.cc

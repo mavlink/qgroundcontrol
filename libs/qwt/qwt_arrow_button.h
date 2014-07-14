@@ -10,8 +10,8 @@
 #ifndef QWT_ARROW_BUTTON_H
 #define QWT_ARROW_BUTTON_H
 
-#include <qpushbutton.h>
 #include "qwt_global.h"
+#include <qpushbutton.h>
 
 /*!
   \brief Arrow Button
@@ -23,7 +23,7 @@
 class QWT_EXPORT QwtArrowButton : public QPushButton
 {
 public:
-    explicit QwtArrowButton (int num, Qt::ArrowType, QWidget *parent = NULL);
+    explicit QwtArrowButton ( int num, Qt::ArrowType, QWidget *parent = NULL );
     virtual ~QwtArrowButton();
 
     Qt::ArrowType arrowType() const;
@@ -33,18 +33,16 @@ public:
     virtual QSize minimumSizeHint() const;
 
 protected:
-#if QT_VERSION >= 0x040000
-    virtual void paintEvent(QPaintEvent *event);
-#endif
+    virtual void paintEvent( QPaintEvent *event );
 
-    virtual void drawButtonLabel(QPainter *p);
-    virtual void drawArrow(QPainter *,
-                           const QRect &, Qt::ArrowType) const;
+    virtual void drawButtonLabel( QPainter *p );
+    virtual void drawArrow( QPainter *,
+        const QRect &, Qt::ArrowType ) const;
     virtual QRect labelRect() const;
-    virtual QSize arrowSize(Qt::ArrowType,
-                            const QSize &boundingSize) const;
+    virtual QSize arrowSize( Qt::ArrowType,
+        const QSize &boundingSize ) const;
 
-    virtual void keyPressEvent(QKeyEvent *);
+    virtual void keyPressEvent( QKeyEvent * );
 
 private:
     class PrivateData;

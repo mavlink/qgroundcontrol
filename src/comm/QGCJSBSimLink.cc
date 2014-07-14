@@ -75,6 +75,7 @@ void QGCJSBSimLink::run()
 
     if (!mav) return;
     socket = new QUdpSocket(this);
+    socket->moveToThread(this);
     connectState = socket->bind(host, port);
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
@@ -256,7 +257,7 @@ void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitch
     {
         QString state("%1\t%2\t%3\t%4\t%5\n");
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-        writeBytes(state.toAscii().constData(), state.length());
+        writeBytes(state.toLatin1().constData(), state.length());
     }
     else
     {

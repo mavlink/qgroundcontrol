@@ -38,8 +38,8 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #endif
 
-ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
-    UAS(mavlink, id)//,
+ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, QThread* thread, int id) :
+    UAS(mavlink, thread, id)//,
     // place other initializers here
 {
     //This does not seem to work. Manually request each stream type at a specified rate.

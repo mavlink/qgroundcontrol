@@ -57,15 +57,19 @@ QGCXPlaneLink::QGCXPlaneLink(UASInterface* mav, QString remoteHost, QHostAddress
     simUpdateLastText(QGC::groundTimeMilliseconds()),
     simUpdateLastGroundTruth(QGC::groundTimeMilliseconds()),
     simUpdateHz(0),
-    _sensorHilEnabled(true)
+    _sensorHilEnabled(true),
+    _should_exit(false)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
     // http://blog.qt.digia.com/blog/2010/06/17/youre-doing-it-wrong/
     moveToThread(this);
 
+    setTerminationEnabled(false);
+
     this->localHost = localHost;
     this->localPort = localPort/*+mav->getUASID()*/;
-    this->connectState = false;
+    connectState = false;
+
     this->name = tr("X-Plane Link (localPort:%1)").arg(localPort);
     setRemoteHost(remoteHost);
     loadSettings();
@@ -75,7 +79,7 @@ QGCXPlaneLink::~QGCXPlaneLink()
 {
     storeSettings();
     // Tell the thread to exit
-    quit();
+    _should_exit = true;
     // Wait for it to exit
     wait();
 
@@ -150,22 +154,37 @@ void QGCXPlaneLink::setVersion(unsigned int version)
  **/
 void QGCXPlaneLink::run()
 {
-    if (!mav) return;
-    if (connectState) return;
+    if (!mav) {
+        emit statusMessage("No MAV present");
+        return;
+    }
+
+    if (connectState) {
+        emit statusMessage("Already connected");
+        return;
+    }
 
     socket = new QUdpSocket(this);
+    socket->moveToThread(this);
     connectState = socket->bind(localHost, localPort);
-    if (!connectState) return;
+    if (!connectState) {
+
+        emit statusMessage("Binding socket failed!");
+
+        delete socket;
+        socket = NULL;
+        return;
+    }
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
-    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-    connect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
+    connect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)), Qt::QueuedConnection);
+    connect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+    connect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), Qt::QueuedConnection);
+    connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), Qt::QueuedConnection);
 
     UAS* uas = dynamic_cast<UAS*>(mav);
     if (uas)
@@ -206,16 +225,42 @@ void QGCXPlaneLink::run()
         }
     }
 
-    //qDebug() << "REQ SEND TO:" << localAddrStr << localPortStr;
-
     ip.index = 0;
-    strncpy(ip.str_ipad_them, localAddrStr.toAscii(), qMin((int)sizeof(ip.str_ipad_them), 16));
-    strncpy(ip.str_port_them, localPortStr.toAscii(), qMin((int)sizeof(ip.str_port_them), 6));
+    strncpy(ip.str_ipad_them, localAddrStr.toLatin1(), qMin((int)sizeof(ip.str_ipad_them), 16));
+    strncpy(ip.str_port_them, localPortStr.toLatin1(), qMin((int)sizeof(ip.str_port_them), 6));
     ip.use_ip = 1;
 
     writeBytes((const char*)&ip, sizeof(ip));
 
-    exec();
+    _should_exit = false;
+
+    while(!_should_exit) {
+        QCoreApplication::processEvents();
+        QGC::SLEEP::msleep(5);
+    }
+
+    if (mav)
+    {
+        disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
+        disconnect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
+
+        disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
+        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
+        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+
+        // Do not toggle HIL state on the UAS - this is not the job of this link, but of the
+        // UAS object
+    }
+
+    connectState = false;
+
+    socket->close();
+    delete socket;
+    socket = NULL;
+
+    emit simulationDisconnected();
+    emit simulationConnected(false);
 }
 
 void QGCXPlaneLink::setPort(int localPort)
@@ -834,50 +879,15 @@ qint64 QGCXPlaneLink::bytesAvailable()
  **/
 bool QGCXPlaneLink::disconnectSimulation()
 {
-    if (!connectState) return true;
-
-    connectState = false;
-
-    if (process) disconnect(process, SIGNAL(error(QProcess::ProcessError)),
-               this, SLOT(processError(QProcess::ProcessError)));
-    if (mav)
+    if (connectState)
     {
-        disconnect(mav, SIGNAL(hilControlsChanged(quint64, float, float, float, float, quint8, quint8)), this, SLOT(updateControls(quint64,float,float,float,float,quint8,quint8)));
-        disconnect(mav, SIGNAL(hilActuatorsChanged(quint64, float, float, float, float, float, float, float, float)), this, SLOT(updateActuators(quint64,float,float,float,float,float,float,float,float)));
-
-        disconnect(this, SIGNAL(hilGroundTruthChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilGroundTruth(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(hilStateChanged(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)), mav, SLOT(sendHilState(quint64,float,float,float,float,float,float,double,double,double,float,float,float,float,float,float,float,float)));
-        disconnect(this, SIGNAL(sensorHilGpsChanged(quint64,double,double,double,int,float,float,float,float,float,float,float,int)), mav, SLOT(sendHilGps(quint64,double,double,double,int,float,float,float,float,float,float,float,int)));
-        disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
-
-        UAS* uas = dynamic_cast<UAS*>(mav);
-        if (uas)
-        {
-            uas->stopHil();
-        }
+        _should_exit = true;
+        wait();
+    } else {
+        emit simulationDisconnected();
+        emit simulationConnected(false);
     }
 
-    if (process)
-    {
-        process->close();
-        delete process;
-        process = NULL;
-    }
-    if (terraSync)
-    {
-        terraSync->close();
-        delete terraSync;
-        terraSync = NULL;
-    }
-    if (socket)
-    {
-        socket->close();
-        delete socket;
-        socket = NULL;
-    }
-
-    emit simulationDisconnected();
-    emit simulationConnected(false);
     return !connectState;
 }
 
@@ -1012,11 +1022,15 @@ void QGCXPlaneLink::setRandomAttitude()
  **/
 bool QGCXPlaneLink::connectSimulation()
 {
-    qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
-    // XXX Hack
-    storeSettings();
+    if (connectState) {
+        qDebug() << "Simulation already active";
+    } else {
+        qDebug() << "STARTING X-PLANE LINK, CONNECTING TO" << remoteHost << ":" << remotePort;
+        // XXX Hack
+        storeSettings();
 
-    start(HighPriority);
+        start(HighPriority);
+    }
 
     return true;
 }

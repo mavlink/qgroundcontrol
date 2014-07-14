@@ -91,7 +91,7 @@
    <damping_coeff_rebound unit="LBS/FT/SEC"> 4.0 </damping_coeff_rebound> 
    <max_steer unit="DEG">0</max_steer>
    <brake_group>NONE</brake_group>
-   <retractable>FIXED</retractable>
+   <retractable>0</retractable>
  </contact>
   <contact type="BOGEY" name="NOSE">
     <location unit="M">
@@ -107,7 +107,7 @@
    <damping_coeff_rebound unit="LBS/FT/SEC"> 4.0 </damping_coeff_rebound> 
   <max_steer unit="DEG">0</max_steer>
   <brake_group>NONE</brake_group>
-  <retractable>FIXED</retractable>
+  <retractable>0</retractable>
  </contact>
 
   <contact type="STRUCTURE" name="TAIL">

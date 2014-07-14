@@ -254,7 +254,7 @@ Q3DWidget::handleKeyPressEvent(QKeyEvent* event)
     {
         mOsgGW->getEventQueue()->keyPress(
             static_cast<osgGA::GUIEventAdapter::KeySymbol>(
-                *(event->text().toAscii().data())));
+                *(event->text().toLatin1().data())));
     }
 }
 
@@ -274,7 +274,7 @@ Q3DWidget::handleKeyReleaseEvent(QKeyEvent* event)
     {
         mOsgGW->getEventQueue()->keyRelease(
             static_cast<osgGA::GUIEventAdapter::KeySymbol>(
-                *(event->text().toAscii().data())));
+                *(event->text().toLatin1().data())));
     }
 }
 

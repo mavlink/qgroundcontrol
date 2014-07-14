@@ -26,6 +26,7 @@
 
 #include "UASInterface.h"
 #include "MockQGCUASParamManager.h"
+#include "MockMavlinkInterface.h"
 
 #include <limits>
 
@@ -50,6 +51,9 @@ public:
     virtual int getUASID(void) const { return _systemId; }
     virtual QGCUASParamManagerInterface* getParamManager() { return &_paramManager; };
     
+    // sendMessage is only supported if a mavlink plugin is installed.
+    virtual void sendMessage(mavlink_message_t message);
+    
 public:
     // MockUAS methods
     MockUAS(void);
@@ -63,11 +67,14 @@ public:
     /// allows you to simulate parameter input and validate parameter setting
     MockQGCUASParamManager* getMockQGCUASParamManager(void) { return &_paramManager; }
     
-    /// Sets the parameter map into the mock QGCUASParamManager and signals parameterChanged for
+    /// @brief Sets the parameter map into the mock QGCUASParamManager and signals parameterChanged for
     /// each param
     void setMockParametersAndSignal(MockQGCUASParamManager::ParamMap_t& map);
     
     void emitRemoteControlChannelRawChanged(int channel, float raw) { emit remoteControlChannelRawChanged(channel, raw); }
+    
+    /// @brief Installs a mavlink plugin. Only a single mavlink plugin is supported at a time.
+    void setMockMavlinkPlugin(MockMavlinkInterface* mavlinkPlugin) { _mavlinkPlugin = mavlinkPlugin; };
     
 public:
     // Unimplemented UASInterface overrides
@@ -109,6 +116,10 @@ public:
     virtual bool systemCanReverse() const { Q_ASSERT(false); return false; };
     virtual QString getSystemTypeName() { Q_ASSERT(false); return _bogusString; };
     virtual int getAutopilotType() { Q_ASSERT(false); return 0; };
+    virtual QGCUASFileManager* getFileManager() {Q_ASSERT(false); return NULL; }
+
+    /** @brief Send a message over this link (to this or to all UAS on this link) */
+    virtual void sendMessage(LinkInterface* link, mavlink_message_t message){ Q_UNUSED(link); Q_UNUSED(message); Q_ASSERT(false); }
     virtual QString getAutopilotTypeName() { Q_ASSERT(false); return _bogusString; };
     virtual void setAutopilotType(int apType) { Q_UNUSED(apType); Q_ASSERT(false); };
     virtual QMap<int, QString> getComponents() { Q_ASSERT(false); return _bogusMapIntQString; };
@@ -176,6 +187,8 @@ private:
     int                 _systemId;
     
     MockQGCUASParamManager _paramManager;
+    
+    MockMavlinkInterface* _mavlinkPlugin;   ///< Mock Mavlink plugin, NULL for none
 
     // Bogus variables used for return types of NYI methods
     QString             _bogusString;

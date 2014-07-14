@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _UAS_H_
 #define _UAS_H_
 
+#include <QThread>
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
@@ -41,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 #include "QGCUASParamManager.h"
+#include "QGCUASFileManager.h"
 
 
 /**
@@ -55,7 +57,7 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, int id = 0);
+    UAS(MAVLinkProtocol* protocol, QThread* thread, int id = 0);
     ~UAS();
 
     float lipoFull;  ///< 100% charged voltage
@@ -369,6 +371,7 @@ public:
 #endif
 
     friend class UASWaypointManager;
+    friend class QGCUASFileManager;
 
 protected: //COMMENTS FOR TEST UNIT
     /// LINK ID AND STATUS
@@ -381,7 +384,7 @@ protected: //COMMENTS FOR TEST UNIT
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
     quint64 lastHeartbeat;        ///< Time of the last heartbeat message
-    QTimer* statusTimeout;        ///< Timer for various status timeouts
+    QTimer statusTimeout;       ///< Timer for various status timeouts
 
     /// BASIC UAS TYPE, NAME AND STATE
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
@@ -471,6 +474,7 @@ protected: //COMMENTS FOR TEST UNIT
     double groundSpeed;          ///< Groundspeed
     double bearingToWaypoint;    ///< Bearing to next waypoint
     UASWaypointManager waypointManager;
+    QGCUASFileManager   fileManager;
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -525,6 +529,7 @@ protected: //COMMENTS FOR TEST UNIT
 
     /// SIMULATION
     QGCHilLink* simulation;         ///< Hardware in the loop simulation link
+    QThread* _thread;
 
 public:
     /** @brief Set the current battery type */
@@ -550,6 +555,10 @@ public:
     /** @brief Get reference to the param manager **/
     virtual QGCUASParamManagerInterface* getParamManager()  {
         return &paramMgr;
+    }
+
+    virtual QGCUASFileManager* getFileManager() {
+        return &fileManager;
     }
 
     /** @brief Get the HIL simulation */
@@ -836,7 +845,7 @@ public slots:
     void toggleAutonomy();
 
     /** @brief Set the values for the manual control of the vehicle */
-    void setManualControlCommands(double roll, double pitch, double yaw, double thrust, int xHat, int yHat, int buttons);
+    void setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
@@ -972,6 +981,7 @@ protected:
     quint64 getUnixReferenceTime(quint64 time);
 
     virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
+    virtual void processParamValueMsgHook(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue) { Q_UNUSED(msg); Q_UNUSED(paramName); Q_UNUSED(rawValue); Q_UNUSED(paramValue); };
 
     int componentID[256];
     bool componentMulti[256];

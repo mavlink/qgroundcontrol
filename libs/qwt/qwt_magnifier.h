@@ -29,50 +29,54 @@ class QWT_EXPORT QwtMagnifier: public QObject
     Q_OBJECT
 
 public:
-    explicit QwtMagnifier(QWidget *);
+    explicit QwtMagnifier( QWidget * );
     virtual ~QwtMagnifier();
 
     QWidget *parentWidget();
     const QWidget *parentWidget() const;
 
-    void setEnabled(bool);
+    void setEnabled( bool );
     bool isEnabled() const;
 
     // mouse
-    void setMouseFactor(double);
+    void setMouseFactor( double );
     double mouseFactor() const;
 
-    void setMouseButton(int button, int buttonState = Qt::NoButton);
-    void getMouseButton(int &button, int &buttonState) const;
+    void setMouseButton( Qt::MouseButton, Qt::KeyboardModifiers = Qt::NoModifier );
+    void getMouseButton( Qt::MouseButton &, Qt::KeyboardModifiers & ) const;
 
     // mouse wheel
-    void setWheelFactor(double);
+    void setWheelFactor( double );
     double wheelFactor() const;
 
-    void setWheelButtonState(int buttonState);
-    int wheelButtonState() const;
+    void setWheelModifiers( Qt::KeyboardModifiers );
+    Qt::KeyboardModifiers wheelModifiers() const;
 
     // keyboard
-    void setKeyFactor(double);
+    void setKeyFactor( double );
     double keyFactor() const;
 
-    void setZoomInKey(int key, int modifiers);
-    void getZoomInKey(int &key, int &modifiers) const;
+    void setZoomInKey( int key, Qt::KeyboardModifiers = Qt::NoModifier );
+    void getZoomInKey( int &key, Qt::KeyboardModifiers & ) const;
 
-    void setZoomOutKey(int key, int modifiers);
-    void getZoomOutKey(int &key, int &modifiers) const;
+    void setZoomOutKey( int key, Qt::KeyboardModifiers = Qt::NoModifier );
+    void getZoomOutKey( int &key, Qt::KeyboardModifiers & ) const;
 
-    virtual bool eventFilter(QObject *, QEvent *);
+    virtual bool eventFilter( QObject *, QEvent * );
 
 protected:
-    virtual void rescale(double factor) = 0;
+    /*!
+       Rescale the parent widget
+       \param factor Scale factor
+     */
+    virtual void rescale( double factor ) = 0;
 
-    virtual void widgetMousePressEvent(QMouseEvent *);
-    virtual void widgetMouseReleaseEvent(QMouseEvent *);
-    virtual void widgetMouseMoveEvent(QMouseEvent *);
-    virtual void widgetWheelEvent(QWheelEvent *);
-    virtual void widgetKeyPressEvent(QKeyEvent *);
-    virtual void widgetKeyReleaseEvent(QKeyEvent *);
+    virtual void widgetMousePressEvent( QMouseEvent * );
+    virtual void widgetMouseReleaseEvent( QMouseEvent * );
+    virtual void widgetMouseMoveEvent( QMouseEvent * );
+    virtual void widgetWheelEvent( QWheelEvent * );
+    virtual void widgetKeyPressEvent( QKeyEvent * );
+    virtual void widgetKeyReleaseEvent( QKeyEvent * );
 
 private:
     class PrivateData;
