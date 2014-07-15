@@ -2990,10 +2990,10 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
 //            const float newPitchCommand = pitch * axesScaling;
 //            const float newYawCommand = yaw * axesScaling;
 //            const float newThrustCommand = thrust * axesScaling;
-            const int16_t rollCommand = (int16_t)(roll * axesScaling);
-            const int16_t pitchCommand = (int16_t)(pitch * axesScaling);
-            const int16_t yawCommand = (int16_t)(yaw * axesScaling);
-            const uint16_t thrustCommand = (uint16_t)(thrust * axesScaling);
+            //const int16_t rollCommand = (int16_t)(roll * axesScaling);
+            //const int16_t pitchCommand = (int16_t)(pitch * axesScaling);
+            //const int16_t yawCommand = (int16_t)(yaw * axesScaling);
+            //const uint16_t thrustCommand = (uint16_t)(thrust * axesScaling);
 
 
             uint8_t mode = 3; // for velocity setpoint (OFFBOARD_CONTROL_MODE_DIRECT_VELOCITY)
@@ -3001,9 +3001,23 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
             // Send the MANUAL_COMMAND message
             mavlink_message_t message;
             //mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
-            // hack to send swarm command, TODO: replace with proper message
-            mavlink_msg_set_quad_swarm_roll_pitch_yaw_thrust_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, mode,
-                                                                  &rollCommand, &pitchCommand, &yawCommand, &thrustCommand);
+            // send an external attitude setpoint command (rate control disabled)
+            float attitudeQuaternion[4];
+            mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
+            uint8_t typeMask = 0b111; // disable rate control
+            mavlink_msg_attitude_setpoint_external_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    typeMask,
+                    attitudeQuaternion,
+                    0,
+                    0,
+                    0,
+                    thrust
+                    );
             sendMessage(message);
 
             // Emit an update in control values to other UI elements, like the HSI display
