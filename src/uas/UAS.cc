@@ -2947,9 +2947,11 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
     static quint8 countSinceLastTransmission = 0; // Track how many calls to this function have occurred since the last MAVLink transmission
 
     // We only transmit manual command messages if the system has manual inputs enabled and is armed
-    if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
-    {
+    //if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
 
+    // Lets always send velocity commands for now
+    if (true)
+    {
         // Transmit the manual commands only if they've changed OR if it's been a little bit since they were last transmit. To make sure there aren't issues with
         // response rate, we make sure that a message is transmit when the commands have changed, then one more time, and then switch to the lower transmission rate
         // if no command inputs have changed.
@@ -2981,17 +2983,27 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
             manualButtons = buttons;
 
             // Store scaling values for all 3 axes
-            const float axesScaling = 1.0 * 1000.0;
+            const float axesScaling = 1000.0f;
 
             // Calculate the new commands for roll, pitch, yaw, and thrust
-            const float newRollCommand = roll * axesScaling;
-            const float newPitchCommand = pitch * axesScaling;
-            const float newYawCommand = yaw * axesScaling;
-            const float newThrustCommand = thrust * axesScaling;
+//            const float newRollCommand = roll * axesScaling;
+//            const float newPitchCommand = pitch * axesScaling;
+//            const float newYawCommand = yaw * axesScaling;
+//            const float newThrustCommand = thrust * axesScaling;
+            const int16_t rollCommand = (int16_t)(roll * axesScaling);
+            const int16_t pitchCommand = (int16_t)(pitch * axesScaling);
+            const int16_t yawCommand = (int16_t)(yaw * axesScaling);
+            const uint16_t thrustCommand = (uint16_t)(thrust * axesScaling);
+
+
+            uint8_t mode = 3; // for velocity setpoint (OFFBOARD_CONTROL_MODE_DIRECT_VELOCITY)
 
             // Send the MANUAL_COMMAND message
             mavlink_message_t message;
-            mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            //mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            // hack to send swarm command, TODO: replace with proper message
+            mavlink_msg_set_quad_swarm_roll_pitch_yaw_thrust_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, mode,
+                                                                  &rollCommand, &pitchCommand, &yawCommand, &thrustCommand);
             sendMessage(message);
 
             // Emit an update in control values to other UI elements, like the HSI display

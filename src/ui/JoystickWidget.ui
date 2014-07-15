@@ -78,7 +78,7 @@
      <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
+     <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0">
       <property name="sizeConstraint">
        <enum>QLayout::SetMinimumSize</enum>
       </property>
@@ -168,6 +168,20 @@
        <widget class="QLabel" name="statusLabel">
         <property name="text">
          <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="calibrationButton">
+        <property name="text">
+         <string>Calibrate range</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="calibrationStatusLabel">
+        <property name="text">
+         <string>Range status</string>
         </property>
        </widget>
       </item>

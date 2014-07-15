@@ -7,6 +7,7 @@
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Andreas Romer <mavteam@student.ethz.ch>
+ *   @author Julian Oes <julian@oes.ch
  *
  */
 
@@ -32,6 +33,7 @@ JoystickInput::JoystickInput() :
     sdlJoystickMin(-32768.0f),
     sdlJoystickMax(32767.0f),
     isEnabled(false),
+    isCalibrating(false),
     done(false),
     uas(NULL),
     autopilotType(0),
@@ -45,11 +47,6 @@ JoystickInput::JoystickInput() :
     joystickID(-1),
     joystickNumButtons(0)
 {
-
-    for (int i = 0; i < 10; i++) {
-        calibrationPositive[i] = sdlJoystickMax;
-        calibrationNegative[i] = sdlJoystickMin;
-    }
 
     // Make sure we initialize with the correct UAS.
     setActiveUAS(UASManager::instance()->getActiveUAS());
@@ -111,6 +108,8 @@ void JoystickInput::loadJoystickSettings()
             // Now that both the autopilot and system type are available, update some references.
             QMap<int, bool>* joystickAxesInverted = &joystickSettings[autopilotType][systemType].axesInverted;
             QMap<int, bool>* joystickAxesLimited = &joystickSettings[autopilotType][systemType].axesLimited;
+            QMap<int, float>* joystickAxesMinRange = &joystickSettings[autopilotType][systemType].axesMaxRange;
+            QMap<int, float>* joystickAxesMaxRange = &joystickSettings[autopilotType][systemType].axesMinRange;
             QMap<int, int>* joystickButtonActions = &joystickSettings[autopilotType][systemType].buttonActions;
 
             // Read back the joystickAxesInverted QList one element at a time.
@@ -132,6 +131,28 @@ void JoystickInput::loadJoystickSettings()
                 int index = settings.value("INDEX", 0).toInt();
                 bool limited = settings.value("LIMITED", false).toBool();
                 joystickAxesLimited->insert(index, limited);
+            }
+            settings.endArray();
+
+            // Read back the joystickAxesMinRange QList one element at a time.
+            axesStored = settings.beginReadArray("AXES_MIN_RANGE");
+            for (int k = 0; k < axesStored; k++)
+            {
+                settings.setArrayIndex(k);
+                int index = settings.value("INDEX", 0).toInt();
+                float min = settings.value("MIN_RANGE", false).toFloat();
+                joystickAxesMinRange->insert(index, min);
+            }
+            settings.endArray();
+
+            // Read back the joystickAxesMaxRange QList one element at a time.
+            axesStored = settings.beginReadArray("AXES_MAX_RANGE");
+            for (int k = 0; k < axesStored; k++)
+            {
+                settings.setArrayIndex(k);
+                int index = settings.value("INDEX", 0).toInt();
+                float max = settings.value("MAX_RANGE", false).toFloat();
+                joystickAxesMaxRange->insert(index, max);
             }
             settings.endArray();
 
@@ -199,6 +220,8 @@ void JoystickInput::storeJoystickSettings() const
             // Now that both the autopilot and system type are available, update some references.
             QMapIterator<int, bool> joystickAxesInverted(joystickSettings[autopilotType][systemType].axesInverted);
             QMapIterator<int, bool> joystickAxesLimited(joystickSettings[autopilotType][systemType].axesLimited);
+            QMapIterator<int, float> joystickAxesMinRange(joystickSettings[autopilotType][systemType].axesMaxRange);
+            QMapIterator<int, float> joystickAxesMaxRange(joystickSettings[autopilotType][systemType].axesMinRange);
             QMapIterator<int, int> joystickButtonActions(joystickSettings[autopilotType][systemType].buttonActions);
 
             settings.beginWriteArray("AXES_INVERTED");
@@ -215,6 +238,32 @@ void JoystickInput::storeJoystickSettings() const
                     settings.setValue("INDEX", index);
                     settings.setValue("INVERTED", inverted);
                 }
+            }
+            settings.endArray();
+
+            settings.beginWriteArray("AXES_MIN_RANGE");
+            k = 0;
+            while (joystickAxesMinRange.hasNext())
+            {
+                joystickAxesMinRange.next();
+                float min = joystickAxesMinRange.value();
+                settings.setArrayIndex(k++);
+                int index = joystickAxesMinRange.key();
+                settings.setValue("INDEX", index);
+                settings.setValue("MIN_RANGE", min);
+            }
+            settings.endArray();
+
+            settings.beginWriteArray("AXES_MAX_RANGE");
+            k = 0;
+            while (joystickAxesMaxRange.hasNext())
+            {
+                joystickAxesMaxRange.next();
+                float max = joystickAxesMaxRange.value();
+                settings.setArrayIndex(k++);
+                int index = joystickAxesMaxRange.key();
+                settings.setValue("INDEX", index);
+                settings.setValue("MAX_RANGE", max);
             }
             settings.endArray();
 
@@ -401,26 +450,48 @@ void JoystickInput::run()
             // This is generally not used for controlling a vehicle, but a UI representation, so it being slightly off is fine.
             // Here we map the joystick axis value into the initial range of [0:1].
             float axisValue = SDL_JoystickGetAxis(joystick, i);
+
+            // during calibration save min and max values
+            if (isCalibrating)
+            {
+                if (joystickSettings[autopilotType][systemType].axesMinRange.value(i) > axisValue)
+                {
+                    joystickSettings[autopilotType][systemType].axesMinRange[i] = axisValue;
+                }
+
+                if (joystickSettings[autopilotType][systemType].axesMaxRange.value(i) < axisValue)
+                {
+                    joystickSettings[autopilotType][systemType].axesMaxRange[i] = axisValue;
+                }
+            }
+
             if (joystickSettings[autopilotType][systemType].axesInverted[i])
             {
-                axisValue = (axisValue - calibrationNegative[i]) / (calibrationPositive[i] - calibrationNegative[i]);
+                axisValue = (axisValue - joystickSettings[autopilotType][systemType].axesMinRange.value(i)) /
+                        (joystickSettings[autopilotType][systemType].axesMaxRange.value(i) -
+                         joystickSettings[autopilotType][systemType].axesMinRange.value(i));
             }
             else
             {
-                axisValue = (axisValue - calibrationPositive[i]) / (calibrationNegative[i] - calibrationPositive[i]);
+                axisValue = (axisValue - joystickSettings[autopilotType][systemType].axesMaxRange.value(i)) /
+                        (joystickSettings[autopilotType][systemType].axesMinRange.value(i) -
+                         joystickSettings[autopilotType][systemType].axesMaxRange.value(i));
             }
             axisValue = 1.0f - axisValue;
 
             // For non-throttle axes or if the UAS can reverse, go ahead and convert this into the range [-1:1].
-            if (uasCanReverse || throttleAxis != i)
+
+            //if (uasCanReverse || throttleAxis != i)
+            // don't take into account if UAS can reverse. This means to reverse position but not throttle
+            // therefore deactivated for now
+            if (throttleAxis != i)
             {
                 axisValue = axisValue * 2.0f - 1.0f;
             }
-            // Otherwise if this vehicle can only go forward, but the axis is limited to only the positive range,
-            // scale this so the negative values are ignored for this axis and it's clamped to [0:1].
+            // Otherwise if this vehicle can only go forward, scale it to [0:1].
             else if (throttleAxis == i && joystickSettings[autopilotType][systemType].axesLimited.value(i))
             {
-                axisValue = axisValue * 2.0f - 1.0f;
+                axisValue = (axisValue);
                 if (axisValue < 0.0f)
                 {
                     axisValue = 0.0f;
@@ -483,8 +554,8 @@ void JoystickInput::run()
             emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, joystickButtons);
         }
 
-        // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
-        QGC::SLEEP::msleep(20);
+        // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
+        QGC::SLEEP::msleep(40);
     }
 }
 
@@ -533,6 +604,38 @@ void JoystickInput::setActiveJoystick(int id)
     emit newJoystickSelected();
     // And then trigger an update of this new UI.
     emit joystickSettingsChanged();
+}
+
+void JoystickInput::setCalibrating(bool active)
+{
+    if (active)
+    {
+        setEnabled(false);
+        isCalibrating = true;
+
+        // set range small so that limits can be re-found
+        for (int i = 0; i < joystickNumAxes; i++)
+        {
+            joystickSettings[autopilotType][systemType].axesMinRange[i] = -10.0f;
+            joystickSettings[autopilotType][systemType].axesMaxRange[i] = 10.0f;
+        }
+
+    } else {
+
+        // store calibration values
+        storeJoystickSettings();
+
+        qDebug() << "Calibration result:";
+        for (int i = 0; i < joystickNumAxes; i++)
+        {
+            qDebug() << i << ": " <<
+                        joystickSettings[autopilotType][systemType].axesMinRange[i] <<
+                        " - " <<
+                        joystickSettings[autopilotType][systemType].axesMaxRange[i];
+        }
+        setEnabled(true);
+        isCalibrating = false;
+    }
 }
 
 void JoystickInput::setAxisMapping(int axis, JOYSTICK_INPUT_MAPPING newMapping)
@@ -593,6 +696,24 @@ void JoystickInput::setAxisRangeLimit(int axis, bool limitRange)
     }
 }
 
+void JoystickInput::setAxisRangeLimitMin(int axis, float min)
+{
+    if (axis < joystickNumAxes)
+    {
+        joystickSettings[autopilotType][systemType].axesMinRange[axis] = min;
+        storeJoystickSettings();
+    }
+}
+
+void JoystickInput::setAxisRangeLimitMax(int axis, float max)
+{
+    if (axis < joystickNumAxes)
+    {
+        joystickSettings[autopilotType][systemType].axesMaxRange[axis] = max;
+        storeJoystickSettings();
+    }
+}
+
 void JoystickInput::setButtonAction(int button, int action)
 {
     if (button < joystickNumButtons)
@@ -627,6 +748,24 @@ bool JoystickInput::getRangeLimitForAxis(int axis) const
         return joystickSettings[autopilotType][systemType].axesLimited.value(axis);
     }
     return false;
+}
+
+float JoystickInput::getAxisRangeLimitMinForAxis(int axis) const
+{
+    if (axis < joystickNumAxes)
+    {
+        return joystickSettings[autopilotType][systemType].axesMinRange.value(axis);
+    }
+    return sdlJoystickMin;
+}
+
+float JoystickInput::getAxisRangeLimitMaxForAxis(int axis) const
+{
+    if (axis < joystickNumAxes)
+    {
+        return joystickSettings[autopilotType][systemType].axesMaxRange.value(axis);
+    }
+    return sdlJoystickMax;
 }
 
 int JoystickInput::getActionForButton(int button) const
