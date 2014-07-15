@@ -119,7 +119,7 @@ HUD::HUD(int width, int height, QWidget* parent)
 {
     Q_UNUSED(width);
     Q_UNUSED(height);
-    
+
     // Set auto fill to false
     setAutoFillBackground(false);
 
@@ -1374,7 +1374,10 @@ void HUD::copyImage(UASInterface* uas)
     UAS* u = qobject_cast<UAS*>(uas);
     if (u)
     {
-        this->glImage = u->getImage();
+        QImage temp_im = u->getImage();
+        if (temp_im.byteCount() > 0) {
+            this->glImage = temp_im;
+        }
 
         // Save to directory if logging is enabled
         if (imageLoggingEnabled)
