@@ -95,14 +95,14 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     px4AirframeConfig = new QGCPX4AirframeConfig(this);
     ui->airframeLayout->addWidget(px4AirframeConfig);
 
-    px4SafetyConfig = new QGCPX4SafetyConfig(this);
-    ui->safetyConfigLayout->addWidget(px4SafetyConfig);
+    // px4SafetyConfig = new QGCPX4SafetyConfig(this);
+    // ui->safetyConfigLayout->addWidget(px4SafetyConfig);
 
-    px4TuningConfig = new QGCPX4TuningConfig(this);
-    ui->tuningLayout->addWidget(px4TuningConfig);
+    // px4TuningConfig = new QGCPX4TuningConfig(this);
+    // ui->tuningLayout->addWidget(px4TuningConfig);
 
-    px4FlightModeConfig = new QGCPX4FlightModeConfig(this);
-    ui->flightModeLayout->addWidget(px4FlightModeConfig);
+    // px4FlightModeConfig = new QGCPX4FlightModeConfig(this);
+    // ui->flightModeLayout->addWidget(px4FlightModeConfig);
 
     px4SensorCalibration = new QGCPX4SensorCalibration(this);
     ui->sensorLayout->addWidget(px4SensorCalibration);
@@ -306,7 +306,7 @@ void QGCPX4VehicleConfig::sensorMenuButtonClicked()
 
 void QGCPX4VehicleConfig::tuningMenuButtonClicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->generalTab);
+    ui->stackedWidget->setCurrentWidget(ui->tuningTab);
     ui->tabTitleLabel->setText(tr("Controller Tuning"));
 }
 
