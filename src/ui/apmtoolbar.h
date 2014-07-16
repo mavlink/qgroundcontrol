@@ -2,12 +2,12 @@
 #define APMTOOLBAR_H
 
 #include <QAction>
-#include <QDeclarativeView>
+#include <QQuickView>
 #include "UASInterface.h"
 
 class LinkInterface;
 
-class APMToolBar : public QDeclarativeView
+class APMToolBar : public QQuickView
 {
     Q_OBJECT
 public:

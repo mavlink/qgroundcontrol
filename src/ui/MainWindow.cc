@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilLink.h>
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
-#include <QDeclarativeView>
+#include <QQuickView>
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -272,7 +272,8 @@ void MainWindow::init()
         apmToolBar->setTerminalViewAction(ui.actionTerminalView);
 
         QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
-        widget->setWidget(apmToolBar);
+        QWidget *toolbarWidget = QWidget::createWindowContainer(apmToolBar, this);
+        widget->setWidget(toolbarWidget);
         widget->setMinimumHeight(72);
         widget->setMaximumHeight(72);
         widget->setMinimumWidth(1024);
