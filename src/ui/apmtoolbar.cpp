@@ -1,5 +1,5 @@
 #include <QDebug>
-#include <QDeclarativeContext>
+#include <QQmlContext>
 #include <QGraphicsObject>
 #include "LinkManager.h"
 #include "MainWindow.h"
@@ -7,7 +7,7 @@
 #include "apmtoolbar.h"
 
 APMToolBar::APMToolBar(QWidget *parent):
-    QDeclarativeView(parent), m_uas(0)
+    QQuickView(), m_uas(0)
 {
     // Configure our QML object
     
@@ -20,7 +20,7 @@ APMToolBar::APMToolBar(QWidget *parent):
 #else
     setSource(QUrl::fromLocalFile("qml/ApmToolBar.qml"));
 #endif
-    setResizeMode(QDeclarativeView::SizeRootObjectToView);
+    setResizeMode(QQuickView::SizeRootObjectToView);
     this->rootContext()->setContextProperty("globalObj", this);
     connect(LinkManager::instance(),SIGNAL(newLink(LinkInterface*)),
             this, SLOT(updateLinkDisplay(LinkInterface*)));
@@ -55,7 +55,8 @@ void APMToolBar::activeUasSet(UASInterface *uas)
 }
 void APMToolBar::armingChanged(bool armed)
 {
-    this->rootObject()->setProperty("armed",armed);
+    // FIXME: This doesn't work in Qt5, figure out what it should be
+    //this->rootObject()->setProperty("armed",armed);
 }
 
 void APMToolBar::armingChanged(int sysId, QString armingState)
@@ -161,8 +162,9 @@ void APMToolBar::connectMAV()
 void APMToolBar::setConnection(bool connection)
 {
     // Change the image to represent the state
-    QObject *object = rootObject();
-    object->setProperty("connected", connection);
+    // FIXME: Doesn't work the same in Qt5, fix this
+    //QObject *object = rootObject();
+    //object->setProperty("connected", connection);
 }
 
 APMToolBar::~APMToolBar()
@@ -198,14 +200,17 @@ void APMToolBar::showConnectionDialog()
 void APMToolBar::updateLinkDisplay(LinkInterface* newLink)
 {
     qDebug() << "APMToolBar: updateLinkDisplay";
-    QObject *object = rootObject();
+    // FIXME: Doesn't work the same in Qt5, fix this.
+    //QObject *object = rootObject();
 
-    if (newLink && object){
+    if (newLink && rootObject()){
         qint64 baudrate = newLink->getConnectionSpeed();
-        object->setProperty("baudrateLabel", QString::number(baudrate));
+        // FIXME: Doesn't work in Qt5
+        //object->setProperty("baudrateLabel", QString::number(baudrate));
 
         QString linkName = newLink->getName();
-        object->setProperty("linkNameLabel", linkName);
+        // FIXME: Doesn't work in Qt5
+        //object->setProperty("linkNameLabel", linkName);
 
         connect(newLink, SIGNAL(connected(bool)),
                 this, SLOT(setConnection(bool)));
