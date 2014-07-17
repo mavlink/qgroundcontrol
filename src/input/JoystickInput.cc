@@ -323,7 +323,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         tmp = dynamic_cast<UAS*>(this->uas);
         if(tmp)
         {
-            disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,JOYSTICK_MODE)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16, JOYSTICK_MODE)));
+            disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,quint8)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,quint8)));
             disconnect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
         }
         uasCanReverse = false;
@@ -339,7 +339,8 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 
     if (this->uas && (tmp = dynamic_cast<UAS*>(this->uas)))
     {
-        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,JOYSTICK_MODE)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,JOYSTICK_MODE)));
+        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,quint8)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,quint8)));
+        qDebug() << "connected joystick";
         connect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
         uasCanReverse = tmp->systemCanReverse();
 
