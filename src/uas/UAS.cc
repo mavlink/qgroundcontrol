@@ -2933,7 +2933,7 @@ void UAS::toggleAutonomy()
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, JoystickInput::JOYSTICK_MODE joystickMode)
 {
     Q_UNUSED(xHat);
     Q_UNUSED(yHat);
@@ -2979,53 +2979,57 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
 
         mavlink_message_t message;
 
-        // send an external attitude setpoint command (rate control disabled)
-        float attitudeQuaternion[4];
-        mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
-        uint8_t typeMask = 0b111; // disable rate control
-        mavlink_msg_attitude_setpoint_external_pack(mavlink->getSystemId(),
-            mavlink->getComponentId(),
-            &message,
-            QGC::groundTimeUsecs(),
-            this->uasId,
-            0,
-            typeMask,
-            attitudeQuaternion,
-            0,
-            0,
-            0,
-            thrust
-            );
-
-// TODO: This is a prototype to be used depending on the joystick mode
-//        // Send the the force setpoint (local pos sp external message)
-//        //mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
-//        // send an external attitude setpoint command (rate control disabled)
-//        float dcm[3][3];
-//        mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
-//        const float fx = -dcm[0][2];
-//        const float fy = -dcm[1][2];
-//        const float fz = -dcm[2][2];
-//        uint16_t typeMask = 0b0000001000111111; // disable rate control
-//        mavlink_msg_local_ned_position_setpoint_external_pack(mavlink->getSystemId(),
-//                mavlink->getComponentId(),
-//                &message,
-//                QGC::groundTimeUsecs(),
-//                this->uasId,
-//                0,
-//                MAV_FRAME_LOCAL_NED,
-//                typeMask,
-//                0,
-//                0,
-//                0,
-//                0,
-//                0,
-//                0,
-//                fx,
-//                fy,
-//                fz
-//                );
-
+        if (joystickMode == JoystickInput::JOYSTICK_MODE_ATTITUDE)
+        {
+            // send an external attitude setpoint command (rate control disabled)
+            float attitudeQuaternion[4];
+            mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
+            uint8_t typeMask = 0b111; // disable rate control
+            mavlink_msg_attitude_setpoint_external_pack(mavlink->getSystemId(),
+                mavlink->getComponentId(),
+                &message,
+                QGC::groundTimeUsecs(),
+                this->uasId,
+                0,
+                typeMask,
+                attitudeQuaternion,
+                0,
+                0,
+                0,
+                thrust
+                );
+        }
+        else if (joystickMode == JoystickInput::JOYSTICK_MODE_FORCE)
+        {
+            // Send the the force setpoint (local pos sp external message)
+            float dcm[3][3];
+            mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
+            const float fx = -dcm[0][2];
+            const float fy = -dcm[1][2];
+            const float fz = -dcm[2][2];
+            uint16_t typeMask = 0b0000001000111111; // select only force control (disable everything else)
+            mavlink_msg_local_ned_position_setpoint_external_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    MAV_FRAME_LOCAL_NED,
+                    typeMask,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    fx,
+                    fy,
+                    fz
+                    );
+        }
+        else {
+            return;
+        }
 
         sendMessage(message);
 

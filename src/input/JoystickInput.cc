@@ -323,7 +323,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         tmp = dynamic_cast<UAS*>(this->uas);
         if(tmp)
         {
-            disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16)), tmp, SLOT(setManualControlCommands(float,float,float,float,qint8,qint8,quint16)));
+            disconnect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,JOYSTICK_MODE)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16, JOYSTICK_MODE)));
             disconnect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
         }
         uasCanReverse = false;
@@ -339,7 +339,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 
     if (this->uas && (tmp = dynamic_cast<UAS*>(this->uas)))
     {
-        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16)), tmp, SLOT(setManualControlCommands(float,float,float,float,qint8,qint8,quint16)));
+        connect(this, SIGNAL(joystickChanged(float,float,float,float,qint8,qint8,quint16,JOYSTICK_MODE)), tmp, SLOT(setExternalControlSetpoint(float,float,float,float,qint8,qint8,quint16,JOYSTICK_MODE)));
         connect(this, SIGNAL(actionTriggered(int)), tmp, SLOT(triggerAction(int)));
         uasCanReverse = tmp->systemCanReverse();
 
@@ -553,7 +553,7 @@ void JoystickInput::run()
             float pitch = pitchAxis > -1?joystickAxes[pitchAxis]:numeric_limits<float>::quiet_NaN();
             float yaw = yawAxis > -1?joystickAxes[yawAxis]:numeric_limits<float>::quiet_NaN();
             float throttle = throttleAxis > -1?joystickAxes[throttleAxis]:numeric_limits<float>::quiet_NaN();
-            emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, joystickButtons);
+            emit joystickChanged(roll, pitch, yaw, throttle, xHat, yHat, joystickButtons, mode);
         }
 
         // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
