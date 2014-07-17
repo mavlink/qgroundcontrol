@@ -3009,9 +3009,40 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                 thrust
                 );
         }
+        else if (joystickMode == JoystickInput::JOYSTICK_MODE_POSITION)
+        {
+            // Send the the local position setpoint (local pos sp external message)
+            static float px = 0;
+            static float py = 0;
+            static float pz = 0;
+            //XXX: find decent scaling
+            px -= pitch;
+            py += roll;
+            pz -= 2.0f*(thrust-0.5);
+            uint16_t typeMask = 0b0000000111111000; // select only position control
+            mavlink_msg_local_ned_position_setpoint_external_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    MAV_FRAME_LOCAL_NED,
+                    typeMask,
+                    px,
+                    py,
+                    pz,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                    );
+        }
         else if (joystickMode == JoystickInput::JOYSTICK_MODE_FORCE)
         {
             // Send the the force setpoint (local pos sp external message)
+            // XXX: scale with thrust
             float dcm[3][3];
             mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
             const float fx = -dcm[0][2];
