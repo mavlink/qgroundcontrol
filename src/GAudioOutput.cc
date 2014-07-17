@@ -187,37 +187,15 @@ bool GAudioOutput::say(QString text, int severity)
         if (!emergency)
         {
 
-#if defined QGC_SPEECH_ENABLED
-#if defined _MSC_VER
-            /*SpeechSynthesizer synth = new SpeechSynthesizer();
-            synth.SelectVoice("Microsoft Anna");
-            synth.SpeakText(text.toStdString().c_str());
-            res = true;*/
-            /*ISpVoice * pVoice = NULL;
-            if (FAILED(::CoInitialize(NULL)))
-            {
-            	qDebug("Creating COM object for audio output failed!");
-            }
-            else
-            {
-            	HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
-            	if( SUCCEEDED( hr ) )
-            	{
-            		hr = */pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
-            /*pVoice->WaitUntilDone(5000);
-            pVoice->Release();
-            pVoice = NULL;
-            }
-            }*/
-#endif // _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
+            pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
 
-#if defined Q_OS_LINUX
+#elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
             // Set size of string for espeak: +1 for the null-character
             unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
             espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
-#endif // Q_OS_LINUX
 
-#if defined Q_OS_MAC
+#elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
             // Slashes necessary to have the right start to the sentence
             // copying data prevents SpeakString from reading additional chars
             text = "\\" + text;
@@ -226,11 +204,11 @@ bool GAudioOutput::say(QString text, int severity)
             memcpy(str2, text.toLatin1().data(), str.length());
             SpeakString(str2);
             res = true;
-#endif // Q_OS_MAC
 
 #else
+            // Make sure there isn't an unused variable warning when speech output is disabled
             Q_UNUSED(text);
-#endif // QGC_SPEECH_ENABLED
+#endif
         }
 
         return res;
