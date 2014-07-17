@@ -139,6 +139,7 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
     waypointManager(this),
+    fileManager(this, this),
 
     attitudeKnown(false),
     attitudeStamped(false),
@@ -147,6 +148,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     roll(0.0),
     pitch(0.0),
     yaw(0.0),
+
+    imagePackets(0),    // We must initialize to 0, otherwise extended data packets maybe incorrectly thought to be images
 
     blockHomePositionChanges(false),
     receivedMode(false),
@@ -174,6 +177,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
         componentID[i] = -1;
         componentMulti[i] = false;
     }
+
+    connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), &fileManager, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 
     // Store a list of available actions for this UAS.
     // Basically everything exposed as a SLOT with no return value or arguments.
@@ -1309,11 +1314,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             QString text = QString(b);
             int severity = mavlink_msg_statustext_get_severity(&message);
 
-            if (text.startsWith("#audio:"))
+            if (text.startsWith("#") || severity <= MAV_SEVERITY_WARNING)
             {
                 text.remove("#audio:");
                 emit textMessageReceived(uasId, message.compid, severity, QString("Audio message: ") + text);
-                GAudioOutput::instance()->say(text, severity);
+                GAudioOutput::instance()->say(text.toLower(), severity);
             }
             else
             {
@@ -1368,6 +1373,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // NO VALID TRANSACTION - ABORT
                 // Restart statemachine
                 imagePacketsArrived = 0;
+                break;
             }
 
             for (int i = 0; i < imagePayload; ++i)
@@ -1381,9 +1387,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             ++imagePacketsArrived;
 
             // emit signal if all packets arrived
-            if ((imagePacketsArrived >= imagePackets))
+            if (imagePacketsArrived >= imagePackets)
             {
                 // Restart statemachine
+                imagePackets = 0;
+                imagePacketsArrived = 0;
                 emit imageReady(this);
                 //qDebug() << "imageReady emitted. all packets arrived";
             }
@@ -2194,13 +2202,15 @@ QImage UAS::getImage()
         if (!image.loadFromData(imageRecBuffer))
         {
             qDebug() << __FILE__ << __LINE__ << "Loading data from image buffer failed!";
+            return QImage();
         }
     }
+
     // Restart statemachine
     imagePacketsArrived = 0;
-    //imageRecBuffer.clear();
+    imagePackets = 0;
+    imageRecBuffer.clear();
     return image;
-
 }
 
 void UAS::requestImage()

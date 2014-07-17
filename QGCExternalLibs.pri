@@ -33,7 +33,7 @@ contains(DEFINES, DISABLE_QUPGRADE) {
     DEFINES -= DISABLE_QUPGRADE
 }
 # Otherwise the user can still disable this feature in the user_config.pri file.
-else:infile(user_config.pri, DEFINES, DISABLE_QUPGRADE) {
+else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_QUPGRADE) {
     message("Skipping support for QUpgrade (manual override from user_config.pri)")
 }
 # If the QUpgrade submodule has been initialized, build in support by default.
@@ -92,7 +92,7 @@ DEFINES += MAVLINK_NO_DATA
     message($$sprintf("Using MAVLink dialect '%1' specified at the command line.", $$MAVLINK_CONF))
 }
 # Otherwise they can specify MAVLINK_CONF within user_config.pri
-else:infile(user_config.pri, MAVLINK_CONF) {
+else:exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
     MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
     !isEmpty(MAVLINK_CONF) {
         message($$sprintf("Using MAVLink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
@@ -132,7 +132,7 @@ contains(DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
     DEFINES -= DISABLE_OPEN_SCENE_GRAPH
 }
 # Otherwise the user can still disable this feature in the user_config.pri file.
-else:infile(user_config.pri, DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
+else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_OPEN_SCENE_GRAPH) {
     message("Skipping support for OpenSceneGraph (manual override from user_config.pri)")
 }
 else:MacBuild {
@@ -246,7 +246,7 @@ contains(DEFINES, DISABLE_GOOGLE_EARTH) {
     DEFINES -= DISABLE_GOOGLE_EARTH
 }
 # Otherwise the user can still disable this feature in the user_config.pri file.
-else:infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
+else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EARTH) {
     message("Skipping support for Google Earth view (manual override from user_config.pri)")
 } else:MacBuild {
     message("Including support for Google Earth view")
@@ -353,7 +353,7 @@ contains(DEFINES, DISABLE_XBEE) {
 	message("Skipping support for native XBee API (manual override from command line)")
 	DEFINES -= DISABLE_XBEE
 # Otherwise the user can still disable this feature in the user_config.pri file.
-} else:infile(user_config.pri, DEFINES, DISABLE_XBEE) {
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_XBEE) {
     message("Skipping support for native XBee API (manual override from user_config.pri)")
 } else:LinuxBuild {
 	exists(/usr/include/xbee.h) {
@@ -384,7 +384,7 @@ contains(DEFINES, DISABLE_3DMOUSE) {
 	message("Skipping support for 3DConnexion mice (manual override from command line)")
 	DEFINES -= DISABLE_3DMOUSE
 # Otherwise the user can still disable this feature in the user_config.pri file.
-} else:infile(user_config.pri, DEFINES, DISABLE_3DMOUSE) {
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_3DMOUSE) {
     message("Skipping support for 3DConnexion mice (manual override from user_config.pri)")
 } else:LinuxBuild {
 	exists(/usr/local/lib/libxdrvlib.so) {
@@ -429,7 +429,7 @@ contains(DEFINES, DISABLE_RTLAB) {
 	message("Skipping support for RT-LAB (manual override from command line)")
 	DEFINES -= DISABLE_RTLAB
 # Otherwise the user can still disable this feature in the user_config.pri file.
-} else:infile(user_config.pri, DEFINES, DISABLE_RTLAB) {
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_RTLAB) {
     message("Skipping support for RT-LAB (manual override from user_config.pri)")
 } else:WindowsBuild {
 	exists(src/lib/opalrt/OpalApi.h) : exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
@@ -506,7 +506,7 @@ contains (DEFINES, DISABLE_SPEECH) {
 	message("Skipping support for speech output (manual override from command line)")
 	DEFINES -= DISABLE_SPEECH
 # Otherwise the user can still disable this feature in the user_config.pri file.
-} else:infile(user_config.pri, DEFINES, DISABLE_SPEECH) {
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_SPEECH) {
     message("Skipping support for speech output (manual override from user_config.pri)")
 } else:LinuxBuild {
 	exists(/usr/include/espeak) | exists(/usr/local/include/espeak) {

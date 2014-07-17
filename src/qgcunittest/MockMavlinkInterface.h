@@ -21,34 +21,24 @@
  
  ======================================================================*/
 
-#include "MockUAS.h"
+#include <QObject>
 
-QString MockUAS::_bogusStaticString;
+#include "QGCMAVLink.h"
+#include "LinkInterface.h"
 
-MockUAS::MockUAS(void) :
-    _systemType(MAV_TYPE_QUADROTOR),
-    _systemId(1),
-    _mavlinkPlugin(NULL)
+#ifndef MOCKMAVLINKINTERFACE_H
+#define MOCKMAVLINKINTERFACE_H
+
+class MockMavlinkInterface : public QObject
 {
+    Q_OBJECT
     
-}
+public:
+    virtual void sendMessage(mavlink_message_t message) = 0;
+    
+signals:
+    // link argument will always be NULL
+    void messageReceived(LinkInterface* link, mavlink_message_t message);
+};
 
-void MockUAS::setMockParametersAndSignal(MockQGCUASParamManager::ParamMap_t& map)
-{
-    _paramManager.setMockParameters(map);
-    
-    QMapIterator<QString, QVariant> i(map);
-    while (i.hasNext()) {
-        i.next();
-        emit parameterChanged(_systemId, 0, i.key(), i.value());
-    }
-}
-
-void MockUAS::sendMessage(mavlink_message_t message)
-{
-    if (!_mavlinkPlugin) {
-        Q_ASSERT(false);
-    }
-    
-    _mavlinkPlugin->sendMessage(message);
-}
+#endif

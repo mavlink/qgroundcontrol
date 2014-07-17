@@ -51,7 +51,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>1</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="firmwareTab">
         <layout class="QVBoxLayout" name="firmwareLayout"/>
@@ -988,7 +988,7 @@
        <widget class="QWidget" name="airframeTab">
         <layout class="QHBoxLayout" name="airframeLayout"/>
        </widget>
-       <widget class="QWidget" name="generalTab">
+       <widget class="QWidget" name="tuningTab">
         <property name="font">
          <font>
           <pointsize>16</pointsize>
@@ -996,7 +996,7 @@
           <bold>true</bold>
          </font>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_11">
+        <layout class="QVBoxLayout" name="tuningLayout">
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
@@ -1027,8 +1027,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>21</width>
-                   <height>16</height>
+                   <width>516</width>
+                   <height>1043</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -1082,8 +1082,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>21</width>
-                   <height>16</height>
+                   <width>515</width>
+                   <height>1043</height>
                   </rect>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1151,8 +1151,8 @@
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>16</width>
-                   <height>16</height>
+                   <width>600</width>
+                   <height>1017</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -1264,6 +1264,12 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="flightModeTab">
+        <layout class="QVBoxLayout" name="flightModeLayout"/>
+       </widget>
+       <widget class="QWidget" name="safetyConfigTab">
+        <layout class="QVBoxLayout" name="safetyConfigLayout"/>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -1312,8 +1318,8 @@ Upgrade</string>
           </property>
           <property name="iconSize">
            <size>
-            <width>64</width>
-            <height>64</height>
+            <width>60</width>
+            <height>60</height>
            </size>
           </property>
          </widget>
@@ -1330,8 +1336,8 @@ Config</string>
           </property>
           <property name="iconSize">
            <size>
-            <width>64</width>
-            <height>64</height>
+            <width>60</width>
+            <height>60</height>
            </size>
           </property>
          </widget>
@@ -1354,8 +1360,8 @@ Calibration</string>
           </property>
           <property name="iconSize">
            <size>
-            <width>64</width>
-            <height>64</height>
+            <width>60</width>
+            <height>60</height>
            </size>
           </property>
          </widget>
@@ -1384,14 +1390,14 @@ Calibration</string>
           </property>
           <property name="iconSize">
            <size>
-            <width>64</width>
-            <height>64</height>
+            <width>60</width>
+            <height>60</height>
            </size>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="generalMenuButton">
+         <widget class="QPushButton" name="flightModeMenuButton">
           <property name="minimumSize">
            <size>
             <width>100</width>
@@ -1399,7 +1405,31 @@ Calibration</string>
            </size>
           </property>
           <property name="text">
-           <string>General
+           <string>Flight Mode
+Config</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/toggle_switch.png</normaloff>:/files/images/px4/menu/toggle_switch.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="safetyConfigButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Safety
 Config</string>
           </property>
           <property name="icon">
@@ -1408,8 +1438,32 @@ Config</string>
           </property>
           <property name="iconSize">
            <size>
-            <width>64</width>
-            <height>64</height>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="tuningMenuButton">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>75</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Controller
+Tuning</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../qgroundcontrol.qrc">
+            <normaloff>:/files/images/px4/menu/cogwheels.png</normaloff>:/files/images/px4/menu/cogwheels.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
            </size>
           </property>
          </widget>
@@ -1432,8 +1486,8 @@ Config</string>
           </property>
           <property name="iconSize">
            <size>
-            <width>64</width>
-            <height>64</height>
+            <width>60</width>
+            <height>60</height>
            </size>
           </property>
          </widget>
