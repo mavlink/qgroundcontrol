@@ -366,7 +366,7 @@ public slots:
      * @brief Specify which setpoints should be sent to the UAS when moving the joystick
      * @param newMode the mode (setpoint type) see the JOYSTICK_MODE enum
      */
-    void setMode(quint8 newMode)
+    void setMode(int newMode)
     {
         mode = (JOYSTICK_MODE)newMode;
     }
