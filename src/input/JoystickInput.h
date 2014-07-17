@@ -251,8 +251,9 @@ signals:
      * @param throttle Throttle, -100%:-1.0, 0%: 0.0, 100%: 1.0. If the roll axis isn't defined, NaN is transmit instead.
      * @param xHat hat vector in forward-backward direction, +1 forward, 0 center, -1 backward
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
+     * @param mode (setpoint type) see JOYSTICK_MODE enum
      */
-    void joystickChanged(float roll, float pitch, float yaw, float throttle, qint8 xHat, qint8 yHat, quint16 buttons);
+    void joystickChanged(float roll, float pitch, float yaw, float throttle, qint8 xHat, qint8 yHat, quint16 buttons, JOYSTICK_MODE mode);
 
     /**
       * @brief Emit a new value for an axis
