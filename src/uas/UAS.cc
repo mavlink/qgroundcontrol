@@ -2995,29 +2995,57 @@ void UAS::setManualControlCommands(float roll, float pitch, float yaw, float thr
             //const int16_t yawCommand = (int16_t)(yaw * axesScaling);
             //const uint16_t thrustCommand = (uint16_t)(thrust * axesScaling);
 
-
-            uint8_t mode = 3; // for velocity setpoint (OFFBOARD_CONTROL_MODE_DIRECT_VELOCITY)
-
-            // Send the MANUAL_COMMAND message
             mavlink_message_t message;
+
+            //// Send the attitude setpoint external message
+            ////mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            //// send an external attitude setpoint command (rate control disabled)
+            //float attitudeQuaternion[4];
+            //mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
+            //uint8_t typeMask = 0b111; // disable rate control
+            //mavlink_msg_attitude_setpoint_external_pack(mavlink->getSystemId(),
+                    //mavlink->getComponentId(),
+                    //&message,
+                    //QGC::groundTimeUsecs(),
+                    //this->uasId,
+                    //0,
+                    //typeMask,
+                    //attitudeQuaternion,
+                    //0,
+                    //0,
+                    //0,
+                    //thrust
+                    //);
+
+
+            // Send the the force setpoint (local pos sp external message)
             //mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
             // send an external attitude setpoint command (rate control disabled)
-            float attitudeQuaternion[4];
-            mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
-            uint8_t typeMask = 0b111; // disable rate control
-            mavlink_msg_attitude_setpoint_external_pack(mavlink->getSystemId(),
+            float dcm[3][3];
+            mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
+            const float fx = -dcm[0][2];
+            const float fy = -dcm[1][2];
+            const float fz = -dcm[2][2];
+            uint16_t typeMask = 0b0000001000111111; // disable rate control
+            mavlink_msg_local_ned_position_setpoint_external_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
                     QGC::groundTimeUsecs(),
                     this->uasId,
                     0,
+                    MAV_FRAME_LOCAL_NED,
                     typeMask,
-                    attitudeQuaternion,
                     0,
                     0,
                     0,
-                    thrust
+                    0,
+                    0,
+                    0,
+                    fx,
+                    fy,
+                    fz
                     );
+
             sendMessage(message);
 
             // Emit an update in control values to other UI elements, like the HSI display

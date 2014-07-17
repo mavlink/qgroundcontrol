@@ -45,6 +45,9 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     styleChanged(MainWindow::instance()->getStyle());
     connect(MainWindow::instance(), SIGNAL(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)), this, SLOT(styleChanged(MainWindow::QGC_MAINWINDOW_STYLE)));
 
+    // change mode when mode combobox is changed
+    connect(m_ui->joystickModeComboBox, SIGNAL(currentIndexChanged(int)), this->joystick, SLOT(setMode(int)));
+
     // Display the widget above all other windows.
     this->raise();
     this->show();
@@ -67,6 +70,12 @@ void JoystickWidget::initUI()
         {
             m_ui->joystickFrame->setEnabled(true);
         }
+
+        // mode combo box
+        m_ui->joystickModeComboBox->addItem("Attitude");
+        m_ui->joystickModeComboBox->addItem("Position");
+        m_ui->joystickModeComboBox->addItem("Force");
+        m_ui->joystickModeComboBox->setCurrentIndex(joystick->getMode());
 
         // Create the initial UI.
         createUIForJoystick();
