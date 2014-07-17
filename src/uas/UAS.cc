@@ -2978,7 +2978,6 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         manualButtons = buttons;
 
         mavlink_message_t message;
-        qDebug() << "js mode" << joystickMode;
 
         if (joystickMode == JoystickInput::JOYSTICK_MODE_ATTITUDE)
         {
