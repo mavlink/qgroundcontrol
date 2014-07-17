@@ -2933,7 +2933,7 @@ void UAS::toggleAutonomy()
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, JoystickInput::JOYSTICK_MODE joystickMode)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8 joystickMode)
 {
     Q_UNUSED(xHat);
     Q_UNUSED(yHat);
@@ -2978,6 +2978,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
         manualButtons = buttons;
 
         mavlink_message_t message;
+        qDebug() << "js mode" << joystickMode;
 
         if (joystickMode == JoystickInput::JOYSTICK_MODE_ATTITUDE)
         {

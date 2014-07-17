@@ -96,8 +96,8 @@ public:
     enum JOYSTICK_MODE
     {
         JOYSTICK_MODE_ATTITUDE     = 0,
-        JOYSTICK_MODE_POSITION      = 1,
-        JOYSTICK_MODE_FORCE    = 2,
+        JOYSTICK_MODE_POSITION     = 1,
+        JOYSTICK_MODE_FORCE        = 2
     };
 
     /**
@@ -253,7 +253,7 @@ signals:
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
      * @param mode (setpoint type) see JOYSTICK_MODE enum
      */
-    void joystickChanged(float roll, float pitch, float yaw, float throttle, qint8 xHat, qint8 yHat, quint16 buttons, JOYSTICK_MODE mode);
+    void joystickChanged(float roll, float pitch, float yaw, float throttle, qint8 xHat, qint8 yHat, quint16 buttons, quint8 mode);
 
     /**
       * @brief Emit a new value for an axis
@@ -366,7 +366,7 @@ public slots:
      * @brief Specify which setpoints should be sent to the UAS when moving the joystick
      * @param newMode the mode (setpoint type) see the JOYSTICK_MODE enum
      */
-    void setMode(int newMode)
+    void setMode(quint8 newMode)
     {
         mode = (JOYSTICK_MODE)newMode;
     }
