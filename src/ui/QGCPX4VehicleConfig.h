@@ -40,7 +40,9 @@ public:
 public slots:
     void rcMenuButtonClicked();
     void sensorMenuButtonClicked();
-    void generalMenuButtonClicked();
+    void tuningMenuButtonClicked();
+    void flightModeMenuButtonClicked();
+    void safetyConfigMenuButtonClicked();
     void advancedMenuButtonClicked();
     void airframeMenuButtonClicked();
     void firmwareMenuButtonClicked();
