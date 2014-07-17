@@ -72,6 +72,7 @@ void JoystickInput::loadGeneralSettings()
     settings.beginGroup("JOYSTICK_INPUT");
     isEnabled = settings.value("ENABLED", false).toBool();
     joystickName = settings.value("JOYSTICK_NAME", "").toString();
+    mode = (JOYSTICK_MODE)settings.value("JOYSTICK_MODE", JOYSTICK_MODE_ATTITUDE).toInt();
     settings.endGroup();
 }
 
@@ -182,6 +183,7 @@ void JoystickInput::storeGeneralSettings() const
     settings.beginGroup("JOYSTICK_INPUT");
     settings.setValue("ENABLED", isEnabled);
     settings.setValue("JOYSTICK_NAME", joystickName);
+    settings.setValue("JOYSTICK_MODE", mode);
     settings.endGroup();
     settings.sync();
 }

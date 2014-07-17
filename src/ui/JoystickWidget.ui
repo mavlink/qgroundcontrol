@@ -68,6 +68,9 @@
     </widget>
    </item>
    <item>
+    <widget class="QComboBox" name="joystickModeComboBox"/>
+   </item>
+   <item>
     <widget class="QFrame" name="joystickFrame">
      <property name="enabled">
       <bool>false</bool>

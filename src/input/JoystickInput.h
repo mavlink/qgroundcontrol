@@ -90,6 +90,17 @@ public:
     };
 
     /**
+     * @brief The JOYSTICK_MODE enum stores the values for each item in the mode combobox.
+     * This should match the order of items in the mode combobox in JoystickWidget.ui.
+     */
+    enum JOYSTICK_MODE
+    {
+        JOYSTICK_MODE_ATTITUDE     = 0,
+        JOYSTICK_MODE_POSITION      = 1,
+        JOYSTICK_MODE_FORCE    = 2,
+    };
+
+    /**
      * @brief Load joystick-specific settings.
      */
     void loadJoystickSettings();
@@ -162,6 +173,11 @@ public:
         return numJoysticks;
     }
 
+    JOYSTICK_MODE getMode() const
+    {
+        return mode;
+    }
+
     QString getJoystickNameById(int id) const
     {
         return QString(SDL_JoystickName(id));
@@ -202,6 +218,9 @@ protected:
     int joystickID;
     int joystickNumAxes;
     int joystickNumButtons;
+
+    // mode of joystick (attitude, position, force, ... (see JOYSTICK_MODE enum))
+    JOYSTICK_MODE mode;
 
     // Track axis/button settings based on a Joystick/AutopilotType/SystemType triplet.
     // This is only a double-map, because settings are stored/loaded based on joystick
@@ -341,6 +360,15 @@ public slots:
      * @param action The numeric ID of the action for this UAS to map to.
      */
     void setButtonAction(int button, int action);
+
+    /**
+     * @brief Specify which setpoints should be sent to the UAS when moving the joystick
+     * @param newMode the mode (setpoint type) see the JOYSTICK_MODE enum
+     */
+    void setMode(int newMode)
+    {
+        mode = (JOYSTICK_MODE)newMode;
+    }
 };
 
 #endif // _JOYSTICKINPUT_H_
