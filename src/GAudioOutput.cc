@@ -46,9 +46,6 @@ This file is part of the QGROUNDCONTROL project
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
-
-//using System;
-//using System.Speech.Synthesis;
 #endif
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
@@ -121,17 +118,10 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
         if (SUCCEEDED(hr))
         {
-            //hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
-            //pVoice->Release();
-            //pVoice = NULL;
         }
     }
 
 #endif
-    // Initialize audio output
-    //m_media = new Phonon::MediaObject(this);
-    //Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-    //createPath(m_media, audioOutput);
 
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
@@ -245,7 +235,8 @@ void GAudioOutput::notifyPositive()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/double_notify.wav"));
+        // FIXME: Get working with Qt5's QtMultimedia module
+        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/double_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -256,7 +247,8 @@ void GAudioOutput::notifyNegative()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/flat_notify.wav"));
+        // FIXME: Get working with Qt5's QtMultimedia module
+        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/flat_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -306,7 +298,7 @@ void GAudioOutput::beep()
 {
     if (!muted)
     {
-        // TODO: Re-enable audio beeps
+        // FIXME: Re-enable audio beeps
         // Use QFile to transform path for all OS
         //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
         //qDebug() << "FILE:" << f.fileName();
@@ -318,6 +310,7 @@ void GAudioOutput::beep()
 void GAudioOutput::selectFemaleVoice()
 {
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+    // FIXME: Enable selecting a female voice on all platforms
     //this->voice = register_cmu_us_slt(NULL);
 #endif
 }
@@ -325,20 +318,14 @@ void GAudioOutput::selectFemaleVoice()
 void GAudioOutput::selectMaleVoice()
 {
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+    // FIXME: Enable selecting a male voice on all platforms
     //this->voice = register_cmu_us_rms(NULL);
 #endif
 }
 
-/*
-void GAudioOutput::selectNeutralVoice()
-{
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    this->voice = register_cmu_us_awb(NULL);
-#endif
-}*/
-
 QStringList GAudioOutput::listVoices(void)
 {
+    // No voice selection is currently supported, so just return an empty list
     QStringList l;
     return l;
 }
