@@ -108,7 +108,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
     if (FAILED(::CoInitialize(NULL)))
     {
-        qDebug("Creating COM object for audio output failed!");
+        qDebug() << "ERROR: Creating COM object for audio output failed!";
     }
 
     else
@@ -116,8 +116,9 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
         HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
 
-        if (SUCCEEDED(hr))
+        if (FAILED(hr))
         {
+            qDebug() << "ERROR: Initializing voice for audio output failed!");
         }
     }
 
