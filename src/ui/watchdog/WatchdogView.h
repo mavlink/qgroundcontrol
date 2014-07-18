@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef WATCHDOGVIEW_H
 #define WATCHDOGVIEW_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 
 namespace Ui
 {

@@ -448,7 +448,7 @@ bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpS
     
     _sendRequest(&request);
     
-    return TRUE;
+    return true;
 }
 
 /// @brief Starts the ack timeout timer

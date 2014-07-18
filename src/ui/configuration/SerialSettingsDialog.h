@@ -37,7 +37,7 @@ This file is part of the APM_PLANNER project
 #define SETTINGSDIALOG_H
 
 #include <QDialog>
-#include <qserialport.h>
+#include <QSerialPort>
 
 namespace Ui {
 class SettingsDialog;

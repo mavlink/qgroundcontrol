@@ -4,6 +4,8 @@
 #include "MouseParameters.h"
 
 #include <QWidget>
+#include <QByteArray>
+#include <QAbstractNativeEventFilter>
 #include <vector>
 #include <map>
 
@@ -32,12 +34,13 @@
 	Qt is compiled for Win 2000 targets.
 */
 
-class Mouse3DInput : public QObject
+class Mouse3DInput : public QAbstractNativeEventFilter, public QObject
 {
 	Q_OBJECT
 public:
 		Mouse3DInput(QWidget* widget);
 		~Mouse3DInput();
+virtual	bool		nativeEventFilter(const QByteArray& eventType, void* msg, long* result);
 
 static	bool		Is3dmouseAttached();
 
@@ -58,7 +61,6 @@ private:
 
 		bool		InitializeRawInput(HWND hwndTarget);
 
-static	bool		RawInputEventFilter(void* msg, long* result);
 
 		void		OnRawInput(UINT nInputCode, HRAWINPUT hRawInput);
 		UINT		GetRawInputBuffer(PRAWINPUT pData, PUINT pcbSize, UINT cbSizeHeader);

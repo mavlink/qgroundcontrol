@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef PARAMETERINTERFACE_H
 #define PARAMETERINTERFACE_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 
 #include "ui_ParameterInterface.h"
 #include "UASInterface.h"

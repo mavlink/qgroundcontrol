@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef HSIDISPLAY_H
 #define HSIDISPLAY_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QColor>
 #include <QTimer>
 #include <QMap>

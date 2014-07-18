@@ -33,7 +33,7 @@ QGCStatusBar::QGCStatusBar(QWidget *parent) :
     toggleLoggingButton(NULL),
     player(NULL),
     changed(true),
-    lastLogDirectory(QDesktopServices::storageLocation(QDesktopServices::DesktopLocation))
+    lastLogDirectory(QStandardPaths::writableLocation(QStandardPaths::DesktopLocation))
 {
     setObjectName("QGC_STATUSBAR");
 

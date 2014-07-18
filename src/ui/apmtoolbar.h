@@ -2,16 +2,16 @@
 #define APMTOOLBAR_H
 
 #include <QAction>
-#include <QDeclarativeView>
+#include <QQuickView>
 #include "UASInterface.h"
 
 class LinkInterface;
 
-class APMToolBar : public QDeclarativeView
+class APMToolBar : public QQuickView
 {
     Q_OBJECT
 public:
-    explicit APMToolBar(QWidget *parent = 0);
+    explicit APMToolBar();
     ~APMToolBar();
 
     void setFlightViewAction(QAction *action);

@@ -28,6 +28,7 @@
 #define MAPGRAPHICITEM_H
 
 #include <QGraphicsItem>
+#include <QGraphicsSceneMouseEvent>
 #include "../internals/core.h"
 //#include "../internals/point.h"
 #include "../core/diagnostics.h"

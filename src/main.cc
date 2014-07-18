@@ -28,7 +28,7 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include <QtGui/QApplication>
+#include <QApplication>
 #include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
@@ -52,10 +52,10 @@ This file is part of the QGROUNDCONTROL project
 
 /// @brief Message handler which is installed using qInstallMsgHandler so you do not need
 /// the MSFT debug tools installed to see qDebug(), qWarning(), qCritical and qAbort
-void msgHandler( QtMsgType type, const char* msg )
+void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     const char symbols[] = { 'I', 'E', '!', 'X' };
-    QString output = QString("[%1] %2").arg( symbols[type] ).arg( msg );
+    QString output = QString("[%1] in %2:%3 - \"%2\"").arg(symbols[type]).arg(context.file).arg(context.line).arg(msg);
     std::cerr << output.toStdString() << std::endl;
     if( type == QtFatalMsg ) abort();
 }
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 
     // install the message handler
 #ifdef Q_OS_WIN
-    qInstallMsgHandler( msgHandler );
+    qInstallMessageHandler(msgHandler);
 #endif
 
     // The following calls to qRegisterMetaType are done to silence debug output which warns

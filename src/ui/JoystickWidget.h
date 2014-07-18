@@ -31,7 +31,7 @@ This file is part of the PIXHAWK project
 #ifndef JOYSTICKWIDGET_H
 #define JOYSTICKWIDGET_H
 
-#include <QtGui/QDialog>
+#include <QDialog>
 #include <QLabel>
 #include <QMap>
 #include "JoystickInput.h"

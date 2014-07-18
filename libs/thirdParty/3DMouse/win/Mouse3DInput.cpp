@@ -119,8 +119,9 @@ unsigned short HidToVirtualKey(unsigned long pid, unsigned short hidKeyCode)
 
 static Mouse3DInput* gMouseInput = 0;
 
-bool Mouse3DInput::RawInputEventFilter(void* msg, long* result)
+bool Mouse3DInput::nativeEventFilter(const QByteArray &eventType, void* msg, long* result)
 {
+    Q_UNUSED(eventType);
 	if (gMouseInput == 0) return false;
 
 	MSG* message = (MSG*)(msg);
@@ -143,10 +144,10 @@ Mouse3DInput::Mouse3DInput(QWidget* widget) :
 {
 	fLast3dmouseInputTime = 0;
 
-	InitializeRawInput(widget->winId());
+	InitializeRawInput((HWND)widget->winId());
 
 	gMouseInput = this;
-	qApp->setEventFilter(Mouse3DInput::RawInputEventFilter);
+	qApp->installNativeEventFilter(this);
 }
 
 Mouse3DInput::~Mouse3DInput()

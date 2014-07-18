@@ -12,8 +12,8 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QScrollBar>
+#include <QSerialPort>
 
-#include "qserialport.h"
 #include "ui_ApmFirmwareConfig.h"
 
 class ApmFirmwareConfig : public QWidget
