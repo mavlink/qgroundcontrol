@@ -7,7 +7,7 @@
 
 #include "apmtoolbar.h"
 
-APMToolBar::APMToolBar(QWidget *parent):
+APMToolBar::APMToolBar():
     QQuickView(), m_uas(0)
 {
     // Configure our QML object

@@ -11,7 +11,7 @@ class APMToolBar : public QQuickView
 {
     Q_OBJECT
 public:
-    explicit APMToolBar(QWidget *parent = 0);
+    explicit APMToolBar();
     ~APMToolBar();
 
     void setFlightViewAction(QAction *action);
