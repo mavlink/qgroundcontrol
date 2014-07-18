@@ -263,7 +263,7 @@ void MainWindow::init()
     if (getCustomMode() == CUSTOM_MODE_APM) {
         // Add the APM 'toolbar'
 
-        APMToolBar *apmToolBar = new APMToolBar(this);
+        APMToolBar *apmToolBar = new APMToolBar();
         apmToolBar->setFlightViewAction(ui.actionFlightView);
         apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
         apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
