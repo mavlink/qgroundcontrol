@@ -32,21 +32,21 @@ linux {
         message("Linux build")
         CONFIG += LinuxBuild
     } else {
-        message("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
+        error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
     win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
         message("Windows build")
         CONFIG += WindowsBuild
     } else {
-        message("Unsupported Windows toolchain, only Visual Studio 2010, 2012, and 2013 are supported")
+        error("Unsupported Windows toolchain, only Visual Studio 2010, 2012, and 2013 are supported")
     }
 } else : macx {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
     } else {
-        message("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
+        error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
 } else {
     error("Unsupported build platform, only Linux, Windows, and Mac are supported")
