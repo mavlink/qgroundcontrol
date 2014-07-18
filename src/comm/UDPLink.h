@@ -37,7 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutex>
 #include <QUdpSocket>
 #include <LinkInterface.h>
-#include <configuration.h>
+#include "QGCConfig.h"
 
 class UDPLink : public LinkInterface
 {

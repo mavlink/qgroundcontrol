@@ -37,7 +37,7 @@ This file is part of the APM_PLANNER project
 #include "terminalconsole.h"
 #include "ui_terminalconsole.h"
 #include "console.h"
-#include "configuration.h"
+#include "QGCConfig.h"
 
 #include <QDebug>
 #include <QSettings>
@@ -45,8 +45,8 @@ This file is part of the APM_PLANNER project
 #include <QMessageBox>
 #include <QVBoxLayout>
 #include <QComboBox>
-#include <qserialportinfo.h>
-#include <qserialport.h>
+#include <QSerialPort>
+#include <QSerialPortInfo>
 
 TerminalConsole::TerminalConsole(QWidget *parent) :
     QWidget(parent),

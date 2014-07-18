@@ -150,13 +150,6 @@ else:MacBuild {
 	exists(/usr/include/osg) | exists(/usr/local/include/osg) {
 		message("Including support for OpenSceneGraph")
         CONFIG += OSGDependency
-        exists(/usr/include/osg/osgQt) | exists(/usr/include/osgQt) | exists(/usr/local/include/osg/osgQt) | exists(/usr/local/include/osgQt) {
-            message("Including support for Linux OpenSceneGraph Qt")
-            LIBS += -losgQt
-            DEFINES += QGC_OSG_QT_ENABLED
-        } else {
-            warning("Skipping support for Linux OpenSceneGraph Qt (missing libraries, see README)")
-        }
 	} else {
 		warning("Skipping support for OpenSceneGraph (missing libraries, see README)")
 	}
@@ -258,7 +251,7 @@ else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EAR
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-    CONFIG += qaxcontainer
+    QT += axcontainer
 } else {
     message("Skipping support for Google Earth view (unsupported platform)")
 }
@@ -302,15 +295,7 @@ DEFINES += NOMINMAX
 #
 # [REQUIRED] OPMapControl library from OpenPilot. Provides 2D mapping functionality.
 #
-include(libs/utils/utils_external.pri)
 include(libs/opmapcontrol/opmapcontrol_external.pri)
-
-DEPENDPATH += \
-    libs/utils \
-    libs/utils/src \
-    libs/opmapcontrol \
-    libs/opmapcontrol/src \
-    libs/opmapcontrol/src/mapwidget
 
 INCLUDEPATH += \
     libs/utils \
@@ -323,11 +308,6 @@ INCLUDEPATH += \
 include(libs/qwt.pri)
 DEPENDPATH += libs/qwt
 INCLUDEPATH += libs/qwt
-
-#
-# [REQUIRED] QSerialPort library. Provides serial port wrapper library.
-#
-include(libs/serialport/qserialport.pri)
 
 #
 # [OPTIONAL] XBee wireless support. This is not necessary for basic serial/UART communications.

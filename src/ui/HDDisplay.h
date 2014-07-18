@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef HDDISPLAY_H
 #define HDDISPLAY_H
 
-#include <QtGui/QGraphicsView>
+#include <QGraphicsView>
 #include <QColor>
 #include <QTimer>
 #include <QFontDatabase>

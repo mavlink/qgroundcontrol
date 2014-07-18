@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef _OBJECTDETECTIONVIEW_H_
 #define _OBJECTDETECTIONVIEW_H_
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QResizeEvent>
 #include <QMap>
 #include "UASInterface.h"

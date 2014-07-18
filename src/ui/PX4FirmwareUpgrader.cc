@@ -1,5 +1,5 @@
 #include <QFileDialog>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include <QSettings>
 
 #include "PX4FirmwareUpgrader.h"
@@ -28,7 +28,7 @@ void PX4FirmwareUpgrader::selectFirmwareFile()
 {
     QSettings settings;
     QString path = settings.value("PX4_FIRMWARE_PATH",
-                                     QDesktopServices::storageLocation(QDesktopServices::DesktopLocation)).toString();
+                                     QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)).toString();
     const QString widgetFileExtension(".px4");
     QString fileName = QFileDialog::getOpenFileName(this, tr("Specify File Name"),
                        path,

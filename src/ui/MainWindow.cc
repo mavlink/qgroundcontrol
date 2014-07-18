@@ -38,7 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QGCHilLink.h>
 #include <QGCHilConfiguration.h>
 #include <QGCHilFlightGearConfiguration.h>
-#include <QDeclarativeView>
+#include <QQuickView>
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
@@ -263,7 +263,7 @@ void MainWindow::init()
     if (getCustomMode() == CUSTOM_MODE_APM) {
         // Add the APM 'toolbar'
 
-        APMToolBar *apmToolBar = new APMToolBar(this);
+        APMToolBar *apmToolBar = new APMToolBar();
         apmToolBar->setFlightViewAction(ui.actionFlightView);
         apmToolBar->setFlightPlanViewAction(ui.actionMissionView);
         apmToolBar->setHardwareViewAction(ui.actionHardwareConfig);
@@ -272,7 +272,8 @@ void MainWindow::init()
         apmToolBar->setTerminalViewAction(ui.actionTerminalView);
 
         QDockWidget *widget = new QDockWidget(tr("APM Tool Bar"),this);
-        widget->setWidget(apmToolBar);
+        QWidget *toolbarWidget = QWidget::createWindowContainer(apmToolBar, this);
+        widget->setWidget(toolbarWidget);
         widget->setMinimumHeight(72);
         widget->setMaximumHeight(72);
         widget->setMinimumWidth(1024);
@@ -976,7 +977,7 @@ void MainWindow::createCustomWidget()
 void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
     if (fileName != "") loadCustomWidget(fileName);
 }
 void MainWindow::loadCustomWidget(const QString& fileName, int view)

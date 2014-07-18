@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef DEBUGCONSOLE_H
 #define DEBUGCONSOLE_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QList>
 #include <QByteArray>
 #include <QTimer>
