@@ -1,7 +1,7 @@
 #ifndef SLUGSPADCAMERACONTROL_H
 #define SLUGSPADCAMERACONTROL_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QGraphicsView>
 #include <QMouseEvent>
 #include <QKeyEvent>

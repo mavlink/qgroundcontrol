@@ -1,6 +1,6 @@
 #include "ImageryParamDialog.h"
 
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include <QFileDialog>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -79,7 +79,7 @@ void
 ImageryParamDialog::selectPath(void)
 {
     QString filename = QFileDialog::getExistingDirectory(this, "Imagery path",
-                                                         QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+                                                         QStandardPaths::writableLocation(QStandardPaths::DesktopLocation));
     if (filename.isNull())
     {
         return;

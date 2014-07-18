@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef MAPWIDGET_H
 #define MAPWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QMap>
 #include "qmapcontrol.h"
 #include "UASInterface.h"

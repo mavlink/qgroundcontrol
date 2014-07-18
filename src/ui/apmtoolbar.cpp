@@ -1,13 +1,14 @@
 #include <QDebug>
-#include <QDeclarativeContext>
+#include <QQmlContext>
 #include <QGraphicsObject>
+#include <QQuickItem>
 #include "LinkManager.h"
 #include "MainWindow.h"
 
 #include "apmtoolbar.h"
 
 APMToolBar::APMToolBar(QWidget *parent):
-    QDeclarativeView(parent), m_uas(0)
+    QQuickView(), m_uas(0)
 {
     // Configure our QML object
     
@@ -20,8 +21,8 @@ APMToolBar::APMToolBar(QWidget *parent):
 #else
     setSource(QUrl::fromLocalFile("qml/ApmToolBar.qml"));
 #endif
-    setResizeMode(QDeclarativeView::SizeRootObjectToView);
-    this->rootContext()->setContextProperty("globalObj", this);
+    setResizeMode(QQuickView::SizeRootObjectToView);
+    rootContext()->setContextProperty("globalObj", this);
     connect(LinkManager::instance(),SIGNAL(newLink(LinkInterface*)),
             this, SLOT(updateLinkDisplay(LinkInterface*)));
 
@@ -55,7 +56,7 @@ void APMToolBar::activeUasSet(UASInterface *uas)
 }
 void APMToolBar::armingChanged(bool armed)
 {
-    this->rootObject()->setProperty("armed",armed);
+    rootObject()->setProperty("armed", armed);
 }
 
 void APMToolBar::armingChanged(int sysId, QString armingState)
@@ -161,8 +162,7 @@ void APMToolBar::connectMAV()
 void APMToolBar::setConnection(bool connection)
 {
     // Change the image to represent the state
-    QObject *object = rootObject();
-    object->setProperty("connected", connection);
+    rootObject()->setProperty("connected", connection);
 }
 
 APMToolBar::~APMToolBar()
@@ -200,7 +200,7 @@ void APMToolBar::updateLinkDisplay(LinkInterface* newLink)
     qDebug() << "APMToolBar: updateLinkDisplay";
     QObject *object = rootObject();
 
-    if (newLink && object){
+    if (newLink && rootObject()){
         qint64 baudrate = newLink->getConnectionSpeed();
         object->setProperty("baudrateLabel", QString::number(baudrate));
 

@@ -28,7 +28,7 @@
 #include <QColor>
 #include <QThread>
 
-#include "configuration.h"
+#include "QGCConfig.h"
 
 
 /* Windows fixes */

@@ -33,7 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef WAYPOINTEDITABLEVIEW_H
 #define WAYPOINTEDITABLEVIEW_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include "Waypoint.h"
 #include <iostream>
 

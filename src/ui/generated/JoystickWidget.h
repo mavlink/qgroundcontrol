@@ -11,17 +11,17 @@
 #define JOYSTICKWIDGET_H
 
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
-#include <QtGui/QApplication>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QDial>
-#include <QtGui/QDialog>
-#include <QtGui/QDialogButtonBox>
-#include <QtGui/QGroupBox>
-#include <QtGui/QHeaderView>
-#include <QtGui/QLCDNumber>
-#include <QtGui/QProgressBar>
-#include <QtGui/QSlider>
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QDial>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QGroupBox>
+#include <QHeaderView>
+#include <QLCDNumber>
+#include <QProgressBar>
+#include <QSlider>
 
 QT_BEGIN_NAMESPACE
 

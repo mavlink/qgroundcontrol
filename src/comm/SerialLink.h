@@ -36,11 +36,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QThread>
 #include <QMutex>
 #include <QString>
-#include <configuration.h>
+#include "QGCConfig.h"
 #include "SerialLinkInterface.h"
 
 // We use QSerialPort::SerialPortError in a signal so we must declare it as a meta type
-#include <qserialport.h>
+#include <QSerialPort>
 #include <QMetaType>
 Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
 
@@ -67,7 +67,7 @@ public:
                int stopBits=1);
     ~SerialLink();
 
-    static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
+    static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in QGCConfig.h
 
     /** @brief Get a list of the currently available ports */
     QList<QString> getCurrentPorts();

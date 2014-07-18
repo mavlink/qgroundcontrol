@@ -62,14 +62,13 @@ To build on Mac OSX (10.6 or later):
 - - -
 ### Install SDL
 
-1. Download SDL from:  <http://www.libsdl.org/release/SDL-1.2.14.dmg>
+1. Download SDL 1.2 from:  <http://www.libsdl.org/release/SDL-1.2.14.dmg>
 2. From the SDL disk image, copy the `sdl.framework` bundle to `/Library/Frameworks` directory (if you are not an admin copy to `~/Library/Frameworks`)
 
 ### Install QT
 - - -
-1. Download Qt 4.8+ from: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-mac-opensource-4.8.5.dmg>
+1. Download Qt 5.3 from: <http://download.qt-project.org/official_releases/qt/5.3/5.3.1/qt-opensource-mac-x64-clang-5.3.1.dmg>
 2. Double click the package installer and follow instructions.
-3. If you are building on Mavericks or later you will need to modify /Library/Frameworks/QtCore.framework/Versions/4/Headers/qglobal.h to add the new 10.9 os version number. Search for MAC_OS_X_VERSION_10_8 to find the right spot.
 
 ### Build QGroundControl
 - - -
@@ -82,13 +81,12 @@ To build on Mac OSX (10.6 or later):
 
 # Build on Linux
 
-
 To build on Linux:
 - - -
-1. Install base dependencies (QT + phonon/webkit, SDL)
-  * For Ubuntu: `sudo apt-get install libqt4-dev libphonon-dev libphonon4 phonon-backend-gstreamer qtcreator libsdl1.2-dev build-essential libudev-dev`
-  * For Fedora: `sudo yum install qt qt-creator qt-webkit-devel phonon-devel SDL-devel SDL-static systemd-devel`
-  * For Arch Linux: `pacman -Sy qtwebkit phonon-qt4`
+1. Install base dependencies (QT5.1+, SDL1.2)
+  * For Ubuntu: `sudo apt-get install qtcreator qttools5-dev qtbase5-dev qt5-default qtdeclarative5-dev libqt5serialport5-dev libqt5svg5-dev libqt5webkit5-dev libsdl1.2-dev build-essential libudev-dev`
+  * For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel`
+  * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 
 2. **[OPTIONAL]** Install additional libraries
   * For text-to-speech (espeak)
@@ -97,7 +95,8 @@ To build on Linux:
 	* For Arch Linux: `pacman -Sy espeak`
   * For 3D flight view (openscenegraph)
 	* For Ubuntu: `sudo apt-get install libopenscenegraph-dev`
-	* For Fedora: `sudo yum install OpenSceneGraph-qt-devel`
+	* For Fedora: `sudo yum install OpenSceneGraph`
+	* For Arch Linux: `pacman -Sy openscenegraph`
 
 3. Clone the repository
   1. `cd PROJECTS_DIRECTORY`
@@ -124,21 +123,20 @@ To build on Linux:
 # Build on Windows
 - - -
 
-Steps for Visual Studio 2010:
+Only compilation using Visual Studio 2010, 2012, and 2013 are supported.
 
-1. Download and install Visual Studio 2010 Express Edition (free) from here: <http://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx>. Make sure to install VS 2010 SP1 as well to fix a linking error. Download from here: <http://www.microsoft.com/en-us/download/details.aspx?id=23691>.
+1. Download and install Visual Studio Express Edition (free) from here: <http://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx>.
+  * If installing VS2010, make sure to install Service Pack 1, which fixes a linking error: <http://www.microsoft.com/en-us/download/details.aspx?id=23691>.
 
-2. Download and install the Qt libraries for Windows (VS 2010 version) from here: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-win-opensource-4.8.5-vs2010.exe>
+2. Download and install the Qt 5.3 libraries for your version of Visual Studio from here: <http://download.qt-project.org/official_releases/qt/5.3/5.3.1>
 
-3. Go to the QGroundControl folder and then to thirdParty/libxbee and build it following the instructions in win32.README
+3. **[OPTIONAL]** Go to the QGroundControl folder and then to thirdParty/libxbee and build it following the instructions in win32.README
 
-4. Open the Qt Command Prompt program (should be in the Start Menu), navigate to the source folder of QGroundControl and create the Visual Studio project by typing `qmake -tp vc qgroundcontrol.pro`
+4. Open the Qt Command Prompt program from the Start Menu, navigate to the source folder of QGroundControl, and create the Visual Studio project by typing `qmake -tp vc qgroundcontrol.pro`
 
-5. Now start Visual Studio 2010 and load qgroundcontrol.vcxproj.
+5. Now open the generated `qgroundcontrol.vcxproj` file.
 
 6. Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run `qmake -tp vc qgroundcontrol.pro`
-
-7. If you already have VS 2008 that works as well. Download the appropriate Qt from here: <http://download.qt-project.org/official_releases/qt/4.8/4.8.5/qt-win-opensource-4.8.5-vs2008.exe>. And use qgroundcontrol.vcproj instead.
 
 
 ## Repository Layout

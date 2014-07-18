@@ -1,4 +1,5 @@
 #include <QSettings>
+#include <QDesktopWidget>
 
 #include "QGCSettingsWidget.h"
 #include "MainWindow.h"

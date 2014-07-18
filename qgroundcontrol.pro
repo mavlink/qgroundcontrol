@@ -84,11 +84,16 @@ QT += network \
     opengl \
     svg \
     xml \
-    phonon \
     webkit \
+    concurrent \
+    widgets \
+    gui \
+    serialport \
     sql \
-    declarative
-        
+    printsupport \
+    webkitwidgets \
+    quick
+
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
 
@@ -408,7 +413,7 @@ HEADERS += \
     src/ui/linechart/LinechartPlot.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
-    src/configuration.h \
+    src/QGCConfig.h \
     src/ui/uas/UASView.h \
     src/ui/CameraView.h \
     src/comm/MAVLinkSimulationLink.h \

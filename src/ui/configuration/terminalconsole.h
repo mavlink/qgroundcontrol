@@ -39,7 +39,7 @@ This file is part of the APM_PLANNER project
 #include "SerialSettingsDialog.h"
 
 #include <QWidget>
-#include <qserialport.h>
+#include <QSerialPort>
 
 namespace Ui {
 class TerminalConsole;
