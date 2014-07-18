@@ -26,7 +26,7 @@ message(Qt version $$[QT_VERSION])
 linux-g++ | linux-g++-64 {
     message(Linux build)
     CONFIG += LinuxBuild
-} else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 {
+} else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
     message(Windows build)
     CONFIG += WindowsBuild
 } else : macx-clang | macx-llvm {
