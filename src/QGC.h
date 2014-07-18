@@ -33,22 +33,6 @@
 
 /* Windows fixes */
 #ifdef _MSC_VER
-/* Needed define for Eigen */
-//#define NOMINMAX
-#include <limits>
-template<typename T>
-inline bool isnan(T value)
-{
-    return value != value;
-
-}
-
-// requires #include <limits>
-template<typename T>
-inline bool isinf(T value)
-{
-    return (value == std::numeric_limits<T>::infinity() || (-1*value) == std::numeric_limits<T>::infinity()) && std::numeric_limits<T>::has_infinity;
-}
 #elif defined __APPLE__
 #include <cmath>
 #ifndef isnan
