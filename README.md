@@ -56,7 +56,15 @@ QGroundControl can talk to XBee wireless devices using their proprietary protoco
 
 To disable XBee support you may add `DISABLE_XBEE` to the DEFINES argument.
 
-# Build on Mac OSX
+## Building QGroundControl
+
+### Requirements
+QGroundControl requires Qt5.2+ and SDL1.2 at a minimum. Additionally, only the following platform targets are supported:
+  * Windows: Microsoft Visual Studio 2010, 2012, 2013
+  * Linux: gcc, 32- or 64-bit
+  * Mac: LLVM+clang 64-bit
+
+## Build on Mac OSX
 
 To build on Mac OSX (10.6 or later):
 - - -
@@ -79,7 +87,7 @@ To build on Mac OSX (10.6 or later):
 3. Run `make -j4`
 
 
-# Build on Linux
+## Build on Linux
 
 To build on Linux:
 - - -
@@ -120,7 +128,7 @@ To build on Linux:
 6. Run qgroundcontrol
   1. `./release/qgroundcontrol`
 
-# Build on Windows
+## Build on Windows
 - - -
 
 Only compilation using Visual Studio 2010, 2012, and 2013 are supported.
