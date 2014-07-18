@@ -12,8 +12,8 @@
 #include <QDebug>
 #include <QSettings>
 #include <QMutexLocker>
-#include <qserialport.h>
-#include <qserialportinfo.h>
+#include <QSerialPort>
+#include <QSerialPortInfo>
 #include "SerialLink.h"
 #include "LinkManager.h"
 #include "QGC.h"
@@ -612,7 +612,6 @@ qint64 SerialLink::getConnectionSpeed() const
             dataRate = 115200;
             break;
             // Otherwise do nothing.
-        case QSerialPort::UnknownBaud:
         default:
             dataRate = -1;
             break;
@@ -771,7 +770,7 @@ bool SerialLink::setPortName(QString portName)
 bool SerialLink::setBaudRateType(int rateIndex)
 {
 
-  // These minimum and maximum baud rates were based on those enumerated in qserialport.h
+  // These minimum and maximum baud rates were based on those enumerated in <QSerialPort>
     bool result;
     const int minBaud = (int)QSerialPort::Baud1200;
     const int maxBaud = (int)QSerialPort::Baud115200;

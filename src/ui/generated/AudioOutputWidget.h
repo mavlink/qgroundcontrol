@@ -11,14 +11,14 @@
 #define AUDIOOUTPUTWIDGET_H
 
 #include <QtCore/QVariant>
-#include <QtGui/QAction>
-#include <QtGui/QApplication>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QGridLayout>
-#include <QtGui/QHeaderView>
-#include <QtGui/QPushButton>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QWidget>
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QGridLayout>
+#include <QHeaderView>
+#include <QPushButton>
+#include <QSpacerItem>
+#include <QWidget>
 
 QT_BEGIN_NAMESPACE
 

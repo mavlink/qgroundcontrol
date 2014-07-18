@@ -2,6 +2,7 @@
 #define MENUACTIONHELPER_H
 
 #include "MainWindow.h"
+#include <QDockWidget>
 
 class MenuActionHelper : public QObject
 {

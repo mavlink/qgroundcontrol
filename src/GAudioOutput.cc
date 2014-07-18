@@ -46,9 +46,6 @@ This file is part of the QGROUNDCONTROL project
 #if defined _MSC_VER && defined QGC_SPEECH_ENABLED
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
-
-//using System;
-//using System.Speech.Synthesis;
 #endif
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
@@ -111,7 +108,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
     if (FAILED(::CoInitialize(NULL)))
     {
-        qDebug("Creating COM object for audio output failed!");
+        qDebug() << "ERROR: Creating COM object for audio output failed!";
     }
 
     else
@@ -119,19 +116,13 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
         HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
 
-        if (SUCCEEDED(hr))
+        if (FAILED(hr))
         {
-            //hr = pVoice->Speak(L"QGC audio output active!", 0, NULL);
-            //pVoice->Release();
-            //pVoice = NULL;
+            qDebug() << "ERROR: Initializing voice for audio output failed!");
         }
     }
 
 #endif
-    // Initialize audio output
-    m_media = new Phonon::MediaObject(this);
-    Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-    createPath(m_media, audioOutput);
 
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
@@ -187,50 +178,28 @@ bool GAudioOutput::say(QString text, int severity)
         if (!emergency)
         {
 
-#if defined QGC_SPEECH_ENABLED
-#if defined _MSC_VER
-            /*SpeechSynthesizer synth = new SpeechSynthesizer();
-            synth.SelectVoice("Microsoft Anna");
-            synth.SpeakText(text.toStdString().c_str());
-            res = true;*/
-            /*ISpVoice * pVoice = NULL;
-            if (FAILED(::CoInitialize(NULL)))
-            {
-            	qDebug("Creating COM object for audio output failed!");
-            }
-            else
-            {
-            	HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice);
-            	if( SUCCEEDED( hr ) )
-            	{
-            		hr = */pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
-            /*pVoice->WaitUntilDone(5000);
-            pVoice->Release();
-            pVoice = NULL;
-            }
-            }*/
-#endif // _MSC_VER
+#if defined _MSC_VER && defined QGC_SPEECH_ENABLED
+            pVoice->Speak(text.toStdWString().c_str(), SPF_ASYNC, NULL);
 
-#if defined Q_OS_LINUX
+#elif defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
             // Set size of string for espeak: +1 for the null-character
             unsigned int espeak_size = strlen(text.toStdString().c_str()) + 1;
             espeak_Synth(text.toStdString().c_str(), espeak_size, 0, POS_CHARACTER, 0, espeakCHARS_AUTO, NULL, NULL);
-#endif // Q_OS_LINUX
 
-#if defined Q_OS_MAC
+#elif defined Q_OS_MAC && defined QGC_SPEECH_ENABLED
             // Slashes necessary to have the right start to the sentence
             // copying data prevents SpeakString from reading additional chars
             text = "\\" + text;
-            QStdWString str = text.toStdWString();
+            std::wstring str = text.toStdWString();
             unsigned char str2[1024] = {};
             memcpy(str2, text.toLatin1().data(), str.length());
             SpeakString(str2);
             res = true;
-#endif // Q_OS_MAC
 
 #else
+            // Make sure there isn't an unused variable warning when speech output is disabled
             Q_UNUSED(text);
-#endif // QGC_SPEECH_ENABLED
+#endif
         }
 
         return res;
@@ -267,7 +236,8 @@ void GAudioOutput::notifyPositive()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/double_notify.wav"));
+        // FIXME: Get working with Qt5's QtMultimedia module
+        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/double_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -278,7 +248,8 @@ void GAudioOutput::notifyNegative()
     if (!muted)
     {
         // Use QFile to transform path for all OS
-        QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/flat_notify.wav"));
+        // FIXME: Get working with Qt5's QtMultimedia module
+        //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/flat_notify.wav"));
         //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
         //m_media->play();
     }
@@ -328,7 +299,7 @@ void GAudioOutput::beep()
 {
     if (!muted)
     {
-        // TODO: Re-enable audio beeps
+        // FIXME: Re-enable audio beeps
         // Use QFile to transform path for all OS
         //QFile f(QCoreApplication::applicationDirPath() + QString("/files/audio/alert.wav"));
         //qDebug() << "FILE:" << f.fileName();
@@ -340,6 +311,7 @@ void GAudioOutput::beep()
 void GAudioOutput::selectFemaleVoice()
 {
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+    // FIXME: Enable selecting a female voice on all platforms
     //this->voice = register_cmu_us_slt(NULL);
 #endif
 }
@@ -347,20 +319,14 @@ void GAudioOutput::selectFemaleVoice()
 void GAudioOutput::selectMaleVoice()
 {
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
+    // FIXME: Enable selecting a male voice on all platforms
     //this->voice = register_cmu_us_rms(NULL);
 #endif
 }
 
-/*
-void GAudioOutput::selectNeutralVoice()
-{
-#if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
-    this->voice = register_cmu_us_awb(NULL);
-#endif
-}*/
-
 QStringList GAudioOutput::listVoices(void)
 {
+    // No voice selection is currently supported, so just return an empty list
     QStringList l;
     return l;
 }

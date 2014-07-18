@@ -723,7 +723,7 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
 {
     if (event->type() == QMouseEvent::MouseButtonDblClick)
     {
-        QPointF p = screenToMetricBody(event->posF());
+        QPointF p = screenToMetricBody(event->localPos());
         if (!directSending)
         {
             setBodySetpointCoordinateXY(p.x(), p.y());
