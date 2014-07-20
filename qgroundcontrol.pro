@@ -23,17 +23,33 @@ message(Qt version $$[QT_VERSION])
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
-linux-g++ | linux-g++-64 {
-    message(Linux build)
-    CONFIG += LinuxBuild
-} else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
-    message(Windows build)
-    CONFIG += WindowsBuild
-} else : macx-clang | macx-llvm {
-    message(Mac build)
-    CONFIG += MacBuild
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 1) {
+    error("Unsupported Qt version, 5.2+ is required")
+}
+
+linux {
+    linux-g++ | linux-g++-64 {
+        message("Linux build")
+        CONFIG += LinuxBuild
+    } else {
+        error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
+    }
+} else : win32 {
+    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
+        message("Windows build")
+        CONFIG += WindowsBuild
+    } else {
+        error("Unsupported Windows toolchain, only Visual Studio 2010, 2012, and 2013 are supported")
+    }
+} else : macx {
+    macx-clang | macx-llvm {
+        message("Mac build")
+        CONFIG += MacBuild
+    } else {
+        error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
+    }
 } else {
-    error(Unsupported build type)
+    error("Unsupported build platform, only Linux, Windows, and Mac are supported")
 }
 
 # Installer configuration
