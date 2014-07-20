@@ -308,6 +308,16 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
             }
 
+            if(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS)
+            {
+                // process telemetry status message
+                mavlink_radio_status_t rstatus;
+                mavlink_msg_radio_status_decode(&message, &rstatus);
+
+                emit radioStatusChanged(link, rstatus.rxerrors, rstatus.fixed, rstatus.rssi, rstatus.remrssi,
+                    rstatus.txbuf, rstatus.noise, rstatus.remnoise);
+            }
+
 #if defined(QGC_PROTOBUF_ENABLED)
 
             if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
