@@ -140,13 +140,6 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
-	# Specify that the Unicode versions of string functions should be used in the Windows API.
-	# Without this the utils and qserialport libraries crash.
-	DEFINES += UNICODE
-
-	# QWebkit is not needed on MS-Windows compilation environment
-	CONFIG -= webkit
-
 	RC_FILE = $$BASEDIR/qgroundcontrol.rc
 }
 
@@ -176,7 +169,7 @@ WindowsBuild {
 }
 
 #
-# Build flavor specific settings
+# Build-specific settings
 #
 
 DebugBuild {
@@ -187,47 +180,10 @@ ReleaseBuild {
     DEFINES += QT_NO_DEBUG
 
 	WindowsBuild {
-		# Use link time code generation for beteer optimization (I believe this is supported in msvc express, but not 100% sure)
+		# Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
 		QMAKE_LFLAGS_LTCG = /LTCG
 		QMAKE_CFLAGS_LTCG = -GL
     }
-}
-
-#
-# Unit Test specific configuration goes here (debug only)
-#
-
-DebugBuild {
-    INCLUDEPATH += \
-        src/qgcunittest
-
-    HEADERS += \
-        src/qgcunittest/AutoTest.h \
-        src/qgcunittest/UASUnitTest.h \
-        src/qgcunittest/MockUASManager.h \
-        src/qgcunittest/MockUAS.h \
-        src/qgcunittest/MockQGCUASParamManager.h \
-        src/qgcunittest/MockMavlinkInterface.h \
-        src/qgcunittest/MockMavlinkFileServer.h \
-        src/qgcunittest/MultiSignalSpy.h \
-        src/qgcunittest/FlightModeConfigTest.h \
-        src/qgcunittest/FlightGearTest.h \
-        src/qgcunittest/TCPLinkTest.h \
-        src/qgcunittest/TCPLoopBackServer.h \
-        src/qgcunittest/QGCUASFileManagerTest.h
-
-    SOURCES += \
-        src/qgcunittest/UASUnitTest.cc \
-        src/qgcunittest/MockUASManager.cc \
-        src/qgcunittest/MockUAS.cc \
-        src/qgcunittest/MockQGCUASParamManager.cc \
-        src/qgcunittest/MockMavlinkFileServer.cc \
-        src/qgcunittest/MultiSignalSpy.cc \
-        src/qgcunittest/FlightModeConfigTest.cc \
-        src/qgcunittest/FlightGearTest.cc \
-        src/qgcunittest/TCPLinkTest.cc \
-        src/qgcunittest/TCPLoopBackServer.cc \
-        src/qgcunittest/QGCUASFileManagerTest.cc
 }
 
 #
@@ -790,3 +746,41 @@ SOURCES += \
     src/uas/QGCUASWorker.cc \
     src/CmdLineOptParser.cc \
     src/uas/QGXPX4UAS.cc
+
+#
+# Unit Test specific configuration goes here
+#
+# FIXME: These files should only be enabled on the Debug build, but that is currently broken as of Qt5.3.1 on Windows,
+#        so we just always compile them.
+#ReleaseBuild {
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/qgcunittest/AutoTest.h \
+        src/qgcunittest/UASUnitTest.h \
+        src/qgcunittest/MockUASManager.h \
+        src/qgcunittest/MockUAS.h \
+        src/qgcunittest/MockQGCUASParamManager.h \
+        src/qgcunittest/MockMavlinkInterface.h \
+        src/qgcunittest/MockMavlinkFileServer.h \
+        src/qgcunittest/MultiSignalSpy.h \
+        src/qgcunittest/FlightModeConfigTest.h \
+        src/qgcunittest/FlightGearTest.h \
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/TCPLoopBackServer.h \
+        src/qgcunittest/QGCUASFileManagerTest.h
+
+    SOURCES += \
+        src/qgcunittest/UASUnitTest.cc \
+        src/qgcunittest/MockUASManager.cc \
+        src/qgcunittest/MockUAS.cc \
+        src/qgcunittest/MockQGCUASParamManager.cc \
+        src/qgcunittest/MockMavlinkFileServer.cc \
+        src/qgcunittest/MultiSignalSpy.cc \
+        src/qgcunittest/FlightModeConfigTest.cc \
+        src/qgcunittest/FlightGearTest.cc \
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/TCPLoopBackServer.cc \
+        src/qgcunittest/QGCUASFileManagerTest.cc
+#}

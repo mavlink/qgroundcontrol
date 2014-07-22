@@ -17,7 +17,7 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-QMAKE_POST_LINK += $$quote(echo "Copying files")
+QMAKE_POST_LINK += echo "Copying files"
 
 #
 # Copy the application resources to the associated place alongside the application
@@ -38,9 +38,9 @@ WindowsBuild {
     # Make sure to keep both side of this if using the same set of directories
 	DESTDIR_COPY_RESOURCE_LIST = $$replace(DESTDIR,"/","\\")
 	BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$BASEDIR_COPY_RESOURCE_LIST\\files $$DESTDIR_COPY_RESOURCE_LIST\\files
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$BASEDIR_COPY_RESOURCE_LIST\\qml $$DESTDIR_COPY_RESOURCE_LIST\\qml
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR $$BASEDIR_COPY_RESOURCE_LIST\\data $$DESTDIR_COPY_RESOURCE_LIST\\data
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\files\" \"$$DESTDIR_COPY_RESOURCE_LIST\\files\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\qml\" \"$$DESTDIR_COPY_RESOURCE_LIST\\qml\"
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\data\" \"$$DESTDIR_COPY_RESOURCE_LIST\\data\"
 } else {
     # Make sure to keep both side of this if using the same set of directories
     QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/files $$DESTDIR_COPY_RESOURCE_LIST
@@ -155,44 +155,62 @@ MacBuild {
 }
 
 WindowsBuild {
-	BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
-	DESTDIR_WIN = $$replace(DESTDIR,"/","\\")
+	BASEDIR_WIN = $$replace(BASEDIR, "/", "\\")
+	DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
+	D_DIR = $$[QT_INSTALL_LIBEXECS]
+	DLL_DIR = $$replace(D_DIR, "/", "\\")
+	P_DIR = $$[QT_INSTALL_PLUGINS]
+	PLUGIN_DIR = $$replace(P_DIR, "/", "\\")
 
 	# Copy dependencies
 
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY_DIR "$$(QTDIR)\\plugins" "$$DESTDIR_WIN")
-
-    COPY_FILE_DESTDIR = $$DESTDIR_WIN
 	DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
-        $$BASEDIR_WIN\\libs\\lib\\sdl\\win32\\SDL.dll \
-        $$BASEDIR_WIN\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
-        $$(QTDIR)\\bin\\phonon$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtCore$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtGui$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtMultimedia$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtNetwork$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtOpenGL$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtSql$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtSvg$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtTest$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtWebKit$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtXml$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtXmlPatterns$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtDeclarative$${DLL_QT_DEBUGCHAR}4.dll \
-        $$(QTDIR)\\bin\\QtScript$${DLL_QT_DEBUGCHAR}4.dll
+        $$BASEDIR\\libs\\lib\\sdl\\win32\\SDL.dll \
+        $$BASEDIR\\libs\\thirdParty\\libxbee\\lib\\libxbee.dll \
+        $$DLL_DIR\\icu*.dll \
+        $$DLL_DIR\\Qt5Core$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Gui$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Multimedia$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5MultimediaWidgets$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Network$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5OpenGL$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Positioning$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5PrintSupport$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Qml$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Quick$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Sensors$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5SerialPort$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5OpenGL$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Sql$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Svg$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Test$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5WebKit$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5WebKitWidgets$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Widgets$${DLL_QT_DEBUGCHAR}.dll \
+        $$DLL_DIR\\Qt5Xml$${DLL_QT_DEBUGCHAR}.dll
     for(COPY_FILE, COPY_FILE_LIST) {
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY "$$COPY_FILE" "$$COPY_FILE_DESTDIR")
+		QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
 
 	ReleaseBuild {
 		# Copy Visual Studio DLLs
 		# Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
-		# This currently only works for VS2010.
 		win32-msvc2010 {
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY "C:\\Windows\\System32\\msvcp100.dll"  "$$DESTDIR_WIN\\")
-			QMAKE_POST_LINK += $$escape_expand(\\n) $$quote($$QMAKE_COPY "C:\\Windows\\System32\\msvcr100.dll"  "$$DESTDIR_WIN\\")
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp100.dll\"  \"$$DESTDIR_WIN\"
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr100.dll\"  \"$$DESTDIR_WIN\"
+		}
+		else:win32-msvc2012 {
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp110.dll\"  \"$$DESTDIR_WIN\"
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr110.dll\"  \"$$DESTDIR_WIN\"
+		}
+		else:win32-msvc2013 {
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp120.dll\"  \"$$DESTDIR_WIN\"
+			QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr120.dll\"  \"$$DESTDIR_WIN\"
+		}
+		else {
+			error("Visual studio version not supported, installation cannot be completed.")
 		}
 	}
 }
