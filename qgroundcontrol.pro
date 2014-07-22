@@ -108,8 +108,7 @@ QT += network \
     sql \
     printsupport \
     webkitwidgets \
-    quick \
-    quickwidgets
+    quick
 
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
@@ -125,8 +124,9 @@ MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
     CONFIG += x86_64
     CONFIG -= x86
-	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-	ICON = $$BASEDIR/files/images/icons/macx.icns
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    ICON = $$BASEDIR/files/images/icons/macx.icns
+    QT += quickwidgets
 }
 
 LinuxBuild {
