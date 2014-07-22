@@ -34,7 +34,7 @@
 	Qt is compiled for Win 2000 targets.
 */
 
-class Mouse3DInput : public QAbstractNativeEventFilter, public QObject
+class Mouse3DInput : public QObject, public QAbstractNativeEventFilter
 {
 	Q_OBJECT
 public:
