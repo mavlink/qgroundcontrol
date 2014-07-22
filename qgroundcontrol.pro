@@ -140,13 +140,6 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
-	# Specify that the Unicode versions of string functions should be used in the Windows API.
-	# Without this the utils and qserialport libraries crash.
-	DEFINES += UNICODE
-
-	# QWebkit is not needed on MS-Windows compilation environment
-	CONFIG -= webkit
-
 	RC_FILE = $$BASEDIR/qgroundcontrol.rc
 }
 
@@ -176,7 +169,7 @@ WindowsBuild {
 }
 
 #
-# Build flavor specific settings
+# Build-specific settings
 #
 
 DebugBuild {
@@ -187,7 +180,7 @@ ReleaseBuild {
     DEFINES += QT_NO_DEBUG
 
 	WindowsBuild {
-		# Use link time code generation for beteer optimization (I believe this is supported in msvc express, but not 100% sure)
+		# Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
 		QMAKE_LFLAGS_LTCG = /LTCG
 		QMAKE_CFLAGS_LTCG = -GL
     }

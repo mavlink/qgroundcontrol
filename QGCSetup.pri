@@ -17,7 +17,7 @@
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 # -------------------------------------------------
 
-QMAKE_POST_LINK += $$quote(echo "Copying files")
+QMAKE_POST_LINK += echo "Copying files"
 
 #
 # Copy the application resources to the associated place alongside the application
