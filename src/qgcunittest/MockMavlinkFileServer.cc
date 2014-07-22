@@ -97,6 +97,7 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
     
     size_t cchPath = strnlen((char *)request->data, sizeof(request->data));
     Q_ASSERT(cchPath != sizeof(request->data));
+    Q_UNUSED(connected); // Fix initialized-but-not-referenced warning on release builds
     path = (char *)request->data;
     
     // Check path against one of our known test cases

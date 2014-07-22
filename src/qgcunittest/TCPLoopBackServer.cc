@@ -45,6 +45,7 @@ void TCPLoopBackServer::run(void)
 
     bool connected = QObject::connect(_tcpServer, SIGNAL(newConnection()), this, SLOT(_newConnection()));
     Q_ASSERT(connected);
+    Q_UNUSED(connected); // Fix initialized-but-not-referenced warning on release builds
 
     Q_ASSERT(_tcpServer->listen(_hostAddress, _port));
 
@@ -59,6 +60,7 @@ void TCPLoopBackServer::_newConnection(void)
     Q_ASSERT(_tcpSocket);
     bool connected = QObject::connect(_tcpSocket, SIGNAL(readyRead()), this, SLOT(_readBytes()));
     Q_ASSERT(connected);
+    Q_UNUSED(connected); // Fix initialized-but-not-referenced warning on release builds
 }
 
 void TCPLoopBackServer::_readBytes(void)
