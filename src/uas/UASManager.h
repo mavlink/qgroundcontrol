@@ -275,24 +275,6 @@ protected:
 private:
     static UASManagerInterface* _mockUASManager;
 
-signals:
-
-    /** A new system was created */
-    void UASCreated(UASInterface* UAS);
-    /** A system was deleted */
-    void UASDeleted(UASInterface* UAS);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASSet(UASInterface* UAS);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASSet(int systemId);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASSetListIndex(int listIndex);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASStatusChanged(UASInterface* UAS, bool active);
-    /** @brief The UAS currently under main operator control changed */
-    void activeUASStatusChanged(int systemId, bool active);
-    /** @brief Current home position changed */
-    void homePositionChanged(double lat, double lon, double alt);
 public:
     /* Need to align struct pointer to prevent a memory assertion:
      * See http://eigen.tuxfamily.org/dox-devel/TopicUnalignedArrayAssert.html
