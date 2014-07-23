@@ -73,20 +73,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         uas = px4;
     }
     break;
-    case MAV_AUTOPILOT_SLUGS:
-    {
-        SlugsMAV* mav = new SlugsMAV(mavlink, worker, sysid);
-        // Set the system type
-        mav->setSystemType((int)heartbeat->type);
-
-        // Connect this robot to the UAS object
-        // it is IMPORTANT here to use the right object type,
-        // else the slot of the parent object is called (and thus the special
-        // packets never reach their goal)
-        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-        uas = mav;
-    }
-    break;
     case MAV_AUTOPILOT_ARDUPILOTMEGA:
     {
         ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, worker, sysid);

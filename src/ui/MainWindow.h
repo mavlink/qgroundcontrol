@@ -65,12 +65,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCGoogleEarthView.h"
 #endif
 #include "QGCToolBar.h"
-#include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
 
-#include "SlugsHilSim.h"
-
-#include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
 #include "QGCMAVLinkInspector.h"
 #include "QGCMAVLinkLogPlayer.h"
@@ -463,9 +459,6 @@ protected:
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
     QPointer<QDockWidget> hudDockWidget;
-    QPointer<QDockWidget> slugsDataWidget;
-    QPointer<QDockWidget> slugsHilSimWidget;
-    QPointer<QDockWidget> slugsCamControlWidget;
 
     QPointer<QGCToolBar> toolBar;
     QPointer<QGCStatusBar> customStatusBar;
