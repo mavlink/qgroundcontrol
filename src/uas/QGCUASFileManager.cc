@@ -250,6 +250,11 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         return;
     }
 
+    // XXX: hack to prevent files from videostream to interfere
+    if (message.compid != MAV_COMP_ID_IMU) {
+        return;
+    }
+
     _clearAckTimeout();
 
     mavlink_encapsulated_data_t data;
