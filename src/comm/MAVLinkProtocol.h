@@ -276,6 +276,19 @@ signals:
     void actionGuardChanged(bool enabled);
     /** @brief Emitted if actiion request timeout changed */
     void actionRetransmissionTimeoutChanged(int ms);
+    /**
+     * @brief Emitted if a new radio status packet received
+     *
+     * @param rxerrors receive errors
+     * @param fixed count of error corrected packets
+     * @param rssi local signal strength
+     * @param remrssi remote signal strength
+     * @param txbuf how full the tx buffer is as a percentage
+     * @param noise background noise level
+     * @param remnoise remote background noise level
+     */
+    void radioStatusChanged(LinkInterface* link, unsigned rxerrors, unsigned fixed, unsigned rssi, unsigned remrssi,
+    unsigned txbuf, unsigned noise, unsigned remnoise);
 };
 
 #endif // MAVLINKPROTOCOL_H_

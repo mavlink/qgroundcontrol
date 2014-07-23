@@ -23,17 +23,33 @@ message(Qt version $$[QT_VERSION])
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
-linux-g++ | linux-g++-64 {
-    message(Linux build)
-    CONFIG += LinuxBuild
-} else : win32-msvc2008 | win32-msvc2010 | win32-msvc2012 {
-    message(Windows build)
-    CONFIG += WindowsBuild
-} else : macx-clang | macx-llvm {
-    message(Mac build)
-    CONFIG += MacBuild
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 1) {
+    error("Unsupported Qt version, 5.2+ is required")
+}
+
+linux {
+    linux-g++ | linux-g++-64 {
+        message("Linux build")
+        CONFIG += LinuxBuild
+    } else {
+        error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
+    }
+} else : win32 {
+    win32-msvc2010 | win32-msvc2012 | win32-msvc2013 {
+        message("Windows build")
+        CONFIG += WindowsBuild
+    } else {
+        error("Unsupported Windows toolchain, only Visual Studio 2010, 2012, and 2013 are supported")
+    }
+} else : macx {
+    macx-clang | macx-llvm {
+        message("Mac build")
+        CONFIG += MacBuild
+    } else {
+        error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
+    }
 } else {
-    error(Unsupported build type)
+    error("Unsupported build platform, only Linux, Windows, and Mac are supported")
 }
 
 # Installer configuration
@@ -108,8 +124,9 @@ MacBuild {
     QMAKE_INFO_PLIST = Custom-Info.plist
     CONFIG += x86_64
     CONFIG -= x86
-	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-	ICON = $$BASEDIR/files/images/icons/macx.icns
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    ICON = $$BASEDIR/files/images/icons/macx.icns
+    QT += quickwidgets
 }
 
 LinuxBuild {
@@ -123,13 +140,6 @@ WindowsBuild {
 	# (drastically improves compilation times for multi-core computers)
 	QMAKE_CXXFLAGS_DEBUG += -MP
 	QMAKE_CXXFLAGS_RELEASE += -MP
-
-	# Specify that the Unicode versions of string functions should be used in the Windows API.
-	# Without this the utils and qserialport libraries crash.
-	DEFINES += UNICODE
-
-	# QWebkit is not needed on MS-Windows compilation environment
-	CONFIG -= webkit
 
 	RC_FILE = $$BASEDIR/qgroundcontrol.rc
 }
@@ -160,7 +170,7 @@ WindowsBuild {
 }
 
 #
-# Build flavor specific settings
+# Build-specific settings
 #
 
 DebugBuild {
@@ -171,47 +181,10 @@ ReleaseBuild {
     DEFINES += QT_NO_DEBUG
 
 	WindowsBuild {
-		# Use link time code generation for beteer optimization (I believe this is supported in msvc express, but not 100% sure)
+		# Use link time code generation for better optimization (I believe this is supported in MSVC Express, but not 100% sure)
 		QMAKE_LFLAGS_LTCG = /LTCG
 		QMAKE_CFLAGS_LTCG = -GL
     }
-}
-
-#
-# Unit Test specific configuration goes here (debug only)
-#
-
-DebugBuild {
-    INCLUDEPATH += \
-        src/qgcunittest
-
-    HEADERS += \
-        src/qgcunittest/AutoTest.h \
-        src/qgcunittest/UASUnitTest.h \
-        src/qgcunittest/MockUASManager.h \
-        src/qgcunittest/MockUAS.h \
-        src/qgcunittest/MockQGCUASParamManager.h \
-        src/qgcunittest/MockMavlinkInterface.h \
-        src/qgcunittest/MockMavlinkFileServer.h \
-        src/qgcunittest/MultiSignalSpy.h \
-        src/qgcunittest/FlightModeConfigTest.h \
-        src/qgcunittest/FlightGearTest.h \
-        src/qgcunittest/TCPLinkTest.h \
-        src/qgcunittest/TCPLoopBackServer.h \
-        src/qgcunittest/QGCUASFileManagerTest.h
-
-    SOURCES += \
-        src/qgcunittest/UASUnitTest.cc \
-        src/qgcunittest/MockUASManager.cc \
-        src/qgcunittest/MockUAS.cc \
-        src/qgcunittest/MockQGCUASParamManager.cc \
-        src/qgcunittest/MockMavlinkFileServer.cc \
-        src/qgcunittest/MultiSignalSpy.cc \
-        src/qgcunittest/FlightModeConfigTest.cc \
-        src/qgcunittest/FlightGearTest.cc \
-        src/qgcunittest/TCPLinkTest.cc \
-        src/qgcunittest/TCPLoopBackServer.cc \
-        src/qgcunittest/QGCUASFileManagerTest.cc
 }
 
 #
@@ -774,3 +747,38 @@ SOURCES += \
     src/uas/QGCUASWorker.cc \
     src/CmdLineOptParser.cc \
     src/uas/QGXPX4UAS.cc
+
+#
+# Unit Test specific configuration goes here
+# We'd ideally only build this code as part of a Debug build, but qmake doesn't allow
+# for Debug-only files when generating Visual Studio projects [QTBUG-40351]
+INCLUDEPATH += \
+	src/qgcunittest
+
+HEADERS += \
+	src/qgcunittest/AutoTest.h \
+	src/qgcunittest/UASUnitTest.h \
+	src/qgcunittest/MockUASManager.h \
+	src/qgcunittest/MockUAS.h \
+	src/qgcunittest/MockQGCUASParamManager.h \
+	src/qgcunittest/MockMavlinkInterface.h \
+	src/qgcunittest/MockMavlinkFileServer.h \
+	src/qgcunittest/MultiSignalSpy.h \
+	src/qgcunittest/FlightModeConfigTest.h \
+	src/qgcunittest/FlightGearTest.h \
+	src/qgcunittest/TCPLinkTest.h \
+	src/qgcunittest/TCPLoopBackServer.h \
+	src/qgcunittest/QGCUASFileManagerTest.h
+
+SOURCES += \
+	src/qgcunittest/UASUnitTest.cc \
+	src/qgcunittest/MockUASManager.cc \
+	src/qgcunittest/MockUAS.cc \
+	src/qgcunittest/MockQGCUASParamManager.cc \
+	src/qgcunittest/MockMavlinkFileServer.cc \
+	src/qgcunittest/MultiSignalSpy.cc \
+	src/qgcunittest/FlightModeConfigTest.cc \
+	src/qgcunittest/FlightGearTest.cc \
+	src/qgcunittest/TCPLinkTest.cc \
+	src/qgcunittest/TCPLoopBackServer.cc \
+	src/qgcunittest/QGCUASFileManagerTest.cc

@@ -84,6 +84,7 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("MAV_CMD_MISSION_START", MAV_CMD_MISSION_START);
     ui->editCommandComboBox->addItem("MAV_CMD_COMPONENT_ARM_DISARM", MAV_CMD_COMPONENT_ARM_DISARM);
     ui->editCommandComboBox->addItem("MAV_CMD_NAV_GUIDED_ENABLE", MAV_CMD_NAV_GUIDED_ENABLE);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_FLIGHTTERMINATION", MAV_CMD_DO_FLIGHTTERMINATION);
     ui->editCommandComboBox->setEditable(true);
 
     init();
