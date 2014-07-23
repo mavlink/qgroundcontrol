@@ -1,24 +1,24 @@
 /*=====================================================================
- 
+
  QGroundControl Open Source Ground Control Station
- 
+
  (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- 
+
  This file is part of the QGROUNDCONTROL project
- 
+
  QGROUNDCONTROL is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  QGROUNDCONTROL is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
- 
+
  ======================================================================*/
 
 #include "QGCUASFileManager.h"
@@ -86,14 +86,14 @@ quint32 QGCUASFileManager::crc32(Request* request, unsigned state)
 {
     uint8_t* data = (uint8_t*)request;
     size_t cbData = sizeof(RequestHeader) + request->hdr.size;
-    
+
     // Always calculate CRC with 0 initial CRC value
     quint32 crcSave = request->hdr.crc32;
     request->hdr.crc32 = 0;
-    
+
     for (size_t i=0; i < cbData; i++)
         state = crctab[(state ^ data[i]) & 0xff] ^ (state >> 8);
-    
+
     request->hdr.crc32 = crcSave;
 
     return state;
@@ -104,17 +104,17 @@ void QGCUASFileManager::_openAckResponse(Request* openAck)
 {
     _currentOperation = kCORead;
     _activeSession = openAck->hdr.session;
-    
+
     _readOffset = 0;                // Start reading at beginning of file
     _readFileAccumulator.clear();   // Start with an empty file
-    
+
     Request request;
     request.hdr.magic = 'f';
     request.hdr.session = _activeSession;
     request.hdr.opcode = kCmdRead;
     request.hdr.offset = _readOffset;
     request.hdr.size = sizeof(request.data);
-    
+
     _sendRequest(&request);
 }
 
@@ -124,13 +124,13 @@ void QGCUASFileManager::_closeReadSession(bool success)
 {
     if (success) {
         QString downloadFilePath = _readFileDownloadDir.absoluteFilePath(_readFileDownloadFilename);
-        
+
         QFile file(downloadFilePath);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             _emitErrorMessage(tr("Unable to open local file for writing (%1)").arg(downloadFilePath));
             return;
         }
-        
+
         qint64 bytesWritten = file.write((const char *)_readFileAccumulator, _readFileAccumulator.length());
         if (bytesWritten != _readFileAccumulator.length()) {
             file.close();
@@ -138,10 +138,10 @@ void QGCUASFileManager::_closeReadSession(bool success)
             return;
         }
         file.close();
-        
+
         _emitStatusMessage(tr("Download complete '%1'").arg(downloadFilePath));
     }
-    
+
     // Close the open session
     _sendTerminateCommand();
 }
@@ -155,7 +155,7 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
         _emitErrorMessage(tr("Read: Incorrect session returned"));
         return;
     }
-    
+
     if (readAck->hdr.offset != _readOffset) {
         _currentOperation = kCOIdle;
         _readFileAccumulator.clear();
@@ -164,20 +164,20 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
     }
 
     _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
-    
+
     if (readAck->hdr.size == sizeof(readAck->data)) {
         // Possibly still more data to read, send next read request
-        
+
         _currentOperation = kCORead;
-        
+
         _readOffset += readAck->hdr.size;
-        
+
         Request request;
         request.hdr.magic = 'f';
         request.hdr.session = _activeSession;
         request.hdr.opcode = kCmdRead;
         request.hdr.offset = _readOffset;
-        
+
         _sendRequest(&request);
     } else {
         // We only receieved a partial buffer back. These means we are at EOF
@@ -194,15 +194,15 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
         _emitErrorMessage(tr("List: Offset returned (%1) differs from offset requested (%2)").arg(listAck->hdr.offset).arg(_listOffset));
         return;
     }
-    
+
     uint8_t offset = 0;
     uint8_t cListEntries = 0;
     uint8_t cBytes = listAck->hdr.size;
-    
+
     // parse filenames out of the buffer
     while (offset < cBytes) {
         const char * ptr = ((const char *)listAck->data) + offset;
-        
+
         // get the length of the name
         uint8_t cBytesLeft = cBytes - offset;
         size_t nlen = strnlen(ptr, cBytesLeft);
@@ -221,10 +221,10 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
             // put it in the view
             _emitStatusMessage(ptr);
         }
-    
+
         // account for the name + NUL
         offset += nlen + 1;
-        
+
         cListEntries++;
     }
 
@@ -244,12 +244,17 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
 void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
-    
+
     if (message.msgid != MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
         // wtf, not for us
         return;
     }
-    
+
+    // XXX: hack to prevent files from videostream to interfere
+    if (message.compid != MAV_COMP_ID_IMU) {
+        return;
+    }
+
     _clearAckTimeout();
 
     mavlink_encapsulated_data_t data;
@@ -257,28 +262,28 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     Request* request = (Request*)&data.data[0];
 
     // FIXME: Check CRC
-    
+
     if (request->hdr.opcode == kRspAck) {
-        
+
         switch (_currentOperation) {
             case kCOIdle:
                 // we should not be seeing anything here.. shut the other guy up
                 _sendCmdReset();
                 break;
-                
+
             case kCOAck:
                 // We are expecting an ack back
                 _currentOperation = kCOIdle;
                 break;
-                
+
             case kCOList:
                 _listAckResponse(request);
                 break;
-            
+
             case kCOOpen:
                 _openAckResponse(request);
                 break;
-                
+
             case kCORead:
                 _readAckResponse(request);
                 break;
@@ -289,12 +294,12 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
         }
     } else if (request->hdr.opcode == kRspNak) {
         Q_ASSERT(request->hdr.size == 1); // Should only have one byte of error code
-        
+
         OperationState previousOperation = _currentOperation;
         uint8_t errorCode = request->data[0];
-        
+
         _currentOperation = kCOIdle;
-        
+
         if (previousOperation == kCOList && errorCode == kErrEOF) {
             // This is not an error, just the end of the read loop
             emit listComplete();
@@ -351,9 +356,9 @@ void QGCUASFileManager::_sendListCommand(void)
     request.hdr.session = 0;
     request.hdr.opcode = kCmdList;
     request.hdr.offset = _listOffset;
-    
+
     _fillRequestWithString(&request, _listPath);
-    
+
     _sendRequest(&request);
 }
 
@@ -365,9 +370,9 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
     if (from.isEmpty()) {
         return;
     }
-    
+
     _readFileDownloadDir.setPath(downloadDir.absolutePath());
-    
+
     // We need to strip off the file name from the fully qualified path. We can't use the usual QDir
     // routines because this path does not exist locally.
     int i;
@@ -378,9 +383,9 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
     }
     i++; // move past slash
     _readFileDownloadFilename = from.right(from.size() - i);
-    
+
     emit resetStatusMessages();
-    
+
     _currentOperation = kCOOpen;
 
     Request request;
@@ -436,18 +441,18 @@ bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpS
         // Can't have multiple commands in play at the same time
         return false;
     }
-    
+
     Request request;
     request.hdr.magic = 'f';
     request.hdr.session = 0;
     request.hdr.opcode = opcode;
     request.hdr.offset = 0;
     request.hdr.size = 0;
-    
+
     _currentOperation = newOpState;
-    
+
     _sendRequest(&request);
-    
+
     return true;
 }
 
@@ -455,7 +460,7 @@ bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpS
 void QGCUASFileManager::_setupAckTimeout(void)
 {
     Q_ASSERT(!_ackTimer.isActive());
-    
+
     _ackTimer.setSingleShot(true);
     _ackTimer.start(_ackTimerTimeoutMsecs);
 }
@@ -464,7 +469,7 @@ void QGCUASFileManager::_setupAckTimeout(void)
 void QGCUASFileManager::_clearAckTimeout(void)
 {
     Q_ASSERT(_ackTimer.isActive());
-    
+
     _ackTimer.stop();
 }
 
@@ -513,7 +518,7 @@ void QGCUASFileManager::_emitStatusMessage(const QString& msg)
 void QGCUASFileManager::_sendRequest(Request* request)
 {
     mavlink_message_t message;
-    
+
     _setupAckTimeout();
 
     request->hdr.crc32 = crc32(request);

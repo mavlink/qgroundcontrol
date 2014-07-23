@@ -56,7 +56,15 @@ QGroundControl can talk to XBee wireless devices using their proprietary protoco
 
 To disable XBee support you may add `DISABLE_XBEE` to the DEFINES argument.
 
-# Build on Mac OSX
+## Building QGroundControl
+
+### Requirements
+QGroundControl requires Qt5.2+ and SDL1.2 at a minimum. Additionally, only the following platform targets are supported:
+  * Windows: Microsoft Visual Studio 2010, 2012, 2013
+  * Linux: gcc, 32- or 64-bit
+  * Mac: LLVM+clang 64-bit
+
+## Build on Mac OSX
 
 To build on Mac OSX (10.6 or later):
 - - -
@@ -79,7 +87,7 @@ To build on Mac OSX (10.6 or later):
 3. Run `make -j4`
 
 
-# Build on Linux
+## Build on Linux
 
 To build on Linux:
 - - -
@@ -120,7 +128,7 @@ To build on Linux:
 6. Run qgroundcontrol
   1. `./release/qgroundcontrol`
 
-# Build on Windows
+## Build on Windows
 - - -
 
 Only compilation using Visual Studio 2010, 2012, and 2013 are supported.
@@ -129,8 +137,9 @@ Only compilation using Visual Studio 2010, 2012, and 2013 are supported.
   * If installing VS2010, make sure to install Service Pack 1, which fixes a linking error: <http://www.microsoft.com/en-us/download/details.aspx?id=23691>.
 
 2. Download and install the Qt 5.3 libraries for your version of Visual Studio from here: <http://download.qt-project.org/official_releases/qt/5.3/5.3.1>
+  * The Qt variant should be 32 bit (not 64) and include opengl. For Visual Studio 2013, this could be qt-opensource-windows-x86-msvc2013_opengl-5.3.1.exe for example.
 
-3. **[OPTIONAL]** Go to the QGroundControl folder and then to thirdParty/libxbee and build it following the instructions in win32.README
+3. **[OPTIONAL]** Go to the QGroundControl folder and then to libs/thirdParty/libxbee and build it following the instructions in win32.README.txt
 
 4. Open the Qt Command Prompt program from the Start Menu, navigate to the source folder of QGroundControl, and create the Visual Studio project by typing `qmake -tp vc qgroundcontrol.pro`
 

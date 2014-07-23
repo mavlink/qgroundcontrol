@@ -118,7 +118,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
         if (FAILED(hr))
         {
-            qDebug() << "ERROR: Initializing voice for audio output failed!");
+            qDebug() << "ERROR: Initializing voice for audio output failed!";
         }
     }
 
