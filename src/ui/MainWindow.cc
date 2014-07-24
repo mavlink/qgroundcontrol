@@ -666,7 +666,7 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
     createDockWidget(pilotView, new DebugConsole(this), tr("Communications Console"), "COMMUNICATION_CONSOLE_DOCKWIDGET", VIEW_FLIGHT, Qt::LeftDockWidgetArea);
-    createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
+    //createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
 
     menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
@@ -675,7 +675,7 @@ void MainWindow::buildCommonWidgets()
     createDockWidget(engineeringView,new HUD(320,240,this),tr("Video Downlink"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
 
     createDockWidget(simView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_SIMULATION,Qt::RightDockWidgetArea);
-    createDockWidget(pilotView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
+    createDockWidget(plannerView,new PrimaryFlightDisplay(this),tr("Primary Flight Display"),"PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
     QGCTabbedInfoView *infoview = new QGCTabbedInfoView(this);
     infoview->addSource(mavlinkDecoder);
