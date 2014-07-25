@@ -262,36 +262,6 @@ else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EAR
 }
 
 #
-# [OPTIONAL] Protcol Buffers for PixHawk
-#
-LinuxBuild : contains(MAVLINK_DIALECT, pixhawk) {
-    exists(/usr/local/include/google/protobuf) | exists(/usr/include/google/protobuf) {
-        message("Including support for Protocol Buffers")
-
-        DEFINES += QGC_PROTOBUF_ENABLED
-
-        LIBS += \
-            -lprotobuf \
-            -lprotobuf-lite \
-            -lprotoc
-
-        HEADERS += \
-            libs/mavlink/include/mavlink/v1.0/pixhawk/pixhawk.pb.h \
-            src/ui/map3D/ObstacleGroupNode.h \
-            src/ui/map3D/GLOverlayGeode.h
-
-        SOURCES += \
-            libs/mavlink/share/mavlink/src/v1.0/pixhawk/pixhawk.pb.cc \
-            src/ui/map3D/ObstacleGroupNode.cc \
-            src/ui/map3D/GLOverlayGeode.cc
-    } else {
-        warning("Skipping support for Protocol Buffers (missing libraries, see README)")
-    }
-} else {
-    message("Skipping support for Protocol Buffers (unsupported platform)")
-}
-
-#
 # [REQUIRED] EIGEN matrix library
 # NOMINMAX constant required to make internal min/max work.
 INCLUDEPATH += libs/eigen

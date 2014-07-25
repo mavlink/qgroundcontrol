@@ -97,18 +97,6 @@ public:
     virtual double getPitch() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
     virtual double getYaw() const { Q_ASSERT(false); return std::numeric_limits<double>::quiet_NaN(); };
     virtual bool getSelected() const { Q_ASSERT(false); return false; };
-#if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    virtual px::GLOverlay getOverlay() { Q_ASSERT(false); };
-    virtual px::GLOverlay getOverlay(qreal& receivedTimestamp) { Q_ASSERT(false); };
-    virtual px::ObstacleList getObstacleList() { Q_ASSERT(false); };
-    virtual px::ObstacleList getObstacleList(qreal& receivedTimestamp) { Q_ASSERT(false); };
-    virtual px::Path getPath() { Q_ASSERT(false); };
-    virtual px::Path getPath(qreal& receivedTimestamp) { Q_ASSERT(false); };
-    virtual px::PointCloudXYZRGB getPointCloud() { Q_ASSERT(false); };
-    virtual px::PointCloudXYZRGB getPointCloud(qreal& receivedTimestamp) { Q_ASSERT(false); };
-    virtual px::RGBDImage getRGBDImage() { Q_ASSERT(false); };
-    virtual px::RGBDImage getRGBDImage(qreal& receivedTimestamp) { Q_ASSERT(false); };
-#endif
     virtual bool isArmed() const { Q_ASSERT(false); return false; };
     virtual int getAirframe() const { Q_ASSERT(false); return 0; };
     virtual UASWaypointManager* getWaypointManager(void) { Q_ASSERT(false); return NULL; };
