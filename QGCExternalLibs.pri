@@ -293,13 +293,15 @@ contains(DEFINES, DISABLE_XBEE) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_XBEE) {
     message("Skipping support for native XBee API (manual override from user_config.pri)")
 } else:LinuxBuild {
-	exists(/usr/include/xbee.h) {
+        linux-g++-64 {
+            message("Skipping support for XBee API (64-bit Linux builds not supported)")
+        } else:exists(/usr/include/xbee.h) {
 		message("Including support for XBee API")
 
 		HEADERS += $$XBEE_DEPENDENT_HEADERS
 		SOURCES += $$XBEE_DEPENDENT_SOURCES
 		DEFINES += $$XBEE_DEFINES
-		LIBS += -lxbee
+		LIBS += -L/usr/lib -lxbee
 	} else {
 		warning("Skipping support for XBee API (missing libraries, see README)")
 	}
