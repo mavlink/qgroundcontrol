@@ -1,22 +1,4 @@
 #
-# [REQUIRED] Tell the Linux build to look in a few additional places for libs
-#
-LinuxBuild {
-	INCLUDEPATH += \
-        /usr/include \
-        /usr/local/include
-
-	LIBS += \
-		-L/usr/lib
-
-    linux-g++-64 {
-        LIBS += \
-            -L/usr/local/lib64 \
-            -L/usr/lib64
-	}
-}
-
-#
 # [REQUIRED] Add support for <inttypes.h> to Windows.
 #
 WindowsBuild {
