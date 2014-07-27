@@ -1,22 +1,4 @@
 #
-# [REQUIRED] Tell the Linux build to look in a few additional places for libs
-#
-LinuxBuild {
-	INCLUDEPATH += \
-        /usr/include \
-        /usr/local/include
-
-	LIBS += \
-		-L/usr/lib
-
-    linux-g++-64 {
-        LIBS += \
-            -L/usr/local/lib64 \
-            -L/usr/lib64
-	}
-}
-
-#
 # [REQUIRED] Add support for <inttypes.h> to Windows.
 #
 WindowsBuild {
@@ -311,13 +293,15 @@ contains(DEFINES, DISABLE_XBEE) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_XBEE) {
     message("Skipping support for native XBee API (manual override from user_config.pri)")
 } else:LinuxBuild {
-	exists(/usr/include/xbee.h) {
+        linux-g++-64 {
+            message("Skipping support for XBee API (64-bit Linux builds not supported)")
+        } else:exists(/usr/include/xbee.h) {
 		message("Including support for XBee API")
 
 		HEADERS += $$XBEE_DEPENDENT_HEADERS
 		SOURCES += $$XBEE_DEPENDENT_SOURCES
 		DEFINES += $$XBEE_DEFINES
-		LIBS += -lxbee
+		LIBS += -L/usr/lib -lxbee
 	} else {
 		warning("Skipping support for XBee API (missing libraries, see README)")
 	}

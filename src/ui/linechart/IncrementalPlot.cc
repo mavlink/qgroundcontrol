@@ -100,8 +100,6 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
     resetScaling();
 
     legend = NULL;
-
-    connect(this, SIGNAL(legendChecked(QwtPlotItem*,bool)), this, SLOT(handleLegendClick(QwtPlotItem*,bool)));
 }
 
 IncrementalPlot::~IncrementalPlot()
