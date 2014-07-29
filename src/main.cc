@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
 void msgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     const char symbols[] = { 'I', 'E', '!', 'X' };
-    QString output = QString("[%1] in %2:%3 - \"%2\"").arg(symbols[type]).arg(context.file).arg(context.line).arg(msg);
+    QString output = QString("[%1] at %2:%3 - \"%4\"").arg(symbols[type]).arg(context.file).arg(context.line).arg(msg);
     std::cerr << output.toStdString() << std::endl;
     if( type == QtFatalMsg ) abort();
 }
