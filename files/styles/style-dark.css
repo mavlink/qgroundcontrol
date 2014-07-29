@@ -334,6 +334,14 @@ QMenu::separator {
     margin: 8px 5px 4px 5px;
 }
 
+/*
+ * Fix for bug in Qt5 where QMenuBar items are styled natively on Windows, ignoring inherited settings.
+ * so we explicitly set their background color here (should match catch-all style background color).
+ */
+QMenuBar::item {
+    background-color: #222;
+}
+
 QMenuBar::item:selected {
     background-color: #CCC;
     color: #000;
