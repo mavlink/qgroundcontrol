@@ -196,9 +196,6 @@ void MainWindow::init()
     menuBar()->setNativeMenuBar(false);
 #endif
 
-    // We only need this menu if we have more than one system
-    //    ui.menuConnected_Systems->setEnabled(false);
-
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
 
