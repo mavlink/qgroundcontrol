@@ -191,6 +191,7 @@ void MainWindow::init()
     menuActionHelper->setMenu(ui.menuTools);
 
     // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
+    // TODO: Check that this is still necessary on Qt5 on Ubuntu
 #ifdef Q_OS_LINUX
     menuBar()->setNativeMenuBar(false);
 #endif
