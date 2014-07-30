@@ -38,7 +38,7 @@ ApmFirmwareConfig::ApmFirmwareConfig(QWidget *parent) : QWidget(parent)
     ui.progressBar->setValue(0);
 
     ui.textBrowser->setVisible(false);
-    connect(ui.showOutputCheckBox,SIGNAL(clicked(bool)),ui.textBrowser,SLOT(setShown(bool)));
+    connect(ui.showOutputCheckBox,SIGNAL(clicked(bool)),ui.textBrowser,SLOT(setVisible(bool)));
 
     /*addBetaLabel(ui.roverPushButton);
     addBetaLabel(ui.planePushButton);
