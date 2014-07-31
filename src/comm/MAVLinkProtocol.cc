@@ -24,7 +24,6 @@
 #include "UASManager.h"
 #include "UASInterface.h"
 #include "UAS.h"
-#include "SlugsMAV.h"
 #include "PxQuadMAV.h"
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"

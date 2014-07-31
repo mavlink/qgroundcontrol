@@ -96,6 +96,7 @@ bool MultiSignalSpy::checkSignalByMask(quint16 mask)
             Q_ASSERT(spy != NULL);
             
             if (spy->count() !=  1) {
+                _printSignalState();
                 return false;
             }
         }
@@ -114,10 +115,12 @@ bool MultiSignalSpy::checkOnlySignalByMask(quint16 mask)
 
         if ((1 << i) & mask) {
             if (spy->count() != 1) {
+                _printSignalState();
                 return false;
             }
         } else {
             if (spy->count() != 0) {
+                _printSignalState();
                 return false;
             }
         }
@@ -135,6 +138,7 @@ bool MultiSignalSpy::checkNoSignalByMask(quint16 mask)
             Q_ASSERT(spy != NULL);
 
             if (spy->count() != 0) {
+                _printSignalState();
                 return false;
             }
         }
@@ -231,4 +235,13 @@ bool MultiSignalSpy::waitForSignalByIndex(
     }
 
     return spy->count() != 0;
+}
+
+void MultiSignalSpy::_printSignalState(void)
+{
+    for (size_t i=0; i<_cSignals; i++) {
+        QSignalSpy* spy = _rgSpys[i];
+        Q_ASSERT(spy != NULL);
+        qDebug() << "Signal index:" << i << "count:" << spy->count();
+    }
 }
