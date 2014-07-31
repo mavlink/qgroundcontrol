@@ -4,18 +4,6 @@
 #define CONTROL_MODE_LOCKED "MODE LOCKED"
 #define CONTROL_MODE_MANUAL "MODE MANUAL"
 
-#ifdef MAVLINK_ENABLED_SLUGS
-#define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
-#define CONTROL_MODE_AUTO   "MODE WAYPOINT"
-#define CONTROL_MODE_TEST1  "MODE PASST"
-#define CONTROL_MODE_TEST2  "MODE SEL PT"
-#else
-#define CONTROL_MODE_GUIDED "MODE GUIDED"
-#define CONTROL_MODE_AUTO   "MODE AUTO"
-#define CONTROL_MODE_TEST1  "MODE TEST1"
-#define CONTROL_MODE_TEST2  "MODE TEST2"
-#endif
-
 #define CONTROL_MODE_READY  "MODE TEST3"
 #define CONTROL_MODE_RC_TRAINING  "RC SIMULATION"
 
@@ -61,21 +49,6 @@ void UASControlParameters::changedMode(int mode)
     case (uint8_t)MAV_MODE_MANUAL_DISARMED:
         modeTemp = "D/MANUAL MODE";
         break;
-#ifdef MAVLINK_ENABLED_SLUGS
-    case (uint8_t)MAV_MODE_AUTO:
-        modeTemp = "WAYPOINT MODE";
-        break;
-    case (uint8_t)MAV_MODE_GUIDED:
-        modeTemp = "MID-L CMDS MODE";
-        break;
-
-    case (uint8_t)MAV_MODE_TEST1:
-        modeTemp = "PASST MODE";
-        break;
-    case (uint8_t)MAV_MODE_TEST2:
-        modeTemp = "SEL PT MODE";
-        break;
-#endif
     default:
         modeTemp = "UNKNOWN MODE";
         break;
@@ -131,20 +104,6 @@ void UASControlParameters::updateAttitude(UASInterface *uas, double roll, double
 
 void UASControlParameters::setCommands()
 {
-#ifdef MAVLINK_ENABLED_SLUGS
-    if(this->activeUAS) {
-        UAS* myUas= static_cast<UAS*>(this->activeUAS);
-
-        mavlink_message_t msg;
-
-        tempCmds.uCommand = ui->sbAirSpeed->value();
-        tempCmds.hCommand = ui->sbHeight->value();
-        tempCmds.rCommand = ui->sbTurnRate->value();
-
-        mavlink_msg_mid_lvl_cmds_encode(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, &this->tempCmds);
-        myUas->sendMessage(msg);
-    }
-#endif
 }
 
 void UASControlParameters::getCommands()
@@ -156,40 +115,6 @@ void UASControlParameters::getCommands()
 
 void UASControlParameters::setPassthrough()
 {
-#ifdef MAVLINK_ENABLED_SLUGS
-    if(this->activeUAS) {
-        UAS* myUas= static_cast<UAS*>(this->activeUAS);
-
-        mavlink_message_t msg;
-
-        int8_t tmpBit=0;
-
-        if(ui->cxdle_c->isChecked()) { //left elevator command
-            tmpBit+=8;
-        }
-        if(ui->cxdr_c->isChecked()) { //rudder command
-            tmpBit+=16;
-        }
-
-        if(ui->cxdla_c->isChecked()) { //left aileron command
-            tmpBit+=64;
-        }
-        if(ui->cxdt_c->isChecked()) { //throttle command
-            tmpBit+=128;
-        }
-
-        generic_16bit r;
-        r.b[1] = 0;
-        r.b[0] = tmpBit;//255;
-
-        tempCtrl.target= this->activeUAS->getUASID();
-        tempCtrl.bitfieldPt= (uint16_t)r.s;
-
-        mavlink_msg_ctrl_srfc_pt_encode(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, &this->tempCtrl);
-        myUas->sendMessage(msg);
-        //qDebug()<<tempCtrl.bitfieldPt;
-    }
-#endif
 }
 
 void UASControlParameters::updateMode(int uas,QString mode,QString description)

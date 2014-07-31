@@ -53,6 +53,7 @@ void QGCUASFileManagerUnitTest::init(void)
     
     bool connected = connect(&_mockFileServer, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), _fileManager, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
     Q_ASSERT(connected);
+    Q_UNUSED(connected);    // Silent release build compiler warning
 
     connected = connect(_fileManager, SIGNAL(statusMessage(const QString&)), this, SLOT(statusMessage(const QString&)));
     Q_ASSERT(connected);
