@@ -32,10 +32,6 @@
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 
-#ifdef QGC_PROTOBUF_ENABLED
-#include <google/protobuf/descriptor.h>
-#endif
-
 Q_DECLARE_METATYPE(mavlink_message_t)
 
 /**
@@ -316,87 +312,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 emit radioStatusChanged(link, rstatus.rxerrors, rstatus.fixed, rstatus.rssi, rstatus.remrssi,
                     rstatus.txbuf, rstatus.noise, rstatus.remnoise);
             }
-
-#if defined(QGC_PROTOBUF_ENABLED)
-
-            if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
-            {
-                mavlink_extended_message_t extended_message;
-
-                extended_message.base_msg = message;
-
-                // read extended header
-                uint8_t* payload = reinterpret_cast<uint8_t*>(message.payload64);
-
-                memcpy(&extended_message.extended_payload_len, payload + 3, 4);
-
-                // Check if message is valid
-                if
-                 (b.size() != MAVLINK_NUM_NON_PAYLOAD_BYTES+MAVLINK_EXTENDED_HEADER_LEN+ extended_message.extended_payload_len)
-                {
-                    //invalid message
-                    qDebug() << "GOT INVALID EXTENDED MESSAGE, ABORTING";
-                    return;
-                }
-
-                const uint8_t* extended_payload = reinterpret_cast<const uint8_t*>(b.constData()) + MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_EXTENDED_HEADER_LEN;
-
-                // copy extended payload data
-                memcpy(extended_message.extended_payload, extended_payload, extended_message.extended_payload_len);
-
-#if defined(QGC_USE_PIXHAWK_MESSAGES)
-
-                if (protobufManager.cacheFragment(extended_message))
-                {
-                    std::tr1::shared_ptr<google::protobuf::Message> protobuf_msg;
-
-                    if (protobufManager.getMessage(protobuf_msg))
-                    {
-                        const google::protobuf::Descriptor* descriptor = protobuf_msg->GetDescriptor();
-                        if (!descriptor)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::FieldDescriptor* headerField = descriptor->FindFieldByName("header");
-                        if (!headerField)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::Descriptor* headerDescriptor = headerField->message_type();
-                        if (!headerDescriptor)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::FieldDescriptor* sourceSysIdField = headerDescriptor->FindFieldByName("source_sysid");
-                        if (!sourceSysIdField)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::Reflection* reflection = protobuf_msg->GetReflection();
-                        const google::protobuf::Message& headerMsg = reflection->GetMessage(*protobuf_msg, headerField);
-                        const google::protobuf::Reflection* headerReflection = headerMsg.GetReflection();
-
-                        int source_sysid = headerReflection->GetInt32(headerMsg, sourceSysIdField);
-
-                        UASInterface* uas = UASManager::instance()->getUASForId(source_sysid);
-
-                        if (uas != NULL)
-                        {
-                            emit extendedMessageReceived(link, protobuf_msg);
-                        }
-                    }
-                }
-#endif
-
-                position += extended_message.extended_payload_len;
-
-                continue;
-            }
-#endif
 
             // Log data
             if (m_loggingEnabled && m_logfile)
