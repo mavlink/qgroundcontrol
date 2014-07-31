@@ -281,7 +281,7 @@ void MockMavlinkFileServer::_emitResponse(QGCUASFileManager::Request* request)
     
     request->hdr.crc32 = QGCUASFileManager::crc32(request);
     
-    mavlink_msg_encapsulated_data_pack(250, 0, &mavlinkMessage, 0 /*_encdata_seq*/, (uint8_t*)request);
+    mavlink_msg_encapsulated_data_pack(250, MAV_COMP_ID_IMU, &mavlinkMessage, 0 /*_encdata_seq*/, (uint8_t*)request);
     
     emit messageReceived(NULL, mavlinkMessage);
 }
