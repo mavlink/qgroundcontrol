@@ -45,6 +45,7 @@ namespace internals {
     projection(NULL),
     isDragging(false),
     TooltipTextPadding(10,10),
+    mapType(MapType::GoogleMap),
     loaderLimit(5),
     maxzoom(21),
     runningThreads(0),
