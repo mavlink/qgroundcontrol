@@ -150,7 +150,7 @@ void TCPLinkUnitTest::_connectSucceed_test(void)
     QCOMPARE(_link->connect(), true);
     
     // Make sure we get the two different connected signals
-    QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 1000), true);
+    QCOMPARE(_multiSpy->waitForSignalByIndex(connectedSignalIndex, 10000), true);
     QCOMPARE(_multiSpy->checkOnlySignalByMask(connectedSignalMask | connected2SignalMask), true);
     QList<QVariant> arguments = _multiSpy->getSpyByIndex(connected2SignalIndex)->takeFirst();
     QCOMPARE(arguments.at(0).toBool(), true);
