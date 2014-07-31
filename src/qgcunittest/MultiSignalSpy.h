@@ -59,6 +59,8 @@ public:
 private:
     // QObject overrides
     void timerEvent(QTimerEvent * event);
+    
+    void _printSignalState(void);
 
     QObject*        _signalEmitter;
     const char**    _rgSignals;
