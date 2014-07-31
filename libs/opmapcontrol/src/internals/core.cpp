@@ -42,6 +42,7 @@ namespace internals {
     minOfTiles(0,0),
     maxOfTiles(0,0),
     zoom(0),
+    projection(NULL),
     isDragging(false),
     TooltipTextPadding(10,10),
     loaderLimit(5),
@@ -61,6 +62,9 @@ namespace internals {
     }
     Core::~Core()
     {
+        if (projection) {
+            delete projection;
+        }
         ProcessLoadTaskCallback.waitForDone();
     }
 
