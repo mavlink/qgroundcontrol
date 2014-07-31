@@ -159,11 +159,8 @@ WindowsBuild {
 	DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
 	D_DIR = $$[QT_INSTALL_LIBEXECS]
 	DLL_DIR = $$replace(D_DIR, "/", "\\")
-	P_DIR = $$[QT_INSTALL_PLUGINS]
-	PLUGIN_DIR = $$replace(P_DIR, "/", "\\")
 
 	# Copy dependencies
-
 	DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \

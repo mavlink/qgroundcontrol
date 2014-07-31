@@ -463,8 +463,6 @@ protected:
     QPointer<QGCToolBar> toolBar;
     QPointer<QGCStatusBar> customStatusBar;
 
-    QPointer<DebugConsole> debugConsole;
-
     QPointer<QDockWidget> mavlinkInspectorWidget;
     QPointer<MAVLinkDecoder> mavlinkDecoder;
     QPointer<QDockWidget> mavlinkSenderWidget;

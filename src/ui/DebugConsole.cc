@@ -47,7 +47,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     currLink(NULL),
     holdOn(false),
     convertToAscii(true),
-    filterMAVLINK(false),
+    filterMAVLINK(true),
     autoHold(true),
     bytesToIgnore(0),
     lastByte(-1),

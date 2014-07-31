@@ -756,8 +756,7 @@ HEADERS += \
 	src/qgcunittest/FlightModeConfigTest.h \
 	src/qgcunittest/FlightGearTest.h \
 	src/qgcunittest/TCPLinkTest.h \
-	src/qgcunittest/TCPLoopBackServer.h \
-	src/qgcunittest/QGCUASFileManagerTest.h
+	src/qgcunittest/TCPLoopBackServer.h
 
 SOURCES += \
 	src/qgcunittest/UASUnitTest.cc \
@@ -769,5 +768,4 @@ SOURCES += \
 	src/qgcunittest/FlightModeConfigTest.cc \
 	src/qgcunittest/FlightGearTest.cc \
 	src/qgcunittest/TCPLinkTest.cc \
-	src/qgcunittest/TCPLoopBackServer.cc \
-	src/qgcunittest/QGCUASFileManagerTest.cc
+	src/qgcunittest/TCPLoopBackServer.cc

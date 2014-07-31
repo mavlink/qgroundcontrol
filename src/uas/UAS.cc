@@ -30,10 +30,6 @@
 #include <Eigen/Geometry>
 #include <comm/px4_custom_mode.h>
 
-#ifdef QGC_PROTOBUF_ENABLED
-#include <google/protobuf/descriptor.h>
-#endif
-
 /**
 * Gets the settings from the previous UAS (name, airframe, autopilot, battery specs)
 * by calling readSettings. This means the new UAS will have the same settings
@@ -127,14 +123,6 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
 
     nedPosGlobalOffset(0,0,0),
     nedAttGlobalOffset(0,0,0),
-
-    #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
-    receivedOverlayTimestamp(0.0),
-    receivedObstacleListTimestamp(0.0),
-    receivedPathTimestamp(0.0),
-    receivedPointCloudTimestamp(0.0),
-    receivedRGBDImageTimestamp(0.0),
-    #endif
 
     airSpeed(std::numeric_limits<double>::quiet_NaN()),
     groundSpeed(std::numeric_limits<double>::quiet_NaN()),
@@ -1544,105 +1532,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
     }
 }
-
-
-#if defined(QGC_PROTOBUF_ENABLED)
-/**
-* Receive an extended message.
-* @param link
-* @param message
-*/
-void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message)
-{
-    if (!link)
-    {
-        return;
-    }
-    if (!links->contains(link))
-    {
-        addLink(link);
-    }
-
-    const google::protobuf::Descriptor* descriptor = message->GetDescriptor();
-    if (!descriptor)
-    {
-        return;
-    }
-
-    const google::protobuf::FieldDescriptor* headerField = descriptor->FindFieldByName("header");
-    if (!headerField)
-    {
-        return;
-    }
-
-    const google::protobuf::Descriptor* headerDescriptor = headerField->message_type();
-    if (!headerDescriptor)
-    {
-        return;
-    }
-
-    const google::protobuf::FieldDescriptor* sourceSysIdField = headerDescriptor->FindFieldByName("source_sysid");
-    if (!sourceSysIdField)
-    {
-        return;
-    }
-
-    const google::protobuf::Reflection* reflection = message->GetReflection();
-    const google::protobuf::Message& headerMsg = reflection->GetMessage(*message, headerField);
-    const google::protobuf::Reflection* headerReflection = headerMsg.GetReflection();
-
-    int source_sysid = headerReflection->GetInt32(headerMsg, sourceSysIdField);
-
-    if (source_sysid != uasId)
-    {
-        return;
-    }
-
-#ifdef QGC_USE_PIXHAWK_MESSAGES
-    if (message->GetTypeName() == overlay.GetTypeName())
-    {
-        receivedOverlayTimestamp = QGC::groundTimeSeconds();
-        overlayMutex.lock();
-        overlay.CopyFrom(*message);
-        overlayMutex.unlock();
-        emit overlayChanged(this);
-    }
-    else if (message->GetTypeName() == obstacleList.GetTypeName())
-    {
-        receivedObstacleListTimestamp = QGC::groundTimeSeconds();
-        obstacleListMutex.lock();
-        obstacleList.CopyFrom(*message);
-        obstacleListMutex.unlock();
-        emit obstacleListChanged(this);
-    }
-    else if (message->GetTypeName() == path.GetTypeName())
-    {
-        receivedPathTimestamp = QGC::groundTimeSeconds();
-        pathMutex.lock();
-        path.CopyFrom(*message);
-        pathMutex.unlock();
-        emit pathChanged(this);
-    }
-    else if (message->GetTypeName() == pointCloud.GetTypeName())
-    {
-        receivedPointCloudTimestamp = QGC::groundTimeSeconds();
-        pointCloudMutex.lock();
-        pointCloud.CopyFrom(*message);
-        pointCloudMutex.unlock();
-        emit pointCloudChanged(this);
-    }
-    else if (message->GetTypeName() == rgbdImage.GetTypeName())
-    {
-        receivedRGBDImageTimestamp = QGC::groundTimeSeconds();
-        rgbdImageMutex.lock();
-        rgbdImage.CopyFrom(*message);
-        rgbdImageMutex.unlock();
-        emit rgbdImageChanged(this);
-    }
-#endif
-}
-
-#endif
 
 /**
 * Set the home position of the UAS.
