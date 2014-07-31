@@ -94,7 +94,7 @@ GAudioOutput::GAudioOutput(QObject *parent) : QObject(parent),
 
 #if defined Q_OS_LINUX && defined QGC_SPEECH_ENABLED
     espeak_Initialize(AUDIO_OUTPUT_PLAYBACK, 500, NULL, 0); // initialize for playback with 500ms buffer and no options (see speak_lib.h)
-    espeak_VOICE espeak_voice;
+    espeak_VOICE espeak_voice = {};
     espeak_voice.languages = "en-uk"; // Default to British English
     espeak_voice.identifier = NULL; // no specific voice file specified
     espeak_voice.name = "klatt"; // espeak voice name
