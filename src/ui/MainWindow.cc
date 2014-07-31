@@ -85,7 +85,6 @@ This file is part of the QGROUNDCONTROL project
 
 // FIXME Move
 #include "PxQuadMAV.h"
-#include "SlugsMAV.h"
 
 #include "LogCompressor.h"
 
