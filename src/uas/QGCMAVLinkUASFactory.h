@@ -10,7 +10,6 @@
 
 // INCLUDE ALL MAV/UAS CLASSES USING MAVLINK
 #include "UAS.h"
-#include "SlugsMAV.h"
 #include "PxQuadMAV.h"
 #include "senseSoarMAV.h"
 #include "ArduPilotMegaMAV.h"
