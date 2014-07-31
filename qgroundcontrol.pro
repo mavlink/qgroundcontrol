@@ -61,7 +61,7 @@ installer {
     message(Build Installer)
 }
 
-# Setup our supported build flavors
+# Setup our supported build  flavors
 
 CONFIG(debug, debug|release) {
     message(Debug flavor)
