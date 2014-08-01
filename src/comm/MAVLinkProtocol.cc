@@ -183,6 +183,7 @@ void MAVLinkProtocol::run()
     while(!_should_exit) {
 
         if (isFinished()) {
+            delete heartbeatTimer;
             qDebug() << "MAVLINK WORKER DONE!";
             return;
         }

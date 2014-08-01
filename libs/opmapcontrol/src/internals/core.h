@@ -135,6 +135,9 @@ namespace internals {
         }
         void SetProjection(PureProjection* value)
         {
+            if (projection) {
+                delete projection;
+            }
             projection=value;
             tileRect=Rectangle(core::Point(0,0),value->TileSize());
         }
