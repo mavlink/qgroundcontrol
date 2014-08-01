@@ -738,7 +738,7 @@ SOURCES += \
     src/uas/QGXPX4UAS.cc
 
 #
-# Unit Test specific configuration goes here
+# Unit Test specific configuration goes  here
 # We'd ideally only build this code as part of a Debug build, but qmake doesn't allow
 # for Debug-only files when generating Visual Studio projects [QTBUG-40351]
 INCLUDEPATH += \
