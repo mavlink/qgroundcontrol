@@ -87,6 +87,8 @@ private:
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
     
+    static const int _ackTimerTimeoutMsecs = QGCUASFileManager::ackTimerTimeoutMsecs * 2;   ///> Timeout for ack failure, must be larger than file manager timeout
+    
     QStringList _fileListReceived;
 };
 

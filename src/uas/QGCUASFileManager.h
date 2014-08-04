@@ -39,6 +39,8 @@ public:
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
     bool _sendCmdTestNoAck(void) { return _sendOpcodeOnlyCmd(kCmdTestNoAck, kCOAck); };
     bool _sendCmdReset(void) { return _sendOpcodeOnlyCmd(kCmdReset, kCOAck); };
+    
+    static const int ackTimerTimeoutMsecs = 1000;   ///> Timeout in msecs for ack timer, this is public so we can write unit tests
 
 signals:
     void statusMessage(const QString& msg);
@@ -140,9 +142,8 @@ protected:
     static quint32 crc32(Request* request, unsigned state = 0);
     static QString errorString(uint8_t errorCode);
 
-    OperationState      _currentOperation;              ///> Current operation of state machine
-    QTimer              _ackTimer;                      ///> Used to signal a timeout waiting for an ack
-    static const int    _ackTimerTimeoutMsecs = 1000;   ///> Timeout in msecs for ack timer
+    OperationState  _currentOperation;              ///> Current operation of state machine
+    QTimer          _ackTimer;                      ///> Used to signal a timeout waiting for an ack
     
     UASInterface* _mav;
     quint16 _encdata_seq;

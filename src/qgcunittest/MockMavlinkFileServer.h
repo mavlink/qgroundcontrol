@@ -46,12 +46,30 @@ public:
     /// to indicate (F)ile or (D)irectory.
     void setFileList(QStringList& fileList) { _fileList = fileList; }
     
+    typedef enum {
+        errModeNone,                ///< No error, respond correctly
+        errModeNoResponse,          ///< No response to any request
+        errModeNakResponse,         ///< Nak all requests
+        errModeNoSecondResponse,    ///< No response to subsequent request to initial command
+        errModeNakSecondResponse,   ///< Nak subsequent request to initial command
+        errModeBadCRC,              ///< Return response with bad CRC
+        errModeBadSequence          ///< Return response with bad sequence number, NYI: Waiting on Firmware sequence # support
+    } ErrorMode_t;
+    
+    ///< Array of failure modes you can cycle through for testing
+    static const ErrorMode_t rgFailureModes[];
+    static const size_t cFailureModes;
+    
+    /// @brief Sets the error mode for command responses.
+    void setErrorMode(ErrorMode_t errMode) { _errMode = errMode; };
+    
     // From MockMavlinkInterface
     virtual void sendMessage(mavlink_message_t message);
     
     struct FileTestCase {
         const char* filename;
         uint8_t     length;
+        bool        fMultiPacketResponse;   ///< true: multiple acks required to download, false: single ack contains entire download
     };
     
     static const size_t cFileTestCases = 3;
@@ -73,6 +91,7 @@ private:
     
     static const uint8_t    _sessionId;
     uint8_t                 _readFileLength; ///< Length of active file being read
+    ErrorMode_t             _errMode;
 };
 
 #endif
