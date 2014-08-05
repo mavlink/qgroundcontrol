@@ -186,14 +186,7 @@ void MainWindow::init()
 
     // Setup user interface
     ui.setupUi(this);
-    hide();
     menuActionHelper->setMenu(ui.menuTools);
-
-    // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
-    // TODO: Check that this is still necessary on Qt5 on Ubuntu
-#ifdef Q_OS_LINUX
-    menuBar()->setNativeMenuBar(false);
-#endif
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -202,6 +195,12 @@ void MainWindow::init()
 
     // Setup corners
     setCorner(Qt::BottomRightCorner, Qt::BottomDockWidgetArea);
+
+    // Qt 4 on Ubuntu does place the native menubar correctly so on Linux we revert back to in-window menu bar.
+    // TODO: Check that this is still necessary on Qt5 on Ubuntu
+#ifdef Q_OS_LINUX
+    menuBar()->setNativeMenuBar(false);
+#endif
 
     // Setup UI state machines
     centerStackActionGroup->setExclusive(true);
