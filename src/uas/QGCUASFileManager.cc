@@ -261,7 +261,13 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     mavlink_msg_encapsulated_data_decode(&message, &data);
     Request* request = (Request*)&data.data[0];
 
-    // FIXME: Check CRC
+    // Make sure we have a good CRC
+    if (request->hdr.crc32 != crc32(request)) {
+        _currentOperation = kCOIdle;
+        _emitErrorMessage(tr("Bad CRC on received message"));
+        return;
+    }
+
 
     if (request->hdr.opcode == kRspAck) {
 
@@ -289,7 +295,7 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
                 break;
 
             default:
-                _emitErrorMessage("Ack received in unexpected state");
+                _emitErrorMessage(tr("Ack received in unexpected state"));
                 break;
         }
     } else if (request->hdr.opcode == kRspNak) {
@@ -462,7 +468,7 @@ void QGCUASFileManager::_setupAckTimeout(void)
     Q_ASSERT(!_ackTimer.isActive());
 
     _ackTimer.setSingleShot(true);
-    _ackTimer.start(_ackTimerTimeoutMsecs);
+    _ackTimer.start(ackTimerTimeoutMsecs);
 }
 
 /// @brief Clears the ack timeout timer
