@@ -51,6 +51,10 @@ void QGCUASFileManagerUnitTest::init(void)
     _fileManager = new QGCUASFileManager(NULL, &_mockUAS);
     Q_CHECK_PTR(_fileManager);
     
+    // Reset any internal state back to normal
+    _mockFileServer.setErrorMode(MockMavlinkFileServer::errModeNone);
+    _fileListReceived.clear();
+    
     bool connected = connect(&_mockFileServer, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), _fileManager, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
     Q_ASSERT(connected);
     Q_UNUSED(connected);    // Silent release build compiler warning
@@ -98,6 +102,12 @@ void QGCUASFileManagerUnitTest::_ackTest(void)
     // we don't get any error signals.
     QVERIFY(_fileManager->_sendCmdTestAck());
     QVERIFY(_multiSpy->checkNoSignals());
+    
+    // Setup for no response from ack. This should cause a timeout error;
+    _mockFileServer.setErrorMode(MockMavlinkFileServer::errModeNoResponse);
+    QVERIFY(_fileManager->_sendCmdTestAck());
+    QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask), true);
 }
 
 void QGCUASFileManagerUnitTest::_noAckTest(void)
@@ -108,7 +118,7 @@ void QGCUASFileManagerUnitTest::_noAckTest(void)
     
     // This should not get the ack back and timeout.
     QVERIFY(_fileManager->_sendCmdTestNoAck());
-    QTest::qWait(2000); // Let the file manager timeout, magic number 2 secs must be larger than file manager ack timeout
+    QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
     QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask), true);
 }
 
@@ -137,21 +147,51 @@ void QGCUASFileManagerUnitTest::_listTest(void)
     QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
     _multiSpy->clearAllSignals();
 
-    // Send a list command at the root of the directory tree
-    //  We should get back a single resetStatusMessages signal
-    //  We should not get back an errorMessage signal
-    //  We should get back one or more statusMessage signals
-    //  The returned list should match out inputs
-    
+    // Setup the mock file server with a valid directory list
     QStringList fileList;
     fileList << "Ddir" << "Ffoo" << "Fbar";
     _mockFileServer.setFileList(fileList);
     
-    _fileListReceived.clear();
+    // Run through the various server side failure modes
+    for (size_t i=0; i<MockMavlinkFileServer::cFailureModes; i++) {
+        MockMavlinkFileServer::ErrorMode_t errMode = MockMavlinkFileServer::rgFailureModes[i];
+        qDebug() << "Testing failure mode:" << errMode;
+        _mockFileServer.setErrorMode(errMode);
+        
+        _fileManager->listDirectory("/");
+        QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
+        
+        if (errMode == MockMavlinkFileServer::errModeNoSecondResponse || errMode == MockMavlinkFileServer::errModeNakSecondResponse) {
+            // For simulated server errors on subsequent Acks, the first Ack will go through. This means we should have gotten some
+            // partial results. In the case of the directory list test set, all entries fit into the first ack, so we should have
+            // gotten back all of them.
+            QCOMPARE(_multiSpy->getSpyByIndex(statusMessageSignalIndex)->count(), fileList.count());
+            _multiSpy->clearSignalByIndex(statusMessageSignalIndex);
+            
+            // And then it should have errored out because the next list Request would have failed.
+            QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+        } else {
+            // For the simulated errors which failed the intial response we should not have gotten any results back at all.
+            // Just an error.
+            QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+        }
+
+        // Set everything back to initial state
+        _fileListReceived.clear();
+        _multiSpy->clearAllSignals();
+        _mockFileServer.setErrorMode(MockMavlinkFileServer::errModeNone);
+    }
+
+    // Send a list command at the root of the directory tree which should succeed
+    //  We should get back a single resetStatusMessages signal
+    //  We should not get back an errorMessage signal
+    //  We should get back a statusMessage signal for each entry
+    //  The returned list should match our inputs
     
     _fileManager->listDirectory("/");
-    QCOMPARE(_multiSpy->checkSignalByMask(resetStatusMessagesSignalMask), true);  // We should be told to reset status messages
-    QCOMPARE(_multiSpy->checkNoSignalByMask(errorMessageSignalMask), true);  // We should not get an error signals
+    QCOMPARE(_multiSpy->checkSignalByMask(resetStatusMessagesSignalMask), true);
+    QCOMPARE(_multiSpy->checkNoSignalByMask(errorMessageSignalMask), true);
+    QCOMPARE(_multiSpy->getSpyByIndex(statusMessageSignalIndex)->count(), fileList.count());
     QVERIFY(_fileListReceived == fileList);
 }
 
@@ -167,13 +207,10 @@ void QGCUASFileManagerUnitTest::_validateFileContents(const QString& filePath, u
     QByteArray bytes = file.readAll();
     file.close();
     
-    // Validate length byte
-    QCOMPARE((uint8_t)bytes[0], length);
-    
     // Validate file contents:
     //      Repeating 0x00, 0x01 .. 0xFF until file is full
-    for (uint8_t i=1; i<bytes.length(); i++) {
-        QCOMPARE((uint8_t)bytes[i], (uint8_t)((i-1) & 0xFF));
+    for (uint8_t i=0; i<bytes.length(); i++) {
+        QCOMPARE((uint8_t)bytes[i], (uint8_t)(i & 0xFF));
     }
 }
 
@@ -197,14 +234,61 @@ void QGCUASFileManagerUnitTest::_openTest(void)
             Q_ASSERT(QFile::remove(filePath));
         }
     }
-
-    // Run through the set of file test cases
     
-    // We setup a spy on the terminate command signal so that we can determine that a Terminate command was
+    // We setup a spy on the Terminate command signal so that we can determine that a Terminate command was
     // correctly sent after the Open/Read commands complete.
     QSignalSpy terminateSpy(&_mockFileServer, SIGNAL(terminateCommandReceived()));
     
+    // Run through the set of file test cases
     for (size_t i=0; i<MockMavlinkFileServer::cFileTestCases; i++) {
+        
+        // Run through the various failure modes for this test case
+        for (size_t j=0; j<MockMavlinkFileServer::cFailureModes; j++) {
+            MockMavlinkFileServer::ErrorMode_t errMode = MockMavlinkFileServer::rgFailureModes[j];
+            qDebug() << "Testing failure mode:" << errMode;
+            _mockFileServer.setErrorMode(errMode);
+            
+            _fileManager->downloadPath(MockMavlinkFileServer::rgFileTestCases[i].filename, QDir::temp());
+            QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
+            
+            if (errMode == MockMavlinkFileServer::errModeNoSecondResponse || errMode == MockMavlinkFileServer::errModeNakSecondResponse) {
+                // For simulated server errors on subsequent Acks, the first Ack will go through. We must handle things differently depending
+                // on whether the downloaded file requires multiple packets to complete the download.
+                if (MockMavlinkFileServer::rgFileTestCases[i].fMultiPacketResponse) {
+                    // The downloaded file requires multiple Acks to complete. Hence second Read should have failed.
+                    QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+
+                    // Open command succeeded, so we should get a Terminate for the open
+                    QCOMPARE(terminateSpy.count(), 1);
+                } else {
+                    // The downloaded file fits within a single Ack response, hence there is no second Read issued.
+                    // This should result in a successful download.
+                    
+                    //  We should get a single resetStatusMessages signal
+                    //  We should get a single statusMessage signal, which indicates download completion
+                    QCOMPARE(_multiSpy->checkOnlySignalByMask(statusMessageSignalMask | resetStatusMessagesSignalMask), true);
+                    
+                    // We should get a single Terminate command to close the Open session
+                    QCOMPARE(terminateSpy.count(), 1);
+                    
+                    // Validate file contents
+                    QString filePath = QDir::temp().absoluteFilePath(MockMavlinkFileServer::rgFileTestCases[i].filename);
+                    _validateFileContents(filePath, MockMavlinkFileServer::rgFileTestCases[i].length);
+                }
+            } else {
+                // For all the other simulated server errors the Open command should have failed. Since the Open failed
+                // there is no session to terminate, hence no Terminate in this case.
+                QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+                QCOMPARE(terminateSpy.count(), 0);
+            }
+
+            // Cleanup for next iteration
+            _multiSpy->clearAllSignals();
+            terminateSpy.clear();
+            _mockFileServer.setErrorMode(MockMavlinkFileServer::errModeNone);
+        }
+
+        // Run what should be a successful file download test case. No servers errors are being simulated.
         _fileManager->downloadPath(MockMavlinkFileServer::rgFileTestCases[i].filename, QDir::temp());
 
         //  We should get a single resetStatusMessages signal
@@ -212,10 +296,11 @@ void QGCUASFileManagerUnitTest::_openTest(void)
         QCOMPARE(_multiSpy->checkOnlySignalByMask(statusMessageSignalMask | resetStatusMessagesSignalMask), true);
         _multiSpy->clearAllSignals();
         
-        // We should get a single Terminate command
+        // We should get a single Terminate command to close the session
         QCOMPARE(terminateSpy.count(), 1);
         terminateSpy.clear();
         
+        // Validate file contents
         QString filePath = QDir::temp().absoluteFilePath(MockMavlinkFileServer::rgFileTestCases[i].filename);
         _validateFileContents(filePath, MockMavlinkFileServer::rgFileTestCases[i].length);
     }

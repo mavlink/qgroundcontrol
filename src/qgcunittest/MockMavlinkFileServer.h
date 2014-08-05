@@ -46,18 +46,46 @@ public:
     /// to indicate (F)ile or (D)irectory.
     void setFileList(QStringList& fileList) { _fileList = fileList; }
     
+    /// @brief By calling setErrorMode with one of these modes you can cause the server to simulate an error.
+    typedef enum {
+        errModeNone,                ///< No error, respond correctly
+        errModeNoResponse,          ///< No response to any request, client should eventually time out with no Ack
+        errModeNakResponse,         ///< Nak all requests
+        errModeNoSecondResponse,    ///< No response to subsequent request to initial command
+        errModeNakSecondResponse,   ///< Nak subsequent request to initial command
+        errModeBadCRC,              ///< Return response with bad CRC
+        errModeBadSequence          ///< Return response with bad sequence number, NYI: Waiting on Firmware sequence # support
+    } ErrorMode_t;
+    
+    /// @brief Sets the error mode for command responses. This allows you to simulate various server errors.
+    void setErrorMode(ErrorMode_t errMode) { _errMode = errMode; };
+    
+    /// @brief Array of failure modes you can cycle through for testing. By looping through this array you can avoid
+    /// hardcoding the specific error modes in your unit test. This way when new error modes are added your unit test
+    /// code may not need to be modified.
+    static const ErrorMode_t rgFailureModes[];
+    
+    /// @brief The number of ErrorModes in the rgFailureModes array.
+    static const size_t cFailureModes;
+    
     // From MockMavlinkInterface
     virtual void sendMessage(mavlink_message_t message);
     
+    /// @brief Used to represent a single test case for download testing.
     struct FileTestCase {
-        const char* filename;
-        uint8_t     length;
+        const char* filename;               ///< Filename to download
+        uint8_t     length;                 ///< Length of file in bytes
+        bool        fMultiPacketResponse;   ///< true: multiple acks required to download, false: single ack contains entire download
     };
     
+    /// @brief The numbers of test cases in the rgFileTestCases array.
     static const size_t cFileTestCases = 3;
+    
+    /// @brief The set of files supported by the mock server for testing purposes. Each one represents a different edge case for testing.
     static const FileTestCase rgFileTestCases[cFileTestCases];
     
 signals:
+    /// @brief You can connect to this signal to be notified when the server receives a Terminate command.
     void terminateCommandReceived(void);
     
 private:
@@ -72,7 +100,8 @@ private:
     QStringList _fileList;  ///< List of files returned by List command
     
     static const uint8_t    _sessionId;
-    uint8_t                 _readFileLength; ///< Length of active file being read
+    uint8_t                 _readFileLength;    ///< Length of active file being read
+    ErrorMode_t             _errMode;           ///< Currently set error mode, as specified by setErrorMode
 };
 
 #endif
