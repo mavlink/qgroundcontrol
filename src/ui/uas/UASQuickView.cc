@@ -5,7 +5,8 @@
 #include "UASQuickViewTextItem.h"
 #include <QSettings>
 #include <QInputDialog>
-UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent)
+UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
+    uas(NULL)
 {
     quickViewSelectDialog=0;
     m_columnCount=2;
