@@ -72,7 +72,8 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     logging(false),
     logStartTime(0),
     updateTimer(new QTimer()),
-    selectedMAV(-1)
+    selectedMAV(-1),
+    lastTimestamp(0)
 {
     // Add elements defined in Qt Designer
     ui.setupUi(this);
