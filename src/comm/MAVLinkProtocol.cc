@@ -393,70 +393,65 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             }
 
-            // Only count message if UAS exists for this message
-            if (uas != NULL)
+            // Increase receive counter
+            totalReceiveCounter[linkId]++;
+            currReceiveCounter[linkId]++;
+
+            // Determine what the next expected sequence number is, accounting for
+            // never having seen a message for this system/component pair.
+            int lastSeq = lastIndex[message.sysid][message.compid];
+            int expectedSeq = (lastSeq == -1) ? message.seq : (lastSeq + 1);
+
+            // And if we didn't encounter that sequence number, record the error
+            if (message.seq != expectedSeq)
             {
 
-                // Increase receive counter
-                totalReceiveCounter[linkId]++;
-                currReceiveCounter[linkId]++;
+                // Determine how many messages were skipped
+                int lostMessages = message.seq - expectedSeq;
 
-                // Determine what the next expected sequence number is, accounting for
-                // never having seen a message for this system/component pair.
-                int lastSeq = lastIndex[message.sysid][message.compid];
-                int expectedSeq = (lastSeq == -1) ? message.seq : (lastSeq + 1);
-
-                // And if we didn't encounter that sequence number, record the error
-                if (message.seq != expectedSeq)
+                // Out of order messages or wraparound can cause this, but we just ignore these conditions for simplicity
+                if (lostMessages < 0)
                 {
-
-                    // Determine how many messages were skipped
-                    int lostMessages = message.seq - expectedSeq;
-
-                    // Out of order messages or wraparound can cause this, but we just ignore these conditions for simplicity
-                    if (lostMessages < 0)
-                    {
-                        lostMessages = 0;
-                    }
-
-                    // And log how many were lost for all time and just this timestep
-                    totalLossCounter[linkId] += lostMessages;
-                    currLossCounter[linkId] += lostMessages;
+                    lostMessages = 0;
                 }
 
-                // And update the last sequence number for this system/component pair
-                lastIndex[message.sysid][message.compid] = expectedSeq;
+                // And log how many were lost for all time and just this timestep
+                totalLossCounter[linkId] += lostMessages;
+                currLossCounter[linkId] += lostMessages;
+            }
 
-                // Update on every 32th packet
-                if ((totalReceiveCounter[linkId] & 0x1F) == 0)
+            // And update the last sequence number for this system/component pair
+            lastIndex[message.sysid][message.compid] = expectedSeq;
+
+            // Update on every 32th packet
+            if ((totalReceiveCounter[linkId] & 0x1F) == 0)
+            {
+                // Calculate new loss ratio
+                // Receive loss
+                float receiveLoss = (double)currLossCounter[linkId]/(double)(currReceiveCounter[linkId]+currLossCounter[linkId]);
+                receiveLoss *= 100.0f;
+                currLossCounter[linkId] = 0;
+                currReceiveCounter[linkId] = 0;
+                emit receiveLossChanged(message.sysid, receiveLoss);
+            }
+
+            // The packet is emitted as a whole, as it is only 255 - 261 bytes short
+            // kind of inefficient, but no issue for a groundstation pc.
+            // It buys as reentrancy for the whole code over all threads
+            emit messageReceived(link, message);
+
+            // Multiplex message if enabled
+            if (m_multiplexingEnabled)
+            {
+                // Get all links connected to this unit
+                QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+
+                // Emit message on all links that are currently connected
+                foreach (LinkInterface* currLink, links)
                 {
-                    // Calculate new loss ratio
-                    // Receive loss
-                    float receiveLoss = (double)currLossCounter[linkId]/(double)(currReceiveCounter[linkId]+currLossCounter[linkId]);
-                    receiveLoss *= 100.0f;
-                    currLossCounter[linkId] = 0;
-                    currReceiveCounter[linkId] = 0;
-                    emit receiveLossChanged(message.sysid, receiveLoss);
-                }
-
-                // The packet is emitted as a whole, as it is only 255 - 261 bytes short
-                // kind of inefficient, but no issue for a groundstation pc.
-                // It buys as reentrancy for the whole code over all threads
-                emit messageReceived(link, message);
-
-                // Multiplex message if enabled
-                if (m_multiplexingEnabled)
-                {
-                    // Get all links connected to this unit
-                    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
-
-                    // Emit message on all links that are currently connected
-                    foreach (LinkInterface* currLink, links)
-                    {
-                        // Only forward this message to the other links,
-                        // not the link the message was received on
-                        if (currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
-                    }
+                    // Only forward this message to the other links,
+                    // not the link the message was received on
+                    if (currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
                 }
             }
         }
