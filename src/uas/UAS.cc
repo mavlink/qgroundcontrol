@@ -82,8 +82,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     lpVoltage(12.0f),
     currentCurrent(0.4f),
     batteryRemainingEstimateEnabled(false),
-    // chargeLevel not initialized
-    // timeRemaining  not initialized
+    chargeLevel(-1),
+    timeRemaining(0),
     lowBattAlarm(false),
 
     startTime(QGC::groundTimeMilliseconds()),
