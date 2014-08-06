@@ -737,6 +737,7 @@ SOURCES += \
     src/CmdLineOptParser.cc \
     src/uas/QGXPX4UAS.cc
 
+DebugBuild {
 #
 # Unit Test specific configuration goes here
 # We'd ideally only build this code as part of a Debug build, but qmake doesn't allow
@@ -771,3 +772,4 @@ SOURCES += \
 	src/qgcunittest/TCPLinkTest.cc \
 	src/qgcunittest/TCPLoopBackServer.cc \
 	src/qgcunittest/QGCUASFileManagerTest.cc
+}
