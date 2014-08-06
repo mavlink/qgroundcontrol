@@ -19,7 +19,7 @@
 
 installer {
     MacBuild {
-        QMAKE_POST_LINK += && macdeployqt $${DESTDIR}/qgroundcontrol.app -dmg
+        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${DESTDIR}/qgroundcontrol.app -dmg
     }
     
     WindowsBuild {
