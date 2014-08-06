@@ -234,8 +234,6 @@ public slots:
     void loadEngineerView();
     /** @brief Load view for operator */
     void loadOperatorView();
-    /** @brief Load MAVLink XML generator view */
-    void loadMAVLinkView();
     /** @brief Load Terminal Console views */
     void loadTerminalView();
     /** @brief Load Google Earth View */
@@ -339,7 +337,6 @@ protected:
         VIEW_MISSION,
         VIEW_FLIGHT,
         VIEW_SIMULATION,
-        VIEW_MAVLINK,
         VIEW_FIRMWAREUPDATE,
         VIEW_HARDWARE_CONFIG,
         VIEW_SOFTWARE_CONFIG,
@@ -413,7 +410,6 @@ protected:
     QPointer<SubMainWindow> pilotView;
     QPointer<SubMainWindow> configView;
     QPointer<SubMainWindow> softwareConfigView;
-    QPointer<SubMainWindow> mavlinkView;
     QPointer<SubMainWindow> engineeringView;
     QPointer<SubMainWindow> simView;
     QPointer<SubMainWindow> terminalView;
