@@ -422,11 +422,6 @@ protected:
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
-    //QPointer<HUD> hudWidget;
-    //QPointer<QGCVehicleConfig> configWidget;
-    //QPointer<QGCMapTool> mapWidget;
-    //QPointer<XMLCommProtocolWidget> protocolWidget;
-    //QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> q3DWidget;
 #endif
