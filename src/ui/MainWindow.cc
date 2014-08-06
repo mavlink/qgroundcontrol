@@ -74,11 +74,6 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUASFileViewMulti.h"
 #include <QDesktopWidget>
 
-// Add support for the MAVLink generator UI if it's been requested.
-#ifdef QGC_MAVGEN_ENABLED
-#include "XMLCommProtocolWidget.h"
-#endif
-
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
 #endif
@@ -369,7 +364,6 @@ void MainWindow::init()
     ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
     ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
     ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
-    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
@@ -377,7 +371,6 @@ void MainWindow::init()
     ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
     ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
     ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
-    ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
@@ -500,9 +493,6 @@ void MainWindow::buildCustomWidget()
             case VIEW_MISSION:
                 dock = createDockWidget(plannerView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
-            case VIEW_MAVLINK:
-                dock = createDockWidget(mavlinkView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
-                break;
             case VIEW_GOOGLEEARTH:
                 dock = createDockWidget(googleEarthView,tool,tool->getTitle(),tool->objectName(),(VIEW_SECTIONS)view,location);
                 break;
@@ -592,17 +582,6 @@ void MainWindow::buildCommonWidgets()
         engineeringView->setCentralWidget(new QGCDataPlot2D(this));
         addToCentralStackedWidget(engineeringView, VIEW_ENGINEER, tr("Logfile Plot"));
     }
-
-// Add the MAVLink generator UI if it's been requested.
-#ifdef QGC_MAVGEN_ENABLED
-    if (!mavlinkView)
-    {
-        mavlinkView = new SubMainWindow(this);
-        mavlinkView->setObjectName("VIEW_MAVLINK");
-        mavlinkView->setCentralWidget(new XMLCommProtocolWidget(this));
-        addToCentralStackedWidget(mavlinkView, VIEW_MAVLINK, tr("Mavlink Generator"));
-    }
-#endif
 
 #ifdef QGC_GOOGLE_EARTH_ENABLED
     if (!googleEarthView)
@@ -1215,7 +1194,6 @@ void MainWindow::connectCommonActions()
     // Bind together the perspective actions
     QActionGroup* perspectives = new QActionGroup(ui.menuPerspectives);
     perspectives->addAction(ui.actionEngineersView);
-    perspectives->addAction(ui.actionMavlinkView);
     perspectives->addAction(ui.actionFlightView);
     perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
@@ -1228,9 +1206,6 @@ void MainWindow::connectCommonActions()
 
     /* Hide the actions that are not relevant */
     ui.actionSoftwareConfig->setVisible(getCustomMode() == CUSTOM_MODE_APM);
-#ifndef QGC_MAVGEN_ENABLED
-    ui.actionMavlinkView->setVisible(false);
-#endif
 #ifndef QGC_GOOGLE_EARTH_ENABLED
     ui.actionGoogleEarthView->setVisible(false);
 #endif
@@ -1243,11 +1218,6 @@ void MainWindow::connectCommonActions()
     {
         ui.actionEngineersView->setChecked(true);
         ui.actionEngineersView->activate(QAction::Trigger);
-    }
-    if (currentView == VIEW_MAVLINK)
-    {
-        ui.actionMavlinkView->setChecked(true);
-        ui.actionMavlinkView->activate(QAction::Trigger);
     }
     if (currentView == VIEW_FLIGHT)
     {
@@ -1325,7 +1295,6 @@ void MainWindow::connectCommonActions()
     connect(ui.actionHardwareConfig, SIGNAL(triggered()), this, SLOT(loadHardwareConfigView()));
     connect(ui.actionSoftwareConfig,SIGNAL(triggered()),this,SLOT(loadSoftwareConfigView()));
     connect(ui.actionTerminalView,SIGNAL(triggered()),this,SLOT(loadTerminalView()));
-    connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
 
     // Help Actions
     connect(ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
@@ -1723,9 +1692,6 @@ void MainWindow::loadViewState()
         case VIEW_FLIGHT:
             centerStack->setCurrentWidget(pilotView);
             break;
-        case VIEW_MAVLINK:
-            centerStack->setCurrentWidget(mavlinkView);
-            break;
         case VIEW_MISSION:
             centerStack->setCurrentWidget(plannerView);
             break;
@@ -1909,17 +1875,6 @@ void MainWindow::loadSimulationView()
         storeViewState();
         currentView = VIEW_SIMULATION;
         ui.actionSimulationView->setChecked(true);
-        loadViewState();
-    }
-}
-
-void MainWindow::loadMAVLinkView()
-{
-    if (currentView != VIEW_MAVLINK)
-    {
-        storeViewState();
-        currentView = VIEW_MAVLINK;
-        ui.actionMavlinkView->setChecked(true);
         loadViewState();
     }
 }
