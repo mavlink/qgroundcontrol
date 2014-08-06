@@ -230,6 +230,13 @@ QGroupBox::title {
     color: #000;
 }
 
+QHeaderView::section {
+    border: none;
+	border-right: 1px solid #969696;
+	padding: 2px 0 2px 4px;
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #DDD, stop: 1 #999);
+}
+
 QLabel {
     background-color: transparent;
 }
