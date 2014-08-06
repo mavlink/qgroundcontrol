@@ -275,7 +275,6 @@ void MainWindow::init()
         widget->setMinimumWidth(1024);
         widget->setFeatures(QDockWidget::NoDockWidgetFeatures);
         widget->setTitleBarWidget(new QWidget(this)); // Disables the title bar
-    //    /*widget*/->setStyleSheet("QDockWidget { border: 0px solid #FFFFFF; border-radius: 0px; border-bottom: 0px;}");
         this->addDockWidget(Qt::TopDockWidgetArea, widget);
     }
 
@@ -458,7 +457,6 @@ QString MainWindow::getWindowStateKey()
 
 QString MainWindow::getWindowGeometryKey()
 {
-    //return QString::number(currentView)+"_geometry";
     return "_geometry";
 }
 
@@ -485,10 +483,7 @@ void MainWindow::buildCustomWidget()
             // Load dock widget location (default is bottom)
             Qt::DockWidgetArea location = tool->getDockWidgetArea(currentView);
 
-            //addDockWidget(location, dock);
-            //dock->hide();
             int view = settings.value(QString("TOOL_PARENT_") + tool->objectName(),-1).toInt();
-            //settings.setValue(QString("TOOL_PARENT_") + "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView);
             settings.endGroup();
 
             QDockWidget* dock;
@@ -523,8 +518,6 @@ void MainWindow::buildCustomWidget()
 
             // XXX temporary "fix"
             dock->hide();
-
-            //createDockWidget(0,tool,tool->getTitle(),tool->objectName(),view,location);
         }
     }
 }
@@ -662,7 +655,6 @@ void MainWindow::buildCommonWidgets()
     menuActionHelper->createToolAction(tr("Status Details"), "UAS_STATUS_DETAILS_DOCKWIDGET");
 
     createDockWidget(pilotView, new DebugConsole(this), tr("Communications Console"), "COMMUNICATION_CONSOLE_DOCKWIDGET", VIEW_FLIGHT, Qt::LeftDockWidgetArea);
-    //createDockWidget(simView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_SIMULATION,Qt::BottomDockWidgetArea);
 
     menuActionHelper->createToolAction(tr("Flight Display"), "HEAD_DOWN_DISPLAY_1_DOCKWIDGET");
     menuActionHelper->createToolAction(tr("Actuator Status"), "HEAD_DOWN_DISPLAY_2_DOCKWIDGET");
@@ -677,61 +669,8 @@ void MainWindow::buildCommonWidgets()
     infoview->addSource(mavlinkDecoder);
     createDockWidget(pilotView,infoview,tr("Info View"),"UAS_INFO_INFOVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
 
-
-    //createDockWidget(pilotView,new HUD(320,240,this),tr("Head Up Display"),"HEAD_UP_DISPLAY_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea,this->width()/1.8);
-
-//    createDockWidget(pilotView,new UASQuickView(this),tr("Quick View"),"UAS_INFO_QUICKVIEW_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
-//    createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
-//    pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);
-//    pilotView->tabifyDockWidget((QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET"],(QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["UAS_INFO_QUICKVIEW_DOCKWIDGET"]);
-
-    //UASRawStatusView *view = new UASRawStatusView();
-    //view->setDecoder(mavlinkDecoder);
-    //view->show();
-    //hddisplay->addSource(mavlinkDecoder);
-    //createDockWidget(pilotView,new HSIDisplay(this),tr("Horizontal Situation"),"HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET",VIEW_FLIGHT,Qt::LeftDockWidgetArea);
-    //pilotView->setTabPosition(Qt::LeftDockWidgetArea,QTabWidget::North);
-    //pilotView->tabifyDockWidget((QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["HORIZONTAL_SITUATION_INDICATOR_DOCKWIDGET"],(QDockWidget*)centralWidgetToDockWidgetsMap[VIEW_FLIGHT]["UAS_INFO_QUICKVIEW_DOCKWIDGET"]);
-
-
-    //createDockWidget(pilotView,new UASActionsWidget(this),tr("Actions"),"UNMANNED_SYSTEM_ACTION_DOCKWIDGET",VIEW_FLIGHT,Qt::RightDockWidgetArea);
-
     // Custom widgets, added last to all menus and layouts
     buildCustomWidget();
-
-
-
-    /*if (!protocolWidget)
-    {
-        protocolWidget    = new XMLCommProtocolWidget(this);
-        addCentralWidget(protocolWidget, "Mavlink Generator");
-    }*/
-
-
-    //    if (!firmwareUpdateWidget)
-    //    {
-    //        firmwareUpdateWidget    = new QGCFirmwareUpdate(this);
-    //        addCentralWidget(firmwareUpdateWidget, "Firmware Update");
-    //    }
-
-    /*if (!hudWidget)
-    {
-        hudWidget         = new HUD(320, 240, this);
-        addCentralWidget(hudWidget, tr("Head Up Display"));
-    }*/
-
-    /*if (!configWidget)
-    {
-        configWidget = new QGCVehicleConfig(this);
-        addCentralWidget(configWidget, tr("Vehicle Configuration"));
-    }*/
-
-
-    /*if (!dataplotWidget)
-    {
-        dataplotWidget    = new QGCDataPlot2D(this);
-        addCentralWidget(dataplotWidget, tr("Logfile Plot"));
-    }*/
 }
 
 void MainWindow::addTool(SubMainWindow *parent,VIEW_SECTIONS view,QDockWidget* widget, const QString& title, Qt::DockWidgetArea area)
@@ -847,7 +786,6 @@ void MainWindow::loadDockWidget(const QString& name)
     else if (name == "Radio Control")
     {
         qDebug() << "Error loading window:" << name << "Unknown window type";
-        //createDockWidget(centerStack->currentWidget(),hddisplay,tr("Actuator Status"),"HEADS_DOWN_DISPLAY_2_DOCKWIDGET",currentView,Qt::RightDockWidgetArea);
     }
     else if (name == "PRIMARY_FLIGHT_DISPLAY_DOCKWIDGET")
     {
@@ -866,7 +804,6 @@ void MainWindow::loadDockWidget(const QString& name)
         if (customWidgetNameToFilenameMap.contains(name))
         {
             loadCustomWidget(customWidgetNameToFilenameMap[name],currentView);
-            //customWidgetNameToFilenameMap.remove(name);
         }
         else
         {
@@ -1009,7 +946,6 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         qDebug() << "Loading custom tool:" << tool->getTitle() << tool->objectName();
         QSettings settings;
         settings.beginGroup("QGC_MAINWINDOW");
-        //settings.setValue(QString("TOOL_PARENT_") + "UNNAMED_TOOL_" + QString::number(ui.menuTools->actions().size()),currentView);
 
         int view = settings.value(QString("TOOL_PARENT_") + tool->objectName(),-1).toInt();
         switch (view)
@@ -1141,10 +1077,6 @@ void MainWindow::configureWindowName()
     windowname.append(")");
 
     setWindowTitle(windowname);
-
-#ifndef Q_WS_MAC
-    //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
-#endif
 }
 
 void MainWindow::startVideoCapture()
@@ -1159,9 +1091,6 @@ void MainWindow::startVideoCapture()
                                                           .arg(format));
     delete videoTimer;
     videoTimer = new QTimer(this);
-    //videoTimer->setInterval(40);
-    //connect(videoTimer, SIGNAL(timeout()), this, SLOT(saveScreen()));
-    //videoTimer->stop();
 }
 
 void MainWindow::stopVideoCapture()
@@ -1292,7 +1221,6 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionFlightView);
     perspectives->addAction(ui.actionSimulationView);
     perspectives->addAction(ui.actionMissionView);
-    //perspectives->addAction(ui.actionConfiguration_2);
     perspectives->addAction(ui.actionHardwareConfig);
     perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionTerminalView);
@@ -1516,7 +1444,7 @@ LinkInterface* MainWindow::addLink()
     foreach (QAction* act, actions)
     {
         if (act->data().toInt() == linkID)
-        { // LinkManager::instance()->getLinks().indexOf(link)
+        {
             act->trigger();
             break;
         }
@@ -1539,7 +1467,7 @@ bool MainWindow::configLink(LinkInterface *link)
     foreach (QAction* action, actions)
     {
         if (action->data().toInt() == linkID)
-        { // LinkManager::instance()->getLinks().indexOf(link)
+        {
             found = true;
             action->trigger(); // Show the Link Config Dialog
         }
@@ -1568,7 +1496,7 @@ void MainWindow::addLink(LinkInterface *link)
     foreach (QAction* act, actions)
     {
         if (act->data().toInt() == linkID)
-        { // LinkManager::instance()->getLinks().indexOf(link)
+        {
             found = true;
         }
     }
@@ -1592,10 +1520,6 @@ void MainWindow::simulateLink(bool simulate) {
     simulationLink->connectLink(simulate);
 }
 
-//void MainWindow::configLink(LinkInterface *link)
-//{
-
-//}
 void MainWindow::commsWidgetDestroyed(QObject *obj)
 {
     if (commsWidgetList.contains(obj))
@@ -1607,13 +1531,9 @@ void MainWindow::commsWidgetDestroyed(QObject *obj)
 void MainWindow::setActiveUAS(UASInterface* uas)
 {
     Q_UNUSED(uas);
-    // Enable and rename menu
-    //    ui.menuUnmanned_System->setTitle(uas->getUASName());
-    //    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
     if (settings.contains(getWindowStateKey()))
     {
         SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
-        //settings.setValue(getWindowStateKey(), win->saveState(QGC::applicationVersion()))
         win->restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
     }
 
@@ -1621,114 +1541,85 @@ void MainWindow::setActiveUAS(UASInterface* uas)
 
 void MainWindow::UASSpecsChanged(int uas)
 {
-    UASInterface* activeUAS = UASManager::instance()->getActiveUAS();
-    if (activeUAS)
-    {
-        if (activeUAS->getUASID() == uas)
-        {
-            //            ui.menuUnmanned_System->setTitle(activeUAS->getUASName());
-        }
-    }
-    else
-    {
-        // Last system deleted
-        //        ui.menuUnmanned_System->setTitle(tr("No System"));
-        //        ui.menuUnmanned_System->setEnabled(false);
-    }
+    Q_UNUSED(uas);
+    // TODO: Update UAS properties if its specs change
 }
 
 void MainWindow::UASCreated(UASInterface* uas)
 {
+    // The pilot, operator and engineer views were not available on startup, enable them now
+    ui.actionFlightView->setEnabled(true);
+    ui.actionMissionView->setEnabled(true);
+    ui.actionEngineersView->setEnabled(true);
+    // The UAS actions are not enabled without connection to system
+    ui.actionLiftoff->setEnabled(true);
+    ui.actionLand->setEnabled(true);
+    ui.actionEmergency_Kill->setEnabled(true);
+    ui.actionEmergency_Land->setEnabled(true);
+    ui.actionShutdownMAV->setEnabled(true);
 
-    // Check if this is the 2nd system and we need a switch menu
-    if (UASManager::instance()->getUASList().count() > 1)
-        //        ui.menuConnected_Systems->setEnabled(true);
-
-        // Connect the UAS to the full user interface
-
-        //if (uas != NULL)
-        //{
-        // The pilot, operator and engineer views were not available on startup, enable them now
-        ui.actionFlightView->setEnabled(true);
-        ui.actionMissionView->setEnabled(true);
-        ui.actionEngineersView->setEnabled(true);
-        // The UAS actions are not enabled without connection to system
-        ui.actionLiftoff->setEnabled(true);
-        ui.actionLand->setEnabled(true);
-        ui.actionEmergency_Kill->setEnabled(true);
-        ui.actionEmergency_Land->setEnabled(true);
-        ui.actionShutdownMAV->setEnabled(true);
-
-        QIcon icon;
-        // Set matching icon
-        switch (uas->getSystemType())
-        {
-        case MAV_TYPE_GENERIC:
-            icon = QIcon(":files/images/mavs/generic.svg");
-            break;
-        case MAV_TYPE_FIXED_WING:
-            icon = QIcon(":files/images/mavs/fixed-wing.svg");
-            break;
-        case MAV_TYPE_QUADROTOR:
-            icon = QIcon(":files/images/mavs/quadrotor.svg");
-            break;
-        case MAV_TYPE_COAXIAL:
-            icon = QIcon(":files/images/mavs/coaxial.svg");
-            break;
-        case MAV_TYPE_HELICOPTER:
-            icon = QIcon(":files/images/mavs/helicopter.svg");
-            break;
-        case MAV_TYPE_ANTENNA_TRACKER:
-            icon = QIcon(":files/images/mavs/antenna-tracker.svg");
-            break;
-        case MAV_TYPE_GCS:
-            icon = QIcon(":files/images/mavs/groundstation.svg");
-            break;
-        case MAV_TYPE_AIRSHIP:
-            icon = QIcon(":files/images/mavs/airship.svg");
-            break;
-        case MAV_TYPE_FREE_BALLOON:
-            icon = QIcon(":files/images/mavs/free-balloon.svg");
-            break;
-        case MAV_TYPE_ROCKET:
-            icon = QIcon(":files/images/mavs/rocket.svg");
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-            icon = QIcon(":files/images/mavs/ground-rover.svg");
-            break;
-        case MAV_TYPE_SURFACE_BOAT:
-            icon = QIcon(":files/images/mavs/surface-boat.svg");
-            break;
-        case MAV_TYPE_SUBMARINE:
-            icon = QIcon(":files/images/mavs/submarine.svg");
-            break;
-        case MAV_TYPE_HEXAROTOR:
-            icon = QIcon(":files/images/mavs/hexarotor.svg");
-            break;
-        case MAV_TYPE_OCTOROTOR:
-            icon = QIcon(":files/images/mavs/octorotor.svg");
-            break;
-        case MAV_TYPE_TRICOPTER:
-            icon = QIcon(":files/images/mavs/tricopter.svg");
-            break;
-        case MAV_TYPE_FLAPPING_WING:
-            icon = QIcon(":files/images/mavs/flapping-wing.svg");
-            break;
-        case MAV_TYPE_KITE:
-            icon = QIcon(":files/images/mavs/kite.svg");
-            break;
-        default:
-            icon = QIcon(":files/images/mavs/unknown.svg");
-            break;
-        }
-
-    // XXX The multi-UAS selection menu has been disabled for now,
-    // its redundant with right-clicking the UAS in the list.
-    // this code piece might be removed later if this is the final
-    // conclusion (May 2013)
-    //        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
-    //        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
-    //        ui.menuConnected_Systems->addAction(uasAction);
+    QIcon icon;
+    // Set matching icon
+    switch (uas->getSystemType())
+    {
+    case MAV_TYPE_GENERIC:
+        icon = QIcon(":files/images/mavs/generic.svg");
+        break;
+    case MAV_TYPE_FIXED_WING:
+        icon = QIcon(":files/images/mavs/fixed-wing.svg");
+        break;
+    case MAV_TYPE_QUADROTOR:
+        icon = QIcon(":files/images/mavs/quadrotor.svg");
+        break;
+    case MAV_TYPE_COAXIAL:
+        icon = QIcon(":files/images/mavs/coaxial.svg");
+        break;
+    case MAV_TYPE_HELICOPTER:
+        icon = QIcon(":files/images/mavs/helicopter.svg");
+        break;
+    case MAV_TYPE_ANTENNA_TRACKER:
+        icon = QIcon(":files/images/mavs/antenna-tracker.svg");
+        break;
+    case MAV_TYPE_GCS:
+        icon = QIcon(":files/images/mavs/groundstation.svg");
+        break;
+    case MAV_TYPE_AIRSHIP:
+        icon = QIcon(":files/images/mavs/airship.svg");
+        break;
+    case MAV_TYPE_FREE_BALLOON:
+        icon = QIcon(":files/images/mavs/free-balloon.svg");
+        break;
+    case MAV_TYPE_ROCKET:
+        icon = QIcon(":files/images/mavs/rocket.svg");
+        break;
+    case MAV_TYPE_GROUND_ROVER:
+        icon = QIcon(":files/images/mavs/ground-rover.svg");
+        break;
+    case MAV_TYPE_SURFACE_BOAT:
+        icon = QIcon(":files/images/mavs/surface-boat.svg");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        icon = QIcon(":files/images/mavs/submarine.svg");
+        break;
+    case MAV_TYPE_HEXAROTOR:
+        icon = QIcon(":files/images/mavs/hexarotor.svg");
+        break;
+    case MAV_TYPE_OCTOROTOR:
+        icon = QIcon(":files/images/mavs/octorotor.svg");
+        break;
+    case MAV_TYPE_TRICOPTER:
+        icon = QIcon(":files/images/mavs/tricopter.svg");
+        break;
+    case MAV_TYPE_FLAPPING_WING:
+        icon = QIcon(":files/images/mavs/flapping-wing.svg");
+        break;
+    case MAV_TYPE_KITE:
+        icon = QIcon(":files/images/mavs/kite.svg");
+        break;
+    default:
+        icon = QIcon(":files/images/mavs/unknown.svg");
+        break;
+    }
 
 
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
@@ -1741,8 +1632,6 @@ void MainWindow::UASCreated(UASInterface* uas)
     if (!linechartWidget)
     {
         linechartWidget = new Linecharts(this);
-        //linechartWidget->hide();
-
     }
 
     linechartWidget->addSource(mavlinkDecoder);
@@ -1764,7 +1653,6 @@ void MainWindow::UASCreated(UASInterface* uas)
             detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
             detectionDockWidget->setWidget( new ObjectDetectionView("files/images/patterns", this) );
             detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
-            //addTool(detectionDockWidget, tr("Object Recognition"), Qt::RightDockWidgetArea);
         }
 
         if (!watchdogControlDockWidget)
@@ -1772,56 +1660,8 @@ void MainWindow::UASCreated(UASInterface* uas)
             watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
             watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
             watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
-            //addTool(watchdogControlDockWidget, tr("Process Control"), Qt::BottomDockWidgetArea);
         }
     }
-
-    // Change the view only if this is the first UAS
-
-    // If this is the first connected UAS, it is both created as well as
-    // the currently active UAS
-    if (UASManager::instance()->getUASList().size() == 1)
-    {
-        // Load last view if setting is present
-        if (settings.contains("CURRENT_VIEW_WITH_UAS_CONNECTED"))
-        {
-            /*int view = settings.value("CURRENT_VIEW_WITH_UAS_CONNECTED").toInt();
-                switch (view)
-                {
-                case VIEW_ENGINEER:
-                    loadEngineerView();
-                    break;
-                case VIEW_MAVLINK:
-                    loadMAVLinkView();
-                    break;
-                case VIEW_FIRMWAREUPDATE:
-                    loadFirmwareUpdateView();
-                    break;
-                case VIEW_FLIGHT:
-                    loadPilotView();
-                    break;
-                case VIEW_SIMULATION:
-                    loadSimulationView();
-                    break;
-                case VIEW_UNCONNECTED:
-                    loadUnconnectedView();
-                    break;
-                case VIEW_MISSION:
-                default:
-                    loadOperatorView();
-                    break;
-                }*/
-        }
-        else
-        {
-            // loadOperatorView();
-        }
-    }
-
-    //}
-
-    //    if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
-    //    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
 
     // Reload view state in case new widgets were added
     loadViewState();
@@ -1830,21 +1670,7 @@ void MainWindow::UASCreated(UASInterface* uas)
 void MainWindow::UASDeleted(UASInterface* uas)
 {
     Q_UNUSED(uas);
-    if (UASManager::instance()->getUASList().count() == 0)
-    {
-        // Last system deleted
-        //        ui.menuUnmanned_System->setTitle(tr("No System"));
-        //        ui.menuUnmanned_System->setEnabled(false);
-    }
-
-    //    QAction* act;
-    //    QList<QAction*> actions = ui.menuConnected_Systems->actions();
-
-    //    foreach (act, actions)
-    //    {
-    //        if (act->text().contains(uas->getUASName()))
-    //            ui.menuConnected_Systems->removeAction(act);
-    //    }
+    // TODO: Update the UI when a UAS is deleted
 }
 
 /**
@@ -1879,12 +1705,6 @@ void MainWindow::loadViewState()
 {
     // Restore center stack state
     int index = settings.value(getWindowStateKey()+"CENTER_WIDGET", -1).toInt();
-    // The offline plot view is usually the consequence of a logging run, always show the realtime view first
-    if (centerStack->indexOf(engineeringView) == index)
-    {
-        // Rewrite to realtime plot
-        //index = centerStack->indexOf(linechartWidget);
-    }
 
     if (index != -1)
     {
@@ -1915,9 +1735,6 @@ void MainWindow::loadViewState()
         case VIEW_MAVLINK:
             centerStack->setCurrentWidget(mavlinkView);
             break;
-//        case VIEW_FIRMWAREUPDATE:
-//            centerStack->setCurrentWidget(firmwareUpdateWidget);
-//            break;
         case VIEW_MISSION:
             centerStack->setCurrentWidget(plannerView);
             break;
@@ -1938,7 +1755,6 @@ void MainWindow::loadViewState()
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
-            //centerStack->setCurrentWidget(mapWidget);
             if (controlDockWidget)
             {
                 controlDockWidget->hide();
@@ -1968,7 +1784,6 @@ void MainWindow::loadViewState()
     if (settings.contains(getWindowStateKey()))
     {
         SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
-        //settings.setValue(getWindowStateKey(), win->saveState(QGC::applicationVersion()))
         win->restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
     }
 }
@@ -2144,7 +1959,6 @@ bool MainWindow::dockWidgetTitleBarsEnabled() const
 bool MainWindow::x11Event(XEvent *event)
 {
     emit x11EventOccured(event);
-    //qDebug("XEvent occured...");
     return false;
 }
 #endif // QGC_MOUSE_ENABLED_LINUX
