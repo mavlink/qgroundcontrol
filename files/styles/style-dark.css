@@ -261,6 +261,13 @@ QGroupBox::title {
     color: #DDD;
 }
 
+QHeaderView::section {
+    border: none;
+	border-right: 1px solid #969696;
+	padding: 2px 0 2px 4px;
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4B4B4B, stop: 0.3 #404040, stop: 0.34 #383838, stop:1 #181818);
+}
+
 QLabel {
     background-color: transparent;
 }
@@ -651,6 +658,10 @@ QToolTip {
     margin: 3px;
     border-radius: 3px;
     color: #DDD;
+}
+
+QTreeView::item:selected {
+	color: #000;
 }
 
 UASQuickViewItem QLabel {
