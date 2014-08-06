@@ -660,6 +660,10 @@ QToolTip {
     color: #DDD;
 }
 
+QTreeView::item:selected {
+	color: #000;
+}
+
 UASQuickViewItem QLabel {
     padding: 0;
     margin: 0;
