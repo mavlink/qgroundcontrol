@@ -95,15 +95,15 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
-    <addaction name="actionFlightView"/>
     <addaction name="actionMissionView"/>
+    <addaction name="actionFlightView"/>
     <addaction name="actionHardwareConfig"/>
-    <addaction name="actionSoftwareConfig"/>
-    <addaction name="actionTerminalView"/>
-    <addaction name="actionSimulationView"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
+    <addaction name="actionSoftwareConfig"/>
+    <addaction name="actionTerminalView"/>
+    <addaction name="actionSimulationView"/>
     <addaction name="actionFirmwareUpdateView"/>
     <addaction name="separator"/>
     <addaction name="actionFullscreen"/>

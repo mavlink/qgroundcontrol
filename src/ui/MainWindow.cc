@@ -211,16 +211,20 @@ void MainWindow::init()
 
         // Add actions for average users (displayed next to each other)
         QList<QAction*> actions;
-        actions << ui.actionFlightView;
         actions << ui.actionMissionView;
+        actions << ui.actionFlightView;
         actions << ui.actionHardwareConfig;
 
         toolBar->setPerspectiveChangeActions(actions);
 
         // Add actions for advanced users (displayed in dropdown under "advanced")
         QList<QAction*> advancedActions;
-        advancedActions << ui.actionSimulationView;
         advancedActions << ui.actionEngineersView;
+        advancedActions << ui.actionGoogleEarthView;
+        advancedActions << ui.actionLocal3DView;
+        advancedActions << ui.actionSoftwareConfig;
+        advancedActions << ui.actionTerminalView;
+        advancedActions << ui.actionSimulationView;
 
         toolBar->setPerspectiveChangeAdvancedActions(advancedActions);
     } else {
@@ -359,18 +363,26 @@ void MainWindow::init()
 
     // Set OS dependent keyboard shortcuts for the main window, non OS dependent shortcuts are set in MainWindow.ui
 #ifdef Q_OS_MACX
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Meta+1", 0));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Meta+2", 0));
     ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Meta+3", 0));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
+    ui.actionGoogleEarthView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
+    ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Meta+6", 0));
+    ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Meta+7", 0));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+8", 0));
+    ui.actionFirmwareUpdateView->setShortcut(QApplication::translate("MainWindow", "Meta+9", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
-    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
-    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
+    ui.actionMissionView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
+    ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+2", 0));
     ui.actionHardwareConfig->setShortcut(QApplication::translate("MainWindow", "Ctrl+3", 0));
-    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
-    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
+    ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
+    ui.actionGoogleEarthView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
+    ui.actionLocal3DView->setShortcut(QApplication::translate("MainWindow", "Ctrl+6", 0));
+    ui.actionTerminalView->setShortcut(QApplication::translate("MainWindow", "Ctrl+7", 0));
+    ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+8", 0));
+    ui.actionFirmwareUpdateView->setShortcut(QApplication::translate("MainWindow", "Ctrl+9", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
