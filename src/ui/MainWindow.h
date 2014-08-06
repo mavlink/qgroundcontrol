@@ -224,8 +224,6 @@ public slots:
     /** @brief Load configuration views */
     void loadHardwareConfigView();
     void loadSoftwareConfigView();
-    /** @brief Load default view when no MAV is connected */
-    void loadUnconnectedView();
     /** @brief Load view for pilot */
     void loadPilotView();
     /** @brief Load view for simulation */
@@ -343,8 +341,7 @@ protected:
         VIEW_TERMINAL,
         VIEW_LOCAL3D,
         VIEW_GOOGLEEARTH,
-        VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
-        VIEW_FULL            ///< All widgets shown at once
+        VIEW_DEFAULT
     } VIEW_SECTIONS;
 
     /**
