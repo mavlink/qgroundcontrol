@@ -23,6 +23,8 @@ message(Qt version $$[QT_VERSION])
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
+error("Testing failure")
+
 !equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 1) {
     error("Unsupported Qt version, 5.2+ is required")
 }
