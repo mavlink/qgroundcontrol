@@ -175,7 +175,7 @@ void MainWindow::init()
         if (currentViewCandidate != VIEW_ENGINEER &&
                 currentViewCandidate != VIEW_MISSION &&
                 currentViewCandidate != VIEW_FLIGHT &&
-                currentViewCandidate != VIEW_FULL)
+                currentViewCandidate != VIEW_DEFAULT)
         {
             currentView = currentViewCandidate;
         }
@@ -370,7 +370,6 @@ void MainWindow::init()
     ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Meta+4", 0));
     ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Meta+5", 0));
     ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Meta+M", 0));
-    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Meta+U", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Meta+Return", 0));
 #else
     ui.actionFlightView->setShortcut(QApplication::translate("MainWindow", "Ctrl+1", 0));
@@ -379,7 +378,6 @@ void MainWindow::init()
     ui.actionSimulationView->setShortcut(QApplication::translate("MainWindow", "Ctrl+4", 0));
     ui.actionEngineersView->setShortcut(QApplication::translate("MainWindow", "Ctrl+5", 0));
     ui.actionMavlinkView->setShortcut(QApplication::translate("MainWindow", "Ctrl+M", 0));
-    ui.actionUnconnectedView->setShortcut(QApplication::translate("MainWindow", "Ctrl+U", 0));
     ui.actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0));
 #endif
 
@@ -1224,7 +1222,6 @@ void MainWindow::connectCommonActions()
     perspectives->addAction(ui.actionHardwareConfig);
     perspectives->addAction(ui.actionSoftwareConfig);
     perspectives->addAction(ui.actionTerminalView);
-    perspectives->addAction(ui.actionUnconnectedView);
     perspectives->addAction(ui.actionGoogleEarthView);
     perspectives->addAction(ui.actionLocal3DView);
     perspectives->setExclusive(true);
@@ -1292,11 +1289,6 @@ void MainWindow::connectCommonActions()
         ui.actionLocal3DView->setChecked(true);
         ui.actionLocal3DView->activate(QAction::Trigger);
     }
-    if (currentView == VIEW_UNCONNECTED)
-    {
-        ui.actionUnconnectedView->setChecked(true);
-        ui.actionUnconnectedView->activate(QAction::Trigger);
-    }
 
     // The UAS actions are not enabled without connection to system
     ui.actionLiftoff->setEnabled(false);
@@ -1327,7 +1319,6 @@ void MainWindow::connectCommonActions()
     connect(ui.actionSimulationView, SIGNAL(triggered()), this, SLOT(loadSimulationView()));
     connect(ui.actionEngineersView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionMissionView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
-    connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
     connect(ui.actionHardwareConfig,SIGNAL(triggered()),this,SLOT(loadHardwareConfigView()));
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
     connect(ui.actionLocal3DView, SIGNAL(triggered()), this, SLOT(loadLocal3DView()));
@@ -1752,8 +1743,7 @@ void MainWindow::loadViewState()
         case VIEW_LOCAL3D:
             centerStack->setCurrentWidget(local3DView);
             break;
-        case VIEW_UNCONNECTED:
-        case VIEW_FULL:
+        case VIEW_DEFAULT:
         default:
             if (controlDockWidget)
             {
@@ -1897,17 +1887,6 @@ void MainWindow::loadLocal3DView()
         storeViewState();
         currentView = VIEW_LOCAL3D;
         ui.actionLocal3DView->setChecked(true);
-        loadViewState();
-    }
-}
-
-void MainWindow::loadUnconnectedView()
-{
-    if (currentView != VIEW_UNCONNECTED)
-    {
-        storeViewState();
-        currentView = VIEW_UNCONNECTED;
-        ui.actionUnconnectedView->setChecked(true);
         loadViewState();
     }
 }
