@@ -253,7 +253,6 @@ FORMS += \
     src/ui/ParameterInterface.ui \
     src/ui/WaypointList.ui \
     src/ui/ObjectDetectionView.ui \
-    src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
@@ -394,7 +393,6 @@ HEADERS += \
     src/Waypoint.h \
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
-    src/ui/JoystickWidget.h \
     src/ui/DebugConsole.h \
     src/ui/HDDisplay.h \
     src/ui/MAVLinkSettingsWidget.h \
@@ -584,7 +582,6 @@ SOURCES += \
     src/Waypoint.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
-    src/ui/JoystickWidget.cc \
     src/ui/DebugConsole.cc \
     src/ui/HDDisplay.cc \
     src/ui/MAVLinkSettingsWidget.cc \
