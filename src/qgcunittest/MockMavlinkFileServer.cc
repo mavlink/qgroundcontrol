@@ -139,7 +139,7 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request, ui
     
     // Data contains file length
     response.hdr.size = sizeof(uint32_t);
-    *((uint32_t*)response.data) = _readFileLength;
+    response.openFileLength = _readFileLength;
     
     _emitResponse(&response, outgoingSeqNumber);
 }

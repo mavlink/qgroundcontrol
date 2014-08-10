@@ -107,8 +107,7 @@ void QGCUASFileManager::_openAckResponse(Request* openAck)
     
     // File length comes back in data
     Q_ASSERT(openAck->hdr.size == sizeof(uint32_t));
-    uint32_t fileLength = *((uint32_t*)&openAck->data[0]);
-    emit openFileLength(fileLength);
+    emit openFileLength(openAck->openFileLength);
 
     _readOffset = 0;                // Start reading at beginning of file
     _readFileAccumulator.clear();   // Start with an empty file

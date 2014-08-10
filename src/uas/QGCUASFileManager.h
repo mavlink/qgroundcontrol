@@ -71,9 +71,16 @@ protected:
     struct Request
     {
         struct RequestHeader hdr;
-        // The entire Request must fit into the data member of the mavlink_encapsulated_data_t structure. We use as many leftover bytes
-        // after we use up space for the RequestHeader for the data portion of the Request.
-        uint8_t data[sizeof(((mavlink_encapsulated_data_t*)0)->data) - sizeof(RequestHeader)];
+
+        // We use a union here instead of just casting (uint32_t)&data[0] to not break strict aliasing rules
+        union {
+            // The entire Request must fit into the data member of the mavlink_encapsulated_data_t structure. We use as many leftover bytes
+            // after we use up space for the RequestHeader for the data portion of the Request.
+            uint8_t data[sizeof(((mavlink_encapsulated_data_t*)0)->data) - sizeof(RequestHeader)];
+
+            // File length returned by Open command
+            uint32_t openFileLength;
+        };
     };
 
     enum Opcode
