@@ -394,13 +394,7 @@ void MAVLinkSimulationLink::mainloop()
 //        y = (y < -5.0f) ? -5.0f : y;
 //        z = (z < -3.0f) ? -3.0f : z;
 
-        // Send back new setpoint
         mavlink_message_t ret;
-        mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, MAV_FRAME_LOCAL_NED, spX, spY, spZ, spYaw); // spYaw/180.0*M_PI);
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
-        //add data into datastream
-        memcpy(stream+streampointer,buffer, bufferlength);
-        streampointer += bufferlength;
 
         // Send back new position
         mavlink_msg_local_position_ned_pack(systemId, componentId, &ret, 0, x, y, -fabs(z), xSpeed, ySpeed, zSpeed);
@@ -700,24 +694,6 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                 mavlink_msg_set_mode_decode(&msg, &mode);
                 // Set mode indepent of mode.target
                 system.base_mode = mode.base_mode;
-            }
-            break;
-            case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
-            {
-                mavlink_set_local_position_setpoint_t set;
-                mavlink_msg_set_local_position_setpoint_decode(&msg, &set);
-                spX = set.x;
-                spY = set.y;
-                spZ = set.z;
-                spYaw = set.yaw;
-
-                // Send back new setpoint
-                mavlink_message_t ret;
-                mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, MAV_FRAME_LOCAL_NED, spX, spY, spZ, spYaw);
-                bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-                //add data into datastream
-                memcpy(stream+streampointer,buffer, bufferlength);
-                streampointer += bufferlength;
             }
             break;
             // EXECUTE OPERATOR ACTIONS
