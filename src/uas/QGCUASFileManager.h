@@ -49,6 +49,7 @@ signals:
     void resetStatusMessages();
     void errorMessage(const QString& msg);
     void listComplete(void);
+    void openFileLength(unsigned int length);
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -56,6 +57,7 @@ public slots:
     void downloadPath(const QString& from, const QDir& downloadDir);
 
 protected:
+    static const uint8_t kProtocolMagic = 'f';
     struct RequestHeader
         {
             uint8_t		magic;      ///> Magic byte 'f' to idenitfy FTP protocol
@@ -148,7 +150,8 @@ protected:
     QTimer          _ackTimer;                      ///> Used to signal a timeout waiting for an ack
     
     UASInterface* _mav;
-    quint16 _encdata_seq;
+    
+    uint16_t _lastOutgoingSeqNumber; ///< Sequence number sent in last outgoing packet
 
     unsigned    _listOffset;    ///> offset for the current List operation
     QString     _listPath;      ///> path for the current List operation

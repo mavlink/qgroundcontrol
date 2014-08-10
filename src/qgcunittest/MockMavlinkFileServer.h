@@ -54,7 +54,7 @@ public:
         errModeNoSecondResponse,    ///< No response to subsequent request to initial command
         errModeNakSecondResponse,   ///< Nak subsequent request to initial command
         errModeBadCRC,              ///< Return response with bad CRC
-        errModeBadSequence          ///< Return response with bad sequence number, NYI: Waiting on Firmware sequence # support
+        errModeBadSequence          ///< Return response with bad sequence number
     } ErrorMode_t;
     
     /// @brief Sets the error mode for command responses. This allows you to simulate various server errors.
@@ -89,13 +89,14 @@ signals:
     void terminateCommandReceived(void);
     
 private:
-    void _sendAck(void);
-    void _sendNak(QGCUASFileManager::ErrorCode error);
-    void _emitResponse(QGCUASFileManager::Request* request);
-    void _listCommand(QGCUASFileManager::Request* request);
-    void _openCommand(QGCUASFileManager::Request* request);
-    void _readCommand(QGCUASFileManager::Request* request);
-    void _terminateCommand(QGCUASFileManager::Request* request);
+    void _sendAck(uint16_t seqNumber);
+    void _sendNak(QGCUASFileManager::ErrorCode error, uint16_t seqNumber);
+    void _emitResponse(QGCUASFileManager::Request* request, uint16_t seqNumber);
+    void _listCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
+    void _openCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
+    void _readCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
+    void _terminateCommand(QGCUASFileManager::Request* request, uint16_t seqNumber);
+    uint16_t _nextSeqNumber(uint16_t seqNumber);
     
     QStringList _fileList;  ///< List of files returned by List command
     
