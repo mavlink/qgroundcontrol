@@ -1123,12 +1123,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 break;
             }
         }
-        case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
+        case MAVLINK_MSG_ID_ATTITUDE_TARGET:
         {
-            mavlink_roll_pitch_yaw_thrust_setpoint_t out;
-            mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
+            mavlink_attitude_target_t out;
+            mavlink_msg_attitude_target_decode(&message, &out);
+            float roll, pitch, yaw;
+            mavlink_quaternion_to_euler(out.q, &roll, &pitch, &yaw);
             quint64 time = getUnixTimeFromMs(out.time_boot_ms);
-            emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
+            emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, out.thrust, time);
         }
             break;
         case MAVLINK_MSG_ID_MISSION_COUNT:
@@ -1274,22 +1276,23 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
             break;
 
-        case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT:
+        case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
         {
             if (multiComponentSourceDetected && wrongComponent)
             {
                 break;
             }
-            mavlink_local_position_setpoint_t p;
-            mavlink_msg_local_position_setpoint_decode(&message, &p);
-            emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
+            mavlink_position_target_local_ned_t p;
+            mavlink_msg_position_target_local_ned_decode(&message, &p);
+            quint64 time = getUnixTimeFromMs(p.time_boot_ms);
+            emit positionSetPointsChanged(uasId, p.x, p.y, p.z, 0/* XXX remove yaw and move it to attitude */, time);
         }
             break;
-        case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
+        case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
         {
-            mavlink_set_local_position_setpoint_t p;
-            mavlink_msg_set_local_position_setpoint_decode(&message, &p);
-            emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw);
+            mavlink_set_position_target_local_ned_t p;
+            mavlink_msg_set_position_target_local_ned_decode(&message, &p);
+            emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, 0/* XXX remove yaw and move it to attitude */);
         }
             break;
         case MAVLINK_MSG_ID_STATUSTEXT:
@@ -2905,9 +2908,24 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
         mavlink_message_t message;
-        mavlink_msg_setpoint_6dof_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)x, (float)y, (float)z, (float)roll, (float)pitch, (float)yaw);
+        float q[4];
+        mavlink_euler_to_quaternion(roll, pitch, yaw, q);
+        quint8 mask;
+        // Do not control rates and throttle
+        mask |= (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
+        mask |= (1 << 6); // ignore throttle
+        mavlink_msg_set_attitude_target_pack(mavlink->getSystemId(), mavlink->getComponentId(),
+                                             &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
+                                             mask, q, 0, 0, 0, 0);
         sendMessage(message);
-        qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGE: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
+        quint8 position_mask;
+        position_mask |= (1 << 3) | (1 << 4) | (1 << 5) |
+                         (1 << 6) | (1 << 7) | (1 << 8);
+        mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(), mavlink->getComponentId(),
+                                                       &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
+                                                       MAV_FRAME_LOCAL_NED, position_mask, x, y, z, 0, 0, 0, 0, 0, 0);
+        sendMessage(message);
+        qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGES: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
 
         //emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }
