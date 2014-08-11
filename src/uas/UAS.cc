@@ -2865,7 +2865,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
                                              &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
                                              mask, q, 0, 0, 0, 0);
         sendMessage(message);
-        quint8 position_mask = (1 << 3) | (1 << 4) | (1 << 5) |
+        quint16 position_mask = (1 << 3) | (1 << 4) | (1 << 5) |
             (1 << 6) | (1 << 7) | (1 << 8);
         mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(), mavlink->getComponentId(),
                                                        &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
