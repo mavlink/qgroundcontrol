@@ -191,6 +191,13 @@ WindowsBuild {
 		QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
     }
 
+	# Copy platform plugins
+	P_DIR = $$[QT_INSTALL_PLUGINS]
+	PLUGINS_DIR_WIN = $$replace(P_DIR, "/", "\\")
+	QMAKE_POST_LINK += $$escape_expand(\\n) mkdir release\\platforms
+	QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$PLUGINS_DIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\" \"$$DESTDIR_WIN\\platforms\\qwindows$${DLL_QT_DEBUGCHAR}.dll\"
+	QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$PLUGINS_DIR_WIN\\imageformats\" \"$$DESTDIR_WIN\\imageformats\"
+    
 	ReleaseBuild {
 		# Copy Visual Studio DLLs
 		# Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
