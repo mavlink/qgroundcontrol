@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>1024</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -95,19 +95,16 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
-    <addaction name="actionFlightView"/>
     <addaction name="actionMissionView"/>
+    <addaction name="actionFlightView"/>
     <addaction name="actionHardwareConfig"/>
-    <addaction name="actionSoftwareConfig"/>
-    <addaction name="actionTerminalView"/>
-    <addaction name="actionSimulationView"/>
     <addaction name="actionEngineersView"/>
     <addaction name="actionGoogleEarthView"/>
     <addaction name="actionLocal3DView"/>
-    <addaction name="separator"/>
+    <addaction name="actionSoftwareConfig"/>
+    <addaction name="actionTerminalView"/>
+    <addaction name="actionSimulationView"/>
     <addaction name="actionFirmwareUpdateView"/>
-    <addaction name="actionMavlinkView"/>
-    <addaction name="actionUnconnectedView"/>
     <addaction name="separator"/>
     <addaction name="actionFullscreen"/>
     <addaction name="actionNormal"/>
@@ -377,6 +374,9 @@
    <property name="text">
     <string>Settings</string>
    </property>
+   <property name="toolTip">
+    <string>Application settings</string>
+   </property>
   </action>
   <action name="actionFullscreen">
    <property name="checkable">
@@ -439,10 +439,10 @@
      <normaloff>:/files/images/categories/preferences-system.svg</normaloff>:/files/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Config</string>
+    <string>Vehicle Setup</string>
    </property>
    <property name="toolTip">
-    <string>Configuration options of the vehicle.</string>
+    <string>Hardware setup of the vehicle</string>
    </property>
   </action>
   <action name="actionAdvanced_Mode">

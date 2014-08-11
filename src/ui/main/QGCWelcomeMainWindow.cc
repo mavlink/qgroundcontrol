@@ -9,7 +9,6 @@ QGCWelcomeMainWindow::QGCWelcomeMainWindow(QWidget *parent) :
     storeSettings(false)
 {
     ui->setupUi(this);
-    statusBar()->hide();
 
     QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
     setWindowTitle(windowname);

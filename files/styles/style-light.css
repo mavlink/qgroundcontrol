@@ -230,6 +230,13 @@ QGroupBox::title {
     color: #000;
 }
 
+QHeaderView::section {
+    border: none;
+	border-right: 1px solid #969696;
+	padding: 2px 0 2px 4px;
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #DDD, stop: 1 #999);
+}
+
 QLabel {
     background-color: transparent;
 }
@@ -276,6 +283,14 @@ QMenu::separator {
     height: 1px;
     background: #379AC3;
     margin: 8px 5px 4px 5px;
+}
+
+/*
+ * Fix for bug in Qt5 where QMenuBar items are styled natively on Windows, ignoring inherited settings.
+ * so we explicitly set their background color here (should match catch-all style background color).
+ */
+QMenuBar::item {
+    background-color: #F6F6F6;
 }
 
 QMenuBar::item:selected {
@@ -532,6 +547,10 @@ QToolTip {
     margin: 3px;
     border-radius: 3px;
     color: #000;
+}
+
+QTreeView::item {
+	color: #000;
 }
 
 UASQuickViewItem QLabel {
