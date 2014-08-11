@@ -1123,12 +1123,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 break;
             }
         }
-        case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
+        case MAVLINK_MSG_ID_ATTITUDE_TARGET:
         {
-            mavlink_roll_pitch_yaw_thrust_setpoint_t out;
-            mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
+            mavlink_attitude_target_t out;
+            mavlink_msg_attitude_target_decode(&message, &out);
+            float roll, pitch, yaw;
+            mavlink_quaternion_to_euler(out.q, &roll, &pitch, &yaw);
             quint64 time = getUnixTimeFromMs(out.time_boot_ms);
-            emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
+            emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, out.thrust, time);
         }
             break;
         case MAVLINK_MSG_ID_MISSION_COUNT:
@@ -1274,22 +1276,23 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
             break;
 
-        case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT:
+        case MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED:
         {
             if (multiComponentSourceDetected && wrongComponent)
             {
                 break;
             }
-            mavlink_local_position_setpoint_t p;
-            mavlink_msg_local_position_setpoint_decode(&message, &p);
-            emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
+            mavlink_position_target_local_ned_t p;
+            mavlink_msg_position_target_local_ned_decode(&message, &p);
+            quint64 time = getUnixTimeFromMs(p.time_boot_ms);
+            emit positionSetPointsChanged(uasId, p.x, p.y, p.z, 0/* XXX remove yaw and move it to attitude */, time);
         }
             break;
-        case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT:
+        case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:
         {
-            mavlink_set_local_position_setpoint_t p;
-            mavlink_msg_set_local_position_setpoint_decode(&message, &p);
-            emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw);
+            mavlink_set_position_target_local_ned_t p;
+            mavlink_msg_set_position_target_local_ned_decode(&message, &p);
+            emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, 0/* XXX remove yaw and move it to attitude */);
         }
             break;
         case MAVLINK_MSG_ID_STATUSTEXT:
@@ -1381,126 +1384,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 imagePackets = 0;
                 imagePacketsArrived = 0;
                 emit imageReady(this);
-                //qDebug() << "imageReady emitted. all packets arrived";
             }
         }
             break;
 
-
-            //        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
-            //        {
-            //            mavlink_object_detection_event_t event;
-            //            mavlink_msg_object_detection_event_decode(&message, &event);
-            //            QString str(event.name);
-            //            emit objectDetected(event.time, event.object_id, event.type, str, event.quality, event.bearing, event.distance);
-            //        }
-            //        break;
-            // WILL BE ENABLED ONCE MESSAGE IS IN COMMON MESSAGE SET
-            //        case MAVLINK_MSG_ID_MEMORY_VECT:
-            //        {
-            //            mavlink_memory_vect_t vect;
-            //            mavlink_msg_memory_vect_decode(&message, &vect);
-            //            QString str("mem_%1");
-            //            quint64 time = getUnixTime(0);
-            //            int16_t *mem0 = (int16_t *)&vect.value[0];
-            //            uint16_t *mem1 = (uint16_t *)&vect.value[0];
-            //            int32_t *mem2 = (int32_t *)&vect.value[0];
-            //            // uint32_t *mem3 = (uint32_t *)&vect.value[0]; causes overload problem
-            //            float *mem4 = (float *)&vect.value[0];
-            //            if ( vect.ver == 0) vect.type = 0, vect.ver = 1; else ;
-            //            if ( vect.ver == 1)
-            //            {
-            //                switch (vect.type) {
-            //                default:
-            //                case 0:
-            //                    for (int i = 0; i < 16; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "i16", mem0[i], time);
-            //                    break;
-            //                case 1:
-            //                    for (int i = 0; i < 16; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "ui16", mem1[i], time);
-            //                    break;
-            //                case 2:
-            //                    for (int i = 0; i < 16; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "Q15", (float)mem0[i]/32767.0, time);
-            //                    break;
-            //                case 3:
-            //                    for (int i = 0; i < 16; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "1Q14", (float)mem0[i]/16383.0, time);
-            //                    break;
-            //                case 4:
-            //                    for (int i = 0; i < 8; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
-            //                    break;
-            //                case 5:
-            //                    for (int i = 0; i < 8; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
-            //                    break;
-            //                case 6:
-            //                    for (int i = 0; i < 8; i++)
-            //                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*4)), "float", mem4[i], time);
-            //                    break;
-            //                }
-            //            }
-            //        }
-            //        break;
-#ifdef MAVLINK_ENABLED_UALBERTA
-        case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
-        {
-            mavlink_nav_filter_bias_t bias;
-            mavlink_msg_nav_filter_bias_decode(&message, &bias);
-            quint64 time = getUnixTime();
-            // FIXME REMOVE LATER emit valueChanged(uasId, "b_f[0]", "raw", bias.accel_0, time);
-            // FIXME REMOVE LATER emit valueChanged(uasId, "b_f[1]", "raw", bias.accel_1, time);
-            // FIXME REMOVE LATER emit valueChanged(uasId, "b_f[2]", "raw", bias.accel_2, time);
-            // FIXME REMOVE LATER emit valueChanged(uasId, "b_w[0]", "raw", bias.gyro_0, time);
-            // FIXME REMOVE LATER emit valueChanged(uasId, "b_w[1]", "raw", bias.gyro_1, time);
-            // FIXME REMOVE LATER emit valueChanged(uasId, "b_w[2]", "raw", bias.gyro_2, time);
-        }
-            break;
-        case MAVLINK_MSG_ID_RADIO_CALIBRATION:
-        {
-            mavlink_radio_calibration_t radioMsg;
-            mavlink_msg_radio_calibration_decode(&message, &radioMsg);
-            QVector<uint16_t> aileron;
-            QVector<uint16_t> elevator;
-            QVector<uint16_t> rudder;
-            QVector<uint16_t> gyro;
-            QVector<uint16_t> pitch;
-            QVector<uint16_t> throttle;
-
-            for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_AILERON_LEN; ++i)
-                aileron << radioMsg.aileron[i];
-            for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_ELEVATOR_LEN; ++i)
-                elevator << radioMsg.elevator[i];
-            for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_RUDDER_LEN; ++i)
-                rudder << radioMsg.rudder[i];
-            for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_GYRO_LEN; ++i)
-                gyro << radioMsg.gyro[i];
-            for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_PITCH_LEN; ++i)
-                pitch << radioMsg.pitch[i];
-            for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_THROTTLE_LEN; ++i)
-                throttle << radioMsg.throttle[i];
-
-            QPointer<RadioCalibrationData> radioData = new RadioCalibrationData(aileron, elevator, rudder, gyro, pitch, throttle);
-            emit radioCalibrationReceived(radioData);
-            delete radioData;
-        }
-            break;
-
-#endif
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
         {
-            //mavlink_set_local_position_setpoint_t p;
-            //mavlink_msg_set_local_position_setpoint_decode(&message, &p);
-            //emit userPositionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw);
             mavlink_nav_controller_output_t p;
             mavlink_msg_nav_controller_output_decode(&message,&p);
             setDistToWaypoint(p.wp_dist);
             setBearingToWaypoint(p.nav_bearing);
-            //setAltitudeError(p.alt_error);
-            //setSpeedError(p.aspd_error);
-            //setCrosstrackingError(p.xtrack_error);
             emit navigationControllerErrorsChanged(this, p.alt_error, p.aspd_error, p.xtrack_error);
         }
             break;
@@ -1615,16 +1508,10 @@ void UAS::setLocalOriginAtCurrentGPSPosition()
 */
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
-    mavlink_message_t msg;
-    mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_FRAME_LOCAL_NED, x, y, z, yaw/M_PI*180.0);
-    sendMessage(msg);
-#else
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(z);
     Q_UNUSED(yaw);
-#endif
 }
 
 /**
@@ -1636,16 +1523,10 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 */
 void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
-    mavlink_message_t msg;
-    mavlink_msg_set_position_control_offset_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
-    sendMessage(msg);
-#else
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(z);
     Q_UNUSED(yaw);
-#endif
 }
 
 void UAS::startRadioControlCalibration(int param)
@@ -2974,9 +2855,24 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
         mavlink_message_t message;
-        mavlink_msg_setpoint_6dof_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)x, (float)y, (float)z, (float)roll, (float)pitch, (float)yaw);
+        float q[4];
+        mavlink_euler_to_quaternion(roll, pitch, yaw, q);
+        quint8 mask;
+        // Do not control rates and throttle
+        mask |= (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
+        mask |= (1 << 6); // ignore throttle
+        mavlink_msg_set_attitude_target_pack(mavlink->getSystemId(), mavlink->getComponentId(),
+                                             &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
+                                             mask, q, 0, 0, 0, 0);
         sendMessage(message);
-        qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGE: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
+        quint8 position_mask;
+        position_mask |= (1 << 3) | (1 << 4) | (1 << 5) |
+                         (1 << 6) | (1 << 7) | (1 << 8);
+        mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(), mavlink->getComponentId(),
+                                                       &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
+                                                       MAV_FRAME_LOCAL_NED, position_mask, x, y, z, 0, 0, 0, 0, 0, 0);
+        sendMessage(message);
+        qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGES: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
 
         //emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, QGC::groundTimeMilliseconds());
     }
