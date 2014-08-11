@@ -2788,9 +2788,9 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
         mavlink_message_t message;
         float q[4];
         mavlink_euler_to_quaternion(roll, pitch, yaw, q);
-        quint8 mask;
+        
         // Do not control rates and throttle
-        mask |= (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
+        quint8 mask = (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
         mask |= (1 << 6); // ignore throttle
         mavlink_msg_set_attitude_target_pack(mavlink->getSystemId(), mavlink->getComponentId(),
                                              &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
