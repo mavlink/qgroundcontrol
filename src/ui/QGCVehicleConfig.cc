@@ -104,8 +104,13 @@ QGCVehicleConfig::QGCVehicleConfig(QWidget *parent) :
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateView()));
     updateTimer.start();
 
-    ui->advancedGroupBox->hide();
-    connect(ui->advancedCheckBox,SIGNAL(toggled(bool)),ui->advancedGroupBox,SLOT(setShown(bool)));
+    // Make sure the advanced features match what the checkbox indicates on startup and listen for
+    // future changes.
+    if (!ui->advancedCheckBox->isChecked())
+    {
+        ui->advancedGroupBox->hide();
+    }
+    connect(ui->advancedCheckBox, SIGNAL(toggled(bool)), ui->advancedGroupBox,SLOT(setVisible(bool)));
 }
 void QGCVehicleConfig::rcMenuButtonClicked()
 {

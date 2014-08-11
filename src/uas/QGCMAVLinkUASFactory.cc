@@ -36,9 +36,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         // Connect this robot to the UAS object
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), mav->getFileManager(), SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-#ifdef QGC_PROTOBUF_ENABLED
-        connect(mavlink, SIGNAL(extendedMessageReceived(LinkInterface*, std::tr1::shared_ptr<google::protobuf::Message>)), mav, SLOT(receiveExtendedMessage(LinkInterface*, std::tr1::shared_ptr<google::protobuf::Message>)));
-#endif
         uas = mav;
     }
     break;
@@ -53,9 +50,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         // else the slot of the parent object is called (and thus the special
         // packets never reach their goal)
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-#ifdef QGC_PROTOBUF_ENABLED
-        connect(mavlink, SIGNAL(extendedMessageReceived(LinkInterface*, std::tr1::shared_ptr<google::protobuf::Message>)), mav, SLOT(receiveExtendedMessage(LinkInterface*, std::tr1::shared_ptr<google::protobuf::Message>)));
-#endif
         uas = mav;
     }
     break;
@@ -71,20 +65,6 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         // packets never reach their goal)
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), px4, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
         uas = px4;
-    }
-    break;
-    case MAV_AUTOPILOT_SLUGS:
-    {
-        SlugsMAV* mav = new SlugsMAV(mavlink, worker, sysid);
-        // Set the system type
-        mav->setSystemType((int)heartbeat->type);
-
-        // Connect this robot to the UAS object
-        // it is IMPORTANT here to use the right object type,
-        // else the slot of the parent object is called (and thus the special
-        // packets never reach their goal)
-        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-        uas = mav;
     }
     break;
     case MAV_AUTOPILOT_ARDUPILOTMEGA:

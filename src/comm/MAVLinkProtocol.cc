@@ -24,7 +24,6 @@
 #include "UASManager.h"
 #include "UASInterface.h"
 #include "UAS.h"
-#include "SlugsMAV.h"
 #include "PxQuadMAV.h"
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
@@ -32,10 +31,6 @@
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
-
-#ifdef QGC_PROTOBUF_ENABLED
-#include <google/protobuf/descriptor.h>
-#endif
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 
@@ -188,6 +183,7 @@ void MAVLinkProtocol::run()
     while(!_should_exit) {
 
         if (isFinished()) {
+            delete heartbeatTimer;
             qDebug() << "MAVLINK WORKER DONE!";
             return;
         }
@@ -318,87 +314,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     rstatus.txbuf, rstatus.noise, rstatus.remnoise);
             }
 
-#if defined(QGC_PROTOBUF_ENABLED)
-
-            if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
-            {
-                mavlink_extended_message_t extended_message;
-
-                extended_message.base_msg = message;
-
-                // read extended header
-                uint8_t* payload = reinterpret_cast<uint8_t*>(message.payload64);
-
-                memcpy(&extended_message.extended_payload_len, payload + 3, 4);
-
-                // Check if message is valid
-                if
-                 (b.size() != MAVLINK_NUM_NON_PAYLOAD_BYTES+MAVLINK_EXTENDED_HEADER_LEN+ extended_message.extended_payload_len)
-                {
-                    //invalid message
-                    qDebug() << "GOT INVALID EXTENDED MESSAGE, ABORTING";
-                    return;
-                }
-
-                const uint8_t* extended_payload = reinterpret_cast<const uint8_t*>(b.constData()) + MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_EXTENDED_HEADER_LEN;
-
-                // copy extended payload data
-                memcpy(extended_message.extended_payload, extended_payload, extended_message.extended_payload_len);
-
-#if defined(QGC_USE_PIXHAWK_MESSAGES)
-
-                if (protobufManager.cacheFragment(extended_message))
-                {
-                    std::tr1::shared_ptr<google::protobuf::Message> protobuf_msg;
-
-                    if (protobufManager.getMessage(protobuf_msg))
-                    {
-                        const google::protobuf::Descriptor* descriptor = protobuf_msg->GetDescriptor();
-                        if (!descriptor)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::FieldDescriptor* headerField = descriptor->FindFieldByName("header");
-                        if (!headerField)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::Descriptor* headerDescriptor = headerField->message_type();
-                        if (!headerDescriptor)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::FieldDescriptor* sourceSysIdField = headerDescriptor->FindFieldByName("source_sysid");
-                        if (!sourceSysIdField)
-                        {
-                            continue;
-                        }
-
-                        const google::protobuf::Reflection* reflection = protobuf_msg->GetReflection();
-                        const google::protobuf::Message& headerMsg = reflection->GetMessage(*protobuf_msg, headerField);
-                        const google::protobuf::Reflection* headerReflection = headerMsg.GetReflection();
-
-                        int source_sysid = headerReflection->GetInt32(headerMsg, sourceSysIdField);
-
-                        UASInterface* uas = UASManager::instance()->getUASForId(source_sysid);
-
-                        if (uas != NULL)
-                        {
-                            emit extendedMessageReceived(link, protobuf_msg);
-                        }
-                    }
-                }
-#endif
-
-                position += extended_message.extended_payload_len;
-
-                continue;
-            }
-#endif
-
             // Log data
             if (m_loggingEnabled && m_logfile)
             {
@@ -478,70 +393,65 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             }
 
-            // Only count message if UAS exists for this message
-            if (uas != NULL)
+            // Increase receive counter
+            totalReceiveCounter[linkId]++;
+            currReceiveCounter[linkId]++;
+
+            // Determine what the next expected sequence number is, accounting for
+            // never having seen a message for this system/component pair.
+            int lastSeq = lastIndex[message.sysid][message.compid];
+            int expectedSeq = (lastSeq == -1) ? message.seq : (lastSeq + 1);
+
+            // And if we didn't encounter that sequence number, record the error
+            if (message.seq != expectedSeq)
             {
 
-                // Increase receive counter
-                totalReceiveCounter[linkId]++;
-                currReceiveCounter[linkId]++;
+                // Determine how many messages were skipped
+                int lostMessages = message.seq - expectedSeq;
 
-                // Determine what the next expected sequence number is, accounting for
-                // never having seen a message for this system/component pair.
-                int lastSeq = lastIndex[message.sysid][message.compid];
-                int expectedSeq = (lastSeq == -1) ? message.seq : (lastSeq + 1);
-
-                // And if we didn't encounter that sequence number, record the error
-                if (message.seq != expectedSeq)
+                // Out of order messages or wraparound can cause this, but we just ignore these conditions for simplicity
+                if (lostMessages < 0)
                 {
-
-                    // Determine how many messages were skipped
-                    int lostMessages = message.seq - expectedSeq;
-
-                    // Out of order messages or wraparound can cause this, but we just ignore these conditions for simplicity
-                    if (lostMessages < 0)
-                    {
-                        lostMessages = 0;
-                    }
-
-                    // And log how many were lost for all time and just this timestep
-                    totalLossCounter[linkId] += lostMessages;
-                    currLossCounter[linkId] += lostMessages;
+                    lostMessages = 0;
                 }
 
-                // And update the last sequence number for this system/component pair
-                lastIndex[message.sysid][message.compid] = expectedSeq;
+                // And log how many were lost for all time and just this timestep
+                totalLossCounter[linkId] += lostMessages;
+                currLossCounter[linkId] += lostMessages;
+            }
 
-                // Update on every 32th packet
-                if ((totalReceiveCounter[linkId] & 0x1F) == 0)
+            // And update the last sequence number for this system/component pair
+            lastIndex[message.sysid][message.compid] = expectedSeq;
+
+            // Update on every 32th packet
+            if ((totalReceiveCounter[linkId] & 0x1F) == 0)
+            {
+                // Calculate new loss ratio
+                // Receive loss
+                float receiveLoss = (double)currLossCounter[linkId]/(double)(currReceiveCounter[linkId]+currLossCounter[linkId]);
+                receiveLoss *= 100.0f;
+                currLossCounter[linkId] = 0;
+                currReceiveCounter[linkId] = 0;
+                emit receiveLossChanged(message.sysid, receiveLoss);
+            }
+
+            // The packet is emitted as a whole, as it is only 255 - 261 bytes short
+            // kind of inefficient, but no issue for a groundstation pc.
+            // It buys as reentrancy for the whole code over all threads
+            emit messageReceived(link, message);
+
+            // Multiplex message if enabled
+            if (m_multiplexingEnabled)
+            {
+                // Get all links connected to this unit
+                QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+
+                // Emit message on all links that are currently connected
+                foreach (LinkInterface* currLink, links)
                 {
-                    // Calculate new loss ratio
-                    // Receive loss
-                    float receiveLoss = (double)currLossCounter[linkId]/(double)(currReceiveCounter[linkId]+currLossCounter[linkId]);
-                    receiveLoss *= 100.0f;
-                    currLossCounter[linkId] = 0;
-                    currReceiveCounter[linkId] = 0;
-                    emit receiveLossChanged(message.sysid, receiveLoss);
-                }
-
-                // The packet is emitted as a whole, as it is only 255 - 261 bytes short
-                // kind of inefficient, but no issue for a groundstation pc.
-                // It buys as reentrancy for the whole code over all threads
-                emit messageReceived(link, message);
-
-                // Multiplex message if enabled
-                if (m_multiplexingEnabled)
-                {
-                    // Get all links connected to this unit
-                    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
-
-                    // Emit message on all links that are currently connected
-                    foreach (LinkInterface* currLink, links)
-                    {
-                        // Only forward this message to the other links,
-                        // not the link the message was received on
-                        if (currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
-                    }
+                    // Only forward this message to the other links,
+                    // not the link the message was received on
+                    if (currLink != link) sendMessage(currLink, message, message.sysid, message.compid);
                 }
             }
         }
