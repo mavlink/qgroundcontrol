@@ -56,7 +56,7 @@ private slots:
     void _noAckTest(void);
     void _resetTest(void);
     void _listTest(void);
-    void _openTest(void);
+    void _downloadTest(void);
     
     // Connected to QGCUASFileManager statusMessage signal
     void statusMessage(const QString&);
@@ -68,7 +68,8 @@ private:
         statusMessageSignalIndex = 0,
         errorMessageSignalIndex,
         resetStatusMessagesSignalIndex,
-
+        listCompleteSignalIndex,
+        openFileLengthSignalIndex,
         maxSignalIndex
     };
     
@@ -76,6 +77,8 @@ private:
         statusMessageSignalMask =           1 << statusMessageSignalIndex,
         errorMessageSignalMask =            1 << errorMessageSignalIndex,
         resetStatusMessagesSignalMask =     1 << resetStatusMessagesSignalIndex,
+        listCompleteSignalMask =            1 << listCompleteSignalIndex,
+        openFileLengthSignalMask =          1 << openFileLengthSignalIndex,
     };
     
     MockUAS                 _mockUAS;

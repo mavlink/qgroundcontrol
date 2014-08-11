@@ -56,7 +56,8 @@ void QGCUASFileView::_downloadFiles(void)
     QTreeWidgetItem* item = _ui.treeWidget->currentItem();
     if (item && item->type() == _typeFile) {
         do {
-            path.prepend("/" + item->text(0));
+            QString name = item->text(0).split("\t")[0];    // Strip off file sizes
+            path.prepend("/" + name);
             item = item->parent();
         } while (item);
         qDebug() << "Download: " << path;
