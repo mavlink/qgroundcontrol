@@ -2765,7 +2765,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             float attitudeQuaternion[4];
             mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
             uint8_t typeMask = 0b111; // disable rate control
-            mavlink_msg_attitude_setpoint_external_pack(mavlink->getSystemId(),
+            mavlink_msg_set_attitude_target_pack(mavlink->getSystemId(),
                 mavlink->getComponentId(),
                 &message,
                 QGC::groundTimeUsecs(),
@@ -2790,7 +2790,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             py += roll;
             pz -= 2.0f*(thrust-0.5);
             uint16_t typeMask = 0b0000000111111000; // select only position control
-            mavlink_msg_local_ned_position_setpoint_external_pack(mavlink->getSystemId(),
+            mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
                     QGC::groundTimeUsecs(),
@@ -2819,7 +2819,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             const float fy = -dcm[1][2];
             const float fz = -dcm[2][2];
             uint16_t typeMask = 0b0000001000111111; // select only force control (disable everything else)
-            mavlink_msg_local_ned_position_setpoint_external_pack(mavlink->getSystemId(),
+            mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
                     QGC::groundTimeUsecs(),
