@@ -70,7 +70,7 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
     QObject(parent),
     _currentOperation(kCOIdle),
     _mav(uas),
-    _encdata_seq(0),
+    _lastOutgoingSeqNumber(0),
     _activeSession(0)
 {
     bool connected = connect(&_ackTimer, SIGNAL(timeout()), this, SLOT(_ackTimeout()));
@@ -104,12 +104,15 @@ void QGCUASFileManager::_openAckResponse(Request* openAck)
 {
     _currentOperation = kCORead;
     _activeSession = openAck->hdr.session;
+    
+    // File length comes back in data
+    Q_ASSERT(openAck->hdr.size == sizeof(uint32_t));
+    emit openFileLength(openAck->openFileLength);
 
     _readOffset = 0;                // Start reading at beginning of file
     _readFileAccumulator.clear();   // Start with an empty file
 
     Request request;
-    request.hdr.magic = 'f';
     request.hdr.session = _activeSession;
     request.hdr.opcode = kCmdRead;
     request.hdr.offset = _readOffset;
@@ -173,7 +176,6 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
         _readOffset += readAck->hdr.size;
 
         Request request;
-        request.hdr.magic = 'f';
         request.hdr.session = _activeSession;
         request.hdr.opcode = kCmdRead;
         request.hdr.offset = _readOffset;
@@ -251,23 +253,42 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
     }
 
     // XXX: hack to prevent files from videostream to interfere
-    if (message.compid != MAV_COMP_ID_IMU) {
+    // FIXME: magic number
+    if (message.compid != 50) {
         return;
     }
-
-    _clearAckTimeout();
 
     mavlink_encapsulated_data_t data;
     mavlink_msg_encapsulated_data_decode(&message, &data);
     Request* request = (Request*)&data.data[0];
-
-    // Make sure we have a good CRC
-    if (request->hdr.crc32 != crc32(request)) {
-        _currentOperation = kCOIdle;
-        _emitErrorMessage(tr("Bad CRC on received message"));
+    
+    if (request->hdr.magic != kProtocolMagic) {
         return;
     }
 
+    _clearAckTimeout();
+    
+    uint16_t incomingSeqNumber = data.seqnr;
+    
+    // Make sure we have a good CRC
+    quint32 expectedCRC = crc32(request);
+    quint32 receivedCRC = request->hdr.crc32;
+    if (receivedCRC != expectedCRC) {
+        _currentOperation = kCOIdle;
+        _emitErrorMessage(tr("Bad CRC on received message: expected(%1) received(%2)").arg(expectedCRC).arg(receivedCRC));
+        return;
+    }
+    
+    // Make sure we have a good sequence number
+    uint16_t expectedSeqNumber = _lastOutgoingSeqNumber + 1;
+    if (incomingSeqNumber != expectedSeqNumber) {
+        _currentOperation = kCOIdle;
+        _emitErrorMessage(tr("Bad sequence number on received message: expected(%1) received(%2)").arg(expectedSeqNumber).arg(incomingSeqNumber));
+        return;
+    }
+    
+    // Move past the incoming sequence number for next request
+    _lastOutgoingSeqNumber = incomingSeqNumber;
 
     if (request->hdr.opcode == kRspAck) {
 
@@ -474,8 +495,6 @@ void QGCUASFileManager::_setupAckTimeout(void)
 /// @brief Clears the ack timeout timer
 void QGCUASFileManager::_clearAckTimeout(void)
 {
-    Q_ASSERT(_ackTimer.isActive());
-
     _ackTimer.stop();
 }
 
@@ -502,7 +521,6 @@ void QGCUASFileManager::_ackTimeout(void)
 void QGCUASFileManager::_sendTerminateCommand(void)
 {
     Request request;
-    request.hdr.magic = 'f';
     request.hdr.session = _activeSession;
     request.hdr.opcode = kCmdTerminate;
     _sendRequest(&request);
@@ -526,9 +544,13 @@ void QGCUASFileManager::_sendRequest(Request* request)
     mavlink_message_t message;
 
     _setupAckTimeout();
+    
+    _lastOutgoingSeqNumber++;
 
+    request->hdr.magic = kProtocolMagic;
     request->hdr.crc32 = crc32(request);
     // FIXME: Send correct system id instead of harcoded 250
-    mavlink_msg_encapsulated_data_pack(250, 0, &message, _encdata_seq, (uint8_t*)request);
+    // FIXME: What about the component id? Should it be set to something specific.
+    mavlink_msg_encapsulated_data_pack(250, 0, &message, _lastOutgoingSeqNumber, (uint8_t*)request);
     _mav->sendMessage(message);
 }

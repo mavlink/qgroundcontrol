@@ -29,6 +29,7 @@ const MockMavlinkFileServer::ErrorMode_t MockMavlinkFileServer::rgFailureModes[]
     MockMavlinkFileServer::errModeNoSecondResponse,
     MockMavlinkFileServer::errModeNakSecondResponse,
     MockMavlinkFileServer::errModeBadCRC,
+    MockMavlinkFileServer::errModeBadSequence,
 };
 const size_t MockMavlinkFileServer::cFailureModes = sizeof(MockMavlinkFileServer::rgFailureModes) / sizeof(MockMavlinkFileServer::rgFailureModes[0]);
 
@@ -52,23 +53,24 @@ MockMavlinkFileServer::MockMavlinkFileServer(void) :
 
 /// @brief Handles List command requests. Only supports root folder paths.
 ///         File list returned is set using the setFileList method.
-void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
+void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request, uint16_t seqNumber)
 {
     // FIXME: Does not support directories that span multiple packets
     
     QGCUASFileManager::Request  ackResponse;
     QString                     path;
+    uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     // We only support root path
     path = (char *)&request->data[0];
     if (!path.isEmpty() && path != "/") {
-        _sendNak(QGCUASFileManager::kErrNotDir);
+        _sendNak(QGCUASFileManager::kErrNotDir, outgoingSeqNumber);
         return;
     }
     
     // Offset requested is past the end of the list
     if (request->hdr.offset > (uint32_t)_fileList.size()) {
-        _sendNak(QGCUASFileManager::kErrEOF);
+        _sendNak(QGCUASFileManager::kErrEOF, outgoingSeqNumber);
         return;
     }
     
@@ -90,25 +92,26 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request)
             bufPtr += cchFilename + 1;
         }
 
-        _emitResponse(&ackResponse);
+        _emitResponse(&ackResponse, outgoingSeqNumber);
     } else if (_errMode == errModeNakSecondResponse) {
         // Nak error all subsequent requests
-        _sendNak(QGCUASFileManager::kErrPerm);
+        _sendNak(QGCUASFileManager::kErrPerm, outgoingSeqNumber);
         return;
     } else if (_errMode == errModeNoSecondResponse) {
         // No response for all subsequent requests
         return;
     } else {
         // FIXME: Does not support directories that span multiple packets
-        _sendNak(QGCUASFileManager::kErrEOF);
+        _sendNak(QGCUASFileManager::kErrEOF, outgoingSeqNumber);
     }
 }
 
 /// @brief Handles Open command requests.
-void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
+void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request, uint16_t seqNumber)
 {
     QGCUASFileManager::Request  response;
     QString                     path;
+    uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
     
     size_t cchPath = strnlen((char *)request->data, sizeof(request->data));
     Q_ASSERT(cchPath != sizeof(request->data));
@@ -126,25 +129,29 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request)
         }
     }
     if (!found) {
-        _sendNak(QGCUASFileManager::kErrNotFile);
+        _sendNak(QGCUASFileManager::kErrNotFile, outgoingSeqNumber);
         return;
     }
     
     response.hdr.magic = 'f';
     response.hdr.opcode = QGCUASFileManager::kRspAck;
     response.hdr.session = _sessionId;
-    response.hdr.size = 0;
     
-    _emitResponse(&response);
+    // Data contains file length
+    response.hdr.size = sizeof(uint32_t);
+    response.openFileLength = _readFileLength;
+    
+    _emitResponse(&response, outgoingSeqNumber);
 }
 
 /// @brief Handles Read command requests.
-void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
+void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request, uint16_t seqNumber)
 {
-    QGCUASFileManager::Request response;
+    QGCUASFileManager::Request  response;
+    uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     if (request->hdr.session != _sessionId) {
-        _sendNak(QGCUASFileManager::kErrNoSession);
+        _sendNak(QGCUASFileManager::kErrNoSession, outgoingSeqNumber);
         return;
     }
     
@@ -155,7 +162,7 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
         // If we get here it means the client is requesting additional data past the first request
         if (_errMode == errModeNakSecondResponse) {
             // Nak error all subsequent requests
-            _sendNak(QGCUASFileManager::kErrPerm);
+            _sendNak(QGCUASFileManager::kErrPerm, outgoingSeqNumber);
             return;
         } else if (_errMode == errModeNoSecondResponse) {
             // No rsponse for all subsequent requests
@@ -164,7 +171,7 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
     }
     
     if (readOffset >= _readFileLength) {
-        _sendNak(QGCUASFileManager::kErrEOF);
+        _sendNak(QGCUASFileManager::kErrEOF, outgoingSeqNumber);
         return;
     }
     
@@ -182,18 +189,20 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request)
     response.hdr.offset = request->hdr.offset;
     response.hdr.opcode = QGCUASFileManager::kRspAck;
     
-    _emitResponse(&response);
+    _emitResponse(&response, outgoingSeqNumber);
 }
 
 /// @brief Handles Terminate commands
-void MockMavlinkFileServer::_terminateCommand(QGCUASFileManager::Request* request)
+void MockMavlinkFileServer::_terminateCommand(QGCUASFileManager::Request* request, uint16_t seqNumber)
 {
+    uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
+
     if (request->hdr.session != _sessionId) {
-        _sendNak(QGCUASFileManager::kErrNoSession);
+        _sendNak(QGCUASFileManager::kErrNoSession, outgoingSeqNumber);
         return;
     }
     
-    _sendAck();
+    _sendAck(outgoingSeqNumber);
     
     // Let our test harness know that we got a terminate command. This is used to validate the a Terminate is correctly
     // sent after an Open.
@@ -203,26 +212,31 @@ void MockMavlinkFileServer::_terminateCommand(QGCUASFileManager::Request* reques
 /// @brief Handles messages sent to the FTP server.
 void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
 {
-    QGCUASFileManager::Request ackResponse;
+    QGCUASFileManager::Request  ackResponse;
 
     Q_ASSERT(message.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA);
+    
+    mavlink_encapsulated_data_t requestEncapsulatedData;
+    mavlink_msg_encapsulated_data_decode(&message, &requestEncapsulatedData);
+    QGCUASFileManager::Request* request = (QGCUASFileManager::Request*)&requestEncapsulatedData.data[0];
+
+    Q_ASSERT(request->hdr.magic == QGCUASFileManager::kProtocolMagic);
+
+    uint16_t incomingSeqNumber = requestEncapsulatedData.seqnr;
+    uint16_t outgoingSeqNumber = _nextSeqNumber(incomingSeqNumber);
     
     if (_errMode == errModeNoResponse) {
         // Don't respond to any requests, this shold cause the client to eventually timeout waiting for the ack
         return;
     } else if (_errMode == errModeNakResponse) {
         // Nak all requests, the actual error send back doesn't really matter as long as it's an error
-        _sendNak(QGCUASFileManager::kErrPerm);
+        _sendNak(QGCUASFileManager::kErrPerm, outgoingSeqNumber);
         return;
     }
 
-    mavlink_encapsulated_data_t requestEncapsulatedData;
-    mavlink_msg_encapsulated_data_decode(&message, &requestEncapsulatedData);
-    QGCUASFileManager::Request* request = (QGCUASFileManager::Request*)&requestEncapsulatedData.data[0];
-    
     // Validate CRC
     if (request->hdr.crc32 != QGCUASFileManager::crc32(request)) {
-        _sendNak(QGCUASFileManager::kErrCrc);
+        _sendNak(QGCUASFileManager::kErrCrc, outgoingSeqNumber);
     }
 
     switch (request->hdr.opcode) {
@@ -241,23 +255,23 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             ackResponse.hdr.session = 0;
             ackResponse.hdr.crc32 = 0;
             ackResponse.hdr.size = 0;
-            _emitResponse(&ackResponse);
+            _emitResponse(&ackResponse, outgoingSeqNumber);
             break;
 
         case QGCUASFileManager::kCmdList:
-            _listCommand(request);
+            _listCommand(request, incomingSeqNumber);
             break;
             
         case QGCUASFileManager::kCmdOpen:
-            _openCommand(request);
+            _openCommand(request, incomingSeqNumber);
             break;
 
         case QGCUASFileManager::kCmdRead:
-            _readCommand(request);
+            _readCommand(request, incomingSeqNumber);
             break;
 
         case QGCUASFileManager::kCmdTerminate:
-            _terminateCommand(request);
+            _terminateCommand(request, incomingSeqNumber);
             break;
 
         // Remainder of commands are NYI
@@ -270,13 +284,13 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             // remove file (only if created by server?)
         default:
             // nack for all NYI opcodes
-            _sendNak(QGCUASFileManager::kErrUnknownCommand);
+            _sendNak(QGCUASFileManager::kErrUnknownCommand, outgoingSeqNumber);
             break;
     }
 }
 
 /// @brief Sends an Ack
-void MockMavlinkFileServer::_sendAck(void)
+void MockMavlinkFileServer::_sendAck(uint16_t seqNumber)
 {
     QGCUASFileManager::Request ackResponse;
     
@@ -285,11 +299,11 @@ void MockMavlinkFileServer::_sendAck(void)
     ackResponse.hdr.session = 0;
     ackResponse.hdr.size = 0;
     
-    _emitResponse(&ackResponse);
+    _emitResponse(&ackResponse, seqNumber);
 }
 
 /// @brief Sends a Nak with the specified error code.
-void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error)
+void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error, uint16_t seqNumber)
 {
     QGCUASFileManager::Request nakResponse;
 
@@ -299,21 +313,34 @@ void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error)
     nakResponse.hdr.size = 1;
     nakResponse.data[0] = error;
     
-    _emitResponse(&nakResponse);
+    _emitResponse(&nakResponse, seqNumber);
 }
 
 /// @brief Emits a Request through the messageReceived signal.
-void MockMavlinkFileServer::_emitResponse(QGCUASFileManager::Request* request)
+void MockMavlinkFileServer::_emitResponse(QGCUASFileManager::Request* request, uint16_t seqNumber)
 {
     mavlink_message_t   mavlinkMessage;
     
+    request->hdr.magic = QGCUASFileManager::kProtocolMagic;
     request->hdr.crc32 = QGCUASFileManager::crc32(request);
     if (_errMode == errModeBadCRC) {
         // Return a bad CRC
         request->hdr.crc32++;
     }
     
-    mavlink_msg_encapsulated_data_pack(250, MAV_COMP_ID_IMU, &mavlinkMessage, 0 /*_encdata_seq*/, (uint8_t*)request);
+    mavlink_msg_encapsulated_data_pack(250, 50, &mavlinkMessage, seqNumber, (uint8_t*)request);
     
     emit messageReceived(NULL, mavlinkMessage);
+}
+
+/// @brief Generates the next sequence number given an incoming sequence number. Handles generating
+/// bad sequence numbers when errModeBadSequence is set.
+uint16_t MockMavlinkFileServer::_nextSeqNumber(uint16_t seqNumber)
+{
+    uint16_t outgoingSeqNumber = seqNumber + 1;
+    
+    if (_errMode == errModeBadSequence) {
+        outgoingSeqNumber++;
+    }
+    return outgoingSeqNumber;
 }

@@ -49,6 +49,7 @@ signals:
     void resetStatusMessages();
     void errorMessage(const QString& msg);
     void listComplete(void);
+    void openFileLength(unsigned int length);
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -56,6 +57,7 @@ public slots:
     void downloadPath(const QString& from, const QDir& downloadDir);
 
 protected:
+    static const uint8_t kProtocolMagic = 'f';
     struct RequestHeader
         {
             uint8_t		magic;      ///> Magic byte 'f' to idenitfy FTP protocol
@@ -69,9 +71,16 @@ protected:
     struct Request
     {
         struct RequestHeader hdr;
-        // The entire Request must fit into the data member of the mavlink_encapsulated_data_t structure. We use as many leftover bytes
-        // after we use up space for the RequestHeader for the data portion of the Request.
-        uint8_t data[sizeof(((mavlink_encapsulated_data_t*)0)->data) - sizeof(RequestHeader)];
+
+        // We use a union here instead of just casting (uint32_t)&data[0] to not break strict aliasing rules
+        union {
+            // The entire Request must fit into the data member of the mavlink_encapsulated_data_t structure. We use as many leftover bytes
+            // after we use up space for the RequestHeader for the data portion of the Request.
+            uint8_t data[sizeof(((mavlink_encapsulated_data_t*)0)->data) - sizeof(RequestHeader)];
+
+            // File length returned by Open command
+            uint32_t openFileLength;
+        };
     };
 
     enum Opcode
@@ -148,7 +157,8 @@ protected:
     QTimer          _ackTimer;                      ///> Used to signal a timeout waiting for an ack
     
     UASInterface* _mav;
-    quint16 _encdata_seq;
+    
+    uint16_t _lastOutgoingSeqNumber; ///< Sequence number sent in last outgoing packet
 
     unsigned    _listOffset;    ///> offset for the current List operation
     QString     _listPath;      ///> path for the current List operation
