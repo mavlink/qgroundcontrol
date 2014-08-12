@@ -70,6 +70,8 @@ public slots:
     void joystickButtonPressed(int key);
     /** @brief Trigger a UI change based on a button being released */
     void joystickButtonReleased(int key);
+    /** @brief Toggle the calibration button */
+    void cycleCalibrationButton();
     /** @brief Update the UI color scheme when the MainWindow theme changes. */
     void styleChanged(bool styleIsDark);
     /** Update the UI assuming the joystick has stayed the same. */
