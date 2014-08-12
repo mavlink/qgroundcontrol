@@ -2764,7 +2764,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             // send an external attitude setpoint command (rate control disabled)
             float attitudeQuaternion[4];
             mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
-            uint8_t typeMask = 0b111; // disable rate control
+            uint8_t typeMask = 0x7; // 0b 0111 disable rate control
             mavlink_msg_set_attitude_target_pack(mavlink->getSystemId(),
                 mavlink->getComponentId(),
                 &message,
@@ -2789,7 +2789,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             px -= pitch;
             py += roll;
             pz -= 2.0f*(thrust-0.5);
-            uint16_t typeMask = 0b0000000111111000; // select only position control
+            uint16_t typeMask = 0x01F8; // 0b 0000 0001 1111 1000 select only position control
             mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
@@ -2818,7 +2818,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             const float fx = -dcm[0][2];
             const float fy = -dcm[1][2];
             const float fz = -dcm[2][2];
-            uint16_t typeMask = 0b0000001000111111; // select only force control (disable everything else)
+            uint16_t typeMask = 0x023F; // 0b 0000 0010 0011 1111 select only force control (disable everything else)
             mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,

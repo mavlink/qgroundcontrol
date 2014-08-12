@@ -494,7 +494,8 @@ void JoystickInput::run()
             // Otherwise if this vehicle can only go forward, scale it to [0:1].
             else if (throttleAxis == i && joystickSettings[autopilotType][systemType].axesLimited.value(i))
             {
-                axisValue = (axisValue);
+                // FIXME: I assume this is either missing a function call, or is new C++ syntax I don't know about which is not supported on OSX gcc
+                //axisValue = (axisValue);
                 if (axisValue < 0.0f)
                 {
                     axisValue = 0.0f;
