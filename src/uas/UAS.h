@@ -42,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 #include "QGCUASParamManager.h"
+#include "JoystickInput.h"
 #include "QGCUASFileManager.h"
 
 
@@ -845,7 +846,7 @@ public slots:
     void toggleAutonomy();
 
     /** @brief Set the values for the manual control of the vehicle */
-    void setManualControlCommands(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons);
+    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, qint8 xHat, qint8 yHat, quint16 buttons, quint8);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
     void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
