@@ -42,29 +42,38 @@ protected:
     
 private slots:
     void _refreshTree(void);
-    void _downloadFiles(void);
-    void _treeStatusMessage(const QString& msg);
-    void _treeErrorMessage(const QString& msg);
+    void _listEntryReceived(const QString& entry);
+    void _listErrorMessage(const QString& msg);
     void _listComplete(void);
-    void _downloadStatusMessage(const QString& msg);
+    
+    void _downloadFile(void);
+    void _downloadLength(unsigned int length);
+    void _downloadProgress(unsigned int length);
+    void _downloadErrorMessage(const QString& msg);
+    void _downloadComplete(void);
+
     void _currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous);
-    void _listCompleteTimeout(void);
 
 private:
-    void _setupListCompleteTimeout(void);
-    void _clearListCompleteTimeout(void);
+    void _connectDownloadSignals(void);
+    void _disconnectDownloadSignals(void);
+    void _connectListSignals(void);
+    void _disconnectListSignals(void);
     void _requestDirectoryList(const QString& dir);
 
     static const int        _typeFile = QTreeWidgetItem::UserType + 1;
     static const int        _typeDir = QTreeWidgetItem::UserType + 2;
     static const int        _typeError = QTreeWidgetItem::UserType + 3;
     
-    QTimer                  _listCompleteTimer;                     ///> Used to signal a timeout waiting for a listComplete signal
-    static const int        _listCompleteTimerTimeoutMsecs = 5000;  ///> Timeout in msecs for listComplete timer
-    
     QList<int>              _walkIndexStack;
     QList<QTreeWidgetItem*> _walkItemStack;
     Ui::QGCUASFileView      _ui;
+    
+    QString _downloadFilename;  ///< File currently being downloaded, not including path
+    QTime   _downloadStartTime; ///< Time at which download started
+    
+    bool _listInProgress;       ///< Indicates that a listDirectory command is in progress
+    bool _downloadInProgress;   ///< Indicates that a downloadPath command is in progress
 };
 
 #endif // QGCUASFILEVIEW_H
