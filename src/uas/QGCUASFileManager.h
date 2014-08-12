@@ -45,11 +45,28 @@ public:
     static const int ackTimerTimeoutMsecs = 1000;
 
 signals:
-    void statusMessage(const QString& msg);
-    void resetStatusMessages();
+    /// @brief Signalled whenever an error occurs during the listDirectory or downloadPath methods.
     void errorMessage(const QString& msg);
+    
+    // Signals associated with the listDirectory method
+    
+    /// @brief Signalled to indicate a new directory entry was received.
+    void listEntry(const QString& entry);
+    
+    /// @brief Signalled after listDirectory completes. If an error occurs during directory listing this signal will not be emitted.
     void listComplete(void);
-    void openFileLength(unsigned int length);
+    
+    // Signals associated with the downloadPath method
+    
+    /// @brief Signalled after downloadPath is called to indicate length of file being downloaded
+    void downloadFileLength(unsigned int length);
+    
+    /// @brief Signalled during file download to indicate download progress
+    ///     @param bytesReceived Number of bytes currently received from file
+    void downloadFileProgress(unsigned int bytesReceived);
+    
+    /// @brief Signaled to indicate completion of file download. If an error occurs during download this signal will not be emitted.
+    void downloadFileComplete(void);
 
 public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -140,7 +157,7 @@ protected:
     void _setupAckTimeout(void);
     void _clearAckTimeout(void);
     void _emitErrorMessage(const QString& msg);
-    void _emitStatusMessage(const QString& msg);
+    void _emitListEntry(const QString& entry);
     void _sendRequest(Request* request);
     void _fillRequestWithString(Request* request, const QString& str);
     void _openAckResponse(Request* openAck);
