@@ -905,7 +905,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             positionLock = true;
             isGlobalPositionKnown = true;
             //TODO fix this hack for forwarding of global position for patch antenna tracking
-            forwardMessage(message);
+            //forwardMessage(message);
         }
             break;
         case MAVLINK_MSG_ID_GPS_RAW_INT:
@@ -2788,7 +2788,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
         mavlink_message_t message;
         float q[4];
         mavlink_euler_to_quaternion(roll, pitch, yaw, q);
-        
+
         // Do not control rates and throttle
         quint8 mask = (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
         mask |= (1 << 6); // ignore throttle
