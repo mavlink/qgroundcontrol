@@ -59,15 +59,17 @@ void QGCUASFileManagerUnitTest::init(void)
     Q_ASSERT(connected);
     Q_UNUSED(connected);    // Silent release build compiler warning
 
-    connected = connect(_fileManager, SIGNAL(statusMessage(const QString&)), this, SLOT(statusMessage(const QString&)));
+    connected = connect(_fileManager, SIGNAL(listEntry(const QString&)), this, SLOT(listEntry(const QString&)));
     Q_ASSERT(connected);
 
-    _rgSignals[statusMessageSignalIndex] = SIGNAL(statusMessage(const QString&));
-    _rgSignals[errorMessageSignalIndex] = SIGNAL(errorMessage(const QString&));
-    _rgSignals[resetStatusMessagesSignalIndex] = SIGNAL(resetStatusMessages(void));
+    _rgSignals[listEntrySignalIndex] = SIGNAL(listEntry(const QString&));
     _rgSignals[listCompleteSignalIndex] = SIGNAL(listComplete(void));
-    _rgSignals[openFileLengthSignalIndex] = SIGNAL(openFileLength(unsigned int));
+
+    _rgSignals[downloadFileLengthSignalIndex] = SIGNAL(downloadFileLength(unsigned int));
+    _rgSignals[downloadFileCompleteSignalIndex] = SIGNAL(downloadFileComplete(void));
     
+    _rgSignals[errorMessageSignalIndex] = SIGNAL(errorMessage(const QString&));
+
     _multiSpy = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpy);
     QCOMPARE(_multiSpy->init(_fileManager, _rgSignals, _cSignals), true);
@@ -86,11 +88,11 @@ void QGCUASFileManagerUnitTest::cleanup(void)
     _multiSpy = NULL;
 }
 
-/// @brief Connected to QGCUASFileManager statusMessage signal in order to catch list command output
-void QGCUASFileManagerUnitTest::statusMessage(const QString& msg)
+/// @brief Connected to QGCUASFileManager listEntry signal in order to catch list entries
+void QGCUASFileManagerUnitTest::listEntry(const QString& entry)
 {
     // Keep a list of all names received so we can test it for correctness
-    _fileListReceived += msg;
+    _fileListReceived += entry;
 }
 
 
@@ -151,14 +153,13 @@ void QGCUASFileManagerUnitTest::_listTest(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
     // QGCUASFileManager::listDirectory signalling as follows:
-    //  Emits the resetStatusMessages signal
-    //  Emits a statusMessage signal for each list entry
+    //  Emits a listEntry signal for each list entry
     //  Emits an errorMessage signal if:
     //      It gets a Nak back
     //      Sequence number is incorrrect on any response
     //      CRC is incorrect on any responses
     //      List entry is formatted incorrectly
-    //  It is possible to get a number of good statusMessage signals, followed by an errorMessage signal
+    //  It is possible to get a number of good listEntry signals, followed by an errorMessage signal
     //  Emits listComplete after it receives the final list entry
     //      If an errorMessage signal is signalled no listComplete is signalled
     
@@ -166,7 +167,7 @@ void QGCUASFileManagerUnitTest::_listTest(void)
     //  We should get a single resetStatusMessages signal
     //  We should get a single errorMessage signal
     _fileManager->listDirectory("/bogus");
-    QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+    QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask), true);
     _multiSpy->clearAllSignals();
 
     // Setup the mock file server with a valid directory list
@@ -187,15 +188,15 @@ void QGCUASFileManagerUnitTest::_listTest(void)
             // For simulated server errors on subsequent Acks, the first Ack will go through. This means we should have gotten some
             // partial results. In the case of the directory list test set, all entries fit into the first ack, so we should have
             // gotten back all of them.
-            QCOMPARE(_multiSpy->getSpyByIndex(statusMessageSignalIndex)->count(), fileList.count());
-            _multiSpy->clearSignalByIndex(statusMessageSignalIndex);
+            QCOMPARE(_multiSpy->getSpyByIndex(listEntrySignalIndex)->count(), fileList.count());
+            _multiSpy->clearSignalByIndex(listEntrySignalIndex);
             
             // And then it should have errored out because the next list Request would have failed.
-            QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+            QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask), true);
         } else {
             // For the simulated errors which failed the intial response we should not have gotten any results back at all.
             // Just an error.
-            QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask | resetStatusMessagesSignalMask), true);
+            QCOMPARE(_multiSpy->checkOnlySignalByMask(errorMessageSignalMask), true);
         }
 
         // Set everything back to initial state
@@ -206,9 +207,9 @@ void QGCUASFileManagerUnitTest::_listTest(void)
 
     // Send a list command at the root of the directory tree which should succeed    
     _fileManager->listDirectory("/");
-    QCOMPARE(_multiSpy->checkSignalByMask(resetStatusMessagesSignalMask | listCompleteSignalMask), true);
+    QCOMPARE(_multiSpy->checkSignalByMask(listCompleteSignalMask), true);
     QCOMPARE(_multiSpy->checkNoSignalByMask(errorMessageSignalMask), true);
-    QCOMPARE(_multiSpy->getSpyByIndex(statusMessageSignalIndex)->count(), fileList.count());
+    QCOMPARE(_multiSpy->getSpyByIndex(listEntrySignalIndex)->count(), fileList.count());
     QVERIFY(_fileListReceived == fileList);
 }
 
@@ -238,26 +239,26 @@ void QGCUASFileManagerUnitTest::_downloadTest(void)
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
     
     // QGCUASFileManager::downloadPath works as follows:
-    //  Emits the resetStatusMessages signal
     //  Sends an Open Command to the server
     //      Expects an Ack Response back from the server with the correct sequence numner
     //          Emits an errorMessage signal if it gets a Nak back
-    //      Emits an openFileLength signal with the file length if it gets back a good Ack
+    //      Emits an downloadFileLength signal with the file length if it gets back a good Ack
     //  Sends subsequent Read commands to the server until it gets the full file contents back
+    //      Emits a downloadFileProgress for each read command ack it gets back
     //  Sends Terminate command to server when download is complete to close Open command
     //      Mock file server will signal terminateCommandReceived when it gets a Terminate command
-    //  Sends statusMessage signal to indicate the download is complete
+    //  Sends downloadFileComplete signal to indicate the download is complete
     //  Emits an errorMessage signal if sequence number is incorrrect on any response
     //  Emits an errorMessage signal if CRC is incorrect on any responses
     
     // Expected signals if the Open command fails for any reason
-    quint16 signalMaskOpenFailure = resetStatusMessagesSignalMask | errorMessageSignalMask;
+    quint16 signalMaskOpenFailure = errorMessageSignalMask;
 
     // Expected signals if the Read command fails for any reason
-    quint16 signalMaskReadFailure = resetStatusMessagesSignalMask | openFileLengthSignalMask | errorMessageSignalMask;
+    quint16 signalMaskReadFailure = downloadFileLengthSignalMask | errorMessageSignalMask;
     
     // Expected signals if the downloadPath command succeeds
-    quint16 signalMaskDownloadSuccess = resetStatusMessagesSignalMask | openFileLengthSignalMask | statusMessageSignalMask;
+    quint16 signalMaskDownloadSuccess = downloadFileLengthSignalMask | downloadFileCompleteSignalMask;
 
     // Send a bogus path
     //  We should get a single resetStatusMessages signal
@@ -296,7 +297,8 @@ void QGCUASFileManagerUnitTest::_downloadTest(void)
                 // For simulated server errors on subsequent Acks, the first Ack will go through. We must handle things differently depending
                 // on whether the downloaded file requires multiple packets to complete the download.
                 if (testCase->fMultiPacketResponse) {
-                    // The downloaded file requires multiple Acks to complete. Hence second Read should have failed.
+                    // The downloaded file requires multiple Acks to complete. Hence first Read should have succeeded and sent one downloadFileComplete.
+                    // Second Read should have failed.
                     QCOMPARE(_multiSpy->checkOnlySignalByMask(signalMaskReadFailure), true);
 
                     // Open command succeeded, so we should get a Terminate for the open
@@ -333,7 +335,7 @@ void QGCUASFileManagerUnitTest::_downloadTest(void)
         QCOMPARE(_multiSpy->checkOnlySignalByMask(signalMaskDownloadSuccess), true);
         
         // Make sure the file length coming back through the openFileLength signal is correct
-        QVERIFY(_multiSpy->getSpyByIndex(openFileLengthSignalIndex)->takeFirst().at(0).toInt() == testCase->length);
+        QVERIFY(_multiSpy->getSpyByIndex(downloadFileLengthSignalIndex)->takeFirst().at(0).toInt() == testCase->length);
 
         _multiSpy->clearAllSignals();
         
