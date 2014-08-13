@@ -107,7 +107,9 @@ void QGCUASFileManager::_openAckResponse(Request* openAck)
     
     // File length comes back in data
     Q_ASSERT(openAck->hdr.size == sizeof(uint32_t));
-    emit openFileLength(openAck->openFileLength);
+    emit downloadFileLength(openAck->openFileLength);
+    
+    // Start the sequence of read commands
 
     _readOffset = 0;                // Start reading at beginning of file
     _readFileAccumulator.clear();   // Start with an empty file
@@ -142,7 +144,7 @@ void QGCUASFileManager::_closeReadSession(bool success)
         }
         file.close();
 
-        _emitStatusMessage(tr("Download complete '%1'").arg(downloadFilePath));
+        emit downloadFileComplete();
     }
 
     // Close the open session
@@ -167,6 +169,7 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
     }
 
     _readFileAccumulator.append((const char*)readAck->data, readAck->hdr.size);
+    emit downloadFileProgress(_readFileAccumulator.length());
 
     if (readAck->hdr.size == sizeof(readAck->data)) {
         // Possibly still more data to read, send next read request
@@ -221,7 +224,9 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
         // Returned names are prepended with D for directory, F for file, U for unknown
         if (*ptr == 'F' || *ptr == 'D') {
             // put it in the view
-            _emitStatusMessage(ptr);
+            _emitListEntry(ptr);
+        } else {
+            qDebug() << "unknown entry" << ptr;
         }
 
         // account for the name + NUL
@@ -357,9 +362,6 @@ void QGCUASFileManager::listDirectory(const QString& dirPath)
         return;
     }
 
-    // clear the text widget
-    emit resetStatusMessages();
-
     // initialise the lister
     _listPath = dirPath;
     _listOffset = 0;
@@ -410,8 +412,6 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
     }
     i++; // move past slash
     _readFileDownloadFilename = from.right(from.size() - i);
-
-    emit resetStatusMessages();
 
     _currentOperation = kCOOpen;
 
@@ -532,10 +532,10 @@ void QGCUASFileManager::_emitErrorMessage(const QString& msg)
     emit errorMessage(msg);
 }
 
-void QGCUASFileManager::_emitStatusMessage(const QString& msg)
+void QGCUASFileManager::_emitListEntry(const QString& entry)
 {
-    qDebug() << "QGCUASFileManager: Status" << msg;
-    emit statusMessage(msg);
+    qDebug() << "QGCUASFileManager: list entry" << entry;
+    emit listEntry(entry);
 }
 
 /// @brief Sends the specified Request out to the UAS.

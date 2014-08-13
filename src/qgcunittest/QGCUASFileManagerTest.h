@@ -58,29 +58,28 @@ private slots:
     void _listTest(void);
     void _downloadTest(void);
     
-    // Connected to QGCUASFileManager statusMessage signal
-    void statusMessage(const QString&);
+    // Connected to QGCUASFileManager listEntry signal
+    void listEntry(const QString& entry);
     
 private:
     void _validateFileContents(const QString& filePath, uint8_t length);
 
     enum {
-        statusMessageSignalIndex = 0,
-        errorMessageSignalIndex,
-        resetStatusMessagesSignalIndex,
+        listEntrySignalIndex = 0,
         listCompleteSignalIndex,
-        openFileLengthSignalIndex,
+        downloadFileLengthSignalIndex,
+        downloadFileCompleteSignalIndex,
+        errorMessageSignalIndex,
         maxSignalIndex
     };
     
     enum {
-        statusMessageSignalMask =           1 << statusMessageSignalIndex,
-        errorMessageSignalMask =            1 << errorMessageSignalIndex,
-        resetStatusMessagesSignalMask =     1 << resetStatusMessagesSignalIndex,
+        listEntrySignalMask =               1 << listEntrySignalIndex,
         listCompleteSignalMask =            1 << listCompleteSignalIndex,
-        openFileLengthSignalMask =          1 << openFileLengthSignalIndex,
+        downloadFileLengthSignalMask =      1 << downloadFileLengthSignalIndex,
+        downloadFileCompleteSignalMask =    1 << downloadFileCompleteSignalIndex,
+        errorMessageSignalMask =            1 << errorMessageSignalIndex,
     };
-    
     MockUAS                 _mockUAS;
     MockMavlinkFileServer   _mockFileServer;
     
