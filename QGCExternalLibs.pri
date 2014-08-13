@@ -19,7 +19,9 @@ else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_QUPGRADE) 
     message("Skipping support for QUpgrade (manual override from user_config.pri)")
 }
 # If the QUpgrade submodule has been initialized, build in support by default.
-else:exists(qupgrade/.git) {
+# We look for the existence of qupgrade.pro for the check. We can't look for a .git file
+# because that breaks the TeamCity build process which does not use repositories.
+else:exists(qupgrade/qupgrade.pro) {
     message("Including support for QUpgrade")
 
     DEFINES += QGC_QUPGRADE_ENABLED
