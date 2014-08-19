@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1183</width>
+    <width>1235</width>
     <height>430</height>
    </rect>
   </property>
@@ -173,6 +173,9 @@
        <property name="prefix">
         <string>P5: </string>
        </property>
+       <property name="decimals">
+        <number>7</number>
+       </property>
        <property name="minimum">
         <double>-2147483647.000000000000000</double>
        </property>
@@ -185,6 +188,9 @@
       <widget class="QDoubleSpinBox" name="editParam6SpinBox">
        <property name="prefix">
         <string>P6: </string>
+       </property>
+       <property name="decimals">
+        <number>7</number>
        </property>
        <property name="minimum">
         <double>-2147483647.000000000000000</double>
