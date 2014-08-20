@@ -320,7 +320,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
             }
         }
         if (current_state == WP_IDLE) {
-        emit updateStatusString(tr("New current waypoint %1").arg(wpc->seq));
+            emit updateStatusString(tr("New current waypoint %1").arg(wpc->seq));
         }
         //emit update to UI widgets
         emit currentWaypointChanged(wpc->seq);
@@ -361,7 +361,7 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
             current_state = WP_SETCURRENT;
             current_wp_id = seq;
             current_partner_systemid = uasid;
-            current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
+            current_partner_compid = uas->getComponents().begin().key();
 
             sendWaypointSetCurrent(current_wp_id);
 
@@ -593,7 +593,7 @@ void UASWaypointManager::clearWaypointList()
         current_state = WP_CLEARLIST;
         current_wp_id = 0;
         current_partner_systemid = uasid;
-        current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
+        current_partner_compid = uas->getComponents().begin().key();
 
         sendWaypointClearAll();
     }
@@ -846,7 +846,7 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
         current_state = WP_GETLIST;
         current_wp_id = 0;
         current_partner_systemid = uasid;
-        current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
+        current_partner_compid = uas->getComponents().begin().key();
 
         sendWaypointRequestList();
 
@@ -880,7 +880,7 @@ void UASWaypointManager::goToWaypoint(Waypoint *wp)
         mission.z = wp->getZ();
         mavlink_message_t message;
         mission.target_system = uasid;
-        mission.target_component = MAV_COMP_ID_MISSIONPLANNER;
+        mission.target_component = uas->getComponents().begin().key();
         mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &mission);
         uas->sendMessage(message);
         QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
@@ -899,7 +899,7 @@ void UASWaypointManager::writeWaypoints()
             current_state = WP_SENDLIST;
             current_wp_id = 0;
             current_partner_systemid = uasid;
-            current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
+            current_partner_compid = uas->getComponents().begin().key();
 
             //clear local buffer
             // Why not replace with waypoint_buffer.clear() ?
@@ -961,7 +961,7 @@ void UASWaypointManager::sendWaypointClearAll()
 
     // Send the message.
     mavlink_message_t message;
-    mavlink_mission_clear_all_t wpca = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_mission_clear_all_t wpca = {(quint8)uasid, uas->getComponents().begin().key()};
     mavlink_msg_mission_clear_all_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpca);
     uas->sendMessage(message);
 
@@ -977,7 +977,7 @@ void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 
     // Send the message.
     mavlink_message_t message;
-    mavlink_mission_set_current_t wpsc = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_mission_set_current_t wpsc = {seq, (quint8)uasid, uas->getComponents().begin().key()};
     mavlink_msg_mission_set_current_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpsc);
     uas->sendMessage(message);
 
@@ -994,7 +994,7 @@ void UASWaypointManager::sendWaypointCount()
 
     // Tell the UAS how many missions we'll sending.
     mavlink_message_t message;
-    mavlink_mission_count_t wpc = {current_count, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_mission_count_t wpc = {current_count, (quint8)uasid, uas->getComponents().begin().key()};
     mavlink_msg_mission_count_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpc);
     uas->sendMessage(message);
 
@@ -1010,7 +1010,7 @@ void UASWaypointManager::sendWaypointRequestList()
 
     // Send a MISSION_REQUEST message to the uas for this mission manager, using the MISSIONPLANNER component.
     mavlink_message_t message;
-    mavlink_mission_request_list_t wprl = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_mission_request_list_t wprl = {(quint8)uasid, uas->getComponents().begin().key()};
     mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
     uas->sendMessage(message);
 
@@ -1028,7 +1028,7 @@ void UASWaypointManager::sendWaypointRequest(quint16 seq)
 
     // Send a MISSION_REQUEST message to the UAS's MISSIONPLANNER component.
     mavlink_message_t message;
-    mavlink_mission_request_t wpr = {seq, (quint8)uasid, MAV_COMP_ID_MISSIONPLANNER};
+    mavlink_mission_request_t wpr = {seq, (quint8)uasid, uas->getComponents().begin().key()};
     mavlink_msg_mission_request_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpr);
     uas->sendMessage(message);
 
@@ -1048,7 +1048,7 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
         // Fetch the current mission to send, and set it to apply to the curent UAS.
         mavlink_mission_item_t *wp = waypoint_buffer.at(seq);
         wp->target_system = uasid;
-        wp->target_component = MAV_COMP_ID_MISSIONPLANNER;
+        wp->target_component = uas->getComponents().begin().key();
 
         // Transmit the new mission
         mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, wp);
@@ -1067,7 +1067,7 @@ void UASWaypointManager::sendWaypointAck(quint8 type)
 
     // Send the message.
     mavlink_message_t message;
-    mavlink_mission_ack_t wpa = {(quint8)uasid, MAV_COMP_ID_MISSIONPLANNER, type};
+    mavlink_mission_ack_t wpa = {(quint8)uasid, uas->getComponents().begin().key(), type};
     mavlink_msg_mission_ack_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpa);
     uas->sendMessage(message);
 
