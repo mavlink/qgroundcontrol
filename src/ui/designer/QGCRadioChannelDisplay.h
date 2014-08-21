@@ -10,8 +10,9 @@ public:
     explicit QGCRadioChannelDisplay(QWidget *parent = 0);
     void setOrientation(Qt::Orientation orient);
     void setValue(int value);
-    void showMinMax();
+    void showMinMax(bool show = true);
     void hideMinMax();
+    bool isMinMaxShown() { return m_showMinMax; }
     void setValueAndRange(int val, int min, int max);
     void setMinMax(int min, int max);
     void setMin(int value);
