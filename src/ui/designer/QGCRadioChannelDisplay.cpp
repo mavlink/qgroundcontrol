@@ -70,43 +70,46 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
         painter.setBrush(Qt::SolidPattern);
 
         //draw the text value of the widget, and its label
-        QString valStr = QString::number(m_value);
         painter.setPen(QColor::fromRgb(255,255,255));
         painter.drawText((width()/2.0) - (painter.fontMetrics().width(m_name)/2.0),((height()-3) - (fontHeight*1)),m_name);
-        painter.drawText((width()/2.0) - (painter.fontMetrics().width(valStr)/2.0),((height()-3) - (fontHeight * 0)),valStr);
 
-        painter.setPen(QColor::fromRgb(128,128,64));
-        painter.setBrush(gradientBrush);
+        if (isEnabled()) {
+            QString valStr = QString::number(m_value);
+            painter.drawText((width()/2.0) - (painter.fontMetrics().width(valStr)/2.0),((height()-3) - (fontHeight * 0)),valStr);
 
-        if (!m_showMinMax) {
-            //draw just the value
-            int newval = (height()-2-twiceFontHeight) * ((float)(curVal - m_min) / ((m_max-m_min)+1));
-            int yVal = (height()-2-twiceFontHeight) - newval;
-            painter.drawRect(1,yVal,width()-3,((height()-2) - yVal - twiceFontHeight));
-        }
-        else {
-            //draw the value
-            int newval = (height()-2-twiceFontHeight) * ((float)(curVal / 3001.0));
-            int yVal = (height()-2-twiceFontHeight) - newval;
-            painter.drawRect(1,yVal,width()-3,((height()-2) - yVal - twiceFontHeight));
+            painter.setPen(QColor::fromRgb(128,128,64));
+            painter.setBrush(gradientBrush);
 
-            //draw min max indicator bars
-            painter.setPen(QColor::fromRgb(255,0,0));
-            painter.setBrush(Qt::NoBrush);
+            if (!m_showMinMax) {
+                //draw just the value
+                int newval = (height()-2-twiceFontHeight) * ((float)(curVal - m_min) / ((m_max-m_min)+1));
+                int yVal = (height()-2-twiceFontHeight) - newval;
+                painter.drawRect(1,yVal,width()-3,((height()-2) - yVal - twiceFontHeight));
+            }
+            else {
+                //draw the value
+                int newval = (height()-2-twiceFontHeight) * ((float)(curVal / 3001.0));
+                int yVal = (height()-2-twiceFontHeight) - newval;
+                painter.drawRect(1,yVal,width()-3,((height()-2) - yVal - twiceFontHeight));
 
-            int yMax = (height()-3 - twiceFontHeight) - (((height()-3-twiceFontHeight) * ((float)m_max / 3000.0)));
-            int yMin = (height()-3 - twiceFontHeight) - (((height()-3-twiceFontHeight) * ((float)m_min / 3000.0)));
-            painter.drawRect(2,yMax,width()-3,yMin - yMax);
+                //draw min max indicator bars
+                painter.setPen(QColor::fromRgb(255,0,0));
+                painter.setBrush(Qt::NoBrush);
 
-            //draw min and max labels
-            QString minstr = QString::number(m_min);
-            painter.drawText((width() / 2.0) - (painter.fontMetrics().width("min")/2.0),yMin,"min");
-            painter.drawText((width() / 2.0) - (painter.fontMetrics().width(minstr)/2.0),yMin + fontHeight,minstr);
+                int yMax = (height()-3 - twiceFontHeight) - (((height()-3-twiceFontHeight) * ((float)m_max / 3000.0)));
+                int yMin = (height()-3 - twiceFontHeight) - (((height()-3-twiceFontHeight) * ((float)m_min / 3000.0)));
+                painter.drawRect(2,yMax,width()-3,yMin - yMax);
 
-            QString maxstr = QString::number(m_max);
-            painter.drawText((width() / 2.0) - (painter.fontMetrics().width("max")/2.0),yMax,"max");
-            painter.drawText((width() / 2.0) - (painter.fontMetrics().width(maxstr)/2.0),yMax + fontHeight,maxstr);
+                //draw min and max labels
+                QString minstr = QString::number(m_min);
+                painter.drawText((width() / 2.0) - (painter.fontMetrics().width("min")/2.0),yMin,"min");
+                painter.drawText((width() / 2.0) - (painter.fontMetrics().width(minstr)/2.0),yMin + fontHeight,minstr);
 
+                QString maxstr = QString::number(m_max);
+                painter.drawText((width() / 2.0) - (painter.fontMetrics().width("max")/2.0),yMax,"max");
+                painter.drawText((width() / 2.0) - (painter.fontMetrics().width(maxstr)/2.0),yMax + fontHeight,maxstr);
+
+            }
         }
     }
     else //horizontal orientation
@@ -123,35 +126,37 @@ void QGCRadioChannelDisplay::paintEvent(QPaintEvent *event)
 
         //draw the value string
         painter.setPen(QColor::fromRgb(255,255,255));
-        QString valstr = QString::number(m_value);
         painter.drawText((width()/2.0) - (painter.fontMetrics().width(m_name)/2.0),((height()-3) - (fontHeight*1)),m_name);
-        painter.drawText((width()/2.0) - (painter.fontMetrics().width(valstr)/2.0),((height()-3) - (fontHeight * 0)),valstr);
 
+        if (isEnabled()) {
+            QString valstr = QString::number(m_value);
+            painter.drawText((width()/2.0) - (painter.fontMetrics().width(valstr)/2.0),((height()-3) - (fontHeight * 0)),valstr);
 
-        painter.setPen(QColor::fromRgb(0,128,0));
-        painter.setBrush(hGradientBrush);
+            painter.setPen(QColor::fromRgb(0,128,0));
+            painter.setBrush(hGradientBrush);
 
-        if (!m_showMinMax) {
-            //draw just the value
-            painter.drawRect(1,1,(width()-3) * ((float)(curVal-m_min) / (m_max-m_min)),(height()-3) - twiceFontHeight);
-        }
-        else {
-            //draw the value
-            painter.drawRect(1,1,(width()-3) * ((float)curVal / 3000.0),(height()-3) - twiceFontHeight);
+            if (!m_showMinMax) {
+                //draw just the value
+                painter.drawRect(1,1,(width()-3) * ((float)(curVal-m_min) / (m_max-m_min)),(height()-3) - twiceFontHeight);
+            }
+            else {
+                //draw the value
+                painter.drawRect(1,1,(width()-3) * ((float)curVal / 3000.0),(height()-3) - twiceFontHeight);
 
-             //draw the min and max bars
-            painter.setBrush(Qt::NoBrush);
-            painter.setPen(QColor::fromRgb(255,0,0));
-            painter.drawRect(width() * ((float)m_min / 3000.0),2,((width()-1) * ((float)m_max / 3000.0)) - (width() * ((float)m_min / 3000.0)),(height()-5) - twiceFontHeight);
+                 //draw the min and max bars
+                painter.setBrush(Qt::NoBrush);
+                painter.setPen(QColor::fromRgb(255,0,0));
+                painter.drawRect(width() * ((float)m_min / 3000.0),2,((width()-1) * ((float)m_max / 3000.0)) - (width() * ((float)m_min / 3000.0)),(height()-5) - twiceFontHeight);
 
-            //draw the min and max strings
-            QString minstr = QString::number(m_min);
-            painter.drawText((width() * ((float)m_min / 3000.0)) - (painter.fontMetrics().width("min")/2.0),((height()-3) - (painter.fontMetrics().height()*1)),"min");
-            painter.drawText((width() * ((float)m_min / 3000.0)) - (painter.fontMetrics().width(minstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),minstr);
+                //draw the min and max strings
+                QString minstr = QString::number(m_min);
+                painter.drawText((width() * ((float)m_min / 3000.0)) - (painter.fontMetrics().width("min")/2.0),((height()-3) - (painter.fontMetrics().height()*1)),"min");
+                painter.drawText((width() * ((float)m_min / 3000.0)) - (painter.fontMetrics().width(minstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),minstr);
 
-            QString maxstr = QString::number(m_max);
-            painter.drawText((width() * ((float)m_max / 3000.0)) - (painter.fontMetrics().width("max")/2.0),((height()-3) - (painter.fontMetrics().height()*1)),"max");
-            painter.drawText((width() * ((float)m_max / 3000.0)) - (painter.fontMetrics().width(maxstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),maxstr);
+                QString maxstr = QString::number(m_max);
+                painter.drawText((width() * ((float)m_max / 3000.0)) - (painter.fontMetrics().width("max")/2.0),((height()-3) - (painter.fontMetrics().height()*1)),"max");
+                painter.drawText((width() * ((float)m_max / 3000.0)) - (painter.fontMetrics().width(maxstr)/2.0),((height()-3) - (painter.fontMetrics().height() * 0)),maxstr);
+            }
         }
     }
 }
@@ -173,9 +178,9 @@ void QGCRadioChannelDisplay::setValue(int value)
     update();
 }
 
-void QGCRadioChannelDisplay::showMinMax()
+void QGCRadioChannelDisplay::showMinMax(bool show)
 {
-    m_showMinMax = true;
+    m_showMinMax = show;
     update();
 }
 
