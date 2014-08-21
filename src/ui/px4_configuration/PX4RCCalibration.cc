@@ -258,7 +258,7 @@ void PX4RCCalibration::_writeCalibration(bool trimsOnly)
 ///     @param fval Current value for channel
 void PX4RCCalibration::_remoteControlChannelRawChanged(int chan, float fval)
 {
-    Q_ASSERT(chan >=0 and chan <= _chanMax);
+    Q_ASSERT(chan >=0 && chan <= _chanMax);
 
     // We always update raw values
     _rcRawValue[chan] = fval;
