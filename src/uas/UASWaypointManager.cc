@@ -218,7 +218,16 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
 void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavlink_mission_ack_t *wpa)
 {
-    if (systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL)) {
+    if (systemId != current_partner_systemid) {
+        return;
+    }
+
+    // Check if the current partner component ID is generic. If it is, we might need to update
+    if (current_partner_compid == MAV_COMP_ID_MISSIONPLANNER) {
+        current_partner_compid = compId;
+    }
+
+    if (compId == current_partner_compid || compId == MAV_COMP_ID_ALL) {
         if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && (current_wp_id == waypoint_buffer.count()-1 && wpa->type == 0)) {
             //all waypoints sent and ack received
             protocol_timer.stop();
