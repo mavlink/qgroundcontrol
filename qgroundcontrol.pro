@@ -354,6 +354,7 @@ FORMS += \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
+    src/ui/px4_configuration/PX4RCCalibration.ui \
     src/ui/designer/QGCXYPlot.ui \
     src/ui/QGCUASFileView.ui
 
@@ -542,6 +543,7 @@ HEADERS += \
     src/ui/QGCBaseParamWidget.h \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
+    src/ui/px4_configuration/PX4RCCalibration.h \
     src/ui/designer/QGCXYPlot.h \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
@@ -729,6 +731,7 @@ SOURCES += \
     src/ui/QGCBaseParamWidget.cc \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
+    src/ui/px4_configuration/PX4RCCalibration.cc \
     src/ui/designer/QGCXYPlot.cc \
     src/ui/menuactionhelper.cpp \
     src/uas/QGCUASFileManager.cc \
@@ -757,7 +760,8 @@ HEADERS += \
 	src/qgcunittest/FlightGearTest.h \
 	src/qgcunittest/TCPLinkTest.h \
 	src/qgcunittest/TCPLoopBackServer.h \
-	src/qgcunittest/QGCUASFileManagerTest.h
+	src/qgcunittest/QGCUASFileManagerTest.h \
+    src/qgcunittest/PX4RCCalibrationTest.h
 
 SOURCES += \
 	src/qgcunittest/UASUnitTest.cc \
@@ -770,4 +774,5 @@ SOURCES += \
 	src/qgcunittest/FlightGearTest.cc \
 	src/qgcunittest/TCPLinkTest.cc \
 	src/qgcunittest/TCPLoopBackServer.cc \
-	src/qgcunittest/QGCUASFileManagerTest.cc
+	src/qgcunittest/QGCUASFileManagerTest.cc \
+    src/qgcunittest/PX4RCCalibrationTest.cc
