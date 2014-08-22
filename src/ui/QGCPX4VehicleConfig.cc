@@ -380,23 +380,10 @@ void QGCPX4VehicleConfig::loadConfig()
     QGCToolWidget* tool;
 
     QDir autopilotdir(qApp->applicationDirPath() + "/files/" + mav->getAutopilotTypeName().toLower());
-    QDir generaldir = QDir(autopilotdir.absolutePath() + "/general/widgets");
-    QDir vehicledir = QDir(autopilotdir.absolutePath() + "/" + mav->getSystemTypeName().toLower() + "/widgets");
-    if (!autopilotdir.exists("general"))
-    {
-     //TODO: Throw some kind of error here. There is no general configuration directory
-        qDebug() << "Invalid general dir. no general configuration will be loaded.";
-    }
-    if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
-    {
-        //TODO: Throw an error here too, no autopilot specific configuration
-        qDebug() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
-    }
     qDebug() << autopilotdir.absolutePath();
-    qDebug() << generaldir.absolutePath();
-    qDebug() << vehicledir.absolutePath();
+
     QFile xmlfile(autopilotdir.absolutePath() + "/arduplane.pdef.xml");
-    if (xmlfile.exists() && !xmlfile.open(QIODevice::ReadOnly))
+    if (!xmlfile.open(QIODevice::ReadOnly))
     {
         loadQgcConfig(false);
         doneLoadingConfig = true;

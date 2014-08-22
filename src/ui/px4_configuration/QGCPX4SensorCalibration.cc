@@ -280,22 +280,26 @@ void QGCPX4SensorCalibration::setGpsOrientation(int index)
 
 void QGCPX4SensorCalibration::setAutopilotImage(const QString &path)
 {
-    autopilotIcon.load(path);
+    if (autopilotIcon.load(path)) {
+        int w = ui->autopilotLabel->width();
+        int h = ui->autopilotLabel->height();
 
-    int w = ui->autopilotLabel->width();
-    int h = ui->autopilotLabel->height();
-
-    ui->autopilotLabel->setPixmap(autopilotIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        ui->autopilotLabel->setPixmap(autopilotIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    } else {
+        qDebug() << "AutoPilot Icon image did not load" << path;
+    }
 }
 
 void QGCPX4SensorCalibration::setGpsImage(const QString &path)
 {
-    gpsIcon.load(path);
+    if (gpsIcon.load(path)) {
+        int w = ui->gpsLabel->width();
+        int h = ui->gpsLabel->height();
 
-    int w = ui->gpsLabel->width();
-    int h = ui->gpsLabel->height();
-
-    ui->gpsLabel->setPixmap(gpsIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        ui->gpsLabel->setPixmap(gpsIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    } else {
+        qDebug() << "GPS Icon image did not load" << path;
+    }
 }
 
 void QGCPX4SensorCalibration::updateIcons()
