@@ -181,6 +181,8 @@ private:
     UASInterface* _mav;                  ///< The current MAV
     QGCUASParamManagerInterface* _paramMgr;
     
+    bool _parameterListUpToDateSignalled;   ///< true: we have received a parameterListUpToDate signal
+    
     Ui::PX4RCCalibration* _ui;
     
     QTimer _updateTimer;    ///< Timer used to update widgete ui

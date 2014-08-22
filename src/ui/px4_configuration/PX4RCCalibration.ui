@@ -271,7 +271,7 @@
          </size>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>Please turn on Radio</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

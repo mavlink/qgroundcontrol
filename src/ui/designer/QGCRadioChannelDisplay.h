@@ -10,11 +10,19 @@ class QGCRadioChannelDisplay : public QGroupBox
 public:
     explicit QGCRadioChannelDisplay(QWidget *parent = 0);
     void setOrientation(Qt::Orientation orient);
+    
+    /// @brief Set the current RC value to display
     void setValue(int value);
+    
+    /// @brief Set the current RC Value, Minimum RC Value and Maximum RC Value
     void setValueAndRange(int val, int min, int max);
+    
     void setMinMax(int min, int max);
+    
     void setMin(int value);
     void setMax(int value);
+    
+    /// @brief Sets the Trim value for the channel
     void setTrim(int value);
     void setName(QString name);
     int value(void) { return _value; }
@@ -47,9 +55,9 @@ private:
     QString _name;      ///< Channel name to display
     
     static const int _centerValue = 1500;                           ///< RC Value which is at center
-    static const int _maxDeltaRange = 700;
-    static const int _minRange = _centerValue - _maxDeltaRange;
-    static const int _maxRange = _centerValue + _maxDeltaRange;
+    static const int _maxDeltaRange = 700;                          ///< Delta around center value which is the max range for widget
+    static const int _minRange = _centerValue - _maxDeltaRange;     ///< Smallest value widget can display
+    static const int _maxRange = _centerValue + _maxDeltaRange;     ///< Largest value widget can display
 };
 
 #endif // QGCRADIOCHANNELDISPLAY_H

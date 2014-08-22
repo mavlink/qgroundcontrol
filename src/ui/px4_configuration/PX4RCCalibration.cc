@@ -60,6 +60,7 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     _rcCalState(rcCalStateChannelWait),
     _mav(NULL),
     _paramMgr(NULL),
+    _parameterListUpToDateSignalled(false),
     _ui(new Ui::PX4RCCalibration)
 {
     _ui->setupUi(this);
@@ -163,83 +164,83 @@ void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
 {
     Q_ASSERT(_paramMgr);
     
-    // Initialize all function mappings to not set
-    
-    for (size_t i=0; i<_chanMax; i++) {
-        struct ChannelInfo* info = &_rgChannelInfo[i];
-        info->function = rcCalFunctionMax;
-    }
-    
-    for (size_t i=0; i<rcCalFunctionMax; i++) {
-        _rgFunctionChannelMapping[i] = _chanMax;
-    }
-    
-    // FIXME: Hardwired component id
-    
-    // Pull parameters and update
-    
-    QString minTpl("RC%1_MIN");
-    QString maxTpl("RC%1_MAX");
-    QString trimTpl("RC%1_TRIM");
-    QString revTpl("RC%1_REV");
-    QVariant value;
-    bool paramFound;
-    bool convertOk;
-    
-    for (int i = 0; i < _chanMax; ++i) {
-        struct ChannelInfo* info = &_rgChannelInfo[i];
+    if (_parameterListUpToDateSignalled) {
+        // Initialize all function mappings to not set
         
-        paramFound = _paramMgr->getParameterValue(50, trimTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            info->rcTrim = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
+        for (size_t i=0; i<_chanMax; i++) {
+            struct ChannelInfo* info = &_rgChannelInfo[i];
+            info->function = rcCalFunctionMax;
         }
         
-        paramFound = _paramMgr->getParameterValue(50, minTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            info->rcMin = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
+        for (size_t i=0; i<rcCalFunctionMax; i++) {
+            _rgFunctionChannelMapping[i] = _chanMax;
         }
-
-        paramFound = _paramMgr->getParameterValue(50, maxTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            info->rcMax = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
-        }
-
-        paramFound = _paramMgr->getParameterValue(50, revTpl.arg(i+1), value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            float floatReversed = value.toFloat(&convertOk);
-            Q_ASSERT(convertOk);
-            Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
-            info->reversed = floatReversed == -1.0f;
-        }
-    }
-    
-    for (int i=0; i<rcCalFunctionMax; i++) {
-        int32_t paramChannel;
         
-        paramFound = _paramMgr->getParameterValue(50, _rgFunctionInfo[i].parameterName, value);
-        Q_ASSERT(paramFound);
-        if (paramFound) {
-            paramChannel = value.toInt(&convertOk);
-            Q_ASSERT(convertOk);
+        // FIXME: Hardwired component id
+        
+        // Pull parameters and update
+        
+        QString minTpl("RC%1_MIN");
+        QString maxTpl("RC%1_MAX");
+        QString trimTpl("RC%1_TRIM");
+        QString revTpl("RC%1_REV");
+        QVariant value;
+        bool paramFound;
+        bool convertOk;
+        
+        for (int i = 0; i < _chanMax; ++i) {
+            struct ChannelInfo* info = &_rgChannelInfo[i];
             
-            if (paramChannel != 0) {
-                _rgFunctionChannelMapping[i] = paramChannel - 1;
-                _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+            paramFound = _paramMgr->getParameterValue(50, trimTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                info->rcTrim = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+            }
+            
+            paramFound = _paramMgr->getParameterValue(50, minTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                info->rcMin = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+            }
+
+            paramFound = _paramMgr->getParameterValue(50, maxTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                info->rcMax = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+            }
+
+            paramFound = _paramMgr->getParameterValue(50, revTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                float floatReversed = value.toFloat(&convertOk);
+                Q_ASSERT(convertOk);
+                Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
+                info->reversed = floatReversed == -1.0f;
             }
         }
+        
+        for (int i=0; i<rcCalFunctionMax; i++) {
+            int32_t paramChannel;
+            
+            paramFound = _paramMgr->getParameterValue(50, _rgFunctionInfo[i].parameterName, value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                paramChannel = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+                
+                if (paramChannel != 0) {
+                    _rgFunctionChannelMapping[i] = paramChannel - 1;
+                    _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+                }
+            }
+        }
+        
+        _showMinMaxOnRadioWidgets(true);
+        _showTrimOnRadioWidgets(true);
     }
-    
-    _showMinMaxOnRadioWidgets(true);
-    _showTrimOnRadioWidgets(true);
-    
-    _ui->rcCalFound->setText(tr("Current calibration values are shown."));
 }
 
 /// @brief Sets a connected Spektrum receiver into bind mode
@@ -614,14 +615,25 @@ void PX4RCCalibration::_rcCalChannelWait(bool firstTime)
     
     _resetInternalCalibrationValues();
 
-    _ui->rcCalStatus->setText(tr("Please turn on Radio."));
+    if (_chanCount == 0) {
+        _ui->rcCalFound->setText(tr("Please turn on Radio"));
+        _ui->rcCalNext->setEnabled(false);
+    } else {
+        if (_chanCount >= _chanMinimum) {
+            _ui->rcCalNext->setEnabled(true);
+            _ui->rcCalStatus->setText(tr("Detected %1 radio channels.").arg(_chanCount));
+        } else if (_chanCount < _chanMinimum) {
+            _ui->rcCalNext->setEnabled(false);
+            _ui->rcCalStatus->setText(tr("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+        }
+    }
+    
     if (firstTime) {
         _ui->rcCalFound->clear();
     } else {
         _ui->rcCalFound->setText(tr("Calibration complete"));
     }
     
-    _ui->rcCalNext->setEnabled(false);
     _ui->rcCalNext->setText(tr("Start"));
     _ui->rcCalCancel->setEnabled(false);
     _ui->rcCalSkip->setEnabled(false);
@@ -880,6 +892,8 @@ void PX4RCCalibration::_showTrimOnRadioWidgets(bool show)
 
 void PX4RCCalibration::_parameterListUpToDate(void)
 {
+    _parameterListUpToDateSignalled = true;
+    
     if (_rcCalState == rcCalStateChannelWait) {
         _setInternalCalibrationValuesFromParameters();
     }
