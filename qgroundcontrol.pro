@@ -100,14 +100,12 @@ QT += network \
     opengl \
     svg \
     xml \
-    webkit \
     concurrent \
     widgets \
     gui \
     serialport \
     sql \
     printsupport \
-    webkitwidgets \
     quick
 
 #  testlib is needed even in release flavor for QSignalSpy support
@@ -267,7 +265,6 @@ FORMS += \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
-    src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
@@ -426,8 +423,6 @@ HEADERS += \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
-    src/ui/QGCWebView.h \
-    src/ui/map3D/QGCWebPage.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/comm/MAVLinkSwarmSimulationLink.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
@@ -616,8 +611,6 @@ SOURCES += \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
-    src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCWebPage.cc \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/comm/MAVLinkSwarmSimulationLink.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \

@@ -3,7 +3,6 @@
 
 #include <QWidget>
 #include <QAction>
-#include <QtDesigner/QDesignerExportWidget>
 
 #include "QGCToolWidgetItem.h"
 

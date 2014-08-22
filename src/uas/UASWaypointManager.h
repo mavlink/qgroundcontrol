@@ -160,6 +160,13 @@ signals:
 
     void loadWPFile();                              ///< emits signal that a file wp has been load
     void readGlobalWPFromUAS(bool value);           ///< emits signal when finish to read Global WP from UAS
+    
+    void _startProtocolTimer(void);                 ///< emits signal to start protocol timer
+    void _stopProtocolTimer(void);                 ///< emits signal to stop protocol timer
+    
+private slots:
+    void _startProtocolTimerOnThisThread(void);                 ///< Starts the protocol timer
+    void _stopProtocolTimerOnThisThread(void);                 ///< Starts the protocol timer
 
 private:
     UAS* uas;                                       ///< Reference to the corresponding UAS
