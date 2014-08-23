@@ -78,7 +78,7 @@ ParameterList::ParameterList()
                     (*paramIter).setOpalID(opalParams->value(s));
                     //                qDebug() << __FILE__ << " Line:" << __LINE__ << ": Successfully added " << s;
                 } else {
-                    qWarning() << __FILE__ << " Line:" << __LINE__ << ": " << s << " was not found in param list";
+                    qDebug() << __FILE__ << " Line:" << __LINE__ << ": " << s << " was not found in param list";
                 }
             }
         }
