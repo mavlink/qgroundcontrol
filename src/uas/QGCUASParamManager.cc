@@ -5,13 +5,11 @@
 #include <QMessageBox>
 
 #include "UASInterface.h"
-#include "UASParameterCommsMgr.h"
 
 QGCUASParamManager::QGCUASParamManager(QObject *parent) :
     QGCUASParamManagerInterface(parent),
     mav(NULL),
-    paramDataModel(this),
-    paramCommsMgr(NULL)
+    paramDataModel(this)
 {
 
 
@@ -25,8 +23,7 @@ QGCUASParamManager* QGCUASParamManager::initWithUAS(UASInterface* uas)
     loadParamMetaInfoCSV();
 
     paramDataModel.setUASID(mav->getUASID());
-    paramCommsMgr = new UASParameterCommsMgr(this);
-    paramCommsMgr->initWithUAS(uas);
+    paramCommsMgr.initWithUAS(uas);
 
     connectToModelAndComms();
 
@@ -36,10 +33,10 @@ QGCUASParamManager* QGCUASParamManager::initWithUAS(UASInterface* uas)
 void QGCUASParamManager::connectToModelAndComms()
 {
     // Pass along comms mgr status msgs
-    connect(paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
+    connect(&paramCommsMgr, SIGNAL(parameterStatusMsgUpdated(QString,int)),
             this, SIGNAL(parameterStatusMsgUpdated(QString,int)));
 
-    connect(paramCommsMgr, SIGNAL(parameterListUpToDate()),
+    connect(&paramCommsMgr, SIGNAL(parameterListUpToDate()),
             this, SIGNAL(parameterListUpToDate()));
 
     // Pass along data model updates
@@ -81,7 +78,7 @@ bool QGCUASParamManager::getParameterValue(int component, const QString& paramet
 void QGCUASParamManager::requestParameterUpdate(int component, const QString& parameter)
 {
     if (mav) {
-        paramCommsMgr->requestParameterUpdate(component,parameter);
+        paramCommsMgr.requestParameterUpdate(component,parameter);
     }
 }
 
@@ -95,7 +92,7 @@ void QGCUASParamManager::requestParameterList()
 {
     if (mav) {
         emit parameterStatusMsgUpdated(tr("Requested param list.. waiting"), UASParameterCommsMgr::ParamCommsStatusLevel_OK);
-        paramCommsMgr->requestParameterList();
+        paramCommsMgr.requestParameterList();
     }
 }
 
@@ -126,7 +123,7 @@ void QGCUASParamManager::setParameter(int compId, QString paramName, QVariant va
 
 void QGCUASParamManager::sendPendingParameters(bool persistAfterSend, bool forceSend)
 {
-    paramCommsMgr->sendPendingParameters(persistAfterSend, forceSend);
+    paramCommsMgr.sendPendingParameters(persistAfterSend, forceSend);
 }
 
 
@@ -156,7 +153,7 @@ void QGCUASParamManager::loadParamMetaInfoCSV()
     qDebug() << "loadParamMetaInfoCSV for autopilot: " << autopilot << " from file: " << fileName;
 
     if (!paramMetaFile.open(QIODevice::ReadOnly | QIODevice::Text))  {
-        qWarning() << "loadParamMetaInfoCSV couldn't open:" << fileName;
+        qDebug() << "loadParamMetaInfoCSV couldn't open:" << fileName;
         return;
     }
 
@@ -201,7 +198,7 @@ void QGCUASParamManager::copyVolatileParamsToPersistent()
         msgBox.exec();
     }
     else {
-        paramCommsMgr->writeParamsToPersistentStorage();
+        paramCommsMgr.writeParamsToPersistentStorage();
     }
 }
 
@@ -215,5 +212,5 @@ void QGCUASParamManager::copyPersistentParamsToVolatile()
 
 
 void QGCUASParamManager::requestRcCalibrationParamsUpdate() {
-    paramCommsMgr->requestRcCalibrationParamsUpdate();
+    paramCommsMgr.requestRcCalibrationParamsUpdate();
 }
