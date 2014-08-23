@@ -65,6 +65,8 @@ private slots:
     void _setActiveUAS(UASInterface* uas);
     void _toggleSpektrumPairing(bool enabled);
     
+    void _parameterListUpToDate(void);
+    
 private:
     /// @brief These identify the various controls functions. They are also used as indices into the _rgFunctioInfo
     /// aray.
@@ -124,7 +126,8 @@ private:
     
     void _writeCalibration(bool trimsOnly);
     void _resetInternalCalibrationValues(void);
-    void _copyAndSetTrims(void);
+    void _setInternalCalibrationValuesFromParameters(void);
+    void _initializeTrims(void);
     
     void _rcCalChannelWait(bool firstTime);
     void _rcCalBegin(void);
@@ -138,6 +141,7 @@ private:
     void _rcCalSaveCurrentValues(void);
     
     void _showMinMaxOnRadioWidgets(bool show);
+    void _showTrimOnRadioWidgets(bool show);
     
     void _unitTestForceCalState(enum rcCalStates state);
     
@@ -175,6 +179,9 @@ private:
     QGCRadioChannelDisplay* _rgRadioWidget[_chanMax];   ///< Array of radio channel widgets
 
     UASInterface* _mav;                  ///< The current MAV
+    QGCUASParamManagerInterface* _paramMgr;
+    
+    bool _parameterListUpToDateSignalled;   ///< true: we have received a parameterListUpToDate signal
     
     Ui::PX4RCCalibration* _ui;
     

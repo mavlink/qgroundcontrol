@@ -38,7 +38,7 @@ class MockQGCUASParamManager : public QGCUASParamManagerInterface
     
 signals:
     // The following QGCSUASParamManagerInterface signals are supported
-    // currently none
+    void parameterListUpToDate();   // You can connect to this signal, but it will never be emitted
     
 public:
     // Implemented QGCSUASParamManager overrides
