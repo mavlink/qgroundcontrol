@@ -1418,7 +1418,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 unknownPackets.append(message.msgid);
 
                 emit unknownPacketReceived(uasId, message.compid, message.msgid);
-                qWarning() << "Unknown message from system:" << uasId << "message:" << message.msgid;
+                qDebug() << "Unknown message from system:" << uasId << "message:" << message.msgid;
             }
         }
             break;
@@ -1787,7 +1787,7 @@ void UAS::sendMessage(mavlink_message_t message)
 {
     if (!LinkManager::instance())
     {
-        qWarning() << "LINKMANAGER NOT AVAILABLE!";
+        qDebug() << "LINKMANAGER NOT AVAILABLE!";
         return;
     }
 
@@ -2931,6 +2931,8 @@ bool UAS::emergencyKILL()
 */
 void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
 {
+    Q_UNUSED(configuration);
+    
     QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
     if (!link || !simulation) {
         // Delete wrong sim
@@ -2944,7 +2946,8 @@ void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObj
     link = dynamic_cast<QGCFlightGearLink*>(simulation);
     link->setStartupArguments(options);
     link->sensorHilEnabled(sensorHil);
-    QObject::connect(configuration, SIGNAL(barometerOffsetChanged(float)), link, SLOT(setBarometerOffset(float)));
+    // FIXME: this signal is not on the base hil configuration widget, only on the FG widget
+    //QObject::connect(configuration, SIGNAL(barometerOffsetChanged(float)), link, SLOT(setBarometerOffset(float)));
     if (enable)
     {
         startHil();
