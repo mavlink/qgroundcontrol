@@ -1131,6 +1131,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_quaternion_to_euler(out.q, &roll, &pitch, &yaw);
             quint64 time = getUnixTimeFromMs(out.time_boot_ms);
             emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, out.thrust, time);
+
+            // For plotting emit roll sp, pitch sp and yaw sp values
+            emit valueChanged(uasId, "roll sp", "rad", roll, out.time_boot_ms);
+            emit valueChanged(uasId, "pitch sp", "rad", pitch, out.time_boot_ms);
+            emit valueChanged(uasId, "yaw sp", "rad", yaw, out.time_boot_ms);
         }
             break;
         case MAVLINK_MSG_ID_MISSION_COUNT:
