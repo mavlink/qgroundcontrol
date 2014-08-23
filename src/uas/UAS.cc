@@ -109,6 +109,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     latitude(0.0),
     longitude(0.0),
     altitudeAMSL(0.0),
+    altitudeAMSLFT(0.0),
+    altitudeWGS84(0.0),
     altitudeRelative(0.0),
 
     globalEstimatorActive(false),
@@ -820,7 +822,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (!isnan(hud.airspeed))
                 setAirSpeed(hud.airspeed);
             speedZ = -hud.climb;
-            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
+            emit altitudeChanged(this, altitudeAMSL, altitudeWGS84, altitudeRelative, -speedZ, time);
             emit speedChanged(this, groundSpeed, airSpeed, time);
         }
             break;
@@ -879,7 +881,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             setLatitude(pos.lat/(double)1E7);
             setLongitude(pos.lon/(double)1E7);
-            setAltitudeAMSL(pos.alt/1000.0);
+            setAltitudeWGS84(pos.alt/1000.0);
             setAltitudeRelative(pos.relative_alt/1000.0);
 
             globalEstimatorActive = true;
@@ -888,8 +890,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             speedY = pos.vy/100.0;
             speedZ = pos.vz/100.0;
 
-            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
-            emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
+            emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), getAltitudeWGS84(), time);
+            emit altitudeChanged(this, altitudeAMSL, altitudeWGS84, altitudeRelative, -speedZ, time);
             // We had some frame mess here, global and local axes were mixed.
             emit velocityChanged_NED(this, speedX, speedY, speedZ, time);
 
@@ -938,9 +940,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (!globalEstimatorActive) {
                     setLatitude(latitude_gps);
                     setLongitude(longitude_gps);
-                    setAltitudeAMSL(altitude_gps);
-                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), time);
-                    emit altitudeChanged(this, altitudeAMSL, altitudeRelative, -speedZ, time);
+                    setAltitudeWGS84(altitude_gps);
+                    emit globalPositionChanged(this, getLatitude(), getLongitude(), getAltitudeAMSL(), getAltitudeWGS84(), time);
+                    emit altitudeChanged(this, altitudeAMSL, altitudeWGS84, altitudeRelative, -speedZ, time);
 
                     float vel = pos.vel/100.0f;
                     // Smaller than threshold and not NaN

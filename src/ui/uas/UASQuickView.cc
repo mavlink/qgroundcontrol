@@ -31,6 +31,8 @@ UASQuickView::UASQuickView(QWidget *parent) : QWidget(parent),
     if (uasPropertyValueMap.size() == 0)
     {
         valueEnabled("altitudeAMSL");
+        valueEnabled("altitudeAMSLFT");
+        valueEnabled("altitudeWGS84");
         valueEnabled("altitudeRelative");
         valueEnabled("groundSpeed");
         valueEnabled("distToWaypoint");
