@@ -93,8 +93,7 @@ private:
     QPushButton*    _tryAgainButton;
     QLabel*         _statusLabel;
     
-    QGCRadioChannelDisplay* _rgAttitudeRadioWidget[4];
-    QGCRadioChannelDisplay* _rgRadioWidget[PX4RCCalibration::_chanMax];
+    RCChannelWidget* _rgRadioWidget[PX4RCCalibration::_chanMax];
 };
 
 DECLARE_TEST(PX4RCCalibrationTest)
