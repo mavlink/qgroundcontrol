@@ -17,6 +17,7 @@ public:
     UASQuickView(QWidget *parent = 0);
     ~UASQuickView();
     void addSource(MAVLinkDecoder *decoder);
+
 private:
     UASInterface *uas;
 
@@ -28,6 +29,7 @@ private:
 
     /** Maps from property name to the display item */
     QMap<QString,UASQuickViewItem*> uasPropertyToLabelMap;
+
 
     /** Timer for updating the UI */
     QTimer *updateTimer;
@@ -43,6 +45,8 @@ private:
 
     void recalculateItemTextSizing();
 
+    void valueUpdate(const int uasId,const QString &name,const QString &unit,const double value,const quint64 msec);
+
     /** Column Count */
     int m_columnCount;
 
@@ -57,18 +61,22 @@ protected:
     Ui::Form ui;
     void resizeEvent(QResizeEvent *evt);
 signals:
-    
+
 public slots:
     void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant& value,const quint64 msecs);
+
     void actionTriggered(bool checked);
     void actionTriggered();
     void updateTimerTick();
     void addUAS(UASInterface* uas);
     void setActiveUAS(UASInterface* uas);
+    void valChanged(double val,QString type);
     void selectDialogClosed();
     void valueEnabled(QString value);
     void valueDisabled(QString value);
     void columnActionTriggered();
+    void replaceSingleItem(QString olditem);
+    void replaceSingleItemSelected(QString newitem,QString olditem);
 };
 
 #endif // UASQUICKVIEW_H
