@@ -251,12 +251,12 @@ void QGCVehicleConfig::loadQgcConfig(bool primary)
     if (!autopilotdir.exists("general"))
     {
      //TODO: Throw some kind of error here. There is no general configuration directory
-        qWarning() << "Invalid general dir. no general configuration will be loaded.";
+        qDebug() << "Invalid general dir. no general configuration will be loaded.";
     }
     if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
     {
         //TODO: Throw an error here too, no autopilot specific configuration
-        qWarning() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
+        qDebug() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
     }
 
     // Generate widgets for the General tab.
@@ -475,12 +475,12 @@ void QGCVehicleConfig::loadConfig()
     if (!autopilotdir.exists("general"))
     {
      //TODO: Throw some kind of error here. There is no general configuration directory
-        qWarning() << "Invalid general dir. no general configuration will be loaded.";
+        qDebug() << "Invalid general dir. no general configuration will be loaded.";
     }
     if (!autopilotdir.exists(mav->getAutopilotTypeName().toLower()))
     {
         //TODO: Throw an error here too, no autopilot specific configuration
-        qWarning() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
+        qDebug() << "Invalid vehicle dir, no vehicle specific configuration will be loaded.";
     }
     qDebug() << autopilotdir.absolutePath();
     qDebug() << generaldir.absolutePath();

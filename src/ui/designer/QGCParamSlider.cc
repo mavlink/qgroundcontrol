@@ -269,7 +269,7 @@ void QGCParamSlider::setParamPending()
         uas->getParamManager()->sendPendingParameters(true, true);
     }
     else {
-        qWarning() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
+        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
 
