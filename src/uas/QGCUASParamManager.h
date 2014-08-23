@@ -8,11 +8,11 @@
 
 #include "UASParameterDataModel.h"
 #include "QGCUASParamManagerInterface.h"
+#include "UASParameterCommsMgr.h"
 
 //forward declarations
 class QTextStream;
 class UASInterface;
-class UASParameterCommsMgr;
 
 class QGCUASParamManager : public QGCUASParamManagerInterface
 {
@@ -125,7 +125,7 @@ protected:
     // Parameter data model
     UASInterface*           mav;   ///< The MAV this manager is controlling
     UASParameterDataModel  paramDataModel;///< Shared data model of parameters
-    UASParameterCommsMgr*   paramCommsMgr; ///< Shared comms mgr for parameters
+    UASParameterCommsMgr   paramCommsMgr; ///< Shared comms mgr for parameters
 
 };
 
