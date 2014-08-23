@@ -19,8 +19,9 @@ UASParameterCommsMgr::UASParameterCommsMgr(QObject *parent) :
     silenceTimeout(1000),
     transmissionListMode(false)
 {
-
-
+    // We signal to ourselves to start/stop timer on our own thread
+    connect(this, SIGNAL(_startSilenceTimer(void)), this, SLOT(_startSilenceTimerOnThisThread(void)));
+    connect(this, SIGNAL(_stopSilenceTimer(void)), this, SLOT(_stopSilenceTimerOnThisThread(void)));
 }
 
 UASParameterCommsMgr* UASParameterCommsMgr::initWithUAS(UASInterface* uas)
@@ -254,7 +255,7 @@ void UASParameterCommsMgr::silenceTimerExpired()
         qDebug() << "maxSilenceTimeout exceeded: " << totalElapsed;
         int missingReads, missingWrites;
         clearRetransmissionLists(missingReads,missingWrites);
-        silenceTimer.stop();
+        emit _stopSilenceTimer(); // Stop timer on our thread;
         lastReceiveTime = 0;
         lastSilenceTimerReset = curTime;
         setParameterStatusMsg(tr("TIMEOUT: Abandoning %1 reads %2 writes after %3 seconds").arg(missingReads).arg(missingWrites).arg(totalElapsed/1000));
@@ -370,13 +371,14 @@ void UASParameterCommsMgr::updateSilenceTimer()
         if (0 == lastReceiveTime) {
             lastReceiveTime = lastSilenceTimerReset;
         }
-        silenceTimer.start(silenceTimeout);
+        // We signal this to ourselves so timer is started on the right thread
+        emit _startSilenceTimer();
     }
     else {
         //all parameters have been received, broadcast to UI
         emit parameterListUpToDate();
         resetAfterListReceive();
-        silenceTimer.stop();
+        emit _stopSilenceTimer(); // Stop timer on our thread;
         lastReceiveTime = 0;
     }
 
@@ -547,3 +549,12 @@ UASParameterCommsMgr::~UASParameterCommsMgr()
 
 }
 
+void UASParameterCommsMgr::_startSilenceTimerOnThisThread(void)
+{
+    silenceTimer.start(silenceTimeout);
+}
+
+void UASParameterCommsMgr::_stopSilenceTimerOnThisThread(void)
+{
+    silenceTimer.stop();
+}
