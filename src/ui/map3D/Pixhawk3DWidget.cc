@@ -66,7 +66,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
  , mViewParamWidget(new ViewParamWidget(mGlobalViewParams, mSystemViewParamMap, this, parent))
 {
     connect(m3DWidget, SIGNAL(sizeChanged(int,int)), this, SLOT(sizeChanged(int,int)));
-    connect(m3DWidget, SIGNAL(update()), this, SLOT(update()));
+    connect(m3DWidget, SIGNAL(updateWidget()), this, SLOT(updateWidget()));
 
     m3DWidget->setCameraParams(2.0f, 30.0f, 0.01f, 10000.0f);
     m3DWidget->init(15.0f);
@@ -1078,7 +1078,7 @@ Pixhawk3DWidget::sizeChanged(int width, int height)
 }
 
 void
-Pixhawk3DWidget::update(void)
+Pixhawk3DWidget::updateWidget(void)
 {
     MAV_FRAME frame = mGlobalViewParams->frame();
 

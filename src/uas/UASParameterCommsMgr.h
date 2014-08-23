@@ -68,6 +68,11 @@ signals:
 
     /** @brief We updated the parameter status message */
     void parameterStatusMsgUpdated(QString msg, int level);
+    
+    
+    /// @brief We signal this to ourselves in order to get timer started/stopped on our own thread.
+    void _startSilenceTimer(void);
+    void _stopSilenceTimer(void);
 
 public slots:
     /** @brief  Iterate through all components, through all pending parameters and send them to UAS */
@@ -113,7 +118,10 @@ protected:
     bool transmissionListMode;       ///< Currently requesting list
     QMap<int, QMap<QString, QVariant>* > writesWaiting; ///< All writes that have not yet been ack'd, by component ID
 
-
+private slots:
+    /// @brief We signal this to ourselves in order to get timer started/stopped on our own thread.
+    void _startSilenceTimerOnThisThread(void);
+    void _stopSilenceTimerOnThisThread(void);
 };
     
 

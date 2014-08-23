@@ -97,7 +97,7 @@ private slots:
     void rotateTerrain(void);
 
     void sizeChanged(int width, int height);
-    void update(void);
+    void updateWidget(void);
 
 protected:
     void addModels(QVector< osg::ref_ptr<osg::Node> >& models,
