@@ -78,7 +78,7 @@ public slots:
     /** @brief Update connection timeout time */
     void heartbeatTimeout(bool timeout, unsigned int ms);
     /** @brief Update global position */
-    void globalPositionChanged(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
+    void globalPositionChanged(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     /** @brief Create or connect link */
     void connectLink(bool connect);
     /** @brief Clear status string */

@@ -60,7 +60,7 @@ public slots:
     void updateUserPositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired);
     void updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
-    void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
+    void updateGlobalPosition(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     void updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time);
     void updatePositionLock(UASInterface* uas, bool lock);
     void updateAttitudeControllerEnabled(bool enabled);
