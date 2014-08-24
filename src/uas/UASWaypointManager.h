@@ -145,7 +145,7 @@ public slots:
     void notifyOfChangeViewOnly(Waypoint* wp);             ///< Notifies manager to changes to a viewonly waypoint, e.g. some widget wants to change "current"
     /*@}*/
     void handleLocalPositionChanged(UASInterface* mav, double x, double y, double z, quint64 time);
-    void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time);
+    void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double altAMSL, double altWGS84, quint64 time);
 
 signals:
     void waypointEditableListChanged(void);                 ///< emits signal that the list of editable waypoints has been changed

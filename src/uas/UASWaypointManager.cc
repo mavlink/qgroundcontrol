@@ -55,7 +55,7 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
         uasid = uas->getUASID();
         connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,double,double,quint64)));
     }
     else
     {
@@ -119,11 +119,12 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
     }
 }
 
-void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time)
+void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double altAMSL, double altWGS84, quint64 time)
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-	Q_UNUSED(alt);
+    Q_UNUSED(altAMSL);
+    Q_UNUSED(altWGS84);
 	Q_UNUSED(lon);
 	Q_UNUSED(lat);
     if (waypointsEditable.count() > 0 && currentWaypointEditable && (currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL || currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))

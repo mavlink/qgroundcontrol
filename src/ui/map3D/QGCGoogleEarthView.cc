@@ -206,7 +206,7 @@ void QGCGoogleEarthView::addUAS(UASInterface* uas)
     if (trailEnabled) javaScript(QString("showTrail(%1);").arg(uas->getUASID()));
 
     // Automatically receive further position updates
-    connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,double,quint64)));
     // Receive waypoint updates
     // Connect the waypoint manager / data storage to the UI
     connect(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));

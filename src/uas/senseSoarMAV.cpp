@@ -115,7 +115,7 @@ void senseSoarMAV::receiveMessage(LinkInterface *link, mavlink_message_t message
 				emit valueChanged(uasId, "latitude", "deg", this->latitude, time);
                 emit valueChanged(uasId, "longitude", "deg", this->longitude, time);
                 emit valueChanged(uasId, "altitude", "m", this->altitude, time);
-				emit globalPositionChanged(this, this->latitude, this->longitude, this->altitude, time);
+                emit globalPositionChanged(this, this->latitude, this->longitude, this->altitude, this->altitude, time);
 				break;
 			}
 		case MAVLINK_MSG_ID_OBS_QFF:
