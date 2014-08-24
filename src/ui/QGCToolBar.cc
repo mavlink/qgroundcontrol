@@ -56,6 +56,7 @@ void QGCToolBar::globalPositionChanged(UASInterface* uas, double lat, double lon
     Q_UNUSED(uas);
     Q_UNUSED(lat);
     Q_UNUSED(lon);
+    Q_UNUSED(altWGS84);
     Q_UNUSED(usec);
     altitudeMSL = altAMSL;
     changed = true;
