@@ -51,13 +51,14 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     // Do not load UI, wait for actions
 }
 
-void QGCToolBar::globalPositionChanged(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
+void QGCToolBar::globalPositionChanged(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
 {
     Q_UNUSED(uas);
     Q_UNUSED(lat);
     Q_UNUSED(lon);
+    Q_UNUSED(altWGS84);
     Q_UNUSED(usec);
-    altitudeMSL = alt;
+    altitudeMSL = altAMSL;
     changed = true;
 }
 
@@ -370,7 +371,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(batteryChanged(UASInterface*, double, double, double,int)), this, SLOT(updateBatteryRemaining(UASInterface*, double, double, double, int)));
         disconnect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         disconnect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
-        disconnect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
+        disconnect(active, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,double,quint64)));
         if (mav->getWaypointManager())
         {
             disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -395,7 +396,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         connect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,double,int)));
         connect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         connect(mav, SIGNAL(heartbeatTimeout(bool, unsigned int)), this, SLOT(heartbeatTimeout(bool,unsigned int)));
-        connect(mav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(mav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(globalPositionChanged(UASInterface*,double,double,double,double,quint64)));
         if (mav->getWaypointManager())
         {
             connect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));

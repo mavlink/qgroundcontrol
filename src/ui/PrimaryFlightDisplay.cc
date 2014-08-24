@@ -218,7 +218,7 @@ void PrimaryFlightDisplay::forgetUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(speedChanged(UASInterface*, double, double, quint64)), this, SLOT(updateSpeed(UASInterface*, double, double, quint64)));
-        disconnect(this->uas, SIGNAL(altitudeChanged(UASInterface*, double, double, double, quint64)), this, SLOT(updateAltitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(altitudeChanged(UASInterface*, double, double, double, double, quint64)), this, SLOT(updateAltitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)), this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
     }
 }
@@ -241,7 +241,7 @@ void PrimaryFlightDisplay::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,int,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,int,double, double, double, quint64)));
         connect(uas, SIGNAL(speedChanged(UASInterface*, double, double, quint64)), this, SLOT(updateSpeed(UASInterface*, double, double, quint64)));
-        connect(uas, SIGNAL(altitudeChanged(UASInterface*, double, double, double, quint64)), this, SLOT(updateAltitude(UASInterface*, double, double, double, quint64)));
+        connect(uas, SIGNAL(altitudeChanged(UASInterface*, double, double, double, double, quint64)), this, SLOT(updateAltitude(UASInterface*, double, double, double, double, quint64)));
         connect(uas, SIGNAL(navigationControllerErrorsChanged(UASInterface*, double, double, double)), this, SLOT(updateNavigationControllerErrors(UASInterface*, double, double, double)));
 
         // Set new UAS
@@ -319,11 +319,16 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
     airSpeed = _airSpeed;
 }
 
-void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp) {
+void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp) {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
+    Q_UNUSED(_altitudeWGS84)
 
     if (fabsf(altitudeAMSL - _altitudeAMSL) > 0.5f) {
+        _valuesChanged = true;
+    }
+
+    if (fabsf(altitudeWGS84 - _altitudeWGS84) > 0.5f) {
         _valuesChanged = true;
     }
 
@@ -336,6 +341,7 @@ void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMS
     }
 
     altitudeAMSL = _altitudeAMSL;
+    altitudeWGS84 = _altitudeWGS84;
     altitudeRelative = _altitudeRelative;
     climbRate = _climbRate;
 }
@@ -892,7 +898,7 @@ void PrimaryFlightDisplay::drawAltimeter(
         QRectF area
     ) {
 
-    float primaryAltitude = altitudeAMSL;
+    float primaryAltitude = altitudeWGS84;
     float secondaryAltitude = 0;
 
     painter.resetTransform();
