@@ -49,6 +49,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->flyingWingComboBox->addItem(tr("FX-61 Phantom FPV (1550 mm)"), 3031);
     ui->flyingWingComboBox->addItem(tr("FX-79 Buffalo (2000 mm)"), 3034);
     ui->flyingWingComboBox->addItem(tr("Skywalker X5 (1180 mm)"), 3032);
+    ui->flyingWingComboBox->addItem(tr("Viper v2 (3000 mm)"), 3035);
 
     connect(ui->flyingWingPushButton, SIGNAL(clicked()), this, SLOT(flyingWingSelected()));
     connect(ui->flyingWingComboBox, SIGNAL(activated(int)), this, SLOT(flyingWingSelected(int)));

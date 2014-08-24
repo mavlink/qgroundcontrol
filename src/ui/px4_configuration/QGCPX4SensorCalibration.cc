@@ -340,7 +340,15 @@ void QGCPX4SensorCalibration::setActiveUAS(UASInterface* uas)
 
     connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
     connect(uas, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
+    connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
     activeUAS = uas;
+
+    updateSystemSpecs(uas->getUASID());
+}
+
+void QGCPX4SensorCalibration::updateSystemSpecs(int id)
+{
+    Q_UNUSED(id);
 
     if (activeUAS->isRotaryWing()) {
         // Users are confused by the config button
