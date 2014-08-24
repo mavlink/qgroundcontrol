@@ -2794,6 +2794,8 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
         float q[4];
         mavlink_euler_to_quaternion(roll, pitch, yaw, q);
 
+        float yawrate = 0.0f;
+
         // Do not control rates and throttle
         quint8 mask = (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
         mask |= (1 << 6); // ignore throttle
@@ -2805,7 +2807,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
             (1 << 6) | (1 << 7) | (1 << 8);
         mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(), mavlink->getComponentId(),
                                                        &message, QGC::groundTimeMilliseconds(), this->uasId, 0,
-                                                       MAV_FRAME_LOCAL_NED, position_mask, x, y, z, 0, 0, 0, 0, 0, 0);
+                                                       MAV_FRAME_LOCAL_NED, position_mask, x, y, z, 0, 0, 0, 0, 0, 0, yaw, yawrate);
         sendMessage(message);
         qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGES: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
 
