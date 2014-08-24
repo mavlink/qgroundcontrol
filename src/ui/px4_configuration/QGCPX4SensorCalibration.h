@@ -23,6 +23,7 @@ public slots:
      * @param uas the current active UAS
      */
     void setActiveUAS(UASInterface* uas);
+
     /**
      * @brief Handle text message from current active UAS
      * @param uasid
@@ -31,6 +32,12 @@ public slots:
      * @param text
      */
     void handleTextMessage(int uasid, int componentid, int severity, QString text);
+
+    /**
+     * @brief Update system specs / properties
+     * @param id the UID of the aircraft
+     */
+    void updateSystemSpecs(int id);
 
     void gyroButtonClicked();
     void magButtonClicked();

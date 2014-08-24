@@ -97,31 +97,12 @@ void PX4RCCalibrationTest::init(void)
     _statusLabel = _calWidget->findChild<QLabel*>("rcCalStatus");
     Q_ASSERT(_statusLabel);
  
-    // Need to make sure standard channel indices are less then 4. Otherwise our _rgRadioWidget array won't work correctly.
-    Q_ASSERT(PX4RCCalibration::rcCalFunctionRoll >= 0 && PX4RCCalibration::rcCalFunctionRoll < 4);
-    Q_ASSERT(PX4RCCalibration::rcCalFunctionPitch >= 0 && PX4RCCalibration::rcCalFunctionPitch < 4);
-    Q_ASSERT(PX4RCCalibration::rcCalFunctionYaw >= 0 && PX4RCCalibration::rcCalFunctionYaw < 4);
-    Q_ASSERT(PX4RCCalibration::rcCalFunctionThrottle >= 0 && PX4RCCalibration::rcCalFunctionThrottle < 4);
-    
-    _rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionRoll] = _calWidget->findChild<QGCRadioChannelDisplay*>("rollWidget");
-    _rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionPitch] = _calWidget->findChild<QGCRadioChannelDisplay*>("pitchWidget");
-    _rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionYaw] = _calWidget->findChild<QGCRadioChannelDisplay*>("yawWidget");
-    _rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionThrottle] = _calWidget->findChild<QGCRadioChannelDisplay*>("throttleWidget");
-    
-    Q_ASSERT(_rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionRoll]);
-    Q_ASSERT(_rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionPitch]);
-    Q_ASSERT(_rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionYaw]);
-    Q_ASSERT(_rgAttitudeRadioWidget[PX4RCCalibration::rcCalFunctionThrottle]);
-
     for (size_t i=0; i<PX4RCCalibration::_chanMax; i++) {
         QString radioWidgetName("radio%1Widget");
         QString radioWidgetUserName("Radio %1");
         
-        QGCRadioChannelDisplay* radioWidget = _calWidget->findChild<QGCRadioChannelDisplay*>(radioWidgetName.arg(i+1));
+        RCChannelWidget* radioWidget = _calWidget->findChild<RCChannelWidget*>(radioWidgetName.arg(i+1));
         Q_ASSERT(radioWidget);
-        
-        radioWidget->setOrientation(Qt::Horizontal);
-        radioWidget->setName(radioWidgetUserName.arg(i+1));
         
         _rgRadioWidget[i] = radioWidget;
     }
@@ -177,7 +158,7 @@ void PX4RCCalibrationTest::_liveRC_test(void)
     }
     
     for (int i=0; i<PX4RCCalibration::_chanMax; i++) {
-        QGCRadioChannelDisplay* radioWidget = _rgRadioWidget[i];
+        RCChannelWidget* radioWidget = _rgRadioWidget[i];
         Q_ASSERT(radioWidget);
         
         QCOMPARE(radioWidget->value(), PX4RCCalibration::_rcCalPWMValidMinValue);
@@ -323,20 +304,9 @@ StartOver:
     CHK_BUTTONS(cancelButtonMask);
 
     // Also at this point the radio channel widgets should be displaying the current min/max we just set.
-    // Check both the Attitude Control widgets as well as generic channel widgets.
-    
-    Q_ASSERT(PX4RCCalibration::rcCalFunctionFirstAttitudeFunction == 0);
-    for (int i=0; i<PX4RCCalibration::rcCalFunctionLastAttitudeFunction; i++) {
-        QGCRadioChannelDisplay* radioWidget = _rgAttitudeRadioWidget[i];
-        Q_ASSERT(radioWidget);
-        
-        QCOMPARE(radioWidget->isMinMaxShown(), true);
-        QCOMPARE(radioWidget->min(), PX4RCCalibration::_rcCalPWMValidMinValue);
-        QCOMPARE(radioWidget->max(), PX4RCCalibration::_rcCalPWMValidMaxValue);
-    }
 
     for (int i=0; i<PX4RCCalibration::_chanMax; i++) {
-        QGCRadioChannelDisplay* radioWidget = _rgRadioWidget[i];
+        RCChannelWidget* radioWidget = _rgRadioWidget[i];
         Q_ASSERT(radioWidget);
         
         QCOMPARE(radioWidget->isMinMaxShown(), true);
