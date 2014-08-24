@@ -59,40 +59,21 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     _chanCount(0),
     _rcCalState(rcCalStateChannelWait),
     _mav(NULL),
+    _paramMgr(NULL),
+    _parameterListUpToDateSignalled(false),
     _ui(new Ui::PX4RCCalibration)
 {
     _ui->setupUi(this);
     
-    // Setup up attitude control radio widgets
-    _ui->rollWidget->setName(_rgFunctionInfo[rcCalFunctionRoll].functionName);
-    _ui->pitchWidget->setName(_rgFunctionInfo[rcCalFunctionPitch].functionName);
-    _ui->yawWidget->setName(_rgFunctionInfo[rcCalFunctionYaw].functionName);
-    _ui->throttleWidget->setName(_rgFunctionInfo[rcCalFunctionThrottle].functionName);
-    _ui->rollWidget->setOrientation(Qt::Horizontal);
-    _ui->yawWidget->setOrientation(Qt::Horizontal);
-
     // Initialize arrays of widget control pointers. This allows for more efficient code writing using "for" loops.
-    
-    // Need to make sure standard channel indices are less then 4. Otherwise our _rgRadioWidget array won't work correctly.
-    Q_ASSERT(rcCalFunctionRoll >= 0 && rcCalFunctionRoll < 4);
-    Q_ASSERT(rcCalFunctionPitch >= 0 && rcCalFunctionPitch < 4);
-    Q_ASSERT(rcCalFunctionYaw >= 0 && rcCalFunctionYaw < 4);
-    Q_ASSERT(rcCalFunctionThrottle >= 0 && rcCalFunctionThrottle < 4);
-    
-    _rgAttitudeRadioWidget[rcCalFunctionRoll] = _ui->rollWidget;
-    _rgAttitudeRadioWidget[rcCalFunctionPitch] = _ui->pitchWidget;
-    _rgAttitudeRadioWidget[rcCalFunctionYaw] = _ui->yawWidget;
-    _rgAttitudeRadioWidget[rcCalFunctionThrottle] = _ui->throttleWidget;
-
     for (int chan=0; chan<_chanMax; chan++) {
         QString radioWidgetName("radio%1Widget");
-        QString radioWidgetUserName("Radio %1");
+        QString radioWidgetUserName("Channel %1");
         
-        QGCRadioChannelDisplay* radioWidget = findChild<QGCRadioChannelDisplay*>(radioWidgetName.arg(chan+1));
+        RCChannelWidget* radioWidget = findChild<RCChannelWidget*>(radioWidgetName.arg(chan+1));
         Q_ASSERT(radioWidget);
         
-        radioWidget->setOrientation(Qt::Horizontal);
-        radioWidget->setName(radioWidgetUserName.arg(chan+1));
+        radioWidget->setTitle(radioWidgetUserName.arg(chan+1));
 
         _rgRadioWidget[chan] = radioWidget;
     }
@@ -132,9 +113,6 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
 /// @brief Resets internal calibration values to their initial state in preparation for a new calibration sequence.
 void PX4RCCalibration::_resetInternalCalibrationValues(void)
 {
-    // Detect channel count again
-    _chanCount = 0;
-    
     // Set all raw channels to not reversed and center point values
     for (size_t i=0; i<_chanMax; i++) {
         struct ChannelInfo* info = &_rgChannelInfo[i];
@@ -151,6 +129,91 @@ void PX4RCCalibration::_resetInternalCalibrationValues(void)
     }
     
     _showMinMaxOnRadioWidgets(false);
+    _showTrimOnRadioWidgets(false);
+}
+
+/// @brief Resets internal calibration values to their initial state in preparation for a new calibration sequence.
+void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
+{
+    Q_ASSERT(_paramMgr);
+    
+    if (_parameterListUpToDateSignalled) {
+        // Initialize all function mappings to not set
+        
+        for (size_t i=0; i<_chanMax; i++) {
+            struct ChannelInfo* info = &_rgChannelInfo[i];
+            info->function = rcCalFunctionMax;
+        }
+        
+        for (size_t i=0; i<rcCalFunctionMax; i++) {
+            _rgFunctionChannelMapping[i] = _chanMax;
+        }
+        
+        // FIXME: Hardwired component id
+        
+        // Pull parameters and update
+        
+        QString minTpl("RC%1_MIN");
+        QString maxTpl("RC%1_MAX");
+        QString trimTpl("RC%1_TRIM");
+        QString revTpl("RC%1_REV");
+        QVariant value;
+        bool paramFound;
+        bool convertOk;
+        
+        for (int i = 0; i < _chanMax; ++i) {
+            struct ChannelInfo* info = &_rgChannelInfo[i];
+            
+            paramFound = _paramMgr->getParameterValue(50, trimTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                info->rcTrim = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+            }
+            
+            paramFound = _paramMgr->getParameterValue(50, minTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                info->rcMin = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+            }
+
+            paramFound = _paramMgr->getParameterValue(50, maxTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                info->rcMax = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+            }
+
+            paramFound = _paramMgr->getParameterValue(50, revTpl.arg(i+1), value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                float floatReversed = value.toFloat(&convertOk);
+                Q_ASSERT(convertOk);
+                Q_ASSERT(floatReversed == 1.0f || floatReversed == -1.0f);
+                info->reversed = floatReversed == -1.0f;
+            }
+        }
+        
+        for (int i=0; i<rcCalFunctionMax; i++) {
+            int32_t paramChannel;
+            
+            paramFound = _paramMgr->getParameterValue(50, _rgFunctionInfo[i].parameterName, value);
+            Q_ASSERT(paramFound);
+            if (paramFound) {
+                paramChannel = value.toInt(&convertOk);
+                Q_ASSERT(convertOk);
+                
+                if (paramChannel != 0) {
+                    _rgFunctionChannelMapping[i] = paramChannel - 1;
+                    _rgChannelInfo[paramChannel - 1].function = (enum rcCalFunctions)i;
+                }
+            }
+        }
+        
+        _showMinMaxOnRadioWidgets(true);
+        _showTrimOnRadioWidgets(true);
+    }
 }
 
 /// @brief Sets a connected Spektrum receiver into bind mode
@@ -188,6 +251,8 @@ void PX4RCCalibration::_setActiveUAS(UASInterface* active)
     // Disconnect old signals
     if (_mav) {
         disconnect(_mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(_remoteControlChannelRawChanged(int,float)));
+        disconnect(_paramMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_parameterListUpToDate()));
+        _paramMgr = NULL;
     }
     
     _mav = active;
@@ -197,6 +262,12 @@ void PX4RCCalibration::_setActiveUAS(UASInterface* active)
         bool fSucceeded;
         Q_UNUSED(fSucceeded);
         fSucceeded =  connect(_mav, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(_remoteControlChannelRawChanged(int,float)));
+        Q_ASSERT(fSucceeded);
+        
+        _paramMgr = _mav->getParamManager();
+        Q_ASSERT(_paramMgr);
+
+        fSucceeded = connect(_paramMgr, SIGNAL(parameterListUpToDate()), this, SLOT(_parameterListUpToDate()));
         Q_ASSERT(fSucceeded);
     }
 
@@ -361,7 +432,17 @@ void PX4RCCalibration::_remoteControlChannelRawChanged(int chan, float fval)
             break;
             
         case rcCalStateTrims:
-            // We only care about the throttle channel
+            // Update the trim values for attitude functions only
+            if (_rgChannelInfo[chan].function >= rcCalFunctionFirstAttitudeFunction && _rgChannelInfo[chan].function <= rcCalFunctionLastAttitudeFunction) {
+                int mappedChannel = _rgFunctionChannelMapping[_rgChannelInfo[chan].function];
+                
+                // All Attitude Functions should be mapped
+                Q_ASSERT(mappedChannel != rcCalFunctionMax);
+                
+                _rgChannelInfo[mappedChannel].rcTrim = _rcRawValue[mappedChannel];
+            }
+            
+            // Once the throttle is lowered we enable the next button
             Q_ASSERT(_rgFunctionChannelMapping[rcCalFunctionThrottle] != rcCalFunctionMax);
             if (chan == _rgFunctionChannelMapping[rcCalFunctionThrottle]) {
                 bool enableNext = false;
@@ -383,24 +464,13 @@ void PX4RCCalibration::_remoteControlChannelRawChanged(int chan, float fval)
 
 void PX4RCCalibration::_updateView()
 {
-    // Update Attitude Function channel widgets, disbaled if unmapped
-    for (int i=rcCalFunctionFirstAttitudeFunction; i<=rcCalFunctionLastAttitudeFunction; i++) {
-        int mappedChannel = _rgFunctionChannelMapping[i];
-        if (mappedChannel != _chanMax) {
-            struct ChannelInfo* info = &_rgChannelInfo[mappedChannel];
-            _rgAttitudeRadioWidget[i]->setEnabled(true);
-            _rgAttitudeRadioWidget[i]->setValueAndRange(_rcRawValue[mappedChannel], info->rcMin, info->rcMax);
-        } else {
-            _rgAttitudeRadioWidget[i]->setEnabled(false);
-        }
-    }
-    
     // Update the available channels
     for (int chan=0; chan<_chanCount; chan++) {
         _rgRadioWidget[chan]->setEnabled(true);
         
         struct ChannelInfo* info = &_rgChannelInfo[chan];
-        _rgRadioWidget[chan]->setValueAndRange(_rcRawValue[chan], info->rcMin, info->rcMax);
+        _rgRadioWidget[chan]->setValueAndMinMax(_rcRawValue[chan], info->rcMin, info->rcMax);
+        _rgRadioWidget[chan]->setTrim(info->rcTrim);
     }
     
     // Disable non-available channels
@@ -408,7 +478,6 @@ void PX4RCCalibration::_updateView()
         _rgRadioWidget[chan]->setEnabled(false);
     }
     
-    // FIXME: Could save some CPU by not doing this on every update
     // Update the channel names for all channels
     for (int chan=0; chan<_chanMax; chan++) {
         struct ChannelInfo* info = &_rgChannelInfo[chan];
@@ -420,7 +489,7 @@ void PX4RCCalibration::_updateView()
         } else {
             name = tr("%1 [Channel %2]").arg(_rgFunctionInfo[info->function].functionName).arg(oneBasedChannel);
         }
-        _rgRadioWidget[chan]->setName(name);
+        _rgRadioWidget[chan]->setTitle(name);
     }
 }
 
@@ -429,6 +498,7 @@ void PX4RCCalibration::_rcCalCancel(void)
 {
     _mav->endRadioControlCalibration();
     _rcCalChannelWait(true);
+    _setInternalCalibrationValuesFromParameters();
 }
 
 void PX4RCCalibration::_rcCalSkip(void)
@@ -482,7 +552,6 @@ void PX4RCCalibration::_rcCalNext(void)
             break;
             
         case rcCalStateTrims:
-            _copyAndSetTrims();
             _rcCalSave();
             break;
             
@@ -504,15 +573,26 @@ void PX4RCCalibration::_rcCalChannelWait(bool firstTime)
     _rcCalState = rcCalStateChannelWait;
     
     _resetInternalCalibrationValues();
+
+    if (_chanCount == 0) {
+        _ui->rcCalFound->setText(tr("Please turn on Radio"));
+        _ui->rcCalNext->setEnabled(false);
+    } else {
+        if (_chanCount >= _chanMinimum) {
+            _ui->rcCalNext->setEnabled(true);
+            _ui->rcCalStatus->setText(tr("Detected %1 radio channels.").arg(_chanCount));
+        } else if (_chanCount < _chanMinimum) {
+            _ui->rcCalNext->setEnabled(false);
+            _ui->rcCalStatus->setText(tr("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+        }
+    }
     
-    _ui->rcCalStatus->setText(tr("Please turn on Radio."));
     if (firstTime) {
         _ui->rcCalFound->clear();
     } else {
         _ui->rcCalFound->setText(tr("Calibration complete"));
     }
     
-    _ui->rcCalNext->setEnabled(false);
     _ui->rcCalNext->setText(tr("Start"));
     _ui->rcCalCancel->setEnabled(false);
     _ui->rcCalSkip->setEnabled(false);
@@ -526,6 +606,8 @@ void PX4RCCalibration::_rcCalBegin(void)
     
     _rcCalState = rcCalStateBegin;
     
+    _resetInternalCalibrationValues();
+    
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
     // FIXME: XXX magic number: Set to 1 for radio input disable
     _mav->startRadioControlCalibration(1);
@@ -535,6 +617,7 @@ void PX4RCCalibration::_rcCalBegin(void)
     _ui->rcCalStatus->setText(tr("Starting RC calibration.\n\n"
                                 "Ensure RC transmitter and receiver are powered and connected. It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\n"
                                 "Reset all transmitter trims to center, then click Next to continue"));
+    _ui->rcCalFound->clear();
 }
 
 /// @brief Saves the current channel values, so that we can detect when the use moves an input.
@@ -591,7 +674,6 @@ void PX4RCCalibration::_rcCalReadChannelsMinMax(void)
     _ui->rcCalSkip->setEnabled(false);
     _ui->rcCalCancel->setEnabled(true);
     
-    // Turn on min/max display for all radio widgets
     _showMinMaxOnRadioWidgets(true);
 }
 
@@ -658,30 +740,16 @@ void PX4RCCalibration::_rcCalTrims(void)
     _ui->rcCalTryAgain->setEnabled(false);
     _ui->rcCalSkip->setEnabled(false);
     _ui->rcCalCancel->setEnabled(true);
+    
+    _initializeTrims();
+    _showTrimOnRadioWidgets(true);
 }
 
-/// @brief Copies the current rc values as trim positions.
-void PX4RCCalibration::_copyAndSetTrims(void)
+/// @brief Initializes the trim values based on current min/max.
+void PX4RCCalibration::_initializeTrims(void)
 {
-    // For the Attitude Functions we use the current RC values as the trim setting
-    for (int chanFunction=rcCalFunctionFirstAttitudeFunction; chanFunction<=rcCalFunctionLastAttitudeFunction; chanFunction++) {
-        int mappedChannel = _rgFunctionChannelMapping[chanFunction];
-        
-        // All Attitude Functions should be mapped
-        Q_ASSERT(mappedChannel != rcCalFunctionMax);
-        
-        _rgChannelInfo[mappedChannel].rcTrim = _rcRawValue[mappedChannel];
-        //qDebug() << "Setting Attitude Function trim: function" << chanFunction << "mapped channel" << mappedChannel << "trim" << _rgChannelInfo[mappedChannel].rcTrim;
-    }
-    
-    // For mapped non-Attitude Funtions the trim is calculated from the min/max values
-    for (int chanFunction=rcCalFunctionFirstNonAttitudeFunction; chanFunction<=rcCalFunctionLastNonAttitudeFunction; chanFunction++) {
-        int mappedChannel = _rgFunctionChannelMapping[chanFunction];
-        
-        if (mappedChannel != rcCalFunctionMax) {
-            _rgChannelInfo[mappedChannel].rcTrim = ((_rgChannelInfo[mappedChannel].rcMax - _rgChannelInfo[mappedChannel].rcMin) / 2.0f) + _rgChannelInfo[mappedChannel].rcMin;
-            //qDebug() << "Setting non-Attitude Function trim: function" << chanFunction << "mapped channel" << mappedChannel << "trim" << _rgChannelInfo[mappedChannel].rcTrim;
-        }
+    for (int chan=0; chan<=_chanMax; chan++) {
+        _rgChannelInfo[chan].rcTrim = ((_rgChannelInfo[chan].rcMax - _rgChannelInfo[chan].rcMin) / 2.0f) + _rgChannelInfo[chan].rcMin;
     }
 }
 
@@ -744,18 +812,32 @@ void PX4RCCalibration::_unitTestForceCalState(enum rcCalStates state) {
 void PX4RCCalibration::_showMinMaxOnRadioWidgets(bool show)
 {
     // Turn on min/max display for all radio widgets
-    Q_ASSERT(rcCalFunctionFirstAttitudeFunction == 0);
-    for (int i=0; i<=rcCalFunctionLastAttitudeFunction; i++) {
-        QGCRadioChannelDisplay* radioWidget = _rgAttitudeRadioWidget[i];
+    for (int i=0; i<_chanMax; i++) {
+        RCChannelWidget* radioWidget = _rgRadioWidget[i];
         Q_ASSERT(radioWidget);
         
         radioWidget->showMinMax(show);
     }
-    
+}
+
+/// @brief Shows or hides the trim values of the channel widgets.
+///     @param show true: show the trim values, false: hide the trim values
+void PX4RCCalibration::_showTrimOnRadioWidgets(bool show)
+{
+    // Turn on trim display for all radio widgets
     for (int i=0; i<_chanMax; i++) {
-        QGCRadioChannelDisplay* radioWidget = _rgRadioWidget[i];
+        RCChannelWidget* radioWidget = _rgRadioWidget[i];
         Q_ASSERT(radioWidget);
         
-        radioWidget->showMinMax(show);
+        radioWidget->showTrim(show);
+    }
+}
+
+void PX4RCCalibration::_parameterListUpToDate(void)
+{
+    _parameterListUpToDateSignalled = true;
+    
+    if (_rcCalState == rcCalStateChannelWait) {
+        _setInternalCalibrationValuesFromParameters();
     }
 }

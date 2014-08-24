@@ -176,14 +176,14 @@ void RadioCalibrationConfig::calibrateButtonClicked()
             rcMin[i] = 1500;
             rcMax[i] = 1500;
         }
-        ui.rollWidget->showMinMax();
-        ui.pitchWidget->showMinMax();
-        ui.yawWidget->showMinMax();
-        ui.radio5Widget->showMinMax();
-        ui.radio6Widget->showMinMax();
-        ui.radio7Widget->showMinMax();
-        ui.throttleWidget->showMinMax();
-        ui.radio8Widget->showMinMax();
+        ui.rollWidget->showMinMax(true);
+        ui.pitchWidget->showMinMax(true);
+        ui.yawWidget->showMinMax(true);
+        ui.radio5Widget->showMinMax(true);
+        ui.radio6Widget->showMinMax(true);
+        ui.radio7Widget->showMinMax(true);
+        ui.throttleWidget->showMinMax(true);
+        ui.radio8Widget->showMinMax(true);
         QMessageBox::information(0,"Information","Click OK, then move all sticks to their extreme positions, watching the min/max values to ensure you get the most range from your controller. This includes all switches");
     }
     else
@@ -192,14 +192,14 @@ void RadioCalibrationConfig::calibrateButtonClicked()
         QMessageBox::information(0,"Trims","Ensure all sticks are centered and throttle is in the downmost position, click OK to continue");
         ///TODO: Set trims!
         m_calibrationEnabled = false;
-        ui.rollWidget->hideMinMax();
-        ui.pitchWidget->hideMinMax();
-        ui.yawWidget->hideMinMax();
-        ui.radio5Widget->hideMinMax();
-        ui.radio6Widget->hideMinMax();
-        ui.throttleWidget->hideMinMax();
-        ui.radio7Widget->hideMinMax();
-        ui.radio8Widget->hideMinMax();
+        ui.rollWidget->showMinMax(false);
+        ui.pitchWidget->showMinMax(false);
+        ui.yawWidget->showMinMax(false);
+        ui.radio5Widget->showMinMax(false);
+        ui.radio6Widget->showMinMax(false);
+        ui.throttleWidget->showMinMax(false);
+        ui.radio7Widget->showMinMax(false);
+        ui.radio8Widget->showMinMax(false);
         QString statusstr;
         statusstr = "Below you will find the detected radio calibration information that will be sent to the autopilot\n";
         statusstr += "Normal values are around 1100 to 1900, with disconnected channels reading very close to 1500\n\n";
