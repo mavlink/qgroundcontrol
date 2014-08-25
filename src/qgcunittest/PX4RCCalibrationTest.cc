@@ -711,7 +711,7 @@ void PX4RCCalibrationTest::_validateWidgets(int validateMask, const struct Chann
         }
     }
     
-    for (int chan=_availableChannels; chan<=PX4RCCalibration::_chanMax; chan++) {
+    for (int chan=_availableChannels; chan<PX4RCCalibration::_chanMax; chan++) {
         QCOMPARE(_rgRadioWidget[chan]->isEnabled(), false);
     }
 }
