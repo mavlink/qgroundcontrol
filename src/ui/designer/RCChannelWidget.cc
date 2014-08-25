@@ -37,6 +37,8 @@ RCChannelWidget::RCChannelWidget(QWidget *parent) :
     _min(_centerValue),
     _max(_centerValue),
     _trim(_centerValue),
+    _minValid(false),
+    _maxValid(false),
     _showMinMax(false),
     _showTrim(false)
 {
@@ -90,19 +92,36 @@ void RCChannelWidget::paintEvent(QPaintEvent *event)
         painter.setBrush(hGradientBrush);
 
         if (_showMinMax) {
+            QString text;
+            
             // Draw the Min numeric value display to the left
             painter.drawText(0, rowHeigth, minMaxDisplayWidth, fontHeight, Qt::AlignHCenter | Qt::AlignBottom, "Min");
-            painter.drawText(0, rowHeigth * 2, minMaxDisplayWidth, fontHeight, Qt::AlignHCenter | Qt::AlignBottom, QString::number(_min));
+            if (_minValid) {
+                text = QString::number(_min);
+            } else {
+                text = "----";
+            }
+            painter.drawText(0, rowHeigth * 2, minMaxDisplayWidth, fontHeight, Qt::AlignHCenter | Qt::AlignBottom, text);
 
             // Draw the Max numeric value display to the right
             painter.drawText(width() - minMaxDisplayWidth, rowHeigth, minMaxDisplayWidth, fontHeight, Qt::AlignHCenter | Qt::AlignBottom, "Max");
-            painter.drawText(width() - minMaxDisplayWidth, rowHeigth * 2, minMaxDisplayWidth, fontHeight, Qt::AlignHCenter | Qt::AlignBottom, QString::number(_max));
+            if (_maxValid) {
+                text = QString::number(_max);
+            } else {
+                text = QString::number(_max);
+            }
+            painter.drawText(width() - minMaxDisplayWidth, rowHeigth * 2, minMaxDisplayWidth, fontHeight, Qt::AlignHCenter | Qt::AlignBottom, text);
             
             // Draw the Min/Max tick marks on the axis
-            int xTick = rcValueAxis.left() + (rcValueAxis.width() * ((float)(_min-_minRange) / (_maxRange-_minRange)));
-            painter.drawLine(xTick, rcValueAxis.top(), xTick, rcValueAxis.bottom());
-            xTick = rcValueAxis.left() + (rcValueAxis.width() * ((float)(_max-_minRange) / (_maxRange-_minRange)));
-            painter.drawLine(xTick, rcValueAxis.top(), xTick, rcValueAxis.bottom());
+            int xTick;
+            if (_minValid) {
+                int xTick = rcValueAxis.left() + (rcValueAxis.width() * ((float)(_min-_minRange) / (_maxRange-_minRange)));
+                painter.drawLine(xTick, rcValueAxis.top(), xTick, rcValueAxis.bottom());
+            }
+            if (_maxValid) {
+                xTick = rcValueAxis.left() + (rcValueAxis.width() * ((float)(_max-_minRange) / (_maxRange-_minRange)));
+                painter.drawLine(xTick, rcValueAxis.top(), xTick, rcValueAxis.bottom());
+            }
         }
         
         if (_showTrim) {
@@ -220,4 +239,18 @@ void RCChannelWidget::_drawValuePointer(QPainter* painter, int xTip, int yTip, i
     trianglePoints[2].setY(yBottom);
     
     painter->drawPolygon (trianglePoints, 3);
+}
+
+/// @brief Set whether the Min range value is valid or not.
+void RCChannelWidget::setMinValid(bool valid)
+{
+    _minValid = valid;
+    update();
+}
+
+/// @brief Set whether the Max range value is valid or not.
+void RCChannelWidget::setMaxValid(bool valid)
+{
+    _maxValid = valid;
+    update();
 }

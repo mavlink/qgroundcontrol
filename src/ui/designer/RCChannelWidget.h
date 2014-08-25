@@ -46,6 +46,12 @@ public:
     
     void setMinMax(int min, int max);
     
+    /// @brief Set whether the Min range value is valid or not.
+    void setMinValid(bool valid);
+
+    /// @brief Set whether the Max range value is valid or not.
+    void setMaxValid(bool valid);
+    
     /// @brief Sets the Trim value for the channel
     void setTrim(int value);
     
@@ -56,6 +62,8 @@ public:
 
     void showMinMax(bool show);
     bool isMinMaxShown() { return _showMinMax; }
+    bool isMinValid(void) { return _minValid; }
+    bool isMaxValid(void) { return _maxValid; }
     
     void showTrim(bool show);
     bool isTrimShown() { return _showTrim; }
@@ -70,6 +78,9 @@ private:
     int _min;           ///< Min RC value
     int _max;           ///< Max RC value
     int _trim;          ///< RC Value for Trim position
+    
+    bool _minValid;     ///< true: minimum value is valid
+    bool _maxValid;     ///< true: maximum value is valid
     
     bool _showMinMax;   ///< true: show min max values on display
     bool _showTrim;     ///< true: show trim value on display
