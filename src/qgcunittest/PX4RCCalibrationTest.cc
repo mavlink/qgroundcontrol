@@ -607,15 +607,12 @@ void PX4RCCalibrationTest::_validateParameters(int validateMask)
     // Check mapping for all fuctions
     for (int chanFunction=0; chanFunction<PX4RCCalibration::rcCalFunctionMax; chanFunction++) {
         int expectedParameterValue;
-        int expectedChannelValue;
         
         if (PX4RCCalibration::_rgFunctionInfo[chanFunction].required) {
             // We only map the required functions. All functions should be mapped to the same channel index
             expectedParameterValue = chanFunction + 1; // 1-based parameter value
-            expectedChannelValue = chanFunction;
         } else {
             expectedParameterValue = 0;  // 0 signals no mapping
-            expectedChannelValue = PX4RCCalibration::_chanMax;
         }
         
         if (validateMask & validateMappingMask) {
