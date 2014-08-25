@@ -31,13 +31,16 @@
 #include "PX4RCCalibration.h"
 #include "UASManager.h"
 
-const int PX4RCCalibration::_updateInterval = 150;          ///< Interval for timer which updates radio channel widgets
-const int PX4RCCalibration::_rcCalPWMValidMinValue = 1000;
-const int PX4RCCalibration::_rcCalPWMValidMaxValue = 2000;
+const int PX4RCCalibration::_updateInterval = 150;              ///< Interval for timer which updates radio channel widgets
 const int PX4RCCalibration::_rcCalPWMCenterPoint = ((PX4RCCalibration::_rcCalPWMValidMaxValue - PX4RCCalibration::_rcCalPWMValidMinValue) / 2.0f) + PX4RCCalibration::_rcCalPWMValidMinValue;
-const int PX4RCCalibration::_rcCalRoughCenterDelta = 200;   ///< Delta around center point which is considered to be roughly centered
-const float PX4RCCalibration::_rcCalMoveDelta = 300.0f;     ///< Amount of delta which is considered stick movement
-const float PX4RCCalibration::_rcCalMinDelta = 100.0f;      ///< Amount of delta allowed around min value to consider channel at min
+const int PX4RCCalibration::_rcCalPWMValidMinValue = 1300;      ///< Largest valid minimum PWM Min range value
+const int PX4RCCalibration::_rcCalPWMValidMaxValue = 1700;      ///< Smallest valid maximum PWM Max range value
+const int PX4RCCalibration::_rcCalPWMDefaultMinValue = 1000;    ///< Default value for Min if not set
+const int PX4RCCalibration::_rcCalPWMDefaultMaxValue = 2000;    ///< Default value for Max if not set
+const int PX4RCCalibration::_rcCalPWMDefaultTrimValue = PX4RCCalibration::_rcCalPWMCenterPoint;    ///< Default value for Trim if not set
+const int PX4RCCalibration::_rcCalRoughCenterDelta = 200;       ///< Delta around center point which is considered to be roughly centered
+const float PX4RCCalibration::_rcCalMoveDelta = 300.0f;         ///< Amount of delta which is considered stick movement
+const float PX4RCCalibration::_rcCalMinDelta = 100.0f;          ///< Amount of delta allowed around min value to consider channel at min
 
 const struct PX4RCCalibration::FunctionInfo PX4RCCalibration::_rgFunctionInfo[PX4RCCalibration::rcCalFunctionMax] = {
     // Name                  Inversion Message   Parameter          required
@@ -274,6 +277,31 @@ void PX4RCCalibration::_setActiveUAS(UASInterface* active)
     setEnabled(_mav ? true : false);
 }
 
+/// @brief Validates the current settings against the calibration rules resetting values as necessary.
+void PX4RCCalibration::_validateCalibration(void)
+{
+    for (int chan = 0; chan<_chanMax; chan++) {
+        struct ChannelInfo* info = &_rgChannelInfo[chan];
+        
+        if (chan < _chanCount) {
+            // Validate Min/Max values. Although the channel appears as available we still may
+            // not have good min/max/trim values for it. Set to defaults if needed.
+            if (info->rcMin > _rcCalPWMValidMinValue || info->rcMax < _rcCalPWMValidMaxValue) {
+                info->rcMin = _rcCalPWMDefaultMinValue;
+                info->rcMax = _rcCalPWMDefaultMaxValue;
+                info->rcTrim = _rcCalPWMDefaultTrimValue;
+            }
+        } else {
+            // Unavailable channels are set to defaults
+            info->rcMin = _rcCalPWMDefaultMinValue;
+            info->rcMax = _rcCalPWMDefaultMaxValue;
+            info->rcTrim = _rcCalPWMDefaultTrimValue;
+            info->reversed = false;
+        }
+    }
+}
+
+
 /// @brief Saves the rc calibration values to the board parameters.
 ///     @param trimsOnly true: write only trim values, false: write all calibration values
 void PX4RCCalibration::_writeCalibration(bool trimsOnly)
@@ -281,6 +309,8 @@ void PX4RCCalibration::_writeCalibration(bool trimsOnly)
     if (!_mav) return;
     
     _mav->endRadioControlCalibration();
+    
+    _validateCalibration();
     
     QGCUASParamManagerInterface* paramMgr = _mav->getParamManager();
     Q_ASSERT(paramMgr);
@@ -290,17 +320,14 @@ void PX4RCCalibration::_writeCalibration(bool trimsOnly)
     QString trimTpl("RC%1_TRIM");
     QString revTpl("RC%1_REV");
     
-    // Do not write the RC type, as these values depend on this
-    // active onboard parameter
-    
-    for (int i = 0; i < _chanCount; ++i) {
-        struct ChannelInfo* info = &_rgChannelInfo[i];
-
-        paramMgr->setPendingParam(0, trimTpl.arg(i+1), info->rcTrim);
+    for (int chan = 0; chan<_chanMax; chan++) {
+        struct ChannelInfo* info = &_rgChannelInfo[chan];
+        int oneBasedChannel = chan + 1;
+        paramMgr->setPendingParam(0, trimTpl.arg(oneBasedChannel), info->rcTrim);
         if (!trimsOnly) {
-            paramMgr->setPendingParam(0, minTpl.arg(i+1), info->rcMin);
-            paramMgr->setPendingParam(0, maxTpl.arg(i+1), info->rcMax);
-            paramMgr->setPendingParam(0, revTpl.arg(i+1), info->reversed ? -1.0f : 1.0f);
+            paramMgr->setPendingParam(0, minTpl.arg(oneBasedChannel), info->rcMin);
+            paramMgr->setPendingParam(0, maxTpl.arg(oneBasedChannel), info->rcMax);
+            paramMgr->setPendingParam(0, revTpl.arg(oneBasedChannel), info->reversed ? -1.0f : 1.0f);
         }
     }
     
@@ -355,13 +382,7 @@ void PX4RCCalibration::_remoteControlChannelRawChanged(int chan, float fval)
         case rcCalStateIdentify:
             if (!_rcCalStateChannelComplete) {
                 // If this channel is already used in a mapping we can't used it again
-                bool channelAlreadyMapped = false;
-                for (int chanFunction=0; chanFunction<rcCalFunctionMax; chanFunction++) {
-                    if (_rgFunctionChannelMapping[chanFunction] == chan) {
-                        channelAlreadyMapped = true;
-                        break;
-                    }
-                }
+                bool channelAlreadyMapped = !(_rgChannelInfo[chan].function == rcCalFunctionMax);
                 
                 // If the channel moved considerably, pick it
                 if (!channelAlreadyMapped && fabsf(_rcValueSave[chan] - fval) > _rcCalMoveDelta) {
@@ -383,10 +404,12 @@ void PX4RCCalibration::_remoteControlChannelRawChanged(int chan, float fval)
             break;
             
         case rcCalStateMinMax:
-            if (fval < _rgChannelInfo[chan].rcMin) {
+            if (fval < _rgChannelInfo[chan].rcMin && fval <= _rcCalPWMValidMinValue) {
+                _rgRadioWidget[chan]->setMinValid(true);
                 _rgChannelInfo[chan].rcMin = fval;
             }
-            if (fval > _rgChannelInfo[chan].rcMax) {
+            if (fval > _rgChannelInfo[chan].rcMax  && fval >= _rcCalPWMValidMaxValue) {
+                _rgRadioWidget[chan]->setMaxValid(true);
                 _rgChannelInfo[chan].rcMax = fval;
             }
             break;
@@ -572,7 +595,11 @@ void PX4RCCalibration::_rcCalChannelWait(bool firstTime)
 {
     _rcCalState = rcCalStateChannelWait;
     
-    _resetInternalCalibrationValues();
+    if (firstTime) {
+        _resetInternalCalibrationValues();
+    } else {
+        _setInternalCalibrationValuesFromParameters();
+    }
 
     if (_chanCount == 0) {
         _ui->rcCalFound->setText(tr("Please turn on Radio"));
@@ -741,16 +768,7 @@ void PX4RCCalibration::_rcCalTrims(void)
     _ui->rcCalSkip->setEnabled(false);
     _ui->rcCalCancel->setEnabled(true);
     
-    _initializeTrims();
     _showTrimOnRadioWidgets(true);
-}
-
-/// @brief Initializes the trim values based on current min/max.
-void PX4RCCalibration::_initializeTrims(void)
-{
-    for (int chan=0; chan<=_chanMax; chan++) {
-        _rgChannelInfo[chan].rcTrim = ((_rgChannelInfo[chan].rcMax - _rgChannelInfo[chan].rcMin) / 2.0f) + _rgChannelInfo[chan].rcMin;
-    }
 }
 
 /// @brief Set up the Save state of calibration.
@@ -766,6 +784,12 @@ void PX4RCCalibration::_rcCalSave(void)
     _ui->rcCalTryAgain->setEnabled(false);
     _ui->rcCalSkip->setEnabled(false);
     _ui->rcCalCancel->setEnabled(true);
+    
+    // This updates the internal values according to the validation rules. Then _updateView will tick and update ui
+    // such that the settings that will be written our are displayed.
+    _validateCalibration();
+    
+    _showMinMaxOnRadioWidgets(true);
 }
 
 /// @brief This is used by unit test code to force the calibration state machine to the specified state.
@@ -811,12 +835,26 @@ void PX4RCCalibration::_unitTestForceCalState(enum rcCalStates state) {
 ///     @param show true: show the min/max values, false: hide the min/max values
 void PX4RCCalibration::_showMinMaxOnRadioWidgets(bool show)
 {
+    // Force a view update to widget have current values
+    _updateView();
+    
     // Turn on min/max display for all radio widgets
     for (int i=0; i<_chanMax; i++) {
         RCChannelWidget* radioWidget = _rgRadioWidget[i];
         Q_ASSERT(radioWidget);
         
         radioWidget->showMinMax(show);
+        if (show) {
+            if (radioWidget->min() <= _rcCalPWMValidMinValue) {
+                radioWidget->setMinValid(true);
+            }
+            if (radioWidget->max() >= _rcCalPWMValidMaxValue) {
+                radioWidget->setMaxValid(true);
+            }
+        } else {
+            radioWidget->setMinValid(false);
+            radioWidget->setMaxValid(false);
+        }
     }
 }
 
