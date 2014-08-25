@@ -124,10 +124,10 @@ private:
     
     // Methods - see source code for documentation
     
+    void _validateCalibration(void);
     void _writeCalibration(bool trimsOnly);
     void _resetInternalCalibrationValues(void);
     void _setInternalCalibrationValuesFromParameters(void);
-    void _initializeTrims(void);
     
     void _rcCalChannelWait(bool firstTime);
     void _rcCalBegin(void);
@@ -164,12 +164,15 @@ private:
     int _rcCalStateIdentifyOldMapping;  ///< Previous mapping for channel being currently identified
     int _rcCalStateReverseOldMapping;   ///< Previous mapping for channel being currently used to detect inversion
     
-    static const int _rcCalPWMCenterPoint;      ///< PWM center value;
-    static const int _rcCalPWMValidMinValue;    ///< Valid minimum PWM value
-    static const int _rcCalPWMValidMaxValue;    ///< Valid maximum PWM value
-    static const int _rcCalRoughCenterDelta;    ///< Delta around center point which is considered to be roughly centered
-    static const float _rcCalMoveDelta;         ///< Amount of delta which is considered stick movement
-    static const float _rcCalMinDelta;          ///< Amount of delta allowed around min value to consider channel at min
+    static const int _rcCalPWMCenterPoint;
+    static const int _rcCalPWMValidMinValue;
+    static const int _rcCalPWMValidMaxValue;
+    static const int _rcCalPWMDefaultMinValue;
+    static const int _rcCalPWMDefaultMaxValue;
+    static const int _rcCalPWMDefaultTrimValue;
+    static const int _rcCalRoughCenterDelta;
+    static const float _rcCalMoveDelta;
+    static const float _rcCalMinDelta;
     
     float _rcValueSave[_chanMax];        ///< Saved values prior to detecting channel movement
     

@@ -30,10 +30,11 @@
 #include "px4_configuration/PX4RCCalibration.h"
 
 /// @file
-///     @brief QGCPX4RCCAlibration Widget unit test
+///     @brief PX4RCCalibration Widget unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
+///     @brief PX4RCCalibration Widget unit test
 class PX4RCCalibrationTest : public QObject
 {
     Q_OBJECT
@@ -42,6 +43,7 @@ public:
     PX4RCCalibrationTest(void);
     
 private slots:
+    void initTestCase(void);
     void init(void);
     void cleanup(void);
     
@@ -50,7 +52,6 @@ private slots:
     //void _liveRC_test(void);
     void _beginState_test(void);
     void _identifyState_test(void);
-    void _identifyStateSkipOptional_test(void);
     void _minMaxState_test(void);
     void _centerThrottleState_test(void);
     void _detectInversionState_test(void);
@@ -58,13 +59,20 @@ private slots:
     void _fullCalibration_test(void);
     
 private:
-    void _centerAllChannels(void);
-    void _beginState_worker(bool standaloneTest);
-    void _identifyState_worker(bool standaloneTest, bool skipOptional);
-    void _minMaxState_worker(bool standaloneTest);
-    void _centerThrottleState_worker(bool standaloneTest);
-    void _detectInversionState_worker(bool standaloneTest);
-    void _trimsState_worker(bool standaloneTest);
+    /// @brief Modes to run worker functions
+    enum TestMode {
+        testModeStandalone,     ///< Perform standalone test of calibration state
+        testModePrerequisite,   ///< Setup prequisites for subsequent calibration state
+        testModeFullSequence,   ///< Run as full calibration sequence
+    };
+    
+    void _centerChannels(void);
+    void _beginState_worker(enum TestMode mode);
+    void _identifyState_worker(enum TestMode mode);
+    void _minMaxState_worker(enum TestMode mode);
+    void _centerThrottleState_worker(enum TestMode mode);
+    void _detectInversionState_worker(enum TestMode mode);
+    void _trimsState_worker(enum TestMode mode);
     
     enum {
         validateMinMaxMask =    1 << 0,
@@ -73,7 +81,19 @@ private:
         validateMappingMask =   1 << 3,
         validateAllMask = 0xFFFF
     };
-    void _validateParameters(int validateMask, bool skipOptional = false);
+
+    struct ChannelSettings {
+        int rcMin;
+        int rcMax;
+        int rcTrim;
+        int reversed;
+        bool isMinMaxShown;
+        bool isMinValid;
+        bool isMaxValid;
+    };
+    
+    void _validateParameters(int validateMask);
+    void _validateWidgets(int validateMask, const struct ChannelSettings* rgChannelSettings);
     
     MockUASManager*     _mockUASManager;
     MockUAS*            _mockUAS;
@@ -94,6 +114,21 @@ private:
     QLabel*         _statusLabel;
     
     RCChannelWidget* _rgRadioWidget[PX4RCCalibration::_chanMax];
+    
+    // When settings values into min/max/trim we set them slightly different than the defaults so that
+    // we can distinguish between the two values.
+    static const int _testMinValue;
+    static const int _testMaxValue;
+    static const int _testTrimValue;
+    static const int _testThrottleTrimValue;
+    
+    static const int _availableChannels = 8;    ///< 8 channel RC Trasmitter
+    static const int _requiredChannels = 5;     ///< Required channels are 0-4
+    static const int _minMaxChannels = _requiredChannels + 1;    ///< Send min/max to channels 0-5
+    static const int _attitudeChannels = 4;     ///< Attitude channels are 0-3
+    
+    static const struct ChannelSettings _rgChannelSettingsPreValidate[_availableChannels];
+    static const struct ChannelSettings _rgChannelSettingsPostValidate[PX4RCCalibration::_chanMax];
 };
 
 DECLARE_TEST(PX4RCCalibrationTest)
