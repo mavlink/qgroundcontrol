@@ -279,7 +279,7 @@ void MainWindow::init()
 
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    joystickWidget = 0;
+    joystickWidget = NULL;
     joystick = new JoystickInput();
 
 #ifdef QGC_MOUSE_ENABLED_WIN
