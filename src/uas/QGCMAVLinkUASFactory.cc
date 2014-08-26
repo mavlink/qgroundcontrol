@@ -67,20 +67,21 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         uas = px4;
     }
     break;
-    case MAV_AUTOPILOT_ARDUPILOTMEGA:
-    {
-        ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, worker, sysid);
-        // Set the system type
-        mav->setSystemType((int)heartbeat->type);
+    // XXX the APM support needs polishing before it can be shown to users
+//    case MAV_AUTOPILOT_ARDUPILOTMEGA:
+//    {
+//        ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, worker, sysid);
+//        // Set the system type
+//        mav->setSystemType((int)heartbeat->type);
 
-        // Connect this robot to the UAS object
-        // it is IMPORTANT here to use the right object type,
-        // else the slot of the parent object is called (and thus the special
-        // packets never reach their goal)
-        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-        uas = mav;
-    }
-    break;
+//        // Connect this robot to the UAS object
+//        // it is IMPORTANT here to use the right object type,
+//        // else the slot of the parent object is called (and thus the special
+//        // packets never reach their goal)
+//        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+//        uas = mav;
+//    }
+//    break;
 #ifdef QGC_USE_SENSESOAR_MESSAGES
 	case MAV_AUTOPILOT_SENSESOAR:
 		{
