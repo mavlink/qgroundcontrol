@@ -5,14 +5,13 @@
 #include "MainWindow.h"
 #include "ui_QGCSettingsWidget.h"
 
+#include "JoystickWidget.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "GAudioOutput.h"
 
-//, Qt::WindowFlags flags
-
-QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
+QGCSettingsWidget::QGCSettingsWidget(JoystickInput *joystick, QWidget *parent, Qt::WindowFlags flags) :
     QDialog(parent, flags),
     mainWindow((MainWindow*)parent),
     ui(new Ui::QGCSettingsWidget)
@@ -23,6 +22,9 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     QRect position = frameGeometry();
     position.moveCenter(QApplication::desktop()->availableGeometry().center());
     move(position.topLeft());
+
+    // Add the joystick settings pane
+    ui->tabWidget->addTab(new JoystickWidget(joystick, this), "Controllers");
 
     // Add all protocols
     QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();

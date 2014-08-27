@@ -31,7 +31,7 @@ This file is part of the PIXHAWK project
 #ifndef JOYSTICKWIDGET_H
 #define JOYSTICKWIDGET_H
 
-#include <QDialog>
+#include <QWidget>
 #include <QLabel>
 #include <QMap>
 #include "JoystickInput.h"
@@ -44,7 +44,7 @@ namespace Ui
 class JoystickWidget;
 }
 
-class JoystickWidget : public QDialog
+class JoystickWidget : public QWidget
 {
     Q_OBJECT
     Q_DISABLE_COPY(JoystickWidget)
