@@ -75,6 +75,7 @@ void JoystickWidget::initUI()
         m_ui->joystickModeComboBox->addItem("Attitude");
         m_ui->joystickModeComboBox->addItem("Position");
         m_ui->joystickModeComboBox->addItem("Force");
+        m_ui->joystickModeComboBox->addItem("Velocity");
         m_ui->joystickModeComboBox->setCurrentIndex(joystick->getMode());
 
         // Create the initial UI.

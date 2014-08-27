@@ -97,7 +97,8 @@ public:
     {
         JOYSTICK_MODE_ATTITUDE     = 0,
         JOYSTICK_MODE_POSITION     = 1,
-        JOYSTICK_MODE_FORCE        = 2
+        JOYSTICK_MODE_FORCE        = 2,
+	JOYSTICK_MODE_VELOCITY	    = 3
     };
 
     /**

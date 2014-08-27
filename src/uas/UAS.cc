@@ -2849,6 +2849,40 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     0
                     );
         }
+        else if (joystickMode == JoystickInput::JOYSTICK_MODE_VELOCITY)
+        {
+            // Send the the local velocity setpoint (local pos sp external message)
+            static float vx = 0;
+            static float vy = 0;
+            static float vz = 0;
+            static float yaw_rate = 0;
+            //XXX: find decent scaling
+            vx -= pitch;
+            vy += roll;
+            vz -= 2.0f*(thrust-0.5);
+            yaw_rate += yaw; //XXX: not sure what scale to apply here
+            uint16_t typeMask = 0b0000000111000111; // select only position control
+            mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
+                    mavlink->getComponentId(),
+                    &message,
+                    QGC::groundTimeUsecs(),
+                    this->uasId,
+                    0,
+                    MAV_FRAME_LOCAL_NED,
+                    typeMask,
+                    0,
+                    0,
+                    0,
+                    vx,
+                    vy,
+                    vz,
+                    0,
+                    0,
+                    0,
+                    0,
+                    yaw_rate
+                    );
+        }
         else {
             return;
         }
