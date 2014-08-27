@@ -47,7 +47,6 @@ This file is part of the QGROUNDCONTROL project
 #include "CommConfigurationWindow.h"
 #include "QGCWaypointListMulti.h"
 #include "MainWindow.h"
-#include "JoystickWidget.h"
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
@@ -279,7 +278,6 @@ void MainWindow::init()
 
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    joystickWidget = 0;
     joystick = new JoystickInput();
 
 #ifdef QGC_MOUSE_ENABLED_WIN
@@ -1322,16 +1320,6 @@ void MainWindow::connectCommonActions()
     connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
     connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
-    // User interaction
-    // NOTE: Joystick thread is not started and
-    // configuration widget is not instantiated
-    // unless it is actually used
-    // so no ressources spend on this.
-    ui.actionJoystickSettings->setVisible(true);
-
-    // Configuration
-    // Joystick
-    connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
     // Application Settings
     connect(ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 
@@ -1380,22 +1368,13 @@ void MainWindow::showRoadMap()
     }
 }
 
-void MainWindow::configure()
-{
-    if (!joystickWidget)
-    {
-        if (!joystick->isRunning())
-        {
-            joystick->start();
-        }
-        joystickWidget = new JoystickWidget(joystick, this);
-    }
-    joystickWidget->show();
-}
-
 void MainWindow::showSettings()
 {
-    QGCSettingsWidget* settings = new QGCSettingsWidget(this);
+    if (!joystick->isRunning())
+    {
+        joystick->start();
+    }
+    QGCSettingsWidget* settings = new QGCSettingsWidget(joystick, this);
     settings->show();
 }
 

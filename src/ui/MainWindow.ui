@@ -62,7 +62,6 @@
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
-    <addaction name="actionJoystickSettings"/>
     <addaction name="actionSettings"/>
     <addaction name="actionAdvanced_Mode"/>
     <addaction name="separator"/>
