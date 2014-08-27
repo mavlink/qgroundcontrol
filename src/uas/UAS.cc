@@ -2796,7 +2796,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             px -= pitch;
             py += roll;
             pz -= 2.0f*(thrust-0.5);
-            uint16_t typeMask = 0b0000000111111000; // select only position control
+            uint16_t typeMask = (1<<11)|(7<<6)|(7<<3); // select only POSITION control
             mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
@@ -2827,7 +2827,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             const float fx = -dcm[0][2];
             const float fy = -dcm[1][2];
             const float fz = -dcm[2][2];
-            uint16_t typeMask = 0b0000001000111111; // select only force control (disable everything else)
+            uint16_t typeMask = = (3<<10)|(7<<3)|(7<<0)(1<<9); // select only FORCE control (disable everything else)
             mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
@@ -2855,13 +2855,13 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             static float vx = 0;
             static float vy = 0;
             static float vz = 0;
-            static float yaw_rate = 0;
+            static float yawrate = 0;
             //XXX: find decent scaling
             vx -= pitch;
             vy += roll;
             vz -= 2.0f*(thrust-0.5);
-            yaw_rate += yaw; //XXX: not sure what scale to apply here
-            uint16_t typeMask = 0b0000000111000111; // select only position control
+            yawrate += yaw; //XXX: not sure what scale to apply here
+            uint16_t typeMask = (1<<10)|(7<<6)|(7<<0); // select only VELOCITY control
             mavlink_msg_set_position_target_local_ned_pack(mavlink->getSystemId(),
                     mavlink->getComponentId(),
                     &message,
@@ -2880,7 +2880,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     0,
                     0,
                     0,
-                    yaw_rate
+                    yawrate
                     );
         }
         else {
