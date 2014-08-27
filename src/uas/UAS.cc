@@ -2813,6 +2813,8 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     0,
                     0,
                     0,
+                    0,
+                    yaw,
                     0
                     );
         }
@@ -2842,7 +2844,9 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                     0,
                     fx,
                     fy,
-                    fz
+                    fz,
+                    0,
+                    0
                     );
         }
         else {
