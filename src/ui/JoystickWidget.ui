@@ -50,7 +50,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>Enable joysticks</string>
+      <string>Enable controllers</string>
      </property>
     </widget>
    </item>
