@@ -7,7 +7,7 @@
 #include <QDesktopWidget>
 
 JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
-    QDialog(parent),
+    QWidget(parent),
     joystick(joystick),
     m_ui(new Ui::JoystickWidget)
 {
