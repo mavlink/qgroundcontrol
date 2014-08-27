@@ -19,7 +19,7 @@ public slots:
     void updateAttitude(UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
 
     void updateSpeed(UASInterface* uas, double _groundSpeed, double _airSpeed, quint64 timestamp);
-    void updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeRelative, double _climbRate, quint64 timestamp);
+    void updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp);
     void updateNavigationControllerErrors(UASInterface* uas, double altitudeError, double speedError, double xtrackError);
 
     /** @brief Set the currently monitored UAS */
@@ -104,6 +104,7 @@ private:
     float heading;
 
     float altitudeAMSL;
+    float altitudeWGS84;
     float altitudeRelative;
 
     // APM: GPS and baro mix above home (GPS) altitude. This value comes from the GLOBAL_POSITION_INT message.

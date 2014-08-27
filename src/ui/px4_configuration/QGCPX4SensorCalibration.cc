@@ -280,22 +280,26 @@ void QGCPX4SensorCalibration::setGpsOrientation(int index)
 
 void QGCPX4SensorCalibration::setAutopilotImage(const QString &path)
 {
-    autopilotIcon.load(path);
+    if (autopilotIcon.load(path)) {
+        int w = ui->autopilotLabel->width();
+        int h = ui->autopilotLabel->height();
 
-    int w = ui->autopilotLabel->width();
-    int h = ui->autopilotLabel->height();
-
-    ui->autopilotLabel->setPixmap(autopilotIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        ui->autopilotLabel->setPixmap(autopilotIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    } else {
+        qDebug() << "AutoPilot Icon image did not load" << path;
+    }
 }
 
 void QGCPX4SensorCalibration::setGpsImage(const QString &path)
 {
-    gpsIcon.load(path);
+    if (gpsIcon.load(path)) {
+        int w = ui->gpsLabel->width();
+        int h = ui->gpsLabel->height();
 
-    int w = ui->gpsLabel->width();
-    int h = ui->gpsLabel->height();
-
-    ui->gpsLabel->setPixmap(gpsIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        ui->gpsLabel->setPixmap(gpsIcon.scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    } else {
+        qDebug() << "GPS Icon image did not load" << path;
+    }
 }
 
 void QGCPX4SensorCalibration::updateIcons()
@@ -336,7 +340,15 @@ void QGCPX4SensorCalibration::setActiveUAS(UASInterface* uas)
 
     connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(handleTextMessage(int,int,int,QString)));
     connect(uas, SIGNAL(parameterChanged(int,int,QString,QVariant)), this, SLOT(parameterChanged(int,int,QString,QVariant)));
+    connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
     activeUAS = uas;
+
+    updateSystemSpecs(uas->getUASID());
+}
+
+void QGCPX4SensorCalibration::updateSystemSpecs(int id)
+{
+    Q_UNUSED(id);
 
     if (activeUAS->isRotaryWing()) {
         // Users are confused by the config button

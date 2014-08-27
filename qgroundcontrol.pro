@@ -274,6 +274,9 @@ FORMS += \
     src/ui/designer/QGCParamSlider.ui \
     src/ui/designer/QGCActionButton.ui \
     src/ui/designer/QGCCommandButton.ui \
+    src/ui/designer/QGCComboBox.ui \
+    src/ui/designer/QGCTextLabel.ui \
+    src/ui/designer/QGCXYPlot.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
     src/ui/QGCUASFileViewMulti.ui \
@@ -309,8 +312,6 @@ FORMS += \
     src/ui/QGCHilFlightGearConfiguration.ui \
     src/ui/QGCHilJSBSimConfiguration.ui \
     src/ui/QGCHilXPlaneConfiguration.ui \
-    src/ui/designer/QGCComboBox.ui \
-    src/ui/designer/QGCTextLabel.ui \
     src/ui/uas/UASQuickView.ui \
     src/ui/uas/UASQuickViewItemSelect.ui \
     src/ui/uas/UASActionsWidget.ui \
@@ -354,7 +355,7 @@ FORMS += \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
-    src/ui/designer/QGCXYPlot.ui \
+    src/ui/px4_configuration/PX4RCCalibration.ui \
     src/ui/QGCUASFileView.ui
 
 HEADERS += \
@@ -434,6 +435,11 @@ HEADERS += \
     src/ui/designer/QGCParamSlider.h \
     src/ui/designer/QGCCommandButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
+    src/ui/designer/QGCComboBox.h \
+    src/ui/designer/QGCTextLabel.h \
+    src/ui/designer/QGCRadioChannelDisplay.h \
+    src/ui/designer/QGCXYPlot.h \
+    src/ui/designer/RCChannelWidget.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/comm/MAVLinkSimulationWaypointPlanner.h \
     src/comm/MAVLinkSimulationMAV.h \
@@ -482,8 +488,6 @@ HEADERS += \
     src/ui/QGCHilFlightGearConfiguration.h \
     src/ui/QGCHilJSBSimConfiguration.h \
     src/ui/QGCHilXPlaneConfiguration.h \
-    src/ui/designer/QGCComboBox.h \
-    src/ui/designer/QGCTextLabel.h \
     src/ui/submainwindow.h \
     src/ui/uas/UASQuickView.h \
     src/ui/uas/UASQuickViewItem.h \
@@ -492,7 +496,6 @@ HEADERS += \
     src/ui/uas/UASQuickViewTextItem.h \
     src/ui/uas/UASQuickViewGaugeItem.h \
     src/ui/uas/UASActionsWidget.h \
-    src/ui/designer/QGCRadioChannelDisplay.h \
     src/ui/QGCTabbedInfoView.h \
     src/ui/UASRawStatusView.h \
     src/ui/PrimaryFlightDisplay.h \
@@ -542,7 +545,7 @@ HEADERS += \
     src/ui/QGCBaseParamWidget.h \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
-    src/ui/designer/QGCXYPlot.h \
+    src/ui/px4_configuration/PX4RCCalibration.h \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
@@ -623,6 +626,11 @@ SOURCES += \
     src/ui/designer/QGCParamSlider.cc \
     src/ui/designer/QGCCommandButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
+    src/ui/designer/QGCComboBox.cc \
+    src/ui/designer/QGCTextLabel.cc \
+    src/ui/designer/QGCRadioChannelDisplay.cpp \
+    src/ui/designer/QGCXYPlot.cc \
+    src/ui/designer/RCChannelWidget.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/comm/MAVLinkSimulationWaypointPlanner.cc \
     src/comm/MAVLinkSimulationMAV.cc \
@@ -669,8 +677,6 @@ SOURCES += \
     src/ui/QGCHilFlightGearConfiguration.cc \
     src/ui/QGCHilJSBSimConfiguration.cc \
     src/ui/QGCHilXPlaneConfiguration.cc \
-    src/ui/designer/QGCComboBox.cc \
-    src/ui/designer/QGCTextLabel.cc \
     src/ui/submainwindow.cpp \
     src/ui/uas/UASQuickViewItem.cc \
     src/ui/uas/UASQuickView.cc \
@@ -679,7 +685,6 @@ SOURCES += \
     src/ui/uas/UASQuickViewGaugeItem.cc \
     src/ui/uas/UASQuickViewItemSelect.cc \
     src/ui/uas/UASActionsWidget.cpp \
-    src/ui/designer/QGCRadioChannelDisplay.cpp \
     src/ui/QGCTabbedInfoView.cpp \
     src/ui/UASRawStatusView.cpp \
     src/ui/PrimaryFlightDisplay.cc \
@@ -729,7 +734,7 @@ SOURCES += \
     src/ui/QGCBaseParamWidget.cc \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
-    src/ui/designer/QGCXYPlot.cc \
+    src/ui/px4_configuration/PX4RCCalibration.cc \
     src/ui/menuactionhelper.cpp \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
@@ -757,7 +762,8 @@ HEADERS += \
 	src/qgcunittest/FlightGearTest.h \
 	src/qgcunittest/TCPLinkTest.h \
 	src/qgcunittest/TCPLoopBackServer.h \
-	src/qgcunittest/QGCUASFileManagerTest.h
+	src/qgcunittest/QGCUASFileManagerTest.h \
+    src/qgcunittest/PX4RCCalibrationTest.h
 
 SOURCES += \
 	src/qgcunittest/UASUnitTest.cc \
@@ -770,4 +776,5 @@ SOURCES += \
 	src/qgcunittest/FlightGearTest.cc \
 	src/qgcunittest/TCPLinkTest.cc \
 	src/qgcunittest/TCPLoopBackServer.cc \
-	src/qgcunittest/QGCUASFileManagerTest.cc
+	src/qgcunittest/QGCUASFileManagerTest.cc \
+    src/qgcunittest/PX4RCCalibrationTest.cc

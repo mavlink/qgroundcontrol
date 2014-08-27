@@ -176,7 +176,7 @@ protected slots:
 
 signals:
     void sizeChanged(int width, int height);
-    void update(void);
+    void updateWidget(void);
 
 protected:
     /**

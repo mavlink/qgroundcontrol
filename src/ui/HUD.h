@@ -74,7 +74,7 @@ public slots:
     void receiveHeartbeat(UASInterface*);
     void updateThrust(UASInterface*, double);
     void updateLocalPosition(UASInterface*,double,double,double,quint64);
-    void updateGlobalPosition(UASInterface*,double,double,double,quint64);
+    void updateGlobalPosition(UASInterface*,double,double,double,double,quint64);
     void updateSpeed(UASInterface*,double,double,double,quint64);
     void updateState(UASInterface*,QString);
     void updateMode(int id,QString mode, QString description);

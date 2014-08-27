@@ -145,7 +145,7 @@ public slots:
     void notifyOfChangeViewOnly(Waypoint* wp);             ///< Notifies manager to changes to a viewonly waypoint, e.g. some widget wants to change "current"
     /*@}*/
     void handleLocalPositionChanged(UASInterface* mav, double x, double y, double z, quint64 time);
-    void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time);
+    void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double altAMSL, double altWGS84, quint64 time);
 
 signals:
     void waypointEditableListChanged(void);                 ///< emits signal that the list of editable waypoints has been changed
@@ -160,6 +160,13 @@ signals:
 
     void loadWPFile();                              ///< emits signal that a file wp has been load
     void readGlobalWPFromUAS(bool value);           ///< emits signal when finish to read Global WP from UAS
+    
+    void _startProtocolTimer(void);                 ///< emits signal to start protocol timer
+    void _stopProtocolTimer(void);                 ///< emits signal to stop protocol timer
+    
+private slots:
+    void _startProtocolTimerOnThisThread(void);                 ///< Starts the protocol timer
+    void _stopProtocolTimerOnThisThread(void);                 ///< Starts the protocol timer
 
 private:
     UAS* uas;                                       ///< Reference to the corresponding UAS

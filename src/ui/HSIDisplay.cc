@@ -920,7 +920,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     if (this->uas != NULL) {
         disconnect(this->uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,float,float,float,float,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,float,float,float,float,quint64)));
         disconnect(this->uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
         disconnect(uas, SIGNAL(userPositionSetPointsChanged(int,float,float,float,float)), this, SLOT(updateUserPositionSetpoints(int,float,float,float,float)));
@@ -955,8 +955,8 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
                 this, SLOT(updateSatellite(int,int,float,float,float,bool)));
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),
                 this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)),
-                this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)),
+                this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,double,quint64)));
         connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,float,float,float,float,quint64)),
                 this, SLOT(updateAttitudeSetpoints(UASInterface*,float,float,float,float,quint64)));
         connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)),
@@ -1161,11 +1161,12 @@ void HSIDisplay::updateLocalPosition(UASInterface*, double x, double y, double z
     localAvailable = usec;
 }
 
-void HSIDisplay::updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec)
+void HSIDisplay::updateGlobalPosition(UASInterface*, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
 {
+    Q_UNUSED(altAMSL);
     this->lat = lat;
     this->lon = lon;
-    this->alt = alt;
+    this->alt = altWGS84;
     globalAvailable = usec;
 }
 

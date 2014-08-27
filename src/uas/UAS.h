@@ -111,6 +111,8 @@ public:
     Q_PROPERTY(double groundSpeed READ getGroundSpeed WRITE setGroundSpeed NOTIFY groundSpeedChanged)
     Q_PROPERTY(double bearingToWaypoint READ getBearingToWaypoint WRITE setBearingToWaypoint NOTIFY bearingToWaypointChanged)
     Q_PROPERTY(double altitudeAMSL READ getAltitudeAMSL WRITE setAltitudeAMSL NOTIFY altitudeAMSLChanged)
+    Q_PROPERTY(double altitudeAMSLFT READ getAltitudeAMSLFT NOTIFY altitudeAMSLFTChanged)
+    Q_PROPERTY(double altitudeWGS84 READ getAltitudeWGS84 WRITE setAltitudeWGS84 NOTIFY altitudeWGS84Changed)
     Q_PROPERTY(double altitudeRelative READ getAltitudeRelative WRITE setAltitudeRelative NOTIFY altitudeRelativeChanged)
 
     void setGroundSpeed(double val)
@@ -198,13 +200,34 @@ public:
     {
         altitudeAMSL = val;
         emit altitudeAMSLChanged(val, "altitudeAMSL");
-        emit valueChanged(this->uasId,"altitudeAMSL","m",QVariant(val),getUnixTime());
+        emit valueChanged(this->uasId,"altitudeAMSL","m",QVariant(altitudeAMSL),getUnixTime());
+        altitudeAMSLFT = 3.28084 * altitudeAMSL;
+        emit altitudeAMSLFTChanged(val, "altitudeAMSLFT");
+        emit valueChanged(this->uasId,"altitudeAMSLFT","m",QVariant(altitudeAMSLFT),getUnixTime());
     }
 
     double getAltitudeAMSL() const
     {
         return altitudeAMSL;
     }
+
+    double getAltitudeAMSLFT() const
+    {
+        return altitudeAMSLFT;
+    }
+
+    void setAltitudeWGS84(double val)
+    {
+        altitudeWGS84 = val;
+        emit altitudeWGS84Changed(val, "altitudeWGS84");
+        emit valueChanged(this->uasId,"altitudeWGS84","m",QVariant(val),getUnixTime());
+    }
+
+    double getAltitudeWGS84() const
+    {
+        return altitudeWGS84;
+    }
+
 
     void setAltitudeRelative(double val)
     {
@@ -454,7 +477,9 @@ protected: //COMMENTS FOR TEST UNIT
 
     double latitude;            ///< Global latitude as estimated by position estimator
     double longitude;           ///< Global longitude as estimated by position estimator
-    double altitudeAMSL;        ///< Global altitude as estimated by position estimator
+    double altitudeAMSL;        ///< Global altitude as estimated by position estimator, AMSL
+    double altitudeAMSLFT;        ///< Global altitude as estimated by position estimator, AMSL
+    double altitudeWGS84;        ///< Global altitude as estimated by position estimator, WGS84
     double altitudeRelative;    ///< Altitude above home as estimated by position estimator
 
     double satelliteCount;      ///< Number of satellites visible to raw GPS
@@ -964,6 +989,8 @@ signals:
     void longitudeChanged(double val,QString name);
     void latitudeChanged(double val,QString name);
     void altitudeAMSLChanged(double val,QString name);
+    void altitudeAMSLFTChanged(double val,QString name);
+    void altitudeWGS84Changed(double val,QString name);
     void altitudeRelativeChanged(double val,QString name);
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);

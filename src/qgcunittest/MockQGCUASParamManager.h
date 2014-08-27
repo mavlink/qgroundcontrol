@@ -38,7 +38,7 @@ class MockQGCUASParamManager : public QGCUASParamManagerInterface
     
 signals:
     // The following QGCSUASParamManagerInterface signals are supported
-    // currently none
+    void parameterListUpToDate();   // You can connect to this signal, but it will never be emitted
     
 public:
     // Implemented QGCSUASParamManager overrides
@@ -49,6 +49,10 @@ public:
 public slots:
     // Implemented QGCSUASParamManager overrides
     void setParameter(int component, QString parameterName, QVariant value);
+    virtual void setPendingParam(int componentId,  const QString& key,  const QVariant& value, bool forceSend = false)
+        { Q_UNUSED(forceSend); setParameter(componentId, key, value); }
+    virtual void sendPendingParameters(bool persistAfterSend = false, bool forceSend = false)
+        { Q_UNUSED(persistAfterSend); Q_UNUSED(forceSend); }
     
 public:
     // MockQGCUASParamManager methods
@@ -74,12 +78,8 @@ public:
     
 public slots:
     // Unimplemented QGCUASParamManagerInterface overrides
-    virtual void sendPendingParameters(bool persistAfterSend = false, bool forceSend = false)
-        { Q_ASSERT(false); Q_UNUSED(persistAfterSend); Q_UNUSED(forceSend); }
     virtual void requestParameterList() { Q_ASSERT(false); }
     virtual void requestParameterListIfEmpty() { Q_ASSERT(false); }
-    virtual void setPendingParam(int componentId,  const QString& key,  const QVariant& value, bool forceSend = false)
-        { Q_ASSERT(false); Q_UNUSED(componentId); Q_UNUSED(key); Q_UNUSED(value); Q_UNUSED(forceSend); }
     virtual void clearAllPendingParams() { Q_ASSERT(false); }
     virtual void requestParameterUpdate(int component, const QString& parameter)
         { Q_ASSERT(false); Q_UNUSED(component); Q_UNUSED(parameter); }

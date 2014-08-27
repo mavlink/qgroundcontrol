@@ -55,12 +55,16 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
         uasid = uas->getUASID();
         connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,double,double,quint64)));
     }
     else
     {
         uasid = 0;
     }
+    
+    // We signal to ourselves here so that tiemrs are started and stopped on correct thread
+    connect(this, SIGNAL(_startProtocolTimer(void)), this, SLOT(_startProtocolTimerOnThisThread(void)));
+    connect(this, SIGNAL(_stopProtocolTimer(void)), this, SLOT(_stopProtocolTimerOnThisThread(void)));
 }
 
 UASWaypointManager::~UASWaypointManager()
@@ -115,11 +119,12 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
     }
 }
 
-void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time)
+void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double altAMSL, double altWGS84, quint64 time)
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-	Q_UNUSED(alt);
+    Q_UNUSED(altAMSL);
+    Q_UNUSED(altWGS84);
 	Q_UNUSED(lon);
 	Q_UNUSED(lat);
     if (waypointsEditable.count() > 0 && currentWaypointEditable && (currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL || currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))
@@ -133,7 +138,7 @@ void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double l
 void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, quint16 count)
 {
     if (current_state == WP_GETLIST && systemId == current_partner_systemid) {
-        protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+        emit _startProtocolTimer(); // Start timer on correct thread
         current_retries = PROTOCOL_MAX_RETRIES;
 
         //Clear the old edit-list before receiving the new one
@@ -152,7 +157,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             current_state = WP_GETLIST_GETWPS;
             sendWaypointRequest(current_wp_id);
         } else {
-            protocol_timer.stop();
+            emit _stopProtocolTimer();  // Stop the time on our thread
             QTime time = QTime::currentTime();
             emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
             current_state = WP_IDLE;
@@ -171,7 +176,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_mission_item_t *wp)
 {
     if (systemId == current_partner_systemid && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id) {
-        protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+        emit _startProtocolTimer(); // Start timer on our thread
         current_retries = PROTOCOL_MAX_RETRIES;
 
         if(wp->seq == current_wp_id) {
@@ -202,7 +207,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 current_partner_systemid = 0;
                 current_partner_compid = 0;
 
-                protocol_timer.stop();
+                emit _stopProtocolTimer(); // Stop timer on our thread
                 emit readGlobalWPFromUAS(false);
                 QTime time = QTime::currentTime();
                 emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
@@ -218,10 +223,19 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
 void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavlink_mission_ack_t *wpa)
 {
-    if (systemId == current_partner_systemid && (compId == current_partner_compid || compId == MAV_COMP_ID_ALL)) {
+    if (systemId != current_partner_systemid) {
+        return;
+    }
+
+    // Check if the current partner component ID is generic. If it is, we might need to update
+    if (current_partner_compid == MAV_COMP_ID_MISSIONPLANNER) {
+        current_partner_compid = compId;
+    }
+
+    if (compId == current_partner_compid || compId == MAV_COMP_ID_ALL) {
         if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && (current_wp_id == waypoint_buffer.count()-1 && wpa->type == 0)) {
             //all waypoints sent and ack received
-            protocol_timer.stop();
+            emit _stopProtocolTimer();  // Stop timer on our thread
             current_state = WP_IDLE;
             readWaypoints(false); //Update "Onboard Waypoints"-tab immediately after the waypoint list has been sent.
             QTime time = QTime::currentTime();
@@ -260,10 +274,10 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
                 emit updateStatusString(tr("ERROR: Unspecified error"));
                 break;
             }
-            protocol_timer.stop();
+            emit _stopProtocolTimer();  // Stop timer on our thread
             current_state = WP_IDLE;
         } else if(current_state == WP_CLEARLIST) {
-            protocol_timer.stop();
+            emit _stopProtocolTimer(); // Stop timer on our thread
             current_state = WP_IDLE;
             QTime time = QTime::currentTime();
             emit updateStatusString(tr("Done. (updated at %1)").arg(time.toString()));
@@ -274,7 +288,7 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
 void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_mission_request_t *wpr)
 {
     if (systemId == current_partner_systemid && ((current_state == WP_SENDLIST && wpr->seq == 0) || (current_state == WP_SENDLIST_SENDWPS && (wpr->seq == current_wp_id || wpr->seq == current_wp_id + 1)))) {
-        protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+        emit _startProtocolTimer();  // Start timer on our thread
         current_retries = PROTOCOL_MAX_RETRIES;
 
         if (wpr->seq < waypoint_buffer.count()) {
@@ -305,7 +319,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
     if (systemId == uasid) {
         // FIXME Petri
         if (current_state == WP_SETCURRENT) {
-            protocol_timer.stop();
+            emit _stopProtocolTimer();  // Stop timer on our thread
             current_state = WP_IDLE;
 
             // update the local main storage
@@ -353,7 +367,7 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
         if(current_state == WP_IDLE) {
 
             //send change to UAS - important to note: if the transmission fails, we have inconsistencies
-            protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+            emit _startProtocolTimer();  // Start timer on our thread
             current_retries = PROTOCOL_MAX_RETRIES;
 
             current_state = WP_SETCURRENT;
@@ -585,7 +599,7 @@ void UASWaypointManager::clearWaypointList()
 {
     if (current_state == WP_IDLE)
     {
-        protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+        emit _startProtocolTimer(); // Start timer on our thread
         current_retries = PROTOCOL_MAX_RETRIES;
 
         current_state = WP_CLEARLIST;
@@ -838,7 +852,10 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
             emit waypointEditableListChanged();
         }
         */
-        protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+        
+        // We are signalling ourselves here so that the timer gets started on the right thread
+        emit _startProtocolTimer();
+
         current_retries = PROTOCOL_MAX_RETRIES;
 
         current_state = WP_GETLIST;
@@ -890,7 +907,7 @@ void UASWaypointManager::writeWaypoints()
     if (current_state == WP_IDLE) {
         // Send clear all if count == 0
         if (waypointsEditable.count() > 0) {
-            protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+            emit _startProtocolTimer();  // Start timer on our thread
             current_retries = PROTOCOL_MAX_RETRIES;
 
             current_count = waypointsEditable.count();
@@ -1118,4 +1135,15 @@ float UASWaypointManager::getAcceptanceRadiusRecommendation()
 float UASWaypointManager::getHomeAltitudeOffsetDefault()
 {
     return defaultAltitudeHomeOffset;
+}
+
+
+void UASWaypointManager::_startProtocolTimerOnThisThread(void)
+{
+    protocol_timer.start(PROTOCOL_TIMEOUT_MS);
+}
+
+void UASWaypointManager::_stopProtocolTimerOnThisThread(void)
+{
+    protocol_timer.stop();
 }
