@@ -80,6 +80,10 @@ private:
         downloadFileCompleteSignalMask =    1 << downloadFileCompleteSignalIndex,
         errorMessageSignalMask =            1 << errorMessageSignalIndex,
     };
+
+    static const uint8_t    _systemIdQGC = 255;
+    static const uint8_t    _systemIdServer = 128;
+
     MockUAS                 _mockUAS;
     MockMavlinkFileServer   _mockFileServer;
     

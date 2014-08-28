@@ -33,7 +33,7 @@ class QGCUASFileManager : public QObject
 {
     Q_OBJECT
 public:
-    QGCUASFileManager(QObject* parent, UASInterface* uas);
+    QGCUASFileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC = 0);
     
     /// These methods are only used for testing purposes.
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
@@ -74,26 +74,28 @@ public slots:
     void downloadPath(const QString& from, const QDir& downloadDir);
 
 protected:
-    static const uint8_t kProtocolMagic = 'f';
+    
+    /// @brief This is the fixed length portion of the protocol data. This structure is layed out such that it should not require
+    /// any special compiler packing to not consume extra space.
     struct RequestHeader
         {
-            uint8_t		magic;      ///> Magic byte 'f' to idenitfy FTP protocol
-            uint8_t		session;    ///> Session id for read and write commands
-            uint8_t		opcode;     ///> Command opcode
-            uint8_t		size;       ///> Size of data
-            uint32_t	crc32;      ///> CRC for entire Request structure, with crc32 set to 0
-            uint32_t	offset;     ///> Offsets for List and Read commands
+            uint16_t        seqNumber;  ///< sequence number for message
+            unsigned int    session:4;  ///< Session id for read and write commands
+            unsigned int    opcode:4;   ///< Command opcode
+            uint8_t         size;       ///< Size of data
+            uint32_t        crc32;      ///< CRC for entire Request structure, with crc32 set to 0
+            uint32_t        offset;     ///< Offsets for List and Read commands
         };
 
     struct Request
     {
         struct RequestHeader hdr;
 
-        // We use a union here instead of just casting (uint32_t)&data[0] to not break strict aliasing rules
+        // We use a union here instead of just casting (uint32_t)&payload[0] to not break strict aliasing rules
         union {
-            // The entire Request must fit into the data member of the mavlink_encapsulated_data_t structure. We use as many leftover bytes
+            // The entire Request must fit into the payload member of the mavlink_file_transfer_protocol_t structure. We use as many leftover bytes
             // after we use up space for the RequestHeader for the data portion of the Request.
-            uint8_t data[sizeof(((mavlink_encapsulated_data_t*)0)->data) - sizeof(RequestHeader)];
+            uint8_t data[sizeof(((mavlink_file_transfer_protocol_t*)0)->payload) - sizeof(RequestHeader)];
 
             // File length returned by Open command
             uint32_t openFileLength;
@@ -103,22 +105,22 @@ protected:
     enum Opcode
         {
             // Commands
-            kCmdNone,       ///> ignored, always acked
-            kCmdTerminate,	///> releases sessionID, closes file
-            kCmdReset,      ///> terminates all sessions
-            kCmdList,       ///> list files in <path> from <offset>
-            kCmdOpen,       ///> opens <path> for reading, returns <session>
-            kCmdRead,       ///> reads <size> bytes from <offset> in <session>
-            kCmdCreate,     ///> creates <path> for writing, returns <session>
-            kCmdWrite,      ///> appends <size> bytes at <offset> in <session>
-            kCmdRemove,     ///> remove file (only if created by server?)
+            kCmdNone,       ///< ignored, always acked
+            kCmdTerminate,	///< releases sessionID, closes file
+            kCmdReset,      ///< terminates all sessions
+            kCmdList,       ///< list files in <path> from <offset>
+            kCmdOpen,       ///< opens <path> for reading, returns <session>
+            kCmdRead,       ///< reads <size> bytes from <offset> in <session>
+            kCmdCreate,     ///< creates <path> for writing, returns <session>
+            kCmdWrite,      ///< appends <size> bytes at <offset> in <session>
+            kCmdRemove,     ///< remove file (only if created by server?)
 
             // Responses
-            kRspAck,        ///> positive acknowledgement of previous command
-            kRspNak,        ///> negative acknowledgement of previous command
+            kRspAck,        ///< positive acknowledgement of previous command
+            kRspNak,        ///< negative acknowledgement of previous command
             
             // Used for testing only, not part of protocol
-            kCmdTestNoAck,  // ignored, ack not sent back, should timeout waiting for ack
+            kCmdTestNoAck,  ///< ignored, ack not sent back, should timeout waiting for ack
         };
 
     enum ErrorCode
@@ -170,21 +172,24 @@ protected:
     static quint32 crc32(Request* request, unsigned state = 0);
     static QString errorString(uint8_t errorCode);
 
-    OperationState  _currentOperation;              ///> Current operation of state machine
-    QTimer          _ackTimer;                      ///> Used to signal a timeout waiting for an ack
+    OperationState  _currentOperation;              ///< Current operation of state machine
+    QTimer          _ackTimer;                      ///< Used to signal a timeout waiting for an ack
     
     UASInterface* _mav;
     
     uint16_t _lastOutgoingSeqNumber; ///< Sequence number sent in last outgoing packet
 
-    unsigned    _listOffset;    ///> offset for the current List operation
-    QString     _listPath;      ///> path for the current List operation
+    unsigned    _listOffset;    ///< offset for the current List operation
+    QString     _listPath;      ///< path for the current List operation
     
-    uint8_t     _activeSession;             ///> currently active session, 0 for none
-    uint32_t    _readOffset;                ///> current read offset
-    QByteArray  _readFileAccumulator;       ///> Holds file being downloaded
-    QDir        _readFileDownloadDir;       ///> Directory to download file to
-    QString     _readFileDownloadFilename;  ///> Filename (no path) for download file
+    uint8_t     _activeSession;             ///< currently active session, 0 for none
+    uint32_t    _readOffset;                ///< current read offset
+    QByteArray  _readFileAccumulator;       ///< Holds file being downloaded
+    QDir        _readFileDownloadDir;       ///< Directory to download file to
+    QString     _readFileDownloadFilename;  ///< Filename (no path) for download file
+    
+    uint8_t     _systemIdQGC;               ///< System ID for QGC
+    uint8_t     _systemIdServer;            ///< System ID for server
     
     // We give MockMavlinkFileServer friend access so that it can use the data structures and opcodes
     // to build a mock mavlink file server for testing.
