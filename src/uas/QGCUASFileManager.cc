@@ -78,6 +78,9 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas, uint8_t
     connect(&_ackTimer, &QTimer::timeout, this, &QGCUASFileManager::_ackTimeout);
     
     _systemIdServer = _mav->getUASID();
+    
+    // Make sure we don't have bad structure packing
+    Q_ASSERT(sizeof(RequestHeader) == 12);
 }
 
 /// @brief Calculates a 32 bit CRC for the specified request.
@@ -184,6 +187,7 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
         request.hdr.session = _activeSession;
         request.hdr.opcode = kCmdRead;
         request.hdr.offset = _readOffset;
+        request.hdr.size = 0;
 
         _sendRequest(&request);
     } else {
@@ -383,6 +387,7 @@ void QGCUASFileManager::_sendListCommand(void)
     request.hdr.session = 0;
     request.hdr.opcode = kCmdList;
     request.hdr.offset = _listOffset;
+    request.hdr.size = 0;
 
     _fillRequestWithString(&request, _listPath);
 
@@ -417,6 +422,7 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
     request.hdr.session = 0;
     request.hdr.opcode = kCmdOpen;
     request.hdr.offset = 0;
+    request.hdr.size = 0;
     _fillRequestWithString(&request, from);
     _sendRequest(&request);
 }
@@ -519,6 +525,7 @@ void QGCUASFileManager::_sendTerminateCommand(void)
     Request request;
     request.hdr.session = _activeSession;
     request.hdr.opcode = kCmdTerminate;
+    request.hdr.size = 0;
     _sendRequest(&request);
 }
 
