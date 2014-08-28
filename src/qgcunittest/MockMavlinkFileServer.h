@@ -40,7 +40,10 @@ class MockMavlinkFileServer : public MockMavlinkInterface
     Q_OBJECT
     
 public:
-    MockMavlinkFileServer(void);
+    /// @brief Constructor for MockMavlinkFileServer
+    ///     @param System ID for QGroundControl App
+    ///     @pqram System ID for this Server
+    MockMavlinkFileServer(uint8_t systemIdQGC, uint8_t systemIdServer);
     
     /// @brief Sets the list of files returned by the List command. Prepend names with F or D
     /// to indicate (F)ile or (D)irectory.
@@ -103,6 +106,8 @@ private:
     static const uint8_t    _sessionId;
     uint8_t                 _readFileLength;    ///< Length of active file being read
     ErrorMode_t             _errMode;           ///< Currently set error mode, as specified by setErrorMode
+    const uint8_t           _systemIdServer;    ///< System ID for server
+    const uint8_t           _systemIdQGC;       ///< QGC System ID
 };
 
 #endif
