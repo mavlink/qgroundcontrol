@@ -80,7 +80,7 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas, uint8_t
     _systemIdServer = _mav->getUASID();
     
     // Make sure we don't have bad structure packing
-    Q_ASSERT(sizeof(RequestHeader) == 12);
+    Q_ASSERT(sizeof(RequestHeader) == 16);
 }
 
 /// @brief Calculates a 32 bit CRC for the specified request.
@@ -95,6 +95,9 @@ quint32 QGCUASFileManager::crc32(Request* request, unsigned state)
     // Always calculate CRC with 0 initial CRC value
     quint32 crcSave = request->hdr.crc32;
     request->hdr.crc32 = 0;
+    request->hdr.padding[0] = 0;
+    request->hdr.padding[1] = 0;
+    request->hdr.padding[2] = 0;
 
     for (size_t i=0; i < cbData; i++)
         state = crctab[(state ^ data[i]) & 0xff] ^ (state >> 8);
