@@ -24,6 +24,7 @@
 #include "QGCUASFileManager.h"
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
+#include "MainWindow.h"
 
 #include <QFile>
 #include <QDir>
@@ -66,16 +67,17 @@ static const quint32 crctab[] =
 };
 
 
-QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas) :
+QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas, uint8_t unitTestSystemIdQGC) :
     QObject(parent),
     _currentOperation(kCOIdle),
     _mav(uas),
     _lastOutgoingSeqNumber(0),
-    _activeSession(0)
+    _activeSession(0),
+    _systemIdQGC(unitTestSystemIdQGC)
 {
-    bool connected = connect(&_ackTimer, SIGNAL(timeout()), this, SLOT(_ackTimeout()));
-    Q_ASSERT(connected);
-    Q_UNUSED(connected);    // Silence retail unused variable error
+    connect(&_ackTimer, &QTimer::timeout, this, &QGCUASFileManager::_ackTimeout);
+    
+    _systemIdServer = _mav->getUASID();
 }
 
 /// @brief Calculates a 32 bit CRC for the specified request.
@@ -252,28 +254,25 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
 {
     Q_UNUSED(link);
 
-    if (message.msgid != MAVLINK_MSG_ID_ENCAPSULATED_DATA) {
-        // wtf, not for us
+    // receiveMessage is signalled will all mavlink messages so we need to filter everything else out but ours.
+    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
         return;
     }
-
-    // XXX: hack to prevent files from videostream to interfere
-    // FIXME: magic number
-    if (message.compid != 50) {
-        return;
-    }
-
-    mavlink_encapsulated_data_t data;
-    mavlink_msg_encapsulated_data_decode(&message, &data);
-    Request* request = (Request*)&data.data[0];
     
-    if (request->hdr.magic != kProtocolMagic) {
+    mavlink_file_transfer_protocol_t data;
+    mavlink_msg_file_transfer_protocol_decode(&message, &data);
+    
+    // Make sure we are the target system
+    if (data.target_system != _systemIdQGC) {
+        qDebug() << "Received MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL with possibly incorrect system id" << _systemIdQGC;
         return;
     }
-
+    
+    Request* request = (Request*)&data.payload[0];
+    
     _clearAckTimeout();
     
-    uint16_t incomingSeqNumber = data.seqnr;
+    uint16_t incomingSeqNumber = request->hdr.seqNumber;
     
     // Make sure we have a good CRC
     quint32 expectedCRC = crc32(request);
@@ -381,7 +380,6 @@ void QGCUASFileManager::_sendListCommand(void)
 {
     Request request;
 
-    request.hdr.magic = 'f';
     request.hdr.session = 0;
     request.hdr.opcode = kCmdList;
     request.hdr.offset = _listOffset;
@@ -416,7 +414,6 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
     _currentOperation = kCOOpen;
 
     Request request;
-    request.hdr.magic = 'f';
     request.hdr.session = 0;
     request.hdr.opcode = kCmdOpen;
     request.hdr.offset = 0;
@@ -470,7 +467,6 @@ bool QGCUASFileManager::_sendOpcodeOnlyCmd(uint8_t opcode, OperationState newOpS
     }
 
     Request request;
-    request.hdr.magic = 'f';
     request.hdr.session = 0;
     request.hdr.opcode = opcode;
     request.hdr.offset = 0;
@@ -547,10 +543,22 @@ void QGCUASFileManager::_sendRequest(Request* request)
     
     _lastOutgoingSeqNumber++;
 
-    request->hdr.magic = kProtocolMagic;
+    request->hdr.seqNumber = _lastOutgoingSeqNumber;
+    
     request->hdr.crc32 = crc32(request);
-    // FIXME: Send correct system id instead of harcoded 250
-    // FIXME: What about the component id? Should it be set to something specific.
-    mavlink_msg_encapsulated_data_pack(250, 0, &message, _lastOutgoingSeqNumber, (uint8_t*)request);
+    
+    if (_systemIdQGC == 0) {
+        _systemIdQGC = MainWindow::instance()->getMAVLink()->getSystemId();
+    }
+    
+    Q_ASSERT(_mav);
+    mavlink_msg_file_transfer_protocol_pack(_systemIdQGC,       // QGC System ID
+                                            0,                  // QGC Component ID
+                                            &message,           // Mavlink Message to pack into
+                                            0,                  // Target network
+                                            _systemIdServer,    // Target system
+                                            0,                  // Target component
+                                            (uint8_t*)request); // Payload
+    
     _mav->sendMessage(message);
 }

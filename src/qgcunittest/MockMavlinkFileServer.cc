@@ -45,8 +45,10 @@ const MockMavlinkFileServer::FileTestCase MockMavlinkFileServer::rgFileTestCases
 // We only support a single fixed session
 const uint8_t MockMavlinkFileServer::_sessionId = 1;
 
-MockMavlinkFileServer::MockMavlinkFileServer(void) :
-    _errMode(errModeNone)
+MockMavlinkFileServer::MockMavlinkFileServer(uint8_t systemIdQGC, uint8_t systemIdServer) :
+    _errMode(errModeNone),
+    _systemIdServer(systemIdServer),
+    _systemIdQGC(systemIdQGC)
 {
 
 }
@@ -74,7 +76,6 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request, ui
         return;
     }
     
-    ackResponse.hdr.magic = 'f';
     ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
     ackResponse.hdr.session = 0;
     ackResponse.hdr.offset = request->hdr.offset;
@@ -133,7 +134,6 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request, ui
         return;
     }
     
-    response.hdr.magic = 'f';
     response.hdr.opcode = QGCUASFileManager::kRspAck;
     response.hdr.session = _sessionId;
     
@@ -183,7 +183,6 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request, ui
     // We should always have written something, otherwise there is something wrong with the code above
     Q_ASSERT(cDataBytes);
     
-    response.hdr.magic = 'f';
     response.hdr.session = _sessionId;
     response.hdr.size = cDataBytes;
     response.hdr.offset = request->hdr.offset;
@@ -214,15 +213,15 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
 {
     QGCUASFileManager::Request  ackResponse;
 
-    Q_ASSERT(message.msgid == MAVLINK_MSG_ID_ENCAPSULATED_DATA);
+    Q_ASSERT(message.msgid == MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL);
     
-    mavlink_encapsulated_data_t requestEncapsulatedData;
-    mavlink_msg_encapsulated_data_decode(&message, &requestEncapsulatedData);
-    QGCUASFileManager::Request* request = (QGCUASFileManager::Request*)&requestEncapsulatedData.data[0];
+    mavlink_file_transfer_protocol_t requestFileTransferProtocol;
+    mavlink_msg_file_transfer_protocol_decode(&message, &requestFileTransferProtocol);
+    QGCUASFileManager::Request* request = (QGCUASFileManager::Request*)&requestFileTransferProtocol.payload[0];
 
-    Q_ASSERT(request->hdr.magic == QGCUASFileManager::kProtocolMagic);
-
-    uint16_t incomingSeqNumber = requestEncapsulatedData.seqnr;
+    Q_ASSERT(requestFileTransferProtocol.target_system == _systemIdServer);
+    
+    uint16_t incomingSeqNumber = request->hdr.seqNumber;
     uint16_t outgoingSeqNumber = _nextSeqNumber(incomingSeqNumber);
     
     if (_errMode == errModeNoResponse) {
@@ -250,7 +249,6 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
 
         case QGCUASFileManager::kCmdNone:
             // ignored, always acked
-            ackResponse.hdr.magic = 'f';
             ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
             ackResponse.hdr.session = 0;
             ackResponse.hdr.crc32 = 0;
@@ -294,7 +292,6 @@ void MockMavlinkFileServer::_sendAck(uint16_t seqNumber)
 {
     QGCUASFileManager::Request ackResponse;
     
-    ackResponse.hdr.magic = 'f';
     ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
     ackResponse.hdr.session = 0;
     ackResponse.hdr.size = 0;
@@ -307,7 +304,6 @@ void MockMavlinkFileServer::_sendNak(QGCUASFileManager::ErrorCode error, uint16_
 {
     QGCUASFileManager::Request nakResponse;
 
-    nakResponse.hdr.magic = 'f';
     nakResponse.hdr.opcode = QGCUASFileManager::kRspNak;
     nakResponse.hdr.session = 0;
     nakResponse.hdr.size = 1;
@@ -321,14 +317,21 @@ void MockMavlinkFileServer::_emitResponse(QGCUASFileManager::Request* request, u
 {
     mavlink_message_t   mavlinkMessage;
     
-    request->hdr.magic = QGCUASFileManager::kProtocolMagic;
+    request->hdr.seqNumber = seqNumber;
+    
     request->hdr.crc32 = QGCUASFileManager::crc32(request);
     if (_errMode == errModeBadCRC) {
         // Return a bad CRC
         request->hdr.crc32++;
     }
     
-    mavlink_msg_encapsulated_data_pack(250, 50, &mavlinkMessage, seqNumber, (uint8_t*)request);
+    mavlink_msg_file_transfer_protocol_pack(_systemIdServer,    // System ID
+                                            0,                  // Component ID
+                                            &mavlinkMessage,    // Mavlink Message to pack into
+                                            0,                  // Target network
+                                            _systemIdQGC,       // QGC Target System ID
+                                            0,                  // Target component
+                                            (uint8_t*)request); // Payload
     
     emit messageReceived(NULL, mavlinkMessage);
 }
