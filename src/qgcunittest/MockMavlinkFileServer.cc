@@ -235,6 +235,7 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
 
     // Validate CRC
     if (request->hdr.crc32 != QGCUASFileManager::crc32(request)) {
+        qDebug() << "Bad CRC received - opcode:" << request->hdr.opcode << "expected:" << request->hdr.crc32 << "actual:" << QGCUASFileManager::crc32(request);
         _sendNak(QGCUASFileManager::kErrCrc, outgoingSeqNumber);
     }
 
