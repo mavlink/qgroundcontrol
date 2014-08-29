@@ -279,7 +279,6 @@ void MainWindow::init()
 
     // Connect user interface devices
     emit initStatusChanged(tr("Initializing joystick interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    joystickWidget = 0;
     joystick = new JoystickInput();
 
 #ifdef QGC_MOUSE_ENABLED_WIN
@@ -1329,9 +1328,6 @@ void MainWindow::connectCommonActions()
     // so no ressources spend on this.
     ui.actionJoystickSettings->setVisible(true);
 
-    // Configuration
-    // Joystick
-    connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
     // Application Settings
     connect(ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 
@@ -1380,22 +1376,9 @@ void MainWindow::showRoadMap()
     }
 }
 
-void MainWindow::configure()
-{
-    if (!joystickWidget)
-    {
-        if (!joystick->isRunning())
-        {
-            joystick->start();
-        }
-        joystickWidget = new JoystickWidget(joystick, this);
-    }
-    joystickWidget->show();
-}
-
 void MainWindow::showSettings()
 {
-    QGCSettingsWidget* settings = new QGCSettingsWidget(this);
+    QGCSettingsWidget* settings = new QGCSettingsWidget(joystick, this);
     settings->show();
 }
 
