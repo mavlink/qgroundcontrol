@@ -14,7 +14,7 @@ class QGCSettingsWidget : public QDialog
     Q_OBJECT
 
 public:
-    QGCSettingsWidget(QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
+    QGCSettingsWidget(JoystickInput *joystick, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
     ~QGCSettingsWidget();
 
 public slots:

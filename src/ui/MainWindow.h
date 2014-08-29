@@ -81,7 +81,6 @@ class QSplashScreen;
 class QGCStatusBar;
 class Linecharts;
 class QGCDataPlot2D;
-class JoystickWidget;
 class MenuActionHelper;
 class QGCUASFileViewMulti;
 
@@ -202,7 +201,6 @@ public slots:
     LinkInterface* addLink();
     void addLink(LinkInterface* link);
     bool configLink(LinkInterface *link);
-    void configure();
     /** @brief Simulate a link */
     void simulateLink(bool simulate);
     /** @brief Set the currently controlled UAS */
@@ -459,10 +457,7 @@ protected:
 
     QPointer<QGCUASFileViewMulti> fileWidget;
 
-    // Popup widgets
-    JoystickWidget* joystickWidget;
-
-    JoystickInput* joystick;
+    JoystickInput* joystick; ///< The joystick manager for QGC
 
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
