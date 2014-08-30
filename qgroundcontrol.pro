@@ -73,6 +73,11 @@ CONFIG(debug, debug|release) {
     error(Unsupported build flavor)
 }
 
+# Need to special case Windows debug_and_release since VS Project creation in this case does strange things [QTBUG-40351]
+win32:debug_and_release {
+    CONFIG += WindowsDebugAndRelease
+}
+
 # Setup our build directories
 
 BASEDIR = $${IN_PWD}
@@ -744,8 +749,15 @@ SOURCES += \
 
 #
 # Unit Test specific configuration goes here
-# We'd ideally only build this code as part of a Debug build, but qmake doesn't allow
-# for Debug-only files when generating Visual Studio projects [QTBUG-40351]
+#
+# We have to special case Windows debug_and_release builds because you can't have files
+# which are only in the debug variant [QTBUG-40351]. So in this case we include unit tests 
+# even in the release variant. If you want a Windows release build with no unit tests run 
+# qmake with CONFIG-=debug_and_release CONFIG+=release.
+#
+
+DebugBuild|WindowsDebugAndRelease {
+
 INCLUDEPATH += \
 	src/qgcunittest
 
@@ -778,3 +790,5 @@ SOURCES += \
 	src/qgcunittest/TCPLoopBackServer.cc \
 	src/qgcunittest/QGCUASFileManagerTest.cc \
     src/qgcunittest/PX4RCCalibrationTest.cc
+
+}
