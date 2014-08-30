@@ -19,7 +19,8 @@
 
 installer {
     MacBuild {
-        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${DESTDIR}/qgroundcontrol.app -dmg
+        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${DESTDIR}/qgroundcontrol.app
+        QMAKE_POST_LINK += && hdiutil create -layout SPUD -srcfolder $${DESTDIR}/qgroundcontrol.app -volname qgroundcontrol $${DESTDIR}/qgroundcontrol.dmg
     }
     
     WindowsBuild {
