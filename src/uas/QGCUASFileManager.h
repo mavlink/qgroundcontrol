@@ -38,7 +38,7 @@ public:
     /// These methods are only used for testing purposes.
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
     bool _sendCmdTestNoAck(void) { return _sendOpcodeOnlyCmd(kCmdTestNoAck, kCOAck); };
-    bool _sendCmdReset(void) { return _sendOpcodeOnlyCmd(kCmdReset, kCOAck); };
+    bool _sendCmdReset(void) { return _sendOpcodeOnlyCmd(kCmdResetSessions, kCOAck); };
     
     /// @brief Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
     /// for the FileManager to timeout.
@@ -104,43 +104,39 @@ protected:
     };
 
     enum Opcode
-        {
-            // Commands
-            kCmdNone,       ///< ignored, always acked
-            kCmdTerminate,	///< releases sessionID, closes file
-            kCmdReset,      ///< terminates all sessions
-            kCmdList,       ///< list files in <path> from <offset>
-            kCmdOpen,       ///< opens <path> for reading, returns <session>
-            kCmdRead,       ///< reads <size> bytes from <offset> in <session>
-            kCmdCreate,     ///< creates <path> for writing, returns <session>
-            kCmdWrite,      ///< appends <size> bytes at <offset> in <session>
-            kCmdRemove,     ///< remove file (only if created by server?)
+	{
+		kCmdNone,               ///< ignored, always acked
+		kCmdTerminateSession,	///< Terminates open Read session
+		kCmdResetSessions,      ///< Terminates all open Read sessions
+		kCmdListDirectory,      ///< List files in <path> from <offset>
+		kCmdOpenFile,           ///< Opens file at <path> for reading, returns <session>
+		kCmdReadFile,           ///< Reads <size> bytes from <offset> in <session>
+		kCmdCreateFile,         ///< Creates file at <path> for writing, returns <session>
+		kCmdWriteFile,          ///< Appends <size> bytes to file in <session>
+		kCmdRemoveFile,         ///< Remove file at <path>
+		kCmdCreateDirectory,	///< Creates directory at <path>
+		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
+		
+		kRspAck,                ///< Ack response
+		kRspNak,                ///< Nak response
 
-            // Responses
-            kRspAck,        ///< positive acknowledgement of previous command
-            kRspNak,        ///< negative acknowledgement of previous command
-            
-            // Used for testing only, not part of protocol
-            kCmdTestNoAck,  ///< ignored, ack not sent back, should timeout waiting for ack
-        };
-
-    enum ErrorCode
-        {
-            kErrNone,
-            kErrNoRequest,
-            kErrNoSession,
-            kErrSequence,
-            kErrNotDir,
-            kErrNotFile,
-            kErrEOF,
-            kErrNotAppend,
-            kErrTooBig,
-            kErrIO,
-            kErrPerm,
-            kErrUnknownCommand,
-            kErrCrc
-        };
-
+        // Used for testing only, not part of protocol
+        kCmdTestNoAck,          ///< ignored, ack not sent back, should timeout waiting for ack
+	};
+	
+	/// @brief Error codes returned in Nak response PayloadHeader.data[0].
+	enum ErrorCode
+    {
+		kErrNone,
+		kErrFail,                   ///< Unknown failure
+		kErrFailErrno,              ///< errno sent back in PayloadHeader.data[1]
+		kErrInvalidDataSize,		///< PayloadHeader.size is invalid
+		kErrInvalidSession,         ///< Session is not currently open
+		kErrNoSessionsAvailable,	///< All available Sessions in use
+		kErrEOF,                    ///< Offset past end of file for List and Read commands
+		kErrUnknownCommand,         ///< Unknown command opcode
+		kErrCrc                     ///< CRC on Payload is incorrect
+    };
 
     enum OperationState
         {

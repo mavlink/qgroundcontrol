@@ -124,7 +124,7 @@ void QGCUASFileManager::_openAckResponse(Request* openAck)
 
     Request request;
     request.hdr.session = _activeSession;
-    request.hdr.opcode = kCmdRead;
+    request.hdr.opcode = kCmdReadFile;
     request.hdr.offset = _readOffset;
     request.hdr.size = sizeof(request.data);
 
@@ -188,7 +188,7 @@ void QGCUASFileManager::_readAckResponse(Request* readAck)
 
         Request request;
         request.hdr.session = _activeSession;
-        request.hdr.opcode = kCmdRead;
+        request.hdr.opcode = kCmdReadFile;
         request.hdr.offset = _readOffset;
         request.hdr.size = 0;
 
@@ -388,7 +388,7 @@ void QGCUASFileManager::_sendListCommand(void)
     Request request;
 
     request.hdr.session = 0;
-    request.hdr.opcode = kCmdList;
+    request.hdr.opcode = kCmdListDirectory;
     request.hdr.offset = _listOffset;
     request.hdr.size = 0;
 
@@ -423,7 +423,7 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
 
     Request request;
     request.hdr.session = 0;
-    request.hdr.opcode = kCmdOpen;
+    request.hdr.opcode = kCmdOpenFile;
     request.hdr.offset = 0;
     request.hdr.size = 0;
     _fillRequestWithString(&request, from);
@@ -433,34 +433,26 @@ void QGCUASFileManager::downloadPath(const QString& from, const QDir& downloadDi
 QString QGCUASFileManager::errorString(uint8_t errorCode)
 {
     switch(errorCode) {
-    case kErrNone:
-        return QString("no error");
-    case kErrNoRequest:
-        return QString("bad request");
-    case kErrNoSession:
-        return QString("bad session");
-    case kErrSequence:
-        return QString("bad sequence number");
-    case kErrNotDir:
-        return QString("not a directory");
-    case kErrNotFile:
-        return QString("not a file");
-    case kErrEOF:
-        return QString("read beyond end of file");
-    case kErrNotAppend:
-        return QString("write not at end of file");
-    case kErrTooBig:
-        return QString("file too big");
-    case kErrIO:
-        return QString("device I/O error");
-    case kErrPerm:
-        return QString("permission denied");
-    case kErrUnknownCommand:
-        return QString("unknown command");
-    case kErrCrc:
-        return QString("bad crc");
-    default:
-        return QString("unknown error code");
+        case kErrNone:
+            return QString("no error");
+        case kErrFail:
+            return QString("unknown error");
+        case kErrEOF:
+            return QString("read beyond end of file");
+        case kErrUnknownCommand:
+            return QString("unknown command");
+        case kErrCrc:
+            return QString("bad crc");
+        case kErrFailErrno:
+            return QString("command failed");
+        case kErrInvalidDataSize:
+            return QString("invalid data size");
+        case kErrInvalidSession:
+            return QString("invalid session");
+        case kErrNoSessionsAvailable:
+            return QString("no sessions availble");
+        default:
+            return QString("unknown error code");
     }
 }
 
@@ -527,7 +519,7 @@ void QGCUASFileManager::_sendTerminateCommand(void)
 {
     Request request;
     request.hdr.session = _activeSession;
-    request.hdr.opcode = kCmdTerminate;
+    request.hdr.opcode = kCmdTerminateSession;
     request.hdr.size = 0;
     _sendRequest(&request);
 }
