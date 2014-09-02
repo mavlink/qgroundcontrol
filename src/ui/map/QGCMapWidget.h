@@ -56,7 +56,7 @@ public slots:
     /** @brief Add system to map view */
     void addUAS(UASInterface* uas);
     /** @brief Update the global position of a system */
-    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec);
     /** @brief Update the global position of all systems */
     void updateGlobalPosition();
     /** @brief Update the local position and draw it converted to GPS reference */
