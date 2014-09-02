@@ -6,7 +6,7 @@
   <output>
    <line_separator>newline</line_separator>
    <var_separator>tab</var_separator>
-   
+
    <chunk>
     <name>time (sec)</name>
     <type>float</type>
@@ -46,7 +46,7 @@
     <node>/orientation/roll-deg</node>
     <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
    </chunk>
-   
+
    <chunk>
     <name>pitch angle (rad)</name>
     <type>float</type>
@@ -54,7 +54,7 @@
     <node>/orientation/pitch-deg</node>
     <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
    </chunk>
-   
+
    <chunk>
     <name>yaw angle</name>
     <type>float</type>
@@ -109,7 +109,7 @@
    </chunk>
 
    <!-- Velocities -->
-   
+
    <chunk>
     <name>Velocity North ("vn" mps)</name>
     <type>float</type>
@@ -176,7 +176,16 @@
     <node>/environment/pressure-inhg</node>
     <factor>33.86389</factor>                  <!-- inhg to hpa -->
    </chunk>
-   
+
+   <!-- Altitude AGL -->
+   <chunk>
+    <name>Altitude AGL (m)</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/position/altitude-agl-ft</node>
+    <factor>0.3048</factor>  <!-- feet to meter -->
+   </chunk>
+
   </output>
 
   <input>
@@ -195,13 +204,13 @@
     <type>float</type>
     <node>/controls/flight/elevator</node>
    </chunk>
-   
+
    <chunk>
      <name>rudder</name>
      <type>float</type>
      <node>/controls/flight/rudder</node>
    </chunk>
-   
+
    <chunk>
     <name>running</name>
     <type>bool</type>
@@ -213,7 +222,7 @@
     <type>float</type>
     <node>/controls/engines/engine/throttle</node>
    </chunk>
-   
+
 
  </input>
 
