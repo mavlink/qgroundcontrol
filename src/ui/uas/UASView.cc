@@ -396,13 +396,14 @@ void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double 
     localFrame = true;
 }
 
-void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec)
+void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double altAMSL, double altWGS84, quint64 usec)
 {
     Q_UNUSED(uas);
     Q_UNUSED(usec);
+    Q_UNUSED(altAMSL);
     this->lon = lon;
     this->lat = lat;
-    this->alt = alt;
+    this->alt = altWGS84;
     globalFrameKnown = true;
 }
 

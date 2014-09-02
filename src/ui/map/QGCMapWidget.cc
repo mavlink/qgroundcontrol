@@ -421,9 +421,10 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
  * @param alt Altitude over mean sea level
  * @param usec Timestamp of the position message in milliseconds FIXME will move to microseconds
  */
-void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
+void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double altAMSL, double altWGS84, quint64 usec)
 {
     Q_UNUSED(usec);
+    Q_UNUSED(altAMSL);
 
     // Immediate update
     if (maxUpdateInterval == 0)
@@ -452,7 +453,7 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
 
         // Set new lat/lon position of UAV icon
         internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
-        uav->SetUAVPos(pos_lat_lon, alt);
+        uav->SetUAVPos(pos_lat_lon, altWGS84);
         // Follow status
         if (followUAVEnabled && uas->getUASID() == followUAVID) SetCurrentPosition(pos_lat_lon);
         // Convert from radians to degrees and apply
