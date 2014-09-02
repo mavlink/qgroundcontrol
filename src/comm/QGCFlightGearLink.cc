@@ -432,7 +432,11 @@ void QGCFlightGearLink::readBytes()
 //        qDebug()  << "sensorHilGpsChanged " << lat  << lon << alt  << vel;
 
         // Send Optical Flow message. For now we set the flow quality to 0 and just write the ground_distance field
-        float distanceMeasurement = (float)(1.0/cosPhi * 1.0/cosThe * alt_agl); //asuming planar ground
+        float distanceMeasurement = -1.0; // -1 means invalid value
+        if (fabsf(roll) < 0.87 && fabsf(pitch) < 0.87) // return a valid value only for decent angles
+        {
+            distanceMeasurement = fabsf((float)(1.0/cosPhi * 1.0/cosThe * alt_agl)); // assuming planar ground
+        }
         emit sensorHilOpticalFlowChanged(QGC::groundTimeUsecs(), 0, 0, 0.0f,
                                          0.0f, 0.0f, distanceMeasurement);
     } else {
