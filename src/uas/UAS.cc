@@ -158,7 +158,8 @@ UAS::UAS(MAVLinkProtocol* protocol, QThread* thread, int id) : UASInterface(),
     hilEnabled(false),
     sensorHil(false),
     lastSendTimeGPS(0),
-    lastSendTimeSensors(0)
+    lastSendTimeSensors(0),
+    lastSendTimeOpticalFlow(0)
 {
     moveToThread(thread);
 
@@ -3145,6 +3146,26 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
         setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
         qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
     }
+}
+
+void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
+                    float flow_comp_m_y, quint8 quality, float ground_distance)
+{
+    if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_hil_optical_flow_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
+                                   time_us, 0, flow_x, flow_y, flow_comp_m_x, flow_comp_m_y, quality, ground_distance);
+        sendMessage(msg);
+        lastSendTimeOpticalFlow = QGC::groundTimeMilliseconds();
+    }
+    else
+    {
+        // Attempt to set HIL mode
+        setMode(base_mode | MAV_MODE_FLAG_HIL_ENABLED, custom_mode);
+        qDebug() << __FILE__ << __LINE__ << "HIL is onboard not enabled, trying to enable.";
+    }
+
 }
 
 void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites)

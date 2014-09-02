@@ -390,6 +390,10 @@ public slots:
     /** @brief Send raw GPS for sensor HIL */
     virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites) = 0;
 
+    /** @brief Send Optical Flow sensor message for HIL, (arguments and units accoding to mavlink documentation*/
+    virtual void sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
+                            float flow_comp_m_y, quint8 quality, float ground_distance) = 0;
+
 protected:
     QColor color;
 
