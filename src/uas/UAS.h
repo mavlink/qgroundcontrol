@@ -813,6 +813,10 @@ public slots:
     void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
                         float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed);
 
+    /** @brief Send Optical Flow sensor message for HIL, (arguments and units accoding to mavlink documentation*/
+    void sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
+                            float flow_comp_m_y, quint8 quality, float ground_distance);
+
     /**
      * @param time_us
      * @param lat
@@ -1020,7 +1024,8 @@ protected:
     bool hilEnabled;            ///< Set to true if HIL mode is enabled from GCS (UAS might be in HIL even if this flag is not set, this defines the GCS HIL setting)
     bool sensorHil;             ///< True if sensor HIL is enabled
     quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
-    quint64 lastSendTimeSensors;
+    quint64 lastSendTimeSensors; ///< Last HIL Sensors message sent
+    quint64 lastSendTimeOpticalFlow; ///< Last HIL Optical Flow message sent
     QList<QAction*> actions; ///< A list of actions that this UAS can perform.
 
 
