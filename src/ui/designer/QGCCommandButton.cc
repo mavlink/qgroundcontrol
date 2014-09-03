@@ -83,6 +83,7 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("MAV_CMD_OVERRIDE_GOTO", MAV_CMD_OVERRIDE_GOTO);
     ui->editCommandComboBox->addItem("MAV_CMD_MISSION_START", MAV_CMD_MISSION_START);
     ui->editCommandComboBox->addItem("MAV_CMD_COMPONENT_ARM_DISARM", MAV_CMD_COMPONENT_ARM_DISARM);
+	ui->editCommandComboBox->addItem("MAV_CMD_START_RX_PAIR", MAV_CMD_START_RX_PAIR);
     ui->editCommandComboBox->addItem("MAV_CMD_DO_FLIGHTTERMINATION", MAV_CMD_DO_FLIGHTTERMINATION);
     ui->editCommandComboBox->addItem("MAV_CMD_PAYLOAD_PREPARE_DEPLOY", MAV_CMD_PAYLOAD_PREPARE_DEPLOY);
     ui->editCommandComboBox->addItem("MAV_CMD_PAYLOAD_CONTROL_DEPLOY", MAV_CMD_PAYLOAD_CONTROL_DEPLOY);
