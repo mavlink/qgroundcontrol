@@ -322,7 +322,6 @@ void PrimaryFlightDisplay::updateSpeed(UASInterface* uas, double _groundSpeed, d
 void PrimaryFlightDisplay::updateAltitude(UASInterface* uas, double _altitudeAMSL, double _altitudeWGS84, double _altitudeRelative, double _climbRate, quint64 timestamp) {
     Q_UNUSED(uas);
     Q_UNUSED(timestamp);
-    Q_UNUSED(_altitudeWGS84)
 
     if (fabsf(altitudeAMSL - _altitudeAMSL) > 0.5f) {
         _valuesChanged = true;
