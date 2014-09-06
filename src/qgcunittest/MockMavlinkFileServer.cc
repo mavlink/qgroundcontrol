@@ -66,7 +66,7 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request, ui
     // We only support root path
     path = (char *)&request->data[0];
     if (!path.isEmpty() && path != "/") {
-        _sendNak(QGCUASFileManager::kErrNotDir, outgoingSeqNumber);
+        _sendNak(QGCUASFileManager::kErrFail, outgoingSeqNumber);
         return;
     }
     
@@ -96,7 +96,7 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request, ui
         _emitResponse(&ackResponse, outgoingSeqNumber);
     } else if (_errMode == errModeNakSecondResponse) {
         // Nak error all subsequent requests
-        _sendNak(QGCUASFileManager::kErrPerm, outgoingSeqNumber);
+        _sendNak(QGCUASFileManager::kErrFail, outgoingSeqNumber);
         return;
     } else if (_errMode == errModeNoSecondResponse) {
         // No response for all subsequent requests
@@ -130,7 +130,7 @@ void MockMavlinkFileServer::_openCommand(QGCUASFileManager::Request* request, ui
         }
     }
     if (!found) {
-        _sendNak(QGCUASFileManager::kErrNotFile, outgoingSeqNumber);
+        _sendNak(QGCUASFileManager::kErrFail, outgoingSeqNumber);
         return;
     }
     
@@ -151,7 +151,7 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request, ui
     uint16_t                    outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     if (request->hdr.session != _sessionId) {
-        _sendNak(QGCUASFileManager::kErrNoSession, outgoingSeqNumber);
+        _sendNak(QGCUASFileManager::kErrFail, outgoingSeqNumber);
         return;
     }
     
@@ -162,7 +162,7 @@ void MockMavlinkFileServer::_readCommand(QGCUASFileManager::Request* request, ui
         // If we get here it means the client is requesting additional data past the first request
         if (_errMode == errModeNakSecondResponse) {
             // Nak error all subsequent requests
-            _sendNak(QGCUASFileManager::kErrPerm, outgoingSeqNumber);
+            _sendNak(QGCUASFileManager::kErrFail, outgoingSeqNumber);
             return;
         } else if (_errMode == errModeNoSecondResponse) {
             // No rsponse for all subsequent requests
@@ -197,7 +197,7 @@ void MockMavlinkFileServer::_terminateCommand(QGCUASFileManager::Request* reques
     uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     if (request->hdr.session != _sessionId) {
-        _sendNak(QGCUASFileManager::kErrNoSession, outgoingSeqNumber);
+        _sendNak(QGCUASFileManager::kErrInvalidSession, outgoingSeqNumber);
         return;
     }
     
@@ -229,7 +229,7 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
         return;
     } else if (_errMode == errModeNakResponse) {
         // Nak all requests, the actual error send back doesn't really matter as long as it's an error
-        _sendNak(QGCUASFileManager::kErrPerm, outgoingSeqNumber);
+        _sendNak(QGCUASFileManager::kErrFail, outgoingSeqNumber);
         return;
     }
 
@@ -244,7 +244,7 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             // ignored, ack not sent back, for testing only
             break;
             
-        case QGCUASFileManager::kCmdReset:
+        case QGCUASFileManager::kCmdResetSessions:
             // terminates all sessions
             // Fall through to send back Ack
 
@@ -257,30 +257,22 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             _emitResponse(&ackResponse, outgoingSeqNumber);
             break;
 
-        case QGCUASFileManager::kCmdList:
+        case QGCUASFileManager::kCmdListDirectory:
             _listCommand(request, incomingSeqNumber);
             break;
             
-        case QGCUASFileManager::kCmdOpen:
+        case QGCUASFileManager::kCmdOpenFile:
             _openCommand(request, incomingSeqNumber);
             break;
 
-        case QGCUASFileManager::kCmdRead:
+        case QGCUASFileManager::kCmdReadFile:
             _readCommand(request, incomingSeqNumber);
             break;
 
-        case QGCUASFileManager::kCmdTerminate:
+        case QGCUASFileManager::kCmdTerminateSession:
             _terminateCommand(request, incomingSeqNumber);
             break;
 
-        // Remainder of commands are NYI
-
-        case QGCUASFileManager::kCmdCreate:
-            // creates <path> for writing, returns <session>
-        case QGCUASFileManager::kCmdWrite:
-            // appends <size> bytes at <offset> in <session>
-        case QGCUASFileManager::kCmdRemove:
-            // remove file (only if created by server?)
         default:
             // nack for all NYI opcodes
             _sendNak(QGCUASFileManager::kErrUnknownCommand, outgoingSeqNumber);
