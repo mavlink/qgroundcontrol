@@ -22,7 +22,6 @@ public slots:
 
     void selectGeneric();
     void selectPX4();
-    void selectAPM();
     void selectWifi();
 
 signals:
