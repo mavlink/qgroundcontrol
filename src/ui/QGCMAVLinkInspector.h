@@ -26,9 +26,11 @@ public slots:
     void receiveMessage(LinkInterface* link,mavlink_message_t message);
     /** @brief Clear all messages */
     void clearView();
-    /** Update view */
+    /** @brief Update view */
     void refreshView();
+    /** @brief Add system to the list */
     void addSystem(UASInterface* uas);
+    /** @brief Add component to the list */
     void addComponent(int uas, int component, const QString& name);
     /** @Brief Select a system through the drop down menu */
     void selectDropDownMenuSystem(int dropdownid);
@@ -43,25 +45,31 @@ protected:
     int selectedComponentID;       ///< Currently selected component
     QMap<int, int> systems;     ///< Already observed systems
     QMap<int, int> components; ///< Already observed components
-    QMap<int, quint64> lastMessageUpdate; ///< Used to switch between highlight and non-highlighting color
-    QMap<int, float> messagesHz; ///< Used to store update rate in Hz
     QMap<int, float> onboardMessageInterval; ///< Stores the onboard selected data rate
-    QMap<int, unsigned int> messageCount; ///< Used to store the message count
-    mavlink_message_t receivedMessages[256]; ///< Available / known messages
-    QMap<int, QTreeWidgetItem*> treeWidgetItems;   ///< Available tree widget items
     QMap<int, QTreeWidgetItem*> rateTreeWidgetItems; ///< Available rate tree widget items
     QTimer updateTimer; ///< Only update at 1 Hz to not overload the GUI
     mavlink_message_info_t messageInfo[256]; // Store the metadata for all available MAVLink messages.
 
-    // Update one message field
-    void updateField(int msgid, int fieldid, QTreeWidgetItem* item);
+    QMap<int, QTreeWidgetItem* > uasTreeWidgetItems; ///< Tree of available uas with their widget
+    QMap<int, QMap<int, QTreeWidgetItem*>* > uasMsgTreeItems; ///< Stores the widget of the received message for each UAS
+
+    QMap<int, mavlink_message_t* > uasMavlinkStorage; ///< Stores the message array for every UAS
+    QMap<int, QMap<int, float>* > uasMessageHz; ///< Stores the frequency of each message of each UAS
+    QMap<int, QMap<int, unsigned int>* > uasMessageCount; ///< Stores the message count of each message of each UAS
+
+    QMap<int, QMap<int, quint64>* > uasLastMessageUpdate; ///< Stores the time of the last message for each message of each UAS
+
+    /* @brief Update one message field */
+    void updateField(int sysid, int msgid, int fieldid, QTreeWidgetItem* item);
     /** @brief Rebuild the list of components */
     void rebuildComponentList();
     /** @brief Change the stream interval */
     void changeStreamInterval(int msgid, int interval);
+    /* @brief Create a new tree for a new UAS */
+    void addUAStoTree(int sysId);
 
-    static const unsigned int updateInterval;
-    static const float updateHzLowpass;
+    static const unsigned int updateInterval; ///< The update interval of the refresh function
+    static const float updateHzLowpass; ///< The low-pass filter value for the frequency of each message
 
 private:
     Ui::QGCMAVLinkInspector *ui;
