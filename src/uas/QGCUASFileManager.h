@@ -83,7 +83,8 @@ protected:
             uint8_t     session;    ///< Session id for read and write commands
             uint8_t     opcode;     ///< Command opcode
             uint8_t     size;       ///< Size of data
-            uint8_t     padding[3];
+            uint8_t     req_opcode; ///< Request opcode returned in kRspAck, kRspNak message
+            uint8_t     padding[2];
             uint32_t    crc32;      ///< CRC for entire Request structure, with crc32 and padding set to 0
             uint32_t    offset;     ///< Offsets for List and Read commands
         };
@@ -117,7 +118,7 @@ protected:
 		kCmdCreateDirectory,	///< Creates directory at <path>
 		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
 		
-		kRspAck,                ///< Ack response
+		kRspAck = 128,          ///< Ack response
 		kRspNak,                ///< Nak response
 
         // Used for testing only, not part of protocol
