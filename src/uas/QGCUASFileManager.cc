@@ -97,7 +97,6 @@ quint32 QGCUASFileManager::crc32(Request* request, unsigned state)
     request->hdr.crc32 = 0;
     request->hdr.padding[0] = 0;
     request->hdr.padding[1] = 0;
-    request->hdr.padding[2] = 0;
 
     for (size_t i=0; i < cbData; i++)
         state = crctab[(state ^ data[i]) & 0xff] ^ (state >> 8);
