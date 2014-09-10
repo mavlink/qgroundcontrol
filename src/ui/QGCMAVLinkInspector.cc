@@ -170,7 +170,7 @@ void QGCMAVLinkInspector::refreshView()
     {
         const char* msgname = messageInfo[i].name;
 
-        int namelen = strnlen(msgname, 5);
+        size_t namelen = strnlen(msgname, 5);
 
         if (namelen < 3) {
             continue;
