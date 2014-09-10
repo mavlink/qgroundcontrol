@@ -262,11 +262,13 @@ void QGCUASFileManager::receiveMessage(LinkInterface* link, mavlink_message_t me
                 break;
         }
     } else if (request->hdr.opcode == kRspNak) {
-        Q_ASSERT(request->hdr.size == 1); // Should only have one byte of error code
 
         OperationState previousOperation = _currentOperation;
         uint8_t errorCode = request->data[0];
 
+        // Nak's normally have 1 byte of data for error code, except for kErrFailErrno which has additional byte for errno
+        Q_ASSERT((errorCode == kErrFailErrno && request->hdr.size == 2) || request->hdr.size == 1);
+        
         _currentOperation = kCOIdle;
 
         if (previousOperation == kCOList && errorCode == kErrEOF) {
