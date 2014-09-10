@@ -475,8 +475,6 @@ void QGCUASFileManager::_sendRequest(Request* request)
     _lastOutgoingSeqNumber++;
 
     request->hdr.seqNumber = _lastOutgoingSeqNumber;
-    request->hdr.padding[0] = 0;
-    request->hdr.padding[1] = 0;
     
     if (_systemIdQGC == 0) {
         _systemIdQGC = MainWindow::instance()->getMAVLink()->getSystemId();
