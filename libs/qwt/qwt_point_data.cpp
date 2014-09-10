@@ -37,10 +37,10 @@ QwtPointArrayData::QwtPointArrayData(
 QwtPointArrayData::QwtPointArrayData( const double *x,
         const double *y, size_t size )
 {
-    d_x.resize( size );
+    d_x.resize( static_cast<int>(size) );
     ::memcpy( d_x.data(), x, size * sizeof( double ) );
 
-    d_y.resize( size );
+	d_y.resize(static_cast<int>(size));
     ::memcpy( d_y.data(), y, size * sizeof( double ) );
 }
 
@@ -273,7 +273,7 @@ QPointF QwtSyntheticPointData::sample( size_t index ) const
     if ( index >= d_size )
         return QPointF( 0, 0 );
 
-    const double xValue = x( index );
+    const double xValue = x( static_cast<uint>(index) );
     const double yValue = y( xValue );
 
     return QPointF( xValue, yValue );
