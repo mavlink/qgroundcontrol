@@ -53,7 +53,8 @@ protected:
     QMap<int, QTreeWidgetItem* > uasTreeWidgetItems; ///< Tree of available uas with their widget
     QMap<int, QMap<int, QTreeWidgetItem*>* > uasMsgTreeItems; ///< Stores the widget of the received message for each UAS
 
-    QMap<int, mavlink_message_t* > uasMavlinkStorage; ///< Stores the message array for every UAS
+    QMap<int, mavlink_message_t* > uasMessageStorage; ///< Stores the messages for every UAS
+
     QMap<int, QMap<int, float>* > uasMessageHz; ///< Stores the frequency of each message of each UAS
     QMap<int, QMap<int, unsigned int>* > uasMessageCount; ///< Stores the message count of each message of each UAS
 

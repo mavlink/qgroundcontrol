@@ -126,7 +126,7 @@ void QGCMAVLinkInspector::clearView()
 {
     uasTreeWidgetItems.clear();
     uasMsgTreeItems.clear();
-    uasMavlinkStorage.clear();
+    uasMessageStorage.clear();
     uasMessageHz.clear();
     uasMessageCount.clear();
     uasLastMessageUpdate.clear();
@@ -141,93 +141,91 @@ void QGCMAVLinkInspector::refreshView()
 {
     QMap<int, mavlink_message_t* >::const_iterator ite;
     
-    for(ite=uasMavlinkStorage.constBegin(); ite!=uasMavlinkStorage.constEnd();++ite)
+    for(ite=uasMessageStorage.constBegin(); ite!=uasMessageStorage.constEnd();++ite)
     {
-        for (int i = 0; i < 256; ++i)
+
+        mavlink_message_t* msg = ite.value();
+        // Ignore NULL values
+        if (msg->msgid == 0xFF) continue;
+
+        // Update the message frenquency
+
+        // Get the previous frequency for low-pass filtering
+        float msgHz = 0.0f;
+        QMap<int, QMap<int, float>* >::const_iterator iteHz = uasMessageHz.find(msg->sysid);
+        QMap<int, float>* uasMsgHz = iteHz.value();
+
+        while((iteHz != uasMessageHz.end()) && (iteHz.key() == msg->sysid))
         {
-            mavlink_message_t* msg = ite.value()+i;
-            // Ignore NULL values
-            if (msg->msgid == 0xFF) continue;
-
-            // Update the message frenquency
-
-            // Get the previous frequency for low-pass filtering
-            float msgHz = 0.0f;
-            QMap<int, QMap<int, float>* >::const_iterator iteHz = uasMessageHz.find(msg->sysid);
-            QMap<int, float>* uasMsgHz = iteHz.value();
-
-            while((iteHz != uasMessageHz.end()) && (iteHz.key() == msg->sysid))
+            if(iteHz.value()->contains(msg->msgid))
             {
-                if(iteHz.value()->contains(msg->msgid))
-                {
-                    uasMsgHz = iteHz.value();
-                    msgHz = iteHz.value()->value(msg->msgid);
-                    break;
-                }
-                ++iteHz;
+                uasMsgHz = iteHz.value();
+                msgHz = iteHz.value()->value(msg->msgid);
+                break;
             }
+            ++iteHz;
+        }
 
-            // Get the number of message received
-            float msgCount = 0;
-            QMap<int, QMap<int, unsigned int> * >::const_iterator iter = uasMessageCount.find(msg->sysid);
-            QMap<int, unsigned int>* uasMsgCount = iter.value();
-            while((iter != uasMessageCount.end()) && (iter.key()==msg->sysid))
+        // Get the number of message received
+        float msgCount = 0;
+        QMap<int, QMap<int, unsigned int> * >::const_iterator iter = uasMessageCount.find(msg->sysid);
+        QMap<int, unsigned int>* uasMsgCount = iter.value();
+        while((iter != uasMessageCount.end()) && (iter.key()==msg->sysid))
+        {
+            if(iter.value()->contains(msg->msgid))
             {
-                if(iter.value()->contains(msg->msgid))
-                {
-                    msgCount = (float) iter.value()->value(msg->msgid);
-                    uasMsgCount = iter.value();
-                    break;
-                }
-                ++iter;
+                msgCount = (float) iter.value()->value(msg->msgid);
+                uasMsgCount = iter.value();
+                break;
             }
+            ++iter;
+        }
 
-            // Compute the new low-pass filtered frequency and update the message count
-            msgHz = (1.0f-updateHzLowpass)* msgHz + updateHzLowpass*msgCount/((float)updateInterval/1000.0f);
-            uasMsgHz->insert(msg->msgid,msgHz);
-            uasMsgCount->insert(msg->msgid,(unsigned int) 0);
+        // Compute the new low-pass filtered frequency and update the message count
+        msgHz = (1.0f-updateHzLowpass)* msgHz + updateHzLowpass*msgCount/((float)updateInterval/1000.0f);
+        uasMsgHz->insert(msg->msgid,msgHz);
+        uasMsgCount->insert(msg->msgid,(unsigned int) 0);
 
-            // Update the tree view
-            QString messageName("%1 (%2 Hz, #%3)");
-            messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
+        // Update the tree view
+        QString messageName("%1 (%2 Hz, #%3)");
+        messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
 
-            addUAStoTree(msg->sysid);
+        addUAStoTree(msg->sysid);
 
-            // Look for the tree for the UAS sysid
-            QMap<int, QTreeWidgetItem*>* msgTreeItems = uasMsgTreeItems.value(msg->sysid);
-            if (!msgTreeItems)
+        // Look for the tree for the UAS sysid
+        QMap<int, QTreeWidgetItem*>* msgTreeItems = uasMsgTreeItems.value(msg->sysid);
+        if (!msgTreeItems)
+        {
+            // The UAS tree has not been created yet, no update
+            return;
+        }
+
+        // Add the message with msgid to the tree if not done yet
+        if(!msgTreeItems->contains(msg->msgid))
+        {
+            QStringList fields;
+            fields << messageName;
+            QTreeWidgetItem* widget = new QTreeWidgetItem();
+            for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
             {
-                // The UAS tree has not been created yet, no update
-                return;
+                QTreeWidgetItem* field = new QTreeWidgetItem();
+                widget->addChild(field);
             }
+            msgTreeItems->insert(msg->msgid,widget);
+            QList<int> groupKeys = msgTreeItems->uniqueKeys();
+            int insertIndex = groupKeys.indexOf(msg->msgid);
+            uasTreeWidgetItems.value(msg->sysid)->insertChild(insertIndex,widget);
+        }
 
-            // Add the message with msgid to the tree if not done yet
-            if(!msgTreeItems->contains(msg->msgid))
+        // Update the message
+        QTreeWidgetItem* message = msgTreeItems->value(msg->msgid);
+        if(message)
+        {
+            message->setFirstColumnSpanned(true);
+            message->setData(0, Qt::DisplayRole, QVariant(messageName));
+            for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
             {
-                QStringList fields;
-                fields << messageName;
-                QTreeWidgetItem* widget = new QTreeWidgetItem();
-                for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
-                {
-                    QTreeWidgetItem* field = new QTreeWidgetItem();
-                    widget->addChild(field);
-                }
-                msgTreeItems->insert(msg->msgid,widget);
-                QList<int> groupKeys = msgTreeItems->uniqueKeys();
-                int insertIndex = groupKeys.indexOf(msg->msgid);
-                uasTreeWidgetItems.value(msg->sysid)->insertChild(insertIndex,widget);
-            }
-
-            // Update the message
-            QTreeWidgetItem* message = msgTreeItems->value(msg->msgid);
-            if(message)
-            {
-                message->setFirstColumnSpanned(true);
-                message->setData(0, Qt::DisplayRole, QVariant(messageName));
-                for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
-                {
-                    updateField(msg->sysid,msg->msgid, i, message->child(i));
-                }
+                updateField(msg->sysid,msg->msgid, i, message->child(i));
             }
         }
     }
@@ -306,20 +304,39 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
     quint64 receiveTime;
 
     // Create dynamically an array to store the messages for each UAS
-    if(!uasMavlinkStorage.contains(message.sysid))
+    if (!uasMessageStorage.contains(message.sysid))
     {
-        mavlink_message_t* msg = new mavlink_message_t[256];
-
-        // Initialize the received data for all messages to invalid (0xFF)
-        memset(msg,0xFF, sizeof(mavlink_message_t)*256);
-        uasMavlinkStorage.insert(message.sysid,msg);
+        mavlink_message_t* msg = new mavlink_message_t;
+        *msg = message;
+        uasMessageStorage.insertMulti(message.sysid,msg);
     }
 
-    // Fill the slot with the message received
-    memcpy(uasMavlinkStorage.value(message.sysid)+message.msgid,&message,sizeof(mavlink_message_t));
+    bool msgFound = false;
+    QMap<int, mavlink_message_t* >::const_iterator iteMsg = uasMessageStorage.find(message.sysid);
+    mavlink_message_t* uasMessage = iteMsg.value();
+    while((iteMsg != uasMessageStorage.end()) && (iteMsg.key() == message.sysid))
+    {
+        if (iteMsg.value()->msgid == message.msgid)
+        {
+            msgFound = true;
+            uasMessage = iteMsg.value();
+            break;
+        }
+        ++iteMsg;
+    }
+    if (!msgFound)
+    {
+        mavlink_message_t* msgIdMessage = new mavlink_message_t;
+        *msgIdMessage = message;
+        uasMessageStorage.insertMulti(message.sysid,msgIdMessage);
+    }
+    else
+    {
+        *uasMessage = message;
+    }
 
     // Looking if this message has already been received once
-    bool msgFound = false;
+    msgFound = false;
     QMap<int, QMap<int, quint64>* >::const_iterator ite = uasLastMessageUpdate.find(message.sysid);
     QMap<int, quint64>* lastMsgUpdate = ite.value();
     while((ite != uasLastMessageUpdate.end()) && (ite.key() == message.sysid))
@@ -358,27 +375,29 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
         // Point to the created message
         lastMsgUpdate = lastMessage;
     }
-
-    // The message has been found/created
-    if ((lastMsgUpdate->contains(message.msgid))&&(uasMessageCount.contains(message.sysid)))
+    else
     {
-        // Looking for and updating the message count
-        unsigned int count = 0;
-        QMap<int, QMap<int, unsigned int>* >::const_iterator iter = uasMessageCount.find(message.sysid);
-        QMap<int, unsigned int> * uasMsgCount = iter.value();
-        while((iter != uasMessageCount.end()) && (iter.key() == message.sysid))
+        // The message has been found/created
+        if ((lastMsgUpdate->contains(message.msgid))&&(uasMessageCount.contains(message.sysid)))
         {
-            if(iter.value()->contains(message.msgid))
+            // Looking for and updating the message count
+            unsigned int count = 0;
+            QMap<int, QMap<int, unsigned int>* >::const_iterator iter = uasMessageCount.find(message.sysid);
+            QMap<int, unsigned int> * uasMsgCount = iter.value();
+            while((iter != uasMessageCount.end()) && (iter.key() == message.sysid))
             {
-                uasMsgCount = iter.value();
-                count = uasMsgCount->value(message.msgid,0);
-                uasMsgCount->insert(message.msgid,count+1);
-                break;
+                if(iter.value()->contains(message.msgid))
+                {
+                    uasMsgCount = iter.value();
+                    count = uasMsgCount->value(message.msgid,0);
+                    uasMsgCount->insert(message.msgid,count+1);
+                    break;
+                }
+                ++iter;
             }
-            ++iter;
         }
+        lastMsgUpdate->insert(message.msgid,receiveTime);
     }
-    lastMsgUpdate->insert(message.msgid,receiveTime);
 
     if (selectedSystemID == 0 || selectedComponentID == 0)
     {
@@ -440,7 +459,29 @@ void QGCMAVLinkInspector::updateField(int sysid, int msgid, int fieldid, QTreeWi
 {
     // Add field tree widget item
     item->setData(0, Qt::DisplayRole, QVariant(messageInfo[msgid].fields[fieldid].name));
-    uint8_t* m = ((uint8_t*)(uasMavlinkStorage.value(sysid)+msgid))+8;
+    
+    bool msgFound = false;
+    QMap<int, mavlink_message_t* >::const_iterator iteMsg = uasMessageStorage.find(sysid);
+    mavlink_message_t* uasMessage = iteMsg.value();
+    while((iteMsg != uasMessageStorage.end()) && (iteMsg.key() == sysid))
+    {
+        if (iteMsg.value()->msgid == msgid)
+        {
+            msgFound = true;
+            uasMessage = iteMsg.value();
+            break;
+        }
+        ++iteMsg;
+    }
+
+    if (!msgFound)
+    {
+        return;
+    }
+    
+    uint8_t* m = ((uint8_t*)uasMessage)+8;
+
+
     switch (messageInfo[msgid].fields[fieldid].type)
     {
     case MAVLINK_TYPE_CHAR:
