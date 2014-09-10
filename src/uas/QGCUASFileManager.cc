@@ -44,7 +44,7 @@ QGCUASFileManager::QGCUASFileManager(QObject* parent, UASInterface* uas, uint8_t
     _systemIdServer = _mav->getUASID();
     
     // Make sure we don't have bad structure packing
-    Q_ASSERT(sizeof(RequestHeader) == 16);
+    Q_ASSERT(sizeof(RequestHeader) == 12);
 }
 
 /// @brief Respond to the Ack associated with the Open command with the next Read command.
@@ -475,9 +475,8 @@ void QGCUASFileManager::_sendRequest(Request* request)
     _lastOutgoingSeqNumber++;
 
     request->hdr.seqNumber = _lastOutgoingSeqNumber;
-    request->hdr.reserved[0] = 0;
-    request->hdr.reserved[1] = 0;
-    request->hdr.reserved[2] = 0;
+    request->hdr.padding[0] = 0;
+    request->hdr.padding[1] = 0;
     
     if (_systemIdQGC == 0) {
         _systemIdQGC = MainWindow::instance()->getMAVLink()->getSystemId();
