@@ -56,7 +56,6 @@ public:
         errModeNakResponse,         ///< Nak all requests
         errModeNoSecondResponse,    ///< No response to subsequent request to initial command
         errModeNakSecondResponse,   ///< Nak subsequent request to initial command
-        errModeBadCRC,              ///< Return response with bad CRC
         errModeBadSequence          ///< Return response with bad sequence number
     } ErrorMode_t;
     
