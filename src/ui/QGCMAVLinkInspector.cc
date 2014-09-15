@@ -113,6 +113,7 @@ void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& na
 {
     Q_UNUSED(component);
     Q_UNUSED(name);
+    
     if (uas != selectedSystemID) return;
 
     rebuildComponentList();
@@ -124,23 +125,75 @@ void QGCMAVLinkInspector::addComponent(int uas, int component, const QString& na
  */
 void QGCMAVLinkInspector::clearView()
 {
-    uasTreeWidgetItems.clear();
-    uasMsgTreeItems.clear();
+    QMap<int, mavlink_message_t* >::iterator ite;
+    for(ite=uasMessageStorage.begin(); ite!=uasMessageStorage.end();++ite)
+    {
+        delete ite.value();
+        ite.value() = NULL;
+    }
     uasMessageStorage.clear();
+
+    QMap<int, QMap<int, QTreeWidgetItem*>* >::iterator iteMsg;
+    for (iteMsg=uasMsgTreeItems.begin(); iteMsg!=uasMsgTreeItems.end();++iteMsg)
+    {
+        QMap<int, QTreeWidgetItem*>* msgTreeItems = iteMsg.value();
+
+        QList<int> groupKeys = msgTreeItems->uniqueKeys();
+        QList<int>::iterator listKeys;
+        for (listKeys=groupKeys.begin();listKeys!=groupKeys.end();++listKeys)
+        {
+            delete msgTreeItems->take(*listKeys);
+        }
+    }
+    uasMsgTreeItems.clear();
+
+    QMap<int, QTreeWidgetItem* >::iterator iteTree;
+    for(iteTree=uasTreeWidgetItems.begin(); iteTree!=uasTreeWidgetItems.end();++iteTree)
+    {
+        delete iteTree.value();
+        iteTree.value() = NULL;
+    }
+    uasTreeWidgetItems.clear();
+    
+    QMap<int, QMap<int, float>* >::iterator iteHz;
+    for (iteHz=uasMessageHz.begin(); iteHz!=uasMessageHz.end();++iteHz)
+    {
+
+        iteHz.value()->clear();
+        delete iteHz.value();
+        iteHz.value() = NULL;
+    }
     uasMessageHz.clear();
+
+    QMap<int, QMap<int, unsigned int>* >::iterator iteCount;
+    for(iteCount=uasMessageCount.begin(); iteCount!=uasMessageCount.end();++iteCount)
+    {
+        iteCount.value()->clear();
+        delete iteCount.value();
+        iteCount.value() = NULL;
+    }
     uasMessageCount.clear();
+
+    QMap<int, QMap<int, quint64>* >::iterator iteLast;
+    for(iteLast=uasLastMessageUpdate.begin(); iteLast!=uasLastMessageUpdate.end();++iteLast)
+    {
+        iteLast.value()->clear();
+        delete iteLast.value();
+        iteLast.value() = NULL;
+    }
     uasLastMessageUpdate.clear();
 
     onboardMessageInterval.clear();
 
     ui->treeWidget->clear();
     ui->rateTreeWidget->clear();
+
 }
 
 void QGCMAVLinkInspector::refreshView()
 {
     QMap<int, mavlink_message_t* >::const_iterator ite;
-    
+
     for(ite=uasMessageStorage.constBegin(); ite!=uasMessageStorage.constEnd();++ite)
     {
 
@@ -170,6 +223,7 @@ void QGCMAVLinkInspector::refreshView()
         float msgCount = 0;
         QMap<int, QMap<int, unsigned int> * >::const_iterator iter = uasMessageCount.find(msg->sysid);
         QMap<int, unsigned int>* uasMsgCount = iter.value();
+
         while((iter != uasMessageCount.end()) && (iter.key()==msg->sysid))
         {
             if(iter.value()->contains(msg->msgid))
@@ -302,7 +356,6 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
     Q_UNUSED(link);
 
     quint64 receiveTime;
-
     
     if (selectedSystemID != 0 && selectedSystemID != message.sysid) return;
     if (selectedComponentID != 0 && selectedComponentID != message.compid) return;
@@ -421,7 +474,8 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
     }
 }
 
-void QGCMAVLinkInspector::changeStreamInterval(int msgid, int interval) {
+void QGCMAVLinkInspector::changeStreamInterval(int msgid, int interval)
+{
     //REQUEST_DATA_STREAM
     if (selectedSystemID == 0 || selectedComponentID == 0) {
         return;
@@ -456,6 +510,7 @@ void QGCMAVLinkInspector::rateTreeItemChanged(QTreeWidgetItem* paramItem, int co
 
 QGCMAVLinkInspector::~QGCMAVLinkInspector()
 {
+    clearView();
     delete ui;
 }
 
