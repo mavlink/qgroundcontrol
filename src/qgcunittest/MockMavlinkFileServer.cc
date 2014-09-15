@@ -28,7 +28,6 @@ const MockMavlinkFileServer::ErrorMode_t MockMavlinkFileServer::rgFailureModes[]
     MockMavlinkFileServer::errModeNakResponse,
     MockMavlinkFileServer::errModeNoSecondResponse,
     MockMavlinkFileServer::errModeNakSecondResponse,
-    MockMavlinkFileServer::errModeBadCRC,
     MockMavlinkFileServer::errModeBadSequence,
 };
 const size_t MockMavlinkFileServer::cFailureModes = sizeof(MockMavlinkFileServer::rgFailureModes) / sizeof(MockMavlinkFileServer::rgFailureModes[0]);
@@ -233,12 +232,6 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
         return;
     }
 
-    // Validate CRC
-    if (request->hdr.crc32 != QGCUASFileManager::crc32(request)) {
-        qDebug() << "Bad CRC received - opcode:" << request->hdr.opcode << "expected:" << request->hdr.crc32 << "actual:" << QGCUASFileManager::crc32(request);
-        _sendNak(QGCUASFileManager::kErrCrc, outgoingSeqNumber);
-    }
-
     switch (request->hdr.opcode) {
         case QGCUASFileManager::kCmdTestNoAck:
             // ignored, ack not sent back, for testing only
@@ -252,7 +245,6 @@ void MockMavlinkFileServer::sendMessage(mavlink_message_t message)
             // ignored, always acked
             ackResponse.hdr.opcode = QGCUASFileManager::kRspAck;
             ackResponse.hdr.session = 0;
-            ackResponse.hdr.crc32 = 0;
             ackResponse.hdr.size = 0;
             _emitResponse(&ackResponse, outgoingSeqNumber);
             break;
@@ -311,12 +303,6 @@ void MockMavlinkFileServer::_emitResponse(QGCUASFileManager::Request* request, u
     mavlink_message_t   mavlinkMessage;
     
     request->hdr.seqNumber = seqNumber;
-    
-    request->hdr.crc32 = QGCUASFileManager::crc32(request);
-    if (_errMode == errModeBadCRC) {
-        // Return a bad CRC
-        request->hdr.crc32++;
-    }
     
     mavlink_msg_file_transfer_protocol_pack(_systemIdServer,    // System ID
                                             0,                  // Component ID

@@ -83,8 +83,8 @@ protected:
             uint8_t     session;    ///< Session id for read and write commands
             uint8_t     opcode;     ///< Command opcode
             uint8_t     size;       ///< Size of data
-            uint8_t     padding[3];
-            uint32_t    crc32;      ///< CRC for entire Request structure, with crc32 and padding set to 0
+            uint8_t     req_opcode; ///< Request opcode returned in kRspAck, kRspNak message
+            uint8_t     padding[2]; ///< 32 bit aligment padding
             uint32_t    offset;     ///< Offsets for List and Read commands
         };
 
@@ -117,7 +117,7 @@ protected:
 		kCmdCreateDirectory,	///< Creates directory at <path>
 		kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
 		
-		kRspAck,                ///< Ack response
+		kRspAck = 128,          ///< Ack response
 		kRspNak,                ///< Nak response
 
         // Used for testing only, not part of protocol
@@ -134,8 +134,7 @@ protected:
 		kErrInvalidSession,         ///< Session is not currently open
 		kErrNoSessionsAvailable,	///< All available Sessions in use
 		kErrEOF,                    ///< Offset past end of file for List and Read commands
-		kErrUnknownCommand,         ///< Unknown command opcode
-		kErrCrc                     ///< CRC on Payload is incorrect
+		kErrUnknownCommand          ///< Unknown command opcode
     };
 
     enum OperationState
@@ -166,7 +165,6 @@ protected:
     void _sendTerminateCommand(void);
     void _closeReadSession(bool success);
     
-    static quint32 crc32(Request* request, unsigned state = 0);
     static QString errorString(uint8_t errorCode);
 
     OperationState  _currentOperation;              ///< Current operation of state machine
