@@ -160,7 +160,7 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
         // get the length of the name
         uint8_t cBytesLeft = cBytes - offset;
         size_t nlen = strnlen(ptr, cBytesLeft);
-        if (nlen < 2) {
+        if ((*ptr == 'S' && nlen > 1) || (*ptr != 'S' && nlen < 2)) {
             _currentOperation = kCOIdle;
             _emitErrorMessage(tr("Incorrectly formed list entry: '%1'").arg(ptr));
             return;
@@ -170,10 +170,12 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
             return;
         }
 
-        // Returned names are prepended with D for directory, F for file, U for unknown
+        // Returned names are prepended with D for directory, F for file, S for skip
         if (*ptr == 'F' || *ptr == 'D') {
             // put it in the view
             _emitListEntry(ptr);
+        } else if (*ptr == 'S') {
+            // do nothing
         } else {
             qDebug() << "unknown entry" << ptr;
         }
