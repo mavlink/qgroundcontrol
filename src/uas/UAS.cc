@@ -2417,7 +2417,7 @@ void UAS::setParameter(const int compId, const QString& paramId, const QVariant&
                 p.param_id[i] = 0;
             }
         }
-        mavlink_msg_param_set_encode(mavlink->getSystemId(), compId, &msg, &p);
+        mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
         sendMessage(msg);
     }
 }
