@@ -890,7 +890,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                 } else {
                     if (verbose) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST from %u but have no waypoints, staying in \n", msg->sysid);
                 }
-				protocol_current_count = static_cast<uint16_t>(waypoints->size());
+                protocol_current_count = static_cast<uint16_t>(waypoints->size());
                 send_waypoint_count(msg->sysid,msg->compid, protocol_current_count);
             } else {
                 if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST because i'm doing something else already (state=%i).\n", current_state);

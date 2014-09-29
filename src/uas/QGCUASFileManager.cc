@@ -219,7 +219,7 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
 
         // get the length of the name
         uint8_t cBytesLeft = cBytes - offset;
-		uint8_t nlen = static_cast<uint8_t>(strnlen(ptr, cBytesLeft));
+        uint8_t nlen = static_cast<uint8_t>(strnlen(ptr, cBytesLeft));
         if (nlen < 2) {
             _currentOperation = kCOIdle;
             _emitErrorMessage(tr("Incorrectly formed list entry: '%1'").arg(ptr));
