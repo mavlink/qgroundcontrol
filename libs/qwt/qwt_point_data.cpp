@@ -40,7 +40,7 @@ QwtPointArrayData::QwtPointArrayData( const double *x,
     d_x.resize( static_cast<int>(size) );
     ::memcpy( d_x.data(), x, size * sizeof( double ) );
 
-	d_y.resize(static_cast<int>(size));
+    d_y.resize(static_cast<int>(size));
     ::memcpy( d_y.data(), y, size * sizeof( double ) );
 }
 
