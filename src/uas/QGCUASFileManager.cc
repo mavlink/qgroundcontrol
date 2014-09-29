@@ -159,8 +159,9 @@ void QGCUASFileManager::_listAckResponse(Request* listAck)
 
         // get the length of the name
         uint8_t cBytesLeft = cBytes - offset;
-        size_t nlen = strnlen(ptr, cBytesLeft);
+        uint8_t nlen = static_cast<uint8_t>(strnlen(ptr, cBytesLeft));
         if ((*ptr == 'S' && nlen > 1) || (*ptr != 'S' && nlen < 2)) {
+        if (nlen < 2) {
             _currentOperation = kCOIdle;
             _emitErrorMessage(tr("Incorrectly formed list entry: '%1'").arg(ptr));
             return;
@@ -315,7 +316,7 @@ void QGCUASFileManager::listDirectory(const QString& dirPath)
 void QGCUASFileManager::_fillRequestWithString(Request* request, const QString& str)
 {
     strncpy((char *)&request->data[0], str.toStdString().c_str(), sizeof(request->data));
-    request->hdr.size = strnlen((const char *)&request->data[0], sizeof(request->data));
+    request->hdr.size = static_cast<uint8_t>(strnlen((const char *)&request->data[0], sizeof(request->data)));
 }
 
 void QGCUASFileManager::_sendListCommand(void)

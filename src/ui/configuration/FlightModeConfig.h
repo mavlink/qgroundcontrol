@@ -58,9 +58,9 @@ private:
     static const FlightModeInfo_t   _rgModeInfoRotor[];
     static const FlightModeInfo_t   _rgModeInfoRover[];
     const FlightModeInfo_t*         _rgModeInfo;
-    size_t                          _cModeInfo;
+    int                             _cModeInfo;
     
-    static const size_t _cModes = 6;
+    static const int _cModes = 6;
 
     static const char*  _rgModeParamFixedWing[_cModes];
     static const char*  _rgModeParamRotor[_cModes];

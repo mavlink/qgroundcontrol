@@ -86,8 +86,8 @@ void MockMavlinkFileServer::_listCommand(QGCUASFileManager::Request* request, ui
         char *bufPtr = (char *)&ackResponse.data[0];
         for (int i=0; i<_fileList.size(); i++) {
             strcpy(bufPtr, _fileList[i].toStdString().c_str());
-            size_t cchFilename = strlen(bufPtr);
-			Q_ASSERT(cchFilename);
+            uint8_t cchFilename = static_cast<uint8_t>(strlen(bufPtr));
+            Q_ASSERT(cchFilename);
             ackResponse.hdr.size += cchFilename + 1;
             bufPtr += cchFilename + 1;
         }
