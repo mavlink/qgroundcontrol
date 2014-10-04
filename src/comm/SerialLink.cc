@@ -232,10 +232,10 @@ void SerialLink::run()
         }
 
         // If there are too many errors on this link, disconnect.
-        if (isConnected() && (linkErrorCount > 100)) {
+        if (isConnected() && (linkErrorCount > 150)) {
             qDebug() << "linkErrorCount too high: re-connecting!";
             linkErrorCount = 0;
-            emit communicationUpdate(getName(), tr("Reconnecting on too many link errors"));
+            emit communicationUpdate(getName(), tr("Link timeout, not receiving any data, attempting reconnect"));
 
             if (m_port) {
                 m_port->close();
@@ -290,7 +290,7 @@ void SerialLink::run()
         //wait n msecs for data to be ready
         //[TODO][BB] lower to SerialLink::poll_interval?
         m_dataMutex.lock();
-        bool success = m_port->waitForReadyRead(10);
+        bool success = m_port->waitForReadyRead(20);
 
         if (success) {
             QByteArray readData = m_port->readAll();
@@ -416,6 +416,8 @@ bool SerialLink::disconnect()
         }
         wait(); // This will terminate the thread and close the serial port
 
+        emit connected(false);
+        emit disconnected();
         return true;
     }
 
