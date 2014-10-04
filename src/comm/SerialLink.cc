@@ -242,6 +242,9 @@ void SerialLink::run()
                 delete m_port;
                 m_port = NULL;
 
+                // We are reconnecting, so give it a fresh start
+                linkErrorCount = 0;
+
                 emit disconnected();
                 emit connected(false);
             }
