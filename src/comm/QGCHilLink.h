@@ -105,6 +105,9 @@ signals:
                                                   float abs_pressure, float diff_pressure,
                                                   float pressure_alt, float temperature,
                                                   quint32 fields_updated);
+
+    void sensorHilOpticalFlowChanged(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
+                                     float flow_comp_m_y, quint8 quality, float ground_distance);
     
     /** @brief Remote host and port changed */
     void remoteChanged(const QString& hostPort);

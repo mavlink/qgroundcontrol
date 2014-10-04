@@ -181,9 +181,9 @@ void FlightModeConfig::activeUASSet(UASInterface *uas)
     }
 
     // Set up the combo boxes
-    for (size_t i=0; i<_cModes; i++) {
+    for (int i=0; i<_cModes; i++) {
         // Fill each combo box with the available flight modes
-        for (size_t j=0; j<_cModeInfo; j++) {
+        for (int j=0; j<_cModeInfo; j++) {
             _rgCombo[i]->addItem(_rgModeInfo[j].label, QVariant(QChar((char)_rgModeInfo[j].value)));
         }
         
@@ -260,13 +260,13 @@ void FlightModeConfig::parameterChanged(int uas, int component, QString paramete
         }
     } else {
         // Loop over the flight mode params looking for a match
-        for (size_t i=0; i<_cModes; i++) {
+        for (int i=0; i<_cModes; i++) {
             if (parameterName == _rgModeParam[i]) {
                 // We found a match, i is now the index of the combo box which displays that mode slot
                 // Loop over the mode info till we find the matching value, this tells us which row in the
                 // combo box to select.
                 QComboBox* combo = _rgCombo[i];
-                for (size_t j=0; j<_cModeInfo; j++) {
+                for (int j=0; j<_cModeInfo; j++) {
                     if (_rgModeInfo[j].value == iValue) {
                         combo->setCurrentIndex(j);
                         return;
