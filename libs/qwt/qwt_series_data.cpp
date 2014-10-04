@@ -78,7 +78,7 @@ QRectF qwtBoundingRectT(
         from = 0;
 
     if ( to < 0 )
-        to = series.size() - 1;
+        to = static_cast<int>(series.size()) - 1;
 
     if ( to < from )
         return boundingRect;

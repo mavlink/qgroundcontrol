@@ -31,6 +31,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 QGCUASFileManagerUnitTest::QGCUASFileManagerUnitTest(void) :
+    _mockFileServer(_systemIdQGC, _systemIdServer),
     _fileManager(NULL),
     _multiSpy(NULL)
 {
@@ -40,6 +41,7 @@ QGCUASFileManagerUnitTest::QGCUASFileManagerUnitTest(void) :
 // Called once before all test cases are run
 void QGCUASFileManagerUnitTest::initTestCase(void)
 {
+    _mockUAS.setMockSystemId(_systemIdServer);
     _mockUAS.setMockMavlinkPlugin(&_mockFileServer);
 }
 
@@ -48,19 +50,16 @@ void QGCUASFileManagerUnitTest::init(void)
 {
     Q_ASSERT(_multiSpy == NULL);
     
-    _fileManager = new QGCUASFileManager(NULL, &_mockUAS);
+    _fileManager = new QGCUASFileManager(NULL, &_mockUAS, _systemIdQGC);
     Q_CHECK_PTR(_fileManager);
     
     // Reset any internal state back to normal
     _mockFileServer.setErrorMode(MockMavlinkFileServer::errModeNone);
     _fileListReceived.clear();
     
-    bool connected = connect(&_mockFileServer, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), _fileManager, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-    Q_ASSERT(connected);
-    Q_UNUSED(connected);    // Silent release build compiler warning
+    connect(&_mockFileServer, &MockMavlinkFileServer::messageReceived, _fileManager, &QGCUASFileManager::receiveMessage);
 
-    connected = connect(_fileManager, SIGNAL(listEntry(const QString&)), this, SLOT(listEntry(const QString&)));
-    Q_ASSERT(connected);
+    connect(_fileManager, &QGCUASFileManager::listEntry, this, &QGCUASFileManagerUnitTest::listEntry);
 
     _rgSignals[listEntrySignalIndex] = SIGNAL(listEntry(const QString&));
     _rgSignals[listCompleteSignalIndex] = SIGNAL(listComplete(void));

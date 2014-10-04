@@ -99,6 +99,8 @@ void QGCFlightGearLink::run()
             mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     connect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)),
             mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+    connect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
+            mav, SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
     
     // Start a new QProcess to run FlightGear in
     _fgProcess = new QProcess(this);
@@ -298,7 +300,7 @@ void QGCFlightGearLink::readBytes()
     QStringList values = state.split("\t");
 
     // Check length
-    const int nValues = 21;
+    const int nValues = 22;
     if (values.size() != nValues)
     {
         qDebug() << "RETURN LENGTH MISMATCHING EXPECTED" << nValues << "BUT GOT" << values.size();
@@ -316,6 +318,7 @@ void QGCFlightGearLink::readBytes()
     float temperature;
     float abs_pressure;
     float mag_variation, mag_dip, xmag_ned, ymag_ned, zmag_ned, xmag_body, ymag_body, zmag_body;
+    float alt_agl;
 
 
     lat = values.at(1).toDouble();
@@ -344,6 +347,8 @@ void QGCFlightGearLink::readBytes()
     temperature = values.at(19).toFloat();
     abs_pressure = values.at(20).toFloat() * 1e2f; //convert to Pa from hPa
     abs_pressure += barometerOffsetkPa * 1e3f; //add offset, convert from kPa to Pa
+
+    alt_agl = values.at(21).toFloat();
 
     //calculate differential pressure
     const float air_gas_constant = 287.1f; // J/(kg * K)
@@ -424,8 +429,16 @@ void QGCFlightGearLink::readBytes()
         int satellites = 8;
 
         emit sensorHilGpsChanged(QGC::groundTimeUsecs(), lat, lon, alt, gps_fix_type, eph, epv, vel, vx, vy, vz, cog, satellites);
-
 //        qDebug()  << "sensorHilGpsChanged " << lat  << lon << alt  << vel;
+
+        // Send Optical Flow message. For now we set the flow quality to 0 and just write the ground_distance field
+        float distanceMeasurement = -1.0; // -1 means invalid value
+        if (fabsf(roll) < 0.87 && fabsf(pitch) < 0.87) // return a valid value only for decent angles
+        {
+            distanceMeasurement = fabsf((float)(1.0/cosPhi * 1.0/cosThe * alt_agl)); // assuming planar ground
+        }
+        emit sensorHilOpticalFlowChanged(QGC::groundTimeUsecs(), 0, 0, 0.0f,
+                                         0.0f, 0.0f, distanceMeasurement);
     } else {
         emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
                          pitchspeed, yawspeed, lat, lon, alt,
@@ -470,6 +483,8 @@ bool QGCFlightGearLink::disconnectSimulation()
     disconnect(this, SIGNAL(hilStateChanged(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)), mav, SLOT(sendHilState(quint64, float, float, float, float,float, float, double, double, double, float, float, float, float, float, float, float, float)));
     disconnect(this, SIGNAL(sensorHilGpsChanged(quint64, double, double, double, int, float, float, float, float, float, float, float, int)), mav, SLOT(sendHilGps(quint64, double, double, double, int, float, float, float, float, float, float, float, int)));
     disconnect(this, SIGNAL(sensorHilRawImuChanged(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)), mav, SLOT(sendHilSensors(quint64,float,float,float,float,float,float,float,float,float,float,float,float,float,quint32)));
+    disconnect(this, SIGNAL(sensorHilOpticalFlowChanged(quint64, qint16, qint16, float,float, quint8, float)),
+            mav, SLOT(sendHilOpticalFlow(quint64, qint16, qint16, float, float, quint8, float)));
 
     if (_fgProcess)
     {

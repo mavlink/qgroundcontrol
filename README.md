@@ -141,7 +141,7 @@ Only compilation using Visual Studio 2010, 2012, and 2013 are supported.
 
 3. **[OPTIONAL]** Go to the QGroundControl folder and then to libs/thirdParty/libxbee and build it following the instructions in win32.README.txt
 
-4. Open the Qt Command Prompt program from the Start Menu, navigate to the source folder of QGroundControl, and create the Visual Studio project by typing `qmake -tp vc qgroundcontrol.pro`
+4. Open the Qt Command Prompt program from the Start Menu, navigate to the source folder of QGroundControl, and create the Visual Studio project by typing `qmake -tp vc qgroundcontrol.pro`. To build a "Release" only build which does not contain unit tests, add the options 'CONFIG-=debug_and_release CONFIG+=release'.
 
 5. Now open the generated `qgroundcontrol.vcxproj` file.
 

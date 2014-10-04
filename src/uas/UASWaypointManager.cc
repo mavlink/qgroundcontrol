@@ -55,7 +55,7 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
         uasid = uas->getUASID();
         connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,double,quint64)));
     }
     else
     {

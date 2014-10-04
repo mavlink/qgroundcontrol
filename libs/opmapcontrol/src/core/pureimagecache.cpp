@@ -223,7 +223,7 @@ namespace core {
         qlonglong id=++ConnCounter;
         Mcounter.unlock();
 #ifdef DEBUG_PUREIMAGECACHE
-        qDebug()<<"Cache dir="<<dir<<" Try to GET:"<<pos.X()+","+pos.Y();
+        qDebug()<<"Cache dir="<<dir<<" Try to GET:"<<pos.X()<<","<<pos.Y();
 #endif //DEBUG_PUREIMAGECACHE
 
             QString db=dir+"Data.qmdb";
