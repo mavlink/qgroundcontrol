@@ -50,6 +50,10 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
       currentWaypointEditable(NULL),
       protocol_timer(this)
 {
+    
+    _offlineEditingModeTitle = tr("OFFLINE Waypoint Editing Mode");
+    _offlineEditingModeMessage = tr("You are in offline editing mode. Make sure to save your mission to a file before connecting to a system - you will need to load the file into the system, the offline list will be cleared on connect.");
+    
     if (uas)
     {
         uasid = uas->getUASID();
@@ -426,7 +430,7 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
     {
         // Check if this is the first waypoint in an offline list
         if (waypointsEditable.count() == 0 && uas == NULL)
-            MainWindow::instance()->showCriticalMessage(tr("OFFLINE Waypoint Editing Mode"), tr("You are in offline editing mode. Make sure to safe your mission to a file before connecting to a system - you will need to load the file into the system, the offline list will be cleared on connect."));
+            MainWindow::instance()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
 
         wp->setId(waypointsEditable.count());
         if (enforceFirstActive && waypointsEditable.count() == 0)
@@ -449,7 +453,7 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     // Check if this is the first waypoint in an offline list
     if (waypointsEditable.count() == 0 && uas == NULL)
-        MainWindow::instance()->showCriticalMessage(tr("OFFLINE Waypoint Editing Mode"), tr("You are in offline editing mode. Make sure to safe your mission to a file before connecting to a system - you will need to load the file into the system, the offline list will be cleared on connect."));
+        MainWindow::instance()->showCriticalMessage(_offlineEditingModeTitle, _offlineEditingModeMessage);
 
     Waypoint* wp = new Waypoint();
     wp->setId(waypointsEditable.count());
@@ -1119,7 +1123,8 @@ float UASWaypointManager::getAcceptanceRadiusRecommendation()
     }
     else
     {
-        if (uas->isRotaryWing())
+        // Default to rotary wing waypoint radius for offline editing
+        if (!uas || uas->isRotaryWing())
         {
             return UASInterface::WAYPOINT_RADIUS_DEFAULT_ROTARY_WING;
         }
