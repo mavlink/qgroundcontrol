@@ -290,7 +290,7 @@ bool UDPLink::disconnect()
 
         if(socket)
 	{
-        // Make sure delete happen on correct thread
+		// Make sure delete happen on correct thread
 		socket->deleteLater();
 		socket = NULL;
 	}
