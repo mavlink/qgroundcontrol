@@ -50,10 +50,6 @@ public slots:
 
     /** Set the MAV currently being calibrated */
     void setActiveUAS(UASInterface* active);
-    /** Fallback function, automatically called by loadConfig() upon failure to find and xml file*/
-    void loadQgcConfig(bool primary);
-    /** Load configuration from xml file */
-    void loadConfig();
 
 protected slots:
     void menuButtonClicked();
