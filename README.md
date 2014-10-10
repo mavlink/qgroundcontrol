@@ -46,8 +46,6 @@ QGroundControl builds are supported for OSX, Linux and Windows. See the individu
 ### Build on Mac OSX
 Supported builds are 64 bit, built using the clang compiler.
 
-To build on Mac OSX (10.6 or later):
-- - -
 #### Install SDL prerequisite
 
 1. Download SDL 1.2 from:  <http://www.libsdl.org/release/SDL-1.2.14.dmg>
@@ -71,7 +69,7 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 * For Fedora: `sudo yum install qt-creator qt5-qtbase-devel qt5-qtdeclarative-devel qt5-qtserialport-devel qt5-qtsvg-devel qt5-qtwebkit-devel SDL-devel SDL-static systemd-devel`
 * For Arch Linux: `pacman -Sy qtcreator qt5-base qt5-declarative qt5-serialport qt5-svg qt5-webkit`
 
-#### [OPTIONAL]Install additional libraries
+#### [Optional] Install additional libraries
 * For text-to-speech (espeak)
 	* For Ubuntu: `sudo apt-get install espeak libespeak-dev`
 	* For Fedora: `sudo yum install espeak espeak-devel`
@@ -82,7 +80,7 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 	* For Arch Linux: `pacman -Sy openscenegraph`
 
 #### Build QGroundControl
-1. Change directory to you 'qgroundcontrol' source directory.
+1. Change directory to you `qgroundcontrol` source directory.
 2. Run `qmake`
 3. Run `make`
 
@@ -90,7 +88,7 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 Supported builds for Windows are 32 bit only built using Visual Studio 2013 or higher.
 
 #### Install OpenSLL prerequisite
-Install OpenSSL from here: <http://slproweb.com/products/Win32OpenSSL.html>. Make sure to install VC redistributables first, then install the 32 bit v1.01i.
+Install OpenSSL from here: <http://slproweb.com/products/Win32OpenSSL.html>. Make sure to install VC redistributables first, then install the 32 bit version v1.01i.
 
 #### Install Visual Studio Express 2013
 Only compilation using Visual Studio 2013 is supported. Download and install Visual Studio Express Edition (free) from here: <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop>. Make sure you install the Windows Desktop version.
@@ -102,19 +100,19 @@ Download Qt 5.3 from here: <http://download.qt-project.org/official_releases/qt/
 #### Build QGroundControl
 1. Open the Qt Command Prompt program from the Start Menu
 2. Change directory to your 'qgroundcontrol' source folder.
-3. Run `qmake -tp vc qgroundcontrol.pro`.  This will create a `qgroundcontrol.vcxproj` project file which is capable of building both debug and release configurations.
-4. Now open the generated `qgroundcontrol.vcxproj` file in Visual Studio.
+3. Run `qmake -tp vc qgroundcontrol.pro`.  This will create a 'qgroundcontrol.vcxproj' project file which is capable of building both debug and release configurations.
+4. Now open the generated 'qgroundcontrol.vcxproj' file in Visual Studio.
 5. Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run qmake from step 3.
 
 ### Additional build notes for all supported OS
 
-* Debug Builds: By default qmake will create makefiles for a release build. If you want a debug build add CONFIG+=debug to the command line.
-* Warnings as Errors: Specifying CONFIG+=WarningsAsErrorsOn will turn all warnings into errors which break the build. If you are working on a pull request you plan to submit to github for consideration, you should always run with this settings turned on, since it is required for all pull requests.
-* Parallel builds: For Linux and OSX you can use the -j# option to run parellel builds. On Winddows parallel builds are on by default.
-* Location of built files: Individual build file results can be found in the 'build_debug' or 'build_release' directories. The built executable can be found in the 'debug' or 'release' directory.
-* Incremental builds: Incremental builds are not 100% reliable. If you find something strange happening that seems like a bad build. Delete your 'build_debug' and 'build+release' directories and run qmake again.
-* Single release congfiguration on Windows: If you want to build a vs project that does not create both debug and release builds. Include 'CONFIG-=debug_and_release' on the qmake command line plus either 'CONFIG+=debug' or 
-'CONFIG+=release' depending on the build type you want.
+* Debug Builds: By default qmake will create makefiles for a release build. If you want a debug build add `CONFIG+=debug` to the command line.
+* Warnings as Errors: Specifying `CONFIG+=WarningsAsErrorsOn` will turn all warnings into errors which break the build. If you are working on a pull request you plan to submit to github for consideration, you should always run with this settings turned on, since it is required for all pull requests.
+* Parallel builds: For Linux and OSX you can use the '-j#' option to run parellel builds. On Windows parallel builds are on by default.
+* Location of built files: Individual build file results can be found in the `build_debug` or `build_release` directories. The built executable can be found in the `debug` or `release` directory.
+* Incremental builds: Incremental builds may not be 100% reliable. If you find something strange happening that seems like a bad build. Delete your `build_debug` and `build_release` directories and run qmake again.
+* Single release congfiguration on Windows: If you want to build a vs project that does not create both debug and release builds. Include `CONFIG-=debug_and_release` on the qmake command line plus either `CONFIG+=debug` or 
+`CONFIG+=release` depending on the build type you want.
 * Build using QtCreator: It is possible to build and debug using QtCreator as well. The above instructions should provide you with enough information to setup QtCreator on OSX and Linux. QtCreator on Windows is supposedly possible but we don't have any instructions available for that.
 
 ## Additional functionality
