@@ -83,6 +83,7 @@ private:
     };
 
     struct ChannelSettings {
+		int function;
         int rcMin;
         int rcMax;
         int rcTrim;
@@ -122,13 +123,12 @@ private:
     static const int _testTrimValue;
     static const int _testThrottleTrimValue;
     
-    static const int _availableChannels = 8;    ///< 8 channel RC Trasmitter
-    static const int _requiredChannels = 5;     ///< Required channels are 0-4
-    static const int _minMaxChannels = _requiredChannels + 1;    ///< Send min/max to channels 0-5
-    static const int _attitudeChannels = 4;     ///< Attitude channels are 0-3
-    
+	static const int _availableChannels = 18;	///< Simulate 18 channel RC Transmitter
+	
     static const struct ChannelSettings _rgChannelSettingsPreValidate[_availableChannels];
     static const struct ChannelSettings _rgChannelSettingsPostValidate[PX4RCCalibration::_chanMax];
+	
+	static const int _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax];
 };
 
 DECLARE_TEST(PX4RCCalibrationTest)
