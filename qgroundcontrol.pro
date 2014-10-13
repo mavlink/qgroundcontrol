@@ -267,8 +267,6 @@ FORMS += \
     src/ui/watchdog/WatchdogControl.ui \
     src/ui/watchdog/WatchdogProcessView.ui \
     src/ui/watchdog/WatchdogView.ui \
-    src/ui/QGCFirmwareUpdate.ui \
-    src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
@@ -295,9 +293,7 @@ FORMS += \
     src/ui/WaypointViewOnlyView.ui \
     src/ui/WaypointEditableView.ui \
     src/ui/mavlink/QGCMAVLinkMessageSender.ui \
-    src/ui/firmwareupdate/QGCFirmwareUpdateWidget.ui \
     src/ui/QGCPluginHost.ui \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.ui \
     src/ui/mission/QGCMissionOther.ui \
     src/ui/mission/QGCMissionNavWaypoint.ui \
     src/ui/mission/QGCMissionDoJump.ui \
@@ -419,8 +415,6 @@ HEADERS += \
     src/uas/UASWaypointManager.h \
     src/ui/HSIDisplay.h \
     src/QGC.h \
-    src/ui/QGCFirmwareUpdate.h \
-    src/ui/QGCPxImuFirmwareUpdate.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/QGCRemoteControlView.h \
@@ -470,9 +464,7 @@ HEADERS += \
     src/ui/WaypointEditableView.h \
     src/ui/QGCRGBDView.h \
     src/ui/mavlink/QGCMAVLinkMessageSender.h \
-    src/ui/firmwareupdate/QGCFirmwareUpdateWidget.h \
     src/ui/QGCPluginHost.h \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.h \
     src/ui/mission/QGCMissionOther.h \
     src/ui/mission/QGCMissionNavWaypoint.h \
     src/ui/mission/QGCMissionDoJump.h \
@@ -611,8 +603,6 @@ SOURCES += \
     src/uas/UASWaypointManager.cc \
     src/ui/HSIDisplay.cc \
     src/QGC.cc \
-    src/ui/QGCFirmwareUpdate.cc \
-    src/ui/QGCPxImuFirmwareUpdate.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/QGCRemoteControlView.cc \
@@ -660,9 +650,7 @@ SOURCES += \
     src/ui/WaypointEditableView.cc \
     src/ui/QGCRGBDView.cc \
     src/ui/mavlink/QGCMAVLinkMessageSender.cc \
-    src/ui/firmwareupdate/QGCFirmwareUpdateWidget.cc \
     src/ui/QGCPluginHost.cc \
-    src/ui/firmwareupdate/QGCPX4FirmwareUpdate.cc \
     src/ui/mission/QGCMissionOther.cc \
     src/ui/mission/QGCMissionNavWaypoint.cc \
     src/ui/mission/QGCMissionDoJump.cc \
