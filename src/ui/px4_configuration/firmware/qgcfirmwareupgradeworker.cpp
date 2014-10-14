@@ -93,7 +93,7 @@ void QGCFirmwareUpgradeWorker::detectBoards()
 
     emit upgradeStatusChanged(tr("Detecting boards.."));
     
-    // First step is to find whic port the board is on
+    // First step is to find which port the board is on
 
     // FIXME: Should we re-scan after a reboot? Could it show up on a dfferent port on Windows?
     while (!_abortUpload && foundPortName.isEmpty()) {

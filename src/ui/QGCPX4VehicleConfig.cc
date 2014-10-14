@@ -25,7 +25,7 @@
 #include "px4_configuration/QGCPX4SensorCalibration.h"
 #include "px4_configuration/PX4RCCalibration.h"
 
-#include <dialog_bare.h>
+#include "PX4FirmwareUpgrade.h"
 
 #define WIDGET_INDEX_FIRMWARE 0
 #define WIDGET_INDEX_RC 1
@@ -65,11 +65,10 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     px4RCCalibration = new PX4RCCalibration(this);
     ui->rcLayout->addWidget(px4RCCalibration);
     
-    DialogBare *firmwareDialog = new DialogBare(this);
-    ui->firmwareLayout->addWidget(firmwareDialog);
-
-    connect(firmwareDialog, SIGNAL(connectLinks()), LinkManager::instance(), SLOT(connectAll()));
-    connect(firmwareDialog, SIGNAL(disconnectLinks()), LinkManager::instance(), SLOT(disconnectAll()));
+    PX4FirmwareUpgrade* firmwareUpgrade = new PX4FirmwareUpgrade(this);
+    ui->firmwareLayout->addWidget(firmwareUpgrade);
+    connect(firmwareUpgrade, &PX4FirmwareUpgrade::connectLinks, LinkManager::instance(), &LinkManager::connectAll);
+    connect(firmwareUpgrade, &PX4FirmwareUpgrade::disconnectLinks, LinkManager::instance(), &LinkManager::disconnectAll);
 
     connect(ui->rcMenuButton,SIGNAL(clicked()),
             this,SLOT(rcMenuButtonClicked()));

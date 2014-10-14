@@ -49,51 +49,23 @@
 #include <QSettings>
 
 #include <QGC.h>
-#include "qgcfirmwareupgradeworker.h"
-#include "boardwidget.h"
-#include "dialog_bare.h"
-#include "ui_dialog_bare.h"
 
-/// @brief Group to store settings under.
-const char* PX4FirmwareUpgrade::_settingsGroup = "PX4FirmwareUpgrade";
-
+#include "PX4FirmwareUpgrade.h"
 
 /// @Brief Constructs a new PX4FirmwareUpgrade Widget. This widget is used within the PX4VehicleConfig set of screens.
 PX4FirmwareUpgrade::PX4FirmwareUpgrade(QWidget *parent) :
     QWidget(parent),
-    _loading(false),
-    _worker(NULL),
-    _boardFoundWidget(NULL)
+    _upgradeState(upgradeStateBegin)
 {
     _ui.setupUi(this);
 
-    // Load the port list for the advanced combo box
-    foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
-        if (!info.portName().isEmpty()) {
-            _ui.advancedPortBox->addItem(info.portName());
-        }
-    }
-    
-#if 0
-    // FIXME: Why?
-    //make sure user can input their own port name!
-    ui->portBox->setEditable(true);
-#endif
-
 #if 0
     // FIXME
-    enumerator = new QextSerialEnumerator(this);
-    enumerator->setUpNotifications();
-    // FIXME: Won't pick up on new ports being added
-    connect(enumerator, SIGNAL(deviceDiscovered(QextPortInfo)), SLOT(onPortAddedOrRemoved()));
-    connect(enumerator, SIGNAL(deviceRemoved(QextPortInfo)), SLOT(onPortAddedOrRemoved()));
-#endif
-
     struct BoardInfo {
         const char* name;
         int         id;
-    }
-    static const struct BoardInfo rgBoardInfo[] = {
+    };
+    static const BoardInfo rgBoardInfo[] = {
         { "PX4FMU v1.6+",   5 },
         { "PX4FLOW v1.1+",  6 },
         { "PX4IO v1.3+",    7 },
@@ -102,114 +74,231 @@ PX4FirmwareUpgrade::PX4FirmwareUpgrade(QWidget *parent) :
         { "PX4 board #10",  10 },
         { "PX4 board #11",  11 },
     };
-    
-    for (size_t i=0; i<sizeof(rgBoardInfo)/sizeof(rgBoardInfo[0]); i++) {
-        _ui.advancedBoardCombo->addItem(rgBoardInfo[i].name, rgBoardInfo[i].id);
-    }
-
-    // Connect up advanced ui elements
-    connect(_ui.advancedCheckBox, &QCheckBox::clicked, this, &PX4FirmwareUpgrade::_showAdvancedMode);
-    connect(_ui.selectFileButton, &QPushButton::clicked, this, &PX4FirmwareUpgrade::_selectAdvancedFirmwareFilename);
-    connect(_ui.advancedFlashButton, &QPushButton::clicked, this, &PX4FirmwareUpgrade::_advancedFlash);
+#endif
     
     // Connect standard ui elements
-    connect(_ui.scanButton, &QPushButton::clicked, this, &PX4FirmwareUpgrade::_scanForBoard);
-    connect(_ui.cancelButton, &QPushButton::clicked, this, &PX4FirmwareUpgrade::onCancelButtonClicked);
-
-    // FIXME: Does this title show up anywhere?
-    setWindowTitle(tr("QUpgrade Firmware Upload / Configuration Tool"));
-
-    // FIXME: Huh?
-    // Adjust the size
-    const int screenHeight = qMin(1000, QApplication::desktop()->height() - 100);
-
-    resize(700, qMax(screenHeight, 550));
-
-    _loadSettings();
+    connect(_ui.next, &QPushButton::clicked, this, &PX4FirmwareUpgrade::_nextStep);
+    connect(_ui.cancel, &QPushButton::clicked, this, &PX4FirmwareUpgrade::_cancelUpgrade);
     
-    // FIXME: No UI to show filename?
-
-    // Set up initial state
-    ui->flashButton->setEnabled(!_advancedFirmwareFilename.isEmpty());
+    _updateStateUI(_upgradeState);
 }
 
-PX4FirmwareUpgrade::~PX4FirmwareUpgrade()
+/// @brief Updates the progress UI elements according to the new upgrade process state.
+void PX4FirmwareUpgrade::_updateStateUI(enum PX4FirmwareUpgrade::upgradeStates newUpgradeState)
 {
-    _storeSettings();
-}
+    switch (newUpgradeState) {
+        case upgradeStateBegin:
+            _ui.boardFoundCheck->setCheckState(Qt::Unchecked);
+            _ui.port->setVisible(false);
+            _ui.description->setVisible(false);
+            
+            _ui.bootloaderFoundCheck->setCheckState(Qt::Unchecked);
+            _ui.bootloaderVersion->setVisible(false);
+            _ui.boardID->setVisible(false);
+            _ui.icon->setVisible(false);
+            
+            _ui.selectFirmwareCheck->setCheckState(Qt::Unchecked);
+            _ui.firmwareCombo->setVisible(false);
+            
+            _ui.firmwareDownloadedCheck->setCheckState(Qt::Unchecked);
+            _ui.boardUpgradedCheck->setCheckState(Qt::Unchecked);
 
-/// @brief Called to show or hide the Advanced mode of the UI.
-void PX4FirmwareUpgrade::_showAdvancedMode(bool show)
-{
-    // Advanced mode UI
-    _ui.advancedSelectFileButton->setVisible(show);
-    _ui.advancedPortCombo->setVisible(show);
-    _ui.advancedPortLabel->setVisible(show);
-    _ui.advancedBoardIdLabel->setVisible(show);
-    _ui.advancedBoardCombo->setVisible(show);
-    _ui.flashButton->setVisible(show);
-    
-    // Standard UI
-    ui.scanButton->setVisible(!show);
-
-    QString msg;
-    if (show) {
-        msg = tr("Advanced Mode. Please select a file to upload and click flash.");
-    } else {
-        msg = tr("Please scan to upgrade PX4 boards.");
+            _ui.tryAgain->setEnabled(false);
+            _ui.skip->setEnabled(false);
+            _ui.cancel->setEnabled(false);
+            _ui.next->setEnabled(true);
+            
+            _ui.next->setText(tr("Scan"));
+            
+            _ui.statusLog->setText(tr("Connect your Pixhawk or PX4Flow board via USB. "
+                                   "Then click the 'Scan' button to find the board and begin the firmware upgrade process."));
+            break;
+            
+        case upgradeStateBoardNotFound:
+            _ui.tryAgain->setEnabled(true);
+            _ui.skip->setEnabled(false);
+            _ui.cancel->setEnabled(true);
+            _ui.next->setEnabled(false);
+            
+            _ui.statusLog->setText(tr("Unable to detect you board. If the board is currently connected via USB. "
+                                   "Disconnect it, reconnect it, wait a few seconds and click the 'Try Again' button."));
+            break;
+            
+        case upgradeStateBoardFound:
+            _ui.boardFoundCheck->setCheckState(Qt::Checked);
+            
+            _ui.port->setText(tr("Port: %1").arg(_port));
+            _ui.port->setVisible(true);
+            
+            _ui.description->setText(tr("Name: %1").arg(_portDescription));
+            _ui.description->setVisible(true);
+            
+            _ui.next->setText(tr("Next"));
+            
+            _ui.tryAgain->setEnabled(true);
+            _ui.skip->setEnabled(false);
+            _ui.cancel->setEnabled(true);
+            _ui.next->setEnabled(true);
+            break;
+            
+        case upgradeStateBootloaderFound:
+            _ui.bootloaderFoundCheck->setCheckState(Qt::Checked);
+            
+            _ui.bootloaderVersion->setText(QString("Version %1").arg(_bootloaderVersion));
+            _ui.bootloaderVersion->setVisible(true);
+            
+            _ui.boardID->setText(QString("Board ID %1").arg(_boardID));
+            _ui.boardID->setVisible(true);
+            
+            _setBoardIcon(_boardID);
+            _ui.icon->setVisible(false);
+            
+            _setFirmwareCombo(_boardID);
+            break;
+            
+        case upgradeStateFirmwareSelected:
+            break;
+            
+        case upgradeStateFirmwareDownloaded:
+            break;
+            
+        case upgradeStateBoardUpgraded:
+            break;
+            
     }
-    _ui.boardListLabel->setText(msg);
 }
 
-void PX4FirmwareUpgrade::_loadSettings(void)
+/// @brief Sets the board image into the icon label according to the board id.
+void PX4FirmwareUpgrade::_setBoardIcon(int boardID)
 {
-    QSettings setttings;
+    QString imageFile;
     
-    settings.beginGroup(_settingsGroup);
+    // FIXME: Magic numbers
+    switch (boardID) {
+        case 5:
+            imageFile = ":/files/images/px4/boards/px4fmu_1.x.png";
+            break;
+            
+        case 6:
+            imageFile = ":/files/images/px4/boards/px4flow_1.x.png";
+            break;
+            
+        case 9:
+            imageFile = ":/files/images/px4/boards/px4fmu_2.x.png";
+            break;
+            
+        default:
+            qDebug() << "Invalid board ID";
+            Q_ASSERT(false);
+            break;
+    }
     
-    lastFilename = settings.value("LAST_FILENAME", lastFilename).toString();
-    ui->advancedCheckBox->setChecked(set.value("ADVANCED_MODE", false).toBool());
+    _boardIcon.load(imageFile);
+    
+    int w = _ui.icon->width();
+    int h = _ui.icon->height();
+    
+    _ui.icon->setPixmap(_boardIcon.scaled(w, h, Qt::KeepAspectRatio));
+}
 
-    int boardIndex = ui->boardComboBox->findData(set.value("BOARD_ID", 5));
-    if (boardIndex >= 0)
-        ui->boardComboBox->setCurrentIndex(boardIndex);
+/// @brief Sets up the selections in the firmware combox box associated with the specified
+///     board id.
+void PX4FirmwareUpgrade::_setFirmwareCombo(int boardID)
+{
+    _ui.firmwareCombo->clear();
+    
+    static const char* rgPX4FMUV1Firmware[3] =
+    {
+        "http://px4.oznet.ch/stable/px4fmu-v1_default.px4",
+        "http://px4.oznet.ch/beta/px4fmu-v1_default.px4",
+        "http://px4.oznet.ch/continuous/px4fmu-v1_default.px4"
+    };
+    
+    static const char* rgPX4FMUV2Firmware[3] =
+    {
+        "http://px4.oznet.ch/stable/px4fmu-v2_default.px4",
+        "http://px4.oznet.ch/beta/px4fmu-v2_default.px4",
+        "http://px4.oznet.ch/continuous/px4fmu-v2_default.px4"
+    };
+    
+    static const char* rgPX4FlowFirmware[3] =
+    {
+        "http://px4.oznet.ch/stable/px4flow.px4",
+        "http://px4.oznet.ch/beta/px4flow.px4",
+        "http://px4.oznet.ch/continuous/px4flow.px4"
+    };
+    
+    // FIXME: Magic numbers
+    const char** prgFirmware;
+    switch (boardID) {
+        case 5:
+            prgFirmware = rgPX4FMUV1Firmware;
+            break;
 
-    if (set.value("PORT_NAME", "").toString().trimmed().length() > 0) {
-        int portIndex = ui->portBox->findText(set.value("PORT_NAME", "").toString());
-        if (portIndex >= 0) {
-            ui->portBox->setCurrentIndex(portIndex);
-        } else {
-            qDebug() << "could not find port" << set.value("PORT_NAME", "");
+        case 6:
+            prgFirmware = rgPX4FlowFirmware;
+            break;
+
+        case 9:
+            prgFirmware = rgPX4FMUV2Firmware;
+            break;
+            
+        default:
+            qDebug() << "Invalid board ID";
+            Q_ASSERT(false);
+            break;
+    }
+    
+    _ui.firmwareCombo->addItem(tr("Standard Version (stable)"), prgFirmware[0]);
+    _ui.firmwareCombo->addItem(tr("Beta Testing (beta)"), prgFirmware[1]);
+    _ui.firmwareCombo->addItem(tr("Developer Build (master)"), prgFirmware[2]);
+}
+
+void PX4FirmwareUpgrade::_nextStep(void)
+{
+    _updateStateUI(_findBoard() ? upgradeStateBoardFound : upgradeStateBoardNotFound);
+}
+
+void PX4FirmwareUpgrade::_cancelUpgrade(void)
+{
+    _updateStateUI(upgradeStateBegin);
+}
+
+bool PX4FirmwareUpgrade::_findBoard(void)
+{
+    foreach (QSerialPortInfo info, QSerialPortInfo::availablePorts()) {
+        
+        // Check for valid handles
+        if (info.portName().isEmpty())
+            continue;
+
+        // FIXME: Won't this OR find a 3dr radio as well?
+        // FIXME: Magic number
+        if (info.description().contains("PX4") || info.vendorIdentifier() == 9900 /* 3DR */) {
+            
+            qDebug() << "Found Board:";
+            qDebug() << "\tport name:" << info.portName();
+            qDebug() << "\tdescription:" << info.description();
+            qDebug() << "\tsystem location:" << info.systemLocation();
+            qDebug() << "\tvendor ID:" << info.vendorIdentifier();
+            qDebug() << "\tproduct ID:" << info.productIdentifier();
+            
+            _port = info.portName();
+            _portDescription = info.description();
+            
+#ifdef Q_OS_WIN
+            // Stupid windows fixes
+            _port.prepend("\\\\.\\");
+#endif
+            
+            return true;
         }
     }
-
-    onToggleAdvancedMode(ui->advancedCheckBox->isChecked());
-
-    // Check if in advanced mode
-    if (!lastFilename.isEmpty() && ui->advancedCheckBox->isChecked()) {
-        ui->upgradeLog->appendPlainText(tr("Pre-selected file %1\nfor flashing (click 'Flash' to upgrade)").arg(lastFilename));
-
-        updateBoardId(lastFilename);
-    }
     
-    settings.endGroup(_settingsGroup);
+    return false;
 }
 
-void PX4FirmwareUpgrade::_storeSettings(void)
-{
-    QSettings setttings;
-    
-    settings.beginGroup(_settingsGroup);
-    
-    if (lastFilename != "")
-        set.setValue("LAST_FILENAME", lastFilename);
-    set.setValue("ADVANCED_MODE", ui->advancedCheckBox->isChecked());
-    set.setValue("BOARD_ID", ui->boardComboBox->itemData(ui->boardComboBox->currentIndex()));
-    set.setValue("PORT_NAME", ui->portBox->currentText());
-    
-    settings.endGroup(_settingsGroup);
-}
-
+#if 0
 void PX4FirmwareUpgrade::updateBoardId(const QString &fileName) {
     // XXX this should be moved in separe classes
 
@@ -484,62 +573,6 @@ void PX4FirmwareUpgrade::_scanForBoard(void)
     }
 }
 
-void PX4FirmwareUpgrade::onPortAddedOrRemoved()
-{
-#if 0
-    // FIXME: Will need to do this on a timer
-    ui->portBox->blockSignals(true);
-
-    // Delete old ports
-    for (int i = 0; i < ui->portBox->count(); i++)
-    {
-        bool found = false;
-        foreach (QextPortInfo info, QextSerialEnumerator::getPorts())
-            if (info.portName == ui->portBox->itemText(i))
-                found = true;
-
-        if (!found && !ui->portBox->itemText(i).contains("Automatic"))
-            ui->portBox->removeItem(i);
-    }
-
-    // Add new ports
-    foreach (QextPortInfo info, QextSerialEnumerator::getPorts())
-        if (ui->portBox->findText(info.portName) < 0) {
-            if (!info.portName.isEmpty())
-                ui->portBox->addItem(info.portName);
-        }
-
-    ui->portBox->blockSignals(false);
-#endif
-}
-
-void PX4FirmwareUpgrade::onLoadStart()
-{
-    loading = true;
-    ui->flashButton->setEnabled(false);
-    ui->cancelButton->setEnabled(true);
-}
-
-void PX4FirmwareUpgrade::onUserAbort()
-{
-    loading = false;
-    ui->flashButton->setEnabled(true);
-    ui->cancelButton->setEnabled(false);
-
-    ui->upgradeLog->appendPlainText(tr("Canceled by user request"));
-    ui->boardListLabel->show();
-    ui->boardListLabel->setText(tr("Upgrade canceled. To start another upgrade attempt, click scan."));
-    ui->scanButton->show();
-    if (boardFoundWidget) {
-        ui->boardListLayout->removeWidget(boardFoundWidget);
-        delete boardFoundWidget;
-        boardFoundWidget = NULL;
-    }
-
-    ui->upgradeProgressBar->setValue(0);
-
-}
-
 void PX4FirmwareUpgrade::onLoadFinished(bool success)
 {
     loading = false;
@@ -574,50 +607,6 @@ void PX4FirmwareUpgrade::onLoadFinished(bool success)
 
 }
 
-void PX4FirmwareUpgrade::onDetectFinished(bool success, int board_id, const QString &boardName, const QString &bootLoader)
-{   
-    loading = false;
-    worker = NULL;
-
-    if (success) {
-        ui->flashButton->setEnabled(true);
-        ui->cancelButton->setEnabled(false);
-        ui->upgradeLog->appendPlainText(tr("Board found with ID #%1.").arg(board_id));
-
-        switch (board_id) {
-        case 5:
-        case 6:
-        case 9:
-        {
-            if (boardFoundWidget) {
-                ui->boardListLayout->removeWidget(boardFoundWidget);
-                delete boardFoundWidget;
-                boardFoundWidget = NULL;
-            }
-            // Instantiate the appropriate board widget
-            BoardWidget* w = new BoardWidget(this);
-            w->setBoardInfo(board_id, boardName, bootLoader);
-            connect(w, SIGNAL(flashFirmwareURL(QString)), this, SLOT(onFlashURL(QString)));
-            connect(w, SIGNAL(cancelFirmwareUpload()), this, SLOT(onUserAbort()));
-
-            boardFoundWidget = w;
-
-            w->updateStatus(tr("Ready for Firmware upload. Choose a firmware and flash."));
-
-            ui->boardListLabel->hide();
-            ui->scanButton->hide();
-            ui->boardListLayout->addWidget(w, 0, 0);
-
-        }
-            break;
-        }
-
-    } else {
-        ui->upgradeLog->appendPlainText(tr("No suitable device to upgrade."));
-        ui->upgradeProgressBar->setValue(0);
-    }
-}
-
 void PX4FirmwareUpgrade::onFlashURL(const QString &url)
 {
     onLinkClicked(QUrl(url));
@@ -629,3 +618,4 @@ void PX4FirmwareUpgrade::onDownloadProgress(qint64 curr, qint64 total)
     if (total > 0)
         ui->upgradeProgressBar->setValue((curr*100) / total);
 }
+#endif

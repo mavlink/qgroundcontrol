@@ -34,6 +34,8 @@
 #include <QSerialPort>
 #include <QTimer>
 
+#include "ui_PX4FirmwareUpgrade.h"
+
 // FIXME: Get rid of this
 class QGCFirmwareUpgradeWorker;
 
@@ -43,47 +45,42 @@ class PX4FirmwareUpgrade : public QWidget
 
 public:
     explicit PX4FirmwareUpgrade(QWidget *parent = 0);
-    ~PX4FirmwareUpgrade();
 
 signals:
-    void filenameSet(QString filename);
-    void connectLinks();
-    void disconnectLinks();
-
-protected:
-    void changeEvent(QEvent *e);
-    void loadSettings();
-    void storeSettings();
-    void updateBoardId(const QString &fileName);
-
-public slots:
-    void onPortAddedOrRemoved();
-    void onLoadStart();
-    void onLoadFinished(bool success);
-    void onUserAbort();
-    void onDetectFinished(bool success, int board_id, const QString &boardName, const QString &bootLoader);
-    void onFlashURL(const QString &url);
-    void onDownloadProgress(qint64 curr, qint64 total);
+    void connectLinks(void);
+    void disconnectLinks(void);
 
 private slots:
-    void _selectAdvancedFirmwareFilename(void);
-    void onCancelButtonClicked();
-    void onUploadButtonClicked();
-    void _scanForBoard(void);
-    void onDownloadFinished();
-    void onDownloadRequested(const QNetworkRequest &request);
-    void onLinkClicked(const QUrl&);
-    void _showAdvancedMode(bool show);
+    void _nextStep(void);
+    void _cancelUpgrade(void);
 
 private:
-    bool                        _loading;
-    Ui::PX4FirmwareUpgrade      _ui;
-    QTimer*                     _timer;
-    QGCFirmwareUpgradeWorker*   _worker;
-    QWidget*                    _boardFoundWidget;
+    /// @brief The various states that the upgrade process progresses through.
+    enum upgradeStates {
+        upgradeStateBegin,
+        upgradeStateBoardFound,
+        upgradeStateBoardNotFound,
+        upgradeStateBootloaderFound,
+        upgradeStateFirmwareSelected,
+        upgradeStateFirmwareDownloaded,
+        upgradeStateBoardUpgraded,
+    };
+    
+    void _updateStateUI(enum upgradeStates newUpgradeState);
+    void _setBoardIcon(int boardID);
+    void _setFirmwareCombo(int boardID);
+    bool _findBoard(void);
+    
+    enum upgradeStates _upgradeState;
+    
+    QString _port;
+    QString _portDescription;
+    int     _bootloaderVersion;
+    int     _boardID;
 
-    QString                     _advancedFirmwareFilename;  ///< File to flash when using advanced mode
-    static const char*          _settingsGroup;
+    QPixmap _boardIcon;
+    
+    Ui::PX4FirmwareUpgrade      _ui;
 };
 
 #endif // PX4FirmwareUpgrade_H
