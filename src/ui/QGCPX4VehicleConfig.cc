@@ -25,9 +25,7 @@
 #include "px4_configuration/QGCPX4SensorCalibration.h"
 #include "px4_configuration/PX4RCCalibration.h"
 
-#ifdef QGC_QUPGRADE_ENABLED
 #include <dialog_bare.h>
-#endif
 
 #define WIDGET_INDEX_FIRMWARE 0
 #define WIDGET_INDEX_RC 1
@@ -67,18 +65,11 @@ QGCPX4VehicleConfig::QGCPX4VehicleConfig(QWidget *parent) :
     px4RCCalibration = new PX4RCCalibration(this);
     ui->rcLayout->addWidget(px4RCCalibration);
     
-#ifdef QGC_QUPGRADE_ENABLED
     DialogBare *firmwareDialog = new DialogBare(this);
     ui->firmwareLayout->addWidget(firmwareDialog);
 
     connect(firmwareDialog, SIGNAL(connectLinks()), LinkManager::instance(), SLOT(connectAll()));
     connect(firmwareDialog, SIGNAL(disconnectLinks()), LinkManager::instance(), SLOT(disconnectAll()));
-#else
-
-    QLabel* label = new QLabel(this);
-    label->setText("THIS VERSION OF QGROUNDCONTROL WAS BUILT WITHOUT QUPGRADE. To enable firmware upload support, checkout QUpgrade WITHIN the QGroundControl folder");
-    ui->firmwareLayout->addWidget(label);
-#endif
 
     connect(ui->rcMenuButton,SIGNAL(clicked()),
             this,SLOT(rcMenuButtonClicked()));

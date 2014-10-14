@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PX4FirmwareUpgrade</class>
+ <widget class="QWidget" name="PX4FirmwareUpgrade">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1562</width>
+    <height>1286</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="verticalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>760</x>
+     <y>0</y>
+     <width>252</width>
+     <height>715</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="channelGroup10to18">
+    <item>
+     <widget class="RCChannelWidget" name="radio10Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio11Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio12Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio13Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio14Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio15Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio16Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio17Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio18Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>486</width>
+     <height>525</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="0">
+    <item row="0" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout_9">
+      <item>
+       <widget class="QPushButton" name="rcCopyTrimButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Copy the trim values from roll / pitch / yaw from manual flight to the autonomous flight modes.</string>
+        </property>
+        <property name="text">
+         <string>Copy Attitude Trims</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="rcCalStatus">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>180</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Please turn on Radio</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="rcCalFound">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>400</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="rcCalTryAgain">
+          <property name="text">
+           <string>Try Again</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="rcCalSkip">
+          <property name="text">
+           <string>Skip</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="rcCalCancel">
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="rcCalNext">
+          <property name="text">
+           <string>Next</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>60</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="title">
+         <string>Spektrum RC</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <widget class="QPushButton" name="spektrumPairButton">
+           <property name="text">
+            <string>Pair Receiver</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="dsm2RadioButton">
+           <property name="text">
+            <string>DSM2 Mode</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="dsmxRadioButton">
+           <property name="text">
+            <string>DSMX Mode (3 to 7 channels)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="dsmx8RadioButton">
+           <property name="text">
+            <string>DSMX Mode (8 or more channels)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>0</y>
+     <width>252</width>
+     <height>715</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="channelGroup1to9" stretch="0,0,0,0,0,0,0,0,0">
+    <item>
+     <widget class="RCChannelWidget" name="radio1Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio2Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio3Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio4Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio5Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio6Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio7Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio8Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="RCChannelWidget" name="radio9Widget">
+      <property name="minimumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>250</width>
+        <height>65</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>RCChannelWidget</class>
+   <extends>QGroupBox</extends>
+   <header>ui/designer/RCChannelWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
