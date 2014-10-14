@@ -163,32 +163,33 @@ void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
         QVariant value;
         bool paramFound;
         bool convertOk;
+        int componentId = _paramMgr->getDefaultComponentId();
         
         for (int i = 0; i < _chanMax; ++i) {
             struct ChannelInfo* info = &_rgChannelInfo[i];
             
-            paramFound = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), trimTpl.arg(i+1), value);
+            paramFound = _paramMgr->getParameterValue(componentId, trimTpl.arg(i+1), value);
             Q_ASSERT(paramFound);
             if (paramFound) {
                 info->rcTrim = value.toInt(&convertOk);
                 Q_ASSERT(convertOk);
             }
             
-            paramFound = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), minTpl.arg(i+1), value);
+            paramFound = _paramMgr->getParameterValue(componentId, minTpl.arg(i+1), value);
             Q_ASSERT(paramFound);
             if (paramFound) {
                 info->rcMin = value.toInt(&convertOk);
                 Q_ASSERT(convertOk);
             }
 
-            paramFound = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), maxTpl.arg(i+1), value);
+            paramFound = _paramMgr->getParameterValue(componentId, maxTpl.arg(i+1), value);
             Q_ASSERT(paramFound);
             if (paramFound) {
                 info->rcMax = value.toInt(&convertOk);
                 Q_ASSERT(convertOk);
             }
 
-            paramFound = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), revTpl.arg(i+1), value);
+            paramFound = _paramMgr->getParameterValue(componentId, revTpl.arg(i+1), value);
             Q_ASSERT(paramFound);
             if (paramFound) {
                 float floatReversed = value.toFloat(&convertOk);
@@ -201,7 +202,7 @@ void PX4RCCalibration::_setInternalCalibrationValuesFromParameters(void)
         for (int i=0; i<rcCalFunctionMax; i++) {
             int32_t paramChannel;
             
-            paramFound = _paramMgr->getParameterValue(_paramMgr->getDefaultComponentId(), _rgFunctionInfo[i].parameterName, value);
+            paramFound = _paramMgr->getParameterValue(componentId, _rgFunctionInfo[i].parameterName, value);
             Q_ASSERT(paramFound);
             if (paramFound) {
                 paramChannel = value.toInt(&convertOk);
