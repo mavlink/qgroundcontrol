@@ -96,8 +96,6 @@ static quint32 crc32(const uint8_t *src, unsigned len, unsigned state)
     return state;
 }
 
-#define CHK_RETURN(fn)
-
 // FIXME: QIODevice has error string
 const struct PX4FirmwareUpgrade::serialPortErrorString PX4FirmwareUpgrade::_rgSerialPortErrors[14] = {
     { QSerialPort::NoError,                     "No error occurred." },
@@ -416,9 +414,9 @@ bool PX4FirmwareUpgrade::_findBoard(void)
     return false;
 }
 
-bool PX4FirmwareUpgrade::_bootloaderWrite(const char* data, qint64 maxSize, const QString errorPrefix)
+bool PX4FirmwareUpgrade::_bootloaderWrite(const uint8_t* data, qint64 maxSize, const QString errorPrefix)
 {
-    qint64 bytesWritten = _bootloaderPort.write(data, maxSize);
+    qint64 bytesWritten = _bootloaderPort.write((const char*)data, maxSize);
     if (bytesWritten == -1) {
         _portErrorString = tr("Could not write %1, error: %2").arg(errorPrefix).arg(_bootloaderPort.errorString());
         return false;
@@ -435,13 +433,13 @@ bool PX4FirmwareUpgrade::_bootloaderWrite(const char* data, qint64 maxSize, cons
     return true;
 }
 
-bool PX4FirmwareUpgrade::_bootloaderWrite(const char data, const QString errorPrefix)
+bool PX4FirmwareUpgrade::_bootloaderWrite(const uint8_t byte, const QString errorPrefix)
 {
-    char buf[1] = { data };
+    uint8_t buf[1] = { byte };
     return _bootloaderWrite(buf, 1, errorPrefix);
 }
 
-bool PX4FirmwareUpgrade::_bootloaderRead(char* data, qint64 maxSize, const QString errorPrefix, int readTimeout)
+bool PX4FirmwareUpgrade::_bootloaderRead(uint8_t* data, qint64 maxSize, const QString errorPrefix, int readTimeout)
 {
     qint64 bytesRead;
     
@@ -452,7 +450,7 @@ bool PX4FirmwareUpgrade::_bootloaderRead(char* data, qint64 maxSize, const QStri
         }
     }
     
-    bytesRead = _bootloaderPort.read(data, maxSize);
+    bytesRead = _bootloaderPort.read((char*)data, maxSize);
     if (bytesRead == -1) {
         _portErrorString = tr("Could not read %1 resonse, error: %2").arg(errorPrefix).arg(_bootloaderPort.errorString());
         return false;
@@ -467,7 +465,7 @@ bool PX4FirmwareUpgrade::_bootloaderRead(char* data, qint64 maxSize, const QStri
 
 bool PX4FirmwareUpgrade::_bootloaderGetCommandResponse(const QString& errorPrefix, int responseTimeout)
 {
-    char response[2];
+    uint8_t response[2];
     
     // Read command response
     if (!_bootloaderRead(response, 2, errorPrefix, responseTimeout)) {
@@ -500,22 +498,22 @@ bool PX4FirmwareUpgrade::_bootloaderGetCommandResponse(const QString& errorPrefi
     return true;
 }
 
-bool PX4FirmwareUpgrade::_bootloaderGetBoardInfo(char param, uint32_t& value)
+bool PX4FirmwareUpgrade::_bootloaderGetBoardInfo(uint8_t param, uint32_t& value)
 {
-    char buf[3] = { PROTO_GET_DEVICE, param, PROTO_EOC };
+    uint8_t buf[3] = { PROTO_GET_DEVICE, param, PROTO_EOC };
     
     if (!_bootloaderWrite(buf, sizeof(buf), "GET_DEVICE")) {
         return false;
     }
-    if (!_bootloaderRead((char*)&value, sizeof(value), tr("GET_DEVICE read return value"))) {
+    if (!_bootloaderRead((uint8_t)&value, sizeof(value), tr("GET_DEVICE read return value"))) {
         return false;
     }
     return _bootloaderGetCommandResponse("GET_DEVICE");
 }
 
-bool PX4FirmwareUpgrade::_bootloaderCommand(const char cmd, const QString& errorPrefix, int responseTimeout)
+bool PX4FirmwareUpgrade::_bootloaderCommand(const uint8_t cmd, const QString& errorPrefix, int responseTimeout)
 {
-    char buf[2] = { cmd, PROTO_EOC };
+    uint8_t buf[2] = { cmd, PROTO_EOC };
     
     if (!_bootloaderWrite(buf, 2, errorPrefix)) {
         return false;

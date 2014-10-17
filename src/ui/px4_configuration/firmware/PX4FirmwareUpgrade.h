@@ -144,12 +144,12 @@ private:
     
     const char* _serialPortErrorString(int error);
     
-    bool _bootloaderWrite(const char data, const QString errorPrefix);
-    bool _bootloaderWrite(const char* data, qint64 maxSize, const QString errorPrefix);
-    bool _bootloaderRead(char* data, qint64 maxSize, const QString errorPrefix, int readTimeout = 2000);
+    bool _bootloaderWrite(const uint8_t byte, const QString errorPrefix);
+    bool _bootloaderWrite(const uint8_t* data, qint64 maxSize, const QString errorPrefix);
+    bool _bootloaderRead(uint8_t* data, qint64 maxSize, const QString errorPrefix, int readTimeout = 2000);
     bool _bootloaderGetCommandResponse(const QString& errorPrefix, int responseTimeout = 2000);
-    bool _bootloaderGetBoardInfo(char param, uint32_t& value);
-    bool _bootloaderCommand(char cmd, const QString& errorPrefix, int responseTimeout = 2000);
+    bool _bootloaderGetBoardInfo(uint8_t param, uint32_t& value);
+    bool _bootloaderCommand(uint8_t cmd, const QString& errorPrefix, int responseTimeout = 2000);
     bool _bootloaderProgram(void);
     
     enum upgradeStates _upgradeState;
