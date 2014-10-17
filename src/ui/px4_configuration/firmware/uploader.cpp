@@ -813,7 +813,7 @@ PX4_Uploader::sync()
 }
 
 int
-PX4_Uploader::get_info(int param, quint32 &val)
+PX4_Uploader::get_info(char param, quint32 &val)
 {
 	int ret;
 

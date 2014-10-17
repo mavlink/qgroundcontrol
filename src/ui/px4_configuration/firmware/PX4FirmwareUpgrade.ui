@@ -18,7 +18,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>673</width>
+     <width>726</width>
      <height>525</height>
     </rect>
    </property>
@@ -65,7 +65,7 @@
          <string>Bootloader Version</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -75,7 +75,7 @@
          <string>Board ID</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -143,7 +143,7 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>0</width>
+          <width>400</width>
           <height>180</height>
          </size>
         </property>
@@ -159,7 +159,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="foundLabel">
+       <widget class="QLabel" name="statusLabel">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
