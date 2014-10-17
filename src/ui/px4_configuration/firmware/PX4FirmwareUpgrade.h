@@ -47,6 +47,7 @@ class PX4FirmwareUpgrade : public QWidget
 
 public:
     explicit PX4FirmwareUpgrade(QWidget *parent = 0);
+    ~PX4FirmwareUpgrade();
 
 signals:
     void connectLinks(void);
@@ -164,6 +165,7 @@ private:
     uint32_t    _boardID;
     uint32_t    _boardFlashSize;
     uint32_t    _imageSize;
+    uint32_t    _imageCRC;
 
     QPixmap _boardIcon;
     
