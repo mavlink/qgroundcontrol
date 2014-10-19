@@ -146,6 +146,8 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
 	RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+        QT += quickwidgets webkitwidgets
 }
 
 #
