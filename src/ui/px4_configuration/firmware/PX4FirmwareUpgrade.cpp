@@ -374,6 +374,10 @@ void PX4FirmwareUpgrade::_tryAgain(void)
             }
             break;
             
+        case upgradeStateBoardUpgraded:
+            _cancelUpgrade();
+            break;
+            
         default:
             Q_ASSERT(false);
             break;
@@ -505,7 +509,7 @@ bool PX4FirmwareUpgrade::_bootloaderGetBoardInfo(uint8_t param, uint32_t& value)
     if (!_bootloaderWrite(buf, sizeof(buf), "GET_DEVICE")) {
         return false;
     }
-    if (!_bootloaderRead((uint8_t)&value, sizeof(value), tr("GET_DEVICE read return value"))) {
+    if (!_bootloaderRead((uint8_t*)&value, sizeof(value), tr("GET_DEVICE read return value"))) {
         return false;
     }
     return _bootloaderGetCommandResponse("GET_DEVICE");
@@ -547,13 +551,13 @@ bool PX4FirmwareUpgrade::_bootloaderProgram(void)
     
     Q_ASSERT(_imageSize == (uint32_t)firmwareFile.size());
     
-    char imageBuf[PROG_MULTI_MAX];
-    int bytesSent = 0;
+    uint8_t imageBuf[PROG_MULTI_MAX];
+    uint32_t bytesSent = 0;
     _imageCRC = 0;
     
     Q_ASSERT(PROG_MULTI_MAX <= 0x8F);
     
-    while (bytesSent < (int)_imageSize) {
+    while (bytesSent < _imageSize) {
         int bytesToSend = _imageSize - bytesSent;
         if (bytesToSend > (int)sizeof(imageBuf)) {
             bytesToSend = (int)sizeof(imageBuf);
@@ -561,7 +565,7 @@ bool PX4FirmwareUpgrade::_bootloaderProgram(void)
         
         Q_ASSERT((bytesToSend % 4) == 0);
         
-        int bytesWritten = firmwareFile.read(imageBuf, bytesToSend);
+        int bytesWritten = firmwareFile.read((char *)imageBuf, bytesToSend);
         if (bytesWritten == -1 || bytesWritten != bytesToSend) {
             // FIXME: Better error handling
             _ui.statusLabel->setText(tr("ERROR: read, %1").arg(firmwareFile.errorString()));
@@ -572,7 +576,7 @@ bool PX4FirmwareUpgrade::_bootloaderProgram(void)
         
         // FIXME: Error handling
         if (!_bootloaderWrite(PROTO_PROG_MULTI, "PROG_MULTI") ||
-                !_bootloaderWrite((char)bytesToSend, "PROG_MULTI") ||
+                !_bootloaderWrite((uint8_t)bytesToSend, "PROG_MULTI") ||
                 !_bootloaderWrite(imageBuf, bytesToSend, "PROG_MULTI") ||
                 !_bootloaderWrite(PROTO_EOC, "PROG_MULTI") ||
                 !_bootloaderGetCommandResponse("PROG_MULTI")) {
@@ -595,19 +599,23 @@ bool PX4FirmwareUpgrade::_bootloaderProgram(void)
     // We calculate the CRC using the entire flash size, filling the remainder with 0xFF. We need to do this
     // because we don't know the amount of the flash that is taken up with real code bytes after it is written.
     while (bytesSent < _boardFlashSize) {
-        const char fill = 0xFF;
+        const uint8_t fill = 0xFF;
         _imageCRC = crc32(&fill, 1, _imageCRC);
         bytesSent++;
     }
     
+#if 0
     if (_bootloaderVersion <= 2) {
         _bootloaderVerifyRev2();
     } else {
         _bootloaderVerifyRev3();
     }
+#endif
     
     return true;
 }
+
+#if 0
 
 /// @brief Verify the flash on bootloader version 2 by reading it back and comparing it against
 /// the original firmware file.
@@ -710,6 +718,7 @@ bool PX4FirmwareUpgrade::_bootloaderVerifyRev3(void)
     
     return true;
 }
+#endif
 
 bool PX4FirmwareUpgrade::_findBootloader(void)
 {
@@ -952,12 +961,14 @@ void PX4FirmwareUpgrade::_upgradeBoardUpgraded(void)
     
     _enableWizardButtons(wizardButtonTryAgain);
     
-    _ui.statusLog->setText(tr("Board upgraded."));
+    _ui.statusLog->setText(tr("Board upgraded.\n\nClick 'Try Again' to upgrade board again."));
     _ui.statusLabel->clear();
 }
 
 void PX4FirmwareUpgrade::_upgradeBoardUpgradeFailed(void)
 {
+    // FIXME: Finished?
+    
     _upgradeState = upgradeStateBoardUpgradeFailed;
     
     _enableWizardButtons(wizardButtonCancel | wizardButtonTryAgain);
