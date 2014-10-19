@@ -29,6 +29,8 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QApplication>
+#include <QSslSocket>
+
 #include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
@@ -148,6 +150,14 @@ int main(int argc, char *argv[])
             firstStart = false;
         }
         core = new QGCCore(firstStart, argc, argv);
+        
+        if (!QSslSocket::supportsSsl()) {
+            QMessageBox::critical(NULL,
+                                  QObject::tr("Missing SSL Support"),
+                                  QObject::tr("QGroundControl requires support for SSL to be installed prior to running. Please see http://www.qgroundcontrol.org/downloads for instructions on installing prerequisites for QGroundControl."));
+            return 1;
+        }
+        
         val = core->exec();
     } while (core->getRestartRequested());
 

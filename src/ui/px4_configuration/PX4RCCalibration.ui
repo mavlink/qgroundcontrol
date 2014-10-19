@@ -169,7 +169,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="layoutWidget1">
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -181,19 +181,6 @@
    <layout class="QGridLayout" name="gridLayout" rowstretch="0" columnstretch="0">
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout_9">
-      <item>
-       <widget class="QPushButton" name="rcCopyTrimButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string>Copy the trim values from roll / pitch / yaw from manual flight to the autonomous flight modes.</string>
-        </property>
-        <property name="text">
-         <string>Copy Attitude Trims</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QLabel" name="rcCalStatus">
         <property name="sizePolicy">
@@ -333,7 +320,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="layoutWidget">
+  <widget class="QWidget" name="layoutWidget2">
    <property name="geometry">
     <rect>
      <x>490</x>
