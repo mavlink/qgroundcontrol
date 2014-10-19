@@ -184,11 +184,13 @@ else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EAR
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+    FORMS += src/ui/map3D/QGCGoogleEarthView.ui
 } else:WindowsBuild {
     message("Including support for Google Earth view")
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
     HEADERS += src/ui/map3D/QGCGoogleEarthView.h
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+    FORMS += src/ui/map3D/QGCGoogleEarthView.ui
     QT += axcontainer
 } else {
     message("Skipping support for Google Earth view (unsupported platform)")

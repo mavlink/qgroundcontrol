@@ -129,7 +129,7 @@ MacBuild {
     CONFIG -= x86
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
     ICON = $$BASEDIR/files/images/icons/macx.icns
-    QT += quickwidgets
+    QT += quickwidgets webkitwidgets
 }
 
 LinuxBuild {
