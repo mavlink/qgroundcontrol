@@ -182,14 +182,18 @@ else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_GOOGLE_EAR
 } else:MacBuild {
     message("Including support for Google Earth view")
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+    HEADERS += src/ui/map3D/QGCGoogleEarthView.h \
+               src/ui/map3D/QGCWebPage.h
+    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc \
+               src/ui/map3D/QGCWebPage.cc
     FORMS += src/ui/map3D/QGCGoogleEarthView.ui
 } else:WindowsBuild {
     message("Including support for Google Earth view")
     DEFINES += QGC_GOOGLE_EARTH_ENABLED
-    HEADERS += src/ui/map3D/QGCGoogleEarthView.h
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+    HEADERS += src/ui/map3D/QGCGoogleEarthView.h \
+               src/ui/map3D/QGCWebPage.h
+    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc \
+               src/ui/map3D/QGCWebPage.cc
     FORMS += src/ui/map3D/QGCGoogleEarthView.ui
     QT += axcontainer
 } else {
