@@ -43,6 +43,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE, false);
     #endif
     messageFilter.insert(MAVLINK_MSG_ID_EXTENDED_MESSAGE, false);
+    messageFilter.insert(MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL, false);
 
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);
