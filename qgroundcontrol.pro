@@ -45,6 +45,7 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
+        QMAKE_MAC_SDK = macosx10.9
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
