@@ -106,14 +106,12 @@ QT += network \
     opengl \
     svg \
     xml \
-    webkit \
     concurrent \
     widgets \
     gui \
     serialport \
     sql \
     printsupport \
-    webkitwidgets \
     quick
 
 #  testlib is needed even in release flavor for QSignalSpy support
@@ -132,11 +130,12 @@ MacBuild {
     CONFIG -= x86
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
     ICON = $$BASEDIR/files/images/icons/macx.icns
-    QT += quickwidgets
+    QT += quickwidgets webkitwidgets
 }
 
 LinuxBuild {
 	DEFINES += __STDC_LIMIT_MACROS
+    CONFIG += qesp_linux_udev
 }
 
 WindowsBuild {
@@ -148,6 +147,8 @@ WindowsBuild {
 	QMAKE_CXXFLAGS_RELEASE += -MP
 
 	RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+        QT += quickwidgets webkitwidgets
 }
 
 #
@@ -245,6 +246,8 @@ INCLUDEPATH += \
     src/ui/mission \
     src/ui/designer \
     src/ui/configuration \
+    src/ui/px4_configuration/firmware \
+    src/ui/px4_configuration \
     src/ui/main
 
 FORMS += \
@@ -271,8 +274,6 @@ FORMS += \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
-    src/ui/QGCWebView.ui \
-    src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
     src/ui/designer/QGCParamSlider.ui \
@@ -358,6 +359,7 @@ FORMS += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
     src/ui/px4_configuration/PX4RCCalibration.ui \
+    src/ui/px4_configuration/PX4FirmwareUpgrade.ui \
     src/ui/QGCUASFileView.ui
 
 HEADERS += \
@@ -426,8 +428,6 @@ HEADERS += \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
-    src/ui/QGCWebView.h \
-    src/ui/map3D/QGCWebPage.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/comm/MAVLinkSwarmSimulationLink.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
@@ -544,6 +544,9 @@ HEADERS += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/px4_configuration/PX4RCCalibration.h \
+    src/ui/px4_configuration/PX4Bootloader.h \
+    src/ui/px4_configuration/PX4FirmwareUpgradeThread.h \
+    src/ui/px4_configuration/PX4FirmwareUpgrade.h \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
@@ -613,8 +616,6 @@ SOURCES += \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
-    src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCWebPage.cc \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/comm/MAVLinkSwarmSimulationLink.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
@@ -729,6 +730,9 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
+    src/ui/px4_configuration/PX4Bootloader.cc \
+    src/ui/px4_configuration/PX4FirmwareUpgradeThread.cc \
+    src/ui/px4_configuration/PX4FirmwareUpgrade.cc \
     src/ui/menuactionhelper.cpp \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
