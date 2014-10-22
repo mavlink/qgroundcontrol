@@ -144,7 +144,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce(void)
             } else {
                 _closeFind();
                 _bootloaderPort->close();
-                delete _bootloaderPort;
+                _bootloaderPort->deleteLater();
                 _bootloaderPort = NULL;
                 qDebug() << "Bootloader error:" << _bootloader->errorString();
                 emit error(commandBootloader, _bootloader->errorString());
@@ -153,7 +153,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce(void)
         } else {
             _closeFind();
             _bootloaderPort->close();
-            delete _bootloaderPort;
+            _bootloaderPort->deleteLater();
             _bootloaderPort = NULL;
             qDebug() << "Bootloader sync failed";
             emit bootloaderSyncFailed();
@@ -189,7 +189,7 @@ void PX4FirmwareUpgradeThreadWorker::timeout(void)
 void PX4FirmwareUpgradeThreadWorker::sendBootloaderReboot(void)
 {
     _bootloader->sendBootloaderReboot(_bootloaderPort);
-    delete _bootloaderPort;
+    _bootloaderPort->deleteLater();
     _bootloaderPort = NULL;
 }
 
@@ -197,7 +197,7 @@ void PX4FirmwareUpgradeThreadWorker::program(const QString firmwareFilename)
 {
     qDebug() << "Program";
     if (!_bootloader->program(_bootloaderPort, firmwareFilename)) {
-        delete _bootloaderPort;
+        _bootloaderPort->deleteLater();
         _bootloaderPort = NULL;
         qDebug() << "Program failed:" << _bootloader->errorString();
         emit error(commandProgram, _bootloader->errorString());
@@ -217,7 +217,7 @@ void PX4FirmwareUpgradeThreadWorker::verify(const QString firmwareFilename)
         qDebug() << "Verify complete";
         emit complete(commandVerify);
     }
-    delete _bootloaderPort;
+    _bootloaderPort->deleteLater();
     _bootloaderPort = NULL;
 }
 
@@ -225,7 +225,7 @@ void PX4FirmwareUpgradeThreadWorker::erase(void)
 {
     qDebug() << "Erase";
     if (!_bootloader->erase(_bootloaderPort)) {
-        delete _bootloaderPort;
+        _bootloaderPort->deleteLater();
         _bootloaderPort = NULL;
         qDebug() << "Erase failed:" << _bootloader->errorString();
         emit error(commandErase, _bootloader->errorString());
