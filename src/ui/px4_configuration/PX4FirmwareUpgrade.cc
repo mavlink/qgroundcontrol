@@ -363,6 +363,7 @@ void PX4FirmwareUpgrade::_setBoardIcon(int boardID)
     if (!imageFile.isEmpty()) {
         bool success = _boardIcon.load(imageFile);
         Q_ASSERT(success);
+        Q_UNUSED(success);
         
         int w = _ui->icon->width();
         int h = _ui->icon->height();
@@ -728,9 +729,6 @@ void PX4FirmwareUpgrade::_downloadFinished(void)
 /// @brief Called when an error occurs during download
 void PX4FirmwareUpgrade::_downloadError(QNetworkReply::NetworkError code)
 {
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    Q_ASSERT(reply);
-
     if (code == QNetworkReply::OperationCanceledError) {
         _ui->statusLabel->setText(tr("Download cancelled"));
     } else {
