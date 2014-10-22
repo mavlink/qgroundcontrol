@@ -781,11 +781,17 @@ void QGCToolBar::connectLink(bool connect)
             link->setPortName(portComboBox->itemData(portComboBox->currentIndex()).toString().trimmed());
             int baud = baudcomboBox->currentText().toInt();
             link->setBaudRate(baud);
+            QObject::connect(link, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
             link->connect();
         }
 
     } else if (!connect && currentLink) {
         currentLink->disconnect();
+        QObject::disconnect(currentLink, SIGNAL(connected(bool)), this, SLOT(updateLinkState(bool)));
+    }
+
+    if (currentLink) {
+        updateLinkState(currentLink->isConnected());
     }
 }
 
