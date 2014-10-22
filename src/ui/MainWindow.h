@@ -98,7 +98,6 @@ public:
         CUSTOM_MODE_UNCHANGED = 0,
         CUSTOM_MODE_NONE,
         CUSTOM_MODE_PX4,
-        CUSTOM_MODE_APM,
         CUSTOM_MODE_WIFI
     };
 

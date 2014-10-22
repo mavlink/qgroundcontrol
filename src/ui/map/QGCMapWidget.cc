@@ -6,7 +6,6 @@
 #include "MAV2DIcon.h"
 #include "Waypoint2DIcon.h"
 #include "UASWaypointManager.h"
-#include "ArduPilotMegaMAV.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapcontrol::OPMapWidget(parent),
@@ -56,11 +55,6 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     guidedaction->setText("Go To Here Alt (Guided Mode)");
     connect(guidedaction,SIGNAL(triggered()),this,SLOT(guidedAltActionTriggered()));
     this->addAction(guidedaction);
-    // Point camera option
-    QAction *cameraaction = new QAction(this);
-    cameraaction->setText("Point Camera Here");
-    connect(cameraaction,SIGNAL(triggered()),this,SLOT(cameraActionTriggered()));
-    this->addAction(cameraaction);
     // Set home location option
     QAction *sethomeaction = new QAction(this);
     sethomeaction->setText("Set Home Location Here");
@@ -110,21 +104,6 @@ bool QGCMapWidget::guidedAltActionTriggered()
     defaultGuidedAlt = tmpalt;
     guidedActionTriggered();
     return true;
-}
-void QGCMapWidget::cameraActionTriggered()
-{
-    if (!uas)
-    {
-        QMessageBox::information(0,"Error","Please connect first");
-        return;
-    }
-    ArduPilotMegaMAV *newmav = qobject_cast<ArduPilotMegaMAV*>(this->uas);
-    if (newmav)
-    {
-        newmav->setMountConfigure(4,true,true,true);
-        internals::PointLatLng pos = map->FromLocalToLatLng(contextMousePressPos.x(), contextMousePressPos.y());
-        newmav->setMountControl(pos.Lat(),pos.Lng(),100,true);
-    }
 }
 
 /**
