@@ -19,6 +19,10 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     connect(ui->accelButton, SIGNAL(clicked()), this, SLOT(accelButtonClicked()));
     connect(ui->diffPressureButton, SIGNAL(clicked()), this, SLOT(diffPressureButtonClicked()));
 
+    connect(ui->logCheckBox, SIGNAL(clicked(bool)), ui->textView, SLOT(setVisible(bool)));
+    ui->logCheckBox->setChecked(false);
+    ui->textView->setVisible(false);
+
     ui->gyroButton->setEnabled(false);
     ui->magButton->setEnabled(false);
     ui->accelButton->setEnabled(false);
