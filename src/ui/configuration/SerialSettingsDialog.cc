@@ -148,7 +148,6 @@ void SettingsDialog::fillPortsParameters()
 void SettingsDialog::fillPortsInfo()
 {
     ui->serialPortInfoListBox->clear();
-    QList<QSerialPortInfo> list = QSerialPortInfo::availablePorts();
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
         QStringList list;
         list << info.portName()
