@@ -1316,7 +1316,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (text.startsWith("#") || severity <= MAV_SEVERITY_WARNING)
             {
                 text.remove("#audio:");
-                emit textMessageReceived(uasId, message.compid, severity, QString("Audio message: ") + text);
+                emit textMessageReceived(uasId, message.compid, severity, text);
                 GAudioOutput::instance()->say(text.toLower(), severity);
             }
             else
