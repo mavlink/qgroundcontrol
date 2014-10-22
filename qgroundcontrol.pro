@@ -137,6 +137,7 @@ MacBuild {
 
 LinuxBuild {
 	DEFINES += __STDC_LIMIT_MACROS
+    CONFIG += qesp_linux_udev
 }
 
 WindowsBuild {
@@ -245,6 +246,7 @@ INCLUDEPATH += \
     src/ui/mission \
     src/ui/designer \
     src/ui/configuration \
+    src/ui/px4_configuration \
     src/ui/main
 
 FORMS += \
@@ -358,6 +360,7 @@ FORMS += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
     src/ui/px4_configuration/PX4RCCalibration.ui \
+    src/ui/px4_configuration/PX4FirmwareUpgrade.ui \
     src/ui/QGCUASFileView.ui
 
 HEADERS += \
@@ -544,6 +547,9 @@ HEADERS += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/px4_configuration/PX4RCCalibration.h \
+    src/ui/px4_configuration/PX4Bootloader.h \
+    src/ui/px4_configuration/PX4FirmwareUpgradeThread.h \
+    src/ui/px4_configuration/PX4FirmwareUpgrade.h \
     src/ui/menuactionhelper.h \
     src/uas/UASManagerInterface.h \
     src/uas/QGCUASParamManagerInterface.h \
@@ -729,6 +735,9 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
+    src/ui/px4_configuration/PX4Bootloader.cc \
+    src/ui/px4_configuration/PX4FirmwareUpgradeThread.cc \
+    src/ui/px4_configuration/PX4FirmwareUpgrade.cc \
     src/ui/menuactionhelper.cpp \
     src/uas/QGCUASFileManager.cc \
     src/ui/QGCUASFileView.cc \
