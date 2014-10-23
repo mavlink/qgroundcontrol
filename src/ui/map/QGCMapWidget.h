@@ -45,8 +45,6 @@ signals:
     void waypointChanged(Waypoint* wp);
 
 public slots:
-    /** @brief Action triggered with point-camera action is selected from the context menu */
-    void cameraActionTriggered();
     /** @brief Action triggered when guided action is selected from the context menu */
     void guidedActionTriggered();
     /** @brief Action triggered when guided action is selected from the context menu, allows for altitude selection */
