@@ -79,7 +79,7 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("MAV_CMD_DO_SET_SERVO", MAV_CMD_DO_SET_SERVO);
     ui->editCommandComboBox->addItem("MAV_CMD_DO_REPEAT_SERVO", MAV_CMD_DO_REPEAT_SERVO);
     ui->editCommandComboBox->addItem("MAV_CMD_DO_FLIGHTTERMINATION", MAV_CMD_DO_FLIGHTTERMINATION);
-    ui->editCommandComboBox->addItem("MAV_CMD_DO_LAND_START", MAV_CMD_DO_LAND_START);
+    //ui->editCommandComboBox->addItem("MAV_CMD_DO_LAND_START", MAV_CMD_DO_LAND_START);
     ui->editCommandComboBox->addItem("MAV_CMD_DO_RALLY_LAND", MAV_CMD_DO_RALLY_LAND);
     ui->editCommandComboBox->addItem("MAV_CMD_DO_GO_AROUND", MAV_CMD_DO_GO_AROUND);
     ui->editCommandComboBox->addItem("MAV_CMD_DO_CONTROL_VIDEO", MAV_CMD_DO_CONTROL_VIDEO);
