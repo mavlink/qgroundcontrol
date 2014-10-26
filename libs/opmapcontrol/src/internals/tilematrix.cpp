@@ -100,7 +100,7 @@ void TileMatrix::Clear()
 void TileMatrix::ClearPointsNotIn(QList<Point>list)
 {
     removals.clear();
-    mutex.lock();
+    QMutexLocker lock(&mutex);
     foreach(Point p, matrix.keys())
     {
         if(!list.contains(p))
@@ -111,14 +111,12 @@ void TileMatrix::ClearPointsNotIn(QList<Point>list)
     mutex.unlock();
     foreach(Point p,removals)
     {
-        Tile* t=TileAt(p);
+        Tile* t=matrix.value(p, 0);
         if(t!=0)
         {
-            mutex.lock();
             delete t;
             t=0;
             matrix.remove(p);
-            mutex.unlock();
         }
 
     }
