@@ -56,23 +56,24 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
 
     ui->quadXComboBox->addItem(tr("DJI F330 8\" Quad"), 4010);
     ui->quadXComboBox->addItem(tr("DJI F450 10\" Quad"), 4011);
-    ui->quadXComboBox->addItem(tr("Turnigy Talon v2 X550 Quad"), 4012);
+    ui->quadXComboBox->addItem(tr("X frame Quad UAVCAN"), 4012);
     ui->quadXComboBox->addItem(tr("AR.Drone Frame Quad"), 4008);
-    ui->quadXComboBox->addItem(tr("DJI F330 with MK BLCTRL"), 4017);
-    ui->quadXComboBox->addItem(tr("Mikrokopter X frame"), 4019);
+//    ui->quadXComboBox->addItem(tr("DJI F330 with MK BLCTRL"), 4017);
+//    ui->quadXComboBox->addItem(tr("Mikrokopter X frame"), 4019);
 
     connect(ui->quadXPushButton, SIGNAL(clicked()), this, SLOT(quadXSelected()));
     connect(ui->quadXComboBox, SIGNAL(activated(int)), this, SLOT(quadXSelected(int)));
     ui->quadXPushButton->setEnabled(ui->quadXComboBox->count() > 0);
 
     ui->quadPlusComboBox->addItem(tr("Generic 10\" Quad +"), 5001);
-    ui->quadXComboBox->addItem(tr("Mikrokopter + frame"), 5020);
+//    ui->quadXComboBox->addItem(tr("Mikrokopter + frame"), 5020);
 
     connect(ui->quadPlusPushButton, SIGNAL(clicked()), this, SLOT(quadPlusSelected()));
     connect(ui->quadPlusComboBox, SIGNAL(activated(int)), this, SLOT(quadPlusSelected(int)));
     ui->quadPlusPushButton->setEnabled(ui->quadPlusComboBox->count() > 0);
 
-    ui->hexaXComboBox->addItem(tr("Standard 10\" Hexa"), 6001);
+    ui->hexaXComboBox->addItem(tr("Standard 10\" Hexa X"), 6001);
+    ui->hexaXComboBox->addItem(tr("Coaxial 10\" Hexa X"), 11001);
 
     connect(ui->hexaXPushButton, SIGNAL(clicked()), this, SLOT(hexaXSelected()));
     connect(ui->hexaXComboBox, SIGNAL(activated(int)), this, SLOT(hexaXSelected(int)));
@@ -85,6 +86,7 @@ QGCPX4AirframeConfig::QGCPX4AirframeConfig(QWidget *parent) :
     ui->hexaPlusPushButton->setEnabled(ui->hexaPlusComboBox->count() > 0);
 
     ui->octoXComboBox->addItem(tr("Standard 10\" Octo"), 8001);
+    ui->octoXComboBox->addItem(tr("Coaxial 10\" Octo"), 12001);
 
     connect(ui->octoXPushButton, SIGNAL(clicked()), this, SLOT(octoXSelected()));
     connect(ui->octoXComboBox, SIGNAL(activated(int)), this, SLOT(octoXSelected(int)));
