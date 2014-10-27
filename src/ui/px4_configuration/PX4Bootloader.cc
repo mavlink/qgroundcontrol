@@ -119,6 +119,12 @@ Again:
 
 bool PX4Bootloader::write(QSerialPort* port, const uint8_t* data, qint64 maxSize)
 {
+    // Make sure we don't overflow output buffer
+    while (port->bytesToWrite() > 50) {
+        int bump = 0;
+        bump++;
+    }
+
     qint64 bytesWritten = port->write((const char*)data, maxSize);
     if (bytesWritten == -1) {
         _errorString = tr("Write failed: %1").arg(port->errorString());
@@ -147,32 +153,33 @@ bool PX4Bootloader::write(QSerialPort* port, const uint8_t byte)
 
 bool PX4Bootloader::read(QSerialPort* port, uint8_t* data, qint64 maxSize, bool warnOnError, int readTimeout)
 {
-    qint64 bytesRead;
+    qint64 bytesToRead = 0;
     
-    if (port->bytesAvailable() < maxSize) {
-        if (!port->waitForReadyRead(readTimeout)) {
-            _errorString = tr("Timeout waiting for read bytes available: %1").arg(port->errorString());
+    while (bytesToRead < maxSize) {
+        if (port->bytesAvailable() == 0) {
+            if (!port->waitForReadyRead(readTimeout)) {
+                _errorString = tr("Timeout waiting for byte to be available");
+                if (warnOnError) {
+                    qWarning() << _errorString;
+                }
+                return false;
+            }
+            Q_ASSERT(port->bytesAvailable() != 0);
+        }
+        
+        qint64 bytesRead;
+        bytesRead = port->read((char*)&data[bytesToRead], maxSize);
+        
+        if (bytesRead == -1) {
+            _errorString = tr("Read failed: Could not read 1 byte, error: %1").arg(port->errorString());
             if (warnOnError) {
                 qWarning() << _errorString;
             }
             return false;
+        } else {
+            Q_ASSERT(bytesRead != 0);
+            bytesToRead += bytesRead;
         }
-    }
-    
-    bytesRead = port->read((char*)data, maxSize);
-    if (bytesRead == -1) {
-        _errorString = tr("Read failed: Could not read %1 resonse, error: 12").arg(port->errorString());
-        if (warnOnError) {
-            qWarning() << _errorString;
-        }
-        return false;
-    }
-    if (bytesRead != maxSize) {
-        _errorString = tr("In correct number of bytes returned for read: actual(%1) expected(%2)").arg(bytesRead).arg(maxSize);
-        if (warnOnError) {
-            qWarning() << _errorString;
-        }
-        return false;
     }
     
     return true;

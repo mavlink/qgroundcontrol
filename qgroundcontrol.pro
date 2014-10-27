@@ -324,38 +324,11 @@ FORMS += \
     src/ui/uas/QGCMessageView.ui \
     src/ui/JoystickButton.ui \
     src/ui/JoystickAxis.ui \
-    src/ui/configuration/ApmHardwareConfig.ui \
-    src/ui/configuration/ApmSoftwareConfig.ui \
-    src/ui/configuration/FrameTypeConfig.ui \
-    src/ui/configuration/CompassConfig.ui \
-    src/ui/configuration/AccelCalibrationConfig.ui \
-    src/ui/configuration/RadioCalibrationConfig.ui \
-    src/ui/configuration/FlightModeConfig.ui \
-    src/ui/configuration/Radio3DRConfig.ui \
-    src/ui/configuration/BatteryMonitorConfig.ui \
-    src/ui/configuration/SonarConfig.ui \
-    src/ui/configuration/AirspeedConfig.ui \
-    src/ui/configuration/OpticalFlowConfig.ui \
-    src/ui/configuration/OsdConfig.ui \
-    src/ui/configuration/AntennaTrackerConfig.ui \
-    src/ui/configuration/CameraGimbalConfig.ui \
-    src/ui/configuration/BasicPidConfig.ui \
-    src/ui/configuration/StandardParamConfig.ui \
-    src/ui/configuration/GeoFenceConfig.ui \
-    src/ui/configuration/FailSafeConfig.ui \
-    src/ui/configuration/AdvancedParamConfig.ui \
-    src/ui/configuration/ArduCopterPidConfig.ui \
-    src/ui/configuration/ApmPlaneLevel.ui \
-    src/ui/configuration/ParamWidget.ui \
-    src/ui/configuration/ArduPlanePidConfig.ui \
-    src/ui/configuration/AdvParameterList.ui \
-    src/ui/configuration/ArduRoverPidConfig.ui \
     src/ui/QGCConfigView.ui \
     src/ui/main/QGCViewModeSelection.ui \
     src/ui/main/QGCWelcomeMainWindow.ui \
     src/ui/configuration/terminalconsole.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
-    src/ui/configuration/ApmFirmwareConfig.ui \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.ui \
     src/ui/px4_configuration/QGCPX4SensorCalibration.ui \
@@ -411,7 +384,6 @@ HEADERS += \
     src/ui/QGCSensorSettingsWidget.h \
     src/ui/linechart/Linecharts.h \
     src/uas/PxQuadMAV.h \
-    src/uas/ArduPilotMegaMAV.h \
     src/uas/senseSoarMAV.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
@@ -503,34 +475,6 @@ HEADERS += \
     src/ui/uas/QGCMessageView.h \
     src/ui/JoystickButton.h \
     src/ui/JoystickAxis.h \
-    src/ui/configuration/ApmHardwareConfig.h \
-    src/ui/configuration/ApmSoftwareConfig.h \
-    src/ui/configuration/FrameTypeConfig.h \
-    src/ui/configuration/CompassConfig.h \
-    src/ui/configuration/AccelCalibrationConfig.h \
-    src/ui/configuration/RadioCalibrationConfig.h \
-    src/ui/configuration/FlightModeConfig.h \
-    src/ui/configuration/Radio3DRConfig.h \
-    src/ui/configuration/BatteryMonitorConfig.h \
-    src/ui/configuration/SonarConfig.h \
-    src/ui/configuration/AirspeedConfig.h \
-    src/ui/configuration/OpticalFlowConfig.h \
-    src/ui/configuration/OsdConfig.h \
-    src/ui/configuration/AntennaTrackerConfig.h \
-    src/ui/configuration/CameraGimbalConfig.h \
-    src/ui/configuration/AP2ConfigWidget.h \
-    src/ui/configuration/BasicPidConfig.h \
-    src/ui/configuration/StandardParamConfig.h \
-    src/ui/configuration/GeoFenceConfig.h \
-    src/ui/configuration/FailSafeConfig.h \
-    src/ui/configuration/AdvancedParamConfig.h \
-    src/ui/configuration/ArduCopterPidConfig.h \
-    src/ui/apmtoolbar.h \
-    src/ui/configuration/ApmPlaneLevel.h \
-    src/ui/configuration/ParamWidget.h \
-    src/ui/configuration/ArduPlanePidConfig.h \
-    src/ui/configuration/AdvParameterList.h \
-    src/ui/configuration/ArduRoverPidConfig.h \
     src/ui/QGCConfigView.h \
     src/ui/main/QGCViewModeSelection.h \
     src/ui/main/QGCWelcomeMainWindow.h \
@@ -538,7 +482,6 @@ HEADERS += \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
     src/ui/configuration/ApmHighlighter.h \
-    src/ui/configuration/ApmFirmwareConfig.h \
     src/uas/UASParameterDataModel.h \
     src/uas/UASParameterCommsMgr.h \
     src/ui/QGCPendingParamWidget.h \
@@ -602,7 +545,6 @@ SOURCES += \
     src/ui/QGCSensorSettingsWidget.cc \
     src/ui/linechart/Linecharts.cc \
     src/uas/PxQuadMAV.cc \
-    src/uas/ArduPilotMegaMAV.cc \
     src/uas/senseSoarMAV.cpp \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
@@ -691,34 +633,6 @@ SOURCES += \
     src/ui/JoystickButton.cc \
     src/ui/JoystickAxis.cc \
     src/ui/uas/QGCMessageView.cc \
-    src/ui/configuration/ApmHardwareConfig.cc \
-    src/ui/configuration/ApmSoftwareConfig.cc \
-    src/ui/configuration/FrameTypeConfig.cc \
-    src/ui/configuration/CompassConfig.cc \
-    src/ui/configuration/AccelCalibrationConfig.cc \
-    src/ui/configuration/RadioCalibrationConfig.cc \
-    src/ui/configuration/FlightModeConfig.cc \
-    src/ui/configuration/Radio3DRConfig.cc \
-    src/ui/configuration/BatteryMonitorConfig.cc \
-    src/ui/configuration/SonarConfig.cc \
-    src/ui/configuration/AirspeedConfig.cc \
-    src/ui/configuration/OpticalFlowConfig.cc \
-    src/ui/configuration/OsdConfig.cc \
-    src/ui/configuration/AntennaTrackerConfig.cc \
-    src/ui/configuration/CameraGimbalConfig.cc \
-    src/ui/configuration/AP2ConfigWidget.cc \
-    src/ui/configuration/BasicPidConfig.cc \
-    src/ui/configuration/StandardParamConfig.cc \
-    src/ui/configuration/GeoFenceConfig.cc \
-    src/ui/configuration/FailSafeConfig.cc \
-    src/ui/configuration/AdvancedParamConfig.cc \
-    src/ui/configuration/ArduCopterPidConfig.cc \
-    src/ui/apmtoolbar.cpp \
-    src/ui/configuration/ApmPlaneLevel.cc \
-    src/ui/configuration/ParamWidget.cc \
-    src/ui/configuration/ArduPlanePidConfig.cc \
-    src/ui/configuration/AdvParameterList.cc \
-    src/ui/configuration/ArduRoverPidConfig.cc \
     src/ui/QGCConfigView.cc \
     src/ui/main/QGCViewModeSelection.cc \
     src/ui/main/QGCWelcomeMainWindow.cc \
@@ -726,7 +640,6 @@ SOURCES += \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \
     src/ui/configuration/ApmHighlighter.cc \
-    src/ui/configuration/ApmFirmwareConfig.cc \
     src/uas/UASParameterDataModel.cc \
     src/uas/UASParameterCommsMgr.cc \
     src/ui/QGCPendingParamWidget.cc \
@@ -768,7 +681,6 @@ HEADERS += \
 	src/qgcunittest/MockMavlinkInterface.h \
 	src/qgcunittest/MockMavlinkFileServer.h \
 	src/qgcunittest/MultiSignalSpy.h \
-	src/qgcunittest/FlightModeConfigTest.h \
 	src/qgcunittest/FlightGearTest.h \
 	src/qgcunittest/TCPLinkTest.h \
 	src/qgcunittest/TCPLoopBackServer.h \
@@ -782,7 +694,6 @@ SOURCES += \
 	src/qgcunittest/MockQGCUASParamManager.cc \
 	src/qgcunittest/MockMavlinkFileServer.cc \
 	src/qgcunittest/MultiSignalSpy.cc \
-	src/qgcunittest/FlightModeConfigTest.cc \
 	src/qgcunittest/FlightGearTest.cc \
 	src/qgcunittest/TCPLinkTest.cc \
 	src/qgcunittest/TCPLoopBackServer.cc \
