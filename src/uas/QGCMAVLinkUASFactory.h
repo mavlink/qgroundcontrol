@@ -12,7 +12,6 @@
 #include "UAS.h"
 #include "PxQuadMAV.h"
 #include "senseSoarMAV.h"
-#include "ArduPilotMegaMAV.h"
 
 class QGCMAVLinkUASFactory : public QObject
 {
