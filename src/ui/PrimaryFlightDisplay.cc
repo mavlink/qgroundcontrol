@@ -453,7 +453,7 @@ void PrimaryFlightDisplay::drawTextCenterBottom (
     font.setPixelSize(pixelSize);
     painter.setFont(font);
 
-    QFontMetrics metrics = QFontMetrics(font);
+    QFontMetrics metrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter;
     painter.drawText(x - bounds.width()/2, y, bounds.width(), bounds.height(), flags, text);
