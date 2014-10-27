@@ -108,7 +108,6 @@ void TileMatrix::ClearPointsNotIn(QList<Point>list)
             removals.append(p);
         }
     }
-    mutex.unlock();
     foreach(Point p,removals)
     {
         Tile* t=matrix.value(p, 0);
