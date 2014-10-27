@@ -497,27 +497,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // Set new type if it has changed
             if (this->type != state.type)
             {
-                this->type = state.type;
-                if (airframe == 0)
-                {
-                    switch (type)
-                    {
-                    case MAV_TYPE_FIXED_WING:
-                        setAirframe(UASInterface::QGC_AIRFRAME_EASYSTAR);
-                        break;
-                    case MAV_TYPE_QUADROTOR:
-                        setAirframe(UASInterface::QGC_AIRFRAME_CHEETAH);
-                        break;
-                    case MAV_TYPE_HEXAROTOR:
-                        setAirframe(UASInterface::QGC_AIRFRAME_HEXCOPTER);
-                        break;
-                    default:
-                        // Do nothing
-                        break;
-                    }
-                }
                 this->autopilot = state.autopilot;
-                emit systemTypeSet(this, type);
+                setSystemType(state.type);
             }
 
             bool currentlyArmed = state.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
@@ -2593,17 +2574,25 @@ void UAS::setSystemType(int systemType)
       // If the airframe is still generic, change it to a close default type
       if (airframe == 0)
       {
-          switch (systemType)
+          switch (type)
           {
           case MAV_TYPE_FIXED_WING:
-              airframe = QGC_AIRFRAME_EASYSTAR;
+              setAirframe(UASInterface::QGC_AIRFRAME_EASYSTAR);
               break;
           case MAV_TYPE_QUADROTOR:
-              airframe = QGC_AIRFRAME_MIKROKOPTER;
+              setAirframe(UASInterface::QGC_AIRFRAME_CHEETAH);
+              break;
+          case MAV_TYPE_HEXAROTOR:
+              setAirframe(UASInterface::QGC_AIRFRAME_HEXCOPTER);
+              break;
+          default:
+              // Do nothing
               break;
           }
       }
       emit systemSpecsChanged(uasId);
+      emit systemTypeSet(this, type);
+      qDebug() << "TYPE CHANGED TO:" << type;
    }
 }
 
