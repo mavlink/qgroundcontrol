@@ -117,14 +117,16 @@ bool SerialLink::isBootloader()
 
     foreach (const QSerialPortInfo &info, portList)
     {
+        // XXX debug statements will be removed once we have 100% stable link reports
 //        qDebug() << "PortName    : " << info.portName()
 //                 << "Description : " << info.description();
 //        qDebug() << "Manufacturer: " << info.manufacturer();
 
        if (info.portName().trimmed() == this->m_portName.trimmed() &&
                (info.description().toLower().contains("bootloader") ||
-                info.description().toLower().contains("px4 bl"))) {
-           qDebug() << "BOOTLOADER FOUND";
+                info.description().toLower().contains("px4 bl") ||
+                info.description().toLower().contains("px4 fmu v1.6"))) {
+//           qDebug() << "BOOTLOADER FOUND";
            return true;
        }
     }
@@ -266,10 +268,11 @@ void SerialLink::run()
         if (m_transmitBuffer.count() > 0) {
             m_writeMutex.lock();
             int numWritten = m_port->write(m_transmitBuffer);
-            bool txSuccess = m_port->waitForBytesWritten(5);
+            bool txSuccess = m_port->flush();
+            txSuccess |= m_port->waitForBytesWritten(10);
             if (!txSuccess || (numWritten != m_transmitBuffer.count())) {
                 linkErrorCount++;
-                qDebug() << "TX Error! wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";
+                qDebug() << "TX Error! written:" << txSuccess << "wrote" << numWritten << ", asked for " << m_transmitBuffer.count() << "bytes";
             }
             else {
 
