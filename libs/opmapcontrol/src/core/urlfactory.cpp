@@ -210,7 +210,8 @@ namespace core {
                 QString sec2 = ""; // after &zoom=...
                 GetSecGoogleWords(pos,  sec1,  sec2);
                 TryCorrectGoogleVersions();
-                return QString("https://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleSatellite).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
+                //this does not yield good results in practice return QString("https://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(GetServerNum(pos, 4)).arg(request).arg(VersionGoogleSatellite).arg(language).arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom).arg(sec2);
+                return QString("http://mt1.google.com/vt/lyrs=y&x=%1%2&y=%3&z=%4").arg(pos.X()).arg(sec1).arg(pos.Y()).arg(zoom);
             }
             break;
         case MapType::GoogleLabels:

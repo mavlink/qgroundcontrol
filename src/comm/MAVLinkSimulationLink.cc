@@ -585,28 +585,6 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer, buffer, bufferlength);
         streampointer += bufferlength;
 
-
-
-//        // HEARTBEAT VEHICLE 2
-
-//        // Pack message and get size of encoded byte string
-//        mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_HELICOPTER, MAV_AUTOPILOT_ARDUPILOTMEGA);
-//        // Allocate buffer with packet data
-//        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-//        //add data into datastream
-//        memcpy(stream+streampointer,buffer, bufferlength);
-//        streampointer += bufferlength;
-
-//        // HEARTBEAT VEHICLE 3
-
-//        // Pack message and get size of encoded byte string
-//        mavlink_msg_heartbeat_pack(60, componentId, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
-//        // Allocate buffer with packet data
-//        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-//        //add data into datastream
-//        memcpy(stream+streampointer,buffer, bufferlength);
-//        streampointer += bufferlength;
-
         // Pack message and get size of encoded byte string
         mavlink_msg_sys_status_encode(54, componentId, &msg, &status);
         // Allocate buffer with packet data

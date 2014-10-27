@@ -39,12 +39,10 @@ WindowsBuild {
 	DESTDIR_COPY_RESOURCE_LIST = $$replace(DESTDIR,"/","\\")
 	BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\files\" \"$$DESTDIR_COPY_RESOURCE_LIST\\files\"
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\qml\" \"$$DESTDIR_COPY_RESOURCE_LIST\\qml\"
     QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\data\" \"$$DESTDIR_COPY_RESOURCE_LIST\\data\"
 } else {
     # Make sure to keep both side of this if using the same set of directories
     QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/files $$DESTDIR_COPY_RESOURCE_LIST
-    QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/qml $$DESTDIR_COPY_RESOURCE_LIST
     QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/data $$DESTDIR_COPY_RESOURCE_LIST
 }
 
