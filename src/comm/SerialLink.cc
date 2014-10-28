@@ -22,7 +22,7 @@
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
     m_bytesRead(0),
-    m_port(NULL),
+    m_port(Q_NULLPTR),
     type(""),
     m_is_cdc(true),
     m_stopp(false),
@@ -34,9 +34,10 @@ SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl,
 
     // Get the name of the current port in use.
     m_portName = portname.trimmed();
-    if (m_portName == "" && getCurrentPorts().size() > 0)
+    QList<QString> ports = getCurrentPorts();
+    if (m_portName == "" && ports.size() > 0)
     {
-        m_portName = m_ports.first().trimmed();
+        m_portName = ports.first().trimmed();
     }
 
     checkIfCDC();
@@ -96,15 +97,15 @@ SerialLink::~SerialLink()
 
 QList<QString> SerialLink::getCurrentPorts()
 {
-    m_ports.clear();
+    QList<QString> ports;
 
     QList<QSerialPortInfo> portList =  QSerialPortInfo::availablePorts();
     foreach (const QSerialPortInfo &info, portList)
     {
-        m_ports.append(info.portName());
+        ports.append(info.portName());
     }
 
-    return m_ports;
+    return ports;
 }
 
 bool SerialLink::isBootloader()
