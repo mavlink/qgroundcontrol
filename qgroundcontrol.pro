@@ -384,7 +384,6 @@ HEADERS += \
     src/ui/QGCSensorSettingsWidget.h \
     src/ui/linechart/Linecharts.h \
     src/uas/PxQuadMAV.h \
-    src/uas/senseSoarMAV.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
     src/ui/watchdog/WatchdogView.h \
@@ -545,7 +544,6 @@ SOURCES += \
     src/ui/QGCSensorSettingsWidget.cc \
     src/ui/linechart/Linecharts.cc \
     src/uas/PxQuadMAV.cc \
-    src/uas/senseSoarMAV.cpp \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
     src/ui/watchdog/WatchdogView.cc \
