@@ -32,8 +32,8 @@
 #include <QWidget>
 #include <QTimer>
 
-#include "QGCToolWidget.h"
 #include "UASInterface.h"
+#include "RCValueWidget.h"
 
 #include "ui_PX4RCCalibration.h"
 
@@ -52,18 +52,23 @@ class PX4RCCalibration : public QWidget
     
 public:
     explicit PX4RCCalibration(QWidget *parent = 0);
+    ~ PX4RCCalibration();
+    
+signals:
+    // @brief Signalled when in unit test mode and a message box should be displayed by the next button
+    void nextButtonMessageBoxDisplayed(void);
 
 private slots:
-    void _rcCalNext(void);
-    void _rcCalTryAgain(void);
-    void _rcCalSkip(void);
-    void _rcCalCancel(void);
+    void _nextButton(void);
+    void _skipButton(void);
+    void _spektrumBind(void);
+    
+    void _trimNYI(void);
     
     void _updateView(void);
     
     void _remoteControlChannelRawChanged(int chan, float val);
     void _setActiveUAS(UASInterface* uas);
-    void _toggleSpektrumPairing(bool enabled);
     
     void _parameterListUpToDate(void);
     
@@ -105,52 +110,104 @@ private:
         rcCalStateSave
     };
     
+    typedef void (PX4RCCalibration::*inputFn)(enum rcCalFunctions function, int chan, int value);
+    typedef void (PX4RCCalibration::*buttonFn)(void);
+    struct stateMachineEntry {
+        enum rcCalFunctions function;
+        const char*         instructions;
+        const char*         image;
+        inputFn             rcInputFn;
+        buttonFn            nextFn;
+        buttonFn            skipFn;
+    };
+    
     /// @brief A set of information associated with a function.
     struct FunctionInfo {
-        const char* functionName;   ///< User visible function name
-        const char* inversionMsg;   ///< Message to display to user to detect inversion
         const char* parameterName;  ///< Parameter name for function mapping
-        bool        required;       ///< true: function must be mapped
     };
     
     /// @brief A set of information associated with a radio channel.
     struct ChannelInfo {
         enum rcCalFunctions function;   ///< Function mapped to this channel, rcCalFunctionMax for none
         bool                reversed;   ///< true: channel is reverse, false: not reversed
-        float               rcMin;      ///< Minimum RC value
-        float               rcMax;      ///< Maximum RC value
-        float               rcTrim;     ///< Trim position
+        int                 rcMin;      ///< Minimum RC value
+        int                 rcMax;      ///< Maximum RC value
+        int                 rcTrim;     ///< Trim position
+    };
+    
+    /// @brief Information to relate a function to it's value widget.
+    struct AttitudeInfo {
+        enum rcCalFunctions function;
+        RCValueWidget*      valueWidget;
     };
     
     // Methods - see source code for documentation
     
+    int _currentStep;  ///< Current step of state machine
+    
+    const struct stateMachineEntry* _getStateMachineEntry(int step);
+    
+    void _nextStep(void);
+    void _setupCurrentState(void);
+    
+    void _inputCenterWaitBegin(enum rcCalFunctions function, int channel, int value);
+    void _inputStickDetect(enum rcCalFunctions function, int channel, int value);
+    void _inputStickMin(enum rcCalFunctions function, int channel, int value);
+    void _inputCenterWait(enum rcCalFunctions function, int channel, int value);
+    void _inputSwitchMinMax(enum rcCalFunctions function, int channel, int value);
+    void _inputFlapsDown(enum rcCalFunctions function, int channel, int value);
+    void _inputFlapsUp(enum rcCalFunctions function, int channel, int value);
+    void _inputSwitchDetect(enum rcCalFunctions function, int channel, int value);
+    void _inputFlapsDetect(enum rcCalFunctions function, int channel, int value);
+    
+    void _switchDetect(enum rcCalFunctions function, int channel, int value, bool moveToNextStep);
+    
+    void _saveFlapsDown(void);
+    void _skipFlaps(void);
+    void _saveAllTrims(void);
+    
+    bool _stickSettleComplete(int value);
+    
     void _validateCalibration(void);
-    void _writeCalibration(bool trimsOnly);
+    void _writeCalibration(void);
     void _resetInternalCalibrationValues(void);
     void _setInternalCalibrationValuesFromParameters(void);
     
-    void _rcCalChannelWait(bool firstTime);
-    void _rcCalBegin(void);
-    void _rcCalNextIdentifyChannelMapping(void);
-    void _rcCalReadChannelsMinMax(void);
-    void _rcCalCenterThrottle(void);
-    void _rcCalNextDetectChannelInversion(void);
-    void _rcCalTrims(void);
+    void _startCalibration(void);
+    void _stopCalibration(void);
     void _rcCalSave(void);
 
+    void _writeParameters(void);
+    
     void _rcCalSaveCurrentValues(void);
     
     void _showMinMaxOnRadioWidgets(bool show);
     void _showTrimOnRadioWidgets(bool show);
     
-    void _unitTestForceCalState(enum rcCalStates state);
+    // @brief Called by unit test code to set the mode to unit testing
+    void _setUnitTestMode(void){ _unitTestMode = true; }
     
     // Member variables
+
+    static const char* _imageFilePrefix;
+    static const char* _imageHome;
+    static const char* _imageThrottleUp;
+    static const char* _imageThrottleDown;
+    static const char* _imageYawLeft;
+    static const char* _imageYawRight;
+    static const char* _imageRollLeft;
+    static const char* _imageRollRight;
+    static const char* _imagePitchUp;
+    static const char* _imagePitchDown;
+    static const char* _imageSwitchMinMax;
     
     static const int _updateInterval;   ///< Interval for ui update timer
     
     static const struct FunctionInfo _rgFunctionInfo[rcCalFunctionMax]; ///< Information associated with each function.
     int _rgFunctionChannelMapping[rcCalFunctionMax];                    ///< Maps from rcCalFunctions to channel index. _chanMax indicates channel not set for this function.
+
+    static const int _attitudeControls = 5;
+    struct AttitudeInfo _rgAttitudeControl[_attitudeControls];
     
     int _chanCount;                     ///< Number of actual rc channels available
     static const int _chanMax = 18;     ///< Maximum number of supported rc channels
@@ -169,16 +226,17 @@ private:
     static const int _rcCalPWMValidMaxValue;
     static const int _rcCalPWMDefaultMinValue;
     static const int _rcCalPWMDefaultMaxValue;
-    static const int _rcCalPWMDefaultTrimValue;
     static const int _rcCalRoughCenterDelta;
-    static const float _rcCalMoveDelta;
-    static const float _rcCalMinDelta;
+    static const int _rcCalMoveDelta;
+    static const int _rcCalSettleDelta;
+    static const int _rcCalMinDelta;
     
-    float _rcValueSave[_chanMax];        ///< Saved values prior to detecting channel movement
+    int _rcValueSave[_chanMax];        ///< Saved values prior to detecting channel movement
     
-    float _rcRawValue[_chanMax];         ///< Current set of raw channel values
+    int _rcRawValue[_chanMax];         ///< Current set of raw channel values
     
-    RCChannelWidget* _rgRadioWidget[_chanMax];   ///< Array of radio channel widgets
+    RCValueWidget* _rgRCValueMonitorWidget[_chanMax];   ///< Array of radio channel value widgets
+    QLabel* _rgRCValueMonitorLabel[_chanMax];           ///< Array of radio channel value labels
 
     UASInterface* _mav;                  ///< The current MAV
     QGCUASParamManagerInterface* _paramMgr;
@@ -188,6 +246,15 @@ private:
     Ui::PX4RCCalibration* _ui;
     
     QTimer _updateTimer;    ///< Timer used to update widgete ui
+    
+    int     _stickDetectChannel;
+    int     _stickDetectInitialValue;
+    int     _stickDetectValue;
+    bool    _stickDetectSettleStarted;
+    QTime   _stickDetectSettleElapsed;
+    static const int _stickDetectSettleMSecs;
+    
+    bool _unitTestMode;
 };
 
 #endif // PX4RCCalibration_H
