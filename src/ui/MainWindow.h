@@ -385,7 +385,6 @@ protected:
     void buildCommonWidgets();
     void connectCommonWidgets();
     void connectCommonActions();
-    void connectSenseSoarActions();
 
     void loadSettings();
     void storeSettings();
