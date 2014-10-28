@@ -565,6 +565,8 @@ void PX4RCCalibration::_saveFlapsDown(void)
 
 void PX4RCCalibration::_inputFlapsUp(enum rcCalFunctions function, int channel, int value)
 {
+    Q_UNUSED(function);
+    
     // FIXME: Duplication
     
     Q_ASSERT(function == rcCalFunctionFlaps);
@@ -770,7 +772,7 @@ void PX4RCCalibration::_spektrumBind(void)
     bindTypeMsg.setWindowTitle(tr("Spektrum Bind"));
     bindTypeMsg.setText(tr("Place Spektrum satellite receiver in bind mode. Select which mode below."));
     
-    int bindType;
+    int bindType = 0;
     if (bindTypeMsg.exec() != QMessageBox::Cancel) {
         if (bindTypeMsg.clickedButton() == dsm2Mode) {
             bindType = 0;
