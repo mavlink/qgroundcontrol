@@ -489,6 +489,7 @@ HEADERS += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.h \
     src/ui/px4_configuration/QGCPX4SensorCalibration.h \
     src/ui/px4_configuration/PX4RCCalibration.h \
+    src/ui/px4_configuration/RCValueWidget.h \
     src/ui/px4_configuration/PX4Bootloader.h \
     src/ui/px4_configuration/PX4FirmwareUpgradeThread.h \
     src/ui/px4_configuration/PX4FirmwareUpgrade.h \
@@ -646,6 +647,7 @@ SOURCES += \
     src/ui/px4_configuration/QGCPX4MulticopterConfig.cc \
     src/ui/px4_configuration/QGCPX4SensorCalibration.cc \
     src/ui/px4_configuration/PX4RCCalibration.cc \
+    src/ui/px4_configuration/RCValueWidget.cc \
     src/ui/px4_configuration/PX4Bootloader.cc \
     src/ui/px4_configuration/PX4FirmwareUpgradeThread.cc \
     src/ui/px4_configuration/PX4FirmwareUpgrade.cc \
