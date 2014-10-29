@@ -27,6 +27,7 @@
 #include "AutoTest.h"
 #include "MockUASManager.h"
 #include "MockUAS.h"
+#include "MultiSignalSpy.h"
 #include "px4_configuration/PX4RCCalibration.h"
 
 /// @file
@@ -49,13 +50,6 @@ private slots:
     
     void _setUAS_test(void);
     void _minRCChannels_test(void);
-    //void _liveRC_test(void);
-    void _beginState_test(void);
-    void _identifyState_test(void);
-    void _minMaxState_test(void);
-    void _centerThrottleState_test(void);
-    void _detectInversionState_test(void);
-    void _trimsState_test(void);
     void _fullCalibration_test(void);
     
 private:
@@ -66,13 +60,20 @@ private:
         testModeFullSequence,   ///< Run as full calibration sequence
     };
     
-    void _centerChannels(void);
-    void _beginState_worker(enum TestMode mode);
-    void _identifyState_worker(enum TestMode mode);
-    void _minMaxState_worker(enum TestMode mode);
-    void _centerThrottleState_worker(enum TestMode mode);
-    void _detectInversionState_worker(enum TestMode mode);
-    void _trimsState_worker(enum TestMode mode);
+    enum MoveToDirection {
+        moveToMax,
+        moveToMin,
+        moveToCenter,
+    };
+    
+    void _channelHomePosition(void);
+    void _minRCChannels(void);
+    void _beginCalibration(void);
+    void _stickMoveWaitForSettle(int channel, int value);
+    void _stickMoveAutoStep(const char* functionStr, enum PX4RCCalibration::rcCalFunctions function, enum MoveToDirection direction, bool identifyStep);
+    void _switchMinMaxStep(void);
+    void _flapsDetectStep(void);
+    void _switchSelectAutoStep(const char* functionStr, PX4RCCalibration::rcCalFunctions function);
     
     enum {
         validateMinMaxMask =    1 << 0,
@@ -88,13 +89,9 @@ private:
         int rcMax;
         int rcTrim;
         int reversed;
-        bool isMinMaxShown;
-        bool isMinValid;
-        bool isMaxValid;
     };
     
-    void _validateParameters(int validateMask);
-    void _validateWidgets(int validateMask, const struct ChannelSettings* rgChannelSettings);
+    void _validateParameters(void);
     
     MockUASManager*     _mockUASManager;
     MockUAS*            _mockUAS;
@@ -104,29 +101,30 @@ private:
     enum {
         nextButtonMask =        1 << 0,
         cancelButtonMask =      1 << 1,
-        skipButtonMask =        1 << 2,
-        tryAgainButtonMask =    1 << 3
+        skipButtonMask =        1 << 2
     };
     
     QPushButton*    _nextButton;
     QPushButton*    _cancelButton;
     QPushButton*    _skipButton;
-    QPushButton*    _tryAgainButton;
     QLabel*         _statusLabel;
     
-    RCChannelWidget* _rgRadioWidget[PX4RCCalibration::_chanMax];
+    RCValueWidget* _rgValueWidget[PX4RCCalibration::_chanMax];
+    
+    const char*         _rgSignals[1];
+    MultiSignalSpy*     _multiSpyNextButtonMessageBox;
     
     // When settings values into min/max/trim we set them slightly different than the defaults so that
     // we can distinguish between the two values.
     static const int _testMinValue;
     static const int _testMaxValue;
-    static const int _testTrimValue;
-    static const int _testThrottleTrimValue;
+    static const int _testCenterValue;
     
 	static const int _availableChannels = 18;	///< Simulate 18 channel RC Transmitter
+    static const int _stickSettleWait;
 	
-    static const struct ChannelSettings _rgChannelSettingsPreValidate[_availableChannels];
-    static const struct ChannelSettings _rgChannelSettingsPostValidate[PX4RCCalibration::_chanMax];
+    static const struct ChannelSettings _rgChannelSettings[_availableChannels];
+    static const struct ChannelSettings _rgChannelSettingsValidate[PX4RCCalibration::_chanMax];
 	
 	static const int _rgFunctionChannelMap[PX4RCCalibration::rcCalFunctionMax];
 };
