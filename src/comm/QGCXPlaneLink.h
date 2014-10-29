@@ -191,7 +191,7 @@ protected:
     bool attitudeReceived;
 
     float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
-    double lat, lon, alt;
+    double lat, lon, alt, alt_agl;
     float vx, vy, vz, xacc, yacc, zacc;
     float ind_airspeed;
     float true_airspeed;
