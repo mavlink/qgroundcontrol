@@ -2,8 +2,6 @@
 #include "ui_QGCConfigView.h"
 #include "UASManager.h"
 #include "QGCPX4VehicleConfig.h"
-#include "QGCVehicleConfig.h"
-#include "QGCPX4VehicleConfig.h"
 #include "MainWindow.h"
 
 QGCConfigView::QGCConfigView(QWidget *parent) :
@@ -16,22 +14,13 @@ QGCConfigView::QGCConfigView(QWidget *parent) :
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASChanged(UASInterface*)));
 
-    // The config screens are required for firmware uploading
-    if (MainWindow::instance()->getCustomMode() == MainWindow::CUSTOM_MODE_PX4) {
+    ui->gridLayout->removeWidget(ui->waitingLabel);
+    ui->waitingLabel->setVisible(false);
+    delete ui->waitingLabel;
+    ui->waitingLabel = NULL;
 
-        ui->gridLayout->removeWidget(ui->waitingLabel);
-        ui->waitingLabel->setVisible(false);
-        delete ui->waitingLabel;
-        ui->waitingLabel = NULL;
-
-        config = new QGCPX4VehicleConfig();
-        ui->gridLayout->addWidget(config);
-
-    } else {
-        //don't show a configuration widget if no vehicle is connected
-        //show a placeholder informational widget instead
-    }
-
+    config = new QGCPX4VehicleConfig();
+    ui->gridLayout->addWidget(config);
 }
 
 QGCConfigView::~QGCConfigView()
@@ -68,30 +57,12 @@ void QGCConfigView::activeUASChanged(UASInterface* uas)
             }
         }
 
-        int autopilotType = mav->getAutopilotType();
-        switch (autopilotType) {
-        case MAV_AUTOPILOT_PX4:
-            {
-                QGCPX4VehicleConfig* px4config = qobject_cast<QGCPX4VehicleConfig*>(config);
-                if (!px4config) {
-                    if (config)
-                        delete config;
-                    config = new QGCPX4VehicleConfig();
-                    ui->gridLayout->addWidget(config);
-                }
-            }
-            break;
-        default:
-            {
-                QGCVehicleConfig* generalconfig = qobject_cast<QGCVehicleConfig*>(config);
-                if (!generalconfig) {
-                    if (config)
-                        delete config;
-                    config = new QGCVehicleConfig();
-                    ui->gridLayout->addWidget(config);
-                }
-            }
-            break;
+        QGCPX4VehicleConfig* px4config = qobject_cast<QGCPX4VehicleConfig*>(config);
+        if (!px4config) {
+            if (config)
+                delete config;
+            config = new QGCPX4VehicleConfig();
+            ui->gridLayout->addWidget(config);
         }
     }
     else {
