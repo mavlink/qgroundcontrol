@@ -271,7 +271,7 @@ void QGCPX4VehicleConfig::setActiveUAS(UASInterface* active)
     // Since a system is now connected, enable the VehicleConfig UI.
     // Enable buttons
     
-    bool px4Firmware = mav->getAutopilotType() == MAV_AUTOPILOT_PIXHAWK;
+    bool px4Firmware = mav->getAutopilotType() == MAV_AUTOPILOT_PX4;
     ui->airframeMenuButton->setEnabled(px4Firmware);
     ui->sensorMenuButton->setEnabled(px4Firmware);
     ui->rcMenuButton->setEnabled(px4Firmware);
