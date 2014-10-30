@@ -324,8 +324,6 @@ FORMS += \
     src/ui/JoystickButton.ui \
     src/ui/JoystickAxis.ui \
     src/ui/QGCConfigView.ui \
-    src/ui/main/QGCViewModeSelection.ui \
-    src/ui/main/QGCWelcomeMainWindow.ui \
     src/ui/configuration/terminalconsole.ui \
     src/ui/configuration/SerialSettingsDialog.ui \
     src/ui/px4_configuration/QGCPX4AirframeConfig.ui \
@@ -473,8 +471,6 @@ HEADERS += \
     src/ui/JoystickButton.h \
     src/ui/JoystickAxis.h \
     src/ui/QGCConfigView.h \
-    src/ui/main/QGCViewModeSelection.h \
-    src/ui/main/QGCWelcomeMainWindow.h \
     src/ui/configuration/console.h \
     src/ui/configuration/SerialSettingsDialog.h \
     src/ui/configuration/terminalconsole.h \
@@ -630,8 +626,6 @@ SOURCES += \
     src/ui/JoystickAxis.cc \
     src/ui/uas/QGCMessageView.cc \
     src/ui/QGCConfigView.cc \
-    src/ui/main/QGCViewModeSelection.cc \
-    src/ui/main/QGCWelcomeMainWindow.cc \
     src/ui/configuration/terminalconsole.cpp \
     src/ui/configuration/console.cpp \
     src/ui/configuration/SerialSettingsDialog.cc \

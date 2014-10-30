@@ -140,26 +140,12 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    QGCCore* core = NULL;
-    int val;
-    bool firstStart = true;
+    QGCCore* core = new QGCCore(argc, argv);
+    Q_CHECK_PTR(core);
+    
+    if (!core->init()) {
+        return -1;
+    }
 
-    do {
-        if (core) {
-            delete core;
-            firstStart = false;
-        }
-        core = new QGCCore(firstStart, argc, argv);
-        
-        if (!QSslSocket::supportsSsl()) {
-            QMessageBox::critical(NULL,
-                                  QObject::tr("Missing SSL Support"),
-                                  QObject::tr("QGroundControl requires support for SSL to be installed prior to running. Please see http://www.qgroundcontrol.org/downloads for instructions on installing prerequisites for QGroundControl."));
-            return 1;
-        }
-        
-        val = core->exec();
-    } while (core->getRestartRequested());
-
-    return val;
+    return core->exec();
 }
