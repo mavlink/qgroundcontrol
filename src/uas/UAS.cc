@@ -2553,8 +2553,8 @@ void UAS::requestParameter(int component, const QString& parameter)
     {
         emit textMessageReceived(uasId, 0, MAV_SEVERITY_WARNING, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
     }
-    memcpy(read.param_id, parameter.toStdString().c_str(), qMax(parameter.length(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
-    read.param_id[15] = '\0'; // Enforce null termination
+    strncpy(read.param_id, parameter.toStdString().c_str(), sizeof(read.param_id));
+    read.param_id[sizeof(read.param_id) - 1] = '\0'; // Enforce null termination
     read.target_system = uasId;
     read.target_component = component;
     mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
