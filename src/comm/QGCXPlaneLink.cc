@@ -594,20 +594,35 @@ void QGCXPlaneLink::readBytes()
             }
             if (p.index == 4)
             {
-                // Do not actually use the XPlane value, but calculate our own
-                Eigen::Vector3f g(0, 0, -9.81f);
+				// WORKAROUND: IF ground speed <<1m/s and altitude-above-ground <1m, do NOT use the X-Plane data, because X-Plane (tested 
+				// with v10.3 and earlier) delivers yacc=0 and zacc=0 when the ground speed is very low, which gives e.g. wrong readings 
+				// before launch when waiting on the runway. This might pose a problem for initial state estimation/calibration. 
+				// Instead, we calculate our own accelerations.
+				if (fabsf(groundspeed)<0.1f && alt_agl<1.0) 
+				{
+					// TODO: Add centrip. acceleration to the current static acceleration implementation.
+					Eigen::Vector3f g(0, 0, -9.81f);
+					Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
+					Eigen::Vector3f gr = R.transpose().eval() * g;
 
-                Eigen::Matrix3f R = euler_to_wRo(yaw, pitch, roll);
+					xacc = gr[0];
+					yacc = gr[1];
+					zacc = gr[2];
 
-                Eigen::Vector3f gr = R.transpose().eval() * g;
+					//qDebug() << "Calculated values" << gr[0] << gr[1] << gr[2];
+				}
+				else
+				{
+					// Accelerometer readings, directly from X-Plane and including centripetal forces. 
+					const float one_g = 9.80665f;
+					xacc = p.f[5] * one_g;
+					yacc = p.f[6] * one_g;
+					zacc = -p.f[4] * one_g;
 
-                // TODO Add centrip. accel
+					//qDebug() << "X-Plane values" << xacc << yacc << zacc;
+				}
 
-                xacc = gr[0];
-                yacc = gr[1];
-                zacc = gr[2];
-
-                fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
+				fields_changed |= (1 << 0) | (1 << 1) | (1 << 2);
             }
             else if (p.index == 6 && xPlaneVersion == 10)
             {
@@ -712,12 +727,13 @@ void QGCXPlaneLink::readBytes()
 //            {
 //                qDebug() << "ATT:" << p.f[0] << p.f[1] << p.f[2];
 //            }
-            else if (p.index == 20)
-            {
-                //qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
-                lat = p.f[0];
-                lon = p.f[1];
-                alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
+			else if (p.index == 20)
+			{
+				//qDebug() << "LAT/LON/ALT:" << p.f[0] << p.f[1] << p.f[2];
+				lat = p.f[0];
+				lon = p.f[1];
+				alt = p.f[2] * 0.3048f; // convert feet (MSL) to meters
+				alt_agl = p.f[3] * 0.3048f; //convert feet (AGL) to meters
             }
             else if (p.index == 21 && xPlaneVersion == 10)
             {
