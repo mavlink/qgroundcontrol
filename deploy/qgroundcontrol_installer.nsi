@@ -20,10 +20,8 @@ SectionEnd
 
 Section "Uninstall"
   Delete $INSTDIR\QGroundControl_uninstall.exe
-  Delete $INSTDIR\*.*
-  RMDir $INSTDIR
-  Delete "$SMPROGRAMS\QGroundControl\*.*"
-  RMDir "$SMPROGRAMS\QGroundControl\"
+  RMDir /r /REBOOTOK $INSTDIR
+  RMDir /r /REBOOTOK "$SMPROGRAMS\QGroundControl\"
 SectionEnd
 
 Section "create Start Menu Shortcuts"
