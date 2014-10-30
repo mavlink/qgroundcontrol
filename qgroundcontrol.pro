@@ -310,7 +310,6 @@ FORMS += \
     src/ui/mission/QGCMissionNavSweep.ui \
     src/ui/mission/QGCMissionDoStartSearch.ui \
     src/ui/mission/QGCMissionDoFinishSearch.ui \
-    src/ui/QGCVehicleConfig.ui \
     src/ui/QGCPX4VehicleConfig.ui \
     src/ui/QGCHilConfiguration.ui \
     src/ui/QGCHilFlightGearConfiguration.ui \
@@ -453,7 +452,6 @@ HEADERS += \
     src/ui/mission/QGCMissionNavSweep.h \
     src/ui/mission/QGCMissionDoStartSearch.h \
     src/ui/mission/QGCMissionDoFinishSearch.h \
-    src/ui/QGCVehicleConfig.h \
     src/ui/QGCPX4VehicleConfig.h \
     src/comm/QGCHilLink.h \
     src/ui/QGCHilConfiguration.h \
@@ -612,7 +610,6 @@ SOURCES += \
     src/ui/mission/QGCMissionNavSweep.cc \
     src/ui/mission/QGCMissionDoStartSearch.cc \
     src/ui/mission/QGCMissionDoFinishSearch.cc \
-    src/ui/QGCVehicleConfig.cc \
     src/ui/QGCPX4VehicleConfig.cc \
     src/ui/QGCHilConfiguration.cc \
     src/ui/QGCHilFlightGearConfiguration.cc \
