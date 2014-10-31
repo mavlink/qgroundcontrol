@@ -35,6 +35,7 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QDebug>
+#include <QMessageBox>
 
 /// @Brief Constructs a new PX4FirmwareUpgrade Widget. This widget is used within the PX4VehicleConfig set of screens.
 PX4FirmwareUpgrade::PX4FirmwareUpgrade(QWidget *parent) :
@@ -287,12 +288,18 @@ void PX4FirmwareUpgrade::_findBoard(void)
 }
 
 /// @brief Called when board has been found by the findBoard process
-void PX4FirmwareUpgrade::_foundBoard(const QString portName, QString portDescription)
+void PX4FirmwareUpgrade::_foundBoard(bool firstTry, const QString portName, QString portDescription)
 {
-    _portName = portName;
-    _portDescription = portDescription;
-    _setupState(upgradeStateBootloaderSearch);
-    _findBootloader();
+    if (firstTry) {
+        // Board is still plugged
+        QMessageBox::critical(this, tr("Firmware Upgrade"), tr("You must unplug you board before beginning the Firmware Upgrade process."));
+        _cancel();
+    } else {
+        _portName = portName;
+        _portDescription = portDescription;
+        _setupState(upgradeStateBootloaderSearch);
+        _findBootloader();
+    }
 }
 
 /// @brief Begins the findBootloader process to connect to the bootloader
