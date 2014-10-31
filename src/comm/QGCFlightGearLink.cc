@@ -628,6 +628,21 @@ bool QGCFlightGearLink::connectSimulation()
 	QString     fgSceneryPath;					// FlightGear scenery path as specified by --fg-scenery
 	bool        fgSceneryDirOverride = false;	// true: User has specified --fg-scenery from ui options
     QDir        fgAppDir;						// Location of main FlightGear application
+
+    // Reset the list of arguments which will be provided to FG to the arguments set by the user via the UI
+    // First split the space seperated command line arguments coming in from the ui into a QStringList since
+    // that is what QProcess::start needs.
+    QStringList uiArgList;
+    bool mismatchedQuotes = parseUIArguments(startupArguments, uiArgList);
+    if (!mismatchedQuotes) {
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), tr("Mismatched quotes in specified command line options"));
+        return false;
+    }
+#ifdef DEBUG_FLIGHTGEAR_CONNECT
+    qDebug() << "\nSplit arguments" << uiArgList << "\n";
+#endif
+    // Now set the FG arguments to the arguments from the UI
+    _fgArgList = uiArgList;
     
 #if defined Q_OS_MACX
     // Mac installs will default to the /Applications folder 99% of the time. Anything other than
@@ -744,22 +759,7 @@ bool QGCFlightGearLink::connectSimulation()
         fgAppFullyQualified = fgAppDir.absoluteFilePath(fgAppName);
     }
 #endif
-    
-	// Split the space seperated command line arguments coming in from the ui into a QStringList since
-	// that is what QProcess::start needs.
-	QStringList uiArgList;
-    bool mismatchedQuotes = parseUIArguments(startupArguments, uiArgList);
-    if (!mismatchedQuotes) {
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear settings"), tr("Mismatched quotes in specified command line options"));
-        return false;
-    }
-    
-	// Add the user specified arguments to our argument list
-#ifdef DEBUG_FLIGHTGEAR_CONNECT
-	qDebug() << "\nSplit arguments" << uiArgList << "\n";
-#endif
-    _fgArgList = uiArgList;
-    
+     
     // If we have an --fg-root coming in from the ui options, that setting overrides any internal searching of
     // proposed locations.
     QString argValue;
