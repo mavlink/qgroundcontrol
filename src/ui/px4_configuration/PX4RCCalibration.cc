@@ -973,6 +973,7 @@ void PX4RCCalibration::_stopCalibration(void)
     _ui->rcCalStatus->clear();
 
     _ui->rcCalNext->setText(tr("Calibrate"));
+    _ui->rcCalNext->setEnabled(true);
     _ui->rcCalCancel->setEnabled(false);
     _ui->rcCalSkip->setEnabled(false);
 }
