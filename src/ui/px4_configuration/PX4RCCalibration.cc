@@ -1136,7 +1136,7 @@ void PX4RCCalibration::_setHelpImage(const char* imageFile)
     }
     file += imageFile;
     
-    qDebug() << "_setHelpImage" << file;
+    //qDebug() << "_setHelpImage" << file;
     
     _ui->radioIcon->setPixmap(QPixmap(file));
 }
