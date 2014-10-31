@@ -758,7 +758,7 @@ bool QGCFlightGearLink::connectSimulation()
 #ifdef DEBUG_FLIGHTGEAR_CONNECT
 	qDebug() << "\nSplit arguments" << uiArgList << "\n";
 #endif
-    _fgArgList += uiArgList;
+    _fgArgList = uiArgList;
     
     // If we have an --fg-root coming in from the ui options, that setting overrides any internal searching of
     // proposed locations.
