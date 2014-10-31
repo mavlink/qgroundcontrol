@@ -175,17 +175,28 @@
         <file>files/images/px4/calibration/accel_z-.png</file>
         <file>files/images/px4/calibration/accel_y+.png</file>
         <file>files/images/px4/calibration/mag_calibration_figure8.png</file>
-        <file>files/images/px4/calibration/radioCenter.png</file>
-        <file>files/images/px4/calibration/radioHome.png</file>
-        <file>files/images/px4/calibration/radioRollLeft.png</file>
-        <file>files/images/px4/calibration/radioRollRight.png</file>
-        <file>files/images/px4/calibration/radioPitchUp.png</file>
-        <file>files/images/px4/calibration/radioPitchDown.png</file>
-        <file>files/images/px4/calibration/radioYawLeft.png</file>
-        <file>files/images/px4/calibration/radioYawRight.png</file>
-        <file>files/images/px4/calibration/radioThrottleUp.png</file>
-        <file>files/images/px4/calibration/radioThrottleDown.png</file>
-        <file>files/images/px4/calibration/radioSwitchMinMax.png</file>
+        <file>files/images/px4/calibration/mode1/radioCenter.png</file>
+        <file>files/images/px4/calibration/mode1/radioHome.png</file>
+        <file>files/images/px4/calibration/mode1/radioRollLeft.png</file>
+        <file>files/images/px4/calibration/mode1/radioRollRight.png</file>
+        <file>files/images/px4/calibration/mode1/radioPitchUp.png</file>
+        <file>files/images/px4/calibration/mode1/radioPitchDown.png</file>
+        <file>files/images/px4/calibration/mode1/radioYawLeft.png</file>
+        <file>files/images/px4/calibration/mode1/radioYawRight.png</file>
+        <file>files/images/px4/calibration/mode1/radioThrottleUp.png</file>
+        <file>files/images/px4/calibration/mode1/radioThrottleDown.png</file>
+        <file>files/images/px4/calibration/mode1/radioSwitchMinMax.png</file>
+        <file>files/images/px4/calibration/mode2/radioCenter.png</file>
+        <file>files/images/px4/calibration/mode2/radioHome.png</file>
+        <file>files/images/px4/calibration/mode2/radioRollLeft.png</file>
+        <file>files/images/px4/calibration/mode2/radioRollRight.png</file>
+        <file>files/images/px4/calibration/mode2/radioPitchUp.png</file>
+        <file>files/images/px4/calibration/mode2/radioPitchDown.png</file>
+        <file>files/images/px4/calibration/mode2/radioYawLeft.png</file>
+        <file>files/images/px4/calibration/mode2/radioYawRight.png</file>
+        <file>files/images/px4/calibration/mode2/radioThrottleUp.png</file>
+        <file>files/images/px4/calibration/mode2/radioThrottleDown.png</file>
+        <file>files/images/px4/calibration/mode2/radioSwitchMinMax.png</file>
         <file>files/images/px4/menu/sensors.png</file>
         <file>files/images/px4/menu/firmware_upgrade.png</file>
         <file>files/images/px4/menu/plane.png</file>

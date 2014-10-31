@@ -546,11 +546,53 @@ background-color: rgb(80, 80, 80);s</string>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_9">
-       <property name="text">
-        <string>Calibration Help</string>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <property name="spacing">
+        <number>-1</number>
        </property>
-      </widget>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetDefaultConstraint</enum>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Calibration Help</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="mode1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Mode 1</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="mode2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Mode 2</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
       <widget class="QLabel" name="radioIcon">
@@ -570,7 +612,7 @@ background-color: rgb(80, 80, 80);s</string>
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="../../../qgroundcontrol.qrc">:/files/images/px4/calibration/radioCenter.png</pixmap>
+        <pixmap>:/files/images/px4/calibration/radioCenter.png</pixmap>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -594,7 +636,7 @@ background-color: rgb(80, 80, 80);s</string>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="monitorLabel">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -1172,8 +1214,6 @@ background-color: rgb(179, 179, 179);</string>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../../../qgroundcontrol.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
