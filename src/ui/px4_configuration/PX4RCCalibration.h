@@ -63,6 +63,9 @@ private slots:
     void _skipButton(void);
     void _spektrumBind(void);
     
+    void _mode1Toggled(bool checked);
+    void _mode2Toggled(bool checked);
+    
     void _trimNYI(void);
     
     void _updateView(void);
@@ -184,12 +187,20 @@ private:
     void _showMinMaxOnRadioWidgets(bool show);
     void _showTrimOnRadioWidgets(bool show);
     
+    void _setHelpImage(const char* imageFile);
+    
+    void _loadSettings(void);
+    void _storeSettings(void);
+    
     // @brief Called by unit test code to set the mode to unit testing
     void _setUnitTestMode(void){ _unitTestMode = true; }
     
     // Member variables
 
+    static const char* _imageFileMode1Dir;
+    static const char* _imageFileMode2Dir;
     static const char* _imageFilePrefix;
+    static const char* _imageCenter;
     static const char* _imageHome;
     static const char* _imageThrottleUp;
     static const char* _imageThrottleDown;
@@ -200,6 +211,11 @@ private:
     static const char* _imagePitchUp;
     static const char* _imagePitchDown;
     static const char* _imageSwitchMinMax;
+    
+    static const char* _settingsGroup;
+    static const char* _settingsKeyTransmitterMode;
+    
+    int _transmitterMode;   ///< 1: transmitter is mode 1, 2: transmitted is mode 2
     
     static const int _updateInterval;   ///< Interval for ui update timer
     

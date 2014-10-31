@@ -26,6 +26,7 @@
 ///     @author Don Gagne <don@thegagnes.com
 
 #include <QMessageBox>
+#include <QSettings>
 
 #include "PX4RCCalibration.h"
 #include "UASManager.h"
@@ -45,6 +46,9 @@ const int PX4RCCalibration::_rcCalMinDelta = 100;             ///< Amount of del
 const int PX4RCCalibration::_stickDetectSettleMSecs = 500;
 
 const char*  PX4RCCalibration::_imageFilePrefix = ":files/images/px4/calibration/";
+const char*  PX4RCCalibration::_imageFileMode1Dir = "mode1/";
+const char*  PX4RCCalibration::_imageFileMode2Dir = "mode2/";
+const char*  PX4RCCalibration::_imageCenter = "radioCenter.png";
 const char*  PX4RCCalibration::_imageHome = "radioHome.png";
 const char*  PX4RCCalibration::_imageThrottleUp = "radioThrottleUp.png";
 const char*  PX4RCCalibration::_imageThrottleDown = "radioThrottleDown.png";
@@ -55,6 +59,9 @@ const char*  PX4RCCalibration::_imageRollRight = "radioRollRight.png";
 const char*  PX4RCCalibration::_imagePitchUp = "radioPitchUp";
 const char*  PX4RCCalibration::_imagePitchDown = "radioPitchDown";
 const char*  PX4RCCalibration::_imageSwitchMinMax = "radioSwitchMinMax";
+
+const char* PX4RCCalibration::_settingsGroup = "RadioCalibration";
+const char* PX4RCCalibration::_settingsKeyTransmitterMode = "TransmitterMode";
 
 const struct PX4RCCalibration::FunctionInfo PX4RCCalibration::_rgFunctionInfo[PX4RCCalibration::rcCalFunctionMax] = {
     //Parameter          required
@@ -74,6 +81,7 @@ const struct PX4RCCalibration::FunctionInfo PX4RCCalibration::_rgFunctionInfo[PX
 PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     QWidget(parent),
     _currentStep(-1),
+    _transmitterMode(2),
     _chanCount(0),
     _rcCalState(rcCalStateChannelWait),
     _mav(NULL),
@@ -136,11 +144,27 @@ PX4RCCalibration::PX4RCCalibration(QWidget *parent) :
     connect(_ui->pitchTrim, &QPushButton::clicked, this, &PX4RCCalibration::_trimNYI);
     connect(_ui->throttleTrim, &QPushButton::clicked, this, &PX4RCCalibration::_trimNYI);
     
+    _loadSettings();
+
+    if (_transmitterMode == 1) {
+        _ui->mode1->setChecked(true);
+        _mode1Toggled(true);
+    } else if (_transmitterMode == 2) {
+        _ui->mode2->setChecked(true);
+        _mode2Toggled(true);
+    } else {
+        Q_ASSERT(false);
+    }
+    
+    connect(_ui->mode1, &QAbstractButton::toggled, this, &PX4RCCalibration::_mode1Toggled);
+    connect(_ui->mode2, &QAbstractButton::toggled, this, &PX4RCCalibration::_mode2Toggled);
+    
     _stopCalibration();
 }
 
 PX4RCCalibration::~PX4RCCalibration()
 {
+    _storeSettings();
 }
 
 /// @brief Returns the state machine entry for the specified state.
@@ -219,7 +243,8 @@ void PX4RCCalibration::_setupCurrentState(void)
    const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
     
     _ui->rcCalStatus->setText(state->instructions);
-    _ui->radioIcon->setPixmap(QPixmap(QString(_imageFilePrefix) + state->image));
+    
+    _setHelpImage(state->image);
     
     _stickDetectChannel = _chanMax;
     _stickDetectSettleStarted = false;
@@ -976,6 +1001,8 @@ void PX4RCCalibration::_stopCalibration(void)
     _ui->rcCalNext->setEnabled(true);
     _ui->rcCalCancel->setEnabled(false);
     _ui->rcCalSkip->setEnabled(false);
+    
+    _setHelpImage(_imageCenter);
 }
 
 /// @brief Saves the current channel values, so that we can detect when the use moves an input.
@@ -1050,4 +1077,66 @@ void PX4RCCalibration::_parameterListUpToDate(void)
     if (_currentStep == -1) {
         _setInternalCalibrationValuesFromParameters();
     }
+}
+
+void PX4RCCalibration::_loadSettings(void)
+{
+    QSettings settings;
+    
+    settings.beginGroup(_settingsGroup);
+    _transmitterMode = settings.value(_settingsKeyTransmitterMode, 2).toInt();
+    settings.endGroup();
+    
+    if (_transmitterMode != 1 || _transmitterMode != 2) {
+        _transmitterMode = 2;
+    }
+}
+
+void PX4RCCalibration::_storeSettings(void)
+{
+    QSettings settings;
+    
+    settings.beginGroup(_settingsGroup);
+    settings.setValue(_settingsKeyTransmitterMode, _transmitterMode);
+    settings.endGroup();
+}
+
+void PX4RCCalibration::_mode1Toggled(bool checked)
+{
+    if (checked) {
+        _transmitterMode = 1;
+        if (_currentStep != -1) {
+            const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+            _setHelpImage(state->image);
+        }
+    }
+}
+
+void PX4RCCalibration::_mode2Toggled(bool checked)
+{
+    if (checked) {
+        _transmitterMode = 2;
+        if (_currentStep != -1) {
+            const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+            _setHelpImage(state->image);
+        }
+    }
+}
+
+void PX4RCCalibration::_setHelpImage(const char* imageFile)
+{
+    QString file = _imageFilePrefix;
+    
+    if (_transmitterMode == 1) {
+        file += _imageFileMode1Dir;
+    } else if (_transmitterMode == 2) {
+        file += _imageFileMode2Dir;
+    } else {
+        Q_ASSERT(false);
+    }
+    file += imageFile;
+    
+    qDebug() << "_setHelpImage" << file;
+    
+    _ui->radioIcon->setPixmap(QPixmap(file));
 }
