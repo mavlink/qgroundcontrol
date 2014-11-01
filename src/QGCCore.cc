@@ -72,11 +72,16 @@ QGCCore::QGCCore(int &argc, char* argv[]) :
     QApplication(argc, argv),
     _mainWindow(NULL)
 {
-    // Set application name
+    // Set application information
     this->setApplicationName(QGC_APPLICATION_NAME);
-    this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QGC::ORG_NAME);
-    this->setOrganizationDomain(QGC::ORG_DOMAIN);
+    this->setOrganizationName(QGC_ORG_NAME);
+    this->setOrganizationDomain(QGC_ORG_DOMAIN);
+    
+    // Version string is build from component parts. Format is:
+    //  vMajor.Minor.BuildNumber BuildType
+    QString versionString("v%1.%2.%3 %4");
+    versionString = versionString.arg(QGC_APPLICATION_VERSION_MAJOR).arg(QGC_APPLICATION_VERSION_MINOR).arg(QGC_APPLICATION_VERSION_BUILDNUMBER).arg(QGC_APPLICATION_VERSION_BUILDTYPE);
+    this->setApplicationVersion(versionString);
     
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
