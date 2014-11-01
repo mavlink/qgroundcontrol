@@ -38,9 +38,6 @@ QGCSettingsWidget::QGCSettingsWidget(JoystickInput *joystick, QWidget *parent, Q
 
     this->window()->setWindowTitle(tr("QGroundControl Settings"));
 
-    // Settings reset
-    connect(ui->resetSettingsButton, SIGNAL(clicked()), this, SLOT(resetSettings()));
-
     // Audio preferences
     ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
     connect(ui->audioMuteCheckBox, SIGNAL(toggled(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
@@ -199,14 +196,4 @@ void QGCSettingsWidget::selectCustomMode(int mode)
 {
     MainWindow::instance()->setCustomMode(static_cast<enum MainWindow::CUSTOM_MODE>(ui->customModeComboBox->itemData(mode).toInt()));
     MainWindow::instance()->showInfoMessage(tr("Please restart QGroundControl"), tr("The optimization selection was changed. The application needs to be closed and restarted to put all optimizations into effect."));
-}
-
-void QGCSettingsWidget::resetSettings()
-{
-    QSettings settings;
-    settings.sync();
-    settings.clear();
-    // Write current application version
-    settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
-    settings.sync();
 }
