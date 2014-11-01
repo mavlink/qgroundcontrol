@@ -87,9 +87,6 @@ Supported builds for Linux are 32 or 64-bit, built using gcc.
 ### Build on Windows
 Supported builds for Windows are 32 bit only built using Visual Studio 2013 or higher.
 
-#### Install OpenSLL prerequisite
-Install OpenSSL from here: <http://slproweb.com/products/Win32OpenSSL.html>. Make sure to install VC redistributables first, then install the 32 bit version v1.01i.
-
 #### Install Visual Studio Express 2013
 Only compilation using Visual Studio 2013 is supported. Download and install Visual Studio Express Edition (free) from here: <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-express-windows-desktop>. Make sure you install the Windows Desktop version.
 
