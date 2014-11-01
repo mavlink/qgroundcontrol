@@ -105,14 +105,6 @@ bool QGCCore::init(void)
 {
     QSettings settings;
     
-    // SSL support is required. No reason to go any further without it
-    if (!QSslSocket::supportsSsl()) {
-        QMessageBox::critical(NULL,
-                              QObject::tr("Missing SSL Support"),
-                              QObject::tr("QGroundControl requires support for SSL to be installed prior to running. Please see http://www.qgroundcontrol.org/downloads for instructions on installing prerequisites for QGroundControl."));
-        return false;
-    }
-
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
     
