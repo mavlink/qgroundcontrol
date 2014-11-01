@@ -72,7 +72,8 @@ protected:
     void startUASManager();
 
 private:
-    MainWindow*             _mainWindow;
+    MainWindow* _mainWindow;
+    static const char* _settingsVersionKey;
 };
 
 #endif /* _CORE_H_ */

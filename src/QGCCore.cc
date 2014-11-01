@@ -55,6 +55,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 
+const char* QGCCore::_settingsVersionKey = "SettingsVersion";
 
 /**
  * @brief Constructor for the main application.
@@ -108,30 +109,24 @@ bool QGCCore::init(void)
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
     
-    
-    // Show user an upgrade message if QGC got upgraded (see code below, after splash screen)
-    bool upgraded = false;
+    // Show user an upgrade message if the settings version has been bumped up
+    bool settingsUpgraded = false;
     enum MainWindow::CUSTOM_MODE mode = MainWindow::CUSTOM_MODE_PX4;
-    QString lastApplicationVersion("");
-    if (settings.contains("QGC_APPLICATION_VERSION"))
-    {
-        QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
-        if (qgcVersion != QGC_APPLICATION_VERSION)
-        {
-            lastApplicationVersion = qgcVersion;
-            settings.clear(); // Clear settings from different version
-            // Write current application version
-            settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
-            upgraded = true;
-        } else {
-            mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
+    if (settings.contains(_settingsVersionKey)) {
+        if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
+            settingsUpgraded = true;
         }
-    } else {
-        // If application version is not set, clear settings anyway
-        settings.clear();
-        // Write current application version
-        settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
+    } else if (settings.allKeys().count()) {
+        // Settings version key is missing and there are settings. This is an upgrade scenario.
+        settingsUpgraded = true;
     }
+    
+    if (settingsUpgraded) {
+        settings.clear();
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+    }
+    
+    mode = (enum MainWindow::CUSTOM_MODE) settings.value("QGC_CUSTOM_MODE", (int)MainWindow::CUSTOM_MODE_PX4).toInt();
     
     settings.sync();
     
@@ -192,8 +187,11 @@ bool QGCCore::init(void)
     // Remove splash screen
     splashScreen->finish(_mainWindow);
     
-    if (upgraded) _mainWindow->showInfoMessage(tr("Default Settings Loaded"),
-                                              tr("qgroundcontrol has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
+    if (settingsUpgraded) {
+        _mainWindow->showInfoMessage(tr("Settings Cleared"),
+                                     tr("The format for QGroundControl saved settings has been modified. "
+                                        "Your saved settings have been reset to defaults."));
+    }
     
     // Check if link could be connected
     if (udpLink && !udpLink->connect())
