@@ -266,7 +266,7 @@ void TerminalConsole::setLink(int index)
 void TerminalConsole::loadSettings()
 {
     // Load defaults from settings
-    QSettings settings(QGC::ORG_NAME, QGC::APPNAME);
+    QSettings settings;
     settings.sync();
     if (settings.contains("TERMINALCONSOLE_COMM_PORT"))
     {
@@ -288,7 +288,7 @@ void TerminalConsole::loadSettings()
 void TerminalConsole::writeSettings()
 {
     // Store settings
-    QSettings settings(QGC::ORG_NAME, QGC::APPNAME);
+    QSettings settings;
     settings.setValue("TERMINALCONSOLE_COMM_PORT", m_settings.name);
     settings.setValue("TERMINALCONSOLE_COMM_BAUD", m_settings.baudRate);
     settings.setValue("TERMINALCONSOLE_COMM_PARITY", m_settings.parity);

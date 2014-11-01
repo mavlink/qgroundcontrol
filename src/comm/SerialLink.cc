@@ -139,7 +139,7 @@ bool SerialLink::isBootloader()
 void SerialLink::loadSettings()
 {
     // Load defaults from settings
-    QSettings settings(QGC::ORG_NAME, QGC::APPNAME);
+    QSettings settings;
     settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
@@ -157,7 +157,7 @@ void SerialLink::loadSettings()
 void SerialLink::writeSettings()
 {
     // Store settings
-    QSettings settings(QGC::ORG_NAME, QGC::APPNAME);
+    QSettings settings;
     settings.setValue("SERIALLINK_COMM_PORT", getPortName());
     settings.setValue("SERIALLINK_COMM_BAUD", getBaudRateType());
     settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
