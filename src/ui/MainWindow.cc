@@ -984,7 +984,7 @@ void MainWindow::storeSettings()
         // Save the last current view in any case
         settings.setValue("CURRENT_VIEW", currentView);
         // Save the current window state, but only if a system is connected (else no real number of widgets would be present))
-        if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
+        if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState());
         // Save the current view only if a UAS is connected
         if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
         // Save the current power mode
@@ -1439,7 +1439,7 @@ void MainWindow::setActiveUAS(UASInterface* uas)
     if (settings.contains(getWindowStateKey()))
     {
         SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
-        win->restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
+        win->restoreState(settings.value(getWindowStateKey()).toByteArray());
     }
 
 }
@@ -1596,7 +1596,7 @@ void MainWindow::storeViewState()
         widgetnames = widgetnames.mid(0,widgetnames.length()-1);
 
         settings.setValue(getWindowStateKey() + "WIDGETS",widgetnames);
-        settings.setValue(getWindowStateKey(), win->saveState(QGC::applicationVersion()));
+        settings.setValue(getWindowStateKey(), win->saveState());
         settings.setValue(getWindowStateKey()+"CENTER_WIDGET", centerStack->currentIndex());
         // Although we want save the state of the window, we do not want to change the top-leve state (minimized, maximized, etc)
         // therefore this state is stored here and restored after applying the rest of the settings in the new
@@ -1685,7 +1685,7 @@ void MainWindow::loadViewState()
     if (settings.contains(getWindowStateKey()))
     {
         SubMainWindow *win = qobject_cast<SubMainWindow*>(centerStack->currentWidget());
-        win->restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
+        win->restoreState(settings.value(getWindowStateKey()).toByteArray());
     }
 }
 void MainWindow::setAdvancedMode(bool isAdvancedMode)

@@ -12,24 +12,27 @@
 
 // If you need to make an incompatible changes to stored settings, bump this version number
 // up by 1. This will caused store settings to be cleared on next boot.
-#define QGC_SETTINGS_VERSION 1
+#define QGC_SETTINGS_VERSION 2
 
 #define QGC_APPLICATION_NAME "QGroundControl"
-#define QGC_APPLICATION_VERSION_BASE "v2.0.3"
+#define QGC_ORG_NAME "QGroundControl.org"
+#define QGC_ORG_DOMAIN "org.qgroundcontrol"
 
-#ifdef QGC_APPLICATION_VERSION_SUFFIX
-    #define QGC_APPLICATION_VERSION QGC_APPLICATION_VERSION_BASE QGC_APPLICATION_VERSION_SUFFIX
-#else
-    #define QGC_APPLICATION_VERSION QGC_APPLICATION_VERSION_BASE " (Developer Build)"
+#define QGC_APPLICATION_VERSION_MAJOR 2
+#define QGC_APPLICATION_VERSION_MINOR 1
+
+// The following #definess can be overriden from the command line so that automated build systems can
+// add additional build identification.
+
+// Only comes from command line
+//#define QGC_APPLICATION_VERSION_COMMIT "..."
+
+#ifndef QGC_APPLICATION_VERSION_BUILDNUMBER
+#define QGC_APPLICATION_VERSION_BUILDNUMBER 0
 #endif
 
-namespace QGC
-
-{
-const QString APPNAME = "QGROUNDCONTROL";
-const QString ORG_NAME = "QGROUNDCONTROL.ORG"; //can be customized by forks to e.g. mycompany.com to maintain separate Settings for customized apps
-const QString ORG_DOMAIN = "org.qgroundcontrol";//can be customized by forks
-const int APPLICATIONVERSION = 203; // 2.0.3
-}
+#ifndef QGC_APPLICATION_VERSION_BUILDTYPE
+#define QGC_APPLICATION_VERSION_BUILDTYPE "(Developer Build)"
+#endif
 
 #endif // QGC_CONFIGURATION_H

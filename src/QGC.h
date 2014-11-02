@@ -93,7 +93,6 @@ qreal groundTimeSeconds();
 float limitAngleToPMPIf(float angle);
 /** @brief Returns the angle limited to -pi - pi */
 double limitAngleToPMPId(double angle);
-int applicationVersion();
 
 const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 
