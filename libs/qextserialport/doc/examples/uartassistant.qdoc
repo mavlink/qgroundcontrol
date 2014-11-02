@@ -1,0 +1,24 @@
+/*!
+    \example examples/uartassistant
+    \title UartAssistant Demo
+
+    The example demonstrates how to use QextSerialPort.
+
+    Initialze UI element.
+    \snippet examples/uartassistant/dialog.cpp 0
+
+    Initialize serial port
+    \snippet examples/uartassistant/dialog.cpp 1
+
+    port Settings
+    \snippet examples/uartassistant/dialog.cpp 2
+
+    Open or Close the port.
+    \snippet examples/uartassistant/dialog.cpp 3
+
+    Read from or Write to the port
+    \snippet examples/uartassistant/dialog.cpp 4
+
+    \image uartassistant.png
+*/
+
