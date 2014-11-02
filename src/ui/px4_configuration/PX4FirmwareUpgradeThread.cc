@@ -99,7 +99,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
             qDebug() << "\tvendor ID:" << info.vendorIdentifier();
             qDebug() << "\tproduct ID:" << info.productIdentifier();
             
-            portName = info.portName();
+            portName = info.systemLocation();
             portDescription = info.description();
             
 #ifdef Q_OS_WIN
@@ -134,7 +134,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce(void)
     
     uint32_t    bootloaderVersion, boardID, flashSize;
 
-    _bootloaderPort = new QSerialPort;
+    _bootloaderPort = new QextSerialPort(QextSerialPort::Polling);
     Q_CHECK_PTR(_bootloaderPort);
     
     if (_bootloader->open(_bootloaderPort, _portName)) {
@@ -149,7 +149,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBootloaderOnce(void)
                 _bootloaderPort->close();
                 _bootloaderPort->deleteLater();
                 _bootloaderPort = NULL;
-                qDebug() << "Bootloader error:" << _bootloader->errorString();
+                qDebug() << "Bootloader Get Board Info error:" << _bootloader->errorString();
                 emit error(commandBootloader, _bootloader->errorString());
                 return;
             }

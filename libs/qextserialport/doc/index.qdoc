@@ -1,0 +1,199 @@
+/*!
+    \page index.html
+    \title QextSerialPort Manual
+
+    \section1 Overview
+      QextSerialPort provides an interface to old fashioned serial ports for
+      Qt-based applications. It currently supports Mac OS X, Windows, Linux, FreeBSD. 
+
+      From QextSerialPort 1.2-beta on, license of the project has been changed to MIT.
+
+      \list
+         \o Revision 0.9.x is Qt 2 & 3 compatible.
+         \o Revision 1.x.x is Qt 4 compatible.
+         \o From revision 1.2beta1 on, Qt 5 support is added.
+      \endlist
+
+        
+    \section1 Classes
+      \list
+      \o \l QextSerialPort encapsulates a serial port on both POSIX and Windows systems.
+      \o \l QextSerialEnumerator enumerates ports currently available in the system.
+      \endlist
+    
+    \section1 Getting Started
+
+
+    \section2 Usage(1): Source Code Only
+
+ The package contains a qextserialport.pri file that allows you to integrate the component into programs that use qmake for the build step.
+
+      Download the source code.
+      Put the source code in any directory you like. For example, 3rdparty:
+
+      \code
+       |-- project.pro
+       |-- ....
+       |-- 3rdparty\
+       |     |-- qextserialport\
+       |     |
+      \endcode
+
+      Add following line to your qmake project file:
+      \code
+      include(pathToPri/qextserialport.pri)
+      \endcode
+
+      Then, using QextSerialPort in your code
+      \code
+      #include "qextserialport.h"
+      ... 
+      MyClass::MyClass()
+      {
+          port = new QextSerialPort("COM1");
+          connect(port, SIGNAL(readyRead()), this, SLOT(onDataAvailable()));
+          port->open();
+      }
+  
+      void MyClass::onDataAvailable()
+      {
+          QByteArray data = port->readAll();
+          processNewData(usbdata);
+      }
+      \endcode
+
+    \section2 Usage(2): shared library
+      Although QextSerialPort can be directly compiled into your application, You may prefer
+      to use QextSerailPort as an library, which is very easy too.
+
+     1. Download the source code, and put it in any location you like.
+    
+     2. Goto the top level directory ,run following command to generate library.
+    
+          \code
+          qmake
+          sudo make install (or nmake install)
+          \endcode
+    
+     3. Add following line to your project's file
+    
+          \code
+          CONFIG += extserialport
+          \endcode
+    
+     4. Using QextSerialPort in your code. Enjoy it!
+    
+          \code
+          #include "qextserialport.h"
+          ....
+          QextSerialPort * port = new QextSerialPort();
+          ....
+          \endcode
+
+    \section2 Usage(3): Static library
+
+        Someone prefer to use QextSerailPort as static library.
+
+        Open the project file: qextserialport.pro, add uncomment follow line
+
+          \code
+           # CONFIG += qesp_static
+          \endcode
+
+        Then follow the same steps as shared library
+
+          \code
+           qmake
+           sudo make install
+          \endcode
+
+        The static library, the header files, and the feature file will be installed to your system.
+
+        Add following line to your qmake's project file:
+
+          \code
+          CONFIG += extserialport
+          \endcode
+    
+      \section1 Platform Special
+
+      \section2 For MacX: Build as framework
+
+      Open the project file: *qextserialport.pro*, and uncomment follow line
+
+          \code
+           # CONFIG += qesp_mac_framework
+          \endcode
+
+      Then follow the same steps as shared library, Goto the top level directory , and run
+
+          \code
+           qmake
+           sudo make install
+          \endcode
+ 
+      The framework which includes libraries and the header files, and the feature file will be installed to your system.
+
+      Add following line to your qmake's project file:
+
+          \code
+           CONFIG += extserialport
+          \endcode
+
+      \section2 For Linux: Enable udev
+
+       Open the project file: *qextserialport.pro*, uncomment follow line
+
+          \code
+           #linux*:CONFIG += qesp_linux_udev
+          \endcode
+
+       Note, If you are using the usage(1), Add following line before include the qextserialport.pri file. 
+          \code
+           CONFIG += qesp_linux_udev
+          \endcode
+
+
+     \section2 Build documents
+      \code
+        make docs
+      \endcode
+
+    \section1 Examples
+      \list
+      \o \l examples/enumerator
+      \o \l examples/qespta
+      \o \l examples/uartassistant
+      \endlist
+
+    \section1 Resources
+        \section2  Nokia(Trolltech)
+        \list
+          \o  \l {http://doc.trolltech.com/qq/qq12-iodevice.html} {Writing a Custom I/O Device}
+          \o  \l {http://doc.trolltech.com/3.3/qiodevice.html} {Qt 3.3: QIODevice Class Reference}
+          \o  \l {http://doc.trolltech.com/4.7/qiodevice.html} {Qt 4.7: QIODevice Class Reference}
+        \endlist
+        \section2  MSDN
+        \list
+          \o \l {http://msdn.microsoft.com/library/default.asp?url=/library/en-us/devio/base/communications_resources.asp} {Communications Resources}
+           \o \l {http://msdn.microsoft.com/library/default.asp?url=/library/en-us/devio/base/about_communications_resources.asp} {About Communications Resources}
+           \o \l {http://msdn.microsoft.com/library/default.asp?url=/library/en-us/devio/base/using_communications_resources.asp}{Using Communications Resources}
+           \o \l {http://msdn.microsoft.com/library/default.asp?url=/library/en-us/devio/base/communications_functions.asp} {Communications Functions}
+           \o \l {http://msdn.microsoft.com/library/default.asp?url=/library/en-us/devio/base/communications_structures.asp} {Communications Structures}
+        \endlist
+        \section2  TLDP
+        \list
+           \o \l {http://www.tldp.org/HOWTO/Serial-HOWTO.html}{Serial HOWTO}
+           \o \l {http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/}{Serial Programming HOWTO}
+        \endlist
+        \section2  Other
+        \list
+           \o \l {http://www.easysw.com/~mike/serial/serial.html} {Serial Programming Guide for POSIX Operating Systems}
+        \endlist
+
+*/
+
+/*!
+  \page classes.html
+  \generatelist annotatedclasses
+*/

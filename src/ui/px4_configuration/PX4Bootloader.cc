@@ -32,6 +32,8 @@
 #include <QDebug>
 #include <QTime>
 
+#include "QGC.h"
+
 static const quint32 crctab[] =
 {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
@@ -76,22 +78,24 @@ static quint32 crc32(const uint8_t *src, unsigned len, unsigned state)
     return state;
 }
 
+#if 0
 const struct PX4Bootloader::serialPortErrorString PX4Bootloader::_rgSerialPortErrors[14] = {
-    { QSerialPort::NoError,                     "No error occurred." },
-    { QSerialPort::DeviceNotFoundError,         "An error occurred while attempting to open a non-existing device." },
-    { QSerialPort::PermissionError,             "An error occurred while attempting to open an already opened device by another process or a user not having enough permission and credentials to open." },
-    { QSerialPort::OpenError,                   "An error occurred while attempting to open an already opened device in this object." },
-    { QSerialPort::NotOpenError,                "This error occurs when an operation is executed that can only be successfully performed if the device is open." },
-    { QSerialPort::ParityError,                 "Parity error detected by the hardware while reading data." },
-    { QSerialPort::FramingError,                "Framing error detected by the hardware while reading data." },
-    { QSerialPort::BreakConditionError,         "Break condition detected by the hardware on the input line." },
-    { QSerialPort::WriteError,                  "An I/O error occurred while writing the data." },
-    { QSerialPort::ReadError,                   "An I/O error occurred while reading the data." },
-    { QSerialPort::ResourceError,               "An I/O error occurred when a resource becomes unavailable, e.g. when the device is unexpectedly removed from the system." },
-    { QSerialPort::UnsupportedOperationError,   "The requested device operation is not supported or prohibited by the running operating system." },
-    { QSerialPort::TimeoutError,                "A timeout error occurred." },
-    { QSerialPort::UnknownError,                "An unidentified error occurred." }
+    { QextSerialPort::NoError,                     "No error occurred." },
+    { QextSerialPort::DeviceNotFoundError,         "An error occurred while attempting to open a non-existing device." },
+    { QextSerialPort::PermissionError,             "An error occurred while attempting to open an already opened device by another process or a user not having enough permission and credentials to open." },
+    { QextSerialPort::OpenError,                   "An error occurred while attempting to open an already opened device in this object." },
+    { QextSerialPort::NotOpenError,                "This error occurs when an operation is executed that can only be successfully performed if the device is open." },
+    { QextSerialPort::ParityError,                 "Parity error detected by the hardware while reading data." },
+    { QextSerialPort::FramingError,                "Framing error detected by the hardware while reading data." },
+    { QextSerialPort::BreakConditionError,         "Break condition detected by the hardware on the input line." },
+    { QextSerialPort::WriteError,                  "An I/O error occurred while writing the data." },
+    { QextSerialPort::ReadError,                   "An I/O error occurred while reading the data." },
+    { QextSerialPort::ResourceError,               "An I/O error occurred when a resource becomes unavailable, e.g. when the device is unexpectedly removed from the system." },
+    { QextSerialPort::UnsupportedOperationError,   "The requested device operation is not supported or prohibited by the running operating system." },
+    { QextSerialPort::TimeoutError,                "A timeout error occurred." },
+    { QextSerialPort::UnknownError,                "An unidentified error occurred." }
 };
+#endif
 
 PX4Bootloader::PX4Bootloader(QObject *parent) :
     QObject(parent)
@@ -99,9 +103,11 @@ PX4Bootloader::PX4Bootloader(QObject *parent) :
 
 }
 
-/// @brief Translate a QSerialPort::SerialPortError code into a string.
+/// @brief Translate a QextSerialPort::SerialPortError code into a string.
 const char* PX4Bootloader::_serialPortErrorString(int error)
 {
+    Q_UNUSED(error);
+#if 0
 Again:
     for (size_t i=0; i<sizeof(_rgSerialPortErrors)/sizeof(_rgSerialPortErrors[0]); i++) {
         if (error == _rgSerialPortErrors[i].error) {
@@ -109,22 +115,19 @@ Again:
         }
     }
     
-    error = QSerialPort::UnknownError;
+    error = QextSerialPort::UnknownError;
     goto Again;
     
     Q_ASSERT(false);
     
     return NULL;
+#else
+    return "NYI error";
+#endif
 }
 
-bool PX4Bootloader::write(QSerialPort* port, const uint8_t* data, qint64 maxSize)
+bool PX4Bootloader::write(QextSerialPort* port, const uint8_t* data, qint64 maxSize)
 {
-    // Make sure we don't overflow output buffer
-    while (port->bytesToWrite() > 50) {
-        int bump = 0;
-        bump++;
-    }
-
     qint64 bytesWritten = port->write((const char*)data, maxSize);
     if (bytesWritten == -1) {
         _errorString = tr("Write failed: %1").arg(port->errorString());
@@ -136,39 +139,36 @@ bool PX4Bootloader::write(QSerialPort* port, const uint8_t* data, qint64 maxSize
         qWarning() << _errorString;
         return false;
     }
-    if (!port->waitForBytesWritten(1000)) {
-        _errorString = tr("Timeout waiting for write");
-        qWarning() << _errorString;
-        return false;
-    }
     
     return true;
 }
 
-bool PX4Bootloader::write(QSerialPort* port, const uint8_t byte)
+bool PX4Bootloader::write(QextSerialPort* port, const uint8_t byte)
 {
     uint8_t buf[1] = { byte };
     return write(port, buf, 1);
 }
 
-bool PX4Bootloader::read(QSerialPort* port, uint8_t* data, qint64 maxSize, bool warnOnError, int readTimeout)
+bool PX4Bootloader::read(QextSerialPort* port, uint8_t* data, qint64 maxSize, bool warnOnError, int readTimeout)
 {
-    qint64 bytesToRead = 0;
+    qint64 bytesAlreadyRead = 0;
     
-    while (bytesToRead < maxSize) {
-        if (port->bytesAvailable() == 0) {
-            if (!port->waitForReadyRead(readTimeout)) {
-                _errorString = tr("Timeout waiting for byte to be available");
+    while (bytesAlreadyRead < maxSize) {
+        QTime timeout;
+        timeout.start();
+        while (port->bytesAvailable() < 1) {
+            if (timeout.elapsed() > readTimeout) {
+                _errorString = tr("Timeout waiting for bytes to be available");
                 if (warnOnError) {
                     qWarning() << _errorString;
                 }
                 return false;
             }
-            Q_ASSERT(port->bytesAvailable() != 0);
+            QGC::SLEEP::usleep(100);
         }
         
         qint64 bytesRead;
-        bytesRead = port->read((char*)&data[bytesToRead], maxSize);
+        bytesRead = port->read((char*)&data[bytesAlreadyRead], maxSize);
         
         if (bytesRead == -1) {
             _errorString = tr("Read failed: Could not read 1 byte, error: %1").arg(port->errorString());
@@ -178,14 +178,14 @@ bool PX4Bootloader::read(QSerialPort* port, uint8_t* data, qint64 maxSize, bool 
             return false;
         } else {
             Q_ASSERT(bytesRead != 0);
-            bytesToRead += bytesRead;
+            bytesAlreadyRead += bytesRead;
         }
     }
     
     return true;
 }
 
-bool PX4Bootloader::getCommandResponse(QSerialPort* port, bool warnOnError, int responseTimeout)
+bool PX4Bootloader::getCommandResponse(QextSerialPort* port, bool warnOnError, int responseTimeout)
 {
     uint8_t response[2];
     
@@ -217,30 +217,32 @@ bool PX4Bootloader::getCommandResponse(QSerialPort* port, bool warnOnError, int 
     return true;
 }
 
-bool PX4Bootloader::getBoardInfo(QSerialPort* port, uint8_t param, uint32_t& value)
+bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value)
 {
     uint8_t buf[3] = { PROTO_GET_DEVICE, param, PROTO_EOC };
     
     if (!write(port, buf, sizeof(buf))) {
         return false;
     }
+    port->flush();
     if (!read(port, (uint8_t*)&value, sizeof(value), warnOnError)) {
         return false;
     }
     return getCommandResponse(port, warnOnError);
 }
 
-bool PX4Bootloader::sendCommand(QSerialPort* port, const uint8_t cmd, bool warnOnError, int responseTimeout)
+bool PX4Bootloader::sendCommand(QextSerialPort* port, const uint8_t cmd, bool warnOnError, int responseTimeout)
 {
     uint8_t buf[2] = { cmd, PROTO_EOC };
     
     if (!write(port, buf, 2)) {
         return false;
     }
+    port->flush();
     return getCommandResponse(port, warnOnError, responseTimeout);
 }
 
-bool PX4Bootloader::erase(QSerialPort* port)
+bool PX4Bootloader::erase(QextSerialPort* port)
 {
     // Erase is slow, need larger timeout
     if (!sendCommand(port, PROTO_CHIP_ERASE, warnOnError, _eraseTimeout)) {
@@ -252,7 +254,7 @@ bool PX4Bootloader::erase(QSerialPort* port)
     return true;
 }
 
-bool PX4Bootloader::program(QSerialPort* port, const QString& firmwareFilename)
+bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilename)
 {
     QFile firmwareFile(firmwareFilename);
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
@@ -285,11 +287,20 @@ bool PX4Bootloader::program(QSerialPort* port, const QString& firmwareFilename)
         
         Q_ASSERT(bytesToSend <= 0x8F);
         
-        if (!write(port, PROTO_PROG_MULTI) ||
-                !write(port, (uint8_t)bytesToSend) ||
-                !write(port, imageBuf, bytesToSend) ||
-                !write(port, PROTO_EOC) ||
-                !getCommandResponse(port, warnOnError)) {
+        bool failed = true;
+        if (write(port, PROTO_PROG_MULTI)) {
+            if (write(port, (uint8_t)bytesToSend)) {
+                if (write(port, imageBuf, bytesToSend)) {
+                    if (write(port, PROTO_EOC)) {
+                        port->flush();
+                        if (getCommandResponse(port, warnOnError)) {
+                            failed = false;
+                        }
+                    }
+                }
+            }
+        }
+        if (failed) {
             _errorString = tr("Flash failed: %1").arg(_errorString);
             qWarning() << _errorString;
             return false;
@@ -314,7 +325,7 @@ bool PX4Bootloader::program(QSerialPort* port, const QString& firmwareFilename)
     return true;
 }
 
-bool PX4Bootloader::verify(QSerialPort* port, const QString firmwareFilename)
+bool PX4Bootloader::verify(QextSerialPort* port, const QString firmwareFilename)
 {
     bool ret;
     
@@ -331,7 +342,7 @@ bool PX4Bootloader::verify(QSerialPort* port, const QString firmwareFilename)
 
 /// @brief Verify the flash on bootloader version 2 by reading it back and comparing it against
 /// the original firmware file.
-bool PX4Bootloader::_bootloaderVerifyRev2(QSerialPort* port, const QString firmwareFilename)
+bool PX4Bootloader::_bootloaderVerifyRev2(QextSerialPort* port, const QString firmwareFilename)
 {
     QFile firmwareFile(firmwareFilename);
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
@@ -368,11 +379,20 @@ bool PX4Bootloader::_bootloaderVerifyRev2(QSerialPort* port, const QString firmw
         
         Q_ASSERT(bytesToRead <= 0x8F);
         
-        if (!write(port, PROTO_READ_MULTI) ||
-                !write(port, (uint8_t)bytesToRead) ||
-                !write(port, PROTO_EOC) ||
-                !read(port, flashBuf, sizeof(flashBuf), warnOnError) ||
-                !getCommandResponse(port, warnOnError)) {
+        bool failed = true;
+        if (write(port, PROTO_READ_MULTI)) {
+            if (write(port, (uint8_t)bytesToRead)) {
+                if (write(port, PROTO_EOC)) {
+                    port->flush();
+                    if (read(port, flashBuf, sizeof(flashBuf), warnOnError)) {
+                        if (getCommandResponse(port, warnOnError)) {
+                            failed = false;
+                        }
+                    }
+                }
+            }
+        }
+        if (failed) {
             return false;
         }
 
@@ -392,16 +412,23 @@ bool PX4Bootloader::_bootloaderVerifyRev2(QSerialPort* port, const QString firmw
 }
 
 /// @Brief Verify the flash on a version 3 or higher bootloader board by comparing CRCs.
-bool PX4Bootloader::_bootloaderVerifyRev3(QSerialPort* port)
+bool PX4Bootloader::_bootloaderVerifyRev3(QextSerialPort* port)
 {
     return true;
     
     uint8_t buf[2] = { PROTO_GET_CRC, PROTO_EOC };
     quint32 flashCRC;
     
-    if (!write(port, buf, 2) ||
-        !read(port, (uint8_t*)&flashCRC, sizeof(flashCRC), warnOnError, _verifyTimeout) ||
-        !getCommandResponse(port, warnOnError)) {
+    bool failed = true;
+    if (write(port, buf, 2)) {
+        port->flush();
+        if (read(port, (uint8_t*)&flashCRC, sizeof(flashCRC), warnOnError, _verifyTimeout)) {
+            if (getCommandResponse(port, warnOnError)) {
+                failed = false;
+            }
+        }
+    }
+    if (failed) {
         return false;
     }
 
@@ -413,19 +440,19 @@ bool PX4Bootloader::_bootloaderVerifyRev3(QSerialPort* port)
     return true;
 }
 
-bool PX4Bootloader::open(QSerialPort* port, const QString portName)
+bool PX4Bootloader::open(QextSerialPort* port, const QString portName)
 {
     Q_ASSERT(!port->isOpen());
     
     port->setPortName(portName);
-    port->setBaudRate(QSerialPort::Baud115200);
-    port->setDataBits(QSerialPort::Data8);
-    port->setParity(QSerialPort::NoParity);
-    port->setStopBits(QSerialPort::OneStop);
-    port->setFlowControl(QSerialPort::NoFlowControl);
+    port->setBaudRate(BAUD115200);
+    port->setDataBits(DATA_8);
+    port->setParity(PAR_NONE);
+    port->setStopBits(STOP_1);
+    port->setFlowControl(FLOW_OFF);
     
-    if (!port->open(QIODevice::ReadWrite)) {
-        _errorString = tr("Open failed on port %1: %2").arg(portName).arg(_serialPortErrorString(port->error()));
+    if (!port->open(QIODevice::ReadWrite | QIODevice::Unbuffered)) {
+        _errorString = tr("Open failed on port %1: %2").arg(portName).arg(port->errorString());
         qWarning() << _errorString;
         return false;
     }
@@ -433,20 +460,13 @@ bool PX4Bootloader::open(QSerialPort* port, const QString portName)
     return true;
 }
 
-bool PX4Bootloader::sync(QSerialPort* port)
+bool PX4Bootloader::sync(QextSerialPort* port)
 {
-    // Drain out any remaining input or output from the port
-    if (!port->clear()) {
-        _errorString = tr("Unable to clear port");
-        qWarning() << _errorString;
-        return false;
-    }
-    
     // Send sync command
     return sendCommand(port, PROTO_GET_SYNC, noWarnOnError);
 }
 
-bool PX4Bootloader::getBoardInfo(QSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize)
+bool PX4Bootloader::getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize)
 {
     
     if (!getBoardInfo(port, INFO_BL_REV, _bootloaderVersion)) {
@@ -482,7 +502,7 @@ Error:
     return false;
 }
 
-bool PX4Bootloader::sendBootloaderReboot(QSerialPort* port)
+bool PX4Bootloader::sendBootloaderReboot(QextSerialPort* port)
 {
     return write(port, PROTO_BOOT) && write(port, PROTO_EOC);
 }

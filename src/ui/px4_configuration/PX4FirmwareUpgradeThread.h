@@ -29,10 +29,11 @@
 #define PX4FirmwareUpgradeThread_H
 
 #include <QObject>
-#include <QSerialPort>
 #include <QThread>
 #include <QTimer>
 #include <QTime>
+
+#include "qextserialport.h"
 
 #include <stdint.h>
 
@@ -85,7 +86,7 @@ private slots:
     
 private:
     PX4Bootloader*      _bootloader;
-    QSerialPort*        _bootloaderPort;
+    QextSerialPort*     _bootloaderPort;
     QTimer*             _timerTimeout;
     QTimer*             _timerRetry;
     QTime               _elapsed;

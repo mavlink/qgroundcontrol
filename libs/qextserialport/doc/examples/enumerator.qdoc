@@ -1,0 +1,16 @@
+/*!
+    \example examples/enumerator
+    \title enumerator Demo
+
+    The example demonstrates how to use QextSerialEnumerator.
+
+    Include the proper header file
+    \snippet examples/enumerator/main.cpp 0
+
+    Get available ports in the system.
+    \snippet examples/enumerator/main.cpp 1
+
+    Output
+    \snippet examples/enumerator/main.cpp 2
+*/
+
