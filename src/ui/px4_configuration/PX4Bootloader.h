@@ -138,20 +138,13 @@ private:
         INFO_FLASH_SIZE		= 4,    ///< max firmware size in bytes
         
         PROG_MULTI_MAX		= 32,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
-        READ_MULTI_MAX		= 64    ///< read size for PROTO_READ_MULTI, must be multiple of 4
-    };
-    
-    struct serialPortErrorString {
-        int         error;
-        const char* errorString;
+        READ_MULTI_MAX		= 32    ///< read size for PROTO_READ_MULTI, must be multiple of 4
     };
     
     bool _findBootloader(void);
     bool _downloadFirmware(void);
     bool _bootloaderVerifyRev2(QextSerialPort* port, const QString firmwareFilename);
     bool _bootloaderVerifyRev3(QextSerialPort* port);
-    
-    const char* _serialPortErrorString(int error);
     
     static const int _boardIDPX4FMUV1 = 5;  ///< Board ID for PX4 V1 board
     static const int _boardIDPX4FMUV2 = 9;  ///< Board ID for PX4 V2 board
@@ -165,8 +158,6 @@ private:
     QString _firmwareFilename;      ///< Currently selected firmware file to flash
     
     QString _errorString;           ///< Last error
-    
-    static const struct serialPortErrorString _rgSerialPortErrors[14];  ///< Translation of QextSerialPort::SerialPortError into string
     
     static const int _eraseTimeout = 20000;     ///< Msecs to wait for response from erase command
     static const int _rebootTimeout = 10000;    ///< Msecs to wait for reboot command to cause serial port to disconnect
