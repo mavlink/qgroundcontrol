@@ -78,52 +78,10 @@ static quint32 crc32(const uint8_t *src, unsigned len, unsigned state)
     return state;
 }
 
-#if 0
-const struct PX4Bootloader::serialPortErrorString PX4Bootloader::_rgSerialPortErrors[14] = {
-    { QextSerialPort::NoError,                     "No error occurred." },
-    { QextSerialPort::DeviceNotFoundError,         "An error occurred while attempting to open a non-existing device." },
-    { QextSerialPort::PermissionError,             "An error occurred while attempting to open an already opened device by another process or a user not having enough permission and credentials to open." },
-    { QextSerialPort::OpenError,                   "An error occurred while attempting to open an already opened device in this object." },
-    { QextSerialPort::NotOpenError,                "This error occurs when an operation is executed that can only be successfully performed if the device is open." },
-    { QextSerialPort::ParityError,                 "Parity error detected by the hardware while reading data." },
-    { QextSerialPort::FramingError,                "Framing error detected by the hardware while reading data." },
-    { QextSerialPort::BreakConditionError,         "Break condition detected by the hardware on the input line." },
-    { QextSerialPort::WriteError,                  "An I/O error occurred while writing the data." },
-    { QextSerialPort::ReadError,                   "An I/O error occurred while reading the data." },
-    { QextSerialPort::ResourceError,               "An I/O error occurred when a resource becomes unavailable, e.g. when the device is unexpectedly removed from the system." },
-    { QextSerialPort::UnsupportedOperationError,   "The requested device operation is not supported or prohibited by the running operating system." },
-    { QextSerialPort::TimeoutError,                "A timeout error occurred." },
-    { QextSerialPort::UnknownError,                "An unidentified error occurred." }
-};
-#endif
-
 PX4Bootloader::PX4Bootloader(QObject *parent) :
     QObject(parent)
 {
 
-}
-
-/// @brief Translate a QextSerialPort::SerialPortError code into a string.
-const char* PX4Bootloader::_serialPortErrorString(int error)
-{
-    Q_UNUSED(error);
-#if 0
-Again:
-    for (size_t i=0; i<sizeof(_rgSerialPortErrors)/sizeof(_rgSerialPortErrors[0]); i++) {
-        if (error == _rgSerialPortErrors[i].error) {
-            return _rgSerialPortErrors[i].errorString;
-        }
-    }
-    
-    error = QextSerialPort::UnknownError;
-    goto Again;
-    
-    Q_ASSERT(false);
-    
-    return NULL;
-#else
-    return "NYI error";
-#endif
 }
 
 bool PX4Bootloader::write(QextSerialPort* port, const uint8_t* data, qint64 maxSize)
@@ -301,7 +259,7 @@ bool PX4Bootloader::program(QextSerialPort* port, const QString& firmwareFilenam
             }
         }
         if (failed) {
-            _errorString = tr("Flash failed: %1").arg(_errorString);
+            _errorString = tr("Flash failed: %1 at address 0x%2").arg(_errorString).arg(bytesSent, 8, 16, QLatin1Char('0'));
             qWarning() << _errorString;
             return false;
         }
@@ -393,12 +351,14 @@ bool PX4Bootloader::_bootloaderVerifyRev2(QextSerialPort* port, const QString fi
             }
         }
         if (failed) {
+            _errorString = tr("Verify failed: %1 at address: 0x%2").arg(_errorString).arg(bytesVerified, 8, 16, QLatin1Char('0'));
+            qWarning() << _errorString;
             return false;
         }
 
         for (int i=0; i<bytesToRead; i++) {
             if (fileBuf[i] != flashBuf[i]) {
-                _errorString = tr("Compare failed at %1: file(0x%2) flash(0x%3)").arg(bytesVerified + i).arg(fileBuf[i], 2, 16, QLatin1Char('0')).arg(flashBuf[i], 2, 16, QLatin1Char('0'));
+                _errorString = tr("Compare failed at %1: file(0x%2) flash(0x%3) at address: 0x%4").arg(bytesVerified + i).arg(fileBuf[i], 2, 16, QLatin1Char('0')).arg(flashBuf[i], 2, 16, QLatin1Char('0')).arg(bytesVerified, 8, 16, QLatin1Char('0'));
                 qWarning() << _errorString;
                 return false;
             }
