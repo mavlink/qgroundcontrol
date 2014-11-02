@@ -1,0 +1,53 @@
+# Run qdoc3 from the directory that contains this file.
+project = qesp
+description = QextSerialPort Reference Documentation
+url = http://code.google.com/p/qextserialport
+
+outputencoding = UTF-8
+language = Cpp
+
+#Paths are relative to the location of this file
+headerdirs               = . ../src
+sourcedirs               = . ../src
+exampledirs              = ../examples ..
+imagedirs                = ./examples/images images
+
+Cpp.ignoretokens         = QEXTSERIALPORT_EXPORT 
+
+indexes = $QTDIR/doc/html/qt.index
+
+qhp.projects             = qesp
+qhp.qesp.file            = qesp.qhp
+qhp.qesp.namespace       = com.google.code.qextserialport.120
+qhp.qesp.virtualFolder   = qdoc
+qhp.qesp.indexTitle      = QextSerialPort Reference Documentation
+qhp.qesp.indexRoot       = 
+qhp.qesp.extraFiles      = style/style.css
+
+
+#------------------------------------------------------------------
+outputdir = html
+outputformats = HTML
+
+headers.fileextensions = "*.h"
+sources.fileextensions = "*.cpp *.qdoc"
+
+HTML.templatedir        = .
+HTML.stylesheets        = style/style.css
+
+HTML.headerstyles       = "  <link rel=\"stylesheet\" type=\"text/css\" href=\"style/style.css\" />\n"
+HTML.endheader          = "</head>\n"
+
+HTML.postheader         = "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">\n" \
+                          "<tr>\n" \
+                          "<td class=\"postheader\" valign=\"center\">" \
+                          "<a href=\"index.html\">Home</a> &middot;" \
+                          " <a href=\"classes.html\">All Classes</a> &middot;" \
+                          "</td></tr></table>"
+
+HTML.footer             = "<p /><address><hr /><div align=\"center\">\n" \
+                          "<table width=\"100%\" cellspacing=\"0\" border=\"0\"><tr class=\"address\">\n" \
+                          "<td width=\"40%\" align=\"left\">Copyright &copy; 2000-2012</td>\n" \
+                          "<td width=\"20%\" align=\"center\"><a href=\"http://code.google.com/p/qextserialport\">QextSerialPort Project</a></td>\n" \
+                          "<td width=\"40%\" align=\"right\"><div align=\"right\">QextSerialPort Manual</div></td>\n" \
+                          "</tr></table></div></address>"

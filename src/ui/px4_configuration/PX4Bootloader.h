@@ -28,7 +28,7 @@
 #ifndef PX4Bootloader_H
 #define PX4Bootloader_H
 
-#include <QSerialPort>
+#include "qextserialport.h"
 
 #include <stdint.h>
 
@@ -52,56 +52,56 @@ public:
     ///     @param data Bytes to write
     ///     @param maxSize Number of bytes to write
     /// @return true: success
-    bool write(QSerialPort* port, const uint8_t* data, qint64 maxSize);
-    bool write(QSerialPort* port, const uint8_t byte);
+    bool write(QextSerialPort* port, const uint8_t* data, qint64 maxSize);
+    bool write(QextSerialPort* port, const uint8_t byte);
     
     /// @brief Read a set of bytes from the port
     ///     @param data Read bytes into this buffer
     ///     @param maxSize Number of bytes to read
     ///     @param warnOnError true: Log error using qWarning
     ///     @param readTimeout Msecs to wait for bytes to become available on port
-    bool read(QSerialPort* port, uint8_t* data, qint64 maxSize, bool warnOnError, int readTimeout = _readTimout);
+    bool read(QextSerialPort* port, uint8_t* data, qint64 maxSize, bool warnOnError, int readTimeout = _readTimout);
     
     /// @brief Read a PROTO_SYNC command response from the bootloader
     ///     @param responseTimeout Msecs to wait for response bytes to become available on port
-    bool getCommandResponse(QSerialPort* port, bool warnOnError, const int responseTimeout = _responseTimeout);
+    bool getCommandResponse(QextSerialPort* port, bool warnOnError, const int responseTimeout = _responseTimeout);
     
     /// @brief Send a PROTO_GET_DEVICE command to retrieve a value from the bootloader
     ///     @param param Value to retrieve using INFO_BOARD_* enums
     ///     @param value Returned value
-    bool getBoardInfo(QSerialPort* port, uint8_t param, uint32_t& value);
+    bool getBoardInfo(QextSerialPort* port, uint8_t param, uint32_t& value);
     
     /// @brief Send a command to the bootloader
     ///     @param cmd Command to send using PROTO_* enums
     /// @return true: Command sent and valid sync response returned
-    bool sendCommand(QSerialPort* port, uint8_t cmd, bool warnOnError, int responseTimeout = _responseTimeout);
+    bool sendCommand(QextSerialPort* port, uint8_t cmd, bool warnOnError, int responseTimeout = _responseTimeout);
     
     /// @brief Program the board with the specified firmware
-    bool program(QSerialPort* port, const QString& firmwareFilename);
+    bool program(QextSerialPort* port, const QString& firmwareFilename);
     
     /// @brief Verify the board flash. How it works depend on bootloader rev
     ///         Rev 2: Read the flash back and compare it against the firmware file
     ///         Rev 3: Compare CRCs for flash and file
-    bool verify(QSerialPort* port, const QString firmwareFilename);
+    bool verify(QextSerialPort* port, const QString firmwareFilename);
     
     /// @brief Read a PROTO_SYNC response from the bootloader
     /// @return true: Valid sync response was received
-    bool sync(QSerialPort* port);
+    bool sync(QextSerialPort* port);
     
     /// @brief Retrieve a set of board info from the bootloader
     ///     @param bootloaderVersion Returned INFO_BL_REV
     ///     @param boardID Returned INFO_BOARD_ID
     ///     @param flashSize Returned INFO_FLASH_SIZE
-    bool getBoardInfo(QSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize);
+    bool getBoardInfo(QextSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize);
     
     /// @brief Opens a port to the bootloader
-    bool open(QSerialPort* port, const QString portName);
+    bool open(QextSerialPort* port, const QString portName);
     
     /// @brief Sends a PROTO_REBOOT command to the bootloader
-    bool sendBootloaderReboot(QSerialPort* port);
+    bool sendBootloaderReboot(QextSerialPort* port);
     
     /// @brief Sends a PROTO_ERASE command to the bootlader
-    bool erase(QSerialPort* port);
+    bool erase(QextSerialPort* port);
     
 signals:
     /// @brief Signals progress indicator for long running bootloader utility routines
@@ -138,20 +138,13 @@ private:
         INFO_FLASH_SIZE		= 4,    ///< max firmware size in bytes
         
         PROG_MULTI_MAX		= 32,   ///< write size for PROTO_PROG_MULTI, must be multiple of 4
-        READ_MULTI_MAX		= 64    ///< read size for PROTO_READ_MULTI, must be multiple of 4
-    };
-    
-    struct serialPortErrorString {
-        int         error;
-        const char* errorString;
+        READ_MULTI_MAX		= 32    ///< read size for PROTO_READ_MULTI, must be multiple of 4
     };
     
     bool _findBootloader(void);
     bool _downloadFirmware(void);
-    bool _bootloaderVerifyRev2(QSerialPort* port, const QString firmwareFilename);
-    bool _bootloaderVerifyRev3(QSerialPort* port);
-    
-    const char* _serialPortErrorString(int error);
+    bool _bootloaderVerifyRev2(QextSerialPort* port, const QString firmwareFilename);
+    bool _bootloaderVerifyRev3(QextSerialPort* port);
     
     static const int _boardIDPX4FMUV1 = 5;  ///< Board ID for PX4 V1 board
     static const int _boardIDPX4FMUV2 = 9;  ///< Board ID for PX4 V2 board
@@ -165,8 +158,6 @@ private:
     QString _firmwareFilename;      ///< Currently selected firmware file to flash
     
     QString _errorString;           ///< Last error
-    
-    static const struct serialPortErrorString _rgSerialPortErrors[14];  ///< Translation of QSerialPort::SerialPortError into string
     
     static const int _eraseTimeout = 20000;     ///< Msecs to wait for response from erase command
     static const int _rebootTimeout = 10000;    ///< Msecs to wait for reboot command to cause serial port to disconnect

@@ -194,6 +194,8 @@ ReleaseBuild {
     }
 }
 
+include(libs/qextserialport/src/qextserialport.pri)
+
 #
 # External library configuration
 #

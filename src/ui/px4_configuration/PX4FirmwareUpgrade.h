@@ -30,10 +30,11 @@
 
 #include <QWidget>
 #include <QUrl>
-#include <QSerialPort>
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+
+#include "qextserialport.h"
 
 #include <stdint.h>
 
