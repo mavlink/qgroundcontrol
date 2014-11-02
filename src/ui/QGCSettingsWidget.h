@@ -23,7 +23,6 @@ public slots:
     void setDefaultStyle();
     void selectStylesheet();
     void selectCustomMode(int mode);
-    void resetSettings();
 
 private:
     MainWindow* mainWindow;

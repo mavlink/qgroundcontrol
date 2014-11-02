@@ -94,9 +94,4 @@ double limitAngleToPMPId(double angle)
     return angle;
 }
 
-int applicationVersion()
-{
-    return APPLICATIONVERSION;
-}
-
 }
