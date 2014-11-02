@@ -1,0 +1,24 @@
+defineReplace(qextLibraryName) {
+   unset(LIBRARY_NAME)
+   LIBRARY_NAME = \$\$1
+   greaterThan(QT_MAJOR_VERSION, 4):LIBRARY_NAME ~= s,^Qt,Qt\$\$QT_MAJOR_VERSION,
+   CONFIG(debug, debug|release) {
+      !debug_and_release|build_pass {
+          mac:LIBRARY_NAME = \$\${LIBRARY_NAME}_debug
+          else:win32:LIBRARY_NAME = \$\${LIBRARY_NAME}d
+      }
+   }
+   return(\$\$LIBRARY_NAME)
+}
+
+!!IF qesp_mac_framework
+LIBS += -framework $$QESP_LIB_BASENAME
+INCLUDEPATH += $$[QT_INSTALL_LIBS]/$${QESP_LIB_BASENAME}.framework/Headers
+!!ELSE
+LIBS += -l\$\$qextLibraryName($$QESP_LIB_BASENAME)
+INCLUDEPATH += $$[QT_INSTALL_HEADERS]/QtExtSerialPort
+!!ENDIF
+
+!!IF !qesp_static
+DEFINES += QEXTSERIALPORT_USING_SHARED
+!!ENDIF

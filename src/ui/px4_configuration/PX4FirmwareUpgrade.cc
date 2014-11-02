@@ -91,7 +91,8 @@ const PX4FirmwareUpgrade::stateMachineEntry* PX4FirmwareUpgrade::_getStateMachin
     static const char* msgFirmwareBoardEraseFailed = "Board erase failed.";
     static const char* msgFirmwareBoardFlashing = "Flashing new firmware onto board...";
     static const char* msgFirmwareBoardFlashError = "A failure has occured while flashing the new firmware to your board. "
-                                                        "This has left the board in an inconsistent state. "
+                                                        "This has left the board in an inconsistent state.\n\n"
+                                                        "There currently is an known issue which does not yet have a fix which may cause this.\n\n"
                                                         "You should click 'Try Again' to attempt the upgrade process again.";
     static const char* msgFirmwareBoardVerifying = "Verifying firmware on board...";
     static const char* msgFirmwareBoardVerifyError = "Verification of flash memory on board failed. "
