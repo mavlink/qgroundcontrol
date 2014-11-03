@@ -83,8 +83,6 @@ public:
 
     bool disconnect();
 
-    qint64 bytesAvailable();
-
     void run();
 
     int getOpalInstID() {

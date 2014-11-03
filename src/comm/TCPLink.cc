@@ -177,16 +177,6 @@ void TCPLink::readBytes()
 }
 
 /**
- * @brief Get the number of bytes to read.
- *
- * @return The number of bytes to read
- **/
-qint64 TCPLink::bytesAvailable()
-{
-    return _socket->bytesAvailable();
-}
-
-/**
  * @brief Disconnect the connection.
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.

@@ -67,7 +67,6 @@ public:
     virtual bool    isConnected(void) const;
     virtual bool    connect(void);
     virtual bool    disconnect(void);
-    virtual qint64  bytesAvailable(void);
     virtual void    requestReset(void) {};
 
     // Extensive statistics for scientific purposes
