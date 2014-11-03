@@ -51,7 +51,6 @@ public:
     MAVLinkSimulationLink(QString readFile="", QString writeFile="", int rate=5);
     ~MAVLinkSimulationLink();
     bool isConnected() const;
-    qint64 bytesAvailable();
 
     void run();
     void requestReset() { }

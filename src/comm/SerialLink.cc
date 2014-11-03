@@ -390,21 +390,6 @@ void SerialLink::readBytes()
     }
 }
 
-
-/**
- * @brief Get the number of bytes to read.
- *
- * @return The number of bytes to read
- **/
-qint64 SerialLink::bytesAvailable()
-{
-    if (m_port) {
-        return m_port->bytesAvailable();
-    } else {
-        return 0;
-    }
-}
-
 /**
  * @brief Disconnect the connection.
  *

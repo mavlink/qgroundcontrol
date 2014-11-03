@@ -632,14 +632,6 @@ void MAVLinkSimulationLink::mainloop()
 }
 
 
-qint64 MAVLinkSimulationLink::bytesAvailable()
-{
-    readyBufferMutex.lock();
-    qint64 size = readyBuffer.size();
-    readyBufferMutex.unlock();
-    return size;
-}
-
 void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 {
     // Parse bytes

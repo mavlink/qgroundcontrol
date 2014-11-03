@@ -36,7 +36,6 @@ public: // virtual functions from LinkInterface
     bool isConnected() const;
     bool connect();
     bool disconnect();
-    qint64 bytesAvailable();
 
     // Extensive statistics for scientific purposes
     qint64 getConnectionSpeed() const;

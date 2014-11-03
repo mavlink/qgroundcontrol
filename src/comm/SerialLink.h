@@ -78,7 +78,6 @@ public:
     void requestReset();
 
     bool isConnected() const;
-    qint64 bytesAvailable();
 
     /**
      * @brief The port handle
