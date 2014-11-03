@@ -374,8 +374,6 @@ bool PX4Bootloader::_bootloaderVerifyRev2(QextSerialPort* port, const QString fi
 /// @Brief Verify the flash on a version 3 or higher bootloader board by comparing CRCs.
 bool PX4Bootloader::_bootloaderVerifyRev3(QextSerialPort* port)
 {
-    return true;
-    
     uint8_t buf[2] = { PROTO_GET_CRC, PROTO_EOC };
     quint32 flashCRC;
     
