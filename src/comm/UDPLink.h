@@ -52,7 +52,6 @@ public:
     void requestReset() { }
 
     bool isConnected() const;
-    qint64 bytesAvailable();
     int getPort() const {
         return port;
     }

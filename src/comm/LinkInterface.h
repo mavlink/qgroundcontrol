@@ -147,13 +147,6 @@ public:
      **/
     virtual bool disconnect() = 0;
 
-    /**
-     * @brief Get the current number of bytes in buffer.
-     *
-     * @return The number of bytes ready to read
-     **/
-    virtual qint64 bytesAvailable() = 0;
-
 public slots:
 
     /**

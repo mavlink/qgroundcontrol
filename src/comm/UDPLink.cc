@@ -267,17 +267,6 @@ void UDPLink::readBytes()
     }
 }
 
-
-/**
- * @brief Get the number of bytes to read.
- *
- * @return The number of bytes to read
- **/
-qint64 UDPLink::bytesAvailable()
-{
-    return socket->pendingDatagramSize();
-}
-
 /**
  * @brief Disconnect the connection.
  *

@@ -189,11 +189,6 @@ bool XbeeLink::disconnect()
 	return true;
 }
 
-qint64 XbeeLink::bytesAvailable()
-{
-	return 0;
-}
-
 void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete the data array
 {
 	char *data;
