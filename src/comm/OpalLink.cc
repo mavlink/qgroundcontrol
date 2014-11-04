@@ -58,18 +58,6 @@ OpalLink::OpalLink() :
     QObject::connect(getSignalsTimer, SIGNAL(timeout()), this, SLOT(getSignals()));
 }
 
-
-/*
- *
-  Communication
- *
- */
-
-qint64 OpalLink::bytesAvailable()
-{
-    return 0;
-}
-
 void OpalLink::writeBytes(const char *bytes, qint64 length)
 {
     /* decode the message */
