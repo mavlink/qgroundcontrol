@@ -438,9 +438,8 @@ void MAVLinkSimulationLink::mainloop()
 
         static int rcCounter = 0;
         if (rcCounter == 2) {
-            mavlink_rc_channels_raw_t chan;
+            mavlink_rc_channels_t chan;
             chan.time_boot_ms = 0;
-            chan.port = 0;
             chan.chan1_raw = 1000 + ((int)(fabs(x) * 1000) % 2000);
             chan.chan2_raw = 1000 + ((int)(fabs(y) * 1000) % 2000);
             chan.chan3_raw = 1000 + ((int)(fabs(z) * 1000) % 2000);
@@ -450,7 +449,7 @@ void MAVLinkSimulationLink::mainloop()
             chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
             chan.chan8_raw = 0;
             chan.rssi = 100;
-            mavlink_msg_rc_channels_raw_encode(systemId, componentId, &msg, &chan);
+            mavlink_msg_rc_channels_encode(systemId, componentId, &msg, &chan);
             // Allocate buffer with packet data
             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
             //add data into datastream
