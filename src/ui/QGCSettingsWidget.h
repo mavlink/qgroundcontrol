@@ -24,6 +24,9 @@ public slots:
     void selectStylesheet();
     void selectCustomMode(int mode);
 
+private slots:
+    void _deleteSettingsToggled(bool checked);
+    
 private:
     MainWindow* mainWindow;
     Ui::QGCSettingsWidget* ui;

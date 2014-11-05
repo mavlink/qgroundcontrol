@@ -55,6 +55,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 
+const char* QGCCore::deleteAllSettingsKey = "DeleteAllSettingsNextBoot";
 const char* QGCCore::_settingsVersionKey = "SettingsVersion";
 
 /**
@@ -99,9 +100,13 @@ QGCCore::QGCCore(int &argc, char* argv[]) :
     
     QSettings settings;
     
+    // The setting will delete all settings on this boot
+    fClearSettingsOptions |= settings.contains(deleteAllSettingsKey);
+    
     if (fClearSettingsOptions) {
         // User requested settings to be cleared on command line
         settings.clear();
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
         settings.sync();
     }
     

@@ -10,6 +10,7 @@
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 #include "GAudioOutput.h"
+#include "QGCCore.h"
 
 QGCSettingsWidget::QGCSettingsWidget(JoystickInput *joystick, QWidget *parent, Qt::WindowFlags flags) :
     QDialog(parent, flags),
@@ -54,6 +55,8 @@ QGCSettingsWidget::QGCSettingsWidget(JoystickInput *joystick, QWidget *parent, Q
     // Dock widget title bars
     ui->titleBarCheckBox->setChecked(mainWindow->dockWidgetTitleBarsEnabled());
     connect(ui->titleBarCheckBox,SIGNAL(clicked(bool)),mainWindow,SLOT(enableDockWidgetTitleBars(bool)));
+    
+    connect(ui->deleteSettings, &QAbstractButton::toggled, this, &QGCSettingsWidget::_deleteSettingsToggled);
 
     // Custom mode
 
@@ -196,4 +199,21 @@ void QGCSettingsWidget::selectCustomMode(int mode)
 {
     MainWindow::instance()->setCustomMode(static_cast<enum MainWindow::CUSTOM_MODE>(ui->customModeComboBox->itemData(mode).toInt()));
     MainWindow::instance()->showInfoMessage(tr("Please restart QGroundControl"), tr("The optimization selection was changed. The application needs to be closed and restarted to put all optimizations into effect."));
+}
+
+void QGCSettingsWidget::_deleteSettingsToggled(bool checked)
+{
+    if (checked){
+        QMessageBox::StandardButton answer = QMessageBox::question(this,
+                                                                   tr("Delete Settings"),
+                                                                   tr("All saved settgings will be deleted the next time you start QGroundControl. Is this really what you want?"),
+                                                                   QMessageBox::Yes | QMessageBox::No,
+                                                                   QMessageBox::No);
+        if (answer == QMessageBox::Yes) {
+            QSettings settings;
+            settings.setValue(QGCCore::deleteAllSettingsKey, 1);
+        } else {
+            ui->deleteSettings->setChecked(false);
+        }
+    }
 }
