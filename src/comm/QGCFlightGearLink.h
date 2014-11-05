@@ -164,6 +164,8 @@ private:
 
     QUdpSocket* _udpCommSocket;             ///< UDP communication sockect between FG and QGC
     QProcess*   _fgProcess;                 ///< FlightGear process
+    
+    QString     _fgProtocolFileFullyQualified;  ///< Fully qualified file name for protocol file
 };
 
 #endif // QGCFLIGHTGEARLINK_H
