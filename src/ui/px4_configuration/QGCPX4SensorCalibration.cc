@@ -30,9 +30,9 @@ QGCPX4SensorCalibration::QGCPX4SensorCalibration(QWidget *parent) :
     ui->autopilotComboBox->setEnabled(false);
     ui->magComboBox->setEnabled(false);
 
-    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
-    setAutopilotImage(":/files/images/px4/calibration/accel_z-.png");
-    setGpsImage(":/files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_down.png");
+    setAutopilotImage(":/files/images/px4/calibration/accel_down.png");
+    setGpsImage(":/files/images/px4/calibration/accel_down.png");
 
     // Fill combo boxes
     ui->autopilotComboBox->addItem(tr("Default Orientation"), 0);
@@ -402,7 +402,7 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
     if (text.endsWith(" calibration: done") || text.endsWith(" calibration: failed")) {
         // XXX use a confirmation image or something
-        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+        setInstructionImage(":/files/images/px4/calibration/accel_down.png");
         if (text.endsWith(" calibration: done")) {
             ui->progressBar->setValue(100);
         } else {
@@ -446,7 +446,7 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
     }
 
     if (text.endsWith(" calibration: started")) {
-        setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+        setInstructionImage(":/files/images/px4/calibration/accel_down.png");
     }
 
     // XXX color messages according to severity
@@ -466,28 +466,28 @@ void QGCPX4SensorCalibration::handleTextMessage(int uasid, int compId, int sever
 
 void QGCPX4SensorCalibration::gyroButtonClicked()
 {
-    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_down.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
 }
 
 void QGCPX4SensorCalibration::magButtonClicked()
 {
-    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_down.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
 }
 
 void QGCPX4SensorCalibration::accelButtonClicked()
 {
-    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_down.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
 }
 
 void QGCPX4SensorCalibration::diffPressureButtonClicked()
 {
-    setInstructionImage(":/files/images/px4/calibration/accel_z-.png");
+    setInstructionImage(":/files/images/px4/calibration/accel_down.png");
     activeUAS->executeCommand(MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0);
     ui->progressBar->setValue(0);
 }
