@@ -305,6 +305,9 @@ void QGCFlightGearLink::readBytes()
     {
         qDebug() << "RETURN LENGTH MISMATCHING EXPECTED" << nValues << "BUT GOT" << values.size();
         qDebug() << state;
+        emit showCriticalMessageFromThread(tr("FlightGear HIL"),
+                                           tr("Flight Gear protocol file '%1' is out of date. Quit QGroundControl. Delete the file and restart QGroundControl to fix.").arg(_fgProtocolFileFullyQualified));
+        disconnectSimulation();
         return;
     }
 
@@ -857,8 +860,8 @@ bool QGCFlightGearLink::connectSimulation()
     // around this by specifying something on the FlightGear command line. FG code does direct append
     // of protocol xml file to $FG_ROOT and $FG_ROOT only allows a single directory to be specified.
     QString fgProtocolXmlFile = fgProtocol + ".xml";
-    QString fgProtocolFileFullyQualified = fgProtocolDir.absoluteFilePath(fgProtocolXmlFile);
-    if (!QFileInfo(fgProtocolFileFullyQualified).exists()) {
+    _fgProtocolFileFullyQualified = fgProtocolDir.absoluteFilePath(fgProtocolXmlFile);
+    if (!QFileInfo(_fgProtocolFileFullyQualified).exists()) {
         QMessageBox msgBox(QMessageBox::Critical,
                            tr("FlightGear Failed to Start"),
                            tr("FlightGear Failed to Start. QGroundControl protocol (%1) not installed to FlightGear Protocol directory (%2)").arg(fgProtocolXmlFile).arg(fgProtocolDir.path()),
@@ -878,21 +881,21 @@ bool QGCFlightGearLink::connectSimulation()
         }
         
         // Now that we made it this far, we should be able to try to copy the protocol file to FlightGear.
-        bool succeeded = QFile::copy(qgcProtocolFileFullyQualified, fgProtocolFileFullyQualified);
+        bool succeeded = QFile::copy(qgcProtocolFileFullyQualified, _fgProtocolFileFullyQualified);
         if (!succeeded) {
 #ifdef Q_OS_WIN32
-            QString copyCmd = QString("copy \"%1\" \"%2\"").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified);
+            QString copyCmd = QString("copy \"%1\" \"%2\"").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
             copyCmd.replace("/", "\\");
 #else
-            QString copyCmd = QString("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified);
+            QString copyCmd = QString("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
 #endif
             
             QMessageBox msgBox(QMessageBox::Critical,
                                tr("Copy failed"),
 #ifdef Q_OS_WIN32
-                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a Command Prompt which was started with Run as Administrator:\n\n").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified) + copyCmd,
+                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a Command Prompt which was started with Run as Administrator:\n\n").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified) + copyCmd,
 #else
-                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a shell:\n\n").arg(qgcProtocolFileFullyQualified).arg(fgProtocolFileFullyQualified) + copyCmd,
+                               tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a shell:\n\n").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified) + copyCmd,
 #endif
                                QMessageBox::Cancel,
                                MainWindow::instance());

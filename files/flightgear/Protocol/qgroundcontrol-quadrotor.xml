@@ -176,6 +176,15 @@
     <node>/environment/pressure-inhg</node>
     <factor>33.86389</factor>                  <!-- inhg to hpa -->
    </chunk>
+   
+   <!-- Altitude AGL -->
+   <chunk>
+       <name>Altitude AGL (m)</name>
+       <type>float</type>
+       <format>%.5f</format>
+       <node>/position/altitude-agl-ft</node>
+       <factor>0.3048</factor>  <!-- feet to meter -->
+   </chunk>
 
   </output>
 
