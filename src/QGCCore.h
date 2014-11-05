@@ -60,6 +60,8 @@ public:
     /// @brief Initialize the applicaation.
     /// @return false: init failed, app should exit
     bool init(void);
+    
+    static const char* deleteAllSettingsKey;
 
 protected:
     void startLinkManager();
