@@ -60,9 +60,6 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
-      <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
-      <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
     <contact type="BOGEY" name="rearbase">
       <location unit="M">
@@ -72,9 +69,6 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
-      <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
-      <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
     <contact type="BOGEY" name="leftbase">
       <location unit="M">
@@ -84,9 +78,6 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
-      <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
-      <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
     <contact type="BOGEY" name="rightbase">
       <location unit="M">
@@ -96,9 +87,6 @@
       </location>
       <static_friction>  0.80 </static_friction>
       <dynamic_friction> 0.50 </dynamic_friction>
-      <spring_coeff unit="N/M">       800 </spring_coeff>
-      <damping_coeff unit="N/M2/SEC2" type="SQUARE">  7 </damping_coeff>
-      <damping_coeff_rebound unit="N/M2/SEC2" type="SQUARE">  300 </damping_coeff_rebound>
     </contact>
   </ground_reactions>
   <!-- the front and rear motors spin clockwise, and the left and right motors spin counter-clockwise. -->
