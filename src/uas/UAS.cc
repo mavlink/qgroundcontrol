@@ -2905,7 +2905,7 @@ bool UAS::emergencyKILL()
 void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
 {
     Q_UNUSED(configuration);
-    
+
     QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
     if (!link || !simulation) {
         // Delete wrong sim
@@ -3115,7 +3115,7 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
                     float flow_comp_m_y, quint8 quality, float ground_distance)
 {
     // FIXME: This needs to be updated for new mavlink_msg_hil_optical_flow_pack api
-    
+
     Q_UNUSED(time_us);
     Q_UNUSED(flow_x);
     Q_UNUSED(flow_y);
@@ -3123,14 +3123,14 @@ void UAS::sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, floa
     Q_UNUSED(flow_comp_m_y);
     Q_UNUSED(quality);
     Q_UNUSED(ground_distance);
-    
+
     if (this->base_mode & MAV_MODE_FLAG_HIL_ENABLED)
     {
 #if 0
         mavlink_message_t msg;
         mavlink_msg_hil_optical_flow_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg,
                                    time_us, 0, 0 /* hack */, flow_x, flow_y, 0.0f /* hack */, 0.0f /* hack */, 0.0f /* hack */, 0 /* hack */, quality, ground_distance);
-        
+
         sendMessage(msg);
         lastSendTimeOpticalFlow = QGC::groundTimeMilliseconds();
 #endif
@@ -3354,6 +3354,8 @@ QString UAS::getShortModeTextFor(uint8_t base_mode, uint32_t custom_mode, int au
                 } else if (px4_mode.sub_mode == PX4_CUSTOM_SUB_MODE_AUTO_LAND) {
                     mode += "|LAND";
                 }
+            } else if (px4_mode.main_mode == PX4_CUSTOM_MAIN_MODE_OFFBOARD) {
+                mode += "|OFFBOARD";
             }
         }
     }
