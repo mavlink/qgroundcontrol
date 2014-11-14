@@ -164,17 +164,15 @@ void QextSerialPortPrivate::translateError(ulong error)
     lastOSErr = error;
     lastErr = E_OS_SPECIFIC;
     
-    LPVOID lpMsgBuf;
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                  FORMAT_MESSAGE_FROM_SYSTEM |
+    char buf[256];
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM |
                   FORMAT_MESSAGE_IGNORE_INSERTS,
                   NULL,
                   error,
                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                  (LPTSTR) &lpMsgBuf,
-                  0, NULL);
-    lastOSErrString = QString((char*)lpMsgBuf);
-    LocalFree(lpMsgBuf);
+                  buf, sizeof(buf), 
+				  NULL);
+    lastOSErrString = buf;
 }
 
 /*
@@ -204,8 +202,8 @@ qint64 QextSerialPortPrivate::readData_sys(char *data, qint64 maxSize)
     if (!failed)
         return (qint64)bytesRead;
 
-    lastErr = E_READ_FAILED;
-    return -1;
+	translateError(GetLastError());
+	return -1;
 }
 
 /*
@@ -249,7 +247,7 @@ qint64 QextSerialPortPrivate::writeData_sys(const char *data, qint64 maxSize)
     if (!failed)
         return (qint64)bytesWritten;
 
-    lastErr = E_WRITE_FAILED;
+	translateError(GetLastError());
     return -1;
 }
 
