@@ -155,6 +155,11 @@ void QextSerialPortPrivate::translateError(ulong error)
     case EAGAIN:
         lastErr = E_AGAIN;
         break;
+    default:
+        lastOSErr = error;
+        lastOSErrString = strerror(error);
+        lastErr = E_OS_SPECIFIC;
+        break;
     }
 }
 

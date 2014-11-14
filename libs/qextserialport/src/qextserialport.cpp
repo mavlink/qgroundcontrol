@@ -755,6 +755,8 @@ QString QextSerialPort::errorString()
         return tr("Permission denied");
     case E_AGAIN:
         return tr("Device is already locked");
+    case E_OS_SPECIFIC:
+        return tr("OS error: %1").arg(d->lastOSErrString);
     default:
         return tr("Unknown error: %1").arg(d->lastErr);
     }
